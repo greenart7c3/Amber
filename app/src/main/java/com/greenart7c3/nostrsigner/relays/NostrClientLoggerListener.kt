@@ -17,6 +17,7 @@ import com.vitorpamplona.quartz.nip01Core.relay.commands.toRelay.Command
 import com.vitorpamplona.quartz.nip01Core.relay.commands.toRelay.EventCmd
 import com.vitorpamplona.quartz.nip01Core.relay.commands.toRelay.ReqCmd
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -52,7 +53,7 @@ class NostrClientLoggerListener(
     val scope: CoroutineScope,
 ) : RelayConnectionListener {
     private var reconnectJob: Job? = null
-    private var reconnectDelay = 5_000L
+    private var reconnectDelay = 5.seconds
     private var lastDisconnectTime = 0L
 
     // Counts the failure against the relay and only schedules a reconnect while it
@@ -71,15 +72,15 @@ class NostrClientLoggerListener(
     private fun reconnectWithBackoff() {
         val now = System.currentTimeMillis()
         if (now - lastDisconnectTime > 60_000) {
-            reconnectDelay = 5_000L
+            reconnectDelay = 5.seconds
         }
         lastDisconnectTime = now
 
         reconnectJob?.cancel()
         reconnectJob = scope.launch {
-            AmberLog.d(Amber.TAG, "Reconnecting in ${reconnectDelay / 1000}s...")
+            AmberLog.d(Amber.TAG, "Reconnecting in ${reconnectDelay.inWholeSeconds}s...")
             delay(reconnectDelay)
-            reconnectDelay = (reconnectDelay * 2).coerceAtMost(60_000L)
+            reconnectDelay = (reconnectDelay * 2).coerceAtMost(60.seconds)
             if (!BuildFlavorChecker.isOfflineFlavor() && !Amber.instance.settings.killSwitch.value) {
                 Amber.instance.reconnect()
             }

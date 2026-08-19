@@ -15,6 +15,7 @@ import com.vitorpamplona.quartz.nip19Bech32.Nip19Parser
 import com.vitorpamplona.quartz.nip19Bech32.entities.NPub
 import com.vitorpamplona.quartz.nip19Bech32.toNpub
 import com.vitorpamplona.quartz.utils.Hex
+import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -142,7 +143,7 @@ class MainViewModel(val context: Context) : ViewModel() {
                         var error = true
                         var count = 0
                         while (error && count < 10) {
-                            delay(100)
+                            delay(100.milliseconds)
                             count++
                             try {
                                 if (route == Route.UpdateSettings.route) {

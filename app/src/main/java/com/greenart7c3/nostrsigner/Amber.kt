@@ -76,6 +76,7 @@ import java.net.Socket
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 import kotlin.coroutines.cancellation.CancellationException
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -410,11 +411,11 @@ class Amber :
                         if (attempt > 0) {
                             TorManager.showRetrying()
                             TorManager.stop()
-                            delay(3000)
+                            delay(3.seconds)
                             TorManager.start(this@Amber, applicationIOScope)
                         }
                         attempt++
-                        withTimeoutOrNull(120_000L) {
+                        withTimeoutOrNull(120.seconds) {
                             TorManager.isRunning.first { it }
                         }
                     }
@@ -553,7 +554,7 @@ class Amber :
         }
         AmberLog.d(TAG, "checkForNewRelaysAndUpdateAllFilters wasActive: $wasActive")
         if (!wasActive) {
-            delay(3000)
+            delay(3.seconds)
             client.connect()
         }
 

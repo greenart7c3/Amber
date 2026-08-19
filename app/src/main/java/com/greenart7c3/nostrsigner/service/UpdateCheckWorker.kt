@@ -8,10 +8,11 @@ import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import kotlin.coroutines.cancellation.CancellationException
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withTimeoutOrNull
 
-private const val CHECK_TIMEOUT_MS = 30_000L
+private val CHECK_TIMEOUT = 30.seconds
 
 class UpdateCheckWorker(appContext: Context, workerParams: WorkerParameters) : CoroutineWorker(appContext, workerParams) {
 
@@ -29,7 +30,7 @@ class UpdateCheckWorker(appContext: Context, workerParams: WorkerParameters) : C
             // If a check was actually started, wait for it to finish so the notification fires
             // before WorkManager considers the job done.
             if (updater.isChecking.value) {
-                withTimeoutOrNull(CHECK_TIMEOUT_MS) {
+                withTimeoutOrNull(CHECK_TIMEOUT) {
                     updater.isChecking.first { !it }
                 }
             }

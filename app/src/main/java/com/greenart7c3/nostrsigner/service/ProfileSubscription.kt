@@ -40,13 +40,14 @@ import com.vitorpamplona.quartz.nip65RelayList.AdvertisedRelayListEvent
 import com.vitorpamplona.quartz.utils.TimeUtils
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-private const val EOSE_TIMEOUT_MS = 30_000L
+private val EOSE_TIMEOUT = 30.seconds
 
 class ProfileSubscription(
     val client: NostrClient,
@@ -170,7 +171,7 @@ class ProfileSubscription(
         relaysPerSubId[subId] = ConcurrentHashMap.newKeySet<NormalizedRelayUrl>().apply { addAll(relayListFilter.keys) }
         client.subscribe(subId, relayListFilter)
         timeoutJobs[subId] = scope.launch {
-            delay(EOSE_TIMEOUT_MS)
+            delay(EOSE_TIMEOUT)
             if (relaysPerSubId.containsKey(subId)) {
                 unsubscribe(subId)
                 // still fetch the profile with whatever relay list we have saved
@@ -186,7 +187,7 @@ class ProfileSubscription(
         relaysPerSubId[subId] = ConcurrentHashMap.newKeySet<NormalizedRelayUrl>().apply { addAll(profileFilter.keys) }
         client.subscribe(subId, profileFilter)
         timeoutJobs[subId] = scope.launch {
-            delay(EOSE_TIMEOUT_MS)
+            delay(EOSE_TIMEOUT)
             if (relaysPerSubId.containsKey(subId)) {
                 unsubscribe(subId)
             }

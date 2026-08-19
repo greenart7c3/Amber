@@ -6,6 +6,7 @@ import com.greenart7c3.nostrsigner.models.SignerType
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequest
 import io.mockk.every
 import io.mockk.mockk
+import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
@@ -344,8 +345,8 @@ class BunkerRequestUtilsTest {
         var calls = 0
         val result = BunkerRequestUtils.retryWithBackoff(
             maxRetries = 3,
-            initialDelayMs = 1L,
-            maxDelayMs = 4L,
+            initialDelay = 1.milliseconds,
+            maxDelay = 4.milliseconds,
         ) {
             calls++
             true
@@ -359,8 +360,8 @@ class BunkerRequestUtilsTest {
         var calls = 0
         val result = BunkerRequestUtils.retryWithBackoff(
             maxRetries = 5,
-            initialDelayMs = 1L,
-            maxDelayMs = 4L,
+            initialDelay = 1.milliseconds,
+            maxDelay = 4.milliseconds,
         ) {
             calls++
             calls >= 3
@@ -374,8 +375,8 @@ class BunkerRequestUtilsTest {
         var calls = 0
         val result = BunkerRequestUtils.retryWithBackoff(
             maxRetries = 3,
-            initialDelayMs = 1L,
-            maxDelayMs = 4L,
+            initialDelay = 1.milliseconds,
+            maxDelay = 4.milliseconds,
         ) {
             calls++
             false
@@ -389,8 +390,8 @@ class BunkerRequestUtilsTest {
         var calls = 0
         val result = BunkerRequestUtils.retryWithBackoff(
             maxRetries = 1,
-            initialDelayMs = 1L,
-            maxDelayMs = 4L,
+            initialDelay = 1.milliseconds,
+            maxDelay = 4.milliseconds,
         ) {
             calls++
             false
@@ -403,8 +404,8 @@ class BunkerRequestUtilsTest {
     fun `retryWithBackoff with maxRetries 1 returns true on success`() = runBlocking {
         val result = BunkerRequestUtils.retryWithBackoff(
             maxRetries = 1,
-            initialDelayMs = 1L,
-            maxDelayMs = 4L,
+            initialDelay = 1.milliseconds,
+            maxDelay = 4.milliseconds,
         ) { true }
         assertTrue(result)
     }
@@ -415,8 +416,8 @@ class BunkerRequestUtilsTest {
         var calls = 0
         BunkerRequestUtils.retryWithBackoff(
             maxRetries = maxRetries,
-            initialDelayMs = 1L,
-            maxDelayMs = 4L,
+            initialDelay = 1.milliseconds,
+            maxDelay = 4.milliseconds,
         ) {
             calls++
             false

@@ -7,12 +7,14 @@ import android.os.PersistableBundle
 import androidx.compose.ui.platform.ClipEntry
 import androidx.compose.ui.platform.Clipboard
 import com.greenart7c3.nostrsigner.Amber
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /** How long a copied secret stays on the clipboard before it is cleared. */
-const val SENSITIVE_CLIPBOARD_CLEAR_DELAY_MS = 60_000L
+val SENSITIVE_CLIPBOARD_CLEAR_DELAY = 60.seconds
 
 /**
  * Creates a [ClipData] flagged as sensitive so the system (Android 13+) avoids
@@ -34,7 +36,7 @@ fun newSensitivePlainText(label: CharSequence, text: CharSequence): ClipData {
 
 /**
  * Copies a secret to the clipboard flagged as sensitive content and schedules it
- * to be cleared after [clearAfterMillis]. The clipboard is only cleared if it
+ * to be cleared after [clearAfter]. The clipboard is only cleared if it
  * still contains the copied secret, so anything the user copies afterwards is
  * left untouched.
  */
@@ -42,19 +44,19 @@ suspend fun Clipboard.setSensitiveClip(
     label: CharSequence,
     text: CharSequence,
     scope: CoroutineScope = Amber.instance.applicationIOScope,
-    clearAfterMillis: Long = SENSITIVE_CLIPBOARD_CLEAR_DELAY_MS,
+    clearAfter: Duration = SENSITIVE_CLIPBOARD_CLEAR_DELAY,
 ) {
     setClipEntry(ClipEntry(newSensitivePlainText(label, text)))
-    scheduleSensitiveClear(text, scope, clearAfterMillis)
+    scheduleSensitiveClear(text, scope, clearAfter)
 }
 
 private fun Clipboard.scheduleSensitiveClear(
     copiedValue: CharSequence,
     scope: CoroutineScope,
-    delayMillis: Long,
+    clearAfter: Duration,
 ) {
     scope.launch {
-        delay(delayMillis)
+        delay(clearAfter)
         val currentText = getClipEntry()?.clipData?.let { clip ->
             if (clip.itemCount > 0) clip.getItemAt(0).text?.toString() else null
         }

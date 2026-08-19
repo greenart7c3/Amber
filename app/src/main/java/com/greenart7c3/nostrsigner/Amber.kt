@@ -40,6 +40,7 @@ import com.greenart7c3.nostrsigner.database.LogDatabase
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.AmberSettings
 import com.greenart7c3.nostrsigner.models.FeedbackType
+import com.greenart7c3.nostrsigner.models.TimeUtils as AmberTimeUtils
 import com.greenart7c3.nostrsigner.models.TorMode
 import com.greenart7c3.nostrsigner.models.UpdateCheckFrequency
 import com.greenart7c3.nostrsigner.okhttp.HttpClientManager
@@ -353,6 +354,13 @@ class Amber :
         // build it lazily during composition trips StrictMode's DiskReadViolation.
         applicationIOScope.launch {
             SingletonImageLoader.get(this@Amber)
+        }
+
+        // The first ZoneId.systemDefault() call lazily mmaps tzdata from disk.
+        // Force it here so it never happens on the main thread during the first
+        // timestamp formatted in composition (StrictMode DiskReadViolation).
+        applicationIOScope.launch {
+            AmberTimeUtils.warmUp()
         }
     }
 

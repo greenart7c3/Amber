@@ -68,6 +68,10 @@ class ProfileSubscription(
 
     // hexKey -> the cached Account instance a live composable cares about. Updating the
     // StateFlows on these instances is what reflects fresh metadata in the UI.
+    // Iteration (updateFilters) is wrapped in synchronized(this map) and every mutation
+    // (put/remove/clear) takes the same monitor, so the weakly-consistent CHM iterator
+    // can never run off the end and throw NoSuchElementException when the map shrinks
+    // mid-iteration. Single-key reads stay lock-free.
     private val accounts = ConcurrentHashMap<String, Account>()
 
     init {
@@ -148,7 +152,7 @@ class ProfileSubscription(
         val interval = Amber.instance.settings.profileFetchInterval
         if (interval == ProfileFetchInterval.NEVER) return
 
-        accounts[account.hexKey] = account
+        synchronized(accounts) { accounts[account.hexKey] = account }
 
         val shouldFetch = if (interval == ProfileFetchInterval.ALWAYS) {
             true
@@ -228,14 +232,15 @@ class ProfileSubscription(
      * Re-runs the fetch for every currently tracked account. Call when the relay list changes.
      */
     suspend fun updateFilters() {
-        accounts.values.toList().forEach { updateFilter(it) }
+        val snapshot = synchronized(accounts) { accounts.values.toList() }
+        snapshot.forEach { updateFilter(it) }
     }
 
     /**
      * Stops updates for a single [account] (call when the composable leaves composition).
      */
     fun closeSub(account: Account) {
-        accounts.remove(account.hexKey)
+        synchronized(accounts) { accounts.remove(account.hexKey) }
         relayListSubIds.remove(account.hexKey)?.let { unsubscribe(it) }
         subIds.remove(account.hexKey)?.let { unsubscribe(it) }
     }
@@ -252,7 +257,7 @@ class ProfileSubscription(
         relaysPerSubId.clear()
         subIds.clear()
         relayListSubIds.clear()
-        accounts.clear()
+        synchronized(accounts) { accounts.clear() }
     }
 
     /** Default profile relays from the settings plus the user's own saved relay list. */

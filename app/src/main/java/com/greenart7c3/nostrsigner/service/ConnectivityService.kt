@@ -113,10 +113,13 @@ class ConnectivityService : Service() {
         LocalPreferences.allSavedAccounts(this).forEach {
             Amber.instance.databases[it.npub] = Amber.instance.getDatabase(it.npub)
             Amber.instance.applicationIOScope.launch {
-                Amber.instance.databases[it.npub]?.dao()?.getAllNotConnected()?.forEach { app ->
+                // Cached dao so the write invalidates CachingApplicationDao's getAll
+                // entry for this account (the service can restart in a live process).
+                val dao = Amber.instance.dao(it.npub)
+                dao.getAllNotConnected()?.forEach { app ->
                     if (app.application.secret.isNotEmpty() && app.application.secret != app.application.key) {
                         app.application.isConnected = true
-                        Amber.instance.databases[it.npub]?.dao()?.insertApplicationWithPermissions(app)
+                        dao.insertApplicationWithPermissions(app)
                     }
                 }
             }

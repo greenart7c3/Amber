@@ -129,7 +129,9 @@ interface HistoryDao {
                 val lastUsed = entities.maxByOrNull { it.time }?.time ?: TimeUtils.now()
                 val pkKey = entities.firstOrNull()?.pkKey
                 if (pkKey != null) {
-                    Amber.instance.getDatabase(npub).dao().updateLastUsed(pkKey, lastUsed)
+                    // Cached dao so the write invalidates CachingApplicationDao's
+                    // getAll entry (lastUsed is a column of that projection).
+                    Amber.instance.dao(npub).updateLastUsed(pkKey, lastUsed)
                 }
             }
         } catch (e: Exception) {

@@ -17,6 +17,16 @@ import androidx.paging.PagingSource
  * (coarse-grained per-app). Every mutation in [ApplicationDao] is scoped to a
  * single app key, so this matches the natural granularity without forcing
  * callers to know which exact (type, kind, relay) tuple they touched.
+ *
+ * [getAll] results are cached per account pubKey in a separate small LRU.
+ * That query decrypts every application row (AndroidKeyStore AES-GCM, a binder
+ * hop to keystore2 per field) and [com.greenart7c3.nostrsigner.service.NotificationSubscription]
+ * re-runs it on every ~30s relay-refresh cycle, which made it the app's
+ * dominant native allocator. Any mutation of the `application` table evicts
+ * the affected account's entry (or all entries when only the app key — not
+ * the owning account — is known). Cached lists are handed out as defensive
+ * copies; callers must not expect in-place edits of returned entities to be
+ * visible (all current call sites are read-only consumers).
  */
 class CachingApplicationDao(
     private val delegate: ApplicationDao,
@@ -38,10 +48,20 @@ class CachingApplicationDao(
 
     private val cache = LruCache<Key, Value>(MAX_ENTRIES)
 
+    // One entry per account (key = account pubKey); a handful at most.
+    private val getAllCache = LruCache<String, List<ApplicationEntity>>(GET_ALL_MAX_ENTRIES)
+
     private fun lookup(key: Key): Value? = synchronized(cache) { cache.get(key) }
 
     private fun store(key: Key, value: Value) {
         synchronized(cache) { cache.put(key, value) }
+    }
+
+    /** Evicts the cached [getAll] list for [pubKey], or every list when null. */
+    private fun invalidateGetAll(pubKey: String?) {
+        synchronized(getAllCache) {
+            if (pubKey != null) getAllCache.remove(pubKey) else getAllCache.evictAll()
+        }
     }
 
     private fun invalidateApp(pkKey: String) {
@@ -122,6 +142,7 @@ class CachingApplicationDao(
     override suspend fun insertApplicationWithPermissions(application: ApplicationWithPermissions) {
         delegate.insertApplicationWithPermissions(application)
         invalidateApp(application.application.key)
+        invalidateGetAll(application.application.pubKey)
     }
 
     override suspend fun deletePermissions(key: String) {
@@ -157,11 +178,15 @@ class CachingApplicationDao(
     override suspend fun delete(entity: ApplicationEntity) {
         delegate.delete(entity)
         invalidateApp(entity.key)
+        invalidateGetAll(entity.pubKey)
     }
 
     override suspend fun delete(key: String) {
         delegate.delete(key)
         invalidateApp(key)
+        // Only the app key is known here, not the owning account, so drop every
+        // getAll entry — there is at most one per account.
+        invalidateGetAll(null)
     }
 
     // Affects many apps at once (timestamp predicate), so wipe the whole cache.
@@ -172,13 +197,21 @@ class CachingApplicationDao(
 
     override suspend fun deleteOldApplications(time: Long): Int {
         val n = delegate.deleteOldApplications(time)
-        if (n > 0) invalidateAll()
+        if (n > 0) {
+            invalidateAll()
+            invalidateGetAll(null)
+        }
         return n
     }
 
     // -------- pass-through (not cached, not invalidating) --------
 
-    override suspend fun getAll(pubKey: String): List<ApplicationEntity> = delegate.getAll(pubKey)
+    override suspend fun getAll(pubKey: String): List<ApplicationEntity> {
+        synchronized(getAllCache) { getAllCache.get(pubKey) }?.let { return it.toList() }
+        val result = delegate.getAll(pubKey)
+        synchronized(getAllCache) { getAllCache.put(pubKey, result) }
+        return result.toList()
+    }
 
     override suspend fun getAllNotConnected(): List<ApplicationWithPermissions> = delegate.getAllNotConnected()
 
@@ -211,23 +244,28 @@ class CachingApplicationDao(
         // ApplicationEntity columns like signPolicy and lastUsed feed cached reads
         // (getSignPolicy), so invalidate the affected app's entries.
         invalidateApp(event.key)
+        invalidateGetAll(event.pubKey)
         return result
     }
 
     override fun insertAll(events: List<ApplicationEntity>): List<Long>? {
         val result = delegate.insertAll(events)
         events.forEach { invalidateApp(it.key) }
+        events.asSequence().map { it.pubKey }.distinct().forEach(::invalidateGetAll)
         return result
     }
 
     override suspend fun updateLastUsed(key: String, time: Long) {
         delegate.updateLastUsed(key, time)
-        // lastUsed doesn't affect any cached read, so no invalidation needed.
+        // lastUsed doesn't affect any cached read of the permission cache, but it
+        // is a column of getAll's projection, so the per-account list goes stale.
+        invalidateGetAll(null)
     }
 
     override suspend fun updateNameAndIcon(key: String, name: String, icon: String) {
         delegate.updateNameAndIcon(key, name, icon)
         invalidateApp(key)
+        invalidateGetAll(null)
     }
 
     // -------- *Raw delegations (envelope-encrypted persistence boundary) --------
@@ -255,9 +293,14 @@ class CachingApplicationDao(
 
     override suspend fun getAllWithLocalKeyRaw(pubKey: String): List<ApplicationEntity> = delegate.getAllWithLocalKeyRaw(pubKey)
 
-    // Key-rotation write path: secret/localKey never feed a cached read, so a
-    // plain delegation with no invalidation is correct.
-    override suspend fun updateEncryptedColumnsRaw(key: String, secret: String, localKey: String) = delegate.updateEncryptedColumnsRaw(key, secret, localKey)
+    // Key-rotation write path: secret/localKey never feed a cached read of the
+    // permission cache, but they ARE columns of getAll's projection, so evict
+    // the per-account lists (SecureCryptoHelper.rotateKey calls this through
+    // the caching wrapper, ciphertext in / ciphertext out).
+    override suspend fun updateEncryptedColumnsRaw(key: String, secret: String, localKey: String) {
+        delegate.updateEncryptedColumnsRaw(key, secret, localKey)
+        invalidateGetAll(null)
+    }
 
     override suspend fun insertApplicationRaw(event: ApplicationEntity): Long? = delegate.insertApplicationRaw(event)
 
@@ -271,5 +314,6 @@ class CachingApplicationDao(
 
     companion object {
         private const val MAX_ENTRIES = 512
+        private const val GET_ALL_MAX_ENTRIES = 8
     }
 }

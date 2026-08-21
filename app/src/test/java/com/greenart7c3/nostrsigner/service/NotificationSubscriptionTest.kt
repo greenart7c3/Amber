@@ -7,6 +7,7 @@ import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.database.AppDatabase
 import com.greenart7c3.nostrsigner.database.ApplicationDao
 import com.greenart7c3.nostrsigner.database.ApplicationEntity
+import com.greenart7c3.nostrsigner.database.CachingApplicationDao
 import com.greenart7c3.nostrsigner.models.Account
 import com.vitorpamplona.quartz.nip01Core.core.Event
 import com.vitorpamplona.quartz.nip01Core.relay.client.NostrClient
@@ -51,6 +52,9 @@ class NotificationSubscriptionTest {
 
         val amber = mockk<Amber>(relaxed = true)
         every { amber.getDatabase(any()) } returns database
+        // updateFilter reads through the caching wrapper; a fresh wrapper per call
+        // mirrors per-test dao state without cross-test cache leakage.
+        every { amber.dao(any()) } answers { CachingApplicationDao(dao) }
         every { amber.notificationCache } returns LruCache(512)
         installAmberInstance(amber)
 

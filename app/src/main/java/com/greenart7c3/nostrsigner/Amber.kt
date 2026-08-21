@@ -54,6 +54,7 @@ import com.greenart7c3.nostrsigner.service.ConnectivityService
 import com.greenart7c3.nostrsigner.service.NotificationSubscription
 import com.greenart7c3.nostrsigner.service.ProfileSubscription
 import com.greenart7c3.nostrsigner.service.TorManager
+import com.greenart7c3.nostrsigner.service.TrustScoreService
 import com.greenart7c3.nostrsigner.service.UpdateCheckWorker
 import com.greenart7c3.nostrsigner.service.ZapstoreUpdater
 import com.greenart7c3.nostrsigner.service.crashreports.CrashReportCache
@@ -628,6 +629,44 @@ class Amber :
                 },
             )
             .build()
+    }
+
+    override fun onTrimMemory(level: Int) {
+        super.onTrimMemory(level)
+
+        // Since API 34 the system only delivers UI_HIDDEN and BACKGROUND here —
+        // the RUNNING_*/MODERATE/COMPLETE levels are deprecated and never sent.
+        // UI_HIDDEN (20) is not pressure, but a long-lived signer process has no
+        // reason to keep UI-only caches while its UI is invisible either.
+        if (level == TRIM_MEMORY_UI_HIDDEN) {
+            trimImageMemoryCache()
+        } else if (level >= TRIM_MEMORY_BACKGROUND) {
+            trimImageMemoryCache()
+            TrustScoreService.clearCache()
+        }
+    }
+
+    /**
+     * Pre-API-34 stand-in for foreground memory pressure (the deprecated
+     * TRIM_MEMORY_RUNNING_* levels are never delivered since API 34): the
+     * system only calls this when memory is low enough that process death is
+     * imminent.
+     */
+    override fun onLowMemory() {
+        super.onLowMemory()
+        trimImageMemoryCache()
+        TrustScoreService.clearCache()
+    }
+
+    private fun trimImageMemoryCache() {
+        // Coil 3 registers no ComponentCallbacks of its own, so its bitmap
+        // memory cache (32 MB cap) would otherwise stay fully resident in
+        // this long-lived signer process even while its UI is not visible.
+        // The cache rebuilds lazily on the next image load.
+        applicationIOScope.launch {
+            runCatching { SingletonImageLoader.get(this@Amber).memoryCache?.clear() }
+                .onFailure { AmberLog.w(TAG, "Failed to trim Coil memory cache", it) }
+        }
     }
 
     override fun onTerminate() {

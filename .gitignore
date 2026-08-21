@@ -137,3 +137,5 @@ lint/tmp/
 # lint/reports/
 quartz/
 .ai-jail
+trace_processor
+perf-traces

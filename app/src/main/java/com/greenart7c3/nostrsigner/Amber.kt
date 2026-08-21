@@ -132,7 +132,7 @@ class Amber :
     }
 
     // Authenticates with relays.
-    val authCoordinator = RelayAuthenticator(client, applicationIOScope) { event ->
+    val authCoordinator = RelayAuthenticator(client, applicationIOScope) { _, event, _ ->
         LocalPreferences.allAccounts(this).map { account ->
             account.sign(event)
         }

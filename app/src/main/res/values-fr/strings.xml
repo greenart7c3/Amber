@@ -698,6 +698,9 @@
     <string name="enable_kill_switch">Activer le kill switch</string>
     <string name="disable_kill_switch">Désactiver le kill switch</string>
     <string name="kill_switch_message">Kill Switch activé, la connexion à distance et la récupération de profil ne fonctionneront pas</string>
+    <string name="kill_switch_settings_subtitle">Déconnecte Amber de tous les relais. La connexion à distance et la récupération de profil ne fonctionneront pas</string>
+    <string name="kill_switch_connect_title">Désactiver le kill switch ?</string>
+    <string name="kill_switch_connect_message">Le kill switch est activé et Amber est déconnecté de tous les relais. Répondre à cette demande de connexion nécessite un accès réseau. Voulez-vous désactiver le kill switch ?</string>
     <string name="edit_relays">Modifier les relays</string>
     <string name="one_hour">Une heure</string>
     <string name="one_day">Un jour</string>

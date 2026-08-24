@@ -84,6 +84,8 @@ fun BunkerMultiEventHomeScreen(
     val context = LocalContext.current
     var localAccount by remember { mutableStateOf("") }
     val key = bunkerRequests.first().localKey
+
+    KillSwitchConnectPrompt(hasConnectRequest = bunkerRequests.any { it.request is BunkerRequestConnect })
     val groupRememberTypes = remember { mutableStateMapOf<RequestGroupKey, RememberType>() }
     val groupRelayAuthScopes = remember { mutableStateMapOf<RequestGroupKey, RelayAuthScope>() }
     val groupDecryptScopes = remember { mutableStateMapOf<RequestGroupKey, DecryptTypeScope>() }

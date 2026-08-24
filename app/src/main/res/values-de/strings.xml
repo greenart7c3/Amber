@@ -698,6 +698,9 @@
     <string name="enable_kill_switch">Kill-Switch aktivieren</string>
     <string name="disable_kill_switch">Kill-Switch deaktivieren</string>
     <string name="kill_switch_message">Kill-Switch aktiviert, Remote-Anmeldung und Profilabruf funktionieren nicht</string>
+    <string name="kill_switch_settings_subtitle">Trennt Amber von allen Relays. Remote-Anmeldung und Profilabruf funktionieren nicht</string>
+    <string name="kill_switch_connect_title">Kill-Switch deaktivieren?</string>
+    <string name="kill_switch_connect_message">Der Kill-Switch ist aktiviert und Amber ist von allen Relays getrennt. Zum Beantworten dieser Verbindungsanfrage ist Netzwerkzugriff nötig. Möchtest du den Kill-Switch deaktivieren?</string>
     <string name="edit_relays">Relays bearbeiten</string>
     <string name="one_hour">Eine Stunde</string>
     <string name="one_day">Ein Tag</string>

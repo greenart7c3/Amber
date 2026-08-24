@@ -701,6 +701,9 @@
     <string name="enable_kill_switch">Включить аварийный выключатель</string>
     <string name="disable_kill_switch">Отключить аварийный выключатель</string>
     <string name="kill_switch_message">Аварийный выключатель включён, удалённый вход и получение профиля не будут работать</string>
+    <string name="kill_switch_settings_subtitle">Отключает Amber от всех реле. Удалённый вход и получение профиля не будут работать</string>
+    <string name="kill_switch_connect_title">Отключить аварийный выключатель?</string>
+    <string name="kill_switch_connect_message">Аварийный выключатель включён, и Amber отключён от всех реле. Для ответа на этот запрос подключения нужен доступ к сети. Отключить аварийный выключатель?</string>
     <string name="edit_relays">Изменить relay-серверы</string>
     <string name="one_hour">Один час</string>
     <string name="one_day">Один день</string>

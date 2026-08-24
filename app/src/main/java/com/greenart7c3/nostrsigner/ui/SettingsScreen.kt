@@ -1,5 +1,6 @@
 package com.greenart7c3.nostrsigner.ui
 
+import android.content.Intent
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
@@ -18,6 +19,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Article
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.Block
 import androidx.compose.material.icons.filled.CloudUpload
 import androidx.compose.material.icons.filled.Draw
 import androidx.compose.material.icons.filled.Feedback
@@ -72,6 +74,7 @@ import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.TorMode
+import com.greenart7c3.nostrsigner.service.KillSwitchReceiver
 import com.greenart7c3.nostrsigner.service.TorManager
 import com.greenart7c3.nostrsigner.ui.actions.LogoutDialog
 import com.greenart7c3.nostrsigner.ui.components.AmberButton
@@ -96,6 +99,7 @@ fun SettingsScreen(
     var logoutDialog by remember { mutableStateOf(false) }
     val context = LocalContext.current
     var torMode by remember { mutableStateOf(Amber.instance.settings.torMode) }
+    val killSwitch by Amber.instance.settings.killSwitch.collectAsStateWithLifecycle()
     var disconnectTorDialog by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
     var isLoading by remember { mutableStateOf(false) }
@@ -182,6 +186,19 @@ fun SettingsScreen(
                         subtitle = stringResource(R.string.relays_subtitle),
                         painter = painterResource(R.drawable.relays),
                         onClick = { onNav(Route.RelaysScreen.route) },
+                    )
+                    SettingsDivider()
+                    SettingsItem(
+                        title = stringResource(
+                            if (killSwitch) R.string.disable_kill_switch else R.string.enable_kill_switch,
+                        ),
+                        subtitle = stringResource(R.string.kill_switch_settings_subtitle),
+                        painter = rememberVectorPainter(Icons.Default.Block),
+                        iconTint = if (killSwitch) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onBackground,
+                        titleColor = if (killSwitch) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onBackground,
+                        onClick = {
+                            context.sendBroadcast(Intent(context, KillSwitchReceiver::class.java))
+                        },
                     )
                 }
 

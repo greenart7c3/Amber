@@ -733,6 +733,9 @@
     <string name="enable_kill_switch">Enable kill switch</string>
     <string name="disable_kill_switch">Disable kill switch</string>
     <string name="kill_switch_message">Kill Switch enabled, remote login and profile fetching will not work</string>
+    <string name="kill_switch_settings_subtitle">Disconnect Amber from all relays. Remote login and profile fetching will not work</string>
+    <string name="kill_switch_connect_title">Disable kill switch?</string>
+    <string name="kill_switch_connect_message">The kill switch is enabled and Amber is disconnected from all relays. Answering this connection request needs network access. Do you want to disable the kill switch?</string>
     <string name="edit_relays">Edit Relays</string>
     <string name="one_hour">One hour</string>
     <string name="one_day">One day</string>

@@ -232,6 +232,8 @@ fun BunkerSingleEventHomeScreen(
                 )
             }
 
+            KillSwitchConnectPrompt(hasConnectRequest = true)
+
             BunkerConnectRequestScreen(
                 horizontalPadding = horizontalPadding,
                 scaffoldPadding = scaffoldPadding,

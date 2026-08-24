@@ -76,6 +76,12 @@
     <string name="biometric_authentication_failed_explainer_with_error">Biometrics failed to authenticate the owner of this phone. Error: %1$s</string>
     <string name="delete">Delete</string>
     <string name="permissions">Permissions</string>
+    <string name="add_permission">Add permission</string>
+    <string name="add_permission_description">Select the permissions you want to be approved automatically for this application.</string>
+    <string name="search_permissions">Search permissions</string>
+    <string name="no_permissions_found">No permissions found</string>
+    <string name="custom_event_kind">Custom event kind</string>
+    <string name="custom_event_kind_already_added">This permission is already in the list</string>
     <string name="delete_application">Delete Application</string>
     <string name="reset_bunker">Reset Bunker</string>
     <string name="copy_to_clipboard">Copy to clipboard</string>

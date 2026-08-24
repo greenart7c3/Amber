@@ -43,6 +43,12 @@
     <string name="biometric_authentication_failed_explainer_with_error">生体認証でこの端末の所有者を確認できませんでした。エラー: %1$s</string>
     <string name="delete">削除</string>
     <string name="permissions">権限</string>
+    <string name="add_permission">権限を追加</string>
+    <string name="add_permission_description">このアプリケーションで自動的に承認したい権限を選択してください。</string>
+    <string name="search_permissions">権限を検索</string>
+    <string name="no_permissions_found">権限が見つかりません</string>
+    <string name="custom_event_kind">カスタムイベント種別</string>
+    <string name="custom_event_kind_already_added">この権限はすでにリストにあります</string>
     <string name="delete_application">アプリケーションを削除</string>
     <string name="reset_bunker">Bunker をリセット</string>
     <string name="copy_to_clipboard">クリップボードにコピー</string>

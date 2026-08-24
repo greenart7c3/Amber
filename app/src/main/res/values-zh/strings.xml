@@ -48,6 +48,12 @@
     <string name="biometric_authentication_failed_explainer_with_error">生物识别验证设备所有者身份失败：%1$s</string>
     <string name="delete">删除</string>
     <string name="permissions">权限</string>
+    <string name="add_permission">添加权限</string>
+    <string name="add_permission_description">选择您希望为此应用程序自动批准的权限。</string>
+    <string name="search_permissions">搜索权限</string>
+    <string name="no_permissions_found">未找到权限</string>
+    <string name="custom_event_kind">自定义事件类型</string>
+    <string name="custom_event_kind_already_added">此权限已在列表中</string>
     <string name="delete_application">删除应用</string>
     <string name="reset_bunker">重置 Bunker</string>
     <string name="copy_to_clipboard">复制到剪贴板</string>

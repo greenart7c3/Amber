@@ -51,6 +51,7 @@ import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.ui.actions.RemoveAllPermissionsDialog
+import com.greenart7c3.nostrsigner.ui.components.AddPermissionsSheet
 import com.greenart7c3.nostrsigner.ui.components.AmberButton
 import com.greenart7c3.nostrsigner.ui.components.AmberToggles
 import com.greenart7c3.nostrsigner.ui.components.LabeledBorderBox
@@ -77,6 +78,7 @@ fun EditPermission(
     }
 
     var wantsToRemovePermissions by remember { mutableStateOf(false) }
+    var showAddPermissions by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
 
     var checked by remember {
@@ -193,6 +195,45 @@ fun EditPermission(
                 .padding(bottom = 20.dp),
             text = stringResource(R.string.edit_permissions_description),
         )
+
+        if (applicationData.key.isNotEmpty()) {
+            if (showAddPermissions) {
+                AddPermissionsSheet(
+                    existingPermissions = permissions.map { Permission(it.type, it.kind) },
+                    onAdd = { addedPermissions ->
+                        val newPermissions = addedPermissions.map {
+                            ApplicationPermissionsEntity(
+                                null,
+                                applicationData.key,
+                                it.type.uppercase(),
+                                it.kind,
+                                true,
+                                RememberType.ALWAYS.screenCode,
+                                Long.MAX_VALUE / 1000,
+                                0,
+                            )
+                        }
+                        permissions.addAll(newPermissions)
+                        scope.launch(Dispatchers.IO) {
+                            Amber.instance
+                                .dao(account.npub)
+                                .insertPermissions(newPermissions)
+                        }
+                    },
+                    onDismiss = {
+                        showAddPermissions = false
+                    },
+                )
+            }
+
+            AmberButton(
+                modifier = Modifier.padding(bottom = 20.dp),
+                onClick = {
+                    showAddPermissions = true
+                },
+                text = stringResource(R.string.add_permission),
+            )
+        }
 
         permissions.forEach { permission ->
             PermissionRow(

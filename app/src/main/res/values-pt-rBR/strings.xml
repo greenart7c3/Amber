@@ -48,6 +48,12 @@
     <string name="biometric_authentication_failed_explainer_with_error">A biometria não conseguiu autenticar o proprietário deste telefone. Erro: %1$s</string>
     <string name="delete">Excluir</string>
     <string name="permissions">Permissões</string>
+    <string name="add_permission">Adicionar permissão</string>
+    <string name="add_permission_description">Selecione as permissões que você deseja que sejam aprovadas automaticamente para este aplicativo.</string>
+    <string name="search_permissions">Pesquisar permissões</string>
+    <string name="no_permissions_found">Nenhuma permissão encontrada</string>
+    <string name="custom_event_kind">Tipo de evento personalizado</string>
+    <string name="custom_event_kind_already_added">Esta permissão já está na lista</string>
     <string name="delete_application">Excluir aplicativo</string>
     <string name="reset_bunker">Redefinir Bunker</string>
     <string name="copy_to_clipboard">Copiar para área de transferência</string>

@@ -52,6 +52,12 @@
     <string name="biometric_authentication_failed_explainer_with_error">Биометрия не смогла подтвердить владельца этого телефона. Ошибка: %1$s</string>
     <string name="delete">Удалить</string>
     <string name="permissions">Разрешения</string>
+    <string name="add_permission">Добавить разрешение</string>
+    <string name="add_permission_description">Выберите разрешения, которые должны автоматически одобряться для этого приложения.</string>
+    <string name="search_permissions">Поиск разрешений</string>
+    <string name="no_permissions_found">Разрешения не найдены</string>
+    <string name="custom_event_kind">Пользовательский тип события</string>
+    <string name="custom_event_kind_already_added">Это разрешение уже есть в списке</string>
     <string name="delete_application">Удалить приложение</string>
     <string name="reset_bunker">Сбросить Bunker</string>
     <string name="copy_to_clipboard">Копировать в буфер обмена</string>

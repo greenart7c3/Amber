@@ -52,6 +52,12 @@
     <string name="biometric_authentication_failed_explainer_with_error">Biometrik gagal mengautentikasi pemilik ponsel ini. Error: %1$s</string>
     <string name="delete">Hapus</string>
     <string name="permissions">Izin</string>
+    <string name="add_permission">Tambahkan izin</string>
+    <string name="add_permission_description">Pilih izin yang ingin disetujui otomatis untuk aplikasi ini.</string>
+    <string name="search_permissions">Cari izin</string>
+    <string name="no_permissions_found">Tidak ada izin ditemukan</string>
+    <string name="custom_event_kind">Jenis event kustom</string>
+    <string name="custom_event_kind_already_added">Izin ini sudah ada di daftar</string>
     <string name="delete_application">Hapus Aplikasi</string>
     <string name="reset_bunker">Atur Ulang Bunker</string>
     <string name="copy_to_clipboard">Salin ke clipboard</string>

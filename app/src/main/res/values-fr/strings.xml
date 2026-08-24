@@ -50,6 +50,12 @@
     <string name="biometric_authentication_failed_explainer_with_error">La biométrie n\'a pas réussi à authentifier le propriétaire de ce téléphone. Erreur : %1$s</string>
     <string name="delete">Supprimer</string>
     <string name="permissions">Autorisations</string>
+    <string name="add_permission">Ajouter une autorisation</string>
+    <string name="add_permission_description">Sélectionnez les autorisations que vous souhaitez voir approuvées automatiquement pour cette application.</string>
+    <string name="search_permissions">Rechercher des autorisations</string>
+    <string name="no_permissions_found">Aucune autorisation trouvée</string>
+    <string name="custom_event_kind">Type d\'événement personnalisé</string>
+    <string name="custom_event_kind_already_added">Cette autorisation est déjà dans la liste</string>
     <string name="delete_application">Supprimer l\'application</string>
     <string name="reset_bunker">Réinitialiser le Bunker</string>
     <string name="copy_to_clipboard">Copier dans le presse-papiers</string>

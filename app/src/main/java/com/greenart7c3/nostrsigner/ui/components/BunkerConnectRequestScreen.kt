@@ -155,6 +155,7 @@ fun BunkerConnectRequestScreen(
     var deleteAfterIndex by remember { mutableIntStateOf(DeleteAfterType.NEVER.screenCode) }
     var closeApp by remember { mutableStateOf(shouldCloseApp) }
     var showModal by remember { mutableStateOf(false) }
+    var showAddPermissions by remember { mutableStateOf(false) }
     var advancedOpen by remember { mutableStateOf(false) }
     val sheetState = rememberModalBottomSheetState(
         skipPartiallyExpanded = true,
@@ -281,7 +282,58 @@ fun BunkerConnectRequestScreen(
                 },
             )
 
-            if (selectedOption == 1 && localPermissions.isNotEmpty()) {
+            if (selectedOption == 1) {
+                if (localPermissions.isNotEmpty()) {
+                    Box(
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(top = 4.dp),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        ElevatedButton(
+                            colors = ButtonDefaults.buttonColors().copy(
+                                contentColor = Color.Black,
+                            ),
+                            shape = RoundedCornerShape(20),
+                            content = {
+                                Text(stringResource(R.string.permissions))
+                            },
+                            onClick = {
+                                showModal = true
+                            },
+                        )
+                    }
+                    if (showModal) {
+                        ModalBottomSheet(
+                            sheetState = sheetState,
+                            onDismissRequest = {
+                                showModal = false
+                            },
+                        ) {
+                            Scaffold(
+                                bottomBar = {
+                                    BottomAppBar {
+                                        IconRow(
+                                            center = true,
+                                            title = stringResource(R.string.go_back),
+                                            icon = ImageVector.vectorResource(R.drawable.back),
+                                            onClick = {
+                                                showModal = false
+                                            },
+                                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        )
+                                    }
+                                },
+                            ) {
+                                EnabledPermissions(
+                                    Modifier.padding(it),
+                                    localPermissions,
+                                )
+                            }
+                        }
+                    }
+                }
+
                 Box(
                     Modifier
                         .fillMaxWidth()
@@ -294,41 +346,23 @@ fun BunkerConnectRequestScreen(
                         ),
                         shape = RoundedCornerShape(20),
                         content = {
-                            Text(stringResource(R.string.permissions))
+                            Text(stringResource(R.string.add_permission))
                         },
                         onClick = {
-                            showModal = true
+                            showAddPermissions = true
                         },
                     )
                 }
-                if (showModal) {
-                    ModalBottomSheet(
-                        sheetState = sheetState,
-                        onDismissRequest = {
-                            showModal = false
+                if (showAddPermissions) {
+                    AddPermissionsSheet(
+                        existingPermissions = localPermissions,
+                        onAdd = { addedPermissions ->
+                            localPermissions.addAll(addedPermissions)
                         },
-                    ) {
-                        Scaffold(
-                            bottomBar = {
-                                BottomAppBar {
-                                    IconRow(
-                                        center = true,
-                                        title = stringResource(R.string.go_back),
-                                        icon = ImageVector.vectorResource(R.drawable.back),
-                                        onClick = {
-                                            showModal = false
-                                        },
-                                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    )
-                                }
-                            },
-                        ) {
-                            EnabledPermissions(
-                                Modifier.padding(it),
-                                localPermissions,
-                            )
-                        }
-                    }
+                        onDismiss = {
+                            showAddPermissions = false
+                        },
+                    )
                 }
             }
 

@@ -43,6 +43,12 @@
     <string name="biometric_authentication_failed_explainer_with_error">ไบโอเมตริกไม่สามารถยืนยันตัวตนเจ้าของโทรศัพท์เครื่องนี้ได้ ข้อผิดพลาด: %1$s</string>
     <string name="delete">ลบ</string>
     <string name="permissions">สิทธิ์</string>
+    <string name="add_permission">เพิ่มสิทธิ์</string>
+    <string name="add_permission_description">เลือกสิทธิ์ที่คุณต้องการให้อนุมัติโดยอัตโนมัติสำหรับแอปพลิเคชันนี้</string>
+    <string name="search_permissions">ค้นหาสิทธิ์</string>
+    <string name="no_permissions_found">ไม่พบสิทธิ์</string>
+    <string name="custom_event_kind">ชนิดเหตุการณ์แบบกำหนดเอง</string>
+    <string name="custom_event_kind_already_added">สิทธิ์นี้อยู่ในรายการแล้ว</string>
     <string name="delete_application">ลบแอปพลิเคชัน</string>
     <string name="reset_bunker">รีเซ็ต Bunker</string>
     <string name="copy_to_clipboard">คัดลอกไปยังคลิปบอร์ด</string>

@@ -50,6 +50,12 @@
     <string name="biometric_authentication_failed_explainer_with_error">Biyometrik veriler bu telefonun sahibini doğrulayamadı. Hata: %1$s</string>
     <string name="delete">Sil</string>
     <string name="permissions">İzinler</string>
+    <string name="add_permission">İzin ekle</string>
+    <string name="add_permission_description">Bu uygulama için otomatik olarak onaylanmasını istediğiniz izinleri seçin.</string>
+    <string name="search_permissions">İzinleri ara</string>
+    <string name="no_permissions_found">İzin bulunamadı</string>
+    <string name="custom_event_kind">Özel etkinlik türü</string>
+    <string name="custom_event_kind_already_added">Bu izin listede zaten var</string>
     <string name="delete_application">Uygulamayı Sil</string>
     <string name="reset_bunker">Bunker\'ı Sıfırla</string>
     <string name="copy_to_clipboard">Panoya kopyala</string>

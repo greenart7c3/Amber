@@ -682,6 +682,9 @@
     <string name="enable_kill_switch">启用 Kill Switch</string>
     <string name="disable_kill_switch">禁用 Kill Switch</string>
     <string name="kill_switch_message">Kill Switch 已启用，远程登录和资料获取将无法使用</string>
+    <string name="kill_switch_settings_subtitle">将 Amber 与所有中继断开连接。远程登录和资料获取将无法使用</string>
+    <string name="kill_switch_connect_title">禁用 Kill Switch？</string>
+    <string name="kill_switch_connect_message">Kill Switch 已启用，Amber 已与所有中继断开连接。回应此连接请求需要网络访问。是否禁用 Kill Switch？</string>
     <string name="edit_relays">编辑中继</string>
     <string name="one_hour">一小时</string>
     <string name="one_day">一天</string>

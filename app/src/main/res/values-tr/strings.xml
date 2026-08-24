@@ -697,6 +697,9 @@
     <string name="enable_kill_switch">Acil anahtarını (Kill switch) etkinleştir</string>
     <string name="disable_kill_switch">Acil anahtarını (Kill switch) devre dışı bırak</string>
     <string name="kill_switch_message">Acil Anahtarı etkinleştirildiğinde, uzaktan giriş ve profil getirme işlemleri çalışmaz</string>
+    <string name="kill_switch_settings_subtitle">Amber\'i tüm aktarıcılardan bağlantısını keser. Uzaktan giriş ve profil getirme çalışmaz</string>
+    <string name="kill_switch_connect_title">Acil anahtarı (kill switch) devre dışı bırakılsın mı?</string>
+    <string name="kill_switch_connect_message">Acil anahtarı etkin ve Amber tüm aktarıcılardan bağlantısı kesilmiş durumda. Bu bağlantı isteğini yanıtlamak için ağ erişimi gerekir. Acil anahtarını devre dışı bırakmak ister misiniz?</string>
     <string name="edit_relays">Röleleri Düzenle</string>
     <string name="one_hour">Bir saat</string>
     <string name="one_day">Bir gün</string>

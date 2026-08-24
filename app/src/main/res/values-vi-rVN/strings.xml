@@ -677,6 +677,9 @@
     <string name="enable_kill_switch">Bật kill switch</string>
     <string name="disable_kill_switch">Tắt kill switch</string>
     <string name="kill_switch_message">Kill Switch đã bật, đăng nhập từ xa và tải hồ sơ sẽ không hoạt động</string>
+    <string name="kill_switch_settings_subtitle">Ngắt kết nối Amber khỏi tất cả relay. Đăng nhập từ xa và tải hồ sơ sẽ không hoạt động</string>
+    <string name="kill_switch_connect_title">Tắt kill switch?</string>
+    <string name="kill_switch_connect_message">Kill switch đang bật và Amber đã ngắt kết nối khỏi tất cả relay. Cần có kết nối mạng để trả lời yêu cầu kết nối này. Bạn có muốn tắt kill switch không?</string>
     <string name="edit_relays">Chỉnh Sửa Relay</string>
     <string name="one_hour">Một giờ</string>
     <string name="one_day">Một ngày</string>

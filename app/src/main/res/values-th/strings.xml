@@ -677,6 +677,9 @@
     <string name="enable_kill_switch">เปิดใช้งาน kill switch</string>
     <string name="disable_kill_switch">ปิดใช้งาน kill switch</string>
     <string name="kill_switch_message">เปิดใช้งาน Kill Switch แล้ว การล็อกอินระยะไกลและการดึงโปรไฟล์จะไม่ทำงาน</string>
+    <string name="kill_switch_settings_subtitle">ตัดการเชื่อมต่อ Amber จาก relay ทั้งหมด การล็อกอินระยะไกลและการดึงโปรไฟล์จะไม่ทำงาน</string>
+    <string name="kill_switch_connect_title">ปิดใช้งาน kill switch หรือไม่?</string>
+    <string name="kill_switch_connect_message">Kill switch เปิดใช้งานอยู่และ Amber ถูกตัดการเชื่อมต่อจาก relay ทั้งหมด การตอบกลับคำขอเชื่อมต่อนี้จำเป็นต้องใช้การเชื่อมต่อเครือข่าย คุณต้องการปิดใช้งาน kill switch หรือไม่?</string>
     <string name="edit_relays">แก้ไข Relay</string>
     <string name="one_hour">หนึ่งชั่วโมง</string>
     <string name="one_day">หนึ่งวัน</string>

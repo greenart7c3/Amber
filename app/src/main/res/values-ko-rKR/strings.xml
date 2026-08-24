@@ -701,6 +701,9 @@
     <string name="enable_kill_switch">킬 스위치 활성화</string>
     <string name="disable_kill_switch">킬 스위치 비활성화</string>
     <string name="kill_switch_message">킬 스위치가 활성화되어 원격 로그인 및 프로필 가져오기가 작동하지 않습니다</string>
+    <string name="kill_switch_settings_subtitle">Amber를 모든 릴레이에서 연결 해제합니다. 원격 로그인 및 프로필 가져오기가 작동하지 않습니다</string>
+    <string name="kill_switch_connect_title">킬 스위치를 비활성화하시겠습니까?</string>
+    <string name="kill_switch_connect_message">킬 스위치가 활성화되어 Amber가 모든 릴레이에서 연결 해제되었습니다. 이 연결 요청에 응답하려면 네트워크 연결이 필요합니다. 킬 스위치를 비활성화하시겠습니까?</string>
     <string name="edit_relays">Relay 편집</string>
     <string name="one_hour">1시간</string>
     <string name="one_day">1일</string>

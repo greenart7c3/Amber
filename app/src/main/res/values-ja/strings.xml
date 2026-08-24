@@ -677,6 +677,9 @@
     <string name="enable_kill_switch">キルスイッチを有効にする</string>
     <string name="disable_kill_switch">キルスイッチを無効にする</string>
     <string name="kill_switch_message">キルスイッチが有効です。リモートログインとプロフィール取得は機能しません</string>
+    <string name="kill_switch_settings_subtitle">Amberをすべてのリレーから切断します。リモートログインとプロフィール取得は機能しません</string>
+    <string name="kill_switch_connect_title">キルスイッチを無効にしますか？</string>
+    <string name="kill_switch_connect_message">キルスイッチが有効のため、Amberはすべてのリレーから切断されています。この接続リクエストに応答するにはネットワークへの接続が必要です。キルスイッチを無効にしますか？</string>
     <string name="edit_relays">Relay を編集</string>
     <string name="one_hour">1 時間</string>
     <string name="one_day">1 日</string>

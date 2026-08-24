@@ -701,6 +701,9 @@
     <string name="enable_kill_switch">Abilita kill switch</string>
     <string name="disable_kill_switch">Disabilita kill switch</string>
     <string name="kill_switch_message">Kill switch abilitato, l\'accesso remoto e il recupero del profilo non funzioneranno</string>
+    <string name="kill_switch_settings_subtitle">Disconnette Amber da tutti i relay. L\'accesso remoto e il recupero del profilo non funzioneranno</string>
+    <string name="kill_switch_connect_title">Disabilitare il kill switch?</string>
+    <string name="kill_switch_connect_message">Il kill switch è abilitato e Amber è disconnesso da tutti i relay. Per rispondere a questa richiesta di connessione è necessario l\'accesso alla rete. Vuoi disabilitare il kill switch?</string>
     <string name="edit_relays">Modifica relay</string>
     <string name="one_hour">Un\'ora</string>
     <string name="one_day">Un giorno</string>

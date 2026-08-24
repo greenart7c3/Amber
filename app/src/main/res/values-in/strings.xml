@@ -701,6 +701,9 @@
     <string name="enable_kill_switch">Aktifkan kill switch</string>
     <string name="disable_kill_switch">Nonaktifkan kill switch</string>
     <string name="kill_switch_message">Kill Switch diaktifkan, login jarak jauh dan pengambilan profil tidak akan berfungsi</string>
+    <string name="kill_switch_settings_subtitle">Putuskan Amber dari semua relay. Login jarak jauh dan pengambilan profil tidak akan berfungsi</string>
+    <string name="kill_switch_connect_title">Nonaktifkan kill switch?</string>
+    <string name="kill_switch_connect_message">Kill switch diaktifkan dan Amber terputus dari semua relay. Menjawab permintaan koneksi ini membutuhkan akses jaringan. Apakah Anda ingin menonaktifkan kill switch?</string>
     <string name="edit_relays">Edit Relay</string>
     <string name="one_hour">Satu jam</string>
     <string name="one_day">Satu hari</string>

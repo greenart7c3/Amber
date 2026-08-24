@@ -79,7 +79,7 @@ class ProfileSubscription(
         client.addConnectionListener(this)
     }
 
-    override fun onIncomingMessage(relay: IRelayClient, msgStr: String, msg: Message) {
+    override suspend fun onIncomingMessage(relay: IRelayClient, msgStr: String, msg: Message) {
         if (msg is EoseMessage) {
             val subId = msg.subId
             val relays = relaysPerSubId[subId]

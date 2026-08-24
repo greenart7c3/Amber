@@ -164,7 +164,7 @@ object ApplicationBackup {
         val latest = mutableMapOf<Long, Event>()
 
         val listener = object : RelayConnectionListener {
-            override fun onIncomingMessage(relay: IRelayClient, msgStr: String, msg: Message) {
+            override suspend fun onIncomingMessage(relay: IRelayClient, msgStr: String, msg: Message) {
                 if (msg is EventMessage && msg.subId == subId && msg.event.kind == INBOX_KIND && msg.event.pubKey == account.hexKey) {
                     if (msg.event.verify()) {
                         latest[msg.event.createdAt] = msg.event
@@ -250,7 +250,7 @@ object ApplicationBackup {
         val received = mutableMapOf<Long, Event>()
 
         val listener = object : RelayConnectionListener {
-            override fun onIncomingMessage(relay: IRelayClient, msgStr: String, msg: Message) {
+            override suspend fun onIncomingMessage(relay: IRelayClient, msgStr: String, msg: Message) {
                 if (msg is EventMessage &&
                     msg.subId == subId &&
                     msg.event.kind == BACKUP_KIND &&

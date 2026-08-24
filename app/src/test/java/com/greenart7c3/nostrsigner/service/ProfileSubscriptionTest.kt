@@ -185,8 +185,10 @@ class ProfileSubscriptionTest {
                 repeat(200) {
                     try {
                         val subId = sentSubIds.toList().randomOrNull() ?: return@repeat
-                        subscription.onIncomingMessage(relay, "", EoseMessage(subId))
-                        subscription.onIncomingMessage(relay, "", EventMessage(subId, event))
+                        runBlocking {
+                            subscription.onIncomingMessage(relay, "", EoseMessage(subId))
+                            subscription.onIncomingMessage(relay, "", EventMessage(subId, event))
+                        }
                     } catch (e: Throwable) {
                         errors.add(e)
                     }

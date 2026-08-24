@@ -54,7 +54,7 @@ class NotificationSubscription(
         client.addConnectionListener(this)
     }
 
-    override fun onIncomingMessage(relay: IRelayClient, msgStr: String, msg: Message) {
+    override suspend fun onIncomingMessage(relay: IRelayClient, msgStr: String, msg: Message) {
         if (msg is EventMessage) {
             if (subIds.containsValue(msg.subId)) {
                 Amber.instance.applicationIOScope.launch {

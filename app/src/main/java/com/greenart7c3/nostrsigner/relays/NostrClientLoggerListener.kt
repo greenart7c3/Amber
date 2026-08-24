@@ -160,7 +160,7 @@ class NostrClientLoggerListener(
         super.onSent(relay, cmdStr, cmd, success)
     }
 
-    override fun onIncomingMessage(relay: IRelayClient, msgStr: String, msg: Message) {
+    override suspend fun onIncomingMessage(relay: IRelayClient, msgStr: String, msg: Message) {
         // Defense-in-depth (GHSA-8844-q5vh-9j8f, L2): log only the message
         // type and wire size, not the raw frame (which may carry NIP-46
         // envelopes, DM/gift-wrap ciphertexts and event content).

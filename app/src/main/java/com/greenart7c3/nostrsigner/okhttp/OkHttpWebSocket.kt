@@ -24,6 +24,13 @@ import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
 import com.vitorpamplona.quartz.nip01Core.relay.sockets.WebSocket
 import com.vitorpamplona.quartz.nip01Core.relay.sockets.WebSocketListener
 import com.vitorpamplona.quartz.nip01Core.relay.sockets.WebsocketBuilder
+import com.vitorpamplona.quartz.nip01Core.relay.sockets.okhttp.BasicOkHttpWebSocket.Companion.exceptionHandler
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.trySendBlocking
+import kotlinx.coroutines.launch
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -33,7 +40,6 @@ class OkHttpWebSocket(
     val httpClient: (url: NormalizedRelayUrl) -> OkHttpClient,
     val out: WebSocketListener,
 ) : WebSocket {
-    private val listener = OkHttpWebsocketListener()
     private var usingOkHttp: OkHttpClient? = null
     private var socket: okhttp3.WebSocket? = null
 
@@ -62,10 +68,28 @@ class OkHttpWebSocket(
 
     override fun connect() {
         usingOkHttp = httpClient(url)
-        socket = usingOkHttp?.newWebSocket(buildRequest(), listener)
+        socket = usingOkHttp?.newWebSocket(buildRequest(), OkHttpWebsocketListener(out))
     }
 
-    inner class OkHttpWebsocketListener : okhttp3.WebSocketListener() {
+    inner class OkHttpWebsocketListener(
+        val out: WebSocketListener,
+    ) : okhttp3.WebSocketListener() {
+        val scope = CoroutineScope(Dispatchers.IO + exceptionHandler)
+
+        // UNLIMITED on purpose — do NOT bound this channel. The app holds
+        // many relay connections; a bounded buffer under a slow consumer
+        // would block OkHttp reader threads and park the backlog on the
+        // relay's outbound buffers — infrastructure that isn't ours. Drain
+        // the remote as fast as it can send; consumer speed is handled
+        // downstream.
+        val incomingMessages: Channel<String> = Channel(Channel.UNLIMITED)
+        val job = // Launch a coroutine to process messages from the channel.
+            scope.launch {
+                for (message in incomingMessages) {
+                    out.onMessage(message)
+                }
+            }
+
         override fun onOpen(
             webSocket: okhttp3.WebSocket,
             response: Response,
@@ -77,13 +101,23 @@ class OkHttpWebSocket(
         override fun onMessage(
             webSocket: okhttp3.WebSocket,
             text: String,
-        ) = out.onMessage(text)
+        ) {
+            // Asynchronously send the received message to the channel.
+            // `trySendBlocking` is used here for simplicity within the callback,
+            // but it's important to understand potential thread blocking if the buffer is full.
+            incomingMessages.trySendBlocking(text)
+        }
 
         override fun onClosed(
             webSocket: okhttp3.WebSocket,
             code: Int,
             reason: String,
         ) {
+            // Close the channel when the WebSocket connection is closed.
+            incomingMessages.close()
+            job.cancel()
+            scope.cancel()
+
             socket = null
             out.onClosed(code, reason)
         }
@@ -93,6 +127,11 @@ class OkHttpWebSocket(
             t: Throwable,
             response: Response?,
         ) {
+            // Close the channel on failure, and propagate the error.
+            incomingMessages.close()
+            job.cancel()
+            scope.cancel()
+
             socket = null
             out.onFailure(t, response?.code, response?.message)
         }

@@ -156,7 +156,7 @@ class NotificationSubscriptionTest {
             threads += Thread {
                 repeat(300) { i ->
                     try {
-                        subscription.onIncomingMessage(relay, "", EventMessage("unknown-sub-$i", event))
+                        runBlocking { subscription.onIncomingMessage(relay, "", EventMessage("unknown-sub-$i", event)) }
                     } catch (e: Throwable) {
                         errors.add(e)
                     }

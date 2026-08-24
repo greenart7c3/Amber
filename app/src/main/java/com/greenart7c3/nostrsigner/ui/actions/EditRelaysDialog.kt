@@ -434,7 +434,7 @@ fun onAddRelay(
                         super.onCannotConnect(relay, errorMessage)
                     }
 
-                    override fun onIncomingMessage(relay: IRelayClient, msgStr: String, msg: Message) {
+                    override suspend fun onIncomingMessage(relay: IRelayClient, msgStr: String, msg: Message) {
                         if (msg is EventMessage) {
                             if (ncSub == msg.subId && msg.event.kind == NostrConnectEvent.KIND && msg.event.id == signedEvent.id) {
                                 filterResult = true

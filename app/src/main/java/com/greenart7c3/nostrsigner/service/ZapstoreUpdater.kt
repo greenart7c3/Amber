@@ -91,7 +91,7 @@ class ZapstoreUpdater(
         }
     }
 
-    override fun onIncomingMessage(relay: IRelayClient, msgStr: String, msg: Message) {
+    override suspend fun onIncomingMessage(relay: IRelayClient, msgStr: String, msg: Message) {
         when (msg) {
             is EventMessage if (msg.subId == releaseSubId || msg.subId == fileSubId) -> messages.trySend(msg)
             is EoseMessage if (msg.subId == releaseSubId || msg.subId == fileSubId) -> messages.trySend(msg)

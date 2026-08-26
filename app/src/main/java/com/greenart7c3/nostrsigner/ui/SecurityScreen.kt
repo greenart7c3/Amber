@@ -1,5 +1,10 @@
 package com.greenart7c3.nostrsigner.ui
 
+import android.app.Activity
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.ActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -32,6 +37,7 @@ import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.service.Biometrics.authenticate
 import com.greenart7c3.nostrsigner.ui.components.AmberButton
 import com.greenart7c3.nostrsigner.ui.components.TitleExplainer
 import com.greenart7c3.nostrsigner.ui.navigation.Route
@@ -61,6 +67,33 @@ fun SecurityScreen(
     }
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
+    val biometricsKeyguardLauncher =
+        rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
+            if (result.resultCode == Activity.RESULT_OK) {
+                enableBiometrics = !enableBiometrics
+            }
+        }
+
+    fun toggleBiometrics() {
+        authenticate(
+            title = context.getString(R.string.authenticate),
+            context = context,
+            keyguardLauncher = biometricsKeyguardLauncher,
+            onApproved = {
+                enableBiometrics = !enableBiometrics
+            },
+            onError = { _, message ->
+                Amber.instance.applicationIOScope.launch(Dispatchers.Main) {
+                    Toast.makeText(
+                        context,
+                        message,
+                        Toast.LENGTH_SHORT,
+                    ).show()
+                }
+            },
+        )
+    }
+
     fun toggleRequireUnlockedDevice(enabled: Boolean) {
         requireUnlockedDevice = enabled
         requireUnlockedDeviceUpdating = true
@@ -97,7 +130,7 @@ fun SecurityScreen(
                     modifier = Modifier
                         .padding(horizontal = 8.dp)
                         .clickable {
-                            enableBiometrics = !enableBiometrics
+                            toggleBiometrics()
                         },
                 ) {
                     Text(
@@ -107,7 +140,7 @@ fun SecurityScreen(
                     Switch(
                         checked = enableBiometrics,
                         onCheckedChange = {
-                            enableBiometrics = !enableBiometrics
+                            toggleBiometrics()
                         },
                     )
                 }

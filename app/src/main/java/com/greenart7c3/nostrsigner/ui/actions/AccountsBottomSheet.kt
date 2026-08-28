@@ -82,6 +82,15 @@ fun AccountsBottomSheet(
             onClose()
         },
     ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(stringResource(R.string.select_account), fontWeight = FontWeight.Bold)
+        }
         CompositionLocalProvider(
             LocalDensity provides Density(
                 LocalDensity.current.density,
@@ -97,15 +106,6 @@ fun AccountsBottomSheet(
                     .verticalScrollbar(scrollState)
                     .verticalScroll(scrollState),
             ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    horizontalArrangement = Arrangement.Center,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text(stringResource(R.string.select_account), fontWeight = FontWeight.Bold)
-                }
                 accounts.forEach { acc ->
                     // Load the cached Account off the main thread (decrypts once, then cached) so we
                     // can observe its name/picture StateFlows and refresh its metadata while the

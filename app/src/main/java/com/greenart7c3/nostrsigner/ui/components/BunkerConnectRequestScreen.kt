@@ -164,7 +164,9 @@ fun BunkerConnectRequestScreen(
     val scrollState = rememberScrollState()
 
     Scaffold(
-        modifier = Modifier.fillMaxSize().padding(scaffoldPadding),
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(scaffoldPadding),
         bottomBar = {
             Row(
                 Modifier

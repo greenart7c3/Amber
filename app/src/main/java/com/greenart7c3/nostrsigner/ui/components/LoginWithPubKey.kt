@@ -15,8 +15,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.CompareArrows
 import androidx.compose.material.icons.filled.Check
@@ -68,6 +70,7 @@ import com.greenart7c3.nostrsigner.ui.theme.ThemePreviews
 import com.greenart7c3.nostrsigner.ui.theme.fromHex
 import com.greenart7c3.nostrsigner.ui.theme.previewAccount
 import com.greenart7c3.nostrsigner.ui.theme.primaryVariant
+import com.greenart7c3.nostrsigner.ui.verticalScrollbar
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 
@@ -206,17 +209,20 @@ fun AccountPickerRow(
             sheetState = sheetState,
             onDismissRequest = { sheetOpen = false },
         ) {
+            Text(
+                text = stringResource(R.string.select_account),
+                fontWeight = FontWeight.Medium,
+                fontSize = 15.sp,
+                modifier = Modifier.padding(start = 16.dp, top = 8.dp, bottom = 8.dp),
+            )
+            val scrollState = rememberScrollState()
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .verticalScrollbar(scrollState)
+                    .verticalScroll(scrollState)
                     .padding(horizontal = 12.dp, vertical = 8.dp),
             ) {
-                Text(
-                    text = stringResource(R.string.select_account),
-                    fontWeight = FontWeight.Medium,
-                    fontSize = 15.sp,
-                    modifier = Modifier.padding(start = 4.dp, bottom = 8.dp),
-                )
                 accounts.forEachIndexed { index, acc ->
                     val name by acc.name.collectAsStateWithLifecycle()
                     Row(

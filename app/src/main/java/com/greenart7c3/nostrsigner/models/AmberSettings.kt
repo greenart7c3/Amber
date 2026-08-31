@@ -6,9 +6,10 @@ import com.vitorpamplona.quartz.nip01Core.relay.normalizer.RelayUrlNormalizer
 import kotlinx.coroutines.flow.MutableStateFlow
 
 val defaultAppRelays = listOf(
-    RelayUrlNormalizer.normalize("wss://nostr.oxtr.dev/"),
-    RelayUrlNormalizer.normalize("wss://theforest.nostr1.com/"),
-    RelayUrlNormalizer.normalize("wss://relay.primal.net/"),
+    RelayUrlNormalizer.normalize("wss://auth.nostr1.com/"),
+    RelayUrlNormalizer.normalize("wss://bucket.coracle.social/"),
+    RelayUrlNormalizer.normalize("wss://nrs.primal.net/"),
+    RelayUrlNormalizer.normalize("wss://relay.nip46.com/"),
 )
 
 val defaultIndexerRelays = listOf(
@@ -16,6 +17,7 @@ val defaultIndexerRelays = listOf(
     RelayUrlNormalizer.normalize("wss://user.kindpag.es/"),
     RelayUrlNormalizer.normalize("wss://profiles.nostr1.com/"),
     RelayUrlNormalizer.normalize("wss://directory.yabu.me/"),
+    RelayUrlNormalizer.normalize("wss://indexer.coracle.social/"),
 )
 
 data class AmberSettings(

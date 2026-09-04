@@ -337,6 +337,7 @@ class Amber :
     }
 
     fun cancelBackupApplicationsAlarm() {
+        if (BuildFlavorChecker.isOfflineFlavor()) return
         WorkManager.getInstance(this).cancelUniqueWork("BackupApplicationsWorker")
     }
 

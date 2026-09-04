@@ -60,5 +60,20 @@ jobs:
             else
               echo "OK: No $PERMISSION in offline build manifest"
             fi
+          for COMPONENT in androidx.work.WorkManagerInitializer androidx.work.impl.background.systemjob.SystemJobService; do
+            if grep -q "$COMPONENT" "$MANIFEST"; then
+              echo ""
+              echo "ERROR: $COMPONENT found in offline build manifest!"
+              echo "WorkManager must never initialize in the offline flavor: it tracks"
+              echo "network-constrained work via ConnectivityManager, which crashes with"
+              echo "SecurityException because ACCESS_NETWORK_STATE is removed."
+              echo ""
+              echo "Offending lines:"
+              grep "$COMPONENT" "$MANIFEST"
+              FAILED=1
+            else
+              echo "OK: No $COMPONENT in offline build manifest"
+            fi
+          done
           done
           exit $FAILED

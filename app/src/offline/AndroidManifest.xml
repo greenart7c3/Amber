@@ -29,6 +29,44 @@
             android:enabled="true"
             android:exported="true" />
 
+        <!-- WorkManager is dead code in the offline flavor: every WorkManager enqueue is
+             flavor-guarded and ConnectivityService (the only startCleanLogsAlarm caller)
+             never runs here. Its auto-initialization must not run either: for any persisted
+             network-constrained work (e.g. state left by an installed free flavor), WorkManager
+             tracks it via ConnectivityManager.registerDefaultNetworkCallback, which throws
+             SecurityException because ACCESS_NETWORK_STATE is removed below. Strip every
+             WorkManager manifest component so it can never initialize or be invoked here. -->
+        <provider
+            android:name="androidx.startup.InitializationProvider"
+            android:authorities="${applicationId}.androidx-startup"
+            android:exported="false"
+            tools:node="merge">
+            <meta-data
+                android:name="androidx.work.WorkManagerInitializer"
+                android:value="androidx.startup"
+                tools:node="remove" />
+        </provider>
+
+        <service
+            android:name="androidx.work.impl.background.systemjob.SystemJobService"
+            tools:node="remove" />
+
+        <service
+            android:name="androidx.work.impl.foreground.SystemForegroundService"
+            tools:node="remove" />
+
+        <receiver
+            android:name="androidx.work.impl.utils.ForceStopRunnable$BroadcastReceiver"
+            tools:node="remove" />
+
+        <receiver
+            android:name="androidx.work.impl.background.systemalarm.RescheduleReceiver"
+            tools:node="remove" />
+
+        <receiver
+            android:name="androidx.work.impl.diagnostics.DiagnosticsReceiver"
+            tools:node="remove" />
+
         <activity
             android:name=".MainActivity"
             android:exported="true">

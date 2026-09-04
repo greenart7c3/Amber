@@ -186,6 +186,13 @@
     <string name="event_kind_447">Solicitud de token MLS</string>
     <string name="event_kind_448">Lista de tokens MLS</string>
     <string name="event_kind_449">Eliminación de token MLS</string>
+    <string name="event_kind_450">Prueba de identidad de la cuenta</string>
+    <string name="event_kind_451">Prueba del propietario push</string>
+    <string name="event_kind_452">Autorización de unión multidispositivo</string>
+    <string name="event_kind_1009">Edición de mensaje</string>
+    <string name="event_kind_1200">Inicio del flujo de texto del agente</string>
+    <string name="event_kind_1210">Evento de sistema de grupo</string>
+    <string name="event_kind_30443">KeyPackage de Marmot</string>
     <string name="event_kind_1010">Ediciones</string>
     <string name="event_kind_1064">Datos blob</string>
     <string name="event_kind_1065">Cabeceras blob</string>

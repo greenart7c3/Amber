@@ -162,6 +162,13 @@
     <string name="event_kind_447">Yêu cầu token MLS</string>
     <string name="event_kind_448">Danh sách token MLS</string>
     <string name="event_kind_449">Xóa token MLS</string>
+    <string name="event_kind_450">Bằng chứng danh tính tài khoản</string>
+    <string name="event_kind_451">Bằng chứng chủ sở hữu push</string>
+    <string name="event_kind_452">Ủy quyền tham gia đa thiết bị</string>
+    <string name="event_kind_1009">Chỉnh sửa tin nhắn</string>
+    <string name="event_kind_1200">Bắt đầu luồng văn bản của agent</string>
+    <string name="event_kind_1210">Sự kiện hệ thống nhóm</string>
+    <string name="event_kind_30443">KeyPackage của Marmot</string>
     <string name="event_kind_1010">Chỉnh sửa</string>
     <string name="event_kind_1064">Dữ liệu blob</string>
     <string name="event_kind_1065">Header blob</string>

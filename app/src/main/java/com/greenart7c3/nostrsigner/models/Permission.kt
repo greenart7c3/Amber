@@ -147,7 +147,11 @@ data class Permission(
                 447 -> context.getString(R.string.event_kind_447)
                 448 -> context.getString(R.string.event_kind_448)
                 449 -> context.getString(R.string.event_kind_449)
+                450 -> context.getString(R.string.event_kind_450)
+                451 -> context.getString(R.string.event_kind_451)
+                452 -> context.getString(R.string.event_kind_452)
                 818 -> context.getString(R.string.event_kind_818)
+                1009 -> context.getString(R.string.event_kind_1009)
                 1010 -> context.getString(R.string.event_kind_1010)
                 1018 -> context.getString(R.string.event_kind_1018)
                 1021 -> context.getString(R.string.event_kind_1021)
@@ -160,6 +164,8 @@ data class Permission(
                 1068 -> context.getString(R.string.event_kind_1068)
                 1111 -> context.getString(R.string.event_kind_1111)
                 1163 -> context.getString(R.string.event_kind_1163)
+                1200 -> context.getString(R.string.event_kind_1200)
+                1210 -> context.getString(R.string.event_kind_1210)
                 1222 -> context.getString(R.string.event_kind_1222)
                 1244 -> context.getString(R.string.event_kind_1244)
                 1301 -> context.getString(R.string.event_kind_1301)
@@ -352,7 +358,7 @@ data class Permission(
                 30385 -> context.getString(R.string.event_kind_30385)
                 30402 -> context.getString(R.string.event_kind_30402)
                 30403 -> context.getString(R.string.event_kind_30403)
-                30443 -> context.getString(R.string.event_kind_10443)
+                30443 -> context.getString(R.string.event_kind_30443)
                 30617 -> context.getString(R.string.event_kind_30617)
                 30618 -> context.getString(R.string.event_kind_30618)
                 30817 -> context.getString(R.string.event_kind_30817)
@@ -635,6 +641,13 @@ val supportedKindNumbers = listOf(
     Permission("sign_event", 447),
     Permission("sign_event", 448),
     Permission("sign_event", 449),
+    Permission("sign_event", 450),
+    Permission("sign_event", 451),
+    Permission("sign_event", 452),
+    Permission("sign_event", 1009),
+    Permission("sign_event", 1200),
+    Permission("sign_event", 1210),
+    Permission("sign_event", 30443),
     Permission("sign_event", 818),
     Permission("sign_event", 1010),
     Permission("sign_event", 1018),

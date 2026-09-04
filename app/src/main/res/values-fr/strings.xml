@@ -183,6 +183,13 @@
     <string name="event_kind_447">Requête de jeton MLS</string>
     <string name="event_kind_448">Liste de jetons MLS</string>
     <string name="event_kind_449">Suppression de jeton MLS</string>
+    <string name="event_kind_450">Preuve d\'identité de compte</string>
+    <string name="event_kind_451">Preuve du propriétaire push</string>
+    <string name="event_kind_452">Autorisation d\'adhésion multi-appareils</string>
+    <string name="event_kind_1009">Modification de message</string>
+    <string name="event_kind_1200">Début du flux de texte d\'agent</string>
+    <string name="event_kind_1210">Événement système de groupe</string>
+    <string name="event_kind_30443">KeyPackage Marmot</string>
     <string name="event_kind_1010">Modifications</string>
     <string name="event_kind_1064">Données blob</string>
     <string name="event_kind_1065">En-têtes blob</string>

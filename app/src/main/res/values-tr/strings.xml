@@ -182,6 +182,13 @@
     <string name="event_kind_447">MLS token isteği</string>
     <string name="event_kind_448">MLS token listesi</string>
     <string name="event_kind_449">MLS token kaldırma</string>
+    <string name="event_kind_450">Hesap kimlik kanıtı</string>
+    <string name="event_kind_451">Push sahibi kanıtı</string>
+    <string name="event_kind_452">Çok cihazlı katılım yetkilendirmesi</string>
+    <string name="event_kind_1009">Mesaj düzenlemesi</string>
+    <string name="event_kind_1200">Aracı metin akışı başlangıcı</string>
+    <string name="event_kind_1210">Grup sistem olayı</string>
+    <string name="event_kind_30443">Marmot KeyPackage</string>
     <string name="event_kind_1010">Düzenlemeler</string>
     <string name="event_kind_1064">Blob verileri</string>
     <string name="event_kind_1065">Blob başlıkları</string>

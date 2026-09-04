@@ -210,6 +210,13 @@
     <string name="event_kind_447">MLS token request</string>
     <string name="event_kind_448">MLS token list</string>
     <string name="event_kind_449">MLS token removal</string>
+    <string name="event_kind_450">Account identity proof</string>
+    <string name="event_kind_451">Push owner proof</string>
+    <string name="event_kind_452">Multi-device join authorization</string>
+    <string name="event_kind_1009">Message edit</string>
+    <string name="event_kind_1200">Agent text stream start</string>
+    <string name="event_kind_1210">Group system event</string>
+    <string name="event_kind_30443">Marmot KeyPackage</string>
     <string name="event_kind_1010">Edits</string>
     <string name="event_kind_1064">Blob data</string>
     <string name="event_kind_1065">Blob headers</string>

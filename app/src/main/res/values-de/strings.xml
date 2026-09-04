@@ -183,6 +183,13 @@
     <string name="event_kind_447">MLS-Token-Anfrage</string>
     <string name="event_kind_448">MLS-Token-Liste</string>
     <string name="event_kind_449">MLS-Token-Entfernung</string>
+    <string name="event_kind_450">Kontoidentitätsnachweis</string>
+    <string name="event_kind_451">Push-Besitzernachweis</string>
+    <string name="event_kind_452">Mehrgeräte-Beitrittsautorisierung</string>
+    <string name="event_kind_1009">Nachrichtenbearbeitung</string>
+    <string name="event_kind_1200">Start des Agent-Textstreams</string>
+    <string name="event_kind_1210">Gruppensystemereignis</string>
+    <string name="event_kind_30443">Marmot-KeyPackage</string>
     <string name="event_kind_1010">Bearbeitungen</string>
     <string name="event_kind_1064">Blob-Daten</string>
     <string name="event_kind_1065">Blob-Header</string>

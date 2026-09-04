@@ -162,6 +162,13 @@
     <string name="event_kind_447">MLSトークンリクエスト</string>
     <string name="event_kind_448">MLSトークンリスト</string>
     <string name="event_kind_449">MLSトークン削除</string>
+    <string name="event_kind_450">アカウント識別証明</string>
+    <string name="event_kind_451">プッシュオーナー証明</string>
+    <string name="event_kind_452">マルチデバイス参加認証</string>
+    <string name="event_kind_1009">メッセージ編集</string>
+    <string name="event_kind_1200">エージェントテキストストリーム開始</string>
+    <string name="event_kind_1210">グループシステムイベント</string>
+    <string name="event_kind_30443">Marmot KeyPackage</string>
     <string name="event_kind_1010">編集</string>
     <string name="event_kind_1064">Blobデータ</string>
     <string name="event_kind_1065">Blobヘッダー</string>

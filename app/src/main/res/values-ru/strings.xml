@@ -186,6 +186,13 @@
     <string name="event_kind_447">Запрос токена MLS</string>
     <string name="event_kind_448">Список токенов MLS</string>
     <string name="event_kind_449">Удаление токена MLS</string>
+    <string name="event_kind_450">Подтверждение личности аккаунта</string>
+    <string name="event_kind_451">Подтверждение владельца push</string>
+    <string name="event_kind_452">Авторизация входа с нескольких устройств</string>
+    <string name="event_kind_1009">Правка сообщения</string>
+    <string name="event_kind_1200">Начало текстового потока агента</string>
+    <string name="event_kind_1210">Системное событие группы</string>
+    <string name="event_kind_30443">KeyPackage Marmot</string>
     <string name="event_kind_1010">Правки</string>
     <string name="event_kind_1064">Данные blob</string>
     <string name="event_kind_1065">Заголовки blob</string>

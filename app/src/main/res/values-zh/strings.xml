@@ -167,6 +167,13 @@
     <string name="event_kind_447">MLS 令牌请求</string>
     <string name="event_kind_448">MLS 令牌列表</string>
     <string name="event_kind_449">MLS 令牌移除</string>
+    <string name="event_kind_450">账户身份证明</string>
+    <string name="event_kind_451">推送所有者证明</string>
+    <string name="event_kind_452">多设备加入授权</string>
+    <string name="event_kind_1009">消息编辑</string>
+    <string name="event_kind_1200">代理文本流开始</string>
+    <string name="event_kind_1210">群组系统事件</string>
+    <string name="event_kind_30443">Marmot 密钥包</string>
     <string name="event_kind_1010">编辑</string>
     <string name="event_kind_1064">Blob 数据</string>
     <string name="event_kind_1065">Blob 头部</string>

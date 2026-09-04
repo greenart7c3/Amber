@@ -162,6 +162,13 @@
     <string name="event_kind_447">คำขอโทเค็น MLS</string>
     <string name="event_kind_448">รายการโทเค็น MLS</string>
     <string name="event_kind_449">การลบโทเค็น MLS</string>
+    <string name="event_kind_450">หลักฐานตัวตนบัญชี</string>
+    <string name="event_kind_451">หลักฐานเจ้าของพุช</string>
+    <string name="event_kind_452">การอนุญาตให้เข้าร่วมหลายอุปกรณ์</string>
+    <string name="event_kind_1009">การแก้ไขข้อความ</string>
+    <string name="event_kind_1200">การเริ่มสตรีมข้อความเอเจนต์</string>
+    <string name="event_kind_1210">เหตุการณ์ระบบของกลุ่ม</string>
+    <string name="event_kind_30443">KeyPackage ของ Marmot</string>
     <string name="event_kind_1010">การแก้ไข</string>
     <string name="event_kind_1064">ข้อมูล Blob</string>
     <string name="event_kind_1065">ส่วนหัว Blob</string>

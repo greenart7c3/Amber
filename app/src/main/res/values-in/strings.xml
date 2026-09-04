@@ -186,6 +186,13 @@
     <string name="event_kind_447">Permintaan token MLS</string>
     <string name="event_kind_448">Daftar token MLS</string>
     <string name="event_kind_449">Penghapusan token MLS</string>
+    <string name="event_kind_450">Bukti identitas akun</string>
+    <string name="event_kind_451">Bukti pemilik push</string>
+    <string name="event_kind_452">Otorisasi bergabung multi-perangkat</string>
+    <string name="event_kind_1009">Suntingan pesan</string>
+    <string name="event_kind_1200">Awal aliran teks agen</string>
+    <string name="event_kind_1210">Peristiwa sistem grup</string>
+    <string name="event_kind_30443">KeyPackage Marmot</string>
     <string name="event_kind_1010">Suntingan</string>
     <string name="event_kind_1064">Data blob</string>
     <string name="event_kind_1065">Header blob</string>

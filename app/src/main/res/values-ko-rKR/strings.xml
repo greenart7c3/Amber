@@ -186,6 +186,13 @@
     <string name="event_kind_447">MLS 토큰 요청</string>
     <string name="event_kind_448">MLS 토큰 목록</string>
     <string name="event_kind_449">MLS 토큰 제거</string>
+    <string name="event_kind_450">계정 신원 증명</string>
+    <string name="event_kind_451">푸시 소유자 증명</string>
+    <string name="event_kind_452">멀티 디바이스 참여 승인</string>
+    <string name="event_kind_1009">메시지 수정</string>
+    <string name="event_kind_1200">에이전트 텍스트 스트림 시작</string>
+    <string name="event_kind_1210">그룹 시스템 이벤트</string>
+    <string name="event_kind_30443">Marmot KeyPackage</string>
     <string name="event_kind_1010">수정</string>
     <string name="event_kind_1064">Blob 데이터</string>
     <string name="event_kind_1065">Blob 헤더</string>

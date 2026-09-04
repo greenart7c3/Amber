@@ -49,7 +49,7 @@ data class Permission(
         companion object {
             fun fromJson(jsonObject: JsonNode): Permission = Permission(
                 type = jsonObject.get("type").asText().intern(),
-                kind = jsonObject.get("kind").asText()?.toIntOrNull(),
+                kind = jsonObject.get("kind")?.asText()?.toIntOrNull(),
             )
         }
     }

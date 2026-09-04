@@ -421,7 +421,8 @@ object IntentUtils {
         val permissions: MutableList<Permission>? = json?.let {
             try {
                 Permission.mapper.readValue<MutableList<Permission>>(it)
-            } catch (_: Exception) {
+            } catch (e: Exception) {
+                AmberLog.e("IntentUtils", "Error parsing permissions: $json", e)
                 null
             }
         }

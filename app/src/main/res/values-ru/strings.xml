@@ -776,7 +776,7 @@
     <string name="relays_used">Используемые relay-серверы</string>
     <string name="do_not_leave_the_app_until_the_key_is_generated">Не покидайте приложение до завершения генерации ключа</string>
     <string name="status_detail">Подробности статуса</string>
-    <string name="amber_is_a_free_and_open_source_project">Amber — бесплатный проект с открытым исходным кодом\n</string>
+    <string name="amber_is_a_free_and_open_source_project">Amber — свободный проект с открытым исходным кодом\n</string>
     <string name="report_missing_event_kind_translation">Сообщить об отсутствующем переводе типа события</string>
     <string name="translation_report_title">Отчёт об отсутствующем переводе</string>
     <string name="translation_report_send">Отправить</string>

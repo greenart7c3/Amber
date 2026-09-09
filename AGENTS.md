@@ -72,3 +72,5 @@ Use the committed scripts for cloud environments:
 ## Reproducibility
 
 `Dockerfile` + `apkdiff.py` verify reproducible builds: `docker build -t amber-repro --build-arg VERSION=vX.Y.Z --build-arg APK_TYPE=free-arm64-v8a .` then `docker run --rm amber-repro` (expect `APKs match!`).
+
+- For repository collaboration, use ngit and follow `.agents/skills/ngit/SKILL.md`.

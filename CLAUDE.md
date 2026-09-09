@@ -90,3 +90,5 @@ In other words, the lock controls who can open and navigate the app UI; it does 
 | `BiometricAuthScreen.kt` | UI-only app-launch lock (biometric/PIN); not a signing gate |
 | `Biometrics.kt` | Wraps `BiometricPrompt` / keyguard credential prompt |
 | `SecurityScreen.kt` | Toggles `useAuth` / `usePin` and the re-prompt interval |
+
+- For repository collaboration, use ngit and follow `.claude/skills/ngit/SKILL.md`.

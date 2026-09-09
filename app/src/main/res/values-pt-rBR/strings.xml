@@ -644,7 +644,7 @@
     <string name="service_settings">Configurações do serviço</string>
     <string name="stop_service">Parar serviço</string>
     <string name="start_service_on_boot">Iniciar serviço na inicialização</string>
-    <string name="start_service_on_boot_description">Quando ativado, o Amber iniciará seu serviço em segundo plano automaticamente após o dispositivo ser ligado, para que o login remoto e as solicitações NIP-46 continuem funcionando.</string>
+    <string name="start_service_on_boot_description">Quando ativado, o Amber iniciará seu serviço em segundo plano automaticamente após o dispositivo ser ligado ou após uma atualização do app, para que o login remoto e as solicitações NIP-46 continuem funcionando.</string>
     <string name="profile_fetch_interval">Intervalo de busca de perfil</string>
     <string name="profile_fetch_interval_description">Com que frequência o Amber verifica os relays em busca de metadados de perfil atualizados (nome e foto)</string>
     <string name="profile_fetch_interval_always">Sempre (todas as vezes)</string>

@@ -649,7 +649,7 @@
     <string name="service_settings">서비스 설정</string>
     <string name="stop_service">서비스 중지</string>
     <string name="start_service_on_boot">부팅 시 서비스 시작</string>
-    <string name="start_service_on_boot_description">활성화하면 기기 부팅 후 Amber가 백그라운드 서비스를 자동으로 시작하여 원격 로그인 및 NIP-46 요청이 계속 작동합니다.</string>
+    <string name="start_service_on_boot_description">활성화하면 기기 부팅 후 또는 앱 업데이트 후 Amber가 백그라운드 서비스를 자동으로 시작하여 원격 로그인 및 NIP-46 요청이 계속 작동합니다.</string>
     <string name="profile_fetch_interval">프로필 가져오기 간격</string>
     <string name="profile_fetch_interval_description">Amber가 업데이트된 프로필 메타데이터(이름 및 사진)를 릴레이에서 확인하는 빈도</string>
     <string name="profile_fetch_interval_always">항상(매번)</string>

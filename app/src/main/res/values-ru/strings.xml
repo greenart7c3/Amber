@@ -649,7 +649,7 @@
     <string name="service_settings">Настройки службы</string>
     <string name="stop_service">Остановить службу</string>
     <string name="start_service_on_boot">Запускать службу при загрузке</string>
-    <string name="start_service_on_boot_description">При включении Amber будет автоматически запускать фоновую службу после загрузки устройства, чтобы удалённый вход и запросы NIP-46 продолжали работать.</string>
+    <string name="start_service_on_boot_description">При включении Amber будет автоматически запускать фоновую службу после загрузки устройства или после обновления приложения, чтобы удалённый вход и запросы NIP-46 продолжали работать.</string>
     <string name="profile_fetch_interval">Интервал получения профиля</string>
     <string name="profile_fetch_interval_description">Как часто Amber проверяет реле на наличие обновлённых метаданных профиля (имя и изображение)</string>
     <string name="profile_fetch_interval_always">Всегда (каждый раз)</string>

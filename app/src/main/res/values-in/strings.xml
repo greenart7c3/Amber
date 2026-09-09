@@ -649,7 +649,7 @@
     <string name="service_settings">Pengaturan layanan</string>
     <string name="stop_service">Hentikan layanan</string>
     <string name="start_service_on_boot">Mulai layanan saat boot</string>
-    <string name="start_service_on_boot_description">Jika diaktifkan, Amber akan memulai layanan latar belakangnya secara otomatis setelah perangkat boot sehingga login jarak jauh dan permintaan NIP-46 tetap berfungsi.</string>
+    <string name="start_service_on_boot_description">Jika diaktifkan, Amber akan memulai layanan latar belakangnya secara otomatis setelah perangkat boot atau setelah aplikasi diperbarui sehingga login jarak jauh dan permintaan NIP-46 tetap berfungsi.</string>
     <string name="profile_fetch_interval">Interval pengambilan profil</string>
     <string name="profile_fetch_interval_description">Seberapa sering Amber memeriksa relay untuk metadata profil yang diperbarui (nama dan gambar)</string>
     <string name="profile_fetch_interval_always">Selalu (setiap saat)</string>

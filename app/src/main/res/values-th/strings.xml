@@ -625,7 +625,7 @@
     <string name="service_settings">การตั้งค่าบริการ</string>
     <string name="stop_service">หยุดบริการ</string>
     <string name="start_service_on_boot">เริ่มบริการเมื่อเปิดเครื่อง</string>
-    <string name="start_service_on_boot_description">เมื่อเปิดใช้งาน Amber จะเริ่มบริการพื้นหลังโดยอัตโนมัติหลังจากอุปกรณ์เปิดเครื่อง เพื่อให้การล็อกอินระยะไกลและคำขอ NIP-46 ยังคงทำงานได้</string>
+    <string name="start_service_on_boot_description">เมื่อเปิดใช้งาน Amber จะเริ่มบริการพื้นหลังโดยอัตโนมัติหลังจากอุปกรณ์เปิดเครื่องหรือหลังแอปอัปเดต เพื่อให้การล็อกอินระยะไกลและคำขอ NIP-46 ยังคงทำงานได้</string>
     <string name="profile_fetch_interval">ช่วงเวลาดึงข้อมูลโปรไฟล์</string>
     <string name="profile_fetch_interval_description">ความถี่ที่ Amber ตรวจสอบรีเลย์เพื่อหาข้อมูลเมตาโปรไฟล์ที่อัปเดต (ชื่อและรูปภาพ)</string>
     <string name="profile_fetch_interval_always">เสมอ (ทุกครั้ง)</string>

@@ -630,7 +630,7 @@
     <string name="service_settings">服务设置</string>
     <string name="stop_service">停止服务</string>
     <string name="start_service_on_boot">开启时启动服务</string>
-    <string name="start_service_on_boot_description">启用后，Amber将在设备启动后自动启动后台服务，可以使远程登录和 NIP-46 请求继续保持运行。</string>
+    <string name="start_service_on_boot_description">启用后，Amber将在设备启动后或应用更新后自动启动后台服务，可以使远程登录和 NIP-46 请求继续保持运行。</string>
     <string name="profile_fetch_interval">个人资料获取间隔</string>
     <string name="profile_fetch_interval_description">Amber 检查中继以获取更新的个人资料元数据(名称和图片)的频率</string>
     <string name="profile_fetch_interval_always">总是(每次)</string>

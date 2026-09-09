@@ -646,7 +646,7 @@
     <string name="service_settings">Paramètres du service</string>
     <string name="stop_service">Arrêter le service</string>
     <string name="start_service_on_boot">Démarrer le service au démarrage</string>
-    <string name="start_service_on_boot_description">Lorsqu\'il est activé, Amber démarre automatiquement son service en arrière-plan après le démarrage de l\'appareil afin que la connexion à distance et les requêtes NIP-46 continuent de fonctionner.</string>
+    <string name="start_service_on_boot_description">Lorsqu\'il est activé, Amber démarre automatiquement son service en arrière-plan après le démarrage de l\'appareil ou après une mise à jour de l\'application afin que la connexion à distance et les requêtes NIP-46 continuent de fonctionner.</string>
     <string name="profile_fetch_interval">Intervalle de récupération du profil</string>
     <string name="profile_fetch_interval_description">À quelle fréquence Amber vérifie les relais pour des métadonnées de profil mises à jour (nom et image)</string>
     <string name="profile_fetch_interval_always">Toujours (à chaque fois)</string>

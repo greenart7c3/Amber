@@ -12,8 +12,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 
-class BootReceiver : BroadcastReceiver() {
-    val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+class BootReceiver(
+    private val scope: CoroutineScope = CoroutineScope(Dispatchers.IO + SupervisorJob()),
+) : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         if (BuildFlavorChecker.isOfflineFlavor()) return
         AmberLog.d(Amber.TAG, "Received intent: ${intent.action}")
@@ -24,11 +25,8 @@ class BootReceiver : BroadcastReceiver() {
             -> {
                 AmberLog.d(Amber.TAG, "Received ${intent.action}")
                 scope.launch {
-                    val shouldStartService = LocalPreferences.getStartServiceOnBoot(context)
-                    if (intent.action == Intent.ACTION_BOOT_COMPLETED &&
-                        !shouldStartService
-                    ) {
-                        AmberLog.d(Amber.TAG, "Skipping service start on boot (disabled in settings)")
+                    if (!LocalPreferences.getStartServiceOnBoot(context)) {
+                        AmberLog.d(Amber.TAG, "Skipping service start (${intent.action}) (disabled in settings)")
                         return@launch
                     }
                     Amber.instance.startService()

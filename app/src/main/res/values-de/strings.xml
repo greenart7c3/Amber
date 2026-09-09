@@ -646,7 +646,7 @@
     <string name="service_settings">Diensteinstellungen</string>
     <string name="stop_service">Dienst stoppen</string>
     <string name="start_service_on_boot">Dienst beim Start ausführen</string>
-    <string name="start_service_on_boot_description">Wenn aktiviert, startet Amber seinen Hintergrunddienst automatisch nach dem Gerätestart, damit Remote-Anmeldungen und NIP-46-Anfragen weiterhin funktionieren.</string>
+    <string name="start_service_on_boot_description">Wenn aktiviert, startet Amber seinen Hintergrunddienst automatisch nach dem Gerätestart oder nach einem App-Update, damit Remote-Anmeldungen und NIP-46-Anfragen weiterhin funktionieren.</string>
     <string name="profile_fetch_interval">Profilabruf-Intervall</string>
     <string name="profile_fetch_interval_description">Wie oft Amber die Relays auf aktualisierte Profilmetadaten (Name und Bild) prüft</string>
     <string name="profile_fetch_interval_always">Immer (jedes Mal)</string>

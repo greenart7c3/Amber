@@ -14,16 +14,16 @@ jobs:
 
     steps:
       - name: Checkout source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up JDK 21
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v6
         with:
           distribution: 'temurin'
           java-version: 21
 
       - name: Cache Gradle
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: |
             ~/.gradle/caches
@@ -43,7 +43,7 @@ jobs:
           ./gradlew bundleFreeRelease bundleOfflineRelease assembleFreeRelease assembleOfflineRelease --stacktrace
 
       - name: Upload all APKs as artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: All-APKs-${{ github.ref_name }}
           path: app/build/outputs/apk/**/release/*.apk

@@ -87,7 +87,8 @@ class NotificationSubscription(
             val since = computeSince()
 
             // Cached dao: getAll() is served from CachingApplicationDao's per-account
-            // LRU. updateFilter re-runs on every ~30s relay refresh, and an uncached
+            // LRU. updateFilter re-runs on every relay refresh (explicit refreshes
+            // plus the periodic ConnectivityService safety net), and an uncached
             // getAll re-decrypts every application row through AndroidKeyStore
             // (a keystore2 binder round-trip per encrypted field) each cycle —
             // previously the app's dominant native allocator.
@@ -102,7 +103,7 @@ class NotificationSubscription(
                 val subKey = "${account.hexKey}_$connPubKey"
 
                 // Exclude relays that have been declared dead so Quartz stops opening
-                // a socket to them on every 30s refresh. They are re-added once
+                // a socket to them on every refresh. They are re-added once
                 // RelayHealthTracker is reset (network change / manual reconnect) or
                 // they connect successfully again.
                 val connRelays = conn.relays.ifEmpty { Amber.instance.getSavedRelays(account) }

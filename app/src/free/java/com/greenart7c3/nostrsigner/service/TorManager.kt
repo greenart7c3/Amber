@@ -153,6 +153,15 @@ object TorManager {
         appContext?.let { showNotification(it.getString(R.string.tor_retrying)) }
     }
 
+    /**
+     * Shows the terminal failure state (used after the bounded startup retries
+     * in Amber.runMigrations give up). Non-ongoing so the user can swipe it
+     * away; the Restart action is the way back to a connection attempt.
+     */
+    fun showFailed() {
+        appContext?.let { showNotification(it.getString(R.string.tor_connection_failed), ongoing = false) }
+    }
+
     fun start(context: Context, scope: CoroutineScope) {
         if (appContext == null) {
             appContext = context.applicationContext

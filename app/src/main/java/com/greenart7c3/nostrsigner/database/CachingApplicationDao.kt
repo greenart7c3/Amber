@@ -21,7 +21,7 @@ import androidx.paging.PagingSource
  * [getAll] results are cached per account pubKey in a separate small LRU.
  * That query decrypts every application row (AndroidKeyStore AES-GCM, a binder
  * hop to keystore2 per field) and [com.greenart7c3.nostrsigner.service.NotificationSubscription]
- * re-runs it on every ~30s relay-refresh cycle, which made it the app's
+ * re-runs it on every relay-refresh cycle, which made it the app's
  * dominant native allocator. Any mutation of the `application` table evicts
  * the affected account's entry (or all entries when only the app key — not
  * the owning account — is known). Cached lists are handed out as defensive

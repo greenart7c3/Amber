@@ -14,6 +14,7 @@ import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.LocalPreferences
+import com.greenart7c3.nostrsigner.models.TorMode
 import com.greenart7c3.nostrsigner.okhttp.HttpClientManager
 import com.greenart7c3.nostrsigner.relays.RelayHealthTracker
 import java.util.Timer
@@ -38,8 +39,16 @@ class ConnectivityService : Service() {
                 if (Amber.instance.settings.killSwitch.value) return
 
                 if (lastNetwork != null && lastNetwork != network) {
-                    // New network: give previously-dead relays a fresh chance. The
-                    // 30s updateFilter tick re-adds them to the subscription set.
+                    // New network: give previously-dead relays a fresh chance.
+                    // RelayHealthTracker.reset() makes updateFilter re-add them
+                    // to the subscription set (explicit refreshes plus the
+                    // periodic safety net below).
+                    if (Amber.instance.settings.torMode == TorMode.BUILTIN && !TorManager.isRunning.value) {
+                        // Built-in Tor gave up earlier (bounded startup retries
+                        // in runMigrations). The network is back, so retry now
+                        // instead of waiting for a manual restart.
+                        TorManager.restart(this@ConnectivityService, Amber.instance.applicationIOScope)
+                    }
                     RelayHealthTracker.reset()
                     scope.launch(Dispatchers.IO) {
                         if (!Amber.instance.client.isActive()) {
@@ -168,7 +177,7 @@ class ConnectivityService : Service() {
                     }
                 },
                 5000,
-                30000,
+                UPDATE_FILTER_PERIOD_MS,
             )
         }
     }
@@ -211,5 +220,17 @@ class ConnectivityService : Service() {
             return START_NOT_STICKY
         }
         return START_STICKY
+    }
+
+    companion object {
+        /**
+         * How often the safety-net subscription refresh runs. Every real state
+         * change (login/logout, relay edits, app connect/disconnect, NIP-46
+         * CONNECT, backup restore, kill switch) already refreshes the filters
+         * explicitly, and Quartz replays subscriptions on reconnect, so this
+         * tick only covers missed paths. Kept slow: it wakes the CPU even when
+         * nothing changed, and a 30s period prevented doze 2,880 times a day.
+         */
+        const val UPDATE_FILTER_PERIOD_MS = 5 * 60 * 1000L
     }
 }

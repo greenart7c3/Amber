@@ -8,7 +8,7 @@ import java.util.concurrent.ConcurrentHashMap
  * relays that are permanently unreachable.
  *
  * Quartz's relay pool is driven by the relays referenced in active subscriptions:
- * [NotificationSubscription.updateFilter] re-subscribes every 30s, and any relay
+ * [NotificationSubscription.updateFilter] re-subscribes on every refresh, and any relay
  * present in that map is (re)connected by the pool. Without this tracker an
  * offline relay stays in the map forever, so a socket is opened to it on every
  * refresh, needlessly waking the radio and draining the battery.

@@ -39,6 +39,10 @@ object TorManager {
         // No-op in offline flavor
     }
 
+    fun showFailed() {
+        // No-op in offline flavor
+    }
+
     fun cancelNotification() {
         // No-op in offline flavor
     }

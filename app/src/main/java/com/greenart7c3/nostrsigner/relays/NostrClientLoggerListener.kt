@@ -59,7 +59,7 @@ class NostrClientLoggerListener(
     // Counts the failure against the relay and only schedules a reconnect while it
     // is still worth retrying. Once a relay is dead, RelayHealthTracker also makes
     // NotificationSubscription.updateFilter drop it from the subscription relay
-    // set, so Quartz stops opening sockets to it every 30s. The streak resets on a
+    // set, so Quartz stops opening sockets to it on every refresh. The streak resets on a
     // successful connection (onConnected) or a network change / manual reconnect.
     private fun scheduleReconnect(relay: NormalizedRelayUrl) {
         if (!RelayHealthTracker.recordFailure(relay)) {

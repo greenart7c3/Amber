@@ -1,8 +1,8 @@
 # Accounts — identity, login, secrets
 
-Read when managing accounts, logins, or credential storage.
-Guide: https://ngit.dev/accounts (storage modes, pairing a remote signer for
-CI, rotation).
+Read when managing accounts, logins, or credential storage. Guide:
+https://ngit.dev/accounts (storage modes, pairing a remote signer for CI,
+rotation).
 
 ```bash
 ngit account whoami --json --offline            # every usable signer with npub, aliases, scope, active state; `account list` is an alias
@@ -40,8 +40,8 @@ unaliased connection. Log in with `--alias` to keep an extra connection and
 select it by alias. Older ngit versions ignore the exact-session binding and
 select the identity's default connection.
 
-**nbunksec** is a portable established connection: remote-signer pubkey,
-client secret, relays, and optional pairing secret. It holds no npub, so
-one-shot use resolves the identity from the signer. The `--nbunksec-file` and
-`--nsec-file` forms keep secrets out of process arguments. A fresh pairing
-needs interactive approval, so unattended runs use a stored connection.
+**nbunksec** is a portable established connection: remote-signer pubkey, client
+secret, relays, and optional pairing secret. It holds no npub, so one-shot use
+resolves the identity from the signer. The `--nbunksec-file` and `--nsec-file`
+forms keep secrets out of process arguments. A fresh pairing needs interactive
+approval, so unattended runs use a stored connection.

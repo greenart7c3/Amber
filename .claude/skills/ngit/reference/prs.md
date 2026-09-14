@@ -1,12 +1,12 @@
 # Pull requests — open, update, stack, review, merge
 
-Read before opening, updating, reviewing, or merging PRs.
-Guide: https://ngit.dev/pull-requests
+Read before opening, updating, reviewing, or merging PRs. Guide:
+https://ngit.dev/pull-requests
 
 ## Open or update a PR
 
-The branch name MUST start with `pr/`. No push option turns another branch
-into a PR.
+The branch name MUST start with `pr/`. No push option turns another branch into
+a PR.
 
 ```bash
 git checkout -b pr/my-feature
@@ -21,18 +21,18 @@ git push --force origin pr/my-feature                # update the PR after amend
 
 - `-d`/`--defaults` accepts the single-commit title and description without a
   prompt.
-- Do not use `$'…\n…'` for push options, and do not pre-escape a Markdown
-  file into `-o description=`; open the PR with `ngit send` instead.
+- Do not use `$'…\n…'` for push options, and do not pre-escape a Markdown file
+  into `-o description=`; open the PR with `ngit send` instead.
 - Stacks are inferred: a branch that contains the unique latest tip of one of
-  your other open or draft PRs becomes that PR's child and follows the parent
-  as it advances. Rebase the child onto the parent's latest tip before updating
-  it; ngit refuses stale children and ambiguous candidates rather than
-  guessing. Use `base=` for a cross-author, historical, or ambiguous parent,
-  and repeat it on each update if the child should stay pinned.
+  your other open or draft PRs becomes that PR's child and follows the parent as
+  it advances. Rebase the child onto the parent's latest tip before updating it;
+  ngit refuses stale children and ambiguous candidates rather than guessing. Use
+  `base=` for a cross-author, historical, or ambiguous parent, and repeat it on
+  each update if the child should stay pinned.
 - To push as another stored identity, use
-  `git -c nostr.signer=<alias|npub|profile-name> push …`; `--signer` applies
-  to `ngit` commands only. `ngit account login --local <alias>` makes an
-  identity the repository default instead.
+  `git -c nostr.signer=<alias|npub|profile-name> push …`; `--signer` applies to
+  `ngit` commands only. `ngit account login --local <alias>` makes an identity
+  the repository default instead.
 
 ## ngit send
 
@@ -70,13 +70,12 @@ ngit pr merge <ID|nevent> --exclude-description --json       # summary line and 
 git push origin <target-branch>                              # publishes the merge and the applied status
 ```
 
-`ngit merge` is a compatibility alias with the same options. The merge lands
-on the PR's declared target, or the default branch, resolved against the
-latest Nostr repository state rather than a local tracking ref, with the
-message `Merge #<8-hex>: <PR title>`. Closed and applied PRs are refused
-before any git change. On conflicts, resolve them and run `git commit`; the
-message is already prepared, and JSON reports `action: "conflicted"` instead
-of `"merged"`.
+`ngit merge` is a compatibility alias with the same options. The merge lands on
+the PR's declared target, or the default branch, resolved against the latest
+Nostr repository state rather than a local tracking ref, with the message
+`Merge #<8-hex>: <PR title>`. Closed and applied PRs are refused before any git
+change. On conflicts, resolve them and run `git commit`; the message is already
+prepared, and JSON reports `action: "conflicted"` instead of `"merged"`.
 
 Before merging or adding maintainer fixes, run
 `git log --merges --oneline origin/<target>..HEAD`. A prior `Merge #…` means a

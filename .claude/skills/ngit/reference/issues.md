@@ -17,13 +17,13 @@ ngit issue set-subject <ID|nevent> --subject "New title" --json
 ngit issue set-cover-note <ID|nevent> --body "$(cat cover-note.md)" --json
 ```
 
-`resolved` records that the problem was fixed; `close` records that it will
-not be. Reference other events in `--body` as `nostr:nevent1…`.
+`resolved` records that the problem was fixed; `close` records that it will not
+be. Reference other events in `--body` as `nostr:nevent1…`.
 
 ## Auto-resolve from commits
 
 A commit pushed to the declared default branch resolves an issue when its
-message contains a form of `close`, `fix`, `resolve`, or `implement` followed
-by a unique hex ID or prefix or a `nostr:nevent1…` reference, for example
+message contains a form of `close`, `fix`, `resolve`, or `implement` followed by
+a unique hex ID or prefix or a `nostr:nevent1…` reference, for example
 `Fixes #deadbeef`. The status is published only when the pusher is the issue
 author or a confirmed repository member.

@@ -117,8 +117,25 @@ class Amber :
 
     var settings: AmberSettings = AmberSettings()
 
+    /**
+     * False until the first async settings load ([LocalPreferences.reloadApp]) lands. Until
+     * then [settings] is the data-class default, whose torMode (DISABLED) is a guess, not a
+     * decision — any dial in that window must route through the proxy client (preset from
+     * plain prefs in [onCreate]) instead of trusting the default and going to the clearnet.
+     */
+    @Volatile var isSettingsLoaded = false
+
     val factory = OkHttpWebSocket.Builder { url ->
-        val useProxy = if (isPrivateIp(url.url)) false else settings.torMode != TorMode.DISABLED
+        val useProxy = when {
+            isPrivateIp(url.url) -> false
+            // Settings load asynchronously; until they land, torMode's default (DISABLED)
+            // is a guess, not a decision. Route through the proxy client — preset from
+            // plain prefs in onCreate — so a BUILTIN/ORBOT user's pre-Tor dials (network
+            // callbacks, profile fetches) hit the fail-closed placeholder instead of the
+            // clearnet.
+            !isSettingsLoaded -> true
+            else -> settings.torMode != TorMode.DISABLED
+        }
         HttpClientManager.getHttpClient(useProxy)
     }
 
@@ -354,6 +371,12 @@ class Amber :
         }
 
         instance = this
+        // Before anything can dial: route the proxy client through the user's SOCKS
+        // setup (or the fail-closed placeholder for BUILTIN) read synchronously from
+        // plain prefs. Dials in the window before the async settings load — network
+        // callbacks, profile fetches — pick this up via the factory's !isSettingsLoaded
+        // gate; without it that window leaks clearnet traffic for Tor users.
+        LocalPreferences.presetProxyFromPrefs(this)
         stats.createNotificationChannel()
         Thread.setDefaultUncaughtExceptionHandler(UnexpectedCrashSaver(crashReportCache, applicationIOScope))
 
@@ -654,7 +677,11 @@ class Amber :
             .build()
         val coilCallFactory = okhttp3.Call.Factory { request ->
             val url = request.url.toString()
-            val useProxy = if (isPrivateIp(url)) false else settings.torMode != TorMode.DISABLED
+            val useProxy = when {
+                isPrivateIp(url) -> false
+                !isSettingsLoaded -> true
+                else -> settings.torMode != TorMode.DISABLED
+            }
             HttpClientManager.getHttpClient(useProxy).newCall(request)
         }
         return ImageLoader.Builder(context)

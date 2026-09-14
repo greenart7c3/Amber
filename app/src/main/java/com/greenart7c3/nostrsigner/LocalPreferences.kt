@@ -244,10 +244,34 @@ object LocalPreferences {
         accountCache.clear()
         warmAccountCache(context)
         context.settings = loadSettingsFromEncryptedStorage(context)
+        context.isSettingsLoaded = true
         context.settings.language?.let {
             AppCompatDelegate.setApplicationLocales(
                 LocaleListCompat.forLanguageTags(it),
             )
+        }
+    }
+
+    /**
+     * Synchronously presets the OkHttp proxy from plain (unencrypted) prefs, before any
+     * dial can happen. The full settings load is async; until it lands, the relay/Coil
+     * factories treat torMode as unknown and route through the proxy client — which only
+     * protects Tor users if that client already carries the SOCKS proxy (fail-closed
+     * placeholder for BUILTIN, the configured port for ORBOT).
+     */
+    fun presetProxyFromPrefs(context: Context) {
+        val prefs = sharedPrefs(context)
+        val torMode = try {
+            TorMode.valueOf(prefs.getString(SettingsKeys.TOR_MODE.key, TorMode.DISABLED.name)!!)
+        } catch (_: IllegalArgumentException) {
+            TorMode.DISABLED
+        }
+        when (torMode) {
+            TorMode.ORBOT -> HttpClientManager.setDefaultProxyOnPort(
+                prefs.getInt(SettingsKeys.PROXY_PORT.key, 9050),
+            )
+            TorMode.BUILTIN -> HttpClientManager.setDefaultProxyOnPort(TorManager.socksPort.value)
+            TorMode.DISABLED -> {}
         }
     }
 

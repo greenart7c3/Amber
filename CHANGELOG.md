@@ -1,13 +1,14 @@
 # Changelog
 
-## Amber 6.6.3
+## Amber 6.6.4
 
-- Fix the "start service on boot" setting not being respected after an app update
-- Fix a crash on the offline flavor caused by a `SecurityException` from WorkManager network tracking left over from an upgrade
-- Fix the Russian translation of the "Amber is a free and open source project" string
-- Fix a release build failure caused by an AGP 9.4.0 regression
+- Fix a clearnet leak for Tor users during the startup settings race: profile fetches and boot-time network callbacks could dial relays directly before the Tor setting finished loading
+- Reduce background battery drain: the connectivity safety-net tick now runs every 5 minutes instead of every 30 seconds, and the built-in Tor daemon gives up after a bounded bootstrap window instead of restarting forever (a notification lets you retry)
+- Relay connections now recover automatically when the built-in Tor daemon comes back, including after a manual Tor restart
+- Sync the relay WebSocket layer with upstream quartz: relay-initiated CLOSE frames are answered so sockets close promptly instead of lingering half-open until the ping timeout
+- Add sign-event labels for the Armada event kinds (presence and typing indicators, NIP-29 group management, Buzz forum kinds, webxdc app data, and more)
 
-Download it with [Zapstore](https://zapstore.dev/apps/com.greenart7c3.nostrsigner), [Obtainium](https://github.com/ImranR98/Obtainium), [f-droid](https://f-droid.org/packages/com.greenart7c3.nostrsigner) or download it directly in the [releases page](https://github.com/greenart7c3/Amber/releases/tag/v6.6.3)
+Download it with [Zapstore](https://zapstore.dev/apps/com.greenart7c3.nostrsigner), [Obtainium](https://github.com/ImranR98/Obtainium), [f-droid](https://f-droid.org/packages/com.greenart7c3.nostrsigner) or download it directly in the [releases page](https://github.com/greenart7c3/Amber/releases/tag/v6.6.4)
 
 If you like my work consider making a [donation](https://greenart7c3.com)
 
@@ -19,10 +20,10 @@ In order to verify the release, you'll need to have `gpg` or `gpg2` installed on
 gpg --keyserver hkps://keys.openpgp.org --recv-keys 44F0AAEB77F373747E3D5444885822EED3A26A6D
 ```
 
-Once you have his PGP key you can verify the release (assuming `manifest-v6.6.3.txt` and `manifest-v6.6.3.txt.sig` are in the current directory) with:
+Once you have his PGP key you can verify the release (assuming `manifest-v6.6.4.txt` and `manifest-v6.6.4.txt.sig` are in the current directory) with:
 
 ``` bash
-gpg --verify manifest-v6.6.3.txt.sig manifest-v6.6.3.txt
+gpg --verify manifest-v6.6.4.txt.sig manifest-v6.6.4.txt
 ```
 
 You should see the following if the verification was successful:
@@ -36,7 +37,7 @@ gpg: Good signature from "greenart7c3 <greenart7c3@proton.me>"
 That will verify the signature on the main manifest page which ensures integrity and authenticity of the binaries you've downloaded locally. Next, depending on your operating system you should then re-calculate the sha256 sum of the binary, and compare that with the following hashes:
 
 ``` bash
-cat manifest-v6.6.3.txt
+cat manifest-v6.6.4.txt
 ```
 
 One can use the `shasum -a 256 <file name here>` tool in order to re-compute the `sha256` hash of the target binary for your operating system. The produced hash should be compared with the hashes listed above and they should match exactly.

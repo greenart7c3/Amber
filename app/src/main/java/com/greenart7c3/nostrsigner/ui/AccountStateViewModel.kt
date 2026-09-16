@@ -211,7 +211,12 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
 
     fun maybeOfferRestore(account: Account) {
         if (BuildFlavorChecker.isOfflineFlavor()) return
-        if (!LocalPreferences.getBackupApplications(Amber.instance, account.npub)) return
+
+        // No BACKUP_APPLICATIONS gate here: that flag is publish consent for the
+        // daily worker and is deliberately wiped on logout, so it can never be
+        // true on a logout→login round trip — the main case restore exists for.
+        // Fetching is a read of a public, self-authored event; the dao check
+        // below skips accounts whose local apps are still present.
 
         Amber.instance.applicationIOScope.launch {
             try {

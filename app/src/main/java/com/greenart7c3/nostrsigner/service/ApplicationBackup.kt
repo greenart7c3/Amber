@@ -12,6 +12,8 @@ import com.greenart7c3.nostrsigner.database.ApplicationPermissionsEntity
 import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
 import com.greenart7c3.nostrsigner.models.Account
 import com.vitorpamplona.quartz.nip01Core.core.Event
+import com.vitorpamplona.quartz.nip01Core.core.toHexKey
+import com.vitorpamplona.quartz.nip01Core.crypto.KeyPair
 import com.vitorpamplona.quartz.nip01Core.crypto.verify
 import com.vitorpamplona.quartz.nip01Core.relay.client.accessories.publishAndConfirm
 import com.vitorpamplona.quartz.nip01Core.relay.client.listeners.RelayConnectionListener
@@ -21,6 +23,9 @@ import com.vitorpamplona.quartz.nip01Core.relay.commands.toClient.Message
 import com.vitorpamplona.quartz.nip01Core.relay.filters.Filter
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.RelayUrlNormalizer
+import com.vitorpamplona.quartz.nip01Core.signers.NostrSignerInternal
+import com.vitorpamplona.quartz.nip44Encryption.crypto.Hkdf
+import com.vitorpamplona.quartz.utils.Secp256k1Instance
 import com.vitorpamplona.quartz.utils.TimeUtils
 import java.util.UUID
 import kotlin.coroutines.cancellation.CancellationException
@@ -38,6 +43,16 @@ private val AGGREGATOR_RELAY = RelayUrlNormalizer.normalizeOrNull("wss://aggr.no
 private val INBOX_FALLBACK_RELAYS = listOfNotNull(
     RelayUrlNormalizer.normalizeOrNull("wss://nos.lol/"),
 )
+
+// HKDF domain separation for the backup encryption key. Payloads are encrypted
+// to a keypair derived from the account key, so a client app holding only a
+// decrypt permission cannot read the publicly stored backup event. Deliberately
+// outside the "nip44kd"/EncryptionKeyDerivation namespace: that is the domain
+// NIP-46/NIP-55 derive_key requests draw from, and an app that could request
+// the backup nonce must never land on the backup key.
+private val BACKUP_KEY_SALT = "amber-app-backup-salt-v1".encodeToByteArray()
+private val BACKUP_KEY_INFO = "amber-app-backup-key".encodeToByteArray()
+private val backupHkdf = Hkdf()
 
 data class BackupPermission(
     @param:JsonProperty("type") val type: String,
@@ -78,6 +93,32 @@ sealed interface RestoreResult {
     data class Success(val apps: Int, val permissions: Int) : RestoreResult
     data object NoBackupFound : RestoreResult
     data class Failed(val message: String) : RestoreResult
+}
+
+/**
+ * Deterministically derives the backup encryption keypair from the account
+ * private key: RFC 5869 HKDF-SHA256 via Quartz's [Hkdf] (the same primitive
+ * NIP-44 v3 uses for its key schedule), with a counter-step retry on the
+ * near-impossible invalid scalar — the same pattern as Quartz's
+ * GeohashKeyDerivation. The keypair is never stored: after a key restore it is
+ * re-derived, so only the account secret can decrypt.
+ */
+internal fun backupKeyPair(identityPrivKey: ByteArray): KeyPair {
+    val prk = backupHkdf.extract(identityPrivKey, BACKUP_KEY_SALT)
+    var counter = 1
+    while (true) {
+        val okm = backupHkdf.expand(prk, BACKUP_KEY_INFO + byteArrayOf(counter.toByte()), 32)
+        if (Secp256k1Instance.isPrivateKeyValid(okm)) return KeyPair(privKey = okm)
+        counter++
+        check(counter < 256) { "ApplicationBackup: could not derive a valid backup key" }
+    }
+}
+
+internal fun backupSigner(account: Account): NostrSignerInternal {
+    val identityPrivKey = checkNotNull(account.signer.keyPair.privKey) {
+        "ApplicationBackup: account has no private key"
+    }
+    return NostrSignerInternal(backupKeyPair(identityPrivKey))
 }
 
 object ApplicationBackup {
@@ -216,7 +257,8 @@ object ApplicationBackup {
                 return true
             }
             val json = toJson(payload)
-            val encrypted = account.nip44Encrypt(json, account.hexKey)
+            val backupSigner = backupSigner(account)
+            val encrypted = backupSigner.nip44Encrypt(json, backupSigner.keyPair.pubKey.toHexKey())
             val event = account.signSync<Event>(
                 TimeUtils.now(),
                 BACKUP_KIND,
@@ -286,13 +328,34 @@ object ApplicationBackup {
         return received.maxByOrNull { it.key }?.value
     }
 
-    suspend fun decryptPayload(event: Event, account: Account): BackupPayload? = try {
-        val json = account.nip44Decrypt(event.content, account.hexKey)
-        fromJson(json)
+    /**
+     * Decrypts backup content with the derived backup key. Falls back to the
+     * legacy identity-key decryption for backups published before the derived
+     * key existed; the next publish overwrites those replaceable events.
+     */
+    internal suspend fun decryptContent(content: String, account: Account): String? = try {
+        val backupSigner = backupSigner(account)
+        backupSigner.nip44Decrypt(content, backupSigner.keyPair.pubKey.toHexKey())
     } catch (e: Exception) {
         if (e is CancellationException) throw e
-        AmberLog.e(Amber.TAG, "ApplicationBackup: failed to decrypt/parse backup payload", e)
-        null
+        try {
+            account.nip44Decrypt(content, account.hexKey)
+        } catch (legacy: Exception) {
+            if (legacy is CancellationException) throw legacy
+            AmberLog.e(Amber.TAG, "ApplicationBackup: failed to decrypt backup payload", legacy)
+            null
+        }
+    }
+
+    suspend fun decryptPayload(event: Event, account: Account): BackupPayload? {
+        val json = decryptContent(event.content, account) ?: return null
+        return try {
+            fromJson(json)
+        } catch (e: Exception) {
+            if (e is CancellationException) throw e
+            AmberLog.e(Amber.TAG, "ApplicationBackup: failed to parse backup payload", e)
+            null
+        }
     }
 
     suspend fun restoreFromPayload(npub: String, payload: BackupPayload): RestoreResult = try {

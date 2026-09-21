@@ -130,6 +130,10 @@ com.greenart7c3.nostrsigner
 
 Check [NIP 55](https://github.com/nostr-protocol/nips/blob/master/55.md) and [NIP 46](https://github.com/nostr-protocol/nips/blob/master/46.md) for more information.
 
+## Importing many accounts at once
+
+[amber-bulk-import](https://github.com/jooray/amber-bulk-import) takes a list of nsecs, encrypts them as NIP-49 ncryptsec and writes an Amber backup file, so a set of accounts can be restored in a single import rather than entered one at a time. It is a third-party tool and is not maintained by the Amber project.
+
 # Contributors
 
 <a align="center" href="https://github.com/greenart7c3/amber/graphs/contributors">

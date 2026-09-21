@@ -4,6 +4,9 @@ Release notes for Amber, one file per version (pre-releases included). The most 
 
 | Version | Changelog |
 |---------|-----------|
+| 6.6.5 | [6.6.5.md](6.6.5.md) |
+| 6.6.4 | [6.6.4.md](6.6.4.md) |
+| 6.6.3 | [6.6.3.md](6.6.3.md) |
 | 6.6.2 | [6.6.2.md](6.6.2.md) |
 | 6.6.1 | [6.6.1.md](6.6.1.md) |
 | 6.6.0 | [6.6.0.md](6.6.0.md) |

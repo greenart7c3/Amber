@@ -18,6 +18,11 @@ import java.util.UUID
 import kotlinx.coroutines.launch
 
 object NostrConnectUtils {
+    /**
+     * Splits a query parameter into its name and value on the first `=` only,
+     * so values that contain `=` (e.g. base64 padding like "XQUdha4rjh_gjAgHN8X5yg==") are preserved.
+     */
+    fun splitParam(param: String): Pair<String, String> = param.substringBefore("=") to param.substringAfter("=", "")
     private fun metaDataFromJson(json: String): BunkerMetadata = BunkerMetadata.mapper.readValue(json, BunkerMetadata::class.java)
 
     fun getIntentFromNostrConnect(
@@ -36,16 +41,12 @@ object NostrConnectUtils {
             var url = ""
             var image = ""
             val pubKey = split.first()
-            val parsedData = IntentUtils.decodeData(split.drop(1).joinToString { it })
+            val parsedData = IntentUtils.decodeData(split.drop(1).joinToString("") { it })
             val splitParsedData = parsedData.split("&")
             val permissions = mutableListOf<Permission>()
             var nostrConnectSecret = ""
             splitParsedData.forEach {
-                val internalSplit = it.split("=")
-                val paramName = internalSplit.first()
-                val json = internalSplit.mapIndexedNotNull { index, s ->
-                    if (index == 0) null else s
-                }.joinToString { data -> data }
+                val (paramName, json) = splitParam(it)
                 if (paramName == "relay") {
                     val relayUrl = RelayUrlNormalizer.normalizeOrNull(json)
                     if (relayUrl != null) {

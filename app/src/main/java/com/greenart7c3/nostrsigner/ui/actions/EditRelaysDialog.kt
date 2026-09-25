@@ -241,6 +241,7 @@ fun DefaultRelaysScreen(
                         IconButton(
                             colors = IconButtonDefaults.iconButtonColors().copy(
                                 containerColor = MaterialTheme.colorScheme.primary,
+                                contentColor = MaterialTheme.colorScheme.onPrimary,
                             ),
                             onClick = {
                                 scope.launch(Dispatchers.IO) {

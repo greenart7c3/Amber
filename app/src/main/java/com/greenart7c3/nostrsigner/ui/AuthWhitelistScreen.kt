@@ -133,6 +133,7 @@ fun AuthWhitelistScreen(
                     IconButton(
                         colors = IconButtonDefaults.iconButtonColors().copy(
                             containerColor = MaterialTheme.colorScheme.primary,
+                            contentColor = MaterialTheme.colorScheme.onPrimary,
                         ),
                         onClick = { addEntry() },
                     ) {

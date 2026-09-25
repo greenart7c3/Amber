@@ -41,16 +41,19 @@ val orange = Color(0xFFFF6B00)
 private val DarkColorPalette =
     darkColorScheme(
         primary = primaryColor,
-        onPrimary = Color.White,
+        onPrimary = Color.Black,
         secondary = primaryVariant,
         tertiary = secondaryColor,
         primaryContainer = secondaryColor,
+        onPrimaryContainer = Color.Black,
         secondaryContainer = secondaryColor,
+        onSecondaryContainer = Color.Black,
     )
 
 private val LightColorPalette =
     lightColorScheme(
         primary = primaryColor,
+        onPrimary = Color.Black,
         secondary = primaryVariant,
         tertiary = secondaryColor,
         primaryContainer = secondaryColor,

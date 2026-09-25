@@ -35,7 +35,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.ClipEntry
 import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalContext
@@ -197,6 +196,7 @@ fun NewNsecBunkerScreen(
                         IconButton(
                             colors = IconButtonDefaults.iconButtonColors().copy(
                                 containerColor = MaterialTheme.colorScheme.primary,
+                                contentColor = MaterialTheme.colorScheme.onPrimary,
                             ),
                             onClick = {
                                 scope.launch(Dispatchers.IO) {
@@ -216,7 +216,6 @@ fun NewNsecBunkerScreen(
                             Icon(
                                 Icons.Default.Add,
                                 null,
-                                tint = Color.Black,
                             )
                         }
                     },

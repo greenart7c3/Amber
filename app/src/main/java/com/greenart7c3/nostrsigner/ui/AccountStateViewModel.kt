@@ -230,7 +230,7 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
             npub = remotePubkeyHex.hexToByteArray().toNpub(),
             name = MutableStateFlow(bunkerName),
             picture = MutableStateFlow(""),
-            signPolicy = 1,
+            signPolicy = 2,
             didBackup = true,
             signer = NostrSignerInternal(localKeyPair),
             proxy = proxyMetadata,

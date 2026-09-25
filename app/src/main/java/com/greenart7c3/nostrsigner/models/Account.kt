@@ -69,6 +69,11 @@ class Account(
     val saveable = _saveable.asStateFlow()
 
     init {
+        // Proxy accounts always sign silently: signPolicy 2 ("always accept") matches
+        // the proxy path, where requests bypass per-app permissions and are forwarded
+        // to the remote bunker. Also self-heals accounts persisted with the older
+        // default of 1; no UI changes account.signPolicy after construction.
+        if (proxy != null && signPolicy != 2) this.signPolicy = 2
         scope.launch {
             combine(name, picture) { _, _ -> }.drop(1).collect {
                 _saveable.value = AccountState(this@Account)

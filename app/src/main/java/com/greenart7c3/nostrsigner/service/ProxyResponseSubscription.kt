@@ -5,6 +5,7 @@ import android.util.Log
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.LocalPreferences
+import com.greenart7c3.nostrsigner.models.Account
 import com.vitorpamplona.quartz.nip01Core.core.Event
 import com.vitorpamplona.quartz.nip01Core.core.toHexKey
 import com.vitorpamplona.quartz.nip01Core.crypto.KeyPair
@@ -20,7 +21,6 @@ import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
 import com.vitorpamplona.quartz.nip01Core.signers.NostrSignerInternal
 import com.vitorpamplona.quartz.nip01Core.tags.people.taggedUsers
 import com.vitorpamplona.quartz.nip04Dm.crypto.EncryptedInfo
-import com.vitorpamplona.quartz.nip19Bech32.toNpub
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerResponse
 import com.vitorpamplona.quartz.nip46RemoteSigner.NostrConnectEvent
 import com.vitorpamplona.quartz.utils.TimeUtils
@@ -49,10 +49,22 @@ class ProxyResponseSubscription(
     private val transientLogins = ConcurrentHashMap<String, TransientLogin>()
     private val pendingInitialConnect = ConcurrentHashMap<String, CompletableDeferred<String>>()
 
+    /**
+     * In-memory index of proxy accounts by their local proxy pubkey (hex), filled by
+     * [updateFilter]. Keeps the Keystore-backed account loading out of the per-event
+     * hot path; local proxy keys are freshly random per account, so the mapping is
+     * collision-free.
+     */
+    private val proxyAccountsByLocalPub = ConcurrentHashMap<String, Account>()
+
+    internal fun resolveForTaggedKey(localPubHex: String): Account? = proxyAccountsByLocalPub[localPubHex]
+
     private data class TransientLogin(
         val localPrivKey: ByteArray,
         val remotePubkey: String,
         val secret: String,
+        val signer: NostrSignerInternal,
+        val localPubHex: String,
     )
 
     init {
@@ -72,27 +84,18 @@ class ProxyResponseSubscription(
         if (event.kind != NostrConnectEvent.KIND) return
         if (!event.verify()) return
 
-        val taggedKey = event.taggedUsers().firstOrNull() ?: return
-        val taggedNpub = taggedKey.toNPub()
+        val taggedKey = event.taggedUsers().firstOrNull()?.pubKey ?: return
 
         Amber.instance.applicationIOScope.launch {
-            transientLogins.values.firstOrNull { tl ->
-                NostrSignerInternal(KeyPair(privKey = tl.localPrivKey)).keyPair.pubKey.toNpub() == taggedNpub
-            }?.let { tl ->
-                handleViaSigner(event, NostrSignerInternal(KeyPair(privKey = tl.localPrivKey)), tl.remotePubkey, tl.secret, relayUrl)
+            transientLogins.values.firstOrNull { it.localPubHex == taggedKey }?.let { tl ->
+                handleViaSigner(event, tl.signer, tl.remotePubkey, tl.secret, relayUrl, tl.localPubHex)
                 return@launch
             }
 
-            val accounts = LocalPreferences.allSavedAccounts(appContext)
-            for (info in accounts) {
-                val account = LocalPreferences.loadFromEncryptedStorage(appContext, info.npub) ?: continue
-                val proxy = account.proxy ?: continue
-                val localPub = account.signer.keyPair.pubKey.toNpub()
-                if (localPub != taggedNpub) continue
-                if (event.pubKey != proxy.remotePubkey) continue
-                handleViaSigner(event, account.signer, proxy.remotePubkey, "", relayUrl)
-                return@launch
-            }
+            val account = resolveForTaggedKey(taggedKey) ?: return@launch
+            val proxy = account.proxy ?: return@launch
+            if (event.pubKey != proxy.remotePubkey) return@launch
+            handleViaSigner(event, account.signer, proxy.remotePubkey, "", relayUrl, taggedKey)
         }
     }
 
@@ -102,6 +105,7 @@ class ProxyResponseSubscription(
         remotePubkey: String,
         secret: String,
         relayUrl: String,
+        localPubHex: String,
     ) {
         val decrypted = try {
             val isNip04 = EncryptedInfo.isNIP04(event.content)
@@ -123,12 +127,11 @@ class ProxyResponseSubscription(
 
         if (response != null) {
             RemoteBunkerClient.deliverResponse(response)
-            val localPub = signer.keyPair.pubKey.toHexKey()
-            pendingInitialConnect[localPub]?.let { deferred ->
+            pendingInitialConnect[localPubHex]?.let { deferred ->
                 val result = response.result
                 if (response.error.isNullOrBlank() && (secret.isEmpty() || result == secret || result == "ack")) {
                     deferred.complete(event.pubKey)
-                    pendingInitialConnect.remove(localPub)
+                    pendingInitialConnect.remove(localPubHex)
                 }
             }
             return
@@ -139,10 +142,9 @@ class ProxyResponseSubscription(
             val node = JacksonMapper.mapper.readTree(decrypted)
             val method = node.get("method")?.asText() ?: return
             if (method == "connect") {
-                val localPub = signer.keyPair.pubKey.toHexKey()
-                pendingInitialConnect[localPub]?.let { deferred ->
+                pendingInitialConnect[localPubHex]?.let { deferred ->
                     deferred.complete(event.pubKey)
-                    pendingInitialConnect.remove(localPub)
+                    pendingInitialConnect.remove(localPubHex)
                 }
             }
         } catch (_: Exception) {
@@ -177,12 +179,15 @@ class ProxyResponseSubscription(
         timeoutMs: Long,
     ): String? {
         val localPub = localKeyPair.pubKey.toHexKey()
+        val signer = NostrSignerInternal(localKeyPair)
         val deferred = CompletableDeferred<String>()
         pendingInitialConnect[localPub] = deferred
         transientLogins[localPub] = TransientLogin(
             localPrivKey = localKeyPair.privKey!!,
             remotePubkey = "",
             secret = secret,
+            signer = signer,
+            localPubHex = localPub,
         )
         subscribeForLocalKey(localPub, "", relays)
         return withTimeoutOrNull(timeoutMs) { deferred.await() }
@@ -190,10 +195,13 @@ class ProxyResponseSubscription(
 
     fun registerTransientLogin(localPrivKey: ByteArray, remotePubkey: String) {
         val signer = NostrSignerInternal(KeyPair(privKey = localPrivKey))
-        transientLogins[signer.keyPair.pubKey.toHexKey()] = TransientLogin(
+        val localPubHex = signer.keyPair.pubKey.toHexKey()
+        transientLogins[localPubHex] = TransientLogin(
             localPrivKey = localPrivKey,
             remotePubkey = remotePubkey,
             secret = "",
+            signer = signer,
+            localPubHex = localPubHex,
         )
     }
 
@@ -208,6 +216,7 @@ class ProxyResponseSubscription(
         if (BuildFlavorChecker.isOfflineFlavor()) return
         val activeSubKeys = mutableSetOf<String>()
         activeSubKeys += subIds.keys.filter { it.startsWith("transient_") }
+        val activeLocalPubs = mutableSetOf<String>()
         val since = TimeUtils.now()
 
         LocalPreferences.allAccounts(appContext).forEach { account ->
@@ -215,6 +224,8 @@ class ProxyResponseSubscription(
             if (proxy.relays.isEmpty()) return@forEach
 
             val localPub = account.signer.keyPair.pubKey.toHexKey()
+            proxyAccountsByLocalPub[localPub] = account
+            activeLocalPubs.add(localPub)
             val subKey = "proxy_${account.npub}"
             activeSubKeys.add(subKey)
             if (!subIds.containsKey(subKey)) {
@@ -239,5 +250,6 @@ class ProxyResponseSubscription(
         for (subKey in stale) {
             subIds.remove(subKey)?.let { client.unsubscribe(it) }
         }
+        proxyAccountsByLocalPub.keys.retainAll(activeLocalPubs)
     }
 }

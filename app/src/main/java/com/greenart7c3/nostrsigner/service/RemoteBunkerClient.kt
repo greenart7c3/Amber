@@ -18,6 +18,7 @@ import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 
 /**
@@ -90,27 +91,31 @@ object RemoteBunkerClient {
                 ),
             )
 
-            // Publish with retry/backoff. The first attempt may be rejected if the
-            // relay is still negotiating NIP-42 AUTH; the auth coordinator answers
-            // the challenge in the background and subsequent retries succeed once
-            // the relay accepts our AUTH event.
-            val published = publishWithAuthRetry(event, proxy.relays.toSet())
-
-            if (!published) {
-                Log.w(Amber.TAG, "Failed to publish bunker proxy request id=$id")
-                Amber.instance.getLogDatabase(account.npub).dao().insertLog(
-                    LogEntity(
-                        id = 0,
-                        url = proxy.remotePubkey,
-                        type = "bunker proxy request",
-                        message = "publish failed for $method id=$id",
-                        time = System.currentTimeMillis(),
-                    ),
-                )
-                return null
+            // Publish with retry/backoff concurrently with awaiting the response:
+            // a slow or silent relay must not delay the response wait. The first
+            // attempt may be rejected if the relay is still negotiating NIP-42
+            // AUTH; the auth coordinator answers the challenge in the background
+            // and subsequent retries succeed once the relay accepts our AUTH
+            // event. If the event can never be confirmed, this surfaces as a
+            // response timeout below.
+            val publishJob = Amber.instance.applicationIOScope.launch {
+                val published = publishWithAuthRetry(event, proxy.relays.toSet())
+                if (!published) {
+                    Log.w(Amber.TAG, "Failed to publish bunker proxy request id=$id")
+                    Amber.instance.getLogDatabase(account.npub).dao().insertLog(
+                        LogEntity(
+                            id = 0,
+                            url = proxy.remotePubkey,
+                            type = "bunker proxy request",
+                            message = "publish failed for $method id=$id",
+                            time = System.currentTimeMillis(),
+                        ),
+                    )
+                }
             }
 
             val response = withTimeoutOrNull(timeoutMs) { deferred.await() }
+            publishJob.cancel()
             if (response == null) {
                 Log.w(Amber.TAG, "Bunker proxy request timed out id=$id method=$method")
                 Amber.instance.getLogDatabase(account.npub).dao().insertLog(
@@ -297,10 +302,14 @@ object RemoteBunkerClient {
             // Retry-with-backoff so the relay's NIP-42 AUTH challenge has time to
             // be answered by the auth coordinator before the bunker request itself
             // is published — without this, the very first bunker `connect` attempt
-            // races the AUTH and is rejected.
-            val published = publishWithAuthRetry(event, relays.toSet())
-            if (!published) return null
-            return withTimeoutOrNull(timeoutMs) { deferred.await() }
+            // races the AUTH and is rejected. Runs concurrently with the response
+            // wait so publish confirmation never delays the await.
+            val publishJob = Amber.instance.applicationIOScope.launch {
+                publishWithAuthRetry(event, relays.toSet())
+            }
+            val response = withTimeoutOrNull(timeoutMs) { deferred.await() }
+            publishJob.cancel()
+            return response
         } finally {
             pending.remove(id)
         }

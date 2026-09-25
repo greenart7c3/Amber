@@ -132,12 +132,14 @@ class MainViewModel(val context: Context) : ViewModel() {
             account?.let { acc ->
                 val intentData = IntentUtils.getIntentData(context, intent, callingPackage, intent.getStringExtra("route"), acc)
                 if (intentData != null) {
-                    if (acc.isProxy) {
-                        // Bunker proxy: forward the request silently. Never enqueue
-                        // it for the approval UI.
-                        val handled = IntentUtils.handleProxyIntent(context, acc, intentData, callingPackage)
-                        if (handled) return@let
-                    }
+                    // Bunker proxy: forward the request silently. Never enqueue it
+                    // for the approval UI. handleProxyIntent also resolves the case
+                    // where the intent targets a proxy account that is not the
+                    // currently active one — SignerActivity hides itself for those,
+                    // so enqueueing would hang the caller on a UI that never
+                    // renders.
+                    val handled = IntentUtils.handleProxyIntent(context, acc, intentData, callingPackage)
+                    if (handled) return@let
                     IntentUtils.addAll(listOf(intentData))
                     addedIntentIds.add(intentData.id)
                     // The calling app is visible to us now; capture its icon/name.

@@ -157,7 +157,10 @@ object IntentUtils {
      * Bunker-proxy short-circuit for `nostrsigner://` intents. Forwards the request
      * to the remote bunker (or computes the result locally for trivial methods) and
      * delivers the result back to the caller via [Activity.setResult] or the
-     * provided callback URL. Per-app permissions and approval UI are skipped.
+     * provided callback URL. The approval UI is skipped; the caller is instead
+     * registered via [registerProxyApp] so it shows up on the main screen —
+     * without this a NIP-55 `get_public_key` connect would hang forever and the
+     * app would never be saved.
      *
      * Returns true if the intent was handled (so the caller should not enqueue it
      * for the approval UI).
@@ -168,12 +171,28 @@ object IntentUtils {
         intentData: IntentData,
         packageName: String?,
     ): Boolean {
-        if (!account.isProxy) return false
+        if (!account.isProxy) {
+            // The caller may target a *different* account than the one that is
+            // active: SignerActivity hides itself whenever the intent's target is
+            // a proxy account, so letting this fall through to the approval queue
+            // would leave the caller waiting on a UI that never renders.
+            if (intentData.currentAccount.isNotBlank() && intentData.currentAccount != account.npub) {
+                val target = LocalPreferences.loadFromEncryptedStorageSync(context, intentData.currentAccount)
+                if (target?.isProxy == true) {
+                    return handleProxyIntent(context, target, intentData, packageName)
+                }
+            }
+            return false
+        }
 
-        // GET_PUBLIC_KEY with more than one account: fall through to the existing
-        // approval UI so the user can pick which account to expose.
+        // A get_public_key targeting a *different* account is not ours to answer.
+        // (With several accounts the approval UI would normally let the user pick
+        // which account to expose — but that UI never renders on the proxy path,
+        // so falling through would just hang the caller forever.)
         if (intentData.type == SignerType.GET_PUBLIC_KEY &&
-            LocalPreferences.allSavedAccounts(context).size > 1
+            intentData.currentAccount.isNotBlank() &&
+            intentData.currentAccount != account.npub &&
+            intentData.currentAccount != account.hexKey
         ) {
             return false
         }
@@ -220,6 +239,13 @@ object IntentUtils {
                 else -> return false
             }
 
+            // The approval UI never renders on the proxy path, so the app must be
+            // registered here — a first-ever `get_public_key` connect would
+            // otherwise never be saved and never show up on the main screen.
+            if (packageName != null) {
+                registerProxyApp(context, account, packageName, intentData)
+            }
+
             deliverProxyResult(context, packageName, account, intentData, event, value)
             return true
         } catch (e: Exception) {
@@ -238,6 +264,77 @@ object IntentUtils {
             deliverProxyRejection()
             return true
         }
+    }
+
+    /**
+     * Persists the caller of a handled proxy intent as a connected application
+     * on [account], mirroring what the normal approval flow's [sendResult] does:
+     * an [ApplicationEntity] keyed by the caller's package plus an accepted
+     * permission row for [intentData]'s type, so the app appears on the main
+     * screen. No local crypto is involved and the request itself is still
+     * forwarded to the remote bunker per-request.
+     */
+    private suspend fun registerProxyApp(
+        context: Context,
+        account: Account,
+        packageName: String,
+        intentData: IntentData,
+    ) {
+        val dao = Amber.instance.dao(account.npub)
+        val application =
+            dao.getByKey(packageName) ?: run {
+                val localAppName =
+                    try {
+                        val info = context.packageManager.getApplicationInfo(packageName, 0)
+                        context.packageManager.getApplicationLabel(info).toString()
+                    } catch (_: Exception) {
+                        null
+                    }
+                ApplicationWithPermissions(
+                    application = ApplicationEntity(
+                        key = packageName,
+                        name = localAppName ?: "",
+                        relays = emptyList(),
+                        url = "",
+                        icon = "",
+                        description = "",
+                        pubKey = account.hexKey,
+                        isConnected = true,
+                        secret = "",
+                        useSecret = false,
+                        signPolicy = 2,
+                        closeApplication = true,
+                        deleteAfter = 0L,
+                        lastUsed = TimeUtils.now(),
+                    ),
+                    permissions = mutableListOf(),
+                )
+            }
+        application.application.isConnected = true
+        val permissionKind =
+            if (intentData.type == SignerType.NIP44_V3_ENCRYPT || intentData.type == SignerType.NIP44_V3_DECRYPT) {
+                intentData.nip44v3Kind
+            } else {
+                null
+            }
+        if (application.permissions.none { it.type == intentData.type.toString() && it.kind == permissionKind }) {
+            application.permissions.add(
+                ApplicationPermissionsEntity(
+                    null,
+                    packageName,
+                    intentData.type.toString(),
+                    permissionKind,
+                    true,
+                    RememberType.ALWAYS.screenCode,
+                    Long.MAX_VALUE / 1000,
+                    0,
+                ),
+            )
+        }
+        dao.insertApplicationWithPermissions(application)
+        // The caller is visible to us right now; capture its icon/name so a
+        // first-ever connection populates them immediately.
+        persistNativeAppMetadata(context, account, packageName)
     }
 
     private fun deliverProxyResult(
@@ -688,6 +785,17 @@ object IntentUtils {
                     npub = parsePubKey(npub)
                 }
 
+                // A connect request may carry neither current_user nor pubkey (the
+                // caller is asking for the key, it does not know one yet).
+                val npubAccount = npub
+                    ?: pubKey.takeIf { it.isNotBlank() }?.let { key ->
+                        try {
+                            Hex.decode(key).toNpub()
+                        } catch (_: Exception) {
+                            null
+                        }
+                    }
+
                 IntentData(
                     data = data,
                     name = name,
@@ -698,7 +806,7 @@ object IntentUtils {
                     compression = compressionType,
                     returnType = returnType,
                     permissions = permissions?.map { Permission(it.type.trim(), it.kind, it.checked) },
-                    currentAccount = npub ?: Hex.decode(pubKey).toNpub(),
+                    currentAccount = npubAccount ?: "",
                     route = route,
                     event = null,
                     encryptedData = null,

@@ -70,6 +70,7 @@ class SignerProviderQueryTest {
         account = mockk()
         every { account.npub } returns NPUB
         every { account.hexKey } returns HEX
+        every { account.isProxy } returns false
 
         mockkObject(LocalPreferences)
         every { LocalPreferences.loadFromEncryptedStorageSync(any(), any()) } returns account

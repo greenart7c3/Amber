@@ -153,6 +153,248 @@ object IntentUtils {
         }
     }
 
+    /**
+     * Bunker-proxy short-circuit for `nostrsigner://` intents. Forwards the request
+     * to the remote bunker (or computes the result locally for trivial methods) and
+     * delivers the result back to the caller via [Activity.setResult] or the
+     * provided callback URL. The approval UI is skipped; the caller is instead
+     * registered via [registerProxyApp] so it shows up on the main screen —
+     * without this a NIP-55 `get_public_key` connect would hang forever and the
+     * app would never be saved.
+     *
+     * Returns true if the intent was handled (so the caller should not enqueue it
+     * for the approval UI).
+     */
+    suspend fun handleProxyIntent(
+        context: Context,
+        account: Account,
+        intentData: IntentData,
+        packageName: String?,
+    ): Boolean {
+        if (!account.isProxy) {
+            // The caller may target a *different* account than the one that is
+            // active: SignerActivity hides itself whenever the intent's target is
+            // a proxy account, so letting this fall through to the approval queue
+            // would leave the caller waiting on a UI that never renders.
+            if (intentData.currentAccount.isNotBlank() && intentData.currentAccount != account.npub) {
+                val target = LocalPreferences.loadFromEncryptedStorageSync(context, intentData.currentAccount)
+                if (target?.isProxy == true) {
+                    return handleProxyIntent(context, target, intentData, packageName)
+                }
+            }
+            return false
+        }
+
+        // A get_public_key targeting a *different* account is not ours to answer.
+        // (With several accounts the approval UI would normally let the user pick
+        // which account to expose — but that UI never renders on the proxy path,
+        // so falling through would just hang the caller forever.)
+        if (intentData.type == SignerType.GET_PUBLIC_KEY &&
+            intentData.currentAccount.isNotBlank() &&
+            intentData.currentAccount != account.npub &&
+            intentData.currentAccount != account.hexKey
+        ) {
+            return false
+        }
+
+        try {
+            val (event, value) = when (intentData.type) {
+                SignerType.GET_PUBLIC_KEY -> Pair("", account.hexKey)
+                SignerType.PING -> Pair("", "pong")
+                SignerType.SIGN_EVENT -> {
+                    val unsigned = intentData.event ?: return false
+                    val signed = RemoteBunkerClient.remoteSignEventSync(
+                        account = account,
+                        createdAt = unsigned.createdAt,
+                        kind = unsigned.kind,
+                        tags = unsigned.tags,
+                        content = unsigned.content,
+                    )
+                    Pair(signed.toJson(), signed.sig)
+                }
+                SignerType.NIP04_ENCRYPT -> {
+                    val cipher = RemoteBunkerClient.remoteEncrypt(account, intentData.data, intentData.pubKey, useNip44 = false)
+                    Pair(cipher, cipher)
+                }
+                SignerType.NIP44_ENCRYPT -> {
+                    val cipher = RemoteBunkerClient.remoteEncrypt(account, intentData.data, intentData.pubKey, useNip44 = true)
+                    Pair(cipher, cipher)
+                }
+                SignerType.NIP04_DECRYPT -> {
+                    val plain = RemoteBunkerClient.remoteDecrypt(account, intentData.data, intentData.pubKey, useNip44 = false)
+                    Pair(plain, plain)
+                }
+                SignerType.NIP44_DECRYPT -> {
+                    val plain = RemoteBunkerClient.remoteDecrypt(account, intentData.data, intentData.pubKey, useNip44 = true)
+                    Pair(plain, plain)
+                }
+                SignerType.DECRYPT_ZAP_EVENT -> {
+                    val plain = RemoteBunkerClient.remoteDecryptZapEvent(account, intentData.data)
+                    Pair(plain, plain)
+                }
+                SignerType.SIGN_PSBT -> {
+                    val signed = RemoteBunkerClient.remoteSignPsbt(account, intentData.data)
+                    Pair(signed, signed)
+                }
+                else -> return false
+            }
+
+            // The approval UI never renders on the proxy path, so the app must be
+            // registered here — a first-ever `get_public_key` connect would
+            // otherwise never be saved and never show up on the main screen.
+            if (packageName != null) {
+                registerProxyApp(context, account, packageName, intentData)
+            }
+
+            deliverProxyResult(context, packageName, account, intentData, event, value)
+            return true
+        } catch (e: Exception) {
+            AmberLog.e(Amber.TAG, "Bunker proxy intent forwarding failed", e)
+            Amber.instance.applicationIOScope.launch {
+                Amber.instance.getLogDatabase(account.npub).dao().insertLog(
+                    LogEntity(
+                        0,
+                        packageName ?: "intent",
+                        "bunker proxy intent",
+                        e.message ?: "unknown error",
+                        System.currentTimeMillis(),
+                    ),
+                )
+            }
+            deliverProxyRejection()
+            return true
+        }
+    }
+
+    /**
+     * Persists the caller of a handled proxy intent as a connected application
+     * on [account], mirroring what the normal approval flow's [sendResult] does:
+     * an [ApplicationEntity] keyed by the caller's package plus an accepted
+     * permission row for [intentData]'s type, so the app appears on the main
+     * screen. No local crypto is involved and the request itself is still
+     * forwarded to the remote bunker per-request.
+     */
+    private suspend fun registerProxyApp(
+        context: Context,
+        account: Account,
+        packageName: String,
+        intentData: IntentData,
+    ) {
+        val dao = Amber.instance.dao(account.npub)
+        val application =
+            dao.getByKey(packageName) ?: run {
+                val localAppName =
+                    try {
+                        val info = context.packageManager.getApplicationInfo(packageName, 0)
+                        context.packageManager.getApplicationLabel(info).toString()
+                    } catch (_: Exception) {
+                        null
+                    }
+                ApplicationWithPermissions(
+                    application = ApplicationEntity(
+                        key = packageName,
+                        name = localAppName ?: "",
+                        relays = emptyList(),
+                        url = "",
+                        icon = "",
+                        description = "",
+                        pubKey = account.hexKey,
+                        isConnected = true,
+                        secret = "",
+                        useSecret = false,
+                        signPolicy = 2,
+                        closeApplication = true,
+                        deleteAfter = 0L,
+                        lastUsed = TimeUtils.now(),
+                    ),
+                    permissions = mutableListOf(),
+                )
+            }
+        application.application.isConnected = true
+        val permissionKind =
+            if (intentData.type == SignerType.NIP44_V3_ENCRYPT || intentData.type == SignerType.NIP44_V3_DECRYPT) {
+                intentData.nip44v3Kind
+            } else {
+                null
+            }
+        if (application.permissions.none { it.type == intentData.type.toString() && it.kind == permissionKind }) {
+            application.permissions.add(
+                ApplicationPermissionsEntity(
+                    null,
+                    packageName,
+                    intentData.type.toString(),
+                    permissionKind,
+                    true,
+                    RememberType.ALWAYS.screenCode,
+                    Long.MAX_VALUE / 1000,
+                    0,
+                ),
+            )
+        }
+        dao.insertApplicationWithPermissions(application)
+        // The caller is visible to us right now; capture its icon/name so a
+        // first-ever connection populates them immediately.
+        persistNativeAppMetadata(context, account, packageName)
+    }
+
+    private fun deliverProxyResult(
+        context: Context,
+        packageName: String?,
+        account: Account,
+        intentData: IntentData,
+        event: String,
+        value: String,
+    ) {
+        if (packageName != null) {
+            val intent = Intent()
+            intent.putExtra("signature", value)
+            intent.putExtra("result", value)
+            intent.putExtra("id", intentData.id)
+            intent.putExtra("event", event)
+            if (intentData.type == SignerType.GET_PUBLIC_KEY) {
+                intent.putExtra("package", BuildConfig.APPLICATION_ID)
+            }
+            Amber.instance.getMainActivity()?.setResult(RESULT_OK, intent)
+        } else if (!intentData.callBackUrl.isNullOrBlank()) {
+            if (intentData.returnType == ReturnType.SIGNATURE) {
+                val ai = Intent(Intent.ACTION_VIEW)
+                ai.data = (intentData.callBackUrl + Uri.encode(value)).toUri()
+                context.startActivity(ai)
+            } else {
+                val ai = Intent(Intent.ACTION_VIEW)
+                ai.data = (intentData.callBackUrl + Uri.encode(event)).toUri()
+                context.startActivity(ai)
+            }
+        }
+        Amber.instance.applicationIOScope.launch {
+            Amber.instance.getHistoryDatabase(account.npub).dao().addHistory(
+                listOf(
+                    HistoryEntity(
+                        0,
+                        packageName ?: "",
+                        intentData.type.toString(),
+                        intentData.event?.kind,
+                        TimeUtils.now(),
+                        true,
+                        content = if (event.isNotEmpty()) event else value,
+                    ),
+                ),
+                account.npub,
+            )
+        }
+        Amber.instance.getMainActivity()?.let {
+            it.intent = null
+            it.finishAndRemoveTask()
+        }
+    }
+
+    private fun deliverProxyRejection() {
+        Amber.instance.getMainActivity()?.let {
+            it.intent = null
+            it.finishAndRemoveTask()
+        }
+    }
+
     fun removeAll(list: List<IntentData>) {
         _intents.update { current -> (current - list.toSet()).toPersistentList() }
     }
@@ -543,6 +785,17 @@ object IntentUtils {
                     npub = parsePubKey(npub)
                 }
 
+                // A connect request may carry neither current_user nor pubkey (the
+                // caller is asking for the key, it does not know one yet).
+                val npubAccount = npub
+                    ?: pubKey.takeIf { it.isNotBlank() }?.let { key ->
+                        try {
+                            Hex.decode(key).toNpub()
+                        } catch (_: Exception) {
+                            null
+                        }
+                    }
+
                 IntentData(
                     data = data,
                     name = name,
@@ -553,7 +806,7 @@ object IntentUtils {
                     compression = compressionType,
                     returnType = returnType,
                     permissions = permissions?.map { Permission(it.type.trim(), it.kind, it.checked) },
-                    currentAccount = npub ?: Hex.decode(pubKey).toNpub(),
+                    currentAccount = npubAccount ?: "",
                     route = route,
                     event = null,
                     encryptedData = null,

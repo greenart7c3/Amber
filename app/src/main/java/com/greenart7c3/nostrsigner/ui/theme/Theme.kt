@@ -37,6 +37,8 @@ val primaryColor = Color(0xFFFFCA62)
 val primaryVariant = Color(0xFFC8541A)
 val secondaryColor = Color(0xFFFFCA62)
 val orange = Color(0xFFFF6B00)
+val connectedColorLight = Color(0xFF1B5E20)
+val connectedColorDark = Color(0xFF81C784)
 
 private val DarkColorPalette =
     darkColorScheme(

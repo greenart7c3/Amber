@@ -4,6 +4,7 @@ import android.content.Context
 import android.graphics.drawable.Drawable
 import android.widget.Toast
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.material.icons.Icons
@@ -12,6 +13,8 @@ import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.PlainTooltip
 import androidx.compose.material3.Text
 import androidx.compose.material3.TooltipAnchorPosition
@@ -28,7 +31,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
@@ -50,6 +52,8 @@ import com.greenart7c3.nostrsigner.ui.NavBackStackEntryWrapper
 import com.greenart7c3.nostrsigner.ui.navigation.Route
 import com.greenart7c3.nostrsigner.ui.navigation.routes
 import com.greenart7c3.nostrsigner.ui.navigation.title
+import com.greenart7c3.nostrsigner.ui.theme.connectedColorDark
+import com.greenart7c3.nostrsigner.ui.theme.connectedColorLight
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequestConnect
 import java.util.Base64
 import kotlinx.collections.immutable.ImmutableList
@@ -107,7 +111,7 @@ fun AmberTopAppBar(
                                         Icon(
                                             imageVector = ImageVector.vectorResource(R.drawable.relays),
                                             contentDescription = context.getString(R.string.reconnect),
-                                            tint = Color.Unspecified,
+                                            tint = LocalContentColor.current,
                                         )
                                     }
                                 }
@@ -160,7 +164,11 @@ fun AmberTopAppBar(
                                                 Icon(
                                                     Icons.Outlined.Shield,
                                                     context.getString(R.string.proxy),
-                                                    tint = if (isProxyEnabled) Color.Green else Color.Red,
+                                                    tint = if (isProxyEnabled) {
+                                                        if (isSystemInDarkTheme()) connectedColorDark else connectedColorLight
+                                                    } else {
+                                                        MaterialTheme.colorScheme.error
+                                                    },
                                                 )
                                             },
                                         )

@@ -20,6 +20,7 @@ import androidx.compose.ui.window.rememberWindowState
 import com.greenart7c3.nostrsigner.desktop.core.AccountManager
 import com.greenart7c3.nostrsigner.desktop.core.AccountsStore
 import com.greenart7c3.nostrsigner.desktop.core.AmberDesktop
+import com.greenart7c3.nostrsigner.desktop.core.DedicatedUser
 import com.greenart7c3.nostrsigner.desktop.core.DesktopAccount
 import com.greenart7c3.nostrsigner.desktop.core.Notifier
 import com.greenart7c3.nostrsigner.desktop.core.PassphraseLock
@@ -29,6 +30,7 @@ import com.greenart7c3.nostrsigner.desktop.core.describe
 import com.greenart7c3.nostrsigner.desktop.ui.App
 import com.greenart7c3.nostrsigner.desktop.ui.NostrSignerTheme
 import com.greenart7c3.nostrsigner.desktop.ui.handleShortcut
+import com.greenart7c3.nostrsigner.desktop.ui.runUserSetupWindow
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
@@ -45,14 +47,16 @@ object Session {
             var engineStarted = false
             PassphraseLock.state.collect { status ->
                 when (status) {
-                    PassphraseLock.Status.LOCKED -> {
-                        // Key material is evicted; drop the account reference so
-                        // nothing in the UI can reach a decrypted signer.
+                    PassphraseLock.Status.LOCKED, PassphraseLock.Status.DISABLED -> {
+                        // Key material is evicted (or not set up yet); drop the
+                        // account reference so nothing in the UI can reach a
+                        // decrypted signer, and keep the engine disconnected
+                        // until the passphrase has been set up and unlocked.
                         account.value = null
                         loading.value = false
                     }
 
-                    PassphraseLock.Status.DISABLED, PassphraseLock.Status.UNLOCKED -> {
+                    PassphraseLock.Status.UNLOCKED -> {
                         val saved = AmberDesktop.settings.currentAccount
                         val npub = saved.ifBlank { AccountsStore.accounts.value.firstOrNull()?.npub ?: "" }
                         if (npub.isNotBlank()) {
@@ -118,12 +122,30 @@ private object DesktopTray {
 }
 
 fun main() {
-    // The dorkbox tray MUST be created before Compose/AWT initializes GTK:
-    // dorkbox has to own GTK loading, otherwise the AppIndicator backend fails
-    // to start and SystemTray.get() returns null even when
-    // libayatana-appindicator is installed. So build it here, first thing.
+    when (val state = DedicatedUser.detect()) {
+        DedicatedUser.State.Active -> startAmber()
+        is DedicatedUser.State.Ready ->
+            // A launcher is installed: switch to the dedicated user right away
+            // without asking for a password. If the switch fails, fall through
+            // to the setup window to regenerate it; this process exits either
+            // way once the window closes.
+            if (!DedicatedUser.relaunch(state.command)) {
+                runUserSetupWindow()
+            }
+
+        is DedicatedUser.State.SetupNeeded -> runUserSetupWindow()
+    }
+}
+
+private fun startAmber() {
+    // The dorkbox tray prefers to be created before Compose/AWT initializes
+    // GTK (dorkbox has to own GTK loading, otherwise the AppIndicator backend
+    // fails to start and SystemTray.get() returns null even when
+    // libayatana-appindicator is installed). So start it here, first thing —
+    // but never let it block the window: createBounded probes for an SNI host
+    // and abandons init that takes too long.
     if (DesktopTray.isLinux && System.getenv("AMBER_DISABLE_TRAY") == null) {
-        DesktopTray.instance = NativeTray.create(
+        DesktopTray.instance = NativeTray.createBounded(
             iconStream = { NativeTray::class.java.getResourceAsStream("/icon.png") },
             tooltip = Strings.get("d_tray_tooltip"),
             openLabel = Strings.get("d_tray_open"),

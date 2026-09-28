@@ -173,8 +173,8 @@ data class DesktopSettings(
     ),
     val currentAccount: String = "",
     val darkTheme: Boolean? = null,
-    /** Auto-lock delay for the passphrase lock, in minutes; 0 = never. */
-    val autoLockMinutes: Int = 0,
+    /** Auto-lock delay for the passphrase lock, in minutes; 0 = never. Defaults to 1 hour. */
+    val autoLockMinutes: Int = 60,
     /** Keep running in the system tray when the window is closed. */
     val closeToTray: Boolean = true,
     /** Show a system notification when a request needs approval. */

@@ -2,6 +2,7 @@ package com.greenart7c3.nostrsigner.desktop.ui
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -52,6 +53,113 @@ fun UnlockScreen() {
         }
     }
 
+    LockScreenScaffold(subtitle = Strings.get("d_locked", language)) {
+        OutlinedTextField(
+            value = passphrase,
+            onValueChange = { passphrase = it },
+            label = { Text(Strings.get("d_passphrase", language)) },
+            singleLine = true,
+            visualTransformation = PasswordVisualTransformation(),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+            modifier = Modifier.fillMaxWidth(),
+        )
+        error?.let {
+            Spacer(Modifier.height(8.dp))
+            Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+        }
+        Spacer(Modifier.height(16.dp))
+        AmberButton(
+            text = if (working) Strings.get("d_unlocking", language) else Strings.get("d_unlock", language),
+            fillWidth = true,
+            enabled = passphrase.isNotEmpty() && !working,
+            onClick = ::submit,
+        )
+    }
+}
+
+/**
+ * First-run gate: Amber refuses to start until a passphrase is set. There is
+ * no way past this screen and no way back to unprotected key storage.
+ */
+@Composable
+fun PassphraseSetupScreen() {
+    val scope = rememberCoroutineScope()
+    val language by Strings.currentLanguage.collectAsState()
+    var passphrase by remember { mutableStateOf("") }
+    var confirm by remember { mutableStateOf("") }
+    var error by remember { mutableStateOf<String?>(null) }
+    var working by remember { mutableStateOf(false) }
+
+    fun submit() {
+        if (working) return
+        error = null
+        if (passphrase.length < 8) {
+            error = Strings.get("d_use_8_chars", language)
+            return
+        }
+        if (passphrase != confirm) {
+            error = Strings.get("d_passphrases_no_match", language)
+            return
+        }
+        working = true
+        scope.launch {
+            try {
+                PassphraseLock.enable(passphrase.toCharArray())
+                passphrase = ""
+                confirm = ""
+            } catch (e: Exception) {
+                error = e.message ?: Strings.get("d_failed_update_passphrase", language)
+            }
+            working = false
+        }
+    }
+
+    LockScreenScaffold(subtitle = Strings.get("d_passphrase_desc", language)) {
+        OutlinedTextField(
+            value = passphrase,
+            onValueChange = { passphrase = it },
+            label = { Text(Strings.get("d_new_passphrase", language)) },
+            singleLine = true,
+            visualTransformation = PasswordVisualTransformation(),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+            modifier = Modifier.fillMaxWidth(),
+        )
+        Spacer(Modifier.height(8.dp))
+        OutlinedTextField(
+            value = confirm,
+            onValueChange = { confirm = it },
+            label = { Text(Strings.get("d_repeat_passphrase", language)) },
+            singleLine = true,
+            visualTransformation = PasswordVisualTransformation(),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+            modifier = Modifier.fillMaxWidth(),
+        )
+        error?.let {
+            Spacer(Modifier.height(8.dp))
+            Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+        }
+        Spacer(Modifier.height(16.dp))
+        AmberButton(
+            text = if (working) Strings.get("d_working", language) else Strings.get("d_set_passphrase", language),
+            fillWidth = true,
+            enabled = !working,
+            onClick = ::submit,
+        )
+        Spacer(Modifier.height(8.dp))
+        Text(
+            Strings.get("d_passphrase_never_stored", language),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+}
+
+/** Shared centered layout for the lock and first-run passphrase screens. */
+@Composable
+private fun LockScreenScaffold(
+    subtitle: String,
+    content: @Composable ColumnScope.() -> Unit,
+) {
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         Column(
             Modifier.widthIn(max = 480.dp).padding(24.dp),
@@ -62,28 +170,10 @@ fun UnlockScreen() {
                 style = MaterialTheme.typography.headlineLarge,
                 fontWeight = FontWeight.Bold,
             )
-            Text(Strings.get("d_locked", language), style = MaterialTheme.typography.bodyMedium)
+            Spacer(Modifier.height(8.dp))
+            Text(subtitle, style = MaterialTheme.typography.bodyMedium)
             Spacer(Modifier.height(24.dp))
-            OutlinedTextField(
-                value = passphrase,
-                onValueChange = { passphrase = it },
-                label = { Text(Strings.get("d_passphrase", language)) },
-                singleLine = true,
-                visualTransformation = PasswordVisualTransformation(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                modifier = Modifier.fillMaxWidth(),
-            )
-            error?.let {
-                Spacer(Modifier.height(8.dp))
-                Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
-            }
-            Spacer(Modifier.height(16.dp))
-            AmberButton(
-                text = if (working) Strings.get("d_unlocking", language) else Strings.get("d_unlock", language),
-                fillWidth = true,
-                enabled = passphrase.isNotEmpty() && !working,
-                onClick = ::submit,
-            )
+            content()
         }
     }
 }

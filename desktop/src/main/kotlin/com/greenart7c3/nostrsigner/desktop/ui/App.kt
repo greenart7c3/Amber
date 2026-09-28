@@ -100,9 +100,19 @@ fun App() {
     }
 
     val lockStatus by PassphraseLock.state.collectAsState()
-    if (lockStatus == PassphraseLock.Status.LOCKED) {
-        UnlockScreen()
-        return
+    when (lockStatus) {
+        PassphraseLock.Status.LOCKED -> {
+            UnlockScreen()
+            return
+        }
+
+        // First run: no passphrase yet. Nothing else may load until it is set.
+        PassphraseLock.Status.DISABLED -> {
+            PassphraseSetupScreen()
+            return
+        }
+
+        PassphraseLock.Status.UNLOCKED -> {}
     }
 
     if (acc == null || addingAccount) {

@@ -4,6 +4,7 @@ import com.greenart7c3.nostrsigner.desktop.core.AccountManager
 import com.greenart7c3.nostrsigner.desktop.core.AppPermissionRecord
 import com.greenart7c3.nostrsigner.desktop.core.BunkerEngine
 import com.greenart7c3.nostrsigner.desktop.core.DesktopKeyStore
+import com.greenart7c3.nostrsigner.desktop.core.DesktopSettings
 import com.greenart7c3.nostrsigner.desktop.core.RememberType
 import com.greenart7c3.nostrsigner.desktop.core.SignerType
 import com.greenart7c3.nostrsigner.desktop.core.generateBunkerPrivKey
@@ -43,6 +44,11 @@ class DesktopCoreTest {
         val encrypted = DesktopKeyStore.encrypt(secret)
         assertTrue(encrypted != secret)
         assertEquals(secret, DesktopKeyStore.decrypt(encrypted))
+    }
+
+    @Test
+    fun freshInstallsLockAfterOneHour() {
+        assertEquals(60, DesktopSettings().autoLockMinutes)
     }
 
     @Test

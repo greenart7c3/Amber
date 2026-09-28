@@ -208,22 +208,50 @@ fun SettingsScreen(account: DesktopAccount) {
         LogsDialog(account) { showLogsDialog = false }
     }
     showLogoutConfirm?.let { npub ->
+        var logoutPassphrase by remember { mutableStateOf("") }
+        var loggingOut by remember { mutableStateOf(false) }
         AlertDialog(
-            onDismissRequest = { showLogoutConfirm = null },
+            onDismissRequest = { if (!loggingOut) showLogoutConfirm = null },
             title = { Text(Strings.get("d_log_out_q", language)) },
-            text = { Text(Strings.get("d_log_out_confirm", language)) },
+            text = {
+                Column {
+                    Text(Strings.get("d_log_out_confirm", language))
+                    Spacer(Modifier.height(8.dp))
+                    Text(Strings.get("d_log_out_passphrase", language))
+                    Spacer(Modifier.height(4.dp))
+                    OutlinedTextField(
+                        value = logoutPassphrase,
+                        onValueChange = { logoutPassphrase = it },
+                        label = { Text(Strings.get("d_passphrase", language)) },
+                        singleLine = true,
+                        visualTransformation = PasswordVisualTransformation(),
+                        enabled = !loggingOut,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
+            },
             confirmButton = {
                 AmberTextButton(
-                    text = Strings.get("d_log_out", language),
+                    text = if (loggingOut) Strings.get("d_working", language) else Strings.get("d_log_out", language),
+                    enabled = !loggingOut,
                     onClick = {
-                        showLogoutConfirm = null
-                        scope.launch { Session.logout(npub) }
+                        loggingOut = true
+                        scope.launch {
+                            if (PassphraseLock.verify(logoutPassphrase.toCharArray())) {
+                                showLogoutConfirm = null
+                                Session.logout(npub)
+                            } else {
+                                Toaster.toast(Strings.get("d_wrong_passphrase", language))
+                            }
+                            loggingOut = false
+                        }
                     },
                 )
             },
             dismissButton = {
                 AmberTextButton(
                     text = Strings.get("cancel", language),
+                    enabled = !loggingOut,
                     onClick = { showLogoutConfirm = null },
                 )
             },
@@ -280,94 +308,47 @@ private fun SettingSwitch(
 
 @Composable
 private fun SecuritySection() {
-    val scope = rememberCoroutineScope()
-    val lockStatus by PassphraseLock.state.collectAsState()
     val settings by SettingsStore.settings.collectAsState()
     val language by Strings.currentLanguage.collectAsState()
-    var dialog by remember { mutableStateOf<PassphraseDialogMode?>(null) }
-    var showRemoveConfirm by remember { mutableStateOf(false) }
+    var showChangeDialog by remember { mutableStateOf(false) }
 
-    if (lockStatus == PassphraseLock.Status.DISABLED) {
-        Text(
-            Strings.get("d_passphrase_desc", language),
-            style = MaterialTheme.typography.bodySmall,
+    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        AmberOutlinedButton(
+            text = Strings.get("d_lock_now", language),
+            onClick = { PassphraseLock.lock() },
         )
-        AmberButton(text = Strings.get("d_set_passphrase", language), onClick = { dialog = PassphraseDialogMode.SET })
-    } else {
-        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            AmberOutlinedButton(
-                text = Strings.get("d_lock_now", language),
-                onClick = { PassphraseLock.lock() },
+        AmberOutlinedButton(
+            text = Strings.get("d_change_passphrase", language),
+            onClick = { showChangeDialog = true },
+        )
+    }
+    Spacer(Modifier.height(8.dp))
+    Text(Strings.get("d_lock_after", language), style = MaterialTheme.typography.bodySmall)
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        listOf(
+            0 to Strings.get("d_lock_never", language),
+            5 to Strings.get("d_lock_5min", language),
+            15 to Strings.get("d_lock_15min", language),
+            60 to Strings.get("d_lock_1hour", language),
+        ).forEach { (minutes, label) ->
+            FilterChip(
+                selected = settings.autoLockMinutes == minutes,
+                onClick = {
+                    SettingsStore.update { it.copy(autoLockMinutes = minutes) }
+                    PassphraseLock.touch()
+                },
+                label = { Text(label) },
             )
-            AmberOutlinedButton(
-                text = Strings.get("d_change_passphrase", language),
-                onClick = { dialog = PassphraseDialogMode.CHANGE },
-            )
-            AmberOutlinedButton(
-                text = Strings.get("d_remove_passphrase", language),
-                onClick = { showRemoveConfirm = true },
-            )
-        }
-        Spacer(Modifier.height(8.dp))
-        Text(Strings.get("d_lock_after", language), style = MaterialTheme.typography.bodySmall)
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            listOf(
-                0 to Strings.get("d_lock_never", language),
-                5 to Strings.get("d_lock_5min", language),
-                15 to Strings.get("d_lock_15min", language),
-                60 to Strings.get("d_lock_1hour", language),
-            ).forEach { (minutes, label) ->
-                FilterChip(
-                    selected = settings.autoLockMinutes == minutes,
-                    onClick = {
-                        SettingsStore.update { it.copy(autoLockMinutes = minutes) }
-                        PassphraseLock.touch()
-                    },
-                    label = { Text(label) },
-                )
-            }
         }
     }
 
-    dialog?.let { mode ->
-        PassphraseDialog(mode) { dialog = null }
-    }
-    if (showRemoveConfirm) {
-        AlertDialog(
-            onDismissRequest = { showRemoveConfirm = false },
-            title = { Text(Strings.get("d_remove_passphrase_q", language)) },
-            text = {
-                Text(Strings.get("d_remove_passphrase_desc", language))
-            },
-            confirmButton = {
-                AmberTextButton(
-                    text = Strings.get("remove", language),
-                    onClick = {
-                        showRemoveConfirm = false
-                        scope.launch {
-                            PassphraseLock.disable()
-                            Toaster.toast(Strings.get("d_passphrase_removed", language))
-                        }
-                    },
-                )
-            },
-            dismissButton = {
-                AmberTextButton(
-                    text = Strings.get("cancel", language),
-                    onClick = { showRemoveConfirm = false },
-                )
-            },
-        )
+    if (showChangeDialog) {
+        ChangePassphraseDialog { showChangeDialog = false }
     }
 }
 
-private enum class PassphraseDialogMode { SET, CHANGE }
-
 @Composable
-private fun PassphraseDialog(
-    mode: PassphraseDialogMode,
-    onDismiss: () -> Unit,
-) {
+private fun ChangePassphraseDialog(onDismiss: () -> Unit) {
     val scope = rememberCoroutineScope()
     val language by Strings.currentLanguage.collectAsState()
     var current by remember { mutableStateOf("") }
@@ -377,7 +358,7 @@ private fun PassphraseDialog(
 
     AlertDialog(
         onDismissRequest = { if (!working) onDismiss() },
-        title = { Text(if (mode == PassphraseDialogMode.SET) Strings.get("d_set_passphrase", language) else Strings.get("d_change_the_passphrase", language)) },
+        title = { Text(Strings.get("d_change_the_passphrase", language)) },
         text = {
             Column {
                 Text(
@@ -385,17 +366,15 @@ private fun PassphraseDialog(
                     style = MaterialTheme.typography.bodySmall,
                 )
                 Spacer(Modifier.height(8.dp))
-                if (mode == PassphraseDialogMode.CHANGE) {
-                    OutlinedTextField(
-                        value = current,
-                        onValueChange = { current = it },
-                        label = { Text(Strings.get("d_current_passphrase", language)) },
-                        singleLine = true,
-                        visualTransformation = PasswordVisualTransformation(),
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                    Spacer(Modifier.height(8.dp))
-                }
+                OutlinedTextField(
+                    value = current,
+                    onValueChange = { current = it },
+                    label = { Text(Strings.get("d_current_passphrase", language)) },
+                    singleLine = true,
+                    visualTransformation = PasswordVisualTransformation(),
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                Spacer(Modifier.height(8.dp))
                 OutlinedTextField(
                     value = new,
                     onValueChange = { new = it },
@@ -431,17 +410,11 @@ private fun PassphraseDialog(
                     working = true
                     scope.launch {
                         try {
-                            if (mode == PassphraseDialogMode.SET) {
-                                PassphraseLock.enable(new.toCharArray())
-                                Toaster.toast(Strings.get("d_passphrase_set", language))
+                            if (PassphraseLock.changePassphrase(current.toCharArray(), new.toCharArray())) {
+                                Toaster.toast(Strings.get("d_passphrase_changed", language))
                                 onDismiss()
                             } else {
-                                if (PassphraseLock.changePassphrase(current.toCharArray(), new.toCharArray())) {
-                                    Toaster.toast(Strings.get("d_passphrase_changed", language))
-                                    onDismiss()
-                                } else {
-                                    Toaster.toast(Strings.get("d_wrong_current_passphrase", language))
-                                }
+                                Toaster.toast(Strings.get("d_wrong_current_passphrase", language))
                             }
                         } catch (e: Exception) {
                             Toaster.toast(e.message ?: Strings.get("d_failed_update_passphrase", language))

@@ -767,11 +767,6 @@
     <string name="d_log_out_passphrase">ป้อนวลีรหัสผ่านเพื่อออกจากระบบ</string>
     <string name="d_passphrase_desc">Amber กำหนดให้ต้องมีวลีรหัสผ่าน กุญแจของคุณจะถูกเข้ารหัสไว้ขณะจัดเก็บ แม้กระทั่งจากซอฟต์แวร์ที่อ่านไฟล์ของคุณได้ และคุณจะถูกถามวลีรหัสผ่านเมื่อ Amber เริ่มทำงานและเมื่อถูกล็อก</string>
     <string name="d_setup_title">ปกป้องกุญแจของคุณ</string>
-    <string name="d_dedicated_user_title">เรียกใช้ Amber ภายใต้ผู้ใช้ของตัวเอง</string>
-    <string name="d_dedicated_user_desc">Amber จะสร้างผู้ใช้ระบบ “%1$s” และทำงานภายใต้ผู้ใช้นั้นเสมอ เพื่อให้แอปอื่นในคอมพิวเตอร์เครื่องนี้อ่านหน่วยความจำหรือไฟล์ของมันไม่ได้ ข้อมูล Amber ที่มีอยู่ของคุณจะถูกย้ายไปที่โฮมของผู้ใช้นั้น ป้อนรหัสผ่านของคุณ (sudo) เพื่อตั้งค่า</string>
-    <string name="d_dedicated_user_password">รหัสผ่านของคุณ (sudo)</string>
-    <string name="d_dedicated_user_set_up">ตั้งค่าและรีสตาร์ท</string>
-    <string name="d_dedicated_user_failed">การตั้งค่าล้มเหลว — ตรวจสอบรหัสผ่านแล้วลองอีกครั้ง</string>
     <string name="d_set_passphrase">ตั้งวลีรหัสผ่าน</string>
     <string name="d_lock_now">ล็อกทันที</string>
     <string name="d_change_passphrase">เปลี่ยนวลีรหัสผ่าน</string>

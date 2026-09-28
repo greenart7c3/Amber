@@ -788,11 +788,6 @@
     <string name="d_log_out_passphrase">Saisissez votre phrase secrète pour vous déconnecter</string>
     <string name="d_passphrase_desc">Amber exige une phrase secrète. Vos clés restent chiffrées au repos, même face à un logiciel capable de lire vos fichiers ; elle vous sera demandée au démarrage d'Amber et après chaque verrouillage.</string>
     <string name="d_setup_title">Protégez vos clés</string>
-    <string name="d_dedicated_user_title">Exécuter Amber sous son propre utilisateur</string>
-    <string name="d_dedicated_user_desc">Amber va créer l’utilisateur système « %1$s » et s’exécutera toujours sous celui-ci, afin que les autres applications de cet ordinateur ne puissent pas lire sa mémoire ni ses fichiers. Vos données Amber existantes sont déplacées vers le dossier personnel de cet utilisateur. Saisissez votre mot de passe (sudo) pour configurer cela.</string>
-    <string name="d_dedicated_user_password">Votre mot de passe (sudo)</string>
-    <string name="d_dedicated_user_set_up">Configurer et redémarrer</string>
-    <string name="d_dedicated_user_failed">Échec de la configuration — vérifiez votre mot de passe et réessayez</string>
     <string name="d_set_passphrase">Définir une phrase secrète</string>
     <string name="d_lock_now">Verrouiller maintenant</string>
     <string name="d_change_passphrase">Changer la phrase secrète</string>

@@ -787,11 +787,6 @@
     <string name="d_log_out_passphrase">Çıkış yapmak için parolanızı girin</string>
     <string name="d_passphrase_desc">Amber bir parola gerektirir. Anahtarlarınız, dosyalarınızı okuyabilen yazılımlara karşı bile diskte şifreli kalır; parola Amber başlatıldığında ve her kilitlenmeden sonra istenir.</string>
     <string name="d_setup_title">Anahtarlarınızı koruyun</string>
-    <string name="d_dedicated_user_title">Amber'i kendi kullanıcısı altında çalıştır</string>
-    <string name="d_dedicated_user_desc">Amber, “%1$s” işletim sistemi kullanıcısını oluşturacak ve her zaman onun altında çalışacak; böylece bu bilgisayardaki diğer uygulamalar belleğini veya dosyalarını okuyamayacak. Mevcut Amber verileriniz o kullanıcının ev dizinine taşınır. Kurulum için parolanızı (sudo) girin.</string>
-    <string name="d_dedicated_user_password">Parolanız (sudo)</string>
-    <string name="d_dedicated_user_set_up">Kur ve yeniden başlat</string>
-    <string name="d_dedicated_user_failed">Kurulum başarısız oldu — parolanızı kontrol edip tekrar deneyin</string>
     <string name="d_set_passphrase">Parola belirle</string>
     <string name="d_lock_now">Şimdi kilitle</string>
     <string name="d_change_passphrase">Parolayı değiştir</string>

@@ -767,11 +767,6 @@
     <string name="d_log_out_passphrase">ログアウトするにはパスフレーズを入力してください</string>
     <string name="d_passphrase_desc">Amber ではパスフレーズが必須です。ファイルを読み取れるソフトウェアに対しても、鍵は保存時に暗号化されたまま保たれます。Amber の起動時とロック解除時にパスフレーズの入力を求められます。</string>
     <string name="d_setup_title">鍵を保護</string>
-    <string name="d_dedicated_user_title">Amber を専用ユーザーで実行する</string>
-    <string name="d_dedicated_user_desc">Amber は OS ユーザー「%1$s」を作成し、常にそのユーザーで実行します。これにより、このコンピューター上の他のアプリはメモリやファイルを読み取れなくなります。既存の Amber データはそのユーザーのホームに移動されます。設定するにはパスワード（sudo）を入力してください。</string>
-    <string name="d_dedicated_user_password">あなたのパスワード（sudo）</string>
-    <string name="d_dedicated_user_set_up">設定して再起動</string>
-    <string name="d_dedicated_user_failed">セットアップに失敗しました。パスワードを確認してもう一度お試しください</string>
     <string name="d_set_passphrase">パスフレーズを設定</string>
     <string name="d_lock_now">今すぐロック</string>
     <string name="d_change_passphrase">パスフレーズを変更</string>

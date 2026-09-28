@@ -791,11 +791,6 @@
     <string name="d_log_out_passphrase">로그아웃하려면 암호를 입력하세요</string>
     <string name="d_passphrase_desc">Amber에는 암호가 필요합니다. 파일을 읽을 수 있는 소프트웨어로부터도 키는 저장 시 암호화된 상태로 유지됩니다. Amber를 시작할 때와 잠금 해제 시 암호를 입력해야 합니다.</string>
     <string name="d_setup_title">키 보호</string>
-    <string name="d_dedicated_user_title">Amber를 전용 사용자로 실행</string>
-    <string name="d_dedicated_user_desc">Amber는 OS 사용자 “%1$s”을(를) 만들고 항상 해당 사용자로 실행되어, 이 컴퓨터의 다른 앱이 메모리나 파일을 읽을 수 없게 합니다. 기존 Amber 데이터는 해당 사용자의 홈으로 이동됩니다. 설정하려면 비밀번호(sudo)를 입력하세요.</string>
-    <string name="d_dedicated_user_password">비밀번호(sudo)</string>
-    <string name="d_dedicated_user_set_up">설정 후 다시 시작</string>
-    <string name="d_dedicated_user_failed">설정에 실패했습니다. 비밀번호를 확인하고 다시 시도하세요</string>
     <string name="d_set_passphrase">암호 설정</string>
     <string name="d_lock_now">지금 잠그기</string>
     <string name="d_change_passphrase">암호 변경</string>

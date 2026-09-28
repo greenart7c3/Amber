@@ -767,11 +767,6 @@
     <string name="d_log_out_passphrase">Nhập cụm mật khẩu để đăng xuất</string>
     <string name="d_passphrase_desc">Amber yêu cầu có cụm mật khẩu. Khóa của bạn luôn được mã hóa khi lưu, ngay cả trước phần mềm có thể đọc tệp của bạn — bạn sẽ được yêu cầu nhập khi Amber khởi động và mỗi khi bị khóa.</string>
     <string name="d_setup_title">Bảo vệ khóa của bạn</string>
-    <string name="d_dedicated_user_title">Chạy Amber dưới người dùng riêng</string>
-    <string name="d_dedicated_user_desc">Amber sẽ tạo người dùng hệ thống “%1$s” và luôn chạy dưới người dùng đó, để các ứng dụng khác trên máy tính này không thể đọc bộ nhớ hay tệp của nó. Dữ liệu Amber hiện có của bạn được chuyển sang thư mục chính của người dùng đó. Nhập mật khẩu của bạn (sudo) để thiết lập.</string>
-    <string name="d_dedicated_user_password">Mật khẩu của bạn (sudo)</string>
-    <string name="d_dedicated_user_set_up">Thiết lập và khởi động lại</string>
-    <string name="d_dedicated_user_failed">Thiết lập thất bại — kiểm tra mật khẩu và thử lại</string>
     <string name="d_set_passphrase">Đặt cụm mật khẩu</string>
     <string name="d_lock_now">Khóa ngay</string>
     <string name="d_change_passphrase">Đổi cụm mật khẩu</string>

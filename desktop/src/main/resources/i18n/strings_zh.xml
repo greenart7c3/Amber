@@ -772,11 +772,6 @@
     <string name="d_log_out_passphrase">输入密码短语以退出登录</string>
     <string name="d_passphrase_desc">Amber 必须设置密码短语。即使面对能读取你文件的软件，密钥在存储时也保持加密——Amber 启动时和每次锁定后都会要求输入。</string>
     <string name="d_setup_title">保护你的密钥</string>
-    <string name="d_dedicated_user_title">以专属用户运行 Amber</string>
-    <string name="d_dedicated_user_desc">Amber 将创建系统用户“%1$s”并始终以该用户运行，这样这台电脑上的其他应用无法读取它的内存或文件。你现有的 Amber 数据会移动到该用户的主目录。输入你的密码（sudo）以完成设置。</string>
-    <string name="d_dedicated_user_password">你的密码（sudo）</string>
-    <string name="d_dedicated_user_set_up">设置并重启</string>
-    <string name="d_dedicated_user_failed">设置失败——请检查密码后重试</string>
     <string name="d_set_passphrase">设置密码短语</string>
     <string name="d_lock_now">立即锁定</string>
     <string name="d_change_passphrase">更改密码短语</string>

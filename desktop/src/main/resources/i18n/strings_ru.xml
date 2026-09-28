@@ -791,11 +791,6 @@
     <string name="d_log_out_passphrase">Введите пароль-фразу, чтобы выйти</string>
     <string name="d_passphrase_desc">Amber требует пароль-фразу. Ваши ключи остаются зашифрованными на диске, даже от программ, способных читать ваши файлы, — она запрашивается при запуске Amber и после каждой блокировки.</string>
     <string name="d_setup_title">Защитите свои ключи</string>
-    <string name="d_dedicated_user_title">Запускать Amber под отдельным пользователем</string>
-    <string name="d_dedicated_user_desc">Amber создаст системного пользователя «%1$s» и всегда будет работать под ним, чтобы другие приложения этого компьютера не могли читать его память и файлы. Существующие данные Amber переносятся в домашний каталог этого пользователя. Введите свой пароль (sudo) для настройки.</string>
-    <string name="d_dedicated_user_password">Ваш пароль (sudo)</string>
-    <string name="d_dedicated_user_set_up">Настроить и перезапустить</string>
-    <string name="d_dedicated_user_failed">Не удалось настроить — проверьте пароль и попробуйте снова</string>
     <string name="d_set_passphrase">Задать пароль-фразу</string>
     <string name="d_lock_now">Заблокировать сейчас</string>
     <string name="d_change_passphrase">Изменить пароль-фразу</string>

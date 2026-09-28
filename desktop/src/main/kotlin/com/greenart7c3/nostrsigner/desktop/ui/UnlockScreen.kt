@@ -14,6 +14,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -22,6 +23,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
@@ -42,6 +45,9 @@ fun UnlockScreen() {
     var passphrase by remember { mutableStateOf("") }
     var error by remember { mutableStateOf<String?>(null) }
     var working by remember { mutableStateOf(false) }
+    val passphraseFocus = remember { FocusRequester() }
+
+    LaunchedEffect(Unit) { passphraseFocus.requestFocus() }
 
     fun submit() {
         if (passphrase.isEmpty() || working) return
@@ -69,7 +75,7 @@ fun UnlockScreen() {
             singleLine = true,
             visualTransformation = PasswordVisualTransformation(),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().focusRequester(passphraseFocus),
         )
         error?.let {
             Spacer(Modifier.height(8.dp))
@@ -97,6 +103,9 @@ fun PassphraseSetupScreen() {
     var confirm by remember { mutableStateOf("") }
     var error by remember { mutableStateOf<String?>(null) }
     var working by remember { mutableStateOf(false) }
+    val passphraseFocus = remember { FocusRequester() }
+
+    LaunchedEffect(Unit) { passphraseFocus.requestFocus() }
 
     fun submit() {
         if (working) return
@@ -133,7 +142,7 @@ fun PassphraseSetupScreen() {
             singleLine = true,
             visualTransformation = PasswordVisualTransformation(),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().focusRequester(passphraseFocus),
         )
         Spacer(Modifier.height(8.dp))
         OutlinedTextField(

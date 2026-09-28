@@ -40,6 +40,7 @@ import com.greenart7c3.nostrsigner.desktop.Session
 import com.greenart7c3.nostrsigner.desktop.core.AccountManager
 import com.greenart7c3.nostrsigner.desktop.core.AccountsStore
 import com.greenart7c3.nostrsigner.desktop.core.AmberDesktop
+import com.greenart7c3.nostrsigner.desktop.core.AutoStart
 import com.greenart7c3.nostrsigner.desktop.core.DesktopAccount
 import com.greenart7c3.nostrsigner.desktop.core.DesktopKeyStore
 import com.greenart7c3.nostrsigner.desktop.core.PassphraseLock
@@ -149,6 +150,17 @@ fun SettingsScreen(account: DesktopAccount) {
             checked = settings.showNotifications,
             onCheckedChange = { value -> SettingsStore.update { it.copy(showNotifications = value) } },
         )
+        if (AutoStart.isSupported()) {
+            SettingSwitch(
+                title = Strings.get("d_start_on_boot", language),
+                description = Strings.get("d_start_on_boot_sub", language),
+                checked = settings.startOnBoot,
+                onCheckedChange = { value ->
+                    SettingsStore.update { it.copy(startOnBoot = value) }
+                    AutoStart.setEnabled(value)
+                },
+            )
+        }
 
         Spacer(Modifier.height(16.dp))
         SectionTitle(Strings.get("accounts", language))

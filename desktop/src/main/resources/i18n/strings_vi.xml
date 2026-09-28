@@ -757,6 +757,8 @@
     <string name="d_keep_in_tray_sub">Đóng cửa sổ sẽ thu nhỏ Amber vào khay hệ thống để tiếp tục phản hồi các yêu cầu.</string>
     <string name="d_notifications">Thông báo</string>
     <string name="d_notifications_sub">Hiển thị thông báo hệ thống khi có yêu cầu cần bạn phê duyệt.</string>
+    <string name="d_start_on_boot">Khởi động cùng hệ thống</string>
+    <string name="d_start_on_boot_sub">Khởi động Amber tự động khi bạn đăng nhập. Nó khởi động ở trạng thái khóa — nhập cụm mật khẩu để ký.</string>
     <string name="d_active">Đang hoạt động</string>
     <string name="d_switch">Chuyển</string>
     <string name="d_log_out">Đăng xuất</string>

@@ -99,4 +99,30 @@ object AmberDesktop {
         store(npub).apps.value.forEach { addAll(it.app.normalizedRelays()) }
         if (isEmpty()) addAll(defaultRelays())
     }
+
+    /**
+     * When the client was disconnected on purpose (network lost, passphrase
+     * lock): relay listeners skip their reconnect scheduling for a short
+     * window after this timestamp, mirroring `Amber.intentionalDisconnectTime`.
+     */
+    @Volatile
+    var intentionalDisconnectTime = 0L
+        private set
+
+    /** Mirrors `Amber.disconnectIntentionally`. */
+    fun disconnectIntentionally() {
+        intentionalDisconnectTime = System.currentTimeMillis()
+        client.disconnect()
+    }
+
+    /** Mirrors `Amber.reconnect`: connect retries failed relays directly. */
+    fun reconnect() {
+        if (PassphraseLock.isLocked()) return
+        val wasActive = client.isActive()
+        // Always call connect() so that failed relays (socket == null) are
+        // retried directly, bypassing the relay client's internal backoff
+        // delay. For relays already connected, connect() is a safe no-op.
+        client.connect()
+        client.reconnect(wasActive)
+    }
 }

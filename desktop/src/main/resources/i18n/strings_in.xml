@@ -791,11 +791,6 @@
     <string name="d_log_out_passphrase">Masukkan frasa sandi Anda untuk keluar</string>
     <string name="d_passphrase_desc">Amber membutuhkan frasa sandi. Kunci Anda tetap terenkripsi saat disimpan, bahkan dari perangkat lunak yang dapat membaca berkas Anda — Anda akan dimintai frasa sandi saat Amber dimulai dan setiap kali terkunci.</string>
     <string name="d_setup_title">Lindungi kunci Anda</string>
-    <string name="d_dedicated_user_title">Jalankan Amber dengan penggunanya sendiri</string>
-    <string name="d_dedicated_user_desc">Amber akan membuat pengguna OS “%1$s” dan selalu berjalan dengannya, sehingga aplikasi lain di komputer ini tidak dapat membaca memorinya atau berkasnya. Data Amber Anda yang ada dipindahkan ke direktori rumah pengguna tersebut. Masukkan kata sandi Anda (sudo) untuk menyiapkannya.</string>
-    <string name="d_dedicated_user_password">Kata sandi Anda (sudo)</string>
-    <string name="d_dedicated_user_set_up">Siapkan dan mulai ulang</string>
-    <string name="d_dedicated_user_failed">Penyiapan gagal — periksa kata sandi Anda dan coba lagi</string>
     <string name="d_set_passphrase">Tetapkan frasa sandi</string>
     <string name="d_lock_now">Kunci sekarang</string>
     <string name="d_change_passphrase">Ubah frasa sandi</string>

@@ -39,9 +39,7 @@ for the JVM) and mirrors the mobile UI and permission model.
   notification daemon (mako, dunst, swaync, GNOME Shell, …) via `notify-send`
   or `gdbus` on Linux — so they work on Hyprland/Wayland — `osascript` on
   macOS, and the AWT tray notification on Windows
-- Mandatory passphrase lock (see Key storage below); on Linux Amber
-  additionally runs under its own dedicated OS user, set up in-app on first
-  open (see Running under a dedicated user below)
+- Mandatory passphrase lock (see Key storage below)
 - Native desktop layout: sidebar navigation with an account switcher, dense
   list views, and keyboard shortcuts
 - Light/dark theme using the Amber palette
@@ -158,37 +156,6 @@ from their nsec or seed-word backup instead.
 jpackage can only produce installers for the OS it runs on, so release
 builds are made per-platform. Linux packaging needs `fakeroot` (deb) or
 `rpm-build` (rpm) installed.
-
-### Running under a dedicated user (Linux)
-
-On Linux, Amber does not run as your login user: the first time it opens, it
-asks for your password (sudo), creates a dedicated OS user, and re-launches
-itself under that user. The process that holds your keys is then walled off
-from the rest of your desktop session by the OS — other apps can no longer
-read Amber's memory or files, closing the same-user-malware residual risk
-described above (a process running as that user can still be attacked, of
-course — this is isolation, not a security boundary against root).
-
-What the first-open setup does (as root, once):
-
-1. creates the dedicated user `amber` with its own home directory
-   (`AMBER_USER=name` picks a different name),
-2. moves your existing Amber data (`~/.local/share/amber`) into that home,
-3. installs a root-owned launcher (`/usr/local/bin/amber-runas-<name>`) that
-   execs exactly the Amber binary with only your session's socket locations
-   (Wayland, X11/XWayland, D-Bus for tray and notifications) passed as
-   arguments — never arbitrary code or environment,
-4. installs a narrow sudoers rule (`/etc/sudoers.d/amber-runas-<name>`,
-   validated with `visudo`) allowing your user to run that launcher as the
-   dedicated user without a password,
-5. re-launches Amber under the dedicated user.
-
-Afterwards every launch switches to the dedicated user silently. If the
-installed binary path changes (reinstall, update), the next open asks for
-your password once to regenerate the launcher. Set
-`AMBER_DISABLE_DEDICATED_USER=1` to skip the whole flow (useful for
-`./gradlew :desktop:run`, which is skipped automatically since it launches a
-bare `java` binary), and requires the `acl` package for `setfacl`.
 
 ## Tests
 

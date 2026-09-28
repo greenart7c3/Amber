@@ -791,11 +791,6 @@
     <string name="d_log_out_passphrase">Inserisci la tua passphrase per uscire</string>
     <string name="d_passphrase_desc">Amber richiede una passphrase. Le tue chiavi restano cifrate a riposo, anche contro software in grado di leggere i tuoi file: ti verrà richiesta all'avvio di Amber e a ogni blocco.</string>
     <string name="d_setup_title">Proteggi le tue chiavi</string>
-    <string name="d_dedicated_user_title">Esegui Amber con un utente dedicato</string>
-    <string name="d_dedicated_user_desc">Amber creerà l’utente di sistema “%1$s” e verrà eseguito sempre con esso, così le altre app di questo computer non potranno leggere la sua memoria o i suoi file. I tuoi dati Amber esistenti vengono spostati nella home di quell’utente. Inserisci la tua password (sudo) per configurarlo.</string>
-    <string name="d_dedicated_user_password">La tua password (sudo)</string>
-    <string name="d_dedicated_user_set_up">Configura e riavvia</string>
-    <string name="d_dedicated_user_failed">Configurazione non riuscita — controlla la password e riprova</string>
     <string name="d_set_passphrase">Imposta una passphrase</string>
     <string name="d_lock_now">Blocca ora</string>
     <string name="d_change_passphrase">Cambia passphrase</string>

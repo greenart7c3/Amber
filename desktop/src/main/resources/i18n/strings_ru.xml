@@ -877,6 +877,7 @@
     <string name="d_remove_relay">Удалить реле</string>
     <string name="d_one_relay_required">Требуется хотя бы одно реле</string>
     <string name="d_reconnect_relays">Переподключить реле</string>
+    <string name="d_default_relays">Добавить реле по умолчанию</string>
     <string name="d_reconnecting">Переподключение…</string>
     <string name="d_remember_never">Только один раз</string>
     <string name="d_remember_1m">1 минута</string>

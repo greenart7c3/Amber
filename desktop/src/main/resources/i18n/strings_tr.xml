@@ -873,6 +873,7 @@
     <string name="d_remove_relay">Relay'i kaldır</string>
     <string name="d_one_relay_required">En az bir relay gerekli</string>
     <string name="d_reconnect_relays">Relay'lere yeniden bağlan</string>
+    <string name="d_default_relays">Varsayılan relay'leri ekle</string>
     <string name="d_reconnecting">Yeniden bağlanıyor…</string>
     <string name="d_remember_never">Yalnızca bir kez</string>
     <string name="d_remember_1m">1 dakika</string>

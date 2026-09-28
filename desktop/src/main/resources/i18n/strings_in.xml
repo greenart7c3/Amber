@@ -877,6 +877,7 @@
     <string name="d_remove_relay">Hapus relay</string>
     <string name="d_one_relay_required">Minimal satu relay diperlukan</string>
     <string name="d_reconnect_relays">Hubungkan ulang relay</string>
+    <string name="d_default_relays">Tambahkan relay bawaan</string>
     <string name="d_reconnecting">Menghubungkan ulang…</string>
     <string name="d_remember_never">Sekali saja</string>
     <string name="d_remember_1m">1 menit</string>

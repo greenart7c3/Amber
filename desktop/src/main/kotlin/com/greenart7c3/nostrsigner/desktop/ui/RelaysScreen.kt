@@ -31,6 +31,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.greenart7c3.nostrsigner.desktop.core.AmberDesktop
+import com.greenart7c3.nostrsigner.desktop.core.DesktopSettings
 import com.greenart7c3.nostrsigner.desktop.core.RelayChecker
 import com.greenart7c3.nostrsigner.desktop.core.SettingsStore
 import com.greenart7c3.nostrsigner.desktop.core.Strings
@@ -157,17 +158,34 @@ fun RelaysScreen() {
         }
 
         Spacer(Modifier.height(8.dp))
-        AmberOutlinedButton(
-            text = Strings.get("d_reconnect_relays", language),
-            onClick = {
-                scope.launch {
-                    AmberDesktop.engine.updateFilter()
-                    AmberDesktop.client.connect()
-                    AmberDesktop.client.reconnect(true)
-                    Toaster.toast(Strings.get("d_reconnecting", language))
-                }
-            },
-        )
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            AmberOutlinedButton(
+                text = Strings.get("d_default_relays", language),
+                onClick = {
+                    // Union with the shipped defaults (same set as Android):
+                    // existing relays stay, missing defaults come back.
+                    SettingsStore.update {
+                        it.copy(defaultRelays = (it.defaultRelays + DesktopSettings().defaultRelays).distinct())
+                    }
+                    scope.launch {
+                        AmberDesktop.engine.updateFilter()
+                        AmberDesktop.client.connect()
+                        Toaster.toast(Strings.get("d_saved", language))
+                    }
+                },
+            )
+            AmberOutlinedButton(
+                text = Strings.get("d_reconnect_relays", language),
+                onClick = {
+                    scope.launch {
+                        AmberDesktop.engine.updateFilter()
+                        AmberDesktop.client.connect()
+                        AmberDesktop.client.reconnect(true)
+                        Toaster.toast(Strings.get("d_reconnecting", language))
+                    }
+                },
+            )
+        }
         Spacer(Modifier.height(12.dp))
     }
 }

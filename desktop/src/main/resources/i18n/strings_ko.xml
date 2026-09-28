@@ -877,6 +877,7 @@
     <string name="d_remove_relay">릴레이 제거</string>
     <string name="d_one_relay_required">릴레이가 최소 하나 필요합니다</string>
     <string name="d_reconnect_relays">릴레이 재연결</string>
+    <string name="d_default_relays">기본 릴레이 추가</string>
     <string name="d_reconnecting">재연결 중…</string>
     <string name="d_remember_never">이번만</string>
     <string name="d_remember_1m">1분</string>

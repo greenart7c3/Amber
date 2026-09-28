@@ -853,6 +853,7 @@
     <string name="d_remove_relay">リレーを削除</string>
     <string name="d_one_relay_required">リレーは少なくとも 1 つ必要です</string>
     <string name="d_reconnect_relays">リレーに再接続</string>
+    <string name="d_default_relays">デフォルトのリレーを追加</string>
     <string name="d_reconnecting">再接続中…</string>
     <string name="d_remember_never">今回のみ</string>
     <string name="d_remember_1m">1 分</string>

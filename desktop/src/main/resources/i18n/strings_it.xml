@@ -54,6 +54,7 @@
     <string name="permissions">Permessi</string>
     <string name="delete_application">Elimina applicazione</string>
     <string name="reset_bunker">Reimposta Bunker</string>
+    <string name="d_reset_bunker_message">Questo genera una nuova chiave e un nuovo segreto per questa app. Le regole di permesso vengono conservate, ma l'app deve riconnettersi con la nuova stringa di connessione.</string>
     <string name="copy_to_clipboard">Copia negli appunti</string>
     <string name="nothing_to_approve_yet">Niente da approvare per ora</string>
     <string name="why_not_explore_your_favorite_nostr_app_a_bit">Perché non esplori un po\' la tua app Nostr preferita?</string>
@@ -813,6 +814,8 @@
     <string name="d_seed_words">Seed words</string>
     <string name="d_show">Mostra</string>
     <string name="d_copy_nsec">Copia nsec</string>
+    <string name="d_connection_string">Stringa di connessione</string>
+    <string name="d_connection_string_copied">Copiato negli appunti</string>
     <string name="d_nsec_copied">Chiave segreta copiata. Svuota gli appunti dopo averla incollata!</string>
     <string name="d_encrypted_backup">Backup cifrato (ncryptsec)</string>
     <string name="d_password">Password</string>

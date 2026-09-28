@@ -52,6 +52,7 @@
     <string name="permissions">İzinler</string>
     <string name="delete_application">Uygulamayı Sil</string>
     <string name="reset_bunker">Bunker\'ı Sıfırla</string>
+    <string name="d_reset_bunker_message">Bu, uygulama için yeni bir anahtar ve gizli anahtar oluşturur. İzin kuralları korunur ancak uygulamanın yeni bağlantı dizesiyle yeniden bağlanması gerekir.</string>
     <string name="copy_to_clipboard">Panoya kopyala</string>
     <string name="nothing_to_approve_yet">Henüz onaylanacak bir şey yok</string>
     <string name="why_not_explore_your_favorite_nostr_app_a_bit">Neden favori Nostr uygulamanızı biraz keşfetmiyorsunuz?</string>
@@ -809,6 +810,8 @@
     <string name="d_seed_words">Tohum kelimeleri</string>
     <string name="d_show">Göster</string>
     <string name="d_copy_nsec">nsec'i kopyala</string>
+    <string name="d_connection_string">Bağlantı dizesi</string>
+    <string name="d_connection_string_copied">Panoya kopyalandı</string>
     <string name="d_nsec_copied">Gizli anahtar kopyalandı. Yapıştırdıktan sonra panonuzu temizleyin!</string>
     <string name="d_encrypted_backup">Şifreli yedek (ncryptsec)</string>
     <string name="d_password">Parola</string>

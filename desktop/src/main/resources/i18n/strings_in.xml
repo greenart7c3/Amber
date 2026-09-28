@@ -54,6 +54,7 @@
     <string name="permissions">Izin</string>
     <string name="delete_application">Hapus Aplikasi</string>
     <string name="reset_bunker">Atur Ulang Bunker</string>
+    <string name="d_reset_bunker_message">Ini menghasilkan kunci dan rahasia baru untuk aplikasi ini. Aturan izinnya dipertahankan, tetapi aplikasi harus tersambung kembali dengan string koneksi yang baru.</string>
     <string name="copy_to_clipboard">Salin ke clipboard</string>
     <string name="nothing_to_approve_yet">Belum ada yang perlu disetujui</string>
     <string name="why_not_explore_your_favorite_nostr_app_a_bit">Mengapa tidak menjelajahi aplikasi nostr favorit Anda sebentar?</string>
@@ -813,6 +814,8 @@
     <string name="d_seed_words">Kata benih</string>
     <string name="d_show">Tampilkan</string>
     <string name="d_copy_nsec">Salin nsec</string>
+    <string name="d_connection_string">String koneksi</string>
+    <string name="d_connection_string_copied">Disalin ke papan klip</string>
     <string name="d_nsec_copied">Kunci rahasia disalin. Bersihkan papan klip setelah menempelkannya!</string>
     <string name="d_encrypted_backup">Cadangan terenkripsi (ncryptsec)</string>
     <string name="d_password">Kata sandi</string>

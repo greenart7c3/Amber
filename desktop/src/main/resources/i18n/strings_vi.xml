@@ -45,6 +45,7 @@
     <string name="permissions">Quyền</string>
     <string name="delete_application">Xóa Ứng Dụng</string>
     <string name="reset_bunker">Đặt lại Bunker</string>
+    <string name="d_reset_bunker_message">Thao tác này sẽ tạo khóa và bí mật mới cho ứng dụng này. Các quy tắc quyền được giữ nguyên, nhưng ứng dụng phải kết nối lại bằng chuỗi kết nối mới.</string>
     <string name="copy_to_clipboard">Sao chép vào khay nhớ tạm</string>
     <string name="nothing_to_approve_yet">Chưa có gì để phê duyệt</string>
     <string name="why_not_explore_your_favorite_nostr_app_a_bit">Tại sao không khám phá ứng dụng Nostr yêu thích của bạn một chút?</string>
@@ -789,6 +790,8 @@
     <string name="d_seed_words">Các từ khôi phục</string>
     <string name="d_show">Hiện</string>
     <string name="d_copy_nsec">Sao chép nsec</string>
+    <string name="d_connection_string">Chuỗi kết nối</string>
+    <string name="d_connection_string_copied">Đã sao chép vào bộ nhớ tạm</string>
     <string name="d_nsec_copied">Đã sao chép khóa bí mật. Hãy xóa bộ nhớ tạm sau khi dán!</string>
     <string name="d_encrypted_backup">Bản sao lưu đã mã hóa (ncryptsec)</string>
     <string name="d_password">Mật khẩu</string>

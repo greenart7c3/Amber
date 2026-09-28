@@ -45,6 +45,7 @@
     <string name="permissions">権限</string>
     <string name="delete_application">アプリケーションを削除</string>
     <string name="reset_bunker">Bunker をリセット</string>
+    <string name="d_reset_bunker_message">このアプリの新しい鍵とシークレットを生成します。権限ルールは保持されますが、アプリは新しい接続文字列で再接続する必要があります。</string>
     <string name="copy_to_clipboard">クリップボードにコピー</string>
     <string name="nothing_to_approve_yet">まだ承認するものはありません</string>
     <string name="why_not_explore_your_favorite_nostr_app_a_bit">お気に入りの Nostr アプリを少し探索してみませんか？</string>
@@ -789,6 +790,8 @@
     <string name="d_seed_words">シードワード</string>
     <string name="d_show">表示</string>
     <string name="d_copy_nsec">nsec をコピー</string>
+    <string name="d_connection_string">接続文字列</string>
+    <string name="d_connection_string_copied">クリップボードにコピーしました</string>
     <string name="d_nsec_copied">秘密鍵をコピーしました。貼り付けた後はクリップボードを消去してください!</string>
     <string name="d_encrypted_backup">暗号化バックアップ (ncryptsec)</string>
     <string name="d_password">パスワード</string>

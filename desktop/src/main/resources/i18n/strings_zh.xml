@@ -50,6 +50,7 @@
     <string name="permissions">权限</string>
     <string name="delete_application">删除应用</string>
     <string name="reset_bunker">重置 Bunker</string>
+    <string name="d_reset_bunker_message">将为该应用生成新的密钥和秘密。权限规则会保留，但该应用需要使用新的连接字符串重新连接。</string>
     <string name="copy_to_clipboard">复制到剪贴板</string>
     <string name="nothing_to_approve_yet">暂无批复请求</string>
     <string name="why_not_explore_your_favorite_nostr_app_a_bit">为什么不去探索一下你喜欢的 Nostr 应用呢？</string>
@@ -794,6 +795,8 @@
     <string name="d_seed_words">助记词</string>
     <string name="d_show">显示</string>
     <string name="d_copy_nsec">复制 nsec</string>
+    <string name="d_connection_string">连接字符串</string>
+    <string name="d_connection_string_copied">已复制到剪贴板</string>
     <string name="d_nsec_copied">私钥已复制。粘贴后请清除剪贴板！</string>
     <string name="d_encrypted_backup">加密备份（ncryptsec）</string>
     <string name="d_password">密码</string>

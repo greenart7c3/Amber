@@ -50,6 +50,7 @@
     <string name="permissions">Permissões</string>
     <string name="delete_application">Excluir aplicativo</string>
     <string name="reset_bunker">Redefinir Bunker</string>
+    <string name="d_reset_bunker_message">Isso gera uma nova chave e um novo segredo para este aplicativo. As regras de permissão são mantidas, mas o aplicativo precisa reconectar com a nova string de conexão.</string>
     <string name="copy_to_clipboard">Copiar para área de transferência</string>
     <string name="nothing_to_approve_yet">Nada para aprovar ainda</string>
     <string name="why_not_explore_your_favorite_nostr_app_a_bit">Por que não explorar um pouco seu aplicativo nostr favorito?</string>
@@ -808,6 +809,8 @@
     <string name="d_seed_words">Palavras-semente</string>
     <string name="d_show">Mostrar</string>
     <string name="d_copy_nsec">Copiar nsec</string>
+    <string name="d_connection_string">String de conexão</string>
+    <string name="d_connection_string_copied">Copiado para a área de transferência</string>
     <string name="d_nsec_copied">Chave secreta copiada. Limpe sua área de transferência depois de colá-la!</string>
     <string name="d_encrypted_backup">Backup criptografado (ncryptsec)</string>
     <string name="d_password">Senha</string>

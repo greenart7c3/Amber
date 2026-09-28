@@ -45,6 +45,7 @@
     <string name="permissions">สิทธิ์</string>
     <string name="delete_application">ลบแอปพลิเคชัน</string>
     <string name="reset_bunker">รีเซ็ต Bunker</string>
+    <string name="d_reset_bunker_message">การกระทำนี้จะสร้างกุญแจและรหัสลับใหม่ให้แอปนี้ กฎการอนุญาตจะยังคงอยู่ แต่แอปจะต้องเชื่อมต่อใหม่ด้วยสตริงการเชื่อมต่อใหม่</string>
     <string name="copy_to_clipboard">คัดลอกไปยังคลิปบอร์ด</string>
     <string name="nothing_to_approve_yet">ยังไม่มีรายการที่ต้องอนุมัติ</string>
     <string name="why_not_explore_your_favorite_nostr_app_a_bit">ลองสำรวจแอป Nostr ที่คุณชื่นชอบสักหน่อยดีไหม?</string>
@@ -789,6 +790,8 @@
     <string name="d_seed_words">คำกู้คืน</string>
     <string name="d_show">แสดง</string>
     <string name="d_copy_nsec">คัดลอก nsec</string>
+    <string name="d_connection_string">สตริงการเชื่อมต่อ</string>
+    <string name="d_connection_string_copied">คัดลอกไปยังคลิปบอร์ดแล้ว</string>
     <string name="d_nsec_copied">คัดลอกกุญแจลับแล้ว ล้างคลิปบอร์ดของคุณหลังจากวางเสร็จ!</string>
     <string name="d_encrypted_backup">ข้อมูลสำรองที่เข้ารหัส (ncryptsec)</string>
     <string name="d_password">รหัสผ่าน</string>

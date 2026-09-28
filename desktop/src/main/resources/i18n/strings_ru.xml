@@ -54,6 +54,7 @@
     <string name="permissions">Разрешения</string>
     <string name="delete_application">Удалить приложение</string>
     <string name="reset_bunker">Сбросить Bunker</string>
+    <string name="d_reset_bunker_message">Будут созданы новый ключ и секрет для этого приложения. Правила разрешений сохранятся, но приложению потребуется переподключиться с новой строкой подключения.</string>
     <string name="copy_to_clipboard">Копировать в буфер обмена</string>
     <string name="nothing_to_approve_yet">Пока нечего подтверждать</string>
     <string name="why_not_explore_your_favorite_nostr_app_a_bit">Почему бы немного не изучить ваше любимое Nostr-приложение?</string>
@@ -813,6 +814,8 @@
     <string name="d_seed_words">Сид-слова</string>
     <string name="d_show">Показать</string>
     <string name="d_copy_nsec">Копировать nsec</string>
+    <string name="d_connection_string">Строка подключения</string>
+    <string name="d_connection_string_copied">Скопировано в буфер обмена</string>
     <string name="d_nsec_copied">Секретный ключ скопирован. Очистите буфер обмена после вставки!</string>
     <string name="d_encrypted_backup">Зашифрованная резервная копия (ncryptsec)</string>
     <string name="d_password">Пароль</string>

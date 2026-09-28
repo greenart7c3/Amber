@@ -54,6 +54,7 @@
     <string name="permissions">Permisos</string>
     <string name="delete_application">Eliminar aplicación</string>
     <string name="reset_bunker">Restablecer Bunker</string>
+    <string name="d_reset_bunker_message">Esto genera una nueva clave y un nuevo secreto para esta aplicación. Sus reglas de permisos se conservan, pero la aplicación deberá reconectarse con la nueva cadena de conexión.</string>
     <string name="copy_to_clipboard">Copiar al portapapeles</string>
     <string name="nothing_to_approve_yet">Nada que aprobar aún</string>
     <string name="why_not_explore_your_favorite_nostr_app_a_bit">¿Por qué no explorar un poco tu app favorita de nostr?</string>
@@ -813,6 +814,8 @@
     <string name="d_seed_words">Palabras semilla</string>
     <string name="d_show">Mostrar</string>
     <string name="d_copy_nsec">Copiar nsec</string>
+    <string name="d_connection_string">Cadena de conexión</string>
+    <string name="d_connection_string_copied">Copiado al portapapeles</string>
     <string name="d_nsec_copied">Clave secreta copiada. ¡Borra el portapapeles después de pegarla!</string>
     <string name="d_encrypted_backup">Copia de seguridad cifrada (ncryptsec)</string>
     <string name="d_password">Contraseña</string>

@@ -166,10 +166,12 @@ data class LogRecord(
 )
 
 data class DesktopSettings(
+    /** Mirrors the Android app's `defaultAppRelays` (see AmberSettings.kt). */
     val defaultRelays: List<String> = listOf(
-        "wss://nostr.oxtr.dev/",
-        "wss://theforest.nostr1.com/",
-        "wss://relay.primal.net/",
+        "wss://auth.nostr1.com/",
+        "wss://bucket.coracle.social/",
+        "wss://nrs.primal.net/",
+        "wss://relay.nip46.com/",
     ),
     val currentAccount: String = "",
     val darkTheme: Boolean? = null,

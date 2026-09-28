@@ -1,3 +1,4 @@
+import java.io.File
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 
 plugins {
@@ -9,6 +10,25 @@ plugins {
 
 kotlin {
     jvmToolchain(21)
+}
+
+// Tests must never see the developer machine's real desktop state: AppDirs.dataDir
+// resolves from XDG_DATA_HOME *before* user.home, so a real ~/.local/share/amber
+// with a passphrase-locked master.key.enc freezes into the suite and fails every
+// DesktopKeyStore operation with LockedException. Scrub XDG_DATA_HOME from the
+// worker env, point user.home at a pristine dir under build/, and wipe it per run.
+tasks.test {
+    useJUnit()
+    val testHome = layout.buildDirectory.dir("desktop-test-home").get().asFile
+    // Gradle cannot remove env vars for workers (null becomes the literal string
+    // "null", which AppDirs happily uses as a directory name), so point
+    // XDG_DATA_HOME at the pristine home instead.
+    environment("XDG_DATA_HOME", File(testHome, "xdg-data").absolutePath)
+    systemProperty("user.home", testHome.absolutePath)
+    doFirst {
+        testHome.deleteRecursively()
+        testHome.mkdirs()
+    }
 }
 
 dependencies {

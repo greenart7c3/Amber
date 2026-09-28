@@ -98,7 +98,7 @@ object RelayChecker {
                 super.onConnected(relay, pingMillis, compressed)
             }
 
-            override fun onIncomingMessage(relay: IRelayClient, msgStr: String, msg: Message) {
+            override suspend fun onIncomingMessage(relay: IRelayClient, msgStr: String, msg: Message) {
                 if (msg is EventMessage && msg.subId == subId && msg.event.id == signedEvent.id) {
                     filterResult = true
                 }

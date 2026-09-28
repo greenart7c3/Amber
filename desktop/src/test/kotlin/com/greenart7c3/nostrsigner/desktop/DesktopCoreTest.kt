@@ -52,6 +52,21 @@ class DesktopCoreTest {
     }
 
     @Test
+    fun defaultRelaysMatchTheAndroidApp() {
+        // Keep in sync with `defaultAppRelays` in the Android AmberSettings.kt.
+        assertEquals(
+            listOf(
+                "wss://auth.nostr1.com/",
+                "wss://bucket.coracle.social/",
+                "wss://nrs.primal.net/",
+                "wss://relay.nip46.com/",
+            ),
+            DesktopSettings().defaultRelays,
+        )
+        assertEquals(4, DesktopSettings().normalizedDefaultRelays().size)
+    }
+
+    @Test
     fun parsesHexAndNsecKeys() {
         val hex = generateBunkerPrivKey()
         val fromHex = AccountManager.parseKey(hex).getOrThrow()

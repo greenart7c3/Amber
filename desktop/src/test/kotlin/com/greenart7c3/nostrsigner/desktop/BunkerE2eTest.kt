@@ -84,7 +84,7 @@ class BunkerE2eTest {
         init {
             client.addConnectionListener(
                 object : RelayConnectionListener {
-                    override fun onIncomingMessage(relay: IRelayClient, msgStr: String, msg: Message) {
+                    override suspend fun onIncomingMessage(relay: IRelayClient, msgStr: String, msg: Message) {
                         if (msg is EventMessage && msg.event.kind == NostrConnectEvent.KIND) {
                             scope.launch {
                                 runCatching {

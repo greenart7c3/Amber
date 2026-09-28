@@ -173,7 +173,7 @@ object SignerProviderQuery {
                         }
                     }
                     val signPolicy = permDao.getSignPolicy(requesterId)
-                    val isRemembered = IntentUtils.isRemembered(signPolicy, permission) ?: return null
+                    val isRemembered = if (account.isProxy) true else IntentUtils.isRemembered(signPolicy, permission) ?: return null
                     if (!isRemembered) {
                         scope.launch {
                             historyDatabase.dao().addHistory(
@@ -388,7 +388,7 @@ object SignerProviderQuery {
                         }
                     }
                     val signPolicy = permDao.getSignPolicy(requesterId)
-                    val isRemembered = IntentUtils.isRemembered(signPolicy, permission) ?: return null
+                    val isRemembered = if (account.isProxy && !isV3) true else IntentUtils.isRemembered(signPolicy, permission) ?: return null
                     if (!isRemembered) {
                         // A rejected encrypt request was never performed, so no
                         // ciphertext exists — store nothing rather than leaking the
@@ -505,7 +505,7 @@ object SignerProviderQuery {
                                 "SIGN_PSBT",
                             )
                     val signPolicy = permDao.getSignPolicy(requesterId)
-                    val isRemembered = IntentUtils.isRemembered(signPolicy, permission) ?: return null
+                    val isRemembered = if (account.isProxy) true else IntentUtils.isRemembered(signPolicy, permission) ?: return null
                     if (!isRemembered) {
                         scope.launch {
                             historyDatabase.dao().addHistory(

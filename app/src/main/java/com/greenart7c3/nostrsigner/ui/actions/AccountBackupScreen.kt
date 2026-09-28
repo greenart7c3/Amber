@@ -169,10 +169,12 @@ fun AccountBackupScreen(
                     var seedWords by remember { mutableStateOf("") }
                     LaunchedEffect(Unit) {
                         launch(Dispatchers.IO) {
-                            localAccount = LocalPreferences.loadFromEncryptedStorage(Amber.instance, accountInfo.npub)
-                            localAccount?.let { acc ->
-                                seedWords = acc.seedWords()
-                            }
+                            val acc = LocalPreferences.loadFromEncryptedStorage(Amber.instance, accountInfo.npub) ?: return@launch
+                            // Proxy accounts only hold a local relay keypair — the signing
+                            // key lives on the remote bunker, so there is nothing to back up.
+                            if (acc.isProxy) return@launch
+                            localAccount = acc
+                            seedWords = acc.seedWords()
                         }
                     }
 

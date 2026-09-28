@@ -26,6 +26,7 @@ import com.greenart7c3.nostrsigner.desktop.core.Notifier
 import com.greenart7c3.nostrsigner.desktop.core.PassphraseLock
 import com.greenart7c3.nostrsigner.desktop.core.SettingsStore
 import com.greenart7c3.nostrsigner.desktop.core.Strings
+import com.greenart7c3.nostrsigner.desktop.core.UriLaunch
 import com.greenart7c3.nostrsigner.desktop.core.describe
 import com.greenart7c3.nostrsigner.desktop.ui.App
 import com.greenart7c3.nostrsigner.desktop.ui.NostrSignerTheme
@@ -121,7 +122,25 @@ private object DesktopTray {
     var instance: NativeTray? = null
 }
 
-fun main() {
+fun main(args: Array<String>) {
+    // Packaged handler: the URI arrives as an argument. Dev handler
+    // (gradle): it arrives via the drop file (gradle cannot take it as an
+    // argument).
+    val launchUri = UriLaunch.extract(args) ?: UriLaunch.readForwardedUri()
+    // Single instance: a second launch hands its nostrconnect:// URI to the
+    // running app and exits. The OS releases the lock if the first instance
+    // dies, so a failed acquire always means a live instance exists.
+    val primary = UriLaunch.tryAcquireSingleInstance()
+    if (!primary) {
+        if (launchUri != null && UriLaunch.forwardToRunningInstance(launchUri)) return
+        if (launchUri == null) return
+        // Could not forward (no listener): fall through and start anyway.
+    } else {
+        UriLaunch.registerSchemeHandler()
+        UriLaunch.startIpcServer()
+    }
+    if (launchUri != null) UriLaunch.pending.value = launchUri
+
     // The dorkbox tray prefers to be created before Compose/AWT initializes
     // GTK (dorkbox has to own GTK loading, otherwise the AppIndicator backend
     // fails to start and SystemTray.get() returns null even when
@@ -164,6 +183,13 @@ fun main() {
 
         // The tray's Quit routes here so we can exit the Compose app cleanly.
         LaunchedEffect(quitRequested) { if (quitRequested) exitApplication() }
+        // A nostrconnect:// link explicitly targets Amber: raise the window,
+        // even when it was minimized to the tray.
+        LaunchedEffect(Unit) {
+            UriLaunch.pending.collect { uri ->
+                if (uri != null) DesktopTray.windowVisible.value = true
+            }
+        }
         DisposableEffect(Unit) { onDispose { nativeTray?.shutdown() } }
         LaunchedEffect(pending.size, windowVisible, lockStatus, language) {
             nativeTray?.update(

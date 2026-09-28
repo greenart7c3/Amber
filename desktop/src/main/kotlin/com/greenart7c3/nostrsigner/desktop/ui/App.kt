@@ -56,6 +56,7 @@ import com.greenart7c3.nostrsigner.desktop.core.AmberDesktop
 import com.greenart7c3.nostrsigner.desktop.core.DesktopAccount
 import com.greenart7c3.nostrsigner.desktop.core.PassphraseLock
 import com.greenart7c3.nostrsigner.desktop.core.Strings
+import com.greenart7c3.nostrsigner.desktop.core.UriLaunch
 import com.greenart7c3.nostrsigner.desktop.core.toShortenHex
 import kotlinx.coroutines.launch
 
@@ -121,6 +122,19 @@ fun App() {
             snackbarHostState = snackbarHostState,
         )
         return
+    }
+
+    // A nostrconnect:// link opened Amber (launch argument, or forwarded by
+    // a second launch). Process it here — after the gates — so a link
+    // clicked while locked or before an account exists waits for unlock.
+    val launchUri by UriLaunch.pending.collectAsState()
+    LaunchedEffect(launchUri, acc) {
+        val uri = launchUri ?: return@LaunchedEffect
+        UriLaunch.pending.value = null
+        val error = AmberDesktop.engine.addNostrConnect(uri, acc)
+        if (error != null) {
+            Toaster.toast(error)
+        }
     }
 
     Scaffold(

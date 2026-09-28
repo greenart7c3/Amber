@@ -33,6 +33,7 @@ import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -83,6 +84,13 @@ class BunkerEngine(
     private val subIds = mutableMapOf<String, String>()
     private val filterMutex = Mutex()
 
+    // Mirrors `NostrClientLoggerListener`: backoff starts at 5s, doubles up to
+    // 60s, and resets after a quiet minute. A single job per engine replaces
+    // any pending reconnect when a relay drops again.
+    private var reconnectJob: Job? = null
+    private var reconnectDelay = 5.seconds
+    private var lastDisconnectTime = 0L
+
     /** localPubKey -> (npub, localPrivKey), mirrors `LocalKeyAccountIndex`. */
     private val localKeyIndex = ConcurrentHashMap<String, Pair<String, String>>()
 
@@ -104,6 +112,78 @@ class BunkerEngine(
             }
         }
         super.onIncomingMessage(relay, msgStr, msg)
+    }
+
+    override fun onCannotConnect(relay: IRelayClient, errorMessage: String) {
+        AmberLogger.d("BunkerEngine", "onCannotConnect: ${relay.url.url} error: $errorMessage")
+        logAll(relay, "onCannotConnect", errorMessage)
+
+        if (System.currentTimeMillis() - AmberDesktop.intentionalDisconnectTime < 2_000) {
+            return super.onCannotConnect(relay, errorMessage)
+        }
+
+        scheduleReconnect(relay.url)
+        return super.onCannotConnect(relay, errorMessage)
+    }
+
+    override fun onDisconnected(relay: IRelayClient) {
+        AmberLogger.d("BunkerEngine", "onDisconnected: ${relay.url.url}")
+        logAll(relay, "onDisconnected", "Disconnected")
+
+        if (System.currentTimeMillis() - AmberDesktop.intentionalDisconnectTime < 2_000) {
+            return super.onDisconnected(relay)
+        }
+
+        scheduleReconnect(relay.url)
+        return super.onDisconnected(relay)
+    }
+
+    override fun onConnected(relay: IRelayClient, pingMillis: Int, compressed: Boolean) {
+        AmberLogger.d("BunkerEngine", "onConnected: ${relay.url.url} ping: ${pingMillis}ms")
+        logAll(relay, "onConnected", "Connected")
+        // Relay recovered: clear its failure streak so it is eligible for the
+        // normal reconnect-with-backoff path (and the subscription) again.
+        RelayHealthTracker.recordSuccess(relay.url)
+        return super.onConnected(relay, pingMillis, compressed)
+    }
+
+    // Counts the failure against the relay and only schedules a reconnect
+    // while it is still worth retrying. Once a relay is dead,
+    // RelayHealthTracker also makes updateFilterLocked drop it from the
+    // subscription relay set, so Quartz stops opening sockets to it on every
+    // refresh. The streak resets on a successful connection (onConnected) or
+    // a network change / manual reconnect.
+    private fun scheduleReconnect(relay: NormalizedRelayUrl) {
+        if (!RelayHealthTracker.recordFailure(relay)) {
+            AmberLogger.d("BunkerEngine", "Relay ${relay.url} marked dead; skipping reconnect")
+            return
+        }
+        reconnectWithBackoff()
+    }
+
+    private fun reconnectWithBackoff() {
+        val now = System.currentTimeMillis()
+        if (now - lastDisconnectTime > 60_000) {
+            reconnectDelay = 5.seconds
+        }
+        lastDisconnectTime = now
+
+        reconnectJob?.cancel()
+        reconnectJob = scope.launch {
+            AmberLogger.d("BunkerEngine", "Reconnecting in ${reconnectDelay.inWholeSeconds}s...")
+            delay(reconnectDelay)
+            reconnectDelay = (reconnectDelay * 2).coerceAtMost(60.seconds)
+            AmberDesktop.reconnect()
+        }
+    }
+
+    /** Mirrors `NostrClientLoggerListener.saveLog`: every account's relay log. */
+    private fun logAll(relay: IRelayClient, type: String, message: String) {
+        scope.launch {
+            AmberDesktop.accounts().forEach { account ->
+                AmberDesktop.store(account.npub).addLog(relay.url.url, type, message)
+            }
+        }
     }
 
     fun start() {
@@ -136,6 +216,7 @@ class BunkerEngine(
                 val subKey = "${account.hexKey}_$connPubKey"
 
                 val connRelays = conn.normalizedRelays().ifEmpty { AmberDesktop.savedRelays(account.npub).toList() }
+                    .filterNot { RelayHealthTracker.isDead(it) }
                 if (connRelays.isEmpty()) continue
 
                 activeSubKeys.add(subKey)
@@ -158,7 +239,7 @@ class BunkerEngine(
             }
 
             if (hasLegacyConnections) {
-                val relays = AmberDesktop.savedRelays(account.npub)
+                val relays = AmberDesktop.savedRelays(account.npub).filterNot { RelayHealthTracker.isDead(it) }
                 if (relays.isNotEmpty()) {
                     activeSubKeys.add(account.hexKey)
                     if (!subIds.containsKey(account.hexKey)) {

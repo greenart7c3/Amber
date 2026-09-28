@@ -778,6 +778,8 @@
     <string name="d_keep_in_tray_sub">Fermer la fenêtre réduit Amber dans la barre d'état système pour qu'il continue de répondre aux requêtes.</string>
     <string name="d_notifications">Notifications</string>
     <string name="d_notifications_sub">Afficher une notification système lorsqu'une requête nécessite votre approbation.</string>
+    <string name="d_start_on_boot">Lancer au démarrage</string>
+    <string name="d_start_on_boot_sub">Lance Amber automatiquement à l'ouverture de session. Il démarre verrouillé — saisissez votre phrase secrète pour signer.</string>
     <string name="d_active">Actif</string>
     <string name="d_switch">Changer</string>
     <string name="d_log_out">Se déconnecter</string>

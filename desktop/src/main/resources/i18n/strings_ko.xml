@@ -781,6 +781,8 @@
     <string name="d_keep_in_tray_sub">창을 닫으면 Amber가 시스템 트레이로 최소화되어 계속 요청에 응답합니다.</string>
     <string name="d_notifications">알림</string>
     <string name="d_notifications_sub">요청에 승인이 필요할 때 시스템 알림을 표시합니다.</string>
+    <string name="d_start_on_boot">부팅 시 시작</string>
+    <string name="d_start_on_boot_sub">로그인할 때 Amber를 자동으로 시작합니다. 잠긴 상태로 시작되므로 서명하려면 암호를 입력하세요.</string>
     <string name="d_active">활성</string>
     <string name="d_switch">전환</string>
     <string name="d_log_out">로그아웃</string>

@@ -776,6 +776,8 @@
     <string name="d_keep_in_tray_sub">Fechar a janela minimiza o Amber para a bandeja do sistema para que ele continue respondendo às solicitações.</string>
     <string name="d_notifications">Notificações</string>
     <string name="d_notifications_sub">Mostrar uma notificação do sistema quando uma solicitação precisar da sua aprovação.</string>
+    <string name="d_start_on_boot">Iniciar na inicialização</string>
+    <string name="d_start_on_boot_sub">Inicia o Amber automaticamente quando você entra. Ele começa bloqueado — digite sua senha para assinar.</string>
     <string name="d_active">Ativo</string>
     <string name="d_switch">Trocar</string>
     <string name="d_log_out">Sair</string>

@@ -777,6 +777,8 @@
     <string name="d_keep_in_tray_sub">Pencereyi kapatmak Amber'i sistem tepsisine küçültür, böylece istekleri yanıtlamaya devam eder.</string>
     <string name="d_notifications">Bildirimler</string>
     <string name="d_notifications_sub">Bir istek onayınızı gerektirdiğinde sistem bildirimi göster.</string>
+    <string name="d_start_on_boot">Açılışta başlat</string>
+    <string name="d_start_on_boot_sub">Oturum açtığınızda Amber'i otomatik başlatır. Kilitli başlar; imzalamak için parolanızı girin.</string>
     <string name="d_active">Etkin</string>
     <string name="d_switch">Değiştir</string>
     <string name="d_log_out">Çıkış yap</string>

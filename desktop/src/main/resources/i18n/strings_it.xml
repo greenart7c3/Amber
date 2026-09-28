@@ -781,6 +781,8 @@
     <string name="d_keep_in_tray_sub">Chiudendo la finestra Amber viene ridotto a icona nella system tray in modo da continuare a rispondere alle richieste.</string>
     <string name="d_notifications">Notifiche</string>
     <string name="d_notifications_sub">Mostra una notifica di sistema quando una richiesta necessita della tua approvazione.</string>
+    <string name="d_start_on_boot">Avvia all'avvio</string>
+    <string name="d_start_on_boot_sub">Avvia Amber automaticamente al login. Parte bloccato: inserisci la passphrase per firmare.</string>
     <string name="d_active">Attivo</string>
     <string name="d_switch">Cambia</string>
     <string name="d_log_out">Esci</string>

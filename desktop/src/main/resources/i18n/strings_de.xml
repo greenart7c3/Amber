@@ -778,6 +778,8 @@
     <string name="d_keep_in_tray_sub">Beim Schließen des Fensters wird Amber in den Infobereich minimiert und beantwortet weiterhin Anfragen.</string>
     <string name="d_notifications">Benachrichtigungen</string>
     <string name="d_notifications_sub">Eine Systembenachrichtigung anzeigen, wenn eine Anfrage deine Genehmigung erfordert.</string>
+    <string name="d_start_on_boot">Beim Start ausführen</string>
+    <string name="d_start_on_boot_sub">Amber automatisch starten, wenn du dich anmeldest. Es startet gesperrt — gib deine Passphrase ein, um zu signieren.</string>
     <string name="d_active">Aktiv</string>
     <string name="d_switch">Wechseln</string>
     <string name="d_log_out">Abmelden</string>

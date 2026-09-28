@@ -789,6 +789,8 @@
     <string name="d_keep_in_tray_sub">Closing the window minimizes Amber to the system tray so it keeps answering requests.</string>
     <string name="d_notifications">Notifications</string>
     <string name="d_notifications_sub">Show a system notification when a request needs your approval.</string>
+    <string name="d_start_on_boot">Start on boot</string>
+    <string name="d_start_on_boot_sub">Start Amber automatically when you log in. It starts locked — enter your passphrase to sign.</string>
     <string name="d_active">Active</string>
     <string name="d_switch">Switch</string>
     <string name="d_log_out">Log out</string>

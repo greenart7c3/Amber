@@ -181,6 +181,8 @@ data class DesktopSettings(
     val closeToTray: Boolean = true,
     /** Show a system notification when a request needs approval. */
     val showNotifications: Boolean = true,
+    /** Start automatically with the desktop session (systemd user service). */
+    val startOnBoot: Boolean = false,
     /** UI language tag (matches Strings.supportedLanguages); null = follow the OS. */
     val language: String? = null,
 ) {

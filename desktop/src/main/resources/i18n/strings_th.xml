@@ -757,6 +757,8 @@
     <string name="d_keep_in_tray_sub">การปิดหน้าต่างจะย่อ Amber ลงในถาดระบบเพื่อให้ยังคงตอบรับคำขอต่อไป</string>
     <string name="d_notifications">การแจ้งเตือน</string>
     <string name="d_notifications_sub">แสดงการแจ้งเตือนของระบบเมื่อมีคำขอที่ต้องการการอนุมัติของคุณ</string>
+    <string name="d_start_on_boot">เริ่มต้นเมื่อบูตเครื่อง</string>
+    <string name="d_start_on_boot_sub">เริ่ม Amber โดยอัตโนมัติเมื่อคุณล็อกอิน มันจะเริ่มในสถานะล็อก — ป้อนวลีรหัสผ่านเพื่อลงนาม</string>
     <string name="d_active">ใช้งานอยู่</string>
     <string name="d_switch">สลับ</string>
     <string name="d_log_out">ออกจากระบบ</string>

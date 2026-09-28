@@ -20,6 +20,7 @@ import androidx.compose.ui.window.rememberWindowState
 import com.greenart7c3.nostrsigner.desktop.core.AccountManager
 import com.greenart7c3.nostrsigner.desktop.core.AccountsStore
 import com.greenart7c3.nostrsigner.desktop.core.AmberDesktop
+import com.greenart7c3.nostrsigner.desktop.core.AutoStart
 import com.greenart7c3.nostrsigner.desktop.core.DesktopAccount
 import com.greenart7c3.nostrsigner.desktop.core.NetworkConnectivity
 import com.greenart7c3.nostrsigner.desktop.core.Notifier
@@ -140,6 +141,11 @@ fun main(args: Array<String>) {
         UriLaunch.startIpcServer()
     }
     if (launchUri != null) UriLaunch.pending.value = launchUri
+
+    // Keep the autostart unit fresh (binary path can change between builds).
+    if (SettingsStore.settings.value.startOnBoot) {
+        AutoStart.setEnabled(true)
+    }
 
     // The dorkbox tray prefers to be created before Compose/AWT initializes
     // GTK (dorkbox has to own GTK loading, otherwise the AppIndicator backend

@@ -31,13 +31,17 @@ for the JVM) and mirrors the mobile UI and permission model.
   inside a `group`/drawer that you expand to reveal the icon) and the
   `libayatana-appindicator` runtime library; Amber automatically bridges the
   Ayatana library to the legacy `libappindicator3` names dorkbox looks for,
-  so no compat symlink is required. `AMBER_TRAY_TYPE=Gtk|AppIndicator|AutoDetect`
+  so no compat symlink is required. When no SNI host is on the session bus
+  (or tray init takes too long), Amber skips the tray and logs why instead of
+  blocking startup. `AMBER_TRAY_TYPE=Gtk|AppIndicator|AutoDetect`
   forces the backend and `AMBER_DISABLE_TRAY=1` skips the tray entirely.
 - Notifications go through the OS-native channel: the freedesktop
   notification daemon (mako, dunst, swaync, GNOME Shell, …) via `notify-send`
   or `gdbus` on Linux — so they work on Hyprland/Wayland — `osascript` on
   macOS, and the AWT tray notification on Windows
-- Optional passphrase lock (see Key storage below)
+- Mandatory passphrase lock (see Key storage below); on Linux Amber
+  additionally runs under its own dedicated OS user, set up in-app on first
+  open (see Running under a dedicated user below)
 - Native desktop layout: sidebar navigation with an account switcher, dense
   list views, and keyboard shortcuts
 - Light/dark theme using the Amber palette
@@ -59,7 +63,7 @@ Ctrl on Windows/Linux, ⌘ on macOS:
 | Ctrl/⌘ + Enter | Approve the selected request with the chosen duration |
 | Ctrl/⌘ + Shift + Enter | Reject the selected request |
 | Escape | Leave the application detail view |
-| Ctrl/⌘ + L | Lock (when a passphrase is set) |
+| Ctrl/⌘ + L | Lock |
 | Ctrl/⌘ + M | Minimize to tray (keep running in the background) |
 | Ctrl/⌘ + W | Same as Ctrl/⌘ + M |
 | Ctrl/⌘ + Q | Quit |
@@ -98,14 +102,16 @@ protection too. If you move the data directory to another machine, also
 transfer the `com.greenart7c3.nostrsigner` entry from the credential store
 (or keep the legacy `keystore.pass` file).
 
-### Passphrase lock (stronger, opt-in)
+### Passphrase lock (mandatory)
 
-Enable a passphrase under **Settings → Security** for defence that does not
-depend on the OS credential store. The AES master key is then stored only
-wrapped (AES-256-GCM) under a key derived from your passphrase with
-**Argon2id**, in `master.key.enc`; the plain keystore and its
+Amber requires a passphrase: on first run a setup screen asks for one before
+anything else can be used, and installs that already have only the OS
+credential store are migrated to it on the next launch. The AES master key
+is then stored only wrapped (AES-256-GCM) under a key derived from your
+passphrase with **Argon2id**, in `master.key.enc`; the plain keystore and its
 credential-store/file password are deleted. The passphrase is never written
-anywhere.
+anywhere. You can change it under **Settings → Security**, but there is no
+way to remove it and go back to unprotected storage.
 
 With the lock on:
 
@@ -115,13 +121,16 @@ With the lock on:
   request history, relay logs) is also encrypted at rest with the master
   key — AES-256-GCM, with an `AMBERENC1:` header — so the metadata about
   which apps you sign for stays private too. Enabling the passphrase
-  re-encrypts existing data immediately; removing it rewrites plaintext.
+  re-encrypts existing data immediately.
   (`settings.json` and `accounts.json` stay plaintext, but the private keys
   inside `accounts.json` are always encrypted with the master key.)
-- Amber asks for the passphrase at startup and can auto-lock after an idle
-  timeout (5 min / 15 min / 1 hour / never) or immediately via **Lock now**.
-  Locking evicts all key material from memory and disconnects the relays, so
-  no request can be signed until you unlock again.
+- Amber asks for the passphrase at startup and auto-locks after an idle
+  timeout — 1 hour by default, selectable (5 min / 15 min / 1 hour / never)
+  under **Settings → Security** — or immediately via **Lock now**. Locking
+  evicts all key material from memory and disconnects the relays, so no
+  request can be signed until you unlock again.
+- Logging out of an account (which deletes its key from this device) asks
+  for the passphrase first.
 
 Residual risk it cannot remove: while unlocked, the keys are in the
 process's memory, so malware that can scrape another process's memory or
@@ -149,6 +158,37 @@ from their nsec or seed-word backup instead.
 jpackage can only produce installers for the OS it runs on, so release
 builds are made per-platform. Linux packaging needs `fakeroot` (deb) or
 `rpm-build` (rpm) installed.
+
+### Running under a dedicated user (Linux)
+
+On Linux, Amber does not run as your login user: the first time it opens, it
+asks for your password (sudo), creates a dedicated OS user, and re-launches
+itself under that user. The process that holds your keys is then walled off
+from the rest of your desktop session by the OS — other apps can no longer
+read Amber's memory or files, closing the same-user-malware residual risk
+described above (a process running as that user can still be attacked, of
+course — this is isolation, not a security boundary against root).
+
+What the first-open setup does (as root, once):
+
+1. creates the dedicated user `amber` with its own home directory
+   (`AMBER_USER=name` picks a different name),
+2. moves your existing Amber data (`~/.local/share/amber`) into that home,
+3. installs a root-owned launcher (`/usr/local/bin/amber-runas-<name>`) that
+   execs exactly the Amber binary with only your session's socket locations
+   (Wayland, X11/XWayland, D-Bus for tray and notifications) passed as
+   arguments — never arbitrary code or environment,
+4. installs a narrow sudoers rule (`/etc/sudoers.d/amber-runas-<name>`,
+   validated with `visudo`) allowing your user to run that launcher as the
+   dedicated user without a password,
+5. re-launches Amber under the dedicated user.
+
+Afterwards every launch switches to the dedicated user silently. If the
+installed binary path changes (reinstall, update), the next open asks for
+your password once to regenerate the launcher. Set
+`AMBER_DISABLE_DEDICATED_USER=1` to skip the whole flow (useful for
+`./gradlew :desktop:run`, which is skipped automatically since it launches a
+bare `java` binary), and requires the `acl` package for `setfacl`.
 
 ## Tests
 

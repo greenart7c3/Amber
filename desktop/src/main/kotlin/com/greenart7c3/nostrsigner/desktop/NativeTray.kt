@@ -7,6 +7,10 @@ import dorkbox.systemTray.SystemTray
 import java.awt.event.ActionListener
 import java.io.File
 import java.nio.file.Files
+import java.util.concurrent.Callable
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
 
 /**
  * A tray icon backed by the dorkbox SystemTray library, used on Linux.
@@ -120,6 +124,76 @@ class NativeTray private constructor(
             // On Wayland the GtkStatusIcon backend is invisible; AppIndicator
             // (SNI) is the one waybar and the Wayland shells actually host.
             return if (isWayland()) SystemTray.TrayType.AppIndicator else SystemTray.TrayType.AutoDetect
+        }
+
+        /**
+         * True when the session bus advertises a StatusNotifierItem host
+         * (waybar's tray module, GNOME Shell, …), parsed from the reply of
+         * `gdbus call … IsStatusNotifierHostRegistered`. No watcher (or no
+         * gdbus) means no host: AppIndicator init would just hang waiting for
+         * one, so callers skip the tray instead.
+         */
+        internal fun sniHostRegistered(): Boolean {
+            val output = runCatching {
+                val process = ProcessBuilder(
+                    "gdbus", "call", "--session",
+                    "--dest", "org.kde.StatusNotifierWatcher",
+                    "--object-path", "/StatusNotifierWatcher",
+                    "--method", "org.freedesktop.DBus.Properties.Get",
+                    "org.kde.StatusNotifierWatcher", "IsStatusNotifierHostRegistered",
+                ).redirectErrorStream(true).start()
+                val out = process.inputStream.readBytes().toString(Charsets.UTF_8)
+                process.waitFor()
+                out
+            }.getOrDefault("")
+            return parseSniHostReply(output)
+        }
+
+        /** Package-visible for testing: a host is registered only on a `true` reply. */
+        internal fun parseSniHostReply(output: String): Boolean = output.contains("true", ignoreCase = true)
+
+        /**
+         * [create] with two safety nets so a missing/broken tray can never
+         * block the app window: when no SNI host is on the session bus the
+         * tray is skipped outright, and init is abandoned after [timeoutMs].
+         * On timeout the init thread (daemon) may still complete in the
+         * background and publish the icon, but Amber no longer waits for it.
+         */
+        fun createBounded(
+            timeoutMs: Long = 5_000,
+            iconStream: () -> java.io.InputStream?,
+            tooltip: String,
+            openLabel: String,
+            lockLabel: String,
+            quitLabel: String,
+            onToggle: () -> Unit,
+            onLock: () -> Unit,
+            onQuit: () -> Unit,
+        ): NativeTray? {
+            // An explicit AMBER_TRAY_TYPE overrides the host probe (debugging).
+            if (System.getenv("AMBER_TRAY_TYPE") == null && !sniHostRegistered()) {
+                AmberLogger.i(
+                    "NativeTray",
+                    "No StatusNotifierItem host on the session bus; skipping the tray. " +
+                        "(Enable waybar's tray module, or set AMBER_TRAY_TYPE=AppIndicator to force.)",
+                )
+                return null
+            }
+            val executor = Executors.newSingleThreadExecutor { runnable ->
+                Thread(runnable, "amber-tray-init").apply { isDaemon = true }
+            }
+            return try {
+                executor.submit(Callable { create(iconStream, tooltip, openLabel, lockLabel, quitLabel, onToggle, onLock, onQuit) })
+                    .get(timeoutMs, TimeUnit.MILLISECONDS)
+            } catch (e: TimeoutException) {
+                AmberLogger.i("NativeTray", "Tray init did not finish in ${timeoutMs}ms; continuing without it")
+                null
+            } catch (e: Exception) {
+                AmberLogger.i("NativeTray", "Tray init failed: ${e.message}")
+                null
+            } finally {
+                executor.shutdownNow()
+            }
         }
 
         /**

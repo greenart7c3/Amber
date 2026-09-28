@@ -20,12 +20,16 @@ import org.bouncycastle.crypto.generators.Argon2BytesGenerator
 import org.bouncycastle.crypto.params.Argon2Parameters
 
 /**
- * Optional passphrase lock: when enabled, the master AES key exists on disk
- * only wrapped (AES-256-GCM) under a key derived from the user's passphrase
- * with Argon2id. The passphrase itself is never stored anywhere — neither
- * the data directory nor the OS credential store is enough to decrypt the
+ * Mandatory passphrase lock: the master AES key exists on disk only wrapped
+ * (AES-256-GCM) under a key derived from the user's passphrase with
+ * Argon2id. The passphrase itself is never stored anywhere — neither the
+ * data directory nor the OS credential store is enough to decrypt the
  * account keys, which is the strongest protection a portable desktop app
  * can offer against same-user malware reading files at rest.
+ *
+ * Fresh installs set the passphrase before the app is usable ([Status.DISABLED]
+ * is only ever that transient pre-setup state); there is no way back to
+ * unprotected storage.
  *
  * While unlocked, the unwrapped master key (and the decrypted account keys)
  * live in this process's memory; locking evicts them and disconnects the
@@ -33,7 +37,7 @@ import org.bouncycastle.crypto.params.Argon2Parameters
  */
 object PassphraseLock {
     enum class Status {
-        /** No passphrase configured; the keystore + credential store path is used. */
+        /** Passphrase not configured yet (first run); setup is required. */
         DISABLED,
 
         /** Passphrase configured, master key not in memory. Nothing can be signed. */
@@ -99,6 +103,11 @@ object PassphraseLock {
         return true
     }
 
+    /** Checks the passphrase without installing the master key. */
+    suspend fun verify(passphrase: CharArray): Boolean = mutex.withLock {
+        isEnabled() && unwrap(passphrase) != null
+    }
+
     /**
      * Evicts all key material from memory and disconnects from the relays.
      * Incoming NIP-46 requests cannot be decrypted (let alone signed) until
@@ -112,18 +121,6 @@ object PassphraseLock {
         AmberDesktop.engine.pending.value = emptyList()
         AmberDesktop.client.disconnect()
         state.value = Status.LOCKED
-    }
-
-    /** Removes the lock, restoring the keystore + credential-store storage. */
-    suspend fun disable() = mutex.withLock {
-        check(state.value == Status.UNLOCKED) { "Unlock first" }
-        val key = DesktopKeyStore.masterKeyForWrapping()
-        DesktopKeyStore.recreateUnprotectedStore(key)
-        blobFile.delete()
-        // isEnabled() is now false, so rewrite every account's database as plaintext.
-        AmberDesktop.rewriteAllStores()
-        autoLockJob?.cancel()
-        state.value = Status.DISABLED
     }
 
     /** Rewraps the master key under a new passphrase; false when [old] is wrong. */

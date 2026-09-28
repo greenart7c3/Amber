@@ -21,6 +21,7 @@ import com.greenart7c3.nostrsigner.desktop.core.AccountManager
 import com.greenart7c3.nostrsigner.desktop.core.AccountsStore
 import com.greenart7c3.nostrsigner.desktop.core.AmberDesktop
 import com.greenart7c3.nostrsigner.desktop.core.DesktopAccount
+import com.greenart7c3.nostrsigner.desktop.core.NetworkConnectivity
 import com.greenart7c3.nostrsigner.desktop.core.Notifier
 import com.greenart7c3.nostrsigner.desktop.core.PassphraseLock
 import com.greenart7c3.nostrsigner.desktop.core.SettingsStore
@@ -41,6 +42,7 @@ object Session {
     val addingAccount = MutableStateFlow(false)
 
     fun boot() {
+        NetworkConnectivity.start(AmberDesktop.applicationIOScope)
         AmberDesktop.applicationIOScope.launch {
             var engineStarted = false
             PassphraseLock.state.collect { status ->

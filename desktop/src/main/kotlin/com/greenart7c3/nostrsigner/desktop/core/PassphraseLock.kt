@@ -119,7 +119,7 @@ object PassphraseLock {
         DesktopKeyStore.clearMasterKey()
         AmberDesktop.evictAllAccounts()
         AmberDesktop.engine.pending.value = emptyList()
-        AmberDesktop.client.disconnect()
+        AmberDesktop.disconnectIntentionally()
         state.value = Status.LOCKED
     }
 

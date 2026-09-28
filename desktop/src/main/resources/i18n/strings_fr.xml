@@ -874,6 +874,7 @@
     <string name="d_remove_relay">Supprimer le relais</string>
     <string name="d_one_relay_required">Au moins un relais est requis</string>
     <string name="d_reconnect_relays">Reconnecter les relais</string>
+    <string name="d_default_relays">Ajouter les relais par défaut</string>
     <string name="d_reconnecting">Reconnexion…</string>
     <string name="d_remember_never">Une seule fois</string>
     <string name="d_remember_1m">1 minute</string>

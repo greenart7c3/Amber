@@ -853,6 +853,7 @@
     <string name="d_remove_relay">Xóa relay</string>
     <string name="d_one_relay_required">Cần ít nhất một relay</string>
     <string name="d_reconnect_relays">Kết nối lại relay</string>
+    <string name="d_default_relays">Thêm relay mặc định</string>
     <string name="d_reconnecting">Đang kết nối lại…</string>
     <string name="d_remember_never">Chỉ một lần</string>
     <string name="d_remember_1m">1 phút</string>

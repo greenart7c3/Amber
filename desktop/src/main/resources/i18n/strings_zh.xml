@@ -858,6 +858,7 @@
     <string name="d_remove_relay">移除中继</string>
     <string name="d_one_relay_required">至少需要一个中继</string>
     <string name="d_reconnect_relays">重新连接中继</string>
+    <string name="d_default_relays">添加默认中继</string>
     <string name="d_reconnecting">重新连接中…</string>
     <string name="d_remember_never">仅此一次</string>
     <string name="d_remember_1m">1 分钟</string>

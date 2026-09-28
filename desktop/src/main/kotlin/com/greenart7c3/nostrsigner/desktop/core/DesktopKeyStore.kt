@@ -110,23 +110,7 @@ object DesktopKeyStore {
         OsCredentialStore().delete()
     }
 
-    /**
-     * Re-creates the unprotected storage (keystore + credential-store/file
-     * password) from [key] when the passphrase lock is removed.
-     */
-    internal suspend fun recreateUnprotectedStore(key: SecretKey): Unit = mutex.withLock {
-        val resolved = KeystorePassword.resolve(
-            osStore = OsCredentialStore(),
-            fileStore = FilePasswordStore(passwordFile),
-            keystoreExists = false,
-            opens = { false },
-        )
-        writeKeystore(key, resolved.password.toCharArray())
-        cachedKey = key
-        sourceDescription = resolved.source.description
-    }
-
-    // ----- keystore-backed path (passphrase lock disabled) -----
+    // ----- keystore-backed path (before the first passphrase is set) -----
 
     private fun loadKeyStore(password: CharArray): KeyStore {
         val keyStore = KeyStore.getInstance("PKCS12")

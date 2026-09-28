@@ -52,6 +52,7 @@
     <string name="permissions">Autorisations</string>
     <string name="delete_application">Supprimer l\'application</string>
     <string name="reset_bunker">Réinitialiser le Bunker</string>
+    <string name="d_reset_bunker_message">Cette action génère une nouvelle clé et un nouveau secret pour cette application. Ses règles d'autorisation sont conservées, mais l'application devra se reconnecter avec la nouvelle chaîne de connexion.</string>
     <string name="copy_to_clipboard">Copier dans le presse-papiers</string>
     <string name="nothing_to_approve_yet">Rien à approuver pour l\'instant</string>
     <string name="why_not_explore_your_favorite_nostr_app_a_bit">Pourquoi ne pas explorer un peu votre application Nostr préférée ?</string>
@@ -810,6 +811,8 @@
     <string name="d_seed_words">Mots de récupération</string>
     <string name="d_show">Afficher</string>
     <string name="d_copy_nsec">Copier la nsec</string>
+    <string name="d_connection_string">Chaîne de connexion</string>
+    <string name="d_connection_string_copied">Copié dans le presse-papiers</string>
     <string name="d_nsec_copied">Clé secrète copiée. Videz votre presse-papiers après l'avoir collée !</string>
     <string name="d_encrypted_backup">Sauvegarde chiffrée (ncryptsec)</string>
     <string name="d_password">Mot de passe</string>

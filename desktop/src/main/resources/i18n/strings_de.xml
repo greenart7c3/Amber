@@ -52,6 +52,7 @@
     <string name="permissions">Berechtigungen</string>
     <string name="delete_application">Anwendung löschen</string>
     <string name="reset_bunker">Bunker zurücksetzen</string>
+    <string name="d_reset_bunker_message">Dadurch werden ein neuer Schlüssel und ein neues Secret für diese App erzeugt. Die Berechtigungsregeln bleiben erhalten, aber die App muss sich mit dem neuen Verbindungs-String neu verbinden.</string>
     <string name="copy_to_clipboard">In Zwischenablage kopieren</string>
     <string name="nothing_to_approve_yet">Noch nichts zu genehmigen</string>
     <string name="why_not_explore_your_favorite_nostr_app_a_bit">Warum nicht deine Lieblings-Nostr-App ein wenig erkunden?</string>
@@ -810,6 +811,8 @@
     <string name="d_seed_words">Seed-Wörter</string>
     <string name="d_show">Anzeigen</string>
     <string name="d_copy_nsec">nsec kopieren</string>
+    <string name="d_connection_string">Verbindungs-String</string>
+    <string name="d_connection_string_copied">In die Zwischenablage kopiert</string>
     <string name="d_nsec_copied">Geheimer Schlüssel kopiert. Leere deine Zwischenablage nach dem Einfügen!</string>
     <string name="d_encrypted_backup">Verschlüsselte Sicherung (ncryptsec)</string>
     <string name="d_password">Passwort</string>

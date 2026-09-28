@@ -788,11 +788,6 @@
     <string name="d_log_out_passphrase">Gib deine Passphrase ein, um dich abzumelden</string>
     <string name="d_passphrase_desc">Amber benötigt eine Passphrase. Deine Schlüssel bleiben auf der Festplatte verschlüsselt, selbst gegenüber Software, die deine Dateien lesen kann – du wirst beim Start von Amber und nach jedem Sperren danach gefragt.</string>
     <string name="d_setup_title">Schütze deine Schlüssel</string>
-    <string name="d_dedicated_user_title">Amber unter einem eigenen Benutzer ausführen</string>
-    <string name="d_dedicated_user_desc">Amber erstellt den Benutzer „%1$s“ und führt stets unter ihm aus, damit andere Apps auf diesem Computer nicht seinen Speicher oder seine Dateien lesen können. Deine vorhandenen Amber-Daten werden in dessen Home-Verzeichnis verschoben. Gib dein Passwort (sudo) ein, um das einzurichten.</string>
-    <string name="d_dedicated_user_password">Dein Passwort (sudo)</string>
-    <string name="d_dedicated_user_set_up">Einrichten und neu starten</string>
-    <string name="d_dedicated_user_failed">Einrichtung fehlgeschlagen – prüfe dein Passwort und versuche es erneut</string>
     <string name="d_set_passphrase">Passphrase festlegen</string>
     <string name="d_lock_now">Jetzt sperren</string>
     <string name="d_change_passphrase">Passphrase ändern</string>

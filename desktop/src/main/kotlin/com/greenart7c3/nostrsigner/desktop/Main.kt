@@ -20,7 +20,6 @@ import androidx.compose.ui.window.rememberWindowState
 import com.greenart7c3.nostrsigner.desktop.core.AccountManager
 import com.greenart7c3.nostrsigner.desktop.core.AccountsStore
 import com.greenart7c3.nostrsigner.desktop.core.AmberDesktop
-import com.greenart7c3.nostrsigner.desktop.core.DedicatedUser
 import com.greenart7c3.nostrsigner.desktop.core.DesktopAccount
 import com.greenart7c3.nostrsigner.desktop.core.Notifier
 import com.greenart7c3.nostrsigner.desktop.core.PassphraseLock
@@ -30,7 +29,6 @@ import com.greenart7c3.nostrsigner.desktop.core.describe
 import com.greenart7c3.nostrsigner.desktop.ui.App
 import com.greenart7c3.nostrsigner.desktop.ui.NostrSignerTheme
 import com.greenart7c3.nostrsigner.desktop.ui.handleShortcut
-import com.greenart7c3.nostrsigner.desktop.ui.runUserSetupWindow
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
@@ -122,22 +120,6 @@ private object DesktopTray {
 }
 
 fun main() {
-    when (val state = DedicatedUser.detect()) {
-        DedicatedUser.State.Active -> startAmber()
-        is DedicatedUser.State.Ready ->
-            // A launcher is installed: switch to the dedicated user right away
-            // without asking for a password. If the switch fails, fall through
-            // to the setup window to regenerate it; this process exits either
-            // way once the window closes.
-            if (!DedicatedUser.relaunch(state.command)) {
-                runUserSetupWindow()
-            }
-
-        is DedicatedUser.State.SetupNeeded -> runUserSetupWindow()
-    }
-}
-
-private fun startAmber() {
     // The dorkbox tray prefers to be created before Compose/AWT initializes
     // GTK (dorkbox has to own GTK loading, otherwise the AppIndicator backend
     // fails to start and SystemTray.get() returns null even when

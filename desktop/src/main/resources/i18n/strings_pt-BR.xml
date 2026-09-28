@@ -786,11 +786,6 @@
     <string name="d_log_out_passphrase">Digite sua senha para sair</string>
     <string name="d_passphrase_desc">O Amber exige uma senha. Suas chaves permanecem criptografadas em repouso, mesmo contra softwares que possam ler seus arquivos — ela será solicitada quando o Amber iniciar e sempre que ele for bloqueado.</string>
     <string name="d_setup_title">Proteja suas chaves</string>
-    <string name="d_dedicated_user_title">Executar o Amber com um usuário próprio</string>
-    <string name="d_dedicated_user_desc">O Amber criará o usuário do sistema “%1$s” e sempre executará sob ele, para que outros aplicativos neste computador não possam ler a memória nem os arquivos dele. Seus dados existentes do Amber são movidos para a pasta pessoal desse usuário. Digite sua senha (sudo) para configurar.</string>
-    <string name="d_dedicated_user_password">Sua senha (sudo)</string>
-    <string name="d_dedicated_user_set_up">Configurar e reiniciar</string>
-    <string name="d_dedicated_user_failed">Falha na configuração — verifique sua senha e tente novamente</string>
     <string name="d_set_passphrase">Definir uma senha</string>
     <string name="d_lock_now">Bloquear agora</string>
     <string name="d_change_passphrase">Alterar senha</string>

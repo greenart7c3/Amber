@@ -799,11 +799,6 @@
     <string name="d_log_out_passphrase">Enter your passphrase to log out</string>
     <string name="d_passphrase_desc">Amber requires a passphrase. Your keys stay encrypted at rest, even against software that can read your files — you will be asked for it when Amber starts and whenever it locks.</string>
     <string name="d_setup_title">Protect your keys</string>
-    <string name="d_dedicated_user_title">Run Amber under its own user</string>
-    <string name="d_dedicated_user_desc">Amber will create the OS user “%1$s” and always run under it, so other apps on this computer cannot read its memory or files. Your existing Amber data is moved to that user’s home. Enter your password (sudo) to set this up.</string>
-    <string name="d_dedicated_user_password">Your password (sudo)</string>
-    <string name="d_dedicated_user_set_up">Set up and restart</string>
-    <string name="d_dedicated_user_failed">Setup failed — check your password and try again</string>
     <string name="d_set_passphrase">Set a passphrase</string>
     <string name="d_lock_now">Lock now</string>
     <string name="d_change_passphrase">Change passphrase</string>

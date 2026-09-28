@@ -22,6 +22,11 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -53,7 +58,10 @@ fun UnlockScreen() {
         }
     }
 
-    LockScreenScaffold(subtitle = Strings.get("d_locked", language)) {
+    LockScreenScaffold(
+        subtitle = Strings.get("d_locked", language),
+        onEnter = { submit() },
+    ) {
         OutlinedTextField(
             value = passphrase,
             onValueChange = { passphrase = it },
@@ -114,7 +122,10 @@ fun PassphraseSetupScreen() {
         }
     }
 
-    LockScreenScaffold(subtitle = Strings.get("d_passphrase_desc", language)) {
+    LockScreenScaffold(
+        subtitle = Strings.get("d_passphrase_desc", language),
+        onEnter = { submit() },
+    ) {
         OutlinedTextField(
             value = passphrase,
             onValueChange = { passphrase = it },
@@ -158,9 +169,27 @@ fun PassphraseSetupScreen() {
 @Composable
 private fun LockScreenScaffold(
     subtitle: String,
+    onEnter: (() -> Unit)?,
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+    Box(
+        Modifier
+            .fillMaxSize()
+            .onPreviewKeyEvent { event ->
+                // Enter (or numpad enter) runs the primary action, the way
+                // every password prompt behaves.
+                if (onEnter != null &&
+                    event.type == KeyEventType.KeyUp &&
+                    (event.key == Key.Enter || event.key == Key.NumPadEnter)
+                ) {
+                    onEnter()
+                    true
+                } else {
+                    false
+                }
+            },
+        contentAlignment = Alignment.Center,
+    ) {
         Column(
             Modifier.widthIn(max = 480.dp).padding(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally,

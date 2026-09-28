@@ -853,6 +853,7 @@
     <string name="d_remove_relay">ลบรีเลย์</string>
     <string name="d_one_relay_required">ต้องมีรีเลย์อย่างน้อยหนึ่งรายการ</string>
     <string name="d_reconnect_relays">เชื่อมต่อรีเลย์ใหม่</string>
+    <string name="d_default_relays">เพิ่มรีเลย์เริ่มต้น</string>
     <string name="d_reconnecting">กำลังเชื่อมต่อใหม่…</string>
     <string name="d_remember_never">เพียงครั้งเดียว</string>
     <string name="d_remember_1m">1 นาที</string>

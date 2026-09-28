@@ -874,6 +874,7 @@
     <string name="d_remove_relay">Relay entfernen</string>
     <string name="d_one_relay_required">Mindestens ein Relay ist erforderlich</string>
     <string name="d_reconnect_relays">Relays erneut verbinden</string>
+    <string name="d_default_relays">Standard-Relays hinzufügen</string>
     <string name="d_reconnecting">Verbindung wird wiederhergestellt…</string>
     <string name="d_remember_never">Nur einmal</string>
     <string name="d_remember_1m">1 Minute</string>

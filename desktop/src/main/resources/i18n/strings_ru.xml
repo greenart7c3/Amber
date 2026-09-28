@@ -781,6 +781,8 @@
     <string name="d_keep_in_tray_sub">При закрытии окна Amber сворачивается в системный трей и продолжает отвечать на запросы.</string>
     <string name="d_notifications">Уведомления</string>
     <string name="d_notifications_sub">Показывать системное уведомление, когда запрос требует вашего одобрения.</string>
+    <string name="d_start_on_boot">Запускать при включении</string>
+    <string name="d_start_on_boot_sub">Запускает Amber автоматически при входе в систему. Он запускается заблокированным — введите пароль-фразу для подписи.</string>
     <string name="d_active">Активен</string>
     <string name="d_switch">Переключить</string>
     <string name="d_log_out">Выйти</string>

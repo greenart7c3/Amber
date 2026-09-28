@@ -762,6 +762,8 @@
     <string name="d_keep_in_tray_sub">关闭窗口会将 Amber 最小化到系统托盘，以便它继续响应请求。</string>
     <string name="d_notifications">通知</string>
     <string name="d_notifications_sub">当请求需要你批准时显示系统通知。</string>
+    <string name="d_start_on_boot">开机自动启动</string>
+    <string name="d_start_on_boot_sub">登录时自动启动 Amber。启动时处于锁定状态——输入密码短语后才能签名。</string>
     <string name="d_active">当前</string>
     <string name="d_switch">切换</string>
     <string name="d_log_out">退出登录</string>

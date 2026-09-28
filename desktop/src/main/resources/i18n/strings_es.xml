@@ -781,6 +781,8 @@
     <string name="d_keep_in_tray_sub">Al cerrar la ventana, Amber se minimiza a la bandeja del sistema para seguir respondiendo a las solicitudes.</string>
     <string name="d_notifications">Notificaciones</string>
     <string name="d_notifications_sub">Mostrar una notificación del sistema cuando una solicitud necesite tu aprobación.</string>
+    <string name="d_start_on_boot">Iniciar al arrancar</string>
+    <string name="d_start_on_boot_sub">Inicia Amber automáticamente al iniciar sesión. Arranca bloqueado; introduce tu frase de contraseña para firmar.</string>
     <string name="d_active">Activa</string>
     <string name="d_switch">Cambiar</string>
     <string name="d_log_out">Cerrar sesión</string>

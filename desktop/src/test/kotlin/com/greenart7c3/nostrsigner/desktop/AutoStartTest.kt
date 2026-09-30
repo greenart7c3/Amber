@@ -1,6 +1,7 @@
 package com.greenart7c3.nostrsigner.desktop
 
 import com.greenart7c3.nostrsigner.desktop.core.AutoStart
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -30,5 +31,12 @@ class AutoStartTest {
     fun unitQuotesExecStartWithSpaces() {
         val unit = AutoStart.unitContent("/opt/My Apps/Amber/bin/Amber")
         assertTrue(unit.contains("ExecStart=\"/opt/My Apps/Amber/bin/Amber\""))
+    }
+
+    @Test
+    fun windowsRunCommandQuotesPath() {
+        // The Run value is parsed as a command line: an unquoted
+        // "C:\Program Files\..." would try to launch "C:\Program".
+        assertEquals("\"C:\\Program Files\\Amber\\Amber.exe\"", AutoStart.windowsRunCommand("C:\\Program Files\\Amber\\Amber.exe"))
     }
 }

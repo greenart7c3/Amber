@@ -20,6 +20,7 @@ import com.vitorpamplona.quartz.nip01Core.signers.NostrSignerInternal
 import com.vitorpamplona.quartz.nip01Core.tags.people.taggedUsers
 import com.vitorpamplona.quartz.nip04Dm.crypto.EncryptedInfo
 import com.vitorpamplona.quartz.nip19Bech32.toNpub
+import com.vitorpamplona.quartz.nip40Expiration.expiration
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequest
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequestConnect
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequestSign
@@ -37,6 +38,7 @@ import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -67,6 +69,13 @@ data class PendingBunkerRequest(
     val encryptionType: EncryptionType = EncryptionType.NIP44,
     val isNostrConnectUri: Boolean = false,
     val signerPrivKey: String = "",
+    /**
+     * Unix seconds after which the request is dropped from the queue, or null
+     * to keep it until answered. NIP-46 gives no signal when a client stops
+     * waiting, so relay requests get a generous TTL (or their NIP-40
+     * expiration, if sooner) instead of lingering forever.
+     */
+    val expiresAt: Long? = null,
 )
 
 /**
@@ -284,6 +293,12 @@ class BunkerEngine(
         if (event.kind != NostrConnectEvent.KIND) return
         if (!event.verify()) return
         if (event.content.isEmpty()) return
+        // Mirrors EventNotificationConsumer: drop NIP-40-expired requests.
+        val expiration = event.expiration()
+        if (expiration != null && expiration < TimeUtils.now()) {
+            AmberLogger.d("BunkerEngine", "Event ${event.id} has expired")
+            return
+        }
 
         val alreadySeen = synchronized(seenEvents) {
             if (seenEvents.containsKey(event.id)) {
@@ -535,6 +550,7 @@ class BunkerEngine(
                         result = computed.result,
                         encryptionType = encryptionType,
                         signerPrivKey = effectivePrivKey,
+                        expiresAt = minOf(TimeUtils.now() + PENDING_TTL_SECONDS, event.expiration() ?: Long.MAX_VALUE),
                     ),
                 )
             }
@@ -627,6 +643,11 @@ class BunkerEngine(
 
     fun removePending(id: String) {
         pending.value = pending.value.filter { it.request.id != id }
+    }
+
+    /** Drops requests whose [PendingBunkerRequest.expiresAt] has passed; the UI calls this periodically. */
+    fun pruneExpired(now: Long = TimeUtils.now()) {
+        pending.update { list -> list.filter { it.expiresAt == null || it.expiresAt > now } }
     }
 
     /**
@@ -1049,6 +1070,9 @@ class BunkerEngine(
     }
 
     companion object {
+        /** How long a relay request waits for a decision before it is dropped. */
+        const val PENDING_TTL_SECONDS = 10 * 60L
+
         fun typeFromMethod(method: String): SignerType = when (method) {
             "connect" -> SignerType.CONNECT
             "sign_event" -> SignerType.SIGN_EVENT

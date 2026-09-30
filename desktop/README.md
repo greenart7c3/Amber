@@ -40,11 +40,20 @@ for the JVM) and mirrors the mobile UI and permission model.
   or `gdbus` on Linux — so they work on Hyprland/Wayland — `osascript` on
   macOS, and the AWT tray notification on Windows
 - Mandatory passphrase lock (see Key storage below)
-- Optional start-on-boot (Settings → Desktop): installs and enables a
-  hardened systemd **user** service that starts Amber with the desktop
-  session — always locked, passphrase required before anything signs. No
-  `MemoryDenyWriteExecute` (the JVM's JIT cannot run under it); the unit
-  still gets `ProtectSystem=strict`, seccomp, `NoNewPrivileges` and friends
+- Optional start-on-boot (Settings → Desktop), always starting locked —
+  passphrase required before anything signs. Only offered for installed
+  builds (not `:desktop:run`):
+  - Windows: a per-user `HKCU\Software\Microsoft\Windows\CurrentVersion\Run`
+    entry (no admin rights; also listed under Task Manager → Startup apps)
+  - Linux: installs and enables a hardened systemd **user** service that
+    starts Amber with the desktop session. No `MemoryDenyWriteExecute` (the
+    JVM's JIT cannot run under it); the unit still gets
+    `ProtectSystem=strict`, seccomp, `NoNewPrivileges` and friends
+- Windows installer (MSI/EXE) adds a Start Menu entry and a desktop shortcut
+- The window opens fitted to the screen's usable area (never under the
+  taskbar) and remembers its size and maximized state
+- Pending requests expire after 10 minutes (or at the request's NIP-40
+  `expiration`, if sooner), since NIP-46 clients stop waiting long before
 - Native desktop layout: sidebar navigation with an account switcher, dense
   list views, and keyboard shortcuts
 - Light/dark theme using the Amber palette

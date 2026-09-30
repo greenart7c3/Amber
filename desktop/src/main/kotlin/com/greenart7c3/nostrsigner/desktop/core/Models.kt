@@ -181,10 +181,15 @@ data class DesktopSettings(
     val closeToTray: Boolean = true,
     /** Show a system notification when a request needs approval. */
     val showNotifications: Boolean = true,
-    /** Start automatically with the desktop session (systemd user service). */
+    /** Start automatically at login (systemd user service on Linux, HKCU Run entry on Windows). */
     val startOnBoot: Boolean = false,
     /** UI language tag (matches Strings.supportedLanguages); null = follow the OS. */
     val language: String? = null,
+    /** Last floating window size in dp; null = default (fitted to the screen). */
+    val windowWidth: Int? = null,
+    val windowHeight: Int? = null,
+    /** Reopen maximized when the window was maximized at last change. */
+    val windowMaximized: Boolean = false,
 ) {
     fun normalizedDefaultRelays(): List<NormalizedRelayUrl> = defaultRelays.mapNotNull { RelayUrlNormalizer.normalizeOrNull(it) }
 }

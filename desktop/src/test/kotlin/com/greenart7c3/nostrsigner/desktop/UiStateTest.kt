@@ -37,6 +37,27 @@ class UiStateTest {
     }
 
     @Test
+    fun pruneExpiredDropsOnlyStaleRequests() = runBlocking {
+        val account = com.greenart7c3.nostrsigner.desktop.core.AccountManager.addAccount(
+            com.vitorpamplona.quartz.nip01Core.crypto.KeyPair(),
+        )
+        fun req(id: String, expiresAt: Long?) = PendingBunkerRequest(
+            request = BunkerRequest(id, "sign_event", arrayOf()),
+            type = SignerType.SIGN_EVENT,
+            account = account,
+            localKey = "k$id",
+            relays = emptyList(),
+            expiresAt = expiresAt,
+        )
+        AmberDesktop.engine.pending.value = listOf(req("stale", 100), req("fresh", 200), req("uri", null))
+
+        AmberDesktop.engine.pruneExpired(now = 150)
+
+        // Expired relay request goes; unexpired and never-expiring (nostrconnect://) stay.
+        assertEquals(listOf("fresh", "uri"), AmberDesktop.engine.pending.value.map { it.request.id })
+    }
+
+    @Test
     fun upDownSelectionClampsAtEnds() = runBlocking {
         // Needs a real account for PendingBunkerRequest; create one.
         val account = com.greenart7c3.nostrsigner.desktop.core.AccountManager.addAccount(

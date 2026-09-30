@@ -7,16 +7,18 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.unit.DpSize
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Notification
 import androidx.compose.ui.window.Tray
 import androidx.compose.ui.window.Window
+import androidx.compose.ui.window.WindowPlacement
+import androidx.compose.ui.window.WindowPosition
+import androidx.compose.ui.window.WindowState
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.isTraySupported
 import androidx.compose.ui.window.rememberTrayState
-import androidx.compose.ui.window.rememberWindowState
 import com.greenart7c3.nostrsigner.desktop.core.AccountManager
 import com.greenart7c3.nostrsigner.desktop.core.AccountsStore
 import com.greenart7c3.nostrsigner.desktop.core.AmberDesktop
@@ -32,8 +34,12 @@ import com.greenart7c3.nostrsigner.desktop.core.describe
 import com.greenart7c3.nostrsigner.desktop.ui.App
 import com.greenart7c3.nostrsigner.desktop.ui.NostrSignerTheme
 import com.greenart7c3.nostrsigner.desktop.ui.handleShortcut
+import com.greenart7c3.nostrsigner.desktop.ui.initialWindowSize
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -142,7 +148,7 @@ fun main(args: Array<String>) {
     }
     if (launchUri != null) UriLaunch.pending.value = launchUri
 
-    // Keep the autostart unit fresh (binary path can change between builds).
+    // Keep the autostart entry fresh (binary path can change between builds/installs).
     if (SettingsStore.settings.value.startOnBoot) {
         AutoStart.setEnabled(true)
     }
@@ -169,7 +175,14 @@ fun main(args: Array<String>) {
     Session.boot()
 
     application {
-        val windowState = rememberWindowState(size = DpSize(1100.dp, 780.dp))
+        val windowState = remember {
+            val saved = SettingsStore.settings.value
+            WindowState(
+                placement = if (saved.windowMaximized) WindowPlacement.Maximized else WindowPlacement.Floating,
+                position = WindowPosition(Alignment.Center),
+                size = initialWindowSize(saved.windowWidth, saved.windowHeight),
+            )
+        }
         val pending by AmberDesktop.engine.pending.collectAsState()
         val settings by SettingsStore.settings.collectAsState()
         val language by Strings.currentLanguage.collectAsState()
@@ -187,6 +200,29 @@ fun main(args: Array<String>) {
             !isLinux && isTraySupported && runCatching { java.awt.SystemTray.getSystemTray() }.isSuccess
         }
 
+        // Remember maximized state and the floating size across launches. The
+        // size is only saved while floating, so un-maximizing restores it.
+        LaunchedEffect(windowState) {
+            snapshotFlow { windowState.placement to windowState.size }
+                .drop(1)
+                .collectLatest { (placement, size) ->
+                    delay(500)
+                    SettingsStore.update {
+                        if (placement == WindowPlacement.Floating) {
+                            it.copy(windowMaximized = false, windowWidth = size.width.value.toInt(), windowHeight = size.height.value.toInt())
+                        } else {
+                            it.copy(windowMaximized = placement == WindowPlacement.Maximized)
+                        }
+                    }
+                }
+        }
+        // Drop requests whose client has most likely given up (see PendingBunkerRequest.expiresAt).
+        LaunchedEffect(Unit) {
+            while (true) {
+                delay(15_000)
+                AmberDesktop.engine.pruneExpired()
+            }
+        }
         // The tray's Quit routes here so we can exit the Compose app cleanly.
         LaunchedEffect(quitRequested) { if (quitRequested) exitApplication() }
         // A nostrconnect:// link explicitly targets Amber: raise the window,

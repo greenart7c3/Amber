@@ -47,6 +47,8 @@ dependencies {
     // freedesktop StatusNotifierItem / AppIndicator protocol, so a tray icon
     // shows on Wayland compositors (Hyprland, Sway, GNOME) via waybar etc.
     implementation(libs.dorkbox.systemtray)
+    // Windows registry access for start-on-boot (HKCU\...\Run).
+    implementation(libs.jna.platform)
     runtimeOnly(libs.slf4j.nop)
 
     // Argon2id for the optional passphrase lock.
@@ -75,6 +77,14 @@ compose.desktop {
             linux {
                 iconFile.set(rootProject.file("assets/android-icon-hires.png"))
                 menuGroup = "Network"
+            }
+            windows {
+                iconFile.set(project.file("icons/amber.ico"))
+                // Start Menu entry + desktop shortcut; without these the MSI
+                // only adds an uninstall entry and Amber.exe is hard to find.
+                menu = true
+                menuGroup = "Amber"
+                shortcut = true
             }
             macOS {
                 bundleID = "com.greenart7c3.nostrsigner"

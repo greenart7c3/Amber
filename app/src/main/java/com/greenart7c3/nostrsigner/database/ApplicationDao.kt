@@ -188,12 +188,30 @@ interface ApplicationDao {
     @Transaction
     suspend fun insertPermissions2Raw(permissions: List<ApplicationPermissionsEntity>): List<Long>?
 
-    suspend fun insertPermissions2(permissions: List<ApplicationPermissionsEntity>): List<Long>? = insertPermissions2Raw(permissions)
+    @Query("SELECT `key` FROM application WHERE `key` IN (:keys)")
+    suspend fun getExistingApplicationKeys(keys: List<String>): List<String>
+
+    /**
+     * Inserts permissions, skipping rows whose parent application no longer
+     * exists. `OnConflictStrategy.IGNORE` does not cover foreign-key failures,
+     * so a permission written after its application was deleted (e.g. a toggle
+     * racing an app delete/reset) would otherwise crash with
+     * `SQLITE_CONSTRAINT_FOREIGNKEY`.
+     */
+    @Transaction
+    suspend fun insertPermissions2(permissions: List<ApplicationPermissionsEntity>): List<Long>? {
+        if (permissions.isEmpty()) return emptyList()
+        val existingKeys = getExistingApplicationKeys(permissions.map { it.pkKey }.distinct()).toSet()
+        val valid = permissions.filter { it.pkKey in existingKeys }
+        if (valid.isEmpty()) return emptyList()
+        return insertPermissions2Raw(valid)
+    }
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     @Transaction
     suspend fun insertPermissionsRaw(permissions: List<ApplicationPermissionsEntity>): List<Long>?
 
+    @Transaction
     suspend fun insertPermissions(permissions: List<ApplicationPermissionsEntity>): List<Long>? {
         permissions.forEach {
             if (it.kind != null) {
@@ -212,7 +230,7 @@ interface ApplicationDao {
                 deletePermissions(it.pkKey, it.type)
             }
         }
-        return insertPermissions2Raw(permissions)
+        return insertPermissions2(permissions)
     }
 
     @Transaction

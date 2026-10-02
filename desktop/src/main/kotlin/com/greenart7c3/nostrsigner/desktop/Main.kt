@@ -133,10 +133,12 @@ private object DesktopTray {
 /**
  * AWT derives the X11 WM_CLASS from whichever thread first loaded the toolkit
  * (e.g. `java-lang-Thread`), so docks (GNOME, KDE) can't match the window to
- * `amber.desktop` (StartupWMClass=Amber) and show a generic icon instead of
- * Amber's. Must run before the first window is created; needs
+ * its desktop entry and show a generic icon instead of Amber's. Must run
+ * before the first window is created; needs
  * `--add-opens java.desktop/sun.awt.X11=ALL-UNNAMED`.
  */
+private const val LINUX_WINDOW_CLASS = "amber-Amber"
+
 private fun setX11WindowClass(name: String) {
     runCatching {
         val toolkit = java.awt.Toolkit.getDefaultToolkit()
@@ -197,7 +199,10 @@ fun main(args: Array<String>) {
         )
     }
 
-    if (DesktopTray.isLinux) setX11WindowClass("Amber")
+    // The .deb/.rpm desktop entry jpackage generates is amber-Amber.desktop
+    // with no StartupWMClass, so docks match it by window class == file name.
+    // The AppImage entry declares StartupWMClass=amber-Amber to match.
+    if (DesktopTray.isLinux) setX11WindowClass(LINUX_WINDOW_CLASS)
 
     Session.boot()
 

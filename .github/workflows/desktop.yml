@@ -1,0 +1,145 @@
+name: Test/Build Desktop
+
+# Lints, tests and packages the Compose for Desktop signer (:desktop) on every
+# OS it ships for, and uploads the installers so each change can be tried out.
+
+on:
+  pull_request:
+    branches: [master]
+    paths: &desktop-paths
+      - 'desktop/**'
+      - 'gradle/**'
+      - '*.gradle.kts'
+      - 'gradle.properties'
+      - '.github/workflows/desktop.yml'
+  push:
+    paths: *desktop-paths
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: desktop-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v6
+        with:
+          distribution: 'temurin'
+          java-version: 21
+
+      - name: Cache Gradle
+        uses: actions/cache@v6
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-desktop-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', 'gradle/libs.versions.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-desktop-gradle-
+
+      - name: Create keystore.properties
+        run: touch keystore.properties
+
+      - name: Linter (gradle)
+        run: ./gradlew :desktop:ktlintCheck --no-daemon
+
+  build:
+    name: build (${{ matrix.name }})
+    needs: lint
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: linux
+            os: ubuntu-latest
+          - name: windows
+            os: windows-latest
+          - name: macos-arm64
+            os: macos-latest
+          - name: macos-x64
+            os: macos-15-intel
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v6
+        with:
+          distribution: 'temurin'
+          java-version: 21
+
+      - name: Cache Gradle
+        uses: actions/cache@v6
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-${{ runner.arch }}-desktop-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', 'gradle/libs.versions.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ runner.arch }}-desktop-gradle-
+
+      - name: Create keystore.properties
+        run: touch keystore.properties
+
+      - name: Install Linux packaging tools
+        if: runner.os == 'Linux'
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq rpm xvfb
+
+      - name: Test (gradle)
+        run: ./gradlew :desktop:test --no-daemon
+
+      # .deb/.rpm on Linux, .msi/.exe on Windows (WiX is fetched by the
+      # Compose plugin), .dmg on macOS (unsigned).
+      - name: Package (gradle)
+        run: ./gradlew :desktop:packageDistributionForCurrentOs --no-daemon
+
+      # Start the packaged app on a virtual display and make sure it is still
+      # alive after a while, i.e. it doesn't crash on startup. HOME points at an
+      # empty dir so it boots like a first launch.
+      - name: Smoke test packaged app
+        if: runner.os == 'Linux'
+        run: |
+          export HOME="$RUNNER_TEMP/amber-home" AMBER_DISABLE_TRAY=1
+          mkdir -p "$HOME"
+          xvfb-run -a desktop/build/compose/binaries/main/app/Amber/bin/Amber > "$RUNNER_TEMP/amber.log" 2>&1 &
+          sleep 30
+          cat "$RUNNER_TEMP/amber.log"
+          pgrep -f 'binaries/main/app/Amber/bin/Amber' > /dev/null || { echo "::error::Amber exited during startup"; exit 1; }
+          pkill -f 'binaries/main/app/Amber/bin/Amber' || true
+
+      - name: Upload installers
+        uses: actions/upload-artifact@v7
+        with:
+          name: amber-desktop-${{ matrix.name }}-${{ github.sha }}
+          path: |
+            desktop/build/compose/binaries/main/deb/*.deb
+            desktop/build/compose/binaries/main/rpm/*.rpm
+            desktop/build/compose/binaries/main/msi/*.msi
+            desktop/build/compose/binaries/main/exe/*.exe
+            desktop/build/compose/binaries/main/dmg/*.dmg
+          retention-days: 14
+          if-no-files-found: error
+
+      - name: Upload test reports
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: desktop-test-reports-${{ matrix.name }}
+          path: desktop/build/reports

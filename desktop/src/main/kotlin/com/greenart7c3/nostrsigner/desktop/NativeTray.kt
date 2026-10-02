@@ -116,6 +116,28 @@ class NativeTray private constructor(
             return shimDir.absolutePath
         }
 
+        /**
+         * dorkbox hands the shell the tray icon as a file path under its
+         * `OS.TEMP_DIR`, read once from `java.io.tmpdir` when that class
+         * loads. Under the start-on-boot unit /tmp is private (PrivateTmp),
+         * so GNOME Shell / waybar can't read the icon and draw a placeholder.
+         * Load the class with tmpdir pointed at `$XDG_RUNTIME_DIR` (per-user,
+         * visible to the shell), then restore it; nothing else sees the
+         * change — the main thread is blocked on tray init meanwhile.
+         */
+        private fun loadDorkboxWithSessionTempDir() {
+            val runtimeDir = System.getenv("XDG_RUNTIME_DIR")?.let(::File)?.takeIf { it.isDirectory && it.canWrite() } ?: return
+            val original = System.getProperty("java.io.tmpdir")
+            try {
+                System.setProperty("java.io.tmpdir", runtimeDir.path)
+                Class.forName("dorkbox.os.OS")
+            } catch (t: Throwable) {
+                AmberLogger.e("NativeTray", "Could not move the tray icon cache: ${t.message}")
+            } finally {
+                System.setProperty("java.io.tmpdir", original)
+            }
+        }
+
         private fun chosenTrayType(): SystemTray.TrayType {
             System.getenv("AMBER_TRAY_TYPE")?.let { name ->
                 runCatching { return SystemTray.TrayType.valueOf(name) }
@@ -211,6 +233,7 @@ class NativeTray private constructor(
             onLock: () -> Unit,
             onQuit: () -> Unit,
         ): NativeTray? {
+            loadDorkboxWithSessionTempDir()
             val type = chosenTrayType()
             runCatching {
                 if (type != SystemTray.TrayType.AutoDetect) SystemTray.FORCE_TRAY_TYPE = type

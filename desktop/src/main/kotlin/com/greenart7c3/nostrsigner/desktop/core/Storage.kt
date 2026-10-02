@@ -216,4 +216,11 @@ object AccountsStore {
     }
 
     fun get(npub: String): AccountRecord? = accounts.value.firstOrNull { it.npub == npub }
+
+    /** Atomically rewrites one account's record; no-op if it was removed meanwhile. */
+    @Synchronized
+    fun update(npub: String, transform: (AccountRecord) -> AccountRecord) {
+        val current = get(npub) ?: return
+        upsert(transform(current))
+    }
 }

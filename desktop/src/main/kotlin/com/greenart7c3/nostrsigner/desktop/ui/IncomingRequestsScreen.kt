@@ -252,7 +252,14 @@ private fun SigningAccountRow(
 
     Row(verticalAlignment = Alignment.CenterVertically) {
         Text(
-            "${Strings.get("account", language)}: ${label(npub)}",
+            "${Strings.get("account", language)}:",
+            style = MaterialTheme.typography.bodyMedium,
+        )
+        Spacer(Modifier.width(6.dp))
+        AccountAvatar(npub, size = 24.dp)
+        Spacer(Modifier.width(6.dp))
+        Text(
+            label(npub),
             style = MaterialTheme.typography.bodyMedium,
         )
         if (switchable) {
@@ -265,6 +272,7 @@ private fun SigningAccountRow(
                 DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
                     accounts.forEach { account ->
                         DropdownMenuItem(
+                            leadingIcon = { AccountAvatar(account.npub, size = 24.dp) },
                             text = {
                                 Text(
                                     label(account.npub),

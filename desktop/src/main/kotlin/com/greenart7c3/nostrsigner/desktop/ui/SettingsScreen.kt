@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.rememberScrollbarAdapter
@@ -67,7 +68,9 @@ fun SettingsScreen(account: DesktopAccount) {
     var showBackupDialog by remember { mutableStateOf(false) }
     var showLogsDialog by remember { mutableStateOf(false) }
     var showLogoutConfirm by remember { mutableStateOf<String?>(null) }
-    var name by remember { mutableStateOf(account.name.value) }
+    // Re-keyed on the account's name so a name fetched from its profile shows up.
+    val accountName by account.name.collectAsState()
+    var name by remember(accountName) { mutableStateOf(accountName) }
 
     val scrollState = rememberScrollState()
     ScrollbarBox(rememberScrollbarAdapter(scrollState), Modifier.fillMaxSize()) {
@@ -182,6 +185,8 @@ fun SettingsScreen(account: DesktopAccount) {
                     Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 2.dp),
                     verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
                 ) {
+                    AccountAvatar(record.npub)
+                    Spacer(Modifier.width(10.dp))
                     Column(Modifier.weight(1f)) {
                         Text(
                             record.name.ifBlank { record.npub.toShortenHex() },

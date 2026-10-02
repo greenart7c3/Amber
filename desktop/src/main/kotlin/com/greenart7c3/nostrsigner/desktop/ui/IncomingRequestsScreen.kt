@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
 import androidx.compose.material3.Checkbox
@@ -73,19 +74,21 @@ fun IncomingRequestsScreen(account: DesktopAccount) {
         if (index >= 0) listState.animateScrollToItem(index)
     }
 
-    LazyColumn(
-        Modifier.fillMaxSize(),
-        state = listState,
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-        contentPadding = androidx.compose.foundation.layout.PaddingValues(vertical = 12.dp),
-    ) {
-        items(pending.size, key = { pending[it].request.id }) { index ->
-            val req = pending[index]
-            RequestCard(
-                req = req,
-                selected = req.request.id == (selectedId ?: pending.firstOrNull()?.request?.id),
-                onSelect = { UiState.selectedRequestId.value = req.request.id },
-            )
+    ScrollbarBox(rememberScrollbarAdapter(listState), Modifier.fillMaxSize()) {
+        LazyColumn(
+            Modifier.fillMaxSize(),
+            state = listState,
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+            contentPadding = androidx.compose.foundation.layout.PaddingValues(vertical = 12.dp),
+        ) {
+            items(pending.size, key = { pending[it].request.id }) { index ->
+                val req = pending[index]
+                RequestCard(
+                    req = req,
+                    selected = req.request.id == (selectedId ?: pending.firstOrNull()?.request?.id),
+                    onSelect = { UiState.selectedRequestId.value = req.request.id },
+                )
+            }
         }
     }
 }

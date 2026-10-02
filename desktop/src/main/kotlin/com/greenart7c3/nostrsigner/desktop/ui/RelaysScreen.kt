@@ -15,6 +15,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
@@ -136,35 +138,39 @@ fun RelaysScreen() {
         }
         Spacer(Modifier.height(8.dp))
 
-        LazyColumn(
-            Modifier.weight(1f),
-            contentPadding = PaddingValues(bottom = 8.dp),
-        ) {
-            items(settings.defaultRelays.size) { index ->
-                val relay = settings.defaultRelays[index]
-                Row(
-                    Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 2.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text(relay, Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium)
-                    RelayConnectionStatus(RelayUrlNormalizer.normalizeOrNull(relay), available, connected)
-                    Spacer(Modifier.width(8.dp))
-                    IconButton(
-                        onClick = {
-                            if (settings.defaultRelays.size == 1) {
-                                Toaster.toast(Strings.get("d_one_relay_required", language))
-                                return@IconButton
-                            }
-                            SettingsStore.update {
-                                it.copy(defaultRelays = it.defaultRelays.filter { url -> url != relay })
-                            }
-                            scope.launch { AmberDesktop.engine.updateFilter() }
-                        },
+        val listState = rememberLazyListState()
+        ScrollbarBox(rememberScrollbarAdapter(listState), Modifier.weight(1f)) {
+            LazyColumn(
+                Modifier.fillMaxSize(),
+                state = listState,
+                contentPadding = PaddingValues(bottom = 8.dp),
+            ) {
+                items(settings.defaultRelays.size) { index ->
+                    val relay = settings.defaultRelays[index]
+                    Row(
+                        Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 2.dp),
+                        verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        Icon(Icons.Default.Delete, Strings.get("d_remove_relay", language))
+                        Text(relay, Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium)
+                        RelayConnectionStatus(RelayUrlNormalizer.normalizeOrNull(relay), available, connected)
+                        Spacer(Modifier.width(8.dp))
+                        IconButton(
+                            onClick = {
+                                if (settings.defaultRelays.size == 1) {
+                                    Toaster.toast(Strings.get("d_one_relay_required", language))
+                                    return@IconButton
+                                }
+                                SettingsStore.update {
+                                    it.copy(defaultRelays = it.defaultRelays.filter { url -> url != relay })
+                                }
+                                scope.launch { AmberDesktop.engine.updateFilter() }
+                            },
+                        ) {
+                            Icon(Icons.Default.Delete, Strings.get("d_remove_relay", language))
+                        }
                     }
+                    HorizontalDivider()
                 }
-                HorizontalDivider()
             }
         }
 

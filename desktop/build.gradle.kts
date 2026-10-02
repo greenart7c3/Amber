@@ -65,6 +65,8 @@ dependencies {
 compose.desktop {
     application {
         mainClass = "com.greenart7c3.nostrsigner.desktop.MainKt"
+        // Lets Main.kt set the X11 WM_CLASS so Linux docks match amber.desktop.
+        jvmArgs += "--add-opens=java.desktop/sun.awt.X11=ALL-UNNAMED"
 
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Exe, TargetFormat.Deb, TargetFormat.Rpm)
@@ -75,7 +77,7 @@ compose.desktop {
             copyright = "© greenart7c3. Distributed under the MIT license."
 
             linux {
-                iconFile.set(rootProject.file("assets/android-icon-hires.png"))
+                iconFile.set(project.file("src/main/resources/icon.png"))
                 menuGroup = "Network"
             }
             windows {
@@ -88,6 +90,7 @@ compose.desktop {
             }
             macOS {
                 bundleID = "com.greenart7c3.nostrsigner"
+                iconFile.set(project.file("icons/amber.icns"))
                 infoPlist {
                     // Claim nostrconnect:// so LaunchServices routes those
                     // links to Amber (delivered via Desktop.setOpenURIHandler).

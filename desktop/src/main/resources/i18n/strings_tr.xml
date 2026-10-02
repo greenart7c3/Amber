@@ -874,6 +874,9 @@
     <string name="d_disconnect_delete">Bağlantıyı kes ve uygulamayı sil</string>
     <string name="d_application_removed">Uygulama kaldırıldı</string>
     <string name="d_relay_hint">wss://relay.example.com</string>
+    <string name="d_relay_connected">Bağlı</string>
+    <string name="d_relay_disconnected">Bağlı değil</string>
+    <string name="d_relay_not_in_use">Kullanılmıyor</string>
     <string name="d_invalid_relay">Geçersiz relay URL'si</string>
     <string name="d_remove_relay">Relay'i kaldır</string>
     <string name="d_one_relay_required">En az bir relay gerekli</string>

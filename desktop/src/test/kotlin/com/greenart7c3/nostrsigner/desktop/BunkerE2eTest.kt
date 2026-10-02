@@ -2,6 +2,8 @@ package com.greenart7c3.nostrsigner.desktop
 
 import com.greenart7c3.nostrsigner.desktop.core.AccountManager
 import com.greenart7c3.nostrsigner.desktop.core.AmberDesktop
+import com.greenart7c3.nostrsigner.desktop.core.EncryptedContentType
+import com.greenart7c3.nostrsigner.desktop.core.EncryptionScope
 import com.greenart7c3.nostrsigner.desktop.core.RememberType
 import com.greenart7c3.nostrsigner.desktop.core.SettingsStore
 import com.vitorpamplona.quartz.nip01Core.core.Event
@@ -312,6 +314,140 @@ class BunkerE2eTest {
         client.send(signerPubKey, relay, """{"id":"sw-gpk","method":"get_public_key","params":[]}""")
         val gpk = withTimeout(30_000) { client.responses.first { l -> l.any { it.id == "sw-gpk" } } }.first { it.id == "sw-gpk" }
         assertEquals(accountB.hexKey, gpk.result)
+
+        client.stop()
+    }
+
+    /**
+     * Encrypt grants are per content type, like Android: approving a text
+     * encryption "for this method only" auto-approves the next text, but a
+     * tag array still needs approval; "all methods" then covers it too.
+     */
+    @Test
+    fun encryptPermissionsAreScopedByContentType() = runBlocking {
+        assumeTrue("Set AMBER_E2E=1 to run the relay round-trip test", System.getenv("AMBER_E2E") != null)
+
+        val relay = RelayUrlNormalizer.normalize("wss://nos.lol/")
+        SettingsStore.update { it.copy(defaultRelays = listOf(relay.url)) }
+
+        val account = AccountManager.addAccount(KeyPair(), name = "scope")
+        val engine = AmberDesktop.engine
+        engine.start()
+        val bunkerUri = engine.createBunkerConnection(account, "scope-app", listOf(relay))
+        val signerPubKey = bunkerUri.removePrefix("bunker://").substringBefore("?")
+        val secret = bunkerUri.substringAfter("secret=")
+        val client = Client(relay, KeyPair())
+        val peer = KeyPair().pubKey.toHexKey()
+        delay(3000)
+
+        suspend fun request(json: String) {
+            client.send(signerPubKey, relay, json)
+        }
+        suspend fun pendingFor(id: String) = withTimeout(30_000) {
+            engine.pending.first { list -> list.any { it.request.id == id } }
+        }.first { it.request.id == id }
+        suspend fun responseFor(id: String) = withTimeout(30_000) {
+            client.responses.first { l -> l.any { it.id == id } }
+        }.first { it.id == id }
+
+        // Connect with the manual policy and no requested perms.
+        request("""{"id":"sc-connect","method":"connect","params":["$signerPubKey","$secret"]}""")
+        engine.approve(pendingFor("sc-connect"), RememberType.ALWAYS, signPolicy = 1).join()
+        responseFor("sc-connect")
+
+        // Text: approve and remember for this content type only.
+        request("""{"id":"sc-t1","method":"nip44_encrypt","params":["$peer","hello"]}""")
+        val t1 = pendingFor("sc-t1")
+        assertEquals(EncryptedContentType.CLEAR_TEXT, t1.encryptedContent?.type)
+        engine.approve(t1, RememberType.ALWAYS, encryptionScope = EncryptionScope.SPECIFIC).join()
+        responseFor("sc-t1")
+        val stored = AmberDesktop.store(account.npub).apps.value.first { it.app.name == "scope-app" }.permissions.map { it.type }
+        assertTrue(stored.toString(), "ENCRYPT_CLEAR_TEXT" in stored && "NIP44_ENCRYPT" !in stored)
+
+        // Another text is answered without prompting.
+        request("""{"id":"sc-t2","method":"nip44_encrypt","params":["$peer","again"]}""")
+        assertTrue(responseFor("sc-t2").result!!.isNotEmpty())
+
+        // A tag array is a different content type: it prompts. Approve for all methods.
+        request("""{"id":"sc-tags","method":"nip44_encrypt","params":["$peer","[[\"p\",\"$peer\"]]"]}""")
+        val tags = pendingFor("sc-tags")
+        assertEquals(EncryptedContentType.TAG_ARRAY, tags.encryptedContent?.type)
+        engine.approve(tags, RememberType.ALWAYS, encryptionScope = EncryptionScope.ALL).join()
+        responseFor("sc-tags")
+
+        // The whole-NIP grant now covers an event too.
+        request("""{"id":"sc-ev","method":"nip44_encrypt","params":["$peer","{\"kind\":1,\"content\":\"x\",\"tags\":[]}"]}""")
+        assertTrue(responseFor("sc-ev").result!!.isNotEmpty())
+
+        client.stop()
+    }
+
+    /**
+     * NIP-44 v3 grants are per context kind, like Android: "this kind only"
+     * covers the next request of that kind but not another kind; "all kinds"
+     * replaces them with a kind-less grant. A request without a kind is
+     * rejected without prompting.
+     */
+    @Test
+    fun nip44v3PermissionsAreScopedByKind() = runBlocking {
+        assumeTrue("Set AMBER_E2E=1 to run the relay round-trip test", System.getenv("AMBER_E2E") != null)
+
+        val relay = RelayUrlNormalizer.normalize("wss://nos.lol/")
+        SettingsStore.update { it.copy(defaultRelays = listOf(relay.url)) }
+
+        val account = AccountManager.addAccount(KeyPair(), name = "v3")
+        val engine = AmberDesktop.engine
+        engine.start()
+        val bunkerUri = engine.createBunkerConnection(account, "v3-app", listOf(relay))
+        val signerPubKey = bunkerUri.removePrefix("bunker://").substringBefore("?")
+        val secret = bunkerUri.substringAfter("secret=")
+        val client = Client(relay, KeyPair())
+        val peer = KeyPair().pubKey.toHexKey()
+        val plain = java.util.Base64.getEncoder().encodeToString("hi".toByteArray())
+        delay(3000)
+
+        suspend fun request(json: String) {
+            client.send(signerPubKey, relay, json)
+        }
+        suspend fun pendingFor(id: String) = withTimeout(30_000) {
+            engine.pending.first { list -> list.any { it.request.id == id } }
+        }.first { it.request.id == id }
+        suspend fun responseFor(id: String) = withTimeout(30_000) {
+            client.responses.first { l -> l.any { it.id == id } }
+        }.first { it.id == id }
+        fun v3Perms() = AmberDesktop.store(account.npub).apps.value.first { it.app.name == "v3-app" }
+            .permissions.filter { it.type == "NIP44_V3_ENCRYPT" }.map { it.kind }
+
+        request("""{"id":"v3-connect","method":"connect","params":["$signerPubKey","$secret"]}""")
+        engine.approve(pendingFor("v3-connect"), RememberType.ALWAYS, signPolicy = 1).join()
+        responseFor("v3-connect")
+
+        // Kind 1, this kind only.
+        request("""{"id":"v3-a","method":"nip44v3_encrypt","params":["$peer","1","chat","$plain"]}""")
+        val a = pendingFor("v3-a")
+        assertEquals(1, a.kind)
+        assertEquals("chat", a.nip44v3Scope)
+        engine.approve(a, RememberType.ALWAYS, encryptionScope = EncryptionScope.SPECIFIC).join()
+        responseFor("v3-a")
+        assertEquals(listOf<Int?>(1), v3Perms())
+
+        // Same kind: answered without prompting.
+        request("""{"id":"v3-b","method":"nip44v3_encrypt","params":["$peer","1","chat","$plain"]}""")
+        assertTrue(responseFor("v3-b").result!!.isNotEmpty())
+
+        // Another kind prompts; grant all kinds.
+        request("""{"id":"v3-c","method":"nip44v3_encrypt","params":["$peer","7","","$plain"]}""")
+        engine.approve(pendingFor("v3-c"), RememberType.ALWAYS, encryptionScope = EncryptionScope.ALL).join()
+        responseFor("v3-c")
+        assertEquals(listOf<Int?>(null), v3Perms())
+
+        // Any kind is now covered.
+        request("""{"id":"v3-d","method":"nip44v3_encrypt","params":["$peer","30023","","$plain"]}""")
+        assertTrue(responseFor("v3-d").result!!.isNotEmpty())
+
+        // No kind: rejected up front.
+        request("""{"id":"v3-e","method":"nip44v3_encrypt","params":["$peer","","","$plain"]}""")
+        assertEquals("kind is required for nip44v3", responseFor("v3-e").error)
 
         client.stop()
     }

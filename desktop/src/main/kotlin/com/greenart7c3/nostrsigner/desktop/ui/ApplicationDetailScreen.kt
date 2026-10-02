@@ -378,6 +378,9 @@ private fun permissionTitle(type: String, kind: Int?, language: String): String 
     val description = SignerDescriptions.permission(type, kind, language)
     return when (type.trim().lowercase()) {
         "sign_event", "nip" -> Strings.format("sign", description, language = language)
+        // NIP-44 v3 grants are per context kind, or for all kinds without one.
+        "nip44_v3_encrypt", "nip44_v3_decrypt" ->
+            "$description · " + (kind?.let { "$it (${SignerDescriptions.signEventDescription(it, language)})" } ?: Strings.get("for_all_kinds", language))
         else -> description
     }
 }

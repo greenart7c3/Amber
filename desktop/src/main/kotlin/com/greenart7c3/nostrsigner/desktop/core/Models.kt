@@ -66,6 +66,25 @@ enum class RememberType(val screenCode: Int, val labelKey: String) {
     }
 }
 
+/**
+ * "Delete after" choice for a new connection, mirroring the Android
+ * `DeleteAfterType`: the connection is removed once [deleteAt] passes.
+ */
+enum class DeleteAfterType(val screenCode: Int, val labelKey: String, val seconds: Long) {
+    NEVER(0, "never", 0L),
+    FIVE_MINUTES(1, "five_minutes", 300L),
+    TEN_MINUTES(2, "ten_minutes", 600L),
+    ONE_HOUR(3, "one_hour", 3600L),
+    ONE_DAY(4, "one_day", 86400L),
+    ONE_WEEK(5, "one_week", 604800L),
+    ;
+
+    fun label(language: String = Strings.currentLanguage.value): String = Strings.get(labelKey, language)
+
+    /** Unix seconds to store in [AppRecord.deleteAfter]; 0 means never. */
+    fun deleteAt(now: Long = TimeUtils.now()): Long = if (this == NEVER) 0L else now + seconds
+}
+
 val rememberTypeDisplayOrder = listOf(
     RememberType.NEVER,
     RememberType.FIVE_MINUTES,

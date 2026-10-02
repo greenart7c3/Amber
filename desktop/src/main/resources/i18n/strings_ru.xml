@@ -763,6 +763,7 @@
     <string name="d_request_approved">Запрос одобрен</string>
     <string name="d_request_rejected">Запрос отклонён</string>
     <string name="d_shortcut_hint">↑↓ выбрать · ←→ запомнить · %1$s одобрить · %2$s отклонить</string>
+    <string name="d_shortcut_hint_connect">↑↓ выбрать · ←→ удалить через · 1–3 разрешения · A аккаунт · %1$s одобрить · %2$s отклонить</string>
     <string name="d_remember_prefix">Запомнить: %1$s</string>
     <string name="d_qr_code">QR-код</string>
     <string name="d_saved">Сохранено</string>

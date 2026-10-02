@@ -275,6 +275,48 @@ class BunkerE2eTest {
     }
 
     /**
+     * Switching the account on the connect card: a bunker:// connection
+     * created under account A but approved for account B moves to B, keeps
+     * its connection key, and from then on signs as B.
+     */
+    @Test
+    fun connectCanBeApprovedForAnotherAccount() = runBlocking {
+        assumeTrue("Set AMBER_E2E=1 to run the relay round-trip test", System.getenv("AMBER_E2E") != null)
+
+        val relay = RelayUrlNormalizer.normalize("wss://nos.lol/")
+        SettingsStore.update { it.copy(defaultRelays = listOf(relay.url)) }
+
+        val accountA = AccountManager.addAccount(KeyPair(), name = "switch-A")
+        val accountB = AccountManager.addAccount(KeyPair(), name = "switch-B")
+
+        val engine = AmberDesktop.engine
+        engine.start()
+        val bunkerUri = engine.createBunkerConnection(accountA, "switch-app", listOf(relay))
+        val signerPubKey = bunkerUri.removePrefix("bunker://").substringBefore("?")
+        val secret = bunkerUri.substringAfter("secret=")
+
+        val client = Client(relay, KeyPair())
+        delay(3000)
+
+        client.send(signerPubKey, relay, """{"id":"sw-connect","method":"connect","params":["$signerPubKey","$secret"]}""")
+        withTimeout(30_000) { engine.pending.first { list -> list.any { it.request.id == "sw-connect" } } }
+        val req = engine.pending.value.first { it.request.id == "sw-connect" }
+        assertTrue(req.canSwitchAccount)
+        engine.approve(req, RememberType.ALWAYS, accountNpub = accountB.npub).join()
+
+        val ack = withTimeout(30_000) { client.responses.first { l -> l.any { it.id == "sw-connect" } } }.first { it.id == "sw-connect" }
+        assertEquals("ack", ack.result)
+        assertTrue(AmberDesktop.store(accountA.npub).apps.value.none { it.app.name == "switch-app" })
+        assertTrue(AmberDesktop.store(accountB.npub).apps.value.any { it.app.name == "switch-app" && it.app.pubKey == accountB.hexKey })
+
+        client.send(signerPubKey, relay, """{"id":"sw-gpk","method":"get_public_key","params":[]}""")
+        val gpk = withTimeout(30_000) { client.responses.first { l -> l.any { it.id == "sw-gpk" } } }.first { it.id == "sw-gpk" }
+        assertEquals(accountB.hexKey, gpk.result)
+
+        client.stop()
+    }
+
+    /**
      * The nostrconnect:// flow real web apps use: the client publishes a URI,
      * Amber imports it, the user approves, Amber sends the connect ack from a
      * fresh per-connection key, and the client can then issue get_public_key

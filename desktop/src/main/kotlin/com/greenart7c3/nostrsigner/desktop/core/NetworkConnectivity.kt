@@ -16,7 +16,8 @@ import kotlinx.coroutines.launch
  * - network back ([Transition.ONLINE]): give previously-dead relays a fresh
  *   chance ([RelayHealthTracker.reset]) and connect + reconnect;
  * - network lost ([Transition.OFFLINE]): disconnect intentionally so the
- *   relay listeners do not schedule a reconnect storm against a dead link;
+ *   relay listeners do not schedule a reconnect storm against a dead link —
+ *   unless a local relay is in use, which keeps working without internet;
  * - every [UPDATE_FILTER_PERIOD_MS], refresh the subscriptions as a safety
  *   net so relays excluded as dead come back once healthy.
  */
@@ -56,7 +57,10 @@ object NetworkConnectivity {
                         }
                     }
 
-                    Transition.OFFLINE -> AmberDesktop.disconnectIntentionally()
+                    // Local relays keep working without internet: only drop
+                    // everything when none are in use (remote ones then fail
+                    // and back off on their own).
+                    Transition.OFFLINE -> if (!usesLocalRelays()) AmberDesktop.disconnectIntentionally()
 
                     Transition.OPENED, Transition.UNCHANGED -> {}
                 }
@@ -72,6 +76,8 @@ object NetworkConnectivity {
             }
         }
     }
+
+    private fun usesLocalRelays(): Boolean = AmberDesktop.client.availableRelaysFlow().value.any { LocalRelays.isLocal(it) }
 
     /** TCP reachability of any probe target; false on any failure. */
     private fun isOnline(): Boolean = probeTargets.any { target ->

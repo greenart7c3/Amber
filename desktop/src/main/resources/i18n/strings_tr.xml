@@ -898,4 +898,17 @@
     <string name="d_tray_quit">Amber'den çık</string>
     <string name="switch_relays">Relay'leri değiştirmek istiyor</string>
     <string name="invalid_request">geçersiz bir istek gönderdi</string>
+    <string name="tor_connecting">Tor\'a bağlanılıyor: %1$d%%</string>
+    <string name="tor_connection_failed">Tor bağlantısı başarısız oldu</string>
+    <string name="tor_restart">Yeniden başlat</string>
+    <string name="insecure_relay_warning">Genel internet üzerindeki güvensiz (açık metin, ws://) röle, NIP-46 meta verilerini ve şifreli metni ağ gözlemcilerine ifşa eder. wss:// tercih edin veya ws://\'yi yalnızca .onion / yerel ağ röleleri için kullanın.</string>
+    <string name="d_tor_off">Kapalı</string>
+    <string name="d_tor_external">Harici Tor proxy</string>
+    <string name="d_tor_external_sub">Bu bilgisayarda zaten çalışan bir Tor hizmetini kullanın. Sistem tor hizmeti 9050, Tor Browser 9150 numaralı bağlantı noktasını dinler.</string>
+    <string name="d_tor_socks_port">SOCKS bağlantı noktası</string>
+    <string name="d_tor_invalid_port">1 ile 65535 arasında bir bağlantı noktası girin</string>
+    <string name="d_tor_proxy_ok">Tor proxy erişilebilir</string>
+    <string name="d_tor_stopped">Tor çalışmıyor</string>
+    <string name="d_tor_local_note">Yerel aktarıcılar (localhost, LAN ve VPN adresleri, .local adları) her zaman Tor dışında doğrudan bağlanır.</string>
+    <string name="d_local_relay">Yerel</string>
 </resources>

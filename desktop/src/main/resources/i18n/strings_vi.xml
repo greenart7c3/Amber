@@ -878,4 +878,17 @@
     <string name="d_tray_quit">Thoát Amber</string>
     <string name="switch_relays">muốn chuyển relay</string>
     <string name="invalid_request">đã gửi một yêu cầu không hợp lệ</string>
+    <string name="tor_connecting">Đang kết nối với Tor: %1$d%%</string>
+    <string name="tor_connection_failed">Kết nối Tor thất bại</string>
+    <string name="tor_restart">Khởi động lại</string>
+    <string name="insecure_relay_warning">Relay không an toàn (văn bản thuần túy, ws://) qua internet công cộng sẽ để lộ siêu dữ liệu NIP-46 và văn bản mã hóa cho những người quan sát mạng. Ưu tiên wss:// hoặc chỉ sử dụng ws:// cho các relay .onion / mạng cục bộ.</string>
+    <string name="d_tor_off">Tắt</string>
+    <string name="d_tor_external">Proxy Tor bên ngoài</string>
+    <string name="d_tor_external_sub">Dùng dịch vụ Tor đang chạy sẵn trên máy tính này. Dịch vụ tor của hệ thống lắng nghe ở cổng 9050, Tor Browser ở cổng 9150.</string>
+    <string name="d_tor_socks_port">Cổng SOCKS</string>
+    <string name="d_tor_invalid_port">Nhập cổng từ 1 đến 65535</string>
+    <string name="d_tor_proxy_ok">Có thể kết nối proxy Tor</string>
+    <string name="d_tor_stopped">Tor không chạy</string>
+    <string name="d_tor_local_note">Relay cục bộ (localhost, địa chỉ LAN và VPN, tên .local) luôn kết nối trực tiếp, không qua Tor.</string>
+    <string name="d_local_relay">Cục bộ</string>
 </resources>

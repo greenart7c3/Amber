@@ -878,4 +878,17 @@
     <string name="d_tray_quit">ออกจาก Amber</string>
     <string name="switch_relays">ต้องการเปลี่ยน Relay</string>
     <string name="invalid_request">ส่งคำขอที่ไม่ถูกต้อง</string>
+    <string name="tor_connecting">กำลังเชื่อมต่อกับ Tor: %1$d%%</string>
+    <string name="tor_connection_failed">การเชื่อมต่อ Tor ล้มเหลว</string>
+    <string name="tor_restart">เริ่มใหม่</string>
+    <string name="insecure_relay_warning">รีเลย์ที่ไม่ปลอดภัย (ข้อความธรรมดา, ws://) ผ่านอินเทอร์เน็ตสาธารณะจะเปิดเผยข้อมูลเมตาและข้อความไซเฟอร์เท็กซ์ของ NIP-46 ต่อผู้สังเกตการณ์เครือข่าย แนะนำให้ใช้ wss:// หรือใช้ ws:// เฉพาะสำหรับรีเลย์ .onion / เครือข่ายท้องถิ่นเท่านั้น</string>
+    <string name="d_tor_off">ปิด</string>
+    <string name="d_tor_external">พร็อกซี Tor ภายนอก</string>
+    <string name="d_tor_external_sub">ใช้ Tor ที่กำลังทำงานอยู่บนคอมพิวเตอร์เครื่องนี้ บริการ tor ของระบบใช้พอร์ต 9050 ส่วน Tor Browser ใช้ 9150</string>
+    <string name="d_tor_socks_port">พอร์ต SOCKS</string>
+    <string name="d_tor_invalid_port">ป้อนพอร์ตระหว่าง 1 ถึง 65535</string>
+    <string name="d_tor_proxy_ok">เชื่อมต่อพร็อกซี Tor ได้</string>
+    <string name="d_tor_stopped">Tor ไม่ได้ทำงาน</string>
+    <string name="d_tor_local_note">รีเลย์ภายใน (localhost, ที่อยู่ LAN และ VPN, ชื่อ .local) จะเชื่อมต่อโดยตรงเสมอ ไม่ผ่าน Tor</string>
+    <string name="d_local_relay">ภายใน</string>
 </resources>

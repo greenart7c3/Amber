@@ -902,4 +902,17 @@
     <string name="d_tray_quit">Keluar dari Amber</string>
     <string name="switch_relays">ingin mengganti relay</string>
     <string name="invalid_request">mengirim permintaan yang tidak valid</string>
+    <string name="tor_connecting">Menghubungkan ke Tor: %1$d%%</string>
+    <string name="tor_connection_failed">Koneksi Tor gagal</string>
+    <string name="tor_restart">Mulai ulang</string>
+    <string name="insecure_relay_warning">Relay yang tidak aman (teks biasa, ws://) melalui internet publik mengekspos metadata dan teks sandi NIP-46 ke pengamat jaringan. Pilih wss://, atau gunakan ws:// hanya untuk relay .onion / jaringan lokal.</string>
+    <string name="d_tor_off">Mati</string>
+    <string name="d_tor_external">Proksi Tor eksternal</string>
+    <string name="d_tor_external_sub">Gunakan layanan Tor yang sudah berjalan di komputer ini. Layanan tor sistem mendengarkan di port 9050, Tor Browser di 9150.</string>
+    <string name="d_tor_socks_port">Port SOCKS</string>
+    <string name="d_tor_invalid_port">Masukkan port antara 1 dan 65535</string>
+    <string name="d_tor_proxy_ok">Proksi Tor dapat dijangkau</string>
+    <string name="d_tor_stopped">Tor tidak berjalan</string>
+    <string name="d_tor_local_note">Relai lokal (localhost, alamat LAN dan VPN, nama .local) selalu terhubung langsung, di luar Tor.</string>
+    <string name="d_local_relay">Lokal</string>
 </resources>

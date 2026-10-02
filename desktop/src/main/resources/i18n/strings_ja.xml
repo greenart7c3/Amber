@@ -854,6 +854,9 @@
     <string name="d_disconnect_delete">アプリを切断して削除</string>
     <string name="d_application_removed">アプリを削除しました</string>
     <string name="d_relay_hint">wss://relay.example.com</string>
+    <string name="d_relay_connected">接続済み</string>
+    <string name="d_relay_disconnected">未接続</string>
+    <string name="d_relay_not_in_use">未使用</string>
     <string name="d_invalid_relay">無効なリレー URL</string>
     <string name="d_remove_relay">リレーを削除</string>
     <string name="d_one_relay_required">リレーは少なくとも 1 つ必要です</string>

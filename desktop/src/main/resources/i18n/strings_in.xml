@@ -878,6 +878,9 @@
     <string name="d_disconnect_delete">Putuskan dan hapus aplikasi</string>
     <string name="d_application_removed">Aplikasi dihapus</string>
     <string name="d_relay_hint">wss://relay.example.com</string>
+    <string name="d_relay_connected">Terhubung</string>
+    <string name="d_relay_disconnected">Tidak terhubung</string>
+    <string name="d_relay_not_in_use">Tidak digunakan</string>
     <string name="d_invalid_relay">URL relay tidak valid</string>
     <string name="d_remove_relay">Hapus relay</string>
     <string name="d_one_relay_required">Minimal satu relay diperlukan</string>

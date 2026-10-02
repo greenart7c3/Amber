@@ -40,6 +40,7 @@ import androidx.compose.ui.unit.dp
 import com.greenart7c3.nostrsigner.desktop.core.AmberDesktop
 import com.greenart7c3.nostrsigner.desktop.core.DesktopAccount
 import com.greenart7c3.nostrsigner.desktop.core.Strings
+import com.vitorpamplona.quartz.nip01Core.relay.normalizer.RelayUrlNormalizer
 import java.text.DateFormat
 import java.util.Date
 import kotlinx.coroutines.launch
@@ -181,6 +182,7 @@ private fun NewBunkerDialog(
     onDismiss: () -> Unit,
 ) {
     var name by remember { mutableStateOf("") }
+    var relays by remember { mutableStateOf(AmberDesktop.defaultRelays().map { it.url }) }
     var bunkerUri by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
     val clipboard = LocalClipboardManager.current
@@ -204,6 +206,18 @@ private fun NewBunkerDialog(
                         label = { Text(Strings.get("d_application_name", language)) },
                         modifier = Modifier.fillMaxWidth(),
                     )
+                    Spacer(Modifier.height(12.dp))
+                    Text(
+                        Strings.get("relays", language),
+                        style = MaterialTheme.typography.titleSmall,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                    Spacer(Modifier.height(4.dp))
+                    RelayListEditor(
+                        relays = relays,
+                        onChange = { relays = it },
+                        modifier = Modifier.fillMaxWidth(),
+                    )
                 } else {
                     QrCodeImage(uri)
                     Spacer(Modifier.height(8.dp))
@@ -221,11 +235,16 @@ private fun NewBunkerDialog(
                             Toaster.toast(Strings.get("d_name_required", language))
                             return@AmberTextButton
                         }
+                        val normalized = relays.mapNotNull { RelayUrlNormalizer.normalizeOrNull(it) }
+                        if (normalized.isEmpty()) {
+                            Toaster.toast(Strings.get("no_relays_added", language))
+                            return@AmberTextButton
+                        }
                         scope.launch {
                             bunkerUri = AmberDesktop.engine.createBunkerConnection(
                                 account,
                                 name,
-                                AmberDesktop.defaultRelays(),
+                                normalized,
                             )
                         }
                     },

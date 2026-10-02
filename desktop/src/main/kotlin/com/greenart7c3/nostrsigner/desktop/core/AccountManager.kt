@@ -121,13 +121,11 @@ object AccountManager {
     }
 
     fun saveAccountMeta(account: DesktopAccount) {
-        AccountsStore.get(account.npub)?.let {
-            AccountsStore.upsert(
-                it.copy(
-                    name = account.name.value,
-                    signPolicy = account.signPolicy,
-                    didBackup = account.didBackup,
-                ),
+        AccountsStore.update(account.npub) {
+            it.copy(
+                name = account.name.value,
+                signPolicy = account.signPolicy,
+                didBackup = account.didBackup,
             )
         }
     }

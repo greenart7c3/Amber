@@ -64,6 +64,9 @@ object AmberDesktop {
 
     suspend fun accounts(): List<DesktopAccount> = AccountsStore.accounts.value.mapNotNull { account(it.npub) }
 
+    /** The already-loaded account for [npub], if any (never decrypts a key). */
+    fun loadedAccount(npub: String): DesktopAccount? = accountCache[npub]
+
     fun evictAccount(npub: String) {
         accountCache.remove(npub)
         stores.remove(npub)

@@ -213,8 +213,18 @@ data class DesktopSettings(
     val torMode: TorMode = TorMode.DISABLED,
     /** SOCKS port of the external Tor proxy (9050 for system tor, 9150 for Tor Browser). */
     val proxyPort: Int = 9050,
+    /** Indexer relays queried for account profiles; mirrors the Android `defaultIndexerRelays`. */
+    val defaultProfileRelays: List<String> = listOf(
+        "wss://purplepag.es/",
+        "wss://user.kindpag.es/",
+        "wss://profiles.nostr1.com/",
+        "wss://directory.yabu.me/",
+        "wss://indexer.coracle.social/",
+    ),
 ) {
     fun normalizedDefaultRelays(): List<NormalizedRelayUrl> = defaultRelays.mapNotNull { RelayUrlNormalizer.normalizeOrNull(it) }
+
+    fun normalizedProfileRelays(): List<NormalizedRelayUrl> = defaultProfileRelays.mapNotNull { RelayUrlNormalizer.normalizeOrNull(it) }
 }
 
 data class AccountRecord(
@@ -224,6 +234,15 @@ data class AccountRecord(
     val encryptedSeedWords: String = "",
     val signPolicy: Int = 1,
     val didBackup: Boolean = true,
+    /** Profile picture URL from the account's kind-0 metadata. */
+    val picture: String = "",
+    /** Unix seconds of the last profile change applied from metadata (Android `lastMetadataUpdate`). */
+    val lastMetadataUpdate: Long = 0L,
+    /** Unix seconds of the last finished profile fetch (Android `lastCheck`). */
+    val lastProfileCheck: Long = 0L,
+    /** Write relays from the account's NIP-65 list, also queried for its profile. */
+    val userRelays: List<String> = emptyList(),
+    val userRelaysCreatedAt: Long = 0L,
 )
 
 fun String.toShortenHex(): String = if (length <= 16) this else "${take(8)}…${takeLast(8)}"

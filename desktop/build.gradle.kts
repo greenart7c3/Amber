@@ -65,7 +65,7 @@ dependencies {
 compose.desktop {
     application {
         mainClass = "com.greenart7c3.nostrsigner.desktop.MainKt"
-        // Lets Main.kt set the X11 WM_CLASS so Linux docks match amber.desktop.
+        // Lets Main.kt set the X11 WM_CLASS so Linux docks match the desktop entry.
         jvmArgs += "--add-opens=java.desktop/sun.awt.X11=ALL-UNNAMED"
 
         nativeDistributions {

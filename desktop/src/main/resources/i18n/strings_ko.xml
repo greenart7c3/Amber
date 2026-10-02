@@ -902,4 +902,17 @@
     <string name="d_tray_quit">Amber 종료</string>
     <string name="switch_relays">Relay 전환을 요청합니다</string>
     <string name="invalid_request">잘못된 요청을 보냈습니다</string>
+    <string name="tor_connecting">Tor 연결 중: %1$d%%</string>
+    <string name="tor_connection_failed">Tor 연결 실패</string>
+    <string name="tor_restart">재시작</string>
+    <string name="insecure_relay_warning">공개 인터넷을 통한 안전하지 않은(일반 텍스트, ws://) 릴레이는 NIP-46 메타데이터와 암호문을 네트워크 관찰자에게 노출합니다. wss://를 선호하거나, .onion / 로컬 네트워크 릴레이에 대해서만 ws://를 사용하십시오.</string>
+    <string name="d_tor_off">끄기</string>
+    <string name="d_tor_external">외부 Tor 프록시</string>
+    <string name="d_tor_external_sub">이 컴퓨터에서 이미 실행 중인 Tor 데몬을 사용합니다. 시스템 tor 서비스는 9050 포트, Tor Browser는 9150 포트를 사용합니다.</string>
+    <string name="d_tor_socks_port">SOCKS 포트</string>
+    <string name="d_tor_invalid_port">1에서 65535 사이의 포트를 입력하세요</string>
+    <string name="d_tor_proxy_ok">Tor 프록시에 연결할 수 있습니다</string>
+    <string name="d_tor_stopped">Tor가 실행 중이 아닙니다</string>
+    <string name="d_tor_local_note">로컬 릴레이(localhost, LAN 및 VPN 주소, .local 이름)는 항상 Tor를 거치지 않고 직접 연결됩니다.</string>
+    <string name="d_local_relay">로컬</string>
 </resources>

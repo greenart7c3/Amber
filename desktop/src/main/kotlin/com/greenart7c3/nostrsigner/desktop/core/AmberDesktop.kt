@@ -7,12 +7,11 @@ import com.vitorpamplona.quartz.nip01Core.relay.sockets.WebSocketListener
 import com.vitorpamplona.quartz.nip01Core.relay.sockets.WebsocketBuilder
 import com.vitorpamplona.quartz.nip01Core.relay.sockets.okhttp.BasicOkHttpWebSocket
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import okhttp3.OkHttpClient
+import kotlinx.coroutines.launch
 
 /**
  * Desktop counterpart of the Android `Amber` Application singleton: owns the
@@ -28,16 +27,10 @@ object AmberDesktop {
 
     val applicationIOScope = CoroutineScope(Dispatchers.IO + SupervisorJob() + exceptionHandler)
 
-    private val httpClient: OkHttpClient by lazy {
-        OkHttpClient.Builder()
-            .pingInterval(30, TimeUnit.SECONDS)
-            .readTimeout(30, TimeUnit.SECONDS)
-            .connectTimeout(30, TimeUnit.SECONDS)
-            .build()
-    }
-
+    // The client is picked per dial, so Tor routing (and the local-relay
+    // bypass) applies to every socket opened after a settings change.
     private val socketBuilder = object : WebsocketBuilder {
-        override fun build(url: NormalizedRelayUrl, out: WebSocketListener) = BasicOkHttpWebSocket(url, { httpClient }, out)
+        override fun build(url: NormalizedRelayUrl, out: WebSocketListener) = BasicOkHttpWebSocket(url, RelayHttpClients::clientFor, out)
     }
 
     val client: NostrClient by lazy { NostrClient(socketBuilder, applicationIOScope) }
@@ -113,6 +106,58 @@ object AmberDesktop {
     fun disconnectIntentionally() {
         intentionalDisconnectTime = System.currentTimeMillis()
         client.disconnect()
+    }
+
+    /**
+     * Applies the Tor settings: starts or stops built-in Tor and redials every
+     * relay so open sockets move to the new route (an open socket never
+     * re-checks its proxy on its own).
+     */
+    fun applyTorSettings() {
+        if (settings.torMode == TorMode.BUILTIN) {
+            TorManager.start(applicationIOScope)
+        } else {
+            TorManager.stop(applicationIOScope)
+        }
+        redialRelays()
+    }
+
+    /** Drops every relay socket and reconnects them through the current route. */
+    fun redialRelays() {
+        if (PassphraseLock.isLocked()) return
+        RelayHealthTracker.reset()
+        disconnectIntentionally()
+        applicationIOScope.launch {
+            engine.updateFilter()
+            client.connect()
+        }
+    }
+
+    @Volatile
+    private var torObserverStarted = false
+
+    /**
+     * Starts built-in Tor at launch when enabled, and redials relays whenever
+     * it (re)gains its SOCKS listener — mirrors `Amber.startTorRecoveryObserver`.
+     * Until then relays dial the fail-closed placeholder port and never leak.
+     */
+    fun startTor() {
+        if (torObserverStarted) return
+        torObserverStarted = true
+        applicationIOScope.launch {
+            var wasRunning = TorManager.isRunning.value
+            TorManager.isRunning.collect { running ->
+                if (running && !wasRunning && settings.torMode == TorMode.BUILTIN) {
+                    AmberLogger.d(TAG, "Built-in Tor is up; refreshing relay connections")
+                    redialRelays()
+                }
+                wasRunning = running
+            }
+        }
+        if (settings.torMode == TorMode.BUILTIN) {
+            TorManager.start(applicationIOScope)
+        }
+        Runtime.getRuntime().addShutdownHook(Thread { runCatching { TorManager.shutdown() } })
     }
 
     /** Mirrors `Amber.reconnect`: connect retries failed relays directly. */

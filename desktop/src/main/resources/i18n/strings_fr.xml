@@ -899,4 +899,17 @@
     <string name="d_tray_quit">Quitter Amber</string>
     <string name="switch_relays">veut changer de relais</string>
     <string name="invalid_request">a envoyé une requête invalide</string>
+    <string name="tor_connecting">Connexion à Tor : %1$d%%</string>
+    <string name="tor_connection_failed">Échec de la connexion à Tor</string>
+    <string name="tor_restart">Redémarrer</string>
+    <string name="insecure_relay_warning">Un relais non sécurisé (texte clair, ws://) sur l\'Internet public expose les métadonnées et le texte chiffré NIP-46 aux observateurs du réseau. Préférez wss://, ou utilisez ws:// uniquement pour les relais .onion / réseau local.</string>
+    <string name="d_tor_off">Désactivé</string>
+    <string name="d_tor_external">Proxy Tor externe</string>
+    <string name="d_tor_external_sub">Utiliser un service Tor déjà lancé sur cet ordinateur. Le service tor du système écoute sur le port 9050, Tor Browser sur le 9150.</string>
+    <string name="d_tor_socks_port">Port SOCKS</string>
+    <string name="d_tor_invalid_port">Saisissez un port entre 1 et 65535</string>
+    <string name="d_tor_proxy_ok">Proxy Tor joignable</string>
+    <string name="d_tor_stopped">Tor n’est pas lancé</string>
+    <string name="d_tor_local_note">Les relais locaux (localhost, adresses LAN et VPN, noms .local) se connectent toujours directement, hors de Tor.</string>
+    <string name="d_local_relay">Local</string>
 </resources>

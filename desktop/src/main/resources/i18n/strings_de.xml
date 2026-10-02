@@ -899,4 +899,17 @@
     <string name="d_tray_quit">Amber beenden</string>
     <string name="switch_relays">möchte die Relais wechseln</string>
     <string name="invalid_request">hat eine ungültige Anfrage gesendet</string>
+    <string name="tor_connecting">Verbinde mit Tor: %1$d%%</string>
+    <string name="tor_connection_failed">Tor-Verbindung fehlgeschlagen</string>
+    <string name="tor_restart">Neustart</string>
+    <string name="insecure_relay_warning">Unsicheres (Klartext, ws://) Relay über das öffentliche Internet legt NIP-46-Metadaten und Chiffretext für Netzwerkbeobachter offen. Bevorzugen Sie wss://, oder verwenden Sie ws:// nur für .onion / lokale Netzwerk-Relays.</string>
+    <string name="d_tor_off">Aus</string>
+    <string name="d_tor_external">Externer Tor-Proxy</string>
+    <string name="d_tor_external_sub">Einen bereits auf diesem Computer laufenden Tor-Dienst verwenden. Der System-Tor-Dienst lauscht auf Port 9050, der Tor Browser auf 9150.</string>
+    <string name="d_tor_socks_port">SOCKS-Port</string>
+    <string name="d_tor_invalid_port">Gib einen Port zwischen 1 und 65535 ein</string>
+    <string name="d_tor_proxy_ok">Tor-Proxy erreichbar</string>
+    <string name="d_tor_stopped">Tor läuft nicht</string>
+    <string name="d_tor_local_note">Lokale Relays (localhost, LAN- und VPN-Adressen, .local-Namen) verbinden sich immer direkt, außerhalb von Tor.</string>
+    <string name="d_local_relay">Lokal</string>
 </resources>

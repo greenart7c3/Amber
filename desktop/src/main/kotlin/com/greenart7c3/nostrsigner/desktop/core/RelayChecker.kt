@@ -36,12 +36,8 @@ object RelayChecker {
         FILTER_FAILED,
     }
 
-    /** Mirrors the mobile `Amber.isPrivateIp`. */
-    fun isPrivateIp(url: String): Boolean = url.contains("127.0.0.1") ||
-        url.contains("localhost") ||
-        url.contains("192.168.") ||
-        (16..31).any { url.contains("172.$it.") } ||
-        url.contains("10.")
+    /** Local relay (localhost / LAN / VPN address); see [LocalRelays.isLocal]. */
+    fun isPrivateIp(url: String): Boolean = LocalRelays.isLocal(url)
 
     /**
      * Mirrors the mobile URL preparation: bare hosts get `wss://`, except
@@ -51,7 +47,7 @@ object RelayChecker {
         val trimmed = url.trim()
         if (trimmed.isBlank() || trimmed == "/") return null
         return if (!trimmed.startsWith("wss://") && !trimmed.startsWith("ws://")) {
-            if (trimmed.endsWith(".onion") || trimmed.endsWith(".onion/") || isPrivateIp(trimmed)) {
+            if (LocalRelays.isOnion(trimmed) || isPrivateIp(trimmed)) {
                 RelayUrlNormalizer.normalizeOrNull("ws://$trimmed")
             } else {
                 RelayUrlNormalizer.normalizeOrNull("wss://$trimmed")

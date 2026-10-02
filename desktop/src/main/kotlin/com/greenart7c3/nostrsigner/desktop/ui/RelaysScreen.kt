@@ -40,6 +40,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.greenart7c3.nostrsigner.desktop.core.AmberDesktop
 import com.greenart7c3.nostrsigner.desktop.core.DesktopSettings
+import com.greenart7c3.nostrsigner.desktop.core.LocalRelays
 import com.greenart7c3.nostrsigner.desktop.core.RelayChecker
 import com.greenart7c3.nostrsigner.desktop.core.SettingsStore
 import com.greenart7c3.nostrsigner.desktop.core.Strings
@@ -136,6 +137,16 @@ fun RelaysScreen() {
                 },
             )
         }
+        // Port of the Android GHSA-8844-q5vh-9j8f warning: an explicit ws://
+        // relay on the public internet is cleartext; fine for .onion / local.
+        if (LocalRelays.isInsecure(newRelay)) {
+            Text(
+                Strings.get("insecure_relay_warning", language),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.error,
+                modifier = Modifier.widthIn(max = 520.dp).padding(top = 4.dp),
+            )
+        }
         Spacer(Modifier.height(8.dp))
 
         val listState = rememberLazyListState()
@@ -152,6 +163,14 @@ fun RelaysScreen() {
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Text(relay, Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium)
+                        if (LocalRelays.isLocal(relay)) {
+                            Text(
+                                Strings.get("d_local_relay", language),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                            Spacer(Modifier.width(8.dp))
+                        }
                         RelayConnectionStatus(RelayUrlNormalizer.normalizeOrNull(relay), available, connected)
                         Spacer(Modifier.width(8.dp))
                         IconButton(

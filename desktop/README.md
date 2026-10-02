@@ -22,6 +22,16 @@ for the JVM) and mirrors the mobile UI and permission model.
   per-application sign policies (basic / manual / sign everything)
 - Per-application activity history and relay logs
 - Default bunker relays management
+- Tor (Settings → Tor setup), like the Android app: a built-in Tor daemon
+  (kmp-tor, bundled for every OS) or an external SOCKS proxy such as the
+  system tor service (port 9050) or Tor Browser (9150). Relay connections
+  fail closed while built-in Tor is still starting, and switching modes
+  redials every relay through the new route
+- Local relays: localhost, LAN/VPN addresses (RFC 1918, link-local, CGNAT /
+  Tailscale, IPv6 ULA) and `.local` / `.lan` / `.home.arpa` names get plain
+  `ws://` by default, always bypass Tor, and stay connected when the internet
+  drops. An explicit `ws://` relay on the public internet shows a cleartext
+  warning
 - System tray: closing the window minimizes Amber to the tray so it keeps
   answering requests (with Open / Lock now / Quit menu), and new approval
   requests raise a system notification and bring the window back — both

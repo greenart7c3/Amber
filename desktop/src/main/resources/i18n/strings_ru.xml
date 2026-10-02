@@ -902,4 +902,17 @@
     <string name="d_tray_quit">Выйти из Amber</string>
     <string name="switch_relays">хочет сменить Relay-серверы</string>
     <string name="invalid_request">отправил недопустимый запрос</string>
+    <string name="tor_connecting">Подключение к Tor: %1$d%%</string>
+    <string name="tor_connection_failed">Ошибка подключения к Tor</string>
+    <string name="tor_restart">Перезапуск</string>
+    <string name="insecure_relay_warning">Незащищенное (открытый текст, ws://) реле через общедоступный Интернет раскрывает метаданные NIP-46 и зашифрованный текст сетевым наблюдателям. Предпочитайте wss:// или используйте ws:// только для реле .onion / локальной сети.</string>
+    <string name="d_tor_off">Выкл.</string>
+    <string name="d_tor_external">Внешний прокси Tor</string>
+    <string name="d_tor_external_sub">Использовать службу Tor, уже запущенную на этом компьютере. Системная служба tor слушает порт 9050, Tor Browser — 9150.</string>
+    <string name="d_tor_socks_port">Порт SOCKS</string>
+    <string name="d_tor_invalid_port">Введите порт от 1 до 65535</string>
+    <string name="d_tor_proxy_ok">Прокси Tor доступен</string>
+    <string name="d_tor_stopped">Tor не запущен</string>
+    <string name="d_tor_local_note">Локальные релеи (localhost, адреса LAN и VPN, имена .local) всегда подключаются напрямую, в обход Tor.</string>
+    <string name="d_local_relay">Локальный</string>
 </resources>

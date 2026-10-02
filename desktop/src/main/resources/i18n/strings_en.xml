@@ -908,4 +908,17 @@
     <string name="d_tray_hide">Hide Amber</string>
     <string name="d_tray_open">Open Amber</string>
     <string name="d_tray_quit">Quit Amber</string>
+    <string name="tor_connecting">Connecting to Tor: %1$d%%</string>
+    <string name="tor_connection_failed">Tor connection failed</string>
+    <string name="tor_restart">Restart</string>
+    <string name="insecure_relay_warning">Insecure (cleartext, ws://) relay over the public internet exposes NIP-46 metadata and ciphertext to network observers. Prefer wss://, or use ws:// only for .onion / local-network relays.</string>
+    <string name="d_tor_off">Off</string>
+    <string name="d_tor_external">External Tor proxy</string>
+    <string name="d_tor_external_sub">Use a Tor daemon already running on this computer. The system tor service listens on port 9050, Tor Browser on 9150.</string>
+    <string name="d_tor_socks_port">SOCKS port</string>
+    <string name="d_tor_invalid_port">Enter a port between 1 and 65535</string>
+    <string name="d_tor_proxy_ok">Tor proxy reachable</string>
+    <string name="d_tor_stopped">Tor is not running</string>
+    <string name="d_tor_local_note">Local relays (localhost, LAN and VPN addresses, .local names) always connect directly, outside Tor.</string>
+    <string name="d_local_relay">Local</string>
 </resources>

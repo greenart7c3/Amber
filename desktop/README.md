@@ -14,7 +14,9 @@ for the JVM) and mirrors the mobile UI and permission model.
   `nip44v3_encrypt/decrypt`, `decrypt_zap_event`, `sign_psbt`,
   `switch_relays`, `logout`
 - Connect applications with a `nostrconnect://` URI or by generating a
-  `bunker://` URI (with QR code) — each connection gets its own local key
+  `bunker://` URI (with QR code) — each connection gets its own local key.
+  Clicking a `nostrconnect://` link opens Amber (Linux: registered per user
+  via `xdg-mime`; macOS: declared in the app bundle's Info.plist)
 - The same permission model as mobile: auto-accept / auto-reject rules per
   request type and event kind, time-bound grants (5 minutes … always), and
   per-application sign policies (basic / manual / sign everything)
@@ -37,14 +39,19 @@ for the JVM) and mirrors the mobile UI and permission model.
   forces the backend and `AMBER_DISABLE_TRAY=1` skips the tray entirely.
 - Notifications go through the OS-native channel: the freedesktop
   notification daemon (mako, dunst, swaync, GNOME Shell, …) via `notify-send`
-  or `gdbus` on Linux — so they work on Hyprland/Wayland — `osascript` on
-  macOS, and the AWT tray notification on Windows
+  or `gdbus` on Linux — so they work on Hyprland/Wayland — and the AWT tray
+  notification on Windows and macOS (on macOS it is posted as Amber itself;
+  allow it when macOS asks on first launch, or later under System Settings →
+  Notifications → Amber)
 - Mandatory passphrase lock (see Key storage below)
 - Optional start-on-boot (Settings → Desktop), always starting locked —
   passphrase required before anything signs. Only offered for installed
   builds (not `:desktop:run`):
   - Windows: a per-user `HKCU\Software\Microsoft\Windows\CurrentVersion\Run`
     entry (no admin rights; also listed under Task Manager → Startup apps)
+  - macOS: a per-user LaunchAgent (`~/Library/LaunchAgents/com.greenart7c3.nostrsigner.plist`)
+    that runs Amber at login (listed under System Settings → General → Login
+    Items & Extensions)
   - Linux: installs and enables a hardened systemd **user** service that
     starts Amber with the desktop session. No `MemoryDenyWriteExecute` (the
     JVM's JIT cannot run under it); the unit still gets

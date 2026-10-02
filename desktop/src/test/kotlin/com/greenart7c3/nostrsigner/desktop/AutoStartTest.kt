@@ -39,4 +39,22 @@ class AutoStartTest {
         // "C:\Program Files\..." would try to launch "C:\Program".
         assertEquals("\"C:\\Program Files\\Amber\\Amber.exe\"", AutoStart.windowsRunCommand("C:\\Program Files\\Amber\\Amber.exe"))
     }
+
+    @Test
+    fun launchAgentRunsBundleLauncherAtLogin() {
+        val plist = AutoStart.launchAgentContent("/Applications/Amber.app/Contents/MacOS/Amber")
+        assertTrue(plist.startsWith("<?xml"))
+        assertTrue(plist.contains("<string>com.greenart7c3.nostrsigner</string>"))
+        assertTrue(plist.contains("<string>/Applications/Amber.app/Contents/MacOS/Amber</string>"))
+        assertTrue(plist.contains("<key>RunAtLoad</key>\n    <true/>"))
+        assertTrue(plist.contains("<string>Aqua</string>"))
+        // Quitting Amber must stick: launchd must not relaunch it.
+        assertFalse(plist.contains("KeepAlive"))
+    }
+
+    @Test
+    fun launchAgentEscapesXmlInPath() {
+        val plist = AutoStart.launchAgentContent("/Users/a&b/Apps/<Amber>.app/Contents/MacOS/Amber")
+        assertTrue(plist.contains("<string>/Users/a&amp;b/Apps/&lt;Amber&gt;.app/Contents/MacOS/Amber</string>"))
+    }
 }

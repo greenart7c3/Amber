@@ -12,7 +12,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
@@ -69,42 +71,45 @@ fun ApplicationsScreen(
                 )
             }
         } else {
-            LazyColumn(contentPadding = PaddingValues(bottom = 12.dp)) {
-                val sorted = apps.sortedByDescending { it.app.lastUsed }
-                items(sorted.size, key = { sorted[it].app.key }) { index ->
-                    val app = sorted[index]
-                    Row(
-                        Modifier
-                            .fillMaxWidth()
-                            .clickable { onOpenApplication(app.app.key) }
-                            .padding(horizontal = 4.dp, vertical = 10.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Column(Modifier.weight(1f)) {
-                            Text(
-                                app.app.displayName(),
-                                style = MaterialTheme.typography.bodyLarge,
-                                fontWeight = FontWeight.Medium,
-                            )
-                            Text(
-                                buildString {
-                                    append(if (app.app.isConnected) Strings.get("d_app_connected", language) else Strings.get("d_app_waiting", language))
-                                    append(" · ${Strings.format("d_permissions_count", app.permissions.size, language = language)}")
-                                    if (app.app.lastUsed > 0) {
-                                        append(" · ${Strings.format("d_last_used", DateFormat.getDateTimeInstance().format(Date(app.app.lastUsed * 1000)), language = language)}")
-                                    }
-                                },
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            val listState = rememberLazyListState()
+            ScrollbarBox(rememberScrollbarAdapter(listState), Modifier.fillMaxSize()) {
+                LazyColumn(Modifier.fillMaxSize(), state = listState, contentPadding = PaddingValues(bottom = 12.dp)) {
+                    val sorted = apps.sortedByDescending { it.app.lastUsed }
+                    items(sorted.size, key = { sorted[it].app.key }) { index ->
+                        val app = sorted[index]
+                        Row(
+                            Modifier
+                                .fillMaxWidth()
+                                .clickable { onOpenApplication(app.app.key) }
+                                .padding(horizontal = 4.dp, vertical = 10.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Column(Modifier.weight(1f)) {
+                                Text(
+                                    app.app.displayName(),
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    fontWeight = FontWeight.Medium,
+                                )
+                                Text(
+                                    buildString {
+                                        append(if (app.app.isConnected) Strings.get("d_app_connected", language) else Strings.get("d_app_waiting", language))
+                                        append(" · ${Strings.format("d_permissions_count", app.permissions.size, language = language)}")
+                                        if (app.app.lastUsed > 0) {
+                                            append(" · ${Strings.format("d_last_used", DateFormat.getDateTimeInstance().format(Date(app.app.lastUsed * 1000)), language = language)}")
+                                        }
+                                    },
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
+                            Icon(
+                                Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                         }
-                        Icon(
-                            Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
+                        HorizontalDivider()
                     }
-                    HorizontalDivider()
                 }
             }
         }

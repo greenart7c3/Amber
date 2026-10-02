@@ -13,6 +13,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -232,70 +234,78 @@ fun ApplicationDetailScreen(
         }
 
         if (tab == 0) {
-            LazyColumn(
-                Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-                contentPadding = PaddingValues(bottom = 8.dp),
-            ) {
-                item {
-                    Text(
-                        Strings.get("edit_permissions_description", language),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-                items(app.permissions.size) { index ->
-                    val permission = app.permissions[index]
-                    PermissionCard(
-                        permission = permission,
-                        language = language,
-                        onChange = { updated ->
-                            val newPermissions = app.permissions.toMutableList()
-                            newPermissions[index] = updated
-                            store.upsert(app.copy(permissions = newPermissions))
-                        },
-                        onDelete = {
-                            val newPermissions = app.permissions.toMutableList()
-                            newPermissions.removeAt(index)
-                            store.upsert(app.copy(permissions = newPermissions))
-                        },
-                    )
-                }
-                if (app.permissions.isNotEmpty()) {
+            val permissionsState = rememberLazyListState()
+            ScrollbarBox(rememberScrollbarAdapter(permissionsState), Modifier.weight(1f)) {
+                LazyColumn(
+                    Modifier.fillMaxSize(),
+                    state = permissionsState,
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    contentPadding = PaddingValues(bottom = 8.dp),
+                ) {
                     item {
-                        AmberButton(
-                            modifier = Modifier.padding(top = 12.dp),
-                            text = Strings.get("remove_all_permissions", language),
-                            onClick = { showRemoveAll = true },
+                        Text(
+                            Strings.get("edit_permissions_description", language),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
+                    }
+                    items(app.permissions.size) { index ->
+                        val permission = app.permissions[index]
+                        PermissionCard(
+                            permission = permission,
+                            language = language,
+                            onChange = { updated ->
+                                val newPermissions = app.permissions.toMutableList()
+                                newPermissions[index] = updated
+                                store.upsert(app.copy(permissions = newPermissions))
+                            },
+                            onDelete = {
+                                val newPermissions = app.permissions.toMutableList()
+                                newPermissions.removeAt(index)
+                                store.upsert(app.copy(permissions = newPermissions))
+                            },
+                        )
+                    }
+                    if (app.permissions.isNotEmpty()) {
+                        item {
+                            AmberButton(
+                                modifier = Modifier.padding(top = 12.dp),
+                                text = Strings.get("remove_all_permissions", language),
+                                onClick = { showRemoveAll = true },
+                            )
+                        }
                     }
                 }
             }
         } else {
             val appHistory = history.filter { it.appKey == appKey }.sortedByDescending { it.time }
-            LazyColumn(
-                Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(2.dp),
-                contentPadding = PaddingValues(bottom = 8.dp),
-            ) {
-                if (appHistory.isEmpty()) {
-                    item {
-                        Text(Strings.get("d_no_activity", language), style = MaterialTheme.typography.bodyMedium)
+            val historyState = rememberLazyListState()
+            ScrollbarBox(rememberScrollbarAdapter(historyState), Modifier.weight(1f)) {
+                LazyColumn(
+                    Modifier.fillMaxSize(),
+                    state = historyState,
+                    verticalArrangement = Arrangement.spacedBy(2.dp),
+                    contentPadding = PaddingValues(bottom = 8.dp),
+                ) {
+                    if (appHistory.isEmpty()) {
+                        item {
+                            Text(Strings.get("d_no_activity", language), style = MaterialTheme.typography.bodyMedium)
+                        }
                     }
-                }
-                items(appHistory.size) { index ->
-                    val entry = appHistory[index]
-                    Column(Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
-                        Text(
-                            permissionTitle(entry.type, entry.kind, language),
-                            style = MaterialTheme.typography.bodyMedium,
-                        )
-                        Text(
-                            "${DateFormat.getDateTimeInstance().format(Date(entry.time * 1000))} · " +
-                                if (entry.accepted) Strings.get("d_accepted", language) else Strings.get("d_rejected", language),
-                            style = MaterialTheme.typography.bodySmall,
-                        )
-                        HorizontalDivider()
+                    items(appHistory.size) { index ->
+                        val entry = appHistory[index]
+                        Column(Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
+                            Text(
+                                permissionTitle(entry.type, entry.kind, language),
+                                style = MaterialTheme.typography.bodyMedium,
+                            )
+                            Text(
+                                "${DateFormat.getDateTimeInstance().format(Date(entry.time * 1000))} · " +
+                                    if (entry.accepted) Strings.get("d_accepted", language) else Strings.get("d_rejected", language),
+                                style = MaterialTheme.typography.bodySmall,
+                            )
+                            HorizontalDivider()
+                        }
                     }
                 }
             }

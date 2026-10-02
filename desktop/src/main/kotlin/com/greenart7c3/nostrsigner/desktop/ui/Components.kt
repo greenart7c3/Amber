@@ -1,8 +1,14 @@
 package com.greenart7c3.nostrsigner.desktop.ui
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.VerticalScrollbar
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.v2.ScrollbarAdapter
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenu
@@ -21,6 +27,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
@@ -204,4 +211,23 @@ fun QrCodeImage(
         contentDescription = Strings.get("d_qr_code"),
         modifier = modifier.size(size),
     )
+}
+
+/**
+ * Hosts a scrollable [content] with a desktop [VerticalScrollbar] along its right edge, reserving
+ * a gutter so the bar never covers the content. [content] should fill the box (`fillMaxSize()`).
+ */
+@Composable
+fun ScrollbarBox(
+    adapter: ScrollbarAdapter,
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit,
+) {
+    Box(modifier) {
+        Box(Modifier.fillMaxSize().padding(end = 12.dp)) { content() }
+        VerticalScrollbar(
+            adapter = adapter,
+            modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight(),
+        )
+    }
 }

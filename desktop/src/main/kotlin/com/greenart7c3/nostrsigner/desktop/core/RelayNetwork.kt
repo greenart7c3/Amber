@@ -99,9 +99,15 @@ object RelayHttpClients {
         else -> builtinPort
     }
 
-    fun clientFor(url: NormalizedRelayUrl): OkHttpClient {
+    fun clientFor(url: NormalizedRelayUrl): OkHttpClient = clientFor(url.url)
+
+    /**
+     * Client for any URL (relays and plain HTTP fetches such as profile
+     * pictures), so everything follows the same Tor routing rule.
+     */
+    fun clientFor(url: String): OkHttpClient {
         val settings = SettingsStore.settings.value
-        val port = socksPortFor(url.url, settings.torMode, settings.proxyPort, TorManager.socksPort.value) ?: return direct
+        val port = socksPortFor(url, settings.torMode, settings.proxyPort, TorManager.socksPort.value) ?: return direct
         return proxied.computeIfAbsent(port) {
             // Tor circuits are slower to establish; triple the timeouts like Android.
             // An explicit proxy also means OkHttp never falls back to a direct

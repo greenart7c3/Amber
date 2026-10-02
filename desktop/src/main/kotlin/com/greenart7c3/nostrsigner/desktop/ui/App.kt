@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -312,19 +311,7 @@ private fun AccountSwitcher(account: DesktopAccount) {
                 .padding(horizontal = 8.dp, vertical = 6.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Surface(
-                shape = CircleShape,
-                color = MaterialTheme.colorScheme.secondaryContainer,
-                modifier = Modifier.size(32.dp),
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Text(
-                        (name.ifBlank { account.npub.removePrefix("npub1") }).take(1).uppercase(),
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.Bold,
-                    )
-                }
-            }
+            AccountAvatar(account.npub)
             Spacer(Modifier.width(10.dp))
             Column(Modifier.weight(1f)) {
                 Text(
@@ -350,6 +337,7 @@ private fun AccountSwitcher(account: DesktopAccount) {
         ) {
             accounts.forEach { record ->
                 DropdownMenuItem(
+                    leadingIcon = { AccountAvatar(record.npub, size = 24.dp) },
                     text = {
                         Text(
                             (record.name.ifBlank { record.npub.toShortenHex() }) +

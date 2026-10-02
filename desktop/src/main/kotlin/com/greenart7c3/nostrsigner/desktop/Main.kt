@@ -143,6 +143,13 @@ fun main(args: Array<String>) {
         if (launchUri == null) return
         // Could not forward (no listener): fall through and start anyway.
     } else {
+        // macOS delivers nostrconnect:// links as an Apple event, not as an
+        // argument (also to an already-running Amber). Install the handler
+        // before Compose starts so the event that launched the app is not
+        // missed — but only in the primary instance: it initializes AWT, and
+        // once AWT is up returning from main no longer ends the process, so
+        // a second instance would linger invisibly instead of exiting.
+        UriLaunch.installMacOpenUriHandler()
         UriLaunch.registerSchemeHandler()
         UriLaunch.startIpcServer()
     }
@@ -261,10 +268,10 @@ fun main(args: Array<String>) {
                 var notified = false
                 if (settings.showNotifications) {
                     val message = "${request.appName} ${request.type.describe(request.kind, language)}"
-                    // Prefer the OS-native notification channel (freedesktop /
-                    // notify-send on Linux, incl. Wayland/Hyprland; osascript on
-                    // macOS). Only fall back to the AWT tray notification — which
-                    // needs a usable system tray — when there is no native channel.
+                    // Prefer the OS-native notification channel on Linux
+                    // (freedesktop / notify-send, incl. Wayland/Hyprland). On
+                    // Windows and macOS the AWT tray notification is the native
+                    // channel (on macOS it posts as Amber's own bundle).
                     notified = withContext(Dispatchers.IO) {
                         Notifier.notify("Amber", message, onActivate = { DesktopTray.windowVisible.value = true })
                     }

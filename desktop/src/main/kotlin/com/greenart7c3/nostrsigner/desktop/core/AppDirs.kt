@@ -23,7 +23,13 @@ object AppDirs {
         dir
     }
 
-    fun accountDir(npub: String): File = File(dataDir, npub).apply { mkdirs() }
+    fun accountDir(npub: String): File = File(dataDir, npub).apply {
+        mkdirs()
+        // mkdirs() honors the umask (typically 0755); the account's apps,
+        // permissions and history live here, so keep it owner-only. Also
+        // tightens directories created by older versions.
+        restrictToOwner(this)
+    }
 
     /**
      * Best-effort restriction of a file/directory to the current user.

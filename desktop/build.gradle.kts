@@ -88,6 +88,23 @@ compose.desktop {
             }
             macOS {
                 bundleID = "com.greenart7c3.nostrsigner"
+                infoPlist {
+                    // Claim nostrconnect:// so LaunchServices routes those
+                    // links to Amber (delivered via Desktop.setOpenURIHandler).
+                    extraKeysRawXml = """
+                        <key>CFBundleURLTypes</key>
+                        <array>
+                            <dict>
+                                <key>CFBundleURLName</key>
+                                <string>Nostr Connect</string>
+                                <key>CFBundleURLSchemes</key>
+                                <array>
+                                    <string>nostrconnect</string>
+                                </array>
+                            </dict>
+                        </array>
+                    """.trimIndent()
+                }
             }
         }
 

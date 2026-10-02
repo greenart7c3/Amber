@@ -1,5 +1,6 @@
 package com.greenart7c3.nostrsigner.desktop.core
 
+import java.awt.Desktop
 import java.io.File
 import java.net.StandardProtocolFamily
 import java.net.UnixDomainSocketAddress
@@ -15,8 +16,11 @@ import kotlinx.coroutines.flow.MutableStateFlow
 /**
  * Makes `nostrconnect://` links open Amber (desktop).
  *
- * - The OS handler (see [registerSchemeHandler]) launches the Amber binary
- *   with the URI as an argument.
+ * - Linux: the OS handler (see [registerSchemeHandler]) launches the Amber
+ *   binary with the URI as an argument.
+ * - macOS: the scheme is declared in the app bundle's Info.plist and
+ *   LaunchServices delivers the URI as an Apple event, to the running app if
+ *   there is one (see [installMacOpenUriHandler]).
  * - A file lock makes the app single-instance: a second launch forwards the
  *   URI over a private unix socket in the runtime dir to the running
  *   instance and exits.
@@ -32,6 +36,8 @@ object UriLaunch {
     val isLinux: Boolean = System.getProperty("os.name").lowercase().let {
         it.contains("linux") || it.contains("nix") || it.contains("nux")
     }
+
+    val isMac: Boolean = System.getProperty("os.name").lowercase().contains("mac")
 
     private var lockFile: FileChannel? = null
     private var instanceLock: java.nio.channels.FileLock? = null
@@ -70,6 +76,7 @@ object UriLaunch {
                 StandardOpenOption.CREATE,
                 StandardOpenOption.WRITE,
             )
+            AppDirs.restrictToOwner(File(AppDirs.dataDir, "amber.lock"))
             val lock = channel.tryLock()
             if (lock == null) {
                 runCatching { channel.close() }
@@ -80,6 +87,28 @@ object UriLaunch {
                 true
             }
         }.getOrDefault(false)
+    }
+
+    /**
+     * Receives `nostrconnect://` links on macOS. LaunchServices routes a
+     * clicked link to the running Amber (starting it if needed) as an Apple
+     * event; AWT queues that event until a handler is installed, so calling
+     * this before Compose starts also catches the link that launched the app.
+     * Call it only in the primary instance (see main).
+     */
+    fun installMacOpenUriHandler() {
+        if (!isMac) return
+        runCatching {
+            if (!Desktop.isDesktopSupported()) return
+            val desktop = Desktop.getDesktop()
+            if (!desktop.isSupported(Desktop.Action.APP_OPEN_URI)) return
+            desktop.setOpenURIHandler { event ->
+                val uri = event.uri.toString()
+                if (uri.startsWith(PREFIX)) pending.value = uri
+            }
+        }.onFailure {
+            AmberLogger.d("UriLaunch", "Could not install the macOS URI handler: ${it.message}")
+        }
     }
 
     /** Hands [uri] to the running instance over the unix socket. */

@@ -11,6 +11,9 @@ import java.io.File
  * - Windows: a per-user `HKCU\Software\Microsoft\Windows\CurrentVersion\Run`
  *   entry pointing at the installed `Amber.exe` (no admin rights needed; shows
  *   up under Task Manager → Startup apps, where the user can also disable it).
+ * - macOS: a per-user LaunchAgent in `~/Library/LaunchAgents` that runs the
+ *   app bundle's launcher at login (no admin rights needed; listed under
+ *   System Settings → General → Login Items & Extensions).
  * - Linux: installs and enables a hardened systemd user unit (Opal-style)
  *   that starts Amber with the desktop session.
  *
@@ -34,6 +37,11 @@ object AutoStart {
 
     val isWindows: Boolean = System.getProperty("os.name").lowercase().contains("win")
 
+    val isMac: Boolean = System.getProperty("os.name").lowercase().contains("mac")
+
+    /** launchd label; also the plist file name. Matches the bundle id. */
+    private const val LAUNCH_AGENT_LABEL = "com.greenart7c3.nostrsigner"
+
     /** Set by the jpackage launcher to the installed binary; absent in dev (gradle) runs. */
     private fun packagedExecutable(): String? = System.getProperty("jpackage.app-path")?.takeIf { it.isNotBlank() }
 
@@ -46,6 +54,7 @@ object AutoStart {
     /** True when the current launch has a stable binary the OS can start at login. */
     fun isSupported(): Boolean = when {
         isWindows -> packagedExecutable() != null
+        isMac -> packagedExecutable() != null
         isLinux -> currentExecutable()?.let { File(it).name != "java" } ?: false
         else -> false
     }
@@ -63,6 +72,10 @@ object AutoStart {
         if (!isSupported()) return
         if (isWindows) {
             setWindowsRunEntry(enabled)
+            return
+        }
+        if (isMac) {
+            setMacLaunchAgent(enabled)
             return
         }
         runCatching {
@@ -99,6 +112,56 @@ object AutoStart {
             }
         }.onFailure { AmberLogger.e("AutoStart", "Failed to update the Windows Run entry", it) }
     }
+
+    /**
+     * Writes (or removes) the LaunchAgent. launchd picks it up at the next
+     * login; it is deliberately not loaded with launchctl, so enabling never
+     * launches a second instance and disabling never kills the running one.
+     */
+    private fun setMacLaunchAgent(enabled: Boolean) {
+        runCatching {
+            val plist = File(System.getProperty("user.home"), "Library/LaunchAgents/$LAUNCH_AGENT_LABEL.plist")
+            if (enabled) {
+                val exe = packagedExecutable()?.let { File(it).canonicalFile.path } ?: return
+                plist.parentFile.mkdirs()
+                plist.writeText(launchAgentContent(exe))
+            } else {
+                plist.delete()
+            }
+        }.onFailure { AmberLogger.e("AutoStart", "Failed to update the macOS LaunchAgent", it) }
+    }
+
+    /**
+     * RunAtLoad starts Amber once per login. No KeepAlive: quitting Amber
+     * must stick. LimitLoadToSessionType=Aqua keeps it out of SSH/background
+     * sessions, where there is no window server to show it on.
+     */
+    internal fun launchAgentContent(exePath: String): String = """
+        <?xml version="1.0" encoding="UTF-8"?>
+        <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+        <plist version="1.0">
+        <dict>
+            <key>Label</key>
+            <string>$LAUNCH_AGENT_LABEL</string>
+            <key>ProgramArguments</key>
+            <array>
+                <string>${xmlEscape(exePath)}</string>
+            </array>
+            <key>RunAtLoad</key>
+            <true/>
+            <key>ProcessType</key>
+            <string>Interactive</string>
+            <key>LimitLoadToSessionType</key>
+            <string>Aqua</string>
+        </dict>
+        </plist>
+    """.trimIndent() + "\n"
+
+    private fun xmlEscape(value: String): String = value
+        .replace("&", "&amp;")
+        .replace("<", "&lt;")
+        .replace(">", "&gt;")
+        .replace("\"", "&quot;")
 
     /** The Run value is a command line: always quote the path (e.g. `C:\Program Files\...`). */
     internal fun windowsRunCommand(exePath: String): String = "\"$exePath\""

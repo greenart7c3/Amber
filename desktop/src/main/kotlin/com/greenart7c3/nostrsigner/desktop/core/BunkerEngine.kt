@@ -76,7 +76,16 @@ data class PendingBunkerRequest(
      * expiration, if sooner) instead of lingering forever.
      */
     val expiresAt: Long? = null,
-)
+) {
+    /**
+     * Whether a connect can be approved for a different account than the one
+     * it arrived on: only when the client talks to a per-connection key (a
+     * nostrconnect:// URI or a bunker:// connection key), since a legacy
+     * connection is addressed to — and answered by — the account key itself.
+     */
+    val canSwitchAccount: Boolean
+        get() = type == SignerType.CONNECT && (isNostrConnectUri || signerPrivKey.isNotEmpty())
+}
 
 /**
  * Desktop port of `NotificationSubscription` + `EventNotificationConsumer` +
@@ -645,6 +654,26 @@ class BunkerEngine(
         pending.value = pending.value.filter { it.request.id != id }
     }
 
+    /**
+     * Drops connections whose "delete after" time has passed, in every
+     * account, and refreshes the relay filter if any were removed. Mirrors
+     * the Android `ClearLogsWorker` cleanup.
+     */
+    suspend fun pruneExpiredApplications(now: Long = TimeUtils.now()) {
+        // While locked the per-account databases can't be read (or would be
+        // cached empty); the next tick after unlocking catches up.
+        if (PassphraseLock.isLocked()) return
+        var removed = 0
+        AccountsStore.accounts.value.forEach { record ->
+            val count = AmberDesktop.store(record.npub).deleteExpiredApps(now)
+            if (count > 0) {
+                AmberDesktop.store(record.npub).addLog("", "deleteApplications", "Deleted $count expired applications")
+                removed += count
+            }
+        }
+        if (removed > 0) updateFilter()
+    }
+
     /** Drops requests whose [PendingBunkerRequest.expiresAt] has passed; the UI calls this periodically. */
     fun pruneExpired(now: Long = TimeUtils.now()) {
         pending.update { list -> list.filter { it.expiresAt == null || it.expiresAt > now } }
@@ -663,19 +692,38 @@ class BunkerEngine(
         rememberType: RememberType,
         grantedPermissions: List<RequestedPermission> = emptyList(),
         signPolicy: Int? = null,
-    ): Job = scope.launch { doApprove(req, rememberType, grantedPermissions, signPolicy) }
+        deleteAfter: Long = 0L,
+        accountNpub: String? = null,
+    ): Job = scope.launch { doApprove(req, rememberType, grantedPermissions, signPolicy, deleteAfter, accountNpub) }
 
     private suspend fun doApprove(
         req: PendingBunkerRequest,
         rememberType: RememberType,
         grantedPermissions: List<RequestedPermission> = emptyList(),
         signPolicy: Int? = null,
+        deleteAfter: Long = 0L,
+        accountNpub: String? = null,
     ) {
         PassphraseLock.touch()
         removePending(req.request.id)
-        val acc = req.account
+        // Mirrors the Android connect screen's account picker: the connection
+        // is saved under (and signs for) the chosen account.
+        val acc = accountNpub
+            ?.takeIf { it != req.account.npub && req.canSwitchAccount }
+            ?.let { AmberDesktop.account(it) }
+            ?: req.account
         val store = AmberDesktop.store(acc.npub)
         val key = req.localKey
+
+        if (acc.npub != req.account.npub && req.request is BunkerRequestConnect && !req.request.secret.isNullOrBlank()) {
+            // Move the bunker:// placeholder into the chosen account; the
+            // migration below then re-keys it to the client's pubkey.
+            val sourceStore = AmberDesktop.store(req.account.npub)
+            sourceStore.getByKey(req.request.secret!!)?.let { placeholder ->
+                sourceStore.delete(placeholder.app.key)
+                store.upsert(placeholder.copy(app = placeholder.app.copy(pubKey = acc.hexKey)))
+            }
+        }
         val defaultRelays = AmberDesktop.defaultRelays()
 
         var savedApplication = store.getByKey(key)
@@ -709,6 +757,7 @@ class BunkerEngine(
                 secret = secret,
                 useSecret = secret.isNotBlank(),
                 signPolicy = signPolicy ?: acc.signPolicy,
+                deleteAfter = deleteAfter,
                 lastUsed = TimeUtils.now(),
             ),
         )
@@ -722,7 +771,9 @@ class BunkerEngine(
 
         if (req.type == SignerType.CONNECT) {
             val effectivePolicy = signPolicy ?: acc.signPolicy
-            application = application.copy(app = application.app.copy(signPolicy = effectivePolicy))
+            // Like Android, the connect approval's "delete after" choice also
+            // applies to an existing (e.g. bunker:// placeholder) connection.
+            application = application.copy(app = application.app.copy(signPolicy = effectivePolicy, deleteAfter = deleteAfter))
             applySignPolicy(application, effectivePolicy, grantedPermissions)
             if (application.permissions.none { it.type == SignerType.GET_PUBLIC_KEY.toString() }) {
                 application.permissions.add(
@@ -1037,6 +1088,7 @@ class BunkerEngine(
         account: DesktopAccount,
         name: String,
         relays: List<NormalizedRelayUrl>,
+        deleteAfter: Long = 0L,
     ): String {
         val secret = UUID.randomUUID().toString()
         val connPrivKey = generateBunkerPrivKey()
@@ -1050,6 +1102,7 @@ class BunkerEngine(
                 secret = secret,
                 useSecret = true,
                 signPolicy = account.signPolicy,
+                deleteAfter = deleteAfter,
                 localKey = connPrivKey,
             ),
         )

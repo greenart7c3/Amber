@@ -3,6 +3,7 @@ package com.greenart7c3.nostrsigner.desktop.core
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
+import com.vitorpamplona.quartz.utils.TimeUtils
 import java.io.File
 import kotlinx.coroutines.flow.MutableStateFlow
 
@@ -114,6 +115,21 @@ class AccountStore(val npub: String) {
     fun upsert(app: AppWithPermissions) {
         apps.value = apps.value.filter { it.app.key != app.app.key } + app
         writeSecure(appsFile, apps.value)
+    }
+
+    /**
+     * Removes connections whose "delete after" time has passed, mirroring the
+     * Android `deleteOldApplications`. Returns how many were removed.
+     */
+    @Synchronized
+    fun deleteExpiredApps(now: Long = TimeUtils.now()): Int {
+        val expired = apps.value.filter { it.app.deleteAfter in 1 until now }.map { it.app.key }.toSet()
+        if (expired.isEmpty()) return 0
+        apps.value = apps.value.filter { it.app.key !in expired }
+        history.value = history.value.filter { it.appKey !in expired }
+        writeSecure(appsFile, apps.value)
+        writeSecure(historyFile, history.value)
+        return expired.size
     }
 
     @Synchronized

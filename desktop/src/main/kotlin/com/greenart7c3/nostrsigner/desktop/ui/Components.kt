@@ -2,19 +2,30 @@ package com.greenart7c3.nostrsigner.desktop.ui
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.VerticalScrollbar
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.v2.ScrollbarAdapter
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.TabRowDefaults
@@ -32,11 +43,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.toComposeImageBitmap
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.EncodeHintType
 import com.google.zxing.qrcode.QRCodeWriter
+import com.greenart7c3.nostrsigner.desktop.core.DeleteAfterType
 import com.greenart7c3.nostrsigner.desktop.core.RememberType
 import com.greenart7c3.nostrsigner.desktop.core.Strings
 import com.greenart7c3.nostrsigner.desktop.core.rememberTypeDisplayOrder
@@ -229,5 +242,69 @@ fun ScrollbarBox(
             adapter = adapter,
             modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight(),
         )
+    }
+}
+
+/**
+ * Sign policy for a new connection, mirroring the Android `ChooseSignPolicy`:
+ * 0 = approve basic actions, 1 = manually approve each permission,
+ * 2 = fully trust the application.
+ */
+@Composable
+fun SignPolicySelector(
+    selected: Int,
+    onSelect: (Int) -> Unit,
+) {
+    val language by Strings.currentLanguage.collectAsState()
+    Column(Modifier.selectableGroup()) {
+        listOf(
+            Triple(0, "sign_policy_basic", "sign_policy_basic_explainer"),
+            Triple(1, "sign_policy_manual_new_app", "sign_policy_manual_new_app_explainer"),
+            Triple(2, "sign_policy_fully", "sign_policy_fully_explainer"),
+        ).forEach { (value, titleKey, explainerKey) ->
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .selectable(selected = selected == value, role = Role.RadioButton, onClick = { onSelect(value) })
+                    .padding(vertical = 4.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                RadioButton(selected = selected == value, onClick = null)
+                Spacer(Modifier.width(8.dp))
+                Column {
+                    Text(Strings.get(titleKey, language), style = MaterialTheme.typography.bodyMedium)
+                    Text(
+                        Strings.get(explainerKey, language),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+        }
+    }
+}
+
+/** "Delete after" chips for a new connection, mirroring the Android setting row. */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+fun DeleteAfterSelector(
+    selected: DeleteAfterType,
+    onSelect: (DeleteAfterType) -> Unit,
+) {
+    val language by Strings.currentLanguage.collectAsState()
+    Column {
+        Text(
+            Strings.get("delete_after", language),
+            style = MaterialTheme.typography.titleSmall,
+        )
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            DeleteAfterType.entries.forEach { type ->
+                FilterChip(
+                    selected = selected == type,
+                    onClick = { onSelect(type) },
+                    label = { Text(type.label(language)) },
+                )
+            }
+        }
     }
 }

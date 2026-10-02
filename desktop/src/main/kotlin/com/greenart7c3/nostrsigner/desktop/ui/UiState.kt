@@ -9,14 +9,25 @@ import androidx.compose.ui.input.key.isShiftPressed
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.type
 import com.greenart7c3.nostrsigner.desktop.Session
+import com.greenart7c3.nostrsigner.desktop.core.AccountsStore
 import com.greenart7c3.nostrsigner.desktop.core.AmberDesktop
+import com.greenart7c3.nostrsigner.desktop.core.DeleteAfterType
 import com.greenart7c3.nostrsigner.desktop.core.PassphraseLock
 import com.greenart7c3.nostrsigner.desktop.core.PendingBunkerRequest
 import com.greenart7c3.nostrsigner.desktop.core.RememberType
+import com.greenart7c3.nostrsigner.desktop.core.RequestedPermission
 import com.greenart7c3.nostrsigner.desktop.core.SignerType
 import com.greenart7c3.nostrsigner.desktop.core.Strings
 import com.greenart7c3.nostrsigner.desktop.core.rememberTypeDisplayOrder
 import kotlinx.coroutines.flow.MutableStateFlow
+
+/** Options picked on a connect request card (mirrors Android's BunkerConnectRequestScreen). */
+data class ConnectChoice(
+    val signPolicy: Int,
+    val granted: List<RequestedPermission>,
+    val accountNpub: String,
+    val deleteAfter: DeleteAfterType = DeleteAfterType.NEVER,
+)
 
 /**
  * Navigation state, hoisted out of the composition so the window-level
@@ -33,6 +44,39 @@ object UiState {
 
     /** Per-request "Remember" choice, shared by the dropdown and the shortcuts. */
     val rememberChoices = MutableStateFlow<Map<String, RememberType>>(emptyMap())
+
+    /**
+     * Per-connect-request choices (sign policy, granted permissions, delete
+     * after), shared by the request card and the approve shortcut.
+     */
+    val connectChoices = MutableStateFlow<Map<String, ConnectChoice>>(emptyMap())
+
+    fun connectChoiceFor(request: PendingBunkerRequest): ConnectChoice = connectChoices.value[request.request.id] ?: ConnectChoice(
+        signPolicy = request.account.signPolicy,
+        granted = request.requestedPermissions.map { it.copy() },
+        accountNpub = request.account.npub,
+    )
+
+    fun setConnectChoice(requestId: String, choice: ConnectChoice) {
+        connectChoices.value = connectChoices.value + (requestId to choice)
+    }
+
+    /** Approves [request] with the choices made on its card. */
+    fun approve(request: PendingBunkerRequest) {
+        if (request.type == SignerType.CONNECT) {
+            val choice = connectChoiceFor(request)
+            AmberDesktop.engine.approve(
+                request,
+                RememberType.ALWAYS,
+                choice.granted,
+                signPolicy = choice.signPolicy,
+                deleteAfter = choice.deleteAfter.deleteAt(),
+                accountNpub = choice.accountNpub,
+            )
+        } else {
+            AmberDesktop.engine.approve(request, rememberChoiceFor(request.request.id))
+        }
+    }
 
     fun navigate(route: Route) {
         selectedApplication.value = null
@@ -58,14 +102,40 @@ object UiState {
         rememberChoices.value = rememberChoices.value + (requestId to type)
     }
 
-    /** Cycles the selected request's "Remember" duration with ←/→. */
+    /**
+     * ←/→ on the selected request: cycles "Delete after" on a connect request
+     * (connect approvals are always remembered), else the "Remember" duration.
+     */
     fun cycleRememberChoice(delta: Int) {
         val request = selectedRequest() ?: return
-        if (request.type == SignerType.CONNECT) return // connect approvals are always remembered
+        if (request.type == SignerType.CONNECT) {
+            val choice = connectChoiceFor(request)
+            val order = DeleteAfterType.entries
+            setConnectChoice(request.request.id, choice.copy(deleteAfter = order[(order.indexOf(choice.deleteAfter) + delta).mod(order.size)]))
+            return
+        }
         val order = rememberTypeDisplayOrder
         val current = order.indexOf(rememberChoiceFor(request.request.id)).coerceAtLeast(0)
         val next = (current + delta).mod(order.size)
         setRememberChoice(request.request.id, order[next])
+    }
+
+    /** 1–3 on a selected connect request: picks the sign policy (0 basic, 1 manual, 2 full trust). */
+    fun setSelectedSignPolicy(policy: Int): Boolean {
+        val request = selectedRequest()?.takeIf { it.type == SignerType.CONNECT } ?: return false
+        setConnectChoice(request.request.id, connectChoiceFor(request).copy(signPolicy = policy))
+        return true
+    }
+
+    /** A on a selected connect request: cycles the account it will be saved under. */
+    fun cycleSelectedAccount(): Boolean {
+        val request = selectedRequest()?.takeIf { it.canSwitchAccount } ?: return false
+        val npubs = AccountsStore.accounts.value.map { it.npub }
+        if (npubs.size < 2) return false
+        val choice = connectChoiceFor(request)
+        val next = npubs[(npubs.indexOf(choice.accountNpub) + 1).mod(npubs.size)]
+        setConnectChoice(request.request.id, choice.copy(accountNpub = next))
+        return true
     }
 
     /** Drops selection/remember state for requests that no longer exist. */
@@ -76,6 +146,9 @@ object UiState {
         }
         if (rememberChoices.value.keys.any { it !in ids }) {
             rememberChoices.value = rememberChoices.value.filterKeys { it in ids }
+        }
+        if (connectChoices.value.keys.any { it !in ids }) {
+            connectChoices.value = connectChoices.value.filterKeys { it in ids }
         }
     }
 }
@@ -95,6 +168,9 @@ fun shortcutLabel(key: String, shift: Boolean = false): String = buildString {
  * - Ctrl/⌘ 1–4: switch between the sidebar sections
  * - ↑/↓ (incoming requests): select a pending request
  * - ←/→ (incoming requests): cycle the selected request's "Remember" choice
+ *   (on a connect request: its "Delete after" choice)
+ * - 1/2/3 (connect request): basic / manual / full-trust sign policy
+ * - A (connect request): cycle the account the connection is saved under
  * - Ctrl/⌘ Enter: approve the selected request with the chosen duration
  * - Ctrl/⌘ Shift Enter: reject the selected request
  * - Ctrl/⌘ L: lock (when a passphrase is set)
@@ -147,6 +223,14 @@ fun handleShortcut(
                     UiState.cycleRememberChoice(1)
                     return true
                 }
+
+                Key.One -> return UiState.setSelectedSignPolicy(0)
+
+                Key.Two -> return UiState.setSelectedSignPolicy(1)
+
+                Key.Three -> return UiState.setSelectedSignPolicy(2)
+
+                Key.A -> return UiState.cycleSelectedAccount()
             }
         }
         return false
@@ -166,11 +250,7 @@ fun handleShortcut(
                 AmberDesktop.engine.reject(request, rememberType)
                 Toaster.toast(Strings.get("d_request_rejected"))
             } else {
-                AmberDesktop.engine.approve(
-                    request,
-                    if (request.type == SignerType.CONNECT) RememberType.ALWAYS else rememberType,
-                    request.requestedPermissions,
-                )
+                UiState.approve(request)
                 Toaster.toast(Strings.get("d_request_approved"))
             }
         }

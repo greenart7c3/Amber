@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
@@ -19,6 +20,8 @@ import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -33,6 +36,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.greenart7c3.nostrsigner.desktop.core.AccountsStore
 import com.greenart7c3.nostrsigner.desktop.core.AmberDesktop
 import com.greenart7c3.nostrsigner.desktop.core.DesktopAccount
 import com.greenart7c3.nostrsigner.desktop.core.PendingBunkerRequest
@@ -103,7 +107,8 @@ private fun RequestCard(
     val rememberType = rememberChoices[req.request.id] ?: RememberType.NEVER
     val language by Strings.currentLanguage.collectAsState()
     var working by remember { mutableStateOf(false) }
-    val grantedPermissions = remember(req.request.id) { req.requestedPermissions.map { it.copy() } }
+    val connectChoices by UiState.connectChoices.collectAsState()
+    val connectChoice = connectChoices[req.request.id] ?: UiState.connectChoiceFor(req)
 
     Card(
         Modifier.fillMaxWidth().clickable(onClick = onSelect),
@@ -120,9 +125,13 @@ private fun RequestCard(
             }
             Spacer(Modifier.height(4.dp))
             Text(req.type.describe(req.kind, language), style = MaterialTheme.typography.bodyLarge)
-            Text(
-                "${Strings.get("account", language)}: ${req.account.npub.toShortenHex()}",
-                style = MaterialTheme.typography.bodySmall,
+            Spacer(Modifier.height(4.dp))
+            // The account that signs this request; a connect can be moved to
+            // another account, like the Android connect screen's picker.
+            SigningAccountRow(
+                npub = if (req.type == SignerType.CONNECT) connectChoice.accountNpub else req.account.npub,
+                canSwitch = req.canSwitchAccount,
+                onSelect = { UiState.setConnectChoice(req.request.id, connectChoice.copy(accountNpub = it)) },
             )
 
             if (req.preview.isNotBlank()) {
@@ -140,24 +149,38 @@ private fun RequestCard(
                 }
             }
 
-            if (req.type == SignerType.CONNECT && grantedPermissions.isNotEmpty()) {
+            if (req.type == SignerType.CONNECT) {
+                // Mirrors Android's BunkerConnectRequestScreen: pick the sign
+                // policy (requested permissions are only granted one by one
+                // under the manual policy) and when to delete the connection.
                 Spacer(Modifier.height(8.dp))
                 Text(Strings.get("permissions", language), style = MaterialTheme.typography.titleSmall)
-                grantedPermissions.forEach { perm ->
-                    var checked by remember { mutableStateOf(perm.checked) }
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Checkbox(
-                            checked = checked,
-                            onCheckedChange = {
-                                checked = it
-                                perm.checked = it
-                            },
-                        )
-                        Text(
-                            SignerDescriptions.permission(perm.type, perm.kind, language),
-                            style = MaterialTheme.typography.bodyMedium,
-                        )
+                SignPolicySelector(connectChoice.signPolicy) {
+                    UiState.setConnectChoice(req.request.id, connectChoice.copy(signPolicy = it))
+                }
+                if (connectChoice.signPolicy == 1 && connectChoice.granted.isNotEmpty()) {
+                    Column(Modifier.padding(start = 24.dp)) {
+                        connectChoice.granted.forEachIndexed { index, perm ->
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Checkbox(
+                                    checked = perm.checked,
+                                    onCheckedChange = { checked ->
+                                        val granted = connectChoice.granted.toMutableList()
+                                        granted[index] = perm.copy(checked = checked)
+                                        UiState.setConnectChoice(req.request.id, connectChoice.copy(granted = granted))
+                                    },
+                                )
+                                Text(
+                                    SignerDescriptions.permission(perm.type, perm.kind, language),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                )
+                            }
+                        }
                     }
+                }
+                Spacer(Modifier.height(8.dp))
+                DeleteAfterSelector(connectChoice.deleteAfter) {
+                    UiState.setConnectChoice(req.request.id, connectChoice.copy(deleteAfter = it))
                 }
             }
 
@@ -179,11 +202,7 @@ private fun RequestCard(
                         // approve() runs on the engine's application scope, so it
                         // survives this card leaving composition and still
                         // publishes the relay response. Toast optimistically.
-                        AmberDesktop.engine.approve(
-                            req,
-                            if (req.type == SignerType.CONNECT) RememberType.ALWAYS else rememberType,
-                            grantedPermissions,
-                        )
+                        UiState.approve(req)
                         Toaster.toast(Strings.get("d_request_approved", language))
                     },
                 )
@@ -197,10 +216,68 @@ private fun RequestCard(
                 )
                 Spacer(Modifier.weight(1f))
                 Text(
-                    Strings.format("d_shortcut_hint", shortcutLabel("↵"), shortcutLabel("↵", shift = true), language = language),
+                    Strings.format(
+                        if (req.type == SignerType.CONNECT) "d_shortcut_hint_connect" else "d_shortcut_hint",
+                        shortcutLabel("↵"),
+                        shortcutLabel("↵", shift = true),
+                        language = language,
+                    ),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
+            }
+        }
+    }
+}
+
+/**
+ * "Account: name · npub…" for a request; with [canSwitch] and more than one
+ * account, a dropdown to pick the account a connection is saved under.
+ */
+@Composable
+private fun SigningAccountRow(
+    npub: String,
+    canSwitch: Boolean,
+    onSelect: (String) -> Unit,
+) {
+    val language by Strings.currentLanguage.collectAsState()
+    val accounts by AccountsStore.accounts.collectAsState()
+    var expanded by remember { mutableStateOf(false) }
+    val switchable = canSwitch && accounts.size > 1
+
+    fun label(npub: String): String {
+        val name = accounts.firstOrNull { it.npub == npub }?.name.orEmpty()
+        return if (name.isBlank()) npub.toShortenHex() else "$name · ${npub.toShortenHex()}"
+    }
+
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Text(
+            "${Strings.get("account", language)}: ${label(npub)}",
+            style = MaterialTheme.typography.bodyMedium,
+        )
+        if (switchable) {
+            Spacer(Modifier.width(8.dp))
+            Box {
+                AmberTextButton(
+                    text = "${Strings.get("switch_account", language)} (A)",
+                    onClick = { expanded = true },
+                )
+                DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                    accounts.forEach { account ->
+                        DropdownMenuItem(
+                            text = {
+                                Text(
+                                    label(account.npub),
+                                    fontWeight = if (account.npub == npub) FontWeight.Bold else FontWeight.Normal,
+                                )
+                            },
+                            onClick = {
+                                onSelect(account.npub)
+                                expanded = false
+                            },
+                        )
+                    }
+                }
             }
         }
     }

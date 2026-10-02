@@ -25,6 +25,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -33,11 +34,14 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.greenart7c3.nostrsigner.desktop.core.AmberDesktop
+import com.greenart7c3.nostrsigner.desktop.core.DeleteAfterType
 import com.greenart7c3.nostrsigner.desktop.core.DesktopAccount
 import com.greenart7c3.nostrsigner.desktop.core.Strings
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.RelayUrlNormalizer
@@ -183,6 +187,8 @@ private fun NewBunkerDialog(
 ) {
     var name by remember { mutableStateOf("") }
     var relays by remember { mutableStateOf(AmberDesktop.defaultRelays().map { it.url }) }
+    var deleteAfter by remember { mutableStateOf(DeleteAfterType.NEVER) }
+    val nameFocus = remember { FocusRequester() }
     var bunkerUri by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
     val clipboard = LocalClipboardManager.current
@@ -204,8 +210,14 @@ private fun NewBunkerDialog(
                         value = name,
                         onValueChange = { name = it },
                         label = { Text(Strings.get("d_application_name", language)) },
-                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth().focusRequester(nameFocus),
                     )
+                    LaunchedEffect(Unit) { nameFocus.requestFocus() }
+                    Spacer(Modifier.height(12.dp))
+                    Box(Modifier.fillMaxWidth()) {
+                        DeleteAfterSelector(deleteAfter) { deleteAfter = it }
+                    }
                     Spacer(Modifier.height(12.dp))
                     Text(
                         Strings.get("relays", language),
@@ -245,6 +257,7 @@ private fun NewBunkerDialog(
                                 account,
                                 name,
                                 normalized,
+                                deleteAfter.deleteAt(),
                             )
                         }
                     },

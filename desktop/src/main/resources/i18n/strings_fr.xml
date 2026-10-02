@@ -760,6 +760,7 @@
     <string name="d_request_approved">Requête approuvée</string>
     <string name="d_request_rejected">Requête rejetée</string>
     <string name="d_shortcut_hint">↑↓ sélectionner · ←→ mémoriser · %1$s approuver · %2$s rejeter</string>
+    <string name="d_shortcut_hint_connect">↑↓ sélectionner · ←→ supprimer après · 1–3 autorisations · A compte · %1$s approuver · %2$s rejeter</string>
     <string name="d_remember_prefix">Mémoriser : %1$s</string>
     <string name="d_qr_code">QR code</string>
     <string name="d_saved">Enregistré</string>

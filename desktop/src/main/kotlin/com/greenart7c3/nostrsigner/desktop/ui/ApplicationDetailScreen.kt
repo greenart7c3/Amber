@@ -14,8 +14,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
@@ -120,7 +122,7 @@ fun ApplicationDetailScreen(
 
         AmberTabRow(
             selectedTabIndex = tab,
-            titles = listOf(Strings.get("permissions", language), Strings.get("d_activity", language)),
+            titles = listOf(Strings.get("permissions", language), Strings.get("relays", language), Strings.get("d_activity", language)),
             onSelect = { tab = it },
         )
         Spacer(Modifier.height(8.dp))
@@ -274,6 +276,42 @@ fun ApplicationDetailScreen(
                                 onClick = { showRemoveAll = true },
                             )
                         }
+                    }
+                }
+            }
+        } else if (tab == 1) {
+            // Mirrors the Android EditConfigurationScreen relay section: the
+            // relays are editable until the client connects (it only listens
+            // on the relays it was handed), then shown read-only.
+            val editable = (app.app.secret.isNotEmpty() || app.app.relays.isNotEmpty()) && !app.app.isConnected
+            var relays by remember(app.app.relays) { mutableStateOf(app.app.relays) }
+            val relaysScroll = rememberScrollState()
+            ScrollbarBox(rememberScrollbarAdapter(relaysScroll), Modifier.weight(1f)) {
+                Column(Modifier.fillMaxSize().verticalScroll(relaysScroll).padding(bottom = 8.dp)) {
+                    RelayListEditor(
+                        relays = relays,
+                        onChange = { relays = it },
+                        editable = editable,
+                        modifier = Modifier.widthIn(max = 640.dp),
+                    )
+                    if (editable) {
+                        AmberButton(
+                            modifier = Modifier.padding(top = 12.dp),
+                            text = Strings.get("update", language),
+                            enabled = relays != app.app.relays,
+                            onClick = {
+                                if (relays.isEmpty()) {
+                                    Toaster.toast(Strings.get("no_relays_added", language))
+                                    return@AmberButton
+                                }
+                                store.upsert(app.copy(app = app.app.copy(relays = relays)))
+                                scope.launch {
+                                    AmberDesktop.engine.updateFilter()
+                                    AmberDesktop.client.connect()
+                                }
+                                Toaster.toast(Strings.get("d_application_updated", language))
+                            },
+                        )
                     }
                 }
             }

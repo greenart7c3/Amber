@@ -1,6 +1,7 @@
 package com.greenart7c3.nostrsigner.desktop
 
 import com.greenart7c3.nostrsigner.desktop.core.AmberDesktop
+import com.greenart7c3.nostrsigner.desktop.core.EncryptionScope
 import com.greenart7c3.nostrsigner.desktop.core.PendingBunkerRequest
 import com.greenart7c3.nostrsigner.desktop.core.RememberType
 import com.greenart7c3.nostrsigner.desktop.core.SignerType
@@ -9,7 +10,9 @@ import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequest
 import java.io.File
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.BeforeClass
 import org.junit.Test
@@ -34,6 +37,43 @@ class UiStateTest {
         AmberDesktop.engine.pending.value = emptyList()
         UiState.selectedRequestId.value = null
         UiState.rememberChoices.value = emptyMap()
+        UiState.scopeChoices.value = emptyMap()
+    }
+
+    @Test
+    fun scopeShortcutTogglesEncryptionScope() = runBlocking {
+        val account = com.greenart7c3.nostrsigner.desktop.core.AccountManager.addAccount(
+            com.vitorpamplona.quartz.nip01Core.crypto.KeyPair(),
+        )
+        fun req(id: String, type: SignerType) = PendingBunkerRequest(
+            request = BunkerRequest(id, type.name.lowercase(), arrayOf()),
+            type = type,
+            account = account,
+            localKey = "k$id",
+            relays = emptyList(),
+        )
+        val v2 = req("v2", SignerType.NIP44_DECRYPT)
+        val v3 = req("v3", SignerType.NIP44_V3_ENCRYPT)
+        val sign = req("sign", SignerType.SIGN_EVENT)
+        AmberDesktop.engine.pending.value = listOf(v2, v3, sign)
+
+        // Android defaults: NIP-04/44 all methods, NIP-44 v3 this kind only.
+        assertEquals(EncryptionScope.ALL, UiState.scopeChoiceFor(v2))
+        assertEquals(EncryptionScope.SPECIFIC, UiState.scopeChoiceFor(v3))
+
+        UiState.selectedRequestId.value = "v2"
+        assertTrue(UiState.toggleSelectedScope())
+        assertEquals(EncryptionScope.SPECIFIC, UiState.scopeChoiceFor(v2))
+        assertTrue(UiState.toggleSelectedScope())
+        assertEquals(EncryptionScope.ALL, UiState.scopeChoiceFor(v2))
+
+        UiState.selectedRequestId.value = "v3"
+        assertTrue(UiState.toggleSelectedScope())
+        assertEquals(EncryptionScope.ALL, UiState.scopeChoiceFor(v3))
+
+        // Not an encrypt/decrypt request: the key is left alone.
+        UiState.selectedRequestId.value = "sign"
+        assertFalse(UiState.toggleSelectedScope())
     }
 
     @Test

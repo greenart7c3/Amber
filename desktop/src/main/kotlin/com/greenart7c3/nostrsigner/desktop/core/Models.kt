@@ -1,5 +1,6 @@
 package com.greenart7c3.nostrsigner.desktop.core
 
+import com.vitorpamplona.quartz.nip01Core.jackson.JacksonMapper
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.RelayUrlNormalizer
 import com.vitorpamplona.quartz.utils.TimeUtils
@@ -103,10 +104,12 @@ data class RequestedPermission(
 
 val basicPermissions = listOf(
     RequestedPermission("get_public_key", null),
-    RequestedPermission("nip04_encrypt", null),
-    RequestedPermission("nip04_decrypt", null),
-    RequestedPermission("nip44_encrypt", null),
-    RequestedPermission("nip44_decrypt", null),
+    RequestedPermission("encrypt_clear_text", null),
+    RequestedPermission("decrypt_clear_text", null),
+    RequestedPermission("encrypt_event", null),
+    RequestedPermission("decrypt_event", null),
+    RequestedPermission("encrypt_tag_array", null),
+    RequestedPermission("decrypt_tag_array", null),
     RequestedPermission("decrypt_zap_event", null),
     RequestedPermission("sign_event", 0),
     RequestedPermission("sign_event", 1),
@@ -127,6 +130,78 @@ val basicPermissions = listOf(
     RequestedPermission("sign_event", 27235),
     RequestedPermission("sign_event", 30023),
 )
+
+/**
+ * What an encrypt/decrypt payload holds, mirroring the Android
+ * `EncryptedDataKind` (clear text, a tag array, or an event of some kind).
+ * Encrypt/decrypt permissions are granted per content type.
+ */
+enum class EncryptedContentType {
+    CLEAR_TEXT,
+    EVENT,
+    TAG_ARRAY,
+}
+
+data class EncryptedContent(
+    val type: EncryptedContentType,
+    /** Kind of the event, for [EncryptedContentType.EVENT]. */
+    val eventKind: Int? = null,
+) {
+    companion object {
+        /** Classifies a plaintext (the input of an encrypt, the result of a decrypt). */
+        fun classify(plaintext: String): EncryptedContent {
+            val trimmed = plaintext.trimStart()
+            if (trimmed.startsWith("{")) {
+                val node = runCatching { JacksonMapper.mapper.readTree(trimmed) }.getOrNull()
+                val kind = node?.get("kind")
+                if (node != null && node.isObject && kind != null && kind.canConvertToInt()) {
+                    return EncryptedContent(EncryptedContentType.EVENT, kind.asInt())
+                }
+            } else if (trimmed.startsWith("[")) {
+                val node = runCatching { JacksonMapper.mapper.readTree(trimmed) }.getOrNull()
+                if (node != null && node.isArray && node.all { tag -> tag.isArray && tag.all { it.isTextual } }) {
+                    return EncryptedContent(EncryptedContentType.TAG_ARRAY)
+                }
+            }
+            return EncryptedContent(EncryptedContentType.CLEAR_TEXT)
+        }
+    }
+}
+
+/**
+ * Scope of a remembered encrypt/decrypt choice, mirroring the Android
+ * `DecryptTypeScope`: [SPECIFIC] covers only this content type (e.g.
+ * `DECRYPT_CLEAR_TEXT`), [ALL] the whole NIP (e.g. `NIP44_DECRYPT`).
+ */
+enum class EncryptionScope {
+    SPECIFIC,
+    ALL,
+}
+
+/** NIP-04/NIP-44 encrypt and decrypt: the request types granted per content type. */
+val contentScopedSignerTypes = setOf(
+    SignerType.NIP04_ENCRYPT,
+    SignerType.NIP44_ENCRYPT,
+    SignerType.NIP04_DECRYPT,
+    SignerType.NIP44_DECRYPT,
+)
+
+/** NIP-44 v3 encrypt/decrypt: granted per event kind (the v3 context), not per content type. */
+val nip44v3SignerTypes = setOf(SignerType.NIP44_V3_ENCRYPT, SignerType.NIP44_V3_DECRYPT)
+
+/**
+ * The content-type permission for a request, mirroring the Android
+ * `toPermissionTypeString`: e.g. NIP44_DECRYPT of a tag array ->
+ * `DECRYPT_TAG_ARRAY`. Other types keep their own name.
+ */
+fun SignerType.contentPermissionType(content: EncryptedContent?): String {
+    val isEncrypt = this == SignerType.NIP04_ENCRYPT || this == SignerType.NIP44_ENCRYPT
+    return if (this in contentScopedSignerTypes) {
+        (if (isEncrypt) "ENCRYPT_" else "DECRYPT_") + (content?.type ?: EncryptedContentType.CLEAR_TEXT).name
+    } else {
+        toString()
+    }
+}
 
 /**
  * Persisted connection record. Mirrors the Android `ApplicationEntity`
@@ -286,5 +361,31 @@ fun SignerType.describe(kind: Int?, language: String = Strings.currentLanguage.v
     SignerType.LOGOUT -> Strings.get("logout", language)
     SignerType.INVALID -> Strings.get("invalid_request", language)
     SignerType.PING -> Strings.get("ping", language)
+    SignerType.NIP44_V3_ENCRYPT -> Strings.get("nip44_v3_wants_to_encrypt", language)
+    SignerType.NIP44_V3_DECRYPT -> Strings.get("nip44_v3_wants_to_decrypt", language)
     else -> "${Strings.get("requests", language)} ${SignerDescriptions.permission(methodString(), kind, language)}"
+}
+
+/**
+ * Mirrors the Android encrypt/decrypt approval text: "wants to encrypt this
+ * text with NIP44", "wants to read Short text note from NIP04 encrypted
+ * content", … Falls back to [describe] for other request types.
+ */
+fun SignerType.describe(kind: Int?, content: EncryptedContent?, language: String = Strings.currentLanguage.value): String {
+    if (this !in contentScopedSignerTypes || content == null) return describe(kind, language)
+    val nip = name.substringBefore('_')
+    val isEncrypt = this == SignerType.NIP04_ENCRYPT || this == SignerType.NIP44_ENCRYPT
+    val text = when (content.type) {
+        EncryptedContentType.EVENT -> {
+            val what = SignerDescriptions.signEventDescription(content.eventKind, language)
+            Strings.format(if (isEncrypt) "wants_to_encrypt_with" else "wants_to_read_from_encrypted_content", what, nip, language = language)
+        }
+
+        EncryptedContentType.TAG_ARRAY ->
+            Strings.format(if (isEncrypt) "wants_to_encrypt_this_list_of_tags_with" else "wants_to_read_this_list_of_tags_from_encrypted_content", nip, language = language)
+
+        EncryptedContentType.CLEAR_TEXT ->
+            Strings.format(if (isEncrypt) "wants_to_encrypt_this_text_with" else "wants_to_read_this_text_from_encrypted_content", nip, language = language)
+    }
+    return text.trim()
 }

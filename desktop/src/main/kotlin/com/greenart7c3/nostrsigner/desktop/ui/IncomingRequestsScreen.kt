@@ -22,6 +22,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -39,12 +40,15 @@ import androidx.compose.ui.unit.dp
 import com.greenart7c3.nostrsigner.desktop.core.AccountsStore
 import com.greenart7c3.nostrsigner.desktop.core.AmberDesktop
 import com.greenart7c3.nostrsigner.desktop.core.DesktopAccount
+import com.greenart7c3.nostrsigner.desktop.core.EncryptionScope
 import com.greenart7c3.nostrsigner.desktop.core.PendingBunkerRequest
 import com.greenart7c3.nostrsigner.desktop.core.RememberType
 import com.greenart7c3.nostrsigner.desktop.core.SignerDescriptions
 import com.greenart7c3.nostrsigner.desktop.core.SignerType
 import com.greenart7c3.nostrsigner.desktop.core.Strings
+import com.greenart7c3.nostrsigner.desktop.core.contentScopedSignerTypes
 import com.greenart7c3.nostrsigner.desktop.core.describe
+import com.greenart7c3.nostrsigner.desktop.core.nip44v3SignerTypes
 import com.greenart7c3.nostrsigner.desktop.core.toShortenHex
 
 @Composable
@@ -124,7 +128,7 @@ private fun RequestCard(
                 Text(req.appUrl, style = MaterialTheme.typography.bodySmall)
             }
             Spacer(Modifier.height(4.dp))
-            Text(req.type.describe(req.kind, language), style = MaterialTheme.typography.bodyLarge)
+            Text(req.type.describe(req.kind, req.encryptedContent, language), style = MaterialTheme.typography.bodyLarge)
             Spacer(Modifier.height(4.dp))
             // The account that signs this request; a connect can be moved to
             // another account, like the Android connect screen's picker.
@@ -185,6 +189,41 @@ private fun RequestCard(
             }
 
             Spacer(Modifier.height(12.dp))
+            val isV3 = req.type in nip44v3SignerTypes
+            if (isV3) {
+                // Mirrors Android's Nip44v3ContextBox: the kind + scope the
+                // ciphertext is bound to, i.e. what is being granted.
+                Spacer(Modifier.height(4.dp))
+                Text(Strings.get("nip44_v3_context", language), style = MaterialTheme.typography.labelMedium)
+                val kindLabel = req.kind?.let { "$it (${SignerDescriptions.signEventDescription(it, language)})" } ?: "-"
+                Text(Strings.format("nip44_v3_kind", kindLabel, language = language), style = MaterialTheme.typography.bodySmall)
+                Text(
+                    Strings.format("nip44_v3_scope", req.nip44v3Scope.ifEmpty { Strings.get("nip44_v3_no_scope", language) }, language = language),
+                    style = MaterialTheme.typography.bodySmall,
+                )
+            }
+            if (req.type in contentScopedSignerTypes || isV3) {
+                // Mirrors the Android "Encryption scope" toggle: NIP-04/44 grants
+                // this content type or the whole NIP; NIP-44 v3 this kind or all.
+                val scopeChoices by UiState.scopeChoices.collectAsState()
+                val scope = scopeChoices[req.request.id] ?: UiState.defaultScope(req)
+                Text(Strings.get("encryption_scope", language), style = MaterialTheme.typography.labelMedium)
+                val options = if (isV3) {
+                    listOf(EncryptionScope.SPECIFIC to "for_this_kind_only", EncryptionScope.ALL to "for_all_kinds")
+                } else {
+                    listOf(EncryptionScope.SPECIFIC to "for_this_method_only", EncryptionScope.ALL to "for_all_methods")
+                }
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    options.forEach { (value, key) ->
+                        FilterChip(
+                            selected = scope == value,
+                            onClick = { UiState.setScopeChoice(req.request.id, value) },
+                            label = { Text(Strings.get(key, language)) },
+                        )
+                    }
+                }
+                Spacer(Modifier.height(4.dp))
+            }
             if (req.type != SignerType.CONNECT) {
                 RememberTypeSelector(rememberType) { UiState.setRememberChoice(req.request.id, it) }
                 Spacer(Modifier.height(8.dp))
@@ -210,14 +249,18 @@ private fun RequestCard(
                     text = Strings.get("reject", language),
                     onClick = {
                         working = true
-                        AmberDesktop.engine.reject(req, rememberType)
+                        UiState.reject(req)
                         Toaster.toast(Strings.get("d_request_rejected", language))
                     },
                 )
                 Spacer(Modifier.weight(1f))
                 Text(
                     Strings.format(
-                        if (req.type == SignerType.CONNECT) "d_shortcut_hint_connect" else "d_shortcut_hint",
+                        when {
+                            req.type == SignerType.CONNECT -> "d_shortcut_hint_connect"
+                            req.type in contentScopedSignerTypes || req.type in nip44v3SignerTypes -> "d_shortcut_hint_scope"
+                            else -> "d_shortcut_hint"
+                        },
                         shortcutLabel("↵"),
                         shortcutLabel("↵", shift = true),
                         language = language,

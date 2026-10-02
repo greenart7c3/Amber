@@ -12,12 +12,15 @@ import com.greenart7c3.nostrsigner.desktop.Session
 import com.greenart7c3.nostrsigner.desktop.core.AccountsStore
 import com.greenart7c3.nostrsigner.desktop.core.AmberDesktop
 import com.greenart7c3.nostrsigner.desktop.core.DeleteAfterType
+import com.greenart7c3.nostrsigner.desktop.core.EncryptionScope
 import com.greenart7c3.nostrsigner.desktop.core.PassphraseLock
 import com.greenart7c3.nostrsigner.desktop.core.PendingBunkerRequest
 import com.greenart7c3.nostrsigner.desktop.core.RememberType
 import com.greenart7c3.nostrsigner.desktop.core.RequestedPermission
 import com.greenart7c3.nostrsigner.desktop.core.SignerType
 import com.greenart7c3.nostrsigner.desktop.core.Strings
+import com.greenart7c3.nostrsigner.desktop.core.contentScopedSignerTypes
+import com.greenart7c3.nostrsigner.desktop.core.nip44v3SignerTypes
 import com.greenart7c3.nostrsigner.desktop.core.rememberTypeDisplayOrder
 import kotlinx.coroutines.flow.MutableStateFlow
 
@@ -44,6 +47,20 @@ object UiState {
 
     /** Per-request "Remember" choice, shared by the dropdown and the shortcuts. */
     val rememberChoices = MutableStateFlow<Map<String, RememberType>>(emptyMap())
+
+    /**
+     * Per-request encrypt/decrypt "Encryption scope". Android defaults NIP-04/44
+     * to all methods and NIP-44 v3 to this kind only.
+     */
+    val scopeChoices = MutableStateFlow<Map<String, EncryptionScope>>(emptyMap())
+
+    fun scopeChoiceFor(request: PendingBunkerRequest): EncryptionScope = scopeChoices.value[request.request.id] ?: defaultScope(request)
+
+    fun defaultScope(request: PendingBunkerRequest): EncryptionScope = if (request.type in nip44v3SignerTypes) EncryptionScope.SPECIFIC else EncryptionScope.ALL
+
+    fun setScopeChoice(requestId: String, scope: EncryptionScope) {
+        scopeChoices.value = scopeChoices.value + (requestId to scope)
+    }
 
     /**
      * Per-connect-request choices (sign policy, granted permissions, delete
@@ -74,8 +91,17 @@ object UiState {
                 accountNpub = choice.accountNpub,
             )
         } else {
-            AmberDesktop.engine.approve(request, rememberChoiceFor(request.request.id))
+            AmberDesktop.engine.approve(
+                request,
+                rememberChoiceFor(request.request.id),
+                encryptionScope = scopeChoiceFor(request),
+            )
         }
+    }
+
+    /** Rejects [request] with the "Remember" and scope choices made on its card. */
+    fun reject(request: PendingBunkerRequest) {
+        AmberDesktop.engine.reject(request, rememberChoiceFor(request.request.id), scopeChoiceFor(request))
     }
 
     fun navigate(route: Route) {
@@ -127,6 +153,17 @@ object UiState {
         return true
     }
 
+    /**
+     * S on a selected encrypt/decrypt request: toggles its "Encryption scope"
+     * (this method / kind only <-> all methods / kinds).
+     */
+    fun toggleSelectedScope(): Boolean {
+        val request = selectedRequest()?.takeIf { it.type in contentScopedSignerTypes || it.type in nip44v3SignerTypes } ?: return false
+        val next = if (scopeChoiceFor(request) == EncryptionScope.ALL) EncryptionScope.SPECIFIC else EncryptionScope.ALL
+        setScopeChoice(request.request.id, next)
+        return true
+    }
+
     /** A on a selected connect request: cycles the account it will be saved under. */
     fun cycleSelectedAccount(): Boolean {
         val request = selectedRequest()?.takeIf { it.canSwitchAccount } ?: return false
@@ -150,6 +187,9 @@ object UiState {
         if (connectChoices.value.keys.any { it !in ids }) {
             connectChoices.value = connectChoices.value.filterKeys { it in ids }
         }
+        if (scopeChoices.value.keys.any { it !in ids }) {
+            scopeChoices.value = scopeChoices.value.filterKeys { it in ids }
+        }
     }
 }
 
@@ -171,6 +211,8 @@ fun shortcutLabel(key: String, shift: Boolean = false): String = buildString {
  *   (on a connect request: its "Delete after" choice)
  * - 1/2/3 (connect request): basic / manual / full-trust sign policy
  * - A (connect request): cycle the account the connection is saved under
+ * - S (encrypt/decrypt request): toggle the encryption scope (this method or
+ *   kind only / all methods or kinds)
  * - Ctrl/⌘ Enter: approve the selected request with the chosen duration
  * - Ctrl/⌘ Shift Enter: reject the selected request
  * - Ctrl/⌘ L: lock (when a passphrase is set)
@@ -231,6 +273,8 @@ fun handleShortcut(
                 Key.Three -> return UiState.setSelectedSignPolicy(2)
 
                 Key.A -> return UiState.cycleSelectedAccount()
+
+                Key.S -> return UiState.toggleSelectedScope()
             }
         }
         return false
@@ -245,9 +289,8 @@ fun handleShortcut(
         Key.Enter -> {
             if (!loggedIn) return false
             val request = UiState.selectedRequest() ?: return false
-            val rememberType = UiState.rememberChoiceFor(request.request.id)
             if (event.isShiftPressed) {
-                AmberDesktop.engine.reject(request, rememberType)
+                UiState.reject(request)
                 Toaster.toast(Strings.get("d_request_rejected"))
             } else {
                 UiState.approve(request)

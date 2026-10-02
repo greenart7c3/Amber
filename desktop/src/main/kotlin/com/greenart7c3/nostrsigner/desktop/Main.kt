@@ -292,7 +292,7 @@ fun main(args: Array<String>) {
                 val request = pending.last()
                 var notified = false
                 if (settings.showNotifications) {
-                    val message = "${request.appName} ${request.type.describe(request.kind, language)}"
+                    val message = "${request.appName} ${request.type.describe(request.kind, request.encryptedContent, language)}"
                     // Prefer the OS-native notification channel on Linux
                     // (freedesktop / notify-send, incl. Wayland/Hyprland). On
                     // Windows and macOS the AWT tray notification is the native

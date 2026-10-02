@@ -759,6 +759,7 @@
     <string name="d_request_approved">İstek onaylandı</string>
     <string name="d_request_rejected">İstek reddedildi</string>
     <string name="d_shortcut_hint">↑↓ seç · ←→ hatırla · %1$s onayla · %2$s reddet</string>
+    <string name="d_shortcut_hint_scope">↑↓ seç · ←→ hatırla · S kapsam · %1$s onayla · %2$s reddet</string>
     <string name="d_shortcut_hint_connect">↑↓ seç · ←→ şu süre sonra sil · 1–3 izinler · A hesap · %1$s onayla · %2$s reddet</string>
     <string name="d_remember_prefix">Hatırla: %1$s</string>
     <string name="d_qr_code">QR kodu</string>

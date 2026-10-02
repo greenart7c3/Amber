@@ -69,6 +69,10 @@ data class PendingBunkerRequest(
     val encryptionType: EncryptionType = EncryptionType.NIP44,
     val isNostrConnectUri: Boolean = false,
     val signerPrivKey: String = "",
+    /** What an NIP-04/NIP-44 encrypt/decrypt payload holds; drives its content-type permission. */
+    val encryptedContent: EncryptedContent? = null,
+    /** NIP-44 v3 context scope string (params[2]); the context kind is [kind]. */
+    val nip44v3Scope: String = "",
     /**
      * Unix seconds after which the request is dropped from the queue, or null
      * to keep it until answered. NIP-46 gives no signal when a client stops
@@ -85,6 +89,12 @@ data class PendingBunkerRequest(
      */
     val canSwitchAccount: Boolean
         get() = type == SignerType.CONNECT && (isNostrConnectUri || signerPrivKey.isNotEmpty())
+
+    /**
+     * Kind a remembered choice is stored under. NIP-44 v3: this kind for
+     * [EncryptionScope.SPECIFIC], or no kind (all kinds) for ALL, like Android.
+     */
+    fun permissionKind(scope: EncryptionScope): Int? = if (type in nip44v3SignerTypes && scope == EncryptionScope.ALL) null else kind
 }
 
 /**
@@ -481,17 +491,13 @@ class BunkerEngine(
             return
         }
 
-        val kind = if (bunkerRequest is BunkerRequestSign) bunkerRequest.event.kind else null
-        val signPolicy = app?.app?.signPolicy
-        val permissionType = if (type == SignerType.SIGN_EVENT) {
-            store.getPermission(event.pubKey, type.toString(), kind)
-        } else {
-            store.getPermission(event.pubKey, type.toString())
+        // NIP-44 v3 carries its context kind/scope at params[1..2].
+        val kind = when {
+            bunkerRequest is BunkerRequestSign -> bunkerRequest.event.kind
+            type in nip44v3SignerTypes -> bunkerRequest.params.getOrNull(1)?.toIntOrNull()
+            else -> null
         }
-        // A first-time `connect` always goes through the approval UI: approving
-        // is what migrates the bunker placeholder to the client key and grants
-        // the default permissions. Reconnects were already acked above.
-        val remembered = if (type == SignerType.CONNECT) null else isRemembered(signPolicy, permissionType)
+        val signPolicy = app?.app?.signPolicy
 
         // Compute the response payload (also serves as the approval preview).
         val computed = try {
@@ -500,16 +506,48 @@ class BunkerEngine(
             throw e
         } catch (e: Exception) {
             store.addLog(relay.url, "bunker", "Rejecting request that cannot be fulfilled: ${e.message}")
+            // Mirrors Android's validateNip44v3Request errors; kept generic so
+            // a failed decrypt doesn't leak the ciphertext's embedded context.
+            val error = when {
+                type in nip44v3SignerTypes && kind == null -> "kind is required for nip44v3"
+                type == SignerType.NIP44_V3_DECRYPT -> "could not decrypt the message"
+                else -> "could not process the request"
+            }
             sendResponse(
                 acc,
                 effectivePrivKey,
                 event.pubKey,
                 encryptionType,
-                BunkerResponse(bunkerRequest.id, "", "could not process the request"),
+                BunkerResponse(bunkerRequest.id, "", error),
                 relays,
             )
             return
         }
+
+        // NIP-04/NIP-44 encrypt/decrypt grants are per content type, like
+        // Android: classify the plaintext (the encrypt input, or the decrypt
+        // result) and try that grant, then the whole-NIP grant, then `nip:N`.
+        val encryptedContent = if (type in contentScopedSignerTypes) EncryptedContent.classify(computed.preview) else null
+        val permissionType = when (type) {
+            SignerType.SIGN_EVENT -> store.getPermission(event.pubKey, type.toString(), kind)
+
+            // v3 grants are kind-scoped, falling back to the explicit "all
+            // kinds" grant only (never another kind's), like Android.
+            in nip44v3SignerTypes ->
+                store.getPermission(event.pubKey, type.toString(), kind)
+                    ?: store.getPermission(event.pubKey, type.toString(), null)
+
+            in contentScopedSignerTypes ->
+                store.getPermission(event.pubKey, type.contentPermissionType(encryptedContent))
+                    ?: store.getPermission(event.pubKey, type.toString())
+                    ?: store.getPermission(event.pubKey, "NIP", if (type.name.startsWith("NIP04")) 4 else 44)
+
+            else -> store.getPermission(event.pubKey, type.toString())
+        }
+        // A first-time `connect` always goes through the approval UI: approving
+        // is what migrates the bunker placeholder to the client key and grants
+        // the default permissions. Reconnects were already acked above.
+        val remembered = if (type == SignerType.CONNECT) null else isRemembered(signPolicy, permissionType)
 
         when (remembered) {
             true -> {
@@ -559,6 +597,8 @@ class BunkerEngine(
                         result = computed.result,
                         encryptionType = encryptionType,
                         signerPrivKey = effectivePrivKey,
+                        encryptedContent = encryptedContent,
+                        nip44v3Scope = if (type in nip44v3SignerTypes) bunkerRequest.params.getOrElse(2) { "" } else "",
                         expiresAt = minOf(TimeUtils.now() + PENDING_TTL_SECONDS, event.expiration() ?: Long.MAX_VALUE),
                     ),
                 )
@@ -694,7 +734,8 @@ class BunkerEngine(
         signPolicy: Int? = null,
         deleteAfter: Long = 0L,
         accountNpub: String? = null,
-    ): Job = scope.launch { doApprove(req, rememberType, grantedPermissions, signPolicy, deleteAfter, accountNpub) }
+        encryptionScope: EncryptionScope = EncryptionScope.ALL,
+    ): Job = scope.launch { doApprove(req, rememberType, grantedPermissions, signPolicy, deleteAfter, accountNpub, encryptionScope) }
 
     private suspend fun doApprove(
         req: PendingBunkerRequest,
@@ -703,6 +744,7 @@ class BunkerEngine(
         signPolicy: Int? = null,
         deleteAfter: Long = 0L,
         accountNpub: String? = null,
+        encryptionScope: EncryptionScope = EncryptionScope.ALL,
     ) {
         PassphraseLock.touch()
         removePending(req.request.id)
@@ -786,7 +828,7 @@ class BunkerEngine(
                 )
             }
         } else if (rememberType != RememberType.NEVER) {
-            acceptOrRejectPermission(application, req.type, req.kind, true, rememberType)
+            acceptOrRejectPermission(application, req.type, req.permissionKind(encryptionScope), true, rememberType, req.encryptedContent, encryptionScope)
         }
 
         store.upsert(application)
@@ -820,11 +862,13 @@ class BunkerEngine(
     fun reject(
         req: PendingBunkerRequest,
         rememberType: RememberType,
-    ): Job = scope.launch { doReject(req, rememberType) }
+        encryptionScope: EncryptionScope = EncryptionScope.ALL,
+    ): Job = scope.launch { doReject(req, rememberType, encryptionScope) }
 
     private suspend fun doReject(
         req: PendingBunkerRequest,
         rememberType: RememberType,
+        encryptionScope: EncryptionScope = EncryptionScope.ALL,
     ) {
         PassphraseLock.touch()
         removePending(req.request.id)
@@ -857,7 +901,7 @@ class BunkerEngine(
         )
 
         if (rememberType != RememberType.NEVER) {
-            acceptOrRejectPermission(application, req.type, req.kind, false, rememberType)
+            acceptOrRejectPermission(application, req.type, req.permissionKind(encryptionScope), false, rememberType, req.encryptedContent, encryptionScope)
         }
 
         if (req.request !is BunkerRequestConnect) {
@@ -912,21 +956,36 @@ class BunkerEngine(
         }
     }
 
-    /** Mirrors `AmberUtils.acceptPermission` / rejection with ALL scope. */
+    /**
+     * Mirrors `AmberUtils.updatePermission`. For NIP-04/NIP-44 encrypt and
+     * decrypt, [scope] ALL stores the whole-NIP type (NIP44_DECRYPT) and drops
+     * the narrower content-type grant; SPECIFIC stores the content type
+     * (DECRYPT_CLEAR_TEXT) and drops the broader NIP grant.
+     */
     private fun acceptOrRejectPermission(
         application: AppWithPermissions,
         type: SignerType,
         kind: Int?,
         accepted: Boolean,
         rememberType: RememberType,
+        content: EncryptedContent? = null,
+        scope: EncryptionScope = EncryptionScope.ALL,
     ) {
         val until = rememberType.acceptUntil()
-        val typeStr = type.toString()
+        val contentScoped = type in contentScopedSignerTypes
+        val typeStr = if (contentScoped && scope == EncryptionScope.SPECIFIC) type.contentPermissionType(content) else type.toString()
 
         if (kind != null) {
             application.permissions.removeIf { it.kind == kind && it.type == typeStr && it.relay.isEmpty() }
         } else {
             application.permissions.removeIf { it.type == typeStr && it.type != "SIGN_EVENT" }
+            if (contentScoped) {
+                if (scope == EncryptionScope.ALL) {
+                    application.permissions.removeIf { it.type == type.contentPermissionType(content) }
+                } else {
+                    application.permissions.removeIf { it.type == type.toString() }
+                }
+            }
         }
 
         application.permissions.add(
@@ -1146,11 +1205,11 @@ class BunkerEngine(
 
         /**
          * Maps a requested permission string to the stored permission type(s)
-         * the request path actually queries. Content-scoped or generic
-         * encrypt/decrypt perms (Amber uses `encrypt_clear_text`,
-         * `encrypt_event`, `encrypt_tag_array`; standard NIP-46 uses
-         * `nip04_encrypt`/`nip44_encrypt`) grant both NIP variants because the
-         * desktop request path is keyed by NIP, not by content type.
+         * the request path queries. Amber's content-type perms
+         * (`encrypt_clear_text`, `decrypt_event`, `encrypt_tag_array`, …) are
+         * stored as-is (ENCRYPT_CLEAR_TEXT, …) and checked first, like Android;
+         * standard NIP-46 `nip04_encrypt`/`nip44_decrypt` are whole-NIP grants,
+         * and a generic `encrypt`/`decrypt` grants both NIPs.
          */
         fun expandPermissionTypes(type: String): List<String> = when (type.lowercase()) {
             "connect" -> listOf(SignerType.CONNECT.toString())
@@ -1162,10 +1221,11 @@ class BunkerEngine(
             "nip44_decrypt" -> listOf(SignerType.NIP44_DECRYPT.toString())
             "nip44v3_encrypt" -> listOf(SignerType.NIP44_V3_ENCRYPT.toString())
             "nip44v3_decrypt" -> listOf(SignerType.NIP44_V3_DECRYPT.toString())
-            "encrypt_clear_text", "encrypt_event", "encrypt_tag_array", "encrypt" ->
-                listOf(SignerType.NIP04_ENCRYPT.toString(), SignerType.NIP44_ENCRYPT.toString())
-            "decrypt_clear_text", "decrypt_event", "decrypt_tag_array", "decrypt" ->
-                listOf(SignerType.NIP04_DECRYPT.toString(), SignerType.NIP44_DECRYPT.toString())
+            "encrypt_clear_text", "encrypt_event", "encrypt_tag_array",
+            "decrypt_clear_text", "decrypt_event", "decrypt_tag_array",
+            -> listOf(type.uppercase())
+            "encrypt" -> listOf(SignerType.NIP04_ENCRYPT.toString(), SignerType.NIP44_ENCRYPT.toString())
+            "decrypt" -> listOf(SignerType.NIP04_DECRYPT.toString(), SignerType.NIP44_DECRYPT.toString())
             "decrypt_zap_event" -> listOf(SignerType.DECRYPT_ZAP_EVENT.toString())
             "ping" -> listOf(SignerType.PING.toString())
             "sign_psbt" -> listOf(SignerType.SIGN_PSBT.toString())

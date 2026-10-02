@@ -739,6 +739,7 @@
     <string name="d_request_approved">リクエストを承認しました</string>
     <string name="d_request_rejected">リクエストを拒否しました</string>
     <string name="d_shortcut_hint">↑↓ 選択 · ←→ 記憶 · %1$s 承認 · %2$s 拒否</string>
+    <string name="d_shortcut_hint_scope">↑↓ 選択 · ←→ 記憶 · S 範囲 · %1$s 承認 · %2$s 拒否</string>
     <string name="d_shortcut_hint_connect">↑↓ 選択 · ←→ 削除までの期間 · 1–3 権限 · A アカウント · %1$s 承認 · %2$s 拒否</string>
     <string name="d_remember_prefix">記憶: %1$s</string>
     <string name="d_qr_code">QR コード</string>

@@ -129,18 +129,13 @@ class DesktopCoreTest {
         assertEquals(listOf("SIGN_EVENT"), BunkerEngine.expandPermissionTypes("sign_event"))
         assertEquals(listOf("GET_PUBLIC_KEY"), BunkerEngine.expandPermissionTypes("get_public_key"))
 
-        // Content-scoped / generic encrypt-decrypt perms are NIP-agnostic, so a
-        // grant must cover both NIP variants the request path can produce —
-        // otherwise the grant is stored under a key never queried and the
-        // client is re-prompted every time.
-        assertEquals(
-            setOf("NIP04_ENCRYPT", "NIP44_ENCRYPT"),
-            BunkerEngine.expandPermissionTypes("encrypt_event").toSet(),
-        )
-        assertEquals(
-            setOf("NIP04_DECRYPT", "NIP44_DECRYPT"),
-            BunkerEngine.expandPermissionTypes("decrypt_clear_text").toSet(),
-        )
+        // Amber's content-type perms are stored as-is, like Android, and the
+        // request path checks them before the whole-NIP grant.
+        assertEquals(listOf("ENCRYPT_EVENT"), BunkerEngine.expandPermissionTypes("encrypt_event"))
+        assertEquals(listOf("DECRYPT_CLEAR_TEXT"), BunkerEngine.expandPermissionTypes("decrypt_clear_text"))
+        assertEquals(listOf("ENCRYPT_TAG_ARRAY"), BunkerEngine.expandPermissionTypes("encrypt_tag_array"))
+
+        // A generic encrypt/decrypt perm grants both NIPs.
         assertEquals(
             setOf("NIP04_ENCRYPT", "NIP44_ENCRYPT"),
             BunkerEngine.expandPermissionTypes("encrypt").toSet(),

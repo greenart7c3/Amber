@@ -23,6 +23,7 @@ import com.greenart7c3.nostrsigner.desktop.core.AccountManager
 import com.greenart7c3.nostrsigner.desktop.core.AccountsStore
 import com.greenart7c3.nostrsigner.desktop.core.AmberDesktop
 import com.greenart7c3.nostrsigner.desktop.core.AmberLogger
+import com.greenart7c3.nostrsigner.desktop.core.AppImageIntegration
 import com.greenart7c3.nostrsigner.desktop.core.AutoStart
 import com.greenart7c3.nostrsigner.desktop.core.DesktopAccount
 import com.greenart7c3.nostrsigner.desktop.core.NetworkConnectivity
@@ -137,8 +138,6 @@ private object DesktopTray {
  * before the first window is created; needs
  * `--add-opens java.desktop/sun.awt.X11=ALL-UNNAMED`.
  */
-private const val LINUX_WINDOW_CLASS = "amber-Amber"
-
 private fun setX11WindowClass(name: String) {
     runCatching {
         val toolkit = java.awt.Toolkit.getDefaultToolkit()
@@ -171,6 +170,7 @@ fun main(args: Array<String>) {
         // a second instance would linger invisibly instead of exiting.
         UriLaunch.installMacOpenUriHandler()
         UriLaunch.registerSchemeHandler()
+        AppImageIntegration.sync()
         UriLaunch.startIpcServer()
     }
     if (launchUri != null) UriLaunch.pending.value = launchUri
@@ -199,10 +199,7 @@ fun main(args: Array<String>) {
         )
     }
 
-    // The .deb/.rpm desktop entry jpackage generates is amber-Amber.desktop
-    // with no StartupWMClass, so docks match it by window class == file name.
-    // The AppImage entry declares StartupWMClass=amber-Amber to match.
-    if (DesktopTray.isLinux) setX11WindowClass(LINUX_WINDOW_CLASS)
+    if (DesktopTray.isLinux) setX11WindowClass(AppImageIntegration.WINDOW_CLASS)
 
     Session.boot()
 

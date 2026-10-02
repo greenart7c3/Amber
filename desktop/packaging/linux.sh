@@ -31,8 +31,8 @@ mkdir -p "$appdir/usr/lib"
 cp -a "$image" "$appdir/usr/lib/amber"
 cp "$desktop/src/main/resources/icon.png" "$appdir/amber.png"
 ln -s amber.png "$appdir/.DirIcon"
-# StartupWMClass matches the X11 class Main.kt sets (LINUX_WINDOW_CLASS), so
-# docks show this icon.
+# StartupWMClass matches the X11 class the app sets
+# (AppImageIntegration.WINDOW_CLASS), so docks show this icon.
 cat > "$appdir/amber.desktop" << 'EOF'
 [Desktop Entry]
 Type=Application

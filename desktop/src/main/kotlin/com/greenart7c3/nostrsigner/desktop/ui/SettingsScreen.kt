@@ -45,12 +45,18 @@ import com.greenart7c3.nostrsigner.desktop.core.AutoStart
 import com.greenart7c3.nostrsigner.desktop.core.DesktopAccount
 import com.greenart7c3.nostrsigner.desktop.core.DesktopKeyStore
 import com.greenart7c3.nostrsigner.desktop.core.PassphraseLock
+import com.greenart7c3.nostrsigner.desktop.core.RelayHttpClients
 import com.greenart7c3.nostrsigner.desktop.core.SettingsStore
 import com.greenart7c3.nostrsigner.desktop.core.Strings
+import com.greenart7c3.nostrsigner.desktop.core.TorManager
+import com.greenart7c3.nostrsigner.desktop.core.TorMode
+import com.greenart7c3.nostrsigner.desktop.core.TorStatus
 import com.greenart7c3.nostrsigner.desktop.core.toShortenHex
 import java.text.DateFormat
 import java.util.Date
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @Composable
 fun SettingsScreen(account: DesktopAccount) {
@@ -164,6 +170,10 @@ fun SettingsScreen(account: DesktopAccount) {
                     },
                 )
             }
+
+            Spacer(Modifier.height(16.dp))
+            SectionTitle(Strings.get("connect_via_tor_short", language))
+            TorSection()
 
             Spacer(Modifier.height(16.dp))
             SectionTitle(Strings.get("accounts", language))
@@ -319,6 +329,130 @@ private fun SettingSwitch(
             Text(description, style = MaterialTheme.typography.bodySmall)
         }
         Switch(checked = checked, onCheckedChange = onCheckedChange)
+    }
+}
+
+@Composable
+private fun TorSection() {
+    val settings by SettingsStore.settings.collectAsState()
+    val language by Strings.currentLanguage.collectAsState()
+    val torStatus by TorManager.status.collectAsState()
+    val scope = rememberCoroutineScope()
+    var confirmDisable by remember { mutableStateOf(false) }
+    var portText by remember(settings.proxyPort) { mutableStateOf(settings.proxyPort.toString()) }
+
+    fun applyMode(mode: TorMode, port: Int = settings.proxyPort) {
+        SettingsStore.update { it.copy(torMode = mode, proxyPort = port) }
+        AmberDesktop.applyTorSettings()
+        if (mode == TorMode.EXTERNAL) {
+            scope.launch {
+                val alive = withContext(Dispatchers.IO) { RelayHttpClients.isSocksProxyAlive(port) }
+                Toaster.toast(Strings.get(if (alive) "d_tor_proxy_ok" else "failed_to_connect_to_tor_orbot", language))
+            }
+        }
+    }
+
+    Text(Strings.get("tor_subtitle", language), style = MaterialTheme.typography.bodySmall)
+    Spacer(Modifier.height(4.dp))
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        listOf(
+            TorMode.DISABLED to Strings.get("d_tor_off", language),
+            TorMode.BUILTIN to Strings.get("builtin_tor_title", language),
+            TorMode.EXTERNAL to Strings.get("d_tor_external", language),
+        ).forEach { (mode, label) ->
+            FilterChip(
+                selected = settings.torMode == mode,
+                onClick = {
+                    when {
+                        mode == settings.torMode -> {}
+                        // Like Android: confirm before traffic moves back to the clearnet.
+                        mode == TorMode.DISABLED -> confirmDisable = true
+                        else -> applyMode(mode)
+                    }
+                },
+                label = { Text(label) },
+            )
+        }
+    }
+    Spacer(Modifier.height(4.dp))
+    when (settings.torMode) {
+        TorMode.BUILTIN -> {
+            Text(Strings.get("builtin_tor_description", language), style = MaterialTheme.typography.bodySmall)
+            Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                val statusText = when (val status = torStatus) {
+                    TorStatus.Stopped -> Strings.get("d_tor_stopped", language)
+                    is TorStatus.Connecting -> if (status.percentage <= 0) {
+                        Strings.get("tor_starting", language)
+                    } else {
+                        Strings.format("tor_connecting", status.percentage, language = language)
+                    }
+                    TorStatus.Connected -> Strings.get("builtin_tor_active", language)
+                    is TorStatus.Failed -> listOfNotNull(Strings.get("tor_connection_failed", language), status.message?.takeIf { it.isNotBlank() }).joinToString(": ")
+                }
+                Text(
+                    statusText,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = if (torStatus is TorStatus.Failed) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.weight(1f, fill = false),
+                )
+                AmberTextButton(
+                    text = Strings.get("tor_restart", language),
+                    onClick = { TorManager.restart(AmberDesktop.applicationIOScope) },
+                )
+            }
+        }
+
+        TorMode.EXTERNAL -> {
+            Text(Strings.get("d_tor_external_sub", language), style = MaterialTheme.typography.bodySmall)
+            Spacer(Modifier.height(4.dp))
+            Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                OutlinedTextField(
+                    value = portText,
+                    onValueChange = { value -> portText = value.filter { it.isDigit() }.take(5) },
+                    label = { Text(Strings.get("d_tor_socks_port", language)) },
+                    singleLine = true,
+                    modifier = Modifier.widthIn(max = 200.dp),
+                )
+                AmberOutlinedButton(
+                    text = Strings.get("save", language),
+                    onClick = {
+                        val port = portText.toIntOrNull()
+                        if (port == null || port !in 1..65535) {
+                            Toaster.toast(Strings.get("d_tor_invalid_port", language))
+                        } else {
+                            applyMode(TorMode.EXTERNAL, port)
+                        }
+                    },
+                )
+            }
+        }
+
+        TorMode.DISABLED -> {}
+    }
+    Text(
+        Strings.get("d_tor_local_note", language),
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+
+    if (confirmDisable) {
+        AlertDialog(
+            onDismissRequest = { confirmDisable = false },
+            title = { Text(Strings.get("do_you_really_want_to_disable_tor_title", language)) },
+            text = { Text(Strings.get("do_you_really_want_to_disable_tor_text", language)) },
+            confirmButton = {
+                AmberTextButton(
+                    text = Strings.get("yes", language),
+                    onClick = {
+                        confirmDisable = false
+                        applyMode(TorMode.DISABLED)
+                    },
+                )
+            },
+            dismissButton = {
+                AmberTextButton(text = Strings.get("no", language), onClick = { confirmDisable = false })
+            },
+        )
     }
 }
 

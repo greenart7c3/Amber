@@ -190,6 +190,10 @@ data class DesktopSettings(
     val windowHeight: Int? = null,
     /** Reopen maximized when the window was maximized at last change. */
     val windowMaximized: Boolean = false,
+    /** Route relay connections through Tor (built-in daemon or an external SOCKS proxy). */
+    val torMode: TorMode = TorMode.DISABLED,
+    /** SOCKS port of the external Tor proxy (9050 for system tor, 9150 for Tor Browser). */
+    val proxyPort: Int = 9050,
 ) {
     fun normalizedDefaultRelays(): List<NormalizedRelayUrl> = defaultRelays.mapNotNull { RelayUrlNormalizer.normalizeOrNull(it) }
 }

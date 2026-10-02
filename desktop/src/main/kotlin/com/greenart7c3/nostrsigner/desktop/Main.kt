@@ -53,6 +53,7 @@ object Session {
 
     fun boot() {
         NetworkConnectivity.start(AmberDesktop.applicationIOScope)
+        AmberDesktop.startTor()
         AmberDesktop.applicationIOScope.launch {
             var engineStarted = false
             PassphraseLock.state.collect { status ->

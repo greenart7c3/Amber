@@ -883,4 +883,17 @@
     <string name="d_tray_quit">退出 Amber</string>
     <string name="switch_relays">想要切换中继</string>
     <string name="invalid_request">发送了无效的请求</string>
+    <string name="tor_connecting">正在连接到 Tor: %1$d%%</string>
+    <string name="tor_connection_failed">Tor 连接失败</string>
+    <string name="tor_restart">重启</string>
+    <string name="insecure_relay_warning">通过公共互联网进行的不安全（明文，ws://）中继会将 NIP-46 元数据和密文暴露给网络观察者。建议优先使用 wss://，或仅对 .onion / 本地网络中继使用 ws://。</string>
+    <string name="d_tor_off">关闭</string>
+    <string name="d_tor_external">外部 Tor 代理</string>
+    <string name="d_tor_external_sub">使用此电脑上已在运行的 Tor 服务。系统 tor 服务监听 9050 端口，Tor Browser 监听 9150 端口。</string>
+    <string name="d_tor_socks_port">SOCKS 端口</string>
+    <string name="d_tor_invalid_port">请输入 1 到 65535 之间的端口</string>
+    <string name="d_tor_proxy_ok">Tor 代理可访问</string>
+    <string name="d_tor_stopped">Tor 未运行</string>
+    <string name="d_tor_local_note">本地中继（localhost、局域网和 VPN 地址、.local 名称）始终直接连接，不经过 Tor。</string>
+    <string name="d_local_relay">本地</string>
 </resources>

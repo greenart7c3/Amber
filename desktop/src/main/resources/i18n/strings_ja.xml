@@ -878,4 +878,17 @@
     <string name="d_tray_quit">Amber を終了</string>
     <string name="switch_relays">Relay の切り替えを求めています</string>
     <string name="invalid_request">無効なリクエストを送信しました</string>
+    <string name="tor_connecting">Torに接続中: %1$d%%</string>
+    <string name="tor_connection_failed">Torへの接続に失敗しました</string>
+    <string name="tor_restart">再起動</string>
+    <string name="insecure_relay_warning">公開インターネットを介した安全でない（クリアテキスト、ws://）リレーは、NIP-46のメタデータと暗号文をネットワークオブザーバーにさらします。wss://を優先するか、.onion / ローカルネットワークリレーの場合のみws://を使用してください。</string>
+    <string name="d_tor_off">オフ</string>
+    <string name="d_tor_external">外部Torプロキシ</string>
+    <string name="d_tor_external_sub">このコンピューターで既に動作しているTorデーモンを使用します。システムのtorサービスはポート9050、Tor Browserは9150で待ち受けます。</string>
+    <string name="d_tor_socks_port">SOCKSポート</string>
+    <string name="d_tor_invalid_port">1〜65535のポートを入力してください</string>
+    <string name="d_tor_proxy_ok">Torプロキシに接続できます</string>
+    <string name="d_tor_stopped">Torは実行されていません</string>
+    <string name="d_tor_local_note">ローカルリレー（localhost、LAN・VPNアドレス、.local名）は常にTorを経由せず直接接続します。</string>
+    <string name="d_local_relay">ローカル</string>
 </resources>

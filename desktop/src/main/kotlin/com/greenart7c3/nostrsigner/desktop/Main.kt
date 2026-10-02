@@ -22,6 +22,7 @@ import androidx.compose.ui.window.rememberTrayState
 import com.greenart7c3.nostrsigner.desktop.core.AccountManager
 import com.greenart7c3.nostrsigner.desktop.core.AccountsStore
 import com.greenart7c3.nostrsigner.desktop.core.AmberDesktop
+import com.greenart7c3.nostrsigner.desktop.core.AmberLogger
 import com.greenart7c3.nostrsigner.desktop.core.AutoStart
 import com.greenart7c3.nostrsigner.desktop.core.DesktopAccount
 import com.greenart7c3.nostrsigner.desktop.core.NetworkConnectivity
@@ -129,6 +130,23 @@ private object DesktopTray {
     var instance: NativeTray? = null
 }
 
+/**
+ * AWT derives the X11 WM_CLASS from whichever thread first loaded the toolkit
+ * (e.g. `java-lang-Thread`), so docks (GNOME, KDE) can't match the window to
+ * `amber.desktop` (StartupWMClass=Amber) and show a generic icon instead of
+ * Amber's. Must run before the first window is created; needs
+ * `--add-opens java.desktop/sun.awt.X11=ALL-UNNAMED`.
+ */
+private fun setX11WindowClass(name: String) {
+    runCatching {
+        val toolkit = java.awt.Toolkit.getDefaultToolkit()
+        toolkit.javaClass.getDeclaredField("awtAppClassName").apply {
+            isAccessible = true
+            set(toolkit, name)
+        }
+    }.onFailure { AmberLogger.e("Main", "could not set WM_CLASS", it) }
+}
+
 fun main(args: Array<String>) {
     // Packaged handler: the URI arrives as an argument. Dev handler
     // (gradle): it arrives via the drop file (gradle cannot take it as an
@@ -178,6 +196,8 @@ fun main(args: Array<String>) {
             onQuit = { DesktopTray.quitRequested.value = true },
         )
     }
+
+    if (DesktopTray.isLinux) setX11WindowClass("Amber")
 
     Session.boot()
 

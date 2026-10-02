@@ -2,6 +2,7 @@ name: Test/Build Desktop
 
 # Lints, tests and packages the Compose for Desktop signer (:desktop) on every
 # OS it ships for, and uploads the installers so each change can be tried out.
+# desktop-release.yml calls it with the release version.
 
 on:
   pull_request:
@@ -13,8 +14,16 @@ on:
       - 'gradle.properties'
       - '.github/workflows/desktop.yml'
   push:
+    # Branches only: tag pushes are built by desktop-release.yml.
+    branches: ['**']
     paths: *desktop-paths
   workflow_dispatch:
+  workflow_call:
+    inputs:
+      version:
+        description: 'Package version (X.Y.Z); defaults to the one in desktop/build.gradle.kts'
+        type: string
+        default: ''
 
 permissions:
   contents: read
@@ -26,6 +35,10 @@ concurrency:
 defaults:
   run:
     shell: bash
+
+env:
+  VERSION_ARG: ${{ inputs.version && format('-PdesktopVersion={0}', inputs.version) || '' }}
+  RELEASE_VERSION: ${{ inputs.version }}
 
 jobs:
   lint:
@@ -67,9 +80,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - name: linux
+          - name: linux-x86_64
             os: ubuntu-latest
-          - name: windows
+          - name: windows-x64
             os: windows-latest
           - name: macos-arm64
             os: macos-latest
@@ -98,6 +111,10 @@ jobs:
       - name: Create keystore.properties
         run: touch keystore.properties
 
+      # Names the installers: the release version, or the commit for CI builds.
+      - name: Set installer version
+        run: echo "DIST_VERSION=${RELEASE_VERSION:-dev-${GITHUB_SHA::7}}" >> "$GITHUB_ENV"
+
       - name: Install Linux packaging tools
         if: runner.os == 'Linux'
         run: sudo apt-get update -qq && sudo apt-get install -y -qq rpm xvfb
@@ -108,36 +125,46 @@ jobs:
       # .deb/.rpm on Linux, .msi/.exe on Windows (WiX is fetched by the
       # Compose plugin), .dmg on macOS (unsigned).
       - name: Package (gradle)
-        run: ./gradlew :desktop:packageDistributionForCurrentOs --no-daemon
+        run: ./gradlew :desktop:packageDistributionForCurrentOs $VERSION_ARG --no-daemon
 
-      # Start the packaged app on a virtual display and make sure it is still
-      # alive after a while, i.e. it doesn't crash on startup. HOME points at an
-      # empty dir so it boots like a first launch.
-      - name: Smoke test packaged app
+      # Distro-independent bundles from the standalone app image (packageDeb/Rpm
+      # build from a temporary one).
+      - name: Package AppImage and tar.xz
         if: runner.os == 'Linux'
         run: |
-          # packageDeb/Rpm build from a temporary app image; build the
-          # standalone one to launch.
-          ./gradlew :desktop:createDistributable --no-daemon
-          AMBER="$PWD/desktop/build/compose/binaries/main/app/Amber/bin/Amber"
-          export HOME="$RUNNER_TEMP/amber-home" AMBER_DISABLE_TRAY=1
+          ./gradlew :desktop:createDistributable $VERSION_ARG --no-daemon
+          desktop/packaging/linux.sh "$DIST_VERSION" dist
+
+      # Start the AppImage on a virtual display and make sure it is still alive
+      # after a while, i.e. it doesn't crash on startup. HOME points at an
+      # empty dir so it boots like a first launch.
+      - name: Smoke test AppImage
+        if: runner.os == 'Linux'
+        run: |
+          export HOME="$RUNNER_TEMP/amber-home" AMBER_DISABLE_TRAY=1 APPIMAGE_EXTRACT_AND_RUN=1
           mkdir -p "$HOME"
-          xvfb-run -a "$AMBER" > "$RUNNER_TEMP/amber.log" 2>&1 &
+          xvfb-run -a dist/Amber-*.AppImage > "$RUNNER_TEMP/amber.log" 2>&1 &
           sleep 30
           cat "$RUNNER_TEMP/amber.log"
-          pgrep -f 'binaries/main/app/Amber/bin/Amber' > /dev/null || { echo "::error::Amber exited during startup"; exit 1; }
-          pkill -f 'binaries/main/app/Amber/bin/Amber' || true
+          pgrep -f 'usr/lib/amber/bin/Amber' > /dev/null || { echo "::error::Amber exited during startup"; exit 1; }
+          pkill -f 'usr/lib/amber/bin/Amber' || true
+
+      # Name every installer Amber-<version>-<platform>.<ext>: the macOS DMGs
+      # of both architectures would otherwise collide in the release.
+      - name: Collect installers
+        run: |
+          mkdir -p dist
+          for f in desktop/build/compose/binaries/main/*/*.{deb,rpm,msi,exe,dmg}; do
+            [ -e "$f" ] || continue
+            cp "$f" "dist/Amber-$DIST_VERSION-${{ matrix.name }}.${f##*.}"
+          done
+          ls -l dist
 
       - name: Upload installers
         uses: actions/upload-artifact@v7
         with:
-          name: amber-desktop-${{ matrix.name }}-${{ github.sha }}
-          path: |
-            desktop/build/compose/binaries/main/deb/*.deb
-            desktop/build/compose/binaries/main/rpm/*.rpm
-            desktop/build/compose/binaries/main/msi/*.msi
-            desktop/build/compose/binaries/main/exe/*.exe
-            desktop/build/compose/binaries/main/dmg/*.dmg
+          name: amber-desktop-${{ matrix.name }}
+          path: dist/*
           retention-days: 14
           if-no-files-found: error
 

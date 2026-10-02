@@ -1,0 +1,70 @@
+name: Release Desktop
+
+# On a v* tag, builds the desktop installers for Linux (.deb, .rpm, .AppImage,
+# .tar.xz), Windows (.msi, .exe) and macOS (.dmg, arm64 + x64) with the tag's
+# version and attaches them to the tag's GitHub release, next to the Android
+# assets from create-release.yml.
+
+on:
+  push:
+    tags:
+      - 'v*'
+  # To rebuild an existing release: Run workflow, "Use workflow from" the tag.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  version:
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.v.outputs.tag }}
+      version: ${{ steps.v.outputs.version }}
+    steps:
+      # Installers need a plain X.Y.Z: v6.7.0-pre1 packages as 6.7.0.
+      - id: v
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          [ "$GITHUB_REF_TYPE" = tag ] || { echo "::error::Run this on a tag, not $GITHUB_REF"; exit 1; }
+          version=${TAG#v}
+          version=${version%%-*}
+          [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "::error::Tag $TAG is not vX.Y.Z[-suffix]"; exit 1; }
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+  build:
+    needs: version
+    uses: ./.github/workflows/desktop.yml
+    with:
+      version: ${{ needs.version.outputs.version }}
+
+  release:
+    needs: [version, build]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: amber-desktop-*
+          path: dist
+          merge-multiple: true
+
+      # create-release.yml creates the release for the Android APK at the same
+      # time; whichever gets there first creates it and the other attaches.
+      - name: Attach installers to the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          TAG: ${{ needs.version.outputs.tag }}
+        run: |
+          ls -l dist
+          prerelease=$([[ "$TAG" == *-pre* ]] && echo --prerelease || true)
+          for attempt in 1 2 3 4 5; do
+            gh release view "$TAG" > /dev/null 2>&1 && break
+            gh release create "$TAG" --verify-tag --title "Release refs/tags/$TAG" --notes "" $prerelease && break
+            sleep 20
+          done
+          gh release upload "$TAG" dist/* --clobber

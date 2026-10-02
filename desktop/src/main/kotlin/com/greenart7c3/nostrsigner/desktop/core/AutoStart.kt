@@ -45,7 +45,12 @@ object AutoStart {
     /** Set by the jpackage launcher to the installed binary; absent in dev (gradle) runs. */
     private fun packagedExecutable(): String? = System.getProperty("jpackage.app-path")?.takeIf { it.isNotBlank() }
 
-    private fun currentExecutable(): String? = runCatching {
+    /**
+     * Inside an AppImage the binary runs from a per-launch mount
+     * (/tmp/.mount_*), so use the AppImage file itself; its runtime exports
+     * the path as APPIMAGE.
+     */
+    private fun currentExecutable(): String? = System.getenv("APPIMAGE")?.takeIf { it.isNotBlank() } ?: runCatching {
         String(java.nio.file.Files.readAllBytes(java.nio.file.Path.of("/proc/self/cmdline")), Charsets.UTF_8)
             .split('\u0000')
             .firstOrNull { it.isNotBlank() }

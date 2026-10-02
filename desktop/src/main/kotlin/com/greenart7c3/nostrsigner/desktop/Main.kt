@@ -246,11 +246,13 @@ fun main(args: Array<String>) {
                     }
                 }
         }
-        // Drop requests whose client has most likely given up (see PendingBunkerRequest.expiresAt).
+        // Drop requests whose client has most likely given up (see PendingBunkerRequest.expiresAt),
+        // and connections whose "delete after" time has passed.
         LaunchedEffect(Unit) {
             while (true) {
                 delay(15_000)
                 AmberDesktop.engine.pruneExpired()
+                AmberDesktop.engine.pruneExpiredApplications()
             }
         }
         // The tray's Quit routes here so we can exit the Compose app cleanly.

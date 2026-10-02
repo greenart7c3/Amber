@@ -771,6 +771,7 @@
     <string name="d_request_approved">Request approved</string>
     <string name="d_request_rejected">Request rejected</string>
     <string name="d_shortcut_hint">↑↓ select · ←→ remember · %1$s approve · %2$s reject</string>
+    <string name="d_shortcut_hint_connect">↑↓ select · ←→ delete after · 1–3 permissions · A account · %1$s approve · %2$s reject</string>
     <string name="d_remember_prefix">Remember: %1$s</string>
     <string name="d_qr_code">QR code</string>
     <string name="d_saved">Saved</string>

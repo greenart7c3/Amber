@@ -71,7 +71,8 @@ compose.desktop {
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Exe, TargetFormat.Deb, TargetFormat.Rpm)
             packageName = "Amber"
-            packageVersion = "6.2.3"
+            // Release builds pass the tag's version (-PdesktopVersion=X.Y.Z).
+            packageVersion = providers.gradleProperty("desktopVersion").getOrElse("6.2.3")
             description = "Amber - Nostr event signer"
             vendor = "greenart7c3"
             copyright = "© greenart7c3. Distributed under the MIT license."

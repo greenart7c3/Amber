@@ -236,7 +236,8 @@ object UriLaunch {
     /** Desktop-entry Exec quoting: double quotes with backslash escapes. */
     internal fun quoteForDesktopEntry(value: String): String = if (value.none { it in " \t\"'\\" }) value else "\"" + value.replace("\\", "\\\\").replace("\"", "\\\"") + "\""
 
-    private fun currentCommandLine(): String? = runCatching {
+    /** The AppImage file rather than its per-launch mount; see AutoStart.currentExecutable. */
+    private fun currentCommandLine(): String? = System.getenv("APPIMAGE")?.takeIf { it.isNotBlank() } ?: runCatching {
         String(Files.readAllBytes(Path.of("/proc/self/cmdline")), Charsets.UTF_8)
             .split('\u0000')
             .firstOrNull { it.isNotBlank() }

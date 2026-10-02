@@ -116,9 +116,13 @@ jobs:
       - name: Smoke test packaged app
         if: runner.os == 'Linux'
         run: |
+          # packageDeb/Rpm build from a temporary app image; build the
+          # standalone one to launch.
+          ./gradlew :desktop:createDistributable --no-daemon
+          AMBER="$PWD/desktop/build/compose/binaries/main/app/Amber/bin/Amber"
           export HOME="$RUNNER_TEMP/amber-home" AMBER_DISABLE_TRAY=1
           mkdir -p "$HOME"
-          xvfb-run -a desktop/build/compose/binaries/main/app/Amber/bin/Amber > "$RUNNER_TEMP/amber.log" 2>&1 &
+          xvfb-run -a "$AMBER" > "$RUNNER_TEMP/amber.log" 2>&1 &
           sleep 30
           cat "$RUNNER_TEMP/amber.log"
           pgrep -f 'binaries/main/app/Amber/bin/Amber' > /dev/null || { echo "::error::Amber exited during startup"; exit 1; }

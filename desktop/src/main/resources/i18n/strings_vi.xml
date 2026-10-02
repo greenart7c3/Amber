@@ -854,6 +854,9 @@
     <string name="d_disconnect_delete">Ngắt kết nối và xóa ứng dụng</string>
     <string name="d_application_removed">Đã xóa ứng dụng</string>
     <string name="d_relay_hint">wss://relay.example.com</string>
+    <string name="d_relay_connected">Đã kết nối</string>
+    <string name="d_relay_disconnected">Chưa kết nối</string>
+    <string name="d_relay_not_in_use">Không sử dụng</string>
     <string name="d_invalid_relay">URL relay không hợp lệ</string>
     <string name="d_remove_relay">Xóa relay</string>
     <string name="d_one_relay_required">Cần ít nhất một relay</string>

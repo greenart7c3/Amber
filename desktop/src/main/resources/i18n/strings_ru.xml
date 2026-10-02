@@ -878,6 +878,9 @@
     <string name="d_disconnect_delete">Отключить и удалить приложение</string>
     <string name="d_application_removed">Приложение удалено</string>
     <string name="d_relay_hint">wss://relay.example.com</string>
+    <string name="d_relay_connected">Подключено</string>
+    <string name="d_relay_disconnected">Не подключено</string>
+    <string name="d_relay_not_in_use">Не используется</string>
     <string name="d_invalid_relay">Недействительный URL реле</string>
     <string name="d_remove_relay">Удалить реле</string>
     <string name="d_one_relay_required">Требуется хотя бы одно реле</string>

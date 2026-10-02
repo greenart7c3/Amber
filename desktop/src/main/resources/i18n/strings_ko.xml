@@ -878,6 +878,9 @@
     <string name="d_disconnect_delete">애플리케이션 연결 해제 및 삭제</string>
     <string name="d_application_removed">애플리케이션이 삭제됨</string>
     <string name="d_relay_hint">wss://relay.example.com</string>
+    <string name="d_relay_connected">연결됨</string>
+    <string name="d_relay_disconnected">연결되지 않음</string>
+    <string name="d_relay_not_in_use">사용 안 함</string>
     <string name="d_invalid_relay">잘못된 릴레이 URL</string>
     <string name="d_remove_relay">릴레이 제거</string>
     <string name="d_one_relay_required">릴레이가 최소 하나 필요합니다</string>

@@ -859,6 +859,9 @@
     <string name="d_disconnect_delete">断开连接并删除应用程序</string>
     <string name="d_application_removed">应用程序已移除</string>
     <string name="d_relay_hint">wss://relay.example.com</string>
+    <string name="d_relay_connected">已连接</string>
+    <string name="d_relay_disconnected">未连接</string>
+    <string name="d_relay_not_in_use">未使用</string>
     <string name="d_invalid_relay">无效的中继 URL</string>
     <string name="d_remove_relay">移除中继</string>
     <string name="d_one_relay_required">至少需要一个中继</string>

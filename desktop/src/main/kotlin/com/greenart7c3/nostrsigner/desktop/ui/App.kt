@@ -205,12 +205,15 @@ private fun Sidebar(
             .background(MaterialTheme.colorScheme.surface)
             .padding(horizontal = 12.dp, vertical = 16.dp),
     ) {
-        Text(
-            "Amber",
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(horizontal = 8.dp),
-        )
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                "Amber",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(horizontal = 8.dp).weight(1f),
+            )
+            RelayStatusWidget()
+        }
         Text(
             Strings.get("d_tagline"),
             style = MaterialTheme.typography.bodySmall,

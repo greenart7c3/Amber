@@ -854,6 +854,9 @@
     <string name="d_disconnect_delete">ตัดการเชื่อมต่อและลบแอปพลิเคชัน</string>
     <string name="d_application_removed">ลบแอปพลิเคชันแล้ว</string>
     <string name="d_relay_hint">wss://relay.example.com</string>
+    <string name="d_relay_connected">เชื่อมต่อแล้ว</string>
+    <string name="d_relay_disconnected">ไม่ได้เชื่อมต่อ</string>
+    <string name="d_relay_not_in_use">ไม่ได้ใช้งาน</string>
     <string name="d_invalid_relay">URL รีเลย์ไม่ถูกต้อง</string>
     <string name="d_remove_relay">ลบรีเลย์</string>
     <string name="d_one_relay_required">ต้องมีรีเลย์อย่างน้อยหนึ่งรายการ</string>

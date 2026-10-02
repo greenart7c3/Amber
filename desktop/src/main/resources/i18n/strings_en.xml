@@ -886,6 +886,9 @@
     <string name="d_disconnect_delete">Disconnect and delete application</string>
     <string name="d_application_removed">Application removed</string>
     <string name="d_relay_hint">wss://relay.example.com</string>
+    <string name="d_relay_connected">Connected</string>
+    <string name="d_relay_disconnected">Not connected</string>
+    <string name="d_relay_not_in_use">Not in use</string>
     <string name="d_invalid_relay">Invalid relay URL</string>
     <string name="d_remove_relay">Remove relay</string>
     <string name="d_one_relay_required">At least one relay is required</string>

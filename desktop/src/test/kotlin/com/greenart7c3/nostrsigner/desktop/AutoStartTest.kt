@@ -28,6 +28,23 @@ class AutoStartTest {
     }
 
     @Test
+    fun appImageUnitExtractsIntoItsCacheAndKeepsTheSandbox() {
+        val unit = AutoStart.unitContent("/home/u/Apps/Amber.AppImage", "/home/u/.cache/amber/appimage")
+        assertTrue(unit.contains("ExecStart=/home/u/Apps/Amber.AppImage"))
+        assertTrue(unit.contains("Environment=APPIMAGE_EXTRACT_AND_RUN=1 NO_CLEANUP=1 TMPDIR=/home/u/.cache/amber/appimage\n"))
+        assertTrue(unit.contains("ReadWritePaths=/home/u/.cache/amber/appimage\n"))
+        // The extraction replaces the FUSE mount precisely so none of the
+        // hardening has to be relaxed for it.
+        val plain = AutoStart.unitContent("/home/u/Apps/Amber.AppImage")
+        plain.lines().filter { it.isNotBlank() }.forEach { assertTrue("missing: $it", unit.lines().contains(it)) }
+    }
+
+    @Test
+    fun plainUnitHasNoAppImageSettings() {
+        assertFalse(AutoStart.unitContent("/opt/Amber/bin/Amber").contains("APPIMAGE_EXTRACT_AND_RUN"))
+    }
+
+    @Test
     fun unitQuotesExecStartWithSpaces() {
         val unit = AutoStart.unitContent("/opt/My Apps/Amber/bin/Amber")
         assertTrue(unit.contains("ExecStart=\"/opt/My Apps/Amber/bin/Amber\""))

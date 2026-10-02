@@ -90,7 +90,8 @@ object AutoStart {
                 ?.let { File(it).canonicalFile.path }
                 ?: return
             unitDir().mkdirs()
-            unitFile().writeText(unitContent(exe))
+            val appImageCache = if (System.getenv("APPIMAGE").isNullOrBlank()) null else prepareAppImageCache()
+            unitFile().writeText(unitContent(exe, appImageCache?.path))
             systemctl("daemon-reload")
             if (enabled) {
                 systemctl("enable", UNIT_NAME)
@@ -177,7 +178,41 @@ object AutoStart {
 
     private fun quote(value: String): String = if (value.none { it == ' ' || it == '\t' }) value else "\"$value\""
 
-    internal fun unitContent(exePath: String): String = """
+    /**
+     * Where the start-on-boot unit has an AppImage extract itself (see
+     * [unitContent]). Must exist before the unit starts: a missing
+     * ReadWritePaths entry is skipped and the dir would stay read-only.
+     * Extractions of older AppImages are removed; the one this process runs
+     * from ($APPDIR) is kept.
+     */
+    private fun prepareAppImageCache(): File {
+        val cacheHome = System.getenv("XDG_CACHE_HOME")?.takeIf { it.isNotBlank() } ?: File(System.getProperty("user.home"), ".cache").path
+        val dir = File(cacheHome, "amber/appimage").apply { mkdirs() }
+        val current = System.getenv("APPDIR")?.let { File(it).canonicalFile }
+        dir.listFiles { f -> f.isDirectory && f.name.startsWith("appimage_extracted_") }
+            ?.filter { it.canonicalFile != current }
+            ?.forEach { it.deleteRecursively() }
+        return dir
+    }
+
+    /**
+     * [appImageCacheDir] is set when [exePath] is an AppImage: under
+     * NoNewPrivileges and the syscall filter it cannot FUSE-mount itself
+     * (setuid fusermount3, mount(2)), so the unit has it extract into that
+     * dir instead; NO_CLEANUP keeps the extraction for the next login.
+     */
+    internal fun unitContent(exePath: String, appImageCacheDir: String? = null): String {
+        val appImage = appImageCacheDir?.let {
+            "# AppImage: extract instead of FUSE-mounting (blocked by the sandbox).\n" +
+                "Environment=APPIMAGE_EXTRACT_AND_RUN=1 NO_CLEANUP=1 ${quote("TMPDIR=$it")}\n" +
+                "ReadWritePaths=${quote(it)}\n"
+        } ?: ""
+        return baseUnitContent(exePath).replace(READ_WRITE_PATHS_LINE, READ_WRITE_PATHS_LINE + appImage)
+    }
+
+    private const val READ_WRITE_PATHS_LINE = "ReadWritePaths=-%h/.local/share/amber -%h/.local/share/applications %t\n"
+
+    private fun baseUnitContent(exePath: String): String = """
         [Unit]
         Description=Amber Nostr signer
         PartOf=graphical-session.target

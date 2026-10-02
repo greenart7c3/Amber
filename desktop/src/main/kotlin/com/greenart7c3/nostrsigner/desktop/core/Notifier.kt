@@ -12,9 +12,15 @@ import java.util.concurrent.TimeUnit
  * freedesktop.org notification daemon (mako, dunst, swaync, GNOME Shell, …).
  *
  * [notify] delivers through the native channel for the current OS and returns
- * `true` when it dispatched a notification. It returns `false` only when no
- * native channel is available (notably Windows, where the caller should fall
- * back to the AWT tray notification) so the caller can decide what to do next.
+ * `true` when it dispatched a notification. It returns `false` when there is
+ * no external channel to use, so the caller falls back to the AWT tray
+ * notification:
+ * - Windows: the tray balloon/toast is the native channel.
+ * - macOS: AWT posts the notification as Amber's own bundle, which macOS asks
+ *   the user to allow on first launch. `osascript display notification` is
+ *   attributed to Script Editor instead, which a fresh macOS never authorizes
+ *   and never prompts for — the notification is silently dropped while
+ *   osascript still exits 0, so it cannot be detected and must not be used.
  */
 object Notifier {
     private val os = System.getProperty("os.name").lowercase()
@@ -28,8 +34,7 @@ object Notifier {
      */
     fun notify(title: String, message: String, onActivate: (() -> Unit)? = null): Boolean = when {
         os.contains("linux") || os.contains("nix") || os.contains("nux") -> linux(title, message, onActivate)
-        os.contains("mac") || os.contains("darwin") -> mac(title, message)
-        else -> false // Windows: let the caller use the AWT tray notification.
+        else -> false // Windows/macOS: let the caller use the AWT tray notification.
     }
 
     /**
@@ -90,13 +95,6 @@ object Notifier {
         AmberLogger.d("Notifier", "actionable notify-send failed: ${e.message}")
         false
     }
-
-    private fun mac(title: String, message: String): Boolean {
-        val script = "display notification ${appleScriptString(message)} with title ${appleScriptString(title)}"
-        return run("osascript", "-e", script)
-    }
-
-    private fun appleScriptString(s: String): String = "\"" + s.replace("\\", "\\\\").replace("\"", "\\\"") + "\""
 
     /** Test hook: exercises the process plumbing without depending on the OS. */
     internal fun tryCommand(command: List<String>): Boolean = run(*command.toTypedArray())

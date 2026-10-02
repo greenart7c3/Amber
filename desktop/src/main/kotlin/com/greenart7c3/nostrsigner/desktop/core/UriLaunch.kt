@@ -217,7 +217,7 @@ object UriLaunch {
 
     private fun shellQuote(value: String): String = "'" + value.replace("'", "'\\''") + "'"
 
-    private fun xdgAppsDir(): File {
+    internal fun xdgAppsDir(): File {
         val dataHome = System.getenv("XDG_DATA_HOME")?.takeIf { it.isNotBlank() }
             ?: File(File(System.getProperty("user.home"), ".local"), "share").absolutePath
         return File(dataHome, "applications")

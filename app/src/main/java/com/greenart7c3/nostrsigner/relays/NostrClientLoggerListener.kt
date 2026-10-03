@@ -60,10 +60,23 @@ class NostrClientLoggerListener(
     // is still worth retrying. Once a relay is dead, RelayHealthTracker also makes
     // NotificationSubscription.updateFilter drop it from the subscription relay
     // set, so Quartz stops opening sockets to it on every refresh. The streak resets on a
-    // successful connection (onConnected) or a network change / manual reconnect.
-    private fun scheduleReconnect(relay: NormalizedRelayUrl) {
+    // successful connection (onConnected), a network change / manual reconnect, or
+    // after RelayHealthTracker's cooldown.
+    //
+    // Only failed dials count (onCannotConnect). Quartz reports every failed dial as
+    // onCannotConnect followed by onDisconnected, so counting both halved the real
+    // threshold, and a plain server-side close is not a connection failure.
+    private fun recordFailureAndScheduleReconnect(relay: NormalizedRelayUrl) {
         if (!RelayHealthTracker.recordFailure(relay)) {
             AmberLog.d(Amber.TAG, "Relay ${relay.url} marked dead; skipping reconnect")
+            return
+        }
+        reconnectWithBackoff()
+    }
+
+    private fun scheduleReconnect(relay: NormalizedRelayUrl) {
+        if (RelayHealthTracker.isDead(relay)) {
+            AmberLog.d(Amber.TAG, "Relay ${relay.url} is dead; skipping reconnect")
             return
         }
         reconnectWithBackoff()
@@ -129,7 +142,7 @@ class NostrClientLoggerListener(
             return
         }
 
-        scheduleReconnect(relay.url)
+        recordFailureAndScheduleReconnect(relay.url)
         super.onCannotConnect(relay, errorMessage)
     }
 

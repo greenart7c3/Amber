@@ -18,13 +18,13 @@ fun Modifier.verticalScrollbar(
     Modifier.drawWithContent {
         drawContent()
 
-        if (state.maxValue > 0) {
+        val height = size.height
+        if (state.maxValue > 0 && height > 0f) {
             val width = size.width
-            val height = size.height
 
             val scrollFraction = state.value.toFloat() / state.maxValue.toFloat()
             val scrollbarHeight = (height * height / (state.maxValue + height))
-                .coerceIn(10.dp.toPx()..height)
+                .coerceIn(10.dp.toPx().coerceAtMost(height)..height)
 
             val scrollableHeight = height - scrollbarHeight
             val scrollbarY = scrollableHeight * scrollFraction

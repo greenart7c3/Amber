@@ -200,6 +200,21 @@ object IntentUtils {
 
     fun isUrlEncoded(input: String): Boolean = URL_ENCODED_REGEX.containsMatchIn(input)
 
+    /**
+     * True when the nostrsigner: URI carries its parameters in the URL query
+     * (the NIP-55 web form), e.g. `nostrsigner:<payload>?type=sign_event&…`.
+     * Used to recover requests launched by browsers that do not attach
+     * [android.browser.Browser.EXTRA_APPLICATION_ID] (DuckDuckGo, Brave, …):
+     * those VIEW intents arrive with no extras at all, so the extras-only
+     * parsing path would otherwise reject them as invalid.
+     */
+    fun urlHasSignerParameters(data: String?): Boolean {
+        if (data == null) return false
+        val query = data.substringAfter('?', "")
+        if (query.isEmpty()) return false
+        return query.split('&').any { it.substringBefore('=') == "type" }
+    }
+
     private suspend fun getIntentDataWithoutExtras(
         context: Context,
         data: String,
@@ -395,6 +410,20 @@ object IntentUtils {
         val type = parseSignerType(intent.extras?.getString("type"))
 
         if (type == SignerType.INVALID) {
+            if (urlHasSignerParameters(intent.dataString)) {
+                // Browsers that do not attach Browser.EXTRA_APPLICATION_ID
+                // (DuckDuckGo, Brave, …) reach this extras-only path with no
+                // extras at all — the whole request is still in the URL
+                // query. Parse it there instead of rejecting the request.
+                return getIntentDataWithoutExtras(
+                    context,
+                    intent.data?.toString() ?: "",
+                    intent,
+                    packageName,
+                    route,
+                    account,
+                )
+            }
             emitInvalid(intent, packageName, "Unknown signer type: ${intent.extras?.getString("type")}")
             return null
         }

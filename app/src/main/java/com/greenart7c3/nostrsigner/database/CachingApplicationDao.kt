@@ -308,6 +308,8 @@ class CachingApplicationDao(
 
     override suspend fun insertPermissions2Raw(permissions: List<ApplicationPermissionsEntity>): List<Long>? = delegate.insertPermissions2Raw(permissions)
 
+    override suspend fun getExistingApplicationKeys(keys: List<String>): List<String> = delegate.getExistingApplicationKeys(keys)
+
     override suspend fun insertPermissionsRaw(permissions: List<ApplicationPermissionsEntity>): List<Long>? = delegate.insertPermissionsRaw(permissions)
 
     override suspend fun deleteRaw(entity: ApplicationEntity) = delegate.deleteRaw(entity)

@@ -67,8 +67,7 @@ fun RelaysScreen() {
         }
         newRelay = ""
         scope.launch {
-            AmberDesktop.engine.updateFilter()
-            AmberDesktop.client.connect()
+            AmberDesktop.engine.checkForNewRelaysAndUpdateAllFilters()
         }
     }
 
@@ -182,7 +181,7 @@ fun RelaysScreen() {
                                 SettingsStore.update {
                                     it.copy(defaultRelays = it.defaultRelays.filter { url -> url != relay })
                                 }
-                                scope.launch { AmberDesktop.engine.updateFilter() }
+                                scope.launch { AmberDesktop.engine.checkForNewRelaysAndUpdateAllFilters() }
                             },
                         ) {
                             Icon(Icons.Default.Delete, Strings.get("d_remove_relay", language))
@@ -204,8 +203,7 @@ fun RelaysScreen() {
                         it.copy(defaultRelays = (it.defaultRelays + DesktopSettings().defaultRelays).distinct())
                     }
                     scope.launch {
-                        AmberDesktop.engine.updateFilter()
-                        AmberDesktop.client.connect()
+                        AmberDesktop.engine.checkForNewRelaysAndUpdateAllFilters()
                         Toaster.toast(Strings.get("d_saved", language))
                     }
                 },
@@ -214,9 +212,7 @@ fun RelaysScreen() {
                 text = Strings.get("d_reconnect_relays", language),
                 onClick = {
                     scope.launch {
-                        AmberDesktop.engine.updateFilter()
-                        AmberDesktop.client.connect()
-                        AmberDesktop.client.reconnect(true)
+                        AmberDesktop.engine.checkForNewRelaysAndUpdateAllFilters(shouldReconnect = true)
                         Toaster.toast(Strings.get("d_reconnecting", language))
                     }
                 },

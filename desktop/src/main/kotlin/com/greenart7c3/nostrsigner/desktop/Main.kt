@@ -75,8 +75,7 @@ object Session {
                         }
                         loading.value = false
                         if (engineStarted) {
-                            AmberDesktop.engine.updateFilter()
-                            AmberDesktop.client.connect()
+                            AmberDesktop.engine.checkForNewRelaysAndUpdateAllFilters()
                         } else {
                             AmberDesktop.engine.start()
                             engineStarted = true
@@ -97,8 +96,7 @@ object Session {
         account.value = newAccount
         addingAccount.value = false
         AmberDesktop.applicationIOScope.launch {
-            AmberDesktop.engine.updateFilter()
-            AmberDesktop.engine.client.connect()
+            AmberDesktop.engine.checkForNewRelaysAndUpdateAllFilters()
         }
     }
 
@@ -110,7 +108,7 @@ object Session {
         val next = AccountsStore.accounts.value.firstOrNull()?.npub ?: ""
         SettingsStore.update { it.copy(currentAccount = next) }
         account.value = if (next.isBlank()) null else AmberDesktop.account(next)
-        AmberDesktop.engine.updateFilter()
+        AmberDesktop.engine.checkForNewRelaysAndUpdateAllFilters()
     }
 
     fun saveMeta(acc: DesktopAccount) {

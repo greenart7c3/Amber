@@ -16,85 +16,55 @@ import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.models.TorMode
 import com.greenart7c3.nostrsigner.okhttp.HttpClientManager
-import com.greenart7c3.nostrsigner.relays.RelayHealthTracker
 import java.util.Timer
 import java.util.TimerTask
 import kotlin.collections.set
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class ConnectivityService : Service() {
     private val timer = Timer()
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
+    private val networkChangeDetector = NetworkChangeDetector()
+    private var pendingRelayReset: Job? = null
+
     private val networkCallback =
         object : ConnectivityManager.NetworkCallback() {
-            var lastNetwork: Network? = null
-
             override fun onAvailable(network: Network) {
                 super.onAvailable(network)
                 if (BuildFlavorChecker.isOfflineFlavor()) return
-                if (Amber.instance.settings.killSwitch.value) return
 
-                if (lastNetwork != null && lastNetwork != network) {
-                    // New network: give previously-dead relays a fresh chance.
-                    // RelayHealthTracker.reset() makes updateFilter re-add them
-                    // to the subscription set (explicit refreshes plus the
-                    // periodic safety net below).
-                    if (Amber.instance.settings.torMode == TorMode.BUILTIN && !TorManager.isRunning.value) {
-                        // Built-in Tor gave up earlier (bounded startup retries
-                        // in runMigrations). The network is back, so retry now
-                        // instead of waiting for a manual restart.
-                        TorManager.restart(this@ConnectivityService, Amber.instance.applicationIOScope)
-                    }
-                    RelayHealthTracker.reset()
-                    scope.launch(Dispatchers.IO) {
-                        if (!Amber.instance.client.isActive()) {
-                            Amber.instance.client.connect()
-                        }
-                        Amber.instance.client.reconnect(true)
-                    }
+                // onCapabilitiesChanged follows right away, but read them here too in
+                // case it does not, so a new default network is never missed.
+                val connectivityManager =
+                    (getSystemService(ConnectivityManager::class.java) as ConnectivityManager)
+                connectivityManager.getNetworkCapabilities(network)?.let {
+                    onNetworkState(network, it)
                 }
-                lastNetwork = network
             }
 
-            // Network capabilities have changed for the network
             override fun onCapabilitiesChanged(
                 network: Network,
                 networkCapabilities: NetworkCapabilities,
             ) {
                 super.onCapabilitiesChanged(network, networkCapabilities)
-
                 if (BuildFlavorChecker.isOfflineFlavor()) return
-                if (Amber.instance.settings.killSwitch.value) return
 
-                val changed = Amber.instance.updateNetworkCapabilities(networkCapabilities)
-                if (changed) {
-                    // Transport changed (e.g. wifi <-> mobile): retry dead relays.
-                    RelayHealthTracker.reset()
-                }
-
-                scope.launch(Dispatchers.IO) {
-                    AmberLog.d(
-                        "ServiceManager NetworkCallback",
-                        "onCapabilitiesChanged: ${network.networkHandle} hasMobileData ${Amber.instance.isOnMobileDataState.value} hasWifi ${Amber.instance.isOnWifiDataState.value}",
-                    )
-                    if (!Amber.instance.client.isActive()) {
-                        Amber.instance.client.connect()
-                    }
-                    if (changed) {
-                        Amber.instance.client.reconnect(true)
-                    }
-                }
+                onNetworkState(network, networkCapabilities)
             }
 
             override fun onLost(network: Network) {
                 super.onLost(network)
                 if (BuildFlavorChecker.isOfflineFlavor()) return
 
-                lastNetwork = null
+                AmberLog.d("ServiceManager NetworkCallback", "onLost: ${network.networkHandle}")
+                if (!networkChangeDetector.onLost(network.networkHandle)) return
+                cancelPendingRelayReset()
 
                 val connectivityManager =
                     (getSystemService(ConnectivityManager::class.java) as ConnectivityManager)
@@ -103,6 +73,54 @@ class ConnectivityService : Service() {
                 Amber.instance.disconnectIntentionally()
             }
         }
+
+    private fun onNetworkState(network: Network, capabilities: NetworkCapabilities) {
+        // Always tracked (also under the kill switch) so the detector's baseline is
+        // current when relays come back.
+        Amber.instance.updateNetworkCapabilities(capabilities)
+        val reason = networkChangeDetector.onNetwork(capabilities.toSnapshot(network))
+
+        if (Amber.instance.settings.killSwitch.value) return
+
+        AmberLog.d(
+            "ServiceManager NetworkCallback",
+            "network ${network.networkHandle} mobile ${Amber.instance.isOnMobileDataState.value} wifi ${Amber.instance.isOnWifiDataState.value} vpn ${Amber.instance.isOnVpnState.value} change: $reason",
+        )
+
+        if (reason != null) {
+            if (Amber.instance.settings.torMode == TorMode.BUILTIN && !TorManager.isRunning.value) {
+                // Built-in Tor gave up earlier (bounded startup retries
+                // in runMigrations). The network is back, so retry now
+                // instead of waiting for a manual restart.
+                TorManager.restart(this, Amber.instance.applicationIOScope)
+            }
+            scheduleRelayReset(reason)
+        } else if (!Amber.instance.client.isActive()) {
+            scope.launch {
+                Amber.instance.client.connect()
+            }
+        }
+    }
+
+    /**
+     * Network changes arrive as a burst of callbacks (the new network, then its
+     * capabilities as validation completes); wait for it to settle so the relays are
+     * rebuilt once, on the final network.
+     */
+    @Synchronized
+    private fun scheduleRelayReset(reason: String) {
+        pendingRelayReset?.cancel()
+        pendingRelayReset = scope.launch {
+            delay(NETWORK_SETTLE_MS)
+            Amber.instance.resetRelayConnections(reason)
+        }
+    }
+
+    @Synchronized
+    private fun cancelPendingRelayReset() {
+        pendingRelayReset?.cancel()
+        pendingRelayReset = null
+    }
 
     override fun onBind(intent: Intent): IBinder? = null
 
@@ -184,6 +202,7 @@ class ConnectivityService : Service() {
 
     override fun onDestroy() {
         timer.cancel()
+        cancelPendingRelayReset()
         if (!BuildFlavorChecker.isOfflineFlavor()) {
             try {
                 AmberLog.d(Amber.TAG, "unregisterNetworkCallback")
@@ -232,5 +251,21 @@ class ConnectivityService : Service() {
          * nothing changed, and a 30s period prevented doze 2,880 times a day.
          */
         const val UPDATE_FILTER_PERIOD_MS = 5 * 60 * 1000L
+
+        private const val NETWORK_SETTLE_MS = 1_000L
+
+        private val TRACKED_TRANSPORTS = intArrayOf(
+            NetworkCapabilities.TRANSPORT_CELLULAR,
+            NetworkCapabilities.TRANSPORT_WIFI,
+            NetworkCapabilities.TRANSPORT_ETHERNET,
+            NetworkCapabilities.TRANSPORT_BLUETOOTH,
+            NetworkCapabilities.TRANSPORT_VPN,
+        )
+
+        private fun NetworkCapabilities.toSnapshot(network: Network) = NetworkSnapshot(
+            networkId = network.networkHandle,
+            transports = TRACKED_TRANSPORTS.filter { hasTransport(it) }.toSet(),
+            validated = hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED),
+        )
     }
 }

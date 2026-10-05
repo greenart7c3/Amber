@@ -47,6 +47,7 @@ import com.greenart7c3.nostrsigner.okhttp.HttpClientManager
 import com.greenart7c3.nostrsigner.okhttp.OkHttpWebSocket
 import com.greenart7c3.nostrsigner.relays.AmberRelayStats
 import com.greenart7c3.nostrsigner.relays.NostrClientLoggerListener
+import com.greenart7c3.nostrsigner.relays.RelayHealthTracker
 import com.greenart7c3.nostrsigner.service.ApplicationNameCache
 import com.greenart7c3.nostrsigner.service.BackupApplicationsWorker
 import com.greenart7c3.nostrsigner.service.ClearLogsWorker
@@ -206,6 +207,7 @@ class Amber :
 
     val isOnMobileDataState = mutableStateOf(false)
     val isOnWifiDataState = mutableStateOf(false)
+    val isOnVpnState = mutableStateOf(false)
     val isOnOfflineState = mutableStateOf(false)
 
     /** npubs whose AndroidKeyStore key failed to decrypt (device KeyMint bug). */
@@ -258,7 +260,8 @@ class Amber :
     fun updateNetworkCapabilities(networkCapabilities: NetworkCapabilities?): Boolean {
         val isOnMobileData = networkCapabilities?.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) == true
         val isOnWifi = networkCapabilities?.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) == true
-        val isOffline = !isOnMobileData && !isOnWifi
+        val isOnVpn = networkCapabilities?.hasTransport(NetworkCapabilities.TRANSPORT_VPN) == true
+        val isOffline = networkCapabilities?.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) != true
 
         var changedNetwork = false
 
@@ -271,6 +274,11 @@ class Amber :
         if (isOnWifiDataState.value != isOnWifi) {
             isOnWifiDataState.value = isOnWifi
 
+            changedNetwork = true
+        }
+
+        if (isOnVpnState.value != isOnVpn) {
+            isOnVpnState.value = isOnVpn
             changedNetwork = true
         }
 
@@ -569,6 +577,39 @@ class Amber :
         if (!BuildFlavorChecker.isOfflineFlavor()) {
             stats.updateNotification()
         }
+    }
+
+    /**
+     * Drops every relay socket and dials again from scratch. Called when the device's
+     * network identity changes (Wi-Fi <-> mobile, a VPN coming up or going down, the
+     * network regaining internet access).
+     *
+     * Sockets opened on the previous network are bound to routes that may no longer
+     * exist: they keep reporting "connected" and only fail once OkHttp's ping times out,
+     * minutes later. Relays that failed while the device was offline also carry state
+     * that would keep them down on the new network: Quartz's per-relay backoff (up to
+     * five minutes, set at once on an unresolved host) and RelayHealthTracker's dead
+     * list, which removes them from the subscriptions entirely. All of it is about the
+     * old network, so it is cleared here.
+     */
+    suspend fun resetRelayConnections(reason: String) {
+        if (BuildFlavorChecker.isOfflineFlavor()) return
+        if (settings.killSwitch.value) return
+
+        AmberLog.d(TAG, "Resetting relay connections: $reason")
+        RelayHealthTracker.reset()
+
+        // The teardown reports onDisconnected for every relay; mark it intentional so
+        // NostrClientLoggerListener does not count it as failures or schedule retries.
+        intentionalDisconnectTime = System.currentTimeMillis()
+        client.disconnect()
+        // disconnect() also clears each relay's backoff; this covers relays without a socket.
+        client.resetBackoff()
+        client.connect()
+
+        // Re-adds relays the dead list had dropped from the subscriptions.
+        checkForNewRelaysAndUpdateAllFilters()
+        stats.updateNotification()
     }
 
     // computeIfAbsent (not check-then-put): AppDatabase.getDatabase builds a

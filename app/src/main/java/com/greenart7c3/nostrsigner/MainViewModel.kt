@@ -3,6 +3,7 @@ package com.greenart7c3.nostrsigner
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import androidx.compose.runtime.Stable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -126,11 +127,12 @@ class MainViewModel(val context: Context) : ViewModel() {
     fun onNewIntent(
         intent: Intent,
         callingPackage: String?,
+        referrer: Uri? = null,
     ) {
         viewModelScope.launch(Dispatchers.IO) {
             val account = LocalPreferences.loadFromEncryptedStorage(context)
             account?.let { acc ->
-                val intentData = IntentUtils.getIntentData(context, intent, callingPackage, intent.getStringExtra("route"), acc)
+                val intentData = IntentUtils.getIntentData(context, intent, callingPackage, intent.getStringExtra("route"), acc, referrer)
                 if (intentData != null) {
                     IntentUtils.addAll(listOf(intentData))
                     addedIntentIds.add(intentData.id)

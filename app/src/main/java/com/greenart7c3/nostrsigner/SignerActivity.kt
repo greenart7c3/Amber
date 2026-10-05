@@ -68,7 +68,7 @@ class SignerActivity : AppCompatActivity() {
 
         Amber.instance.setMainActivity(this)
         mainViewModel = MainViewModel(applicationContext)
-        intent?.let { mainViewModel.onNewIntent(it, callingPackage) }
+        intent?.let { mainViewModel.onNewIntent(it, callingPackage, referrer) }
         setContent {
             NostrSignerTheme {
                 HttpClientManager.setDefaultUserAgent("Amber/${BuildConfig.VERSION_NAME}")
@@ -180,6 +180,7 @@ class SignerActivity : AppCompatActivity() {
                                         intent = remember(intent) { IntentWrapper(intent) },
                                         packageName = packageName,
                                         appName = appName,
+                                        referrer = referrer,
                                         bunkerRequests = bunkerRequests.value,
                                         navController = NavHostControllerWrapper(navController),
                                         isExternalRequest = true,
@@ -221,7 +222,7 @@ class SignerActivity : AppCompatActivity() {
         super.onNewIntent(intent)
         setIntent(intent)
         if (::mainViewModel.isInitialized) {
-            mainViewModel.onNewIntent(intent, callingPackage)
+            mainViewModel.onNewIntent(intent, callingPackage, referrer)
         }
     }
 

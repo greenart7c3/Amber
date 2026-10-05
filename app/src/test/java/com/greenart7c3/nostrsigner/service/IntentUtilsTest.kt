@@ -192,6 +192,53 @@ class IntentUtilsTest {
         assertNull(IntentUtils.isRemembered(signPolicy = 1, permission = null))
     }
 
+    private fun isWebRequest(
+        hasApplicationIdExtra: Boolean = false,
+        hasBrowsableCategory: Boolean = false,
+        referrerIsBrowser: Boolean = false,
+        typeExtra: String? = null,
+        dataString: String? = "nostrsigner:",
+    ) = IntentUtils.isWebRequest(hasApplicationIdExtra, hasBrowsableCategory, referrerIsBrowser, typeExtra, dataString)
+
+    @Test
+    fun `isWebRequest is true for Chrome application id extra`() {
+        assertTrue(isWebRequest(hasApplicationIdExtra = true, typeExtra = "sign_event"))
+    }
+
+    @Test
+    fun `isWebRequest is true for browsable category`() {
+        assertTrue(isWebRequest(hasBrowsableCategory = true))
+    }
+
+    @Test
+    fun `isWebRequest is true when referrer is a browser`() {
+        assertTrue(isWebRequest(referrerIsBrowser = true))
+    }
+
+    @Test
+    fun `isWebRequest is true for type query parameter without browser markers`() {
+        assertTrue(isWebRequest(dataString = "nostrsigner:?type=get_public_key&callbackUrl=https://example.com/?event="))
+        assertTrue(isWebRequest(dataString = "nostrsigner:%7B%22kind%22%3A1%7D?compressionType=none&type=sign_event"))
+    }
+
+    @Test
+    fun `isWebRequest is true for url encoded type query parameter`() {
+        assertTrue(isWebRequest(dataString = "nostrsigner:abc%3Ftype%3Dnip04_encrypt%26pubkey%3D123"))
+    }
+
+    @Test
+    fun `isWebRequest is false for native app with type extra`() {
+        assertFalse(isWebRequest(typeExtra = "sign_event", dataString = "nostrsigner:{\"content\":\"what?type=x\"}"))
+        assertFalse(isWebRequest(hasBrowsableCategory = true, referrerIsBrowser = true, typeExtra = "sign_event"))
+    }
+
+    @Test
+    fun `isWebRequest is false without markers or query`() {
+        assertFalse(isWebRequest())
+        assertFalse(isWebRequest(dataString = null))
+        assertFalse(isWebRequest(dataString = "nostrsigner:?pubkey=123"))
+    }
+
     // Helper to build a minimal ApplicationPermissionsEntity for isRemembered tests
     private fun permissionWith(
         acceptable: Boolean = true,

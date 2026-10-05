@@ -55,7 +55,7 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         Amber.instance.setMainActivity(this)
         mainViewModel = MainViewModel(applicationContext)
-        intent?.let { mainViewModel.onNewIntent(it, callingPackage) }
+        intent?.let { mainViewModel.onNewIntent(it, callingPackage, referrer) }
         setContent {
             HttpClientManager.setDefaultUserAgent("Amber/${BuildConfig.VERSION_NAME}")
 
@@ -141,6 +141,7 @@ class MainActivity : AppCompatActivity() {
                                 intent = remember(intent) { IntentWrapper(intent) },
                                 packageName = packageName,
                                 appName = appName,
+                                referrer = referrer,
                                 bunkerRequests = bunkerRequests.value,
                                 navController = NavHostControllerWrapper(navController),
                             )
@@ -176,7 +177,7 @@ class MainActivity : AppCompatActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
-        mainViewModel.onNewIntent(intent, callingPackage)
+        mainViewModel.onNewIntent(intent, callingPackage, referrer)
     }
 
     override fun onDestroy() {

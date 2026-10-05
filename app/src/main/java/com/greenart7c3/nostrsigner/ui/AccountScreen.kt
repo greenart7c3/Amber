@@ -1,6 +1,7 @@
 package com.greenart7c3.nostrsigner.ui
 
 import android.annotation.SuppressLint
+import android.net.Uri
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Box
@@ -54,6 +55,7 @@ fun AccountScreen(
     bunkerRequests: ImmutableList<AmberBunkerRequest>,
     navController: NavHostControllerWrapper,
     isExternalRequest: Boolean = false,
+    referrer: Uri? = null,
 ) {
     val accountState by accountStateViewModel.accountContent.collectAsState()
     val context = LocalContext.current
@@ -89,6 +91,7 @@ fun AccountScreen(
                                 packageName,
                                 it.getStringExtra("route"),
                                 state.account,
+                                referrer,
                             )?.let { intentData ->
                                 IntentUtils.addAll(listOf(intentData))
                             }

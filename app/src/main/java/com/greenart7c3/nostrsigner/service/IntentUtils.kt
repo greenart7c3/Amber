@@ -4,6 +4,7 @@ import android.app.Activity.RESULT_OK
 import android.content.ClipData
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.provider.Browser
 import android.widget.Toast
@@ -709,12 +710,70 @@ object IntentUtils {
         }
     }
 
+    /**
+     * Returns true when the launching app is a web browser. [referrer] is the value of
+     * `Activity.getReferrer()`: an `http(s)` referrer is the web page itself, an
+     * `android-app://<package>` referrer is the launching app.
+     */
+    fun isBrowserReferrer(context: Context, referrer: Uri?): Boolean = when (referrer?.scheme) {
+        "http", "https" -> true
+        "android-app" -> isBrowserPackage(context, referrer.host)
+        else -> false
+    }
+
+    fun isBrowserPackage(context: Context, packageName: String?): Boolean {
+        if (packageName.isNullOrBlank()) return false
+        val browserIntent = Intent(Intent.ACTION_VIEW, "https://example.com".toUri())
+            .addCategory(Intent.CATEGORY_BROWSABLE)
+            .setPackage(packageName)
+        return try {
+            context.packageManager.queryIntentActivities(browserIntent, PackageManager.MATCH_ALL).isNotEmpty()
+        } catch (_: Exception) {
+            false
+        }
+    }
+
+    /**
+     * Decides whether a `nostrsigner:` request carries its parameters in the URI query
+     * (web apps) instead of intent extras (native NIP-55 apps). Browsers don't agree on
+     * how they mark external intents: Chrome adds [Browser.EXTRA_APPLICATION_ID], others
+     * (e.g. DuckDuckGo) only add [Intent.CATEGORY_BROWSABLE] or nothing at all. A `type`
+     * extra means the caller used the native extras API, so only then do we ignore the
+     * weaker signals (BROWSABLE category, browser referrer, `type=` query parameter).
+     */
+    internal fun isWebRequest(
+        hasApplicationIdExtra: Boolean,
+        hasBrowsableCategory: Boolean,
+        referrerIsBrowser: Boolean,
+        typeExtra: String?,
+        dataString: String?,
+    ): Boolean {
+        if (hasApplicationIdExtra) return true
+        if (!typeExtra.isNullOrBlank()) return false
+        return hasBrowsableCategory || referrerIsBrowser || hasTypeQueryParameter(dataString)
+    }
+
+    private fun hasTypeQueryParameter(dataString: String?): Boolean {
+        if (dataString.isNullOrBlank()) return false
+        val decoded = try {
+            URLDecoder.decode(dataString.replace("+", "%2b"), "utf-8")
+        } catch (_: Exception) {
+            dataString
+        }
+        return listOf(dataString, decoded).any { data ->
+            data.substringAfter('?', "")
+                .split('?', '&')
+                .any { it.startsWith("type=") }
+        }
+    }
+
     suspend fun getIntentData(
         context: Context,
         intent: Intent,
         packageName: String?,
         route: String?,
         currentLoggedInAccount: Account,
+        referrer: Uri? = null,
     ): IntentData? {
         try {
             if (intent.data == null) {
@@ -748,10 +807,18 @@ object IntentUtils {
 
             if (intent.dataString?.startsWith("nostrconnect:") == true) {
                 NostrConnectUtils.getIntentFromNostrConnect(intent, localAccount)
-            } else if (intent.extras?.getString(Browser.EXTRA_APPLICATION_ID) == null) {
-                return getIntentDataFromIntent(context, intent, packageName, route, localAccount)
-            } else {
+            } else if (
+                isWebRequest(
+                    hasApplicationIdExtra = intent.extras?.getString(Browser.EXTRA_APPLICATION_ID) != null,
+                    hasBrowsableCategory = intent.hasCategory(Intent.CATEGORY_BROWSABLE),
+                    referrerIsBrowser = isBrowserReferrer(context, referrer),
+                    typeExtra = intent.extras?.getString("type"),
+                    dataString = intent.dataString,
+                )
+            ) {
                 return getIntentDataWithoutExtras(context, intent.data?.toString() ?: "", intent, packageName, route, localAccount)
+            } else {
+                return getIntentDataFromIntent(context, intent, packageName, route, localAccount)
             }
         } catch (e: Exception) {
             AmberLog.e(Amber.TAG, "Error parsing intent: ${e.message}", e)

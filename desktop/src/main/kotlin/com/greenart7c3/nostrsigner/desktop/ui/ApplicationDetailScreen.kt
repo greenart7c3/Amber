@@ -190,8 +190,7 @@ fun ApplicationDetailScreen(
                             )
                             store.delete(oldKey)
                             scope.launch {
-                                AmberDesktop.engine.updateFilter()
-                                AmberDesktop.client.connect()
+                                AmberDesktop.engine.checkForNewRelaysAndUpdateAllFilters()
                             }
                             Toaster.toast(Strings.get("d_saved", language))
                         },
@@ -306,8 +305,7 @@ fun ApplicationDetailScreen(
                                 }
                                 store.upsert(app.copy(app = app.app.copy(relays = relays)))
                                 scope.launch {
-                                    AmberDesktop.engine.updateFilter()
-                                    AmberDesktop.client.connect()
+                                    AmberDesktop.engine.checkForNewRelaysAndUpdateAllFilters()
                                 }
                                 Toaster.toast(Strings.get("d_application_updated", language))
                             },
@@ -355,11 +353,11 @@ fun ApplicationDetailScreen(
             onClick = {
                 // Deleting drops this screen from composition, so run the
                 // unsubscribe on the application scope (not this composable's)
-                // to be sure updateFilter() completes and no stale relay
+                // to be sure the relay refresh completes and no stale relay
                 // subscription is left behind.
                 AmberDesktop.applicationIOScope.launch {
                     store.delete(appKey)
-                    AmberDesktop.engine.updateFilter()
+                    AmberDesktop.engine.checkForNewRelaysAndUpdateAllFilters()
                     Toaster.toast(Strings.get("d_application_removed", language))
                 }
                 onBack()

@@ -216,9 +216,23 @@ class BunkerEngine(
 
     fun start() {
         scope.launch {
-            updateFilter()
-            client.connect()
+            checkForNewRelaysAndUpdateAllFilters()
         }
+    }
+
+    /**
+     * Mirrors `Amber.checkForNewRelaysAndUpdateAllFilters`: call after anything
+     * that changes the relay set (apps added/removed, app or default relays
+     * edited, accounts added/removed). Re-subscribes on the current relays —
+     * Quartz then drops sockets no subscription needs any more and opens the
+     * new ones — and wakes the client if it was idle.
+     */
+    suspend fun checkForNewRelaysAndUpdateAllFilters(shouldReconnect: Boolean = false) {
+        if (PassphraseLock.isLocked()) return
+        val wasActive = client.isActive()
+        updateFilterLocked()
+        client.connect()
+        if (shouldReconnect) client.reconnect(wasActive)
     }
 
     /** Mirrors `NotificationSubscription.updateFilter`. */
@@ -467,7 +481,7 @@ class BunkerEngine(
                 )
                 if (ok) {
                     store.upsert(current.copy(app = current.app.copy(relays = defaultRelays.map { it.url })))
-                    updateFilter()
+                    checkForNewRelaysAndUpdateAllFilters(shouldReconnect = true)
                 }
             }
             return
@@ -485,7 +499,7 @@ class BunkerEngine(
                 )
                 if (ok) {
                     store.delete(current.app.key)
-                    updateFilter()
+                    checkForNewRelaysAndUpdateAllFilters()
                 }
             }
             return
@@ -711,7 +725,7 @@ class BunkerEngine(
                 removed += count
             }
         }
-        if (removed > 0) updateFilter()
+        if (removed > 0) checkForNewRelaysAndUpdateAllFilters()
     }
 
     /** Drops requests whose [PendingBunkerRequest.expiresAt] has passed; the UI calls this periodically. */
@@ -834,8 +848,7 @@ class BunkerEngine(
         store.upsert(application)
         store.addHistory(HistoryRecord(key, req.type.toString(), req.kind, TimeUtils.now(), true))
 
-        updateFilter()
-        client.connect()
+        checkForNewRelaysAndUpdateAllFilters()
 
         val response = if (req.type == SignerType.CONNECT) {
             req.nostrConnectSecret.ifBlank { req.result }
@@ -1166,8 +1179,7 @@ class BunkerEngine(
             ),
         )
         AmberDesktop.store(account.npub).upsert(app)
-        updateFilter()
-        client.connect()
+        checkForNewRelaysAndUpdateAllFilters()
         val relayParams = relays.joinToString(separator = "&") { "relay=${it.url}" }
         return "bunker://${localPubKeyFromPrivKey(connPrivKey)}?$relayParams&secret=$secret"
     }

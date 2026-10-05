@@ -10,7 +10,7 @@ description:
   static sites published through Blossom.
 license: CC-BY-SA-4.0
 metadata:
-  version: "1.18"
+  version: "1.19"
 ---
 
 # ngit — Nostr Plugin for Git
@@ -50,8 +50,11 @@ it. Explanation: https://ngit.dev/how-it-works
   for exit 0 and `error` otherwise; it never describes a nested domain result
   (`ngit ci status --json` reports `ok` with `ci.conclusion: "failure"` unless a
   gate was requested).
-- **Add `--offline` after the first network read** in a session, on commands
-  that support it. `git fetch origin` also refreshes the cache.
+- ngit repository commands normally refresh data from Nostr relays—including
+  PRs, issues, comments, statuses, and CI—unless given `--offline`, and git
+  commands contacting a `nostr://` remote refresh that data too, so use
+  `--offline` where supported for subsequent ngit commands when the required
+  data is already cached and newer state is unnecessary.
 - **Identifiers.** `<ID|nevent>` accepts `nevent1…`, a 64-char hex ID, or a
   unique hex prefix with an optional `#` (quote it: `'#deadbeef'`). JSON `id`
   and `reply_to` fields are already `nevent1…`; container publication instead

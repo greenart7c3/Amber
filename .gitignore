@@ -11,6 +11,7 @@
 /.idea/other.xml
 /.idea/markdown.xml
 /.idea/appInsightsSettings.xml
+/.idea/kotlinc.xml
 .DS_Store
 /build
 /captures

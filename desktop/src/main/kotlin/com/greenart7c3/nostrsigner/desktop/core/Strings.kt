@@ -101,7 +101,7 @@ object Strings {
     /**
      * Reverses Android's string escaping. The XML parser already resolves
      * entities like `&amp;`; this handles the backslash escapes Android uses
-     * (`\'`, `\"`, `\n`, `\t`, `\\`) and trims the optional surrounding quotes
+     * (`\'`, `\"`, `\n`, `\t`, `\\`, `\uXXXX`) and trims the optional surrounding quotes
      * Android allows around whitespace-significant strings.
      */
     private fun unescapeAndroid(raw: String): String {
@@ -120,6 +120,17 @@ object Strings {
                     '\'' -> out.append('\'')
                     '"' -> out.append('"')
                     '\\' -> out.append('\\')
+                    'u' -> {
+                        // \uXXXX, e.g. the ellipsis in "Starting Tor…"
+                        val hex = s.substring(i + 2, minOf(i + 6, s.length))
+                        val code = if (hex.length == 4) hex.toIntOrNull(16) else null
+                        if (code != null) {
+                            out.append(code.toChar())
+                            i += 6
+                            continue
+                        }
+                        out.append(next)
+                    }
                     else -> out.append(next)
                 }
                 i += 2

@@ -26,6 +26,13 @@ class StringsTest {
     }
 
     @Test
+    fun unicodeEscapesAreDecoded() {
+        // The XML holds "Starting Tor…"; it must render as an ellipsis, not "u2026".
+        assertEquals("Starting Tor…", Strings.get("tor_starting", "en"))
+        assertEquals("Tor wird gestartet…", Strings.get("tor_starting", "de"))
+    }
+
+    @Test
     fun missingKeyFallsBackToEnglishThenKey() {
         // "switch_relays" is translated everywhere now; use a key that exists
         // nowhere but English to prove the English fallback.

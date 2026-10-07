@@ -11,6 +11,10 @@ plugins {
 android {
     namespace = "com.greenart7c3.nostrsigner"
     compileSdk = 37
+    // AGP strips native libraries with this NDK while packaging, so it is an
+    // APK input: pinned (and installed by the reproducibility Dockerfile) so
+    // release and verification builds strip identically across AGP bumps.
+    ndkVersion = "28.2.13676358"
 
     defaultConfig {
         applicationId = "com.greenart7c3.nostrsigner"
@@ -165,6 +169,17 @@ android {
         }
     }
 
+    // Built-in Tor (Arti) for the online flavors: TorManager, the JNI bridge and
+    // the prebuilt libamber_arti.so of every ABI split (built by tools/arti/build.sh).
+    sourceSets {
+        listOf("free", "benchmark").forEach { flavor ->
+            named(flavor) {
+                kotlin.directories.add("src/tor/java")
+                jniLibs.directories.add("src/tor/jniLibs")
+            }
+        }
+    }
+
     splits {
         abi {
             isEnable = true
@@ -186,6 +201,9 @@ android {
             excludes += "META-INF/versions/9/OSGI-INF/MANIFEST.MF"
         }
         jniLibs.useLegacyPackaging = true
+        // Already stripped by tools/arti/build.sh; ship it byte-identical to the
+        // committed file so it can be checked against a rebuild of tools/arti.
+        jniLibs.keepDebugSymbols += "**/libamber_arti.so"
     }
 }
 
@@ -273,14 +291,10 @@ dependencies {
 
     "freeImplementation"(libs.okhttp)
     "freeImplementation"(libs.okhttpCoroutines)
-    "freeImplementation"(libs.kmptor.runtime)
-    "freeImplementation"(libs.kmptor.resource.exec)
 
     // benchmark mirrors the `free` online network stack
     "benchmarkImplementation"(libs.okhttp)
     "benchmarkImplementation"(libs.okhttpCoroutines)
-    "benchmarkImplementation"(libs.kmptor.runtime)
-    "benchmarkImplementation"(libs.kmptor.resource.exec)
 
     // Load images from the web.
     implementation(libs.coil.compose)

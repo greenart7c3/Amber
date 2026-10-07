@@ -54,10 +54,6 @@ dependencies {
     // Argon2id for the optional passphrase lock.
     implementation(libs.bouncycastle)
     implementation(libs.okhttp)
-    // Built-in Tor: the same kmp-tor runtime as the Android app, with the
-    // tor executable bundled for Linux, macOS and Windows.
-    implementation(libs.kmptor.runtime)
-    implementation(libs.kmptor.resource.exec)
     implementation(libs.kotlinx.collections.immutable)
 
     // QR code generation (pure Java)
@@ -73,6 +69,9 @@ compose.desktop {
         jvmArgs += "--add-opens=java.desktop/sun.awt.X11=ALL-UNNAMED"
 
         nativeDistributions {
+            // Built-in Tor: the prebuilt Arti library of each OS/arch
+            // (tools/arti/build.sh); Compose ships the current OS's one.
+            appResourcesRootDir.set(project.layout.projectDirectory.dir("appResources"))
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Exe, TargetFormat.Deb, TargetFormat.Rpm)
             packageName = "Amber"
             // Release builds pass the tag's version (-PdesktopVersion=X.Y.Z).

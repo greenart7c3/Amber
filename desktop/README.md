@@ -22,8 +22,9 @@ for the JVM) and mirrors the mobile UI and permission model.
   per-application sign policies (basic / manual / sign everything)
 - Per-application activity history and relay logs
 - Default bunker relays management
-- Tor (Settings → Tor setup), like the Android app: a built-in Tor daemon
-  (kmp-tor, bundled for every OS) or an external SOCKS proxy such as the
+- Tor (Settings → Tor setup), like the Android app: built-in Tor
+  ([Arti](https://arti.torproject.org), prebuilt for every OS under
+  `appResources/` by `tools/arti/build.sh`) or an external SOCKS proxy such as the
   system tor service (port 9050) or Tor Browser (9150). Relay connections
   fail closed while built-in Tor is still starting, and switching modes
   redials every relay through the new route

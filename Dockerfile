@@ -27,7 +27,8 @@ RUN yes | ${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager --licenses
 RUN ${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager \
     "platform-tools" \
     "platforms;android-36" \
-    "build-tools;35.0.0"
+    "build-tools;35.0.0" \
+    "ndk;28.2.13676358"
 
 # Create working directory
 WORKDIR /app

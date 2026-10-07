@@ -34,7 +34,7 @@ When asked to "bump the version" / cut a release, do **all** of the following in
 
 | Flavor | Notes |
 |--------|-------|
-| `free` (default) | Online: OkHttp, Coil, kmptor, relay connectivity. Owns `INTERNET`/network permissions. |
+| `free` (default) | Online: OkHttp, Coil, built-in Tor (Arti, `src/tor`), relay connectivity. Owns `INTERNET`/network permissions. |
 | `offline` | No network stack. `app/src/offline/AndroidManifest.xml` **removes** `INTERNET`/`CHANGE_NETWORK_STATE`/`ACCESS_NETWORK_STATE` with `tools:node="remove"`. |
 | `benchmark` | Mirrors `free` network deps; `applicationIdSuffix=.benchmark`, `versionNameSuffix=-BENCHMARK`; CI builds a signed release per push for side-by-side install. |
 

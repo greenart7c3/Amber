@@ -113,7 +113,9 @@ object LocalSigner {
         }
         server = null
         runCatching { channel.close() }
-        sessions.values.toList().forEach { it.close() }
+        // Not toList(): it reads size, then next(), and a session ending in
+        // between makes next() throw. The map's own iterator tolerates that.
+        sessions.values.forEach { it.close() }
         runCatching { Files.deleteIfExists(socketPath()) }
         status.value = Status.STOPPED
     }

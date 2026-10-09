@@ -22,7 +22,9 @@ import java.nio.ByteBuffer
 import java.nio.channels.Channels
 import java.nio.channels.ServerSocketChannel
 import java.nio.channels.SocketChannel
+import java.nio.file.FileSystems
 import java.nio.file.Files
+import java.nio.file.Path
 import java.util.UUID
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.TimeUnit
@@ -33,10 +35,30 @@ import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
+import org.junit.BeforeClass
 import org.junit.Test
 
 /** The NIP-5F socket end to end: real socket, real engine queue, no relays. */
 class LocalSignerTest {
+    companion object {
+        /**
+         * A short home of our own. Other test classes point `user.home` at a
+         * temp dir, and macOS's (/var/folders/…/T/…) pushes the socket path
+         * past the 104-byte AF_UNIX limit, so binding fails there.
+         */
+        @JvmStatic
+        @BeforeClass
+        fun shortHome() {
+            val base = if (System.getProperty("os.name").startsWith("Windows")) {
+                Path.of(System.getProperty("java.io.tmpdir"))
+            } else {
+                Path.of("/tmp")
+            }
+            val home = Files.createTempDirectory(base, "amb").toFile().apply { deleteOnExit() }
+            System.setProperty("user.home", home.absolutePath)
+        }
+    }
+
     private val clients = mutableListOf<TestClient>()
 
     private class TestClient(name: String?, secret: String? = null) : AutoCloseable {
@@ -115,8 +137,11 @@ class LocalSignerTest {
 
     @Test
     fun socketIsOwnerOnlyAndGreetsWithTheMethods() {
-        val perms = Files.getPosixFilePermissions(LocalSigner.socketPath())
-        assertEquals("rw-------", java.nio.file.attribute.PosixFilePermissions.toString(perms))
+        // Windows has no POSIX permissions; the user-profile ACLs guard the socket there.
+        if ("posix" in FileSystems.getDefault().supportedFileAttributeViews()) {
+            val perms = Files.getPosixFilePermissions(LocalSigner.socketPath())
+            assertEquals("rw-------", java.nio.file.attribute.PosixFilePermissions.toString(perms))
+        }
         val c = client(uniqueName())
         val methods = c.handshake.get("supported_methods").map { it.asText() }
         assertTrue("sign_event" in methods && "get_public_key" in methods)

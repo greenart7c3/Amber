@@ -45,6 +45,9 @@ object UiState {
     /** Request id the keyboard is acting on in the incoming-requests list. */
     val selectedRequestId = MutableStateFlow<String?>(null)
 
+    /** Request whose "See details" dialog is open; shortcuts pause meanwhile. */
+    val detailsRequestId = MutableStateFlow<String?>(null)
+
     /** Per-request "Remember" choice, shared by the dropdown and the shortcuts. */
     val rememberChoices = MutableStateFlow<Map<String, RememberType>>(emptyMap())
 
@@ -157,6 +160,13 @@ object UiState {
      * S on a selected encrypt/decrypt request: toggles its "Encryption scope"
      * (this method / kind only <-> all methods / kinds).
      */
+    /** D on a selected request: opens its details, when it has any. */
+    fun showSelectedDetails(): Boolean {
+        val request = selectedRequest()?.takeIf { RequestDetails.of(it) != null } ?: return false
+        detailsRequestId.value = request.request.id
+        return true
+    }
+
     fun toggleSelectedScope(): Boolean {
         val request = selectedRequest()?.takeIf { it.type in contentScopedSignerTypes || it.type in nip44v3SignerTypes } ?: return false
         val next = if (scopeChoiceFor(request) == EncryptionScope.ALL) EncryptionScope.SPECIFIC else EncryptionScope.ALL
@@ -189,6 +199,9 @@ object UiState {
         }
         if (scopeChoices.value.keys.any { it !in ids }) {
             scopeChoices.value = scopeChoices.value.filterKeys { it in ids }
+        }
+        if (detailsRequestId.value != null && detailsRequestId.value !in ids) {
+            detailsRequestId.value = null
         }
     }
 }
@@ -231,6 +244,10 @@ fun handleShortcut(
 
     val loggedIn = Session.account.value != null && !PassphraseLock.isLocked()
 
+    // The details dialog is read-only: keep ⌘↵ and the list keys from acting
+    // on the requests behind it. Esc (handled by the dialog) closes it.
+    val detailsOpen = UiState.detailsRequestId.value != null
+
     val modifier = if (isMacOs) event.isMetaPressed else event.isCtrlPressed
     if (!modifier) {
         if (event.key == Key.Escape && UiState.selectedApplication.value != null) {
@@ -243,6 +260,7 @@ fun handleShortcut(
         val onIncoming = loggedIn &&
             UiState.currentRoute.value == Route.IncomingRequest &&
             UiState.selectedApplication.value == null &&
+            !detailsOpen &&
             AmberDesktop.engine.pending.value.isNotEmpty()
         if (onIncoming) {
             when (event.key) {
@@ -275,6 +293,8 @@ fun handleShortcut(
                 Key.A -> return UiState.cycleSelectedAccount()
 
                 Key.S -> return UiState.toggleSelectedScope()
+
+                Key.D -> return UiState.showSelectedDetails()
             }
         }
         return false
@@ -287,7 +307,7 @@ fun handleShortcut(
         Key.Four -> if (loggedIn) UiState.navigate(Route.Settings) else return false
 
         Key.Enter -> {
-            if (!loggedIn) return false
+            if (!loggedIn || detailsOpen) return false
             val request = UiState.selectedRequest() ?: return false
             if (event.isShiftPressed) {
                 UiState.reject(request)

@@ -36,6 +36,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.greenart7c3.nostrsigner.desktop.core.AccountsStore
 import com.greenart7c3.nostrsigner.desktop.core.AmberDesktop
@@ -141,7 +142,30 @@ private fun RequestCard(
                 onSelect = { UiState.setConnectChoice(req.request.id, connectChoice.copy(accountNpub = it)) },
             )
 
-            if (req.preview.isNotBlank()) {
+            val details = remember(req) { RequestDetails.of(req) }
+            if (details != null) {
+                // Mirrors the Android BunkerRequestCard: what the event says (or
+                // the text being encrypted/decrypted), the rest behind "See details".
+                val summary = details.summary
+                if (summary.isNotBlank()) {
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        summary,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 3,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+                AmberTextButton(
+                    text = "${Strings.get("see_details", language)} (D)",
+                    onClick = { UiState.detailsRequestId.value = req.request.id },
+                )
+                val detailsId by UiState.detailsRequestId.collectAsState()
+                if (detailsId == req.request.id) {
+                    RequestDetailsDialog(req, details, onDismiss = { UiState.detailsRequestId.value = null })
+                }
+            } else if (req.preview.isNotBlank()) {
                 Spacer(Modifier.height(8.dp))
                 Card(Modifier.fillMaxWidth()) {
                     Text(

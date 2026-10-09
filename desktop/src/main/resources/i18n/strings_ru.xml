@@ -917,4 +917,10 @@
     <string name="d_tor_stopped">Tor не запущен</string>
     <string name="d_tor_local_note">Локальные релеи (localhost, адреса LAN и VPN, имена .local) всегда подключаются напрямую, в обход Tor.</string>
     <string name="d_local_relay">Локальный</string>
+    <string name="d_local_signer">Подписание через локальный сокет</string>
+    <string name="d_local_signer_sub">Разрешить инструментам командной строки подписывать через Amber по локальному сокету (NIP-5F) %1$s. Каждый инструмент запрашивает ваше одобрение, как любое другое подключение.</string>
+    <string name="d_local_signer_in_use">Другой подписывающий уже использует %1$s.</string>
+    <string name="d_local_signer_failed">Не удалось открыть %1$s.</string>
+    <string name="d_local_socket">Локальный сокет</string>
+    <string name="d_via_local_socket">Через локальный сокет</string>
 </resources>

@@ -893,4 +893,10 @@
     <string name="d_tor_stopped">Tor ไม่ได้ทำงาน</string>
     <string name="d_tor_local_note">รีเลย์ภายใน (localhost, ที่อยู่ LAN และ VPN, ชื่อ .local) จะเชื่อมต่อโดยตรงเสมอ ไม่ผ่าน Tor</string>
     <string name="d_local_relay">ภายใน</string>
+    <string name="d_local_signer">ผู้ลงนามผ่านซ็อกเก็ตภายในเครื่อง</string>
+    <string name="d_local_signer_sub">ให้เครื่องมือบรรทัดคำสั่งลงนามผ่าน Amber ทางซ็อกเก็ตภายในเครื่อง (NIP-5F) ที่ %1$s แต่ละเครื่องมือจะขอการอนุมัติจากคุณเหมือนการเชื่อมต่ออื่น</string>
+    <string name="d_local_signer_in_use">มีผู้ลงนามอื่นใช้ %1$s อยู่แล้ว</string>
+    <string name="d_local_signer_failed">ไม่สามารถเปิด %1$s ได้</string>
+    <string name="d_local_socket">ซ็อกเก็ตภายในเครื่อง</string>
+    <string name="d_via_local_socket">ผ่านซ็อกเก็ตภายในเครื่อง</string>
 </resources>

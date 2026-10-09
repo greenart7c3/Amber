@@ -222,11 +222,21 @@ data class AppRecord(
     val deleteAfter: Long = 0L,
     val lastUsed: Long = 0L,
     val localKey: String = "",
+    /** How the client reaches Amber: [TRANSPORT_NIP46] (relays) or [TRANSPORT_SOCKET] (NIP-5F local socket). */
+    val transport: String = TRANSPORT_NIP46,
+    /** Socket clients only: SHA-256 hex of the secret `get_public_key` handed the tool on approval. */
+    val socketSecretHash: String = "",
 ) {
     fun normalizedRelays(): List<NormalizedRelayUrl> = relays.mapNotNull { RelayUrlNormalizer.normalizeOrNull(it) }
 
     fun displayName(): String = name.ifBlank { key.toShortenHex() }
 }
+
+const val TRANSPORT_NIP46 = "nip46"
+const val TRANSPORT_SOCKET = "socket"
+
+// An extension, not a member: Jackson would persist a member getter as a field.
+val AppRecord.isLocalSocket: Boolean get() = transport == TRANSPORT_SOCKET
 
 /** Mirrors the Android `ApplicationPermissionsEntity`. */
 data class AppPermissionRecord(
@@ -277,6 +287,8 @@ data class DesktopSettings(
     val showNotifications: Boolean = true,
     /** Start automatically at login (systemd user service on Linux, HKCU Run entry on Windows). */
     val startOnBoot: Boolean = false,
+    /** Serve NIP-5F clients (CLI tools) on the local Unix domain socket. */
+    val localSigner: Boolean = false,
     /** UI language tag (matches Strings.supportedLanguages); null = follow the OS. */
     val language: String? = null,
     /** Last floating window size in dp; null = default (fitted to the screen). */

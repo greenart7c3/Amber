@@ -893,4 +893,10 @@
     <string name="d_tor_stopped">Torは実行されていません</string>
     <string name="d_tor_local_note">ローカルリレー（localhost、LAN・VPNアドレス、.local名）は常にTorを経由せず直接接続します。</string>
     <string name="d_local_relay">ローカル</string>
+    <string name="d_local_signer">ローカルソケット署名</string>
+    <string name="d_local_signer_sub">コマンドラインツールが %1$s のローカルソケット(NIP-5F)経由で Amber に署名を依頼できるようにします。各ツールは他の接続と同様に承認を求めます。</string>
+    <string name="d_local_signer_in_use">別の署名アプリがすでに %1$s を使用しています。</string>
+    <string name="d_local_signer_failed">%1$s を開けませんでした。</string>
+    <string name="d_local_socket">ローカルソケット</string>
+    <string name="d_via_local_socket">ローカルソケット経由</string>
 </resources>

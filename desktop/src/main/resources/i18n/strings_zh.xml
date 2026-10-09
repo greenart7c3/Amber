@@ -898,4 +898,10 @@
     <string name="d_tor_stopped">Tor 未运行</string>
     <string name="d_tor_local_note">本地中继（localhost、局域网和 VPN 地址、.local 名称）始终直接连接，不经过 Tor。</string>
     <string name="d_local_relay">本地</string>
+    <string name="d_local_signer">本地套接字签名</string>
+    <string name="d_local_signer_sub">允许命令行工具通过 %1$s 上的本地套接字(NIP-5F)使用 Amber 签名。每个工具都会像其他连接一样请求你的批准。</string>
+    <string name="d_local_signer_in_use">另一个签名程序已在使用 %1$s。</string>
+    <string name="d_local_signer_failed">无法打开 %1$s。</string>
+    <string name="d_local_socket">本地套接字</string>
+    <string name="d_via_local_socket">通过本地套接字</string>
 </resources>

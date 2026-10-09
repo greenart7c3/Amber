@@ -51,6 +51,7 @@ import com.greenart7c3.nostrsigner.desktop.core.RememberType
 import com.greenart7c3.nostrsigner.desktop.core.SignerDescriptions
 import com.greenart7c3.nostrsigner.desktop.core.Strings
 import com.greenart7c3.nostrsigner.desktop.core.generateBunkerPrivKey
+import com.greenart7c3.nostrsigner.desktop.core.isLocalSocket
 import com.greenart7c3.nostrsigner.desktop.core.localPubKeyFromPrivKey
 import com.greenart7c3.nostrsigner.desktop.core.toShortenHex
 import java.text.DateFormat
@@ -93,6 +94,7 @@ fun ApplicationDetailScreen(
                 Text(
                     buildString {
                         append(Strings.format("d_key_label", app.app.key.toShortenHex(), language = language))
+                        if (app.app.isLocalSocket) append(" · ${Strings.get("d_local_socket", language)}")
                         if (app.app.relays.isNotEmpty()) append(" · ${Strings.format("d_relays_label", app.app.relays.joinToString(), language = language)}")
                     },
                     style = MaterialTheme.typography.bodySmall,
@@ -120,95 +122,104 @@ fun ApplicationDetailScreen(
         }
         Spacer(Modifier.height(12.dp))
 
+        // A local socket client has no relays: its tabs skip index 1.
+        val isSocket = app.app.isLocalSocket
         AmberTabRow(
-            selectedTabIndex = tab,
-            titles = listOf(Strings.get("permissions", language), Strings.get("relays", language), Strings.get("d_activity", language)),
-            onSelect = { tab = it },
+            selectedTabIndex = if (isSocket && tab == 2) 1 else tab,
+            titles = if (isSocket) {
+                listOf(Strings.get("permissions", language), Strings.get("d_activity", language))
+            } else {
+                listOf(Strings.get("permissions", language), Strings.get("relays", language), Strings.get("d_activity", language))
+            },
+            onSelect = { tab = if (isSocket && it == 1) 2 else it },
         )
         Spacer(Modifier.height(8.dp))
 
-        // Mirrors the Android app-detail connection string (EditPermission):
-        // the bunker:// URI the client app can re-paste to reconnect.
-        val connectionPubKey = if (app.app.localKey.isNotEmpty()) {
-            localPubKeyFromPrivKey(app.app.localKey)
-        } else {
-            account.hexKey
-        }
-        val bunkerUri = remember(connectionPubKey, app.app.relays, app.app.useSecret, app.app.secret) {
-            val relayParams = app.app.relays.joinToString(separator = "&") { "relay=$it" }
-            val localSecret = if (app.app.useSecret) "&secret=${app.app.secret}" else ""
-            "bunker://$connectionPubKey?$relayParams$localSecret"
-        }
-        val clipboard = LocalClipboardManager.current
-        Spacer(Modifier.height(16.dp))
-        Text(Strings.get("d_connection_string", language), style = MaterialTheme.typography.titleSmall)
-        Spacer(Modifier.height(4.dp))
-        Text(
-            bunkerUri,
-            style = MaterialTheme.typography.bodySmall,
-            fontFamily = FontFamily.Monospace,
-            modifier = Modifier
-                .fillMaxWidth()
-                .border(BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant), RoundedCornerShape(8.dp))
-                .padding(8.dp),
-        )
-        AmberTextButton(
-            text = Strings.get("copy", language).trim(),
-            onClick = {
-                clipboard.setText(AnnotatedString(bunkerUri))
-                Toaster.toast(Strings.get("d_connection_string_copied", language))
-            },
-        )
-        Spacer(Modifier.height(12.dp))
-
-        // Mirrors the Android "Reset Bunker" (EditConfigurationScreen): a new
-        // key and secret invalidate the old pairing; permission rules stay.
-        var showResetBunker by remember { mutableStateOf(false) }
-        if (showResetBunker) {
-            AlertDialog(
-                onDismissRequest = { showResetBunker = false },
-                title = { Text(Strings.get("reset_bunker", language)) },
-                text = { Text(Strings.get("d_reset_bunker_message", language)) },
-                confirmButton = {
-                    AmberTextButton(
-                        text = Strings.get("reset_bunker", language),
-                        onClick = {
-                            showResetBunker = false
-                            val oldKey = app.app.key
-                            val newSecret = UUID.randomUUID().toString()
-                            store.upsert(
-                                AppWithPermissions(
-                                    app = app.app.copy(
-                                        key = newSecret,
-                                        isConnected = false,
-                                        secret = newSecret,
-                                        useSecret = true,
-                                        localKey = generateBunkerPrivKey(),
-                                    ),
-                                    permissions = app.permissions,
-                                ),
-                            )
-                            store.delete(oldKey)
-                            scope.launch {
-                                AmberDesktop.engine.checkForNewRelaysAndUpdateAllFilters()
-                            }
-                            Toaster.toast(Strings.get("d_saved", language))
-                        },
-                    )
-                },
-                dismissButton = {
-                    AmberTextButton(
-                        text = Strings.get("cancel", language),
-                        onClick = { showResetBunker = false },
-                    )
+        // The bunker:// string and its reset only exist for NIP-46 connections.
+        if (!isSocket) {
+            // Mirrors the Android app-detail connection string (EditPermission):
+            // the bunker:// URI the client app can re-paste to reconnect.
+            val connectionPubKey = if (app.app.localKey.isNotEmpty()) {
+                localPubKeyFromPrivKey(app.app.localKey)
+            } else {
+                account.hexKey
+            }
+            val bunkerUri = remember(connectionPubKey, app.app.relays, app.app.useSecret, app.app.secret) {
+                val relayParams = app.app.relays.joinToString(separator = "&") { "relay=$it" }
+                val localSecret = if (app.app.useSecret) "&secret=${app.app.secret}" else ""
+                "bunker://$connectionPubKey?$relayParams$localSecret"
+            }
+            val clipboard = LocalClipboardManager.current
+            Spacer(Modifier.height(16.dp))
+            Text(Strings.get("d_connection_string", language), style = MaterialTheme.typography.titleSmall)
+            Spacer(Modifier.height(4.dp))
+            Text(
+                bunkerUri,
+                style = MaterialTheme.typography.bodySmall,
+                fontFamily = FontFamily.Monospace,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .border(BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant), RoundedCornerShape(8.dp))
+                    .padding(8.dp),
+            )
+            AmberTextButton(
+                text = Strings.get("copy", language).trim(),
+                onClick = {
+                    clipboard.setText(AnnotatedString(bunkerUri))
+                    Toaster.toast(Strings.get("d_connection_string_copied", language))
                 },
             )
+            Spacer(Modifier.height(12.dp))
+
+            // Mirrors the Android "Reset Bunker" (EditConfigurationScreen): a new
+            // key and secret invalidate the old pairing; permission rules stay.
+            var showResetBunker by remember { mutableStateOf(false) }
+            if (showResetBunker) {
+                AlertDialog(
+                    onDismissRequest = { showResetBunker = false },
+                    title = { Text(Strings.get("reset_bunker", language)) },
+                    text = { Text(Strings.get("d_reset_bunker_message", language)) },
+                    confirmButton = {
+                        AmberTextButton(
+                            text = Strings.get("reset_bunker", language),
+                            onClick = {
+                                showResetBunker = false
+                                val oldKey = app.app.key
+                                val newSecret = UUID.randomUUID().toString()
+                                store.upsert(
+                                    AppWithPermissions(
+                                        app = app.app.copy(
+                                            key = newSecret,
+                                            isConnected = false,
+                                            secret = newSecret,
+                                            useSecret = true,
+                                            localKey = generateBunkerPrivKey(),
+                                        ),
+                                        permissions = app.permissions,
+                                    ),
+                                )
+                                store.delete(oldKey)
+                                scope.launch {
+                                    AmberDesktop.engine.checkForNewRelaysAndUpdateAllFilters()
+                                }
+                                Toaster.toast(Strings.get("d_saved", language))
+                            },
+                        )
+                    },
+                    dismissButton = {
+                        AmberTextButton(
+                            text = Strings.get("cancel", language),
+                            onClick = { showResetBunker = false },
+                        )
+                    },
+                )
+            }
+            AmberOutlinedButton(
+                text = Strings.get("reset_bunker", language),
+                onClick = { showResetBunker = true },
+            )
+            Spacer(Modifier.height(12.dp))
         }
-        AmberOutlinedButton(
-            text = Strings.get("reset_bunker", language),
-            onClick = { showResetBunker = true },
-        )
-        Spacer(Modifier.height(12.dp))
 
         var showRemoveAll by remember { mutableStateOf(false) }
         if (showRemoveAll) {

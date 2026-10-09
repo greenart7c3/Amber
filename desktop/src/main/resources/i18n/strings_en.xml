@@ -923,4 +923,10 @@
     <string name="d_tor_stopped">Tor is not running</string>
     <string name="d_tor_local_note">Local relays (localhost, LAN and VPN addresses, .local names) always connect directly, outside Tor.</string>
     <string name="d_local_relay">Local</string>
+    <string name="d_local_signer">Local socket signer</string>
+    <string name="d_local_signer_sub">Let command-line tools sign through Amber over a local socket (NIP-5F) at %1$s. Each tool asks for your approval like any other connection.</string>
+    <string name="d_local_signer_in_use">Another signer is already using %1$s.</string>
+    <string name="d_local_signer_failed">Could not open %1$s.</string>
+    <string name="d_local_socket">Local socket</string>
+    <string name="d_via_local_socket">Via local socket</string>
 </resources>

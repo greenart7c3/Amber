@@ -914,4 +914,10 @@
     <string name="d_tor_stopped">Tor läuft nicht</string>
     <string name="d_tor_local_note">Lokale Relays (localhost, LAN- und VPN-Adressen, .local-Namen) verbinden sich immer direkt, außerhalb von Tor.</string>
     <string name="d_local_relay">Lokal</string>
+    <string name="d_local_signer">Lokaler Socket-Signer</string>
+    <string name="d_local_signer_sub">Kommandozeilen-Tools über einen lokalen Socket (NIP-5F) unter %1$s mit Amber signieren lassen. Jedes Tool fragt wie jede andere Verbindung nach deiner Zustimmung.</string>
+    <string name="d_local_signer_in_use">Ein anderer Signer verwendet bereits %1$s.</string>
+    <string name="d_local_signer_failed">%1$s konnte nicht geöffnet werden.</string>
+    <string name="d_local_socket">Lokaler Socket</string>
+    <string name="d_via_local_socket">Über lokalen Socket</string>
 </resources>

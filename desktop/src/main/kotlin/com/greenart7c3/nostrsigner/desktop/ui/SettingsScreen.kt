@@ -45,6 +45,7 @@ import com.greenart7c3.nostrsigner.desktop.core.AmberDesktop
 import com.greenart7c3.nostrsigner.desktop.core.AutoStart
 import com.greenart7c3.nostrsigner.desktop.core.DesktopAccount
 import com.greenart7c3.nostrsigner.desktop.core.DesktopKeyStore
+import com.greenart7c3.nostrsigner.desktop.core.LocalSigner
 import com.greenart7c3.nostrsigner.desktop.core.PassphraseLock
 import com.greenart7c3.nostrsigner.desktop.core.RelayHttpClients
 import com.greenart7c3.nostrsigner.desktop.core.SettingsStore
@@ -161,6 +162,21 @@ fun SettingsScreen(account: DesktopAccount) {
                 description = Strings.get("d_notifications_sub", language),
                 checked = settings.showNotifications,
                 onCheckedChange = { value -> SettingsStore.update { it.copy(showNotifications = value) } },
+            )
+            val localSignerStatus by LocalSigner.status.collectAsState()
+            val socketPath = LocalSigner.socketPath().toString()
+            SettingSwitch(
+                title = Strings.get("d_local_signer", language),
+                description = when (localSignerStatus) {
+                    LocalSigner.Status.IN_USE -> Strings.format("d_local_signer_in_use", socketPath, language = language)
+                    LocalSigner.Status.FAILED -> Strings.format("d_local_signer_failed", socketPath, language = language)
+                    else -> Strings.format("d_local_signer_sub", socketPath, language = language)
+                },
+                checked = settings.localSigner,
+                onCheckedChange = { value ->
+                    SettingsStore.update { it.copy(localSigner = value) }
+                    LocalSigner.sync()
+                },
             )
             if (AutoStart.isSupported()) {
                 SettingSwitch(

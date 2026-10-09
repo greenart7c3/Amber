@@ -118,7 +118,7 @@ object PassphraseLock {
         autoLockJob?.cancel()
         DesktopKeyStore.clearMasterKey()
         AmberDesktop.evictAllAccounts()
-        AmberDesktop.engine.pending.value = emptyList()
+        AmberDesktop.engine.dropPending("signer locked") { true }
         AmberDesktop.disconnectIntentionally()
         state.value = Status.LOCKED
     }

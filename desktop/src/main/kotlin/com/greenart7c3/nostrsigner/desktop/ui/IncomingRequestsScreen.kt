@@ -127,6 +127,9 @@ private fun RequestCard(
             if (req.appUrl.isNotBlank()) {
                 Text(req.appUrl, style = MaterialTheme.typography.bodySmall)
             }
+            if (req.isLocalSocket) {
+                Text(Strings.get("d_via_local_socket", language), style = MaterialTheme.typography.bodySmall)
+            }
             Spacer(Modifier.height(4.dp))
             Text(req.type.describe(req.kind, req.encryptedContent, language), style = MaterialTheme.typography.bodyLarge)
             Spacer(Modifier.height(4.dp))

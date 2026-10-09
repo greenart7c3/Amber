@@ -37,6 +37,8 @@ dependencies {
     implementation(compose.materialIconsExtended)
 
     implementation(libs.quartz.jvm)
+    // Quartz ships jackson-databind but no longer the Kotlin module.
+    implementation(libs.jackson.module.kotlin)
     // Native secp256k1 bindings for the JVM (Schnorr signatures + ECDH).
     implementation(libs.secp256k1.jni.jvm)
 

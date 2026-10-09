@@ -233,6 +233,8 @@ dependencies {
     implementation(libs.quartz) {
         exclude(group = "net.java.dev.jna")
     }
+    // Quartz ships jackson-databind but no longer the Kotlin module.
+    implementation(libs.jackson.module.kotlin)
     implementation(libs.jna) {
         artifact {
             type = "aar"

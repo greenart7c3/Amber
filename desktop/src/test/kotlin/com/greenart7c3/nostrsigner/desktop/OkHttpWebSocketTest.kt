@@ -18,8 +18,9 @@
  * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-package com.greenart7c3.nostrsigner.okhttp
+package com.greenart7c3.nostrsigner.desktop
 
+import com.greenart7c3.nostrsigner.desktop.core.OkHttpWebSocket
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
 import com.vitorpamplona.quartz.nip01Core.relay.sockets.WebSocketListener
 import java.io.InputStream
@@ -52,7 +53,7 @@ import org.junit.Test
  * Driven against a minimal RFC 6455 server on a loopback [ServerSocket] rather than a mock
  * server library, so the test needs no new dependency and controls the exact frames on the wire.
  */
-class OkHttpWebSocketCloseHandshakeTest {
+class OkHttpWebSocketTest {
     /** Handshakes one client, sends it a CLOSE frame on demand, and records the frames it sends back. */
     private class TinyRelay : AutoCloseable {
         private val server = ServerSocket(0)

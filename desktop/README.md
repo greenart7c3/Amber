@@ -172,6 +172,24 @@ step and is tracked as future work.
 **If you forget the passphrase there is no recovery** — restore your keys
 from their nsec or seed-word backup instead.
 
+## Local socket signer (NIP-5F)
+
+Command-line tools (nak, ngit, scripts, AI agents, …) can sign through Amber
+over a local Unix domain socket at `~/.local/share/nostr/signer.sock`
+(Linux, macOS, Windows 10+), following the NIP-5F draft with NIP-55-style
+accounts: no relays, no per-tool pairing, every request through Amber's
+normal approval and permissions. Turn it on under Settings → Desktop →
+**Local socket signer**.
+
+```bash
+socat - UNIX-CONNECT:$HOME/.local/share/nostr/signer.sock
+{"client":"socat"}
+{"id":"1","method":"get_public_key","params":[]}
+```
+
+Protocol, methods, accounts, tokens, error codes, security model and
+internals: **[LOCAL_SIGNER.md](LOCAL_SIGNER.md)**.
+
 ## Run and build
 
 ```bash

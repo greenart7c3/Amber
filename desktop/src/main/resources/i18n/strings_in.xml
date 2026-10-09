@@ -917,4 +917,10 @@
     <string name="d_tor_stopped">Tor tidak berjalan</string>
     <string name="d_tor_local_note">Relai lokal (localhost, alamat LAN dan VPN, nama .local) selalu terhubung langsung, di luar Tor.</string>
     <string name="d_local_relay">Lokal</string>
+    <string name="d_local_signer">Penanda tangan socket lokal</string>
+    <string name="d_local_signer_sub">Izinkan alat baris perintah menandatangani melalui Amber lewat socket lokal (NIP-5F) di %1$s. Setiap alat meminta persetujuan Anda seperti koneksi lainnya.</string>
+    <string name="d_local_signer_in_use">Penanda tangan lain sudah menggunakan %1$s.</string>
+    <string name="d_local_signer_failed">Tidak dapat membuka %1$s.</string>
+    <string name="d_local_socket">Socket lokal</string>
+    <string name="d_via_local_socket">Melalui socket lokal</string>
 </resources>

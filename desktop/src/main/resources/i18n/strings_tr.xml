@@ -913,4 +913,10 @@
     <string name="d_tor_stopped">Tor çalışmıyor</string>
     <string name="d_tor_local_note">Yerel aktarıcılar (localhost, LAN ve VPN adresleri, .local adları) her zaman Tor dışında doğrudan bağlanır.</string>
     <string name="d_local_relay">Yerel</string>
+    <string name="d_local_signer">Yerel soket imzalayıcı</string>
+    <string name="d_local_signer_sub">Komut satırı araçlarının %1$s konumundaki yerel soket (NIP-5F) üzerinden Amber ile imzalamasına izin ver. Her araç, diğer bağlantılar gibi onayını ister.</string>
+    <string name="d_local_signer_in_use">Başka bir imzalayıcı zaten %1$s kullanıyor.</string>
+    <string name="d_local_signer_failed">%1$s açılamadı.</string>
+    <string name="d_local_socket">Yerel soket</string>
+    <string name="d_via_local_socket">Yerel soket üzerinden</string>
 </resources>

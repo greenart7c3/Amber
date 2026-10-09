@@ -917,4 +917,10 @@
     <string name="d_tor_stopped">Tor no se está ejecutando</string>
     <string name="d_tor_local_note">Los relés locales (localhost, direcciones LAN y VPN, nombres .local) siempre se conectan directamente, fuera de Tor.</string>
     <string name="d_local_relay">Local</string>
+    <string name="d_local_signer">Firmante por socket local</string>
+    <string name="d_local_signer_sub">Permite que las herramientas de línea de comandos firmen con Amber a través de un socket local (NIP-5F) en %1$s. Cada herramienta pide tu aprobación como cualquier otra conexión.</string>
+    <string name="d_local_signer_in_use">Otro firmante ya está usando %1$s.</string>
+    <string name="d_local_signer_failed">No se pudo abrir %1$s.</string>
+    <string name="d_local_socket">Socket local</string>
+    <string name="d_via_local_socket">Vía socket local</string>
 </resources>

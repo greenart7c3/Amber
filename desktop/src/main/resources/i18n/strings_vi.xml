@@ -893,4 +893,10 @@
     <string name="d_tor_stopped">Tor không chạy</string>
     <string name="d_tor_local_note">Relay cục bộ (localhost, địa chỉ LAN và VPN, tên .local) luôn kết nối trực tiếp, không qua Tor.</string>
     <string name="d_local_relay">Cục bộ</string>
+    <string name="d_local_signer">Ký qua socket cục bộ</string>
+    <string name="d_local_signer_sub">Cho phép công cụ dòng lệnh ký qua Amber bằng socket cục bộ (NIP-5F) tại %1$s. Mỗi công cụ sẽ hỏi bạn phê duyệt như mọi kết nối khác.</string>
+    <string name="d_local_signer_in_use">Một trình ký khác đang dùng %1$s.</string>
+    <string name="d_local_signer_failed">Không thể mở %1$s.</string>
+    <string name="d_local_socket">Socket cục bộ</string>
+    <string name="d_via_local_socket">Qua socket cục bộ</string>
 </resources>

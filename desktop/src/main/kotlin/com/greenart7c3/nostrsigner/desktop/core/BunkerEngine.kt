@@ -80,7 +80,18 @@ data class PendingBunkerRequest(
      * expiration, if sooner) instead of lingering forever.
      */
     val expiresAt: Long? = null,
+    /**
+     * Set for NIP-5F local socket requests: answers the client directly over
+     * its socket instead of a kind-24133 event (see [LocalSigner]).
+     */
+    val responder: (suspend (BunkerResponse) -> Unit)? = null,
+    /** Socket connect only: hash of the secret the client receives once approved. */
+    val socketSecretHash: String = "",
+    /** Socket connect only: the client did not name an account, so any can be picked. */
+    val allowAccountSwitch: Boolean = false,
 ) {
+    val isLocalSocket: Boolean get() = responder != null
+
     /**
      * Whether a connect can be approved for a different account than the one
      * it arrived on: only when the client talks to a per-connection key (a
@@ -88,7 +99,7 @@ data class PendingBunkerRequest(
      * connection is addressed to — and answered by — the account key itself.
      */
     val canSwitchAccount: Boolean
-        get() = type == SignerType.CONNECT && (isNostrConnectUri || signerPrivKey.isNotEmpty())
+        get() = type == SignerType.CONNECT && (isNostrConnectUri || signerPrivKey.isNotEmpty() || allowAccountSwitch)
 
     /**
      * Kind a remembered choice is stored under. NIP-44 v3: this kind for
@@ -542,22 +553,7 @@ class BunkerEngine(
         // Android: classify the plaintext (the encrypt input, or the decrypt
         // result) and try that grant, then the whole-NIP grant, then `nip:N`.
         val encryptedContent = if (type in contentScopedSignerTypes) EncryptedContent.classify(computed.preview) else null
-        val permissionType = when (type) {
-            SignerType.SIGN_EVENT -> store.getPermission(event.pubKey, type.toString(), kind)
-
-            // v3 grants are kind-scoped, falling back to the explicit "all
-            // kinds" grant only (never another kind's), like Android.
-            in nip44v3SignerTypes ->
-                store.getPermission(event.pubKey, type.toString(), kind)
-                    ?: store.getPermission(event.pubKey, type.toString(), null)
-
-            in contentScopedSignerTypes ->
-                store.getPermission(event.pubKey, type.contentPermissionType(encryptedContent))
-                    ?: store.getPermission(event.pubKey, type.toString())
-                    ?: store.getPermission(event.pubKey, "NIP", if (type.name.startsWith("NIP04")) 4 else 44)
-
-            else -> store.getPermission(event.pubKey, type.toString())
-        }
+        val permissionType = lookupPermission(store, event.pubKey, type, kind, encryptedContent)
         // A first-time `connect` always goes through the approval UI: approving
         // is what migrates the bunker placeholder to the client key and grants
         // the default permissions. Reconnects were already acked above.
@@ -620,10 +616,34 @@ class BunkerEngine(
         }
     }
 
-    private data class ComputedResult(val result: String, val preview: String)
+    /** The stored grant that decides [type] for [appKey], with Android's fallbacks. */
+    internal fun lookupPermission(
+        store: AccountStore,
+        appKey: String,
+        type: SignerType,
+        kind: Int?,
+        encryptedContent: EncryptedContent?,
+    ): AppPermissionRecord? = when (type) {
+        SignerType.SIGN_EVENT -> store.getPermission(appKey, type.toString(), kind)
+
+        // v3 grants are kind-scoped, falling back to the explicit "all
+        // kinds" grant only (never another kind's), like Android.
+        in nip44v3SignerTypes ->
+            store.getPermission(appKey, type.toString(), kind)
+                ?: store.getPermission(appKey, type.toString(), null)
+
+        in contentScopedSignerTypes ->
+            store.getPermission(appKey, type.contentPermissionType(encryptedContent))
+                ?: store.getPermission(appKey, type.toString())
+                ?: store.getPermission(appKey, "NIP", if (type.name.startsWith("NIP04")) 4 else 44)
+
+        else -> store.getPermission(appKey, type.toString())
+    }
+
+    internal data class ComputedResult(val result: String, val preview: String)
 
     @OptIn(ExperimentalEncodingApi::class)
-    private suspend fun computeResult(
+    internal suspend fun computeResult(
         request: BunkerRequest,
         type: SignerType,
         acc: DesktopAccount,
@@ -696,16 +716,14 @@ class BunkerEngine(
         else -> throw IllegalArgumentException("Unsupported request type $type")
     }
 
-    private fun addPending(request: PendingBunkerRequest) {
-        pending.value = if (pending.value.any { it.request.id == request.request.id }) {
-            pending.value
-        } else {
-            pending.value + request
-        }
+    // Atomic updates: socket clients queue from several threads at once, and a
+    // plain read-then-write of `pending.value` loses one of two racing requests.
+    internal fun addPending(request: PendingBunkerRequest) {
+        pending.update { list -> if (list.any { it.request.id == request.request.id }) list else list + request }
     }
 
     fun removePending(id: String) {
-        pending.value = pending.value.filter { it.request.id != id }
+        pending.update { list -> list.filter { it.request.id != id } }
     }
 
     /**
@@ -730,7 +748,23 @@ class BunkerEngine(
 
     /** Drops requests whose [PendingBunkerRequest.expiresAt] has passed; the UI calls this periodically. */
     fun pruneExpired(now: Long = TimeUtils.now()) {
-        pending.update { list -> list.filter { it.expiresAt == null || it.expiresAt > now } }
+        dropPending("request expired") { it.expiresAt != null && it.expiresAt <= now }
+    }
+
+    /**
+     * Removes the matching requests from the queue. Relay clients simply time
+     * out, but a local socket client is still waiting on its connection, so it
+     * gets [error] as the answer.
+     */
+    fun dropPending(error: String, predicate: (PendingBunkerRequest) -> Boolean) {
+        var dropped = emptyList<PendingBunkerRequest>()
+        pending.update { list ->
+            dropped = list.filter(predicate)
+            list.filterNot(predicate)
+        }
+        dropped.forEach { req ->
+            req.responder?.let { respond -> scope.launch { respond(BunkerResponse(req.request.id, "", error)) } }
+        }
     }
 
     /**
@@ -798,7 +832,12 @@ class BunkerEngine(
         } else {
             defaultRelays
         }
-        val relays = savedApplication?.app?.normalizedRelays()?.ifEmpty { defaultRelays } ?: newConnectionRelays
+        // A local socket client never talks to relays.
+        val relays = if (req.isLocalSocket) {
+            emptyList()
+        } else {
+            savedApplication?.app?.normalizedRelays()?.ifEmpty { defaultRelays } ?: newConnectionRelays
+        }
         val secret = if (req.request is BunkerRequestConnect) req.request.secret ?: "" else ""
 
         var application = savedApplication ?: AppWithPermissions(
@@ -815,13 +854,15 @@ class BunkerEngine(
                 signPolicy = signPolicy ?: acc.signPolicy,
                 deleteAfter = deleteAfter,
                 lastUsed = TimeUtils.now(),
+                transport = if (req.isLocalSocket) TRANSPORT_SOCKET else TRANSPORT_NIP46,
+                socketSecretHash = req.socketSecretHash,
             ),
         )
 
         application = application.copy(app = application.app.copy(isConnected = true, lastUsed = TimeUtils.now()))
 
         // Ensure each connection has its own unique signing key.
-        if (application.app.localKey.isBlank() && req.request is BunkerRequestConnect && savedApplication == null) {
+        if (application.app.localKey.isBlank() && req.request is BunkerRequestConnect && savedApplication == null && !req.isLocalSocket) {
             application = application.copy(app = application.app.copy(localKey = generateBunkerPrivKey()))
         }
 
@@ -848,13 +889,18 @@ class BunkerEngine(
         store.upsert(application)
         store.addHistory(HistoryRecord(key, req.type.toString(), req.kind, TimeUtils.now(), true))
 
-        checkForNewRelaysAndUpdateAllFilters()
-
         val response = if (req.type == SignerType.CONNECT) {
             req.nostrConnectSecret.ifBlank { req.result }
         } else {
             req.result
         }
+
+        req.responder?.let { respond ->
+            respond(BunkerResponse(req.request.id, response, null))
+            return
+        }
+
+        checkForNewRelaysAndUpdateAllFilters()
         val signerPrivKey = application.app.localKey.ifEmpty { req.signerPrivKey }
 
         sendResponse(
@@ -896,7 +942,11 @@ class BunkerEngine(
         } else {
             defaultRelays
         }
-        val relays = savedApplication?.app?.normalizedRelays()?.ifEmpty { defaultRelays } ?: newConnectionRelays
+        val relays = if (req.isLocalSocket) {
+            emptyList()
+        } else {
+            savedApplication?.app?.normalizedRelays()?.ifEmpty { defaultRelays } ?: newConnectionRelays
+        }
         val secret = if (req.request is BunkerRequestConnect) req.request.secret ?: "" else ""
 
         val application = savedApplication ?: AppWithPermissions(
@@ -910,6 +960,7 @@ class BunkerEngine(
                 useSecret = secret.isNotBlank(),
                 signPolicy = acc.signPolicy,
                 lastUsed = TimeUtils.now(),
+                transport = if (req.isLocalSocket) TRANSPORT_SOCKET else TRANSPORT_NIP46,
             ),
         )
 
@@ -917,9 +968,16 @@ class BunkerEngine(
             acceptOrRejectPermission(application, req.type, req.permissionKind(encryptionScope), false, rememberType, req.encryptedContent, encryptionScope)
         }
 
-        if (req.request !is BunkerRequestConnect) {
+        // A rejected connect leaves nothing behind (socket connects are plain
+        // `BunkerRequest`s, so check the type rather than the class).
+        if (req.request !is BunkerRequestConnect && req.type != SignerType.CONNECT) {
             store.upsert(application)
             store.addHistory(HistoryRecord(key, req.type.toString(), req.kind, TimeUtils.now(), false))
+        }
+
+        req.responder?.let { respond ->
+            respond(BunkerResponse(req.request.id, "", "user rejected"))
+            return
         }
 
         val signerPrivKey = application.app.localKey.ifEmpty { req.signerPrivKey }

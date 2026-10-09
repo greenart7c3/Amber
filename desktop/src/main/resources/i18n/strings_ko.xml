@@ -917,4 +917,10 @@
     <string name="d_tor_stopped">Tor가 실행 중이 아닙니다</string>
     <string name="d_tor_local_note">로컬 릴레이(localhost, LAN 및 VPN 주소, .local 이름)는 항상 Tor를 거치지 않고 직접 연결됩니다.</string>
     <string name="d_local_relay">로컬</string>
+    <string name="d_local_signer">로컬 소켓 서명</string>
+    <string name="d_local_signer_sub">명령줄 도구가 %1$s 의 로컬 소켓(NIP-5F)을 통해 Amber로 서명할 수 있게 합니다. 각 도구는 다른 연결과 마찬가지로 승인을 요청합니다.</string>
+    <string name="d_local_signer_in_use">다른 서명 앱이 이미 %1$s 을(를) 사용 중입니다.</string>
+    <string name="d_local_signer_failed">%1$s 을(를) 열 수 없습니다.</string>
+    <string name="d_local_socket">로컬 소켓</string>
+    <string name="d_via_local_socket">로컬 소켓 경유</string>
 </resources>

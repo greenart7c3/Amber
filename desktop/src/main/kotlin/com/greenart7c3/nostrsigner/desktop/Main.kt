@@ -27,6 +27,7 @@ import com.greenart7c3.nostrsigner.desktop.core.AppImageIntegration
 import com.greenart7c3.nostrsigner.desktop.core.AutoStart
 import com.greenart7c3.nostrsigner.desktop.core.BuildVariant
 import com.greenart7c3.nostrsigner.desktop.core.DesktopAccount
+import com.greenart7c3.nostrsigner.desktop.core.LocalSigner
 import com.greenart7c3.nostrsigner.desktop.core.NetworkConnectivity
 import com.greenart7c3.nostrsigner.desktop.core.Notifier
 import com.greenart7c3.nostrsigner.desktop.core.PassphraseLock
@@ -102,7 +103,7 @@ object Session {
     }
 
     suspend fun logout(npub: String) {
-        AmberDesktop.engine.pending.value = AmberDesktop.engine.pending.value.filter { it.account.npub != npub }
+        AmberDesktop.engine.dropPending("account removed") { it.account.npub == npub }
         AmberDesktop.store(npub).deleteAllFiles()
         AccountsStore.delete(npub)
         AmberDesktop.evictAccount(npub)
@@ -172,6 +173,8 @@ fun main(args: Array<String>) {
         UriLaunch.registerSchemeHandler()
         AppImageIntegration.sync()
         UriLaunch.startIpcServer()
+        // NIP-5F: CLI tools sign over a local socket (opt-in, see Settings).
+        LocalSigner.sync()
     }
     if (launchUri != null) UriLaunch.pending.value = launchUri
 

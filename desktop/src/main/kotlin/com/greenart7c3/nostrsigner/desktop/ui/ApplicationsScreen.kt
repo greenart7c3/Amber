@@ -45,6 +45,7 @@ import com.greenart7c3.nostrsigner.desktop.core.AmberDesktop
 import com.greenart7c3.nostrsigner.desktop.core.DeleteAfterType
 import com.greenart7c3.nostrsigner.desktop.core.DesktopAccount
 import com.greenart7c3.nostrsigner.desktop.core.Strings
+import com.greenart7c3.nostrsigner.desktop.core.isLocalSocket
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.RelayUrlNormalizer
 import java.text.DateFormat
 import java.util.Date
@@ -99,6 +100,7 @@ fun ApplicationsScreen(
                                 Text(
                                     buildString {
                                         append(if (app.app.isConnected) Strings.get("d_app_connected", language) else Strings.get("d_app_waiting", language))
+                                        if (app.app.isLocalSocket) append(" · ${Strings.get("d_local_socket", language)}")
                                         append(" · ${Strings.format("d_permissions_count", app.permissions.size, language = language)}")
                                         if (app.app.lastUsed > 0) {
                                             append(" · ${Strings.format("d_last_used", DateFormat.getDateTimeInstance().format(Date(app.app.lastUsed * 1000)), language = language)}")

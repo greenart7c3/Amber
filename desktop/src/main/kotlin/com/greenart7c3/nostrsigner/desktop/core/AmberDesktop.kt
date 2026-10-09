@@ -5,7 +5,6 @@ import com.vitorpamplona.quartz.nip01Core.relay.client.auth.RelayAuthenticator
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
 import com.vitorpamplona.quartz.nip01Core.relay.sockets.WebSocketListener
 import com.vitorpamplona.quartz.nip01Core.relay.sockets.WebsocketBuilder
-import com.vitorpamplona.quartz.nip01Core.relay.sockets.okhttp.BasicOkHttpWebSocket
 import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
@@ -30,7 +29,7 @@ object AmberDesktop {
     // The client is picked per dial, so Tor routing (and the local-relay
     // bypass) applies to every socket opened after a settings change.
     private val socketBuilder = object : WebsocketBuilder {
-        override fun build(url: NormalizedRelayUrl, out: WebSocketListener) = BasicOkHttpWebSocket(url, RelayHttpClients::clientFor, out)
+        override fun build(url: NormalizedRelayUrl, out: WebSocketListener) = OkHttpWebSocket(url, RelayHttpClients::clientFor, out)
     }
 
     val client: NostrClient by lazy { NostrClient(socketBuilder, applicationIOScope) }

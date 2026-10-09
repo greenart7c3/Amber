@@ -59,10 +59,19 @@ class OkHttpWebSocket(
      */
     private val ended = AtomicBoolean(false)
 
+    /**
+     * True from the start of [connect] until OkHttp hands back its socket. A dial in flight is not
+     * a dead session: reporting it as one let a concurrent reconnect pass tear it down and dial
+     * again, and the first dial, never ended, opened as well -- two connections to one relay, the
+     * REQ sent twice and every message delivered twice.
+     */
+    @Volatile private var dialing = false
+
     fun buildRequest() = Request.Builder().url(url.url).build()
 
     override fun needsReconnect(): Boolean {
-        if (socket == null) return true
+        if (ended.get()) return true
+        if (socket == null) return !dialing
         val myUsingOkHttp = usingOkHttp ?: return true
 
         val currentOkHttp = httpClient(url)
@@ -83,10 +92,23 @@ class OkHttpWebSocket(
     }
 
     override fun connect() {
-        if (socket != null || ended.get()) return
+        if (socket != null || dialing || ended.get()) return
+        dialing = true
 
-        usingOkHttp = httpClient(url)
-        socket = usingOkHttp?.newWebSocket(buildRequest(), OkHttpWebsocketListener(out))
+        try {
+            val client = httpClient(url)
+            usingOkHttp = client
+            val dialed = client.newWebSocket(buildRequest(), OkHttpWebsocketListener(out))
+            socket = dialed
+            // A disconnect() that landed while dialing ended the session but had no socket to
+            // cancel yet: cancel it now, or it opens and lives on beside the relay client's next one.
+            if (ended.get()) {
+                socket = null
+                dialed.cancel()
+            }
+        } finally {
+            dialing = false
+        }
     }
 
     inner class OkHttpWebsocketListener(
@@ -123,6 +145,11 @@ class OkHttpWebSocket(
             response: Response,
         ) {
             if (ended.get()) return
+            // OkHttp dials on its own thread, so this can run before newWebSocket()
+            // returns to connect() and stores the socket. The relay client sends its
+            // REQs from onOpen: without this they went to a null socket and were
+            // dropped, and the relay, never asked, never answered.
+            socket = webSocket
             out.onOpen(
                 (response.receivedResponseAtMillis - response.sentRequestAtMillis).toInt(),
                 response.headers["Sec-WebSocket-Extensions"]?.contains("permessage-deflate") ?: false,
@@ -194,8 +221,12 @@ class OkHttpWebSocket(
         // Claim the session ourselves: OkHttp's cancel() raises no callback when no reader is
         // left to fail (the state a relay-initiated close leaves behind), and when it does the
         // failure arrives later on its own thread. The relay client needs the answer now.
-        val closing = socket ?: return
+        //
+        // Claimed even with no socket yet: a dial still in flight must not open after this
+        // (connect() cancels it once OkHttp returns it), and its callbacks must find the session
+        // ended. Nothing was open, so there is nothing to report.
         if (!ended.compareAndSet(false, true)) return
+        val closing = socket ?: return
         socket = null
         closing.cancel()
         out.onClosed(1000, "client disconnect")

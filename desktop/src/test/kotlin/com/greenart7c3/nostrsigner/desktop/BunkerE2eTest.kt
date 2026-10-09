@@ -4,6 +4,7 @@ import com.greenart7c3.nostrsigner.desktop.core.AccountManager
 import com.greenart7c3.nostrsigner.desktop.core.AmberDesktop
 import com.greenart7c3.nostrsigner.desktop.core.EncryptedContentType
 import com.greenart7c3.nostrsigner.desktop.core.EncryptionScope
+import com.greenart7c3.nostrsigner.desktop.core.OkHttpWebSocket
 import com.greenart7c3.nostrsigner.desktop.core.RememberType
 import com.greenart7c3.nostrsigner.desktop.core.SettingsStore
 import com.vitorpamplona.quartz.nip01Core.core.Event
@@ -22,7 +23,6 @@ import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.RelayUrlNormalizer
 import com.vitorpamplona.quartz.nip01Core.relay.sockets.WebSocketListener
 import com.vitorpamplona.quartz.nip01Core.relay.sockets.WebsocketBuilder
-import com.vitorpamplona.quartz.nip01Core.relay.sockets.okhttp.BasicOkHttpWebSocket
 import com.vitorpamplona.quartz.nip01Core.signers.NostrSignerInternal
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerResponse
 import com.vitorpamplona.quartz.nip46RemoteSigner.NostrConnectEvent
@@ -78,7 +78,7 @@ class BunkerE2eTest {
         private val httpClient = OkHttpClient.Builder().pingInterval(10, TimeUnit.SECONDS).build()
         val client = NostrClient(
             object : WebsocketBuilder {
-                override fun build(url: NormalizedRelayUrl, out: WebSocketListener) = BasicOkHttpWebSocket(url, { httpClient }, out)
+                override fun build(url: NormalizedRelayUrl, out: WebSocketListener) = OkHttpWebSocket(url, { httpClient }, out)
             },
             scope,
         )

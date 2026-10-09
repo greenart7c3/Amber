@@ -47,13 +47,13 @@ object Notifier {
         // (libnotify 0.8+ --wait/--action). Falls through if that's unsupported.
         if (onActivate != null && notifySendWithAction(title, message, onActivate)) return true
         // `--` stops option parsing so a summary/body starting with '-' is safe.
-        if (run("notify-send", "-a", "Amber", "-u", "normal", "--", title, message)) return true
+        if (run("notify-send", "-a", BuildVariant.appName, "-u", "normal", "--", title, message)) return true
         return run(
             "gdbus", "call", "--session",
             "--dest", "org.freedesktop.Notifications",
             "--object-path", "/org/freedesktop/Notifications",
             "--method", "org.freedesktop.Notifications.Notify",
-            "Amber", "0", "", title, message, "[]", "{}", "5000",
+            BuildVariant.appName, "0", "", title, message, "[]", "{}", "5000",
         )
     }
 
@@ -69,7 +69,7 @@ object Notifier {
      */
     private fun notifySendWithAction(title: String, message: String, onActivate: () -> Unit): Boolean = try {
         val process = ProcessBuilder(
-            "notify-send", "-a", "Amber", "-u", "normal",
+            "notify-send", "-a", BuildVariant.appName, "-u", "normal",
             // Bound how long we wait so a never-expiring notification can't leak
             // the process/thread.
             "-t", "20000", "--wait", "--action=default=Open", "--", title, message,

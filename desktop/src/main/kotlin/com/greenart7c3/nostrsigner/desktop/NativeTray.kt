@@ -1,6 +1,7 @@
 package com.greenart7c3.nostrsigner.desktop
 
 import com.greenart7c3.nostrsigner.desktop.core.AmberLogger
+import com.greenart7c3.nostrsigner.desktop.core.BuildVariant
 import dorkbox.systemTray.MenuItem
 import dorkbox.systemTray.Separator
 import dorkbox.systemTray.SystemTray
@@ -244,7 +245,7 @@ class NativeTray private constructor(
             AmberLogger.i("NativeTray", "initializing tray (wayland=${isWayland()}, backend=$type)")
 
             val tray = try {
-                SystemTray.get("Amber")
+                SystemTray.get(BuildVariant.appName)
             } catch (t: Throwable) {
                 AmberLogger.e("NativeTray", "SystemTray.get() threw", t as? Exception)
                 null

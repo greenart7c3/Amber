@@ -25,6 +25,7 @@ import com.greenart7c3.nostrsigner.desktop.core.AmberDesktop
 import com.greenart7c3.nostrsigner.desktop.core.AmberLogger
 import com.greenart7c3.nostrsigner.desktop.core.AppImageIntegration
 import com.greenart7c3.nostrsigner.desktop.core.AutoStart
+import com.greenart7c3.nostrsigner.desktop.core.BuildVariant
 import com.greenart7c3.nostrsigner.desktop.core.DesktopAccount
 import com.greenart7c3.nostrsigner.desktop.core.NetworkConnectivity
 import com.greenart7c3.nostrsigner.desktop.core.Notifier
@@ -296,12 +297,12 @@ fun main(args: Array<String>) {
                     // Windows and macOS the AWT tray notification is the native
                     // channel (on macOS it posts as Amber's own bundle).
                     notified = withContext(Dispatchers.IO) {
-                        Notifier.notify("Amber", message, onActivate = { DesktopTray.windowVisible.value = true })
+                        Notifier.notify(BuildVariant.appName, message, onActivate = { DesktopTray.windowVisible.value = true })
                     }
                     if (!notified && awtTrayUsable) {
                         trayState.sendNotification(
                             Notification(
-                                title = "Amber",
+                                title = BuildVariant.appName,
                                 message = message,
                                 type = Notification.Type.Info,
                             ),
@@ -348,7 +349,7 @@ fun main(args: Array<String>) {
             },
             state = windowState,
             visible = windowVisible,
-            title = if (pending.isEmpty()) "Amber" else "Amber (${pending.size})",
+            title = if (pending.isEmpty()) BuildVariant.appName else "${BuildVariant.appName} (${pending.size})",
             icon = painterResource("icon.png"),
             onPreviewKeyEvent = { event ->
                 handleShortcut(

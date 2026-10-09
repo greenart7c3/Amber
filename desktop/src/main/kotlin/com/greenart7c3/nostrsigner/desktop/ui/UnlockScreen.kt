@@ -34,6 +34,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import com.greenart7c3.nostrsigner.desktop.core.BuildVariant
 import com.greenart7c3.nostrsigner.desktop.core.PassphraseLock
 import com.greenart7c3.nostrsigner.desktop.core.Strings
 import kotlinx.coroutines.launch
@@ -204,7 +205,7 @@ private fun LockScreenScaffold(
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Text(
-                "Amber",
+                BuildVariant.appName,
                 style = MaterialTheme.typography.headlineLarge,
                 fontWeight = FontWeight.Bold,
             )

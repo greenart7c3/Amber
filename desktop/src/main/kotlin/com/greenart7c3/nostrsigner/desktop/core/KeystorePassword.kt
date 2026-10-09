@@ -71,7 +71,8 @@ class OsCredentialStore(
     }
 
     companion object {
-        const val SERVICE = "com.greenart7c3.nostrsigner"
+        // Debug runs get their own entry: a reset there deletes it (see DesktopKeyStore).
+        val SERVICE = "com.greenart7c3.nostrsigner" + if (BuildVariant.isDebug) ".debug" else ""
         const val ACCOUNT = "keystore-password"
     }
 }

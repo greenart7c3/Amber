@@ -175,7 +175,8 @@ from their nsec or seed-word backup instead.
 ## Run and build
 
 ```bash
-./gradlew :desktop:run                                # run from source
+./gradlew :desktop:run                                # debug build, run from source
+./gradlew :desktop:runDistributable                   # release build, run from source
 ./gradlew :desktop:createDistributable                # runnable app image
 ./gradlew :desktop:packageDeb                         # Linux .deb
 ./gradlew :desktop:packageRpm                         # Linux .rpm
@@ -184,6 +185,14 @@ from their nsec or seed-word backup instead.
 ./gradlew :desktop:packageDmg                         # macOS .dmg (build on macOS)
 ./gradlew :desktop:packageDistributionForCurrentOs    # whatever fits the host
 ```
+
+`:desktop:run` (and the hot-reload `hotRun`/`hotDev`) is the **debug**
+build, like the Android `debug` build type: it shows as "Amber Debug" and
+keeps its own data dir (`amber-debug` / `Amber Debug`), OS credential store
+entry (`com.greenart7c3.nostrsigner.debug`) and nostrconnect socket, so it can
+run alongside an installed release without touching its keys, accounts or
+single-instance lock. On Linux it does not claim `nostrconnect://` links
+unless run with `-PdesktopUriHandler`. Packaged builds are always release.
 
 jpackage can only produce installers for the OS it runs on, so release
 builds are made per-platform. Linux packaging needs `fakeroot` (deb) or

@@ -8,15 +8,17 @@ import java.io.File
  * - Windows: %APPDATA%\Amber
  * - macOS: ~/Library/Application Support/Amber
  * - Linux: $XDG_DATA_HOME/amber (or ~/.local/share/amber)
+ *
+ * Debug runs use "Amber Debug" / "amber-debug" instead (see [BuildVariant]).
  */
 object AppDirs {
     val dataDir: File by lazy {
         val os = System.getProperty("os.name").lowercase()
         val home = System.getProperty("user.home")
         val dir = when {
-            os.contains("win") -> File(System.getenv("APPDATA") ?: "$home\\AppData\\Roaming", "Amber")
-            os.contains("mac") -> File(home, "Library/Application Support/Amber")
-            else -> File(System.getenv("XDG_DATA_HOME")?.takeIf { it.isNotBlank() } ?: "$home/.local/share", "amber")
+            os.contains("win") -> File(System.getenv("APPDATA") ?: "$home\\AppData\\Roaming", BuildVariant.appName)
+            os.contains("mac") -> File(home, "Library/Application Support/${BuildVariant.appName}")
+            else -> File(System.getenv("XDG_DATA_HOME")?.takeIf { it.isNotBlank() } ?: "$home/.local/share", "amber${BuildVariant.suffix}")
         }
         dir.mkdirs()
         restrictToOwner(dir)

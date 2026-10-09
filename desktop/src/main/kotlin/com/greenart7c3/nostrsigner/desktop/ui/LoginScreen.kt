@@ -40,6 +40,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.greenart7c3.nostrsigner.desktop.Session
 import com.greenart7c3.nostrsigner.desktop.core.AccountManager
+import com.greenart7c3.nostrsigner.desktop.core.BuildVariant
 import com.greenart7c3.nostrsigner.desktop.core.Strings
 import kotlinx.coroutines.launch
 
@@ -69,7 +70,7 @@ fun LoginScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 Text(
-                    "Amber",
+                    BuildVariant.appName,
                     style = MaterialTheme.typography.headlineLarge,
                     fontWeight = FontWeight.Bold,
                 )

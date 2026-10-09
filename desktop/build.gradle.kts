@@ -64,6 +64,19 @@ dependencies {
     testImplementation(libs.junit)
 }
 
+// `run` is the debug build: BuildVariant keeps its data dir, keyring entry and
+// nostrconnect socket apart from a packaged (release) install on the same
+// machine. Packaged distributions and runDistributable stay release.
+// -PdesktopUriHandler also lets it claim nostrconnect:// links (Linux).
+// Compose registers these after this script is evaluated, hence the lazy match.
+val debugRunTasks = setOf("run", "hotRun", "hotRunAsync", "hotDev", "hotDevAsync")
+tasks.withType<JavaExec>().matching { it.name in debugRunTasks }.configureEach {
+    systemProperty("amber.debug", "true")
+    if (providers.gradleProperty("desktopUriHandler").isPresent) {
+        systemProperty("amber.uriHandler", "true")
+    }
+}
+
 compose.desktop {
     application {
         mainClass = "com.greenart7c3.nostrsigner.desktop.MainKt"

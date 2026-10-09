@@ -30,8 +30,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
  */
 object UriLaunch {
     private const val PREFIX = "nostrconnect://"
-    private const val SOCKET_NAME = "amber-nostrconnect.sock"
-    private const val HANDLER_DESKTOP_FILE = "amber-nostrconnect.desktop"
+    private val SOCKET_NAME = "amber${BuildVariant.suffix}-nostrconnect.sock"
+    private val HANDLER_DESKTOP_FILE = "amber${BuildVariant.suffix}-nostrconnect.desktop"
 
     val isLinux: Boolean = System.getProperty("os.name").lowercase().let {
         it.contains("linux") || it.contains("nix") || it.contains("nux")
@@ -48,7 +48,7 @@ object UriLaunch {
     /** First nostrconnect:// URI among the launch arguments, if any. */
     fun extract(args: Array<String>): String? = args.firstOrNull { it.startsWith(PREFIX) }
 
-    private const val FORWARD_FILE_NAME = "amber-nostrconnect.forward"
+    private val FORWARD_FILE_NAME = "amber${BuildVariant.suffix}-nostrconnect.forward"
 
     /**
      * URI dropped by the dev wrapper for this launch (see
@@ -163,9 +163,14 @@ object UriLaunch {
      * (`./gradlew :desktop:run`, bare `java` on the command line) there is no
      * stable binary, so a small wrapper script is generated instead: it
      * always runs the current code of the project the JVM was started from.
+     *
+     * The xdg default is global, so a debug run would take links away from a
+     * release install; it only registers when asked to
+     * (`./gradlew :desktop:run -PdesktopUriHandler`).
      */
     fun registerSchemeHandler() {
         if (!isLinux) return
+        if (BuildVariant.isDebug && !System.getProperty("amber.uriHandler").toBoolean()) return
         runCatching {
             val exe = handlerExecutable() ?: return
             val appsDir = xdgAppsDir().apply { mkdirs() }
@@ -227,7 +232,7 @@ object UriLaunch {
     internal fun desktopEntry(exePath: String): String = """
         [Desktop Entry]
         Type=Application
-        Name=Amber
+        Name=${BuildVariant.appName}
         NoDisplay=true
         Exec=${quoteForDesktopEntry(exePath)} %u
         MimeType=x-scheme-handler/nostrconnect;

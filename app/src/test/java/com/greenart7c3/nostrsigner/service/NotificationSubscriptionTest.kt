@@ -21,13 +21,17 @@ import io.mockk.mockkObject
 import io.mockk.unmockkObject
 import io.mockk.verify
 import java.util.Collections
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.async
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Assume.assumeFalse
 import org.junit.Before
@@ -68,6 +72,7 @@ class NotificationSubscriptionTest {
     @After
     fun tearDown() {
         unmockkObject(LocalPreferences)
+        LocalKeyAccountIndex.replaceAll(emptyMap())
         scope.cancel()
     }
 
@@ -171,5 +176,95 @@ class NotificationSubscriptionTest {
             "Expected no exceptions, got: ${errors.firstOrNull()?.stackTraceToString()}",
             errors.isEmpty(),
         )
+    }
+
+    @Test
+    fun `all endpoint routes exist before the first subscription becomes live`() = runBlocking {
+        assumeFalse(BuildFlavorChecker.isOfflineFlavor())
+        val first = connection()
+        val second = connection().copy(key = "conn2", localKey = "cd".repeat(32))
+        coEvery { dao.getAll(account.hexKey) } returns listOf(first, second)
+        every { client.subscribe(any(), any()) } answers {
+            assertEquals(account.npub, LocalKeyAccountIndex.lookup(first.localPubKey)?.npub)
+            assertEquals(account.npub, LocalKeyAccountIndex.lookup(second.localPubKey)?.npub)
+        }
+        subscription.updateFilter()
+        verify(exactly = 2) { client.subscribe(any(), any()) }
+    }
+
+    @Test
+    fun `overlapping refreshes cannot restore an older routing snapshot`() = runBlocking {
+        assumeFalse(BuildFlavorChecker.isOfflineFlavor())
+        val started = CompletableDeferred<Unit>()
+        val release = CompletableDeferred<Unit>()
+        val old = connection()
+        val added = connection().copy(key = "conn2", localKey = "cd".repeat(32))
+        var reads = 0
+        coEvery { dao.getAll(account.hexKey) } coAnswers {
+            reads++
+            if (reads == 1) {
+                started.complete(Unit)
+                release.await()
+                listOf(old)
+            } else {
+                listOf(added)
+            }
+        }
+        val first = async(start = CoroutineStart.UNDISPATCHED) { subscription.updateFilter() }
+        started.await()
+        val second = async(start = CoroutineStart.UNDISPATCHED) { subscription.updateFilter() }
+        assertEquals(1, reads)
+        release.complete(Unit)
+        first.await()
+        second.await()
+        assertNull(LocalKeyAccountIndex.lookup(old.localPubKey))
+        assertEquals(account.npub, LocalKeyAccountIndex.lookup(added.localPubKey)?.npub)
+    }
+
+    @Test
+    fun `close during a suspended refresh prevents that refresh from resubscribing`() = runBlocking {
+        assumeFalse(BuildFlavorChecker.isOfflineFlavor())
+        val started = CompletableDeferred<Unit>()
+        val release = CompletableDeferred<Unit>()
+        coEvery { dao.getAll(account.hexKey) } coAnswers {
+            started.complete(Unit)
+            release.await()
+            listOf(connection())
+        }
+        val refreshing = async(start = CoroutineStart.UNDISPATCHED) { subscription.updateFilter() }
+        started.await()
+        subscription.closeAllSubs()
+        release.complete(Unit)
+        refreshing.await()
+        verify(exactly = 0) { client.subscribe(any(), any()) }
+        assertNull(LocalKeyAccountIndex.lookup(connection().localPubKey))
+    }
+
+    @Test
+    fun `close cancels refreshes already queued behind another refresh`() = runBlocking {
+        assumeFalse(BuildFlavorChecker.isOfflineFlavor())
+        val started = CompletableDeferred<Unit>()
+        val release = CompletableDeferred<Unit>()
+        var reads = 0
+        coEvery { dao.getAll(account.hexKey) } coAnswers {
+            reads++
+            if (reads == 1) {
+                started.complete(Unit)
+                release.await()
+            }
+            listOf(connection())
+        }
+        val first = async(start = CoroutineStart.UNDISPATCHED) { subscription.updateFilter() }
+        started.await()
+        val queued = async(start = CoroutineStart.UNDISPATCHED) { subscription.updateFilter() }
+        subscription.closeAllSubs()
+        release.complete(Unit)
+        first.await()
+        queued.await()
+        verify(exactly = 0) { client.subscribe(any(), any()) }
+        assertEquals(1, reads)
+        // A deliberate fresh refresh after close still restores the connection.
+        subscription.updateFilter()
+        verify(exactly = 1) { client.subscribe(any(), any()) }
     }
 }

@@ -3,6 +3,9 @@ package com.greenart7c3.nostrsigner.database
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotSame
@@ -196,5 +199,57 @@ class CachingApplicationDaoTest {
 
         coVerify(exactly = 1) { delegate.getAll(accountKey) }
         coVerify(exactly = 1) { delegate.getAll(otherAccount) }
+    }
+
+    @Test
+    fun `older suspended read cannot refill a cache invalidated by connection insertion`() = runBlocking {
+        val started = CompletableDeferred<Unit>()
+        val release = CompletableDeferred<Unit>()
+        val existing = entity("existing")
+        val added = entity("added")
+        var reads = 0
+        coEvery { delegate.getAll(accountKey) } coAnswers {
+            reads++
+            if (reads == 1) {
+                started.complete(Unit)
+                release.await()
+                listOf(existing)
+            } else {
+                listOf(existing, added)
+            }
+        }
+        val oldRead = async(start = CoroutineStart.UNDISPATCHED) { dao.getAll(accountKey) }
+        started.await()
+        dao.insertApplication(added)
+        release.complete(Unit)
+        assertEquals(listOf(existing), oldRead.await())
+        assertEquals(listOf(existing, added), dao.getAll(accountKey))
+        assertEquals(listOf(existing, added), dao.getAll(accountKey))
+        coVerify(exactly = 2) { delegate.getAll(accountKey) }
+    }
+
+    @Test
+    fun `older suspended read cannot restore a deleted connection`() = runBlocking {
+        val started = CompletableDeferred<Unit>()
+        val release = CompletableDeferred<Unit>()
+        val removed = entity("removed")
+        var reads = 0
+        coEvery { delegate.getAll(accountKey) } coAnswers {
+            reads++
+            if (reads == 1) {
+                started.complete(Unit)
+                release.await()
+                listOf(removed)
+            } else {
+                emptyList()
+            }
+        }
+        val oldRead = async(start = CoroutineStart.UNDISPATCHED) { dao.getAll(accountKey) }
+        started.await()
+        dao.delete(removed)
+        release.complete(Unit)
+        oldRead.await()
+        assertEquals(emptyList<ApplicationEntity>(), dao.getAll(accountKey))
+        coVerify(exactly = 2) { delegate.getAll(accountKey) }
     }
 }

@@ -50,6 +50,7 @@ class CachingApplicationDao(
 
     // One entry per account (key = account pubKey); a handful at most.
     private val getAllCache = LruCache<String, List<ApplicationEntity>>(GET_ALL_MAX_ENTRIES)
+    private var getAllGeneration = 0L
 
     private fun lookup(key: Key): Value? = synchronized(cache) { cache.get(key) }
 
@@ -60,6 +61,7 @@ class CachingApplicationDao(
     /** Evicts the cached [getAll] list for [pubKey], or every list when null. */
     private fun invalidateGetAll(pubKey: String?) {
         synchronized(getAllCache) {
+            getAllGeneration++
             if (pubKey != null) getAllCache.remove(pubKey) else getAllCache.evictAll()
         }
     }
@@ -207,9 +209,15 @@ class CachingApplicationDao(
     // -------- pass-through (not cached, not invalidating) --------
 
     override suspend fun getAll(pubKey: String): List<ApplicationEntity> {
-        synchronized(getAllCache) { getAllCache.get(pubKey) }?.let { return it.toList() }
+        val generation = synchronized(getAllCache) {
+            getAllCache.get(pubKey)?.let { return it.toList() }
+            getAllGeneration
+        }
         val result = delegate.getAll(pubKey)
-        synchronized(getAllCache) { getAllCache.put(pubKey, result) }
+        synchronized(getAllCache) {
+            // A suspended older read must not repopulate a list invalidated by a write.
+            if (getAllGeneration == generation) getAllCache.put(pubKey, result.toList())
+        }
         return result.toList()
     }
 

@@ -28,6 +28,7 @@ import androidx.navigation.compose.rememberNavController
 import com.greenart7c3.nostrsigner.okhttp.HttpClientManager
 import com.greenart7c3.nostrsigner.service.BunkerRequestUtils
 import com.greenart7c3.nostrsigner.service.IntentUtils
+import com.greenart7c3.nostrsigner.service.safeReferrer
 import com.greenart7c3.nostrsigner.ui.AccountScreen
 import com.greenart7c3.nostrsigner.ui.AccountStateViewModel
 import com.greenart7c3.nostrsigner.ui.IntentWrapper
@@ -55,7 +56,10 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         Amber.instance.setMainActivity(this)
         mainViewModel = MainViewModel(applicationContext)
-        intent?.let { mainViewModel.onNewIntent(it, callingPackage, referrer) }
+        // Read once here: getReferrer() crashes on OEM builds (Samsung/Android 12) when
+        // the activity has no intent (mIntent == null).
+        val launchReferrer = safeReferrer()
+        intent?.let { mainViewModel.onNewIntent(it, callingPackage, launchReferrer) }
         setContent {
             HttpClientManager.setDefaultUserAgent("Amber/${BuildConfig.VERSION_NAME}")
 
@@ -141,7 +145,7 @@ class MainActivity : AppCompatActivity() {
                                 intent = remember(intent) { IntentWrapper(intent) },
                                 packageName = packageName,
                                 appName = appName,
-                                referrer = referrer,
+                                referrer = launchReferrer,
                                 bunkerRequests = bunkerRequests.value,
                                 navController = NavHostControllerWrapper(navController),
                             )
@@ -177,7 +181,7 @@ class MainActivity : AppCompatActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
-        mainViewModel.onNewIntent(intent, callingPackage, referrer)
+        mainViewModel.onNewIntent(intent, callingPackage, safeReferrer())
     }
 
     override fun onDestroy() {

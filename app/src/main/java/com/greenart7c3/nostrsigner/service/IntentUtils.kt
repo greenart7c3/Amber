@@ -1,5 +1,6 @@
 package com.greenart7c3.nostrsigner.service
 
+import android.app.Activity
 import android.app.Activity.RESULT_OK
 import android.content.ClipData
 import android.content.Context
@@ -1190,4 +1191,17 @@ object IntentUtils {
             null
         }
     }
+}
+
+/**
+ * Safe read of the launch referrer. `Activity.getReferrer()` dereferences a null launch
+ * intent on some OEM framework builds (e.g. Samsung, Android 12) and crashes when the
+ * activity was delivered or left without an intent (see `sendRejection`, which nulls it).
+ * Null is also the correct "unknown referrer" answer, which [isBrowserReferrer] already
+ * treats as not-a-browser.
+ */
+fun Activity.safeReferrer(): Uri? = try {
+    referrer
+} catch (_: Exception) {
+    null
 }

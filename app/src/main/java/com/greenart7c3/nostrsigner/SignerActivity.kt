@@ -38,6 +38,7 @@ import com.greenart7c3.nostrsigner.service.BunkerRequestUtils
 import com.greenart7c3.nostrsigner.service.IntentRateLimitInspector
 import com.greenart7c3.nostrsigner.service.IntentRateLimiter
 import com.greenart7c3.nostrsigner.service.IntentUtils
+import com.greenart7c3.nostrsigner.service.safeReferrer
 import com.greenart7c3.nostrsigner.ui.AccountScreen
 import com.greenart7c3.nostrsigner.ui.AccountStateViewModel
 import com.greenart7c3.nostrsigner.ui.IntentWrapper
@@ -68,7 +69,10 @@ class SignerActivity : AppCompatActivity() {
 
         Amber.instance.setMainActivity(this)
         mainViewModel = MainViewModel(applicationContext)
-        intent?.let { mainViewModel.onNewIntent(it, callingPackage, referrer) }
+        // Read once here: getReferrer() crashes on OEM builds (Samsung/Android 12) when
+        // the activity has no intent (mIntent == null), e.g. after sendRejection() nulls it.
+        val launchReferrer = safeReferrer()
+        intent?.let { mainViewModel.onNewIntent(it, callingPackage, launchReferrer) }
         setContent {
             NostrSignerTheme {
                 HttpClientManager.setDefaultUserAgent("Amber/${BuildConfig.VERSION_NAME}")
@@ -180,7 +184,7 @@ class SignerActivity : AppCompatActivity() {
                                         intent = remember(intent) { IntentWrapper(intent) },
                                         packageName = packageName,
                                         appName = appName,
-                                        referrer = referrer,
+                                        referrer = launchReferrer,
                                         bunkerRequests = bunkerRequests.value,
                                         navController = NavHostControllerWrapper(navController),
                                         isExternalRequest = true,

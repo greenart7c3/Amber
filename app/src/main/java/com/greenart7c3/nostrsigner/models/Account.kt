@@ -45,6 +45,9 @@ class Account(
     // previews can build an Account without the Amber Application singleton.
     scope: CoroutineScope = Amber.instance.applicationIOScope,
     private val keyAccessCheck: () -> Unit = {
+        // Until settings load, requireUnlockedDevice's default (false) is a guess, not a
+        // decision — the same pre-load window WebDavService fails closed on.
+        check(Amber.instance.isSettingsLoaded) { "Settings are not loaded yet" }
         val required = Amber.instance.settings.requireUnlockedDevice
         if (required) {
             val keyguard = Amber.instance.getSystemService(KeyguardManager::class.java)
@@ -141,7 +144,10 @@ class Account(
         return signer.signPsbt(psbtHex)
     }
 
-    suspend fun seedWords() = runCatching { DataStoreAccess.getEncryptedKey(Amber.instance, npub, DataStoreAccess.SEED_WORDS) }.getOrNull() ?: ""
+    suspend fun seedWords(): String {
+        requirePrivateKeyAccess()
+        return runCatching { DataStoreAccess.getEncryptedKey(Amber.instance, npub, DataStoreAccess.SEED_WORDS) }.getOrNull() ?: ""
+    }
 
     fun decryptZapEvent(
         data: String,

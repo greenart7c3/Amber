@@ -3,6 +3,7 @@ package com.greenart7c3.nostrsigner.models
 import com.greenart7c3.nostrsigner.service.DeviceUnlockPolicy
 import com.vitorpamplona.quartz.nip01Core.core.Event
 import com.vitorpamplona.quartz.nip01Core.signers.NostrSignerInternal
+import io.mockk.Called
 import io.mockk.mockk
 import io.mockk.verify
 import kotlinx.coroutines.CoroutineScope
@@ -39,6 +40,9 @@ class AccountCachedKeyLockTest {
             }
             assertThrows(SecurityException::class.java) {
                 runBlocking { account.nip44Decrypt("synthetic-ciphertext", "peer") }
+            }
+            assertThrows(SecurityException::class.java) {
+                runBlocking { account.seedWords() }
             }
             verify { signer wasNot Called }
         } finally {

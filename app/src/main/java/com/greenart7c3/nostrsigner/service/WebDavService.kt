@@ -1,9 +1,11 @@
 package com.greenart7c3.nostrsigner.service
 
-import com.greenart7c3.nostrsigner.okhttp.TaggedSocketFactory
+import com.greenart7c3.nostrsigner.Amber
+import com.greenart7c3.nostrsigner.models.TorMode
+import com.greenart7c3.nostrsigner.okhttp.HttpClientManager
 import java.io.IOException
+import java.net.Proxy
 import java.util.concurrent.TimeUnit
-import javax.net.SocketFactory
 import okhttp3.Credentials
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
@@ -13,12 +15,19 @@ import okhttp3.RequestBody.Companion.toRequestBody
 object WebDavService {
     private val MEDIA_TYPE = "application/octet-stream".toMediaType()
 
-    private fun createClient(): OkHttpClient = OkHttpClient.Builder()
-        .connectTimeout(30, TimeUnit.SECONDS)
-        .readTimeout(60, TimeUnit.SECONDS)
-        .writeTimeout(60, TimeUnit.SECONDS)
-        .socketFactory(TaggedSocketFactory(SocketFactory.getDefault()))
-        .build()
+    private fun createClient(): OkHttpClient {
+        check(Amber.instance.isSettingsLoaded) { "Network settings are not loaded yet" }
+        val useProxy = Amber.instance.settings.torMode != TorMode.DISABLED
+        val client = HttpClientManager.getHttpClient(useProxy)
+        check(!useProxy || client.proxy?.type() == Proxy.Type.SOCKS) { "Tor proxy is not configured yet" }
+        return client.newBuilder()
+            .connectTimeout(30, TimeUnit.SECONDS)
+            .readTimeout(60, TimeUnit.SECONDS)
+            .writeTimeout(60, TimeUnit.SECONDS)
+            .followRedirects(false)
+            .followSslRedirects(false)
+            .build()
+    }
 
     fun uploadFile(
         serverUrl: String,
@@ -27,6 +36,7 @@ object WebDavService {
         fileName: String,
         content: String,
     ): Result<Unit> = try {
+        WebDavTransportPolicy.requireSecureServerUrl(serverUrl)
         val client = createClient()
         val url = serverUrl.trimEnd('/') + "/" + fileName
         val credential = Credentials.basic(username, password)
@@ -54,6 +64,7 @@ object WebDavService {
         password: String,
         fileName: String,
     ): Result<String> = try {
+        WebDavTransportPolicy.requireSecureServerUrl(serverUrl)
         val client = createClient()
         val url = serverUrl.trimEnd('/') + "/" + fileName
         val credential = Credentials.basic(username, password)
@@ -82,6 +93,7 @@ object WebDavService {
         username: String,
         password: String,
     ): Result<Unit> = try {
+        WebDavTransportPolicy.requireSecureServerUrl(serverUrl)
         val client = createClient()
         val url = serverUrl.trimEnd('/')
         val credential = Credentials.basic(username, password)

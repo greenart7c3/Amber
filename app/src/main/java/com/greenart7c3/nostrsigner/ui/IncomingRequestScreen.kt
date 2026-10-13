@@ -10,6 +10,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -30,6 +31,7 @@ import com.greenart7c3.nostrsigner.models.IntentResultType
 import com.greenart7c3.nostrsigner.ui.components.BunkerSingleEventHomeScreen
 import com.greenart7c3.nostrsigner.ui.components.IntentSingleEventHomeScreen
 import com.greenart7c3.nostrsigner.ui.components.MultiEventHomeScreen
+import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequestConnect
 import kotlinx.collections.immutable.ImmutableList
 
 @Composable
@@ -47,6 +49,9 @@ fun IncomingRequestScreen(
     isExternalRequest: Boolean = false,
 ) {
     var loading by remember { mutableStateOf(false) }
+    // A connect needs the account choice and the replace-or-create-new prompt that
+    // only the single screen has, so it is never batched with other requests.
+    val connectRequest = bunkerRequests.firstOrNull { it.request is BunkerRequestConnect }
 
     if (loading) {
         CenterCircularProgressIndicator(modifier)
@@ -89,15 +94,18 @@ fun IncomingRequestScreen(
                 onRemoveIntentData = onRemoveIntentData,
                 onLoading = onLoading,
             )
-        } else if (bunkerRequests.size == 1) {
-            BunkerSingleEventHomeScreen(
-                horizontalPadding = horizontalPadding,
-                modifier = modifier,
-                scaffoldPadding = scaffoldPadding,
-                bunkerRequest = bunkerRequests.first(),
-                account = account,
-                onLoading = onLoading,
-            )
+        } else if (connectRequest != null || bunkerRequests.size == 1) {
+            val bunkerRequest = connectRequest ?: bunkerRequests.first()
+            key(bunkerRequest.request.id) {
+                BunkerSingleEventHomeScreen(
+                    horizontalPadding = horizontalPadding,
+                    modifier = modifier,
+                    scaffoldPadding = scaffoldPadding,
+                    bunkerRequest = bunkerRequest,
+                    account = account,
+                    onLoading = onLoading,
+                )
+            }
         } else {
             MultiEventHomeScreen(
                 modifier = modifier,

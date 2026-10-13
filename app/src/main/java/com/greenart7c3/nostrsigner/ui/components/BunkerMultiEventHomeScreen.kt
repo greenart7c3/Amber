@@ -230,12 +230,6 @@ fun BunkerMultiEventHomeScreen(
                             val historyDatabase = Amber.instance.getHistoryDatabase(thisAccount.npub)
                             val savedApplication = dao.getByKey(localKey)
 
-                            val secret = if (request.request is BunkerRequestConnect) {
-                                request.request.secret ?: ""
-                            } else {
-                                ""
-                            }
-
                             val application =
                                 savedApplication ?: ApplicationWithPermissions(
                                     application = ApplicationEntity(
@@ -247,8 +241,8 @@ fun BunkerMultiEventHomeScreen(
                                         "",
                                         thisAccount.hexKey,
                                         true,
-                                        secret,
-                                        secret.isNotBlank(),
+                                        "",
+                                        false,
                                         thisAccount.signPolicy,
                                         request.closeApplication,
                                         0L,
@@ -333,45 +327,34 @@ fun BunkerMultiEventHomeScreen(
                                     )
                                 }
                             } else if (request.request is BunkerRequestConnect) {
-                                if (savedApplication == null) {
-                                    dao.insertApplicationWithPermissions(application)
-
-                                    historyDatabase.dao().addHistory(
-                                        listOf(
-                                            HistoryEntity(
-                                                0,
-                                                localKey,
-                                                SignerType.CONNECT.toString(),
-                                                null,
-                                                TimeUtils.now(),
-                                                isApproved,
-                                                content = "",
-                                            ),
-                                        ),
-                                        thisAccount.npub,
+                                // IncomingRequestScreen shows connects on the single screen, so
+                                // this only runs if one slips into a batch. Reuse the single
+                                // screen's path: it saves the client's relays, generates the
+                                // connection key and replies with the nostrconnect secret.
+                                val appName = request.clientMetadata?.name?.ifBlank { null } ?: request.name
+                                if (isApproved) {
+                                    BunkerRequestUtils.sendResult(
+                                        context = context,
+                                        account = thisAccount,
+                                        key = localKey,
+                                        response = request.nostrConnectSecret.ifBlank { "ack" },
+                                        bunkerRequest = request,
+                                        kind = null,
+                                        onLoading = {},
+                                        appName = appName,
+                                        rememberType = RememberType.NEVER,
                                     )
-
-                                    BunkerRequestUtils.remove(request.request.id)
-                                    if (isApproved) {
-                                        BunkerRequestUtils.sendBunkerResponse(
-                                            context,
-                                            thisAccount,
-                                            request,
-                                            BunkerResponse(request.request.id, "", null),
-                                            application.application.relays,
-                                            onLoading = {},
-                                            onDone = {},
-                                        )
-                                    } else {
-                                        AmberUtils.sendBunkerError(
-                                            account = thisAccount,
-                                            bunkerRequest = request,
-                                            relays = application.application.relays,
-                                            context = context,
-                                            closeApplication = application.application.closeApplication,
-                                            onLoading = {},
-                                        )
-                                    }
+                                } else {
+                                    BunkerRequestUtils.sendRejection(
+                                        key = localKey,
+                                        account = thisAccount,
+                                        bunkerRequest = request,
+                                        appName = appName,
+                                        rememberType = RememberType.NEVER,
+                                        signerType = SignerType.CONNECT,
+                                        kind = null,
+                                        onLoading = {},
+                                    )
                                 }
                             } else {
                                 val type = requestType

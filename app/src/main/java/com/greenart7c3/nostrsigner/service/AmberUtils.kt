@@ -4,7 +4,6 @@ import android.content.Context
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.toUpperCase
 import com.greenart7c3.nostrsigner.Amber
-import com.greenart7c3.nostrsigner.SignerActivity
 import com.greenart7c3.nostrsigner.database.ApplicationPermissionsEntity
 import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
 import com.greenart7c3.nostrsigner.models.Account
@@ -84,13 +83,7 @@ object AmberUtils {
                 if (!result) {
                     onLoading(false)
                 } else {
-                    BunkerRequestUtils.clearRequests()
-                    EventNotificationConsumer(context).notificationManager().cancelAll()
-                    val activity = Amber.instance.getMainActivity()
-                    activity?.intent = null
-                    if (closeApplication || activity is SignerActivity) {
-                        activity?.finishAndRemoveTask()
-                    }
+                    BunkerRequestUtils.finishRequest(bunkerRequest, closeApplication)
                 }
             },
         )

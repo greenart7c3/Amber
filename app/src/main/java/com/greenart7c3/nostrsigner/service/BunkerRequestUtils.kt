@@ -73,6 +73,43 @@ object BunkerRequestUtils {
 
     fun getBunkerRequests(): List<AmberBunkerRequest> = state.value
 
+    /**
+     * Removes [bunkerRequest] from the queue once it has been answered. Other requests
+     * that are still waiting for approval are kept, so the notifications and the
+     * activity are only dismissed when the queue is empty.
+     */
+    fun finishRequest(bunkerRequest: AmberBunkerRequest, closeApplication: Boolean) {
+        remove(bunkerRequest.request.id)
+        if (state.value.isNotEmpty()) return
+
+        EventNotificationConsumer(Amber.instance).notificationManager().cancelAll()
+        val activity = Amber.instance.getMainActivity()
+        activity?.intent = null
+        if (closeApplication || activity is SignerActivity) {
+            activity?.finishAndRemoveTask()
+        }
+    }
+
+    /**
+     * Relays to answer [bunkerRequest] on.
+     *
+     * A nostrconnect:// client listens only on the relays named in its URI, so those
+     * always win, merged with any relays already saved for an app with the same key.
+     * Otherwise a saved app keeps its relays. A brand-new relay-delivered request
+     * falls back to the default relays: it carries just the single relay that
+     * delivered the event, which may be a write-restricted indexer/profile relay.
+     */
+    fun responseRelays(
+        bunkerRequest: AmberBunkerRequest,
+        savedRelays: List<NormalizedRelayUrl>?,
+        defaultRelays: List<NormalizedRelayUrl>,
+    ): List<NormalizedRelayUrl> {
+        if (bunkerRequest.isNostrConnectUri && bunkerRequest.relays.isNotEmpty()) {
+            return (bunkerRequest.relays + savedRelays.orEmpty()).distinct()
+        }
+        return savedRelays?.ifEmpty { defaultRelays } ?: defaultRelays
+    }
+
     suspend fun sendBunkerResponse(
         context: Context,
         account: Account,
@@ -333,17 +370,7 @@ object BunkerRequestUtils {
             if (bunkerRequest.request is BunkerRequestConnect) {
                 savedApplication?.application?.deleteAfter = deleteAfter
             }
-            // For a brand-new connection, only honor bunkerRequest.relays when they came
-            // from a nostrconnect:// URI (client-specified). Relay-delivered bunker
-            // requests carry just the single relay that delivered the event, which may be
-            // a write-restricted indexer/profile relay — fall back to the configured
-            // default relays instead.
-            val newConnectionRelays = if (bunkerRequest.isNostrConnectUri) {
-                bunkerRequest.relays.ifEmpty { defaultRelays }
-            } else {
-                defaultRelays
-            }
-            val relays = savedApplication?.application?.relays?.ifEmpty { defaultRelays } ?: newConnectionRelays
+            val relays = responseRelays(bunkerRequest, savedApplication?.application?.relays, defaultRelays)
             val secret = if (bunkerRequest.request is BunkerRequestConnect) bunkerRequest.request.secret ?: "" else ""
 
             var application =
@@ -382,6 +409,13 @@ object BunkerRequestUtils {
             // the new-entity branch above never runs for it. Update name/url/icon
             // in place so the metadata is stored on every connect.
             if (bunkerRequest.request is BunkerRequestConnect) {
+                // The client only listens on the relays in its URI; an app saved
+                // earlier with empty or stale relays must not send the reply elsewhere.
+                if (bunkerRequest.isNostrConnectUri && application.application.relays != relays) {
+                    application = application.copy(
+                        application = application.application.copy(relays = relays),
+                    )
+                }
                 bunkerRequest.clientMetadata?.let { metadata ->
                     application = application.copy(
                         application = application.application.copy(
@@ -393,11 +427,7 @@ object BunkerRequestUtils {
                 }
             }
 
-            val activity = Amber.instance.getMainActivity()
-            activity?.intent = null
-            if (application.application.closeApplication || activity is SignerActivity) {
-                activity?.finishAndRemoveTask()
-            }
+            finishRequest(bunkerRequest, application.application.closeApplication)
 
             delay(500.milliseconds)
 
@@ -461,10 +491,7 @@ object BunkerRequestUtils {
                 }
             }
 
-            clearRequests()
-
             // assume that everything worked and try to revert it if it fails
-            EventNotificationConsumer(context).notificationManager().cancelAll()
             dao.insertApplicationWithPermissions(application)
             val isV3 = type == SignerType.NIP44_V3_ENCRYPT || type == SignerType.NIP44_V3_DECRYPT
             // Persist the encrypted form (ciphertext), never the plaintext: encrypt
@@ -582,15 +609,7 @@ object BunkerRequestUtils {
         Amber.instance.applicationIOScope.launch(Dispatchers.IO) {
             val savedApplication = Amber.instance.dao(account.npub).getByKey(key)
             val defaultRelays = Amber.instance.settings.defaultRelays
-            // Mirror sendResult: a brand-new connection only honors bunkerRequest.relays
-            // for nostrconnect:// URIs. Relay-delivered requests fall back to the
-            // configured default relays rather than the single delivering relay.
-            val newConnectionRelays = if (bunkerRequest.isNostrConnectUri) {
-                bunkerRequest.relays.ifEmpty { defaultRelays }
-            } else {
-                defaultRelays
-            }
-            val relays = savedApplication?.application?.relays?.ifEmpty { defaultRelays } ?: newConnectionRelays
+            val relays = responseRelays(bunkerRequest, savedApplication?.application?.relays, defaultRelays)
 
             val secret = if (bunkerRequest.request is BunkerRequestConnect) bunkerRequest.request.secret ?: "" else ""
 
@@ -623,13 +642,7 @@ object BunkerRequestUtils {
                 bunkerRequest
             }
 
-            clearRequests()
-            EventNotificationConsumer(Amber.instance).notificationManager().cancelAll()
-            val activity = Amber.instance.getMainActivity()
-            activity?.intent = null
-            if (application.application.closeApplication || activity is SignerActivity) {
-                activity?.finishAndRemoveTask()
-            }
+            finishRequest(effectiveBunkerRequest, application.application.closeApplication)
 
             if (rememberType != RememberType.NEVER) {
                 AmberUtils.acceptOrRejectPermission(

@@ -34,6 +34,8 @@ coroutinesTest = "1.11.0"
 secp256k1Jni = "0.24.0"
 leakcanary = "1.0.0"
 composeMultiplatform = "1.12.1"
+composeMultiplatformMaterial3 = "1.9.0"
+composeMultiplatformMaterialIconsExtended = "1.7.3"
 
 [libraries]
 datastore-preferences = { module = "androidx.datastore:datastore-preferences", version.ref = "datastorePreferences" }
@@ -53,6 +55,8 @@ lifecycle-viewmodel-compose = { module = "androidx.lifecycle:lifecycle-viewmodel
 lifecycle-process = { module = "androidx.lifecycle:lifecycle-process", version.ref = "lifecycle_version" }
 material-icons-extended = { module = "androidx.compose.material:material-icons-extended", version.ref = "materialIconsExtended" }
 material3 = { module = "androidx.compose.material3:material3", version.ref = "material3" }
+compose-multiplatform-material3 = { module = "org.jetbrains.compose.material3:material3", version.ref = "composeMultiplatformMaterial3" }
+compose-multiplatform-material-icons-extended = { module = "org.jetbrains.compose.material:material-icons-extended", version.ref = "composeMultiplatformMaterialIconsExtended" }
 navigation-compose = { module = "androidx.navigation:navigation-compose", version.ref = "nav_version" }
 quartz = { module = "com.vitorpamplona.quartz:quartz-android", version.ref = "quartz" }
 jackson-module-kotlin = { module = "com.fasterxml.jackson.module:jackson-module-kotlin", version.ref = "jacksonModuleKotlin" }

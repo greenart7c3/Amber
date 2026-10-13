@@ -33,8 +33,8 @@ tasks.test {
 
 dependencies {
     implementation(compose.desktop.currentOs)
-    implementation(compose.material3)
-    implementation(compose.materialIconsExtended)
+    implementation(libs.compose.multiplatform.material3)
+    implementation(libs.compose.multiplatform.material.icons.extended)
 
     implementation(libs.quartz.jvm)
     // Quartz ships jackson-databind but no longer the Kotlin module.

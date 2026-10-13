@@ -1,0 +1,29 @@
+name: Python regressions
+
+on:
+  pull_request:
+    branches: [master]
+  push:
+    branches: [master]
+
+permissions:
+  contents: read
+
+jobs:
+  python-regressions:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - uses: actions/checkout@v7
+
+      # The tests/ suites ship with the apkdiff and release-workflow fixes.
+      # On branches without them (including master until those merge) this is
+      # a no-op so the job stays green; once merged, every PR runs them.
+      - name: Run local Python regressions
+        run: |
+          if [ -d tests ]; then
+            python3 -m unittest discover -s tests -v
+          else
+            echo "No tests/ directory on this branch; nothing to run yet."
+          fi

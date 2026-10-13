@@ -64,7 +64,7 @@ object AccountExportService {
                                     didBackup = accountData.didBackup,
                                     signer = NostrSignerInternal(KeyPair(privKey.hexToByteArray())),
                                 )
-                                require(accountData.npub == account.npub) { "Backup account does not match its encrypted private key" }
+                                requireBackupIdentityMatches(accountData.npub, account)
                                 val seedWords = decryptExportedSeedWords(account, accountData.seedWords)
                                 LocalPreferences.switchToAccount(Amber.instance, account.npub)
                                 LocalPreferences.updatePrefsForLogin(Amber.instance, account, hexKey.toHexKey(), privKey, seedWords)
@@ -82,6 +82,10 @@ object AccountExportService {
             onText("")
             onLoading(false)
         }
+    }
+
+    internal fun requireBackupIdentityMatches(metadataNpub: String, account: Account) {
+        require(metadataNpub == account.npub) { "Backup account does not match its encrypted private key" }
     }
 
     internal suspend fun decryptExportedSeedWords(account: Account, encryptedSeedWords: String?): String? {

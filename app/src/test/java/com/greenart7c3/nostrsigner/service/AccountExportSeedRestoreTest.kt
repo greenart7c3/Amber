@@ -35,4 +35,14 @@ class AccountExportSeedRestoreTest {
             runBlocking { AccountExportService.decryptExportedSeedWords(account, "encrypted-seed") }
         }
     }
+
+    @Test
+    fun `metadata npub must match the restored key identity`() {
+        val account = mockk<Account>()
+        every { account.npub } returns "npub-restored"
+        assertThrows(IllegalArgumentException::class.java) {
+            AccountExportService.requireBackupIdentityMatches("npub-metadata", account)
+        }
+        AccountExportService.requireBackupIdentityMatches("npub-restored", account)
+    }
 }

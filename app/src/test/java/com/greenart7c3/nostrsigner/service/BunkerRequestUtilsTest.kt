@@ -3,6 +3,7 @@ package com.greenart7c3.nostrsigner.service
 import com.greenart7c3.nostrsigner.models.AmberBunkerRequest
 import com.greenart7c3.nostrsigner.models.EncryptionType
 import com.greenart7c3.nostrsigner.models.SignerType
+import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequest
 import io.mockk.every
 import io.mockk.mockk
@@ -423,5 +424,60 @@ class BunkerRequestUtilsTest {
             false
         }
         assertEquals(maxRetries, calls)
+    }
+
+    // ===== responseRelays =====
+
+    private val uriRelay = NormalizedRelayUrl("wss://relay.nip46.com/")
+    private val savedRelay = NormalizedRelayUrl("wss://saved.relay/")
+    private val defaultRelay = NormalizedRelayUrl("wss://default.relay/")
+
+    private fun nostrConnectRequest(relays: List<NormalizedRelayUrl>) = createAmberBunkerRequest(id = "connect-id", method = "connect")
+        .copy(relays = relays, isNostrConnectUri = true)
+
+    @Test
+    fun `responseRelays uses the nostrconnect URI relays for a new connection`() {
+        val relays = BunkerRequestUtils.responseRelays(nostrConnectRequest(listOf(uriRelay)), null, listOf(defaultRelay))
+        assertEquals(listOf(uriRelay), relays)
+    }
+
+    @Test
+    fun `responseRelays prefers the nostrconnect URI relays over a saved app with no relays`() {
+        val relays = BunkerRequestUtils.responseRelays(nostrConnectRequest(listOf(uriRelay)), emptyList(), listOf(defaultRelay))
+        assertEquals(listOf(uriRelay), relays)
+    }
+
+    @Test
+    fun `responseRelays merges the nostrconnect URI relays with saved relays`() {
+        val relays = BunkerRequestUtils.responseRelays(nostrConnectRequest(listOf(uriRelay)), listOf(savedRelay, uriRelay), listOf(defaultRelay))
+        assertEquals(listOf(uriRelay, savedRelay), relays)
+    }
+
+    @Test
+    fun `responseRelays falls back to defaults for a nostrconnect URI without relays`() {
+        val relays = BunkerRequestUtils.responseRelays(nostrConnectRequest(emptyList()), null, listOf(defaultRelay))
+        assertEquals(listOf(defaultRelay), relays)
+    }
+
+    @Test
+    fun `responseRelays ignores the delivering relay of a relay-delivered request`() {
+        val request = createAmberBunkerRequest(id = "sign-id", method = "sign_event").copy(relays = listOf(uriRelay))
+        assertEquals(listOf(defaultRelay), BunkerRequestUtils.responseRelays(request, null, listOf(defaultRelay)))
+        assertEquals(listOf(defaultRelay), BunkerRequestUtils.responseRelays(request, emptyList(), listOf(defaultRelay)))
+        assertEquals(listOf(savedRelay), BunkerRequestUtils.responseRelays(request, listOf(savedRelay), listOf(defaultRelay)))
+    }
+
+    // ===== finishRequest =====
+
+    @Test
+    fun `finishRequest keeps other pending requests in the queue`() {
+        val connect = createAmberBunkerRequest(id = "connect-id", method = "connect")
+        val sign = createAmberBunkerRequest(id = "sign-id", method = "sign_event")
+        BunkerRequestUtils.addRequest(sign)
+        BunkerRequestUtils.addRequest(connect)
+
+        BunkerRequestUtils.finishRequest(connect, closeApplication = true)
+
+        assertEquals(listOf("sign-id"), BunkerRequestUtils.getBunkerRequests().map { it.request.id })
     }
 }

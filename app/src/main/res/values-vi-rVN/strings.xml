@@ -564,6 +564,9 @@
     <string name="see_details">Xem chi tiết</string>
     <string name="is_requiring_some_permissions_please_review_them">%1$s đang yêu cầu một số quyền, vui lòng xem xét chúng.</string>
     <string name="is_requiring_some_permissions_please_review_them2">Đang yêu cầu một số quyền, vui lòng xem xét chúng.</string>
+    <plurals name="several_apps_are_requiring_some_permissions_please_review_them">
+        <item quantity="other">%1$d ứng dụng đang yêu cầu một số quyền, vui lòng xem xét chúng.</item>
+    </plurals>
     <string name="is_requiring_to_sign_these_events_related_to_permission">%1$s đang yêu cầu ký các sự kiện liên quan đến quyền %2$s.</string>
     <string name="relay_filter_failed">Relay không hỗ trợ truy xuất sự kiện Bunker. Bạn có muốn thêm nó không?</string>
     <string name="active_relays">Relay đang hoạt động</string>

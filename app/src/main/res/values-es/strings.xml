@@ -588,6 +588,11 @@
     <string name="see_details">Ver detalles</string>
     <string name="is_requiring_some_permissions_please_review_them">%1$s solicita algunos permisos, por favor revísalos.</string>
     <string name="is_requiring_some_permissions_please_review_them2">Está solicitando algunos permisos, por favor revísalos.</string>
+    <plurals name="several_apps_are_requiring_some_permissions_please_review_them">
+        <item quantity="one">%1$d app solicita algunos permisos, por favor revísalos.</item>
+        <item quantity="many">%1$d apps solicitan algunos permisos, por favor revísalos.</item>
+        <item quantity="other">%1$d apps solicitan algunos permisos, por favor revísalos.</item>
+    </plurals>
     <string name="is_requiring_to_sign_these_events_related_to_permission">%1$s solicita firmar estos eventos relacionados con el permiso %2$s.</string>
     <string name="relay_filter_failed">El relay no admite la recuperación de eventos de Bunker. ¿Deseas añadirlo de todas formas?</string>
     <string name="active_relays">Relays activos</string>

@@ -25,6 +25,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalInspectionMode
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.capitalize
 import androidx.compose.ui.text.intl.Locale
@@ -73,6 +74,32 @@ import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
+/** The app a bunker request comes from: the client key, per signing account. */
+private data class RequestAppKey(val account: String, val key: String)
+
+/** A request group within one app, so remember/scope choices never leak across apps. */
+private data class AppRequestGroupKey(val app: RequestAppKey, val group: RequestGroupKey)
+
+private data class RequestAppInfo(val name: String, val icon: String)
+
+private val AmberBunkerRequest.appKey get() = RequestAppKey(currentAccount, localKey)
+
+private fun AmberBunkerRequest.requestGroupKey() = requestGroupKey(
+    type = BunkerRequestUtils.getTypeFromBunker(request),
+    eventKind = (request as? BunkerRequestSign)?.event?.kind,
+    encryptedData = encryptedData,
+    nip44v3Kind = BunkerRequestUtils.getNip44v3Kind(request),
+)
+
+private fun AmberBunkerRequest.defaultAppInfo() = RequestAppInfo(
+    name = clientMetadata?.name?.ifBlank { null } ?: name.ifBlank { localKey.toShortenHex() },
+    icon = clientMetadata?.image ?: "",
+)
+
+private fun RequestAppKey.itemKey() = "$account:$key"
+
+private fun AppRequestGroupKey.itemKey() = "${app.itemKey()}:${group.type.name}:${group.payload?.name ?: ""}:${group.kind ?: ""}"
+
 @Composable
 fun BunkerMultiEventHomeScreen(
     modifier: Modifier,
@@ -82,15 +109,21 @@ fun BunkerMultiEventHomeScreen(
     onLoading: (Boolean) -> Unit,
 ) {
     val context = LocalContext.current
-    var localAccount by remember { mutableStateOf("") }
-    val key = bunkerRequests.first().localKey
 
     KillSwitchConnectPrompt(hasConnectRequest = bunkerRequests.any { it.request is BunkerRequestConnect })
-    val groupRememberTypes = remember { mutableStateMapOf<RequestGroupKey, RememberType>() }
-    val groupRelayAuthScopes = remember { mutableStateMapOf<RequestGroupKey, RelayAuthScope>() }
-    val groupDecryptScopes = remember { mutableStateMapOf<RequestGroupKey, DecryptTypeScope>() }
-    var appName by remember { mutableStateOf(ApplicationNameCache["$localAccount-$key"] ?: key.toShortenHex()) }
-    var appIcon by remember { mutableStateOf(bunkerRequests.first().clientMetadata?.image ?: "") }
+    val groupRememberTypes = remember { mutableStateMapOf<AppRequestGroupKey, RememberType>() }
+    val groupRelayAuthScopes = remember { mutableStateMapOf<AppRequestGroupKey, RelayAuthScope>() }
+    val groupDecryptScopes = remember { mutableStateMapOf<AppRequestGroupKey, DecryptTypeScope>() }
+
+    // Requests are grouped by the app that sent them (in arrival order), then by request type.
+    val apps = remember(bunkerRequests) {
+        bunkerRequests.groupBy { it.appKey }.map { (appKey, requests) ->
+            appKey to groupRequests(requests) { it.requestGroupKey() }
+        }
+    }
+    val appInfos = remember { mutableStateMapOf<RequestAppKey, RequestAppInfo>() }
+    fun appInfo(appKey: RequestAppKey): RequestAppInfo = appInfos[appKey]
+        ?: bunkerRequests.first { it.appKey == appKey }.defaultAppInfo()
 
     LaunchedEffect(Unit) {
         MultiEventScreenIntents.checkedStates.clear()
@@ -102,25 +135,25 @@ fun BunkerMultiEventHomeScreen(
     // Skipped in previews: encrypted storage and the Amber singleton don't
     // exist in the preview renderer.
     if (!LocalInspectionMode.current) {
-        LaunchedEffect(Unit) {
+        LaunchedEffect(apps) {
             launch(Dispatchers.IO) {
-                localAccount = LocalPreferences.loadFromEncryptedStorage(
-                    context,
-                    bunkerRequests.first().currentAccount,
-                )?.npub?.toShortenHex() ?: ""
+                apps.forEach { (appKey, _) ->
+                    val account = if (appKey.account.isNotBlank()) {
+                        LocalPreferences.loadFromEncryptedStorage(context, appKey.account)
+                    } else {
+                        accountParam
+                    } ?: return@forEach
 
-                val app = Amber.instance.getDatabase(accountParam.npub).dao().getByKey(key)
-                if (ApplicationNameCache["$localAccount-$key"] == null) {
-                    app?.let {
-                        appName = it.application.name
-                        ApplicationNameCache["$localAccount-$key"] = it.application.name
-                    }
-                } else {
-                    ApplicationNameCache["$localAccount-$key"]?.let {
-                        appName = it
-                    }
+                    val cacheKey = "${account.npub.toShortenHex()}-${appKey.key}"
+                    val app = Amber.instance.getDatabase(account.npub).dao().getByKey(appKey.key)
+                    val name = ApplicationNameCache[cacheKey]
+                        ?: app?.application?.name?.ifBlank { null }?.also { ApplicationNameCache[cacheKey] = it }
+                    val default = appInfo(appKey)
+                    appInfos[appKey] = RequestAppInfo(
+                        name = name ?: default.name,
+                        icon = app?.application?.icon?.ifBlank { null } ?: default.icon,
+                    )
                 }
-                app?.application?.icon?.let { if (it.isNotBlank()) appIcon = it }
             }
         }
     }
@@ -128,73 +161,86 @@ fun BunkerMultiEventHomeScreen(
     Column(
         modifier,
     ) {
-        RemoteAppIcon(appIcon, appName)
+        if (apps.size == 1) {
+            val info = appInfo(apps.first().first)
+            RemoteAppIcon(info.icon, info.name)
 
-        Text(
-            stringResource(R.string.is_requiring_some_permissions_please_review_them, appName),
-            Modifier
-                .fillMaxWidth()
-                .padding(bottom = 4.dp),
-        )
+            Text(
+                stringResource(R.string.is_requiring_some_permissions_please_review_them, info.name),
+                Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 4.dp),
+            )
+        } else {
+            Text(
+                pluralStringResource(R.plurals.several_apps_are_requiring_some_permissions_please_review_them, apps.size, apps.size),
+                Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp),
+            )
+        }
 
         SigningAs(accountParam)
 
-        val groups = remember(bunkerRequests) {
-            groupRequests(bunkerRequests) {
-                requestGroupKey(
-                    type = BunkerRequestUtils.getTypeFromBunker(it.request),
-                    eventKind = (it.request as? BunkerRequestSign)?.event?.kind,
-                    encryptedData = it.encryptedData,
-                    nip44v3Kind = BunkerRequestUtils.getNip44v3Kind(it.request),
-                )
-            }
-        }
-        val expandedGroups = remember { mutableStateMapOf<RequestGroupKey, Boolean>() }
+        val expandedGroups = remember { mutableStateMapOf<AppRequestGroupKey, Boolean>() }
         LazyColumn(
             Modifier.weight(1f),
         ) {
-            groups.forEach { (groupKey, groupItems) ->
-                val expanded = groups.size == 1 || (expandedGroups[groupKey] ?: false)
-                if (groups.size > 1) {
-                    item(key = "group-header:${groupKey.type.name}:${groupKey.payload?.name ?: ""}:${groupKey.kind ?: ""}") {
-                        val groupApproved = groupItems.all { MultiEventScreenIntents.checkedStates[it.request.id] ?: true }
-                        RequestGroupHeader(
-                            label = groupKey.toLabel(context),
-                            count = groupItems.size,
-                            approved = groupApproved,
-                            expanded = expanded,
-                            onApproveChanged = { approve ->
-                                MultiEventScreenIntents.checkedStates.putAll(groupItems.associate { it.request.id to approve })
-                            },
-                            onExpandToggle = {
-                                expandedGroups[groupKey] = !(expandedGroups[groupKey] ?: false)
-                            },
+            apps.forEach { (appKey, groups) ->
+                if (apps.size > 1) {
+                    item(key = "app-header:${appKey.itemKey()}") {
+                        val info = appInfo(appKey)
+                        RequestAppHeader(
+                            name = info.name,
+                            icon = info.icon,
+                            count = groups.sumOf { it.second.size },
                         )
                     }
                 }
-                if (groupKey.hasGroupOptions()) {
-                    item(key = "group-options:${groupKey.type.name}:${groupKey.payload?.name ?: ""}:${groupKey.kind ?: ""}") {
-                        RequestGroupOptions(
-                            groupKey = groupKey,
-                            rememberType = groupRememberTypes[groupKey] ?: RememberType.NEVER,
-                            onRememberTypeChanged = { groupRememberTypes[groupKey] = it },
-                            relayAuthScope = groupRelayAuthScopes[groupKey] ?: RelayAuthScope.SPECIFIC,
-                            onRelayAuthScopeChanged = { groupRelayAuthScopes[groupKey] = it },
-                            decryptTypeScope = groupDecryptScopes[groupKey] ?: defaultDecryptTypeScope(groupKey.type),
-                            onDecryptTypeScopeChanged = { groupDecryptScopes[groupKey] = it },
-                        )
+                groups.forEach { (requestGroupKey, groupItems) ->
+                    val groupKey = AppRequestGroupKey(appKey, requestGroupKey)
+                    val expanded = groups.size == 1 || (expandedGroups[groupKey] ?: false)
+                    if (groups.size > 1) {
+                        item(key = "group-header:${groupKey.itemKey()}") {
+                            val groupApproved = groupItems.all { MultiEventScreenIntents.checkedStates[it.request.id] ?: true }
+                            RequestGroupHeader(
+                                label = requestGroupKey.toLabel(context),
+                                count = groupItems.size,
+                                approved = groupApproved,
+                                expanded = expanded,
+                                onApproveChanged = { approve ->
+                                    MultiEventScreenIntents.checkedStates.putAll(groupItems.associate { it.request.id to approve })
+                                },
+                                onExpandToggle = {
+                                    expandedGroups[groupKey] = !(expandedGroups[groupKey] ?: false)
+                                },
+                            )
+                        }
                     }
-                }
-                if (expanded) {
-                    items(groupItems, key = { it.request.id }) { bunkerRequest ->
-                        BunkerRequestCard(
-                            context = context,
-                            bunkerRequest = bunkerRequest,
-                            approved = MultiEventScreenIntents.checkedStates[bunkerRequest.request.id] ?: true,
-                            onApproveChanged = {
-                                MultiEventScreenIntents.checkedStates[bunkerRequest.request.id] = it
-                            },
-                        )
+                    if (requestGroupKey.hasGroupOptions()) {
+                        item(key = "group-options:${groupKey.itemKey()}") {
+                            RequestGroupOptions(
+                                groupKey = requestGroupKey,
+                                rememberType = groupRememberTypes[groupKey] ?: RememberType.NEVER,
+                                onRememberTypeChanged = { groupRememberTypes[groupKey] = it },
+                                relayAuthScope = groupRelayAuthScopes[groupKey] ?: RelayAuthScope.SPECIFIC,
+                                onRelayAuthScopeChanged = { groupRelayAuthScopes[groupKey] = it },
+                                decryptTypeScope = groupDecryptScopes[groupKey] ?: defaultDecryptTypeScope(requestGroupKey.type),
+                                onDecryptTypeScopeChanged = { groupDecryptScopes[groupKey] = it },
+                            )
+                        }
+                    }
+                    if (expanded) {
+                        items(groupItems, key = { it.request.id }) { bunkerRequest ->
+                            BunkerRequestCard(
+                                context = context,
+                                bunkerRequest = bunkerRequest,
+                                approved = MultiEventScreenIntents.checkedStates[bunkerRequest.request.id] ?: true,
+                                onApproveChanged = {
+                                    MultiEventScreenIntents.checkedStates[bunkerRequest.request.id] = it
+                                },
+                            )
+                        }
                     }
                 }
             }
@@ -253,12 +299,7 @@ fun BunkerMultiEventHomeScreen(
 
                             val isApproved = MultiEventScreenIntents.checkedStates[request.request.id] ?: true
                             val requestType = BunkerRequestUtils.getTypeFromBunker(request.request)
-                            val groupKey = requestGroupKey(
-                                type = requestType,
-                                eventKind = (request.request as? BunkerRequestSign)?.event?.kind,
-                                encryptedData = request.encryptedData,
-                                nip44v3Kind = BunkerRequestUtils.getNip44v3Kind(request.request),
-                            )
+                            val groupKey = AppRequestGroupKey(request.appKey, request.requestGroupKey())
                             val rememberType = groupRememberTypes[groupKey] ?: RememberType.NEVER
 
                             if (request.request is BunkerRequestSign) {
@@ -436,6 +477,33 @@ fun BunkerMultiEventHomeScreen(
 }
 
 @Composable
+private fun RequestAppHeader(
+    name: String,
+    icon: String,
+    count: Int,
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 16.dp, bottom = 8.dp),
+    ) {
+        AppAvatar(
+            iconUrl = icon,
+            name = name,
+            size = 32.dp,
+        )
+        Text(
+            text = "$name ($count)",
+            style = MaterialTheme.typography.titleMedium,
+            modifier = Modifier
+                .weight(1f)
+                .padding(start = 8.dp),
+        )
+    }
+}
+
+@Composable
 private fun BunkerRequestCard(
     context: Context,
     bunkerRequest: AmberBunkerRequest,
@@ -596,13 +664,17 @@ private suspend fun reconnectToRelays() {
 
 private const val PREVIEW_LOCAL_KEY = "460c25e682fda7832b52d1f22d3d22b3176d972f60dcdc3212ed8c92ef85065c"
 
+private const val PREVIEW_OTHER_LOCAL_KEY = "7e7e9c42a91bfef19fa929e5fda1b72e0ebc1a4c1141673e2794234d86addf4e"
+
 private fun previewBunkerRequest(
     request: BunkerRequest,
     signedEvent: Event? = null,
     encryptedData: ClearTextEncryptedDataKind? = null,
+    localKey: String = PREVIEW_LOCAL_KEY,
+    clientMetadata: BunkerClientMetadata = BunkerClientMetadata(name = "Amethyst", url = "https://amethyst.social"),
 ) = AmberBunkerRequest(
     request = request,
-    localKey = PREVIEW_LOCAL_KEY,
+    localKey = localKey,
     relays = listOf(),
     currentAccount = "",
     nostrConnectSecret = "",
@@ -612,7 +684,7 @@ private fun previewBunkerRequest(
     encryptedData = encryptedData,
     encryptionType = EncryptionType.NIP44,
     isNostrConnectUri = false,
-    clientMetadata = BunkerClientMetadata(name = "Amethyst", url = "https://amethyst.social"),
+    clientMetadata = clientMetadata,
 )
 
 private fun previewSignRequest(id: String, content: String) = previewBunkerRequest(
@@ -639,10 +711,6 @@ private fun previewSignRequest(id: String, content: String) = previewBunkerReque
 @ThemePreviews
 @Composable
 fun BunkerMultiEventHomeScreenPreview() {
-    // The screen normally resolves the app name from the database, which is
-    // skipped in previews — seed the cache so the header shows a real name.
-    ApplicationNameCache["-$PREVIEW_LOCAL_KEY"] = "Amethyst"
-
     AmberPreview {
         BunkerMultiEventHomeScreen(
             modifier = Modifier
@@ -665,6 +733,36 @@ fun BunkerMultiEventHomeScreenPreview() {
                         ciphertext = "encrypted-payload",
                     ),
                     encryptedData = ClearTextEncryptedDataKind("encrypted-payload", "Hello Nostr!"),
+                ),
+            ),
+            packageName = null,
+            accountParam = previewAccount(),
+            onLoading = {},
+        )
+    }
+}
+
+@ThemePreviews
+@Composable
+fun BunkerMultiEventHomeScreenMultipleAppsPreview() {
+    AmberPreview {
+        BunkerMultiEventHomeScreen(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(700.dp)
+                .padding(16.dp),
+            bunkerRequests = persistentListOf(
+                previewSignRequest("preview-sign-1", "Hello Nostr!"),
+                previewSignRequest("preview-sign-2", "GM from Amber"),
+                previewBunkerRequest(
+                    request = BunkerRequestNip44Decrypt(
+                        id = "preview-nip44-decrypt",
+                        pubKey = PREVIEW_LOCAL_KEY,
+                        ciphertext = "encrypted-payload",
+                    ),
+                    encryptedData = ClearTextEncryptedDataKind("encrypted-payload", "Hello Nostr!"),
+                    localKey = PREVIEW_OTHER_LOCAL_KEY,
+                    clientMetadata = BunkerClientMetadata(name = "Coracle", url = "https://coracle.social"),
                 ),
             ),
             packageName = null,

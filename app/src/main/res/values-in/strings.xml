@@ -588,6 +588,9 @@
     <string name="see_details">Lihat detail</string>
     <string name="is_requiring_some_permissions_please_review_them">%1$s memerlukan beberapa izin, harap tinjau.</string>
     <string name="is_requiring_some_permissions_please_review_them2">Memerlukan beberapa izin, harap tinjau.</string>
+    <plurals name="several_apps_are_requiring_some_permissions_please_review_them">
+        <item quantity="other">%1$d aplikasi memerlukan beberapa izin, harap tinjau.</item>
+    </plurals>
     <string name="is_requiring_to_sign_these_events_related_to_permission">%1$s memerlukan penandatanganan event yang terkait dengan izin %2$s.</string>
     <string name="relay_filter_failed">Relay tidak mendukung pengambilan event Bunker. Apakah Anda tetap ingin menambahkannya?</string>
     <string name="active_relays">Relay aktif</string>

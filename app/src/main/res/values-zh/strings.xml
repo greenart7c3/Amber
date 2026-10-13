@@ -569,6 +569,9 @@
     <string name="see_details">查看详情</string>
     <string name="is_requiring_some_permissions_please_review_them">%1$s 需要一些权限，请检查它们。</string>
     <string name="is_requiring_some_permissions_please_review_them2"> 请检查权限请求。</string>
+    <plurals name="several_apps_are_requiring_some_permissions_please_review_them">
+        <item quantity="other">%1$d 个应用需要一些权限，请检查它们。</item>
+    </plurals>
     <string name="is_requiring_to_sign_these_events_related_to_permission">%1$s 需要签署与权限「%2$s」相关的事件。</string>
     <string name="relay_filter_failed">中继不支持检索 Bunker 事件。依旧继续添加？</string>
     <string name="active_relays">活动中继</string>

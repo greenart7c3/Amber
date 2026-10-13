@@ -585,6 +585,10 @@
     <string name="see_details">Details anzeigen</string>
     <string name="is_requiring_some_permissions_please_review_them">%1$s fordert einige Berechtigungen an, bitte überprüfe sie.</string>
     <string name="is_requiring_some_permissions_please_review_them2">Es werden einige Berechtigungen angefordert, bitte überprüfe sie.</string>
+    <plurals name="several_apps_are_requiring_some_permissions_please_review_them">
+        <item quantity="one">%1$d App fordert einige Berechtigungen an, bitte überprüfe sie.</item>
+        <item quantity="other">%1$d Apps fordern einige Berechtigungen an, bitte überprüfe sie.</item>
+    </plurals>
     <string name="is_requiring_to_sign_these_events_related_to_permission">%1$s fordert die Signierung dieser Ereignisse im Zusammenhang mit der Berechtigung %2$s an.</string>
     <string name="relay_filter_failed">Der Relay unterstützt das Abrufen von Bunker-Ereignissen nicht. Möchtest du ihn trotzdem hinzufügen?</string>
     <string name="active_relays">Aktive Relays</string>

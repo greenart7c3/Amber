@@ -584,6 +584,10 @@
     <string name="see_details">Ayrıntıları gör</string>
     <string name="is_requiring_some_permissions_please_review_them">%1$s bazı izinler talep ediyor, lütfen onları gözden geçirin.</string>
     <string name="is_requiring_some_permissions_please_review_them2">Bazı izinler talep ediyor, lütfen bunları gözden geçirin.</string>
+    <plurals name="several_apps_are_requiring_some_permissions_please_review_them">
+        <item quantity="one">%1$d uygulama bazı izinler talep ediyor, lütfen onları gözden geçirin.</item>
+        <item quantity="other">%1$d uygulama bazı izinler talep ediyor, lütfen onları gözden geçirin.</item>
+    </plurals>
     <string name="is_requiring_to_sign_these_events_related_to_permission">%1$s, %2$s izniyle ilgili bu etkinlikleri imzalamanızı istiyor.</string>
     <string name="relay_filter_failed">Relay, Bunker etkinliklerini almayı desteklemiyor. Yine de eklemek ister misiniz?</string>
     <string name="active_relays">Aktif relay\'ler</string>

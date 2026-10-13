@@ -564,6 +564,9 @@
     <string name="see_details">詳細を見る</string>
     <string name="is_requiring_some_permissions_please_review_them">%1$s がいくつかの権限を要求しています。確認してください。</string>
     <string name="is_requiring_some_permissions_please_review_them2">いくつかの権限を要求しています。確認してください。</string>
+    <plurals name="several_apps_are_requiring_some_permissions_please_review_them">
+        <item quantity="other">%1$d 個のアプリがいくつかの権限を要求しています。確認してください。</item>
+    </plurals>
     <string name="is_requiring_to_sign_these_events_related_to_permission">%1$s が %2$s 権限に関連するイベントへの署名を求めています。</string>
     <string name="relay_filter_failed">Relay が Bunker イベントの取得をサポートしていません。それでも追加しますか？</string>
     <string name="active_relays">アクティブな relay</string>

@@ -588,6 +588,9 @@
     <string name="see_details">자세히 보기</string>
     <string name="is_requiring_some_permissions_please_review_them">%1$s이(가) 일부 권한을 요청하고 있습니다. 검토해 주세요.</string>
     <string name="is_requiring_some_permissions_please_review_them2">일부 권한을 요청하고 있습니다. 검토해 주세요.</string>
+    <plurals name="several_apps_are_requiring_some_permissions_please_review_them">
+        <item quantity="other">%1$d개의 앱이 일부 권한을 요청하고 있습니다. 검토해 주세요.</item>
+    </plurals>
     <string name="is_requiring_to_sign_these_events_related_to_permission">%1$s이(가) %2$s 권한과 관련된 이벤트에 서명을 요청하고 있습니다.</string>
     <string name="relay_filter_failed">이 relay는 Bunker 이벤트 검색을 지원하지 않습니다. 그래도 추가하시겠습니까?</string>
     <string name="active_relays">활성 relay</string>

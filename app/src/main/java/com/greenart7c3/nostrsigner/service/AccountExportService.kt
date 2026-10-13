@@ -16,6 +16,7 @@ import com.vitorpamplona.quartz.nip01Core.core.toHexKey
 import com.vitorpamplona.quartz.nip01Core.crypto.KeyPair
 import com.vitorpamplona.quartz.nip01Core.crypto.Nip01Crypto
 import com.vitorpamplona.quartz.nip01Core.signers.NostrSignerInternal
+import com.vitorpamplona.quartz.nip06KeyDerivation.Nip06
 import com.vitorpamplona.quartz.nip19Bech32.toNpub
 import com.vitorpamplona.quartz.nip49PrivKeyEnc.Nip49
 import com.vitorpamplona.quartz.utils.Hex
@@ -63,8 +64,10 @@ object AccountExportService {
                                     didBackup = accountData.didBackup,
                                     signer = NostrSignerInternal(KeyPair(privKey.hexToByteArray())),
                                 )
-                                LocalPreferences.switchToAccount(Amber.instance, accountData.npub)
-                                LocalPreferences.updatePrefsForLogin(Amber.instance, account, hexKey.toHexKey(), privKey, accountData.seedWords)
+                                require(accountData.npub == account.npub) { "Backup account does not match its encrypted private key" }
+                                val seedWords = decryptExportedSeedWords(account, accountData.seedWords)
+                                LocalPreferences.switchToAccount(Amber.instance, account.npub)
+                                LocalPreferences.updatePrefsForLogin(Amber.instance, account, hexKey.toHexKey(), privKey, seedWords)
                             } catch (e: Exception) {
                                 if (e is CancellationException) throw e
 
@@ -79,6 +82,13 @@ object AccountExportService {
             onText("")
             onLoading(false)
         }
+    }
+
+    internal suspend fun decryptExportedSeedWords(account: Account, encryptedSeedWords: String?): String? {
+        if (encryptedSeedWords.isNullOrBlank()) return null
+        val seedWords = account.nip44Decrypt(encryptedSeedWords, account.hexKey)
+        require(Nip06().isValidMnemonic(seedWords)) { "Backup seed words are invalid" }
+        return seedWords
     }
 
     /**

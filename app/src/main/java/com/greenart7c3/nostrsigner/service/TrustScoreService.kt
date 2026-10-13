@@ -99,7 +99,7 @@ object TrustScoreService {
 
         return withContext(Dispatchers.IO) {
             try {
-                val normalizedUrl = normalizeUrl(relayUrl)
+                val normalizedUrl = TrustScoreUrlPolicy.publicRelayUrl(relayUrl) ?: return@withContext null
                 val encodedUrl = URLEncoder.encode(normalizedUrl, "UTF-8")
                 val requestUrl = "$API_BASE_URL$encodedUrl"
 
@@ -109,27 +109,28 @@ object TrustScoreService {
                     .get()
                     .build()
 
-                val response = client.newCall(request).execute()
+                client.newCall(request).execute().use { response ->
 
-                if (!response.isSuccessful) {
-                    AmberLog.w(TAG, "Failed to fetch trust score for $relayUrl: ${response.code}")
-                    cacheResult(normalizedUrl, null, isFailed = true)
-                    return@withContext null
+                    if (!response.isSuccessful) {
+                        AmberLog.w(TAG, "Failed to fetch trust score for $relayUrl: ${response.code}")
+                        cacheResult(normalizedUrl, null, isFailed = true)
+                        return@withContext null
+                    }
+
+                    // Safe call needed: the offline flavor compiles against OkHttp 4, where body is nullable
+                    val body = response.body?.string()
+                    if (body == null) {
+                        cacheResult(normalizedUrl, null, isFailed = true)
+                        return@withContext null
+                    }
+
+                    val score = parseResponse(body)
+                    cacheResult(normalizedUrl, score, isFailed = false)
+                    score
                 }
-
-                // Safe call needed: the offline flavor compiles against OkHttp 4, where body is nullable
-                val body = response.body?.string()
-                if (body == null) {
-                    cacheResult(normalizedUrl, null, isFailed = true)
-                    return@withContext null
-                }
-
-                val score = parseResponse(body)
-                cacheResult(normalizedUrl, score, isFailed = false)
-                score
             } catch (e: Exception) {
                 AmberLog.e(TAG, "Error fetching trust score for $relayUrl", e)
-                val normalizedUrl = normalizeUrl(relayUrl)
+                val normalizedUrl = TrustScoreUrlPolicy.publicRelayUrl(relayUrl) ?: return@withContext null
                 cacheResult(normalizedUrl, null, isFailed = true)
                 null
             }

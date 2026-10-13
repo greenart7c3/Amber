@@ -77,7 +77,7 @@ private enum class SettingsKeys(val key: String) {
     RATE_LIMIT_MAX_PER_WINDOW("rate_limit_max_per_window"),
     RATE_LIMIT_WINDOW_SECONDS("rate_limit_window_seconds"),
     PROFILE_FETCH_INTERVAL("profile_fetch_interval"),
-    TRUST_SCORE_ENABLED("trust_score_enabled"),
+    TRUST_SCORE_ENABLED("trust_score_enabled_v2"),
     REQUIRE_UNLOCKED_DEVICE("require_unlocked_device"),
     ACTIVE_KEYSTORE_ALIAS("active_keystore_alias"),
 }
@@ -346,7 +346,7 @@ object LocalPreferences {
                 } catch (_: IllegalArgumentException) {
                     ProfileFetchInterval.FIFTEEN_MINUTES
                 },
-                trustScoreEnabled = getBoolean(SettingsKeys.TRUST_SCORE_ENABLED.key, true),
+                trustScoreEnabled = getBoolean(SettingsKeys.TRUST_SCORE_ENABLED.key, false),
                 requireUnlockedDevice = getBoolean(SettingsKeys.REQUIRE_UNLOCKED_DEVICE.key, false),
             )
         }

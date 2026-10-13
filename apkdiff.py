@@ -25,8 +25,13 @@ class ApkDiff:
         return self.compareEntryNames(firstZip, secondZip) and self.compareEntryContents(firstZip, secondZip) == True
 
     def compareEntryNames(self, firstZip, secondZip):
-        firstNameListSorted = sorted(firstZip.namelist())
-        secondNameListSorted = sorted(secondZip.namelist())
+        firstNames = firstZip.namelist()
+        secondNames = secondZip.namelist()
+        if len(firstNames) != len(set(firstNames)) or len(secondNames) != len(set(secondNames)):
+            print("Duplicate ZIP entry names are not accepted!")
+            return False
+        firstNameListSorted = sorted(firstNames)
+        secondNameListSorted = sorted(secondNames)
 
         for ignoreFile in self.IGNORE_FILES:
             while ignoreFile in firstNameListSorted:
@@ -36,6 +41,7 @@ class ApkDiff:
 
         if len(firstNameListSorted) != len(secondNameListSorted):
             print("Manifest lengths differ!")
+            return False
 
         for (firstEntryName, secondEntryName) in zip(firstNameListSorted, secondNameListSorted):
             if firstEntryName != secondEntryName:
@@ -56,8 +62,8 @@ class ApkDiff:
         for firstEntryInfo in firstInfoList:
             for secondEntryInfo in list(secondInfoList):
                 if firstEntryInfo.filename == secondEntryInfo.filename:
-                    firstEntryBytes = firstZip.read(firstEntryInfo.filename)
-                    secondEntryBytes = secondZip.read(secondEntryInfo.filename)
+                    firstEntryBytes = firstZip.read(firstEntryInfo)
+                    secondEntryBytes = secondZip.read(secondEntryInfo)
 
                     if firstEntryBytes != secondEntryBytes:
                         firstZip.extract(firstEntryInfo, "mismatches/first")

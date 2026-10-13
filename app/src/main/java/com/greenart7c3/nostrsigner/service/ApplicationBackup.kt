@@ -115,6 +115,7 @@ internal fun backupKeyPair(identityPrivKey: ByteArray): KeyPair {
 }
 
 internal fun backupSigner(account: Account): NostrSignerInternal {
+    account.requirePrivateKeyAccess()
     val identityPrivKey = checkNotNull(account.signer.keyPair.privKey) {
         "ApplicationBackup: account has no private key"
     }

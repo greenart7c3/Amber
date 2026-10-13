@@ -45,6 +45,7 @@ class ApplicationBackupCryptoTest {
             signPolicy = 1,
             didBackup = true,
             scope = scope,
+            keyAccessCheck = {},
         )
     }
 

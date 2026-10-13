@@ -38,5 +38,6 @@ fun newTestAccount(scope: CoroutineScope): Account {
         signPolicy = 0,
         didBackup = false,
         scope = scope,
+        keyAccessCheck = {},
     )
 }

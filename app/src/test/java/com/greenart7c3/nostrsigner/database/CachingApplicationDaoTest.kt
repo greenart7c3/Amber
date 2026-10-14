@@ -2,10 +2,16 @@ package com.greenart7c3.nostrsigner.database
 
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.every
 import io.mockk.mockk
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotSame
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
@@ -196,5 +202,101 @@ class CachingApplicationDaoTest {
 
         coVerify(exactly = 1) { delegate.getAll(accountKey) }
         coVerify(exactly = 1) { delegate.getAll(otherAccount) }
+    }
+
+    /**
+     * Runs [read] on another thread, blocks it inside the delegate until [revoke]
+     * has completed, then lets the stale delegate result return. Models a signing
+     * request racing a revocation from the UI.
+     */
+    private fun <T> raceReadAgainstRevocation(
+        stubFirstRead: (blockUntilRevoked: () -> Unit) -> Unit,
+        read: () -> T,
+        revoke: suspend () -> Unit,
+    ) = runBlocking {
+        val readStarted = CountDownLatch(1)
+        val releaseRead = CountDownLatch(1)
+        stubFirstRead {
+            readStarted.countDown()
+            check(releaseRead.await(5, TimeUnit.SECONDS))
+        }
+        val executor = Executors.newSingleThreadExecutor()
+        try {
+            val pending = executor.submit<T> { read() }
+            assertTrue(readStarted.await(5, TimeUnit.SECONDS))
+            revoke()
+            releaseRead.countDown()
+            pending.get(5, TimeUnit.SECONDS)
+        } finally {
+            releaseRead.countDown()
+            executor.shutdownNow()
+        }
+    }
+
+    @Test
+    fun `read overlapping a permission revocation does not cache the stale grant`() {
+        val grant = ApplicationPermissionsEntity(null, "app1", "SIGN_EVENT", 1, true, 4, Long.MAX_VALUE, 0)
+        var firstRead = true
+        raceReadAgainstRevocation(
+            stubFirstRead = { block ->
+                every { delegate.getPermission("app1", "SIGN_EVENT", 1) } answers {
+                    if (firstRead) {
+                        firstRead = false
+                        block()
+                        grant
+                    } else {
+                        null
+                    }
+                }
+            },
+            read = { dao.getPermission("app1", "SIGN_EVENT", 1) },
+            revoke = { dao.deletePermissions("app1") },
+        )
+
+        assertNull(dao.getPermission("app1", "SIGN_EVENT", 1))
+    }
+
+    @Test
+    fun `read overlapping an app deletion does not cache the stale sign policy`() {
+        var firstRead = true
+        raceReadAgainstRevocation(
+            stubFirstRead = { block ->
+                every { delegate.getSignPolicy("app1") } answers {
+                    if (firstRead) {
+                        firstRead = false
+                        block()
+                        2
+                    } else {
+                        null
+                    }
+                }
+            },
+            read = { dao.getSignPolicy("app1") },
+            revoke = { dao.delete("app1") },
+        )
+
+        assertNull(dao.getSignPolicy("app1"))
+    }
+
+    @Test
+    fun `getAll overlapping an app deletion does not cache the stale list`() {
+        var firstRead = true
+        raceReadAgainstRevocation(
+            stubFirstRead = { block ->
+                coEvery { delegate.getAll(accountKey) } answers {
+                    if (firstRead) {
+                        firstRead = false
+                        block()
+                        listOf(entity())
+                    } else {
+                        emptyList()
+                    }
+                }
+            },
+            read = { runBlocking { dao.getAll(accountKey) } },
+            revoke = { dao.delete(entity()) },
+        )
+
+        assertEquals(emptyList<ApplicationEntity>(), runBlocking { dao.getAll(accountKey) })
     }
 }

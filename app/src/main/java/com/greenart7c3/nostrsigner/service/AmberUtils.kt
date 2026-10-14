@@ -181,8 +181,7 @@ object AmberUtils {
             decryptTypeScope,
         )
 
-        Amber.instance.getDatabase(account.npub)
-            .dao()
+        Amber.instance.dao(account.npub)
             .insertApplicationWithPermissions(application)
     }
 

@@ -356,7 +356,7 @@ fun EditConfigurationScreen(
                                 useSecret = true,
                                 localKey = newLocalKey,
                             )
-                            val dao = Amber.instance.getDatabase(account.npub).dao()
+                            val dao = Amber.instance.dao(account.npub)
                             dao.deletePermissions(it.application.key)
                             dao.delete(it.application)
                             Amber.instance.getHistoryDatabase(account.npub).dao().deleteHistory(it.application.key)

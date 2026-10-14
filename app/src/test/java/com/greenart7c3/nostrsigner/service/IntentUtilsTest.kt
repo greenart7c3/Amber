@@ -147,9 +147,15 @@ class IntentUtilsTest {
     }
 
     @Test
-    fun `isRemembered returns true when signPolicy is 2 even with rejecting permission`() {
+    fun `isRemembered returns true when signPolicy is 2 and the rejection has expired`() {
         val permission = permissionWith(acceptable = false, rejectUntil = TimeUtils.now() - 3600)
         assertTrue(IntentUtils.isRemembered(signPolicy = 2, permission = permission) == true)
+    }
+
+    @Test
+    fun `isRemembered returns false when signPolicy is 2 but an active rejection exists`() {
+        val permission = permissionWith(acceptable = false, rejectUntil = TimeUtils.now() + 3600)
+        assertEquals(false, IntentUtils.isRemembered(signPolicy = 2, permission = permission))
     }
 
     @Test

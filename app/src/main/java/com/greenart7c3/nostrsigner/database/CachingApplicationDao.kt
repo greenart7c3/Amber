@@ -18,6 +18,11 @@ import androidx.paging.PagingSource
  * single app key, so this matches the natural granularity without forcing
  * callers to know which exact (type, kind, relay) tuple they touched.
  *
+ * Every invalidation bumps a generation counter, and a read only stores its
+ * result if the generation is unchanged since the read began. Otherwise a
+ * delegate read that started before a revocation could land after the
+ * invalidation and resurrect the revoked grant in the cache.
+ *
  * [getAll] results are cached per account pubKey in a separate small LRU.
  * That query decrypts every application row (AndroidKeyStore AES-GCM, a binder
  * hop to keystore2 per field) and [com.greenart7c3.nostrsigner.service.NotificationSubscription]
@@ -47,81 +52,99 @@ class CachingApplicationDao(
     )
 
     private val cache = LruCache<Key, Value>(MAX_ENTRIES)
+    private var cacheGeneration = 0L
 
     // One entry per account (key = account pubKey); a handful at most.
     private val getAllCache = LruCache<String, List<ApplicationEntity>>(GET_ALL_MAX_ENTRIES)
+    private var getAllGeneration = 0L
+
+    private fun generation(): Long = synchronized(cache) { cacheGeneration }
 
     private fun lookup(key: Key): Value? = synchronized(cache) { cache.get(key) }
 
-    private fun store(key: Key, value: Value) {
-        synchronized(cache) { cache.put(key, value) }
+    /** Caches [value] unless an invalidation ran after the read began at [readGeneration]. */
+    private fun store(key: Key, value: Value, readGeneration: Long) {
+        synchronized(cache) {
+            if (readGeneration == cacheGeneration) cache.put(key, value)
+        }
     }
 
     /** Evicts the cached [getAll] list for [pubKey], or every list when null. */
     private fun invalidateGetAll(pubKey: String?) {
         synchronized(getAllCache) {
+            getAllGeneration++
             if (pubKey != null) getAllCache.remove(pubKey) else getAllCache.evictAll()
         }
     }
 
     private fun invalidateApp(pkKey: String) {
         synchronized(cache) {
+            cacheGeneration++
             val toRemove = cache.snapshot().keys.filter { it.pkKey == pkKey }
             toRemove.forEach { cache.remove(it) }
         }
     }
 
     private fun invalidateAll() {
-        synchronized(cache) { cache.evictAll() }
+        synchronized(cache) {
+            cacheGeneration++
+            cache.evictAll()
+        }
     }
 
     // -------- cached reads --------
 
     override fun getSignPolicy(key: String): Int? {
         val k = Key(Method.SIGN_POLICY, key, null, null, null)
+        val readGeneration = generation()
         lookup(k)?.let { return it.signPolicy }
         val result = delegate.getSignPolicy(key)
-        store(k, Value(result, null))
+        store(k, Value(result, null), readGeneration)
         return result
     }
 
     override fun getPermission(key: String, type: String, kind: Int?): ApplicationPermissionsEntity? {
         val k = Key(Method.PERM_KIND, key, type, kind, null)
+        val readGeneration = generation()
         lookup(k)?.let { return it.permission }
         val result = delegate.getPermission(key, type, kind)
-        store(k, Value(null, result))
+        store(k, Value(null, result), readGeneration)
         return result
     }
 
     override fun getPermission(key: String, type: String): ApplicationPermissionsEntity? {
         val k = Key(Method.PERM, key, type, null, null)
+        val readGeneration = generation()
         lookup(k)?.let { return it.permission }
         val result = delegate.getPermission(key, type)
-        store(k, Value(null, result))
+        store(k, Value(null, result), readGeneration)
         return result
     }
 
     override fun getPermissionAllKinds(key: String, type: String): ApplicationPermissionsEntity? {
         val k = Key(Method.PERM_ALL_KINDS, key, type, null, null)
+        val readGeneration = generation()
         lookup(k)?.let { return it.permission }
         val result = delegate.getPermissionAllKinds(key, type)
-        store(k, Value(null, result))
+        store(k, Value(null, result), readGeneration)
         return result
     }
 
     override fun getPermissionForRelay(key: String, type: String, kind: Int, relay: String): ApplicationPermissionsEntity? {
         val k = Key(Method.PERM_RELAY, key, type, kind, relay)
+        val readGeneration = generation()
         lookup(k)?.let { return it.permission }
         val result = delegate.getPermissionForRelay(key, type, kind, relay)
-        store(k, Value(null, result))
+        store(k, Value(null, result), readGeneration)
         return result
     }
 
     override fun getWildcardRelayPermission(key: String, type: String, kind: Int): ApplicationPermissionsEntity? {
         val k = Key(Method.PERM_WILDCARD, key, type, kind, null)
+        val readGeneration = generation()
         lookup(k)?.let { return it.permission }
         val result = delegate.getWildcardRelayPermission(key, type, kind)
-        store(k, Value(null, result))
+        store(k, Value(null, result), readGeneration)
         return result
     }
 
@@ -207,9 +230,14 @@ class CachingApplicationDao(
     // -------- pass-through (not cached, not invalidating) --------
 
     override suspend fun getAll(pubKey: String): List<ApplicationEntity> {
-        synchronized(getAllCache) { getAllCache.get(pubKey) }?.let { return it.toList() }
+        val readGeneration = synchronized(getAllCache) {
+            getAllCache.get(pubKey)?.let { return it.toList() }
+            getAllGeneration
+        }
         val result = delegate.getAll(pubKey)
-        synchronized(getAllCache) { getAllCache.put(pubKey, result) }
+        synchronized(getAllCache) {
+            if (readGeneration == getAllGeneration) getAllCache.put(pubKey, result)
+        }
         return result.toList()
     }
 

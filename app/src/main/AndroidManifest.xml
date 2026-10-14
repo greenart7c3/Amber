@@ -55,6 +55,10 @@
             android:enabled="true"
             android:exported="false" />
         <receiver
+            android:name=".ui.SensitiveClipboardClearReceiver"
+            android:enabled="true"
+            android:exported="false" />
+        <receiver
             android:name=".service.TorRestartReceiver"
             android:enabled="true"
             android:exported="false" />

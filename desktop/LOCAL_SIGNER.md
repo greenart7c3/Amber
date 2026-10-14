@@ -9,7 +9,7 @@ You configure every account once in Amber. Any tool on the machine can then use
 them without its own key storage, relay setup or pairing string. Every request
 still goes through Amber's normal approval and permission system.
 
-It's off by default. Turn it on in **Settings → Desktop → Local socket signer**.
+It's always on: Amber starts the socket at launch.
 
 ## Contents
 
@@ -54,12 +54,10 @@ What happens to the file:
 
 - **Start:** Amber creates `~/.local/share/nostr/` with mode `0700` and the
   socket with mode `0600`.
-- **Stop:** Amber deletes the socket when the setting is turned off and when
-  the app exits.
+- **Stop:** Amber deletes the socket when the app exits.
 - **Leftover file:** a socket file left behind by a crash is replaced.
 - **Path already in use:** if another program is listening on that path,
-  Amber doesn't take it over, and Settings shows "Another signer is already
-  using …".
+  Amber doesn't take it over and logs it.
 
 The socket stays open while Amber is locked. Requests made while it's locked
 are answered with error `10` ("signer locked") instead of hanging.
@@ -371,7 +369,7 @@ socat - UNIX-CONNECT:$HOME/.local/share/nostr/signer.sock
 | `core/LocalSignerProtocol.kt` | Wire format: the method table, parsing params into Quartz NIP-46 `BunkerRequest`s, building responses (including the `secret` field), error codes. No I/O. |
 | `core/LocalSigner.kt` | The server: starting and stopping the socket, the peer check, one session per connection, login and secret handling, the per-request flow. |
 | `core/BunkerEngine.kt` | Shared with NIP-46: `computeResult` (sign, encrypt, decrypt, v3), `lookupPermission`, the `pending` queue, `approve`/`reject`, `dropPending`. |
-| `core/Models.kt` | `AppRecord.transport` (`"nip46"` or `"socket"`) and `socketSecretHash`. `DesktopSettings.localSigner`. |
+| `core/Models.kt` | `AppRecord.transport` (`"nip46"` or `"socket"`) and `socketSecretHash`. |
 
 **Request flow.** For each line, `LocalSigner` does the following.
 

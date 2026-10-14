@@ -173,8 +173,8 @@ fun main(args: Array<String>) {
         UriLaunch.registerSchemeHandler()
         AppImageIntegration.sync()
         UriLaunch.startIpcServer()
-        // NIP-5F: CLI tools sign over a local socket (opt-in, see Settings).
-        LocalSigner.sync()
+        // NIP-5F: CLI tools sign over a local socket (always on).
+        LocalSigner.start()
     }
     if (launchUri != null) UriLaunch.pending.value = launchUri
 

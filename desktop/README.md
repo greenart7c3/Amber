@@ -179,8 +179,7 @@ Command-line tools (nak, ngit, scripts, AI agents, …) can sign through Amber
 over a local Unix domain socket at `~/.local/share/nostr/signer.sock`
 (Linux, macOS, Windows 10+), following the NIP-5F draft with NIP-55-style
 accounts: no relays, no per-tool pairing, every request through Amber's
-normal approval and permissions. Turn it on under Settings → Desktop →
-**Local socket signer**.
+normal approval and permissions. It's always on.
 
 ```bash
 socat - UNIX-CONNECT:$HOME/.local/share/nostr/signer.sock

@@ -287,8 +287,6 @@ data class DesktopSettings(
     val showNotifications: Boolean = true,
     /** Start automatically at login (systemd user service on Linux, HKCU Run entry on Windows). */
     val startOnBoot: Boolean = false,
-    /** Serve NIP-5F clients (CLI tools) on the local Unix domain socket. */
-    val localSigner: Boolean = false,
     /** UI language tag (matches Strings.supportedLanguages); null = follow the OS. */
     val language: String? = null,
     /** Last floating window size in dp; null = default (fitted to the screen). */

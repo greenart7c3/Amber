@@ -68,11 +68,6 @@ object LocalSigner {
     private val sessions = ConcurrentHashMap<String, ClientSession>()
     private var shutdownHook: Thread? = null
 
-    /** Starts or stops the server to match the setting. */
-    fun sync() {
-        if (SettingsStore.settings.value.localSigner) start() else stop()
-    }
-
     @Synchronized
     fun start(): Status {
         if (server != null) return status.value

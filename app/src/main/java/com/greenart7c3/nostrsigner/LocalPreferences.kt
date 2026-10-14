@@ -79,6 +79,7 @@ private enum class SettingsKeys(val key: String) {
     PROFILE_FETCH_INTERVAL("profile_fetch_interval"),
     TRUST_SCORE_ENABLED("trust_score_enabled"),
     REQUIRE_UNLOCKED_DEVICE("require_unlocked_device"),
+    ACTIVE_KEYSTORE_ALIAS("active_keystore_alias"),
 }
 
 @Immutable
@@ -667,19 +668,29 @@ object LocalPreferences {
     /**
      * Toggles the opt-in "require unlocked device" key policy (GHSA-8844-q5vh-9j8f, L1).
      * The Keystore flag is set at key-generation time, so changing the setting
-     * requires rotating the AMBER_AES_KEY: decrypt all stored secrets with the
-     * old key, delete it, generate a new one with/without
-     * setUnlockedDeviceRequired, and re-encrypt everything.
+     * requires rotating to a new wrapping key. [SecureCryptoHelper.rotateKey]
+     * persists the setting together with the new active key alias.
      */
     suspend fun updateRequireUnlockedDevice(context: Context, enabled: Boolean) {
         SecureCryptoHelper.rotateKey(context, requireUnlockedDevice = enabled)
-        sharedPrefs(context).edit {
-            apply {
-                putBoolean(SettingsKeys.REQUIRE_UNLOCKED_DEVICE.key, enabled)
-            }
-        }
         Amber.instance.settings = loadSettingsFromEncryptedStorage()
     }
+
+    /** Keystore alias currently used to encrypt new secrets, or null if never recorded. */
+    fun getActiveKeystoreAlias(context: Context): String? = sharedPrefs(context).getString(SettingsKeys.ACTIVE_KEYSTORE_ALIAS.key, null)
+
+    /**
+     * Durably (synchronous `commit`) records the active Keystore alias and,
+     * when given, the matching key policy in one atomic write, so the
+     * setting can never disagree with the key that is actually in use.
+     * Returns false if the write did not reach disk. Not the KTX `edit {}`:
+     * it discards `commit()`'s result, which key rotation depends on.
+     */
+    @SuppressLint("UseKtx")
+    fun commitActiveKeystoreAlias(context: Context, alias: String, requireUnlockedDevice: Boolean? = null): Boolean = sharedPrefs(context).edit()
+        .putString(SettingsKeys.ACTIVE_KEYSTORE_ALIAS.key, alias)
+        .apply { requireUnlockedDevice?.let { putBoolean(SettingsKeys.REQUIRE_UNLOCKED_DEVICE.key, it) } }
+        .commit()
 
     fun updateUpdateCheckFrequency(context: Context, frequency: UpdateCheckFrequency) {
         sharedPrefs(context).edit {
@@ -746,15 +757,16 @@ object LocalPreferences {
     fun getWebDavPasswordEncrypted(context: Context): String = sharedPrefs(context).getString(SettingsKeys.WEBDAV_PASSWORD_ENCRYPTED.key, "") ?: ""
 
     /**
-     * Stores an already-encrypted WebDAV password. Used by
-     * [SecureCryptoHelper.rotateKey].
+     * Durably replaces the encrypted WebDAV password with [encryptedPassword]
+     * only if it still equals [expected]. Used by [SecureCryptoHelper.rotateKey].
      */
-    fun saveWebDavPasswordEncrypted(context: Context, encryptedPassword: String) {
-        sharedPrefs(context).edit {
-            apply {
-                putString(SettingsKeys.WEBDAV_PASSWORD_ENCRYPTED.key, encryptedPassword)
-            }
-        }
+    @Synchronized
+    @SuppressLint("UseKtx") // needs commit()'s result, see commitActiveKeystoreAlias
+    fun replaceWebDavPasswordEncrypted(context: Context, expected: String, encryptedPassword: String): Boolean {
+        if (getWebDavPasswordEncrypted(context) != expected) return false
+        return sharedPrefs(context).edit()
+            .putString(SettingsKeys.WEBDAV_PASSWORD_ENCRYPTED.key, encryptedPassword)
+            .commit()
     }
 
     suspend fun saveWebDavSettings(

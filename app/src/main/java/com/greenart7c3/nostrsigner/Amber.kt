@@ -431,6 +431,14 @@ class Amber :
                 }
                 LocalPreferences.reloadApp()
 
+                // Finish a wrapping-key rotation that was interrupted, so the
+                // previous key does not outlive the data it protected.
+                try {
+                    SecureCryptoHelper.completePendingRotation(this@Amber)
+                } catch (e: Exception) {
+                    AmberLog.e(TAG, "Failed to complete pending key rotation", e)
+                }
+
                 HttpClientManager.getHttpClient(false)
                 HttpClientManager.getHttpClient(true)
 

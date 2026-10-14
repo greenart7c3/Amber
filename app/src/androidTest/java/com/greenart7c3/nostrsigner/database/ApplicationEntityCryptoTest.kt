@@ -174,21 +174,20 @@ class ApplicationEntityCryptoTest {
     }
 
     /**
-     * Key-rotation write path (SecureCryptoHelper.rotateKey step 4): the DAO
-     * must accept already-encrypted column values written under the target
-     * Keystore key so the wrapper reads decrypt them back to plaintext.
+     * Key-rotation write path (SecureCryptoHelper.rotateKey sweep): the DAO
+     * must accept already-encrypted column values so the wrapper reads
+     * decrypt them back to plaintext, and only when the column still holds
+     * the expected ciphertext.
      */
     @Test
-    fun updateEncryptedColumnsRaw_rewritesRowCiphertext_readBackThroughWrapper() = runBlocking {
+    fun replaceRaw_rewritesRowCiphertext_readBackThroughWrapper() = runBlocking {
         dao.insertApplication(newEntity(key = "rot"))
+        val raw = dao.getAllApplicationsRaw().single { it.key == "rot" }
 
         val newSecret = "99999999-8888-7777-6666-555555555555"
         val newLocalKey = "ef".repeat(32)
-        dao.updateEncryptedColumnsRaw(
-            key = "rot",
-            secret = SecureCryptoHelper.encryptBlocking(newSecret),
-            localKey = SecureCryptoHelper.encryptBlocking(newLocalKey),
-        )
+        assertEquals(1, dao.replaceSecretRaw("rot", raw.secret, SecureCryptoHelper.encryptBlocking(newSecret)))
+        assertEquals(1, dao.replaceLocalKeyRaw("rot", raw.localKey, SecureCryptoHelper.encryptBlocking(newLocalKey)))
 
         val read = dao.getByKey("rot")?.application
         assertNotNull(read)
@@ -207,15 +206,15 @@ class ApplicationEntityCryptoTest {
     }
 
     @Test
-    fun updateEncryptedColumnsRaw_emptySentinel_roundTripsEmpty() = runBlocking {
-        dao.insertApplication(newEntity(key = "rotEmpty"))
+    fun replaceRaw_staleExpectedValue_leavesRowUntouched() = runBlocking {
+        dao.insertApplication(newEntity(key = "rotStale"))
 
-        dao.updateEncryptedColumnsRaw(key = "rotEmpty", secret = "", localKey = "")
+        assertEquals(0, dao.replaceSecretRaw("rotStale", "not-the-stored-value", SecureCryptoHelper.encryptBlocking("other")))
+        assertEquals(0, dao.replaceLocalKeyRaw("rotStale", "not-the-stored-value", SecureCryptoHelper.encryptBlocking("other")))
 
-        val read = dao.getByKey("rotEmpty")?.application
-        assertNotNull(read)
-        assertEquals("", read?.secret)
-        assertEquals("", read?.localKey)
+        val read = dao.getByKey("rotStale")?.application
+        assertEquals(sampleSecret, read?.secret)
+        assertEquals(sampleLocalKey, read?.localKey)
     }
 
     @Test

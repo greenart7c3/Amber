@@ -72,13 +72,18 @@ object DataStoreAccess {
     }
 
     /**
-     * Raw write: stores an already-encrypted value without encrypting. Used by
-     * [SecureCryptoHelper.rotateKey] to avoid mutex reentrancy.
+     * Raw compare-and-set: replaces the stored ciphertext with [encryptedValue]
+     * only if it still equals [expected], so a key-rotation sweep never
+     * overwrites a value written concurrently. Returns whether it replaced.
+     * Used by [SecureCryptoHelper.rotateKey] to avoid mutex reentrancy.
      */
-    suspend fun saveEncryptedRaw(context: Context, npub: String, key: Preferences.Key<String>, encryptedValue: String) {
+    suspend fun replaceEncryptedRaw(context: Context, npub: String, key: Preferences.Key<String>, expected: String, encryptedValue: String): Boolean {
+        var replaced = false
         getDataStore(context, npub).edit { prefs ->
-            prefs[key] = encryptedValue
+            replaced = prefs[key] == expected
+            if (replaced) prefs[key] = encryptedValue
         }
+        return replaced
     }
 
     suspend fun clearCacheForNpub(context: Context, npub: String) {
@@ -109,10 +114,13 @@ object DataStoreAccess {
         return prefs[PIN]
     }
 
-    /** Raw write for the PIN — see [saveEncryptedRaw] for rationale. */
-    suspend fun savePinRaw(context: Context, encryptedValue: String) {
+    /** Raw compare-and-set for the PIN — see [replaceEncryptedRaw]. */
+    suspend fun replacePinRaw(context: Context, expected: String, encryptedValue: String): Boolean {
+        var replaced = false
         getAppDataStore(context).edit { prefs ->
-            prefs[PIN] = encryptedValue
+            replaced = prefs[PIN] == expected
+            if (replaced) prefs[PIN] = encryptedValue
         }
+        return replaced
     }
 }

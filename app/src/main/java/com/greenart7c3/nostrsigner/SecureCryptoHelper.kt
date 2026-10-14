@@ -6,12 +6,15 @@ import android.os.Build
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import android.util.Base64
+import java.io.IOException
+import java.nio.BufferUnderflowException
 import java.nio.ByteBuffer
 import java.security.InvalidKeyException
 import java.security.KeyStore
 import java.security.KeyStoreException
 import java.security.ProviderException
 import java.security.UnrecoverableKeyException
+import javax.crypto.AEADBadTagException
 import javax.crypto.Cipher
 import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
@@ -21,33 +24,54 @@ import kotlinx.coroutines.sync.withLock
 
 object SecureCryptoHelper {
     private const val ANDROID_KEYSTORE = "AndroidKeyStore"
+
+    // The wrapping key alternates between two aliases. Rotation creates the
+    // new key under whichever alias is free, so the key that protects the
+    // existing ciphertext is never deleted until every secret has been
+    // durably re-encrypted (GHSA-wv7c-hq2j-ppc5). The alias in use is
+    // recorded by LocalPreferences.commitActiveKeystoreAlias; installs that
+    // predate it have never rotated and use KEY_ALIAS.
     private const val KEY_ALIAS = "AMBER_AES_KEY"
+    private const val ALT_KEY_ALIAS = "AMBER_AES_KEY_B"
     private const val TAG = "SecureCryptoHelper"
     private const val TRANSFORMATION = "AES/GCM/NoPadding"
     private const val IV_SIZE = 12 // 96 bits
     private const val TAG_SIZE = 128 // bits
+    private const val KEY_CHECK_PROBE = "amber-key-check"
+
+    // A sweep that rewrote anything is repeated, so a value written with the
+    // previous key while the sweep was running is still picked up.
+    private const val MAX_SWEEP_PASSES = 3
     private val mutex = Mutex()
 
     /**
-     * Cached handle to the [KEY_ALIAS] key. An AndroidKeyStore [SecretKey] is
-     * a lightweight reference (the material never leaves the TEE/StrongBox),
-     * but fetching it costs a fresh KeyStore load plus `containsAlias`/
-     * `getEntry` binder round-trips to the keystore daemon — milliseconds
-     * each, sequential. Re-fetching it per cipher operation made every
+     * The key new ciphertext is written with ([key], stored under [alias]),
+     * plus the other alias's key as a decrypt-only [fallback]. The fallback is
+     * only non-null while a rotation is unfinished: values not yet moved to
+     * the new key stay readable through it.
+     */
+    private class KeyHandle(val alias: String, val key: SecretKey, val fallback: SecretKey?)
+
+    /**
+     * Cached [KeyHandle]. An AndroidKeyStore [SecretKey] is a lightweight
+     * reference (the material never leaves the TEE/StrongBox), but fetching
+     * it costs a fresh KeyStore load plus `containsAlias`/`getEntry`
+     * binder round-trips to the keystore daemon — milliseconds each,
+     * sequential. Re-fetching it per cipher operation made every
      * envelope-encrypted DAO read pay a keystore lookup per field
      * (see ApplicationEntityCrypto.kt), which dominated load times.
-     * Invalidated by [rotateKey] and by [withFreshKeyRetry] when a
+     * Replaced by [rotateKey] and invalidated by [withFreshKeyRetry] when a
      * cached handle is found unusable.
      */
     @Volatile
-    private var cachedSecretKey: SecretKey? = null
+    private var cachedHandle: KeyHandle? = null
 
     suspend fun encrypt(plainText: String): String = mutex.withLock {
-        withFreshKeyRetry { key -> encryptWithKey(key, plainText) }
+        withFreshKeyRetry { handle -> encryptWithKey(handle.key, plainText) }
     }
 
     suspend fun decrypt(encryptedText: String): String = mutex.withLock {
-        withFreshKeyRetry { key -> decryptWithKey(key, encryptedText) }
+        withFreshKeyRetry { handle -> decryptWithHandle(handle, encryptedText) }
     }
 
     /**
@@ -59,7 +83,7 @@ object SecureCryptoHelper {
      * here so blocking callers do not need a [kotlinx.coroutines.runBlocking]
      * bridge.
      */
-    fun encryptBlocking(plainText: String): String = withFreshKeyRetry { key -> encryptWithKey(key, plainText) }
+    fun encryptBlocking(plainText: String): String = withFreshKeyRetry { handle -> encryptWithKey(handle.key, plainText) }
 
     private fun encryptWithKey(key: SecretKey, plainText: String): String {
         val cipher = Cipher.getInstance(TRANSFORMATION)
@@ -79,7 +103,15 @@ object SecureCryptoHelper {
      * Non-suspending equivalent of [decrypt]. See [encryptBlocking] for the
      * rationale.
      */
-    fun decryptBlocking(encryptedText: String): String = withFreshKeyRetry { key -> decryptWithKey(key, encryptedText) }
+    fun decryptBlocking(encryptedText: String): String = withFreshKeyRetry { handle -> decryptWithHandle(handle, encryptedText) }
+
+    private fun decryptWithHandle(handle: KeyHandle, encryptedText: String): String = try {
+        decryptWithKey(handle.key, encryptedText)
+    } catch (e: AEADBadTagException) {
+        // Not written with the active key; during an unfinished rotation it
+        // may still be under the previous one.
+        decryptWithKey(handle.fallback ?: throw e, encryptedText)
+    }
 
     private fun decryptWithKey(key: SecretKey, encryptedText: String): String {
         val data = Base64.decode(encryptedText, Base64.NO_WRAP)
@@ -99,16 +131,17 @@ object SecureCryptoHelper {
     /**
      * Runs [block] with the current key handle, retrying exactly once with a
      * re-fetched handle when the cached one has gone stale (the entry was
-     * deleted or invalidated underneath us — e.g. a concurrent [rotateKey],
-     * or the opt-in unlocked-device policy refusing key use while locked).
+     * deleted or invalidated underneath us — e.g. a concurrent [rotateKey]
+     * removing the previous key, or the opt-in unlocked-device policy
+     * refusing key use while locked).
      * Data errors — chiefly GCM's AEADBadTagException for corrupt or
      * wrong-key ciphertext — are not stale-handle errors and propagate to the
      * caller on the first attempt, preserving the decryptField failure
      * contract in ApplicationEntityCrypto.kt.
      */
-    private inline fun <T> withFreshKeyRetry(block: (SecretKey) -> T): T {
+    private inline fun <T> withFreshKeyRetry(block: (KeyHandle) -> T): T {
         try {
-            return block(getOrCreateSecretKey())
+            return block(getOrLoadHandle())
         } catch (e: InvalidKeyException) {
             AmberLog.w(TAG, "Cached Keystore key unusable, re-fetching once", e)
         } catch (e: KeyStoreException) {
@@ -118,38 +151,57 @@ object SecureCryptoHelper {
         } catch (e: ProviderException) {
             AmberLog.w(TAG, "Keystore provider failure, re-fetching key once", e)
         }
-        cachedSecretKey = null
-        return block(getOrCreateSecretKey())
+        cachedHandle = null
+        return block(getOrLoadHandle())
     }
 
-    private fun getOrCreateSecretKey(): SecretKey {
-        cachedSecretKey?.let { return it }
+    private fun getOrLoadHandle(): KeyHandle {
+        cachedHandle?.let { return it }
         return synchronized(this) {
-            cachedSecretKey?.let { return it }
-            val key = loadOrCreateSecretKey()
-            cachedSecretKey = key
-            key
+            cachedHandle?.let { return it }
+            val handle = loadHandle()
+            cachedHandle = handle
+            handle
         }
     }
 
-    private fun loadOrCreateSecretKey(): SecretKey {
-        val keyStore = KeyStore.getInstance(ANDROID_KEYSTORE).apply { load(null) }
-        if (keyStore.containsAlias(KEY_ALIAS)) {
-            val entry = keyStore.getEntry(KEY_ALIAS, null) as? KeyStore.SecretKeyEntry
-            if (entry != null) {
-                return entry.secretKey
+    private fun loadHandle(): KeyHandle {
+        val context = Amber.instance
+        val keyStore = getKeyStore()
+        val alias = resolveActiveAlias(context, keyStore)
+        val key = keyStore.secretKey(alias) ?: generateSecretKey(alias, Amber.instance.settings.requireUnlockedDevice)
+        return KeyHandle(alias, key, keyStore.secretKey(otherAlias(alias)))
+    }
+
+    /**
+     * The alias new ciphertext must be written with. Normally the recorded
+     * one; if that key is gone but the other alias still holds a key, adopt
+     * the survivor rather than letting [loadHandle] mint a fresh key, which
+     * would strand everything encrypted under the survivor.
+     */
+    private fun resolveActiveAlias(context: Context, keyStore: KeyStore): String {
+        val recorded = if (LocalPreferences.getActiveKeystoreAlias(context) == ALT_KEY_ALIAS) ALT_KEY_ALIAS else KEY_ALIAS
+        val other = otherAlias(recorded)
+        if (!keyStore.containsAlias(recorded) && keyStore.containsAlias(other)) {
+            AmberLog.w(TAG, "Active Keystore alias $recorded is missing, adopting $other")
+            if (!LocalPreferences.commitActiveKeystoreAlias(context, other)) {
+                AmberLog.w(TAG, "Failed to persist adopted Keystore alias $other")
             }
+            return other
         }
-
-        return generateSecretKey(Amber.instance.settings.requireUnlockedDevice)
+        return recorded
     }
+
+    private fun otherAlias(alias: String): String = if (alias == ALT_KEY_ALIAS) KEY_ALIAS else ALT_KEY_ALIAS
+
+    private fun KeyStore.secretKey(alias: String): SecretKey? = (getEntry(alias, null) as? KeyStore.SecretKeyEntry)?.secretKey
 
     private fun getKeyStore(): KeyStore = KeyStore.getInstance(ANDROID_KEYSTORE).apply { load(null) }
 
-    private fun generateSecretKey(requireUnlockedDevice: Boolean): SecretKey {
+    private fun generateSecretKey(alias: String, requireUnlockedDevice: Boolean): SecretKey {
         val keyGenerator = KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_AES, ANDROID_KEYSTORE)
         val paramsBuilder = KeyGenParameterSpec.Builder(
-            KEY_ALIAS,
+            alias,
             KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT,
         )
             .setBlockModes(KeyProperties.BLOCK_MODE_GCM)
@@ -184,171 +236,258 @@ object SecureCryptoHelper {
     }
 
     /**
-     * Rotates the [KEY_ALIAS] Keystore key, re-encrypting every stored secret
-     * (per-account DataStore keys, app DataStore PIN, WebDAV password, and the
-     * per-account Room `application` tables' envelope-encrypted `secret` /
-     * `localKey` columns — see `ApplicationEntityCrypto.kt`).
+     * Replaces the wrapping key with one generated under the requested
+     * policy, re-encrypting every stored secret (per-account DataStore keys,
+     * app DataStore PIN, WebDAV password, and the per-account Room
+     * `application` tables' envelope-encrypted `secret` / `localKey` columns —
+     * see `ApplicationEntityCrypto.kt`).
      *
      * The Keystore `setUnlockedDeviceRequired` flag is set at key-generation
-     * time, so toggling the opt-in policy requires destroying and recreating
-     * the key. The rotation is safe-by-design: all secrets are decrypted
-     * with the old key BEFORE the old key is deleted, so a mid-rotation crash
-     * leaves the old key intact (the delete is the only destructive step and
-     * it runs after all decryptions succeed).
+     * time, so changing the opt-in policy needs a new key. No step deletes a
+     * key that still protects data (GHSA-wv7c-hq2j-ppc5):
+     *
+     * 1. The new key is generated under the free alias; the old one is untouched.
+     * 2. One synchronous preferences commit makes the new alias active and
+     *    records the policy. Before it lands nothing has changed; after it,
+     *    new writes use the new key and reads fall back to the old one.
+     * 3. [finishRotation] moves each value to the new key with
+     *    compare-and-set writes, and deletes the old key only after a full
+     *    pass finds nothing left to move and nothing it failed to read.
+     *
+     * If step 3 cannot finish (process death, the keystore refusing a key),
+     * both keys remain and [completePendingRotation] resumes at next start.
+     * Throws only before step 2, leaving everything as it was.
      *
      * Uses internal non-locking cipher methods ([encryptWithKey]/
      * [decryptWithKey]) and raw DataStore/DAO helpers to avoid mutex
-     * reentrancy (Kotlin's [Mutex] is not reentrant). The cached-key path
-     * ([getOrCreateSecretKey]/[withFreshKeyRetry]) is deliberately not used
-     * here because this function manages the cache itself and must address
-     * the old/new keys explicitly.
+     * reentrancy (Kotlin's [Mutex] is not reentrant).
      */
-    suspend fun rotateKey(context: Context, requireUnlockedDevice: Boolean) = mutex.withLock {
+    suspend fun rotateKey(context: Context, requireUnlockedDevice: Boolean): Unit = mutex.withLock {
         val keyStore = getKeyStore()
-        if (!keyStore.containsAlias(KEY_ALIAS)) {
-            cachedSecretKey = generateSecretKey(requireUnlockedDevice)
+        val oldAlias = resolveActiveAlias(context, keyStore)
+        val newAlias = otherAlias(oldAlias)
+        val oldKey = keyStore.secretKey(oldAlias)
+        if (oldKey == null) {
+            // No key under either alias, so nothing is encrypted yet.
+            val key = generateSecretKey(oldAlias, requireUnlockedDevice)
+            if (!LocalPreferences.commitActiveKeystoreAlias(context, oldAlias, requireUnlockedDevice)) {
+                throw IOException("Failed to persist the key policy")
+            }
+            cachedHandle = KeyHandle(oldAlias, key, null)
             return@withLock
         }
 
-        // 1. Get the old key and decrypt all stored secrets (before deleting).
-        val oldEntry = keyStore.getEntry(KEY_ALIAS, null) as KeyStore.SecretKeyEntry
-        val oldKey = oldEntry.secretKey
-
-        val accounts = LocalPreferences.allSavedAccounts(context)
-        val decryptedAccountKeys = mutableMapOf<String, Pair<String?, String?>>()
-
-        for (acc in accounts) {
-            val rawPrivKey = DataStoreAccess.getEncryptedRaw(context, acc.npub, DataStoreAccess.NOSTR_PRIVKEY)
-            val rawSeedWords = DataStoreAccess.getEncryptedRaw(context, acc.npub, DataStoreAccess.SEED_WORDS)
-            decryptedAccountKeys[acc.npub] = Pair(
-                rawPrivKey?.let {
-                    try {
-                        decryptWithKey(oldKey, it)
-                    } catch (_: Exception) {
-                        null
-                    }
-                },
-                rawSeedWords?.let {
-                    try {
-                        decryptWithKey(oldKey, it)
-                    } catch (_: Exception) {
-                        null
-                    }
-                },
-            )
-        }
-
-        val rawPin = DataStoreAccess.getPinRaw(context)
-        val decryptedPin = rawPin?.let {
-            try {
-                decryptWithKey(oldKey, it)
-            } catch (_: Exception) {
-                null
+        // An earlier rotation never finished, so the free alias may still hold
+        // the key for some values. It can only be replaced once nothing needs it.
+        if (keyStore.containsAlias(newAlias)) {
+            check(finishRotation(context, keyStore, oldAlias, oldKey, newAlias)) {
+                "A previous key rotation is still incomplete"
             }
         }
 
-        val encryptedWebDavPassword = LocalPreferences.getWebDavPasswordEncrypted(context)
-        val decryptedWebDavPassword = if (encryptedWebDavPassword.isNotBlank()) {
-            try {
-                decryptWithKey(oldKey, encryptedWebDavPassword)
-            } catch (_: Exception) {
-                null
+        // 1. Generate the replacement and prove it works before relying on it.
+        val newKey = try {
+            generateSecretKey(newAlias, requireUnlockedDevice).also { key ->
+                check(decryptWithKey(key, encryptWithKey(key, KEY_CHECK_PROBE)) == KEY_CHECK_PROBE) { "New key failed a round trip" }
             }
+        } catch (e: Exception) {
+            discardAlias(keyStore, newAlias)
+            throw e
+        }
+
+        // 2. Switch. commit() updates the in-memory values even when the disk
+        // write fails, so restore them before discarding the new key.
+        val previousPolicy = Amber.instance.settings.requireUnlockedDevice
+        if (!LocalPreferences.commitActiveKeystoreAlias(context, newAlias, requireUnlockedDevice)) {
+            LocalPreferences.commitActiveKeystoreAlias(context, oldAlias, previousPolicy)
+            discardAlias(keyStore, newAlias)
+            throw IOException("Failed to persist the new active key alias")
+        }
+        cachedHandle = KeyHandle(newAlias, newKey, oldKey)
+
+        // 3. Move everything over and drop the old key.
+        if (finishRotation(context, keyStore, newAlias, newKey, oldAlias)) {
+            AmberLog.d(TAG, "Key rotation complete (requireUnlockedDevice=$requireUnlockedDevice)")
         } else {
-            null
-        }
-
-        // 1b. Read the per-account Room `application` tables and decrypt the
-        // envelope-encrypted `secret`/`localKey` columns (GHSA-5fjp-ghh8-wch8)
-        // with the old key — still before any destructive step. Rows whose
-        // columns fail to decrypt keep their raw ciphertext on write-back
-        // (rotation must not destroy data it cannot recover).
-        val decryptedAppRows = mutableMapOf<String, List<RotatedAppRow>>()
-        for (acc in accounts) {
-            val rows = runCatching { Amber.instance.dao(acc.npub).getAllApplicationsRaw() }
-                .onFailure { AmberLog.w(TAG, "Key rotation: failed to read application rows", it) }
-                .getOrElse { emptyList() }
-            decryptedAppRows[acc.npub] = rows.mapNotNull { row ->
-                if (row.secret.isEmpty() && row.localKey.isEmpty()) return@mapNotNull null
-                RotatedAppRow(
-                    key = row.key,
-                    secretPlain = row.secret.decryptOrNullWith(oldKey),
-                    localKeyPlain = row.localKey.decryptOrNullWith(oldKey),
-                    secretRaw = row.secret,
-                    localKeyRaw = row.localKey,
-                )
-            }
-        }
-
-        // 2. Delete the old key and generate a new one with the new policy.
-        // Update the handle cache in the same critical section so concurrent
-        // blocking callers never observe the deleted old key.
-        keyStore.deleteEntry(KEY_ALIAS)
-        val newKey = generateSecretKey(requireUnlockedDevice)
-        cachedSecretKey = newKey
-
-        // 3. Re-encrypt and store all secrets with the new key.
-        for ((npub, keys) in decryptedAccountKeys) {
-            keys.first?.let {
-                DataStoreAccess.saveEncryptedRaw(context, npub, DataStoreAccess.NOSTR_PRIVKEY, encryptWithKey(newKey, it))
-            }
-            keys.second?.let {
-                DataStoreAccess.saveEncryptedRaw(context, npub, DataStoreAccess.SEED_WORDS, encryptWithKey(newKey, it))
-            }
-        }
-        decryptedPin?.let {
-            DataStoreAccess.savePinRaw(context, encryptWithKey(newKey, it))
-        }
-        decryptedWebDavPassword?.let {
-            LocalPreferences.saveWebDavPasswordEncrypted(context, encryptWithKey(newKey, it))
-        }
-
-        // 4. Re-encrypt the per-account `application` rows with the new key
-        // and write them back through the raw (ciphertext-in, ciphertext-out)
-        // update. Columns whose old-key decryption failed are written back
-        // verbatim, matching the `decryptField` failure contract in
-        // ApplicationEntityCrypto.kt.
-        for ((npub, rows) in decryptedAppRows) {
-            val dao = runCatching { Amber.instance.dao(npub) }.getOrNull() ?: continue
-            for (row in rows) {
-                runCatching {
-                    dao.updateEncryptedColumnsRaw(
-                        key = row.key,
-                        secret = row.secretPlain?.let { encryptWithKey(newKey, it) } ?: row.secretRaw,
-                        localKey = row.localKeyPlain?.let { encryptWithKey(newKey, it) } ?: row.localKeyRaw,
-                    )
-                }.onFailure {
-                    AmberLog.w(TAG, "Key rotation: failed to re-encrypt application row", it)
-                }
-            }
-        }
-
-        AmberLog.d(TAG, "Key rotation complete (requireUnlockedDevice=$requireUnlockedDevice)")
-    }
-
-    private fun String.decryptOrNullWith(key: SecretKey): String? = if (isEmpty()) {
-        null
-    } else {
-        try {
-            decryptWithKey(key, this)
-        } catch (_: Exception) {
-            null
+            AmberLog.w(TAG, "Key rotation switched keys but kept the previous one; it will be retried at next start")
         }
     }
 
     /**
-     * One `application`-table row staged during key rotation: [secretPlain] /
-     * [localKeyPlain] hold the old-key decryption result (or `null` when the
-     * ciphertext was unreadable — those rows keep [secretRaw]/[localKeyRaw]
-     * verbatim on write-back so no data is lost).
+     * Resumes a rotation that was interrupted after the switch (or abandoned
+     * before it), so the previous key does not outlive its data. Safe to call
+     * on every start: it does nothing when only one alias exists.
      */
-    private data class RotatedAppRow(
-        val key: String,
-        val secretPlain: String?,
-        val localKeyPlain: String?,
-        val secretRaw: String,
-        val localKeyRaw: String,
-    )
+    suspend fun completePendingRotation(context: Context): Unit = mutex.withLock {
+        val keyStore = getKeyStore()
+        val activeAlias = resolveActiveAlias(context, keyStore)
+        val previousAlias = otherAlias(activeAlias)
+        if (!keyStore.containsAlias(previousAlias)) return@withLock
+        val activeKey = keyStore.secretKey(activeAlias) ?: return@withLock
+        if (finishRotation(context, keyStore, activeAlias, activeKey, previousAlias)) {
+            AmberLog.d(TAG, "Completed a pending key rotation")
+        } else {
+            AmberLog.w(TAG, "Pending key rotation still incomplete; keeping the previous key")
+        }
+    }
+
+    /**
+     * Moves every value still encrypted under [previousAlias] onto
+     * [activeKey], then deletes [previousAlias]. Returns true once it is
+     * deleted; false (deleting nothing) if any value could not be checked or
+     * moved, or values kept moving for [MAX_SWEEP_PASSES] passes.
+     */
+    private suspend fun finishRotation(
+        context: Context,
+        keyStore: KeyStore,
+        activeAlias: String,
+        activeKey: SecretKey,
+        previousAlias: String,
+    ): Boolean {
+        val previousKey = keyStore.secretKey(previousAlias)
+        if (previousKey != null) {
+            var settled = false
+            for (pass in 1..MAX_SWEEP_PASSES) {
+                val result = try {
+                    sweep(context, activeKey, previousKey)
+                } catch (e: Exception) {
+                    AmberLog.w(TAG, "Key rotation: sweep failed", e)
+                    return false
+                }
+                if (result.failed > 0) {
+                    AmberLog.w(TAG, "Key rotation: ${result.failed} value(s) could not be moved to the new key")
+                    return false
+                }
+                if (result.changed == 0) {
+                    settled = true
+                    break
+                }
+            }
+            if (!settled) return false
+        }
+        keyStore.deleteEntry(previousAlias)
+        cachedHandle = KeyHandle(activeAlias, activeKey, null)
+        return true
+    }
+
+    private class SweepResult {
+        var changed = 0
+        var failed = 0
+    }
+
+    /** One pass over every stored ciphertext; see [migrateCiphertext]. */
+    private suspend fun sweep(context: Context, current: SecretKey, previous: SecretKey): SweepResult {
+        val result = SweepResult()
+
+        suspend fun move(raw: String?, replace: suspend (expected: String, ciphertext: String) -> Boolean) {
+            if (raw.isNullOrEmpty()) return
+            val migration = migrateCiphertext(
+                raw,
+                decryptCurrent = { decryptWithKey(current, it) },
+                decryptPrevious = { decryptWithKey(previous, it) },
+                encryptCurrent = { encryptWithKey(current, it) },
+            )
+            when (migration) {
+                CiphertextMigration.Current -> Unit
+                CiphertextMigration.Unreadable -> AmberLog.w(TAG, "Key rotation: skipping a value neither key can decrypt")
+                is CiphertextMigration.Failed -> {
+                    result.failed++
+                    AmberLog.w(TAG, "Key rotation: could not check a value", migration.error)
+                }
+                is CiphertextMigration.Rewrite -> {
+                    // Counted even when the compare-and-set loses to a
+                    // concurrent write, so another pass re-checks that value.
+                    result.changed++
+                    try {
+                        replace(raw, migration.ciphertext)
+                    } catch (e: Exception) {
+                        result.failed++
+                        AmberLog.w(TAG, "Key rotation: failed to write a value", e)
+                    }
+                }
+            }
+        }
+
+        val accounts = LocalPreferences.allSavedAccounts(context)
+        for (acc in accounts) {
+            for (key in listOf(DataStoreAccess.NOSTR_PRIVKEY, DataStoreAccess.SEED_WORDS)) {
+                move(DataStoreAccess.getEncryptedRaw(context, acc.npub, key)) { expected, ciphertext ->
+                    DataStoreAccess.replaceEncryptedRaw(context, acc.npub, key, expected, ciphertext)
+                }
+            }
+        }
+        move(DataStoreAccess.getPinRaw(context)) { expected, ciphertext ->
+            DataStoreAccess.replacePinRaw(context, expected, ciphertext)
+        }
+        move(LocalPreferences.getWebDavPasswordEncrypted(context)) { expected, ciphertext ->
+            LocalPreferences.replaceWebDavPasswordEncrypted(context, expected, ciphertext)
+        }
+        // Per-account Room `application` tables (GHSA-5fjp-ghh8-wch8).
+        for (acc in accounts) {
+            val dao = Amber.instance.dao(acc.npub)
+            for (row in dao.getAllApplicationsRaw()) {
+                move(row.secret) { expected, ciphertext -> dao.replaceSecretRaw(row.key, expected, ciphertext) > 0 }
+                move(row.localKey) { expected, ciphertext -> dao.replaceLocalKeyRaw(row.key, expected, ciphertext) > 0 }
+            }
+        }
+        return result
+    }
+
+    internal sealed interface CiphertextMigration {
+        /** Already readable with the current key. */
+        data object Current : CiphertextMigration
+
+        /** Neither key can decrypt it, so deleting the previous key loses nothing. */
+        data object Unreadable : CiphertextMigration
+
+        data class Rewrite(val ciphertext: String) : CiphertextMigration
+
+        /** A key could not be used right now; the previous key must be kept. */
+        data class Failed(val error: Exception) : CiphertextMigration
+    }
+
+    /**
+     * Decides what one stored value needs during a rotation. Only an error
+     * that proves the ciphertext does not belong to a key (GCM tag mismatch,
+     * malformed data) lets the sweep move on; any other failure — the device
+     * is locked under the unlocked-device policy, a keystore error — is
+     * [CiphertextMigration.Failed], which keeps the previous key alive.
+     */
+    internal fun migrateCiphertext(
+        raw: String,
+        decryptCurrent: (String) -> String,
+        decryptPrevious: (String) -> String,
+        encryptCurrent: (String) -> String,
+    ): CiphertextMigration {
+        try {
+            decryptCurrent(raw)
+            return CiphertextMigration.Current
+        } catch (e: Exception) {
+            if (!e.isWrongKeyOrMalformed()) return CiphertextMigration.Failed(e)
+        }
+        val plainText = try {
+            decryptPrevious(raw)
+        } catch (e: Exception) {
+            return if (e.isWrongKeyOrMalformed()) CiphertextMigration.Unreadable else CiphertextMigration.Failed(e)
+        }
+        return try {
+            CiphertextMigration.Rewrite(encryptCurrent(plainText))
+        } catch (e: Exception) {
+            CiphertextMigration.Failed(e)
+        }
+    }
+
+    private fun Exception.isWrongKeyOrMalformed(): Boolean = this is AEADBadTagException ||
+        this is IllegalArgumentException ||
+        this is BufferUnderflowException
+
+    private fun discardAlias(keyStore: KeyStore, alias: String) {
+        try {
+            keyStore.deleteEntry(alias)
+        } catch (e: Exception) {
+            AmberLog.w(TAG, "Failed to delete unused Keystore alias $alias", e)
+        }
+    }
 }
 
 fun Context.hasStrongBox(): Boolean {

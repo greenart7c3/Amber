@@ -156,11 +156,24 @@ class CachingApplicationDaoTest {
     }
 
     @Test
-    fun `updateEncryptedColumnsRaw evicts all cached lists`() = runBlocking {
+    fun `replaceSecretRaw evicts all cached lists`() = runBlocking {
         stubGetAll(entity())
         dao.getAll(accountKey)
 
-        dao.updateEncryptedColumnsRaw("app1", "secret", "localKey")
+        coEvery { delegate.replaceSecretRaw(any(), any(), any()) } returns 1
+        dao.replaceSecretRaw("app1", "old", "new")
+
+        dao.getAll(accountKey)
+        coVerify(exactly = 2) { delegate.getAll(accountKey) }
+    }
+
+    @Test
+    fun `replaceLocalKeyRaw evicts all cached lists`() = runBlocking {
+        stubGetAll(entity())
+        dao.getAll(accountKey)
+
+        coEvery { delegate.replaceLocalKeyRaw(any(), any(), any()) } returns 1
+        dao.replaceLocalKeyRaw("app1", "old", "new")
 
         dao.getAll(accountKey)
         coVerify(exactly = 2) { delegate.getAll(accountKey) }

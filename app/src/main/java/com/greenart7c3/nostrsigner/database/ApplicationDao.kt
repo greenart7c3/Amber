@@ -264,16 +264,21 @@ interface ApplicationDao {
     suspend fun updateNameAndIcon(key: String, name: String, icon: String)
 
     /**
-     * Rewrites the two envelope-encrypted columns for one row. Key-rotation
-     * write path ([SecureCryptoHelper.rotateKey]): the values must already be
-     * ciphertext encrypted with the TARGET Keystore key — or the unchanged raw
-     * value when the old ciphertext could not be decrypted, so rotation never
-     * destroys data it cannot recover. Not wrapped by a public default method
-     * because callers deal exclusively in ciphertext (empty-sentinel included).
+     * Key-rotation write path ([SecureCryptoHelper.rotateKey]): replaces the
+     * envelope-encrypted `secret` column with [newValue] (ciphertext under the
+     * new Keystore key) only if it still holds [expected], so the sweep never
+     * clobbers a row written concurrently. Returns the number of rows changed.
+     * Not wrapped by a public default method because callers deal exclusively
+     * in ciphertext.
      */
-    @Query("UPDATE application SET secret = :secret, localKey = :localKey WHERE `key` = :key")
+    @Query("UPDATE application SET secret = :newValue WHERE `key` = :key AND secret = :expected")
     @Transaction
-    suspend fun updateEncryptedColumnsRaw(key: String, secret: String, localKey: String)
+    suspend fun replaceSecretRaw(key: String, expected: String, newValue: String): Int
+
+    /** `localKey` counterpart of [replaceSecretRaw]. */
+    @Query("UPDATE application SET localKey = :newValue WHERE `key` = :key AND localKey = :expected")
+    @Transaction
+    suspend fun replaceLocalKeyRaw(key: String, expected: String, newValue: String): Int
 
     @Delete
     @Transaction

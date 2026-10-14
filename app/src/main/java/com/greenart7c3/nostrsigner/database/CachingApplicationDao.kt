@@ -325,10 +325,9 @@ class CachingApplicationDao(
     // permission cache, but they ARE columns of getAll's projection, so evict
     // the per-account lists (SecureCryptoHelper.rotateKey calls this through
     // the caching wrapper, ciphertext in / ciphertext out).
-    override suspend fun updateEncryptedColumnsRaw(key: String, secret: String, localKey: String) {
-        delegate.updateEncryptedColumnsRaw(key, secret, localKey)
-        invalidateGetAll(null)
-    }
+    override suspend fun replaceSecretRaw(key: String, expected: String, newValue: String): Int = delegate.replaceSecretRaw(key, expected, newValue).also { invalidateGetAll(null) }
+
+    override suspend fun replaceLocalKeyRaw(key: String, expected: String, newValue: String): Int = delegate.replaceLocalKeyRaw(key, expected, newValue).also { invalidateGetAll(null) }
 
     override suspend fun insertApplicationRaw(event: ApplicationEntity): Long? = delegate.insertApplicationRaw(event)
 

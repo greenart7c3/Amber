@@ -154,7 +154,11 @@ fun AuthWhitelistScreen(
                         relay = hostname,
                         trustScore = trustScores[hostname],
                         isLoadingScore = loadingScores[hostname] == true,
-                        showTrustScore = !TrustScoreService.isExcludedFromScoring(hostname),
+                        // The whitelist stores bare hostnames; the scoring fetch
+                        // normalizes "wss://$hostname", so check exclusion on
+                        // the same constructed URL — a scheme-less hostname
+                        // would be treated as excluded and hide every badge.
+                        showTrustScore = !TrustScoreService.isExcludedFromScoring("wss://$hostname"),
                         onClick = {
                             whitelist.removeAt(index)
                             Amber.instance.settings = Amber.instance.settings.copy(

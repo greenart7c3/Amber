@@ -6,6 +6,7 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
 import androidx.compose.ui.platform.Clipboard
 import com.greenart7c3.nostrsigner.Amber
+import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.DataStoreAccess
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R

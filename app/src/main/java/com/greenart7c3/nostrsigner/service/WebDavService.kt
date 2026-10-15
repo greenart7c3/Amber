@@ -35,36 +35,46 @@ object WebDavService {
             isPrivateAddress = Amber.instance.isPrivateIp(serverUrl),
             torMode = Amber.instance.settings.torMode,
         )
-        val proxy: Proxy? = if (useProxy) {
+        val proxy: Proxy = if (useProxy) {
             // A SOCKS proxy that is still bootstrapping would fail later with a
             // generic connect error; fail here with the real condition.
             check(Amber.instance.isSocksProxyAlive("127.0.0.1", Amber.instance.settings.proxyPort)) {
                 "Tor is enabled but its SOCKS proxy is not reachable yet"
             }
-            HttpClientManager.getCurrentProxy()
+            checkNotNull(HttpClientManager.getCurrentProxy()) { "Tor proxy is not configured yet" }
         } else {
-            null
+            Proxy(Proxy.Type.DIRECT, null)
         }
         // Dedicated minimal client: the shared relay stack brings a relay
         // User-Agent interceptor, request logging, and an URL-keyed decrypt
-        // cache that must not apply to backup traffic. Timeout scaling matches
-        // HttpClientManager.buildHttpClient (proxied routes get 3x).
-        val timeout = HttpClientManager.getDefaultTimeout()
-        val seconds = if (proxy != null) timeout.seconds * 3 else timeout.seconds
-        return OkHttpClient.Builder()
+        // cache that must not apply to backup traffic.
+        val builder = OkHttpClient.Builder()
             .proxy(proxy)
             .socketFactory(TaggedSocketFactory(SocketFactory.getDefault()))
             .addInterceptor(TaggingInterceptor())
-            .connectTimeout(seconds, TimeUnit.SECONDS)
-            .readTimeout(seconds, TimeUnit.SECONDS)
-            .writeTimeout(seconds, TimeUnit.SECONDS)
-            // Same-origin redirects are ordinary WebDAV behavior (collection
-            // URLs without a trailing slash 301 to slash). OkHttp strips the
-            // Authorization header when a redirect crosses to another host, so
-            // credentials never follow.
-            .followRedirects(true)
+        if (useProxy) {
+            // Timeout scaling matches HttpClientManager.buildHttpClient
+            // (proxied routes get 3x): building a Tor circuit plus the TLS
+            // handshake needs the larger budget.
+            val timeout = HttpClientManager.getDefaultTimeout()
+            val seconds = timeout.seconds * 3
+            builder.connectTimeout(seconds, TimeUnit.SECONDS)
+                .readTimeout(seconds, TimeUnit.SECONDS)
+                .writeTimeout(seconds, TimeUnit.SECONDS)
+        } else {
+            // Direct: keep the long budgets this client always had — large
+            // backups to a slow NAS must not time out.
+            builder.connectTimeout(30, TimeUnit.SECONDS)
+                .readTimeout(60, TimeUnit.SECONDS)
+                .writeTimeout(60, TimeUnit.SECONDS)
+        }
+        // Same-origin redirects are ordinary WebDAV behavior (collection
+        // URLs without a trailing slash 301 to slash). OkHttp strips the
+        // Authorization header when a redirect crosses to another host, so
+        // credentials never follow.
+        builder.followRedirects(true)
             .followSslRedirects(true)
-            .build()
+        return builder.build()
     }
 
     fun uploadFile(

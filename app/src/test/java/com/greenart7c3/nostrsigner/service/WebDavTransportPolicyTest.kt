@@ -45,11 +45,12 @@ class WebDavTransportPolicyTest {
         assertEquals("https://backup.example/dav/amber.ncryptsec", url.toString())
 
         // Query/fragment injection via the restore text field must be encoded,
-        // not interpreted.
+        // not interpreted. OkHttp's PATH_SEGMENT_ENCODE_SET covers ? and #
+        // (and whitespace, quotes, brackets) but leaves '=' alone.
         val injected = WebDavTransportPolicy.buildFileUrl("https://backup.example/dav", "x?token=secret#f")
         assertNull(injected.query)
         assertNull(injected.fragment)
-        assertTrue(injected.encodedPath.endsWith("/x%3Ftoken%3Dsecret%23f"))
+        assertTrue(injected.encodedPath.endsWith("/x%3Ftoken=secret%23f"))
 
         listOf("", "..", ".", "a/b", "a\\b").forEach {
             assertThrows(IllegalArgumentException::class.java) { WebDavTransportPolicy.buildFileUrl("https://backup.example/dav", it) }

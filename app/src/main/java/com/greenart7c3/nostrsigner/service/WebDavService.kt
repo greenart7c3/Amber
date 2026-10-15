@@ -21,8 +21,7 @@ import okhttp3.RequestBody.Companion.toRequestBody
  * cannot reach the user's own NAS, so private addresses connect directly.
  * Mirrors the routing rule used by the relay factory and the image loader.
  */
-internal fun webDavUsesProxy(isPrivateAddress: Boolean, torMode: TorMode): Boolean =
-    !isPrivateAddress && torMode != TorMode.DISABLED
+internal fun webDavUsesProxy(isPrivateAddress: Boolean, torMode: TorMode): Boolean = !isPrivateAddress && torMode != TorMode.DISABLED
 
 object WebDavService {
     private val MEDIA_TYPE = "application/octet-stream".toMediaType()

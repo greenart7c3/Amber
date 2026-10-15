@@ -90,6 +90,10 @@ data class AccountInfo(
 
 object LocalPreferences {
     private const val COMMA = ","
+
+    // Pre-rename consent key, kept only so loadSettingsFromEncryptedStorage can
+    // scrub it. Never read.
+    private const val LEGACY_TRUST_SCORE_ENABLED_KEY = "trust_score_enabled"
     private var currentAccount: String? = null
     private var accountCache = LargeCache<String, Account>()
 
@@ -349,6 +353,11 @@ object LocalPreferences {
                 trustScoreEnabled = getBoolean(SettingsKeys.TRUST_SCORE_ENABLED.key, false),
                 requireUnlockedDevice = getBoolean(SettingsKeys.REQUIRE_UNLOCKED_DEVICE.key, false),
             )
+        }
+        // One-time cleanup: the pre-rename legacy key is never read again, so
+        // remove it instead of leaving a stale opt-in bit in every prefs file.
+        if (sharedPrefs(context).contains(LEGACY_TRUST_SCORE_ENABLED_KEY)) {
+            sharedPrefs(context).edit { remove(LEGACY_TRUST_SCORE_ENABLED_KEY) }
         }
     }
 

@@ -241,6 +241,7 @@ fun DefaultProfileRelaysScreen(
                         RelayCard(
                             trustScore = trustScores[relays2[it].url],
                             isLoadingScore = loadingScores[relays2[it].url] == true,
+                            showTrustScore = !TrustScoreService.isExcludedFromScoring(relays2[it].url),
                             relay = relays2[it].url,
                             onClick = {
                                 isLoading.value = true

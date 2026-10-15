@@ -154,6 +154,7 @@ fun AuthWhitelistScreen(
                         relay = hostname,
                         trustScore = trustScores[hostname],
                         isLoadingScore = loadingScores[hostname] == true,
+                        showTrustScore = !TrustScoreService.isExcludedFromScoring(hostname),
                         onClick = {
                             whitelist.removeAt(index)
                             Amber.instance.settings = Amber.instance.settings.copy(

@@ -7,8 +7,8 @@ import com.greenart7c3.nostrsigner.okhttp.TaggedSocketFactory
 import com.greenart7c3.nostrsigner.okhttp.TaggingInterceptor
 import java.io.IOException
 import java.net.Proxy
-import java.net.SocketFactory
 import java.util.concurrent.TimeUnit
+import javax.net.SocketFactory
 import okhttp3.Credentials
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient

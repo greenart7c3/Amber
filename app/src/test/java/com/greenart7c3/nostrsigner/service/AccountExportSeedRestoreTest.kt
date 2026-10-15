@@ -11,6 +11,9 @@ import com.vitorpamplona.quartz.nip19Bech32.toNpub
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
@@ -31,6 +34,8 @@ class AccountExportSeedRestoreTest {
             picture = MutableStateFlow(""),
             signPolicy = 1,
             didBackup = false,
+            // Explicit scope: the default reads Amber.instance, uninitialized in JVM tests.
+            scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined),
             signer = NostrSignerInternal(KeyPair(privKey)),
         )
     }

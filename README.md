@@ -37,6 +37,8 @@ height="70">](https://f-droid.org/packages/com.greenart7c3.nostrsigner/)
 
 # Contributing
 
+Please read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request. If an AI coding assistant wrote a large part of your change, also read [CONTRIBUTING-WITH-AI.md](CONTRIBUTING-WITH-AI.md).
+
 Issues can be logged on: [https://gitworkshop.dev/greenart7c3@greenart7c3.com/Amber](https://gitworkshop.dev/greenart7c3@greenart7c3.com/Amber)
 
 [GitHub issues](https://github.com/greenart7c3/Amber/issues) and [pull requests](https://github.com/greenart7c3/Amber/pulls) here are also welcome. Translations can be provided by editing the `strings.xml` files under `app/src/main/res/values-<locale>/` and opening a pull request.

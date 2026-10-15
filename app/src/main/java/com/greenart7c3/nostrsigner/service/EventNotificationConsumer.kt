@@ -218,7 +218,21 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                     val connSigner = NostrSignerInternal(KeyPair(privKey = connectionPrivKey.hexToByteArray()))
                     connSigner.decrypt(event.content, event.pubKey)
                 } else {
-                    acc.decrypt(event.content, event.pubKey)
+                    try {
+                        acc.decrypt(event.content, event.pubKey)
+                    } catch (e: Exception) {
+                        if (e is CancellationException) throw e
+                        // Opening the request envelope for a legacy client is
+                        // transport, not authorization: the request must reach
+                        // the permission system (and the user) even while the
+                        // device is locked, or the client never gets a response.
+                        // The gated operation inside still enforces the policy.
+                        if (e is SecurityException || e is IllegalStateException) {
+                            acc.signer.decrypt(event.content, event.pubKey)
+                        } else {
+                            throw e
+                        }
+                    }
                 }
             } catch (e: Exception) {
                 saveLog("Decryption failed for event ${event.id}: ${e.message}", relay.url, acc.npub)
@@ -917,6 +931,10 @@ class EventNotificationConsumer(private val applicationContext: Context) {
             null
         } catch (e: Exception) {
             if (e is CancellationException) throw e
+            // A device-lock or settings refusal is not a ciphertext problem:
+            // let it through so the client gets the real condition instead of
+            // being told the payload was corrupt.
+            if (e is SecurityException || e is IllegalStateException) throw e
             // Keep the response generic so we don't leak the ciphertext's
             // embedded context back to the requester.
             "could not decrypt the message"

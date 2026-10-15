@@ -167,6 +167,14 @@ object LocalPreferences {
 
     fun getBatteryOptimization(context: Context): Boolean = sharedPrefs(context).getBoolean(SettingsKeys.BATERRY_OPTIMIZATION.key, false)
 
+    /**
+     * Synchronous read of the device-lock flag straight from SharedPreferences.
+     * Unlike the DataStore-backed [AmberSettings.requireUnlockedDevice], this is
+     * correct before the async settings load runs (offline flavor, WorkManager
+     * or ContentProvider cold start), so per-operation gates can rely on it.
+     */
+    fun getRequireUnlockedDevice(context: Context): Boolean = sharedPrefs(context).getBoolean(SettingsKeys.REQUIRE_UNLOCKED_DEVICE.key, false)
+
     fun updateBatteryOptimization(context: Context, value: Boolean) {
         sharedPrefs(context).edit {
             apply {

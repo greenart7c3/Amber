@@ -7,6 +7,7 @@ import androidx.compose.runtime.Stable
 import androidx.compose.ui.platform.Clipboard
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.DataStoreAccess
+import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.service.DeviceUnlockPolicy
 import com.greenart7c3.nostrsigner.service.nip44v3.Nip44v3
@@ -45,13 +46,14 @@ class Account(
     // previews can build an Account without the Amber Application singleton.
     scope: CoroutineScope = Amber.instance.applicationIOScope,
     private val keyAccessCheck: () -> Unit = {
-        // Until settings load, requireUnlockedDevice's default (false) is a guess, not a
-        // decision — the same pre-load window WebDavService fails closed on.
-        check(Amber.instance.isSettingsLoaded) { "Settings are not loaded yet" }
-        val required = Amber.instance.settings.requireUnlockedDevice
-        if (required) {
+        // REQUIRE_UNLOCKED_DEVICE is a plain SharedPreferences boolean, so read it
+        // synchronously: the DataStore-backed settings object may not be loaded yet
+        // (offline flavor, WorkManager/ContentProvider cold start), and this gate
+        // must see the user's actual decision, not a default-valued guess.
+        val required = LocalPreferences.getRequireUnlockedDevice(Amber.instance)
+        DeviceUnlockPolicy.requireAccess(required) {
             val keyguard = Amber.instance.getSystemService(KeyguardManager::class.java)
-            DeviceUnlockPolicy.requireAccess(required, keyguard?.isDeviceLocked ?: true)
+            keyguard?.isDeviceLocked ?: true
         }
     },
 ) {
@@ -177,8 +179,15 @@ class Account(
 
     fun copyToClipboard(clipboardManager: Clipboard) {
         Amber.instance.applicationIOScope.launch {
+            val nsec = try {
+                getNsec()
+            } catch (e: Exception) {
+                if (e is CancellationException) throw e
+                // Never mark the account backed up when the export was refused.
+                AmberLog.e(Amber.TAG, "Failed to export secret key for clipboard", e)
+                return@launch
+            }
             didBackup = true
-            val nsec = getNsec()
             Amber.instance.applicationIOScope.launch(Dispatchers.Main) {
                 clipboardManager.setSensitiveClip("", nsec)
 

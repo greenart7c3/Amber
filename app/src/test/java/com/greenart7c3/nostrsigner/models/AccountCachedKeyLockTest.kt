@@ -4,6 +4,7 @@ import android.app.KeyguardManager
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.service.DeviceUnlockPolicy
+import com.greenart7c3.nostrsigner.service.installAmberInstance
 import com.vitorpamplona.quartz.nip01Core.core.Event
 import com.vitorpamplona.quartz.nip01Core.signers.NostrSignerInternal
 import io.mockk.Called
@@ -73,7 +74,7 @@ class AccountCachedKeyLockTest {
         val amber = mockk<Amber>()
         val keyguard = mockk<KeyguardManager>()
         every { amber.getSystemService(KeyguardManager::class.java) } returns keyguard
-        Amber.Companion::class.java.getDeclaredField("instance").apply { isAccessible = true }.set(Amber.Companion, amber)
+        installAmberInstance(amber)
         mockkObject(LocalPreferences)
         try {
             // Opt-in off: allowed regardless of lock state, keyguard untouched.

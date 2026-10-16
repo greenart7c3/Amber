@@ -285,6 +285,13 @@ object LocalPreferences {
     fun loadSettingsFromEncryptedStorage(context: Context = Amber.instance): AmberSettings {
         checkNotInMainThread()
         sharedPrefs(context).apply {
+            // One-time cleanup: the pre-rename legacy key is never read again, so
+            // remove it instead of leaving a stale opt-in bit in every prefs file.
+            // It must run before the return below.
+            if (contains(LEGACY_TRUST_SCORE_ENABLED_KEY)) {
+                edit { remove(LEGACY_TRUST_SCORE_ENABLED_KEY) }
+            }
+
             // Migrate old use_proxy boolean to TorMode enum
             val torMode = if (contains(SettingsKeys.TOR_MODE.key)) {
                 try {
@@ -353,11 +360,6 @@ object LocalPreferences {
                 trustScoreEnabled = getBoolean(SettingsKeys.TRUST_SCORE_ENABLED.key, false),
                 requireUnlockedDevice = getBoolean(SettingsKeys.REQUIRE_UNLOCKED_DEVICE.key, false),
             )
-        }
-        // One-time cleanup: the pre-rename legacy key is never read again, so
-        // remove it instead of leaving a stale opt-in bit in every prefs file.
-        if (sharedPrefs(context).contains(LEGACY_TRUST_SCORE_ENABLED_KEY)) {
-            sharedPrefs(context).edit { remove(LEGACY_TRUST_SCORE_ENABLED_KEY) }
         }
     }
 

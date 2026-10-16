@@ -34,9 +34,11 @@ WORKDIR /app
 
 COPY . /app
 
-RUN git checkout ${VERSION}
-
+# Install the verifier before checking out the release: an older tag ships an
+# older apkdiff.py, and verification must use the current one.
 RUN chmod +x apkdiff.py && cp apkdiff.py /usr/local/bin/apkdiff.py
+
+RUN git checkout ${VERSION}
 
 # Ensure gradlew is executable
 RUN chmod +x gradlew
@@ -44,48 +46,17 @@ RUN chmod +x gradlew
 # Build the APK using the project's Gradle Wrapper
 RUN ./gradlew clean assembleRelease --no-daemon
 
-# Create a self-signed release keystore
-RUN keytool -genkeypair \
-    -alias amberkey \
-    -keyalg RSA \
-    -keysize 2048 \
-    -validity 10000 \
-    -keystore /app/release.keystore \
-    -storepass password \
-    -keypass password \
-    -dname "CN=Amber, OU=Dev, O=AmberProject, L=Internet, S=None, C=US"
+# Copy the unsigned APK to a known location (APK_TYPE starts with the flavor)
+RUN cp app/build/outputs/apk/${APK_TYPE%%-*}/release/app-${APK_TYPE}-release-unsigned.apk /app/built.apk
 
-# Copy unsigned APK to known location
-RUN cp app/build/outputs/apk/free/release/app-${APK_TYPE}-release-unsigned.apk /app/built.apk
-
-# Sign the APK
-RUN ${ANDROID_SDK_ROOT}/build-tools/35.0.0/apksigner sign \
-    --ks /app/release.keystore \
-    --ks-key-alias amberkey \
-    --ks-pass pass:password \
-    --key-pass pass:password \
-    --out /app/signed.apk \
-    /app/built.apk
-
-# Download official release APK
+# Download the official release APK. Since v6.3.0 the free flavor's assets
+# no longer carry the "free-" prefix.
 RUN mkdir -p /release_apk && \
-    wget -q -O /release_apk/Amber-${VERSION}.apk \
-    https://github.com/greenart7c3/Amber/releases/download/${VERSION}/amber-${APK_TYPE}-${VERSION}.apk
+    URL=https://github.com/greenart7c3/Amber/releases/download/${VERSION} && \
+    { wget -q -O /release_apk/official.apk ${URL}/amber-${APK_TYPE}-${VERSION}.apk || \
+      wget -q -O /release_apk/official.apk ${URL}/amber-${APK_TYPE#free-}-${VERSION}.apk; }
 
-# Strip META-INF signature and LICENSE files from both APKs
-RUN mkdir -p /tmp/signed /tmp/release && \
-    unzip -q /app/signed.apk -d /tmp/signed && \
-    unzip -q /release_apk/Amber-${VERSION}.apk -d /tmp/release && \
-    find /tmp/signed -name "*.RSA" -delete && \
-    find /tmp/signed -name "*.SF" -delete && \
-    find /tmp/signed -name "*.DSA" -delete && \
-    find /tmp/signed -name "*LICENSE*" -delete && \
-    find /tmp/release -name "*.RSA" -delete && \
-    find /tmp/release -name "*.SF" -delete && \
-    find /tmp/release -name "*.DSA" -delete && \
-    find /tmp/release -name "*LICENSE*" -delete && \
-    cd /tmp/signed && zip -qr /app/signed-stripped.apk . && \
-    cd /tmp/release && zip -qr /release_apk/official-stripped.apk .
-
-# Compare the stripped APKs
-CMD sh -c "python3 /usr/local/bin/apkdiff.py /release_apk/official-stripped.apk /app/signed-stripped.apk"
+# Compare the APKs as published, without unzipping or re-zipping them:
+# apkdiff.py ignores only the signing files, so an extra or duplicate entry
+# in the official APK can't be hidden.
+CMD ["python3", "/usr/local/bin/apkdiff.py", "/release_apk/official.apk", "/app/built.apk"]

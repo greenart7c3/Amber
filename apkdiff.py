@@ -1,79 +1,71 @@
 #! /usr/bin/env python3
 
+import re
 import sys
 from zipfile import ZipFile
 
 
 class ApkDiff:
-    IGNORE_FILES = [
-        # Related to app signing. Not expected to be present in unsigned builds. Doesn't affect app code.
-        "META-INF/MANIFEST.MF",
-        "META-INF/CERTIFIC.SF",
-        "META-INF/CERTIFIC.RSA",
-        "META-INF/TEXTSECU.SF",
-        "META-INF/TEXTSECU.RSA",
-        "META-INF/BNDLTOOL.SF",
-        "META-INF/BNDLTOOL.RSA",
-        "META-INF/code_transparency_signed.jwt",
-        "stamp-cert-sha256"
-    ]
+    # Only signing output is ignored. JAR signature files always sit directly
+    # under META-INF/, so a file that merely looks like one anywhere else in
+    # the APK (or in a META-INF subdirectory) is still compared.
+    IGNORE_FILES = {
+        b"META-INF/MANIFEST.MF",
+        b"META-INF/code_transparency_signed.jwt",
+        b"stamp-cert-sha256",
+    }
+    IGNORE_PATTERN = re.compile(rb"META-INF/[^/]+\.(SF|RSA|DSA|EC)")
 
     def compare(self, firstApk, secondApk):
-        firstZip = ZipFile(firstApk, 'r')
-        secondZip = ZipFile(secondApk, 'r')
-
-        return self.compareEntryNames(firstZip, secondZip) and self.compareEntryContents(firstZip, secondZip) == True
-
-    def compareEntryNames(self, firstZip, secondZip):
-        firstNames = firstZip.namelist()
-        secondNames = secondZip.namelist()
-        if len(firstNames) != len(set(firstNames)) or len(secondNames) != len(set(secondNames)):
-            print("Duplicate ZIP entry names are not accepted!")
-            return False
-        firstNameListSorted = sorted(firstNames)
-        secondNameListSorted = sorted(secondNames)
-
-        for ignoreFile in self.IGNORE_FILES:
-            while ignoreFile in firstNameListSorted:
-                firstNameListSorted.remove(ignoreFile)
-            while ignoreFile in secondNameListSorted:
-                secondNameListSorted.remove(ignoreFile)
-
-        if len(firstNameListSorted) != len(secondNameListSorted):
-            print("Manifest lengths differ!")
-            return False
-
-        for (firstEntryName, secondEntryName) in zip(firstNameListSorted, secondNameListSorted):
-            if firstEntryName != secondEntryName:
-                print("Sorted manifests don't match, %s vs %s" % (firstEntryName, secondEntryName))
+        with ZipFile(firstApk, "r") as firstZip, ZipFile(secondApk, "r") as secondZip:
+            firstEntries = self.entries(firstZip, firstApk)
+            secondEntries = self.entries(secondZip, secondApk)
+            if firstEntries is None or secondEntries is None:
                 return False
+            return self.compareEntryNames(firstEntries, secondEntries) and \
+                self.compareEntryContents(firstZip, secondZip, firstEntries, secondEntries)
 
-        return True
+    @staticmethod
+    def rawName(info):
+        # zipfile decodes names as UTF-8 only when flag bit 11 is set and as
+        # cp437 otherwise; re-encoding the same way gives back the exact bytes
+        # stored in the archive, which is what Android compares.
+        return info.orig_filename.encode("utf-8" if info.flag_bits & 0x800 else "cp437")
 
-    def compareEntryContents(self, firstZip, secondZip):
-        firstInfoList = list(filter(lambda info: info.filename not in self.IGNORE_FILES, firstZip.infolist()))
-        secondInfoList = list(filter(lambda info: info.filename not in self.IGNORE_FILES, secondZip.infolist()))
+    def ignored(self, rawName):
+        return rawName in self.IGNORE_FILES or self.IGNORE_PATTERN.fullmatch(rawName) is not None
 
-        if len(firstInfoList) != len(secondInfoList):
-            print("APK info lists of different length!")
-            return False
+    def entries(self, apk, path):
+        """Maps each raw entry name to its ZipInfo, or returns None when the
+        archive holds the same name twice: Android and zipfile may each pick a
+        different copy, so such an APK can't be verified."""
+        entries = {}
+        for info in apk.infolist():
+            name = self.rawName(info)
+            if name in entries:
+                print("Duplicate ZIP entry %r in %s!" % (name, path))
+                return None
+            entries[name] = info
+        return {name: info for name, info in entries.items() if not self.ignored(name)}
 
+    def compareEntryNames(self, firstEntries, secondEntries):
+        onlyFirst = sorted(firstEntries.keys() - secondEntries.keys())
+        onlySecond = sorted(secondEntries.keys() - firstEntries.keys())
+        for name in onlyFirst:
+            print("Only in the first APK: %r" % name)
+        for name in onlySecond:
+            print("Only in the second APK: %r" % name)
+        return not onlyFirst and not onlySecond
+
+    def compareEntryContents(self, firstZip, secondZip, firstEntries, secondEntries):
         success = True
-        for firstEntryInfo in firstInfoList:
-            for secondEntryInfo in list(secondInfoList):
-                if firstEntryInfo.filename == secondEntryInfo.filename:
-                    firstEntryBytes = firstZip.read(firstEntryInfo)
-                    secondEntryBytes = secondZip.read(secondEntryInfo)
-
-                    if firstEntryBytes != secondEntryBytes:
-                        firstZip.extract(firstEntryInfo, "mismatches/first")
-                        secondZip.extract(secondEntryInfo, "mismatches/second")
-                        print("APKs differ on file %s! Files extracted to the mismatches/ directory." % (firstEntryInfo.filename))
-                        success = False
-
-                    secondInfoList.remove(secondEntryInfo)
-                    break
-
+        for name, firstInfo in sorted(firstEntries.items()):
+            secondInfo = secondEntries[name]
+            if firstZip.read(firstInfo) != secondZip.read(secondInfo):
+                firstZip.extract(firstInfo, "mismatches/first")
+                secondZip.extract(secondInfo, "mismatches/second")
+                print("APKs differ on file %r! Files extracted to the mismatches/ directory." % name)
+                success = False
         return success
 
 

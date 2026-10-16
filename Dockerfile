@@ -36,7 +36,9 @@ COPY . /app
 
 # Install the verifier before checking out the release: an older tag ships an
 # older apkdiff.py, and verification must use the current one.
-RUN chmod +x apkdiff.py && cp apkdiff.py /usr/local/bin/apkdiff.py
+# Install a copy so the checkout below stays clean (a mode change on the
+# tracked file would make git refuse to switch to the tag).
+RUN install -m 755 apkdiff.py /usr/local/bin/apkdiff.py
 
 RUN git checkout ${VERSION}
 

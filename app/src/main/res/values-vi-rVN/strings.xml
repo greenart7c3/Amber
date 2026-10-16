@@ -39,6 +39,7 @@
     <string name="ncryptsec_password">mật khẩu để mở khóa</string>
     <string name="password_is_required">Mật khẩu là bắt buộc</string>
     <string name="failed_to_encrypt_key">Không thể mã hóa khóa riêng tư của bạn</string>
+    <string name="failed_to_export_key">Không thể xuất khóa riêng tư của bạn</string>
     <string name="biometric_authentication_failed_explainer">Sinh trắc học không thể xác thực chủ sở hữu điện thoại này</string>
     <string name="biometric_authentication_failed_explainer_with_error">Sinh trắc học không thể xác thực chủ sở hữu điện thoại này. Lỗi: %1$s</string>
     <string name="delete">Xóa</string>

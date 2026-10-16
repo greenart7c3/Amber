@@ -39,6 +39,7 @@
     <string name="ncryptsec_password">รหัสผ่านสำหรับเปิดคีย์</string>
     <string name="password_is_required">จำเป็นต้องระบุรหัสผ่าน</string>
     <string name="failed_to_encrypt_key">ไม่สามารถเข้ารหัสคีย์ส่วนตัวของคุณได้</string>
+    <string name="failed_to_export_key">ไม่สามารถส่งออกคีย์ส่วนตัวของคุณได้</string>
     <string name="biometric_authentication_failed_explainer">ไบโอเมตริกไม่สามารถยืนยันตัวตนเจ้าของโทรศัพท์เครื่องนี้ได้</string>
     <string name="biometric_authentication_failed_explainer_with_error">ไบโอเมตริกไม่สามารถยืนยันตัวตนเจ้าของโทรศัพท์เครื่องนี้ได้ ข้อผิดพลาด: %1$s</string>
     <string name="delete">ลบ</string>

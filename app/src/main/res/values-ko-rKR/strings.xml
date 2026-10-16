@@ -48,6 +48,7 @@
     <string name="ncryptsec_password">키를 열기 위한 비밀번호</string>
     <string name="password_is_required">비밀번호를 입력해야 합니다</string>
     <string name="failed_to_encrypt_key">개인 키 암호화에 실패했습니다</string>
+    <string name="failed_to_export_key">개인 키 내보내기에 실패했습니다</string>
     <string name="biometric_authentication_failed_explainer">생체 인식으로 이 휴대폰 소유자 인증에 실패했습니다</string>
     <string name="biometric_authentication_failed_explainer_with_error">생체 인식으로 이 휴대폰 소유자 인증에 실패했습니다. 오류: %1$s</string>
     <string name="delete">삭제</string>

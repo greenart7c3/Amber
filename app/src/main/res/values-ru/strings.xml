@@ -48,6 +48,7 @@
     <string name="ncryptsec_password">пароль для открытия ключа</string>
     <string name="password_is_required">Пароль обязателен</string>
     <string name="failed_to_encrypt_key">Не удалось зашифровать закрытый ключ</string>
+    <string name="failed_to_export_key">Не удалось экспортировать закрытый ключ</string>
     <string name="biometric_authentication_failed_explainer">Биометрия не смогла подтвердить владельца этого телефона</string>
     <string name="biometric_authentication_failed_explainer_with_error">Биометрия не смогла подтвердить владельца этого телефона. Ошибка: %1$s</string>
     <string name="delete">Удалить</string>

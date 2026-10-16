@@ -46,6 +46,7 @@
     <string name="ncryptsec_password">Anahtarı açmak için şifre</string>
     <string name="password_is_required">Şifre gerekli</string>
     <string name="failed_to_encrypt_key">Özel anahtarınız şifrelenemedi</string>
+    <string name="failed_to_export_key">Özel anahtarınız dışa aktarılamadı</string>
     <string name="biometric_authentication_failed_explainer">Biyometrik veriler bu telefonun sahibini doğrulayamadı</string>
     <string name="biometric_authentication_failed_explainer_with_error">Biyometrik veriler bu telefonun sahibini doğrulayamadı. Hata: %1$s</string>
     <string name="delete">Sil</string>

@@ -48,6 +48,7 @@
     <string name="ncryptsec_password">kata sandi untuk membuka kunci</string>
     <string name="password_is_required">Kata sandi diperlukan</string>
     <string name="failed_to_encrypt_key">Gagal mengenkripsi kunci privat Anda</string>
+    <string name="failed_to_export_key">Gagal mengekspor kunci privat Anda</string>
     <string name="biometric_authentication_failed_explainer">Biometrik gagal mengautentikasi pemilik ponsel ini</string>
     <string name="biometric_authentication_failed_explainer_with_error">Biometrik gagal mengautentikasi pemilik ponsel ini. Error: %1$s</string>
     <string name="delete">Hapus</string>

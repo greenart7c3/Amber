@@ -46,6 +46,7 @@
     <string name="ncryptsec_password">mot de passe pour ouvrir la clé</string>
     <string name="password_is_required">Le mot de passe est nécessaire.</string>
     <string name="failed_to_encrypt_key">Impossible de chiffrer votre clé privée</string>
+    <string name="failed_to_export_key">Impossible d\'exporter votre clé privée</string>
     <string name="biometric_authentication_failed_explainer">La biométrie n\'a pas réussi à authentifier le propriétaire du téléphone</string>
     <string name="biometric_authentication_failed_explainer_with_error">La biométrie n\'a pas réussi à authentifier le propriétaire de ce téléphone. Erreur : %1$s</string>
     <string name="delete">Supprimer</string>

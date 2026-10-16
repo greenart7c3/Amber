@@ -39,6 +39,7 @@
     <string name="ncryptsec_password">キーを開くパスワード</string>
     <string name="password_is_required">パスワードは必須です</string>
     <string name="failed_to_encrypt_key">プライベートキーの暗号化に失敗しました</string>
+    <string name="failed_to_export_key">プライベートキーのエクスポートに失敗しました</string>
     <string name="biometric_authentication_failed_explainer">生体認証でこの端末の所有者を確認できませんでした</string>
     <string name="biometric_authentication_failed_explainer_with_error">生体認証でこの端末の所有者を確認できませんでした。エラー: %1$s</string>
     <string name="delete">削除</string>

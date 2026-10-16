@@ -308,6 +308,7 @@ fun DefaultRelaysScreen(
                             relay = relayUrl,
                             trustScore = trustScores[relayUrl],
                             isLoadingScore = loadingScores[relayUrl] == true,
+                            showTrustScore = !TrustScoreService.isExcludedFromScoring(relayUrl),
                             onClick = {
                                 isLoading.value = true
                                 trustScores.remove(relayUrl)
@@ -726,10 +727,12 @@ private fun ActiveRelayRow(
                     overflow = TextOverflow.Ellipsis,
                     color = if (isConnected) Color.Unspecified else Color.Gray,
                 )
-                TrustScoreBadge(
-                    score = trustScores[relay.url],
-                    isLoading = loadingScores[relay.url] == true,
-                )
+                if (!TrustScoreService.isExcludedFromScoring(relay.url)) {
+                    TrustScoreBadge(
+                        score = trustScores[relay.url],
+                        isLoading = loadingScores[relay.url] == true,
+                    )
+                }
             }
             Row(
                 modifier = Modifier.fillMaxWidth(),

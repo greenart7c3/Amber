@@ -267,10 +267,12 @@ fun BunkerConnectRequestScreen(
                             fontSize = 13.sp,
                             fontFamily = FontFamily.Monospace,
                         )
-                        TrustScoreBadge(
-                            score = trustScores[relay.url],
-                            isLoading = loadingScores[relay.url] == true,
-                        )
+                        if (!TrustScoreService.isExcludedFromScoring(relay.url)) {
+                            TrustScoreBadge(
+                                score = trustScores[relay.url],
+                                isLoading = loadingScores[relay.url] == true,
+                            )
+                        }
                     }
                 }
             }

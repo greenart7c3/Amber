@@ -30,6 +30,15 @@ object TrustScoreService {
     fun isEnabled(): Boolean = !BuildFlavorChecker.isOfflineFlavor() && Amber.instance.settings.trustScoreEnabled
 
     /**
+     * True when the URL policy excludes this relay from the ratings API entirely
+     * (private/anonymous endpoints, credentials, IP literals). The UI hides the
+     * score badge for these instead of showing UNKNOWN, which would read as
+     * "untrusted".
+     */
+    fun isExcludedFromScoring(relayUrl: String): Boolean = !BuildFlavorChecker.isOfflineFlavor() &&
+        TrustScoreUrlPolicy.publicRelayUrl(relayUrl) == null
+
+    /**
      * Gets the trust score for a relay URL.
      * Returns cached value if available and not expired, otherwise fetches from API.
      */
@@ -38,7 +47,10 @@ object TrustScoreService {
             return null
         }
 
-        val normalizedUrl = normalizeUrl(relayUrl)
+        // One key function for cache lookups and the API query alike — a lookup
+        // normalized differently from the fetch never hits. Excluded URLs are
+        // resolved up front: no cache probe, no network, no failed-entry churn.
+        val normalizedUrl = TrustScoreUrlPolicy.publicRelayUrl(relayUrl) ?: return null
         val cached = cache[normalizedUrl]
 
         if (cached != null) {
@@ -48,7 +60,7 @@ object TrustScoreService {
             }
         }
 
-        return fetchScore(relayUrl)
+        return fetchScore(relayUrl, normalizedUrl)
     }
 
     /**
@@ -60,7 +72,7 @@ object TrustScoreService {
             return null
         }
 
-        val normalizedUrl = normalizeUrl(relayUrl)
+        val normalizedUrl = TrustScoreUrlPolicy.publicRelayUrl(relayUrl) ?: return null
         val cached = cache[normalizedUrl] ?: return null
 
         val expirationTime = if (cached.isFailed) FAILED_CACHE_DURATION_MS else CACHE_DURATION_MS
@@ -90,16 +102,16 @@ object TrustScoreService {
     }
 
     /**
-     * Fetches the trust score from the API.
+     * Fetches the trust score from the API. The caller resolves the policy
+     * normalization once so the URL is computed exactly once per request.
      */
-    private suspend fun fetchScore(relayUrl: String): Int? {
+    private suspend fun fetchScore(relayUrl: String, normalizedUrl: String): Int? {
         if (!isEnabled()) {
             return null
         }
 
         return withContext(Dispatchers.IO) {
             try {
-                val normalizedUrl = normalizeUrl(relayUrl)
                 val encodedUrl = URLEncoder.encode(normalizedUrl, "UTF-8")
                 val requestUrl = "$API_BASE_URL$encodedUrl"
 
@@ -109,27 +121,27 @@ object TrustScoreService {
                     .get()
                     .build()
 
-                val response = client.newCall(request).execute()
+                client.newCall(request).execute().use { response ->
 
-                if (!response.isSuccessful) {
-                    AmberLog.w(TAG, "Failed to fetch trust score for $relayUrl: ${response.code}")
-                    cacheResult(normalizedUrl, null, isFailed = true)
-                    return@withContext null
+                    if (!response.isSuccessful) {
+                        AmberLog.w(TAG, "Failed to fetch trust score for $relayUrl: ${response.code}")
+                        cacheResult(normalizedUrl, null, isFailed = true)
+                        return@withContext null
+                    }
+
+                    // Safe call needed: the offline flavor compiles against OkHttp 4, where body is nullable
+                    val body = response.body?.string()
+                    if (body == null) {
+                        cacheResult(normalizedUrl, null, isFailed = true)
+                        return@withContext null
+                    }
+
+                    val score = parseResponse(body)
+                    cacheResult(normalizedUrl, score, isFailed = false)
+                    score
                 }
-
-                // Safe call needed: the offline flavor compiles against OkHttp 4, where body is nullable
-                val body = response.body?.string()
-                if (body == null) {
-                    cacheResult(normalizedUrl, null, isFailed = true)
-                    return@withContext null
-                }
-
-                val score = parseResponse(body)
-                cacheResult(normalizedUrl, score, isFailed = false)
-                score
             } catch (e: Exception) {
                 AmberLog.e(TAG, "Error fetching trust score for $relayUrl", e)
-                val normalizedUrl = normalizeUrl(relayUrl)
                 cacheResult(normalizedUrl, null, isFailed = true)
                 null
             }
@@ -153,8 +165,6 @@ object TrustScoreService {
     private fun cacheResult(normalizedUrl: String, score: Int?, isFailed: Boolean) {
         cache[normalizedUrl] = CachedScore(score, System.currentTimeMillis(), isFailed)
     }
-
-    private fun normalizeUrl(url: String): String = url.trimEnd('/')
 
     /**
      * Clears all cached scores.

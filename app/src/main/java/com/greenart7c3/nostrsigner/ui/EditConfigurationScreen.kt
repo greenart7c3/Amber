@@ -258,11 +258,13 @@ fun EditConfigurationScreen(
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis,
                             )
-                            TrustScoreBadge(
-                                score = trustScores[relay.url],
-                                isLoading = loadingScores[relay.url] == true,
-                                modifier = Modifier.padding(horizontal = 8.dp),
-                            )
+                            if (!TrustScoreService.isExcludedFromScoring(relay.url)) {
+                                TrustScoreBadge(
+                                    score = trustScores[relay.url],
+                                    isLoading = loadingScores[relay.url] == true,
+                                    modifier = Modifier.padding(horizontal = 8.dp),
+                                )
+                            }
                             IconButton(
                                 onClick = {
                                     relays.removeAt(index)

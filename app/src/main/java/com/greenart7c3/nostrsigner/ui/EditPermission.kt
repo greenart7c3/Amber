@@ -441,6 +441,7 @@ fun RelayCard(
     relay: String,
     trustScore: Int? = null,
     isLoadingScore: Boolean = false,
+    showTrustScore: Boolean = true,
     onClick: () -> Unit,
 ) {
     Card(
@@ -467,11 +468,16 @@ fun RelayCard(
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
-            TrustScoreBadge(
-                score = trustScore,
-                isLoading = isLoadingScore,
-                modifier = Modifier.padding(horizontal = 8.dp),
-            )
+            // Excluded relays (private/anonymous endpoints) show no badge at
+            // all: UNKNOWN would read as "untrusted" for a relay the ratings
+            // API will never be asked about.
+            if (showTrustScore) {
+                TrustScoreBadge(
+                    score = trustScore,
+                    isLoading = isLoadingScore,
+                    modifier = Modifier.padding(horizontal = 8.dp),
+                )
+            }
             IconButton(
                 onClick = onClick,
             ) {

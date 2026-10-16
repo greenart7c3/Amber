@@ -41,7 +41,7 @@ data class AmberSettings(
     val rateLimitMaxPerWindow: Int = 5,
     val rateLimitWindowSeconds: Int = 30,
     val profileFetchInterval: ProfileFetchInterval = ProfileFetchInterval.FIFTEEN_MINUTES,
-    val trustScoreEnabled: Boolean = true,
+    val trustScoreEnabled: Boolean = false,
     val requireUnlockedDevice: Boolean = false,
 ) {
     val useProxy: Boolean get() = torMode != TorMode.DISABLED

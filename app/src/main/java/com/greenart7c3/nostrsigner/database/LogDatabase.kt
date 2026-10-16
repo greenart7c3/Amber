@@ -13,7 +13,7 @@ import java.util.concurrent.Executors
     entities = [
         LogEntity::class,
     ],
-    version = 2,
+    version = 3,
 )
 @TypeConverters(Converters::class)
 abstract class LogDatabase : RoomDatabase() {
@@ -23,6 +23,13 @@ abstract class LogDatabase : RoomDatabase() {
         val migration_1_2 = object : Migration(1, 2) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("CREATE INDEX IF NOT EXISTS `log_by_time_key` ON `amber_log` (`time` DESC)")
+            }
+        }
+
+        val migration_2_3 = object : Migration(2, 3) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE `amber_log` ADD COLUMN `repeatCount` INTEGER NOT NULL DEFAULT 1")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `log_by_url_time` ON `amber_log` (`url`, `time`)")
             }
         }
 
@@ -41,7 +48,7 @@ abstract class LogDatabase : RoomDatabase() {
                 )
                     .setQueryExecutor(executor)
                     .setTransactionExecutor(transactionExecutor)
-                    .addMigrations(migration_1_2)
+                    .addMigrations(migration_1_2, migration_2_3)
                     .build()
 
             instance

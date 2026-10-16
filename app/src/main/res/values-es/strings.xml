@@ -353,6 +353,16 @@
     <string name="enable_biometrics">Activar biometría</string>
     <string name="privacy_mode">Modo de privacidad</string>
     <string name="privacy_mode_description">Desactiva el registro de logs y las estadísticas de actividad. Los logs y el historial de actividad existentes se eliminan al activarse.</string>
+    <string name="log_retention">Conservar registros durante</string>
+    <string name="log_retention_description">Los registros de relés y solicitudes más antiguos se eliminan</string>
+    <string name="history_retention">Conservar actividad durante</string>
+    <string name="history_retention_description">El historial de actividad más antiguo se elimina</string>
+    <string name="retention_1_day">1 día</string>
+    <string name="retention_3_days">3 días</string>
+    <string name="retention_7_days">7 días</string>
+    <string name="retention_30_days">30 días</string>
+    <string name="retention_90_days">90 días</string>
+    <string name="log_repeated">%1$s (×%2$d)</string>
     <string name="when_to_ask">Cuándo pedir</string>
     <string name="every_time">Siempre</string>
     <string name="one_minute">Un minuto</string>

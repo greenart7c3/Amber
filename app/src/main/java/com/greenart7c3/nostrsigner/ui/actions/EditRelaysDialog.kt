@@ -592,7 +592,7 @@ fun RelayLogScreen(
                         )
                         Text(
                             modifier = Modifier.padding(top = 4.dp, bottom = 16.dp),
-                            text = log.message,
+                            text = if (log.repeatCount > 1) stringResource(R.string.log_repeated, log.message, log.repeatCount) else log.message,
                             fontSize = 20.sp,
                         )
 

@@ -353,6 +353,16 @@
     <string name="enable_biometrics">Aktifkan biometrik</string>
     <string name="privacy_mode">Mode privasi</string>
     <string name="privacy_mode_description">Menonaktifkan pencatatan log dan statistik aktivitas. Log dan riwayat aktivitas yang ada dihapus saat diaktifkan.</string>
+    <string name="log_retention">Simpan log selama</string>
+    <string name="log_retention_description">Log relai dan permintaan yang lebih lama dari ini dihapus</string>
+    <string name="history_retention">Simpan aktivitas selama</string>
+    <string name="history_retention_description">Riwayat aktivitas yang lebih lama dari ini dihapus</string>
+    <string name="retention_1_day">1 hari</string>
+    <string name="retention_3_days">3 hari</string>
+    <string name="retention_7_days">7 hari</string>
+    <string name="retention_30_days">30 hari</string>
+    <string name="retention_90_days">90 hari</string>
+    <string name="log_repeated">%1$s (×%2$d)</string>
     <string name="when_to_ask">Kapan bertanya</string>
     <string name="every_time">Setiap kali</string>
     <string name="one_minute">Satu menit</string>

@@ -377,6 +377,16 @@
     <string name="enable_biometrics">Enable biometrics</string>
     <string name="privacy_mode">Privacy mode</string>
     <string name="privacy_mode_description">Disables logging and activity statistics. Existing logs and activity history are deleted when turned on.</string>
+    <string name="log_retention">Keep logs for</string>
+    <string name="log_retention_description">Relay and request logs older than this are deleted</string>
+    <string name="history_retention">Keep activity for</string>
+    <string name="history_retention_description">Activity history older than this is deleted</string>
+    <string name="retention_1_day">1 day</string>
+    <string name="retention_3_days">3 days</string>
+    <string name="retention_7_days">7 days</string>
+    <string name="retention_30_days">30 days</string>
+    <string name="retention_90_days">90 days</string>
+    <string name="log_repeated">%1$s (×%2$d)</string>
     <string name="when_to_ask">When to ask</string>
     <string name="every_time">Every time</string>
     <string name="one_minute">One minute</string>

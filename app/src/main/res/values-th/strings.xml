@@ -329,6 +329,16 @@
     <string name="enable_biometrics">เปิดใช้งานไบโอเมตริก</string>
     <string name="privacy_mode">โหมดความเป็นส่วนตัว</string>
     <string name="privacy_mode_description">ปิดการบันทึกและสถิติการใช้งาน บันทึกและประวัติการใช้งานที่มีอยู่จะถูกลบเมื่อเปิดใช้งาน</string>
+    <string name="log_retention">เก็บบันทึกการทำงานไว้</string>
+    <string name="log_retention_description">บันทึกรีเลย์และคำขอที่เก่ากว่านี้จะถูกลบ</string>
+    <string name="history_retention">เก็บประวัติการใช้งานไว้</string>
+    <string name="history_retention_description">ประวัติการใช้งานที่เก่ากว่านี้จะถูกลบ</string>
+    <string name="retention_1_day">1 วัน</string>
+    <string name="retention_3_days">3 วัน</string>
+    <string name="retention_7_days">7 วัน</string>
+    <string name="retention_30_days">30 วัน</string>
+    <string name="retention_90_days">90 วัน</string>
+    <string name="log_repeated">%1$s (×%2$d)</string>
     <string name="when_to_ask">เมื่อใดที่จะถาม</string>
     <string name="every_time">ทุกครั้ง</string>
     <string name="one_minute">หนึ่งนาที</string>

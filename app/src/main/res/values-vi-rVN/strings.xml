@@ -329,6 +329,16 @@
     <string name="enable_biometrics">Bật sinh trắc học</string>
     <string name="privacy_mode">Chế độ riêng tư</string>
     <string name="privacy_mode_description">Tắt ghi nhật ký và thống kê hoạt động. Nhật ký và lịch sử hoạt động hiện có sẽ bị xóa khi bật.</string>
+    <string name="log_retention">Giữ nhật ký trong</string>
+    <string name="log_retention_description">Nhật ký relay và yêu cầu cũ hơn thời gian này sẽ bị xóa</string>
+    <string name="history_retention">Giữ hoạt động trong</string>
+    <string name="history_retention_description">Lịch sử hoạt động cũ hơn thời gian này sẽ bị xóa</string>
+    <string name="retention_1_day">1 ngày</string>
+    <string name="retention_3_days">3 ngày</string>
+    <string name="retention_7_days">7 ngày</string>
+    <string name="retention_30_days">30 ngày</string>
+    <string name="retention_90_days">90 ngày</string>
+    <string name="log_repeated">%1$s (×%2$d)</string>
     <string name="when_to_ask">Khi nào hỏi</string>
     <string name="every_time">Mỗi lần</string>
     <string name="one_minute">Một phút</string>

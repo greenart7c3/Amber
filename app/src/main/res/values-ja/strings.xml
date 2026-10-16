@@ -329,6 +329,16 @@
     <string name="enable_biometrics">生体認証を有効にする</string>
     <string name="privacy_mode">プライバシーモード</string>
     <string name="privacy_mode_description">ログ記録とアクティビティ統計を無効にします。オンにすると既存のログとアクティビティ履歴が削除されます。</string>
+    <string name="log_retention">ログの保持期間</string>
+    <string name="log_retention_description">これより古いリレーとリクエストのログは削除されます</string>
+    <string name="history_retention">アクティビティの保持期間</string>
+    <string name="history_retention_description">これより古いアクティビティ履歴は削除されます</string>
+    <string name="retention_1_day">1日</string>
+    <string name="retention_3_days">3日</string>
+    <string name="retention_7_days">7日</string>
+    <string name="retention_30_days">30日</string>
+    <string name="retention_90_days">90日</string>
+    <string name="log_repeated">%1$s (×%2$d)</string>
     <string name="when_to_ask">確認のタイミング</string>
     <string name="every_time">毎回</string>
     <string name="one_minute">1 分</string>

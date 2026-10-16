@@ -14,6 +14,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -37,11 +39,13 @@ import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.models.RetentionPeriod
 import com.greenart7c3.nostrsigner.service.Biometrics.authenticate
 import com.greenart7c3.nostrsigner.ui.components.AmberButton
 import com.greenart7c3.nostrsigner.ui.components.TitleExplainer
 import com.greenart7c3.nostrsigner.ui.navigation.Route
 import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
@@ -60,6 +64,11 @@ fun SecurityScreen(
     var enableBiometrics by remember { mutableStateOf(Amber.instance.settings.useAuth) }
     val setupPin by remember { mutableStateOf(Amber.instance.settings.usePin) }
     var privacyMode by remember { mutableStateOf(Amber.instance.settings.privacyMode) }
+    var logRetention by remember { mutableStateOf(Amber.instance.settings.logRetention) }
+    var historyRetention by remember { mutableStateOf(Amber.instance.settings.historyRetention) }
+    val retentionItems = RetentionPeriod.entries.map {
+        TitleExplainer(stringResource(it.resourceId))
+    }.toImmutableList()
     val context = LocalContext.current
     var requireUnlockedDevice by remember { mutableStateOf(LocalPreferences.getRequireUnlockedDevice(context)) }
     var requireUnlockedDeviceUpdating by remember { mutableStateOf(false) }
@@ -122,7 +131,9 @@ fun SecurityScreen(
                 .fillMaxSize(),
         ) {
             Column(
-                Modifier.weight(1f),
+                Modifier
+                    .weight(1f)
+                    .verticalScroll(rememberScrollState()),
             ) {
                 Row(
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -176,6 +187,37 @@ fun SecurityScreen(
                             }
                         },
                     )
+                }
+
+                if (!privacyMode) {
+                    Box(Modifier.padding(horizontal = 8.dp, vertical = 4.dp)) {
+                        SettingsRow(
+                            name = R.string.log_retention,
+                            description = R.string.log_retention_description,
+                            selectedItems = retentionItems,
+                            selectedIndex = RetentionPeriod.entries.indexOf(logRetention),
+                        ) { index ->
+                            val selected = RetentionPeriod.entries[index]
+                            logRetention = selected
+                            Amber.instance.applicationIOScope.launch {
+                                LocalPreferences.updateLogRetention(context, selected)
+                            }
+                        }
+                    }
+                    Box(Modifier.padding(horizontal = 8.dp, vertical = 4.dp)) {
+                        SettingsRow(
+                            name = R.string.history_retention,
+                            description = R.string.history_retention_description,
+                            selectedItems = retentionItems,
+                            selectedIndex = RetentionPeriod.entries.indexOf(historyRetention),
+                        ) { index ->
+                            val selected = RetentionPeriod.entries[index]
+                            historyRetention = selected
+                            Amber.instance.applicationIOScope.launch {
+                                LocalPreferences.updateHistoryRetention(context, selected)
+                            }
+                        }
+                    }
                 }
 
                 // GHSA-8844-q5vh-9j8f, L1: opt-in toggle

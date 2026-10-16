@@ -350,6 +350,16 @@
     <string name="enable_biometrics">Activer la biométrie</string>
     <string name="privacy_mode">Mode de confidentialité</string>
     <string name="privacy_mode_description">Désactive la journalisation et les statistiques d\'activité. Les journaux et l\'historique d\'activité existants sont supprimés lors de l\'activation.</string>
+    <string name="log_retention">Conserver les journaux pendant</string>
+    <string name="log_retention_description">Les journaux de relais et de requêtes plus anciens sont supprimés</string>
+    <string name="history_retention">Conserver l\'activité pendant</string>
+    <string name="history_retention_description">L\'historique d\'activité plus ancien est supprimé</string>
+    <string name="retention_1_day">1 jour</string>
+    <string name="retention_3_days">3 jours</string>
+    <string name="retention_7_days">7 jours</string>
+    <string name="retention_30_days">30 jours</string>
+    <string name="retention_90_days">90 jours</string>
+    <string name="log_repeated">%1$s (×%2$d)</string>
     <string name="when_to_ask">Quand demander</string>
     <string name="every_time">À chaque fois</string>
     <string name="one_minute">Une minute</string>

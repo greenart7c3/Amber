@@ -8,9 +8,11 @@ import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.runtime.Immutable
 import androidx.core.content.edit
 import androidx.core.os.LocaleListCompat
+import com.greenart7c3.nostrsigner.database.LogRetentionManager
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.AmberSettings
 import com.greenart7c3.nostrsigner.models.ProfileFetchInterval
+import com.greenart7c3.nostrsigner.models.RetentionPeriod
 import com.greenart7c3.nostrsigner.models.TorMode
 import com.greenart7c3.nostrsigner.models.UpdateChannel
 import com.greenart7c3.nostrsigner.models.UpdateCheckFrequency
@@ -29,6 +31,7 @@ import com.vitorpamplona.quartz.utils.cache.LargeCache
 import java.io.File
 import java.security.InvalidKeyException
 import java.security.KeyStoreException
+import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.runBlocking
 
@@ -78,6 +81,8 @@ private enum class SettingsKeys(val key: String) {
     RATE_LIMIT_MAX_PER_WINDOW("rate_limit_max_per_window"),
     RATE_LIMIT_WINDOW_SECONDS("rate_limit_window_seconds"),
     PROFILE_FETCH_INTERVAL("profile_fetch_interval"),
+    LOG_RETENTION("log_retention"),
+    HISTORY_RETENTION("history_retention"),
     TRUST_SCORE_ENABLED("trust_score_enabled_v2"),
     REQUIRE_UNLOCKED_DEVICE("require_unlocked_device"),
     ACTIVE_KEYSTORE_ALIAS("active_keystore_alias"),
@@ -167,6 +172,21 @@ object LocalPreferences {
                 putBoolean(SettingsKeys.TRUST_SCORE_ENABLED.key, settings.trustScoreEnabled)
             }
         }
+    }
+
+    /**
+     * Read synchronously, not from [Amber.settings], so pruning that runs before the
+     * async settings load never applies the default (possibly shorter) period and
+     * deletes rows the user chose to keep.
+     */
+    fun getLogRetention(context: Context): RetentionPeriod = getRetention(context, SettingsKeys.LOG_RETENTION, RetentionPeriod.SEVEN_DAYS)
+
+    fun getHistoryRetention(context: Context): RetentionPeriod = getRetention(context, SettingsKeys.HISTORY_RETENTION, RetentionPeriod.THIRTY_DAYS)
+
+    private fun getRetention(context: Context, key: SettingsKeys, default: RetentionPeriod): RetentionPeriod = try {
+        RetentionPeriod.valueOf(sharedPrefs(context).getString(key.key, default.name)!!)
+    } catch (_: IllegalArgumentException) {
+        default
     }
 
     fun getBatteryOptimization(context: Context): Boolean = sharedPrefs(context).getBoolean(SettingsKeys.BATERRY_OPTIMIZATION.key, false)
@@ -368,6 +388,8 @@ object LocalPreferences {
                     ProfileFetchInterval.FIFTEEN_MINUTES
                 },
                 trustScoreEnabled = getBoolean(SettingsKeys.TRUST_SCORE_ENABLED.key, false),
+                logRetention = getLogRetention(context),
+                historyRetention = getHistoryRetention(context),
             )
         }
     }
@@ -728,6 +750,38 @@ object LocalPreferences {
             }
         }
         Amber.instance.settings = loadSettingsFromEncryptedStorage()
+    }
+
+    suspend fun updateLogRetention(context: Context, retention: RetentionPeriod) {
+        sharedPrefs(context).edit {
+            apply {
+                putString(SettingsKeys.LOG_RETENTION.key, retention.name)
+            }
+        }
+        Amber.instance.settings = loadSettingsFromEncryptedStorage()
+        pruneAllAccounts(context)
+    }
+
+    suspend fun updateHistoryRetention(context: Context, retention: RetentionPeriod) {
+        sharedPrefs(context).edit {
+            apply {
+                putString(SettingsKeys.HISTORY_RETENTION.key, retention.name)
+            }
+        }
+        Amber.instance.settings = loadSettingsFromEncryptedStorage()
+        pruneAllAccounts(context)
+    }
+
+    // Applies a shortened retention period right away instead of at the next cleanup.
+    private suspend fun pruneAllAccounts(context: Context) {
+        allSavedAccounts(context).forEach {
+            try {
+                LogRetentionManager.prune(it.npub)
+            } catch (e: Exception) {
+                if (e is CancellationException) throw e
+                AmberLog.e(Amber.TAG, "Error pruning logs for ${it.npub}", e)
+            }
+        }
     }
 
     fun updateUpdateChannel(context: Context, channel: UpdateChannel) {

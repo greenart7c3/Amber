@@ -353,6 +353,16 @@
     <string name="enable_biometrics">생체 인식 활성화</string>
     <string name="privacy_mode">개인정보 보호 모드</string>
     <string name="privacy_mode_description">로깅 및 활동 통계를 비활성화합니다. 켜면 기존 로그 및 활동 기록이 삭제됩니다.</string>
+    <string name="log_retention">로그 보관 기간</string>
+    <string name="log_retention_description">이보다 오래된 릴레이 및 요청 로그는 삭제됩니다</string>
+    <string name="history_retention">활동 보관 기간</string>
+    <string name="history_retention_description">이보다 오래된 활동 기록은 삭제됩니다</string>
+    <string name="retention_1_day">1일</string>
+    <string name="retention_3_days">3일</string>
+    <string name="retention_7_days">7일</string>
+    <string name="retention_30_days">30일</string>
+    <string name="retention_90_days">90일</string>
+    <string name="log_repeated">%1$s (×%2$d)</string>
     <string name="when_to_ask">인증 요청 시점</string>
     <string name="every_time">매번</string>
     <string name="one_minute">1분</string>

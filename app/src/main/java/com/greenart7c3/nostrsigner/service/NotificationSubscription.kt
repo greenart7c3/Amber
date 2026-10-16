@@ -33,11 +33,14 @@ import com.vitorpamplona.quartz.nip01Core.relay.commands.toClient.EventMessage
 import com.vitorpamplona.quartz.nip01Core.relay.commands.toClient.Message
 import com.vitorpamplona.quartz.nip01Core.relay.commands.toRelay.Command
 import com.vitorpamplona.quartz.nip01Core.relay.filters.Filter
+import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
 import com.vitorpamplona.quartz.nip46RemoteSigner.NostrConnectEvent
 import com.vitorpamplona.quartz.utils.TimeUtils
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 class NotificationSubscription(
     val client: NostrClient,
@@ -48,6 +51,8 @@ class NotificationSubscription(
     // Concurrent: mutated in updateFilter/closeAllSubs (coroutines) while relay I/O
     // threads iterate it in onIncomingMessage (containsValue).
     private val subIds = ConcurrentHashMap<String, String>()
+    private val refreshMutex = Mutex()
+    private var closeGeneration = 0L
 
     init {
         // listens until the app crashes.
@@ -79,42 +84,44 @@ class NotificationSubscription(
      * connections that don't yet have a localKey.
      */
     suspend fun updateFilter() {
-        if (BuildFlavorChecker.isOfflineFlavor()) return
-        val activeSubKeys = mutableSetOf<String>()
-        val indexEntries = mutableMapOf<String, LocalKeyAccountIndex.Match>()
+        // Calls queued before a close belong to the old lifecycle too.
+        val generation = synchronized(subIds) { closeGeneration }
+        refreshMutex.withLock {
+            if (BuildFlavorChecker.isOfflineFlavor()) return@withLock
+            if (generation != synchronized(subIds) { closeGeneration }) return@withLock
+            val pendingSubscriptions = linkedMapOf<String, Map<NormalizedRelayUrl, List<Filter>>>()
+            val activeSubKeys = mutableSetOf<String>()
+            val indexEntries = mutableMapOf<String, LocalKeyAccountIndex.Match>()
 
-        LocalPreferences.allAccounts(appContext).forEach { account ->
-            val since = computeSince()
+            LocalPreferences.allAccounts(appContext).forEach { account ->
+                val since = computeSince()
 
-            // Cached dao: getAll() is served from CachingApplicationDao's per-account
-            // LRU. updateFilter re-runs on every relay refresh (explicit refreshes
-            // plus the periodic ConnectivityService safety net), and an uncached
-            // getAll re-decrypts every application row through AndroidKeyStore
-            // (a keystore2 binder round-trip per encrypted field) each cycle —
-            // previously the app's dominant native allocator.
-            val allConnections = Amber.instance.dao(account.npub).getAll(account.hexKey)
-            val connectionsWithLocalKey = allConnections.filter { it.localKey.isNotEmpty() }
-            val hasLegacyConnections = allConnections.any { it.localKey.isEmpty() && it.relays.isNotEmpty() }
+                // Cached dao: getAll() is served from CachingApplicationDao's per-account
+                // LRU. updateFilter re-runs on every relay refresh (explicit refreshes
+                // plus the periodic ConnectivityService safety net), and an uncached
+                // getAll re-decrypts every application row through AndroidKeyStore
+                // (a keystore2 binder round-trip per encrypted field) each cycle —
+                // previously the app's dominant native allocator.
+                val allConnections = Amber.instance.dao(account.npub).getAll(account.hexKey)
+                val connectionsWithLocalKey = allConnections.filter { it.localKey.isNotEmpty() }
+                val hasLegacyConnections = allConnections.any { it.localKey.isEmpty() && it.relays.isNotEmpty() }
 
-            // Per-connection subscription on each connection's own relays
-            for (conn in connectionsWithLocalKey) {
-                val connPubKey = conn.localPubKey
-                indexEntries[connPubKey] = LocalKeyAccountIndex.Match(account.npub, conn.localKey)
-                val subKey = "${account.hexKey}_$connPubKey"
+                // Per-connection subscription on each connection's own relays
+                for (conn in connectionsWithLocalKey) {
+                    val connPubKey = conn.localPubKey
+                    indexEntries[connPubKey] = LocalKeyAccountIndex.Match(account.npub, conn.localKey)
+                    val subKey = "${account.hexKey}_$connPubKey"
 
-                // Exclude relays that have been declared dead so Quartz stops opening
-                // a socket to them on every refresh. They are re-added once
-                // RelayHealthTracker is reset (network change / manual reconnect) or
-                // they connect successfully again.
-                val connRelays = conn.relays.ifEmpty { Amber.instance.getSavedRelays(account) }
-                    .filterNot { RelayHealthTracker.isDead(it) }
-                if (connRelays.isEmpty()) continue
+                    // Exclude relays that have been declared dead so Quartz stops opening
+                    // a socket to them on every refresh. They are re-added once
+                    // RelayHealthTracker is reset (network change / manual reconnect) or
+                    // they connect successfully again.
+                    val connRelays = conn.relays.ifEmpty { Amber.instance.getSavedRelays(account) }
+                        .filterNot { RelayHealthTracker.isDead(it) }
+                    if (connRelays.isEmpty()) continue
 
-                activeSubKeys.add(subKey)
-                val subId = subIds.getOrPut(subKey) { UUID.randomUUID().toString() }
-                client.subscribe(
-                    subId,
-                    connRelays.associateWith {
+                    activeSubKeys.add(subKey)
+                    pendingSubscriptions[subKey] = connRelays.associateWith {
                         listOf(
                             Filter(
                                 kinds = listOf(NostrConnectEvent.KIND),
@@ -123,20 +130,16 @@ class NotificationSubscription(
                                 since = since,
                             ),
                         )
-                    },
-                )
-            }
+                    }
+                }
 
-            // Main account subscription only for legacy connections (no localKey)
-            if (hasLegacyConnections) {
-                val relays = Amber.instance.getSavedRelays(account)
-                    .filterNot { RelayHealthTracker.isDead(it) }
-                if (relays.isNotEmpty()) {
-                    activeSubKeys.add(account.hexKey)
-                    val subId = subIds.getOrPut(account.hexKey) { UUID.randomUUID().toString() }
-                    client.subscribe(
-                        subId,
-                        relays.associateWith {
+                // Main account subscription only for legacy connections (no localKey)
+                if (hasLegacyConnections) {
+                    val relays = Amber.instance.getSavedRelays(account)
+                        .filterNot { RelayHealthTracker.isDead(it) }
+                    if (relays.isNotEmpty()) {
+                        activeSubKeys.add(account.hexKey)
+                        pendingSubscriptions[account.hexKey] = relays.associateWith {
                             listOf(
                                 Filter(
                                     kinds = listOf(NostrConnectEvent.KIND),
@@ -145,27 +148,38 @@ class NotificationSubscription(
                                     since = since,
                                 ),
                             )
-                        },
-                    )
+                        }
+                    }
+                }
+            }
+
+            synchronized(subIds) {
+                if (generation != closeGeneration) return@withLock
+                // Make every endpoint routable before any subscription can deliver a request.
+                LocalKeyAccountIndex.replaceAll(indexEntries)
+                pendingSubscriptions.forEach { (key, filters) ->
+                    val subId = subIds.getOrPut(key) { UUID.randomUUID().toString() }
+                    client.subscribe(subId, filters)
+                }
+
+                // Unsubscribe from any subscriptions belonging to deleted applications.
+                val staleSubKeys = subIds.keys.filter { it !in activeSubKeys }
+                for (subKey in staleSubKeys) {
+                    subIds.remove(subKey)?.let { subId ->
+                        client.unsubscribe(subId)
+                    }
                 }
             }
         }
-
-        // Unsubscribe from any subscriptions belonging to deleted applications
-        val staleSubKeys = subIds.keys.filter { it !in activeSubKeys }
-        for (subKey in staleSubKeys) {
-            subIds.remove(subKey)?.let { subId ->
-                client.unsubscribe(subId)
-            }
-        }
-
-        // Refresh the localPubKey -> account index used by EventNotificationConsumer.
-        LocalKeyAccountIndex.replaceAll(indexEntries)
     }
 
     fun closeAllSubs() {
-        subIds.values.forEach { client.unsubscribe(it) }
-        subIds.clear()
+        synchronized(subIds) {
+            closeGeneration++
+            subIds.values.forEach { client.unsubscribe(it) }
+            subIds.clear()
+            LocalKeyAccountIndex.replaceAll(emptyMap())
+        }
     }
 
     private fun computeSince(): Long {

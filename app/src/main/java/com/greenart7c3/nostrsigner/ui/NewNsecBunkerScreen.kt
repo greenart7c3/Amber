@@ -46,19 +46,25 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.database.ApplicationEntity
 import com.greenart7c3.nostrsigner.database.generateBunkerPrivKey
 import com.greenart7c3.nostrsigner.models.Account
+import com.greenart7c3.nostrsigner.service.LocalKeyAccountIndex
 import com.greenart7c3.nostrsigner.ui.actions.onAddRelay
 import com.greenart7c3.nostrsigner.ui.components.AmberButton
 import com.greenart7c3.nostrsigner.ui.components.TitleExplainer
 import java.util.UUID
 import kotlinx.collections.immutable.persistentListOf
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @Composable
 fun NewNsecBunkerScreen(
@@ -301,16 +307,37 @@ fun NewNsecBunkerCreatedScreen(
     account: Account,
     key: String,
 ) {
-    val isLoading = remember { mutableStateOf(false) }
-    var application by remember { mutableStateOf(ApplicationEntity.empty()) }
+    val isLoading = remember(account.npub, key) { mutableStateOf(true) }
+    var preparationFailed by remember(account.npub, key) { mutableStateOf(false) }
+    var refreshAttempt by remember(account.npub, key) { mutableIntStateOf(0) }
+    val killSwitch by Amber.instance.settings.killSwitch.collectAsStateWithLifecycle()
+    var application by remember(account.npub, key) { mutableStateOf(ApplicationEntity.empty()) }
     val clipboardManager = LocalClipboard.current
     val scope = rememberCoroutineScope()
 
-    LaunchedEffect(Unit) {
+    LaunchedEffect(account.npub, key, refreshAttempt, killSwitch) {
         isLoading.value = true
-        launch(Dispatchers.IO) {
-            application = Amber.instance.dao(account.npub).getByKey(key)?.application ?: ApplicationEntity.empty()
-            isLoading.value = false
+        preparationFailed = false
+        try {
+            if (killSwitch) {
+                preparationFailed = true
+                return@LaunchedEffect
+            }
+            application = withContext(Dispatchers.IO) {
+                val saved = checkNotNull(Amber.instance.dao(account.npub).getByKey(key)?.application)
+                // Prepare local endpoint routing before exposing the ephemeral-request URI.
+                Amber.instance.checkForNewRelaysAndUpdateAllFilters(shouldReconnect = true)
+                if (saved.localPubKey.isNotEmpty()) {
+                    check(LocalKeyAccountIndex.lookup(saved.localPubKey)?.npub == account.npub)
+                }
+                saved
+            }
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (_: Exception) {
+            preparationFailed = true
+        } finally {
+            if (currentCoroutineContext().isActive) isLoading.value = false
         }
     }
 
@@ -318,17 +345,20 @@ fun NewNsecBunkerCreatedScreen(
         CenterCircularProgressIndicator(
             modifier = Modifier.fillMaxSize(),
         )
+    } else if (preparationFailed) {
+        Column(modifier = modifier.padding(16.dp)) {
+            if (killSwitch) Text(stringResource(R.string.kill_switch_message))
+            AmberButton(
+                text = stringResource(R.string.reconnect),
+                enabled = !killSwitch,
+                onClick = { refreshAttempt++ },
+            )
+        }
     } else {
         val relays = application.relays.joinToString(separator = "&") { "relay=${it.url}" }
         val localSecret = "&secret=${application.secret}"
         val signerPubKey = application.localPubKey.ifEmpty { account.hexKey }
         val bunkerUri = "bunker://$signerPubKey?$relays$localSecret"
-
-        LaunchedEffect(Unit) {
-            Amber.instance.applicationIOScope.launch(Dispatchers.IO) {
-                Amber.instance.checkForNewRelaysAndUpdateAllFilters(shouldReconnect = true)
-            }
-        }
 
         Column(
             modifier = modifier

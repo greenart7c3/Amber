@@ -1,7 +1,5 @@
 package com.greenart7c3.nostrsigner.service
 
-import java.util.concurrent.ConcurrentHashMap
-
 /**
  * Maps a connection's local public key (hex) to the account npub it belongs to
  * and the connection's local private key. Maintained by [NotificationSubscription.updateFilter];
@@ -11,12 +9,12 @@ import java.util.concurrent.ConcurrentHashMap
 object LocalKeyAccountIndex {
     data class Match(val npub: String, val localPrivKey: String)
 
-    private val byLocalPubKey = ConcurrentHashMap<String, Match>()
+    @Volatile
+    private var byLocalPubKey: Map<String, Match> = emptyMap()
 
     fun lookup(localPubKey: String): Match? = byLocalPubKey[localPubKey]
 
     fun replaceAll(entries: Map<String, Match>) {
-        byLocalPubKey.keys.retainAll(entries.keys)
-        byLocalPubKey.putAll(entries)
+        byLocalPubKey = entries.toMap()
     }
 }

@@ -2,9 +2,16 @@ name: Python regressions
 
 on:
   pull_request:
-    branches: [master]
+    paths:
+      - 'tests/**'
+      - 'apkdiff.py'
+      - '.github/workflows/**'
   push:
     branches: [master]
+    paths:
+      - 'tests/**'
+      - 'apkdiff.py'
+      - '.github/workflows/**'
 
 permissions:
   contents: read
@@ -16,14 +23,16 @@ jobs:
 
     steps:
       - uses: actions/checkout@v7
+        with:
+          # The tests run code from the PR, and this job never pushes.
+          persist-credentials: false
 
-      # The tests/ suites ship with the apkdiff and release-workflow fixes.
-      # On branches without them (including master until those merge) this is
-      # a no-op so the job stays green; once merged, every PR runs them.
-      - name: Run local Python regressions
-        run: |
-          if [ -d tests ]; then
-            python3 -m unittest discover -s tests -v
-          else
-            echo "No tests/ directory on this branch; nothing to run yet."
-          fi
+      # Pinned so a runner image update can't change the result.
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.14'
+
+      # Since Python 3.12, discover fails when it finds no tests, so a removed
+      # or renamed suite fails this job instead of passing silently.
+      - name: Run Python regression tests
+        run: python -m unittest discover -s tests -p 'test_*.py' -v

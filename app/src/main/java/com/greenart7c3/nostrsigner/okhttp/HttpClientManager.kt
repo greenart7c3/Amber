@@ -169,6 +169,13 @@ object HttpClientManager {
         defaultHttpClientWithoutProxy!!
     }
 
+    /** Current timeout, already scaled per connection type by callers that need
+     * dedicated clients (see WebDavService). */
+    fun getDefaultTimeout(): Duration = defaultTimeout
+
+    /** The active SOCKS proxy, or null when connecting directly. */
+    fun getCurrentProxy(): Proxy? = currentProxy
+
     fun setDefaultProxyOnPort(port: Int) {
         setDefaultProxy(Proxy(Proxy.Type.SOCKS, InetSocketAddress("127.0.0.1", port)))
     }

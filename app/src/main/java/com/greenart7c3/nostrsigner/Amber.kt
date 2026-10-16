@@ -479,22 +479,26 @@ class Amber :
                     }
                 }
 
+                // Do not open relay sockets through a dead SOCKS proxy: every
+                // connect would fail and the retry churn would waste battery.
+                // Relays connect via the recovery observer once Tor is up.
                 if (torReady) {
                     checkForNewRelaysAndUpdateAllFilters(true)
                     if (settings.killSwitch.value) {
                         disconnectIntentionally()
                     }
-                } else {
-                    // Do not open relay sockets through a dead SOCKS proxy: every
-                    // connect would fail and the retry churn would waste battery.
-                    // Relays connect via the recovery observer once Tor is up.
-                    onDone()
                 }
             } catch (e: Exception) {
                 AmberLog.e(TAG, "Failed to run migrations", e)
                 if (e is CancellationException) throw e
                 if (e is FailedMigrationException) throw e
             }
+            // Always hand over to the caller: it registers the network
+            // callback, the safety-net refresh and the unlock receiver, which
+            // are what recover from a start that couldn't connect (Tor down, or
+            // a locked device under requireUnlockedDevice). startFunctions()
+            // waits for Tor on its own.
+            onDone()
         }
     }
 

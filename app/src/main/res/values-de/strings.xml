@@ -769,6 +769,7 @@
     <string name="response">Antwort</string>
     <string name="recover_from_backup">Aus Backup wiederherstellen</string>
     <string name="importing_account">Konto %1$d wird importiert</string>
+    <string name="import_failed_for_accounts">Die Konten in diesen Zeilen der Sicherung konnten nicht importiert werden: %1$s. Überprüfe das Passwort und versuche es erneut.</string>
     <string name="could_not_connect_to_relay">Verbindung zum Relay fehlgeschlagen. Möchtest du ihn trotzdem hinzufügen?</string>
     <string name="event_kind_25050">WebRTC-Signalisierung</string>
     <string name="event_kind_9733">Privater Zap</string>

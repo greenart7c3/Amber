@@ -806,6 +806,7 @@
     <string name="response">Response</string>
     <string name="recover_from_backup">Recover from backup</string>
     <string name="importing_account">Importing account %1$d</string>
+    <string name="import_failed_for_accounts">Could not import the accounts on backup lines: %1$s. Check the password and try again.</string>
     <string name="could_not_connect_to_relay">Could not connect to relay. Would you like to add it anyway?</string>
     <string name="event_kind_25050">WebRTC Signaling</string>
     <string name="event_kind_9733">Private zap</string>

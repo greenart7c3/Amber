@@ -747,6 +747,7 @@
     <string name="response">Phản hồi</string>
     <string name="recover_from_backup">Khôi phục từ bản sao lưu</string>
     <string name="importing_account">Đang nhập tài khoản %1$d</string>
+    <string name="import_failed_for_accounts">Không thể nhập các tài khoản ở những dòng sao lưu này: %1$s. Hãy kiểm tra mật khẩu và thử lại.</string>
     <string name="could_not_connect_to_relay">Không thể kết nối với relay. Bạn có muốn thêm nó không?</string>
     <string name="event_kind_25050">WebRTC Signaling</string>
     <string name="event_kind_9733">Zap riêng tư</string>

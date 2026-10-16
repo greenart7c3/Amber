@@ -747,6 +747,7 @@
     <string name="response">レスポンス</string>
     <string name="recover_from_backup">バックアップから復元</string>
     <string name="importing_account">アカウント %1$d をインポート中</string>
+    <string name="import_failed_for_accounts">バックアップの次の行のアカウントをインポートできませんでした: %1$s。パスワードを確認して、もう一度お試しください。</string>
     <string name="could_not_connect_to_relay">Relay に接続できませんでした。それでも追加しますか？</string>
     <string name="event_kind_25050">WebRTC シグナリング</string>
     <string name="event_kind_9733">プライベート zap</string>

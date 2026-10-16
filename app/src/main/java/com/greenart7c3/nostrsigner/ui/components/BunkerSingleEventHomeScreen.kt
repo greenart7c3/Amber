@@ -103,18 +103,7 @@ fun BunkerSingleEventHomeScreen(
                     it.pkKey == key && it.type == type.toString()
                 }
 
-            val acceptUntil = permission?.acceptUntil ?: 0
-            val rejectUntil = permission?.rejectUntil ?: 0
-
-            val acceptOrReject = if (rejectUntil == 0L && acceptUntil == 0L) {
-                null
-            } else if (rejectUntil > TimeUtils.now() && rejectUntil > 0) {
-                false
-            } else if (acceptUntil > TimeUtils.now() && acceptUntil > 0) {
-                true
-            } else {
-                null
-            }
+            val acceptOrReject = permission?.activeDecision(TimeUtils.now())
 
             BunkerPingScreen(
                 modifier = modifier,
@@ -376,18 +365,7 @@ fun BunkerSingleEventHomeScreen(
                     }
             }
 
-            val acceptUntil = permission?.acceptUntil ?: 0
-            val rejectUntil = permission?.rejectUntil ?: 0
-
-            val acceptOrReject = if (rejectUntil == 0L && acceptUntil == 0L) {
-                null
-            } else if (rejectUntil > TimeUtils.now() && rejectUntil > 0) {
-                false
-            } else if (acceptUntil > TimeUtils.now() && acceptUntil > 0) {
-                true
-            } else {
-                null
-            }
+            val acceptOrReject = permission?.activeDecision(TimeUtils.now())
 
             BunkerEncryptDecryptData(
                 modifier = modifier,
@@ -450,18 +428,7 @@ fun BunkerSingleEventHomeScreen(
                     }
             }
 
-            val acceptUntil = permission?.acceptUntil ?: 0
-            val rejectUntil = permission?.rejectUntil ?: 0
-
-            val acceptOrReject = if (rejectUntil == 0L && acceptUntil == 0L) {
-                null
-            } else if (rejectUntil > TimeUtils.now() && rejectUntil > 0) {
-                false
-            } else if (acceptUntil > TimeUtils.now() && acceptUntil > 0) {
-                true
-            } else {
-                null
-            }
+            val acceptOrReject = permission?.activeDecision(TimeUtils.now())
 
             BunkerEncryptDecryptData(
                 modifier = modifier,
@@ -526,18 +493,7 @@ fun BunkerSingleEventHomeScreen(
                     }
             }
 
-            val acceptUntil = permission?.acceptUntil ?: 0
-            val rejectUntil = permission?.rejectUntil ?: 0
-
-            val acceptOrReject = if (rejectUntil == 0L && acceptUntil == 0L) {
-                null
-            } else if (rejectUntil > TimeUtils.now() && rejectUntil > 0) {
-                false
-            } else if (acceptUntil > TimeUtils.now() && acceptUntil > 0) {
-                true
-            } else {
-                null
-            }
+            val acceptOrReject = permission?.activeDecision(TimeUtils.now())
 
             BunkerEncryptDecryptData(
                 modifier = modifier,
@@ -602,18 +558,7 @@ fun BunkerSingleEventHomeScreen(
                     }
             }
 
-            val acceptUntil = permission?.acceptUntil ?: 0
-            val rejectUntil = permission?.rejectUntil ?: 0
-
-            val acceptOrReject = if (rejectUntil == 0L && acceptUntil == 0L) {
-                null
-            } else if (rejectUntil > TimeUtils.now() && rejectUntil > 0) {
-                false
-            } else if (acceptUntil > TimeUtils.now() && acceptUntil > 0) {
-                true
-            } else {
-                null
-            }
+            val acceptOrReject = permission?.activeDecision(TimeUtils.now())
 
             BunkerEncryptDecryptData(
                 modifier = modifier,
@@ -691,23 +636,14 @@ fun BunkerSingleEventHomeScreen(
                     it.pkKey == key && it.type == type.toString() && it.kind == 22242 && it.relay == "*"
                 }
 
-                val acceptUntil = permission?.acceptUntil ?: 0
-                val rejectUntil = permission?.rejectUntil ?: 0
-
                 // If the auth whitelist is non-empty and this relay is not in it, auto-reject
                 val authWhitelist = Amber.instance.settings.authWhitelist
                 val blockedByWhitelist = authWhitelist.isNotEmpty() && relayUrl !in authWhitelist
 
                 val acceptOrReject = if (blockedByWhitelist) {
                     false
-                } else if (rejectUntil == 0L && acceptUntil == 0L) {
-                    null
-                } else if (rejectUntil > TimeUtils.now() && rejectUntil > 0 && permission?.acceptable == false) {
-                    false
-                } else if (acceptUntil > TimeUtils.now() && acceptUntil > 0 && permission?.acceptable == true) {
-                    true
                 } else {
-                    null
+                    permission?.activeDecision(TimeUtils.now())
                 }
 
                 BunkerRelayAuthScreen(
@@ -769,18 +705,7 @@ fun BunkerSingleEventHomeScreen(
                         it.pkKey == key && ((it.type == type.toString() && it.kind == event.kind) || (nip != null && it.type == "NIP" && it.kind == nip))
                     }
 
-                val acceptUntil = permission?.acceptUntil ?: 0
-                val rejectUntil = permission?.rejectUntil ?: 0
-
-                val acceptOrReject = if (rejectUntil == 0L && acceptUntil == 0L) {
-                    null
-                } else if (rejectUntil > TimeUtils.now() && rejectUntil > 0) {
-                    false
-                } else if (acceptUntil > TimeUtils.now() && acceptUntil > 0) {
-                    true
-                } else {
-                    null
-                }
+                val acceptOrReject = permission?.activeDecision(TimeUtils.now())
 
                 BunkerEventData(
                     modifier = modifier,
@@ -902,18 +827,7 @@ fun BunkerSingleEventHomeScreen(
                         it.pkKey == key && it.type == type.toString()
                     }
 
-                val acceptUntil = permission?.acceptUntil ?: 0
-                val rejectUntil = permission?.rejectUntil ?: 0
-
-                val acceptOrReject = if (rejectUntil == 0L && acceptUntil == 0L) {
-                    null
-                } else if (rejectUntil > TimeUtils.now() && rejectUntil > 0) {
-                    false
-                } else if (acceptUntil > TimeUtils.now() && acceptUntil > 0) {
-                    true
-                } else {
-                    null
-                }
+                val acceptOrReject = permission?.activeDecision(TimeUtils.now())
 
                 BunkerEncryptDecryptData(
                     modifier = modifier,
@@ -967,18 +881,7 @@ fun BunkerSingleEventHomeScreen(
                         it.pkKey == key && it.type == type.toString()
                     }
 
-                val acceptUntil = permission?.acceptUntil ?: 0
-                val rejectUntil = permission?.rejectUntil ?: 0
-
-                val acceptOrReject = if (rejectUntil == 0L && acceptUntil == 0L) {
-                    null
-                } else if (rejectUntil > TimeUtils.now() && rejectUntil > 0) {
-                    false
-                } else if (acceptUntil > TimeUtils.now() && acceptUntil > 0) {
-                    true
-                } else {
-                    null
-                }
+                val acceptOrReject = permission?.activeDecision(TimeUtils.now())
 
                 val decoded = remember(psbtHex) { PsbtDecoder.decode(psbtHex, account) }
 

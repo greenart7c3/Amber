@@ -53,6 +53,7 @@ import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.service.AccountExportService
 import com.greenart7c3.nostrsigner.service.Biometrics.authenticate
 import com.greenart7c3.nostrsigner.service.WebDavService
+import com.greenart7c3.nostrsigner.service.WebDavTransportPolicy
 import com.greenart7c3.nostrsigner.ui.CenterCircularProgressIndicator
 import com.greenart7c3.nostrsigner.ui.components.AmberButton
 import java.io.File
@@ -323,6 +324,17 @@ fun CloudBackupScreen(modifier: Modifier) {
                 text = stringResource(R.string.cloud_backup_webdav_save),
                 onClick = {
                     Amber.instance.applicationIOScope.launch {
+                        // Enforce the HTTPS policy at save time: an http:// URL
+                        // must not be stored silently and only fail later from
+                        // a generic backup error.
+                        try {
+                            WebDavTransportPolicy.requireSecureServerUrl(webDavUrl.text)
+                        } catch (e: Exception) {
+                            withContext(Dispatchers.Main) {
+                                webDavError = e.message ?: context.getString(R.string.cloud_backup_webdav_url_required)
+                            }
+                            return@launch
+                        }
                         LocalPreferences.saveWebDavSettings(
                             context = context,
                             url = webDavUrl.text,
@@ -388,6 +400,14 @@ fun CloudBackupScreen(modifier: Modifier) {
                                 Amber.instance.applicationIOScope.launch {
                                     isLoading = true
                                     statusText = context.getString(R.string.preparing_export)
+
+                                    try {
+                                        WebDavTransportPolicy.requireSecureServerUrl(webDavUrl.text)
+                                    } catch (e: Exception) {
+                                        isLoading = false
+                                        statusText = e.message ?: context.getString(R.string.cloud_backup_webdav_url_required)
+                                        return@launch
+                                    }
 
                                     LocalPreferences.saveWebDavSettings(
                                         context = context,

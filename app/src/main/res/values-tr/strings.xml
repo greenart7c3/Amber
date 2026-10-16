@@ -768,6 +768,7 @@
     <string name="response">Yanıt</string>
     <string name="recover_from_backup">Yedekten kurtar</string>
     <string name="importing_account">Hesap içe aktarılıyor: %1$d</string>
+    <string name="import_failed_for_accounts">Yedeğin şu satırlarındaki hesaplar içe aktarılamadı: %1$s. Parolayı kontrol edip tekrar deneyin.</string>
     <string name="could_not_connect_to_relay">Röleye bağlanılamadı. Yine de eklemek ister misiniz?</string>
     <string name="event_kind_25050">WebRTC Sinyalizasyonu</string>
     <string name="event_kind_9733">Gizli zap</string>

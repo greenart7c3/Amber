@@ -771,6 +771,7 @@
     <string name="response">Respons</string>
     <string name="recover_from_backup">Pulihkan dari cadangan</string>
     <string name="importing_account">Mengimpor akun %1$d</string>
+    <string name="import_failed_for_accounts">Tidak dapat mengimpor akun pada baris cadangan ini: %1$s. Periksa kata sandi dan coba lagi.</string>
     <string name="could_not_connect_to_relay">Tidak dapat terhubung ke relay. Apakah Anda tetap ingin menambahkannya?</string>
     <string name="event_kind_25050">Sinyal WebRTC</string>
     <string name="event_kind_9733">Zap privat</string>

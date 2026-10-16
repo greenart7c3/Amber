@@ -213,9 +213,12 @@ class CachingApplicationDao(
     }
 
     // Affects many apps at once (timestamp predicate), so wipe the whole cache.
-    override fun updateExpiredPermissions(time: Long) {
-        delegate.updateExpiredPermissions(time)
-        invalidateAll()
+    override fun updateExpiredPermissions(time: Long): Int {
+        val n = delegate.updateExpiredPermissions(time)
+        if (n > 0) {
+            invalidateAll()
+        }
+        return n
     }
 
     override suspend fun deleteOldApplications(time: Long): Int {

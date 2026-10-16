@@ -57,7 +57,9 @@ jobs:
           flags: gm
 
       - name: Rename APK for release asset
-        run: cp app/build/outputs/apk/free/release/app-free-universal-release-unsigned-signed.apk amber-fdroid-universal-${{ github.ref_name }}.apk
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: cp -- app/build/outputs/apk/free/release/app-free-universal-release-unsigned-signed.apk "amber-fdroid-universal-$RELEASE_TAG.apk"
 
       - name: Create Release and Upload Asset
         uses: softprops/action-gh-release@v3

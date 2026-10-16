@@ -1,6 +1,7 @@
 package com.greenart7c3.nostrsigner
 
 import android.annotation.SuppressLint
+import android.app.KeyguardManager
 import android.content.Context
 import android.content.SharedPreferences
 import androidx.appcompat.app.AppCompatDelegate
@@ -815,6 +816,15 @@ object LocalPreferences {
         }
     }
 
+    /**
+     * With requireUnlockedDevice on, the wrapping key refuses every operation
+     * while the device is locked. That is the setting working, not a broken
+     * key, so it must not be reported as one (the report tells the user to log
+     * out and back in).
+     */
+    private fun isKeystoreLockedOut(context: Context): Boolean = getRequireUnlockedDevice(context) &&
+        context.getSystemService(KeyguardManager::class.java)?.isDeviceLocked == true
+
     suspend fun loadFromEncryptedStorage(context: Context, npub: String): Account? {
         if (accountCache.get(npub) != null) {
             return accountCache.get(npub)
@@ -829,10 +839,18 @@ object LocalPreferences {
                 DataStoreAccess.NOSTR_PRIVKEY,
             )
         } catch (e: InvalidKeyException) {
+            if (isKeystoreLockedOut(context)) {
+                AmberLog.d(Amber.TAG, "Device locked: account $npub loads after unlock")
+                return null
+            }
             AmberLog.e(Amber.TAG, "AndroidKeyStore key for $npub is broken (device KeyMint may not support key upgrade). Account skipped.", e)
             Amber.instance.keystoreFailedAccounts.value = (Amber.instance.keystoreFailedAccounts.value + npub).distinct()
             return null
         } catch (e: KeyStoreException) {
+            if (isKeystoreLockedOut(context)) {
+                AmberLog.d(Amber.TAG, "Device locked: account $npub loads after unlock")
+                return null
+            }
             AmberLog.e(Amber.TAG, "KeyStore operation failed for $npub. Account skipped.", e)
             Amber.instance.keystoreFailedAccounts.value = (Amber.instance.keystoreFailedAccounts.value + npub).distinct()
             return null
@@ -855,6 +873,9 @@ object LocalPreferences {
                     didBackup = didBackup,
                 )
             accountCache.put(npub, account)
+            if (npub in Amber.instance.keystoreFailedAccounts.value) {
+                Amber.instance.keystoreFailedAccounts.value -= npub
+            }
             return account
         }
     }

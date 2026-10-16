@@ -230,6 +230,10 @@ class EventNotificationConsumer(private val applicationContext: Context) {
         connectionPrivKey: String,
     ) {
         if (event.content.isEmpty()) return
+        // The same event usually arrives from several relays; answer it once,
+        // like notify() does.
+        if (Amber.instance.notificationCache[event.id] != null) return
+        Amber.instance.notificationCache.put(event.id, event.createdAt)
         Amber.instance.applicationIOScope.launch {
             try {
                 val connSigner = NostrSignerInternal(KeyPair(privKey = connectionPrivKey.hexToByteArray()))

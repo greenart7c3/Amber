@@ -60,13 +60,13 @@ fun SecurityScreen(
     var enableBiometrics by remember { mutableStateOf(Amber.instance.settings.useAuth) }
     val setupPin by remember { mutableStateOf(Amber.instance.settings.usePin) }
     var privacyMode by remember { mutableStateOf(Amber.instance.settings.privacyMode) }
-    var requireUnlockedDevice by remember { mutableStateOf(Amber.instance.settings.requireUnlockedDevice) }
+    val context = LocalContext.current
+    var requireUnlockedDevice by remember { mutableStateOf(LocalPreferences.getRequireUnlockedDevice(context)) }
     var requireUnlockedDeviceUpdating by remember { mutableStateOf(false) }
     var biometricsIndex by remember {
         mutableIntStateOf(Amber.instance.settings.biometricsTimeType.screenCode)
     }
     val scope = rememberCoroutineScope()
-    val context = LocalContext.current
     val biometricsKeyguardLauncher =
         rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
             if (result.resultCode == Activity.RESULT_OK) {
@@ -108,7 +108,7 @@ fun SecurityScreen(
                 AmberLog.e(Amber.TAG, "Error toggling require unlocked device", e)
             } finally {
                 // Re-sync the toggle with the persisted setting (reverts on failure)
-                requireUnlockedDevice = Amber.instance.settings.requireUnlockedDevice
+                requireUnlockedDevice = LocalPreferences.getRequireUnlockedDevice(context)
                 requireUnlockedDeviceUpdating = false
             }
         }

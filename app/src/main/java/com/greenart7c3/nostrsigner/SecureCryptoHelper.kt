@@ -169,7 +169,7 @@ object SecureCryptoHelper {
         val context = Amber.instance
         val keyStore = getKeyStore()
         val alias = resolveActiveAlias(context, keyStore)
-        val key = keyStore.secretKey(alias) ?: generateSecretKey(alias, Amber.instance.settings.requireUnlockedDevice)
+        val key = keyStore.secretKey(alias) ?: generateSecretKey(alias, LocalPreferences.getRequireUnlockedDevice(context))
         return KeyHandle(alias, key, keyStore.secretKey(otherAlias(alias)))
     }
 
@@ -297,7 +297,7 @@ object SecureCryptoHelper {
 
         // 2. Switch. commit() updates the in-memory values even when the disk
         // write fails, so restore them before discarding the new key.
-        val previousPolicy = Amber.instance.settings.requireUnlockedDevice
+        val previousPolicy = LocalPreferences.getRequireUnlockedDevice(context)
         if (!LocalPreferences.commitActiveKeystoreAlias(context, newAlias, requireUnlockedDevice)) {
             LocalPreferences.commitActiveKeystoreAlias(context, oldAlias, previousPolicy)
             discardAlias(keyStore, newAlias)

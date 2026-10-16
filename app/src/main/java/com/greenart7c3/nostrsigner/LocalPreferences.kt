@@ -165,7 +165,6 @@ object LocalPreferences {
                 putInt(SettingsKeys.RATE_LIMIT_MAX_PER_WINDOW.key, settings.rateLimitMaxPerWindow)
                 putInt(SettingsKeys.RATE_LIMIT_WINDOW_SECONDS.key, settings.rateLimitWindowSeconds)
                 putBoolean(SettingsKeys.TRUST_SCORE_ENABLED.key, settings.trustScoreEnabled)
-                putBoolean(SettingsKeys.REQUIRE_UNLOCKED_DEVICE.key, settings.requireUnlockedDevice)
             }
         }
     }
@@ -173,10 +172,12 @@ object LocalPreferences {
     fun getBatteryOptimization(context: Context): Boolean = sharedPrefs(context).getBoolean(SettingsKeys.BATERRY_OPTIMIZATION.key, false)
 
     /**
-     * Synchronous read of the device-lock flag straight from SharedPreferences.
-     * Unlike the DataStore-backed [AmberSettings.requireUnlockedDevice], this is
-     * correct before the async settings load runs (offline flavor, WorkManager
-     * or ContentProvider cold start), so per-operation gates can rely on it.
+     * The only source of the device-lock flag. It is written together with the
+     * active Keystore alias ([commitActiveKeystoreAlias]) so it always matches
+     * the key actually in use, and it is read synchronously, so it is correct
+     * before the async settings load (offline flavor, WorkManager or
+     * ContentProvider cold start) and can't be overwritten by a stale settings
+     * copy saved while a key rotation is running.
      */
     fun getRequireUnlockedDevice(context: Context): Boolean = sharedPrefs(context).getBoolean(SettingsKeys.REQUIRE_UNLOCKED_DEVICE.key, false)
 
@@ -367,7 +368,6 @@ object LocalPreferences {
                     ProfileFetchInterval.FIFTEEN_MINUTES
                 },
                 trustScoreEnabled = getBoolean(SettingsKeys.TRUST_SCORE_ENABLED.key, false),
-                requireUnlockedDevice = getBoolean(SettingsKeys.REQUIRE_UNLOCKED_DEVICE.key, false),
             )
         }
     }

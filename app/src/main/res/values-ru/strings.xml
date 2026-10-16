@@ -774,6 +774,7 @@
     <string name="response">Ответ</string>
     <string name="recover_from_backup">Восстановить из резервной копии</string>
     <string name="importing_account">Импорт аккаунта %1$d</string>
+    <string name="import_failed_for_accounts">Не удалось импортировать аккаунты из этих строк резервной копии: %1$s. Проверьте пароль и повторите попытку.</string>
     <string name="could_not_connect_to_relay">Не удалось подключиться к relay-серверу. Добавить его всё равно?</string>
     <string name="event_kind_25050">WebRTC-сигнализация</string>
     <string name="event_kind_9733">Приватный zap</string>

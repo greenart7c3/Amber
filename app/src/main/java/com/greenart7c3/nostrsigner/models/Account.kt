@@ -15,6 +15,7 @@ import com.vitorpamplona.quartz.nip01Core.core.hexToByteArray
 import com.vitorpamplona.quartz.nip01Core.core.toHexKey
 import com.vitorpamplona.quartz.nip01Core.signers.EventTemplate
 import com.vitorpamplona.quartz.nip01Core.signers.NostrSignerInternal
+import com.vitorpamplona.quartz.nip06KeyDerivation.Nip06
 import com.vitorpamplona.quartz.nip17Dm.NIP17Factory
 import com.vitorpamplona.quartz.nip17Dm.messages.ChatMessageEvent
 import com.vitorpamplona.quartz.nip19Bech32.toNsec
@@ -97,7 +98,26 @@ class Account(
 
     suspend fun signPsbt(psbtHex: String): String = signer.signPsbt(psbtHex)
 
-    suspend fun seedWords() = runCatching { DataStoreAccess.getEncryptedKey(Amber.instance, npub, DataStoreAccess.SEED_WORDS) }.getOrNull() ?: ""
+    suspend fun seedWords(): String {
+        val stored = runCatching { DataStoreAccess.getEncryptedKey(Amber.instance, npub, DataStoreAccess.SEED_WORDS) }.getOrNull() ?: ""
+
+        // Lazy repair for accounts restored by pre-fix builds, which stored the
+        // NIP-44 ciphertext in SEED_WORDS. If the stored value is not a valid
+        // mnemonic but decrypts (with this account's key) to one, rewrite it;
+        // otherwise overwrite it with an empty value so the invalid ciphertext
+        // no longer masquerades as a recovery phrase. Best-effort: a repair
+        // failure must not break the read.
+        if (stored.isNotEmpty() && !Nip06().isValidMnemonic(stored)) {
+            val repaired = runCatching { nip44Decrypt(stored, hexKey) }.getOrNull()
+                ?.takeIf { Nip06().isValidMnemonic(it) }
+                .orEmpty()
+            runCatching {
+                DataStoreAccess.saveEncryptedKey(Amber.instance, npub, DataStoreAccess.SEED_WORDS, repaired)
+            }
+            return repaired
+        }
+        return stored
+    }
 
     fun decryptZapEvent(
         data: String,

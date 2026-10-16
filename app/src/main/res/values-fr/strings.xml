@@ -770,6 +770,7 @@
     <string name="response">Réponse</string>
     <string name="recover_from_backup">Récupérer depuis une sauvegarde</string>
     <string name="importing_account">Importation du compte %1$d</string>
+    <string name="import_failed_for_accounts">Impossible d\'importer les comptes de ces lignes de la sauvegarde : %1$s. Vérifiez le mot de passe et réessayez.</string>
     <string name="could_not_connect_to_relay">Impossible de se connecter au relay. Voulez-vous quand même l\'ajouter ?</string>
     <string name="event_kind_25050">Signalisation WebRTC</string>
     <string name="event_kind_9733">Zap privé</string>

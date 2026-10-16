@@ -112,6 +112,15 @@ class DesktopCoreTest {
 
         val expired = AppPermissionRecord("SIGN_EVENT", 1, true, RememberType.FIVE_MINUTES.screenCode, TimeUtils.now() - 10, 0)
         assertNull(isRemembered(1, expired))
+
+        // An active rejection wins over the "fully trust" sign policy.
+        assertEquals(false, isRemembered(2, rejected))
+
+        // A stale timestamp on the side acceptable does not select never decides.
+        val denialWithLeftoverAccept = AppPermissionRecord("SIGN_EVENT", 1, false, RememberType.ALWAYS.screenCode, Long.MAX_VALUE / 1000, 0)
+        assertNull(isRemembered(1, denialWithLeftoverAccept))
+        val acceptWithLeftoverReject = AppPermissionRecord("SIGN_EVENT", 1, true, RememberType.ALWAYS.screenCode, 0, Long.MAX_VALUE / 1000)
+        assertNull(isRemembered(1, acceptWithLeftoverReject))
     }
 
     @Test

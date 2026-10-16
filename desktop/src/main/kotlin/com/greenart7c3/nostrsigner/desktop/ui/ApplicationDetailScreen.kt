@@ -412,8 +412,8 @@ private fun PermissionCard(
     // Mirrors the mobile mapping: accept window -> Allow, reject window ->
     // Deny, neither -> Ask; a NEVER remember choice edits as ALWAYS.
     val optionIndex = when {
-        permission.acceptUntil > 0 -> 0
-        permission.rejectUntil > 0 -> 1
+        permission.acceptable && permission.acceptUntil > 0 -> 0
+        !permission.acceptable && permission.rejectUntil > 0 -> 1
         else -> 2
     }
     val rememberType = (RememberType.entries.firstOrNull { it.screenCode == permission.rememberType } ?: RememberType.ALWAYS)

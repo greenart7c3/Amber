@@ -120,7 +120,9 @@ class BunkerEngine(
 ) : RelayConnectionListener {
     val pending = kotlinx.coroutines.flow.MutableStateFlow<List<PendingBunkerRequest>>(emptyList())
 
-    private val subIds = mutableMapOf<String, String>()
+    // Concurrent: mutated in updateFilterLocked while relay I/O threads read it
+    // in onIncomingMessage (containsValue).
+    private val subIds = ConcurrentHashMap<String, String>()
     private val filterMutex = Mutex()
 
     // Mirrors `NostrClientLoggerListener`: backoff starts at 5s, doubles up to
@@ -131,7 +133,8 @@ class BunkerEngine(
     private var lastDisconnectTime = 0L
 
     /** localPubKey -> (npub, localPrivKey), mirrors `LocalKeyAccountIndex`. */
-    private val localKeyIndex = ConcurrentHashMap<String, Pair<String, String>>()
+    @Volatile
+    private var localKeyIndex: Map<String, Pair<String, String>> = emptyMap()
 
     /** Recently processed event ids -> createdAt, for dedup + `since` computation. */
     private val seenEvents = object : LinkedHashMap<String, Long>(64, 0.75f, false) {
@@ -253,7 +256,7 @@ class BunkerEngine(
     }
 
     private suspend fun updateFilterLocked() = filterMutex.withLock {
-        val activeSubKeys = mutableSetOf<String>()
+        val pendingSubscriptions = linkedMapOf<String, Map<NormalizedRelayUrl, List<Filter>>>()
         val indexEntries = mutableMapOf<String, Pair<String, String>>()
 
         AmberDesktop.accounts().forEach { account ->
@@ -272,58 +275,50 @@ class BunkerEngine(
                     .filterNot { RelayHealthTracker.isDead(it) }
                 if (connRelays.isEmpty()) continue
 
-                activeSubKeys.add(subKey)
-                if (!subIds.containsKey(subKey)) {
-                    subIds[subKey] = UUID.randomUUID().toString()
+                pendingSubscriptions[subKey] = connRelays.associateWith {
+                    listOf(
+                        Filter(
+                            kinds = listOf(NostrConnectEvent.KIND),
+                            tags = mapOf("p" to listOf(connPubKey)),
+                            limit = 1,
+                            since = since,
+                        ),
+                    )
                 }
-                client.subscribe(
-                    subIds[subKey]!!,
-                    connRelays.associateWith {
-                        listOf(
-                            Filter(
-                                kinds = listOf(NostrConnectEvent.KIND),
-                                tags = mapOf("p" to listOf(connPubKey)),
-                                limit = 1,
-                                since = since,
-                            ),
-                        )
-                    },
-                )
             }
 
             if (hasLegacyConnections) {
                 val relays = AmberDesktop.savedRelays(account.npub).filterNot { RelayHealthTracker.isDead(it) }
                 if (relays.isNotEmpty()) {
-                    activeSubKeys.add(account.hexKey)
-                    if (!subIds.containsKey(account.hexKey)) {
-                        subIds[account.hexKey] = UUID.randomUUID().toString()
+                    pendingSubscriptions[account.hexKey] = relays.associateWith {
+                        listOf(
+                            Filter(
+                                kinds = listOf(NostrConnectEvent.KIND),
+                                tags = mapOf("p" to listOf(account.hexKey)),
+                                limit = 1,
+                                since = since,
+                            ),
+                        )
                     }
-                    client.subscribe(
-                        subIds[account.hexKey]!!,
-                        relays.associateWith {
-                            listOf(
-                                Filter(
-                                    kinds = listOf(NostrConnectEvent.KIND),
-                                    tags = mapOf("p" to listOf(account.hexKey)),
-                                    limit = 1,
-                                    since = since,
-                                ),
-                            )
-                        },
-                    )
                 }
             }
         }
 
-        val staleSubKeys = subIds.keys.filter { it !in activeSubKeys }
+        // Mirrors NotificationSubscription: make every endpoint routable before
+        // any subscription can deliver a request, otherwise the first request
+        // of a new connection can arrive while its key is still unknown and is
+        // dropped. One reference swap, so consume() never sees a half-filled index.
+        localKeyIndex = indexEntries.toMap()
+        pendingSubscriptions.forEach { (key, filters) ->
+            client.subscribe(subIds.getOrPut(key) { UUID.randomUUID().toString() }, filters)
+        }
+
+        val staleSubKeys = subIds.keys.filter { it !in pendingSubscriptions }
         for (subKey in staleSubKeys) {
             subIds.remove(subKey)?.let { subId ->
                 client.unsubscribe(subId)
             }
         }
-
-        localKeyIndex.clear()
-        localKeyIndex.putAll(indexEntries)
     }
 
     private fun computeSince(): Long {

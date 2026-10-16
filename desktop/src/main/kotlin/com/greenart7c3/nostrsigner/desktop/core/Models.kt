@@ -247,7 +247,19 @@ data class AppPermissionRecord(
     val acceptUntil: Long,
     val rejectUntil: Long,
     val relay: String = "",
-)
+) {
+    /**
+     * Mirrors `ApplicationPermissionsEntity.activeDecision`: the remembered
+     * decision in effect at [now] — true to accept, false to reject, null to
+     * ask. Only the timestamp on the side that [acceptable] selects counts, so
+     * a stale value left on the other side can never decide a request.
+     */
+    fun activeDecision(now: Long): Boolean? = when {
+        !acceptable && rejectUntil > now -> false
+        acceptable && acceptUntil > now -> true
+        else -> null
+    }
+}
 
 data class AppWithPermissions(
     val app: AppRecord,
@@ -337,19 +349,15 @@ fun String.toShortenHex(): String = if (length <= 16) this else "${take(8)}…${
  * null = ask the user.
  */
 fun isRemembered(signPolicy: Int?, permission: AppPermissionRecord?): Boolean? {
-    val rejectUntil = permission?.rejectUntil ?: 0
-    val acceptUntil = permission?.acceptUntil ?: 0
+    val decision = permission?.activeDecision(TimeUtils.now())
+    // An active explicit rejection wins over the "fully trust" sign policy.
+    if (decision == false) {
+        return false
+    }
     if (signPolicy == 2) {
         return true
     }
-    if (rejectUntil == 0L && acceptUntil == 0L) return null
-    return if (rejectUntil > TimeUtils.now() && rejectUntil > 0 && permission?.acceptable == false) {
-        false
-    } else if (acceptUntil > TimeUtils.now() && acceptUntil > 0 && permission?.acceptable == true) {
-        true
-    } else {
-        null
-    }
+    return decision
 }
 
 /** The NIP-46 method string for a signer type (e.g. SIGN_EVENT -> "sign_event"). */

@@ -1,5 +1,6 @@
 package com.greenart7c3.nostrsigner.service
 
+import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.models.Account
 import com.vitorpamplona.quartz.nip01Core.core.hexToByteArray
 import com.vitorpamplona.quartz.nip01Core.core.toHexKey
@@ -11,25 +12,43 @@ import com.vitorpamplona.quartz.nip19Bech32.toNpub
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.mockkObject
+import io.mockk.unmockkObject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.runBlocking
+import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import org.junit.Before
 import org.junit.Test
 
 class AccountExportSeedRestoreTest {
     private val words = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about"
     private val otherWords = "legal winner thank year wave sausage worth useful legal winner thank yellow"
 
+    @Before
+    fun setUp() {
+        // The dropped-seed paths log through android.util.Log, which is not
+        // available in JVM tests.
+        mockkObject(AmberLog)
+        every { AmberLog.e(any(), any()) } returns Unit
+        every { AmberLog.e(any(), any(), any()) } returns Unit
+    }
+
+    @After
+    fun tearDown() {
+        unmockkObject(AmberLog)
+    }
+
     private fun realAccount(privKeyHex: String): Account {
         val privKey = privKeyHex.hexToByteArray()
-        val hexKey = Nip01Crypto.pubKeyCreate(privKey).toHexKey()
+        val pubKey = Nip01Crypto.pubKeyCreate(privKey)
         return Account(
-            hexKey = hexKey,
-            npub = hexKey.toNpub(),
+            hexKey = pubKey.toHexKey(),
+            npub = pubKey.toNpub(),
             name = MutableStateFlow(""),
             picture = MutableStateFlow(""),
             signPolicy = 1,

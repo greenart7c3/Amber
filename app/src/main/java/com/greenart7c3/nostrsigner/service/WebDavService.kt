@@ -6,7 +6,6 @@ import com.greenart7c3.nostrsigner.okhttp.HttpClientManager
 import com.greenart7c3.nostrsigner.okhttp.TaggedSocketFactory
 import com.greenart7c3.nostrsigner.okhttp.TaggingInterceptor
 import java.io.IOException
-import java.net.Proxy
 import java.util.concurrent.TimeUnit
 import javax.net.SocketFactory
 import okhttp3.Credentials
@@ -34,24 +33,19 @@ object WebDavService {
             isPrivateAddress = Amber.instance.isPrivateIp(serverUrl),
             torMode = Amber.instance.settings.torMode,
         )
-        val proxy: Proxy = if (useProxy) {
+        // Dedicated minimal client: the shared relay stack brings a relay
+        // User-Agent interceptor, request logging, and an URL-keyed decrypt
+        // cache that must not apply to backup traffic.
+        val builder = OkHttpClient.Builder()
+            .socketFactory(TaggedSocketFactory(SocketFactory.getDefault()))
+            .addInterceptor(TaggingInterceptor())
+        if (useProxy) {
             // A SOCKS proxy that is still bootstrapping would fail later with a
             // generic connect error; fail here with the real condition.
             check(Amber.instance.isSocksProxyAlive("127.0.0.1", Amber.instance.settings.proxyPort)) {
                 "Tor is enabled but its SOCKS proxy is not reachable yet"
             }
-            checkNotNull(HttpClientManager.getCurrentProxy()) { "Tor proxy is not configured yet" }
-        } else {
-            Proxy(Proxy.Type.DIRECT, null)
-        }
-        // Dedicated minimal client: the shared relay stack brings a relay
-        // User-Agent interceptor, request logging, and an URL-keyed decrypt
-        // cache that must not apply to backup traffic.
-        val builder = OkHttpClient.Builder()
-            .proxy(proxy)
-            .socketFactory(TaggedSocketFactory(SocketFactory.getDefault()))
-            .addInterceptor(TaggingInterceptor())
-        if (useProxy) {
+            builder.proxy(checkNotNull(HttpClientManager.getCurrentProxy()) { "Tor proxy is not configured yet" })
             // Timeout scaling matches HttpClientManager.buildHttpClient
             // (proxied routes get 3x): building a Tor circuit plus the TLS
             // handshake needs the larger budget.

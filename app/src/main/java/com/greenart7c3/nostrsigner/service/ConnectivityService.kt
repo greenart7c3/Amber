@@ -1,7 +1,10 @@
 package com.greenart7c3.nostrsigner.service
 
 import android.app.Service
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.ServiceInfo
 import android.net.ConnectivityManager
 import android.net.Network
@@ -9,6 +12,7 @@ import android.net.NetworkCapabilities
 import android.os.Build
 import android.os.IBinder
 import androidx.core.app.ServiceCompat
+import androidx.core.content.ContextCompat
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.BuildConfig
@@ -32,6 +36,23 @@ class ConnectivityService : Service() {
 
     private val networkChangeDetector = NetworkChangeDetector()
     private var pendingRelayReset: Job? = null
+
+    // With requireUnlockedDevice on, a start while the device is locked (an app
+    // update, or the system restarting the process) can't decrypt the stored
+    // accounts and connections, so the NIP-46 filter comes up empty and stays
+    // that way. Rebuild it as soon as the user unlocks.
+    private val unlockReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            if (intent.action != Intent.ACTION_USER_PRESENT) return
+            if (!LocalPreferences.getRequireUnlockedDevice(context)) return
+            if (Amber.instance.settings.killSwitch.value) return
+            AmberLog.d(Amber.TAG, "Device unlocked, refreshing relay subscriptions")
+            Amber.instance.applicationIOScope.launch {
+                Amber.instance.checkForNewRelaysAndUpdateAllFilters()
+            }
+        }
+    }
+    private var unlockReceiverRegistered = false
 
     private val networkCallback =
         object : ConnectivityManager.NetworkCallback() {
@@ -179,6 +200,17 @@ class ConnectivityService : Service() {
                 connectivityManager.getNetworkCapabilities(connectivityManager.activeNetwork)?.let {
                     Amber.instance.updateNetworkCapabilities(it)
                 }
+
+                // USER_PRESENT comes from SystemUI, not the system process, so a
+                // non-exported receiver never gets it. It is a protected
+                // broadcast: no other app can send it.
+                ContextCompat.registerReceiver(
+                    this@ConnectivityService,
+                    unlockReceiver,
+                    IntentFilter(Intent.ACTION_USER_PRESENT),
+                    ContextCompat.RECEIVER_EXPORTED,
+                )
+                unlockReceiverRegistered = true
             }
 
             timer.schedule(
@@ -203,6 +235,10 @@ class ConnectivityService : Service() {
     override fun onDestroy() {
         timer.cancel()
         cancelPendingRelayReset()
+        if (unlockReceiverRegistered) {
+            unregisterReceiver(unlockReceiver)
+            unlockReceiverRegistered = false
+        }
         if (!BuildFlavorChecker.isOfflineFlavor()) {
             try {
                 AmberLog.d(Amber.TAG, "unregisterNetworkCallback")

@@ -191,9 +191,79 @@ class EventNotificationConsumer(private val applicationContext: Context) {
             saveLog("Event ${event.id} already processed (persistent cache)", relay.url)
             return
         }
+
+        // With requireUnlockedDevice on, nothing may use the account key while
+        // the device is locked, and that includes opening the request.
+        if (isAccountKeyLocked(acc)) {
+            if (connectionPrivKey.isEmpty()) {
+                // Legacy client: the request and any reply are encrypted with the
+                // account key, so it can't even be answered. Leave the event
+                // unrecorded so a re-delivery after unlock is processed.
+                saveLog("Device locked: request ${event.id} from a legacy client can't be opened until unlock", relay.url, acc.npub)
+                return
+            }
+            bunkerEventDao.insert(BunkerEventEntity(0, event.id, event.createdAt))
+            replyDeviceLocked(event, acc, relay, connectionPrivKey)
+            return
+        }
+
         bunkerEventDao.insert(BunkerEventEntity(0, event.id, event.createdAt))
 
         notify(event, acc, relay, connectionPrivKey)
+    }
+
+    private fun isAccountKeyLocked(acc: Account): Boolean = try {
+        acc.requirePrivateKeyAccess()
+        false
+    } catch (_: SecurityException) {
+        true
+    }
+
+    /**
+     * Answers a request with a "locked" error instead of letting the client time
+     * out. Only the connection key is used, never the account key.
+     */
+    private fun replyDeviceLocked(
+        event: Event,
+        acc: Account,
+        relay: NormalizedRelayUrl,
+        connectionPrivKey: String,
+    ) {
+        if (event.content.isEmpty()) return
+        Amber.instance.applicationIOScope.launch {
+            try {
+                val connSigner = NostrSignerInternal(KeyPair(privKey = connectionPrivKey.hexToByteArray()))
+                val requestStr = connSigner.decrypt(event.content, event.pubKey)
+                val bunkerRequest = JacksonMapper.mapper.readValue(requestStr, BunkerRequest::class.java)
+                saveLog("Device locked: rejected request ${bunkerRequest.id} method ${bunkerRequest.method}", relay.url, acc.npub)
+                val request = AmberBunkerRequest(
+                    request = bunkerRequest,
+                    localKey = event.pubKey,
+                    relays = listOf(relay),
+                    currentAccount = acc.npub,
+                    nostrConnectSecret = "",
+                    closeApplication = true,
+                    name = "",
+                    signedEvent = null,
+                    encryptedData = null,
+                    encryptionType = if (EncryptedInfo.isNIP04(event.content)) EncryptionType.NIP04 else EncryptionType.NIP44,
+                    isNostrConnectUri = false,
+                    signerPrivKey = connectionPrivKey,
+                )
+                BunkerRequestUtils.sendBunkerResponse(
+                    applicationContext,
+                    acc,
+                    request,
+                    BunkerResponse(bunkerRequest.id, "", "Amber is locked. Unlock your device and try again."),
+                    listOf(relay),
+                    onLoading = {},
+                    onDone = {},
+                )
+            } catch (e: Exception) {
+                if (e is CancellationException) throw e
+                saveLog("Device locked: could not reject request ${event.id}: ${e.message}", relay.url, acc.npub)
+            }
+        }
     }
 
     private fun notify(
@@ -218,21 +288,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                     val connSigner = NostrSignerInternal(KeyPair(privKey = connectionPrivKey.hexToByteArray()))
                     connSigner.decrypt(event.content, event.pubKey)
                 } else {
-                    try {
-                        acc.decrypt(event.content, event.pubKey)
-                    } catch (e: Exception) {
-                        if (e is CancellationException) throw e
-                        // Opening the request envelope for a legacy client is
-                        // transport, not authorization: the request must reach
-                        // the permission system (and the user) even while the
-                        // device is locked, or the client never gets a response.
-                        // The gated operation inside still enforces the policy.
-                        if (e is SecurityException || e is IllegalStateException) {
-                            acc.signer.decrypt(event.content, event.pubKey)
-                        } else {
-                            throw e
-                        }
-                    }
+                    acc.decrypt(event.content, event.pubKey)
                 }
             } catch (e: Exception) {
                 saveLog("Decryption failed for event ${event.id}: ${e.message}", relay.url, acc.npub)

@@ -83,7 +83,7 @@ Separate from the UI-only lock above, the user can enable **`requireUnlockedDevi
 Consequences to keep in mind when touching these paths:
 
 - Background consumers of gated operations must handle the refusal explicitly: the relay AUTH coordinator isolates per-account failures, `BackupApplicationsWorker` returns `Result.retry()` on the lock refusal, and lock/settings refusals are rethrown (not swallowed) by `validateNip44v3Request` and `ApplicationBackup.decryptContent` so clients and callers see the real condition instead of a decrypt/corruption error.
-- Opening a legacy NIP-46 request envelope for permission display is treated as transport: `EventNotificationConsumer` falls back to the ungated signer to decrypt the envelope while locked, but the requested operation inside is still gated.
+- NIP-46 requests are checked before they are opened: while locked, `EventNotificationConsumer` answers clients that have their own connection key with a "locked" error (using only that key), and leaves requests from legacy clients, which are encrypted to the account key, unopened and unrecorded so a re-delivery after unlock is processed.
 - This gate is independent of the biometric/PIN UI lock: with `requireUnlockedDevice=false` (the default), background signing behaves exactly as described above.
 
 ### Key files

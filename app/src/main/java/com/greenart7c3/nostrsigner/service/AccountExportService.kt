@@ -32,7 +32,7 @@ object AccountExportService {
         password: String,
         onLoading: (isLoading: Boolean) -> Unit,
         onText: (text: String) -> Unit,
-        onFinish: () -> Unit,
+        onFinish: (importedCount: Int, failedLines: List<Int>) -> Unit,
     ) {
         onLoading(true)
         try {
@@ -48,6 +48,7 @@ object AccountExportService {
             if (file.isFile) {
                 file.openInputStream(Amber.instance).use { oi ->
                     oi?.bufferedReader().use { reader ->
+                        var importedCount = 0
                         val failedLines = mutableListOf<Int>()
                         reader?.readLines()?.forEachIndexed { index, line ->
                             try {
@@ -78,6 +79,7 @@ object AccountExportService {
                                 val seedWords = decryptExportedSeedWords(account, accountData.seedWords, privKey)
                                 LocalPreferences.switchToAccount(Amber.instance, account.npub)
                                 LocalPreferences.updatePrefsForLogin(Amber.instance, account, hexKey.toHexKey(), privKey, seedWords)
+                                importedCount++
                             } catch (e: Exception) {
                                 if (e is CancellationException) throw e
 
@@ -85,16 +87,7 @@ object AccountExportService {
                                 failedLines.add(index + 1)
                             }
                         }
-                        if (failedLines.isNotEmpty()) {
-                            Amber.instance.applicationIOScope.launch(Dispatchers.Main) {
-                                Toast.makeText(
-                                    Amber.instance,
-                                    Amber.instance.getString(R.string.import_failed_for_accounts, failedLines.joinToString(", ")),
-                                    Toast.LENGTH_LONG,
-                                ).show()
-                            }
-                        }
-                        onFinish()
+                        onFinish(importedCount, failedLines)
                     }
                 }
             }

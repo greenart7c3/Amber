@@ -30,6 +30,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Visibility
 import androidx.compose.material.icons.outlined.VisibilityOff
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -45,6 +46,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -139,6 +141,33 @@ fun MainPage(
     val percentage = (screenWidthDp * 0.93f)
     val verticalPadding = (screenWidthDp - percentage)
     val shouldShowBottomSheet = remember { mutableStateOf(false) }
+    var failedImportLines by remember { mutableStateOf<List<Int>>(emptyList()) }
+    // Set when an import restored some accounts but not all: they are opened
+    // once the error dialog is dismissed.
+    var finishAfterImportError by remember { mutableStateOf<(() -> Unit)?>(null) }
+
+    fun finishImport(hadAccounts: Boolean) {
+        Amber.instance.applicationIOScope.launch {
+            if (hadAccounts) {
+                Amber.instance.applicationIOScope.launch(Dispatchers.Main) {
+                    navHostControllerWrapper.navController.navigate(Route.Applications.route) {
+                        popUpTo(0)
+                    }
+                }
+            } else {
+                val accounts = LocalPreferences.allAccounts(Amber.instance)
+                if (accounts.isNotEmpty()) {
+                    val account = LocalPreferences.loadFromEncryptedStorage(Amber.instance, accounts.first().npub)
+                    account?.let {
+                        accountViewModel.startUI(account, null)
+                        accountViewModel.maybeOfferRestore(account)
+                    }
+                }
+            }
+            Amber.instance.notificationSubscription.updateFilter()
+        }
+    }
+
     val selectFileLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         shouldShowBottomSheet.value = false
         Amber.instance.applicationIOScope.launch {
@@ -153,30 +182,40 @@ fun MainPage(
                     onLoading = {
                         isLoading = it
                     },
-                    onFinish = {
-                        Amber.instance.applicationIOScope.launch {
-                            if (hasAccounts) {
-                                Amber.instance.applicationIOScope.launch(Dispatchers.Main) {
-                                    navHostControllerWrapper.navController.navigate(Route.Applications.route) {
-                                        popUpTo(0)
-                                    }
-                                }
+                    onFinish = { importedCount, failedLines ->
+                        if (failedLines.isEmpty()) {
+                            finishImport(hasAccounts)
+                        } else {
+                            // When nothing was imported, stay here so the user can
+                            // retry instead of landing on a "your account is ready"
+                            // screen.
+                            finishAfterImportError = if (importedCount > 0) {
+                                { finishImport(hasAccounts) }
                             } else {
-                                val accounts = LocalPreferences.allAccounts(Amber.instance)
-                                if (accounts.isNotEmpty()) {
-                                    val account = LocalPreferences.loadFromEncryptedStorage(Amber.instance, accounts.first().npub)
-                                    account?.let {
-                                        accountViewModel.startUI(account, null)
-                                        accountViewModel.maybeOfferRestore(account)
-                                    }
-                                }
+                                null
                             }
-                            Amber.instance.notificationSubscription.updateFilter()
+                            failedImportLines = failedLines
                         }
                     },
                 )
             }
         }
+    }
+
+    if (failedImportLines.isNotEmpty()) {
+        val dismissImportError = {
+            failedImportLines = emptyList()
+            finishAfterImportError?.invoke()
+            finishAfterImportError = null
+        }
+        AlertDialog(
+            onDismissRequest = dismissImportError,
+            title = { Text(stringResource(R.string.recover_from_backup)) },
+            text = { Text(stringResource(R.string.import_failed_for_accounts, failedImportLines.joinToString(", "))) },
+            confirmButton = {
+                TextButton(onClick = dismissImportError) { Text(stringResource(R.string.ok)) }
+            },
+        )
     }
 
     val sheetState =

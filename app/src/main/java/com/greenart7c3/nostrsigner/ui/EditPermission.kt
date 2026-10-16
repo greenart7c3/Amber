@@ -326,9 +326,9 @@ fun PermissionRow(
         }
     }
     var optionIndex by remember {
-        if (permission.acceptUntil > 0) {
+        if (permission.acceptable && permission.acceptUntil > 0) {
             mutableIntStateOf(0)
-        } else if (permission.rejectUntil > 0) {
+        } else if (!permission.acceptable && permission.rejectUntil > 0) {
             mutableIntStateOf(1)
         } else {
             mutableIntStateOf(2)

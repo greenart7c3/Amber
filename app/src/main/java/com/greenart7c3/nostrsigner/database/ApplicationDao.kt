@@ -116,8 +116,19 @@ interface ApplicationDao {
 
     suspend fun getAllWithLocalKey(pubKey: String): List<ApplicationEntity> = getAllWithLocalKeyRaw(pubKey).map { it.decryptFromStorage() }
 
-    @Query("UPDATE applicationPermission set acceptUntil = 0, rejectUntil = 0, rememberType = 0 where ((acceptable = 1 AND acceptUntil > 0 AND acceptUntil <= :time) OR (acceptable = 0 AND rejectUntil > 0 AND rejectUntil <= :time)) AND rememberType <> 4")
-    fun updateExpiredPermissions(time: Long)
+    // Resets every row without an active decision (see
+    // ApplicationPermissionsEntity.activeDecision): expired timers, stale
+    // timestamps on the side acceptable does not select, and "Ask" rows that
+    // still carry a duration. ALWAYS rows are kept. Rows that are already
+    // reset are skipped so the returned count only covers real changes.
+    @Query(
+        "UPDATE applicationPermission SET acceptUntil = 0, rejectUntil = 0, rememberType = 0 " +
+            "WHERE rememberType <> 4 " +
+            "AND NOT (acceptable = 1 AND acceptUntil > :time) " +
+            "AND NOT (acceptable = 0 AND rejectUntil > :time) " +
+            "AND (acceptUntil <> 0 OR rejectUntil <> 0 OR rememberType <> 0)",
+    )
+    fun updateExpiredPermissions(time: Long): Int
 
     @Query("SELECT * FROM applicationPermission WHERE pkKey = :key")
     suspend fun getAllByKey(key: String): List<ApplicationPermissionsEntity>

@@ -44,6 +44,7 @@
     <string name="ncryptsec_password">密码</string>
     <string name="password_is_required">需要密码</string>
     <string name="failed_to_encrypt_key">私钥加密失败</string>
+    <string name="failed_to_export_key">私钥导出失败</string>
     <string name="biometric_authentication_failed_explainer">生物识别验证设备所有者身份失败</string>
     <string name="biometric_authentication_failed_explainer_with_error">生物识别验证设备所有者身份失败：%1$s</string>
     <string name="delete">删除</string>

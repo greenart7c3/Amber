@@ -115,6 +115,7 @@ internal fun backupKeyPair(identityPrivKey: ByteArray): KeyPair {
 }
 
 internal fun backupSigner(account: Account): NostrSignerInternal {
+    account.requirePrivateKeyAccess()
     val identityPrivKey = checkNotNull(account.signer.keyPair.privKey) {
         "ApplicationBackup: account has no private key"
     }
@@ -338,10 +339,15 @@ object ApplicationBackup {
         backupSigner.nip44Decrypt(content, backupSigner.keyPair.pubKey.toHexKey())
     } catch (e: Exception) {
         if (e is CancellationException) throw e
+        // A device-lock refusal is not a decrypt failure: treating it as one
+        // makes callers skip a valid restore or publish an empty backup over
+        // the real one. Rethrow so it surfaces as its own condition.
+        if (e is SecurityException || e is IllegalStateException) throw e
         try {
             account.nip44Decrypt(content, account.hexKey)
         } catch (legacy: Exception) {
             if (legacy is CancellationException) throw legacy
+            if (legacy is SecurityException || legacy is IllegalStateException) throw legacy
             AmberLog.e(Amber.TAG, "ApplicationBackup: failed to decrypt backup payload", legacy)
             null
         }

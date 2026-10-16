@@ -1,12 +1,16 @@
 package com.greenart7c3.nostrsigner.models
 
+import android.app.KeyguardManager
 import android.widget.Toast
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
 import androidx.compose.ui.platform.Clipboard
 import com.greenart7c3.nostrsigner.Amber
+import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.DataStoreAccess
+import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.service.DeviceUnlockPolicy
 import com.greenart7c3.nostrsigner.service.nip44v3.Nip44v3
 import com.greenart7c3.nostrsigner.ui.setSensitiveClip
 import com.vitorpamplona.quartz.nip01Core.core.Event
@@ -43,6 +47,17 @@ class Account(
     // Watches name/picture to mark the account saveable; injectable so Compose
     // previews can build an Account without the Amber Application singleton.
     scope: CoroutineScope = Amber.instance.applicationIOScope,
+    private val keyAccessCheck: () -> Unit = {
+        // REQUIRE_UNLOCKED_DEVICE is a plain SharedPreferences boolean, so read it
+        // synchronously: the DataStore-backed settings object may not be loaded yet
+        // (offline flavor, WorkManager/ContentProvider cold start), and this gate
+        // must see the user's actual decision, not a default-valued guess.
+        val required = LocalPreferences.getRequireUnlockedDevice(Amber.instance)
+        DeviceUnlockPolicy.requireAccess(required) {
+            val keyguard = Amber.instance.getSystemService(KeyguardManager::class.java)
+            keyguard?.isDeviceLocked ?: true
+        }
+    },
 ) {
     var signPolicy: Int = signPolicy
         set(value) {
@@ -71,34 +86,72 @@ class Account(
         }
     }
 
-    suspend fun <T : Event> sign(eventTemplate: EventTemplate<T>): T = signer.sign(eventTemplate)
+    internal fun requirePrivateKeyAccess() = keyAccessCheck()
+
+    suspend fun <T : Event> sign(eventTemplate: EventTemplate<T>): T {
+        requirePrivateKeyAccess()
+        return signer.sign(eventTemplate)
+    }
 
     fun <T : Event> signSync(
         createdAt: Long,
         kind: Int,
         tags: Array<Array<String>>,
         content: String,
-    ): T = signer.signerSync.sign(createdAt, kind, tags, content)
+    ): T {
+        requirePrivateKeyAccess()
+        return signer.signerSync.sign(createdAt, kind, tags, content)
+    }
 
-    fun nip49Encrypt(password: String): String = Nip49().encrypt(signer.keyPair.privKey!!.toHexKey(), password)
+    fun nip49Encrypt(password: String): String {
+        requirePrivateKeyAccess()
+        return Nip49().encrypt(signer.keyPair.privKey!!.toHexKey(), password)
+    }
 
-    suspend fun nip44Encrypt(plainText: String, toPublicKey: String): String = signer.nip44Encrypt(plainText, toPublicKey)
+    suspend fun nip44Encrypt(plainText: String, toPublicKey: String): String {
+        requirePrivateKeyAccess()
+        return signer.nip44Encrypt(plainText, toPublicKey)
+    }
 
-    suspend fun nip04Encrypt(plainText: String, toPublicKey: String): String = signer.nip04Encrypt(plainText, toPublicKey)
+    suspend fun nip04Encrypt(plainText: String, toPublicKey: String): String {
+        requirePrivateKeyAccess()
+        return signer.nip04Encrypt(plainText, toPublicKey)
+    }
 
-    suspend fun nip44Decrypt(cipherText: String, fromPublicKey: String): String = signer.nip44Decrypt(cipherText, fromPublicKey)
+    suspend fun nip44Decrypt(cipherText: String, fromPublicKey: String): String {
+        requirePrivateKeyAccess()
+        return signer.nip44Decrypt(cipherText, fromPublicKey)
+    }
 
-    suspend fun nip04Decrypt(cipherText: String, fromPublicKey: String): String = signer.nip04Decrypt(cipherText, fromPublicKey)
+    suspend fun nip04Decrypt(cipherText: String, fromPublicKey: String): String {
+        requirePrivateKeyAccess()
+        return signer.nip04Decrypt(cipherText, fromPublicKey)
+    }
 
-    fun nip44v3Encrypt(plainText: ByteArray, toPublicKey: String, kind: Int, scope: String): String = Nip44v3.encrypt(plainText, signer.keyPair.privKey!!, toPublicKey.hexToByteArray(), kind, scope)
+    fun nip44v3Encrypt(plainText: ByteArray, toPublicKey: String, kind: Int, scope: String): String {
+        requirePrivateKeyAccess()
+        return Nip44v3.encrypt(plainText, signer.keyPair.privKey!!, toPublicKey.hexToByteArray(), kind, scope)
+    }
 
-    fun nip44v3Decrypt(cipherText: String, fromPublicKey: String, kind: Int, scope: String): ByteArray = Nip44v3.decrypt(cipherText, signer.keyPair.privKey!!, fromPublicKey.hexToByteArray(), kind, scope)
+    fun nip44v3Decrypt(cipherText: String, fromPublicKey: String, kind: Int, scope: String): ByteArray {
+        requirePrivateKeyAccess()
+        return Nip44v3.decrypt(cipherText, signer.keyPair.privKey!!, fromPublicKey.hexToByteArray(), kind, scope)
+    }
 
-    suspend fun decrypt(encryptedContent: String, fromPublicKey: String): String = signer.decrypt(encryptedContent, fromPublicKey)
+    suspend fun decrypt(encryptedContent: String, fromPublicKey: String): String {
+        requirePrivateKeyAccess()
+        return signer.decrypt(encryptedContent, fromPublicKey)
+    }
 
-    suspend fun signPsbt(psbtHex: String): String = signer.signPsbt(psbtHex)
+    suspend fun signPsbt(psbtHex: String): String {
+        requirePrivateKeyAccess()
+        return signer.signPsbt(psbtHex)
+    }
 
     suspend fun seedWords(): String {
+        // Gate before reading: the repair below swallows decrypt failures and
+        // would otherwise turn a lock refusal into an erased recovery phrase.
+        requirePrivateKeyAccess()
         val stored = runCatching { DataStoreAccess.getEncryptedKey(Amber.instance, npub, DataStoreAccess.SEED_WORDS) }.getOrNull() ?: ""
 
         // Lazy repair for accounts restored by pre-fix builds, which stored the
@@ -122,6 +175,7 @@ class Account(
     fun decryptZapEvent(
         data: String,
     ): String? {
+        requirePrivateKeyAccess()
         val event = Event.fromJson(data) as LnZapRequestEvent
         return try {
             PrivateZapRequestBuilder().decryptZapEvent(
@@ -134,14 +188,27 @@ class Account(
         }
     }
 
-    suspend fun createMessageNIP17(template: EventTemplate<ChatMessageEvent>): NIP17Factory.Result = NIP17Factory().createMessageNIP17(template, signer)
+    suspend fun createMessageNIP17(template: EventTemplate<ChatMessageEvent>): NIP17Factory.Result {
+        requirePrivateKeyAccess()
+        return NIP17Factory().createMessageNIP17(template, signer)
+    }
 
-    suspend fun getNsec(): String = signer.keyPair.privKey!!.toNsec()
+    suspend fun getNsec(): String {
+        requirePrivateKeyAccess()
+        return signer.keyPair.privKey!!.toNsec()
+    }
 
     fun copyToClipboard(clipboardManager: Clipboard) {
         Amber.instance.applicationIOScope.launch {
+            val nsec = try {
+                getNsec()
+            } catch (e: Exception) {
+                if (e is CancellationException) throw e
+                // Never mark the account backed up when the export was refused.
+                AmberLog.e(Amber.TAG, "Failed to export secret key for clipboard", e)
+                return@launch
+            }
             didBackup = true
-            val nsec = getNsec()
             Amber.instance.applicationIOScope.launch(Dispatchers.Main) {
                 clipboardManager.setSensitiveClip("", nsec)
 

@@ -143,4 +143,27 @@ class EventNotificationConsumerTest {
         coVerify(exactly = 1) { bunkerEventDao.exists(any()) }
         coVerify(exactly = 0) { bunkerEventDao.insert(any()) }
     }
+
+    @Test
+    fun `a legacy request while locked is neither opened nor recorded`() = runBlocking {
+        val event = mockk<Event>(relaxed = true)
+        every { event.id } returns "event2"
+        every { event.verify() } returns true
+        every { event.kind } returns NostrConnectEvent.KIND
+        every { event.createdAt } returns TimeUtils.now()
+        every { event.content } returns "ciphertext"
+        every { event.tags } returns arrayOf(arrayOf("p", account.hexKey))
+        every { event.taggedUsers() } returns listOf(PTag(account.hexKey))
+
+        val locked = spyk(account)
+        every { locked.requirePrivateKeyAccess() } throws SecurityException("locked")
+        coEvery { LocalPreferences.loadFromEncryptedStorageSync(any(), any()) } returns locked
+        coEvery { bunkerEventDao.exists("event2") } returns false
+
+        consumer.consume(event, NormalizedRelayUrl("wss://relay.com"))
+
+        // Unrecorded, so a re-delivery after unlock is processed.
+        coVerify(exactly = 0) { bunkerEventDao.insert(any()) }
+        coVerify(exactly = 0) { locked.decrypt(any(), any()) }
+    }
 }

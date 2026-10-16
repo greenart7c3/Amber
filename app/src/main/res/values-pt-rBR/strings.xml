@@ -44,6 +44,7 @@
     <string name="ncryptsec_password">senha para desbloquear a sua chave</string>
     <string name="password_is_required">Senha é obrigatória</string>
     <string name="failed_to_encrypt_key">Falha ao criptografar sua chave privada</string>
+    <string name="failed_to_export_key">Falha ao exportar sua chave privada</string>
     <string name="biometric_authentication_failed_explainer">A biometria não conseguiu autenticar o proprietário deste telefone</string>
     <string name="biometric_authentication_failed_explainer_with_error">A biometria não conseguiu autenticar o proprietário deste telefone. Erro: %1$s</string>
     <string name="delete">Excluir</string>

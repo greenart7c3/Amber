@@ -46,6 +46,7 @@
     <string name="ncryptsec_password">Passwort zum Öffnen des Schlüssels</string>
     <string name="password_is_required">Passwort ist erforderlich</string>
     <string name="failed_to_encrypt_key">Verschlüsselung des privaten Schlüssels fehlgeschlagen</string>
+    <string name="failed_to_export_key">Export des privaten Schlüssels fehlgeschlagen</string>
     <string name="biometric_authentication_failed_explainer">Biometrien konnten den Besitzer dieses Telefons nicht authentifizieren</string>
     <string name="biometric_authentication_failed_explainer_with_error">Biometrien konnten den Besitzer dieses Telefons nicht authentifizieren. Fehler: %1$s</string>
     <string name="delete">Löschen</string>

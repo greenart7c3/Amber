@@ -155,8 +155,12 @@ class Amber :
 
     // Authenticates with relays.
     val authCoordinator = RelayAuthenticator(client, applicationIOScope) { _, event, _ ->
-        LocalPreferences.allAccounts(this).map { account ->
-            account.sign(event)
+        // One account failing to sign (device locked under requireUnlockedDevice,
+        // or a transient key error) must not abort AUTH for every other account.
+        LocalPreferences.allAccounts(this).mapNotNull { account ->
+            runCatching { account.sign(event) }.onFailure { e ->
+                AmberLog.e(TAG, "NIP-42 auth signing failed for ${account.npub}", e)
+            }.getOrNull()
         }
     }
 

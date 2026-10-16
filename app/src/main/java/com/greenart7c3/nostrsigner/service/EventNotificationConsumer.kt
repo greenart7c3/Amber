@@ -191,9 +191,83 @@ class EventNotificationConsumer(private val applicationContext: Context) {
             saveLog("Event ${event.id} already processed (persistent cache)", relay.url)
             return
         }
+
+        // With requireUnlockedDevice on, nothing may use the account key while
+        // the device is locked, and that includes opening the request.
+        if (isAccountKeyLocked(acc)) {
+            if (connectionPrivKey.isEmpty()) {
+                // Legacy client: the request and any reply are encrypted with the
+                // account key, so it can't even be answered. Leave the event
+                // unrecorded so a re-delivery after unlock is processed.
+                saveLog("Device locked: request ${event.id} from a legacy client can't be opened until unlock", relay.url, acc.npub)
+                return
+            }
+            bunkerEventDao.insert(BunkerEventEntity(0, event.id, event.createdAt))
+            replyDeviceLocked(event, acc, relay, connectionPrivKey)
+            return
+        }
+
         bunkerEventDao.insert(BunkerEventEntity(0, event.id, event.createdAt))
 
         notify(event, acc, relay, connectionPrivKey)
+    }
+
+    private fun isAccountKeyLocked(acc: Account): Boolean = try {
+        acc.requirePrivateKeyAccess()
+        false
+    } catch (_: SecurityException) {
+        true
+    }
+
+    /**
+     * Answers a request with a "locked" error instead of letting the client time
+     * out. Only the connection key is used, never the account key.
+     */
+    private fun replyDeviceLocked(
+        event: Event,
+        acc: Account,
+        relay: NormalizedRelayUrl,
+        connectionPrivKey: String,
+    ) {
+        if (event.content.isEmpty()) return
+        // The same event usually arrives from several relays; answer it once,
+        // like notify() does.
+        if (Amber.instance.notificationCache[event.id] != null) return
+        Amber.instance.notificationCache.put(event.id, event.createdAt)
+        Amber.instance.applicationIOScope.launch {
+            try {
+                val connSigner = NostrSignerInternal(KeyPair(privKey = connectionPrivKey.hexToByteArray()))
+                val requestStr = connSigner.decrypt(event.content, event.pubKey)
+                val bunkerRequest = JacksonMapper.mapper.readValue(requestStr, BunkerRequest::class.java)
+                saveLog("Device locked: rejected request ${bunkerRequest.id} method ${bunkerRequest.method}", relay.url, acc.npub)
+                val request = AmberBunkerRequest(
+                    request = bunkerRequest,
+                    localKey = event.pubKey,
+                    relays = listOf(relay),
+                    currentAccount = acc.npub,
+                    nostrConnectSecret = "",
+                    closeApplication = true,
+                    name = "",
+                    signedEvent = null,
+                    encryptedData = null,
+                    encryptionType = if (EncryptedInfo.isNIP04(event.content)) EncryptionType.NIP04 else EncryptionType.NIP44,
+                    isNostrConnectUri = false,
+                    signerPrivKey = connectionPrivKey,
+                )
+                BunkerRequestUtils.sendBunkerResponse(
+                    applicationContext,
+                    acc,
+                    request,
+                    BunkerResponse(bunkerRequest.id, "", "Amber is locked. Unlock your device and try again."),
+                    listOf(relay),
+                    onLoading = {},
+                    onDone = {},
+                )
+            } catch (e: Exception) {
+                if (e is CancellationException) throw e
+                saveLog("Device locked: could not reject request ${event.id}: ${e.message}", relay.url, acc.npub)
+            }
+        }
     }
 
     private fun notify(
@@ -917,6 +991,10 @@ class EventNotificationConsumer(private val applicationContext: Context) {
             null
         } catch (e: Exception) {
             if (e is CancellationException) throw e
+            // A device-lock or settings refusal is not a ciphertext problem:
+            // let it through so the client gets the real condition instead of
+            // being told the payload was corrupt.
+            if (e is SecurityException || e is IllegalStateException) throw e
             // Keep the response generic so we don't leak the ciphertext's
             // embedded context back to the requester.
             "could not decrypt the message"

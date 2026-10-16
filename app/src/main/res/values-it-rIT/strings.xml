@@ -48,6 +48,7 @@
     <string name="ncryptsec_password">password per aprire la chiave</string>
     <string name="password_is_required">La password è obbligatoria</string>
     <string name="failed_to_encrypt_key">Impossibile cifrare la chiave privata</string>
+    <string name="failed_to_export_key">Impossibile esportare la chiave privata</string>
     <string name="biometric_authentication_failed_explainer">La biometria non è riuscita ad autenticare il proprietario del telefono</string>
     <string name="biometric_authentication_failed_explainer_with_error">La biometria non è riuscita ad autenticare il proprietario del telefono. Errore: %1$s</string>
     <string name="delete">Elimina</string>

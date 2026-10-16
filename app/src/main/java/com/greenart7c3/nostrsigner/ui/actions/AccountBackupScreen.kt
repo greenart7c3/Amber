@@ -91,6 +91,7 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.navigation.NavController
 import coil3.compose.SubcomposeAsyncImage
 import com.greenart7c3.nostrsigner.Amber
+import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
@@ -110,6 +111,7 @@ import com.greenart7c3.nostrsigner.ui.setSensitiveClip
 import com.greenart7c3.nostrsigner.ui.theme.Size35dp
 import com.greenart7c3.nostrsigner.ui.theme.fromHex
 import com.vitorpamplona.quartz.nip06KeyDerivation.Nip06
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
@@ -474,7 +476,19 @@ private fun NSecQrButton(
         var nsec by remember { mutableStateOf("") }
         LaunchedEffect(Unit) {
             launch(Dispatchers.IO) {
-                nsec = account.getNsec()
+                try {
+                    nsec = account.getNsec()
+                } catch (e: Exception) {
+                    if (e is CancellationException) throw e
+                    // An uncaught throw here (device locked, or a WorkManager
+                    // cold start before settings load) cancels the composition
+                    // scope and crashes the app.
+                    AmberLog.e(Amber.TAG, "Failed to export secret key", e)
+                    showDialog.value = false
+                    launch(Dispatchers.Main) {
+                        Toast.makeText(context, context.getString(R.string.failed_to_export_key), Toast.LENGTH_SHORT).show()
+                    }
+                }
             }
         }
         if (nsec.isNotBlank()) {
@@ -493,11 +507,20 @@ private fun NSecQrButton(
             if (password.isNotBlank()) {
                 Amber.instance.applicationIOScope.launch {
                     onLoading(true)
-                    val ncryptsec = account.nip49Encrypt(password)
-                    account.didBackup = true
-                    onBackupDone()
-                    onShowQrCode(ncryptsec)
-                    onLoading(false)
+                    try {
+                        val ncryptsec = account.nip49Encrypt(password)
+                        account.didBackup = true
+                        onBackupDone()
+                        onShowQrCode(ncryptsec)
+                    } catch (e: Exception) {
+                        if (e is CancellationException) throw e
+                        AmberLog.e(Amber.TAG, "Failed to encrypt secret key for QR", e)
+                        launch(Dispatchers.Main) {
+                            Toast.makeText(context, context.getString(R.string.failed_to_encrypt_key), Toast.LENGTH_SHORT).show()
+                        }
+                    } finally {
+                        onLoading(false)
+                    }
                 }
             } else {
                 showDialog.value = true
@@ -520,11 +543,20 @@ private fun NSecQrButton(
                     if (password.isNotBlank()) {
                         Amber.instance.applicationIOScope.launch {
                             onLoading(true)
-                            val ncryptsec = account.nip49Encrypt(password)
-                            account.didBackup = true
-                            onBackupDone()
-                            onShowQrCode(ncryptsec)
-                            onLoading(false)
+                            try {
+                                val ncryptsec = account.nip49Encrypt(password)
+                                account.didBackup = true
+                                onBackupDone()
+                                onShowQrCode(ncryptsec)
+                            } catch (e: Exception) {
+                                if (e is CancellationException) throw e
+                                AmberLog.e(Amber.TAG, "Failed to encrypt secret key for QR", e)
+                                launch(Dispatchers.Main) {
+                                    Toast.makeText(context, context.getString(R.string.failed_to_encrypt_key), Toast.LENGTH_SHORT).show()
+                                }
+                            } finally {
+                                onLoading(false)
+                            }
                         }
                     } else {
                         showDialog.value = true
@@ -823,12 +855,12 @@ private fun encryptCopyNSec(
                     clipboardManager.setSensitiveClip("", key)
                     Toast.makeText(context, context.getString(R.string.secret_key_copied_to_clipboard), Toast.LENGTH_SHORT).show()
                 }
-                onLoading(false)
             } catch (_: Exception) {
-                onLoading(false)
                 Amber.instance.applicationIOScope.launch(Dispatchers.Main) {
                     Toast.makeText(context, context.getString(R.string.failed_to_encrypt_key), Toast.LENGTH_SHORT).show()
                 }
+            } finally {
+                onLoading(false)
             }
         }
     }

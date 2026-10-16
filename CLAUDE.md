@@ -76,6 +76,16 @@ It does **not** protect the signing operations themselves:
 
 In other words, the lock controls who can open and navigate the app UI; it does not stand between a request and `Account.sign()`. Authorization for automatic signing is governed solely by the permission system (`rememberType` / `acceptUntil` / `kind`).
 
+### The `requireUnlockedDevice` opt-in is a signing gate
+
+Separate from the UI-only lock above, the user can enable **`requireUnlockedDevice`** (SecurityScreen). When enabled, every `Account` private-key operation (`sign`, `signSync`, `nip04*`/`nip44*`, `decrypt`, `signPsbt`, `getNsec`, `seedWords`, `nip49Encrypt`, and the backup derived signer) calls `DeviceUnlockPolicy.requireAccess` first and throws `SecurityException` while the device is locked. The flag is read synchronously from SharedPreferences (`LocalPreferences.getRequireUnlockedDevice`), so the gate is correct even before the async settings load and in the offline flavor.
+
+Consequences to keep in mind when touching these paths:
+
+- Background consumers of gated operations must handle the refusal explicitly: the relay AUTH coordinator isolates per-account failures, `BackupApplicationsWorker` returns `Result.retry()` on the lock refusal, and lock/settings refusals are rethrown (not swallowed) by `validateNip44v3Request` and `ApplicationBackup.decryptContent` so clients and callers see the real condition instead of a decrypt/corruption error.
+- NIP-46 requests are checked before they are opened: while locked, `EventNotificationConsumer` answers clients that have their own connection key with a "locked" error (using only that key), and leaves requests from legacy clients, which are encrypted to the account key, unopened and unrecorded so a re-delivery after unlock is processed.
+- This gate is independent of the biometric/PIN UI lock: with `requireUnlockedDevice=false` (the default), background signing behaves exactly as described above.
+
 ### Key files
 
 | File | Purpose |

@@ -72,6 +72,7 @@
     <string name="ncryptsec_password">password to open the key</string>
     <string name="password_is_required">Password is required</string>
     <string name="failed_to_encrypt_key">Failed to encrypt your private key</string>
+    <string name="failed_to_export_key">Failed to export your private key</string>
     <string name="biometric_authentication_failed_explainer">Biometrics failed to authenticate the owner of this phone</string>
     <string name="biometric_authentication_failed_explainer_with_error">Biometrics failed to authenticate the owner of this phone. Error: %1$s</string>
     <string name="delete">Delete</string>

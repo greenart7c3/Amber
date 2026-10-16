@@ -55,6 +55,8 @@ class AccountExportSeedRestoreTest {
             didBackup = false,
             // Explicit scope: the default reads Amber.instance, uninitialized in JVM tests.
             scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined),
+            // The default device-lock gate reads Amber.instance too.
+            keyAccessCheck = {},
             signer = NostrSignerInternal(KeyPair(privKey)),
         )
     }

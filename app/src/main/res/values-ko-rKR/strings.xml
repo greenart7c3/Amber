@@ -771,6 +771,7 @@
     <string name="response">응답</string>
     <string name="recover_from_backup">백업에서 복구</string>
     <string name="importing_account">%1$d번째 계정 가져오는 중</string>
+    <string name="import_failed_for_accounts">백업의 다음 줄에 있는 계정을 가져오지 못했습니다: %1$s. 비밀번호를 확인하고 다시 시도하세요.</string>
     <string name="could_not_connect_to_relay">relay에 연결할 수 없습니다. 그래도 추가하시겠습니까?</string>
     <string name="event_kind_25050">WebRTC 신호</string>
     <string name="event_kind_9733">비공개 zap</string>

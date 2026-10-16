@@ -752,6 +752,7 @@
     <string name="response">响应</string>
     <string name="recover_from_backup">从备份恢复</string>
     <string name="importing_account">导入账户 %1$d</string>
+    <string name="import_failed_for_accounts">无法导入备份中以下行的账户：%1$s。请检查密码后重试。</string>
     <string name="could_not_connect_to_relay">无法连接到中继。仍然继续添加吗？</string>
     <string name="event_kind_25050">WebRTC 信令</string>
     <string name="event_kind_9733">私密 Zap</string>

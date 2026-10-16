@@ -768,6 +768,7 @@
     <string name="response">Resposta</string>
     <string name="recover_from_backup">Recuperar do backup</string>
     <string name="importing_account">Importando conta %1$d</string>
+    <string name="import_failed_for_accounts">Não foi possível importar as contas destas linhas do backup: %1$s. Verifique a senha e tente novamente.</string>
     <string name="could_not_connect_to_relay">Não foi possível conectar ao relay. Gostaria de adicioná-lo mesmo assim?</string>
     <string name="event_kind_25050">Sinalização WebRTC</string>
     <string name="event_kind_9733">Zap privado</string>

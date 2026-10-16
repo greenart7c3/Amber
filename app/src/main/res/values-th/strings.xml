@@ -747,6 +747,7 @@
     <string name="response">การตอบสนอง</string>
     <string name="recover_from_backup">กู้คืนจากข้อมูลสำรอง</string>
     <string name="importing_account">กำลังนำเข้าบัญชีที่ %1$d</string>
+    <string name="import_failed_for_accounts">ไม่สามารถนำเข้าบัญชีในบรรทัดเหล่านี้ของข้อมูลสำรอง: %1$s ตรวจสอบรหัสผ่านแล้วลองอีกครั้ง</string>
     <string name="could_not_connect_to_relay">ไม่สามารถเชื่อมต่อกับ relay ได้ คุณต้องการเพิ่มไว้อยู่ดีหรือไม่?</string>
     <string name="event_kind_25050">WebRTC Signaling</string>
     <string name="event_kind_9733">zap ส่วนตัว</string>

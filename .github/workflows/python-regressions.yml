@@ -1,0 +1,38 @@
+name: Python regressions
+
+on:
+  pull_request:
+    paths:
+      - 'tests/**'
+      - 'apkdiff.py'
+      - '.github/workflows/**'
+  push:
+    branches: [master]
+    paths:
+      - 'tests/**'
+      - 'apkdiff.py'
+      - '.github/workflows/**'
+
+permissions:
+  contents: read
+
+jobs:
+  python-regressions:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          # The tests run code from the PR, and this job never pushes.
+          persist-credentials: false
+
+      # Pinned so a runner image update can't change the result.
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.14'
+
+      # Since Python 3.12, discover fails when it finds no tests, so a removed
+      # or renamed suite fails this job instead of passing silently.
+      - name: Run Python regression tests
+        run: python -m unittest discover -s tests -p 'test_*.py' -v

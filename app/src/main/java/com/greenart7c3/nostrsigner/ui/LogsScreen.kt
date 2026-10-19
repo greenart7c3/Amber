@@ -86,7 +86,8 @@ fun LogsScreen(
                                 logs.joinToString("\n") { log ->
                                     val time =
                                         TimeUtils.formatLongToCustomDateTimeWithSeconds(log.time)
-                                    "$time | ${log.url} | ${log.type} | ${log.message}"
+                                    val repeats = if (log.repeatCount > 1) " (x${log.repeatCount})" else ""
+                                    "$time | ${log.url} | ${log.type} | ${log.message}$repeats"
                                 }
                             val logsFile = File(context.cacheDir, "amber-logs.txt")
                             logsFile.writeText(logsText)
@@ -160,7 +161,7 @@ fun LogsScreen(
                         )
                         Text(
                             modifier = Modifier.padding(top = 4.dp, bottom = 16.dp),
-                            text = log.message,
+                            text = if (log.repeatCount > 1) stringResource(R.string.log_repeated, log.message, log.repeatCount) else log.message,
                             fontSize = 20.sp,
                         )
 

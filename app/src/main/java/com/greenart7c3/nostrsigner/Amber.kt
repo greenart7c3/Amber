@@ -37,6 +37,7 @@ import com.greenart7c3.nostrsigner.database.ApplicationDao
 import com.greenart7c3.nostrsigner.database.CachingApplicationDao
 import com.greenart7c3.nostrsigner.database.HistoryDatabase
 import com.greenart7c3.nostrsigner.database.LogDatabase
+import com.greenart7c3.nostrsigner.database.LogRetentionManager
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.AmberSettings
 import com.greenart7c3.nostrsigner.models.FeedbackType
@@ -649,11 +650,11 @@ class Amber :
     }
 
     fun getLogDatabase(npub: String): LogDatabase = logDatabases.computeIfAbsent(npub) {
-        LogDatabase.getDatabase(applicationContext, npub)
+        LogDatabase.getDatabase(applicationContext, npub).also { LogRetentionManager.watch(npub, it) }
     }
 
     fun getHistoryDatabase(npub: String): HistoryDatabase = historyDatabases.computeIfAbsent(npub) {
-        HistoryDatabase.getDatabase(applicationContext, npub)
+        HistoryDatabase.getDatabase(applicationContext, npub).also { LogRetentionManager.watch(npub, it) }
     }
 
     /**

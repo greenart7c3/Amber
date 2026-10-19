@@ -42,6 +42,8 @@ data class AmberSettings(
     val rateLimitWindowSeconds: Int = 30,
     val profileFetchInterval: ProfileFetchInterval = ProfileFetchInterval.FIFTEEN_MINUTES,
     val trustScoreEnabled: Boolean = false,
+    val logRetention: RetentionPeriod = RetentionPeriod.SEVEN_DAYS,
+    val historyRetention: RetentionPeriod = RetentionPeriod.THIRTY_DAYS,
 ) {
     val useProxy: Boolean get() = torMode != TorMode.DISABLED
 }

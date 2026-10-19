@@ -81,9 +81,8 @@ interface HistoryDao {
     @Query("SELECT COUNT(*) FROM history")
     suspend fun getCount(): Long
 
-    @Query("DELETE FROM history WHERE id NOT IN (SELECT id FROM history ORDER BY time DESC LIMIT :keepCount)")
-    @Transaction
-    suspend fun deleteExcessHistory(keepCount: Int): Int
+    @Query("DELETE FROM history WHERE id IN (SELECT id FROM history ORDER BY time ASC LIMIT :count)")
+    suspend fun deleteOldestHistory(count: Int): Int
 
     @Query("SELECT COUNT(*) FROM history WHERE time < :time")
     @Transaction

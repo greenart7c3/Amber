@@ -353,6 +353,16 @@
     <string name="enable_biometrics">Включить биометрию</string>
     <string name="privacy_mode">Конфиденциальный режим</string>
     <string name="privacy_mode_description">Отключает ведение журнала и статистику активности. При включении существующие журналы и история активности удаляются.</string>
+    <string name="log_retention">Хранить журналы</string>
+    <string name="log_retention_description">Журналы ретрансляторов и запросов старше этого срока удаляются</string>
+    <string name="history_retention">Хранить активность</string>
+    <string name="history_retention_description">История активности старше этого срока удаляется</string>
+    <string name="retention_1_day">1 день</string>
+    <string name="retention_3_days">3 дня</string>
+    <string name="retention_7_days">7 дней</string>
+    <string name="retention_30_days">30 дней</string>
+    <string name="retention_90_days">90 дней</string>
+    <string name="log_repeated">%1$s (×%2$d)</string>
     <string name="when_to_ask">Когда спрашивать</string>
     <string name="every_time">Каждый раз</string>
     <string name="one_minute">Одна минута</string>

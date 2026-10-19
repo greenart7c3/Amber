@@ -349,6 +349,16 @@
     <string name="enable_biometrics">Biyometrik doğrulamayı etkinleştir</string>
     <string name="privacy_mode">Gizlilik modu</string>
     <string name="privacy_mode_description">Günlük kaydını ve etkinlik istatistiklerini devre dışı bırakır. Açıldığında mevcut günlükler ve etkinlik geçmişi silinir.</string>
+    <string name="log_retention">Kayıtları sakla</string>
+    <string name="log_retention_description">Bundan eski aktarıcı ve istek kayıtları silinir</string>
+    <string name="history_retention">Etkinliği sakla</string>
+    <string name="history_retention_description">Bundan eski etkinlik geçmişi silinir</string>
+    <string name="retention_1_day">1 gün</string>
+    <string name="retention_3_days">3 gün</string>
+    <string name="retention_7_days">7 gün</string>
+    <string name="retention_30_days">30 gün</string>
+    <string name="retention_90_days">90 gün</string>
+    <string name="log_repeated">%1$s (×%2$d)</string>
     <string name="when_to_ask">Ne zaman sorulsun</string>
     <string name="every_time">Her zaman</string>
     <string name="one_minute">Bir dakika</string>

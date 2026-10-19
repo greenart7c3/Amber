@@ -16,6 +16,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Git hooks are auto-installed via the root `build.gradle.kts` preBuild task — no manual setup needed.
 
+## Shared agent instructions
+
+@AGENTS.md
+
+The conventions, release/version-bump checklist, and offline-permissions gate in `AGENTS.md` apply to Claude Code too.
+
+## Strings must be translated in the same change
+
+Whenever you add or change a string in `app/src/main/res/values/strings.xml` — including `event_kind_*` labels for new Nostr kinds — add the real translation to **every** `app/src/main/res/values-*/strings.xml` locale file (`ls app/src/main/res | grep '^values-'`, ignoring `values-night`) before reporting the work as done. Never stop at English and never copy English into a locale file. `MissingTranslation` lint is disabled, so a passing build does **not** mean the translations are present. Escape apostrophes as `\'` (French, Italian, Turkish, …) like neighboring entries.
+
 ## Build flavors
 
 | Flavor | Purpose |

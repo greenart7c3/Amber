@@ -897,4 +897,18 @@
     <string name="tor_connecting">Đang kết nối với Tor: %1$d%%</string>
     <string name="tor_connection_failed">Kết nối Tor thất bại</string>
     <string name="tor_restart">Khởi động lại</string>
+    <string name="event_kind_178">Chỉ mục trò chuyện thiết bị Staircase</string>
+    <string name="event_kind_1011">Thay đổi tin nhắn được ghim</string>
+    <string name="event_kind_1201">Hoạt động của agent</string>
+    <string name="event_kind_1202">Thao tác của agent</string>
+    <string name="event_kind_1209">Kết thúc luồng văn bản của agent</string>
+    <string name="event_kind_3079">Đăng ký thông báo đẩy</string>
+    <string name="event_kind_3080">Hủy đăng ký thông báo đẩy</string>
+    <string name="event_kind_3083">Tùy chọn thông báo đẩy</string>
+    <string name="event_kind_4242">Tinh chỉnh bảng tin</string>
+    <string name="event_kind_4891">Quản trị viên nhóm xóa tin nhắn</string>
+    <string name="event_kind_22236">Lượt xem video</string>
+    <string name="event_kind_25910">Yêu cầu ContextVM</string>
+    <string name="event_kind_34238">Phản hồi cộng tác video</string>
+    <string name="event_kind_39307">Phụ đề video</string>
 </resources>

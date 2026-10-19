@@ -897,4 +897,18 @@
     <string name="tor_connecting">กำลังเชื่อมต่อกับ Tor: %1$d%%</string>
     <string name="tor_connection_failed">การเชื่อมต่อ Tor ล้มเหลว</string>
     <string name="tor_restart">เริ่มใหม่</string>
+    <string name="event_kind_178">ดัชนีแชทของอุปกรณ์ Staircase</string>
+    <string name="event_kind_1011">การเปลี่ยนแปลงข้อความที่ปักหมุด</string>
+    <string name="event_kind_1201">กิจกรรมของเอเจนต์</string>
+    <string name="event_kind_1202">การดำเนินการของเอเจนต์</string>
+    <string name="event_kind_1209">การสิ้นสุดสตรีมข้อความเอเจนต์</string>
+    <string name="event_kind_3079">การลงทะเบียนการแจ้งเตือนแบบพุช</string>
+    <string name="event_kind_3080">การยกเลิกการลงทะเบียนการแจ้งเตือนแบบพุช</string>
+    <string name="event_kind_3083">การตั้งค่าการแจ้งเตือนแบบพุช</string>
+    <string name="event_kind_4242">การปรับแต่งฟีด</string>
+    <string name="event_kind_4891">การลบข้อความโดยผู้ดูแลกลุ่ม</string>
+    <string name="event_kind_22236">การดูวิดีโอ</string>
+    <string name="event_kind_25910">คำขอ ContextVM</string>
+    <string name="event_kind_34238">การตอบรับการทำงานร่วมกันในวิดีโอ</string>
+    <string name="event_kind_39307">คำบรรยายวิดีโอ</string>
 </resources>

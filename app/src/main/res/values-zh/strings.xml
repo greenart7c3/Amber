@@ -902,4 +902,18 @@
     <string name="tor_connecting">正在连接到 Tor: %1$d%%</string>
     <string name="tor_connection_failed">Tor 连接失败</string>
     <string name="tor_restart">重启</string>
+    <string name="event_kind_178">Staircase 设备聊天索引</string>
+    <string name="event_kind_1011">置顶消息变更</string>
+    <string name="event_kind_1201">代理活动</string>
+    <string name="event_kind_1202">代理操作</string>
+    <string name="event_kind_1209">代理文本流结束</string>
+    <string name="event_kind_3079">推送通知注册</string>
+    <string name="event_kind_3080">推送通知注销</string>
+    <string name="event_kind_3083">推送通知偏好设置</string>
+    <string name="event_kind_4242">信息流调整</string>
+    <string name="event_kind_4891">群组管理员移除消息</string>
+    <string name="event_kind_22236">视频观看</string>
+    <string name="event_kind_25910">ContextVM 请求</string>
+    <string name="event_kind_34238">视频协作回应</string>
+    <string name="event_kind_39307">视频字幕</string>
 </resources>

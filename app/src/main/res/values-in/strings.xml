@@ -921,4 +921,18 @@
     <string name="tor_connecting">Menghubungkan ke Tor: %1$d%%</string>
     <string name="tor_connection_failed">Koneksi Tor gagal</string>
     <string name="tor_restart">Mulai ulang</string>
+    <string name="event_kind_178">Indeks obrolan perangkat Staircase</string>
+    <string name="event_kind_1011">Perubahan pesan yang disematkan</string>
+    <string name="event_kind_1201">Aktivitas agen</string>
+    <string name="event_kind_1202">Operasi agen</string>
+    <string name="event_kind_1209">Akhir aliran teks agen</string>
+    <string name="event_kind_3079">Pendaftaran notifikasi push</string>
+    <string name="event_kind_3080">Pembatalan pendaftaran notifikasi push</string>
+    <string name="event_kind_3083">Preferensi notifikasi push</string>
+    <string name="event_kind_4242">Penyesuaian feed</string>
+    <string name="event_kind_4891">Penghapusan pesan oleh admin grup</string>
+    <string name="event_kind_22236">Tayangan video</string>
+    <string name="event_kind_25910">Permintaan ContextVM</string>
+    <string name="event_kind_34238">Tanggapan kolaborasi video</string>
+    <string name="event_kind_39307">Subtitel video</string>
 </resources>

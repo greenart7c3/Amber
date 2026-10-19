@@ -918,4 +918,18 @@
     <string name="tor_connecting">Tor\'a bağlanılıyor: %1$d%%</string>
     <string name="tor_connection_failed">Tor bağlantısı başarısız oldu</string>
     <string name="tor_restart">Yeniden başlat</string>
+    <string name="event_kind_178">Staircase cihaz sohbet dizini</string>
+    <string name="event_kind_1011">Sabitlenmiş mesaj değişikliği</string>
+    <string name="event_kind_1201">Aracı etkinliği</string>
+    <string name="event_kind_1202">Aracı işlemi</string>
+    <string name="event_kind_1209">Aracı metin akışı sonu</string>
+    <string name="event_kind_3079">Anlık bildirim kaydı</string>
+    <string name="event_kind_3080">Anlık bildirim kaydının silinmesi</string>
+    <string name="event_kind_3083">Anlık bildirim tercihleri</string>
+    <string name="event_kind_4242">Akış ayarı</string>
+    <string name="event_kind_4891">Grup yöneticisi tarafından mesaj kaldırma</string>
+    <string name="event_kind_22236">Video görüntüleme</string>
+    <string name="event_kind_25910">ContextVM isteği</string>
+    <string name="event_kind_34238">Video iş birliği yanıtı</string>
+    <string name="event_kind_39307">Video altyazıları</string>
 </resources>

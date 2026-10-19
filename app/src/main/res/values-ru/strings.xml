@@ -924,4 +924,18 @@
     <string name="tor_connecting">Подключение к Tor: %1$d%%</string>
     <string name="tor_connection_failed">Ошибка подключения к Tor</string>
     <string name="tor_restart">Перезапуск</string>
+    <string name="event_kind_178">Индекс чатов устройств Staircase</string>
+    <string name="event_kind_1011">Изменение закреплённого сообщения</string>
+    <string name="event_kind_1201">Активность агента</string>
+    <string name="event_kind_1202">Операция агента</string>
+    <string name="event_kind_1209">Конец текстового потока агента</string>
+    <string name="event_kind_3079">Регистрация push-уведомлений</string>
+    <string name="event_kind_3080">Отмена регистрации push-уведомлений</string>
+    <string name="event_kind_3083">Настройки push-уведомлений</string>
+    <string name="event_kind_4242">Настройка ленты</string>
+    <string name="event_kind_4891">Удаление сообщения администратором группы</string>
+    <string name="event_kind_22236">Просмотр видео</string>
+    <string name="event_kind_25910">Запрос ContextVM</string>
+    <string name="event_kind_34238">Ответ на совместную работу над видео</string>
+    <string name="event_kind_39307">Субтитры к видео</string>
 </resources>

@@ -897,4 +897,18 @@
     <string name="tor_connecting">Torに接続中: %1$d%%</string>
     <string name="tor_connection_failed">Torへの接続に失敗しました</string>
     <string name="tor_restart">再起動</string>
+    <string name="event_kind_178">Staircaseデバイスのチャットインデックス</string>
+    <string name="event_kind_1011">ピン留めメッセージの変更</string>
+    <string name="event_kind_1201">エージェントのアクティビティ</string>
+    <string name="event_kind_1202">エージェントの操作</string>
+    <string name="event_kind_1209">エージェントテキストストリーム終了</string>
+    <string name="event_kind_3079">プッシュ通知の登録</string>
+    <string name="event_kind_3080">プッシュ通知の登録解除</string>
+    <string name="event_kind_3083">プッシュ通知の設定</string>
+    <string name="event_kind_4242">フィードの調整</string>
+    <string name="event_kind_4891">グループ管理者によるメッセージ削除</string>
+    <string name="event_kind_22236">動画の視聴</string>
+    <string name="event_kind_25910">ContextVMリクエスト</string>
+    <string name="event_kind_34238">動画コラボレーションへの返答</string>
+    <string name="event_kind_39307">動画字幕</string>
 </resources>

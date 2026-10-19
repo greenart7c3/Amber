@@ -923,4 +923,18 @@
     <string name="tor_connecting">Conectando a Tor: %1$d%%</string>
     <string name="tor_connection_failed">Conexión a Tor fallida</string>
     <string name="tor_restart">Reiniciar</string>
+    <string name="event_kind_178">Índice de chats de dispositivos de Staircase</string>
+    <string name="event_kind_1011">Cambio de mensaje fijado</string>
+    <string name="event_kind_1201">Actividad del agente</string>
+    <string name="event_kind_1202">Operación del agente</string>
+    <string name="event_kind_1209">Fin del flujo de texto del agente</string>
+    <string name="event_kind_3079">Registro de notificaciones push</string>
+    <string name="event_kind_3080">Baja de notificaciones push</string>
+    <string name="event_kind_3083">Preferencias de notificaciones push</string>
+    <string name="event_kind_4242">Ajuste del feed</string>
+    <string name="event_kind_4891">Eliminación de mensaje por un administrador del grupo</string>
+    <string name="event_kind_22236">Visualización de video</string>
+    <string name="event_kind_25910">Solicitud de ContextVM</string>
+    <string name="event_kind_34238">Respuesta de colaboración en video</string>
+    <string name="event_kind_39307">Subtítulos de video</string>
 </resources>

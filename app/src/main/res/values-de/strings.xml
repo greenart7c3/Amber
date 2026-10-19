@@ -919,4 +919,18 @@
     <string name="tor_connecting">Verbinde mit Tor: %1$d%%</string>
     <string name="tor_connection_failed">Tor-Verbindung fehlgeschlagen</string>
     <string name="tor_restart">Neustart</string>
+    <string name="event_kind_178">Staircase-Chatindex für Geräte</string>
+    <string name="event_kind_1011">Änderung angehefteter Nachricht</string>
+    <string name="event_kind_1201">Agent-Aktivität</string>
+    <string name="event_kind_1202">Agent-Vorgang</string>
+    <string name="event_kind_1209">Ende des Agent-Textstreams</string>
+    <string name="event_kind_3079">Registrierung für Push-Benachrichtigungen</string>
+    <string name="event_kind_3080">Abmeldung von Push-Benachrichtigungen</string>
+    <string name="event_kind_3083">Einstellungen für Push-Benachrichtigungen</string>
+    <string name="event_kind_4242">Feed-Anpassung</string>
+    <string name="event_kind_4891">Entfernung einer Nachricht durch Gruppenadmin</string>
+    <string name="event_kind_22236">Videoaufruf</string>
+    <string name="event_kind_25910">ContextVM-Anfrage</string>
+    <string name="event_kind_34238">Antwort auf Video-Zusammenarbeit</string>
+    <string name="event_kind_39307">Video-Untertitel</string>
 </resources>

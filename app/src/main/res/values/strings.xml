@@ -928,4 +928,18 @@
     <string name="signin_restore_skip">Skip</string>
     <string name="event_kind_39701">Public web bookmark</string>
     <string name="event_kind_30618">Repository state announcements</string>
+    <string name="event_kind_178">Staircase device chat index</string>
+    <string name="event_kind_1011">Pinned message change</string>
+    <string name="event_kind_1201">Agent activity</string>
+    <string name="event_kind_1202">Agent operation</string>
+    <string name="event_kind_1209">Agent text stream final</string>
+    <string name="event_kind_3079">Push notification registration</string>
+    <string name="event_kind_3080">Push notification deregistration</string>
+    <string name="event_kind_3083">Push notification preferences</string>
+    <string name="event_kind_4242">Feed tuning</string>
+    <string name="event_kind_4891">Group admin message removal</string>
+    <string name="event_kind_22236">Video view</string>
+    <string name="event_kind_25910">ContextVM request</string>
+    <string name="event_kind_34238">Video collaboration response</string>
+    <string name="event_kind_39307">Video subtitles</string>
 </resources>

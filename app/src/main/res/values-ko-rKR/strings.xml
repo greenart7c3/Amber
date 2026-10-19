@@ -921,4 +921,18 @@
     <string name="tor_connecting">Tor 연결 중: %1$d%%</string>
     <string name="tor_connection_failed">Tor 연결 실패</string>
     <string name="tor_restart">재시작</string>
+    <string name="event_kind_178">Staircase 기기 채팅 색인</string>
+    <string name="event_kind_1011">고정된 메시지 변경</string>
+    <string name="event_kind_1201">에이전트 활동</string>
+    <string name="event_kind_1202">에이전트 작업</string>
+    <string name="event_kind_1209">에이전트 텍스트 스트림 종료</string>
+    <string name="event_kind_3079">푸시 알림 등록</string>
+    <string name="event_kind_3080">푸시 알림 등록 해제</string>
+    <string name="event_kind_3083">푸시 알림 설정</string>
+    <string name="event_kind_4242">피드 조정</string>
+    <string name="event_kind_4891">그룹 관리자의 메시지 삭제</string>
+    <string name="event_kind_22236">동영상 조회</string>
+    <string name="event_kind_25910">ContextVM 요청</string>
+    <string name="event_kind_34238">동영상 협업 응답</string>
+    <string name="event_kind_39307">동영상 자막</string>
 </resources>

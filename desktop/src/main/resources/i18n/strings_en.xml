@@ -847,6 +847,9 @@
     <string name="d_name_optional">Name (optional)</string>
     <string name="d_your_seed_words">Your seed words</string>
     <string name="d_seed_words_desc">Write them down and keep them safe. They are the only backup of your new key.</string>
+    <string name="d_hide_seed_words">Hide seed words</string>
+    <string name="d_copy_seed_words_warning">Anyone who gets your seed words controls your account. Other apps on this computer can read the clipboard, and some clipboard managers keep a history. Copy them only to paste them somewhere safe right away, then clear your clipboard.</string>
+    <string name="d_seed_words_copied">Seed words copied. Clear your clipboard after pasting them!</string>
     <string name="d_creating">Creating…</string>
     <string name="d_create_account">Create account</string>
     <string name="d_failed_create_key">Failed to create the key</string>

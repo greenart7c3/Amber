@@ -839,6 +839,9 @@
     <string name="d_name_optional">Nama (opsional)</string>
     <string name="d_your_seed_words">Kata benih Anda</string>
     <string name="d_seed_words_desc">Tuliskan dan simpan dengan aman. Itulah satu-satunya cadangan kunci baru Anda.</string>
+    <string name="d_hide_seed_words">Sembunyikan kata benih</string>
+    <string name="d_copy_seed_words_warning">Siapa pun yang mendapatkan kata benih Anda dapat mengendalikan akun Anda. Aplikasi lain di komputer ini dapat membaca papan klip, dan beberapa pengelola papan klip menyimpan riwayat. Salin hanya untuk segera menempelkannya di tempat yang aman, lalu kosongkan papan klip Anda.</string>
+    <string name="d_seed_words_copied">Kata benih disalin. Kosongkan papan klip Anda setelah menempelkannya!</string>
     <string name="d_creating">Membuat…</string>
     <string name="d_create_account">Buat akun</string>
     <string name="d_failed_create_key">Gagal membuat kunci</string>

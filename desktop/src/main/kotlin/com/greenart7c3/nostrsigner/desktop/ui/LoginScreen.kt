@@ -4,6 +4,7 @@ import androidx.compose.foundation.VerticalScrollbar
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -16,6 +17,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -33,6 +35,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -168,6 +172,9 @@ private fun NewKeyPane(scope: kotlinx.coroutines.CoroutineScope) {
     var name by remember { mutableStateOf("") }
     var working by remember { mutableStateOf(false) }
     val seedWords = remember { AccountManager.generateSeedWords() }
+    var revealed by remember { mutableStateOf(false) }
+    var confirmCopy by remember { mutableStateOf(false) }
+    val clipboard = LocalClipboardManager.current
 
     OutlinedTextField(
         value = name,
@@ -183,20 +190,51 @@ private fun NewKeyPane(scope: kotlinx.coroutines.CoroutineScope) {
     )
     Spacer(Modifier.height(8.dp))
     Card(Modifier.fillMaxWidth()) {
-        Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            val columns = if (LocalLayoutWidth.current == LayoutWidth.COMPACT) 3 else 4
-            seedWords.chunked(columns).forEachIndexed { rowIndex, row ->
-                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    row.forEachIndexed { index, word ->
-                        Text(
-                            "${rowIndex * columns + index + 1}. $word",
-                            style = MaterialTheme.typography.bodyMedium,
-                            modifier = Modifier.weight(1f),
-                        )
+        if (!revealed) {
+            // Hidden until asked for, so they don't sit on screen (or in a screen share) by default.
+            Box(Modifier.fillMaxWidth().padding(24.dp), contentAlignment = Alignment.Center) {
+                AmberOutlinedButton(text = Strings.get("show_seed_words", language), onClick = { revealed = true })
+            }
+        } else {
+            Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                val columns = if (LocalLayoutWidth.current == LayoutWidth.COMPACT) 3 else 4
+                seedWords.chunked(columns).forEachIndexed { rowIndex, row ->
+                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        row.forEachIndexed { index, word ->
+                            Text(
+                                "${rowIndex * columns + index + 1}. $word",
+                                style = MaterialTheme.typography.bodyMedium,
+                                modifier = Modifier.weight(1f),
+                            )
+                        }
                     }
+                }
+                FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                    AmberTextButton(text = Strings.get("d_hide_seed_words", language), onClick = { revealed = false })
+                    AmberTextButton(text = Strings.get("copy_to_clipboard", language), onClick = { confirmCopy = true })
                 }
             }
         }
+    }
+    if (confirmCopy) {
+        AlertDialog(
+            onDismissRequest = { confirmCopy = false },
+            title = { Text(Strings.get("warning", language)) },
+            text = { Text(Strings.get("d_copy_seed_words_warning", language)) },
+            confirmButton = {
+                AmberTextButton(
+                    text = Strings.get("copy_to_clipboard", language),
+                    onClick = {
+                        confirmCopy = false
+                        clipboard.setText(AnnotatedString(seedWords.joinToString(" ")))
+                        Toaster.toast(Strings.get("d_seed_words_copied", language))
+                    },
+                )
+            },
+            dismissButton = {
+                AmberTextButton(text = Strings.get("cancel", language), onClick = { confirmCopy = false })
+            },
+        )
     }
     Spacer(Modifier.height(16.dp))
     AmberButton(

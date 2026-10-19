@@ -836,6 +836,9 @@
     <string name="d_name_optional">Nom (facultatif)</string>
     <string name="d_your_seed_words">Vos mots de récupération</string>
     <string name="d_seed_words_desc">Notez-les et conservez-les en lieu sûr. Ce sont la seule sauvegarde de votre nouvelle clé.</string>
+    <string name="d_hide_seed_words">Masquer les mots de récupération</string>
+    <string name="d_copy_seed_words_warning">Quiconque obtient vos mots de récupération contrôle votre compte. D\'autres applications de cet ordinateur peuvent lire le presse-papiers, et certains gestionnaires de presse-papiers conservent un historique. Ne les copiez que pour les coller immédiatement dans un endroit sûr, puis videz votre presse-papiers.</string>
+    <string name="d_seed_words_copied">Mots de récupération copiés. Videz votre presse-papiers après les avoir collés !</string>
     <string name="d_creating">Création…</string>
     <string name="d_create_account">Créer un compte</string>
     <string name="d_failed_create_key">Échec de la création de la clé</string>

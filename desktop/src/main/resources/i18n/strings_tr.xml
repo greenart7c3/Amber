@@ -835,6 +835,9 @@
     <string name="d_name_optional">Ad (isteğe bağlı)</string>
     <string name="d_your_seed_words">Tohum kelimeleriniz</string>
     <string name="d_seed_words_desc">Bunları yazın ve güvende tutun. Yeni anahtarınızın tek yedeği bunlardır.</string>
+    <string name="d_hide_seed_words">Tohum kelimelerini gizle</string>
+    <string name="d_copy_seed_words_warning">Tohum kelimelerinizi ele geçiren herkes hesabınızı kontrol eder. Bu bilgisayardaki diğer uygulamalar panoyu okuyabilir ve bazı pano yöneticileri geçmiş tutar. Bunları yalnızca hemen güvenli bir yere yapıştırmak için kopyalayın, ardından panonuzu temizleyin.</string>
+    <string name="d_seed_words_copied">Tohum kelimeleri kopyalandı. Yapıştırdıktan sonra panonuzu temizleyin!</string>
     <string name="d_creating">Oluşturuluyor…</string>
     <string name="d_create_account">Hesap oluştur</string>
     <string name="d_failed_create_key">Anahtar oluşturulamadı</string>

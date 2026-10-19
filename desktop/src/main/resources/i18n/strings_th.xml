@@ -815,6 +815,9 @@
     <string name="d_name_optional">ชื่อ (ไม่บังคับ)</string>
     <string name="d_your_seed_words">คำกู้คืนของคุณ</string>
     <string name="d_seed_words_desc">จดไว้และเก็บให้ปลอดภัย นี่คือข้อมูลสำรองเพียงอย่างเดียวของกุญแจใหม่ของคุณ</string>
+    <string name="d_hide_seed_words">ซ่อนคำกู้คืน</string>
+    <string name="d_copy_seed_words_warning">ใครก็ตามที่ได้คำกู้คืนของคุณจะควบคุมบัญชีของคุณได้ แอปอื่นบนคอมพิวเตอร์เครื่องนี้สามารถอ่านคลิปบอร์ดได้ และตัวจัดการคลิปบอร์ดบางตัวจะเก็บประวัติไว้ คัดลอกเฉพาะเมื่อจะวางในที่ปลอดภัยทันที แล้วล้างคลิปบอร์ดของคุณ</string>
+    <string name="d_seed_words_copied">คัดลอกคำกู้คืนแล้ว ล้างคลิปบอร์ดหลังจากวางแล้ว!</string>
     <string name="d_creating">กำลังสร้าง…</string>
     <string name="d_create_account">สร้างบัญชี</string>
     <string name="d_failed_create_key">สร้างกุญแจไม่สำเร็จ</string>

@@ -839,6 +839,9 @@
     <string name="d_name_optional">이름 (선택)</string>
     <string name="d_your_seed_words">시드 단어</string>
     <string name="d_seed_words_desc">적어서 안전하게 보관하세요. 새 키의 유일한 백업입니다.</string>
+    <string name="d_hide_seed_words">시드 단어 숨기기</string>
+    <string name="d_copy_seed_words_warning">시드 단어를 가진 사람은 누구나 계정을 제어할 수 있습니다. 이 컴퓨터의 다른 앱이 클립보드를 읽을 수 있고, 일부 클립보드 관리자는 기록을 보관합니다. 안전한 곳에 바로 붙여넣을 때만 복사하고, 그런 다음 클립보드를 지우세요.</string>
+    <string name="d_seed_words_copied">시드 단어를 복사했습니다. 붙여넣은 후 클립보드를 지우세요!</string>
     <string name="d_creating">생성 중…</string>
     <string name="d_create_account">계정 생성</string>
     <string name="d_failed_create_key">키 생성에 실패했습니다</string>

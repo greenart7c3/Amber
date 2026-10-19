@@ -839,6 +839,9 @@
     <string name="d_name_optional">Имя (необязательно)</string>
     <string name="d_your_seed_words">Ваши сид-слова</string>
     <string name="d_seed_words_desc">Запишите их и храните в безопасном месте. Это единственная резервная копия вашего нового ключа.</string>
+    <string name="d_hide_seed_words">Скрыть сид-слова</string>
+    <string name="d_copy_seed_words_warning">Любой, кто получит ваши сид-слова, получит контроль над вашим аккаунтом. Другие приложения на этом компьютере могут читать буфер обмена, а некоторые менеджеры буфера обмена сохраняют историю. Копируйте их, только чтобы сразу вставить в надёжное место, а затем очистите буфер обмена.</string>
+    <string name="d_seed_words_copied">Сид-слова скопированы. Очистите буфер обмена после вставки!</string>
     <string name="d_creating">Создание…</string>
     <string name="d_create_account">Создать аккаунт</string>
     <string name="d_failed_create_key">Не удалось создать ключ</string>

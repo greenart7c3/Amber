@@ -3,6 +3,8 @@ package com.greenart7c3.nostrsigner.desktop.ui
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -75,159 +77,145 @@ fun SettingsScreen(account: DesktopAccount) {
     val scrollState = rememberScrollState()
     ScrollbarBox(rememberScrollbarAdapter(scrollState), Modifier.fillMaxSize()) {
         Column(Modifier.fillMaxSize().verticalScroll(scrollState)) {
-            SectionTitle(Strings.get("account", language))
-            Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                OutlinedTextField(
-                    value = name,
-                    onValueChange = { name = it },
-                    label = { Text(Strings.get("name", language)) },
-                    singleLine = true,
-                    modifier = Modifier.widthIn(max = 420.dp).weight(1f, fill = false),
-                )
-                AmberOutlinedButton(
-                    text = Strings.get("save", language),
-                    onClick = {
-                        account.name.value = name
-                        Session.saveMeta(account)
-                        Toaster.toast(Strings.get("d_saved", language))
-                    },
-                )
-            }
-            Text(
-                Strings.format("d_public_key", account.npub, language = language),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Spacer(Modifier.height(8.dp))
-            AmberButton(text = Strings.get("backup_keys", language), onClick = { showBackupDialog = true })
-
-            Spacer(Modifier.height(16.dp))
-            SectionTitle(Strings.get("d_sign_policy", language))
-            Text(
-                Strings.get("d_sign_policy_sub", language),
-                style = MaterialTheme.typography.bodySmall,
-            )
-            Spacer(Modifier.height(4.dp))
-            val policies = listOf(
-                0 to Strings.get("d_policy_basic", language),
-                1 to Strings.get("d_policy_approve", language),
-                2 to Strings.get("d_policy_sign_all", language),
-            )
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                policies.forEach { (value, label) ->
-                    FilterChip(
-                        selected = account.signPolicy == value,
+            SettingsSection(Strings.get("account", language)) {
+                Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    OutlinedTextField(
+                        value = name,
+                        onValueChange = { name = it },
+                        label = { Text(Strings.get("name", language)) },
+                        singleLine = true,
+                        modifier = Modifier.widthIn(max = 420.dp).weight(1f, fill = false),
+                    )
+                    AmberOutlinedButton(
+                        text = Strings.get("save", language),
                         onClick = {
-                            account.signPolicy = value
+                            account.name.value = name
                             Session.saveMeta(account)
+                            Toaster.toast(Strings.get("d_saved", language))
                         },
-                        label = { Text(label) },
                     )
                 }
-            }
-
-            Spacer(Modifier.height(16.dp))
-            SectionTitle(Strings.get("d_theme", language))
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                listOf<Pair<Boolean?, String>>(
-                    null to Strings.get("d_theme_system", language),
-                    false to Strings.get("d_theme_light", language),
-                    true to Strings.get("d_theme_dark", language),
-                ).forEach { (value, label) ->
-                    FilterChip(
-                        selected = settings.darkTheme == value,
-                        onClick = { SettingsStore.update { it.copy(darkTheme = value) } },
-                        label = { Text(label) },
-                    )
-                }
-            }
-
-            Spacer(Modifier.height(16.dp))
-            SectionTitle(Strings.get("language", language))
-            LanguagePicker()
-
-            Spacer(Modifier.height(16.dp))
-            SectionTitle(Strings.get("d_desktop", language))
-            if (isTraySupported) {
-                SettingSwitch(
-                    title = Strings.get("d_keep_in_tray", language),
-                    description = Strings.get("d_keep_in_tray_sub", language),
-                    checked = settings.closeToTray,
-                    onCheckedChange = { value -> SettingsStore.update { it.copy(closeToTray = value) } },
+                Text(
+                    Strings.format("d_public_key", account.npub, language = language),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
+                Spacer(Modifier.height(8.dp))
+                AmberButton(text = Strings.get("backup_keys", language), onClick = { showBackupDialog = true })
             }
-            SettingSwitch(
-                title = Strings.get("d_notifications", language),
-                description = Strings.get("d_notifications_sub", language),
-                checked = settings.showNotifications,
-                onCheckedChange = { value -> SettingsStore.update { it.copy(showNotifications = value) } },
-            )
-            if (AutoStart.isSupported()) {
-                SettingSwitch(
-                    title = Strings.get("d_start_on_boot", language),
-                    description = Strings.get("d_start_on_boot_sub", language),
-                    checked = settings.startOnBoot,
-                    onCheckedChange = { value ->
-                        SettingsStore.update { it.copy(startOnBoot = value) }
-                        AutoStart.setEnabled(value)
-                    },
+            SettingsSection(Strings.get("d_sign_policy", language), Strings.get("d_sign_policy_sub", language)) {
+                val policies = listOf(
+                    0 to Strings.get("d_policy_basic", language),
+                    1 to Strings.get("d_policy_approve", language),
+                    2 to Strings.get("d_policy_sign_all", language),
                 )
-            }
-
-            Spacer(Modifier.height(16.dp))
-            SectionTitle(Strings.get("connect_via_tor_short", language))
-            TorSection()
-
-            Spacer(Modifier.height(16.dp))
-            SectionTitle(Strings.get("accounts", language))
-            accounts.forEach { record ->
-                Row(
-                    Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 2.dp),
-                    verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
-                ) {
-                    AccountAvatar(record.npub)
-                    Spacer(Modifier.width(10.dp))
-                    Column(Modifier.weight(1f)) {
-                        Text(
-                            record.name.ifBlank { record.npub.toShortenHex() },
-                            style = MaterialTheme.typography.bodyMedium,
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    policies.forEach { (value, label) ->
+                        FilterChip(
+                            selected = account.signPolicy == value,
+                            onClick = {
+                                account.signPolicy = value
+                                Session.saveMeta(account)
+                            },
+                            label = { Text(label) },
                         )
-                        if (record.npub == account.npub) {
+                    }
+                }
+            }
+            SettingsSection(Strings.get("d_theme", language)) {
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    listOf<Pair<Boolean?, String>>(
+                        null to Strings.get("d_theme_system", language),
+                        false to Strings.get("d_theme_light", language),
+                        true to Strings.get("d_theme_dark", language),
+                    ).forEach { (value, label) ->
+                        FilterChip(
+                            selected = settings.darkTheme == value,
+                            onClick = { SettingsStore.update { it.copy(darkTheme = value) } },
+                            label = { Text(label) },
+                        )
+                    }
+                }
+            }
+            SettingsSection(Strings.get("language", language)) {
+                LanguagePicker()
+            }
+            SettingsSection(Strings.get("d_desktop", language)) {
+                if (isTraySupported) {
+                    SettingSwitch(
+                        title = Strings.get("d_keep_in_tray", language),
+                        description = Strings.get("d_keep_in_tray_sub", language),
+                        checked = settings.closeToTray,
+                        onCheckedChange = { value -> SettingsStore.update { it.copy(closeToTray = value) } },
+                    )
+                }
+                SettingSwitch(
+                    title = Strings.get("d_notifications", language),
+                    description = Strings.get("d_notifications_sub", language),
+                    checked = settings.showNotifications,
+                    onCheckedChange = { value -> SettingsStore.update { it.copy(showNotifications = value) } },
+                )
+                if (AutoStart.isSupported()) {
+                    SettingSwitch(
+                        title = Strings.get("d_start_on_boot", language),
+                        description = Strings.get("d_start_on_boot_sub", language),
+                        checked = settings.startOnBoot,
+                        onCheckedChange = { value ->
+                            SettingsStore.update { it.copy(startOnBoot = value) }
+                            AutoStart.setEnabled(value)
+                        },
+                    )
+                }
+            }
+            SettingsSection(Strings.get("connect_via_tor_short", language), Strings.get("tor_subtitle", language)) {
+                TorSection()
+            }
+            SettingsSection(Strings.get("accounts", language)) {
+                accounts.forEach { record ->
+                    Row(
+                        Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 2.dp),
+                        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+                    ) {
+                        AccountAvatar(record.npub)
+                        Spacer(Modifier.width(10.dp))
+                        Column(Modifier.weight(1f)) {
                             Text(
-                                Strings.get("d_active", language),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                record.name.ifBlank { record.npub.toShortenHex() },
+                                style = MaterialTheme.typography.bodyMedium,
+                            )
+                            if (record.npub == account.npub) {
+                                Text(
+                                    Strings.get("d_active", language),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
+                        }
+                        if (record.npub != account.npub) {
+                            AmberTextButton(
+                                text = Strings.get("d_switch", language),
+                                onClick = { scope.launch { Session.switchTo(record.npub) } },
                             )
                         }
-                    }
-                    if (record.npub != account.npub) {
                         AmberTextButton(
-                            text = Strings.get("d_switch", language),
-                            onClick = { scope.launch { Session.switchTo(record.npub) } },
+                            text = Strings.get("d_log_out", language),
+                            onClick = { showLogoutConfirm = record.npub },
                         )
                     }
-                    AmberTextButton(
-                        text = Strings.get("d_log_out", language),
-                        onClick = { showLogoutConfirm = record.npub },
-                    )
+                    HorizontalDivider()
                 }
-                HorizontalDivider()
+                Spacer(Modifier.height(8.dp))
+                AmberOutlinedButton(text = Strings.get("d_add_an_account", language), onClick = { Session.addingAccount.value = true })
             }
-            Spacer(Modifier.height(8.dp))
-            AmberOutlinedButton(text = Strings.get("d_add_an_account", language), onClick = { Session.addingAccount.value = true })
-
-            Spacer(Modifier.height(16.dp))
-            SectionTitle(Strings.get("security", language))
-            Text(
+            SettingsSection(
+                Strings.get("security", language),
                 Strings.format("d_security_keys_desc", DesktopKeyStore.passwordSourceDescription ?: "…", language = language),
-                style = MaterialTheme.typography.bodySmall,
-            )
-            Spacer(Modifier.height(8.dp))
-            SecuritySection()
-
-            Spacer(Modifier.height(16.dp))
-            SectionTitle(Strings.get("d_diagnostics", language))
-            AmberOutlinedButton(text = Strings.get("d_view_logs", language), onClick = { showLogsDialog = true })
+            ) {
+                SecuritySection()
+            }
+            SettingsSection(Strings.get("d_diagnostics", language)) {
+                AmberOutlinedButton(text = Strings.get("d_view_logs", language), onClick = { showLogsDialog = true })
+            }
             Spacer(Modifier.height(24.dp))
         }
     }
@@ -290,10 +278,40 @@ fun SettingsScreen(account: DesktopAccount) {
     }
 }
 
+/**
+ * One settings group. On wide windows the title and [description] sit in a
+ * left column beside the controls, separated from the next group by a
+ * divider; otherwise they stack above the controls.
+ */
 @Composable
-private fun SectionTitle(text: String) {
-    Text(text, style = MaterialTheme.typography.titleMedium)
-    HorizontalDivider(Modifier.padding(vertical = 4.dp))
+private fun SettingsSection(
+    title: String,
+    description: String? = null,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    if (LocalLayoutWidth.current == LayoutWidth.EXPANDED) {
+        Row(Modifier.fillMaxWidth().padding(vertical = 20.dp)) {
+            Column(Modifier.width(240.dp).padding(end = 32.dp)) {
+                Text(title, style = MaterialTheme.typography.titleMedium)
+                if (description != null) {
+                    Spacer(Modifier.height(4.dp))
+                    Text(description, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp), content = content)
+        }
+        HorizontalDivider()
+    } else {
+        Column(Modifier.fillMaxWidth().padding(bottom = 16.dp)) {
+            Text(title, style = MaterialTheme.typography.titleMedium)
+            HorizontalDivider(Modifier.padding(vertical = 4.dp))
+            if (description != null) {
+                Text(description, style = MaterialTheme.typography.bodySmall)
+                Spacer(Modifier.height(4.dp))
+            }
+            content()
+        }
+    }
 }
 
 @Composable
@@ -357,9 +375,7 @@ private fun TorSection() {
         }
     }
 
-    Text(Strings.get("tor_subtitle", language), style = MaterialTheme.typography.bodySmall)
-    Spacer(Modifier.height(4.dp))
-    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         listOf(
             TorMode.DISABLED to Strings.get("d_tor_off", language),
             TorMode.BUILTIN to Strings.get("builtin_tor_title", language),
@@ -467,7 +483,7 @@ private fun SecuritySection() {
     val language by Strings.currentLanguage.collectAsState()
     var showChangeDialog by remember { mutableStateOf(false) }
 
-    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         AmberOutlinedButton(
             text = Strings.get("d_lock_now", language),
             onClick = { PassphraseLock.lock() },
@@ -479,7 +495,7 @@ private fun SecuritySection() {
     }
     Spacer(Modifier.height(8.dp))
     Text(Strings.get("d_lock_after", language), style = MaterialTheme.typography.bodySmall)
-    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         listOf(
             0 to Strings.get("d_lock_never", language),
             5 to Strings.get("d_lock_5min", language),
@@ -692,7 +708,8 @@ private fun LogsDialog(
         onDismissRequest = onDismiss,
         title = { Text(Strings.get("d_logs", language)) },
         text = {
-            Column(Modifier.heightIn(max = 420.dp).verticalScroll(rememberScrollState())) {
+            val window = LocalWindowContentSize.current
+            Column(Modifier.heightIn(max = (window.height - 220.dp).coerceIn(120.dp, 420.dp)).verticalScroll(rememberScrollState())) {
                 if (logs.isEmpty()) {
                     Text(Strings.get("d_no_logs", language))
                 }

@@ -184,11 +184,12 @@ private fun NewKeyPane(scope: kotlinx.coroutines.CoroutineScope) {
     Spacer(Modifier.height(8.dp))
     Card(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            seedWords.chunked(4).forEachIndexed { rowIndex, row ->
+            val columns = if (LocalLayoutWidth.current == LayoutWidth.COMPACT) 3 else 4
+            seedWords.chunked(columns).forEachIndexed { rowIndex, row ->
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     row.forEachIndexed { index, word ->
                         Text(
-                            "${rowIndex * 4 + index + 1}. $word",
+                            "${rowIndex * columns + index + 1}. $word",
                             style = MaterialTheme.typography.bodyMedium,
                             modifier = Modifier.weight(1f),
                         )

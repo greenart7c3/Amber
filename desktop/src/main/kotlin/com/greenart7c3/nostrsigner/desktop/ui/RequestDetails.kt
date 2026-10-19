@@ -125,15 +125,17 @@ internal fun RequestDetailsDialog(
     onDismiss: () -> Unit,
 ) {
     val language by Strings.currentLanguage.collectAsState()
+    // Fill small windows (leaving room for the title and buttons), cap on large ones.
+    val window = LocalWindowContentSize.current
     AlertDialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(usePlatformDefaultWidth = false),
-        modifier = Modifier.widthIn(min = 420.dp, max = 720.dp).padding(24.dp),
+        modifier = Modifier.widthIn(max = 720.dp).fillMaxWidth().padding(if (LocalLayoutWidth.current == LayoutWidth.COMPACT) 12.dp else 24.dp),
         title = { Text(req.type.describe(req.kind, req.encryptedContent, language)) },
         text = {
             val scroll = rememberScrollState()
             Column(
-                Modifier.heightIn(max = 520.dp).verticalScroll(scroll),
+                Modifier.heightIn(max = (window.height - 220.dp).coerceIn(120.dp, 520.dp)).verticalScroll(scroll),
                 verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
                 when (details) {

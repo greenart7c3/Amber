@@ -5,6 +5,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -240,7 +241,7 @@ private fun RequestCard(
                 } else {
                     listOf(EncryptionScope.SPECIFIC to "for_this_method_only", EncryptionScope.ALL to "for_all_methods")
                 }
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     options.forEach { (value, key) ->
                         FilterChip(
                             selected = scope == value,
@@ -256,6 +257,7 @@ private fun RequestCard(
                 Spacer(Modifier.height(8.dp))
             }
 
+            val compact = LocalLayoutWidth.current == LayoutWidth.COMPACT
             Row(
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
                 verticalAlignment = Alignment.CenterVertically,
@@ -280,21 +282,15 @@ private fun RequestCard(
                         Toaster.toast(Strings.get("d_request_rejected", language))
                     },
                 )
-                Spacer(Modifier.weight(1f))
-                Text(
-                    Strings.format(
-                        when {
-                            req.type == SignerType.CONNECT -> "d_shortcut_hint_connect"
-                            req.type in contentScopedSignerTypes || req.type in nip44v3SignerTypes -> "d_shortcut_hint_scope"
-                            else -> "d_shortcut_hint"
-                        },
-                        shortcutLabel("↵"),
-                        shortcutLabel("↵", shift = true),
-                        language = language,
-                    ),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+                if (!compact) {
+                    Spacer(Modifier.weight(1f))
+                    ShortcutHint(req, language)
+                }
+            }
+            // Too narrow to share the row with the buttons: hint underneath.
+            if (compact) {
+                Spacer(Modifier.height(6.dp))
+                ShortcutHint(req, language)
             }
         }
     }
@@ -304,6 +300,27 @@ private fun RequestCard(
  * "Account: name · npub…" for a request; with [canSwitch] and more than one
  * account, a dropdown to pick the account a connection is saved under.
  */
+@Composable
+private fun ShortcutHint(
+    req: PendingBunkerRequest,
+    language: String,
+) {
+    Text(
+        Strings.format(
+            when {
+                req.type == SignerType.CONNECT -> "d_shortcut_hint_connect"
+                req.type in contentScopedSignerTypes || req.type in nip44v3SignerTypes -> "d_shortcut_hint_scope"
+                else -> "d_shortcut_hint"
+            },
+            shortcutLabel("↵"),
+            shortcutLabel("↵", shift = true),
+            language = language,
+        ),
+        style = MaterialTheme.typography.labelSmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+}
+
 @Composable
 private fun SigningAccountRow(
     npub: String,

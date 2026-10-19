@@ -36,9 +36,11 @@ import com.greenart7c3.nostrsigner.desktop.core.Strings
 import com.greenart7c3.nostrsigner.desktop.core.UriLaunch
 import com.greenart7c3.nostrsigner.desktop.core.describe
 import com.greenart7c3.nostrsigner.desktop.ui.App
+import com.greenart7c3.nostrsigner.desktop.ui.MIN_WINDOW_SIZE
 import com.greenart7c3.nostrsigner.desktop.ui.NostrSignerTheme
 import com.greenart7c3.nostrsigner.desktop.ui.handleShortcut
 import com.greenart7c3.nostrsigner.desktop.ui.initialWindowSize
+import java.awt.Dimension
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -364,6 +366,9 @@ fun main(args: Array<String>) {
                 )
             },
         ) {
+            LaunchedEffect(Unit) {
+                window.minimumSize = Dimension(MIN_WINDOW_SIZE.width.value.toInt(), MIN_WINDOW_SIZE.height.value.toInt())
+            }
             NostrSignerTheme {
                 App()
             }

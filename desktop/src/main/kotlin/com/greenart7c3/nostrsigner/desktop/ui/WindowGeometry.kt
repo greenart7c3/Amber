@@ -1,5 +1,7 @@
 package com.greenart7c3.nostrsigner.desktop.ui
 
+import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import java.awt.GraphicsEnvironment
@@ -7,8 +9,11 @@ import java.awt.GraphicsEnvironment
 /** Preferred window size when nothing was saved yet. */
 val DEFAULT_WINDOW_SIZE = DpSize(1100.dp, 780.dp)
 
-/** Smallest size the layout (sidebar + content) stays usable at. */
-private val MIN_WINDOW_SIZE = DpSize(720.dp, 480.dp)
+/**
+ * Smallest size the layout stays usable at (the compact layout, with the
+ * navigation at the bottom). Also enforced as the window's minimum size.
+ */
+val MIN_WINDOW_SIZE = DpSize(360.dp, 420.dp)
 
 /** Space kept free around the window so its edges and title bar stay reachable. */
 private const val SCREEN_MARGIN_DP = 32
@@ -35,3 +40,29 @@ fun initialWindowSize(savedWidth: Int?, savedHeight: Int?): DpSize {
     val usable = runCatching { GraphicsEnvironment.getLocalGraphicsEnvironment().maximumWindowBounds }.getOrNull()
     return fitWindowSize(desired, usable?.width, usable?.height)
 }
+
+/**
+ * Width buckets the UI adapts to, after the Material window size classes:
+ * [COMPACT] puts the navigation in a bottom bar, [MEDIUM] collapses the
+ * sidebar into an icon rail and [EXPANDED] shows the full sidebar.
+ */
+enum class LayoutWidth {
+    COMPACT,
+    MEDIUM,
+    EXPANDED,
+    ;
+
+    companion object {
+        fun of(width: Dp): LayoutWidth = when {
+            width < 600.dp -> COMPACT
+            width < 960.dp -> MEDIUM
+            else -> EXPANDED
+        }
+    }
+}
+
+/** The current window's content size, provided by [App]. */
+val LocalWindowContentSize = staticCompositionLocalOf { DEFAULT_WINDOW_SIZE }
+
+/** The width bucket of the current window, provided by [App]. */
+val LocalLayoutWidth = staticCompositionLocalOf { LayoutWidth.EXPANDED }

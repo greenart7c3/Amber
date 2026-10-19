@@ -4,6 +4,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -63,7 +64,7 @@ fun ApplicationsScreen(
     var showBunkerDialog by remember { mutableStateOf(false) }
 
     Column(Modifier.fillMaxSize()) {
-        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             AmberButton(text = Strings.get("d_connect_nostrconnect", language), onClick = { showNostrConnectDialog = true })
             AmberOutlinedButton(text = Strings.get("d_create_bunker", language), onClick = { showBunkerDialog = true })
         }
@@ -247,7 +248,8 @@ private fun NewBunkerDialog(
                         modifier = Modifier.fillMaxWidth(),
                     )
                 } else {
-                    QrCodeImage(uri)
+                    // The dialog is at least as wide as the QR code: keep it inside small windows.
+                    QrCodeImage(uri, size = (LocalWindowContentSize.current.width - 120.dp).coerceIn(160.dp, 300.dp))
                     Spacer(Modifier.height(8.dp))
                     Text(uri, style = MaterialTheme.typography.bodySmall)
                 }

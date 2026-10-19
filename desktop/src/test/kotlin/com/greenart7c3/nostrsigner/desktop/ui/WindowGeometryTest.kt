@@ -20,8 +20,23 @@ class WindowGeometryTest {
 
     @Test
     fun neverGoesBelowMinimumUsableSize() {
-        assertEquals(DpSize(720.dp, 480.dp), fitWindowSize(DEFAULT_WINDOW_SIZE, 640, 400))
-        assertEquals(DpSize(720.dp, 480.dp), fitWindowSize(DpSize(100.dp, 100.dp), 1920, 1040))
+        assertEquals(MIN_WINDOW_SIZE, fitWindowSize(DEFAULT_WINDOW_SIZE, 320, 400))
+        assertEquals(MIN_WINDOW_SIZE, fitWindowSize(DpSize(100.dp, 100.dp), 1920, 1040))
+    }
+
+    @Test
+    fun smallScreenGetsSmallWindow() {
+        assertEquals(DpSize(608.dp, 568.dp), fitWindowSize(DEFAULT_WINDOW_SIZE, 640, 600))
+    }
+
+    @Test
+    fun layoutWidthBreakpoints() {
+        assertEquals(LayoutWidth.COMPACT, LayoutWidth.of(MIN_WINDOW_SIZE.width))
+        assertEquals(LayoutWidth.COMPACT, LayoutWidth.of(599.dp))
+        assertEquals(LayoutWidth.MEDIUM, LayoutWidth.of(600.dp))
+        assertEquals(LayoutWidth.MEDIUM, LayoutWidth.of(959.dp))
+        assertEquals(LayoutWidth.EXPANDED, LayoutWidth.of(960.dp))
+        assertEquals(LayoutWidth.EXPANDED, LayoutWidth.of(DEFAULT_WINDOW_SIZE.width))
     }
 
     @Test

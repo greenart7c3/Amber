@@ -53,6 +53,13 @@ import kotlinx.coroutines.withContext
 object Session {
     val account = MutableStateFlow<DesktopAccount?>(null)
     val loading = MutableStateFlow(true)
+
+    /**
+     * True once the account for the current unlock has been resolved. The UI
+     * sees the lock open before [boot] has loaded the account, so it waits on
+     * this instead of showing the login screen for an account-less moment.
+     */
+    val ready = MutableStateFlow(false)
     val addingAccount = MutableStateFlow(false)
 
     fun boot() {
@@ -67,6 +74,7 @@ object Session {
                         // account reference so nothing in the UI can reach a
                         // decrypted signer, and keep the engine disconnected
                         // until the passphrase has been set up and unlocked.
+                        ready.value = false
                         account.value = null
                         loading.value = false
                     }
@@ -77,6 +85,7 @@ object Session {
                         if (npub.isNotBlank()) {
                             account.value = AmberDesktop.account(npub)
                         }
+                        ready.value = true
                         loading.value = false
                         if (engineStarted) {
                             AmberDesktop.engine.checkForNewRelaysAndUpdateAllFilters()

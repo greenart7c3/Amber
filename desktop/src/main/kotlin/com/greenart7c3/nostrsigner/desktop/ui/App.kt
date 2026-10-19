@@ -126,6 +126,15 @@ fun App() {
         PassphraseLock.Status.UNLOCKED -> {}
     }
 
+    // Unlocked, but the account is still being loaded: don't flash the login screen.
+    val ready by Session.ready.collectAsState()
+    if (!ready) {
+        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            CircularProgressIndicator()
+        }
+        return
+    }
+
     if (acc == null || addingAccount) {
         LoginScreen(
             hasAccounts = acc != null,

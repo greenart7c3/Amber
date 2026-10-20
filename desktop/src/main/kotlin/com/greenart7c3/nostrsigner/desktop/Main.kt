@@ -9,8 +9,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.window.Notification
 import androidx.compose.ui.window.Tray
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.WindowPlacement
@@ -31,13 +31,17 @@ import com.greenart7c3.nostrsigner.desktop.core.LocalSigner
 import com.greenart7c3.nostrsigner.desktop.core.NetworkConnectivity
 import com.greenart7c3.nostrsigner.desktop.core.Notifier
 import com.greenart7c3.nostrsigner.desktop.core.PassphraseLock
+import com.greenart7c3.nostrsigner.desktop.core.PendingBunkerRequest
 import com.greenart7c3.nostrsigner.desktop.core.SettingsStore
+import com.greenart7c3.nostrsigner.desktop.core.SignerType
 import com.greenart7c3.nostrsigner.desktop.core.Strings
 import com.greenart7c3.nostrsigner.desktop.core.UriLaunch
 import com.greenart7c3.nostrsigner.desktop.core.describe
 import com.greenart7c3.nostrsigner.desktop.ui.App
 import com.greenart7c3.nostrsigner.desktop.ui.MIN_WINDOW_SIZE
 import com.greenart7c3.nostrsigner.desktop.ui.NostrSignerTheme
+import com.greenart7c3.nostrsigner.desktop.ui.RequestNotificationPopup
+import com.greenart7c3.nostrsigner.desktop.ui.UiState
 import com.greenart7c3.nostrsigner.desktop.ui.handleShortcut
 import com.greenart7c3.nostrsigner.desktop.ui.initialWindowSize
 import java.awt.Dimension
@@ -299,28 +303,42 @@ fun main(args: Array<String>) {
         // open — a minimized Amber should stay minimized and let the user open
         // it from the notification or the tray. Only surface it as a last
         // resort, when the user could not be reached any other way.
-        var seenPending by remember { mutableStateOf(0) }
-        LaunchedEffect(pending.size) {
-            if (pending.size > seenPending) {
-                val request = pending.last()
+        // Tracks the requests themselves, not the count: answering one from a
+        // notification and the client's next request arriving can leave the
+        // size unchanged between recompositions.
+        var seenPending by remember { mutableStateOf(emptyList<PendingBunkerRequest>()) }
+        // The request shown in Amber's own notification popup: on Windows and
+        // macOS (the AWT notification cannot carry Approve/Reject buttons) and
+        // on Linux daemons that never draw action buttons.
+        var popupRequest by remember { mutableStateOf<PendingBunkerRequest?>(null) }
+        // Whether the main window has keyboard focus, i.e. the user is looking
+        // at Amber, where the request card already shows: no notification then.
+        var windowFocused by remember { mutableStateOf(false) }
+        LaunchedEffect(pending) {
+            val request = pending.lastOrNull { new -> seenPending.none { it.isSameEntry(new) } }
+            seenPending = pending
+            if (request != null && !(DesktopTray.windowVisible.value && windowFocused)) {
                 var notified = false
                 if (settings.showNotifications) {
                     val message = "${request.appName} ${request.type.describe(request.kind, request.encryptedContent, language)}"
-                    // Prefer the OS-native notification channel on Linux
-                    // (freedesktop / notify-send, incl. Wayland/Hyprland). On
-                    // Windows and macOS the AWT tray notification is the native
-                    // channel (on macOS it posts as Amber's own bundle).
-                    notified = withContext(Dispatchers.IO) {
-                        Notifier.notify(BuildVariant.appName, message, onActivate = { DesktopTray.windowVisible.value = true })
-                    }
-                    if (!notified && awtTrayUsable) {
-                        trayState.sendNotification(
-                            Notification(
-                                title = BuildVariant.appName,
-                                message = message,
-                                type = Notification.Type.Info,
-                            ),
-                        )
+                    // Daemons that never draw action buttons get Amber's own popup.
+                    val nativeButtons = isLinux && withContext(Dispatchers.IO) { Notifier.linuxDaemonShowsButtons() }
+                    if (nativeButtons) {
+                        // The OS-native notification channel (freedesktop /
+                        // notify-send, incl. Wayland/Hyprland), with Approve /
+                        // Reject buttons. A connect needs the choices on its
+                        // card, so it only offers Reject.
+                        val actions = buildList {
+                            if (request.type != SignerType.CONNECT) {
+                                add(Notifier.Action("approve", Strings.get("d_approve", language)) { answerFromNotification(request, approve = true) })
+                            }
+                            add(Notifier.Action("reject", Strings.get("reject", language)) { answerFromNotification(request, approve = false) })
+                        }
+                        notified = withContext(Dispatchers.IO) {
+                            Notifier.notify(BuildVariant.appName, message, actions, onActivate = { DesktopTray.windowVisible.value = true })
+                        }
+                    } else {
+                        popupRequest = request
                         notified = true
                     }
                 }
@@ -330,7 +348,34 @@ fun main(args: Array<String>) {
                     DesktopTray.windowVisible.value = true
                 }
             }
-            seenPending = pending.size
+        }
+        // Focusing Amber shows the request card, so the popup is redundant.
+        LaunchedEffect(windowFocused) { if (windowFocused) popupRequest = null }
+        // Close the popup once its request is answered elsewhere or dropped.
+        popupRequest?.let { request ->
+            if (pending.none { it.isSameEntry(request) }) {
+                popupRequest = null
+            } else {
+                RequestNotificationPopup(
+                    request = request,
+                    title = request.appName,
+                    message = request.type.describe(request.kind, request.encryptedContent, language),
+                    language = language,
+                    onApprove = {
+                        popupRequest = null
+                        answerFromNotification(request, approve = true)
+                    },
+                    onReject = {
+                        popupRequest = null
+                        answerFromNotification(request, approve = false)
+                    },
+                    onOpen = {
+                        popupRequest = null
+                        DesktopTray.windowVisible.value = true
+                    },
+                    onDismiss = { popupRequest = null },
+                )
+            }
         }
 
         if (awtTrayUsable) {
@@ -378,9 +423,21 @@ fun main(args: Array<String>) {
             LaunchedEffect(Unit) {
                 window.minimumSize = Dimension(MIN_WINDOW_SIZE.width.value.toInt(), MIN_WINDOW_SIZE.height.value.toInt())
             }
+            val focused = LocalWindowInfo.current.isWindowFocused
+            LaunchedEffect(focused) { windowFocused = focused }
             NostrSignerTheme {
                 App()
             }
         }
     }
+}
+
+/**
+ * Approve/Reject button on a request notification. The request may have been
+ * answered in the window (or dropped on lock/expiry) while the notification
+ * was showing, so only act if it is still pending — never answer it twice.
+ */
+private fun answerFromNotification(request: PendingBunkerRequest, approve: Boolean) {
+    if (AmberDesktop.engine.pending.value.none { it.isSameEntry(request) }) return
+    if (approve) UiState.approve(request) else UiState.reject(request)
 }

@@ -49,6 +49,11 @@ dependencies {
     // freedesktop StatusNotifierItem / AppIndicator protocol, so a tray icon
     // shows on Wayland compositors (Hyprland, Sway, GNOME) via waybar etc.
     implementation(libs.dorkbox.systemtray)
+    // Session D-Bus for actionable Linux notifications (Approve/Reject
+    // buttons): the daemon sends ActionInvoked only to the connection that
+    // posted the notification. Already on the classpath via the two above.
+    implementation(libs.dbus.java.core)
+    implementation(libs.dbus.java.transport.native.unixsocket)
     // Windows registry access for start-on-boot (HKCU\...\Run).
     implementation(libs.jna.platform)
     runtimeOnly(libs.slf4j.nop)
@@ -89,6 +94,9 @@ compose.desktop {
             appResourcesRootDir.set(project.layout.projectDirectory.dir("appResources"))
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Exe, TargetFormat.Deb, TargetFormat.Rpm)
             packageName = "Amber"
+            // dbus-java authenticates to the session bus with UnixSystem
+            // (actionable Linux notifications, Secret Service keyring).
+            modules("jdk.security.auth")
             // Release builds pass the tag's version (-PdesktopVersion=X.Y.Z).
             packageVersion = providers.gradleProperty("desktopVersion").getOrElse("6.2.3")
             description = "Amber - Nostr event signer"

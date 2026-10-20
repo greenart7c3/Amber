@@ -26,6 +26,7 @@ ksp = "2.3.12"
 coil = "3.6.3"
 storage = "3.1.0"
 jna = "5.19.1"
+dbus-java = "4.2.1"
 materialIconsExtended = "1.7.8"
 collections = "0.5.2"
 pagingCommon = "3.5.2"
@@ -93,6 +94,8 @@ secp256k1-jni-jvm = { module = "fr.acinq.secp256k1:secp256k1-kmp-jni-jvm", versi
 leakcanary = { group = "com.android.tools.studio.leakcanary", name = "leakcanary", version.ref = "leakcanary" }
 java-keyring = { module = "com.github.javakeyring:java-keyring", version = "1.0.4" }
 dorkbox-systemtray = { module = "com.dorkbox:SystemTray", version = "4.4" }
+dbus-java-core = { module = "com.github.hypfvieh:dbus-java-core", version.ref = "dbus-java" }
+dbus-java-transport-native-unixsocket = { module = "com.github.hypfvieh:dbus-java-transport-native-unixsocket", version.ref = "dbus-java" }
 slf4j-nop = { module = "org.slf4j:slf4j-nop", version = "2.0.20" }
 bouncycastle = { module = "org.bouncycastle:bcprov-jdk18on", version = "1.86" }
 

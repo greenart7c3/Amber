@@ -1,6 +1,12 @@
 package com.greenart7c3.nostrsigner.desktop.core
 
 import java.io.File
+import java.io.OutputStream
+import java.nio.file.FileAlreadyExistsException
+import java.nio.file.Files
+import java.nio.file.StandardOpenOption
+import java.nio.file.attribute.PosixFilePermission
+import java.nio.file.attribute.PosixFilePermissions
 
 /**
  * Resolves the per-user application data directory following each
@@ -46,5 +52,31 @@ object AppDirs {
         if (file.isDirectory) {
             file.setExecutable(true, true)
         }
+    }
+
+    /**
+     * Opens [file] for writing, creating it with owner-only permissions
+     * BEFORE any content is written, so secrets never exist on disk even
+     * briefly readable by other users. POSIX only; on Windows the user
+     * profile ACLs already scope access, so the plain write is kept.
+     */
+    fun privateOutput(file: File): OutputStream {
+        if (System.getProperty("os.name").lowercase().contains("win")) {
+            return file.outputStream()
+        }
+        val ownerOnly = PosixFilePermissions.asFileAttribute(
+            setOf(PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE),
+        )
+        try {
+            Files.createFile(file.toPath(), ownerOnly)
+        } catch (_: FileAlreadyExistsException) {
+            // Overwrite in place; the existing file was created under this policy.
+        }
+        return Files.newOutputStream(
+            file.toPath(),
+            StandardOpenOption.WRITE,
+            StandardOpenOption.CREATE,
+            StandardOpenOption.TRUNCATE_EXISTING,
+        )
     }
 }

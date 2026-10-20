@@ -26,4 +26,18 @@ class AppDirsTest {
         Files.setPosixFilePermissions(dir.toPath(), PosixFilePermissions.fromString("rwxr-xr-x"))
         assertEquals("rwx------", perms(AppDirs.accountDir("npub1appdirslegacy")))
     }
+
+    @Test
+    fun privateOutputCreatesOwnerOnlyFileBeforeContent() {
+        assumeTrue(!System.getProperty("os.name").lowercase().contains("win"))
+        val file = File(AppDirs.dataDir, "private-output-test.tmp").apply { delete() }
+        try {
+            AppDirs.privateOutput(file).use { it.write("secret".toByteArray()) }
+            // The file must already be owner-only at creation time, not only
+            // after a post-write restriction pass.
+            assertEquals("rw-------", perms(file))
+        } finally {
+            file.delete()
+        }
+    }
 }

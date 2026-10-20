@@ -1,6 +1,7 @@
 package com.greenart7c3.nostrsigner.desktop
 
 import com.greenart7c3.nostrsigner.desktop.core.AmberLogger
+import com.greenart7c3.nostrsigner.desktop.core.AppDirs
 import com.greenart7c3.nostrsigner.desktop.core.BuildVariant
 import dorkbox.systemTray.MenuItem
 import dorkbox.systemTray.Separator
@@ -75,8 +76,7 @@ class NativeTray private constructor(
 
         private fun ensureAppIndicatorLibrary() {
             runCatching {
-                val tmp = File(System.getProperty("java.io.tmpdir"), "amber-appindicator-shim")
-                val shim = buildAppIndicatorShim(SYSTEM_LIB_DIRS, tmp) ?: return
+                val shim = buildAppIndicatorShim(SYSTEM_LIB_DIRS, newShimDir()) ?: return
                 val prop = "jna.library.path"
                 val existing = System.getProperty(prop)
                 System.setProperty(prop, if (existing.isNullOrBlank()) shim else "$shim${File.pathSeparator}$existing")
@@ -85,10 +85,30 @@ class NativeTray private constructor(
         }
 
         /**
+         * A fresh, owner-only directory for the shim links. `createTempDirectory`
+         * always creates a new directory and never adopts a pre-existing one, so
+         * a local attacker cannot plant a directory (or a link) in the
+         * world-writable tmpdir beforehand, and the owner-only permissions keep
+         * anyone else from swapping the links afterwards: whatever dorkbox
+         * dlopens from `jna.library.path` is what this process put there.
+         * Best-effort recursive cleanup at JVM shutdown.
+         */
+        internal fun newShimDir(): File {
+            val dir = Files.createTempDirectory("amber-appindicator-shim").toFile()
+            AppDirs.restrictToOwner(dir)
+            Runtime.getRuntime().addShutdownHook(
+                Thread({ runCatching { dir.deleteRecursively() } }, "amber-appindicator-shim-cleanup"),
+            )
+            return dir
+        }
+
+        /**
          * If only the Ayatana appindicator library is present, symlink it under
          * the GTK3 names dorkbox probes into [shimDir] and return that dir; else
          * null (legacy lib already there, or no Ayatana lib at all). Package-
-         * visible for testing.
+         * visible for testing. [shimDir] must be a fresh directory only this
+         * user can write to — see [newShimDir]; never a fixed, world-writable
+         * path, or a local attacker decides what gets dlopened.
          */
         internal fun buildAppIndicatorShim(libDirs: List<String>, shimDir: File): String? {
             // Nothing to do if the legacy library dorkbox wants already exists.

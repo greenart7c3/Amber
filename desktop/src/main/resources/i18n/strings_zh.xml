@@ -823,6 +823,7 @@
     <string name="d_hide_seed_words">隐藏助记词</string>
     <string name="d_copy_seed_words_warning">任何获得你助记词的人都能控制你的账户。此电脑上的其他应用可以读取剪贴板，而且一些剪贴板管理器会保存历史记录。仅在需要立即粘贴到安全位置时才复制，然后清空剪贴板。</string>
     <string name="d_seed_words_copied">助记词已复制。粘贴后请清空剪贴板！</string>
+    <string name="d_copy_nsec_warning">任何获得你 nsec 的人都能控制你的账户。此电脑上的其他应用可以读取剪贴板，而且一些剪贴板管理器会保存历史记录。仅在需要立即粘贴到安全位置时才复制，然后清空剪贴板。</string>
     <string name="d_creating">创建中…</string>
     <string name="d_create_account">创建账户</string>
     <string name="d_failed_create_key">创建密钥失败</string>

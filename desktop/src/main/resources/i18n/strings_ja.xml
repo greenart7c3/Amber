@@ -818,6 +818,7 @@
     <string name="d_hide_seed_words">シードワードを隠す</string>
     <string name="d_copy_seed_words_warning">シードワードを入手した人は誰でもあなたのアカウントを操作できます。このコンピューター上の他のアプリはクリップボードを読み取ることができ、クリップボードマネージャーによっては履歴が保存されます。安全な場所にすぐ貼り付ける場合にのみコピーし、その後クリップボードを消去してください。</string>
     <string name="d_seed_words_copied">シードワードをコピーしました。貼り付けたらクリップボードを消去してください！</string>
+    <string name="d_copy_nsec_warning">nsec を入手した人は誰でもあなたのアカウントを操作できます。このコンピューター上の他のアプリはクリップボードを読み取ることができ、クリップボードマネージャーによっては履歴が保存されます。安全な場所にすぐ貼り付ける場合にのみコピーし、その後クリップボードを消去してください。</string>
     <string name="d_creating">作成中…</string>
     <string name="d_create_account">アカウントを作成</string>
     <string name="d_failed_create_key">鍵の作成に失敗しました</string>

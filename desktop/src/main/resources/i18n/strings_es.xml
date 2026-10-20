@@ -842,6 +842,7 @@
     <string name="d_hide_seed_words">Ocultar palabras semilla</string>
     <string name="d_copy_seed_words_warning">Cualquiera que obtenga tus palabras semilla controla tu cuenta. Otras aplicaciones de este ordenador pueden leer el portapapeles, y algunos gestores del portapapeles guardan un historial. Cópialas solo para pegarlas de inmediato en un lugar seguro y luego vacía el portapapeles.</string>
     <string name="d_seed_words_copied">Palabras semilla copiadas. ¡Vacía el portapapeles después de pegarlas!</string>
+    <string name="d_copy_nsec_warning">Quien obtenga tu nsec controla tu cuenta. Otras aplicaciones de este ordenador pueden leer el portapapeles, y algunos gestores del portapapeles guardan un historial. Cópialo solo para pegarlo de inmediato en un lugar seguro y luego vacía el portapapeles.</string>
     <string name="d_creating">Creando…</string>
     <string name="d_create_account">Crear cuenta</string>
     <string name="d_failed_create_key">No se pudo crear la clave</string>

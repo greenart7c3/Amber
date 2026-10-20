@@ -4,6 +4,9 @@ import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import java.io.File
+import java.nio.ByteBuffer
+import java.nio.CharBuffer
+import java.nio.charset.CodingErrorAction
 import java.security.SecureRandom
 import java.util.Base64
 import javax.crypto.Cipher
@@ -162,11 +165,25 @@ object PassphraseLock {
                 .build(),
         )
         val out = ByteArray(32)
-        val passphraseBytes = String(passphrase).toByteArray(Charsets.UTF_8)
+        // Encode straight into a heap byte buffer: an intermediate String
+        // would be an immutable copy whose characters could never be wiped.
+        val encoder = Charsets.UTF_8.newEncoder()
+            .onMalformedInput(CodingErrorAction.REPLACE)
+            .onUnmappableCharacter(CodingErrorAction.REPLACE)
+        val encoded = ByteBuffer.allocate((passphrase.size * encoder.maxBytesPerChar()).toInt().coerceAtLeast(1))
+        val encodeResult = encoder.encode(CharBuffer.wrap(passphrase), encoded, true)
+        if (encodeResult.isError) encodeResult.throwException()
+        if (encoder.flush(encoded).isOverflow) error("Passphrase encoding overflowed its buffer")
+        encoded.flip()
+        // BouncyCastle needs the password as a standalone exact-size array;
+        // extract it from the buffer's backing array. Both byte arrays are
+        // wiped below, so no unwipeable copy of the passphrase remains.
+        val passphraseBytes = ByteArray(encoded.remaining()).also { encoded.get(it) }
         try {
             generator.generateBytes(passphraseBytes, out)
         } finally {
             passphraseBytes.fill(0)
+            encoded.array().fill(0)
         }
         return out
     }
@@ -188,10 +205,15 @@ object PassphraseLock {
             iv = encoder.encodeToString(cipher.iv),
             cipherText = encoder.encodeToString(cipherText),
         )
+        val json = mapper.writeValueAsString(blob)
+        // The tmp file is created owner-only before a single byte lands on
+        // disk; the same applies to the fallback rewrite of the blob itself.
         val tmp = File(blobFile.parentFile, "${blobFile.name}.tmp")
-        tmp.writeText(mapper.writeValueAsString(blob))
+        tmp.delete()
+        AppDirs.privateOutput(tmp).writer(Charsets.UTF_8).use { it.write(json) }
         if (!tmp.renameTo(blobFile)) {
-            blobFile.writeText(tmp.readText())
+            // Windows can refuse an atomic replace; fall back to a private rewrite.
+            AppDirs.privateOutput(blobFile).writer(Charsets.UTF_8).use { it.write(json) }
             tmp.delete()
         }
         AppDirs.restrictToOwner(blobFile)
@@ -213,7 +235,10 @@ object PassphraseLock {
         return try {
             val cipher = Cipher.getInstance("AES/GCM/NoPadding")
             cipher.init(Cipher.DECRYPT_MODE, SecretKeySpec(derived, "AES"), GCMParameterSpec(128, decoder.decode(blob.iv)))
-            SecretKeySpec(cipher.doFinal(decoder.decode(blob.cipherText)), "AES")
+            val plain = cipher.doFinal(decoder.decode(blob.cipherText))
+            val key = SecretKeySpec(plain, "AES") // copies the input
+            plain.fill(0)
+            key
         } catch (_: Exception) {
             null // wrong passphrase (GCM tag mismatch)
         } finally {

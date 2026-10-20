@@ -614,6 +614,7 @@ private fun BackupDialog(
     val scope = rememberCoroutineScope()
     val language by Strings.currentLanguage.collectAsState()
     var showSecret by remember { mutableStateOf(false) }
+    var confirmCopy by remember { mutableStateOf(false) }
     var password by remember { mutableStateOf("") }
     var ncryptsec by remember { mutableStateOf("") }
     var seedWords by remember { mutableStateOf("") }
@@ -643,12 +644,7 @@ private fun BackupDialog(
                 Row {
                     AmberTextButton(
                         text = Strings.get("d_copy_nsec", language),
-                        onClick = {
-                            clipboard.setText(AnnotatedString(account.getNsec()))
-                            account.didBackup = true
-                            Session.saveMeta(account)
-                            Toaster.toast(Strings.get("d_nsec_copied", language))
-                        },
+                        onClick = { confirmCopy = true },
                     )
                 }
 
@@ -693,6 +689,30 @@ private fun BackupDialog(
             )
         },
     )
+    if (confirmCopy) {
+        // Same warning as the seed-words copy: the plain nsec in the clipboard
+        // is full control of the account.
+        AlertDialog(
+            onDismissRequest = { confirmCopy = false },
+            title = { Text(Strings.get("warning", language)) },
+            text = { Text(Strings.get("d_copy_nsec_warning", language)) },
+            confirmButton = {
+                AmberTextButton(
+                    text = Strings.get("d_copy_nsec", language),
+                    onClick = {
+                        confirmCopy = false
+                        clipboard.setText(AnnotatedString(account.getNsec()))
+                        account.didBackup = true
+                        Session.saveMeta(account)
+                        Toaster.toast(Strings.get("d_nsec_copied", language))
+                    },
+                )
+            },
+            dismissButton = {
+                AmberTextButton(text = Strings.get("cancel", language), onClick = { confirmCopy = false })
+            },
+        )
+    }
 }
 
 @Composable

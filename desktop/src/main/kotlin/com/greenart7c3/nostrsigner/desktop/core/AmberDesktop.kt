@@ -73,6 +73,10 @@ object AmberDesktop {
 
     /** Drops every decrypted account key from memory (passphrase lock). */
     fun evictAllAccounts() {
+        // Persist debounced log/history writes first: once locked, writeSecure
+        // refuses to touch the encrypted files, so anything still volatile
+        // would sit in memory only until the next unlock.
+        stores.values.forEach { it.flushVolatile() }
         accountCache.clear()
     }
 

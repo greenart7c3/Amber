@@ -84,7 +84,7 @@ class FilePasswordStore(private val file: File) : PasswordStore {
     override fun load(): String? = if (file.exists()) file.readText().trim().ifBlank { null } else null
 
     override fun store(secret: String): Boolean {
-        file.writeText(secret)
+        AppDirs.privateOutput(file).writer(Charsets.UTF_8).use { it.write(secret) }
         AppDirs.restrictToOwner(file)
         return true
     }

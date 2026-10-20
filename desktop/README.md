@@ -16,7 +16,10 @@ for the JVM) and mirrors the mobile UI and permission model.
 - Connect applications with a `nostrconnect://` URI or by generating a
   `bunker://` URI (with QR code) — each connection gets its own local key.
   Clicking a `nostrconnect://` link opens Amber (Linux: registered per user
-  via `xdg-mime`; macOS: declared in the app bundle's Info.plist)
+  via `xdg-mime`; macOS: declared in the app bundle's Info.plist). On Linux
+  the link is handed to the running instance over a per-user Unix socket:
+  the socket file is mode `0600`, connections from other OS users are
+  dropped via `SO_PEERCRED`, and connection attempts are rate-limited
 - The same permission model as mobile: auto-accept / auto-reject rules per
   request type and event kind, time-bound grants (5 minutes … always), and
   per-application sign policies (basic / manual / sign everything)
@@ -28,11 +31,12 @@ for the JVM) and mirrors the mobile UI and permission model.
   system tor service (port 9050) or Tor Browser (9150). Relay connections
   fail closed while built-in Tor is still starting, and switching modes
   redials every relay through the new route
-- Local relays: localhost, LAN/VPN addresses (RFC 1918, link-local, CGNAT /
-  Tailscale, IPv6 ULA) and `.local` / `.lan` / `.home.arpa` names get plain
-  `ws://` by default, always bypass Tor, and stay connected when the internet
-  drops. An explicit `ws://` relay on the public internet shows a cleartext
-  warning
+- Local relays: localhost and LAN/VPN addresses (RFC 1918, link-local, CGNAT /
+  Tailscale, IPv6 ULA) and `.local` mDNS names get plain `ws://` by default,
+  always bypass Tor, and stay connected when the internet drops. Every other
+  host counts as public — including `.lan`, `.home.arpa` and `.internal`
+  names, which a router can resolve arbitrarily — so an explicit `ws://`
+  relay there shows the cleartext warning
 - System tray: closing the window minimizes Amber to the tray so it keeps
   answering requests (with Open / Lock now / Quit menu), and new approval
   requests raise a system notification and bring the window back — both
@@ -72,6 +76,11 @@ for the JVM) and mirrors the mobile UI and permission model.
   taskbar) and remembers its size and maximized state
 - Pending requests expire after 10 minutes (or at the request's NIP-40
   `expiration`, if sooner), since NIP-46 clients stop waiting long before
++- Relay-side hardening: unknown senders are rate-limited per relay (approved
++  apps are never throttled), an unauthenticated request is answered once
++  without publish retries, and
++  incoming relay-message buffers are bounded, so a hostile relay or client
+  cannot make Amber spin or exhaust its memory
 - Native desktop layout: sidebar navigation with an account switcher, dense
   list views, and keyboard shortcuts
 - Light/dark theme using the Amber palette
@@ -124,6 +133,11 @@ window managers) the password falls back to an owner-only file next to the
 keystore, and is migrated into the credential store automatically the
 first time one becomes available. The Settings screen shows which backend
 is in use.
+
+The per-account backup dialog (Settings → account → Backup) shows the nsec
+and seed words only after you ask for them, and copying either to the
+clipboard first shows a warning: other apps on this computer can read the
+clipboard.
 
 Note the trust model: any process running as your OS user can request the
 secret from the credential store, so this protects against offline attacks

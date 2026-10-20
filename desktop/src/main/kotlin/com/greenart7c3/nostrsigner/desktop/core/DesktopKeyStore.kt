@@ -2,6 +2,9 @@ package com.greenart7c3.nostrsigner.desktop.core
 
 import java.io.File
 import java.nio.ByteBuffer
+import java.nio.file.AtomicMoveNotSupportedException
+import java.nio.file.Files
+import java.nio.file.StandardCopyOption
 import java.security.KeyStore
 import java.util.Base64
 import javax.crypto.Cipher
@@ -110,6 +113,22 @@ object DesktopKeyStore {
         OsCredentialStore().delete()
     }
 
+    /**
+     * Crash recovery for [PassphraseLock.enable]: the wrapped-key blob is
+     * written before the unprotected copies are deleted, so a crash in
+     * between leaves both on disk with no recovery path. The blob's presence
+     * means the lock was enabled, so any remaining unprotected copy (keystore
+     * file, password file, OS credential entry) is stale and gets deleted.
+     * Runs opportunistically whenever key storage initializes.
+     */
+    internal fun cleanupUnprotectedCopiesIfWrapped() {
+        if (!PassphraseLock.isEnabled()) return
+        if (keyStoreFile.exists() || passwordFile.exists() || OsCredentialStore().load() != null) {
+            AmberLogger.d("DesktopKeyStore", "Deleting unprotected key copies left behind by an interrupted passphrase setup")
+            removeUnprotectedCopies()
+        }
+    }
+
     // ----- keystore-backed path (before the first passphrase is set) -----
 
     private fun loadKeyStore(password: CharArray): KeyStore {
@@ -129,13 +148,33 @@ object DesktopKeyStore {
         val keyStore = KeyStore.getInstance("PKCS12")
         keyStore.load(null, password)
         keyStore.setEntry(KEY_ALIAS, KeyStore.SecretKeyEntry(key), KeyStore.PasswordProtection(password))
-        keyStoreFile.outputStream().use { keyStore.store(it, password) }
+        storeKeystoreAtomically(keyStore, password)
+    }
+
+    /**
+     * Serializes the keystore to an owner-only temp file, then replaces the
+     * real one atomically so a crash mid-write can never corrupt the only
+     * keystore (which would mean total key loss).
+     */
+    private fun storeKeystoreAtomically(keyStore: KeyStore, password: CharArray) {
+        val tmp = File(AppDirs.dataDir, "${keyStoreFile.name}.tmp")
+        tmp.delete()
+        AppDirs.privateOutput(tmp).use { keyStore.store(it, password) }
+        try {
+            Files.move(tmp.toPath(), keyStoreFile.toPath(), StandardCopyOption.ATOMIC_MOVE)
+        } catch (_: AtomicMoveNotSupportedException) {
+            // Filesystem without atomic rename support: best-effort replace.
+            Files.move(tmp.toPath(), keyStoreFile.toPath(), StandardCopyOption.REPLACE_EXISTING)
+        }
         AppDirs.restrictToOwner(keyStoreFile)
     }
 
     @Synchronized
     private fun getOrCreateSecretKey(): SecretKey {
         cachedKey?.let { return it }
+        // First key-storage access in this process: reap unprotected copies
+        // an interrupted passphrase setup may have left behind.
+        cleanupUnprotectedCopiesIfWrapped()
         if (PassphraseLock.isEnabled()) {
             throw LockedException()
         }
@@ -169,8 +208,7 @@ object DesktopKeyStore {
             // fall through and add a fresh key to the same store.
             val key = generateKey()
             keyStore.setEntry(KEY_ALIAS, KeyStore.SecretKeyEntry(key), KeyStore.PasswordProtection(password))
-            keyStoreFile.outputStream().use { keyStore.store(it, password) }
-            AppDirs.restrictToOwner(keyStoreFile)
+            storeKeystoreAtomically(keyStore, password)
             cachedKey = key
             return key
         }

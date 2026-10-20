@@ -106,6 +106,63 @@ data class PendingBunkerRequest(
      * [EncryptionScope.SPECIFIC], or no kind (all kinds) for ALL, like Android.
      */
     fun permissionKind(scope: EncryptionScope): Int? = if (type in nip44v3SignerTypes && scope == EncryptionScope.ALL) null else kind
+
+    /**
+     * Queue identity for dedup/removal. Relay clients choose their own request
+     * ids, so keying on the id alone would let one connection's queued request
+     * swallow another connection's request with the same id; key on
+     * (account, connection, id) instead. Socket requests already carry unique
+     * `socket-…` ids.
+     */
+    fun isSameEntry(other: PendingBunkerRequest): Boolean = account.npub == other.account.npub && localKey == other.localKey && request.id == other.request.id
+}
+
+/**
+ * Token bucket limiting NIP-46 senders: [capacity] events per
+ * [windowSeconds], refilled steadily, so one sender cannot flood the engine
+ * (every request costs a decrypt, log writes, and — if answered — a signed
+ * relay publish). Keyed by `(relay url, sender pubkey)`; the map is bounded,
+ * evicting the oldest sender past [maxSenders] keys.
+ */
+internal class SenderRateLimiter(
+    private val capacity: Int = SenderRateLimiter.DEFAULT_CAPACITY,
+    private val windowSeconds: Long = SenderRateLimiter.DEFAULT_WINDOW_SECONDS,
+    private val maxSenders: Int = SenderRateLimiter.DEFAULT_MAX_SENDERS,
+) {
+    private class Bucket(var tokens: Double, var updatedAtMs: Long)
+
+    private val buckets = object : LinkedHashMap<String, Bucket>(64, 0.75f, false) {
+        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, Bucket>?): Boolean = size > maxSenders
+    }
+
+    /** Whether one more event from [key] is allowed at [nowMs]; excess is dropped silently. */
+    @Synchronized
+    fun allow(key: String, nowMs: Long): Boolean {
+        val refillPerMs = capacity.toDouble() / (windowSeconds * 1000.0)
+        val bucket = buckets[key]
+        if (bucket == null) {
+            buckets[key] = Bucket((capacity - 1).toDouble(), nowMs)
+            return true
+        }
+        val tokens = (bucket.tokens + (nowMs - bucket.updatedAtMs) * refillPerMs).coerceIn(0.0, capacity.toDouble())
+        bucket.updatedAtMs = nowMs
+        return if (tokens >= 1.0) {
+            bucket.tokens = tokens - 1.0
+            true
+        } else {
+            bucket.tokens = tokens
+            false
+        }
+    }
+
+    val trackedSenders: Int
+        @Synchronized get() = buckets.size
+
+    companion object {
+        const val DEFAULT_CAPACITY = 10
+        const val DEFAULT_WINDOW_SECONDS = 60L
+        const val DEFAULT_MAX_SENDERS = 4096
+    }
 }
 
 /**
@@ -119,6 +176,10 @@ class BunkerEngine(
     val scope: CoroutineScope,
 ) : RelayConnectionListener {
     val pending = kotlinx.coroutines.flow.MutableStateFlow<List<PendingBunkerRequest>>(emptyList())
+
+    // Per-sender token bucket: bounds the work (decrypt, log writes, signed
+    // replies) one relay sender can force per window.
+    private val rateLimiter = SenderRateLimiter()
 
     // Concurrent: mutated in updateFilterLocked while relay I/O threads read it
     // in onIncomingMessage (containsValue).
@@ -363,6 +424,18 @@ class BunkerEngine(
 
         val acc = account ?: return
         val store = AmberDesktop.store(acc.npub)
+        // Unknown senders are rate-limited: their events force decrypt/log
+        // work and signed error replies, so a flood must cost them silence.
+        // Stored connections bypass the limiter entirely — an approved app
+        // legitimately bursts (bulk NIP-44 decrypt batches, rapid signing)
+        // and must never be silently dropped. Checked after verify() and
+        // keyed on the proven signer pubkey, so forged events cannot drain a
+        // legitimate sender's budget.
+        if (store.getByKey(event.pubKey) == null &&
+            !rateLimiter.allow("${relay.url}|${event.pubKey}", System.currentTimeMillis())
+        ) {
+            return
+        }
         store.addLog(relay.url, "bunker", "New event ${event.id} from ${event.pubKey}")
 
         val encryptionType = if (EncryptedInfo.isNIP04(event.content)) EncryptionType.NIP04 else EncryptionType.NIP44
@@ -402,6 +475,8 @@ class BunkerEngine(
         val type = typeFromMethod(bunkerRequest.method)
 
         if (type == SignerType.INVALID) {
+            // Unauthenticated error reply: publish once, no retry/backoff —
+            // the sender is unverified, so it must not buy amplification.
             sendResponse(
                 acc,
                 connectionPrivKey,
@@ -409,6 +484,7 @@ class BunkerEngine(
                 encryptionType,
                 BunkerResponse(bunkerRequest.id, "", "Unrecognized method: ${bunkerRequest.method}"),
                 responseRelay.ifEmpty { AmberDesktop.defaultRelays() },
+                attempts = 1,
             )
             return
         }
@@ -444,6 +520,7 @@ class BunkerEngine(
                     else -> "secret not in use"
                 }
                 store.addLog(relay.url, "bunker", "Connection rejected: $message")
+                // Unauthenticated error reply: publish once, no retries.
                 sendResponse(
                     acc,
                     connectionPrivKey,
@@ -451,6 +528,7 @@ class BunkerEngine(
                     encryptionType,
                     BunkerResponse(bunkerRequest.id, "", message),
                     applicationWithSecret?.app?.normalizedRelays() ?: responseRelay,
+                    attempts = 1,
                 )
                 return
             }
@@ -459,6 +537,7 @@ class BunkerEngine(
         val relays = permission?.app?.normalizedRelays() ?: applicationWithSecret?.app?.normalizedRelays() ?: responseRelay
         if (permission == null && applicationWithSecret == null) {
             store.addLog(relay.url, "bunker", "No permission found for ${event.pubKey}")
+            // Unauthenticated error reply: publish once, no retries.
             sendResponse(
                 acc,
                 connectionPrivKey,
@@ -466,6 +545,7 @@ class BunkerEngine(
                 encryptionType,
                 BunkerResponse(bunkerRequest.id, "", "no permission"),
                 relays,
+                attempts = 1,
             )
             return
         }
@@ -519,6 +599,10 @@ class BunkerEngine(
         }
         val signPolicy = app?.app?.signPolicy
 
+        // consume() checked the lock on arrival; re-check before any signing
+        // work, since the passphrase lock may have come down in between.
+        if (PassphraseLock.isLocked()) return
+
         // Compute the response payload (also serves as the approval preview).
         val computed = try {
             computeResult(bunkerRequest, type, acc)
@@ -556,6 +640,9 @@ class BunkerEngine(
 
         when (remembered) {
             true -> {
+                // Auto-accept publishes a signed result: re-check the lock so
+                // a signer locked mid-request never publishes.
+                if (PassphraseLock.isLocked()) return
                 store.addHistory(HistoryRecord(event.pubKey, type.toString(), kind, TimeUtils.now(), true))
                 app?.let {
                     store.upsert(it.copy(app = it.app.copy(lastUsed = TimeUtils.now())))
@@ -714,11 +801,12 @@ class BunkerEngine(
     // Atomic updates: socket clients queue from several threads at once, and a
     // plain read-then-write of `pending.value` loses one of two racing requests.
     internal fun addPending(request: PendingBunkerRequest) {
-        pending.update { list -> if (list.any { it.request.id == request.request.id }) list else list + request }
+        pending.update { list -> if (list.any { it.isSameEntry(request) }) list else list + request }
     }
 
-    fun removePending(id: String) {
-        pending.update { list -> list.filter { it.request.id != id } }
+    /** Removes the entry queued under [req]'s (account, connection, id) key. */
+    fun removePending(req: PendingBunkerRequest) {
+        pending.update { list -> list.filterNot { it.isSameEntry(req) } }
     }
 
     /**
@@ -790,7 +878,7 @@ class BunkerEngine(
         encryptionScope: EncryptionScope = EncryptionScope.ALL,
     ) {
         PassphraseLock.touch()
-        removePending(req.request.id)
+        removePending(req)
         // Mirrors the Android connect screen's account picker: the connection
         // is saved under (and signs for) the chosen account.
         val acc = accountNpub
@@ -925,7 +1013,7 @@ class BunkerEngine(
         encryptionScope: EncryptionScope = EncryptionScope.ALL,
     ) {
         PassphraseLock.touch()
-        removePending(req.request.id)
+        removePending(req)
         val acc = req.account
         val store = AmberDesktop.store(acc.npub)
         val key = req.localKey
@@ -1073,6 +1161,7 @@ class BunkerEngine(
         encryptionType: EncryptionType,
         bunkerResponse: BunkerResponse,
         relays: List<NormalizedRelayUrl>,
+        attempts: Int = 5,
     ): Boolean {
         val store = AmberDesktop.store(account.npub)
         if (relays.isEmpty()) {
@@ -1107,13 +1196,18 @@ class BunkerEngine(
             )
         }
 
-        val success = retryWithBackoff {
+        val publish: suspend () -> Boolean = {
             client.publishAndConfirm(
                 event = buildEvent(),
                 relayList = relays.toSet(),
                 timeoutInSeconds = 5,
             )
         }
+
+        // Authorized replies get the full retry/backoff; unauthenticated error
+        // replies (attempts = 1) publish once — a forged or unknown sender must
+        // not be able to buy several signed events plus seconds of CPU.
+        val success = if (attempts <= 1) publish() else retryWithBackoff(maxRetries = attempts) { publish() }
 
         val sanitized = "id=${bunkerResponse.id} ${bunkerResponse.error?.let { "error=$it" } ?: "ok"} sent=$success"
         relays.forEach { store.addLog(it.url, "bunker response", sanitized) }
@@ -1179,7 +1273,7 @@ class BunkerEngine(
             addPending(
                 PendingBunkerRequest(
                     request = BunkerRequestConnect(
-                        id = UUID.randomUUID().toString().substring(0, 6),
+                        id = UUID.randomUUID().toString(),
                         remoteKey = pubKey,
                         secret = "",
                         permissions = permissions.joinToString(",") { if (it.kind != null) "${it.type}:${it.kind}" else it.type }.ifBlank { null },

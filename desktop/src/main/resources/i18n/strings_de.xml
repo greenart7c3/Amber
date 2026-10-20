@@ -839,6 +839,7 @@
     <string name="d_hide_seed_words">Seed-Wörter verbergen</string>
     <string name="d_copy_seed_words_warning">Wer deine Seed-Wörter hat, kontrolliert dein Konto. Andere Apps auf diesem Computer können die Zwischenablage lesen, und manche Zwischenablage-Manager speichern einen Verlauf. Kopiere sie nur, um sie sofort an einem sicheren Ort einzufügen, und leere danach deine Zwischenablage.</string>
     <string name="d_seed_words_copied">Seed-Wörter kopiert. Leere deine Zwischenablage nach dem Einfügen!</string>
+    <string name="d_copy_nsec_warning">Wer deinen nsec hat, kontrolliert dein Konto. Andere Apps auf diesem Computer können die Zwischenablage lesen, und manche Zwischenablage-Manager speichern einen Verlauf. Kopiere ihn nur, um ihn sofort an einem sicheren Ort einzufügen, und leere danach deine Zwischenablage.</string>
     <string name="d_creating">Wird erstellt…</string>
     <string name="d_create_account">Konto erstellen</string>
     <string name="d_failed_create_key">Schlüssel konnte nicht erstellt werden</string>

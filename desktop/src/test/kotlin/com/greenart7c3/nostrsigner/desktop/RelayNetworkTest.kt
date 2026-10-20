@@ -34,8 +34,6 @@ class RelayNetworkTest {
             "ws://[fd12:3456::1]",
             "ws://[fe80::1]",
             "ws://umbrel.local",
-            "ws://relay.home.arpa",
-            "ws://nas.lan:4848",
         ).forEach { assertTrue(it, LocalRelays.isLocal(it)) }
     }
 
@@ -50,6 +48,11 @@ class RelayNetworkTest {
             "wss://8.8.8.8",
             "wss://100.128.0.1",
             "wss://[2001:db8::1]",
+            // DNS-rebindable suffixes are not trusted: only mDNS `.local`
+            // and the localhost loopback names are unconditional locals.
+            "ws://relay.home.arpa",
+            "ws://nas.lan:4848",
+            "ws://relay.internal",
             "ws://abcdef.onion",
         ).forEach { assertFalse(it, LocalRelays.isLocal(it)) }
     }
@@ -57,6 +60,9 @@ class RelayNetworkTest {
     @Test
     fun insecureWarningOnlyForPublicCleartext() {
         assertTrue(LocalRelays.isInsecure("ws://relay.example.com"))
+        // DNS-rebindable suffixes are public hosts now: warned like the rest.
+        assertTrue(LocalRelays.isInsecure("ws://nas.lan:4848"))
+        assertTrue(LocalRelays.isInsecure("ws://relay.home.arpa"))
         assertFalse(LocalRelays.isInsecure("wss://relay.example.com"))
         assertFalse(LocalRelays.isInsecure("ws://abcdef.onion"))
         assertFalse(LocalRelays.isInsecure("ws://192.168.1.5:4869"))

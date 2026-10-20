@@ -309,6 +309,10 @@ typo gets code 1, 2 or 3 even while Amber is locked.
 - **Nothing signs without your approval.** Any process running as you can
   connect, but it only gets what you approve, or what an earlier "remember"
   choice allows for its secret.
+- **Abuse is bounded.** Per-sender rate limiting and bounded message buffers
+  guard the shared request engine, and an unapproved request is answered
+  once and never retried, so a looping or hostile client cannot make Amber
+  spin up unbounded work.
 - **Keys never leave Amber.** Tools get signatures, ciphertexts and plaintexts,
   never keys.
 - **Locked means locked.** While the passphrase lock is on, key material isn't

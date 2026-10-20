@@ -842,6 +842,7 @@
     <string name="d_hide_seed_words">Nascondi le parole seed</string>
     <string name="d_copy_seed_words_warning">Chiunque ottenga le tue parole seed controlla il tuo account. Altre app su questo computer possono leggere gli appunti e alcuni gestori degli appunti ne conservano la cronologia. Copiale solo per incollarle subito in un luogo sicuro, poi svuota gli appunti.</string>
     <string name="d_seed_words_copied">Parole seed copiate. Svuota gli appunti dopo averle incollate!</string>
+    <string name="d_copy_nsec_warning">Chiunque ottenga il tuo nsec controlla il tuo account. Altre app su questo computer possono leggere gli appunti e alcuni gestori degli appunti ne conservano la cronologia. Copialo solo per incollarlo subito in un luogo sicuro, poi svuota gli appunti.</string>
     <string name="d_creating">Creazione…</string>
     <string name="d_create_account">Crea account</string>
     <string name="d_failed_create_key">Impossibile creare la chiave</string>

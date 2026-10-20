@@ -837,6 +837,7 @@
     <string name="d_hide_seed_words">Ocultar palavras-semente</string>
     <string name="d_copy_seed_words_warning">Qualquer pessoa que obtenha suas palavras-semente controla sua conta. Outros aplicativos neste computador podem ler a área de transferência, e alguns gerenciadores de área de transferência mantêm um histórico. Copie-as apenas para colá-las imediatamente em um lugar seguro e depois limpe a área de transferência.</string>
     <string name="d_seed_words_copied">Palavras-semente copiadas. Limpe a área de transferência depois de colá-las!</string>
+    <string name="d_copy_nsec_warning">Qualquer pessoa que obtenha seu nsec controla sua conta. Outros aplicativos neste computador podem ler a área de transferência, e alguns gerenciadores de área de transferência mantêm um histórico. Copie-o apenas para colá-lo imediatamente em um lugar seguro e depois limpe a área de transferência.</string>
     <string name="d_creating">Criando…</string>
     <string name="d_create_account">Criar conta</string>
     <string name="d_failed_create_key">Falha ao criar a chave</string>

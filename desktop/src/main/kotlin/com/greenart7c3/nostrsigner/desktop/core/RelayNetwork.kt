@@ -18,13 +18,13 @@ enum class TorMode {
 
 /**
  * Relays on this machine or the local network (localhost, LAN / VPN
- * addresses, mDNS `.local` names). They are always dialed directly — Tor
- * exits cannot reach them — accept plain `ws://` without a warning, and stay
+ * addresses, mDNS `.local` names). Tor exits cannot reach them — accept
+ * plain `ws://` without a warning, and stay
  * connected when the internet goes away.
  */
 object LocalRelays {
     private val ipv4Literal = Regex("""^\d{1,3}(\.\d{1,3}){3}$""")
-    private val localSuffixes = listOf(".localhost", ".local", ".lan", ".home.arpa", ".internal")
+    private val localSuffixes = listOf(".localhost", ".local")
 
     /** Host part of a relay URL or bare `host[:port][/path]` input, lowercased; null if empty. */
     fun hostOf(url: String): String? {

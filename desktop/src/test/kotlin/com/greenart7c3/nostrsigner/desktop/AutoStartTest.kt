@@ -51,6 +51,24 @@ class AutoStartTest {
     }
 
     @Test
+    fun unitEscapesSystemdSpecialsInPaths() {
+        // systemd(5): inside double quotes \ and " are escaped with a
+        // backslash; $ would start variable expansion and % a specifier.
+        val unit = AutoStart.unitContent("/opt/My \"Apps\"/Am\\ber\$1/bin/Amber")
+        assertTrue(unit.contains("ExecStart=\"/opt/My \\\"Apps\\\"/Am\\\\ber\\\$1/bin/Amber\""))
+        // Even unquoted values must not leak a specifier.
+        val percent = AutoStart.unitContent("/opt/Amber%h/bin/Amber")
+        assertTrue(percent.contains("ExecStart=/opt/Amber%%h/bin/Amber"))
+    }
+
+    @Test
+    fun pathsWithControlCharactersAreRejected() {
+        assertFalse(AutoStart.isUnitSafe("/opt/Amber/bin/Amber\nevil"))
+        assertFalse(AutoStart.isUnitSafe("/opt/Amber/bin/Amber", "/cache/\u0000"))
+        assertTrue(AutoStart.isUnitSafe("/opt/Amber/bin/Amber", "/home/u/.cache/amber/appimage"))
+    }
+
+    @Test
     fun windowsRunCommandQuotesPath() {
         // The Run value is parsed as a command line: an unquoted
         // "C:\Program Files\..." would try to launch "C:\Program".

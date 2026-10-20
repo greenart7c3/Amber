@@ -289,7 +289,7 @@ object LocalSigner {
     private fun findApp(store: AccountStore, session: ClientSession): AppWithPermissions? {
         val socketApps = store.apps.value.filter { it.app.isLocalSocket }
         val hash = session.secretHash
-        return socketApps.firstOrNull { it.app.key in session.approvedApps || (hash != null && it.app.socketSecretHash == hash) }
+        return socketApps.firstOrNull { it.app.key in session.approvedApps || (hash != null && constantTimeEquals(it.app.socketSecretHash, hash)) }
     }
 
     private suspend fun resolveOrConnect(

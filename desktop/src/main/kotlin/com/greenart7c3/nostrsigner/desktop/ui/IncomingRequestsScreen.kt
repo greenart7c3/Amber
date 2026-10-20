@@ -43,6 +43,7 @@ import com.greenart7c3.nostrsigner.desktop.core.AccountsStore
 import com.greenart7c3.nostrsigner.desktop.core.AmberDesktop
 import com.greenart7c3.nostrsigner.desktop.core.DesktopAccount
 import com.greenart7c3.nostrsigner.desktop.core.EncryptionScope
+import com.greenart7c3.nostrsigner.desktop.core.LocalRelays
 import com.greenart7c3.nostrsigner.desktop.core.PendingBunkerRequest
 import com.greenart7c3.nostrsigner.desktop.core.RememberType
 import com.greenart7c3.nostrsigner.desktop.core.SignerDescriptions
@@ -182,6 +183,25 @@ private fun RequestCard(
             }
 
             if (req.type == SignerType.CONNECT) {
+                // The relays the client asks Amber to answer on come straight
+                // from the nostrconnect:// URI, so show them: they are part of
+                // what "Approve" agrees to. An attacker-chosen cleartext relay
+                // gets the same warning as a manually entered one.
+                if (!req.isLocalSocket && req.relays.isNotEmpty()) {
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        Strings.format("d_relays_label", req.relays.joinToString { it.url }, language = language),
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                    if (req.relays.any { LocalRelays.isInsecure(it.url) }) {
+                        Text(
+                            Strings.get("insecure_relay_warning", language),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.padding(top = 4.dp),
+                        )
+                    }
+                }
                 // Mirrors Android's BunkerConnectRequestScreen: pick the sign
                 // policy (requested permissions are only granted one by one
                 // under the manual policy) and when to delete the connection.

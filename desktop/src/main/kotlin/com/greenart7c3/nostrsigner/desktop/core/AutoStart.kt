@@ -91,7 +91,12 @@ object AutoStart {
                 ?: return
             unitDir().mkdirs()
             val appImageCache = if (System.getenv("APPIMAGE").isNullOrBlank()) null else prepareAppImageCache()
-            unitFile().writeText(unitContent(exe, appImageCache?.path))
+            val cachePath = appImageCache?.path
+            if (!isUnitSafe(exe, *listOfNotNull(cachePath).toTypedArray())) {
+                AmberLogger.e("AutoStart", "Executable or AppImage cache path contains control characters; refusing to write a corrupt unit")
+                return
+            }
+            unitFile().writeText(unitContent(exe, cachePath))
             systemctl("daemon-reload")
             if (enabled) {
                 systemctl("enable", UNIT_NAME)
@@ -176,7 +181,23 @@ object AutoStart {
         ProcessBuilder("systemctl", "--user", *args).start().waitFor() == 0
     }.getOrDefault(false)
 
-    private fun quote(value: String): String = if (value.none { it == ' ' || it == '\t' }) value else "\"$value\""
+    /**
+     * systemd(5) word splitting for `ExecStart=` / `Environment=`: values with
+     * whitespace must be double-quoted, and inside the quotes a backslash
+     * escapes itself and `"`; `$` would start variable expansion and `%`
+     * would start a specifier (`%h`, `%t`, …), so both are escaped too.
+     */
+    internal fun quote(value: String): String {
+        val escaped = value
+            .replace("\\", "\\\\")
+            .replace("\"", "\\\"")
+            .replace("$", "\\$")
+            .replace("%", "%%")
+        return if (value.none { it == ' ' || it == '\t' || it == '"' || it == '\\' || it == '$' }) escaped else "\"$escaped\""
+    }
+
+    /** Control characters (newlines in particular) cannot be quoted away in a unit file. */
+    internal fun isUnitSafe(vararg paths: String): Boolean = paths.all { path -> path.none { it < ' ' } }
 
     /**
      * Where the start-on-boot unit has an AppImage extract itself (see

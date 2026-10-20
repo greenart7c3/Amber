@@ -25,12 +25,12 @@ import com.vitorpamplona.quartz.nip01Core.relay.sockets.WebSocket
 import com.vitorpamplona.quartz.nip01Core.relay.sockets.WebSocketListener
 import com.vitorpamplona.quartz.nip01Core.relay.sockets.WebsocketBuilder
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicLong
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.channels.trySendBlocking
 import kotlinx.coroutines.launch
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -52,6 +52,14 @@ class OkHttpWebSocket(
     val out: WebSocketListener,
 ) : WebSocket {
     companion object {
+        /**
+         * Buffered relay messages before the oldest one is dropped. Deep
+         * enough to absorb a burst while the consumer catches up (pages of
+         * EVENTs across 2000+ relay connections), small enough that a wedged
+         * consumer costs memory, not the process.
+         */
+        private const val MESSAGE_BUFFER_CAPACITY = 1024
+
         // Exists to avoid exceptions stopping the coroutine
         val exceptionHandler =
             CoroutineExceptionHandler { _, throwable ->
@@ -95,19 +103,19 @@ class OkHttpWebSocket(
             object : OkHttpWebSocketListener() {
                 val scope = CoroutineScope(Dispatchers.IO + exceptionHandler)
 
-                // UNLIMITED on purpose — do NOT bound this channel. The app
-                // holds 2000+ relay connections; a bounded buffer under a
-                // slow consumer would block OkHttp reader threads (thread
-                // starvation at that connection count) and park the backlog
-                // on the RELAY's outbound buffers via TCP backpressure —
-                // infrastructure that isn't ours. We drain the remote as
-                // fast as it can send and own the buffering; consumer speed
-                // is handled downstream (CachingEventDecoder,
-                // ParallelEventVerifier).
-                val incomingMessages: Channel<String> = Channel(Channel.UNLIMITED)
-                val job = // Launch a coroutine to process messages from the channel.
+                // A bounded hand-off: `offer` never blocks, so the OkHttp
+                // reader thread stays free to keep draining the socket (the
+                // reason this was UNLIMITED — backpressure must park on the
+                // app, never on the relay's outbound buffers). But the queue
+                // itself is capped: an unbounded buffer under a flooded or
+                // wedged consumer grew until the process OOMed. On overflow
+                // the oldest buffered message is dropped; see
+                // [RelayMessageBuffer].
+                val incomingMessages = RelayMessageBuffer(MESSAGE_BUFFER_CAPACITY)
+                val job = // Launch a coroutine to process messages from the buffer.
                     scope.launch {
-                        for (message in incomingMessages) {
+                        while (true) {
+                            val message = incomingMessages.receive() ?: break
                             out.onMessage(message)
                         }
                     }
@@ -143,9 +151,10 @@ class OkHttpWebSocket(
                     text: String,
                 ) {
                     if (ended.get()) return
-                    // Never blocks (unlimited channel): the OkHttp reader
-                    // thread must stay free to keep draining the socket.
-                    incomingMessages.trySendBlocking(text)
+                    // Never blocks (bounded buffer, drops the oldest on
+                    // overflow): the OkHttp reader thread must stay free to
+                    // keep draining the socket.
+                    incomingMessages.offer(text)
                 }
 
                 override fun onClosing(
@@ -228,5 +237,50 @@ class OkHttpWebSocket(
             url: NormalizedRelayUrl,
             out: WebSocketListener,
         ): WebSocket = OkHttpWebSocket(url, httpClient, out)
+    }
+}
+
+/**
+ * Bounded hand-off between OkHttp's reader thread and the consumer coroutine.
+ *
+ * `offer` never blocks — the reader thread must stay free to keep draining the
+ * socket, and backpressure must park on the app, never on the relay's outbound
+ * buffers. The queue itself is capped, though: unbounded, it OOMed the whole
+ * app when a relay flooded or the consumer wedged. At capacity the OLDEST
+ * buffered message is dropped to make room for the newest one (a fresh EVENT
+ * is worth more than a stale one) and the drop is counted and logged
+ * ([AmberLogger] has no warn level; error is its always-on channel).
+ */
+internal class RelayMessageBuffer(capacity: Int) {
+    private val channel = Channel<String>(capacity)
+    private val droppedCount = AtomicLong()
+
+    /** Never blocks: on a full buffer, drops the oldest message and retries. */
+    fun offer(message: String) {
+        while (true) {
+            val result = channel.trySend(message)
+            if (result.isSuccess || result.isClosed) return
+            // Full: make room by dropping the oldest buffered message. A
+            // closed-and-empty channel can never accept again, so give up.
+            if (channel.tryReceive().isClosed) return
+            val dropped = droppedCount.incrementAndGet()
+            if (dropped == 1L || dropped % DROP_LOG_EVERY == 0L) {
+                AmberLogger.e("OkHttpWebSocket", "Slow relay consumer: $dropped buffered messages dropped so far")
+            }
+        }
+    }
+
+    /** Next message, or null once the session ended and the buffer drained. */
+    suspend fun receive(): String? = channel.receiveCatching().getOrNull()
+
+    /** Ends the session side: no further offers accepted; receives drain, then return null. */
+    fun close() {
+        channel.close()
+    }
+
+    val dropped: Long get() = droppedCount.get()
+
+    companion object {
+        private const val DROP_LOG_EVERY = 1000L
     }
 }

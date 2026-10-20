@@ -5,6 +5,11 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.vitorpamplona.quartz.utils.TimeUtils
 import java.io.File
+import java.security.MessageDigest
+import java.util.Collections
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.flow.MutableStateFlow
 
 private val mapper = jacksonObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
@@ -56,16 +61,18 @@ private inline fun <reified T> readSecure(file: File): T? = try {
 /**
  * Writes a JSON file, encrypting the payload with the master key whenever a
  * passphrase lock is set. Refuses to write while locked rather than clobber
- * ciphertext with an empty document.
+ * ciphertext with an empty document. Returns whether the file was written;
+ * callers keeping dirty state use the result to retry later.
  */
-private fun writeSecure(file: File, value: Any) {
+private fun writeSecure(file: File, value: Any): Boolean {
     val encrypt = PassphraseLock.isEnabled()
     if (encrypt && !DesktopKeyStore.isMasterKeyAvailable()) {
         AmberLogger.e("Storage", "Refusing to write ${file.name} while the key store is locked")
-        return
+        return false
     }
     val json = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(value)
     atomicWrite(file, if (encrypt) ENC_MARKER + DesktopKeyStore.encryptString(json) else json)
+    return true
 }
 
 object AmberLogger {
@@ -82,6 +89,14 @@ object AmberLogger {
         e?.printStackTrace()
     }
 }
+
+/**
+ * Constant-time equality for secret material (connection secrets, secret
+ * hashes): every byte is compared instead of short-circuiting on the first
+ * mismatch, so callers comparing attacker-supplied secrets don't leak the
+ * expected value's prefix through timing.
+ */
+internal fun constantTimeEquals(a: String, b: String): Boolean = MessageDigest.isEqual(a.toByteArray(Charsets.UTF_8), b.toByteArray(Charsets.UTF_8))
 
 /**
  * Per-account persistence: connected applications with their permissions,
@@ -103,9 +118,21 @@ class AccountStore(val npub: String) {
     val history = MutableStateFlow(readSecure<List<HistoryRecord>>(historyFile) ?: emptyList())
     val logs = MutableStateFlow(readSecure<List<LogRecord>>(logsFile) ?: emptyList())
 
+    // addLog/addHistory update memory at once but persist with a short
+    // debounce (see [scheduleVolatileFlush]): a relay flood logs one line per
+    // event, and rewriting the whole AES-GCM file per line turns that into a
+    // file rewrite per event. All three flags are guarded by `this`.
+    private var historyDirty = false
+    private var logsDirty = false
+    private var flushQueued = false
+
+    init {
+        liveStores.add(this)
+    }
+
     fun getByKey(key: String): AppWithPermissions? = apps.value.firstOrNull { it.app.key == key }
 
-    fun getBySecret(secret: String): AppWithPermissions? = apps.value.firstOrNull { it.app.secret == secret && it.app.useSecret }
+    fun getBySecret(secret: String): AppWithPermissions? = apps.value.firstOrNull { constantTimeEquals(it.app.secret, secret) && it.app.useSecret }
 
     fun getPermission(key: String, type: String, kind: Int? = null): AppPermissionRecord? = getByKey(key)?.permissions?.firstOrNull {
         it.type == type && it.kind == kind
@@ -129,6 +156,8 @@ class AccountStore(val npub: String) {
         history.value = history.value.filter { it.appKey !in expired }
         writeSecure(appsFile, apps.value)
         writeSecure(historyFile, history.value)
+        // The history rewrite includes anything still volatile.
+        historyDirty = false
         return expired.size
     }
 
@@ -138,25 +167,52 @@ class AccountStore(val npub: String) {
         history.value = history.value.filter { it.appKey != key }
         writeSecure(appsFile, apps.value)
         writeSecure(historyFile, history.value)
+        // The history rewrite includes anything still volatile.
+        historyDirty = false
     }
 
     @Synchronized
     fun addHistory(record: HistoryRecord) {
         history.value = (history.value + record).takeLast(MAX_HISTORY)
-        writeSecure(historyFile, history.value)
+        historyDirty = true
+        scheduleVolatileFlush()
     }
 
     @Synchronized
     fun addLog(url: String, type: String, message: String) {
         AmberLogger.d("Amber", "$url: $message")
         logs.value = (logs.value + LogRecord(url, type, message, System.currentTimeMillis())).takeLast(MAX_LOGS)
-        writeSecure(logsFile, logs.value)
+        logsDirty = true
+        scheduleVolatileFlush()
+    }
+
+    // Only called from the @Synchronized writers, so no extra locking is
+    // needed to check flushQueued.
+    private fun scheduleVolatileFlush() {
+        if (flushQueued) return
+        flushQueued = true
+        flushScheduler.schedule({ runCatching { flushVolatile() } }, FLUSH_DEBOUNCE_MS, TimeUnit.MILLISECONDS)
+    }
+
+    /**
+     * Persists debounced log/history entries now. No-op when nothing is
+     * volatile; a refused write (key store locked) stays dirty, so a later
+     * flush — after unlock, on a passphrase change, at shutdown — can still
+     * persist it. Called by the debounce scheduler, the shutdown hook, and
+     * before the accounts are evicted on lock ([AmberDesktop.evictAllAccounts]).
+     */
+    fun flushVolatile() = synchronized(this) {
+        if (historyDirty && runCatching { writeSecure(historyFile, history.value) }.getOrDefault(false)) historyDirty = false
+        if (logsDirty && runCatching { writeSecure(logsFile, logs.value) }.getOrDefault(false)) logsDirty = false
+        flushQueued = false
     }
 
     @Synchronized
     fun clearLogs() {
         logs.value = emptyList()
         writeSecure(logsFile, logs.value)
+        // The empty-list write supersedes anything still volatile.
+        logsDirty = false
     }
 
     /**
@@ -170,15 +226,39 @@ class AccountStore(val npub: String) {
         writeSecure(appsFile, apps.value)
         writeSecure(historyFile, history.value)
         writeSecure(logsFile, logs.value)
+        historyDirty = false
+        logsDirty = false
     }
 
     fun deleteAllFiles() {
+        liveStores.remove(this)
         dir.deleteRecursively()
     }
 
     companion object {
         private const val MAX_HISTORY = 1000
         private const val MAX_LOGS = 1000
+        private const val FLUSH_DEBOUNCE_MS = 500L
+
+        // One daemon thread schedules every account's debounced writes, so a
+        // relay flood costs at most a couple of file writes per second.
+        private val flushScheduler = Executors.newSingleThreadScheduledExecutor { runnable ->
+            Thread(runnable, "amber-store-flush").apply { isDaemon = true }
+        }
+
+        // Live stores, so the shutdown hook can persist volatile entries and
+        // the lock path can flush before the key material is evicted.
+        private val liveStores: MutableSet<AccountStore> = Collections.newSetFromMap(ConcurrentHashMap())
+
+        init {
+            runCatching {
+                Runtime.getRuntime().addShutdownHook(Thread({ drainVolatile() }, "amber-store-flush"))
+            }
+        }
+
+        private fun drainVolatile() {
+            liveStores.forEach { runCatching { it.flushVolatile() } }
+        }
     }
 }
 

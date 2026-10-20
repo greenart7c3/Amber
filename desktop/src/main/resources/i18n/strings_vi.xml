@@ -818,6 +818,7 @@
     <string name="d_hide_seed_words">Ẩn các từ khôi phục</string>
     <string name="d_copy_seed_words_warning">Bất kỳ ai có được các từ khôi phục của bạn đều có thể kiểm soát tài khoản của bạn. Các ứng dụng khác trên máy tính này có thể đọc bộ nhớ tạm, và một số trình quản lý bộ nhớ tạm lưu lại lịch sử. Chỉ sao chép khi bạn dán ngay vào một nơi an toàn, sau đó xóa bộ nhớ tạm.</string>
     <string name="d_seed_words_copied">Đã sao chép các từ khôi phục. Hãy xóa bộ nhớ tạm sau khi dán!</string>
+    <string name="d_copy_nsec_warning">Bất kỳ ai có được nsec của bạn đều có thể kiểm soát tài khoản của bạn. Các ứng dụng khác trên máy tính này có thể đọc bộ nhớ tạm, và một số trình quản lý bộ nhớ tạm lưu lại lịch sử. Chỉ sao chép khi bạn dán ngay vào một nơi an toàn, sau đó xóa bộ nhớ tạm.</string>
     <string name="d_creating">Đang tạo…</string>
     <string name="d_create_account">Tạo tài khoản</string>
     <string name="d_failed_create_key">Không thể tạo khóa</string>

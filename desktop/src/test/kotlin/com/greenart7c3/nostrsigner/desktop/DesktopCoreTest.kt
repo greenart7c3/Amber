@@ -1,21 +1,31 @@
 package com.greenart7c3.nostrsigner.desktop
 
 import com.greenart7c3.nostrsigner.desktop.core.AccountManager
+import com.greenart7c3.nostrsigner.desktop.core.AccountStore
+import com.greenart7c3.nostrsigner.desktop.core.AmberDesktop
 import com.greenart7c3.nostrsigner.desktop.core.AppPermissionRecord
 import com.greenart7c3.nostrsigner.desktop.core.BunkerEngine
+import com.greenart7c3.nostrsigner.desktop.core.DesktopAccount
 import com.greenart7c3.nostrsigner.desktop.core.DesktopKeyStore
 import com.greenart7c3.nostrsigner.desktop.core.DesktopSettings
+import com.greenart7c3.nostrsigner.desktop.core.HistoryRecord
+import com.greenart7c3.nostrsigner.desktop.core.PendingBunkerRequest
 import com.greenart7c3.nostrsigner.desktop.core.RememberType
+import com.greenart7c3.nostrsigner.desktop.core.SenderRateLimiter
 import com.greenart7c3.nostrsigner.desktop.core.SignerType
+import com.greenart7c3.nostrsigner.desktop.core.constantTimeEquals
 import com.greenart7c3.nostrsigner.desktop.core.generateBunkerPrivKey
 import com.greenart7c3.nostrsigner.desktop.core.isRemembered
 import com.greenart7c3.nostrsigner.desktop.core.localPubKeyFromPrivKey
 import com.vitorpamplona.quartz.nip01Core.core.toHexKey
+import com.vitorpamplona.quartz.nip01Core.crypto.KeyPair
 import com.vitorpamplona.quartz.nip19Bech32.toNsec
+import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequest
 import com.vitorpamplona.quartz.utils.TimeUtils
 import java.io.File
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -149,5 +159,86 @@ class DesktopCoreTest {
             setOf("NIP04_ENCRYPT", "NIP44_ENCRYPT"),
             BunkerEngine.expandPermissionTypes("encrypt").toSet(),
         )
+    }
+
+    private fun pendingEntry(id: String, localKey: String, account: DesktopAccount) = PendingBunkerRequest(
+        request = BunkerRequest(id, "ping", emptyArray()),
+        type = SignerType.PING,
+        account = account,
+        localKey = localKey,
+        relays = emptyList(),
+    )
+
+    @Test
+    fun pendingQueueDedupsOnAccountConnectionAndId() = runBlocking {
+        val engine = AmberDesktop.engine
+        val accountA = AccountManager.addAccount(KeyPair(), name = "dedup-a")
+        val accountB = AccountManager.addAccount(KeyPair(), name = "dedup-b")
+        val first = pendingEntry("X", "conn-one", accountA)
+
+        engine.addPending(first)
+        // Relay clients choose their own request ids: the same id arriving for
+        // another connection (or account) must not be swallowed by the first.
+        engine.addPending(pendingEntry("X", "conn-two", accountA))
+        engine.addPending(pendingEntry("X", "conn-one", accountB))
+        assertEquals(3, engine.pending.value.count { it.request.id == "X" })
+
+        // The very same (account, connection, id) is still collapsed.
+        engine.addPending(first.copy())
+        assertEquals(3, engine.pending.value.count { it.request.id == "X" })
+
+        // Removal matches the full key, not the bare client id.
+        engine.removePending(first)
+        assertEquals(2, engine.pending.value.count { it.request.id == "X" })
+        engine.removePending(pendingEntry("X", "conn-two", accountA))
+        engine.removePending(pendingEntry("X", "conn-one", accountB))
+        assertEquals(0, engine.pending.value.count { it.request.id == "X" })
+    }
+
+    @Test
+    fun rateLimiterDropsBurstsAndBoundsItsMap() {
+        val limiter = SenderRateLimiter(capacity = 3, windowSeconds = 60, maxSenders = 4)
+        val start = 1_000_000L
+        val sender = "wss://relay|senderpubkey"
+
+        // A fresh sender gets its whole budget at once, then drops the excess.
+        repeat(3) { assertTrue("within budget", limiter.allow(sender, start)) }
+        assertFalse("burst beyond budget dropped", limiter.allow(sender, start))
+
+        // Steady refill: half a window later exactly one token is back.
+        assertTrue(limiter.allow(sender, start + 30_000))
+        assertFalse(limiter.allow(sender, start + 30_000))
+
+        // A full window restores the whole budget.
+        assertTrue(limiter.allow(sender, start + 90_000))
+
+        // Senders are evicted oldest-first, so the map cannot grow unbounded.
+        repeat(6) { limiter.allow("wss://relay|sender-$it", start) }
+        assertTrue("map bounded", limiter.trackedSenders <= 4)
+    }
+
+    @Test
+    fun constantTimeEqualsComparesFullBytes() {
+        assertTrue(constantTimeEquals("same-secret", "same-secret"))
+        assertTrue(constantTimeEquals("", ""))
+        assertFalse(constantTimeEquals("same-secret", "differ-secret"))
+        assertFalse(constantTimeEquals("same-secret", "same-secretx"))
+        assertFalse(constantTimeEquals("same-secretx", "same-secret"))
+    }
+
+    @Test
+    fun logWritesAreDebouncedUntilFlush() = runBlocking {
+        val account = AccountManager.addAccount(KeyPair(), name = "debounce")
+        val store = AmberDesktop.store(account.npub)
+        store.addLog("wss://relay", "bunker", "volatile line")
+        store.addHistory(HistoryRecord("app-key", "ping", null, TimeUtils.now(), true))
+
+        // Nothing hit the disk yet: the writes are debounced.
+        assertTrue(AccountStore(account.npub).logs.value.isEmpty())
+        assertTrue(AccountStore(account.npub).history.value.isEmpty())
+
+        store.flushVolatile()
+        assertEquals(listOf("volatile line"), AccountStore(account.npub).logs.value.map { it.message })
+        assertEquals(listOf("ping"), AccountStore(account.npub).history.value.map { it.type })
     }
 }

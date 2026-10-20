@@ -114,4 +114,34 @@ class PassphraseLockTest {
         assertTrue(PassphraseLock.unlock("new passphrase 42".toCharArray()))
         assertEquals(secret, DesktopKeyStore.decrypt(cipher1))
     }
+
+    @Test
+    fun interruptedEnableCleanupRemovesLeftoverUnprotectedCopies() {
+        // Simulate a crash between writeBlob() and removeUnprotectedCopies():
+        // the wrapped blob exists AND an unprotected master-key copy is still
+        // on disk. The startup cleanup must delete the unprotected copies and
+        // keep the blob. Safe in any method order: it only fabricates state
+        // that was not there and restores it afterwards.
+        val dataDir = AppDirs.dataDir
+        val blob = File(dataDir, "master.key.enc")
+        val blobExisted = blob.exists()
+        if (!blobExisted) blob.writeText("{}")
+        val keystore = File(dataDir, "amber.keystore")
+        val passFile = File(dataDir, "keystore.pass")
+        try {
+            keystore.writeText("leftover-keystore")
+            passFile.writeText("leftover-password")
+            DesktopKeyStore.cleanupUnprotectedCopiesIfWrapped()
+            assertFalse("leftover keystore must be deleted", keystore.exists())
+            assertFalse("leftover password file must be deleted", passFile.exists())
+            assertTrue("the wrapped blob must survive the cleanup", blob.exists())
+        } finally {
+            if (!blobExisted) {
+                blob.delete()
+                // The singleton may have initialized as LOCKED while the
+                // fabricated blob existed; restore the fresh-install state.
+                PassphraseLock.state.compareAndSet(PassphraseLock.Status.LOCKED, PassphraseLock.Status.DISABLED)
+            }
+        }
+    }
 }

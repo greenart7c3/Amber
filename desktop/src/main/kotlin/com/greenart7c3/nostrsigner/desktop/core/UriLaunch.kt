@@ -11,6 +11,7 @@ import java.nio.channels.SocketChannel
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
+import java.nio.file.attribute.PosixFilePermissions
 import kotlinx.coroutines.flow.MutableStateFlow
 
 /**
@@ -61,7 +62,15 @@ object UriLaunch {
         if (uri.startsWith(PREFIX)) uri else null
     }.getOrNull()
 
-    private fun xdgRuntimeDir(): String = System.getenv("XDG_RUNTIME_DIR")?.takeIf { it.isNotBlank() }
+    /**
+     * Tests point this at a scratch dir: XDG_RUNTIME_DIR cannot be scrubbed
+     * from a running JVM, and a real runtime dir is exactly the live state
+     * the suite must never touch. Production leaves it null.
+     */
+    internal var runtimeDirOverride: String? = null
+
+    private fun xdgRuntimeDir(): String = runtimeDirOverride
+        ?: System.getenv("XDG_RUNTIME_DIR")?.takeIf { it.isNotBlank() }
         ?: AppDirs.dataDir.absolutePath
 
     /**
@@ -123,6 +132,11 @@ object UriLaunch {
     /**
      * Accept loop for URIs forwarded by second launches. Removes a stale
      * socket file first (safe: the caller holds the single-instance lock).
+     *
+     * The socket is owner-only (the runtime dir is per-user, but the socket
+     * file itself is created with the umask) and every connection is checked
+     * against the socket owner, so another OS user can neither talk to it nor
+     * connect during the window before the permissions land.
      */
     fun startIpcServer() {
         if (!isLinux) return
@@ -132,8 +146,14 @@ object UriLaunch {
                 Files.deleteIfExists(path)
                 ServerSocketChannel.open(StandardProtocolFamily.UNIX).use { server ->
                     server.bind(UnixDomainSocketAddress.of(path))
+                    runCatching { Files.setPosixFilePermissions(path, PosixFilePermissions.fromString("rw-------")) }
                     while (true) {
                         val client = server.accept() ?: continue
+                        if (!isSameUser(client)) {
+                            AmberLogger.i("UriLaunch", "Dropped a forwarded URI from another OS user")
+                            runCatching { client.close() }
+                            continue
+                        }
                         readUri(client)
                         runCatching { client.close() }
                     }
@@ -145,13 +165,46 @@ object UriLaunch {
         }.start()
     }
 
+    /** Peer credentials exist on Linux and macOS; elsewhere the owner-only socket is the guard. */
+    private fun isSameUser(client: SocketChannel): Boolean = runCatching {
+        val peer = client.getOption(jdk.net.ExtendedSocketOptions.SO_PEERCRED)
+        peer.user().name == Files.getOwner(socketPath()).name
+    }.getOrDefault(true)
+
+    /**
+     * At most one accepted URI per this many milliseconds, on top of the
+     * uncollected-pending coalescing below: a local process hammering the
+     * socket cannot churn the pending URI (and whatever UI reacts to it)
+     * faster than this, however fast it connects.
+     */
+    private const val MIN_FORWARD_INTERVAL_MS = 500L
+
+    @Volatile private var lastForwardAt = 0L
+
+    /**
+     * Reads at most one 64 KiB message from [client] and publishes it as
+     * [pending]. Flood-hardened: while a URI is still uncollected, later ones
+     * are coalesced away (the UI only ever sees the oldest unhandled link),
+     * and the min-interval caps the refresh rate after that.
+     */
     private fun readUri(client: SocketChannel) {
         val buffer = ByteBuffer.allocate(64 * 1024)
         while (runCatching { client.read(buffer) }.getOrDefault(-1) > 0) {
             if (buffer.position() >= buffer.capacity()) break
         }
         val uri = String(buffer.array(), 0, buffer.position(), Charsets.UTF_8).trim()
-        if (uri.startsWith(PREFIX)) pending.value = uri
+        if (!uri.startsWith(PREFIX)) return
+        if (pending.value != null) {
+            AmberLogger.d("UriLaunch", "Ignored a forwarded URI; one is already pending")
+            return
+        }
+        val now = System.currentTimeMillis()
+        if (now - lastForwardAt < MIN_FORWARD_INTERVAL_MS) {
+            AmberLogger.d("UriLaunch", "Ignored a forwarded URI; too soon after the previous one")
+            return
+        }
+        lastForwardAt = now
+        pending.value = uri
     }
 
     /**

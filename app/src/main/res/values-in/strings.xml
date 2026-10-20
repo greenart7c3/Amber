@@ -651,7 +651,7 @@
     <string name="event_kind_1630_1633">Status</string>
     <string name="event_kind_1622">Balasan</string>
     <string name="event_kind_1621">Isu</string>
-    <string name="event_kind_1617">Komentar</string>
+    <string name="event_kind_1617">Patch Git</string>
     <string name="event_kind_64">Catur (PGN)</string>
     <string name="event_kind_818">Permintaan Penggabungan</string>
     <string name="event_kind_1018">Respons Jajak Pendapat</string>
@@ -935,4 +935,8 @@
     <string name="event_kind_25910">Permintaan ContextVM</string>
     <string name="event_kind_34238">Tanggapan kolaborasi video</string>
     <string name="event_kind_39307">Subtitel video</string>
+    <string name="event_kind_9840">Pemicu CI manual</string>
+    <string name="event_kind_9843">Permintaan layanan CI</string>
+    <string name="event_kind_9844">Penghentian layanan CI</string>
+    <string name="event_kind_30624">Tag image kontainer</string>
 </resources>

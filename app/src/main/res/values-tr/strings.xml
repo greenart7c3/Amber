@@ -202,7 +202,7 @@
     <string name="event_kind_1315">Yol raporu</string>
     <string name="event_kind_1316">Yol onayı</string>
     <string name="event_kind_1337">Kod parçacığı</string>
-    <string name="event_kind_1618">Git pull request</string>
+    <string name="event_kind_1618">Git çekme isteği</string>
     <string name="event_kind_1619">Git PR güncellemesi</string>
     <string name="event_kind_1808">Ses başlığı</string>
     <string name="event_kind_2473">Kuş algılama</string>
@@ -648,7 +648,7 @@
     <string name="event_kind_1630_1633">Durum</string>
     <string name="event_kind_1622">Yanıtlar</string>
     <string name="event_kind_1621">Sorunlar</string>
-    <string name="event_kind_1617">Yorum</string>
+    <string name="event_kind_1617">Git yaması</string>
     <string name="event_kind_64">Satranç (PGN)</string>
     <string name="event_kind_818">Birleştirme İstekleri</string>
     <string name="event_kind_1018">Anket Yanıtı</string>
@@ -932,4 +932,8 @@
     <string name="event_kind_25910">ContextVM isteği</string>
     <string name="event_kind_34238">Video iş birliği yanıtı</string>
     <string name="event_kind_39307">Video altyazıları</string>
+    <string name="event_kind_9840">Manuel CI tetikleyicisi</string>
+    <string name="event_kind_9843">CI hizmet isteği</string>
+    <string name="event_kind_9844">CI hizmetini durdurma</string>
+    <string name="event_kind_30624">Kapsayıcı imaj etiketleri</string>
 </resources>

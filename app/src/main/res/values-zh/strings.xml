@@ -632,7 +632,7 @@
     <string name="event_kind_1630_1633">状态</string>
     <string name="event_kind_1622">回复</string>
     <string name="event_kind_1621">议题</string>
-    <string name="event_kind_1617">评论</string>
+    <string name="event_kind_1617">Git 补丁</string>
     <string name="event_kind_64">棋局(PGN)</string>
     <string name="event_kind_818">合并请求</string>
     <string name="event_kind_1018">投票回应</string>
@@ -916,4 +916,8 @@
     <string name="event_kind_25910">ContextVM 请求</string>
     <string name="event_kind_34238">视频协作回应</string>
     <string name="event_kind_39307">视频字幕</string>
+    <string name="event_kind_9840">CI 手动触发</string>
+    <string name="event_kind_9843">CI 服务请求</string>
+    <string name="event_kind_9844">CI 服务停止</string>
+    <string name="event_kind_30624">容器镜像标签</string>
 </resources>

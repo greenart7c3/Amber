@@ -627,7 +627,7 @@
     <string name="event_kind_1630_1633">Trạng thái</string>
     <string name="event_kind_1622">Trả lời</string>
     <string name="event_kind_1621">Vấn đề</string>
-    <string name="event_kind_1617">Bình luận</string>
+    <string name="event_kind_1617">Bản vá Git</string>
     <string name="event_kind_64">Cờ vua (PGN)</string>
     <string name="event_kind_818">Yêu cầu hợp nhất</string>
     <string name="event_kind_1018">Phản hồi bình chọn</string>
@@ -911,4 +911,8 @@
     <string name="event_kind_25910">Yêu cầu ContextVM</string>
     <string name="event_kind_34238">Phản hồi cộng tác video</string>
     <string name="event_kind_39307">Phụ đề video</string>
+    <string name="event_kind_9840">Kích hoạt CI thủ công</string>
+    <string name="event_kind_9843">Yêu cầu dịch vụ CI</string>
+    <string name="event_kind_9844">Dừng dịch vụ CI</string>
+    <string name="event_kind_30624">Thẻ image container</string>
 </resources>

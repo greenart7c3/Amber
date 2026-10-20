@@ -650,7 +650,7 @@
     <string name="event_kind_1630_1633">Statut</string>
     <string name="event_kind_1622">Réponses</string>
     <string name="event_kind_1621">Problèmes</string>
-    <string name="event_kind_1617">Commentaire</string>
+    <string name="event_kind_1617">Patch Git</string>
     <string name="event_kind_64">Échecs (PGN)</string>
     <string name="event_kind_818">Demandes de fusion</string>
     <string name="event_kind_1018">Réponse au sondage</string>
@@ -934,4 +934,8 @@
     <string name="event_kind_25910">Requête ContextVM</string>
     <string name="event_kind_34238">Réponse à une collaboration vidéo</string>
     <string name="event_kind_39307">Sous-titres de vidéo</string>
+    <string name="event_kind_9840">Déclenchement manuel de CI</string>
+    <string name="event_kind_9843">Demande de service CI</string>
+    <string name="event_kind_9844">Arrêt du service CI</string>
+    <string name="event_kind_30624">Tags d\'image de conteneur</string>
 </resources>

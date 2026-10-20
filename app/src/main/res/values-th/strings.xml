@@ -271,7 +271,7 @@
     <string name="event_kind_23194">คำขอกระเป๋าเงิน</string>
     <string name="event_kind_23195">การตอบสนองกระเป๋าเงิน</string>
     <string name="event_kind_24133">Nostr connect</string>
-    <string name="event_kind_27235">HTTP auth</string>
+    <string name="event_kind_27235">การยืนยันตัวตน HTTP</string>
     <string name="event_kind_30000">ชุดการติดตาม</string>
     <string name="event_kind_30001">รายการทั่วไป</string>
     <string name="event_kind_30002">ชุด relay</string>
@@ -627,7 +627,7 @@
     <string name="event_kind_1630_1633">สถานะ</string>
     <string name="event_kind_1622">การตอบกลับ</string>
     <string name="event_kind_1621">ปัญหา</string>
-    <string name="event_kind_1617">ความคิดเห็น</string>
+    <string name="event_kind_1617">แพตช์ Git</string>
     <string name="event_kind_64">Chess (PGN)</string>
     <string name="event_kind_818">คำขอ Merge</string>
     <string name="event_kind_1018">การตอบโพล</string>
@@ -817,7 +817,7 @@
     <string name="event_kind_10012">รายการ relay ที่ชื่นชอบ</string>
     <string name="event_kind_30267">ชุดคิวเรชันแอป</string>
     <string name="event_kind_34237">Video View</string>
-    <string name="event_kind_15128">Root nsite manifest</string>
+    <string name="event_kind_15128">manifest nsite หลัก</string>
     <string name="event_kind_10443">MLS Key Package</string>
     <string name="event_kind_16767">ธีมโปรไฟล์ที่ใช้งานอยู่</string>
     <string name="auth_whitelist">รายการที่อนุญาตสำหรับ client auth</string>
@@ -911,4 +911,8 @@
     <string name="event_kind_25910">คำขอ ContextVM</string>
     <string name="event_kind_34238">การตอบรับการทำงานร่วมกันในวิดีโอ</string>
     <string name="event_kind_39307">คำบรรยายวิดีโอ</string>
+    <string name="event_kind_9840">ทริกเกอร์ CI ด้วยตนเอง</string>
+    <string name="event_kind_9843">คำขอบริการ CI</string>
+    <string name="event_kind_9844">หยุดบริการ CI</string>
+    <string name="event_kind_30624">แท็กอิมเมจคอนเทนเนอร์</string>
 </resources>

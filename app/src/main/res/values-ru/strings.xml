@@ -654,7 +654,7 @@
     <string name="event_kind_1630_1633">Статус</string>
     <string name="event_kind_1622">Ответы</string>
     <string name="event_kind_1621">Задачи</string>
-    <string name="event_kind_1617">Комментарий</string>
+    <string name="event_kind_1617">Git-патч</string>
     <string name="event_kind_64">Шахматы (PGN)</string>
     <string name="event_kind_818">Запросы на слияние</string>
     <string name="event_kind_1018">Ответ на опрос</string>
@@ -938,4 +938,8 @@
     <string name="event_kind_25910">Запрос ContextVM</string>
     <string name="event_kind_34238">Ответ на совместную работу над видео</string>
     <string name="event_kind_39307">Субтитры к видео</string>
+    <string name="event_kind_9840">Ручной запуск CI</string>
+    <string name="event_kind_9843">Запрос сервиса CI</string>
+    <string name="event_kind_9844">Остановка сервиса CI</string>
+    <string name="event_kind_30624">Теги образа контейнера</string>
 </resources>

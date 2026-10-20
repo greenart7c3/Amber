@@ -651,7 +651,7 @@
     <string name="event_kind_1630_1633">상태</string>
     <string name="event_kind_1622">답글</string>
     <string name="event_kind_1621">이슈</string>
-    <string name="event_kind_1617">댓글</string>
+    <string name="event_kind_1617">Git 패치</string>
     <string name="event_kind_64">체스 (PGN)</string>
     <string name="event_kind_818">병합 요청</string>
     <string name="event_kind_1018">투표 응답</string>
@@ -935,4 +935,8 @@
     <string name="event_kind_25910">ContextVM 요청</string>
     <string name="event_kind_34238">동영상 협업 응답</string>
     <string name="event_kind_39307">동영상 자막</string>
+    <string name="event_kind_9840">CI 수동 실행</string>
+    <string name="event_kind_9843">CI 서비스 요청</string>
+    <string name="event_kind_9844">CI 서비스 중지</string>
+    <string name="event_kind_30624">컨테이너 이미지 태그</string>
 </resources>

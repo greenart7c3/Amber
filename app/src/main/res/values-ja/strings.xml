@@ -627,7 +627,7 @@
     <string name="event_kind_1630_1633">ステータス</string>
     <string name="event_kind_1622">返信</string>
     <string name="event_kind_1621">課題</string>
-    <string name="event_kind_1617">コメント</string>
+    <string name="event_kind_1617">Gitパッチ</string>
     <string name="event_kind_64">チェス (PGN)</string>
     <string name="event_kind_818">マージリクエスト</string>
     <string name="event_kind_1018">投票への回答</string>
@@ -911,4 +911,8 @@
     <string name="event_kind_25910">ContextVMリクエスト</string>
     <string name="event_kind_34238">動画コラボレーションへの返答</string>
     <string name="event_kind_39307">動画字幕</string>
+    <string name="event_kind_9840">CI 手動トリガー</string>
+    <string name="event_kind_9843">CI サービスリクエスト</string>
+    <string name="event_kind_9844">CI サービス停止</string>
+    <string name="event_kind_30624">コンテナイメージタグ</string>
 </resources>

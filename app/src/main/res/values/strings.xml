@@ -681,7 +681,7 @@
     <string name="event_kind_1630_1633">Status</string>
     <string name="event_kind_1622">Replies</string>
     <string name="event_kind_1621">Issues</string>
-    <string name="event_kind_1617">Comment</string>
+    <string name="event_kind_1617">Git patch</string>
     <string name="event_kind_64">Chess (PGN)</string>
     <string name="event_kind_818">Merge Requests</string>
     <string name="event_kind_1018">Poll Response</string>
@@ -942,4 +942,8 @@
     <string name="event_kind_25910">ContextVM request</string>
     <string name="event_kind_34238">Video collaboration response</string>
     <string name="event_kind_39307">Video subtitles</string>
+    <string name="event_kind_9840">CI manual trigger</string>
+    <string name="event_kind_9843">CI service request</string>
+    <string name="event_kind_9844">CI service stop</string>
+    <string name="event_kind_30624">Container image tags</string>
 </resources>

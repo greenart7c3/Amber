@@ -155,7 +155,7 @@ Things to know before touching these areas:
 - **Per-account data.** Each `npub` has its own preferences and databases.
   Don't share state across accounts.
 
-`CLAUDE.md` and `AGENTS.md` describe the architecture in more detail.
+`AGENTS.md` describes the architecture in more detail.
 
 ## Workflow
 

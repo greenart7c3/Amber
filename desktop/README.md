@@ -280,6 +280,12 @@ run alongside an installed release without touching its keys, accounts or
 single-instance lock. On Linux it does not claim `nostrconnect://` links
 unless run with `-PdesktopUriHandler`. Packaged builds are always release.
 
+The desktop app always carries the Android app's version: both builds read
+`amberVersionName` (and Android `amberVersionCode`) from
+`gradle/libs.versions.toml` (installers drop a `-suffix`, so `6.7.0-pre1`
+packages as `6.7.0`), and the release workflow refuses a tag that does not
+match it. Bump the version there only.
+
 jpackage can only produce installers for the OS it runs on, so release
 builds are made per-platform. Linux packaging needs `fakeroot` (deb) or
 `rpm-build` (rpm) installed.

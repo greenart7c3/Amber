@@ -22,7 +22,11 @@ jobs:
       tag: ${{ steps.v.outputs.tag }}
       version: ${{ steps.v.outputs.version }}
     steps:
-      # Installers need a plain X.Y.Z: v6.7.0-pre1 packages as 6.7.0.
+      - uses: actions/checkout@v7
+
+      # Installers need a plain X.Y.Z: v6.7.0-pre1 packages as 6.7.0. The
+      # desktop build takes its version from amberVersionName, so a tag
+      # that does not match it would ship mislabeled installers.
       - id: v
         env:
           TAG: ${{ github.ref_name }}
@@ -31,6 +35,8 @@ jobs:
           version=${TAG#v}
           version=${version%%-*}
           [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "::error::Tag $TAG is not vX.Y.Z[-suffix]"; exit 1; }
+          app=$(sed -nE 's/^amberVersionName = "([^"]+)".*/\1/p' gradle/libs.versions.toml | head -1)
+          [ "${app%%-*}" = "$version" ] || { echo "::error::Tag $TAG does not match amberVersionName \"$app\" in gradle/libs.versions.toml"; exit 1; }
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
           echo "version=$version" >> "$GITHUB_OUTPUT"
 

@@ -2,7 +2,8 @@ name: Test/Build Desktop
 
 # Lints, tests and packages the Compose for Desktop signer (:desktop) on every
 # OS it ships for, and uploads the installers so each change can be tried out.
-# desktop-release.yml calls it with the release version.
+# desktop-release.yml calls it with the release version. The packaged version
+# itself always comes from amberVersionName in gradle/libs.versions.toml.
 
 on:
   pull_request:
@@ -21,7 +22,7 @@ on:
   workflow_call:
     inputs:
       version:
-        description: 'Package version (X.Y.Z); defaults to the one in desktop/build.gradle.kts'
+        description: 'Release version (X.Y.Z) used to name the installers; must match amberVersionName in gradle/libs.versions.toml'
         type: string
         default: ''
 
@@ -37,7 +38,6 @@ defaults:
     shell: bash
 
 env:
-  VERSION_ARG: ${{ inputs.version && format('-PdesktopVersion={0}', inputs.version) || '' }}
   RELEASE_VERSION: ${{ inputs.version }}
 
 jobs:
@@ -125,14 +125,14 @@ jobs:
       # .deb/.rpm on Linux, .msi/.exe on Windows (WiX is fetched by the
       # Compose plugin), .dmg on macOS (unsigned).
       - name: Package (gradle)
-        run: ./gradlew :desktop:packageDistributionForCurrentOs $VERSION_ARG --no-daemon
+        run: ./gradlew :desktop:packageDistributionForCurrentOs --no-daemon
 
       # Distro-independent bundles from the standalone app image (packageDeb/Rpm
       # build from a temporary one).
       - name: Package AppImage and tar.xz
         if: runner.os == 'Linux'
         run: |
-          ./gradlew :desktop:createDistributable $VERSION_ARG --no-daemon
+          ./gradlew :desktop:createDistributable --no-daemon
           desktop/packaging/linux.sh "$DIST_VERSION" dist
 
       # Start the AppImage on a virtual display and make sure it is still alive

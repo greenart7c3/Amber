@@ -82,8 +82,12 @@ tasks.withType<JavaExec>().matching { it.name in debugRunTasks }.configureEach {
     }
 }
 
-// Release builds pass the tag's version (-PdesktopVersion=X.Y.Z).
-val desktopVersion = providers.gradleProperty("desktopVersion").getOrElse("6.2.3")
+// The desktop app always ships under the Android app's version: both read
+// amberVersionName from gradle/libs.versions.toml (bump it only there).
+val appVersionName: String = libs.versions.amberVersionName.get()
+
+// Installers need a plain X.Y.Z, so a suffix (6.7.0-pre1) is dropped there.
+val desktopPackageVersion: String = appVersionName.substringBefore('-')
 
 compose.desktop {
     application {
@@ -95,7 +99,7 @@ compose.desktop {
         // and no core dump on a JVM crash (hs_err logs are still written).
         jvmArgs += listOf("-XX:+DisableAttachMechanism", "-XX:-HeapDumpOnOutOfMemoryError", "-XX:-CreateCoredumpOnCrash")
         // The version crash reports carry (BuildVariant.version).
-        jvmArgs += "-Damber.version=$desktopVersion"
+        jvmArgs += "-Damber.version=$appVersionName"
 
         nativeDistributions {
             // Built-in Tor: the prebuilt Arti library of each OS/arch
@@ -106,7 +110,7 @@ compose.desktop {
             // dbus-java authenticates to the session bus with UnixSystem
             // (actionable Linux notifications, Secret Service keyring).
             modules("jdk.security.auth")
-            packageVersion = desktopVersion
+            packageVersion = desktopPackageVersion
             description = "Amber - Nostr event signer"
             vendor = "greenart7c3"
             copyright = "© greenart7c3. Distributed under the MIT license."

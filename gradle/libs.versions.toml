@@ -1,4 +1,8 @@
 [versions]
+# Amber's release version, shared by the Android app (versionCode/versionName)
+# and the desktop app. Bump both here, and only here.
+amberVersionCode = "211"
+amberVersionName = "6.6.9"
 activityCompose = "1.13.0"
 appcompat = "1.8.0"
 biometricKtx = "1.4.0-alpha02"

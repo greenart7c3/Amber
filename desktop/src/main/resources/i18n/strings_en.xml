@@ -857,6 +857,7 @@
     <string name="d_locked">Locked</string>
     <string name="d_passphrase">Passphrase</string>
     <string name="d_wrong_passphrase">Wrong passphrase</string>
+    <string name="d_os_secret_unavailable">Amber could not read its unlock secret from %1$s. Unlock your keyring or make sure it is running, then try again.</string>
     <string name="d_unlocking">Unlocking…</string>
     <string name="d_unlock">Unlock</string>
     <string name="d_connect_nostrconnect">Connect with nostrconnect://</string>

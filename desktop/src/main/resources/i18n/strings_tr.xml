@@ -845,6 +845,7 @@
     <string name="d_locked">Kilitli</string>
     <string name="d_passphrase">Parola</string>
     <string name="d_wrong_passphrase">Yanlış parola</string>
+    <string name="d_os_secret_unavailable">Amber, kilit açma sırrını %1$s içinden okuyamadı. Anahtarlığınızın kilidini açın veya çalıştığından emin olun, ardından tekrar deneyin.</string>
     <string name="d_unlocking">Kilit açılıyor…</string>
     <string name="d_unlock">Kilidi aç</string>
     <string name="d_connect_nostrconnect">nostrconnect:// ile bağlan</string>

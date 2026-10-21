@@ -85,8 +85,8 @@ object AccountManager {
             AccountRecord(
                 npub = npub,
                 name = name,
-                encryptedPrivKey = DesktopKeyStore.encrypt(keyPair.privKey!!.toHexKey()),
-                encryptedSeedWords = if (seedWords.isBlank()) "" else DesktopKeyStore.encrypt(seedWords),
+                encryptedPrivKey = DesktopKeyStore.encrypt(keyPair.privKey!!.toHexKey(), privKeyContext(npub)),
+                encryptedSeedWords = if (seedWords.isBlank()) "" else DesktopKeyStore.encrypt(seedWords, seedContext(npub)),
                 signPolicy = signPolicy,
                 didBackup = didBackup,
             ),
@@ -98,12 +98,17 @@ object AccountManager {
     suspend fun loadAccount(npub: String): DesktopAccount? {
         val record = AccountsStore.get(npub) ?: return null
         val privKeyHex = try {
-            DesktopKeyStore.decrypt(record.encryptedPrivKey)
+            DesktopKeyStore.decrypt(record.encryptedPrivKey, privKeyContext(npub))
         } catch (e: Exception) {
             AmberLogger.e("AccountManager", "Failed to decrypt key for $npub", e)
             return null
         }
         val keyPair = KeyPair(privKey = privKeyHex.hexToByteArray())
+        // Never sign as one identity under another account's name and permissions.
+        if (keyPair.pubKey.toNpub() != npub) {
+            AmberLogger.e("AccountManager", "The stored key for $npub belongs to a different account; refusing to load it")
+            return null
+        }
         return DesktopAccount(
             signer = NostrSignerInternal(keyPair),
             hexKey = keyPair.pubKey.toHexKey(),
@@ -117,8 +122,42 @@ object AccountManager {
     suspend fun seedWords(npub: String): String {
         val record = AccountsStore.get(npub) ?: return ""
         if (record.encryptedSeedWords.isBlank()) return ""
-        return runCatching { DesktopKeyStore.decrypt(record.encryptedSeedWords) }.getOrDefault("")
+        return runCatching { DesktopKeyStore.decrypt(record.encryptedSeedWords, seedContext(npub)) }.getOrDefault("")
     }
+
+    /**
+     * Re-encrypts every account's key and seed words that predate context
+     * binding (see [DesktopKeyStore.encryptString]). A key that does not
+     * belong to its record's npub is left as is, so the migration never
+     * blesses a swapped key; it is rejected once unbound values are refused.
+     */
+    internal fun bindKeyCiphertexts() {
+        AccountsStore.accounts.value.forEach { record ->
+            AccountsStore.update(record.npub) { current ->
+                val npub = current.npub
+                val privKey = current.encryptedPrivKey.takeIf { it.isNotBlank() && !DesktopKeyStore.isBound(it) }?.let { legacy ->
+                    runCatching {
+                        val hex = DesktopKeyStore.decryptString(legacy, privKeyContext(npub))
+                        check(KeyPair(privKey = hex.hexToByteArray()).pubKey.toNpub() == npub) { "key does not match $npub" }
+                        DesktopKeyStore.encryptString(hex, privKeyContext(npub))
+                    }.onFailure { AmberLogger.e("AccountManager", "Could not bind the key of $npub", it) }.getOrNull()
+                }
+                val seed = current.encryptedSeedWords.takeIf { it.isNotBlank() && !DesktopKeyStore.isBound(it) }?.let { legacy ->
+                    runCatching {
+                        DesktopKeyStore.encryptString(DesktopKeyStore.decryptString(legacy, seedContext(npub)), seedContext(npub))
+                    }.onFailure { AmberLogger.e("AccountManager", "Could not bind the seed words of $npub", it) }.getOrNull()
+                }
+                current.copy(
+                    encryptedPrivKey = privKey ?: current.encryptedPrivKey,
+                    encryptedSeedWords = seed ?: current.encryptedSeedWords,
+                )
+            }
+        }
+    }
+
+    private fun privKeyContext(npub: String) = "$npub/privkey"
+
+    private fun seedContext(npub: String) = "$npub/seed"
 
     fun saveAccountMeta(account: DesktopAccount) {
         AccountsStore.update(account.npub) {

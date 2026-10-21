@@ -256,11 +256,15 @@ fun SettingsScreen(account: DesktopAccount) {
                     onClick = {
                         loggingOut = true
                         scope.launch {
-                            if (PassphraseLock.verify(logoutPassphrase.toCharArray())) {
-                                showLogoutConfirm = null
-                                Session.logout(npub)
-                            } else {
-                                Toaster.toast(Strings.get("d_wrong_passphrase", language))
+                            try {
+                                if (PassphraseLock.verify(logoutPassphrase.toCharArray())) {
+                                    showLogoutConfirm = null
+                                    Session.logout(npub)
+                                } else {
+                                    Toaster.toast(Strings.get("d_wrong_passphrase", language))
+                                }
+                            } catch (e: PassphraseLock.OsSecretUnavailableException) {
+                                Toaster.toast(Strings.format("d_os_secret_unavailable", e.storeDescription, language = language))
                             }
                             loggingOut = false
                         }
@@ -587,6 +591,8 @@ private fun ChangePassphraseDialog(onDismiss: () -> Unit) {
                             } else {
                                 Toaster.toast(Strings.get("d_wrong_current_passphrase", language))
                             }
+                        } catch (e: PassphraseLock.OsSecretUnavailableException) {
+                            Toaster.toast(Strings.format("d_os_secret_unavailable", e.storeDescription, language = language))
                         } catch (e: Exception) {
                             Toaster.toast(e.message ?: Strings.get("d_failed_update_passphrase", language))
                         }

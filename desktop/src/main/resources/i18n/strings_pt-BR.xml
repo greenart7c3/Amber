@@ -844,6 +844,7 @@
     <string name="d_locked">Bloqueado</string>
     <string name="d_passphrase">Senha</string>
     <string name="d_wrong_passphrase">Senha incorreta</string>
+    <string name="d_os_secret_unavailable">O Amber não conseguiu ler o segredo de desbloqueio em %1$s. Desbloqueie seu chaveiro ou verifique se ele está em execução e tente novamente.</string>
     <string name="d_unlocking">Desbloqueando…</string>
     <string name="d_unlock">Desbloquear</string>
     <string name="d_connect_nostrconnect">Conectar com nostrconnect://</string>

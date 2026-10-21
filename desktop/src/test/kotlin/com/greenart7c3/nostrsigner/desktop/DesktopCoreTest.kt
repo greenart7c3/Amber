@@ -51,9 +51,9 @@ class DesktopCoreTest {
     @Test
     fun keystoreEncryptsAndDecrypts() = runBlocking {
         val secret = "nsec-super-secret-payload"
-        val encrypted = DesktopKeyStore.encrypt(secret)
+        val encrypted = DesktopKeyStore.encrypt(secret, "test/secret")
         assertTrue(encrypted != secret)
-        assertEquals(secret, DesktopKeyStore.decrypt(encrypted))
+        assertEquals(secret, DesktopKeyStore.decrypt(encrypted, "test/secret"))
     }
 
     @Test

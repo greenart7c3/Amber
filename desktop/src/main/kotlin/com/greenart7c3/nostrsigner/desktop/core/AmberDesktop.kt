@@ -89,6 +89,14 @@ object AmberDesktop {
         AccountsStore.accounts.value.forEach { store(it.npub).rewriteAll() }
     }
 
+    /**
+     * Reads every account's database into memory, so a format migration can
+     * rewrite it after the on-disk formats it was read from stop being accepted.
+     */
+    fun loadAllStores() {
+        AccountsStore.accounts.value.forEach { store(it.npub) }
+    }
+
     val settings: DesktopSettings get() = SettingsStore.settings.value
 
     fun defaultRelays(): List<NormalizedRelayUrl> = settings.normalizedDefaultRelays()

@@ -143,9 +143,7 @@ Note the trust model: any process running as your OS user can request the
 secret from the credential store, so this protects against offline attacks
 (disk theft, leaked backups, copied data directories) rather than against
 malware running in your session. Use full-disk encryption and OS login
-protection too. If you move the data directory to another machine, also
-transfer the `com.greenart7c3.nostrsigner` entry from the credential store
-(or keep the legacy `keystore.pass` file).
+protection too.
 
 ### Passphrase lock (mandatory)
 
@@ -158,17 +156,43 @@ credential-store/file password are deleted. The passphrase is never written
 anywhere. You can change it under **Settings → Security**, but there is no
 way to remove it and go back to unprotected storage.
 
+When the OS credential store works, it also holds a second unlock factor: a
+random 256-bit secret (entry `master-key-secret` under the
+`com.greenart7c3.nostrsigner` service) that is mixed into the passphrase-
+derived key with HKDF-SHA256. Unwrapping the master key then needs both your
+passphrase **and** that entry, so a copy of the data directory alone cannot
+be brute-forced offline, however weak the passphrase. Without a usable
+credential store the passphrase is the only factor, and Amber adds the
+second one at the next unlock once a store becomes available. If the entry
+cannot be read (keyring locked, secret daemon not running), the unlock
+screen says so instead of reporting a wrong passphrase. To move the data
+directory to another machine, move that credential-store entry along with
+it — or, simpler, restore the accounts there from their nsec or seed words.
+
 With the lock on:
 
 - Copying the data directory (or the credential store) is useless — without
   the passphrase there is no way to decrypt the keys.
 - The per-account **database** (connected applications, permission grants,
   request history, relay logs) is also encrypted at rest with the master
-  key — AES-256-GCM, with an `AMBERENC1:` header — so the metadata about
+  key — AES-256-GCM, with an `AMBERENC2:` header — so the metadata about
   which apps you sign for stays private too. Enabling the passphrase
   re-encrypts existing data immediately.
   (`settings.json` and `accounts.json` stay plaintext, but the private keys
   inside `accounts.json` are always encrypted with the master key.)
+- Every ciphertext is bound to what it is (account + key, seed words or
+  database file) as GCM associated data, and a loaded key must match its
+  account's npub. Someone who can edit the data directory therefore cannot
+  move one account's key or database into another account, or plant a
+  plaintext database granting permissions; such files are rejected. The
+  header of `master.key.enc` is authenticated too, so it cannot be
+  downgraded. Older installs are migrated to this format at their next
+  unlock.
+- Files are replaced atomically and flushed to disk, so a crash or power
+  loss never leaves a half-written file. A file Amber cannot read is moved
+  aside as `<name>.corrupt-<time>` instead of being overwritten, and the
+  previous `accounts.json` — the only file holding the encrypted keys — is
+  kept as `accounts.json.bak` and restored automatically if needed.
 - Amber asks for the passphrase at startup and auto-locks after an idle
   timeout — 1 hour by default, selectable (5 min / 15 min / 1 hour / never)
   under **Settings → Security** — or immediately via **Lock now**. Locking

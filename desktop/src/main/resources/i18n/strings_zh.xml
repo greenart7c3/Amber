@@ -830,6 +830,7 @@
     <string name="d_locked">已锁定</string>
     <string name="d_passphrase">密码短语</string>
     <string name="d_wrong_passphrase">密码短语错误</string>
+    <string name="d_os_secret_unavailable">Amber 无法从 %1$s 读取其解锁密钥。请解锁你的密钥环或确认它正在运行，然后重试。</string>
     <string name="d_unlocking">解锁中…</string>
     <string name="d_unlock">解锁</string>
     <string name="d_connect_nostrconnect">使用 nostrconnect:// 连接</string>

@@ -14,48 +14,81 @@ import kotlinx.coroutines.flow.MutableStateFlow
 
 private val mapper = jacksonObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
 
-/** Header on a file whose JSON payload is AES-GCM encrypted with the master key. */
-private const val ENC_MARKER = "AMBERENC1:"
+/** Header on a file whose JSON payload is AES-GCM encrypted with the master key, bound to its account and file. */
+private const val ENC_MARKER = "AMBERENC2:"
+
+/** Older encrypted header: the payload is not bound to its account or file. */
+private const val LEGACY_ENC_MARKER = "AMBERENC1:"
 
 private fun atomicWrite(file: File, payload: String) {
-    val tmp = File(file.parentFile, "${file.name}.tmp")
-    tmp.writeText(payload)
-    if (!tmp.renameTo(file)) {
-        // Windows can refuse an atomic replace; fall back to copy + delete.
-        file.writeText(payload)
-        tmp.delete()
+    AppDirs.writeAtomically(file, payload.toByteArray(Charsets.UTF_8))
+}
+
+/**
+ * Reads a JSON file. A file that exists but cannot be parsed is moved aside
+ * rather than treated as empty: otherwise the next write would replace it,
+ * and for accounts.json that destroys the only copy of the encrypted keys.
+ * When [backup] is given and parses, it is restored in the file's place.
+ */
+private inline fun <reified T> readJson(file: File, backup: File? = null): T? {
+    if (!file.exists()) return null
+    try {
+        return mapper.readValue<T>(file.readText())
+    } catch (e: Exception) {
+        val moved = AppDirs.quarantine(file)
+        AmberLogger.e("Storage", "Failed to read ${file.name}; kept it as ${moved?.name}", e)
     }
-    AppDirs.restrictToOwner(file)
+    if (backup == null || !backup.exists()) return null
+    return try {
+        val raw = backup.readText()
+        mapper.readValue<T>(raw).also {
+            atomicWrite(file, raw)
+            AmberLogger.i("Storage", "Restored ${file.name} from ${backup.name}")
+        }
+    } catch (e: Exception) {
+        AmberLogger.e("Storage", "Backup ${backup.name} is unreadable too", e)
+        null
+    }
 }
 
-private inline fun <reified T> readJson(file: File): T? = try {
-    if (file.exists()) mapper.readValue<T>(file.readText()) else null
-} catch (e: Exception) {
-    AmberLogger.e("Storage", "Failed to read ${file.name}", e)
-    null
-}
-
-private fun writeJson(file: File, value: Any) {
+/** Writes a JSON file; with [backup], the previous version is kept there first. */
+private fun writeJson(file: File, value: Any, backup: File? = null) {
+    if (backup != null && file.exists()) AppDirs.writeAtomically(backup, file.readBytes())
     atomicWrite(file, mapper.writerWithDefaultPrettyPrinter().writeValueAsString(value))
 }
 
 /**
  * Reads a JSON file that may be encrypted. Encrypted files carry the
- * [ENC_MARKER] header (written while a passphrase is set); plaintext files
- * are read as-is, so installs that predate the passphrase migrate
- * transparently.
+ * [ENC_MARKER] header, with the ciphertext bound to [context]; plaintext and
+ * [LEGACY_ENC_MARKER] files are only accepted until the install has been
+ * migrated ([PassphraseLock.requiresBoundCiphertexts]), so installs that
+ * predate the formats upgrade transparently but nobody can plant one later.
+ * A file that fails to decrypt or parse is moved aside, never overwritten.
  */
-private inline fun <reified T> readSecure(file: File): T? = try {
-    if (!file.exists()) {
-        null
-    } else {
+private inline fun <reified T> readSecure(file: File, context: String): T? {
+    if (!file.exists()) return null
+    return try {
         val raw = file.readText()
-        val json = if (raw.startsWith(ENC_MARKER)) DesktopKeyStore.decryptString(raw.substring(ENC_MARKER.length)) else raw
+        val json = when {
+            raw.startsWith(ENC_MARKER) -> {
+                val payload = raw.substring(ENC_MARKER.length)
+                if (!DesktopKeyStore.isBound(payload)) throw SecurityException("Unbound payload under the bound header")
+                DesktopKeyStore.decryptString(payload, context)
+            }
+            // The legacy payload is unbound, which decryptString refuses once migrated.
+            raw.startsWith(LEGACY_ENC_MARKER) -> DesktopKeyStore.decryptString(raw.substring(LEGACY_ENC_MARKER.length), context)
+            PassphraseLock.requiresBoundCiphertexts() -> throw SecurityException("Refusing a plaintext ${file.name}")
+            else -> raw
+        }
         mapper.readValue<T>(json)
+    } catch (e: DesktopKeyStore.LockedException) {
+        AmberLogger.e("Storage", "Cannot read ${file.name} while the key store is locked")
+        null
+    } catch (e: Exception) {
+        val moved = AppDirs.quarantine(file)
+        AmberLogger.e("Storage", "Failed to read ${file.name}; kept it as ${moved?.name}", e)
+        null
     }
-} catch (e: Exception) {
-    AmberLogger.e("Storage", "Failed to read ${file.name}", e)
-    null
 }
 
 /**
@@ -64,14 +97,14 @@ private inline fun <reified T> readSecure(file: File): T? = try {
  * ciphertext with an empty document. Returns whether the file was written;
  * callers keeping dirty state use the result to retry later.
  */
-private fun writeSecure(file: File, value: Any): Boolean {
+private fun writeSecure(file: File, value: Any, context: String): Boolean {
     val encrypt = PassphraseLock.isEnabled()
     if (encrypt && !DesktopKeyStore.isMasterKeyAvailable()) {
         AmberLogger.e("Storage", "Refusing to write ${file.name} while the key store is locked")
         return false
     }
     val json = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(value)
-    atomicWrite(file, if (encrypt) ENC_MARKER + DesktopKeyStore.encryptString(json) else json)
+    atomicWrite(file, if (encrypt) ENC_MARKER + DesktopKeyStore.encryptString(json, context) else json)
     return true
 }
 
@@ -114,9 +147,9 @@ class AccountStore(val npub: String) {
     // logs) is the sensitive metadata about who you sign for, so it is
     // encrypted at rest with the master key whenever a passphrase lock is set
     // (see writeSecure/readSecure).
-    val apps = MutableStateFlow(readSecure<List<AppWithPermissions>>(appsFile) ?: emptyList())
-    val history = MutableStateFlow(readSecure<List<HistoryRecord>>(historyFile) ?: emptyList())
-    val logs = MutableStateFlow(readSecure<List<LogRecord>>(logsFile) ?: emptyList())
+    val apps = MutableStateFlow(readSecure<List<AppWithPermissions>>(appsFile, context(appsFile)) ?: emptyList())
+    val history = MutableStateFlow(readSecure<List<HistoryRecord>>(historyFile, context(historyFile)) ?: emptyList())
+    val logs = MutableStateFlow(readSecure<List<LogRecord>>(logsFile, context(logsFile)) ?: emptyList())
 
     // addLog/addHistory update memory at once but persist with a short
     // debounce (see [scheduleVolatileFlush]): a relay flood logs one line per
@@ -130,6 +163,9 @@ class AccountStore(val npub: String) {
         liveStores.add(this)
     }
 
+    // Binds each file's ciphertext to this account and file name.
+    private fun context(file: File) = "$npub/${file.name}"
+
     fun getByKey(key: String): AppWithPermissions? = apps.value.firstOrNull { it.app.key == key }
 
     fun getBySecret(secret: String): AppWithPermissions? = apps.value.firstOrNull { constantTimeEquals(it.app.secret, secret) && it.app.useSecret }
@@ -141,7 +177,7 @@ class AccountStore(val npub: String) {
     @Synchronized
     fun upsert(app: AppWithPermissions) {
         apps.value = apps.value.filter { it.app.key != app.app.key } + app
-        writeSecure(appsFile, apps.value)
+        writeSecure(appsFile, apps.value, context(appsFile))
     }
 
     /**
@@ -154,8 +190,8 @@ class AccountStore(val npub: String) {
         if (expired.isEmpty()) return 0
         apps.value = apps.value.filter { it.app.key !in expired }
         history.value = history.value.filter { it.appKey !in expired }
-        writeSecure(appsFile, apps.value)
-        writeSecure(historyFile, history.value)
+        writeSecure(appsFile, apps.value, context(appsFile))
+        writeSecure(historyFile, history.value, context(historyFile))
         // The history rewrite includes anything still volatile.
         historyDirty = false
         return expired.size
@@ -165,8 +201,8 @@ class AccountStore(val npub: String) {
     fun delete(key: String) {
         apps.value = apps.value.filter { it.app.key != key }
         history.value = history.value.filter { it.appKey != key }
-        writeSecure(appsFile, apps.value)
-        writeSecure(historyFile, history.value)
+        writeSecure(appsFile, apps.value, context(appsFile))
+        writeSecure(historyFile, history.value, context(historyFile))
         // The history rewrite includes anything still volatile.
         historyDirty = false
     }
@@ -202,15 +238,15 @@ class AccountStore(val npub: String) {
      * before the accounts are evicted on lock ([AmberDesktop.evictAllAccounts]).
      */
     fun flushVolatile() = synchronized(this) {
-        if (historyDirty && runCatching { writeSecure(historyFile, history.value) }.getOrDefault(false)) historyDirty = false
-        if (logsDirty && runCatching { writeSecure(logsFile, logs.value) }.getOrDefault(false)) logsDirty = false
+        if (historyDirty && runCatching { writeSecure(historyFile, history.value, context(historyFile)) }.getOrDefault(false)) historyDirty = false
+        if (logsDirty && runCatching { writeSecure(logsFile, logs.value, context(logsFile)) }.getOrDefault(false)) logsDirty = false
         flushQueued = false
     }
 
     @Synchronized
     fun clearLogs() {
         logs.value = emptyList()
-        writeSecure(logsFile, logs.value)
+        writeSecure(logsFile, logs.value, context(logsFile))
         // The empty-list write supersedes anything still volatile.
         logsDirty = false
     }
@@ -223,9 +259,9 @@ class AccountStore(val npub: String) {
      */
     @Synchronized
     fun rewriteAll() {
-        writeSecure(appsFile, apps.value)
-        writeSecure(historyFile, history.value)
-        writeSecure(logsFile, logs.value)
+        writeSecure(appsFile, apps.value, context(appsFile))
+        writeSecure(historyFile, history.value, context(historyFile))
+        writeSecure(logsFile, logs.value, context(logsFile))
         historyDirty = false
         logsDirty = false
     }
@@ -281,18 +317,30 @@ object SettingsStore {
  */
 object AccountsStore {
     private val file = File(AppDirs.dataDir, "accounts.json")
-    val accounts = MutableStateFlow(readJson<List<AccountRecord>>(file) ?: emptyList())
+
+    // The previous version of accounts.json, the only file holding the
+    // encrypted keys; restored if the main file is ever unreadable.
+    private val backup = File(AppDirs.dataDir, "accounts.json.bak")
+    val accounts = MutableStateFlow(readJson<List<AccountRecord>>(file, backup) ?: emptyList())
+
+    /** Re-reads accounts.json from disk (startup path; also used by tests). */
+    @Synchronized
+    internal fun reload() {
+        accounts.value = readJson<List<AccountRecord>>(file, backup) ?: emptyList()
+    }
 
     @Synchronized
     fun upsert(record: AccountRecord) {
         accounts.value = accounts.value.filter { it.npub != record.npub } + record
-        writeJson(file, accounts.value)
+        writeJson(file, accounts.value, backup)
     }
 
     @Synchronized
     fun delete(npub: String) {
         accounts.value = accounts.value.filter { it.npub != npub }
         writeJson(file, accounts.value)
+        // A deleted account's key must not linger in the backup.
+        AppDirs.writeAtomically(backup, file.readBytes())
     }
 
     fun get(npub: String): AccountRecord? = accounts.value.firstOrNull { it.npub == npub }

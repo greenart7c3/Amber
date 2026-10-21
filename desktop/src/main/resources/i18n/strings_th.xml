@@ -825,6 +825,7 @@
     <string name="d_locked">ล็อกอยู่</string>
     <string name="d_passphrase">วลีรหัสผ่าน</string>
     <string name="d_wrong_passphrase">วลีรหัสผ่านไม่ถูกต้อง</string>
+    <string name="d_os_secret_unavailable">Amber ไม่สามารถอ่านข้อมูลลับสำหรับปลดล็อกจาก %1$s ได้ ปลดล็อกพวงกุญแจของคุณหรือตรวจสอบว่ากำลังทำงานอยู่ แล้วลองอีกครั้ง</string>
     <string name="d_unlocking">กำลังปลดล็อก…</string>
     <string name="d_unlock">ปลดล็อก</string>
     <string name="d_connect_nostrconnect">เชื่อมต่อด้วย nostrconnect://</string>

@@ -849,6 +849,7 @@
     <string name="d_locked">Bloccato</string>
     <string name="d_passphrase">Passphrase</string>
     <string name="d_wrong_passphrase">Passphrase errata</string>
+    <string name="d_os_secret_unavailable">Amber non è riuscito a leggere il suo segreto di sblocco da %1$s. Sblocca il portachiavi o assicurati che sia in esecuzione, poi riprova.</string>
     <string name="d_unlocking">Sblocco…</string>
     <string name="d_unlock">Sblocca</string>
     <string name="d_connect_nostrconnect">Connetti con nostrconnect://</string>

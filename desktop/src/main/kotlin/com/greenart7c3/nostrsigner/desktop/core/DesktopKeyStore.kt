@@ -1,10 +1,8 @@
 package com.greenart7c3.nostrsigner.desktop.core
 
+import java.io.ByteArrayOutputStream
 import java.io.File
 import java.nio.ByteBuffer
-import java.nio.file.AtomicMoveNotSupportedException
-import java.nio.file.Files
-import java.nio.file.StandardCopyOption
 import java.security.KeyStore
 import java.util.Base64
 import javax.crypto.Cipher
@@ -32,6 +30,9 @@ object DesktopKeyStore {
     private const val TRANSFORMATION = "AES/GCM/NoPadding"
     private const val IV_SIZE = 12 // 96 bits
     private const val TAG_SIZE = 128 // bits
+
+    // ':' is outside the Base64 alphabet, so legacy values can never match.
+    private const val BOUND_PREFIX = "v2:"
     private val mutex = Mutex()
 
     private val keyStoreFile: File get() = File(AppDirs.dataDir, "amber.keystore")
@@ -46,38 +47,61 @@ object DesktopKeyStore {
 
     class LockedException : IllegalStateException("The key store is locked. Unlock it with your passphrase first.")
 
-    suspend fun encrypt(plainText: String): String = mutex.withLock { encryptString(plainText) }
+    suspend fun encrypt(plainText: String, context: String): String = mutex.withLock { encryptString(plainText, context) }
 
-    suspend fun decrypt(encryptedText: String): String = mutex.withLock { decryptString(encryptedText) }
+    suspend fun decrypt(encryptedText: String, context: String): String = mutex.withLock { decryptString(encryptedText, context) }
 
     /**
      * Synchronous AES-256-GCM encryption with the master key, for the storage
      * layer (which reads/writes files on its own threads). Requires the master
      * key to be available — throws [LockedException] when the passphrase lock
      * is engaged and the app has not been unlocked.
+     *
+     * [context] names what the value is (e.g. "npub1…/privkey") and is
+     * authenticated as GCM associated data: a ciphertext only decrypts under
+     * the context it was written for, so someone who can edit the data
+     * directory cannot move one account's key, seed words or database into
+     * another account's slot.
      */
-    fun encryptString(plainText: String): String {
+    fun encryptString(plainText: String, context: String): String {
         val key = getOrCreateSecretKey()
         val cipher = Cipher.getInstance(TRANSFORMATION)
         cipher.init(Cipher.ENCRYPT_MODE, key)
+        cipher.updateAAD(aad(context))
         val iv = cipher.iv
         val cipherText = cipher.doFinal(plainText.toByteArray(Charsets.UTF_8))
         val combined = ByteBuffer.allocate(iv.size + cipherText.size)
         combined.put(iv)
         combined.put(cipherText)
-        return Base64.getEncoder().withoutPadding().encodeToString(combined.array())
+        return BOUND_PREFIX + Base64.getEncoder().withoutPadding().encodeToString(combined.array())
     }
 
-    fun decryptString(encryptedText: String): String {
+    /**
+     * Decrypts a value written by [encryptString] for the same [context].
+     * Unbound ciphertexts from older versions (no prefix, no associated data)
+     * are accepted only until [PassphraseLock] has migrated the install; after
+     * that they are rejected so a stale copy cannot be swapped back in.
+     */
+    fun decryptString(encryptedText: String, context: String): String {
         val key = getOrCreateSecretKey()
-        val data = Base64.getDecoder().decode(encryptedText)
+        val bound = isBound(encryptedText)
+        if (!bound && PassphraseLock.requiresBoundCiphertexts()) {
+            throw SecurityException("Refusing an unbound ciphertext for $context")
+        }
+        val data = Base64.getDecoder().decode(if (bound) encryptedText.substring(BOUND_PREFIX.length) else encryptedText)
         val buffer = ByteBuffer.wrap(data)
         val iv = ByteArray(IV_SIZE).also { buffer.get(it) }
         val cipherText = ByteArray(buffer.remaining()).also { buffer.get(it) }
         val cipher = Cipher.getInstance(TRANSFORMATION)
         cipher.init(Cipher.DECRYPT_MODE, key, GCMParameterSpec(TAG_SIZE, iv))
+        if (bound) cipher.updateAAD(aad(context))
         return String(cipher.doFinal(cipherText), Charsets.UTF_8)
     }
+
+    /** Whether [encryptedText] carries the context binding (current format). */
+    fun isBound(encryptedText: String): Boolean = encryptedText.startsWith(BOUND_PREFIX)
+
+    private fun aad(context: String): ByteArray = "amber-desktop:v2:$context".toByteArray(Charsets.UTF_8)
 
     // ----- master key management (used by PassphraseLock) -----
 
@@ -152,21 +176,13 @@ object DesktopKeyStore {
     }
 
     /**
-     * Serializes the keystore to an owner-only temp file, then replaces the
-     * real one atomically so a crash mid-write can never corrupt the only
-     * keystore (which would mean total key loss).
+     * Replaces the keystore atomically (see [AppDirs.writeAtomically]) so a
+     * crash mid-write can never corrupt the only keystore (which would mean
+     * total key loss).
      */
     private fun storeKeystoreAtomically(keyStore: KeyStore, password: CharArray) {
-        val tmp = File(AppDirs.dataDir, "${keyStoreFile.name}.tmp")
-        tmp.delete()
-        AppDirs.privateOutput(tmp).use { keyStore.store(it, password) }
-        try {
-            Files.move(tmp.toPath(), keyStoreFile.toPath(), StandardCopyOption.ATOMIC_MOVE)
-        } catch (_: AtomicMoveNotSupportedException) {
-            // Filesystem without atomic rename support: best-effort replace.
-            Files.move(tmp.toPath(), keyStoreFile.toPath(), StandardCopyOption.REPLACE_EXISTING)
-        }
-        AppDirs.restrictToOwner(keyStoreFile)
+        val bytes = ByteArrayOutputStream().also { keyStore.store(it, password) }.toByteArray()
+        AppDirs.writeAtomically(keyStoreFile, bytes)
     }
 
     @Synchronized

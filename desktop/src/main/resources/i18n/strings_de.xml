@@ -846,6 +846,7 @@
     <string name="d_locked">Gesperrt</string>
     <string name="d_passphrase">Passphrase</string>
     <string name="d_wrong_passphrase">Falsche Passphrase</string>
+    <string name="d_os_secret_unavailable">Amber konnte sein Entsperrgeheimnis nicht aus %1$s lesen. Entsperre deinen Schlüsselbund oder stelle sicher, dass er läuft, und versuche es erneut.</string>
     <string name="d_unlocking">Wird entsperrt…</string>
     <string name="d_unlock">Entsperren</string>
     <string name="d_connect_nostrconnect">Mit nostrconnect:// verbinden</string>

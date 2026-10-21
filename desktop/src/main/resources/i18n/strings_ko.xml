@@ -849,6 +849,7 @@
     <string name="d_locked">잠김</string>
     <string name="d_passphrase">암호</string>
     <string name="d_wrong_passphrase">잘못된 암호</string>
+    <string name="d_os_secret_unavailable">Amber가 %1$s에서 잠금 해제 비밀을 읽을 수 없습니다. 키링의 잠금을 해제하거나 실행 중인지 확인한 후 다시 시도하세요.</string>
     <string name="d_unlocking">잠금 해제 중…</string>
     <string name="d_unlock">잠금 해제</string>
     <string name="d_connect_nostrconnect">nostrconnect://로 연결</string>

@@ -846,6 +846,7 @@
     <string name="d_locked">Verrouillé</string>
     <string name="d_passphrase">Phrase secrète</string>
     <string name="d_wrong_passphrase">Phrase secrète incorrecte</string>
+    <string name="d_os_secret_unavailable">Amber n\'a pas pu lire son secret de déverrouillage depuis %1$s. Déverrouillez votre trousseau ou vérifiez qu\'il est en cours d\'exécution, puis réessayez.</string>
     <string name="d_unlocking">Déverrouillage…</string>
     <string name="d_unlock">Déverrouiller</string>
     <string name="d_connect_nostrconnect">Se connecter avec nostrconnect://</string>

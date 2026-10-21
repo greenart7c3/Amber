@@ -849,6 +849,7 @@
     <string name="d_locked">Terkunci</string>
     <string name="d_passphrase">Frasa sandi</string>
     <string name="d_wrong_passphrase">Frasa sandi salah</string>
+    <string name="d_os_secret_unavailable">Amber tidak dapat membaca rahasia pembukanya dari %1$s. Buka kunci keyring Anda atau pastikan keyring berjalan, lalu coba lagi.</string>
     <string name="d_unlocking">Membuka kunci…</string>
     <string name="d_unlock">Buka kunci</string>
     <string name="d_connect_nostrconnect">Hubungkan dengan nostrconnect://</string>

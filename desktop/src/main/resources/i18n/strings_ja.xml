@@ -825,6 +825,7 @@
     <string name="d_locked">ロック中</string>
     <string name="d_passphrase">パスフレーズ</string>
     <string name="d_wrong_passphrase">パスフレーズが違います</string>
+    <string name="d_os_secret_unavailable">Amber は %1$s からロック解除用のシークレットを読み取れませんでした。キーリングのロックを解除するか、実行中であることを確認してから、もう一度お試しください。</string>
     <string name="d_unlocking">ロック解除中…</string>
     <string name="d_unlock">ロック解除</string>
     <string name="d_connect_nostrconnect">nostrconnect:// で接続</string>

@@ -825,6 +825,7 @@
     <string name="d_locked">Đã khóa</string>
     <string name="d_passphrase">Cụm mật khẩu</string>
     <string name="d_wrong_passphrase">Cụm mật khẩu không đúng</string>
+    <string name="d_os_secret_unavailable">Amber không thể đọc bí mật mở khóa từ %1$s. Hãy mở khóa chuỗi khóa của bạn hoặc đảm bảo nó đang chạy, rồi thử lại.</string>
     <string name="d_unlocking">Đang mở khóa…</string>
     <string name="d_unlock">Mở khóa</string>
     <string name="d_connect_nostrconnect">Kết nối bằng nostrconnect://</string>

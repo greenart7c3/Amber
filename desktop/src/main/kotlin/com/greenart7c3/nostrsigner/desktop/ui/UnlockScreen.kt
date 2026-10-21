@@ -55,11 +55,14 @@ fun UnlockScreen() {
         working = true
         error = null
         scope.launch {
-            val ok = PassphraseLock.unlock(passphrase.toCharArray())
-            if (!ok) {
-                error = Strings.get("d_wrong_passphrase", language)
-            } else {
-                passphrase = ""
+            try {
+                if (PassphraseLock.unlock(passphrase.toCharArray())) {
+                    passphrase = ""
+                } else {
+                    error = Strings.get("d_wrong_passphrase", language)
+                }
+            } catch (e: PassphraseLock.OsSecretUnavailableException) {
+                error = Strings.format("d_os_secret_unavailable", e.storeDescription, language = language)
             }
             working = false
         }

@@ -849,6 +849,7 @@
     <string name="d_locked">Заблокировано</string>
     <string name="d_passphrase">Пароль-фраза</string>
     <string name="d_wrong_passphrase">Неверная пароль-фраза</string>
+    <string name="d_os_secret_unavailable">Amber не удалось прочитать секрет разблокировки из %1$s. Разблокируйте связку ключей или убедитесь, что она запущена, и повторите попытку.</string>
     <string name="d_unlocking">Разблокировка…</string>
     <string name="d_unlock">Разблокировать</string>
     <string name="d_connect_nostrconnect">Подключить через nostrconnect://</string>

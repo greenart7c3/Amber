@@ -18,4 +18,7 @@ object BuildVariant {
 
     /** Appended to OS-level identifiers (file names, keyring service, ...). */
     val suffix: String = if (isDebug) "-debug" else ""
+
+    /** The packaged version, passed by the launcher as `amber.version`. */
+    val version: String = System.getProperty("amber.version") ?: "dev"
 }

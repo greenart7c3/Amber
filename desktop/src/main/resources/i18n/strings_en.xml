@@ -618,6 +618,8 @@
     <string name="would_you_like_to_send_the_recent_crash_report_to_amber_in_a_dm_no_personal_information_will_be_shared">Would you like to send the recent crash report to Amber in a DM? No personal information will be shared</string>
     <string name="copy_crash_report_to_clipboard">Would you like to copy the crash report to your clipboard and open a Client to send it to Amber?</string>
     <string name="crashreport_found_send">Send it</string>
+    <string name="d_crash_report_sent">Crash report sent. Thank you!</string>
+    <string name="d_crash_report_send_failed">Could not send the crash report. Check your connection and try again.</string>
     <string name="invalid_intent_title">Invalid request</string>
     <string name="invalid_intent_body">Amber received a malformed nostrsigner request and cannot process it. Please contact the client developer to report this issue.</string>
     <string name="invalid_intent_close_app">Close app</string>
@@ -815,7 +817,7 @@
     <string name="d_change_the_passphrase">Change the passphrase</string>
     <string name="d_passphrase_never_stored">The passphrase is never stored anywhere. If you forget it, the only way back in is restoring your keys from a backup (nsec or seed words).</string>
     <string name="d_current_passphrase">Current passphrase</string>
-    <string name="d_new_passphrase">New passphrase (min. 8 characters)</string>
+    <string name="d_new_passphrase">New passphrase (min. 12 characters)</string>
     <string name="d_repeat_passphrase">Repeat the new passphrase</string>
     <string name="d_use_12_chars">Use at least 12 characters</string>
     <string name="d_passphrases_no_match">The passphrases do not match</string>

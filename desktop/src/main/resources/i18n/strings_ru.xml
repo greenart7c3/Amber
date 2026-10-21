@@ -595,6 +595,8 @@
     <string name="would_you_like_to_send_the_recent_crash_report_to_amber_in_a_dm_no_personal_information_will_be_shared">Хотите отправить последний отчёт об аварии в Amber через личное сообщение? Персональные данные не будут переданы</string>
     <string name="copy_crash_report_to_clipboard">Хотите скопировать отчёт об аварии в буфер обмена и открыть клиент для отправки его в Amber?</string>
     <string name="crashreport_found_send">Отправить</string>
+    <string name="d_crash_report_sent">Отчёт о сбое отправлен. Спасибо!</string>
+    <string name="d_crash_report_send_failed">Не удалось отправить отчёт о сбое. Проверьте подключение и повторите попытку.</string>
     <string name="invalid_intent_title">Некорректный запрос</string>
     <string name="invalid_intent_body">Amber получил некорректный запрос nostrsigner и не может его обработать. Пожалуйста, сообщите об этой проблеме разработчику клиента.</string>
     <string name="invalid_intent_close_app">Закрыть приложение</string>
@@ -807,7 +809,7 @@
     <string name="d_change_the_passphrase">Изменить пароль-фразу</string>
     <string name="d_passphrase_never_stored">Пароль-фраза нигде не хранится. Если вы её забудете, единственный способ вернуться — восстановить ключи из резервной копии (nsec или сид-слова).</string>
     <string name="d_current_passphrase">Текущая пароль-фраза</string>
-    <string name="d_new_passphrase">Новая пароль-фраза (мин. 8 символов)</string>
+    <string name="d_new_passphrase">Новая пароль-фраза (мин. 12 символов)</string>
     <string name="d_repeat_passphrase">Повторите новую пароль-фразу</string>
     <string name="d_use_12_chars">Используйте не менее 12 символов</string>
     <string name="d_passphrases_no_match">Пароль-фразы не совпадают</string>

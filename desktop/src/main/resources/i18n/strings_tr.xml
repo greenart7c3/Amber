@@ -591,6 +591,8 @@
     <string name="would_you_like_to_send_the_recent_crash_report_to_amber_in_a_dm_no_personal_information_will_be_shared">Son çökme raporunu bir DM ile Amber\'a göndermek ister misiniz? Hiçbir kişisel bilgi paylaşılmayacaktır</string>
     <string name="copy_crash_report_to_clipboard">Çökme raporunu panonuza kopyalamak ve onu Amber\'a göndermek için bir İstemci açmak ister misiniz?</string>
     <string name="crashreport_found_send">Gönder</string>
+    <string name="d_crash_report_sent">Çökme raporu gönderildi. Teşekkürler!</string>
+    <string name="d_crash_report_send_failed">Çökme raporu gönderilemedi. Bağlantınızı kontrol edip tekrar deneyin.</string>
     <string name="invalid_intent_title">Geçersiz istek</string>
     <string name="invalid_intent_body">Amber, hatalı biçimlendirilmiş bir nostrsigner isteği aldı ve işleyemiyor. Lütfen bu sorunu bildirmek için istemci geliştiricisiyle iletişime geçin.</string>
     <string name="invalid_intent_close_app">Uygulamayı kapat</string>
@@ -803,7 +805,7 @@
     <string name="d_change_the_passphrase">Parolayı değiştir</string>
     <string name="d_passphrase_never_stored">Parola hiçbir yerde saklanmaz. Unutursanız, geri dönmenin tek yolu anahtarlarınızı bir yedekten (nsec veya tohum kelimeleri) geri yüklemektir.</string>
     <string name="d_current_passphrase">Mevcut parola</string>
-    <string name="d_new_passphrase">Yeni parola (en az 8 karakter)</string>
+    <string name="d_new_passphrase">Yeni parola (en az 12 karakter)</string>
     <string name="d_repeat_passphrase">Yeni parolayı tekrar girin</string>
     <string name="d_use_12_chars">En az 12 karakter kullanın</string>
     <string name="d_passphrases_no_match">Parolalar eşleşmiyor</string>

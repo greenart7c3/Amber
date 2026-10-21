@@ -227,6 +227,20 @@ step and is tracked as future work.
 **If you forget the passphrase there is no recovery** — restore your keys
 from their nsec or seed-word backup instead.
 
+## Crash reports
+
+Like the Android app, Amber saves an uncaught exception as a crash report
+(`crash.trace` in the data directory, owner-only) and, once you unlock,
+shows it in a dialog where you can read and edit it before choosing what to
+do: **Send it** delivers it to the developer as a NIP-17 private DM from the
+current account (through `wss://inbox.nostr.wine` and `wss://nostr.land`,
+expiring after 30 days, over Tor when enabled), **Copy** puts it on the
+clipboard, and **Cancel** discards it. Nothing is sent without that click.
+Before saving, Nostr keys (bech32 and hex), long base64 payloads and your
+home directory path are redacted; the report carries the Amber version, OS,
+architecture, Java runtime and desktop session type. Out-of-memory errors
+are not reported.
+
 ## Local socket signer (NIP-5F)
 
 Command-line tools (nak, ngit, scripts, AI agents, …) can sign through Amber

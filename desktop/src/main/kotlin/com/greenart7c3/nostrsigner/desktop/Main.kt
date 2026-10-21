@@ -26,6 +26,7 @@ import com.greenart7c3.nostrsigner.desktop.core.AmberLogger
 import com.greenart7c3.nostrsigner.desktop.core.AppImageIntegration
 import com.greenart7c3.nostrsigner.desktop.core.AutoStart
 import com.greenart7c3.nostrsigner.desktop.core.BuildVariant
+import com.greenart7c3.nostrsigner.desktop.core.CrashReporter
 import com.greenart7c3.nostrsigner.desktop.core.DesktopAccount
 import com.greenart7c3.nostrsigner.desktop.core.LocalSigner
 import com.greenart7c3.nostrsigner.desktop.core.NetworkConnectivity
@@ -165,6 +166,8 @@ private fun setX11WindowClass(name: String) {
 }
 
 fun main(args: Array<String>) {
+    // First, so a crash anywhere below is saved for the report dialog.
+    CrashReporter.install()
     // Packaged handler: the URI arrives as an argument. Dev handler
     // (gradle): it arrives via the drop file (gradle cannot take it as an
     // argument).

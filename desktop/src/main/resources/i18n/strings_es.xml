@@ -595,6 +595,8 @@
     <string name="would_you_like_to_send_the_recent_crash_report_to_amber_in_a_dm_no_personal_information_will_be_shared">¿Deseas enviar el informe de error reciente a Amber en un DM? No se compartirá ninguna información personal</string>
     <string name="copy_crash_report_to_clipboard">¿Deseas copiar el informe de error al portapapeles y abrir un cliente para enviarlo a Amber?</string>
     <string name="crashreport_found_send">Enviarlo</string>
+    <string name="d_crash_report_sent">Informe de fallo enviado. ¡Gracias!</string>
+    <string name="d_crash_report_send_failed">No se pudo enviar el informe de fallo. Comprueba tu conexión e inténtalo de nuevo.</string>
     <string name="invalid_intent_title">Solicitud no válida</string>
     <string name="invalid_intent_body">Amber recibió una solicitud nostrsigner con formato incorrecto y no puede procesarla. Contacta al desarrollador del cliente para informar sobre este problema.</string>
     <string name="invalid_intent_close_app">Cerrar aplicación</string>
@@ -807,7 +809,7 @@
     <string name="d_change_the_passphrase">Cambiar la frase de contraseña</string>
     <string name="d_passphrase_never_stored">La frase de contraseña nunca se almacena en ningún sitio. Si la olvidas, la única forma de recuperar el acceso es restaurar tus claves desde una copia de seguridad (nsec o palabras semilla).</string>
     <string name="d_current_passphrase">Frase de contraseña actual</string>
-    <string name="d_new_passphrase">Nueva frase de contraseña (mín. 8 caracteres)</string>
+    <string name="d_new_passphrase">Nueva frase de contraseña (mín. 12 caracteres)</string>
     <string name="d_repeat_passphrase">Repite la nueva frase de contraseña</string>
     <string name="d_use_12_chars">Usa al menos 12 caracteres</string>
     <string name="d_passphrases_no_match">Las frases de contraseña no coinciden</string>

@@ -592,6 +592,8 @@
     <string name="would_you_like_to_send_the_recent_crash_report_to_amber_in_a_dm_no_personal_information_will_be_shared">Souhaitez-vous envoyer le rapport de plantage récent à Amber par DM ? Aucune information personnelle ne sera partagée</string>
     <string name="copy_crash_report_to_clipboard">Souhaitez-vous copier le rapport de plantage dans votre presse-papiers et ouvrir un client pour l\'envoyer à Amber ?</string>
     <string name="crashreport_found_send">L\'envoyer</string>
+    <string name="d_crash_report_sent">Rapport de plantage envoyé. Merci !</string>
+    <string name="d_crash_report_send_failed">Impossible d\'envoyer le rapport de plantage. Vérifiez votre connexion et réessayez.</string>
     <string name="invalid_intent_title">Requête invalide</string>
     <string name="invalid_intent_body">Amber a reçu une requête nostrsigner malformée et ne peut pas la traiter. Veuillez contacter le développeur du client pour signaler ce problème.</string>
     <string name="invalid_intent_close_app">Fermer l\'application</string>
@@ -804,7 +806,7 @@
     <string name="d_change_the_passphrase">Changer la phrase secrète</string>
     <string name="d_passphrase_never_stored">La phrase secrète n'est jamais stockée où que ce soit. Si vous l'oubliez, le seul moyen de récupérer l'accès est de restaurer vos clés depuis une sauvegarde (nsec ou mots de récupération).</string>
     <string name="d_current_passphrase">Phrase secrète actuelle</string>
-    <string name="d_new_passphrase">Nouvelle phrase secrète (min. 8 caractères)</string>
+    <string name="d_new_passphrase">Nouvelle phrase secrète (min. 12 caractères)</string>
     <string name="d_repeat_passphrase">Répétez la nouvelle phrase secrète</string>
     <string name="d_use_12_chars">Utilisez au moins 12 caractères</string>
     <string name="d_passphrases_no_match">Les phrases secrètes ne correspondent pas</string>

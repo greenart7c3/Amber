@@ -595,6 +595,8 @@
     <string name="would_you_like_to_send_the_recent_crash_report_to_amber_in_a_dm_no_personal_information_will_be_shared">Apakah Anda ingin mengirim laporan kerusakan terbaru ke Amber melalui DM? Tidak ada informasi pribadi yang akan dibagikan</string>
     <string name="copy_crash_report_to_clipboard">Apakah Anda ingin menyalin laporan kerusakan ke clipboard dan membuka Klien untuk mengirimkannya ke Amber?</string>
     <string name="crashreport_found_send">Kirim</string>
+    <string name="d_crash_report_sent">Laporan kerusakan terkirim. Terima kasih!</string>
+    <string name="d_crash_report_send_failed">Tidak dapat mengirim laporan kerusakan. Periksa koneksi Anda dan coba lagi.</string>
     <string name="invalid_intent_title">Permintaan tidak valid</string>
     <string name="invalid_intent_body">Amber menerima permintaan nostrsigner yang tidak valid dan tidak dapat memprosesnya. Harap hubungi pengembang klien untuk melaporkan masalah ini.</string>
     <string name="invalid_intent_close_app">Tutup aplikasi</string>
@@ -807,7 +809,7 @@
     <string name="d_change_the_passphrase">Ubah frasa sandi</string>
     <string name="d_passphrase_never_stored">Frasa sandi tidak pernah disimpan di mana pun. Jika Anda lupa, satu-satunya cara masuk kembali adalah memulihkan kunci dari cadangan (nsec atau kata benih).</string>
     <string name="d_current_passphrase">Frasa sandi saat ini</string>
-    <string name="d_new_passphrase">Frasa sandi baru (min. 8 karakter)</string>
+    <string name="d_new_passphrase">Frasa sandi baru (min. 12 karakter)</string>
     <string name="d_repeat_passphrase">Ulangi frasa sandi baru</string>
     <string name="d_use_12_chars">Gunakan minimal 12 karakter</string>
     <string name="d_passphrases_no_match">Frasa sandi tidak cocok</string>

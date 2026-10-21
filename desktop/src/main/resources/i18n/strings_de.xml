@@ -592,6 +592,8 @@
     <string name="would_you_like_to_send_the_recent_crash_report_to_amber_in_a_dm_no_personal_information_will_be_shared">Möchtest du den letzten Absturzbericht per DM an Amber senden? Es werden keine persönlichen Daten weitergegeben</string>
     <string name="copy_crash_report_to_clipboard">Möchtest du den Absturzbericht in die Zwischenablage kopieren und einen Client öffnen, um ihn an Amber zu senden?</string>
     <string name="crashreport_found_send">Senden</string>
+    <string name="d_crash_report_sent">Absturzbericht gesendet. Vielen Dank!</string>
+    <string name="d_crash_report_send_failed">Der Absturzbericht konnte nicht gesendet werden. Prüfe deine Verbindung und versuche es erneut.</string>
     <string name="invalid_intent_title">Ungültige Anfrage</string>
     <string name="invalid_intent_body">Amber hat eine fehlerhafte nostrsigner-Anfrage erhalten und kann sie nicht verarbeiten. Bitte kontaktiere den Client-Entwickler, um dieses Problem zu melden.</string>
     <string name="invalid_intent_close_app">App schließen</string>
@@ -804,7 +806,7 @@
     <string name="d_change_the_passphrase">Passphrase ändern</string>
     <string name="d_passphrase_never_stored">Die Passphrase wird nirgendwo gespeichert. Wenn du sie vergisst, ist der einzige Weg zurück die Wiederherstellung deiner Schlüssel aus einer Sicherung (nsec oder Seed-Wörter).</string>
     <string name="d_current_passphrase">Aktuelle Passphrase</string>
-    <string name="d_new_passphrase">Neue Passphrase (mind. 8 Zeichen)</string>
+    <string name="d_new_passphrase">Neue Passphrase (mind. 12 Zeichen)</string>
     <string name="d_repeat_passphrase">Neue Passphrase wiederholen</string>
     <string name="d_use_12_chars">Verwende mindestens 12 Zeichen</string>
     <string name="d_passphrases_no_match">Die Passphrasen stimmen nicht überein</string>

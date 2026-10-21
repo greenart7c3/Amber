@@ -571,6 +571,8 @@
     <string name="would_you_like_to_send_the_recent_crash_report_to_amber_in_a_dm_no_personal_information_will_be_shared">最近のクラッシュレポートを DM で Amber に送信しますか？個人情報は共有されません</string>
     <string name="copy_crash_report_to_clipboard">クラッシュレポートをクリップボードにコピーして、クライアントを開いて Amber に送信しますか？</string>
     <string name="crashreport_found_send">送信する</string>
+    <string name="d_crash_report_sent">クラッシュレポートを送信しました。ありがとうございます！</string>
+    <string name="d_crash_report_send_failed">クラッシュレポートを送信できませんでした。接続を確認して、もう一度お試しください。</string>
     <string name="invalid_intent_title">無効なリクエスト</string>
     <string name="invalid_intent_body">Amber が不正な nostrsigner リクエストを受け取り、処理できません。この問題をクライアント開発者に報告してください。</string>
     <string name="invalid_intent_close_app">アプリを閉じる</string>
@@ -783,7 +785,7 @@
     <string name="d_change_the_passphrase">パスフレーズを変更</string>
     <string name="d_passphrase_never_stored">パスフレーズはどこにも保存されません。忘れた場合、復旧する唯一の方法はバックアップ(nsec またはシードワード)から鍵を復元することです。</string>
     <string name="d_current_passphrase">現在のパスフレーズ</string>
-    <string name="d_new_passphrase">新しいパスフレーズ(8 文字以上)</string>
+    <string name="d_new_passphrase">新しいパスフレーズ(12 文字以上)</string>
     <string name="d_repeat_passphrase">新しいパスフレーズを再入力</string>
     <string name="d_use_12_chars">12 文字以上で入力してください</string>
     <string name="d_passphrases_no_match">パスフレーズが一致しません</string>

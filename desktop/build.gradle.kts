@@ -82,6 +82,9 @@ tasks.withType<JavaExec>().matching { it.name in debugRunTasks }.configureEach {
     }
 }
 
+// Release builds pass the tag's version (-PdesktopVersion=X.Y.Z).
+val desktopVersion = providers.gradleProperty("desktopVersion").getOrElse("6.2.3")
+
 compose.desktop {
     application {
         mainClass = "com.greenart7c3.nostrsigner.desktop.MainKt"
@@ -91,6 +94,8 @@ compose.desktop {
         // attach (a same-user heap dump in one command), no heap dump on OOM
         // and no core dump on a JVM crash (hs_err logs are still written).
         jvmArgs += listOf("-XX:+DisableAttachMechanism", "-XX:-HeapDumpOnOutOfMemoryError", "-XX:-CreateCoredumpOnCrash")
+        // The version crash reports carry (BuildVariant.version).
+        jvmArgs += "-Damber.version=$desktopVersion"
 
         nativeDistributions {
             // Built-in Tor: the prebuilt Arti library of each OS/arch
@@ -101,8 +106,7 @@ compose.desktop {
             // dbus-java authenticates to the session bus with UnixSystem
             // (actionable Linux notifications, Secret Service keyring).
             modules("jdk.security.auth")
-            // Release builds pass the tag's version (-PdesktopVersion=X.Y.Z).
-            packageVersion = providers.gradleProperty("desktopVersion").getOrElse("6.2.3")
+            packageVersion = desktopVersion
             description = "Amber - Nostr event signer"
             vendor = "greenart7c3"
             copyright = "© greenart7c3. Distributed under the MIT license."

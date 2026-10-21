@@ -576,6 +576,8 @@
     <string name="would_you_like_to_send_the_recent_crash_report_to_amber_in_a_dm_no_personal_information_will_be_shared">想要将最近的一个崩溃报告通过私信发送给 Amber 吗？报告不会共享个人信息。</string>
     <string name="copy_crash_report_to_clipboard">想要复制崩溃报告到剪贴板并打开客户端发送给 Amber 吗？</string>
     <string name="crashreport_found_send">发送</string>
+    <string name="d_crash_report_sent">崩溃报告已发送。谢谢！</string>
+    <string name="d_crash_report_send_failed">无法发送崩溃报告。请检查网络连接后重试。</string>
     <string name="invalid_intent_title">无效的请求</string>
     <string name="invalid_intent_body">Amber 收到了一个无法处理的错误格式 Nostr 签名器请求。请联系客户端开发者报告此问题。</string>
     <string name="invalid_intent_close_app">关闭应用</string>
@@ -788,7 +790,7 @@
     <string name="d_change_the_passphrase">更改密码短语</string>
     <string name="d_passphrase_never_stored">密码短语绝不会存储在任何地方。如果你忘记了它，唯一的找回方式是从备份（nsec 或助记词）恢复你的密钥。</string>
     <string name="d_current_passphrase">当前密码短语</string>
-    <string name="d_new_passphrase">新密码短语（至少 8 个字符）</string>
+    <string name="d_new_passphrase">新密码短语（至少 12 个字符）</string>
     <string name="d_repeat_passphrase">重复输入新密码短语</string>
     <string name="d_use_12_chars">请至少使用 12 个字符</string>
     <string name="d_passphrases_no_match">两次输入的密码短语不一致</string>

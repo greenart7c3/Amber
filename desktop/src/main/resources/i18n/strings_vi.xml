@@ -571,6 +571,8 @@
     <string name="would_you_like_to_send_the_recent_crash_report_to_amber_in_a_dm_no_personal_information_will_be_shared">Bạn có muốn gửi báo cáo sự cố gần đây đến Amber qua tin nhắn trực tiếp không? Không có thông tin cá nhân nào được chia sẻ</string>
     <string name="copy_crash_report_to_clipboard">Bạn có muốn sao chép báo cáo sự cố vào khay nhớ tạm và mở Ứng dụng khách để gửi đến Amber không?</string>
     <string name="crashreport_found_send">Gửi đi</string>
+    <string name="d_crash_report_sent">Đã gửi báo cáo sự cố. Cảm ơn bạn!</string>
+    <string name="d_crash_report_send_failed">Không thể gửi báo cáo sự cố. Hãy kiểm tra kết nối và thử lại.</string>
     <string name="invalid_intent_title">Yêu cầu không hợp lệ</string>
     <string name="invalid_intent_body">Amber nhận được yêu cầu nostrsigner không đúng định dạng và không thể xử lý. Vui lòng liên hệ nhà phát triển ứng dụng khách để báo cáo sự cố này.</string>
     <string name="invalid_intent_close_app">Đóng ứng dụng</string>
@@ -783,7 +785,7 @@
     <string name="d_change_the_passphrase">Đổi cụm mật khẩu</string>
     <string name="d_passphrase_never_stored">Cụm mật khẩu không bao giờ được lưu ở bất kỳ đâu. Nếu bạn quên nó, cách duy nhất để truy cập lại là khôi phục khóa từ bản sao lưu (nsec hoặc các từ khôi phục).</string>
     <string name="d_current_passphrase">Cụm mật khẩu hiện tại</string>
-    <string name="d_new_passphrase">Cụm mật khẩu mới (tối thiểu 8 ký tự)</string>
+    <string name="d_new_passphrase">Cụm mật khẩu mới (tối thiểu 12 ký tự)</string>
     <string name="d_repeat_passphrase">Nhập lại cụm mật khẩu mới</string>
     <string name="d_use_12_chars">Dùng ít nhất 12 ký tự</string>
     <string name="d_passphrases_no_match">Cụm mật khẩu không khớp</string>

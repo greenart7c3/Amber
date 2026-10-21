@@ -805,7 +805,7 @@
     <string name="d_current_passphrase">Mevcut parola</string>
     <string name="d_new_passphrase">Yeni parola (en az 8 karakter)</string>
     <string name="d_repeat_passphrase">Yeni parolayı tekrar girin</string>
-    <string name="d_use_8_chars">En az 8 karakter kullanın</string>
+    <string name="d_use_12_chars">En az 12 karakter kullanın</string>
     <string name="d_passphrases_no_match">Parolalar eşleşmiyor</string>
     <string name="d_passphrase_changed">Parola değiştirildi</string>
     <string name="d_wrong_current_passphrase">Mevcut parola yanlış</string>

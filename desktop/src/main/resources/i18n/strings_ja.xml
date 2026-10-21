@@ -785,7 +785,7 @@
     <string name="d_current_passphrase">現在のパスフレーズ</string>
     <string name="d_new_passphrase">新しいパスフレーズ(8 文字以上)</string>
     <string name="d_repeat_passphrase">新しいパスフレーズを再入力</string>
-    <string name="d_use_8_chars">8 文字以上で入力してください</string>
+    <string name="d_use_12_chars">12 文字以上で入力してください</string>
     <string name="d_passphrases_no_match">パスフレーズが一致しません</string>
     <string name="d_passphrase_changed">パスフレーズを変更しました</string>
     <string name="d_wrong_current_passphrase">現在のパスフレーズが違います</string>

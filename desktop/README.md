@@ -156,6 +156,13 @@ credential-store/file password are deleted. The passphrase is never written
 anywhere. You can change it under **Settings → Security**, but there is no
 way to remove it and go back to unprotected storage.
 
+The passphrase must be at least 12 characters (existing shorter ones keep
+working until you change them). Argon2id runs with 256 MB of memory, 3
+iterations and 4 lanes — about a second on a current desktop CPU — scaled
+down to 128 MB / 64 MB when the JVM heap is small. The cost is stored with
+the wrapped key, so a key wrapped with cheaper parameters (such as the 64 MB
+used by earlier versions) is rewrapped at the next unlock.
+
 When the OS credential store works, it also holds a second unlock factor: a
 random 256-bit secret (entry `master-key-secret` under the
 `com.greenart7c3.nostrsigner` service) that is mixed into the passphrase-
@@ -200,6 +207,15 @@ With the lock on:
   request can be signed until you unlock again.
 - Logging out of an account (which deletes its key from this device) asks
   for the passphrase first.
+
+Locking also wipes the key material instead of just dropping references:
+the master key, every loaded account's private key bytes, and Quartz's
+NIP-04/NIP-44 shared-secret caches. Account keys are decrypted straight into
+byte arrays, never into an (unwipeable) string. The JVM can still leave
+copies behind (garbage collection moves objects), so this narrows the
+window rather than closing it. The launcher also runs the JVM with
+`-XX:+DisableAttachMechanism` (no `jcmd`/`jmap` heap dumps by other
+processes), no heap dump on out-of-memory and no core dump on a crash.
 
 Residual risk it cannot remove: while unlocked, the keys are in the
 process's memory, so malware that can scrape another process's memory or

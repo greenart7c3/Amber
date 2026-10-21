@@ -114,8 +114,8 @@ fun PassphraseSetupScreen() {
     fun submit() {
         if (working) return
         error = null
-        if (passphrase.length < 8) {
-            error = Strings.get("d_use_8_chars", language)
+        if (passphrase.length < PassphraseLock.MIN_PASSPHRASE_LENGTH) {
+            error = Strings.get("d_use_12_chars", language)
             return
         }
         if (passphrase != confirm) {

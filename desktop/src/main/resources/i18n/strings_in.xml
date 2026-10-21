@@ -809,7 +809,7 @@
     <string name="d_current_passphrase">Frasa sandi saat ini</string>
     <string name="d_new_passphrase">Frasa sandi baru (min. 8 karakter)</string>
     <string name="d_repeat_passphrase">Ulangi frasa sandi baru</string>
-    <string name="d_use_8_chars">Gunakan minimal 8 karakter</string>
+    <string name="d_use_12_chars">Gunakan minimal 12 karakter</string>
     <string name="d_passphrases_no_match">Frasa sandi tidak cocok</string>
     <string name="d_passphrase_changed">Frasa sandi diubah</string>
     <string name="d_wrong_current_passphrase">Frasa sandi saat ini salah</string>

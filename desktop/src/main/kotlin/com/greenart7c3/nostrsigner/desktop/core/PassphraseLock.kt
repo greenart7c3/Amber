@@ -12,7 +12,6 @@ import java.util.Base64
 import javax.crypto.Cipher
 import javax.crypto.SecretKey
 import javax.crypto.spec.GCMParameterSpec
-import javax.crypto.spec.SecretKeySpec
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -68,12 +67,40 @@ object PassphraseLock {
 
     val state = MutableStateFlow(if (isEnabled()) Status.LOCKED else Status.DISABLED)
 
-    /** Argon2id cost parameters, persisted per blob so they can evolve safely. */
+    /** Shortest passphrase accepted when setting or changing it. */
+    const val MIN_PASSPHRASE_LENGTH = 12
+
+    /**
+     * Argon2id cost parameters, persisted per blob so they can evolve safely:
+     * a blob written with weaker parameters than [targetKdfParams] is rewrapped
+     * at the next unlock.
+     */
     data class KdfParams(
-        val memoryKb: Int = 65536, // 64 MB
+        val memoryKb: Int = 262144, // 256 MB, about 1 s on a current desktop CPU
         val iterations: Int = 3,
-        val parallelism: Int = 2,
-    )
+        val parallelism: Int = 4,
+    ) {
+        fun isWeakerThan(other: KdfParams): Boolean = memoryKb < other.memoryKb || iterations < other.iterations
+
+        companion object {
+            /**
+             * The defaults, with the memory cost scaled down when the JVM heap
+             * could not comfortably hold it; never below the original 64 MB.
+             */
+            fun recommended(maxHeapBytes: Long = Runtime.getRuntime().maxMemory()): KdfParams {
+                val heapMb = maxHeapBytes / (1024 * 1024)
+                val memoryKb = when {
+                    heapMb >= 1024 -> 262144
+                    heapMb >= 512 -> 131072
+                    else -> 65536
+                }
+                return KdfParams(memoryKb = memoryKb)
+            }
+        }
+    }
+
+    /** Cost new and rehashed blobs get; tests lower it to keep Argon2 fast. */
+    internal var targetKdfParams: KdfParams = KdfParams.recommended()
 
     /**
      * On-disk wrapped master key.
@@ -132,7 +159,7 @@ object PassphraseLock {
      * is a fresh install) under the passphrase and deletes every unprotected
      * copy. The app stays unlocked afterwards.
      */
-    suspend fun enable(passphrase: CharArray, params: KdfParams = KdfParams()) = mutex.withLock {
+    suspend fun enable(passphrase: CharArray, params: KdfParams = targetKdfParams) = mutex.withLock {
         check(!isEnabled()) { "A passphrase is already set" }
         val key = DesktopKeyStore.masterKeyForWrapping()
         // Load every account database and bind the account keys while the
@@ -168,7 +195,9 @@ object PassphraseLock {
     /** Checks the passphrase without installing the master key. */
     suspend fun verify(passphrase: CharArray): Boolean = mutex.withLock {
         val blob = readBlob() ?: return false
-        unwrap(blob, passphrase) != null
+        val key = unwrap(blob, passphrase) ?: return false
+        key.destroy()
+        true
     }
 
     /**
@@ -187,7 +216,7 @@ object PassphraseLock {
     }
 
     /** Rewraps the master key under a new passphrase; false when [old] is wrong. */
-    suspend fun changePassphrase(old: CharArray, new: CharArray, params: KdfParams = KdfParams()): Boolean = mutex.withLock {
+    suspend fun changePassphrase(old: CharArray, new: CharArray, params: KdfParams = targetKdfParams): Boolean = mutex.withLock {
         val blob = readBlob() ?: return false
         val key = unwrap(blob, old) ?: return false
         // Writing a v2 blob makes the data strict, so finish an interrupted
@@ -254,21 +283,23 @@ object PassphraseLock {
     }
 
     /**
-     * After an unlock: migrates a v1 install to the bound v2 format and adds
-     * the credential-store secret once the store works. Never blocks the
-     * unlock — on failure the old blob stays valid and the next unlock retries.
+     * After an unlock: migrates a v1 install to the bound v2 format, adds the
+     * credential-store secret once the store works, and rehashes a blob whose
+     * Argon2id cost is below [targetKdfParams]. Never blocks the unlock — on
+     * failure the old blob stays valid and the next unlock retries.
      */
     private fun upgrade(blob: WrappedKeyBlob, key: SecretKey, passphrase: CharArray) {
         try {
-            if (blob.version >= CURRENT_VERSION && blob.osSecret) return
+            val weakKdf = blob.params.isWeakerThan(targetKdfParams)
+            if (blob.version >= CURRENT_VERSION && blob.osSecret && !weakKdf) return
             val osSecret = obtainOsSecret()
-            if (blob.version >= CURRENT_VERSION && osSecret == null) return
+            if (blob.version >= CURRENT_VERSION && osSecret == null && !weakKdf) return
             // The data is rewritten before the blob: a crash in between leaves
             // a v1 blob, which still accepts the already-bound data.
             if (blob.version < CURRENT_VERSION) migrateData()
-            writeBlob(key, passphrase, blob.params, osSecret)
+            writeBlob(key, passphrase, if (weakKdf) targetKdfParams else blob.params, osSecret)
             DesktopKeyStore.installMasterKey(key, sourceDescription(osSecret != null))
-            AmberLogger.i("PassphraseLock", "Upgraded the wrapped master key (second factor: ${osSecret != null})")
+            AmberLogger.i("PassphraseLock", "Upgraded the wrapped master key (second factor: ${osSecret != null}, rehashed: $weakKdf)")
         } catch (e: Exception) {
             AmberLogger.e("PassphraseLock", "Failed to upgrade the wrapped master key", e)
         }
@@ -335,12 +366,14 @@ object PassphraseLock {
 
     private fun writeBlob(key: SecretKey, passphrase: CharArray, params: KdfParams, osSecret: ByteArray?) {
         val salt = ByteArray(16).also { SecureRandom().nextBytes(it) }
-        val kek = deriveKek(passphrase, salt, params, osSecret)
+        val kek = wipeableKek(deriveKek(passphrase, salt, params, osSecret))
         val cipher = Cipher.getInstance("AES/GCM/NoPadding")
-        cipher.init(Cipher.ENCRYPT_MODE, SecretKeySpec(kek, "AES"))
+        cipher.init(Cipher.ENCRYPT_MODE, kek)
         cipher.updateAAD(headerAad(CURRENT_VERSION, params, osSecret != null))
-        val cipherText = cipher.doFinal(key.encoded)
-        kek.fill(0)
+        val raw = key.encoded
+        val cipherText = cipher.doFinal(raw)
+        raw.fill(0)
+        kek.destroy()
 
         val encoder = Base64.getEncoder().withoutPadding()
         val blob = WrappedKeyBlob(
@@ -357,7 +390,7 @@ object PassphraseLock {
         cachedBlobVersion = CURRENT_VERSION
     }
 
-    private fun unwrap(blob: WrappedKeyBlob, passphrase: CharArray): SecretKey? {
+    private fun unwrap(blob: WrappedKeyBlob, passphrase: CharArray): WipeableAesKey? {
         // Checked before the (slow) Argon2 run, and reported separately from a
         // wrong passphrase.
         val osSecret = if (blob.osSecret) {
@@ -366,20 +399,27 @@ object PassphraseLock {
             null
         }
         val decoder = Base64.getDecoder()
-        val kek = deriveKek(passphrase, decoder.decode(blob.salt), blob.params, osSecret)
+        val kek = wipeableKek(deriveKek(passphrase, decoder.decode(blob.salt), blob.params, osSecret))
         return try {
             val cipher = Cipher.getInstance("AES/GCM/NoPadding")
-            cipher.init(Cipher.DECRYPT_MODE, SecretKeySpec(kek, "AES"), GCMParameterSpec(128, decoder.decode(blob.iv)))
+            cipher.init(Cipher.DECRYPT_MODE, kek, GCMParameterSpec(128, decoder.decode(blob.iv)))
             if (blob.version >= CURRENT_VERSION) cipher.updateAAD(headerAad(blob.version, blob.params, blob.osSecret))
             val plain = cipher.doFinal(decoder.decode(blob.cipherText))
-            val key = SecretKeySpec(plain, "AES") // copies the input
+            val key = WipeableAesKey(plain) // copies the input
             plain.fill(0)
             key
         } catch (_: Exception) {
             null // wrong passphrase or tampered header (GCM tag mismatch)
         } finally {
-            kek.fill(0)
+            kek.destroy()
         }
+    }
+
+    /** Moves derived key bytes into a [WipeableAesKey] (SecretKeySpec would keep an unwipeable copy). */
+    private fun wipeableKek(derived: ByteArray): WipeableAesKey = try {
+        WipeableAesKey(derived)
+    } finally {
+        derived.fill(0)
     }
 
     // ----- test support -----
@@ -387,11 +427,11 @@ object PassphraseLock {
     /** Writes a pre-v2 blob (no second factor, unauthenticated header), to exercise the migration. */
     internal fun writeLegacyBlobForTest(key: SecretKey, passphrase: CharArray, params: KdfParams) {
         val salt = ByteArray(16).also { SecureRandom().nextBytes(it) }
-        val kek = deriveKey(passphrase, salt, params)
+        val kek = wipeableKek(deriveKey(passphrase, salt, params))
         val cipher = Cipher.getInstance("AES/GCM/NoPadding")
-        cipher.init(Cipher.ENCRYPT_MODE, SecretKeySpec(kek, "AES"))
+        cipher.init(Cipher.ENCRYPT_MODE, kek)
         val cipherText = cipher.doFinal(key.encoded)
-        kek.fill(0)
+        kek.destroy()
         val encoder = Base64.getEncoder().withoutPadding()
         val blob = WrappedKeyBlob(
             version = 1,

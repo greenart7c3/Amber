@@ -790,7 +790,7 @@
     <string name="d_current_passphrase">当前密码短语</string>
     <string name="d_new_passphrase">新密码短语（至少 8 个字符）</string>
     <string name="d_repeat_passphrase">重复输入新密码短语</string>
-    <string name="d_use_8_chars">请至少使用 8 个字符</string>
+    <string name="d_use_12_chars">请至少使用 12 个字符</string>
     <string name="d_passphrases_no_match">两次输入的密码短语不一致</string>
     <string name="d_passphrase_changed">密码短语已更改</string>
     <string name="d_wrong_current_passphrase">当前密码短语错误</string>

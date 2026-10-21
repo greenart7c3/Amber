@@ -18,6 +18,7 @@ import java.nio.ByteBuffer
 import java.util.Base64
 import javax.crypto.Cipher
 import javax.crypto.SecretKey
+import javax.crypto.spec.SecretKeySpec
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -69,6 +70,7 @@ class PassphraseLockTest {
             }
             System.setProperty("user.home", tmp.absolutePath)
             PassphraseLock.osSecretStore = keyring
+            PassphraseLock.targetKdfParams = fastKdf
         }
 
         /** The pre-v2 ciphertext format (no context binding), to fabricate old installs. */
@@ -126,8 +128,13 @@ class PassphraseLockTest {
         val reloaded = AccountStore(account.npub)
         assertEquals(marker, reloaded.apps.value.first().app.name)
 
-        // Locking evicts the key: crypto operations fail.
+        // Locking evicts the key: crypto operations fail, and the key bytes
+        // themselves are wiped, not just dereferenced.
+        val loaded = AmberDesktop.account(account.npub)!!
+        val liveMasterKey = DesktopKeyStore.masterKeyForWrapping()
         PassphraseLock.lock()
+        assertTrue("account key must be zeroed", loaded.signer.keyPair.privKey!!.all { it == 0.toByte() })
+        assertTrue("master key must be destroyed", liveMasterKey.isDestroyed)
         assertEquals(PassphraseLock.Status.LOCKED, PassphraseLock.state.value)
         assertFalse(DesktopKeyStore.isMasterKeyAvailable())
         assertThrows(DesktopKeyStore.LockedException::class.java) {
@@ -204,7 +211,8 @@ class PassphraseLockTest {
 
         // Migration of an install that predates v2: unbound keys and database,
         // and a v1 blob without the second factor.
-        val masterKey = DesktopKeyStore.masterKeyForWrapping()
+        // A copy: the live key is destroyed on lock.
+        val masterKey: SecretKey = SecretKeySpec(DesktopKeyStore.masterKeyForWrapping().encoded, "AES")
         val privHex = AccountManager.loadAccount(account.npub)!!.signer.keyPair.privKey!!.toHexKey()
         PassphraseLock.lock()
         AmberDesktop.evictAccount(account.npub)
@@ -229,6 +237,32 @@ class PassphraseLockTest {
         // Once migrated, an old-format copy can no longer be swapped back in.
         AccountsStore.upsert(AccountsStore.get(account.npub)!!.copy(encryptedPrivKey = encryptUnbound(masterKey, privHex)))
         assertNull(AccountManager.loadAccount(account.npub))
+        AccountsStore.upsert(AccountsStore.get(account.npub)!!.copy(encryptedPrivKey = DesktopKeyStore.encrypt(privHex, "${account.npub}/privkey")))
+        assertEquals(account.npub, AccountManager.loadAccount(account.npub)?.npub)
+
+        // A blob cheaper than the current Argon2id target is rehashed at unlock.
+        try {
+            PassphraseLock.targetKdfParams = PassphraseLock.KdfParams(memoryKb = 2048, iterations = 2, parallelism = 1)
+            PassphraseLock.lock()
+            assertTrue(PassphraseLock.unlock(pass.toCharArray()))
+            assertTrue("rehashed to the target cost", blobJson().contains("\"memoryKb\":2048"))
+            PassphraseLock.lock()
+            assertTrue(PassphraseLock.unlock(pass.toCharArray()))
+        } finally {
+            PassphraseLock.targetKdfParams = fastKdf
+        }
+        assertEquals(secret, DesktopKeyStore.decrypt(cipher1, "test/secret"))
+    }
+
+    @Test
+    fun kdfDefaultsScaleWithTheHeapButNeverBelowTheOldCost() {
+        val gb = 1024L * 1024 * 1024
+        assertEquals(262144, PassphraseLock.KdfParams.recommended(8 * gb).memoryKb)
+        assertEquals(131072, PassphraseLock.KdfParams.recommended(gb * 3 / 4).memoryKb)
+        assertEquals(65536, PassphraseLock.KdfParams.recommended(gb / 4).memoryKb)
+        val old = PassphraseLock.KdfParams(memoryKb = 65536, iterations = 3, parallelism = 2)
+        assertTrue(old.isWeakerThan(PassphraseLock.KdfParams()))
+        assertFalse(PassphraseLock.KdfParams().isWeakerThan(old))
     }
 
     @Test

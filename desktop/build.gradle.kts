@@ -87,6 +87,10 @@ compose.desktop {
         mainClass = "com.greenart7c3.nostrsigner.desktop.MainKt"
         // Lets Main.kt set the X11 WM_CLASS so Linux docks match the desktop entry.
         jvmArgs += "--add-opens=java.desktop/sun.awt.X11=ALL-UNNAMED"
+        // Keep decrypted keys out of files other tools can read: no jcmd/jmap
+        // attach (a same-user heap dump in one command), no heap dump on OOM
+        // and no core dump on a JVM crash (hs_err logs are still written).
+        jvmArgs += listOf("-XX:+DisableAttachMechanism", "-XX:-HeapDumpOnOutOfMemoryError", "-XX:-CreateCoredumpOnCrash")
 
         nativeDistributions {
             // Built-in Tor: the prebuilt Arti library of each OS/arch

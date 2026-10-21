@@ -806,7 +806,7 @@
     <string name="d_current_passphrase">Phrase secrète actuelle</string>
     <string name="d_new_passphrase">Nouvelle phrase secrète (min. 8 caractères)</string>
     <string name="d_repeat_passphrase">Répétez la nouvelle phrase secrète</string>
-    <string name="d_use_8_chars">Utilisez au moins 8 caractères</string>
+    <string name="d_use_12_chars">Utilisez au moins 12 caractères</string>
     <string name="d_passphrases_no_match">Les phrases secrètes ne correspondent pas</string>
     <string name="d_passphrase_changed">Phrase secrète changée</string>
     <string name="d_wrong_current_passphrase">Phrase secrète actuelle incorrecte</string>

@@ -9,6 +9,7 @@ import javax.crypto.Cipher
 import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
 import javax.crypto.spec.GCMParameterSpec
+import javax.crypto.spec.SecretKeySpec
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
@@ -51,6 +52,12 @@ object DesktopKeyStore {
 
     suspend fun decrypt(encryptedText: String, context: String): String = mutex.withLock { decryptString(encryptedText, context) }
 
+    /** [encryptBytes] for secrets the caller wipes afterwards (private keys). */
+    suspend fun encrypt(plain: ByteArray, context: String): String = mutex.withLock { encryptBytes(plain, context) }
+
+    /** [decryptBytes]: the caller owns the result and should wipe it after use. */
+    suspend fun decryptToBytes(encryptedText: String, context: String): ByteArray = mutex.withLock { decryptBytes(encryptedText, context) }
+
     /**
      * Synchronous AES-256-GCM encryption with the master key, for the storage
      * layer (which reads/writes files on its own threads). Requires the master
@@ -64,12 +71,22 @@ object DesktopKeyStore {
      * another account's slot.
      */
     fun encryptString(plainText: String, context: String): String {
+        val plain = plainText.toByteArray(Charsets.UTF_8)
+        return try {
+            encryptBytes(plain, context)
+        } finally {
+            plain.fill(0)
+        }
+    }
+
+    /** Byte-level [encryptString]; [plain] is left untouched for the caller to wipe. */
+    fun encryptBytes(plain: ByteArray, context: String): String {
         val key = getOrCreateSecretKey()
         val cipher = Cipher.getInstance(TRANSFORMATION)
         cipher.init(Cipher.ENCRYPT_MODE, key)
         cipher.updateAAD(aad(context))
         val iv = cipher.iv
-        val cipherText = cipher.doFinal(plainText.toByteArray(Charsets.UTF_8))
+        val cipherText = cipher.doFinal(plain)
         val combined = ByteBuffer.allocate(iv.size + cipherText.size)
         combined.put(iv)
         combined.put(cipherText)
@@ -83,6 +100,16 @@ object DesktopKeyStore {
      * that they are rejected so a stale copy cannot be swapped back in.
      */
     fun decryptString(encryptedText: String, context: String): String {
+        val plain = decryptBytes(encryptedText, context)
+        return try {
+            String(plain, Charsets.UTF_8)
+        } finally {
+            plain.fill(0)
+        }
+    }
+
+    /** Byte-level [decryptString], so a secret never has to pass through an unwipeable String. */
+    fun decryptBytes(encryptedText: String, context: String): ByteArray {
         val key = getOrCreateSecretKey()
         val bound = isBound(encryptedText)
         if (!bound && PassphraseLock.requiresBoundCiphertexts()) {
@@ -95,7 +122,7 @@ object DesktopKeyStore {
         val cipher = Cipher.getInstance(TRANSFORMATION)
         cipher.init(Cipher.DECRYPT_MODE, key, GCMParameterSpec(TAG_SIZE, iv))
         if (bound) cipher.updateAAD(aad(context))
-        return String(cipher.doFinal(cipherText), Charsets.UTF_8)
+        return cipher.doFinal(cipherText)
     }
 
     /** Whether [encryptedText] carries the context binding (current format). */
@@ -111,8 +138,9 @@ object DesktopKeyStore {
         sourceDescription = source
     }
 
-    /** Evicts the in-memory master key (lock). */
+    /** Evicts the in-memory master key (lock), wiping its bytes. */
     internal fun clearMasterKey() {
+        runCatching { (cachedKey as? WipeableAesKey)?.destroy() }
         cachedKey = null
         sourceDescription = null
     }
@@ -171,7 +199,7 @@ object DesktopKeyStore {
     private fun writeKeystore(key: SecretKey, password: CharArray) {
         val keyStore = KeyStore.getInstance("PKCS12")
         keyStore.load(null, password)
-        keyStore.setEntry(KEY_ALIAS, KeyStore.SecretKeyEntry(key), KeyStore.PasswordProtection(password))
+        keyStore.setEntry(KEY_ALIAS, KeyStore.SecretKeyEntry(SecretKeySpec(key.encoded, "AES")), KeyStore.PasswordProtection(password))
         storeKeystoreAtomically(keyStore, password)
     }
 
@@ -217,13 +245,14 @@ object DesktopKeyStore {
             val keyStore = loadKeyStore(password)
             val entry = keyStore.getEntry(KEY_ALIAS, KeyStore.PasswordProtection(password)) as? KeyStore.SecretKeyEntry
             if (entry != null) {
-                cachedKey = entry.secretKey
-                return entry.secretKey
+                val key = WipeableAesKey.copyOf(entry.secretKey)
+                cachedKey = key
+                return key
             }
             // Keystore exists but the entry is missing (should not happen);
             // fall through and add a fresh key to the same store.
             val key = generateKey()
-            keyStore.setEntry(KEY_ALIAS, KeyStore.SecretKeyEntry(key), KeyStore.PasswordProtection(password))
+            keyStore.setEntry(KEY_ALIAS, KeyStore.SecretKeyEntry(SecretKeySpec(key.encoded, "AES")), KeyStore.PasswordProtection(password))
             storeKeystoreAtomically(keyStore, password)
             cachedKey = key
             return key
@@ -238,6 +267,47 @@ object DesktopKeyStore {
     private fun generateKey(): SecretKey {
         val keyGenerator = KeyGenerator.getInstance("AES")
         keyGenerator.init(256)
-        return keyGenerator.generateKey()
+        return WipeableAesKey.copyOf(keyGenerator.generateKey())
+    }
+}
+
+/**
+ * An AES key whose bytes can actually be wiped: the JDK's SecretKeySpec does
+ * not implement destroy() (it throws DestroyFailedException), so a master key
+ * held in one would stay readable in memory after a lock until the GC reuses
+ * the space. [getEncoded] hands out copies, as the SecretKey contract requires.
+ */
+internal class WipeableAesKey(raw: ByteArray) : SecretKey {
+    private val key = raw.copyOf()
+
+    @Volatile
+    private var destroyed = false
+
+    override fun getAlgorithm(): String = "AES"
+
+    override fun getFormat(): String = "RAW"
+
+    override fun getEncoded(): ByteArray {
+        check(!destroyed) { "The key has been destroyed" }
+        return key.copyOf()
+    }
+
+    override fun destroy() {
+        destroyed = true
+        key.fill(0)
+    }
+
+    override fun isDestroyed(): Boolean = destroyed
+
+    companion object {
+        /** Copies [source] (and wipes the intermediate encoding). */
+        fun copyOf(source: SecretKey): WipeableAesKey {
+            val raw = source.encoded
+            return try {
+                WipeableAesKey(raw)
+            } finally {
+                raw.fill(0)
+            }
+        }
     }
 }

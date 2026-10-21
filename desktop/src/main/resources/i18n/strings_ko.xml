@@ -809,7 +809,7 @@
     <string name="d_current_passphrase">현재 암호</string>
     <string name="d_new_passphrase">새 암호 (최소 8자)</string>
     <string name="d_repeat_passphrase">새 암호 다시 입력</string>
-    <string name="d_use_8_chars">최소 8자 이상 사용하세요</string>
+    <string name="d_use_12_chars">최소 12자 이상 사용하세요</string>
     <string name="d_passphrases_no_match">암호가 일치하지 않습니다</string>
     <string name="d_passphrase_changed">암호가 변경됨</string>
     <string name="d_wrong_current_passphrase">현재 암호가 올바르지 않습니다</string>

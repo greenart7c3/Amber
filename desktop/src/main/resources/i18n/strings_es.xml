@@ -809,7 +809,7 @@
     <string name="d_current_passphrase">Frase de contraseña actual</string>
     <string name="d_new_passphrase">Nueva frase de contraseña (mín. 8 caracteres)</string>
     <string name="d_repeat_passphrase">Repite la nueva frase de contraseña</string>
-    <string name="d_use_8_chars">Usa al menos 8 caracteres</string>
+    <string name="d_use_12_chars">Usa al menos 12 caracteres</string>
     <string name="d_passphrases_no_match">Las frases de contraseña no coinciden</string>
     <string name="d_passphrase_changed">Frase de contraseña cambiada</string>
     <string name="d_wrong_current_passphrase">Frase de contraseña actual incorrecta</string>

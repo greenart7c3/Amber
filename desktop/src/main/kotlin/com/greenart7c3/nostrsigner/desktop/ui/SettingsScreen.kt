@@ -574,8 +574,8 @@ private fun ChangePassphraseDialog(onDismiss: () -> Unit) {
                 text = if (working) Strings.get("d_working", language) else Strings.get("save", language),
                 enabled = !working,
                 onClick = {
-                    if (new.length < 8) {
-                        Toaster.toast(Strings.get("d_use_8_chars", language))
+                    if (new.length < PassphraseLock.MIN_PASSPHRASE_LENGTH) {
+                        Toaster.toast(Strings.get("d_use_12_chars", language))
                         return@AmberTextButton
                     }
                     if (new != confirm) {

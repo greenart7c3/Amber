@@ -785,7 +785,7 @@
     <string name="d_current_passphrase">วลีรหัสผ่านปัจจุบัน</string>
     <string name="d_new_passphrase">วลีรหัสผ่านใหม่ (อย่างน้อย 8 ตัวอักษร)</string>
     <string name="d_repeat_passphrase">ยืนยันวลีรหัสผ่านใหม่</string>
-    <string name="d_use_8_chars">ใช้อย่างน้อย 8 ตัวอักษร</string>
+    <string name="d_use_12_chars">ใช้อย่างน้อย 12 ตัวอักษร</string>
     <string name="d_passphrases_no_match">วลีรหัสผ่านไม่ตรงกัน</string>
     <string name="d_passphrase_changed">เปลี่ยนวลีรหัสผ่านแล้ว</string>
     <string name="d_wrong_current_passphrase">วลีรหัสผ่านปัจจุบันไม่ถูกต้อง</string>

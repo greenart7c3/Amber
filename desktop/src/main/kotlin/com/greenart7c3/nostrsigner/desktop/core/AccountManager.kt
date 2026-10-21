@@ -1,7 +1,6 @@
 package com.greenart7c3.nostrsigner.desktop.core
 
 import com.vitorpamplona.quartz.nip01Core.core.Event
-import com.vitorpamplona.quartz.nip01Core.core.hexToByteArray
 import com.vitorpamplona.quartz.nip01Core.core.toHexKey
 import com.vitorpamplona.quartz.nip01Core.crypto.KeyPair
 import com.vitorpamplona.quartz.nip01Core.signers.NostrSignerInternal
@@ -44,6 +43,11 @@ class DesktopAccount(
     fun getNsec(): String = signer.keyPair.privKey!!.toNsec()
 
     fun nip49Encrypt(password: String): String = Nip49().encrypt(signer.keyPair.privKey!!.toHexKey(), password)
+
+    /** Zeroes the private key bytes; the account cannot sign afterwards. */
+    internal fun wipe() {
+        signer.keyPair.privKey?.fill(0)
+    }
 }
 
 object AccountManager {
@@ -73,6 +77,11 @@ object AccountManager {
         }
     }
 
+    /**
+     * Stores [keyPair]'s key and returns the cached account for it. Consumes
+     * the key pair: its private key bytes are wiped once they are encrypted,
+     * so the only live copy is the cached account's (wiped on lock).
+     */
     suspend fun addAccount(
         keyPair: KeyPair,
         name: String = "",
@@ -85,27 +94,29 @@ object AccountManager {
             AccountRecord(
                 npub = npub,
                 name = name,
-                encryptedPrivKey = DesktopKeyStore.encrypt(keyPair.privKey!!.toHexKey(), privKeyContext(npub)),
+                encryptedPrivKey = encryptPrivKey(keyPair.privKey!!, npub),
                 encryptedSeedWords = if (seedWords.isBlank()) "" else DesktopKeyStore.encrypt(seedWords, seedContext(npub)),
                 signPolicy = signPolicy,
                 didBackup = didBackup,
             ),
         )
+        keyPair.privKey?.fill(0)
         SettingsStore.update { it.copy(currentAccount = npub) }
-        return loadAccount(npub)!!
+        return AmberDesktop.account(npub)!!
     }
 
     suspend fun loadAccount(npub: String): DesktopAccount? {
         val record = AccountsStore.get(npub) ?: return null
-        val privKeyHex = try {
-            DesktopKeyStore.decrypt(record.encryptedPrivKey, privKeyContext(npub))
+        val privKey = try {
+            decryptPrivKey(record.encryptedPrivKey, npub)
         } catch (e: Exception) {
             AmberLogger.e("AccountManager", "Failed to decrypt key for $npub", e)
             return null
         }
-        val keyPair = KeyPair(privKey = privKeyHex.hexToByteArray())
+        val keyPair = KeyPair(privKey = privKey)
         // Never sign as one identity under another account's name and permissions.
         if (keyPair.pubKey.toNpub() != npub) {
+            privKey.fill(0)
             AmberLogger.e("AccountManager", "The stored key for $npub belongs to a different account; refusing to load it")
             return null
         }
@@ -137,9 +148,13 @@ object AccountManager {
                 val npub = current.npub
                 val privKey = current.encryptedPrivKey.takeIf { it.isNotBlank() && !DesktopKeyStore.isBound(it) }?.let { legacy ->
                     runCatching {
-                        val hex = DesktopKeyStore.decryptString(legacy, privKeyContext(npub))
-                        check(KeyPair(privKey = hex.hexToByteArray()).pubKey.toNpub() == npub) { "key does not match $npub" }
-                        DesktopKeyStore.encryptString(hex, privKeyContext(npub))
+                        val raw = hexToBytes(DesktopKeyStore.decryptBytes(legacy, privKeyContext(npub)))
+                        try {
+                            check(KeyPair(privKey = raw).pubKey.toNpub() == npub) { "key does not match $npub" }
+                            encryptPrivKeySync(raw, npub)
+                        } finally {
+                            raw.fill(0)
+                        }
                     }.onFailure { AmberLogger.e("AccountManager", "Could not bind the key of $npub", it) }.getOrNull()
                 }
                 val seed = current.encryptedSeedWords.takeIf { it.isNotBlank() && !DesktopKeyStore.isBound(it) }?.let { legacy ->
@@ -152,6 +167,61 @@ object AccountManager {
                     encryptedSeedWords = seed ?: current.encryptedSeedWords,
                 )
             }
+        }
+    }
+
+    // The private key is stored as hex text (the original format). These
+    // helpers convert between raw bytes and hex bytes without an intermediate
+    // String, so every copy of the key can be wiped.
+
+    private suspend fun encryptPrivKey(raw: ByteArray, npub: String): String {
+        val hex = bytesToHex(raw)
+        return try {
+            DesktopKeyStore.encrypt(hex, privKeyContext(npub))
+        } finally {
+            hex.fill(0)
+        }
+    }
+
+    private fun encryptPrivKeySync(raw: ByteArray, npub: String): String {
+        val hex = bytesToHex(raw)
+        return try {
+            DesktopKeyStore.encryptBytes(hex, privKeyContext(npub))
+        } finally {
+            hex.fill(0)
+        }
+    }
+
+    private suspend fun decryptPrivKey(encrypted: String, npub: String): ByteArray = hexToBytes(DesktopKeyStore.decryptToBytes(encrypted, privKeyContext(npub)))
+
+    private const val HEX_DIGITS = "0123456789abcdef"
+
+    private fun bytesToHex(raw: ByteArray): ByteArray {
+        val out = ByteArray(raw.size * 2)
+        raw.forEachIndexed { i, b ->
+            out[i * 2] = HEX_DIGITS[(b.toInt() shr 4) and 0xF].code.toByte()
+            out[i * 2 + 1] = HEX_DIGITS[b.toInt() and 0xF].code.toByte()
+        }
+        return out
+    }
+
+    /** Decodes ASCII hex and wipes [hex]. */
+    private fun hexToBytes(hex: ByteArray): ByteArray {
+        try {
+            require(hex.size % 2 == 0) { "Odd-length hex key" }
+            val out = ByteArray(hex.size / 2)
+            for (i in out.indices) {
+                val hi = Character.digit(hex[i * 2].toInt(), 16)
+                val lo = Character.digit(hex[i * 2 + 1].toInt(), 16)
+                if (hi < 0 || lo < 0) {
+                    out.fill(0)
+                    throw IllegalArgumentException("Invalid hex key")
+                }
+                out[i] = ((hi shl 4) or lo).toByte()
+            }
+            return out
+        } finally {
+            hex.fill(0)
         }
     }
 

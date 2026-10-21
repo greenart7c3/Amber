@@ -5,6 +5,8 @@ import com.vitorpamplona.quartz.nip01Core.relay.client.auth.RelayAuthenticator
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
 import com.vitorpamplona.quartz.nip01Core.relay.sockets.WebSocketListener
 import com.vitorpamplona.quartz.nip01Core.relay.sockets.WebsocketBuilder
+import com.vitorpamplona.quartz.nip04Dm.crypto.Nip04
+import com.vitorpamplona.quartz.nip44Encryption.Nip44
 import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
@@ -67,17 +69,33 @@ object AmberDesktop {
     fun loadedAccount(npub: String): DesktopAccount? = accountCache[npub]
 
     fun evictAccount(npub: String) {
-        accountCache.remove(npub)
+        val evicted = accountCache.remove(npub)
         stores.remove(npub)
+        evicted?.let { wipe(listOf(it)) }
     }
 
-    /** Drops every decrypted account key from memory (passphrase lock). */
+    /** Drops every decrypted account key from memory and wipes it (passphrase lock). */
     fun evictAllAccounts() {
         // Persist debounced log/history writes first: once locked, writeSecure
         // refuses to touch the encrypted files, so anything still volatile
         // would sit in memory only until the next unlock.
         stores.values.forEach { it.flushVolatile() }
+        val evicted = accountCache.values.toList()
         accountCache.clear()
+        wipe(evicted)
+    }
+
+    /**
+     * Zeroes evicted private keys. Quartz's NIP-04/NIP-44 shared-secret caches
+     * hold the private key arrays as map keys alongside derived conversation
+     * keys, so they are emptied first (the caches are only a speed-up). A
+     * signing call still in flight on an evicted account fails instead of
+     * signing.
+     */
+    private fun wipe(accounts: List<DesktopAccount>) {
+        Nip44.clearCache()
+        Nip04.clearCache()
+        accounts.forEach { it.wipe() }
     }
 
     /**

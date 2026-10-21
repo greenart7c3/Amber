@@ -809,7 +809,7 @@
     <string name="d_current_passphrase">Текущая пароль-фраза</string>
     <string name="d_new_passphrase">Новая пароль-фраза (мин. 8 символов)</string>
     <string name="d_repeat_passphrase">Повторите новую пароль-фразу</string>
-    <string name="d_use_8_chars">Используйте не менее 8 символов</string>
+    <string name="d_use_12_chars">Используйте не менее 12 символов</string>
     <string name="d_passphrases_no_match">Пароль-фразы не совпадают</string>
     <string name="d_passphrase_changed">Пароль-фраза изменена</string>
     <string name="d_wrong_current_passphrase">Неверная текущая пароль-фраза</string>

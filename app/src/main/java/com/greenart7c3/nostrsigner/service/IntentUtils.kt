@@ -632,7 +632,8 @@ object IntentUtils {
                                 EventEncryptedDataKind(event, EventEncryptedDataKind(sealEvent, null, decryptedSealData), result)
                             } else if (decryptedSealData.startsWith("[")) {
                                 val tagArray = JacksonMapper.fromJsonToTagArray(decryptedSealData)
-                                EventEncryptedDataKind(event, TagArrayEncryptedDataKind(tagArray, decryptedSealData), decryptedSealData)
+                                // The seal is decrypted for the preview only; the caller gets the ciphertext.
+                                EventEncryptedDataKind(event, TagArrayEncryptedDataKind(tagArray, decryptedSealData), result)
                             } else {
                                 EventEncryptedDataKind(event, ClearTextEncryptedDataKind(event.content, decryptedSealData), result)
                             }
@@ -670,7 +671,8 @@ object IntentUtils {
                             } else if (decryptedSealData.startsWith("[")) {
                                 try {
                                     val tagArray = JacksonMapper.fromJsonToTagArray(decryptedSealData)
-                                    EventEncryptedDataKind(event, TagArrayEncryptedDataKind(tagArray, decryptedSealData), decryptedSealData)
+                                    // The seal is decrypted for the preview only; the caller gets what it asked to decrypt.
+                                    EventEncryptedDataKind(event, TagArrayEncryptedDataKind(tagArray, decryptedSealData), result)
                                 } catch (e: Exception) {
                                     AmberLog.e("IntentUtils", "Error parsing TagArray: ${e.message}")
                                     EventEncryptedDataKind(event, ClearTextEncryptedDataKind(event.content, decryptedSealData), result)

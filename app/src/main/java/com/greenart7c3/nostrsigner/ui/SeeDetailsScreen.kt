@@ -181,7 +181,7 @@ fun SeeDetailsScreen(
             }
 
             MultiEventScreenIntents.bunkerRequests.forEach { bunkerRequest ->
-                val bunkerChecked = MultiEventScreenIntents.checkedStates[bunkerRequest.request.id] ?: true
+                val bunkerChecked = MultiEventScreenIntents.checkedStates[bunkerRequest.queueKey] ?: true
                 Card(
                     Modifier
                         .padding(4.dp),
@@ -195,13 +195,13 @@ fun SeeDetailsScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clickable {
-                                MultiEventScreenIntents.checkedStates[bunkerRequest.request.id] = !bunkerChecked
+                                MultiEventScreenIntents.checkedStates[bunkerRequest.queueKey] = !bunkerChecked
                             },
                     ) {
                         Checkbox(
                             checked = bunkerChecked,
                             onCheckedChange = { _ ->
-                                MultiEventScreenIntents.checkedStates[bunkerRequest.request.id] = !bunkerChecked
+                                MultiEventScreenIntents.checkedStates[bunkerRequest.queueKey] = !bunkerChecked
                             },
                             colors = CheckboxDefaults.colors().copy(
                                 uncheckedBorderColor = Color.Gray,

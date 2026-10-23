@@ -53,11 +53,13 @@ class BunkerRequestUtilsTest {
     private fun createAmberBunkerRequest(
         id: String,
         method: String = "get_public_key",
+        localKey: String = "localKey",
+        account: String = "npub1test",
     ): AmberBunkerRequest = AmberBunkerRequest(
         request = mockBunkerRequest(method = method, id = id),
-        localKey = "localKey",
+        localKey = localKey,
         relays = emptyList(),
-        currentAccount = "npub1test",
+        currentAccount = account,
         nostrConnectSecret = "",
         closeApplication = false,
         name = "TestApp",
@@ -319,9 +321,10 @@ class BunkerRequestUtilsTest {
 
     @Test
     fun `remove deletes the request with the given id`() {
-        BunkerRequestUtils.addRequest(createAmberBunkerRequest("id1"))
+        val first = createAmberBunkerRequest("id1")
+        BunkerRequestUtils.addRequest(first)
         BunkerRequestUtils.addRequest(createAmberBunkerRequest("id2"))
-        BunkerRequestUtils.remove("id1")
+        BunkerRequestUtils.remove(first)
         val requests = BunkerRequestUtils.getBunkerRequests()
         assertEquals(1, requests.size)
         assertEquals("id2", requests.first().request.id)
@@ -330,8 +333,30 @@ class BunkerRequestUtilsTest {
     @Test
     fun `remove leaves state unchanged when id is not found`() {
         BunkerRequestUtils.addRequest(createAmberBunkerRequest("id1"))
-        BunkerRequestUtils.remove("nonexistent")
+        BunkerRequestUtils.remove(createAmberBunkerRequest("nonexistent"))
         assertEquals(1, BunkerRequestUtils.getBunkerRequests().size)
+    }
+
+    // Clients choose their own JSON-RPC ids (often sequential), so the id is
+    // only unique per (account, client key).
+    @Test
+    fun `requests from different clients with the same id are all queued`() {
+        BunkerRequestUtils.addRequest(createAmberBunkerRequest("1", localKey = "clientA"))
+        BunkerRequestUtils.addRequest(createAmberBunkerRequest("1", localKey = "clientB"))
+        BunkerRequestUtils.addRequest(createAmberBunkerRequest("1", localKey = "clientA", account = "npub1other"))
+        assertEquals(3, BunkerRequestUtils.getBunkerRequests().size)
+    }
+
+    @Test
+    fun `answering one client's request keeps another client's request with the same id`() {
+        val fromA = createAmberBunkerRequest("1", localKey = "clientA")
+        val fromB = createAmberBunkerRequest("1", localKey = "clientB")
+        BunkerRequestUtils.addRequest(fromA)
+        BunkerRequestUtils.addRequest(fromB)
+
+        BunkerRequestUtils.remove(fromA)
+
+        assertEquals(listOf("clientB"), BunkerRequestUtils.getBunkerRequests().map { it.localKey })
     }
 
     @Test
@@ -342,9 +367,10 @@ class BunkerRequestUtilsTest {
     @Test
     fun `getBunkerRequests reflects current state after mutations`() {
         assertTrue(BunkerRequestUtils.getBunkerRequests().isEmpty())
-        BunkerRequestUtils.addRequest(createAmberBunkerRequest("id1"))
+        val request = createAmberBunkerRequest("id1")
+        BunkerRequestUtils.addRequest(request)
         assertEquals(1, BunkerRequestUtils.getBunkerRequests().size)
-        BunkerRequestUtils.remove("id1")
+        BunkerRequestUtils.remove(request)
         assertTrue(BunkerRequestUtils.getBunkerRequests().isEmpty())
     }
 

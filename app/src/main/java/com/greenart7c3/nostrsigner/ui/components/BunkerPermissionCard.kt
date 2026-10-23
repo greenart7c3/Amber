@@ -67,14 +67,14 @@ fun BunkerPermissionCard(
                     .fillMaxWidth()
                     .clickable {
                         acceptEventsGroup[index].value = !acceptEventsGroup[index].value
-                        item.second.forEach { MultiEventScreenIntents.checkedStates[it.request.id] = acceptEventsGroup[index].value }
+                        item.second.forEach { MultiEventScreenIntents.checkedStates[it.queueKey] = acceptEventsGroup[index].value }
                     },
             ) {
                 Checkbox(
                     checked = acceptEventsGroup[index].value,
                     onCheckedChange = { _ ->
                         acceptEventsGroup[index].value = !acceptEventsGroup[index].value
-                        item.second.forEach { MultiEventScreenIntents.checkedStates[it.request.id] = acceptEventsGroup[index].value }
+                        item.second.forEach { MultiEventScreenIntents.checkedStates[it.queueKey] = acceptEventsGroup[index].value }
                     },
                     colors = CheckboxDefaults.colors().copy(
                         uncheckedBorderColor = Color.Gray,
@@ -135,7 +135,7 @@ fun BunkerPermissionCard(
                 )
             }
             if (acceptEventsGroup[index].value) {
-                val selected = item.second.filter { MultiEventScreenIntents.checkedStates[it.request.id] ?: true }.size
+                val selected = item.second.filter { MultiEventScreenIntents.checkedStates[it.queueKey] ?: true }.size
                 val total = item.second.size
                 Row(
                     Modifier

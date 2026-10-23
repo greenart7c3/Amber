@@ -599,7 +599,6 @@ class EventNotificationConsumer(private val applicationContext: Context) {
             if (isRemembered == null) {
                 val message = generateMessage(type, amberEvent, request, event, permission, applicationWithSecret)
                 notificationManager().sendNotification(
-                    bunkerRequest.id,
                     message,
                     "Bunker",
                     "BunkerID",
@@ -706,7 +705,6 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                 val message = generateMessage(type, amberEvent, request, event, permission, applicationWithSecret)
                 notificationManager()
                     .sendNotification(
-                        bunkerRequest.id,
                         message,
                         "Bunker",
                         "BunkerID",
@@ -747,7 +745,6 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                     val message = generateMessage(type, amberEvent, request, event, permission, applicationWithSecret)
                     notificationManager()
                         .sendNotification(
-                            bunkerRequest.id,
                             message,
                             "Bunker",
                             "BunkerID",

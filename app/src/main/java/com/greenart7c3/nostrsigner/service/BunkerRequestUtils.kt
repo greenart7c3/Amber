@@ -51,9 +51,12 @@ import kotlinx.coroutines.launch
 object BunkerRequestUtils {
     val state = MutableStateFlow<ImmutableList<AmberBunkerRequest>>(persistentListOf())
 
+    // Queued requests are identified by [AmberBunkerRequest.queueKey], never by
+    // the client-chosen JSON-RPC id alone: clients using the same (e.g.
+    // sequential) ids must not drop or replace each other's requests.
     fun addRequest(request: AmberBunkerRequest) {
         state.update { current ->
-            if (current.any { it.request.id == request.request.id }) {
+            if (current.any { it.queueKey == request.queueKey }) {
                 current
             } else {
                 (current + request).toPersistentList()
@@ -65,9 +68,9 @@ object BunkerRequestUtils {
         state.tryEmit(persistentListOf())
     }
 
-    fun remove(id: String) {
+    fun remove(request: AmberBunkerRequest) {
         state.update { current ->
-            current.filter { it.request.id != id }.toPersistentList()
+            current.filter { it.queueKey != request.queueKey }.toPersistentList()
         }
     }
 
@@ -94,7 +97,7 @@ object BunkerRequestUtils {
      * activity are only dismissed when the queue is empty.
      */
     fun finishRequest(bunkerRequest: AmberBunkerRequest, closeApplication: Boolean) {
-        remove(bunkerRequest.request.id)
+        remove(bunkerRequest)
         if (state.value.isNotEmpty()) return
 
         EventNotificationConsumer(Amber.instance).notificationManager().cancelAll()

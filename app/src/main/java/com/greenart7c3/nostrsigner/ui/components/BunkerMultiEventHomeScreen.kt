@@ -130,7 +130,7 @@ fun BunkerMultiEventHomeScreen(
         MultiEventScreenIntents.checkedStates.clear()
         MultiEventScreenIntents.rememberType = RememberType.NEVER
         // checkedStates now holds the per-request decision: true = Approve, false = Deny.
-        bunkerRequests.forEach { MultiEventScreenIntents.checkedStates[it.request.id] = true }
+        bunkerRequests.forEach { MultiEventScreenIntents.checkedStates[it.queueKey] = true }
     }
 
     // Skipped in previews: encrypted storage and the Amber singleton don't
@@ -203,14 +203,14 @@ fun BunkerMultiEventHomeScreen(
                     val expanded = groups.size == 1 || (expandedGroups[groupKey] ?: false)
                     if (groups.size > 1) {
                         item(key = "group-header:${groupKey.itemKey()}") {
-                            val groupApproved = groupItems.all { MultiEventScreenIntents.checkedStates[it.request.id] ?: true }
+                            val groupApproved = groupItems.all { MultiEventScreenIntents.checkedStates[it.queueKey] ?: true }
                             RequestGroupHeader(
                                 label = requestGroupKey.toLabel(context),
                                 count = groupItems.size,
                                 approved = groupApproved,
                                 expanded = expanded,
                                 onApproveChanged = { approve ->
-                                    MultiEventScreenIntents.checkedStates.putAll(groupItems.associate { it.request.id to approve })
+                                    MultiEventScreenIntents.checkedStates.putAll(groupItems.associate { it.queueKey to approve })
                                 },
                                 onExpandToggle = {
                                     expandedGroups[groupKey] = !(expandedGroups[groupKey] ?: false)
@@ -232,13 +232,13 @@ fun BunkerMultiEventHomeScreen(
                         }
                     }
                     if (expanded) {
-                        items(groupItems, key = { it.request.id }) { bunkerRequest ->
+                        items(groupItems, key = { it.queueKey }) { bunkerRequest ->
                             BunkerRequestCard(
                                 context = context,
                                 bunkerRequest = bunkerRequest,
-                                approved = MultiEventScreenIntents.checkedStates[bunkerRequest.request.id] ?: true,
+                                approved = MultiEventScreenIntents.checkedStates[bunkerRequest.queueKey] ?: true,
                                 onApproveChanged = {
-                                    MultiEventScreenIntents.checkedStates[bunkerRequest.request.id] = it
+                                    MultiEventScreenIntents.checkedStates[bunkerRequest.queueKey] = it
                                 },
                             )
                         }
@@ -281,7 +281,7 @@ fun BunkerMultiEventHomeScreen(
                             // while it waited: answer with an error instead of
                             // recreating the connection.
                             if (savedApplication == null && request.request !is BunkerRequestConnect) {
-                                BunkerRequestUtils.remove(request.request.id)
+                                BunkerRequestUtils.remove(request)
                                 AmberUtils.sendBunkerError(
                                     account = thisAccount,
                                     bunkerRequest = request,
@@ -314,7 +314,7 @@ fun BunkerMultiEventHomeScreen(
                                     permissions = mutableListOf(),
                                 )
 
-                            val isApproved = MultiEventScreenIntents.checkedStates[request.request.id] ?: true
+                            val isApproved = MultiEventScreenIntents.checkedStates[request.queueKey] ?: true
                             val requestType = BunkerRequestUtils.getTypeFromBunker(request.request)
                             val groupKey = AppRequestGroupKey(request.appKey, request.requestGroupKey())
                             val rememberType = groupRememberTypes[groupKey] ?: RememberType.NEVER
@@ -371,7 +371,7 @@ fun BunkerMultiEventHomeScreen(
                                     thisAccount.npub,
                                 )
 
-                                BunkerRequestUtils.remove(request.request.id)
+                                BunkerRequestUtils.remove(request)
 
                                 if (isApproved) {
                                     BunkerRequestUtils.sendBunkerResponse(
@@ -469,7 +469,7 @@ fun BunkerMultiEventHomeScreen(
                                 if (isApproved) {
                                     val signature = request.encryptedData?.result
                                     if (signature != null) {
-                                        BunkerRequestUtils.remove(request.request.id)
+                                        BunkerRequestUtils.remove(request)
                                         BunkerRequestUtils.sendBunkerResponse(
                                             context,
                                             thisAccount,
@@ -481,7 +481,7 @@ fun BunkerMultiEventHomeScreen(
                                         )
                                     }
                                 } else {
-                                    BunkerRequestUtils.remove(request.request.id)
+                                    BunkerRequestUtils.remove(request)
                                     AmberUtils.sendBunkerError(
                                         account = thisAccount,
                                         bunkerRequest = request,

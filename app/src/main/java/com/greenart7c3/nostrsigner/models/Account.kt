@@ -11,6 +11,7 @@ import com.greenart7c3.nostrsigner.DataStoreAccess
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.service.DeviceUnlockPolicy
+import com.greenart7c3.nostrsigner.service.PsbtSighashPolicy
 import com.greenart7c3.nostrsigner.service.nip44v3.Nip44v3
 import com.greenart7c3.nostrsigner.ui.setSensitiveClip
 import com.vitorpamplona.quartz.nip01Core.core.Event
@@ -145,6 +146,7 @@ class Account(
 
     suspend fun signPsbt(psbtHex: String): String {
         requirePrivateKeyAccess()
+        PsbtSighashPolicy.requireCommitsToAllOutputs(psbtHex, signer.keyPair.pubKey)
         return signer.signPsbt(psbtHex)
     }
 

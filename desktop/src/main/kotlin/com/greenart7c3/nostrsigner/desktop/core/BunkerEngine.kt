@@ -792,6 +792,7 @@ class BunkerEngine(
 
         SignerType.SIGN_PSBT -> {
             val psbt = request.params.first()
+            PsbtSighashPolicy.requireCommitsToAllOutputs(psbt, acc.signer.keyPair.pubKey)
             ComputedResult(acc.signer.signPsbt(psbt), psbt)
         }
 

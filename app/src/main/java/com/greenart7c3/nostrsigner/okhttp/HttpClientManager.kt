@@ -61,6 +61,16 @@ object HttpClientManager {
 
     private var currentProxy: Proxy? = null
 
+    /**
+     * Fail-closed placeholder for built-in Tor: a SOCKS proxy on loopback port
+     * 0 that can never connect. Re-installed when Tor releases its port so a
+     * stop or failure cannot leave OkHttp dialing a loopback port that another
+     * app may then bind.
+     */
+    private val failClosedProxy: Proxy by lazy {
+        Proxy(Proxy.Type.SOCKS, InetSocketAddress("127.0.0.1", 0))
+    }
+
     private val cache = EncryptionKeyCache()
 
     private fun setDefaultProxy(proxy: Proxy?) {
@@ -74,6 +84,19 @@ object HttpClientManager {
             // call") on whatever thread mutates the proxy — often the main
             // thread. getHttpClient() only runs on network/background threads.
             defaultHttpClient = null
+        }
+    }
+
+    /**
+     * Re-installs the fail-closed placeholder when the currently configured
+     * proxy still points at [port]. A no-op when the proxy was switched to
+     * something else already (Orbot port, direct), so that choice is not
+     * overwritten by a concurrent Tor teardown.
+     */
+    fun releaseProxyPort(port: Int) {
+        val address = currentProxy?.address() as? InetSocketAddress
+        if (address != null && address.port == port) {
+            setDefaultProxy(failClosedProxy)
         }
     }
 

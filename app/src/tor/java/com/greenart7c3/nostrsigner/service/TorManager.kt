@@ -252,9 +252,23 @@ object TorManager {
         return null
     }
 
+    /**
+     * Drops the SOCKS port and, while OkHttp still dials through it, replaces
+     * the proxy with a fail-closed placeholder. Without this, the released
+     * loopback port stays configured until Tor rebinds, and a co-installed app
+     * that binds it first receives Amber's proxied dials.
+     */
+    private fun releaseSocksPort() {
+        val released = _socksPort.value
+        _socksPort.value = 0
+        if (released > 0) {
+            HttpClientManager.releaseProxyPort(released)
+        }
+    }
+
     private fun fail(message: String?) {
         _isRunning.value = false
-        _socksPort.value = 0
+        releaseSocksPort()
         updateStatus(TorStatus.Failed(message))
     }
 
@@ -300,7 +314,7 @@ object TorManager {
             job = null
         }
         _isRunning.value = false
-        _socksPort.value = 0
+        releaseSocksPort()
         updateStatus(TorStatus.Stopped)
         cancelNotification()
         if (!nativeReady) return

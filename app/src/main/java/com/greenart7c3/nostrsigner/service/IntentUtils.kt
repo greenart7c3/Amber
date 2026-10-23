@@ -344,7 +344,8 @@ object IntentUtils {
                         compression = compressionType,
                         returnType = returnType,
                         permissions = listOf(),
-                        currentAccount = Hex.decode(pubKey).toNpub(),
+                        // The peer (pubKey) is not a local account; the request runs with `account`.
+                        currentAccount = account.npub,
                         route = route,
                         event = null,
                         encryptedData = encryptedDataKind,
@@ -537,7 +538,8 @@ object IntentUtils {
                     compression = compressionType,
                     returnType = returnType,
                     permissions = permissions?.map { Permission(it.type.trim(), it.kind, it.checked) },
-                    currentAccount = npub ?: Hex.decode(pubKey).toNpub(),
+                    // The peer (pubKey) is not a local account; the request runs with `account`.
+                    currentAccount = npub ?: account.npub,
                     route = route,
                     event = null,
                     encryptedData = encryptedDataKind,

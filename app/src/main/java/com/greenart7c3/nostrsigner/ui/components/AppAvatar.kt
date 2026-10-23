@@ -9,11 +9,13 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
@@ -22,6 +24,7 @@ import androidx.compose.ui.unit.sp
 import androidx.core.graphics.drawable.toBitmap
 import coil3.compose.AsyncImage
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
+import com.greenart7c3.nostrsigner.service.AppIconStore
 import com.greenart7c3.nostrsigner.ui.theme.AmberPreview
 import com.greenart7c3.nostrsigner.ui.theme.ThemePreviews
 import java.io.File
@@ -45,14 +48,14 @@ fun AppAvatar(
         .size(size)
         .clip(CircleShape)
 
-    // A persisted native-app icon is a local file path; a remote client icon is
-    // an http(s) URL. Local files load on every flavor (no network); remote URLs
-    // are skipped on the offline flavor.
-    val isRemote = iconUrl?.startsWith("http", ignoreCase = true) == true
-    val model: Any? = when {
-        iconUrl.isNullOrBlank() -> null
-        isRemote -> if (BuildFlavorChecker.isOfflineFlavor()) null else iconUrl
-        else -> File(iconUrl)
+    // A native app's launcher icon is a file Amber wrote to its own icon store;
+    // a remote client icon is never stored, only fetched over https. Local files
+    // load on every flavor (no network); remote URLs are skipped on the offline
+    // flavor. Remote clients choose the icon string, so anything that is neither
+    // (another local path, plain http, other schemes) is ignored.
+    val context = LocalContext.current
+    val model: Any? = remember(iconUrl) {
+        avatarModel(iconUrl, BuildFlavorChecker.isOfflineFlavor()) { AppIconStore.isStoredIcon(context, it) }
     }
 
     // Only query PackageManager when there's no stored icon to show — avoids a
@@ -92,6 +95,16 @@ fun AppAvatar(
         }
     }
 }
+
+/** The image model for a stored icon string, or null when it must not be loaded. */
+internal fun avatarModel(iconUrl: String?, offline: Boolean, isStoredIcon: (String) -> Boolean): Any? = when {
+    iconUrl.isNullOrBlank() -> null
+    isRemoteIconUrl(iconUrl) -> if (offline) null else iconUrl
+    isStoredIcon(iconUrl) -> File(iconUrl)
+    else -> null
+}
+
+internal fun isRemoteIconUrl(iconUrl: String): Boolean = iconUrl.startsWith("https://", ignoreCase = true)
 
 @ThemePreviews
 @Composable

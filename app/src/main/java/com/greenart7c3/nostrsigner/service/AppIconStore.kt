@@ -44,4 +44,16 @@ object AppIconStore {
 
         return file.absolutePath
     }
+
+    /**
+     * Whether [path] is an icon this store wrote. An application's stored icon
+     * string can come from remote NIP-46 metadata, so only a file directly
+     * inside the icon directory may ever be loaded as a local file.
+     */
+    fun isStoredIcon(context: Context, path: String): Boolean = isStoredIcon(File(context.filesDir, DIR), path)
+
+    internal fun isStoredIcon(dir: File, path: String): Boolean = runCatching {
+        // Canonical paths resolve `..` and symlinks before the comparison.
+        File(path).isAbsolute && File(path).canonicalFile.parentFile == dir.canonicalFile
+    }.getOrDefault(false)
 }

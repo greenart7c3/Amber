@@ -43,6 +43,7 @@ import com.greenart7c3.nostrsigner.service.PsbtDecoder
 import com.greenart7c3.nostrsigner.service.RelayUrlUtils
 import com.greenart7c3.nostrsigner.service.isPrivateEvent
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
+import com.greenart7c3.nostrsigner.service.relayAuthRememberType
 import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.RememberType
 import com.vitorpamplona.quartz.nip01Core.core.toHexKey
@@ -667,6 +668,11 @@ fun BunkerSingleEventHomeScreen(
                         }
 
                         val relayPermission = if (scope == RelayAuthScope.ALL) "*" else relayUrl
+                        val relayRemember = relayAuthRememberType(
+                            allRelays = scope == RelayAuthScope.ALL,
+                            relayUrl = relayUrl,
+                            rememberType = rememberType,
+                        )
                         BunkerRequestUtils.sendResult(
                             context = context,
                             account = account,
@@ -679,18 +685,23 @@ fun BunkerSingleEventHomeScreen(
                             appName = appName,
                             signPolicy = null,
                             shouldCloseApplication = bunkerRequest.closeApplication,
-                            rememberType = rememberType,
+                            rememberType = relayRemember,
                             relay = relayPermission,
                         )
                     },
                     onReject = { rememberType, scope ->
                         val relayPermission = if (scope == RelayAuthScope.ALL) "*" else relayUrl
+                        val relayRemember = relayAuthRememberType(
+                            allRelays = scope == RelayAuthScope.ALL,
+                            relayUrl = relayUrl,
+                            rememberType = rememberType,
+                        )
                         BunkerRequestUtils.sendRejection(
                             key = key,
                             account = account,
                             bunkerRequest = bunkerRequest,
                             appName = appName,
-                            rememberType = rememberType,
+                            rememberType = relayRemember,
                             signerType = type,
                             kind = event.kind,
                             onLoading = onLoading,

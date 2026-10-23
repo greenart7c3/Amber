@@ -53,6 +53,7 @@ import com.greenart7c3.nostrsigner.service.AmberUtils
 import com.greenart7c3.nostrsigner.service.MultiEventScreenIntents
 import com.greenart7c3.nostrsigner.service.RelayUrlUtils
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
+import com.greenart7c3.nostrsigner.service.relayAuthRememberType
 import com.greenart7c3.nostrsigner.ui.RememberType
 import com.greenart7c3.nostrsigner.ui.theme.AmberPreview
 import com.greenart7c3.nostrsigner.ui.theme.ThemePreviews
@@ -226,13 +227,22 @@ fun IntentMultiEventHomeScreen(
                                         } else {
                                             ""
                                         }
+                                        // A blank relay-auth relay can never match a
+                                        // per-relay lookup and reads as the all-relays
+                                        // wildcard: remember "just this time" instead.
+                                        val relayRemember = relayAuthRememberType(
+                                            allRelays = localEvent.kind == 22242 &&
+                                                (groupRelayAuthScopes[groupKey] ?: RelayAuthScope.SPECIFIC) == RelayAuthScope.ALL,
+                                            relayUrl = signRelay,
+                                            rememberType = rememberType,
+                                        )
                                         AmberUtils.updatePermission(
                                             application,
                                             localKey,
                                             type,
                                             localEvent.kind,
                                             isApproved,
-                                            rememberType,
+                                            relayRemember,
                                             relay = signRelay,
                                             encryptedData = intentData.encryptedData,
                                         )

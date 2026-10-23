@@ -36,6 +36,7 @@ import com.greenart7c3.nostrsigner.service.RelayUrlUtils
 import com.greenart7c3.nostrsigner.service.isCrossAccountSignEvent
 import com.greenart7c3.nostrsigner.service.isPrivateEvent
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
+import com.greenart7c3.nostrsigner.service.relayAuthRememberType
 import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.ToastManager
 import com.vitorpamplona.quartz.nip01Core.core.toHexKey
@@ -374,6 +375,11 @@ fun IntentSingleEventHomeScreen(
                         }
 
                         val relayPermission = if (scope == RelayAuthScope.ALL) "*" else relayUrl
+                        val relayRemember = relayAuthRememberType(
+                            allRelays = scope == RelayAuthScope.ALL,
+                            relayUrl = relayUrl,
+                            rememberType = rememberType,
+                        )
                         IntentUtils.sendResult(
                             context = context,
                             packageName = packageName,
@@ -389,18 +395,23 @@ fun IntentSingleEventHomeScreen(
                             signPolicy = null,
                             appName = applicationName ?: appName,
                             permissions = null,
-                            rememberType = rememberType,
+                            rememberType = relayRemember,
                             relay = relayPermission,
                         )
                     },
                     onReject = { rememberType, scope ->
                         val relayPermission = if (scope == RelayAuthScope.ALL) "*" else relayUrl
+                        val relayRemember = relayAuthRememberType(
+                            allRelays = scope == RelayAuthScope.ALL,
+                            relayUrl = relayUrl,
+                            rememberType = rememberType,
+                        )
                         IntentUtils.sendRejection(
                             key = key,
                             account = account,
                             intentData = intentData,
                             appName = appName,
-                            rememberType = rememberType,
+                            rememberType = relayRemember,
                             onLoading = onLoading,
                             onRemoveIntentData = onRemoveIntentData,
                             kind = event.kind,

@@ -335,3 +335,16 @@ fun isCrossAccountSignEvent(
     if (!isPrivateEvent(kind, tags)) return true
     return savedNpubs.any { it == Hex.decode(unsignedEventKey).toNpub() }
 }
+
+/**
+ * Remember decision for a kind-22242 relay-auth grant. A blank relay (the
+ * request carried no relay tag, or a malformed one) can never match a future
+ * per-relay lookup, and the DAO reads blank relay as the all-relays wildcard —
+ * remembering a SPECIFIC-scope choice over it would silently grant every
+ * relay. Such a choice is downgraded to "just this time".
+ */
+fun relayAuthRememberType(
+    allRelays: Boolean,
+    relayUrl: String,
+    rememberType: RememberType,
+): RememberType = if (!allRelays && relayUrl.isBlank()) RememberType.NEVER else rememberType

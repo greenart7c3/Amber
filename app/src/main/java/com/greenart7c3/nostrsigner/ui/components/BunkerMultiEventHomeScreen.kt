@@ -54,6 +54,7 @@ import com.greenart7c3.nostrsigner.service.EventNotificationConsumer
 import com.greenart7c3.nostrsigner.service.MultiEventScreenIntents
 import com.greenart7c3.nostrsigner.service.RelayUrlUtils
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
+import com.greenart7c3.nostrsigner.service.relayAuthRememberType
 import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.RememberType
 import com.greenart7c3.nostrsigner.ui.theme.AmberPreview
@@ -331,13 +332,22 @@ fun BunkerMultiEventHomeScreen(
                                     } else {
                                         ""
                                     }
+                                    // A blank relay-auth relay can never match a
+                                    // per-relay lookup and reads as the all-relays
+                                    // wildcard: remember "just this time" instead.
+                                    val relayRemember = relayAuthRememberType(
+                                        allRelays = localEvent.kind == 22242 &&
+                                            (groupRelayAuthScopes[groupKey] ?: RelayAuthScope.SPECIFIC) == RelayAuthScope.ALL,
+                                        relayUrl = signRelay,
+                                        rememberType = rememberType,
+                                    )
                                     AmberUtils.acceptOrRejectPermission(
                                         application = application,
                                         key = localKey,
                                         signerType = SignerType.SIGN_EVENT,
                                         kind = localEvent.kind,
                                         value = isApproved,
-                                        rememberType = rememberType,
+                                        rememberType = relayRemember,
                                         account = thisAccount,
                                         relay = signRelay,
                                         encryptedData = request.encryptedData,

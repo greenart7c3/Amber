@@ -8,6 +8,9 @@ import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.runtime.Immutable
 import androidx.core.content.edit
 import androidx.core.os.LocaleListCompat
+import com.greenart7c3.nostrsigner.database.AppDatabase
+import com.greenart7c3.nostrsigner.database.HistoryDatabase
+import com.greenart7c3.nostrsigner.database.LogDatabase
 import com.greenart7c3.nostrsigner.database.LogRetentionManager
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.AmberSettings
@@ -497,6 +500,11 @@ object LocalPreferences {
         // we release file locks and worker-pool threads instead of leaking
         // them for the lifetime of the process.
         Amber.instance.closeDatabasesFor(npub)
+        // Logout deletes all local information for the account, as the logout
+        // dialog says: dropping the databases (with their -wal/-shm/-journal
+        // files) means re-importing the key starts with no connections, grants,
+        // history or logs instead of silently restoring them.
+        deleteAccountDatabases(context, npub)
         val userPrefs = sharedPrefs(context, npub)
         userPrefs.edit(commit = true) { clear() }
         removeAccount(context, npub)
@@ -513,6 +521,14 @@ object LocalPreferences {
             return false
         }
         return false
+    }
+
+    internal fun deleteAccountDatabases(context: Context, npub: String) {
+        listOf(AppDatabase.fileName(npub), LogDatabase.fileName(npub), HistoryDatabase.fileName(npub)).forEach { name ->
+            if (!context.deleteDatabase(name) && context.getDatabasePath(name).exists()) {
+                AmberLog.e(Amber.TAG, "Could not delete database $name at logout")
+            }
+        }
     }
 
     suspend fun updatePrefsForLogin(

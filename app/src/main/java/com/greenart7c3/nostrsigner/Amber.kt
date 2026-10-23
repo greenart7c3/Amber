@@ -133,8 +133,8 @@ class Amber :
     @Volatile var isSettingsLoaded = false
 
     val factory = OkHttpWebSocket.Builder { url ->
+        if (isPrivateIp(url.url)) return@Builder HttpClientManager.getLocalHttpClient()
         val useProxy = when {
-            isPrivateIp(url.url) -> false
             // Settings load asynchronously; until they land, torMode's default (DISABLED)
             // is a guess, not a decision. Route through the proxy client — preset from
             // plain prefs in onCreate — so a BUILTIN/ORBOT user's pre-Tor dials (network
@@ -722,8 +722,8 @@ class Amber :
             .build()
         val coilCallFactory = okhttp3.Call.Factory { request ->
             val url = request.url.toString()
+            if (isPrivateIp(url)) return@Factory HttpClientManager.getLocalHttpClient().newCall(request)
             val useProxy = when {
-                isPrivateIp(url) -> false
                 !isSettingsLoaded -> true
                 else -> settings.torMode != TorMode.DISABLED
             }

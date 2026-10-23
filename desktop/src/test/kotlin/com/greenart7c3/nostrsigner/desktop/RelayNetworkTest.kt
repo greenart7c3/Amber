@@ -108,6 +108,19 @@ class RelayNetworkTest {
         }
     }
 
+    // A local URL skips Tor, so a redirect from it to a public host would be
+    // dialed directly and reveal the user's IP.
+    @Test
+    fun localUrlsAreFetchedWithoutFollowingRedirects() {
+        for (url in listOf("ws://192.168.1.5:4869/", "http://localhost:8080/icon.png", "ws://[::1]:7777/")) {
+            val client = RelayHttpClients.clientFor(url)
+            assertFalse(url, client.followRedirects)
+            assertFalse(url, client.followSslRedirects)
+        }
+        // Public URLs keep following redirects (through Tor when it is on).
+        assertTrue(RelayHttpClients.clientFor("https://relay.example.com/").followRedirects)
+    }
+
     @Test
     fun socksProbeRejectsInvalidPorts() {
         assertFalse(RelayHttpClients.isSocksProxyAlive(0))

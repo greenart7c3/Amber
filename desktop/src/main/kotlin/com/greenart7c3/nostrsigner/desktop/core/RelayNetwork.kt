@@ -92,6 +92,19 @@ object RelayHttpClients {
             .build()
     }
 
+    /**
+     * Direct client for local URLs, which skip Tor. It never follows redirects:
+     * a hop is dialed before anything could re-run the routing rule, so a local
+     * host redirecting to a public one would send that request around Tor and
+     * reveal the user's IP.
+     */
+    private val local: OkHttpClient by lazy {
+        direct.newBuilder()
+            .followRedirects(false)
+            .followSslRedirects(false)
+            .build()
+    }
+
     private val proxied = ConcurrentHashMap<Int, OkHttpClient>()
 
     /**
@@ -114,6 +127,7 @@ object RelayHttpClients {
      * pictures), so everything follows the same Tor routing rule.
      */
     fun clientFor(url: String): OkHttpClient {
+        if (LocalRelays.isLocal(url)) return local
         val settings = SettingsStore.settings.value
         val port = socksPortFor(url, settings.torMode, settings.proxyPort, TorManager.socksPort.value) ?: return direct
         return proxied.computeIfAbsent(port) {

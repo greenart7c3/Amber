@@ -137,6 +137,13 @@ class ZapstoreUpdater(
     }
 
     private suspend fun processReleaseEvent(event: Event) {
+        // The authors filter is only a request to the relay, which may ignore it.
+        // The release is the trust root for the URL, hash and file event ids, so it
+        // must be signed by the developer key, not just validly signed by anyone.
+        if (event.pubKey != Amber.DEVELOPER_HEX_KEY) {
+            AmberLog.w(Amber.TAG, "ZapstoreUpdater: ignoring release event ${event.id} from ${event.pubKey}")
+            return
+        }
         if (!event.verify()) {
             AmberLog.w(Amber.TAG, "ZapstoreUpdater: invalid release event: ${event.toJson()}")
             return

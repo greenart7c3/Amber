@@ -91,6 +91,24 @@ class RelayNetworkTest {
     }
 
     @Test
+    fun hostMatchesTheHostOkHttpDials() {
+        // OkHttp ends the authority at '\', so the dialed host is attacker.example.
+        assertEquals("attacker.example", LocalRelays.hostOf("https://attacker.example\\@10.0.0.1/p.png"))
+        assertEquals("attacker.example", LocalRelays.hostOf("https://attacker.example\\@127.0.0.1/p.png"))
+        assertEquals("fd12:3456::1", LocalRelays.hostOf("fd12:3456::1"))
+        assertNull(LocalRelays.hostOf("not a url"))
+    }
+
+    @Test
+    fun backslashAuthorityUrlsStillGoThroughTor() {
+        for (url in listOf("https://attacker.example\\@10.0.0.1/p.png", "https://attacker.example\\@127.0.0.1/p.png")) {
+            assertFalse(url, LocalRelays.isLocal(url))
+            assertEquals(url, 9150, RelayHttpClients.socksPortFor(url, TorMode.EXTERNAL, 9150, 0))
+            assertEquals(url, 0, RelayHttpClients.socksPortFor(url, TorMode.BUILTIN, 9050, 0))
+        }
+    }
+
+    @Test
     fun socksProbeRejectsInvalidPorts() {
         assertFalse(RelayHttpClients.isSocksProxyAlive(0))
         assertFalse(RelayHttpClients.isSocksProxyAlive(70000))

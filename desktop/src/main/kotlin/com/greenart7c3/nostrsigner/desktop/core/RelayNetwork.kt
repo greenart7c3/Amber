@@ -7,6 +7,7 @@ import java.net.Proxy
 import java.net.Socket
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
 
 /** Mirrors the Android `TorMode`; EXTERNAL is the desktop take on ORBOT (a system tor / Tor Browser SOCKS port). */
@@ -26,17 +27,24 @@ object LocalRelays {
     private val ipv4Literal = Regex("""^\d{1,3}(\.\d{1,3}){3}$""")
     private val localSuffixes = listOf(".localhost", ".local")
 
-    /** Host part of a relay URL or bare `host[:port][/path]` input, lowercased; null if empty. */
+    /**
+     * Host part of a relay URL or bare `host[:port][/path]` input, lowercased; null if
+     * empty or unparseable. Parsed with OkHttp's HttpUrl so the Tor-bypass decision is
+     * made on exactly the host OkHttp will dial: a hand-rolled authority parser
+     * disagreed on inputs like `https://attacker.example\@10.0.0.1/` (OkHttp ends the
+     * authority at the backslash), sending a public host direct while Tor was on.
+     */
     fun hostOf(url: String): String? {
-        val afterScheme = url.trim().substringAfter("://")
-        val authority = afterScheme.substringBefore('/').substringBefore('?').substringBefore('#').substringAfterLast('@')
-        val host = when {
-            authority.startsWith("[") -> authority.substringAfter('[').substringBefore(']')
+        val trimmed = url.trim()
+        val httpForm = when {
+            trimmed.startsWith("wss://", ignoreCase = true) -> "https://" + trimmed.substring(6)
+            trimmed.startsWith("ws://", ignoreCase = true) -> "http://" + trimmed.substring(5)
+            trimmed.contains("://") -> trimmed
             // Bare IPv6 without brackets (no port possible to tell apart).
-            authority.count { it == ':' } > 1 -> authority
-            else -> authority.substringBefore(':')
+            trimmed.count { it == ':' } > 1 && !trimmed.startsWith("[") -> "http://[$trimmed]"
+            else -> "http://$trimmed"
         }
-        return host.lowercase().trimEnd('.').ifBlank { null }
+        return httpForm.toHttpUrlOrNull()?.host?.lowercase()?.trimEnd('.')?.ifBlank { null }
     }
 
     fun isLocal(url: NormalizedRelayUrl): Boolean = isLocal(url.url)

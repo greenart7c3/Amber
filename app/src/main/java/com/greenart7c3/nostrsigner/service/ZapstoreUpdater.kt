@@ -359,21 +359,29 @@ class ZapstoreUpdater(
         }
     }
 
-    private fun isNewerVersion(version: String): Boolean {
-        val current = BuildConfig.VERSION_NAME.substringBefore("-")
-        if (version == current) return false
-        return try {
-            val newParts = version.substringBefore("-").split(".").map { it.toInt() }
-            val curParts = current.split(".").map { it.toInt() }
+    private fun isNewerVersion(version: String): Boolean = isNewerVersion(version, BuildConfig.VERSION_NAME)
+
+    internal companion object {
+        private val VERSION = Regex("""\d{1,9}(\.\d{1,9})*""")
+
+        /**
+         * Whether release [version] is newer than [current], comparing numeric
+         * dot-separated parts after dropping a `-suffix`. A version that does not
+         * parse is never newer: the old fallback compared strings, so a value
+         * like "x" or "v1.0" sorted above any real release and was offered.
+         */
+        internal fun isNewerVersion(version: String, current: String): Boolean {
+            val newParts = parts(version) ?: return false
+            val curParts = parts(current) ?: return false
             for (i in 0 until maxOf(newParts.size, curParts.size)) {
                 val n = newParts.getOrElse(i) { 0 }
                 val c = curParts.getOrElse(i) { 0 }
                 if (n > c) return true
                 if (n < c) return false
             }
-            false
-        } catch (_: Exception) {
-            version > current
+            return false
         }
+
+        private fun parts(version: String): List<Int>? = version.substringBefore("-").takeIf { VERSION.matches(it) }?.split(".")?.map { it.toInt() }
     }
 }

@@ -30,6 +30,7 @@ import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.database.ApplicationDao
 import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.AmberBunkerRequest
@@ -150,6 +151,8 @@ fun BunkerSingleEventHomeScreen(
             var localSignPolicy by remember { mutableIntStateOf(0) }
             var localRememberType by remember { mutableStateOf(RememberType.NEVER) }
             var existingAppKey by remember { mutableStateOf("") }
+            var existingAppName by remember { mutableStateOf("") }
+            var canCreateNewConnection by remember { mutableStateOf(true) }
             var localDeleteAfter by remember { mutableLongStateOf(0L) }
             var selectedAccount by remember { mutableStateOf(account) }
 
@@ -159,7 +162,7 @@ fun BunkerSingleEventHomeScreen(
                         Text(text = stringResource(R.string.replace_connection))
                     },
                     text = {
-                        Text(text = stringResource(R.string.replace_app_message, bunkerRequest.name))
+                        Text(text = stringResource(R.string.replace_app_message, existingAppName))
                     },
                     onDismissRequest = {
                         showExistingAppDialog = false
@@ -189,28 +192,30 @@ fun BunkerSingleEventHomeScreen(
                                 },
                                 text = stringResource(R.string.replace),
                             )
-                            AmberButton(
-                                text = stringResource(R.string.create_a_new_connection),
-                                onClick = {
-                                    val result = bunkerRequest.nostrConnectSecret.ifBlank { "ack" }
+                            if (canCreateNewConnection) {
+                                AmberButton(
+                                    text = stringResource(R.string.create_a_new_connection),
+                                    onClick = {
+                                        val result = bunkerRequest.nostrConnectSecret.ifBlank { "ack" }
 
-                                    BunkerRequestUtils.sendResult(
-                                        context = context,
-                                        account = selectedAccount,
-                                        key = key,
-                                        response = result,
-                                        bunkerRequest = bunkerRequest,
-                                        kind = null,
-                                        onLoading = onLoading,
-                                        permissions = localPermissions?.map { Permission(it.type.trim(), it.kind, it.checked) },
-                                        appName = appName,
-                                        signPolicy = localSignPolicy,
-                                        shouldCloseApplication = localCloseApplication,
-                                        rememberType = localRememberType,
-                                        deleteAfter = localDeleteAfter,
-                                    )
-                                },
-                            )
+                                        BunkerRequestUtils.sendResult(
+                                            context = context,
+                                            account = selectedAccount,
+                                            key = key,
+                                            response = result,
+                                            bunkerRequest = bunkerRequest,
+                                            kind = null,
+                                            onLoading = onLoading,
+                                            permissions = localPermissions?.map { Permission(it.type.trim(), it.kind, it.checked) },
+                                            appName = appName,
+                                            signPolicy = localSignPolicy,
+                                            shouldCloseApplication = localCloseApplication,
+                                            rememberType = localRememberType,
+                                            deleteAfter = localDeleteAfter,
+                                        )
+                                    },
+                                )
+                            }
                             AmberButton(
                                 text = stringResource(R.string.cancel),
                                 onClick = {
@@ -253,46 +258,30 @@ fun BunkerSingleEventHomeScreen(
                     localDeleteAfter = deleteAfter
                     selectedAccount = acc
 
-                    if (bunkerRequest.name.isNotBlank()) {
-                        Amber.instance.applicationIOScope.launch {
-                            val existingApp = Amber.instance.getDatabase(acc.npub).dao().getByName(bunkerRequest.name)
-                            if (existingApp == null) {
-                                BunkerRequestUtils.sendResult(
-                                    context = context,
-                                    account = acc,
-                                    key = key,
-                                    response = result,
-                                    bunkerRequest = bunkerRequest,
-                                    kind = null,
-                                    onLoading = onLoading,
-                                    permissions = permissions?.map { Permission(it.type.trim(), it.kind, it.checked) },
-                                    appName = appName,
-                                    signPolicy = signPolicy,
-                                    shouldCloseApplication = closeApplication,
-                                    rememberType = rememberType,
-                                    deleteAfter = deleteAfter,
-                                )
-                            } else {
-                                existingAppKey = existingApp.application.key
-                                showExistingAppDialog = true
-                            }
+                    Amber.instance.applicationIOScope.launch {
+                        val existing = connectionToReplace(Amber.instance.getDatabase(acc.npub).dao(), bunkerRequest, key)
+                        if (existing == null) {
+                            BunkerRequestUtils.sendResult(
+                                context = context,
+                                account = acc,
+                                key = key,
+                                response = result,
+                                bunkerRequest = bunkerRequest,
+                                kind = null,
+                                onLoading = onLoading,
+                                permissions = permissions?.map { Permission(it.type.trim(), it.kind, it.checked) },
+                                appName = appName,
+                                signPolicy = signPolicy,
+                                shouldCloseApplication = closeApplication,
+                                rememberType = rememberType,
+                                deleteAfter = deleteAfter,
+                            )
+                        } else {
+                            existingAppKey = existing.app.application.key
+                            existingAppName = existing.app.application.name.ifBlank { existing.app.application.key.toShortenHex() }
+                            canCreateNewConnection = existing.canCreateNew
+                            showExistingAppDialog = true
                         }
-                    } else {
-                        BunkerRequestUtils.sendResult(
-                            context = context,
-                            account = acc,
-                            key = key,
-                            response = result,
-                            bunkerRequest = bunkerRequest,
-                            kind = null,
-                            onLoading = onLoading,
-                            permissions = permissions?.map { Permission(it.type.trim(), it.kind, it.checked) },
-                            appName = appName,
-                            signPolicy = signPolicy,
-                            shouldCloseApplication = closeApplication,
-                            rememberType = rememberType,
-                            deleteAfter = deleteAfter,
-                        )
                     }
                 },
                 onReject = {
@@ -950,4 +939,32 @@ fun BunkerSingleEventHomeScreen(
             }
         }
     }
+}
+
+/** An existing connection a connect approval would replace or merge into. */
+internal data class ExistingConnection(
+    val app: ApplicationWithPermissions,
+    // False when the request reuses the saved app's key: the key is the row's
+    // identity, so a second connection can't be created alongside it.
+    val canCreateNew: Boolean,
+)
+
+/**
+ * The saved connection the user must confirm replacing before [bunkerRequest]
+ * is approved, or null when the approval creates or updates nothing the user
+ * hasn't seen. A nostrconnect URI names the client key itself, and sendResult
+ * would otherwise silently reuse an app saved under that key, keeping its
+ * grants while taking the URI's relays, name and icon. A bunker:// reconnect
+ * under the same key is the normal flow and is not prompted.
+ */
+internal suspend fun connectionToReplace(
+    dao: ApplicationDao,
+    bunkerRequest: AmberBunkerRequest,
+    key: String,
+): ExistingConnection? {
+    if (bunkerRequest.isNostrConnectUri) {
+        dao.getByKey(key)?.let { return ExistingConnection(it, canCreateNew = false) }
+    }
+    val sameName = bunkerRequest.name.takeIf { it.isNotBlank() }?.let { dao.getByName(it) } ?: return null
+    return ExistingConnection(sameName, canCreateNew = true)
 }

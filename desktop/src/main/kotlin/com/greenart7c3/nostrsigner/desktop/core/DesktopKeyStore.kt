@@ -95,9 +95,9 @@ object DesktopKeyStore {
 
     /**
      * Decrypts a value written by [encryptString] for the same [context].
-     * Unbound ciphertexts from older versions (no prefix, no associated data)
-     * are accepted only until [PassphraseLock] has migrated the install; after
-     * that they are rejected so a stale copy cannot be swapped back in.
+     * Unbound ciphertexts (a format only pre-release builds ever wrote) are
+     * always rejected: without a released predecessor there is nothing to
+     * migrate, so refusing them cannot strand a real install.
      */
     fun decryptString(encryptedText: String, context: String): String {
         val plain = decryptBytes(encryptedText, context)
@@ -110,18 +110,15 @@ object DesktopKeyStore {
 
     /** Byte-level [decryptString], so a secret never has to pass through an unwipeable String. */
     fun decryptBytes(encryptedText: String, context: String): ByteArray {
+        require(isBound(encryptedText)) { "Refusing an unbound ciphertext for $context" }
         val key = getOrCreateSecretKey()
-        val bound = isBound(encryptedText)
-        if (!bound && PassphraseLock.requiresBoundCiphertexts()) {
-            throw SecurityException("Refusing an unbound ciphertext for $context")
-        }
-        val data = Base64.getDecoder().decode(if (bound) encryptedText.substring(BOUND_PREFIX.length) else encryptedText)
+        val data = Base64.getDecoder().decode(encryptedText.substring(BOUND_PREFIX.length))
         val buffer = ByteBuffer.wrap(data)
         val iv = ByteArray(IV_SIZE).also { buffer.get(it) }
         val cipherText = ByteArray(buffer.remaining()).also { buffer.get(it) }
         val cipher = Cipher.getInstance(TRANSFORMATION)
         cipher.init(Cipher.DECRYPT_MODE, key, GCMParameterSpec(TAG_SIZE, iv))
-        if (bound) cipher.updateAAD(aad(context))
+        cipher.updateAAD(aad(context))
         return cipher.doFinal(cipherText)
     }
 

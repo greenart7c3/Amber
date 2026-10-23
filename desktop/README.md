@@ -191,10 +191,9 @@ With the lock on:
   database file) as GCM associated data, and a loaded key must match its
   account's npub. Someone who can edit the data directory therefore cannot
   move one account's key or database into another account, or plant a
-  plaintext database granting permissions; such files are rejected. The
-  header of `master.key.enc` is authenticated too, so it cannot be
-  downgraded. Older installs are migrated to this format at their next
-  unlock.
+  plaintext database granting permissions; such files are rejected and kept
+  aside. The header of `master.key.enc` is authenticated too, so it cannot
+  be downgraded — a blob in an unsupported format is refused at unlock.
 - Files are replaced atomically and flushed to disk, so a crash or power
   loss never leaves a half-written file. A file Amber cannot read is moved
   aside as `<name>.corrupt-<time>` instead of being overwritten, and the

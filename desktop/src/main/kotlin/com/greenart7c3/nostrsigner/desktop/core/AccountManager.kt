@@ -136,40 +136,6 @@ object AccountManager {
         return runCatching { DesktopKeyStore.decrypt(record.encryptedSeedWords, seedContext(npub)) }.getOrDefault("")
     }
 
-    /**
-     * Re-encrypts every account's key and seed words that predate context
-     * binding (see [DesktopKeyStore.encryptString]). A key that does not
-     * belong to its record's npub is left as is, so the migration never
-     * blesses a swapped key; it is rejected once unbound values are refused.
-     */
-    internal fun bindKeyCiphertexts() {
-        AccountsStore.accounts.value.forEach { record ->
-            AccountsStore.update(record.npub) { current ->
-                val npub = current.npub
-                val privKey = current.encryptedPrivKey.takeIf { it.isNotBlank() && !DesktopKeyStore.isBound(it) }?.let { legacy ->
-                    runCatching {
-                        val raw = hexToBytes(DesktopKeyStore.decryptBytes(legacy, privKeyContext(npub)))
-                        try {
-                            check(KeyPair(privKey = raw).pubKey.toNpub() == npub) { "key does not match $npub" }
-                            encryptPrivKeySync(raw, npub)
-                        } finally {
-                            raw.fill(0)
-                        }
-                    }.onFailure { AmberLogger.e("AccountManager", "Could not bind the key of $npub", it) }.getOrNull()
-                }
-                val seed = current.encryptedSeedWords.takeIf { it.isNotBlank() && !DesktopKeyStore.isBound(it) }?.let { legacy ->
-                    runCatching {
-                        DesktopKeyStore.encryptString(DesktopKeyStore.decryptString(legacy, seedContext(npub)), seedContext(npub))
-                    }.onFailure { AmberLogger.e("AccountManager", "Could not bind the seed words of $npub", it) }.getOrNull()
-                }
-                current.copy(
-                    encryptedPrivKey = privKey ?: current.encryptedPrivKey,
-                    encryptedSeedWords = seed ?: current.encryptedSeedWords,
-                )
-            }
-        }
-    }
-
     // The private key is stored as hex text (the original format). These
     // helpers convert between raw bytes and hex bytes without an intermediate
     // String, so every copy of the key can be wiped.
@@ -178,15 +144,6 @@ object AccountManager {
         val hex = bytesToHex(raw)
         return try {
             DesktopKeyStore.encrypt(hex, privKeyContext(npub))
-        } finally {
-            hex.fill(0)
-        }
-    }
-
-    private fun encryptPrivKeySync(raw: ByteArray, npub: String): String {
-        val hex = bytesToHex(raw)
-        return try {
-            DesktopKeyStore.encryptBytes(hex, privKeyContext(npub))
         } finally {
             hex.fill(0)
         }

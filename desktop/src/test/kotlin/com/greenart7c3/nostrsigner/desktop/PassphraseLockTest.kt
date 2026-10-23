@@ -209,36 +209,24 @@ class PassphraseLockTest {
         AccountsStore.upsert(theirs)
         assertEquals(other.npub, AccountManager.loadAccount(other.npub)?.npub)
 
-        // Migration of an install that predates v2: unbound keys and database,
-        // and a v1 blob without the second factor.
-        // A copy: the live key is destroyed on lock.
+        // An old-format (unbound) key copy is refused outright.
         val masterKey: SecretKey = SecretKeySpec(DesktopKeyStore.masterKeyForWrapping().encoded, "AES")
         val privHex = AccountManager.loadAccount(account.npub)!!.signer.keyPair.privKey!!.toHexKey()
-        PassphraseLock.lock()
-        AmberDesktop.evictAccount(account.npub)
-        PassphraseLock.writeLegacyBlobForTest(masterKey, pass.toCharArray(), fastKdf)
-        keyring.value = null
         AccountsStore.upsert(AccountsStore.get(account.npub)!!.copy(encryptedPrivKey = encryptUnbound(masterKey, privHex)))
+        assertNull(AccountManager.loadAccount(account.npub))
+        AccountsStore.upsert(AccountsStore.get(account.npub)!!.copy(encryptedPrivKey = DesktopKeyStore.encrypt(privHex, "${account.npub}/privkey")))
+        assertEquals(account.npub, AccountManager.loadAccount(account.npub)?.npub)
+
+        // A legacy AMBERENC1 database is refused and quarantined.
         appsFile.writeText(
             "AMBERENC1:" + encryptUnbound(
                 masterKey,
                 """[{"app":{"key":"app-key-1","name":"$marker","pubKey":"${account.hexKey}"},"permissions":[]}]""",
             ),
         )
-
-        assertTrue(PassphraseLock.unlock(pass.toCharArray()))
-        assertTrue("migrated to v2", blobJson().contains("\"version\":2"))
-        assertTrue("second factor added on migration", blobJson().contains("\"osSecret\":true"))
-        assertTrue(DesktopKeyStore.isBound(AccountsStore.get(account.npub)!!.encryptedPrivKey))
-        assertTrue(appsFile.readText().startsWith("AMBERENC2:"))
-        assertEquals(marker, AccountStore(account.npub).apps.value.first().app.name)
-        assertEquals(account.npub, AccountManager.loadAccount(account.npub)?.npub)
-
-        // Once migrated, an old-format copy can no longer be swapped back in.
-        AccountsStore.upsert(AccountsStore.get(account.npub)!!.copy(encryptedPrivKey = encryptUnbound(masterKey, privHex)))
-        assertNull(AccountManager.loadAccount(account.npub))
-        AccountsStore.upsert(AccountsStore.get(account.npub)!!.copy(encryptedPrivKey = DesktopKeyStore.encrypt(privHex, "${account.npub}/privkey")))
-        assertEquals(account.npub, AccountManager.loadAccount(account.npub)?.npub)
+        assertTrue(AccountStore(account.npub).apps.value.isEmpty())
+        assertFalse(appsFile.exists())
+        assertEquals(1, quarantined(appsFile).size)
 
         // A blob cheaper than the current Argon2id target is rehashed at unlock.
         try {
@@ -252,6 +240,45 @@ class PassphraseLockTest {
             PassphraseLock.targetKdfParams = fastKdf
         }
         assertEquals(secret, DesktopKeyStore.decrypt(cipher1, "test/secret"))
+    }
+
+    @Test
+    fun `a rolled back v1 blob is refused instead of blessing planted data`() = runBlocking {
+        // Continues the state from fullLifecycle: v2 blob, bound stores,
+        // passphrase "new passphrase 42".
+        val record = AccountsStore.accounts.value.first()
+        assertTrue(blobJson().contains("\"version\":2"))
+
+        PassphraseLock.lock()
+        // Roll the blob back to the pre-release v1 format and plant a
+        // plaintext application database next to it.
+        val masterKey: SecretKey = SecretKeySpec(DesktopKeyStore.masterKeyForWrapping().encoded, "AES")
+        val goodBlob = File(AppDirs.dataDir, "master.key.enc").readText()
+        AmberDesktop.evictAccount(record.npub)
+        File(AppDirs.dataDir, "master.key.enc").writeText(
+            """{"version":1,"salt":"AAAA","memoryKb":1024,"iterations":1,"parallelism":1,"iv":"AAAA","cipherText":"AAAA","osSecret":false}""",
+        )
+        val appsFile = File(AppDirs.accountDir(record.npub), "applications.json")
+        appsFile.writeText(
+            """[{"app":{"key":"evil","name":"planted-f17","pubKey":"${record.npub}"},"permissions":[]}]""",
+        )
+
+        // The unsupported blob is refused before anything is decrypted, so
+        // the planted file is never read, let alone blessed. The only way
+        // back is restoring a supported blob.
+        assertFalse(PassphraseLock.unlock("new passphrase 42".toCharArray()))
+        assertEquals(PassphraseLock.Status.LOCKED, PassphraseLock.state.value)
+
+        // A store read under the rolled-back blob refuses and quarantines the
+        // planted file too.
+        val reloaded = AccountStore(record.npub)
+        assertTrue(reloaded.apps.value.isEmpty())
+        assertFalse(appsFile.exists())
+        assertTrue(quarantined(appsFile).isNotEmpty())
+
+        // Restore the supported blob: later test classes share this data dir.
+        File(AppDirs.dataDir, "master.key.enc").writeText(goodBlob)
+        assertTrue(PassphraseLock.unlock("new passphrase 42".toCharArray()))
     }
 
     @Test

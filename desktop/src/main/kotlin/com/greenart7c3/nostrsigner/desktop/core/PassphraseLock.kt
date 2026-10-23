@@ -103,14 +103,13 @@ object PassphraseLock {
     internal var targetKdfParams: KdfParams = KdfParams.recommended()
 
     /**
-     * On-disk wrapped master key.
-     * - v1: key-encryption key = Argon2id(passphrase); header not authenticated.
-     * - v2: the header (version, KDF parameters, [osSecret]) is GCM associated
-     *   data, so it cannot be downgraded, and every ciphertext the master key
-     *   protects must be context-bound (see [requiresBoundCiphertexts]).
+     * On-disk wrapped master key (the only format the desktop app writes).
+     * The header (version, KDF parameters, [osSecret]) is GCM associated
+     * data, so it cannot be downgraded, and every ciphertext the master key
+     * protects must be context-bound.
      */
     private data class WrappedKeyBlob(
-        val version: Int = 1,
+        val version: Int = CURRENT_VERSION,
         val salt: String,
         val memoryKb: Int,
         val iterations: Int,
@@ -135,24 +134,9 @@ object PassphraseLock {
     /** Holds the second unlock factor; tests swap in an in-memory store. */
     internal var osSecretStore: PasswordStore = OsCredentialStore(account = OS_SECRET_ACCOUNT)
 
-    @Volatile
-    private var cachedBlobVersion: Int? = null
-
     fun isEnabled(): Boolean = blobFile.exists()
 
     fun isLocked(): Boolean = state.value == Status.LOCKED
-
-    /**
-     * True once the install has been migrated to the v2 format: from then on
-     * unbound ciphertexts and plaintext account databases are rejected, so
-     * an attacker with write access to the data directory cannot plant them.
-     */
-    fun requiresBoundCiphertexts(): Boolean {
-        cachedBlobVersion?.let { return it >= CURRENT_VERSION }
-        val version = readBlob()?.version ?: return false
-        cachedBlobVersion = version
-        return version >= CURRENT_VERSION
-    }
 
     /**
      * Turns the lock on: wraps the current master key (creating one if this
@@ -162,10 +146,9 @@ object PassphraseLock {
     suspend fun enable(passphrase: CharArray, params: KdfParams = targetKdfParams) = mutex.withLock {
         check(!isEnabled()) { "A passphrase is already set" }
         val key = DesktopKeyStore.masterKeyForWrapping()
-        // Load every account database and bind the account keys while the
-        // old formats are still accepted: the v2 blob makes them strict.
+        // Load every account database before the blob exists: from then on
+        // writes are strict, and the stores are re-encrypted from memory.
         AmberDesktop.loadAllStores()
-        AccountManager.bindKeyCiphertexts()
         val osSecret = obtainOsSecret()
         writeBlob(key, passphrase, params, osSecret)
         DesktopKeyStore.removeUnprotectedCopies()
@@ -219,9 +202,6 @@ object PassphraseLock {
     suspend fun changePassphrase(old: CharArray, new: CharArray, params: KdfParams = targetKdfParams): Boolean = mutex.withLock {
         val blob = readBlob() ?: return false
         val key = unwrap(blob, old) ?: return false
-        // Writing a v2 blob makes the data strict, so finish an interrupted
-        // migration first.
-        if (blob.version < CURRENT_VERSION) migrateData()
         val osSecret = obtainOsSecret()
         writeBlob(key, new, params, osSecret)
         DesktopKeyStore.installMasterKey(key, sourceDescription(osSecret != null))
@@ -283,33 +263,23 @@ object PassphraseLock {
     }
 
     /**
-     * After an unlock: migrates a v1 install to the bound v2 format, adds the
-     * credential-store secret once the store works, and rehashes a blob whose
-     * Argon2id cost is below [targetKdfParams]. Never blocks the unlock — on
-     * failure the old blob stays valid and the next unlock retries.
+     * After an unlock: adds the credential-store secret once the store works,
+     * and rehashes a blob whose Argon2id cost is below [targetKdfParams].
+     * Never blocks the unlock — on failure the old blob stays valid and the
+     * next unlock retries.
      */
     private fun upgrade(blob: WrappedKeyBlob, key: SecretKey, passphrase: CharArray) {
         try {
             val weakKdf = blob.params.isWeakerThan(targetKdfParams)
-            if (blob.version >= CURRENT_VERSION && blob.osSecret && !weakKdf) return
+            if (blob.osSecret && !weakKdf) return
             val osSecret = obtainOsSecret()
-            if (blob.version >= CURRENT_VERSION && osSecret == null && !weakKdf) return
-            // The data is rewritten before the blob: a crash in between leaves
-            // a v1 blob, which still accepts the already-bound data.
-            if (blob.version < CURRENT_VERSION) migrateData()
+            if (osSecret == null && !weakKdf) return
             writeBlob(key, passphrase, if (weakKdf) targetKdfParams else blob.params, osSecret)
             DesktopKeyStore.installMasterKey(key, sourceDescription(osSecret != null))
-            AmberLogger.i("PassphraseLock", "Upgraded the wrapped master key (second factor: ${osSecret != null}, rehashed: $weakKdf)")
+            AmberLogger.i("PassphraseLock", "Rehashed the wrapped master key (second factor: ${osSecret != null})")
         } catch (e: Exception) {
-            AmberLogger.e("PassphraseLock", "Failed to upgrade the wrapped master key", e)
+            AmberLogger.e("PassphraseLock", "Failed to rehash the wrapped master key", e)
         }
-    }
-
-    /** Rewrites the account keys and databases in the context-bound format. */
-    private fun migrateData() {
-        AmberDesktop.loadAllStores()
-        AccountManager.bindKeyCiphertexts()
-        AmberDesktop.rewriteAllStores()
     }
 
     /**
@@ -341,7 +311,15 @@ object PassphraseLock {
         null
     } else {
         try {
-            mapper.readValue<WrappedKeyBlob>(blobFile.readText())
+            mapper.readValue<WrappedKeyBlob>(blobFile.readText()).takeIf { blob ->
+                // The desktop app has no released predecessor: only the current
+                // blob format is honored, and anything else is treated as a
+                // tampered file rather than migrated.
+                blob.version == CURRENT_VERSION
+            } ?: run {
+                AmberLogger.e("PassphraseLock", "Unsupported wrapped-key blob version; refusing it")
+                null
+            }
         } catch (e: Exception) {
             AmberLogger.e("PassphraseLock", "Corrupt wrapped-key blob", e)
             null
@@ -387,7 +365,6 @@ object PassphraseLock {
             osSecret = osSecret != null,
         )
         AppDirs.writeAtomically(blobFile, mapper.writeValueAsBytes(blob))
-        cachedBlobVersion = CURRENT_VERSION
     }
 
     private fun unwrap(blob: WrappedKeyBlob, passphrase: CharArray): WipeableAesKey? {
@@ -403,7 +380,7 @@ object PassphraseLock {
         return try {
             val cipher = Cipher.getInstance("AES/GCM/NoPadding")
             cipher.init(Cipher.DECRYPT_MODE, kek, GCMParameterSpec(128, decoder.decode(blob.iv)))
-            if (blob.version >= CURRENT_VERSION) cipher.updateAAD(headerAad(blob.version, blob.params, blob.osSecret))
+            cipher.updateAAD(headerAad(blob.version, blob.params, blob.osSecret))
             val plain = cipher.doFinal(decoder.decode(blob.cipherText))
             val key = WipeableAesKey(plain) // copies the input
             plain.fill(0)
@@ -420,30 +397,6 @@ object PassphraseLock {
         WipeableAesKey(derived)
     } finally {
         derived.fill(0)
-    }
-
-    // ----- test support -----
-
-    /** Writes a pre-v2 blob (no second factor, unauthenticated header), to exercise the migration. */
-    internal fun writeLegacyBlobForTest(key: SecretKey, passphrase: CharArray, params: KdfParams) {
-        val salt = ByteArray(16).also { SecureRandom().nextBytes(it) }
-        val kek = wipeableKek(deriveKey(passphrase, salt, params))
-        val cipher = Cipher.getInstance("AES/GCM/NoPadding")
-        cipher.init(Cipher.ENCRYPT_MODE, kek)
-        val cipherText = cipher.doFinal(key.encoded)
-        kek.destroy()
-        val encoder = Base64.getEncoder().withoutPadding()
-        val blob = WrappedKeyBlob(
-            version = 1,
-            salt = encoder.encodeToString(salt),
-            memoryKb = params.memoryKb,
-            iterations = params.iterations,
-            parallelism = params.parallelism,
-            iv = encoder.encodeToString(cipher.iv),
-            cipherText = encoder.encodeToString(cipherText),
-        )
-        AppDirs.writeAtomically(blobFile, mapper.writeValueAsBytes(blob))
-        cachedBlobVersion = 1
     }
 
     private const val SOURCE_DESCRIPTION = "your passphrase (Argon2id, never stored)"

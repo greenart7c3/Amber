@@ -17,9 +17,6 @@ private val mapper = jacksonObjectMapper().configure(DeserializationFeature.FAIL
 /** Header on a file whose JSON payload is AES-GCM encrypted with the master key, bound to its account and file. */
 private const val ENC_MARKER = "AMBERENC2:"
 
-/** Older encrypted header: the payload is not bound to its account or file. */
-private const val LEGACY_ENC_MARKER = "AMBERENC1:"
-
 private fun atomicWrite(file: File, payload: String) {
     AppDirs.writeAtomically(file, payload.toByteArray(Charsets.UTF_8))
 }
@@ -59,11 +56,10 @@ private fun writeJson(file: File, value: Any, backup: File? = null) {
 
 /**
  * Reads a JSON file that may be encrypted. Encrypted files carry the
- * [ENC_MARKER] header, with the ciphertext bound to [context]; plaintext and
- * [LEGACY_ENC_MARKER] files are only accepted until the install has been
- * migrated ([PassphraseLock.requiresBoundCiphertexts]), so installs that
- * predate the formats upgrade transparently but nobody can plant one later.
- * A file that fails to decrypt or parse is moved aside, never overwritten.
+ * [ENC_MARKER] header, with the ciphertext bound to [context]. While a
+ * passphrase lock is set, nothing else is accepted: a plaintext or malformed
+ * file is moved aside (never overwritten), so a data-directory writer cannot
+ * plant a trusted store. Without the lock, stores are plaintext by design.
  */
 private inline fun <reified T> readSecure(file: File, context: String): T? {
     if (!file.exists()) return null
@@ -75,9 +71,7 @@ private inline fun <reified T> readSecure(file: File, context: String): T? {
                 if (!DesktopKeyStore.isBound(payload)) throw SecurityException("Unbound payload under the bound header")
                 DesktopKeyStore.decryptString(payload, context)
             }
-            // The legacy payload is unbound, which decryptString refuses once migrated.
-            raw.startsWith(LEGACY_ENC_MARKER) -> DesktopKeyStore.decryptString(raw.substring(LEGACY_ENC_MARKER.length), context)
-            PassphraseLock.requiresBoundCiphertexts() -> throw SecurityException("Refusing a plaintext ${file.name}")
+            PassphraseLock.isEnabled() -> throw SecurityException("Refusing an unbound ${file.name} while a passphrase lock is set")
             else -> raw
         }
         mapper.readValue<T>(json)

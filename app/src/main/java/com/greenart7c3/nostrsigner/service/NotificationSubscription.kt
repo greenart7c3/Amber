@@ -183,9 +183,11 @@ class NotificationSubscription(
     }
 
     private fun computeSince(): Long {
-        var since = TimeUtils.now()
+        val now = TimeUtils.now()
         val latest = if (Amber.instance.notificationCache.size() > 0) Amber.instance.notificationCache.snapshot().maxOf { it.value } else 0L
-        if (latest > 0) since = latest
-        return since
+        // The cache holds sender-chosen created_at values recorded before any
+        // authorization; never let one push `since` past the real clock, or
+        // relays would drop every legitimate request until then.
+        return if (latest > 0) minOf(latest, now) else now
     }
 }

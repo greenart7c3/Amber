@@ -383,8 +383,11 @@ class BunkerEngine(
     }
 
     private fun computeSince(): Long {
+        val now = TimeUtils.now()
         val latest = synchronized(seenEvents) { seenEvents.values.maxOrNull() ?: 0L }
-        return if (latest > 0) latest else TimeUtils.now()
+        // seenEvents holds sender-chosen created_at values; never let one push
+        // `since` past the real clock (relays would drop legitimate requests).
+        return if (latest > 0) minOf(latest, now) else now
     }
 
     /** Mirrors `EventNotificationConsumer.consume` + `notify`. */
@@ -394,8 +397,15 @@ class BunkerEngine(
         if (!event.verify()) return
         if (event.content.isEmpty()) return
         // Mirrors EventNotificationConsumer: drop NIP-40-expired requests.
+        // Mirrors EventNotificationConsumer's freshness window, checked before the
+        // event is recorded: stale replays and future-dated events are dropped.
+        val now = TimeUtils.now()
+        if (event.createdAt < now - TimeUtils.FIVE_MINUTES || event.createdAt > now + TimeUtils.FIVE_MINUTES) {
+            AmberLogger.d("BunkerEngine", "Event ${event.id} is outside the freshness window")
+            return
+        }
         val expiration = event.expiration()
-        if (expiration != null && expiration < TimeUtils.now()) {
+        if (expiration != null && expiration < now) {
             AmberLogger.d("BunkerEngine", "Event ${event.id} has expired")
             return
         }

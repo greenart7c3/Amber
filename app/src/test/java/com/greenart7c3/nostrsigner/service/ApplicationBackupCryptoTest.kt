@@ -110,13 +110,15 @@ class ApplicationBackupCryptoTest {
     }
 
     @Test
-    fun `decryptContent reads new and legacy backups and rejects garbage`() = runBlocking {
+    fun `decryptContent reads derived-key backups and rejects legacy and garbage`() = runBlocking {
         val backupSigner = backupSigner(account)
         val newCiphertext = backupSigner.nip44Encrypt(payload, backupSigner.keyPair.pubKey.toHexKey())
+        // Any client with an encrypt grant can get this from Amber's nip44_encrypt
+        // to the user's own pubkey, so it must not be restorable as a backup.
         val legacyCiphertext = account.nip44Encrypt(payload, account.hexKey)
 
         assertEquals(payload, ApplicationBackup.decryptContent(newCiphertext, account))
-        assertEquals(payload, ApplicationBackup.decryptContent(legacyCiphertext, account))
+        assertNull(ApplicationBackup.decryptContent(legacyCiphertext, account))
         assertNull(ApplicationBackup.decryptContent("not-a-backup-payload", account))
     }
 }

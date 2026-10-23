@@ -330,9 +330,11 @@ object ApplicationBackup {
     }
 
     /**
-     * Decrypts backup content with the derived backup key. Falls back to the
-     * legacy identity-key decryption for backups published before the derived
-     * key existed; the next publish overwrites those replaceable events.
+     * Decrypts backup content with the derived backup key. Legacy backups
+     * encrypted from the account key to itself are deliberately not accepted:
+     * any client holding an encrypt grant can produce that ciphertext through
+     * Amber's own nip44_encrypt, so it cannot prove Amber authored the backup.
+     * Upgraded installs overwrite those replaceable events on their next publish.
      */
     internal suspend fun decryptContent(content: String, account: Account): String? = try {
         val backupSigner = backupSigner(account)
@@ -343,14 +345,8 @@ object ApplicationBackup {
         // makes callers skip a valid restore or publish an empty backup over
         // the real one. Rethrow so it surfaces as its own condition.
         if (e is SecurityException || e is IllegalStateException) throw e
-        try {
-            account.nip44Decrypt(content, account.hexKey)
-        } catch (legacy: Exception) {
-            if (legacy is CancellationException) throw legacy
-            if (legacy is SecurityException || legacy is IllegalStateException) throw legacy
-            AmberLog.e(Amber.TAG, "ApplicationBackup: failed to decrypt backup payload", legacy)
-            null
-        }
+        AmberLog.e(Amber.TAG, "ApplicationBackup: failed to decrypt backup payload", e)
+        null
     }
 
     suspend fun decryptPayload(event: Event, account: Account): BackupPayload? {

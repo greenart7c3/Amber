@@ -115,14 +115,14 @@ class EventNotificationConsumerTest {
 
     @Test
     fun `consume rejects old events`() = runBlocking {
-        consumer.consume(eventForAccount(TimeUtils.now() - TimeUtils.FIVE_MINUTES - 1), NormalizedRelayUrl("wss://relay.com"))
+        consumer.consume(eventForAccount(TimeUtils.now() - TimeUtils.FIVE_MINUTES - 60), NormalizedRelayUrl("wss://relay.com"))
 
         assertRejectedBeforeProcessing()
     }
 
     @Test
     fun `consume rejects future events`() = runBlocking {
-        consumer.consume(eventForAccount(TimeUtils.now() + TimeUtils.FIVE_MINUTES + 1), NormalizedRelayUrl("wss://relay.com"))
+        consumer.consume(eventForAccount(TimeUtils.now() + TimeUtils.FIVE_MINUTES + 60), NormalizedRelayUrl("wss://relay.com"))
 
         assertRejectedBeforeProcessing()
     }

@@ -71,6 +71,21 @@ object BunkerRequestUtils {
         }
     }
 
+    /**
+     * Drops every queued request from [key] (a client whose app was deleted,
+     * reset or logged out), so answering a stale card later cannot resurrect
+     * the revoked connection. Cancels the request notifications when the
+     * queue empties.
+     */
+    fun removeAllForClient(key: String) {
+        state.update { current ->
+            current.filter { it.localKey != key }.toPersistentList()
+        }
+        if (state.value.isEmpty()) {
+            EventNotificationConsumer(Amber.instance).notificationManager().cancelAll()
+        }
+    }
+
     fun getBunkerRequests(): List<AmberBunkerRequest> = state.value
 
     /**
@@ -373,6 +388,22 @@ object BunkerRequestUtils {
             val relays = responseRelays(bunkerRequest, savedApplication?.application?.relays, defaultRelays)
             val secret = if (bunkerRequest.request is BunkerRequestConnect) bunkerRequest.request.secret ?: "" else ""
 
+            if (savedApplication == null && bunkerRequest.request !is BunkerRequestConnect) {
+                // A queued request whose app row is gone was revoked while it
+                // waited: answer with an error instead of recreating the
+                // revoked connection with fresh grants.
+                finishRequest(bunkerRequest, bunkerRequest.closeApplication)
+                AmberUtils.sendBunkerError(
+                    account,
+                    bunkerRequest,
+                    relays,
+                    Amber.instance,
+                    closeApplication = true,
+                    onLoading = onLoading,
+                )
+                return@launch
+            }
+
             var application =
                 savedApplication ?: ApplicationWithPermissions(
                     application = ApplicationEntity(
@@ -612,6 +643,21 @@ object BunkerRequestUtils {
             val relays = responseRelays(bunkerRequest, savedApplication?.application?.relays, defaultRelays)
 
             val secret = if (bunkerRequest.request is BunkerRequestConnect) bunkerRequest.request.secret ?: "" else ""
+
+            if (savedApplication == null && bunkerRequest.request !is BunkerRequestConnect) {
+                // A queued request whose app row is gone was revoked while it
+                // waited: reject it without recreating the connection.
+                finishRequest(bunkerRequest, closeApplication = true)
+                AmberUtils.sendBunkerError(
+                    account,
+                    bunkerRequest,
+                    relays,
+                    Amber.instance,
+                    closeApplication = true,
+                    onLoading = onLoading,
+                )
+                return@launch
+            }
 
             val application =
                 savedApplication ?: ApplicationWithPermissions(

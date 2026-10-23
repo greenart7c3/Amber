@@ -51,6 +51,7 @@ import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
 import com.greenart7c3.nostrsigner.database.generateBunkerPrivKey
 import com.greenart7c3.nostrsigner.models.Account
+import com.greenart7c3.nostrsigner.service.BunkerRequestUtils
 import com.greenart7c3.nostrsigner.service.TrustScoreService
 import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.actions.onAddRelay
@@ -359,6 +360,9 @@ fun EditConfigurationScreen(
                                 localKey = newLocalKey,
                             )
                             val dao = Amber.instance.dao(account.npub)
+                            // The reset retires the old connection key: drop its
+                            // queued requests so a stale card cannot resurrect it.
+                            BunkerRequestUtils.removeAllForClient(it.application.key)
                             dao.deletePermissions(it.application.key)
                             dao.delete(it.application)
                             Amber.instance.getHistoryDatabase(account.npub).dao().deleteHistory(it.application.key)
@@ -389,6 +393,9 @@ fun EditConfigurationScreen(
                 onClick = {
                     application?.let {
                         scope.launch(Dispatchers.IO) {
+                            // Drop queued requests first: answering a stale card
+                            // would otherwise resurrect the deleted connection.
+                            BunkerRequestUtils.removeAllForClient(it.application.key)
                             Amber.instance.dao(account.npub).delete(it.application)
                             Amber.instance.getHistoryDatabase(account.npub).dao().deleteHistory(it.application.key)
 

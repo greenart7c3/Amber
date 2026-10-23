@@ -276,6 +276,22 @@ fun BunkerMultiEventHomeScreen(
                             val historyDatabase = Amber.instance.getHistoryDatabase(thisAccount.npub)
                             val savedApplication = dao.getByKey(localKey)
 
+                            // A queued request whose app row is gone was revoked
+                            // while it waited: answer with an error instead of
+                            // recreating the connection.
+                            if (savedApplication == null && request.request !is BunkerRequestConnect) {
+                                BunkerRequestUtils.remove(request.request.id)
+                                AmberUtils.sendBunkerError(
+                                    account = thisAccount,
+                                    bunkerRequest = request,
+                                    relays = BunkerRequestUtils.responseRelays(request, null, Amber.instance.settings.defaultRelays),
+                                    context = context,
+                                    closeApplication = request.closeApplication,
+                                    onLoading = {},
+                                )
+                                continue
+                            }
+
                             val application =
                                 savedApplication ?: ApplicationWithPermissions(
                                     application = ApplicationEntity(

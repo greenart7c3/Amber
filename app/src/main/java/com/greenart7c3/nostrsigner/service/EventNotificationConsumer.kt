@@ -536,6 +536,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                             Amber.instance.applicationIOScope.launch {
                                 dao.delete(permission.application.key)
                                 historyDao.deleteHistory(permission.application.key)
+                                BunkerRequestUtils.removeAllForClient(permission.application.key)
                                 Amber.instance.notificationSubscription.updateFilter()
                             }
                         }

@@ -18,8 +18,10 @@ import com.greenart7c3.nostrsigner.ui.RememberType
 import com.greenart7c3.nostrsigner.ui.components.DecryptTypeScope
 import com.vitorpamplona.quartz.nip01Core.core.HexKey
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
+import com.vitorpamplona.quartz.nip19Bech32.toNpub
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerResponse
 import com.vitorpamplona.quartz.nip57Zaps.LnZapRequestEvent
+import com.vitorpamplona.quartz.utils.Hex
 import com.vitorpamplona.quartz.utils.TimeUtils
 import kotlin.io.encoding.Base64
 
@@ -315,3 +317,21 @@ fun isPrivateEvent(
     kind: Int,
     tags: Array<Array<String>>,
 ): Boolean = kind == LnZapRequestEvent.KIND && tags.any { t -> t.size > 1 && t[0] == "anon" }
+
+/**
+ * True when a sign_event payload names a pubkey that the approving account
+ * must not sign over: any non-blank key other than the approving account's,
+ * except anonymous zap requests (kind 9734 carrying an "anon" tag) whose
+ * named key is not another account stored on this device.
+ */
+fun isCrossAccountSignEvent(
+    unsignedEventKey: String,
+    accountHexKey: String,
+    kind: Int,
+    tags: Array<Array<String>>,
+    savedNpubs: Collection<String>,
+): Boolean {
+    if (unsignedEventKey.isBlank() || unsignedEventKey == accountHexKey) return false
+    if (!isPrivateEvent(kind, tags)) return true
+    return savedNpubs.any { it == Hex.decode(unsignedEventKey).toNpub() }
+}

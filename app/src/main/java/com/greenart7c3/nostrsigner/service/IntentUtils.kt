@@ -259,15 +259,13 @@ object IntentUtils {
 
             return when (type) {
                 SignerType.SIGN_EVENT -> {
+                    // The signing key follows the account that authorizes this
+                    // request. Never switch to the pubkey named inside the event:
+                    // an app holding a grant on one local account could otherwise
+                    // silently obtain a signature from another stored account.
                     val unsignedEvent = getUnsignedEvent(localData, account)
-                    var localAccount = account
                     val unsignedEventKey = unsignedEvent.pubKey
-                    if (unsignedEvent.pubKey != account.hexKey) {
-                        LocalPreferences.loadFromEncryptedStorageSync(context, Hex.decode(unsignedEvent.pubKey).toNpub())?.let {
-                            localAccount = it
-                        }
-                    }
-                    val signedEvent = localAccount.signSync<Event>(
+                    val signedEvent = account.signSync<Event>(
                         unsignedEvent.createdAt,
                         unsignedEvent.kind,
                         unsignedEvent.tags,
@@ -436,16 +434,14 @@ object IntentUtils {
 
         return when (type) {
             SignerType.SIGN_EVENT -> {
+                // The signing key follows the account that authorizes this
+                // request; see the web-path branch above. A pubkey naming
+                // another stored account stays a mismatch for the approval
+                // guard instead of silently re-targeting the signature.
                 val unsignedEvent = getUnsignedEvent(data, account)
-                var localAccount = account
                 val unsignedEventKey = unsignedEvent.pubKey
-                if (unsignedEvent.pubKey != account.hexKey) {
-                    LocalPreferences.loadFromEncryptedStorageSync(context, Hex.decode(unsignedEvent.pubKey).toNpub())?.let {
-                        localAccount = it
-                    }
-                }
 
-                val signed = localAccount.signSync<Event>(
+                val signed = account.signSync<Event>(
                     unsignedEvent.createdAt,
                     unsignedEvent.kind,
                     unsignedEvent.tags,

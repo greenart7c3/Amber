@@ -33,6 +33,7 @@ import com.greenart7c3.nostrsigner.models.toPermissionType
 import com.greenart7c3.nostrsigner.service.IntentUtils
 import com.greenart7c3.nostrsigner.service.PsbtDecoder
 import com.greenart7c3.nostrsigner.service.RelayUrlUtils
+import com.greenart7c3.nostrsigner.service.isCrossAccountSignEvent
 import com.greenart7c3.nostrsigner.service.isPrivateEvent
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
 import com.greenart7c3.nostrsigner.service.toShortenHex
@@ -364,7 +365,7 @@ fun IntentSingleEventHomeScreen(
                     defaultScope = RelayAuthScope.SPECIFIC,
                     account = account,
                     onAccept = { rememberType, scope ->
-                        if (intentData.unsignedEventKey.isNotBlank() && intentData.unsignedEventKey != account.hexKey && !isPrivateEvent(event.kind, event.tags)) {
+                        if (isCrossAccountSignEvent(intentData.unsignedEventKey, account.hexKey, event.kind, event.tags, LocalPreferences.allSavedAccounts(context).map { it.npub })) {
                             ToastManager.toast(
                                 title = context.getString(R.string.warning),
                                 message = context.getString(R.string.event_pubkey_is_not_equal_to_current_logged_in_user),
@@ -423,7 +424,7 @@ fun IntentSingleEventHomeScreen(
                     event = event,
                     account = account,
                     onAccept = {
-                        if (intentData.unsignedEventKey.isNotBlank() && intentData.unsignedEventKey != account.hexKey && !isPrivateEvent(event.kind, event.tags)) {
+                        if (isCrossAccountSignEvent(intentData.unsignedEventKey, account.hexKey, event.kind, event.tags, LocalPreferences.allSavedAccounts(context).map { it.npub })) {
                             ToastManager.toast(
                                 title = context.getString(R.string.warning),
                                 message = context.getString(R.string.event_pubkey_is_not_equal_to_current_logged_in_user),

@@ -54,6 +54,9 @@ val encryptSignerTypes = setOf(
     SignerType.NIP44_V3_ENCRYPT,
 )
 
+/** Types whose result is decrypted plaintext, which must be handled as a secret. */
+val decryptSignerTypes = encryptDecryptSignerTypes - encryptSignerTypes
+
 /**
  * History rows for these request types store the ciphertext (encrypted form) in
  * `content` rather than the plaintext, so the value must never be truncated —

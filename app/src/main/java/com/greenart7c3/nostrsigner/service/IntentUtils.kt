@@ -37,11 +37,13 @@ import com.greenart7c3.nostrsigner.models.ReturnType
 import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.models.TagArrayEncryptedDataKind
 import com.greenart7c3.nostrsigner.models.containsNip
+import com.greenart7c3.nostrsigner.models.decryptSignerTypes
 import com.greenart7c3.nostrsigner.models.encryptDecryptSignerTypes
 import com.greenart7c3.nostrsigner.models.encryptSignerTypes
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
 import com.greenart7c3.nostrsigner.ui.RememberType
 import com.greenart7c3.nostrsigner.ui.components.DecryptTypeScope
+import com.greenart7c3.nostrsigner.ui.setSensitiveClip
 import com.vitorpamplona.quartz.nip01Core.core.Event
 import com.vitorpamplona.quartz.nip01Core.crypto.EventHasher
 import com.vitorpamplona.quartz.nip01Core.jackson.JacksonMapper
@@ -1061,11 +1063,17 @@ object IntentUtils {
                         }
 
                     withContext(Dispatchers.Main) {
-                        clipboardManager.setClipEntry(
-                            ClipEntry(
-                                ClipData.newPlainText("", result),
-                            ),
-                        )
+                        if (intentData.type in decryptSignerTypes) {
+                            // A decrypt result is the plaintext itself: hide it from
+                            // clipboard previews and clear it, like the nsec.
+                            clipboardManager.setSensitiveClip("", result)
+                        } else {
+                            clipboardManager.setClipEntry(
+                                ClipEntry(
+                                    ClipData.newPlainText("", result),
+                                ),
+                            )
+                        }
 
                         Toast.makeText(
                             context,

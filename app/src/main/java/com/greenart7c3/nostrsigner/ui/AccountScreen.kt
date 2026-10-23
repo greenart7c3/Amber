@@ -42,6 +42,7 @@ import com.greenart7c3.nostrsigner.models.AmberBunkerRequest
 import com.greenart7c3.nostrsigner.models.IntentResultType
 import com.greenart7c3.nostrsigner.service.IntentUtils
 import com.greenart7c3.nostrsigner.ui.navigation.Route
+import com.greenart7c3.nostrsigner.ui.navigation.externalRoute
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 
@@ -89,7 +90,7 @@ fun AccountScreen(
                                 context,
                                 it,
                                 packageName,
-                                it.getStringExtra("route"),
+                                externalRoute(it.getStringExtra("route")),
                                 state.account,
                                 referrer,
                             )?.let { intentData ->

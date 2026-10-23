@@ -12,6 +12,7 @@ import com.greenart7c3.nostrsigner.service.BunkerRequestUtils
 import com.greenart7c3.nostrsigner.service.IntentUtils
 import com.greenart7c3.nostrsigner.ui.AccountStateViewModel
 import com.greenart7c3.nostrsigner.ui.navigation.Route
+import com.greenart7c3.nostrsigner.ui.navigation.externalRoute
 import com.vitorpamplona.quartz.nip19Bech32.Nip19Parser
 import com.vitorpamplona.quartz.nip19Bech32.entities.NPub
 import com.vitorpamplona.quartz.nip19Bech32.toNpub
@@ -132,7 +133,8 @@ class MainViewModel(val context: Context) : ViewModel() {
         viewModelScope.launch(Dispatchers.IO) {
             val account = LocalPreferences.loadFromEncryptedStorage(context)
             account?.let { acc ->
-                val intentData = IntentUtils.getIntentData(context, intent, callingPackage, intent.getStringExtra("route"), acc, referrer)
+                val route = externalRoute(intent.getStringExtra("route"))
+                val intentData = IntentUtils.getIntentData(context, intent, callingPackage, route, acc, referrer)
                 if (intentData != null) {
                     IntentUtils.addAll(listOf(intentData))
                     addedIntentIds.add(intentData.id)
@@ -140,7 +142,7 @@ class MainViewModel(val context: Context) : ViewModel() {
                     IntentUtils.persistNativeAppMetadata(context, acc, callingPackage)
                 }
 
-                intent.getStringExtra("route")?.let { route ->
+                route?.let { route ->
                     viewModelScope.launch(Dispatchers.Main) {
                         var error = true
                         var count = 0

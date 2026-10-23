@@ -52,6 +52,7 @@ import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.service.AccountExportService
 import com.greenart7c3.nostrsigner.service.Biometrics.authenticate
+import com.greenart7c3.nostrsigner.service.SharedFiles
 import com.greenart7c3.nostrsigner.service.WebDavService
 import com.greenart7c3.nostrsigner.service.WebDavTransportPolicy
 import com.greenart7c3.nostrsigner.ui.CenterCircularProgressIndicator
@@ -102,8 +103,9 @@ fun CloudBackupScreen(modifier: Modifier) {
     // ACTION_SEND / ACTION_SEND_MULTIPLE so the user can pick Google Drive (or any app).
     // No file is persisted on-device beyond the cache.
     fun shareNcryptsecFiles(pairs: List<Pair<String, String>>) {
+        val dir = SharedFiles.freshShareDir(context)
         val uris = pairs.map { (npub, ncryptsec) ->
-            val file = File(context.cacheDir, "$npub.ncryptsec")
+            val file = File(dir, "$npub.ncryptsec")
             file.writeText(ncryptsec)
             FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
         }

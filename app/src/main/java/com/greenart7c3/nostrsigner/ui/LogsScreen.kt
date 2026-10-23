@@ -32,6 +32,7 @@ import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.TimeUtils
+import com.greenart7c3.nostrsigner.service.SharedFiles
 import com.greenart7c3.nostrsigner.ui.components.AmberButton
 import java.io.File
 import kotlinx.coroutines.Dispatchers
@@ -89,7 +90,7 @@ fun LogsScreen(
                                     val repeats = if (log.repeatCount > 1) " (x${log.repeatCount})" else ""
                                     "$time | ${log.url} | ${log.type} | ${log.message}$repeats"
                                 }
-                            val logsFile = File(context.cacheDir, "amber-logs.txt")
+                            val logsFile = File(SharedFiles.freshShareDir(context), "amber-logs.txt")
                             logsFile.writeText(logsText)
                             val logsUri =
                                 FileProvider.getUriForFile(

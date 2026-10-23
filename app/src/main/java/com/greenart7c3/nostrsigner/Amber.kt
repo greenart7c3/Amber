@@ -56,6 +56,7 @@ import com.greenart7c3.nostrsigner.service.ConnectivityService
 import com.greenart7c3.nostrsigner.service.NotificationSubscription
 import com.greenart7c3.nostrsigner.service.PrivateAddress
 import com.greenart7c3.nostrsigner.service.ProfileSubscription
+import com.greenart7c3.nostrsigner.service.SharedFiles
 import com.greenart7c3.nostrsigner.service.TorManager
 import com.greenart7c3.nostrsigner.service.TrustScoreService
 import com.greenart7c3.nostrsigner.service.UpdateCheckWorker
@@ -430,6 +431,7 @@ class Amber :
 
     fun runMigrations(onDone: () -> Unit) {
         applicationIOScope.launch {
+            runCatching { SharedFiles.cleanUp(this@Amber) }
             try {
                 val currentAccount = LocalPreferences.currentAccount(this@Amber)
                 if (currentAccount.isNullOrBlank() && LocalPreferences.allSavedAccounts(this@Amber).isNotEmpty()) {

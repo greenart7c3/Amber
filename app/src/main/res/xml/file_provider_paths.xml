@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Only these cache subdirectories are served; see SharedFiles. -->
 <paths>
     <cache-path
+        name="share"
+        path="share/" />
+    <cache-path
         name="apk_downloads"
-        path="." />
+        path="updates/" />
 </paths>

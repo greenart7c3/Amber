@@ -9,6 +9,7 @@ Amber is a Nostr event signer (NIP-46 / NIP-55), package `com.greenart7c3.nostrs
 - JDK 21 required (source/target compat 21). CI and `.codex/setup.sh` use Temurin 21.
 - `compileSdk = 37`, `minSdk = 26`, R8 full mode enabled, Gradle parallel + configuration-cache.
 - Room schemas are exported to `app/schemas` via KSP (`room.schemaLocation`).
+- Dependency verification is on: `gradle/verification-metadata.xml` pins the SHA-256 of every dependency and plugin artifact, and the build fails on any artifact that is missing or doesn't match. After adding or bumping a dependency or plugin, regenerate it with `./gradlew --write-verification-metadata sha256 help <the tasks that use it>` (e.g. `assembleDebug test lint` or `:desktop:test :desktop:createDistributable`) and review the diff. The per-OS Compose Desktop runtimes (`desktop-jvm-*` / `skiko-awt-runtime-*` for windows-x64, macos-arm64, macos-x64) and `aapt2` `osx`/`windows` builds only resolve on their own OS, so bump their entries too, or desktop CI on Windows/macOS breaks.
 
 ## Build and validation commands
 

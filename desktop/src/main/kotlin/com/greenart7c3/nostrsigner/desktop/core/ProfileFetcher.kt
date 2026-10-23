@@ -141,7 +141,7 @@ object ProfileFetcher {
                 when {
                     msg is EventMessage && msg.subId == subId -> {
                         val event = msg.event
-                        if (event.verify()) {
+                        if (event.verify() && matchesFilter(event, filter)) {
                             synchronized(this) {
                                 if (newest == null || event.createdAt > newest!!.createdAt) newest = event
                             }
@@ -171,5 +171,20 @@ object ProfileFetcher {
             client.removeConnectionListener(listener)
         }
         return synchronized(listener) { newest }
+    }
+
+    /**
+     * A relay may answer a profile REQ with anything it likes: accept only
+     * events the filter actually asked for. A forged author would let one
+     * relay rewrite the account's name, picture and saved relay list, and a
+     * far-future created_at would pin the saved relay list watermark forever.
+     */
+    internal fun matchesFilter(event: Event, filter: Filter): Boolean {
+        val authors = filter.authors
+        if (!authors.isNullOrEmpty() && event.pubKey !in authors) return false
+        val kinds = filter.kinds
+        if (!kinds.isNullOrEmpty() && event.kind !in kinds) return false
+        if (event.createdAt > TimeUtils.now() + TimeUtils.FIVE_MINUTES) return false
+        return true
     }
 }

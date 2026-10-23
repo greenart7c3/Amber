@@ -269,11 +269,15 @@ class ZapstoreUpdater(
             downloadProgress.value = 0f
             try {
                 val apkFile = downloadApk(context, release)
-                if (apkFile != null) {
+                if (apkFile == null) {
+                    downloadState.value = DownloadState.ERROR
+                } else if (!UpdateApkVerifier.isTrustedUpdate(context, apkFile)) {
+                    AmberLog.e(Amber.TAG, "ZapstoreUpdater: downloaded APK is not signed as this app; refusing to install")
+                    apkFile.delete()
+                    downloadState.value = DownloadState.ERROR
+                } else {
                     downloadState.value = DownloadState.INSTALLING
                     installApk(context, apkFile)
-                } else {
-                    downloadState.value = DownloadState.ERROR
                 }
             } catch (e: Exception) {
                 if (e is CancellationException) throw e
@@ -284,6 +288,12 @@ class ZapstoreUpdater(
     }
 
     private suspend fun downloadApk(context: Context, release: ZapstoreRelease): File? {
+        // The hash from the developer-signed release is the only integrity check on
+        // the download; without it, fail closed rather than install unverified bytes.
+        val expectedHash = release.hash?.removePrefix("sha256:") ?: run {
+            AmberLog.e(Amber.TAG, "ZapstoreUpdater: release ${release.version} has no hash; refusing to download")
+            return null
+        }
         val settings = withContext(Dispatchers.IO) {
             LocalPreferences.loadSettingsFromEncryptedStorage()
         }
@@ -302,7 +312,7 @@ class ZapstoreUpdater(
         val contentLength = body.contentLength()
         val apkFile = File(context.cacheDir, "amber-update-${release.version}.apk")
 
-        val digest = if (release.hash != null) MessageDigest.getInstance("SHA-256") else null
+        val digest = MessageDigest.getInstance("SHA-256")
         var bytesRead = 0L
 
         apkFile.outputStream().use { output ->
@@ -311,7 +321,7 @@ class ZapstoreUpdater(
                 var read: Int
                 while (input.read(buffer).also { read = it } != -1) {
                     output.write(buffer, 0, read)
-                    digest?.update(buffer, 0, read)
+                    digest.update(buffer, 0, read)
                     bytesRead += read
                     if (contentLength > 0) {
                         downloadProgress.value = bytesRead.toFloat() / contentLength.toFloat()
@@ -320,16 +330,13 @@ class ZapstoreUpdater(
             }
         }
 
-        if (digest != null && release.hash != null) {
-            val actualHash = digest.digest().joinToString("") { "%02x".format(it) }
-            val expectedHash = release.hash.removePrefix("sha256:")
-            if (!actualHash.equals(expectedHash, ignoreCase = true)) {
-                AmberLog.e(Amber.TAG, "ZapstoreUpdater: hash mismatch! expected=$expectedHash actual=$actualHash")
-                apkFile.delete()
-                return null
-            }
-            AmberLog.d(Amber.TAG, "ZapstoreUpdater: hash verified OK")
+        val actualHash = digest.digest().joinToString("") { "%02x".format(it) }
+        if (!actualHash.equals(expectedHash, ignoreCase = true)) {
+            AmberLog.e(Amber.TAG, "ZapstoreUpdater: hash mismatch! expected=$expectedHash actual=$actualHash")
+            apkFile.delete()
+            return null
         }
+        AmberLog.d(Amber.TAG, "ZapstoreUpdater: hash verified OK")
 
         return apkFile
     }

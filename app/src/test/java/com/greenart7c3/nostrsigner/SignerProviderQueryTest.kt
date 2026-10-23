@@ -243,4 +243,46 @@ class SignerProviderQueryTest {
             unmockkObject(AmberUtils)
         }
     }
+
+    private fun queryV3Decrypt(kind: Int) = SignerProviderQuery.query(
+        context = context,
+        requesterId = REQUESTER,
+        callerPackageName = null,
+        operationUri = mockk<Uri>().also { every { it.toString() } returns "content://${BuildConfig.APPLICATION_ID}.NIP44_V3_DECRYPT" },
+        arguments = arrayOf("ciphertext", "cd".repeat(32), NPUB, kind.toString(), "scope"),
+    )
+
+    private fun stubV3Grant(grantedKind: Int) {
+        val grant = decryptRow("NIP44_V3_DECRYPT", accept = true).copy(kind = grantedKind)
+        every { amber.getLogDatabase(any()) } returns mockk(relaxed = true)
+        every { dao.getSignPolicy(REQUESTER) } returns null
+        // The kind-agnostic lookup has no kind filter, so it finds the grant for any kind.
+        every { dao.getPermission(REQUESTER, any<String>()) } answers { grant.takeIf { it.type == secondArg<String>() } }
+        every { dao.getPermission(REQUESTER, any<String>(), any<Int>()) } answers { grant.takeIf { it.type == secondArg<String>() && it.kind == thirdArg<Int>() } }
+        every { dao.getPermissionAllKinds(REQUESTER, any()) } returns null
+        mockkObject(AmberUtils)
+        coEvery { AmberUtils.encryptOrDecryptData(any(), any(), any(), any(), any(), any()) } returns "plaintext"
+    }
+
+    @Test
+    fun `a v3 grant for one kind does not let another kind be decrypted`() {
+        stubV3Grant(grantedKind = 30_000)
+        try {
+            assertNull(queryV3Decrypt(kind = 1))
+            coVerify(exactly = 0) { AmberUtils.encryptOrDecryptData(any(), any(), any(), any(), any(), any()) }
+        } finally {
+            unmockkObject(AmberUtils)
+        }
+    }
+
+    @Test
+    fun `a v3 grant still decrypts its own kind`() {
+        stubV3Grant(grantedKind = 30_000)
+        try {
+            queryV3Decrypt(kind = 30_000)
+            coVerify(exactly = 1) { AmberUtils.encryptOrDecryptData(any(), SignerType.NIP44_V3_DECRYPT, any(), any(), 30_000, "scope") }
+        } finally {
+            unmockkObject(AmberUtils)
+        }
+    }
 }

@@ -720,12 +720,15 @@ object SignerProviderQuery {
         val now = TimeUtils.now()
         fun ApplicationPermissionsEntity?.canAccept() = this?.activeDecision(now) == true
 
-        if (permDao.getPermission(requesterId, type.toString()).canAccept()) return true
-
         if (v3Kind != null) {
+            // Kind-scoped like the final V3 lookup: the kind-agnostic
+            // getPermission(key, type) would match a grant for any other kind,
+            // and a kind-B request then decrypted only to answer "rejected" on
+            // failure versus null on success, a ciphertext-validity oracle.
             if (permDao.getPermission(requesterId, type.toString(), v3Kind).canAccept()) return true
             if (permDao.getPermissionAllKinds(requesterId, type.toString()).canAccept()) return true
         } else {
+            if (permDao.getPermission(requesterId, type.toString()).canAccept()) return true
             // V2 classified content-type grants. The set of possible types
             // comes from permissionTypeFromContent / EncryptedDataKind.
             if (permDao.getPermission(requesterId, "DECRYPT_CLEAR_TEXT").canAccept()) return true

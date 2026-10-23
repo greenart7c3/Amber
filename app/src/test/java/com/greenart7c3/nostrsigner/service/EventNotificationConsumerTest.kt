@@ -177,6 +177,86 @@ class EventNotificationConsumerTest {
         coVerify(exactly = 0) { locked.decrypt(any(), any()) }
     }
 
+    /**
+     * Feeds [requestJson] from a sender with no stored connection and returns
+     * the replies; the account is a spy so key use can be verified.
+     */
+    private suspend fun consumeFromUnknownSender(requestJson: String, onAccount: (Account) -> Unit): List<BunkerResponse> {
+        val signer = mockk<NostrSignerInternal>(relaxed = true)
+        val kp = KeyPair()
+        val acc = spyk(
+            Account(
+                signer = signer,
+                hexKey = kp.pubKey.toHexKey(),
+                npub = "npub-preauth-test",
+                name = MutableStateFlow(""),
+                picture = MutableStateFlow(""),
+                signPolicy = 2,
+                didBackup = false,
+                scope = scope,
+                keyAccessCheck = {},
+            ),
+        )
+        coEvery { acc.decrypt(any(), any()) } returns requestJson
+        val sender = KeyPair().pubKey.toHexKey()
+        val event = mockk<Event>(relaxed = true)
+        every { event.id } returns "preauth-${requestJson.hashCode()}"
+        every { event.verify() } returns true
+        every { event.kind } returns NostrConnectEvent.KIND
+        every { event.createdAt } returns TimeUtils.now()
+        every { event.content } returns "ciphertext"
+        every { event.pubKey } returns sender
+        every { event.tags } returns arrayOf(arrayOf("p", acc.hexKey))
+        every { event.taggedUsers() } returns listOf(PTag(acc.hexKey))
+        coEvery { LocalPreferences.loadFromEncryptedStorageSync(any(), any()) } returns acc
+        coEvery { bunkerEventDao.exists(any()) } returns false
+        coEvery { dao.getByKey(any()) } returns null
+
+        mockkObject(BunkerRequestUtils)
+        try {
+            every { amber.applicationIOScope } returns CoroutineScope(Dispatchers.Unconfined + SupervisorJob())
+            every { amber.notificationCache.get(any()) } returns null
+            val responses = mutableListOf<BunkerResponse>()
+            coEvery {
+                BunkerRequestUtils.sendBunkerResponse(any(), any(), any(), any(), any(), any(), any())
+            } answers {
+                responses.add(arg(3))
+                Unit
+            }
+            consumer.consume(event, NormalizedRelayUrl("wss://relay.com"))
+            onAccount(acc)
+            return responses
+        } finally {
+            unmockkObject(BunkerRequestUtils)
+        }
+    }
+
+    // An unknown sender's request used to be signed (sign_event) or decrypted,
+    // including the nested seal, before the permission lookup refused it.
+    @Test
+    fun `an unknown sender's sign_event is refused without signing`() = runBlocking {
+        val unsigned = """{"id":"","pubkey":"","created_at":1,"kind":1,"tags":[],"content":"hi","sig":""}"""
+        val responses = consumeFromUnknownSender(
+            """{"id":"s1","method":"sign_event","params":[${com.vitorpamplona.quartz.nip01Core.jackson.JacksonMapper.mapper.writeValueAsString(unsigned)}]}""",
+        ) { acc ->
+            coVerify(exactly = 0) { acc.sign<Event>(any()) }
+        }
+        assertEquals("no permission", responses.single().error)
+    }
+
+    @Test
+    fun `an unknown sender's decrypt is refused without decrypting its payload`() = runBlocking {
+        val peer = KeyPair().pubKey.toHexKey()
+        val responses = consumeFromUnknownSender(
+            """{"id":"d1","method":"nip44_decrypt","params":["$peer","payload-ciphertext"]}""",
+        ) { acc ->
+            // Only the request itself was opened; the payload never was.
+            coVerify(exactly = 1) { acc.decrypt(any(), any()) }
+            coVerify(exactly = 0) { acc.nip44Decrypt(any(), any()) }
+        }
+        assertEquals("no permission", responses.single().error)
+    }
+
     @Test
     fun `an expired connection is answered as an unknown app`() = runBlocking {
         val signer = mockk<NostrSignerInternal>(relaxed = true)

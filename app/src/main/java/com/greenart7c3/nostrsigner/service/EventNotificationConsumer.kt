@@ -374,14 +374,6 @@ class EventNotificationConsumer(private val applicationContext: Context) {
             return
         }
 
-        val signedEvent = if (bunkerRequest is BunkerRequestSign) {
-            acc.sign(bunkerRequest.event)
-        } else {
-            null
-        }
-
-        val encryptedDataKind = getEncryptedDataKind(bunkerRequest, acc, relay.url)
-
         // NIP-46 connect requests may carry optional client metadata as the 4th
         // param (nostr-protocol/nips#2381) so the signer can show who is
         // connecting over the bunker:// flow. It must be read from the raw request
@@ -393,6 +385,9 @@ class EventNotificationConsumer(private val applicationContext: Context) {
             null
         }
 
+        // Only addresses the replies sent before authorization below, so it
+        // carries no signed event or decrypted data: the account key is not
+        // used for a sender until it is known to have a connection.
         var request = AmberBunkerRequest(
             request = bunkerRequest,
             localKey = event.pubKey,
@@ -401,8 +396,8 @@ class EventNotificationConsumer(private val applicationContext: Context) {
             nostrConnectSecret = "",
             closeApplication = true,
             name = clientMetadata?.name ?: "",
-            signedEvent = signedEvent,
-            encryptedData = encryptedDataKind,
+            signedEvent = null,
+            encryptedData = null,
             encryptionType = encryptionType,
             isNostrConnectUri = false,
             signerPrivKey = connectionPrivKey,
@@ -521,6 +516,16 @@ class EventNotificationConsumer(private val applicationContext: Context) {
             )
             return
         }
+
+        // Authorized sender from here on: a stored connection or a valid
+        // connect secret. Only now sign or decrypt with the account key.
+        val signedEvent = if (bunkerRequest is BunkerRequestSign) {
+            acc.sign(bunkerRequest.event)
+        } else {
+            null
+        }
+
+        val encryptedDataKind = getEncryptedDataKind(bunkerRequest, acc, relay.url)
 
         request = AmberBunkerRequest(
             request = bunkerRequest,

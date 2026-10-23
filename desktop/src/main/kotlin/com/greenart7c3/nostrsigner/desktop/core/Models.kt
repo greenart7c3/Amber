@@ -340,6 +340,8 @@ data class AccountRecord(
     /** Write relays from the account's NIP-65 list, also queried for its profile. */
     val userRelays: List<String> = emptyList(),
     val userRelaysCreatedAt: Long = 0L,
+    /** created_at of the kind-0 event [name] and [picture] were last taken from. */
+    val metadataCreatedAt: Long = 0L,
 )
 
 fun String.toShortenHex(): String = if (length <= 16) this else "${take(8)}…${takeLast(8)}"

@@ -108,35 +108,48 @@ class ProfileSubscription(
             if (this.subIds.containsValue(msg.subId)) {
                 if (msg.event.kind == MetadataEvent.KIND && msg.event.verify()) {
                     val account = accounts[msg.event.pubKey] ?: return
-
-                    (msg.event as MetadataEvent).contactMetaData()?.let { metadata ->
-                        val npub = account.npub
-                        var atLeastOne = false
-
-                        metadata.name?.let { name ->
-                            if (account.name.value != name) {
-                                account.name.update { name }
-                                atLeastOne = true
-                            }
-                        }
-
-                        metadata.profilePicture()?.let { url ->
-                            if (account.picture.value != url) {
-                                account.picture.update { url }
-                                atLeastOne = true
-                            }
-                        }
-
-                        if (atLeastOne) {
-                            scope.launch {
-                                LocalPreferences.setLastMetadataUpdate(appContext, npub, TimeUtils.now())
-                            }
-                        }
-                    }
+                    (msg.event as? MetadataEvent)?.let { applyMetadata(account, it) }
                 }
             }
         }
         super.onIncomingMessage(relay, msgStr, msg)
+    }
+
+    /**
+     * Applies [event]'s name and picture to [account] unless an equal or newer
+     * kind-0 was already applied. Every queried relay may answer, in any order,
+     * and any of them can serve an older (still validly signed) profile, which
+     * must not overwrite a newer one. Locked per account: events for the same
+     * account arrive concurrently from several relays' I/O threads.
+     */
+    internal fun applyMetadata(account: Account, event: MetadataEvent) {
+        synchronized(account) {
+            if (event.createdAt <= LocalPreferences.getMetadataCreatedAt(appContext, account.npub)) return
+            LocalPreferences.setMetadataCreatedAt(appContext, account.npub, event.createdAt)
+
+            val metadata = event.contactMetaData() ?: return
+            var atLeastOne = false
+
+            metadata.name?.let { name ->
+                if (account.name.value != name) {
+                    account.name.update { name }
+                    atLeastOne = true
+                }
+            }
+
+            metadata.profilePicture()?.let { url ->
+                if (account.picture.value != url) {
+                    account.picture.update { url }
+                    atLeastOne = true
+                }
+            }
+
+            if (atLeastOne) {
+                scope.launch {
+                    LocalPreferences.setLastMetadataUpdate(appContext, account.npub, TimeUtils.now())
+                }
+            }
+        }
     }
 
     /**

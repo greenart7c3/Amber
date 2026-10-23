@@ -44,6 +44,7 @@ private enum class PrefKeys(val key: String) {
     SIGN_POLICY("default_sign_policy"),
     PROFILE_URL("profile_url"),
     LAST_METADATA_UPDATE("last_metadata_update"),
+    METADATA_CREATED_AT("metadata_created_at"),
     LAST_CHECK("last_check"),
     USER_RELAYS("user_relays"),
     USER_RELAYS_CREATED_AT("user_relays_created_at"),
@@ -255,6 +256,17 @@ object LocalPreferences {
         sharedPrefs(context, npub).edit {
             apply {
                 putLong(PrefKeys.LAST_METADATA_UPDATE.key, time)
+            }
+        }
+    }
+
+    /** created_at of the kind-0 event the account's name/picture were last taken from. */
+    fun getMetadataCreatedAt(context: Context, npub: String): Long = sharedPrefs(context, npub).getLong(PrefKeys.METADATA_CREATED_AT.key, 0)
+
+    fun setMetadataCreatedAt(context: Context, npub: String, createdAt: Long) {
+        sharedPrefs(context, npub).edit {
+            apply {
+                putLong(PrefKeys.METADATA_CREATED_AT.key, createdAt)
             }
         }
     }

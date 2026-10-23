@@ -109,16 +109,31 @@ object ProfileFetcher {
         }
     }
 
-    private fun applyMetadata(npub: String, event: MetadataEvent) {
-        val metadata = event.contactMetaData() ?: return
-        val name = (metadata.name ?: metadata.displayName)?.trim()?.takeIf { it.isNotBlank() }
-        val picture = metadata.profilePicture()?.trim()?.takeIf { it.isNotBlank() }
+    /**
+     * Applies [event] unless an equal or newer kind-0 was already applied: a
+     * later fetch may only reach relays that serve an older (still validly
+     * signed) profile, which must not overwrite the newer one.
+     */
+    internal fun applyMetadata(npub: String, event: MetadataEvent) {
+        val metadata = event.contactMetaData()
+        val name = metadata?.let { (it.name ?: it.displayName)?.trim()?.takeIf { n -> n.isNotBlank() } }
+        val picture = metadata?.profilePicture()?.trim()?.takeIf { it.isNotBlank() }
+        var applied = false
         AccountsStore.update(npub) {
-            val updated = it.copy(name = name ?: it.name, picture = picture ?: it.picture)
-            if (updated == it) it else updated.copy(lastMetadataUpdate = TimeUtils.now())
+            if (event.createdAt <= it.metadataCreatedAt) return@update it
+            applied = true
+            val newName = name ?: it.name
+            val newPicture = picture ?: it.picture
+            val changed = newName != it.name || newPicture != it.picture
+            it.copy(
+                name = newName,
+                picture = newPicture,
+                metadataCreatedAt = event.createdAt,
+                lastMetadataUpdate = if (changed) TimeUtils.now() else it.lastMetadataUpdate,
+            )
         }
         // Keep a loaded account (sidebar, settings) in step with the record.
-        if (name != null) AmberDesktop.loadedAccount(npub)?.name?.value = name
+        if (applied && name != null) AmberDesktop.loadedAccount(npub)?.name?.value = name
     }
 
     /**

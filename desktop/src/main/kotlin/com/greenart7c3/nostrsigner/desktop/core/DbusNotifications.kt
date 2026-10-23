@@ -7,6 +7,7 @@ import org.freedesktop.dbus.annotations.DBusInterfaceName
 import org.freedesktop.dbus.annotations.DBusMemberName
 import org.freedesktop.dbus.connections.impl.DBusConnection
 import org.freedesktop.dbus.connections.impl.DBusConnectionBuilder
+import org.freedesktop.dbus.interfaces.DBus
 import org.freedesktop.dbus.interfaces.DBusInterface
 import org.freedesktop.dbus.messages.DBusSignal
 import org.freedesktop.dbus.types.UInt32
@@ -71,15 +72,42 @@ internal object DbusNotifications {
     @Volatile
     private var connection: DBusConnection? = null
 
+    /**
+     * Unique bus name of the notification daemon we post through. Only its
+     * `ActionInvoked`/`NotificationClosed` signals are honored: any peer on
+     * the session bus can emit those signals, and a spoofed action click
+     * would approve or reject a pending request. Resolved on every post so a
+     * daemon restart (new unique name) is picked up.
+     */
+    @Volatile
+    internal var daemonOwner: String? = null
+
+    internal fun isFromDaemon(signalSource: String?): Boolean {
+        val owner = daemonOwner ?: return false
+        return signalSource == owner
+    }
+
+    private fun daemonOwner(conn: DBusConnection): String? = try {
+        conn.getRemoteObject("org.freedesktop.DBus", "/org/freedesktop/DBus", DBus::class.java)
+            .GetNameOwner(BUS_NAME)
+    } catch (e: Exception) {
+        AmberLogger.d("DbusNotifications", "daemon owner lookup failed: ${e.message}")
+        null
+    }
+
     @Synchronized
     private fun connection(): DBusConnection = connection?.takeIf { it.isConnected } ?: run {
         val address = busAddress
         val conn = if (address != null) DBusConnectionBuilder.forAddress(address).build() else DBusConnectionBuilder.forSessionBus().build()
         conn.addSigHandler(FreedesktopNotifications.ActionInvoked::class.java) { signal ->
-            handlers.remove(signal.id.toLong())?.invoke(signal.actionKey)
+            if (isFromDaemon(signal.source)) {
+                handlers.remove(signal.id.toLong())?.invoke(signal.actionKey)
+            }
         }
         conn.addSigHandler(FreedesktopNotifications.NotificationClosed::class.java) { signal ->
-            handlers.remove(signal.id.toLong())
+            if (isFromDaemon(signal.source)) {
+                handlers.remove(signal.id.toLong())
+            }
         }
         connection = conn
         conn
@@ -91,7 +119,9 @@ internal object DbusNotifications {
      * Throws when there is no session bus or notification daemon.
      */
     fun show(appName: String, title: String, message: String, actions: List<Pair<String, String>>, timeoutMs: Int, onAction: (String) -> Unit) {
-        val daemon = connection().getRemoteObject(BUS_NAME, OBJECT_PATH, FreedesktopNotifications::class.java)
+        val conn = connection()
+        val owner = daemonOwner(conn)
+        val daemon = conn.getRemoteObject(BUS_NAME, OBJECT_PATH, FreedesktopNotifications::class.java)
         val id = daemon.postNotification(
             appName,
             UInt32(0),
@@ -102,6 +132,7 @@ internal object DbusNotifications {
             emptyMap(),
             timeoutMs,
         ).toLong()
+        daemonOwner = owner
         handlers[id] = onAction
         expiry.schedule({ handlers.remove(id) }, WATCH_MS, TimeUnit.MILLISECONDS)
     }

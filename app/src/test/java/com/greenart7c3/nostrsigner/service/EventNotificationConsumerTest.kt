@@ -5,14 +5,19 @@ import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.database.AppDatabase
 import com.greenart7c3.nostrsigner.database.ApplicationDao
+import com.greenart7c3.nostrsigner.database.ApplicationEntity
 import com.greenart7c3.nostrsigner.database.BunkerEventDao
 import com.greenart7c3.nostrsigner.models.Account
 import com.vitorpamplona.quartz.nip01Core.core.Event
+import com.vitorpamplona.quartz.nip01Core.core.toHexKey
+import com.vitorpamplona.quartz.nip01Core.crypto.KeyPair
 import com.vitorpamplona.quartz.nip01Core.crypto.verify
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
+import com.vitorpamplona.quartz.nip01Core.signers.NostrSignerInternal
 import com.vitorpamplona.quartz.nip01Core.tags.people.PTag
 import com.vitorpamplona.quartz.nip01Core.tags.people.taggedUsers
 import com.vitorpamplona.quartz.nip40Expiration.ExpirationTag
+import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerResponse
 import com.vitorpamplona.quartz.nip46RemoteSigner.NostrConnectEvent
 import com.vitorpamplona.quartz.utils.TimeUtils
 import io.mockk.coEvery
@@ -28,8 +33,10 @@ import io.mockk.verify
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.runBlocking
 import org.junit.After
+import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
 
@@ -165,5 +172,83 @@ class EventNotificationConsumerTest {
         // Unrecorded, so a re-delivery after unlock is processed.
         coVerify(exactly = 0) { bunkerEventDao.insert(any()) }
         coVerify(exactly = 0) { locked.decrypt(any(), any()) }
+    }
+
+    @Test
+    fun `an expired connection is answered as an unknown app`() = runBlocking {
+        val signer = mockk<NostrSignerInternal>(relaxed = true)
+        val kp = KeyPair()
+        val expiredAccount = Account(
+            signer = signer,
+            hexKey = kp.pubKey.toHexKey(),
+            npub = "npub-expired-test",
+            name = MutableStateFlow(""),
+            picture = MutableStateFlow(""),
+            signPolicy = 2,
+            didBackup = false,
+            scope = scope,
+            keyAccessCheck = {},
+        )
+        val requestJson = """{"id":"req1","method":"get_public_key","params":[]}"""
+        coEvery { signer.decrypt(any(), any()) } answers {
+            println("DECRYPT-ENTERED")
+            requestJson
+        }
+        val event = mockk<Event>(relaxed = true)
+        every { event.id } returns "event3"
+        every { event.verify() } returns true
+        every { event.kind } returns NostrConnectEvent.KIND
+        every { event.createdAt } returns TimeUtils.now()
+        every { event.content } returns "ciphertext"
+        every { event.pubKey } returns expiredAccount.hexKey
+        every { event.tags } returns arrayOf(arrayOf("p", expiredAccount.hexKey))
+        every { event.taggedUsers() } returns listOf(PTag(expiredAccount.hexKey))
+
+        coEvery { LocalPreferences.loadFromEncryptedStorageSync(any(), any()) } returns expiredAccount
+        coEvery { bunkerEventDao.exists("event3") } returns false
+
+        val expiredRow = ApplicationEntity(
+            key = expiredAccount.hexKey,
+            name = "expired-client",
+            relays = emptyList(),
+            url = "",
+            icon = "",
+            description = "",
+            pubKey = expiredAccount.hexKey,
+            isConnected = true,
+            secret = "",
+            useSecret = false,
+            signPolicy = 2,
+            closeApplication = true,
+            deleteAfter = TimeUtils.now() - 3_600,
+            lastUsed = 1L,
+            localKey = "",
+        )
+        coEvery { dao.getByKey(expiredAccount.hexKey) } returns mockk {
+            every { application } returns expiredRow
+        }
+
+        mockkObject(BunkerRequestUtils)
+        try {
+            // notify() decrypts inside applicationIOScope.launch; run that inline.
+            every { amber.applicationIOScope } returns CoroutineScope(Dispatchers.Unconfined + SupervisorJob())
+            // The relaxed mock returns 0L (non-null) from the dedup cache, which
+            // makes notify() treat the request as already processed.
+            every { amber.notificationCache.get(any()) } returns null
+            val responses = mutableListOf<BunkerResponse>()
+            coEvery {
+                BunkerRequestUtils.sendBunkerResponse(any(), any(), any(), any(), any(), any(), any())
+            } answers {
+                responses.add(arg(3))
+                Unit
+            }
+
+            consumer.consume(event, NormalizedRelayUrl("wss://relay.com"))
+
+            coVerify(exactly = 1) { bunkerEventDao.insert(any()) }
+            assertEquals("no permission", responses.single().error)
+        } finally {
+            unmockkObject(BunkerRequestUtils)
+        }
     }
 }

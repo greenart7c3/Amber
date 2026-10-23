@@ -395,7 +395,13 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                 ""
             }
 
-        val permission = dao.getByKey(event.pubKey)
+        var permission = dao.getByKey(event.pubKey)
+        if (permission != null && permission.application.isExpired()) {
+            // The user set a finite lifetime on this connection: answer as an
+            // unknown app even before the periodic cleanup deletes the row.
+            saveLog("Connection expired for ${event.pubKey}", relay.url, acc.npub)
+            permission = null
+        }
         if (permission != null && ((permission.application.secret != permission.application.key && permission.application.useSecret) || permission.application.isConnected) && type == SignerType.CONNECT) {
             Amber.instance.applicationIOScope.launch {
                 historyDao

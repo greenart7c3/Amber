@@ -71,6 +71,9 @@ interface ApplicationDao {
     @Query("SELECT name FROM application WHERE `key` = :key LIMIT 1")
     suspend fun getAppName(key: String): String?
 
+    @Query("SELECT deleteAfter FROM application WHERE `key` = :key LIMIT 1")
+    fun getDeleteAfter(key: String): Long?
+
     @Query("SELECT * FROM application WHERE `key` = :key")
     @Transaction
     suspend fun getByKeyRaw(key: String): ApplicationWithPermissions?

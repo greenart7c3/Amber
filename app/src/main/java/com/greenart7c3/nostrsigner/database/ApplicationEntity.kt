@@ -12,6 +12,7 @@ import com.vitorpamplona.quartz.nip01Core.crypto.KeyPair
 import com.vitorpamplona.quartz.nip01Core.crypto.Nip01Crypto
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.RelayUrlNormalizer
+import com.vitorpamplona.quartz.utils.TimeUtils
 import kotlin.collections.joinToString
 
 fun generateBunkerPrivKey(): String = Nip01Crypto.privKeyCreate().toHexKey()
@@ -56,6 +57,12 @@ data class ApplicationEntity(
     val localKey: String = "",
 ) {
     val localPubKey: String get() = if (localKey.isNotEmpty()) localPubKeyFromPrivKey(localKey) else ""
+
+    /**
+     * True once the user-chosen finite lifetime for this connection has
+     * passed. `deleteAfter == 0` means no lifetime was set.
+     */
+    fun isExpired(now: Long = TimeUtils.now()): Boolean = deleteAfter > 0 && deleteAfter <= now
 
     companion object {
         fun empty() = ApplicationEntity(

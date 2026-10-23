@@ -2,6 +2,7 @@ package com.greenart7c3.nostrsigner.database
 
 import androidx.collection.LruCache
 import androidx.paging.PagingSource
+import com.vitorpamplona.quartz.utils.TimeUtils
 
 /**
  * Bounded read-through cache in front of [ApplicationDao] for the five queries
@@ -94,8 +95,18 @@ class CachingApplicationDao(
 
     // -------- cached reads --------
 
+    /**
+     * F-13: a row past its user-chosen `deleteAfter` lifetime is
+     * authorization-dead even before the periodic cleanup deletes the row.
+     */
+    private fun isExpired(pkKey: String): Boolean {
+        val deleteAfter = delegate.getDeleteAfter(pkKey) ?: return false
+        return deleteAfter > 0 && deleteAfter <= TimeUtils.now()
+    }
+
     override fun getSignPolicy(key: String): Int? {
         val k = Key(Method.SIGN_POLICY, key, null, null, null)
+        if (isExpired(key)) return null
         val readGeneration = generation()
         lookup(k)?.let { return it.signPolicy }
         val result = delegate.getSignPolicy(key)
@@ -105,6 +116,7 @@ class CachingApplicationDao(
 
     override fun getPermission(key: String, type: String, kind: Int?): ApplicationPermissionsEntity? {
         val k = Key(Method.PERM_KIND, key, type, kind, null)
+        if (isExpired(key)) return null
         val readGeneration = generation()
         lookup(k)?.let { return it.permission }
         val result = delegate.getPermission(key, type, kind)
@@ -114,6 +126,7 @@ class CachingApplicationDao(
 
     override fun getPermission(key: String, type: String): ApplicationPermissionsEntity? {
         val k = Key(Method.PERM, key, type, null, null)
+        if (isExpired(key)) return null
         val readGeneration = generation()
         lookup(k)?.let { return it.permission }
         val result = delegate.getPermission(key, type)
@@ -123,6 +136,7 @@ class CachingApplicationDao(
 
     override fun getPermissionAllKinds(key: String, type: String): ApplicationPermissionsEntity? {
         val k = Key(Method.PERM_ALL_KINDS, key, type, null, null)
+        if (isExpired(key)) return null
         val readGeneration = generation()
         lookup(k)?.let { return it.permission }
         val result = delegate.getPermissionAllKinds(key, type)
@@ -132,6 +146,7 @@ class CachingApplicationDao(
 
     override fun getPermissionForRelay(key: String, type: String, kind: Int, relay: String): ApplicationPermissionsEntity? {
         val k = Key(Method.PERM_RELAY, key, type, kind, relay)
+        if (isExpired(key)) return null
         val readGeneration = generation()
         lookup(k)?.let { return it.permission }
         val result = delegate.getPermissionForRelay(key, type, kind, relay)
@@ -141,6 +156,7 @@ class CachingApplicationDao(
 
     override fun getWildcardRelayPermission(key: String, type: String, kind: Int): ApplicationPermissionsEntity? {
         val k = Key(Method.PERM_WILDCARD, key, type, kind, null)
+        if (isExpired(key)) return null
         val readGeneration = generation()
         lookup(k)?.let { return it.permission }
         val result = delegate.getWildcardRelayPermission(key, type, kind)
@@ -237,7 +253,7 @@ class CachingApplicationDao(
             getAllCache.get(pubKey)?.let { return it.toList() }
             getAllGeneration
         }
-        val result = delegate.getAll(pubKey)
+        val result = delegate.getAll(pubKey).filterNot { it.isExpired() }
         synchronized(getAllCache) {
             if (readGeneration == getAllGeneration) getAllCache.put(pubKey, result)
         }
@@ -252,15 +268,17 @@ class CachingApplicationDao(
 
     override suspend fun getAppName(key: String): String? = delegate.getAppName(key)
 
+    override fun getDeleteAfter(key: String): Long? = delegate.getDeleteAfter(key)
+
     override suspend fun getByKey(key: String): ApplicationWithPermissions? = delegate.getByKey(key)
 
     override fun getByKeySync(key: String): ApplicationWithPermissions? = delegate.getByKeySync(key)
 
     override suspend fun getByName(name: String): ApplicationWithPermissions? = delegate.getByName(name)
 
-    override suspend fun getBySecret(secret: String): ApplicationWithPermissions? = delegate.getBySecret(secret)
+    override suspend fun getBySecret(secret: String): ApplicationWithPermissions? = delegate.getBySecret(secret)?.takeUnless { it.application.isExpired() }
 
-    override suspend fun getAllWithLocalKey(pubKey: String): List<ApplicationEntity> = delegate.getAllWithLocalKey(pubKey)
+    override suspend fun getAllWithLocalKey(pubKey: String): List<ApplicationEntity> = delegate.getAllWithLocalKey(pubKey).filterNot { it.isExpired() }
 
     override suspend fun getAllByKey(key: String): List<ApplicationPermissionsEntity> = delegate.getAllByKey(key)
 

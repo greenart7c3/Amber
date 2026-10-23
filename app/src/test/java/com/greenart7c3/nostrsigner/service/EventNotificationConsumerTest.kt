@@ -94,42 +94,45 @@ class EventNotificationConsumerTest {
         unmockkStatic("com.vitorpamplona.quartz.nip40Expiration.EventExtKt")
     }
 
-    @Test
-    fun `consume rejects old events`() = runBlocking {
+    /** A verified bunker event addressed to [account], so it reaches the freshness checks. */
+    private fun eventForAccount(createdAt: Long, tags: Array<Array<String>> = arrayOf(arrayOf("p", account.hexKey))): Event {
         val event = mockk<Event>(relaxed = true)
+        every { event.id } returns "stale"
         every { event.verify() } returns true
         every { event.kind } returns NostrConnectEvent.KIND
-        every { event.createdAt } returns (TimeUtils.now() - TimeUtils.FIVE_MINUTES - 1)
+        every { event.createdAt } returns createdAt
+        every { event.tags } returns tags
+        every { event.taggedUsers() } returns listOf(PTag(account.hexKey))
+        coEvery { LocalPreferences.loadFromEncryptedStorageSync(any(), any()) } returns account
+        return event
+    }
 
-        consumer.consume(event, NormalizedRelayUrl("wss://relay.com"))
+    // A rejected event is never looked up in, or written to, the persistent cache.
+    private fun assertRejectedBeforeProcessing() {
+        coVerify(exactly = 0) { bunkerEventDao.exists(any()) }
+        coVerify(exactly = 0) { bunkerEventDao.insert(any()) }
+    }
 
-        verify(exactly = 0) { event.tags }
+    @Test
+    fun `consume rejects old events`() = runBlocking {
+        consumer.consume(eventForAccount(TimeUtils.now() - TimeUtils.FIVE_MINUTES - 1), NormalizedRelayUrl("wss://relay.com"))
+
+        assertRejectedBeforeProcessing()
     }
 
     @Test
     fun `consume rejects future events`() = runBlocking {
-        val event = mockk<Event>(relaxed = true)
-        every { event.verify() } returns true
-        every { event.kind } returns NostrConnectEvent.KIND
-        every { event.createdAt } returns (TimeUtils.now() + TimeUtils.FIVE_MINUTES + 1)
+        consumer.consume(eventForAccount(TimeUtils.now() + TimeUtils.FIVE_MINUTES + 1), NormalizedRelayUrl("wss://relay.com"))
 
-        consumer.consume(event, NormalizedRelayUrl("wss://relay.com"))
-
-        verify(exactly = 0) { event.tags }
+        assertRejectedBeforeProcessing()
     }
 
     @Test
     fun `consume rejects expired events`() = runBlocking {
-        val event = mockk<Event>(relaxed = true)
-        every { event.verify() } returns true
-        every { event.kind } returns NostrConnectEvent.KIND
-        every { event.createdAt } returns TimeUtils.now()
-        every { event.tags } returns arrayOf(arrayOf(ExpirationTag.TAG_NAME, (TimeUtils.now() - 10).toString()))
+        val expired = arrayOf(arrayOf("p", account.hexKey), arrayOf(ExpirationTag.TAG_NAME, (TimeUtils.now() - 10).toString()))
+        consumer.consume(eventForAccount(TimeUtils.now(), expired), NormalizedRelayUrl("wss://relay.com"))
 
-        consumer.consume(event, NormalizedRelayUrl("wss://relay.com"))
-
-        // If it passed expiration, it would call taggedUsers()
-        verify(exactly = 0) { event.taggedUsers() }
+        assertRejectedBeforeProcessing()
     }
 
     @Test

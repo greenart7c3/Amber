@@ -117,8 +117,6 @@ class EventNotificationConsumer(private val applicationContext: Context) {
         event: Event,
         relay: NormalizedRelayUrl,
     ) {
-        saveLog("New event ${event.id} from ${event.pubKey}", relay.url)
-
         if (!notificationManager().areNotificationsEnabled()) {
             saveLog("notifications disabled", relay.url)
             return
@@ -131,25 +129,6 @@ class EventNotificationConsumer(private val applicationContext: Context) {
             saveLog("Invalid id hash or signature", relay.url)
             return
         }
-
-        val now = TimeUtils.now()
-        if (event.createdAt < now - TimeUtils.FIVE_MINUTES) {
-            saveLog("Event ${event.id} is too old: ${now - event.createdAt}s ago", relay.url)
-            return
-        }
-        if (event.createdAt > now + TimeUtils.FIVE_MINUTES) {
-            saveLog("Event ${event.id} is in the future: ${event.createdAt - now}s ahead", relay.url)
-            return
-        }
-
-        val expiration = event.expiration()
-        if (expiration != null && expiration < now) {
-            saveLog("Event ${event.id} has expired", relay.url)
-            return
-        }
-
-        NotificationUtils.getOrCreateBunkerChannel(applicationContext)
-        NotificationUtils.getOrCreateErrorsChannel(applicationContext)
 
         val taggedKey = event.taggedUsers().firstOrNull()
         if (taggedKey == null) {
@@ -185,6 +164,42 @@ class EventNotificationConsumer(private val applicationContext: Context) {
             saveLog("Tagged account ${taggedKey.toNPub()} not logged in", relay.url)
             return
         }
+
+        // Senders that are not a stored connection are rate-limited before any
+        // per-event write, decrypt or signed reply, so a flood costs them
+        // silence instead of the user's battery. Stored connections bypass the
+        // limiter: an approved app legitimately bursts (bulk decrypts, rapid
+        // signing) and must never be dropped. Checked after verify() and keyed
+        // on the proven signer pubkey, so forged events cannot drain a
+        // legitimate sender's budget.
+        if (Amber.instance.dao(acc.npub).getByKeyRaw(event.pubKey) == null &&
+            !senderRateLimiter.allow("${relay.url}|${event.pubKey}", System.currentTimeMillis())
+        ) {
+            AmberLog.d(Amber.TAG, "${relay.url}: rate-limited event ${event.id} from unknown sender ${event.pubKey}")
+            return
+        }
+        saveLog("New event ${event.id} from ${event.pubKey}", relay.url, acc.npub)
+
+        // Freshness is checked after the limiter: these rejections log the
+        // event id, so a flood of signed stale events must be budgeted too.
+        val now = TimeUtils.now()
+        if (event.createdAt < now - TimeUtils.FIVE_MINUTES) {
+            saveLog("Event ${event.id} is too old: ${now - event.createdAt}s ago", relay.url, acc.npub)
+            return
+        }
+        if (event.createdAt > now + TimeUtils.FIVE_MINUTES) {
+            saveLog("Event ${event.id} is in the future: ${event.createdAt - now}s ahead", relay.url, acc.npub)
+            return
+        }
+
+        val expiration = event.expiration()
+        if (expiration != null && expiration < now) {
+            saveLog("Event ${event.id} has expired", relay.url, acc.npub)
+            return
+        }
+
+        NotificationUtils.getOrCreateBunkerChannel(applicationContext)
+        NotificationUtils.getOrCreateErrorsChannel(applicationContext)
 
         val bunkerEventDao = Amber.instance.getDatabase(acc.npub).bunkerEventDao()
         if (bunkerEventDao.exists(event.id)) {
@@ -1040,4 +1055,9 @@ class EventNotificationConsumer(private val applicationContext: Context) {
     }
 
     fun notificationManager(): NotificationManager = ContextCompat.getSystemService(applicationContext, NotificationManager::class.java) as NotificationManager
+
+    companion object {
+        // One budget per process: several call sites construct their own consumer.
+        internal val senderRateLimiter = SenderRateLimiter()
+    }
 }

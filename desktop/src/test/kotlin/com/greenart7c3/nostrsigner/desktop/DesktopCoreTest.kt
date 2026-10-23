@@ -218,6 +218,20 @@ class DesktopCoreTest {
     }
 
     @Test
+    fun rateLimiterCapsFreshKeysInTotal() {
+        val limiter = SenderRateLimiter(capacity = 10, windowSeconds = 60, aggregateCapacity = 20)
+        val start = 1_000_000L
+
+        // A fresh key per event no longer evades the limit.
+        assertEquals(20, (0 until 500).count { limiter.allow("wss://relay|fresh-$it", start) })
+
+        // One noisy sender only spends its own budget of the shared one.
+        val other = SenderRateLimiter(capacity = 10, windowSeconds = 60, aggregateCapacity = 20)
+        repeat(1000) { other.allow("wss://relay|noisy", start) }
+        assertEquals(10, (0 until 10).count { other.allow("wss://relay|newcomer-$it", start) })
+    }
+
+    @Test
     fun constantTimeEqualsComparesFullBytes() {
         assertTrue(constantTimeEquals("same-secret", "same-secret"))
         assertTrue(constantTimeEquals("", ""))

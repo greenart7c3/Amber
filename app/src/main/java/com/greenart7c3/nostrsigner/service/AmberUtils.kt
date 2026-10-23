@@ -348,3 +348,11 @@ fun relayAuthRememberType(
     relayUrl: String,
     rememberType: RememberType,
 ): RememberType = if (!allRelays && relayUrl.isBlank()) RememberType.NEVER else rememberType
+
+/**
+ * NIP-42 names exactly one relay per auth event: authorization, the auth
+ * whitelist and the consent screen all decide on the FIRST relay tag, so a
+ * second relay tag would be signed without ever being granted — the signed
+ * event would also vouch for a relay the user never approved.
+ */
+fun hasAmbiguousRelayTags(kind: Int, tags: Array<Array<String>>): Boolean = kind == 22242 && tags.count { it.size > 1 && it[0] == "relay" } > 1

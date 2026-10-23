@@ -52,6 +52,16 @@ fun localPubKeyFromPrivKey(privKeyHex: String): String = KeyPair(privKey = privK
  * precomputed when the request arrives (mirroring the Android flow, which
  * signs/encrypts up-front so the approval screen can preview the result).
  */
+/**
+ * NIP-42 names exactly one relay per auth event: authorization, the auth
+ * whitelist and the consent screen all decide on the FIRST relay tag, so a
+ * second relay tag would be signed without ever being granted — the signed
+ * event would also vouch for a relay the user never approved. The desktop
+ * app has no released predecessor, so no legacy client can rely on the
+ * old multi-tag behavior.
+ */
+internal fun hasAmbiguousRelayTags(kind: Int, tags: Array<Array<String>>): Boolean = kind == 22242 && tags.count { it.size > 1 && it[0] == "relay" } > 1
+
 data class PendingBunkerRequest(
     val request: BunkerRequest,
     val type: SignerType,
@@ -753,6 +763,7 @@ class BunkerEngine(
         SignerType.PING -> ComputedResult("pong", "")
         SignerType.SIGN_EVENT -> {
             val template = (request as BunkerRequestSign).event
+            check(!hasAmbiguousRelayTags(template.kind, template.tags)) { "refusing a multi-relay auth event" }
             val signed = acc.signer.sign(template)
             ComputedResult(signed.toJson(), template.toJson())
         }

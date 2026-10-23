@@ -250,6 +250,7 @@ fun BunkerSingleEventHomeScreen(
                     localSignPolicy = signPolicy
                     localCloseApplication = closeApplication
                     localRememberType = rememberType
+                    localDeleteAfter = deleteAfter
                     selectedAccount = acc
 
                     if (bunkerRequest.name.isNotBlank()) {
@@ -279,7 +280,7 @@ fun BunkerSingleEventHomeScreen(
                     } else {
                         BunkerRequestUtils.sendResult(
                             context = context,
-                            account = account,
+                            account = acc,
                             key = key,
                             response = result,
                             bunkerRequest = bunkerRequest,

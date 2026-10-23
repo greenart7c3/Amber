@@ -15,6 +15,7 @@ import com.greenart7c3.nostrsigner.models.permissionTypeFromContent
 import com.greenart7c3.nostrsigner.service.AmberUtils
 import com.greenart7c3.nostrsigner.service.IntentUtils
 import com.greenart7c3.nostrsigner.service.RelayUrlUtils
+import com.greenart7c3.nostrsigner.service.hasAmbiguousRelayTags
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
 import com.vitorpamplona.quartz.nip01Core.core.Event
 import com.vitorpamplona.quartz.nip57Zaps.LnZapRequestEvent
@@ -115,6 +116,29 @@ object SignerProviderQuery {
                         RelayUrlUtils.extractHostAndPort(AmberEvent.relay(event))
                     } else {
                         ""
+                    }
+
+                    // Authorization below decides on the first relay tag alone; a second
+                    // relay tag would be signed without ever being granted. NIP-42
+                    // defines exactly one relay per auth event, so refuse the rest.
+                    if (hasAmbiguousRelayTags(event.kind, event.tags)) {
+                        scope.launch {
+                            historyDatabase.dao().addHistory(
+                                listOf(
+                                    HistoryEntity(
+                                        0,
+                                        requesterId,
+                                        uriString.replace("content://$appId.", ""),
+                                        event.kind,
+                                        TimeUtils.now(),
+                                        false,
+                                        content = event.toJson(),
+                                    ),
+                                ),
+                                account.npub,
+                            )
+                        }
+                        return MatrixCursor(arrayOf("rejected")).also { it.addRow(arrayOf("true")) }
                     }
 
                     // The auth whitelist is only a relay constraint: when non-empty, relays

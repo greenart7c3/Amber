@@ -328,6 +328,37 @@ class EventNotificationConsumer(private val applicationContext: Context) {
         // is already logged above; here we record only non-sensitive metadata.
         saveLog("Decrypted request ${bunkerRequest.id} method ${bunkerRequest.method}", relay.url, acc.npub)
 
+        // Authorization and the consent screen decide on the first relay tag
+        // alone; a second relay tag would be signed without ever being
+        // granted. Answer the client with an error instead of signing.
+        if (bunkerRequest is BunkerRequestSign && hasAmbiguousRelayTags(bunkerRequest.event.kind, bunkerRequest.event.tags)) {
+            saveLog("Refusing a multi-relay auth event ${bunkerRequest.id}", relay.url, acc.npub)
+            val rejection = AmberBunkerRequest(
+                request = bunkerRequest,
+                localKey = event.pubKey,
+                relays = listOf(relay),
+                currentAccount = acc.npub,
+                nostrConnectSecret = "",
+                closeApplication = true,
+                name = "",
+                signedEvent = null,
+                encryptedData = null,
+                encryptionType = if (EncryptedInfo.isNIP04(event.content)) EncryptionType.NIP04 else EncryptionType.NIP44,
+                isNostrConnectUri = false,
+                signerPrivKey = connectionPrivKey,
+            )
+            BunkerRequestUtils.sendBunkerResponse(
+                applicationContext,
+                acc,
+                rejection,
+                BunkerResponse(bunkerRequest.id, "", "refusing a multi-relay auth event"),
+                listOf(relay),
+                onLoading = {},
+                onDone = {},
+            )
+            return
+        }
+
         val signedEvent = if (bunkerRequest is BunkerRequestSign) {
             acc.sign(bunkerRequest.event)
         } else {

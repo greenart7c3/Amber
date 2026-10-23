@@ -264,6 +264,10 @@ object IntentUtils {
                     // an app holding a grant on one local account could otherwise
                     // silently obtain a signature from another stored account.
                     val unsignedEvent = getUnsignedEvent(localData, account)
+                    if (hasAmbiguousRelayTags(unsignedEvent.kind, unsignedEvent.tags)) {
+                        emitInvalid(intent, packageName, "Refusing a multi-relay auth event")
+                        return null
+                    }
                     val unsignedEventKey = unsignedEvent.pubKey
                     val signedEvent = account.signSync<Event>(
                         unsignedEvent.createdAt,
@@ -439,6 +443,10 @@ object IntentUtils {
                 // another stored account stays a mismatch for the approval
                 // guard instead of silently re-targeting the signature.
                 val unsignedEvent = getUnsignedEvent(data, account)
+                if (hasAmbiguousRelayTags(unsignedEvent.kind, unsignedEvent.tags)) {
+                    emitInvalid(intent, packageName, "Refusing a multi-relay auth event")
+                    return null
+                }
                 val unsignedEventKey = unsignedEvent.pubKey
 
                 val signed = account.signSync<Event>(

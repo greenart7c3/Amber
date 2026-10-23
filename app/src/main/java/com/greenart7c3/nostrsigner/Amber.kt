@@ -54,6 +54,7 @@ import com.greenart7c3.nostrsigner.service.BackupApplicationsWorker
 import com.greenart7c3.nostrsigner.service.ClearLogsWorker
 import com.greenart7c3.nostrsigner.service.ConnectivityService
 import com.greenart7c3.nostrsigner.service.NotificationSubscription
+import com.greenart7c3.nostrsigner.service.PrivateAddress
 import com.greenart7c3.nostrsigner.service.ProfileSubscription
 import com.greenart7c3.nostrsigner.service.TorManager
 import com.greenart7c3.nostrsigner.service.TrustScoreService
@@ -709,25 +710,7 @@ class Amber :
         }
     }
 
-    fun isPrivateIp(url: String): Boolean = url.contains("127.0.0.1") ||
-        url.contains("localhost") ||
-        url.contains("192.168.") ||
-        url.contains("172.16.") ||
-        url.contains("172.17.") ||
-        url.contains("172.18.") ||
-        url.contains("172.19.") ||
-        url.contains("172.20.") ||
-        url.contains("172.21.") ||
-        url.contains("172.22.") ||
-        url.contains("172.23.") ||
-        url.contains("172.24.") ||
-        url.contains("172.25.") ||
-        url.contains("172.26.") ||
-        url.contains("172.27.") ||
-        url.contains("172.28.") ||
-        url.contains("172.29.") ||
-        url.contains("172.30.") ||
-        url.contains("172.31.")
+    fun isPrivateIp(url: String): Boolean = PrivateAddress.isPrivate(url)
 
     override fun newImageLoader(context: PlatformContext): ImageLoader {
         val memCache = MemoryCache.Builder()

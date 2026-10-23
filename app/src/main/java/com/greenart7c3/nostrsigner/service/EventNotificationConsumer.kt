@@ -786,7 +786,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                     } else if (decryptedSealData.startsWith("[")) {
                         try {
                             val tagArray = JacksonMapper.fromJsonToTagArray(decryptedSealData)
-                            EventEncryptedDataKind(event, TagArrayEncryptedDataKind(tagArray, decryptedSealData), decryptedSealData)
+                            EventEncryptedDataKind(event, TagArrayEncryptedDataKind(tagArray, decryptedSealData), result)
                         } catch (_: Exception) {
                             EventEncryptedDataKind(event, ClearTextEncryptedDataKind(event.content, decryptedSealData), result)
                         }
@@ -827,7 +827,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                     } else if (decryptedSealData.startsWith("[")) {
                         try {
                             val tagArray = JacksonMapper.fromJsonToTagArray(decryptedSealData)
-                            EventEncryptedDataKind(event, TagArrayEncryptedDataKind(tagArray, decryptedSealData), decryptedSealData)
+                            EventEncryptedDataKind(event, TagArrayEncryptedDataKind(tagArray, decryptedSealData), result)
                         } catch (_: Exception) {
                             EventEncryptedDataKind(event, ClearTextEncryptedDataKind(event.content, decryptedSealData), result)
                         }
@@ -869,7 +869,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                     } else if (decryptedSealData.startsWith("[")) {
                         try {
                             val tagArray = JacksonMapper.fromJsonToTagArray(decryptedSealData)
-                            EventEncryptedDataKind(event, TagArrayEncryptedDataKind(tagArray, decryptedSealData), decryptedSealData)
+                            EventEncryptedDataKind(event, TagArrayEncryptedDataKind(tagArray, decryptedSealData), result)
                         } catch (_: Exception) {
                             EventEncryptedDataKind(event, ClearTextEncryptedDataKind(event.content, decryptedSealData), result)
                         }
@@ -910,7 +910,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                     } else if (decryptedSealData.startsWith("[")) {
                         try {
                             val tagArray = JacksonMapper.fromJsonToTagArray(decryptedSealData)
-                            EventEncryptedDataKind(event, TagArrayEncryptedDataKind(tagArray, decryptedSealData), decryptedSealData)
+                            EventEncryptedDataKind(event, TagArrayEncryptedDataKind(tagArray, decryptedSealData), result)
                         } catch (_: Exception) {
                             EventEncryptedDataKind(event, ClearTextEncryptedDataKind(event.content, decryptedSealData), result)
                         }

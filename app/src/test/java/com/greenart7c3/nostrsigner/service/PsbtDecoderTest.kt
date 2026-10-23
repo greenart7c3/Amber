@@ -1,11 +1,79 @@
 package com.greenart7c3.nostrsigner.service
 
+import com.greenart7c3.nostrsigner.models.Account
+import com.vitorpamplona.quartz.nip01Core.crypto.KeyPair
+import com.vitorpamplona.quartz.nip01Core.signers.NostrSignerInternal
+import com.vitorpamplona.quartz.nipBCOnchainZaps.psbt.BitcoinTransaction
+import com.vitorpamplona.quartz.nipBCOnchainZaps.psbt.OutPoint
+import com.vitorpamplona.quartz.nipBCOnchainZaps.psbt.Psbt
+import com.vitorpamplona.quartz.nipBCOnchainZaps.psbt.TxIn
+import com.vitorpamplona.quartz.nipBCOnchainZaps.psbt.TxOut
+import com.vitorpamplona.quartz.nipBCOnchainZaps.psbt.setInputTapInternalKey
+import com.vitorpamplona.quartz.nipBCOnchainZaps.psbt.setInputWitnessUtxo
+import com.vitorpamplona.quartz.nipBCOnchainZaps.psbt.setOutputTapInternalKey
+import com.vitorpamplona.quartz.nipBCOnchainZaps.taproot.TaprootAddress
 import com.vitorpamplona.quartz.utils.Hex
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class PsbtDecoderTest {
+    private val userKp = KeyPair(ByteArray(32) { 1 })
+    private val attackerKp = KeyPair(ByteArray(32) { 2 })
+    private val account = Account(
+        signer = NostrSignerInternal(userKp),
+        hexKey = Hex.encode(userKp.pubKey),
+        npub = "npub-test",
+        name = MutableStateFlow(""),
+        picture = MutableStateFlow(""),
+        signPolicy = 0,
+        didBackup = true,
+        scope = CoroutineScope(Dispatchers.Unconfined),
+        keyAccessCheck = {},
+    )
+
+    private fun spk(kp: KeyPair) = TaprootAddress.outputKeyToScriptPubKey(TaprootAddress.tweakOutputKey(kp.pubKey))
+
+    private fun psbtPaying(output: TxOut, taggedInternalKey: ByteArray?): String {
+        val tx = BitcoinTransaction(
+            version = 2,
+            inputs = listOf(TxIn(OutPoint("11".repeat(32), 0))),
+            outputs = listOf(output),
+            lockTime = 0,
+        )
+        val psbt = Psbt.fromUnsignedTx(tx)
+        psbt.setInputWitnessUtxo(0, TxOut(100_000, spk(userKp)))
+        psbt.setInputTapInternalKey(0, userKp.pubKey)
+        taggedInternalKey?.let { psbt.setOutputTapInternalKey(0, it) }
+        return psbt.toHex()
+    }
+
+    @Test
+    fun `output paying another key is sent even when tagged with the account key`() {
+        val decoded = PsbtDecoder.decode(psbtPaying(TxOut(99_000, spk(attackerKp)), userKp.pubKey), account)
+
+        assertFalse(decoded.outputs.single().isChange)
+        assertEquals(99_000L, decoded.totalSent)
+        assertEquals(0L, decoded.totalChange)
+    }
+
+    @Test
+    fun `output paying the account's own taproot address is change`() {
+        for (tag in listOf(userKp.pubKey, null)) {
+            val decoded = PsbtDecoder.decode(psbtPaying(TxOut(99_000, spk(userKp)), tag), account)
+
+            assertTrue(decoded.outputs.single().isChange)
+            assertEquals(0L, decoded.totalSent)
+            assertEquals(99_000L, decoded.totalChange)
+            assertEquals(1_000L, decoded.feeSats)
+        }
+    }
+
     @Test
     fun `scriptPubKeyToAddress decodes P2TR as bech32m`() {
         val script = Hex.decode("5120a3eb3f9b18bf1ea7a3d4eddbb33c0d34c4d2e9a45dc12e7e98aa3d345e8b3c4f")

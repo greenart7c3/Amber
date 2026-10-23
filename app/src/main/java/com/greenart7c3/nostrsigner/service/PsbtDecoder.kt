@@ -4,6 +4,7 @@ import androidx.compose.runtime.Immutable
 import com.greenart7c3.nostrsigner.models.Account
 import com.vitorpamplona.quartz.nipBCOnchainZaps.psbt.Psbt
 import com.vitorpamplona.quartz.nipBCOnchainZaps.psbt.inputWitnessUtxo
+import com.vitorpamplona.quartz.nipBCOnchainZaps.taproot.TaprootAddress
 import com.vitorpamplona.quartz.utils.Hex
 
 @Immutable
@@ -24,13 +25,14 @@ data class DecodedPsbt(
 )
 
 object PsbtDecoder {
-    // BIP-174 PSBT output key type for PSBT_OUT_TAP_INTERNAL_KEY (x-only pubkey of a taproot change output).
-    private const val PSBT_OUT_TAP_INTERNAL_KEY = 0x05
-
     fun decode(psbtHex: String, account: Account): DecodedPsbt = try {
         val psbt = Psbt.parse(psbtHex)
         val tx = psbt.unsignedTx
         val xOnlyPubKey = account.signer.keyPair.pubKey
+        // The account's own key-path taproot output. Change is decided by the script
+        // the output actually pays, never by requester-supplied PSBT metadata such as
+        // PSBT_OUT_TAP_INTERNAL_KEY, which can name the user's key on any output.
+        val ownScriptPubKey = TaprootAddress.outputKeyToScriptPubKey(TaprootAddress.tweakOutputKey(xOnlyPubKey))
 
         var anyInputMissingValue = false
         var inputTotal = 0L
@@ -42,10 +44,9 @@ object PsbtDecoder {
         var totalOut = 0L
         var totalSent = 0L
         var totalChange = 0L
-        val outputs = tx.outputs.mapIndexed { index, txOut ->
+        val outputs = tx.outputs.map { txOut ->
             totalOut += txOut.valueSats
-            val taprootInternalKey = psbt.outputs[index].get(PSBT_OUT_TAP_INTERNAL_KEY)
-            val isChange = taprootInternalKey != null && taprootInternalKey.contentEquals(xOnlyPubKey)
+            val isChange = txOut.scriptPubKey.contentEquals(ownScriptPubKey)
             if (isChange) totalChange += txOut.valueSats else totalSent += txOut.valueSats
 
             DecodedPsbtOutput(

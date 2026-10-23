@@ -115,6 +115,14 @@ data class PendingBunkerRequest(
      * `socket-…` ids.
      */
     fun isSameEntry(other: PendingBunkerRequest): Boolean = account.npub == other.account.npub && localKey == other.localKey && request.id == other.request.id
+
+    /**
+     * Stable UI identity of this queued entry: the same (account, connection,
+     * id) triple [isSameEntry] dedups on. The client-chosen request id alone
+     * is not unique across accounts or connections, so the UI must never key
+     * selection or per-request choices on it.
+     */
+    val queueKey: String get() = "${account.npub}|$localKey|${request.id}"
 }
 
 /**

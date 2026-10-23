@@ -105,13 +105,13 @@ class RequestDetailsTest {
         val sign = req(SignerType.SIGN_EVENT, preview = note)
         AmberDesktop.engine.pending.value = listOf(connect, sign)
 
-        UiState.selectedRequestId.value = connect.request.id
+        UiState.selectedRequestId.value = connect.queueKey
         assertFalse(UiState.showSelectedDetails())
         assertNull(UiState.detailsRequestId.value)
 
-        UiState.selectedRequestId.value = sign.request.id
+        UiState.selectedRequestId.value = sign.queueKey
         assertTrue(UiState.showSelectedDetails())
-        assertEquals(sign.request.id, UiState.detailsRequestId.value)
+        assertEquals(sign.queueKey, UiState.detailsRequestId.value)
 
         // Answered elsewhere (shortcut, notification, expiry): the dialog closes.
         UiState.pruneRequestState(listOf(connect))

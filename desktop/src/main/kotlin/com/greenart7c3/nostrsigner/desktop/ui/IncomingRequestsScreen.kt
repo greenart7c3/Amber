@@ -81,7 +81,7 @@ fun IncomingRequestsScreen(account: DesktopAccount) {
         UiState.pruneRequestState(pending)
     }
     LaunchedEffect(selectedId) {
-        val index = pending.indexOfFirst { it.request.id == selectedId }
+        val index = pending.indexOfFirst { it.queueKey == selectedId }
         if (index >= 0) listState.animateScrollToItem(index)
     }
 
@@ -92,12 +92,12 @@ fun IncomingRequestsScreen(account: DesktopAccount) {
             verticalArrangement = Arrangement.spacedBy(12.dp),
             contentPadding = androidx.compose.foundation.layout.PaddingValues(vertical = 12.dp),
         ) {
-            items(pending.size, key = { pending[it].request.id }) { index ->
+            items(pending.size, key = { pending[it].queueKey }) { index ->
                 val req = pending[index]
                 RequestCard(
                     req = req,
-                    selected = req.request.id == (selectedId ?: pending.firstOrNull()?.request?.id),
-                    onSelect = { UiState.selectedRequestId.value = req.request.id },
+                    selected = req.queueKey == (selectedId ?: pending.firstOrNull()?.queueKey),
+                    onSelect = { UiState.selectedRequestId.value = req.queueKey },
                 )
             }
         }
@@ -111,11 +111,11 @@ private fun RequestCard(
     onSelect: () -> Unit,
 ) {
     val rememberChoices by UiState.rememberChoices.collectAsState()
-    val rememberType = rememberChoices[req.request.id] ?: RememberType.NEVER
+    val rememberType = rememberChoices[req.queueKey] ?: RememberType.NEVER
     val language by Strings.currentLanguage.collectAsState()
     var working by remember { mutableStateOf(false) }
     val connectChoices by UiState.connectChoices.collectAsState()
-    val connectChoice = connectChoices[req.request.id] ?: UiState.connectChoiceFor(req)
+    val connectChoice = connectChoices[req.queueKey] ?: UiState.connectChoiceFor(req)
 
     Card(
         Modifier.fillMaxWidth().clickable(onClick = onSelect),
@@ -141,7 +141,7 @@ private fun RequestCard(
             SigningAccountRow(
                 npub = if (req.type == SignerType.CONNECT) connectChoice.accountNpub else req.account.npub,
                 canSwitch = req.canSwitchAccount,
-                onSelect = { UiState.setConnectChoice(req.request.id, connectChoice.copy(accountNpub = it)) },
+                onSelect = { UiState.setConnectChoice(req.queueKey, connectChoice.copy(accountNpub = it)) },
             )
 
             val details = remember(req) { RequestDetails.of(req) }
@@ -161,10 +161,10 @@ private fun RequestCard(
                 }
                 AmberTextButton(
                     text = "${Strings.get("see_details", language)} (D)",
-                    onClick = { UiState.detailsRequestId.value = req.request.id },
+                    onClick = { UiState.detailsRequestId.value = req.queueKey },
                 )
                 val detailsId by UiState.detailsRequestId.collectAsState()
-                if (detailsId == req.request.id) {
+                if (detailsId == req.queueKey) {
                     RequestDetailsDialog(req, details, onDismiss = { UiState.detailsRequestId.value = null })
                 }
             } else if (req.preview.isNotBlank()) {
@@ -208,7 +208,7 @@ private fun RequestCard(
                 Spacer(Modifier.height(8.dp))
                 Text(Strings.get("permissions", language), style = MaterialTheme.typography.titleSmall)
                 SignPolicySelector(connectChoice.signPolicy) {
-                    UiState.setConnectChoice(req.request.id, connectChoice.copy(signPolicy = it))
+                    UiState.setConnectChoice(req.queueKey, connectChoice.copy(signPolicy = it))
                 }
                 if (connectChoice.signPolicy == 1 && connectChoice.granted.isNotEmpty()) {
                     Column(Modifier.padding(start = 24.dp)) {
@@ -219,7 +219,7 @@ private fun RequestCard(
                                     onCheckedChange = { checked ->
                                         val granted = connectChoice.granted.toMutableList()
                                         granted[index] = perm.copy(checked = checked)
-                                        UiState.setConnectChoice(req.request.id, connectChoice.copy(granted = granted))
+                                        UiState.setConnectChoice(req.queueKey, connectChoice.copy(granted = granted))
                                     },
                                 )
                                 Text(
@@ -232,7 +232,7 @@ private fun RequestCard(
                 }
                 Spacer(Modifier.height(8.dp))
                 DeleteAfterSelector(connectChoice.deleteAfter) {
-                    UiState.setConnectChoice(req.request.id, connectChoice.copy(deleteAfter = it))
+                    UiState.setConnectChoice(req.queueKey, connectChoice.copy(deleteAfter = it))
                 }
             }
 
@@ -254,7 +254,7 @@ private fun RequestCard(
                 // Mirrors the Android "Encryption scope" toggle: NIP-04/44 grants
                 // this content type or the whole NIP; NIP-44 v3 this kind or all.
                 val scopeChoices by UiState.scopeChoices.collectAsState()
-                val scope = scopeChoices[req.request.id] ?: UiState.defaultScope(req)
+                val scope = scopeChoices[req.queueKey] ?: UiState.defaultScope(req)
                 Text(Strings.get("encryption_scope", language), style = MaterialTheme.typography.labelMedium)
                 val options = if (isV3) {
                     listOf(EncryptionScope.SPECIFIC to "for_this_kind_only", EncryptionScope.ALL to "for_all_kinds")
@@ -265,7 +265,7 @@ private fun RequestCard(
                     options.forEach { (value, key) ->
                         FilterChip(
                             selected = scope == value,
-                            onClick = { UiState.setScopeChoice(req.request.id, value) },
+                            onClick = { UiState.setScopeChoice(req.queueKey, value) },
                             label = { Text(Strings.get(key, language)) },
                         )
                     }
@@ -273,7 +273,7 @@ private fun RequestCard(
                 Spacer(Modifier.height(4.dp))
             }
             if (req.type != SignerType.CONNECT) {
-                RememberTypeSelector(rememberType) { UiState.setRememberChoice(req.request.id, it) }
+                RememberTypeSelector(rememberType) { UiState.setRememberChoice(req.queueKey, it) }
                 Spacer(Modifier.height(8.dp))
             }
 

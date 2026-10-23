@@ -57,7 +57,7 @@ object UiState {
      */
     val scopeChoices = MutableStateFlow<Map<String, EncryptionScope>>(emptyMap())
 
-    fun scopeChoiceFor(request: PendingBunkerRequest): EncryptionScope = scopeChoices.value[request.request.id] ?: defaultScope(request)
+    fun scopeChoiceFor(request: PendingBunkerRequest): EncryptionScope = scopeChoices.value[request.queueKey] ?: defaultScope(request)
 
     fun defaultScope(request: PendingBunkerRequest): EncryptionScope = if (request.type in nip44v3SignerTypes) EncryptionScope.SPECIFIC else EncryptionScope.ALL
 
@@ -71,7 +71,7 @@ object UiState {
      */
     val connectChoices = MutableStateFlow<Map<String, ConnectChoice>>(emptyMap())
 
-    fun connectChoiceFor(request: PendingBunkerRequest): ConnectChoice = connectChoices.value[request.request.id] ?: ConnectChoice(
+    fun connectChoiceFor(request: PendingBunkerRequest): ConnectChoice = connectChoices.value[request.queueKey] ?: ConnectChoice(
         signPolicy = request.account.signPolicy,
         granted = request.requestedPermissions.map { it.copy() },
         accountNpub = request.account.npub,
@@ -96,7 +96,7 @@ object UiState {
         } else {
             AmberDesktop.engine.approve(
                 request,
-                rememberChoiceFor(request.request.id),
+                rememberChoiceFor(request.queueKey),
                 encryptionScope = scopeChoiceFor(request),
             )
         }
@@ -104,7 +104,7 @@ object UiState {
 
     /** Rejects [request] with the "Remember" and scope choices made on its card. */
     fun reject(request: PendingBunkerRequest) {
-        AmberDesktop.engine.reject(request, rememberChoiceFor(request.request.id), scopeChoiceFor(request))
+        AmberDesktop.engine.reject(request, rememberChoiceFor(request.queueKey), scopeChoiceFor(request))
     }
 
     fun navigate(route: Route) {
@@ -115,14 +115,14 @@ object UiState {
     /** The selected pending request, falling back to the first one. */
     fun selectedRequest(): PendingBunkerRequest? {
         val pending = AmberDesktop.engine.pending.value
-        return pending.firstOrNull { it.request.id == selectedRequestId.value } ?: pending.firstOrNull()
+        return pending.firstOrNull { it.queueKey == selectedRequestId.value } ?: pending.firstOrNull()
     }
 
     fun moveRequestSelection(delta: Int) {
         val pending = AmberDesktop.engine.pending.value
         if (pending.isEmpty()) return
-        val current = pending.indexOfFirst { it.request.id == selectedRequestId.value }.coerceAtLeast(0)
-        selectedRequestId.value = pending[(current + delta).coerceIn(0, pending.size - 1)].request.id
+        val current = pending.indexOfFirst { it.queueKey == selectedRequestId.value }.coerceAtLeast(0)
+        selectedRequestId.value = pending[(current + delta).coerceIn(0, pending.size - 1)].queueKey
     }
 
     fun rememberChoiceFor(requestId: String): RememberType = rememberChoices.value[requestId] ?: RememberType.NEVER
@@ -140,19 +140,19 @@ object UiState {
         if (request.type == SignerType.CONNECT) {
             val choice = connectChoiceFor(request)
             val order = DeleteAfterType.entries
-            setConnectChoice(request.request.id, choice.copy(deleteAfter = order[(order.indexOf(choice.deleteAfter) + delta).mod(order.size)]))
+            setConnectChoice(request.queueKey, choice.copy(deleteAfter = order[(order.indexOf(choice.deleteAfter) + delta).mod(order.size)]))
             return
         }
         val order = rememberTypeDisplayOrder
-        val current = order.indexOf(rememberChoiceFor(request.request.id)).coerceAtLeast(0)
+        val current = order.indexOf(rememberChoiceFor(request.queueKey)).coerceAtLeast(0)
         val next = (current + delta).mod(order.size)
-        setRememberChoice(request.request.id, order[next])
+        setRememberChoice(request.queueKey, order[next])
     }
 
     /** 1–3 on a selected connect request: picks the sign policy (0 basic, 1 manual, 2 full trust). */
     fun setSelectedSignPolicy(policy: Int): Boolean {
         val request = selectedRequest()?.takeIf { it.type == SignerType.CONNECT } ?: return false
-        setConnectChoice(request.request.id, connectChoiceFor(request).copy(signPolicy = policy))
+        setConnectChoice(request.queueKey, connectChoiceFor(request).copy(signPolicy = policy))
         return true
     }
 
@@ -163,14 +163,14 @@ object UiState {
     /** D on a selected request: opens its details, when it has any. */
     fun showSelectedDetails(): Boolean {
         val request = selectedRequest()?.takeIf { RequestDetails.of(it) != null } ?: return false
-        detailsRequestId.value = request.request.id
+        detailsRequestId.value = request.queueKey
         return true
     }
 
     fun toggleSelectedScope(): Boolean {
         val request = selectedRequest()?.takeIf { it.type in contentScopedSignerTypes || it.type in nip44v3SignerTypes } ?: return false
         val next = if (scopeChoiceFor(request) == EncryptionScope.ALL) EncryptionScope.SPECIFIC else EncryptionScope.ALL
-        setScopeChoice(request.request.id, next)
+        setScopeChoice(request.queueKey, next)
         return true
     }
 
@@ -181,15 +181,15 @@ object UiState {
         if (npubs.size < 2) return false
         val choice = connectChoiceFor(request)
         val next = npubs[(npubs.indexOf(choice.accountNpub) + 1).mod(npubs.size)]
-        setConnectChoice(request.request.id, choice.copy(accountNpub = next))
+        setConnectChoice(request.queueKey, choice.copy(accountNpub = next))
         return true
     }
 
     /** Drops selection/remember state for requests that no longer exist. */
     fun pruneRequestState(pending: List<PendingBunkerRequest>) {
-        val ids = pending.map { it.request.id }.toSet()
+        val ids = pending.map { it.queueKey }.toSet()
         if (selectedRequestId.value !in ids) {
-            selectedRequestId.value = pending.firstOrNull()?.request?.id
+            selectedRequestId.value = pending.firstOrNull()?.queueKey
         }
         if (rememberChoices.value.keys.any { it !in ids }) {
             rememberChoices.value = rememberChoices.value.filterKeys { it in ids }

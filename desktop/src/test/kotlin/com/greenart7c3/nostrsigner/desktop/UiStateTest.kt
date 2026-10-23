@@ -61,18 +61,18 @@ class UiStateTest {
         assertEquals(EncryptionScope.ALL, UiState.scopeChoiceFor(v2))
         assertEquals(EncryptionScope.SPECIFIC, UiState.scopeChoiceFor(v3))
 
-        UiState.selectedRequestId.value = "v2"
+        UiState.selectedRequestId.value = v2.queueKey
         assertTrue(UiState.toggleSelectedScope())
         assertEquals(EncryptionScope.SPECIFIC, UiState.scopeChoiceFor(v2))
         assertTrue(UiState.toggleSelectedScope())
         assertEquals(EncryptionScope.ALL, UiState.scopeChoiceFor(v2))
 
-        UiState.selectedRequestId.value = "v3"
+        UiState.selectedRequestId.value = v3.queueKey
         assertTrue(UiState.toggleSelectedScope())
         assertEquals(EncryptionScope.ALL, UiState.scopeChoiceFor(v3))
 
         // Not an encrypt/decrypt request: the key is left alone.
-        UiState.selectedRequestId.value = "sign"
+        UiState.selectedRequestId.value = sign.queueKey
         assertFalse(UiState.toggleSelectedScope())
     }
 
@@ -113,16 +113,16 @@ class UiStateTest {
             )
         }
         AmberDesktop.engine.pending.value = reqs
-        UiState.selectedRequestId.value = "a"
+        UiState.selectedRequestId.value = reqs[0].queueKey
 
         UiState.moveRequestSelection(1)
-        assertEquals("b", UiState.selectedRequestId.value)
+        assertEquals(reqs[1].queueKey, UiState.selectedRequestId.value)
         UiState.moveRequestSelection(1)
-        assertEquals("c", UiState.selectedRequestId.value)
+        assertEquals(reqs[2].queueKey, UiState.selectedRequestId.value)
         UiState.moveRequestSelection(1) // clamps at the last item
-        assertEquals("c", UiState.selectedRequestId.value)
+        assertEquals(reqs[2].queueKey, UiState.selectedRequestId.value)
         UiState.moveRequestSelection(-5) // clamps at the first
-        assertEquals("a", UiState.selectedRequestId.value)
+        assertEquals(reqs[0].queueKey, UiState.selectedRequestId.value)
     }
 
     @Test
@@ -138,15 +138,15 @@ class UiStateTest {
             relays = emptyList(),
         )
         AmberDesktop.engine.pending.value = listOf(req)
-        UiState.selectedRequestId.value = "x"
+        UiState.selectedRequestId.value = req.queueKey
 
-        assertEquals(RememberType.NEVER, UiState.rememberChoiceFor("x"))
+        assertEquals(RememberType.NEVER, UiState.rememberChoiceFor(req.queueKey))
         UiState.cycleRememberChoice(1)
-        assertEquals(RememberType.FIVE_MINUTES, UiState.rememberChoiceFor("x"))
+        assertEquals(RememberType.FIVE_MINUTES, UiState.rememberChoiceFor(req.queueKey))
         // Wrap backwards from the first entry to the last.
-        UiState.setRememberChoice("x", RememberType.NEVER)
+        UiState.setRememberChoice(req.queueKey, RememberType.NEVER)
         UiState.cycleRememberChoice(-1)
-        assertEquals(RememberType.ALWAYS, UiState.rememberChoiceFor("x"))
+        assertEquals(RememberType.ALWAYS, UiState.rememberChoiceFor(req.queueKey))
     }
 
     @Test
@@ -162,10 +162,10 @@ class UiStateTest {
             relays = emptyList(),
         )
         AmberDesktop.engine.pending.value = listOf(req)
-        UiState.selectedRequestId.value = "c"
+        UiState.selectedRequestId.value = req.queueKey
 
         UiState.cycleRememberChoice(1)
-        assertEquals(RememberType.NEVER, UiState.rememberChoiceFor("c")) // unchanged
+        assertEquals(RememberType.NEVER, UiState.rememberChoiceFor(req.queueKey)) // unchanged
     }
 
     @Test
@@ -175,5 +175,46 @@ class UiStateTest {
         UiState.pruneRequestState(emptyList())
         assertNull(UiState.selectedRequestId.value)
         assertEquals(emptyMap<String, RememberType>(), UiState.rememberChoices.value)
+    }
+
+    @Test
+    fun collidingClientIdsKeepSelectionAndChoicesSeparate() = runBlocking {
+        // Two connections queue the same client-chosen id. The UI keys on the
+        // queue entry (account, connection, id), so one card's selection and
+        // remember choice must never apply to the other.
+        val account = com.greenart7c3.nostrsigner.desktop.core.AccountManager.addAccount(
+            com.vitorpamplona.quartz.nip01Core.crypto.KeyPair(),
+        )
+        fun req(localKey: String) = PendingBunkerRequest(
+            request = BunkerRequest("shared-id", "sign_event", arrayOf()),
+            type = SignerType.SIGN_EVENT,
+            account = account,
+            localKey = localKey,
+            relays = emptyList(),
+        )
+        val clientA = req("conn-a")
+        val clientB = req("conn-b")
+        assertTrue("both cards carry the same client-chosen id", clientA.request.id == clientB.request.id)
+        assertTrue("but their queue keys differ", clientA.queueKey != clientB.queueKey)
+        assertTrue(clientA.queueKey.endsWith("|shared-id"))
+        AmberDesktop.engine.pending.value = listOf(clientA, clientB)
+
+        // Both entries are addressable even though their request ids match.
+        UiState.selectedRequestId.value = clientB.queueKey
+        assertTrue(UiState.selectedRequest() === clientB)
+
+        // A remember choice set on B's card never applies to A's.
+        UiState.setRememberChoice(clientB.queueKey, RememberType.ALWAYS)
+        assertEquals(RememberType.NEVER, UiState.rememberChoiceFor(clientA.queueKey))
+        assertEquals(RememberType.ALWAYS, UiState.rememberChoiceFor(clientB.queueKey))
+
+        // Keyboard selection moves between the two distinct entries.
+        UiState.moveRequestSelection(-1)
+        assertEquals(clientA.queueKey, UiState.selectedRequestId.value)
+        assertEquals(clientA, UiState.selectedRequest())
+
+        // Pruning keeps choices whose queue key still exists.
+        UiState.pruneRequestState(listOf(clientA, clientB))
+        assertEquals(RememberType.ALWAYS, UiState.rememberChoiceFor(clientB.queueKey))
     }
 }

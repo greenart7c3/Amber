@@ -924,6 +924,19 @@ class BunkerEngine(
         }
         val secret = if (req.request is BunkerRequestConnect) req.request.secret ?: "" else ""
 
+        // Only a connect may create an application. A non-connect request whose
+        // app is gone (deleted, expired or logged out while the card was queued)
+        // must not resurrect the revoked connection: answer it like an unknown client.
+        if (savedApplication == null && req.request !is BunkerRequestConnect && req.type != SignerType.CONNECT) {
+            val noPermission = BunkerResponse(req.request.id, "", "no permission")
+            req.responder?.let { respond ->
+                respond(noPermission)
+                return
+            }
+            sendResponse(acc, req.signerPrivKey, key, req.encryptionType, noPermission, relays)
+            return
+        }
+
         var application = savedApplication ?: AppWithPermissions(
             app = AppRecord(
                 key = key,
@@ -1031,31 +1044,16 @@ class BunkerEngine(
         } else {
             savedApplication?.app?.normalizedRelays()?.ifEmpty { defaultRelays } ?: newConnectionRelays
         }
-        val secret = if (req.request is BunkerRequestConnect) req.request.secret ?: "" else ""
-
-        val application = savedApplication ?: AppWithPermissions(
-            app = AppRecord(
-                key = key,
-                name = req.appName,
-                relays = relays.map { it.url },
-                pubKey = acc.hexKey,
-                isConnected = true,
-                secret = secret,
-                useSecret = secret.isNotBlank(),
-                signPolicy = acc.signPolicy,
-                lastUsed = TimeUtils.now(),
-                transport = if (req.isLocalSocket) TRANSPORT_SOCKET else TRANSPORT_NIP46,
-            ),
-        )
-
-        if (rememberType != RememberType.NEVER) {
-            acceptOrRejectPermission(application, req.type, req.permissionKind(encryptionScope), false, rememberType, req.encryptedContent, encryptionScope)
-        }
 
         // A rejected connect leaves nothing behind (socket connects are plain
-        // `BunkerRequest`s, so check the type rather than the class).
-        if (req.request !is BunkerRequestConnect && req.type != SignerType.CONNECT) {
-            store.upsert(application)
+        // `BunkerRequest`s, so check the type rather than the class), and a
+        // rejection never creates an application: if the app was deleted while
+        // the card was queued, there is nothing to record the rejection on.
+        if (savedApplication != null && req.request !is BunkerRequestConnect && req.type != SignerType.CONNECT) {
+            if (rememberType != RememberType.NEVER) {
+                acceptOrRejectPermission(savedApplication, req.type, req.permissionKind(encryptionScope), false, rememberType, req.encryptedContent, encryptionScope)
+            }
+            store.upsert(savedApplication)
             store.addHistory(HistoryRecord(key, req.type.toString(), req.kind, TimeUtils.now(), false))
         }
 
@@ -1064,7 +1062,7 @@ class BunkerEngine(
             return
         }
 
-        val signerPrivKey = application.app.localKey.ifEmpty { req.signerPrivKey }
+        val signerPrivKey = savedApplication?.app?.localKey?.ifEmpty { null } ?: req.signerPrivKey
         sendResponse(
             acc,
             signerPrivKey,

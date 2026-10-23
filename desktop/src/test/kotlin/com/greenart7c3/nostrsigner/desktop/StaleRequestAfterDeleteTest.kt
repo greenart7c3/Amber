@@ -1,0 +1,78 @@
+package com.greenart7c3.nostrsigner.desktop
+
+import com.greenart7c3.nostrsigner.desktop.core.AccountManager
+import com.greenart7c3.nostrsigner.desktop.core.AmberDesktop
+import com.greenart7c3.nostrsigner.desktop.core.AppRecord
+import com.greenart7c3.nostrsigner.desktop.core.AppWithPermissions
+import com.greenart7c3.nostrsigner.desktop.core.PendingBunkerRequest
+import com.greenart7c3.nostrsigner.desktop.core.RememberType
+import com.vitorpamplona.quartz.nip01Core.core.Event
+import com.vitorpamplona.quartz.nip01Core.core.toHexKey
+import com.vitorpamplona.quartz.nip01Core.crypto.KeyPair
+import com.vitorpamplona.quartz.nip01Core.relay.normalizer.RelayUrlNormalizer
+import com.vitorpamplona.quartz.nip01Core.signers.NostrSignerInternal
+import com.vitorpamplona.quartz.utils.TimeUtils
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.withTimeoutOrNull
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
+import org.junit.Test
+
+/**
+ * A request queued for approval must not bring its app back when the user
+ * deleted the app before answering the card.
+ */
+class StaleRequestAfterDeleteTest {
+    private val relay = RelayUrlNormalizer.normalizeOrNull("wss://relay.invalid/")!!
+
+    private suspend fun signRequest(client: NostrSignerInternal, accountHex: String, id: String): Event {
+        val template = """{"kind":1,"content":"stale $id","tags":[],"created_at":${TimeUtils.now()}}"""
+        val escaped = template.replace("\\", "\\\\").replace("\"", "\\\"")
+        val json = """{"id":"$id","method":"sign_event","params":["$escaped"]}"""
+        val content = client.nip44Encrypt(json, accountHex)
+        return client.signerSync.sign(TimeUtils.now(), 24133, arrayOf(arrayOf("p", accountHex)), content)
+    }
+
+    /** Queues a sign_event card for a connected app, deletes the app, and returns the stale card. */
+    private suspend fun CoroutineScope.staleCard(accountPolicy: Int, name: String): Triple<PendingBunkerRequest, String, String> {
+        val account = AccountManager.addAccount(KeyPair(), name = name, signPolicy = accountPolicy)
+        val store = AmberDesktop.store(account.npub)
+        val clientKp = KeyPair()
+        val client = NostrSignerInternal(clientKp)
+        val clientHex = clientKp.pubKey.toHexKey()
+        store.upsert(AppWithPermissions(AppRecord(key = clientHex, name = name, relays = listOf(relay.url), pubKey = account.hexKey, isConnected = true, signPolicy = 1)))
+
+        launch { AmberDesktop.engine.consume(signRequest(client, account.hexKey, "$name-1"), relay) }
+        val card = withTimeout(20_000) {
+            while (AmberDesktop.engine.pending.value.none { it.localKey == clientHex }) delay(50)
+            AmberDesktop.engine.pending.value.first { it.localKey == clientHex }
+        }
+        store.delete(clientHex)
+        return Triple(card, account.npub, clientHex)
+    }
+
+    @Test
+    fun rejectingAStaleCardDoesNotRecreateTheApp() = runBlocking {
+        // Account default "fully trust" is the worst case: a recreated app would auto-sign.
+        val (card, npub, clientHex) = staleCard(accountPolicy = 2, name = "stale-reject")
+
+        withTimeoutOrNull(20_000) { AmberDesktop.engine.reject(card, RememberType.NEVER).join() }
+
+        assertNull(AmberDesktop.store(npub).getByKey(clientHex))
+    }
+
+    @Test
+    fun approvingAStaleCardDoesNotRecreateTheApp() = runBlocking {
+        val (card, npub, clientHex) = staleCard(accountPolicy = 1, name = "stale-approve")
+
+        withTimeoutOrNull(20_000) { AmberDesktop.engine.approve(card, RememberType.ALWAYS).join() }
+
+        val store = AmberDesktop.store(npub)
+        assertNull(store.getByKey(clientHex))
+        assertFalse(store.history.value.any { it.appKey == clientHex && it.accepted })
+    }
+}

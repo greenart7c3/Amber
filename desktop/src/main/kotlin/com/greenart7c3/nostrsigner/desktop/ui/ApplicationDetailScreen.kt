@@ -369,6 +369,8 @@ fun ApplicationDetailScreen(
                 // subscription is left behind.
                 AmberDesktop.applicationIOScope.launch {
                     store.delete(appKey)
+                    // Queued requests from the removed app must not linger as approval cards.
+                    AmberDesktop.engine.dropPending("application removed") { it.account.npub == account.npub && it.localKey == appKey }
                     AmberDesktop.engine.checkForNewRelaysAndUpdateAllFilters()
                     Toaster.toast(Strings.get("d_application_removed", language))
                 }

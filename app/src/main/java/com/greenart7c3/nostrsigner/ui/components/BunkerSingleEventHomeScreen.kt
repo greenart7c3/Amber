@@ -32,6 +32,7 @@ import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.database.ApplicationDao
 import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
+import com.greenart7c3.nostrsigner.database.isAllRelaysGrant
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.AmberBunkerRequest
 import com.greenart7c3.nostrsigner.models.Permission
@@ -620,11 +621,11 @@ fun BunkerSingleEventHomeScreen(
                 // Permission is per-relay hostname extracted from the event's "relay" tag
                 val relayUrl = RelayUrlUtils.extractHostAndPort(AmberEvent.relay(event))
 
-                // Check for a relay-specific permission first, then wildcard "*" (all relays)
+                // Check for a relay-specific permission first, then an all-relays grant ("*" or blank)
                 val permission = applicationEntity?.permissions?.firstOrNull {
                     it.pkKey == key && it.type == type.toString() && it.kind == 22242 && it.relay == relayUrl
                 } ?: applicationEntity?.permissions?.firstOrNull {
-                    it.pkKey == key && it.type == type.toString() && it.kind == 22242 && it.relay == "*"
+                    it.pkKey == key && it.type == type.toString() && it.kind == 22242 && isAllRelaysGrant(it.relay)
                 }
 
                 // If the auth whitelist is non-empty and this relay is not in it, auto-reject

@@ -51,3 +51,11 @@ data class ApplicationPermissionsEntity(
         else -> null
     }
 }
+
+/**
+ * Whether a kind-22242 grant's [relay] covers every relay. Matches
+ * [ApplicationDao.getWildcardRelayPermission]: an explicit "*", or the blank
+ * relay the basic sign policy stores, both mean all relays, so the approval
+ * screens decide like the provider and NIP-46 paths.
+ */
+fun isAllRelaysGrant(relay: String?): Boolean = relay == "*" || relay.isNullOrEmpty()

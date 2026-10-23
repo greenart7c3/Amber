@@ -8,9 +8,13 @@ import com.greenart7c3.nostrsigner.database.HistoryDao
 import com.greenart7c3.nostrsigner.database.HistoryDatabase
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.AmberSettings
+import com.greenart7c3.nostrsigner.models.SignerType
+import com.greenart7c3.nostrsigner.service.AmberUtils
 import com.greenart7c3.nostrsigner.service.installAmberInstance
 import com.vitorpamplona.quartz.nip01Core.core.Event
 import com.vitorpamplona.quartz.utils.TimeUtils
+import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkObject
@@ -178,5 +182,65 @@ class SignerProviderQueryTest {
         assertNull(cursor)
         verify { dao.getPermissionForRelay(REQUESTER, "SIGN_EVENT", 22242, WHITELISTED_HOST) }
         verify(exactly = 0) { account.signSync<Event>(any(), any(), any(), any()) }
+    }
+
+    private fun decryptUri(): Uri {
+        val uri = mockk<Uri>()
+        every { uri.toString() } returns "content://${BuildConfig.APPLICATION_ID}.NIP44_DECRYPT"
+        return uri
+    }
+
+    private fun queryDecrypt() = SignerProviderQuery.query(
+        context = context,
+        requesterId = REQUESTER,
+        callerPackageName = null,
+        operationUri = decryptUri(),
+        arguments = arrayOf("ciphertext", "cd".repeat(32), NPUB),
+    )
+
+    private fun decryptRow(type: String, accept: Boolean) = ApplicationPermissionsEntity(
+        id = 2,
+        pkKey = REQUESTER,
+        type = type,
+        kind = null,
+        acceptable = accept,
+        rememberType = 0,
+        acceptUntil = if (accept) TimeUtils.now() + 3600 else 0,
+        rejectUntil = if (accept) 0 else TimeUtils.now() + 3600,
+    )
+
+    /** Only [rows] exist for the requester; every other decrypt lookup is empty. */
+    private fun stubDecryptGrants(vararg rows: ApplicationPermissionsEntity) {
+        every { amber.getLogDatabase(any()) } returns mockk(relaxed = true)
+        every { dao.getSignPolicy(REQUESTER) } returns null
+        every { dao.getPermission(REQUESTER, any<String>()) } answers { rows.firstOrNull { it.type == secondArg<String>() } }
+        every { dao.getPermission(REQUESTER, any<String>(), any<Int>()) } returns null
+        mockkObject(AmberUtils)
+        coEvery { AmberUtils.encryptOrDecryptData(any(), any(), any(), any(), any(), any()) } returns "plaintext"
+    }
+
+    // A reject-only caller used to pass the pre-check: Amber decrypted, and the
+    // response (rejected for an event, null for anything else) told the caller
+    // how the plaintext classified.
+    @Test
+    fun `a caller holding only rejections is answered without decrypting`() {
+        stubDecryptGrants(decryptRow("DECRYPT_EVENT", accept = false))
+        try {
+            assertNull(queryDecrypt())
+            coVerify(exactly = 0) { AmberUtils.encryptOrDecryptData(any(), any(), any(), any(), any(), any()) }
+        } finally {
+            unmockkObject(AmberUtils)
+        }
+    }
+
+    @Test
+    fun `a caller with an accepting grant still gets its request decrypted`() {
+        stubDecryptGrants(decryptRow("DECRYPT_CLEAR_TEXT", accept = true))
+        try {
+            queryDecrypt()
+            coVerify(exactly = 1) { AmberUtils.encryptOrDecryptData("ciphertext", SignerType.NIP44_DECRYPT, any(), any(), any(), any()) }
+        } finally {
+            unmockkObject(AmberUtils)
+        }
     }
 }

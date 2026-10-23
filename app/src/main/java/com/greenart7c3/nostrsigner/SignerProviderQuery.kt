@@ -5,6 +5,7 @@ import android.database.Cursor
 import android.database.MatrixCursor
 import android.net.Uri
 import com.greenart7c3.nostrsigner.database.ApplicationDao
+import com.greenart7c3.nostrsigner.database.ApplicationPermissionsEntity
 import com.greenart7c3.nostrsigner.database.HistoryEntity
 import com.greenart7c3.nostrsigner.database.LogEntity
 import com.greenart7c3.nostrsigner.models.Account
@@ -321,15 +322,19 @@ object SignerProviderQuery {
                     // surfaces its own approval flow), so returning null here
                     // is externally identical, but the private key is never
                     // touched for an unknown caller. The classified-specific
-                    // grant case (e.g. a grant for DECRYPT_EVENT only) is
-                    // preserved: ANY row of a relevant type counts as "has a
-                    // relevant grant", so we still proceed to decrypt +
-                    // classify, and the final per-type check below honors
-                    // accept/reject precisely.
+                    // grant case (e.g. an accept for DECRYPT_EVENT only) is
+                    // preserved: any row of a relevant type that can accept
+                    // counts, so we still decrypt + classify, and the final
+                    // per-type check below honors accept/reject precisely.
+                    // Rows that can only reject do not count: decrypting for
+                    // them could only end in "rejected" or "no grant", and
+                    // which one it is would tell the caller how the plaintext
+                    // classified. Returning null without decrypting keeps that
+                    // hidden; the intent flow still applies the rejection.
                     if (!isEncrypt) {
                         val preSignPolicy = permDao.getSignPolicy(requesterId)
                         val preAuthorized = preSignPolicy == 2 ||
-                            hasAnyDecryptPermission(permDao, requesterId, type, v3Kind, stringType)
+                            hasAnyAcceptingDecryptPermission(permDao, requesterId, type, v3Kind, stringType)
                         if (!preAuthorized) {
                             AmberLog.d(
                                 Amber.TAG,
@@ -698,31 +703,35 @@ object SignerProviderQuery {
      * requester has *any* permission row that could decide a decrypt of this
      * type — generic ([type.toString()]), any of the V2 classified content
      * types, the NIP-level grant, or (for V3) the kind-scoped / all-kinds rows.
-     * Used to short-circuit a decrypt request from a totally unknown caller
-     * *before* the private key is invoked, closing a key-use / timing / error
-     * oracle. Does not inspect accept/reject state: a row that auto-rejects
-     * still counts as "relevant" so the existing classify-and-decide path
-     * below runs and returns [rejectedCursor] as appropriate.
+     * Used to short-circuit a decrypt request *before* the private key is
+     * invoked, closing a key-use / timing / error oracle. Only rows whose
+     * active decision is accept count: a caller that holds nothing but
+     * rejections (or always-ask rows) can never receive a result, and
+     * decrypting for it would reveal the plaintext's classification through
+     * the rejected-versus-null response.
      */
-    private fun hasAnyDecryptPermission(
+    private fun hasAnyAcceptingDecryptPermission(
         permDao: ApplicationDao,
         requesterId: String,
         type: SignerType,
         v3Kind: Int?,
         stringType: String,
     ): Boolean {
-        if (permDao.getPermission(requesterId, type.toString()) != null) return true
+        val now = TimeUtils.now()
+        fun ApplicationPermissionsEntity?.canAccept() = this?.activeDecision(now) == true
+
+        if (permDao.getPermission(requesterId, type.toString()).canAccept()) return true
 
         if (v3Kind != null) {
-            if (permDao.getPermission(requesterId, type.toString(), v3Kind) != null) return true
-            if (permDao.getPermissionAllKinds(requesterId, type.toString()) != null) return true
+            if (permDao.getPermission(requesterId, type.toString(), v3Kind).canAccept()) return true
+            if (permDao.getPermissionAllKinds(requesterId, type.toString()).canAccept()) return true
         } else {
             // V2 classified content-type grants. The set of possible types
             // comes from permissionTypeFromContent / EncryptedDataKind.
-            if (permDao.getPermission(requesterId, "DECRYPT_CLEAR_TEXT") != null) return true
-            if (permDao.getPermission(requesterId, "DECRYPT_EVENT") != null) return true
-            if (permDao.getPermission(requesterId, "DECRYPT_TAG_ARRAY") != null) return true
-            if (permDao.getPermission(requesterId, "DECRYPT_ZAP_EVENT") != null) return true
+            if (permDao.getPermission(requesterId, "DECRYPT_CLEAR_TEXT").canAccept()) return true
+            if (permDao.getPermission(requesterId, "DECRYPT_EVENT").canAccept()) return true
+            if (permDao.getPermission(requesterId, "DECRYPT_TAG_ARRAY").canAccept()) return true
+            if (permDao.getPermission(requesterId, "DECRYPT_ZAP_EVENT").canAccept()) return true
 
             // NIP-level fallback grant (matches the lookup at line ~341-358).
             val nip = when (stringType) {
@@ -731,7 +740,7 @@ object SignerProviderQuery {
                 else -> null
             }
             nip?.let {
-                if (permDao.getPermission(requesterId, "NIP", it) != null) return true
+                if (permDao.getPermission(requesterId, "NIP", it).canAccept()) return true
             }
         }
         return false

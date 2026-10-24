@@ -30,12 +30,17 @@ object CrashReporter {
 
     private val file: File get() = File(AppDirs.dataDir, "crash.trace")
 
+    /** Marks a report encrypted with the master key; its plaintext is only readable after unlock. */
+    internal const val ENCRYPTED_HEADER = "AMBERCRASH1:"
+    private const val CONTEXT = "crash.trace"
+
     /** The report waiting for the user's decision, if any. */
     val pending = MutableStateFlow<String?>(null)
 
     /** Installs the uncaught-exception handler and loads a report left by a previous run. */
     fun install() {
-        pending.value = runCatching { file.takeIf { it.exists() }?.readText()?.ifBlank { null } }.getOrNull()
+        // An encrypted report waits for the unlock (see [loadAfterUnlock]).
+        pending.value = runCatching { file.takeIf { it.exists() }?.readText()?.ifBlank { null }?.takeUnless { it.startsWith(ENCRYPTED_HEADER) } }.getOrNull()
         val previous = Thread.getDefaultUncaughtExceptionHandler()
         Thread.setDefaultUncaughtExceptionHandler { thread, e ->
             runCatching { save(e) }
@@ -52,8 +57,39 @@ object CrashReporter {
     fun save(e: Throwable) {
         if (isJunkReport(e)) return
         val report = ReportAssembler.buildReport(e)
-        AppDirs.writeAtomically(file, report.toByteArray(Charsets.UTF_8))
+        AppDirs.writeAtomically(file, storedForm(e, report).toByteArray(Charsets.UTF_8))
         pending.value = report
+    }
+
+    /**
+     * What goes on disk. Exception messages can quote request data that the
+     * redaction misses (short secrets, decrypted text), so with a passphrase
+     * set the report is encrypted with the master key, and when the key is
+     * not available (locked) only exception types and stack frames are kept.
+     * Before a passphrase exists there is no key to encrypt with.
+     */
+    private fun storedForm(e: Throwable, report: String): String {
+        if (!PassphraseLock.isEnabled()) return report
+        return runCatching { ENCRYPTED_HEADER + DesktopKeyStore.encryptString(report, CONTEXT) }
+            .getOrElse { ReportAssembler.buildReport(e, includeMessages = false) }
+    }
+
+    /**
+     * Called once the passphrase lock is unlocked: decrypts a report saved
+     * encrypted by a previous run and offers it. One that cannot be decrypted
+     * (another master key, tampered) is discarded.
+     */
+    fun loadAfterUnlock() {
+        // Still locked: leave the report for the next unlock rather than lose it.
+        if (pending.value != null || !DesktopKeyStore.isMasterKeyAvailable()) return
+        val stored = runCatching { file.takeIf { it.exists() }?.readText() }.getOrNull() ?: return
+        if (!stored.startsWith(ENCRYPTED_HEADER)) return
+        pending.value = runCatching { DesktopKeyStore.decryptString(stored.removePrefix(ENCRYPTED_HEADER), CONTEXT) }
+            .onFailure {
+                AmberLogger.e("CrashReporter", "Discarding a crash report that cannot be decrypted", it)
+                file.delete()
+            }
+            .getOrNull()
     }
 
     fun dismiss() {
@@ -93,7 +129,11 @@ object CrashReporter {
 }
 
 object ReportAssembler {
-    fun buildReport(e: Throwable): String = buildString {
+    /**
+     * The report for [e]. Without [includeMessages] it holds exception types
+     * and stack frames only, never a message (which can quote request data).
+     */
+    fun buildReport(e: Throwable, includeMessages: Boolean = true): String = buildString {
         append(e.javaClass.simpleName)
         append(": ")
         appendLine(BuildVariant.version + "-DESKTOP" + if (BuildVariant.isDebug) "-DEBUG" else "")
@@ -113,7 +153,7 @@ object ReportAssembler {
         // or crypto exceptions quoting bad input) and file paths: redact key
         // material, long base64 blobs and the home directory, as on Android.
         appendLine("```")
-        appendThrowable(e, indent = "")
+        appendThrowable(e, indent = "", includeMessages)
         appendLine("```")
     }
 
@@ -123,7 +163,7 @@ object ReportAssembler {
 
     // The whole cause chain (Android stops at the first cause); identity set
     // guards against cyclic causes.
-    private fun StringBuilder.appendThrowable(e: Throwable, indent: String) {
+    private fun StringBuilder.appendThrowable(e: Throwable, indent: String, includeMessages: Boolean) {
         val seen = Collections.newSetFromMap(IdentityHashMap<Throwable, Boolean>())
         var current: Throwable? = e
         var depth = 0
@@ -133,7 +173,7 @@ object ReportAssembler {
                 appendLine()
                 append(pad.dropLast(4)).appendLine("Cause:")
             }
-            append(pad).appendLine(redact(current.toString()))
+            append(pad).appendLine(if (includeMessages) redact(current.toString()) else current.javaClass.name)
             current.stackTrace.forEach { append(pad).append("    ").appendLine(redact(it.toString())) }
             current = current.cause
             depth++

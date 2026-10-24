@@ -66,9 +66,11 @@ class CrashReporterTest {
         assertTrue(file.exists())
         assertTrue(CrashReporter.pending.value!!.contains("boom"))
 
-        // A restart picks the saved report up again.
+        // A restart picks the saved report up again: at launch, or (stored
+        // encrypted when another test class has set a passphrase) at unlock.
         CrashReporter.pending.value = null
         CrashReporter.install()
+        CrashReporter.loadAfterUnlock()
         assertTrue(CrashReporter.pending.value!!.contains("boom"))
 
         CrashReporter.dismiss()
@@ -79,5 +81,17 @@ class CrashReporterTest {
         CrashReporter.save(OutOfMemoryError("junk"))
         assertFalse(file.exists())
         assertNull(CrashReporter.pending.value)
+    }
+
+    @Test
+    fun aMessagelessReportKeepsTypesAndFramesOnly() {
+        val e = IllegalStateException("short secret abc123", IllegalArgumentException("decrypted: hello"))
+        val report = ReportAssembler.buildReport(e, includeMessages = false)
+
+        assertTrue(report.contains("java.lang.IllegalStateException"))
+        assertTrue(report.contains("java.lang.IllegalArgumentException"))
+        assertTrue(report.contains("CrashReporterTest"))
+        assertFalse(report.contains("abc123"))
+        assertFalse(report.contains("hello"))
     }
 }

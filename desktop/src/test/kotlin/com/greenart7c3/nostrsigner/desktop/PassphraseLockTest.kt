@@ -8,6 +8,7 @@ import com.greenart7c3.nostrsigner.desktop.core.AmberDesktop
 import com.greenart7c3.nostrsigner.desktop.core.AppDirs
 import com.greenart7c3.nostrsigner.desktop.core.AppRecord
 import com.greenart7c3.nostrsigner.desktop.core.AppWithPermissions
+import com.greenart7c3.nostrsigner.desktop.core.CrashReporter
 import com.greenart7c3.nostrsigner.desktop.core.DesktopKeyStore
 import com.greenart7c3.nostrsigner.desktop.core.PassphraseLock
 import com.greenart7c3.nostrsigner.desktop.core.PasswordStore
@@ -311,6 +312,35 @@ class PassphraseLockTest {
         assertEquals(PassphraseLock.Status.LOCKED, PassphraseLock.state.value)
         assertFalse("the lock that came last wins: no key left behind", DesktopKeyStore.isMasterKeyAvailable())
         assertTrue(PassphraseLock.unlock(pass.toCharArray()))
+
+        // Crash reports: exception messages can quote request data, so with a
+        // passphrase set nothing readable reaches the disk.
+        val crashFile = File(dataDir, "crash.trace")
+        try {
+            // Unlocked: the full report is stored encrypted with the master key.
+            CrashReporter.save(IllegalStateException("crash-secret-1"))
+            assertTrue(crashFile.readText().startsWith(CrashReporter.ENCRYPTED_HEADER))
+            assertFalse(crashFile.readText().contains("crash-secret-1"))
+            // After a restart it is only readable once unlocked.
+            CrashReporter.pending.value = null
+            PassphraseLock.lock()
+            CrashReporter.loadAfterUnlock()
+            assertNull(CrashReporter.pending.value)
+            assertTrue("kept for the next unlock", crashFile.exists())
+            assertTrue(PassphraseLock.unlock(pass.toCharArray()))
+            CrashReporter.loadAfterUnlock()
+            assertTrue(CrashReporter.pending.value!!.contains("crash-secret-1"))
+            CrashReporter.dismiss()
+
+            // Locked (no key): only exception types and frames are stored.
+            PassphraseLock.lock()
+            CrashReporter.save(IllegalStateException("crash-secret-2"))
+            assertFalse(crashFile.readText().contains("crash-secret-2"))
+            assertTrue(crashFile.readText().contains("java.lang.IllegalStateException"))
+        } finally {
+            CrashReporter.dismiss()
+            if (PassphraseLock.isLocked()) assertTrue(PassphraseLock.unlock(pass.toCharArray()))
+        }
     }
 
     @Test

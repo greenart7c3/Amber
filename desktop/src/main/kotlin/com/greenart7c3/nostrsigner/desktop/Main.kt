@@ -87,6 +87,8 @@ object Session {
                     }
 
                     PassphraseLock.Status.UNLOCKED -> {
+                        // A report saved encrypted by a previous run is readable now.
+                        CrashReporter.loadAfterUnlock()
                         val saved = AmberDesktop.settings.currentAccount
                         val npub = saved.ifBlank { AccountsStore.accounts.value.firstOrNull()?.npub ?: "" }
                         if (npub.isNotBlank()) {

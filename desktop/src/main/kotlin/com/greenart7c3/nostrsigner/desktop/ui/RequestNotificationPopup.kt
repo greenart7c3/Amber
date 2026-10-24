@@ -57,8 +57,8 @@ import androidx.compose.ui.window.rememberWindowState
 import com.greenart7c3.nostrsigner.desktop.core.AmberLogger
 import com.greenart7c3.nostrsigner.desktop.core.BuildVariant
 import com.greenart7c3.nostrsigner.desktop.core.PendingBunkerRequest
-import com.greenart7c3.nostrsigner.desktop.core.SignerType
 import com.greenart7c3.nostrsigner.desktop.core.Strings
+import com.greenart7c3.nostrsigner.desktop.core.allowsQuickApprove
 import com.sun.jna.Native
 import java.awt.GraphicsEnvironment
 import java.awt.geom.RoundRectangle2D
@@ -94,8 +94,8 @@ private class PopupAction(val label: String, val onClick: () -> Unit)
  *
  * It follows the OS light/dark appearance, never takes focus, opens Amber when
  * its body is clicked, and closes itself after [POPUP_TIMEOUT_MS] unless the
- * pointer rests on it. Connect requests only get Reject: approving one needs
- * the permission choices on its card.
+ * pointer rests on it. Only low-risk requests get Approve (see
+ * [allowsQuickApprove]); the rest only get Reject and are approved on the card.
  */
 @Composable
 fun RequestNotificationPopup(
@@ -135,7 +135,7 @@ fun RequestNotificationPopup(
     }
 
     val actions = buildList {
-        if (request.type != SignerType.CONNECT) add(PopupAction(Strings.get("d_approve", language), onApprove))
+        if (request.allowsQuickApprove()) add(PopupAction(Strings.get("d_approve", language), onApprove))
         add(PopupAction(Strings.get("reject", language), onReject))
     }
 

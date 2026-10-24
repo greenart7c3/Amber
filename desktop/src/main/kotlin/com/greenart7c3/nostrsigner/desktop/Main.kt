@@ -34,10 +34,11 @@ import com.greenart7c3.nostrsigner.desktop.core.Notifier
 import com.greenart7c3.nostrsigner.desktop.core.PassphraseLock
 import com.greenart7c3.nostrsigner.desktop.core.PendingBunkerRequest
 import com.greenart7c3.nostrsigner.desktop.core.SettingsStore
-import com.greenart7c3.nostrsigner.desktop.core.SignerType
 import com.greenart7c3.nostrsigner.desktop.core.Strings
 import com.greenart7c3.nostrsigner.desktop.core.UriLaunch
+import com.greenart7c3.nostrsigner.desktop.core.allowsQuickApprove
 import com.greenart7c3.nostrsigner.desktop.core.describe
+import com.greenart7c3.nostrsigner.desktop.core.notificationAccountLine
 import com.greenart7c3.nostrsigner.desktop.ui.App
 import com.greenart7c3.nostrsigner.desktop.ui.MIN_WINDOW_SIZE
 import com.greenart7c3.nostrsigner.desktop.ui.NostrSignerTheme
@@ -323,16 +324,17 @@ fun main(args: Array<String>) {
             if (request != null && !(DesktopTray.windowVisible.value && windowFocused)) {
                 var notified = false
                 if (settings.showNotifications) {
-                    val message = "${request.appName} ${request.type.describe(request.kind, request.encryptedContent, language)}"
+                    val accountLine = request.notificationAccountLine(AccountsStore.accounts.value, language)
+                    val message = listOfNotNull("${request.appName} ${request.type.describe(request.kind, request.encryptedContent, language)}", accountLine).joinToString("\n")
                     // Daemons that never draw action buttons get Amber's own popup.
                     val nativeButtons = isLinux && withContext(Dispatchers.IO) { Notifier.linuxDaemonShowsButtons() }
                     if (nativeButtons) {
                         // The OS-native notification channel (freedesktop /
                         // notify-send, incl. Wayland/Hyprland), with Approve /
-                        // Reject buttons. A connect needs the choices on its
-                        // card, so it only offers Reject.
+                        // Reject buttons. Only low-risk requests can be approved
+                        // from here; the rest need their card, so only Reject.
                         val actions = buildList {
-                            if (request.type != SignerType.CONNECT) {
+                            if (request.allowsQuickApprove()) {
                                 add(Notifier.Action("approve", Strings.get("d_approve", language)) { answerFromNotification(request, approve = true) })
                             }
                             add(Notifier.Action("reject", Strings.get("reject", language)) { answerFromNotification(request, approve = false) })
@@ -362,7 +364,10 @@ fun main(args: Array<String>) {
                 RequestNotificationPopup(
                     request = request,
                     title = request.appName,
-                    message = request.type.describe(request.kind, request.encryptedContent, language),
+                    message = listOfNotNull(
+                        request.type.describe(request.kind, request.encryptedContent, language),
+                        request.notificationAccountLine(AccountsStore.accounts.value, language),
+                    ).joinToString("\n"),
                     language = language,
                     onApprove = {
                         popupRequest = null

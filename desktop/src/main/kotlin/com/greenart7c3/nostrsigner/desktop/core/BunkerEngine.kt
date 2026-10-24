@@ -62,6 +62,16 @@ fun localPubKeyFromPrivKey(privKeyHex: String): String = KeyPair(privKey = privK
  */
 internal fun hasAmbiguousRelayTags(kind: Int, tags: Array<Array<String>>): Boolean = kind == 22242 && tags.count { it.size > 1 && it[0] == "relay" } > 1
 
+/**
+ * The saved connection that approving [req] for [accountNpub] would replace:
+ * a nostrconnect:// connect whose client key is already saved. A bunker://
+ * reconnect under the same key is the normal flow and is not a replacement.
+ */
+fun connectionToReplace(req: PendingBunkerRequest, accountNpub: String): AppWithPermissions? {
+    if (!req.isNostrConnectUri || req.type != SignerType.CONNECT) return null
+    return AmberDesktop.store(accountNpub).getByKey(req.localKey)
+}
+
 data class PendingBunkerRequest(
     val request: BunkerRequest,
     val type: SignerType,
@@ -939,6 +949,14 @@ class BunkerEngine(
         val defaultRelays = AmberDesktop.defaultRelays()
 
         var savedApplication = store.getByKey(key)
+        if (connectionToReplace(req, acc.npub) != null) {
+            // A nostrconnect URI names the client key itself. Approving it
+            // replaces the connection saved under that key (the card shows
+            // which, like Android's "Replace connection" dialog) instead of
+            // silently merging into it and keeping its grants and relays.
+            store.delete(key)
+            savedApplication = null
+        }
         if (savedApplication == null && req.request is BunkerRequestConnect && !req.request.secret.isNullOrBlank()) {
             // The bunker:// placeholder is stored under its secret; migrate it
             // to the client's real pubkey on first connect.

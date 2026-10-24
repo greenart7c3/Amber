@@ -49,6 +49,7 @@ import com.greenart7c3.nostrsigner.desktop.core.RememberType
 import com.greenart7c3.nostrsigner.desktop.core.SignerDescriptions
 import com.greenart7c3.nostrsigner.desktop.core.SignerType
 import com.greenart7c3.nostrsigner.desktop.core.Strings
+import com.greenart7c3.nostrsigner.desktop.core.connectionToReplace
 import com.greenart7c3.nostrsigner.desktop.core.contentScopedSignerTypes
 import com.greenart7c3.nostrsigner.desktop.core.describe
 import com.greenart7c3.nostrsigner.desktop.core.nip44v3SignerTypes
@@ -183,6 +184,23 @@ private fun RequestCard(
             }
 
             if (req.type == SignerType.CONNECT) {
+                // Approving a nostrconnect URI for a client key that is already
+                // saved replaces that connection; say so before Approve.
+                val replaced = remember(req, connectChoice.accountNpub) {
+                    connectionToReplace(req, connectChoice.accountNpub)
+                }
+                if (replaced != null) {
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        Strings.format(
+                            "replace_app_message",
+                            replaced.app.name.ifBlank { replaced.app.key.toShortenHex() },
+                            language = language,
+                        ),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                }
                 // The relays the client asks Amber to answer on come straight
                 // from the nostrconnect:// URI, so show them: they are part of
                 // what "Approve" agrees to. An attacker-chosen cleartext relay

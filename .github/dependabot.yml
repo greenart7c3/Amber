@@ -1,0 +1,16 @@
+# The workflows pin every action to a commit SHA (with its tag as a comment),
+# so they never update on their own: Dependabot proposes the new SHA and tag.
+# Gradle dependencies are left out on purpose: every bump has to regenerate
+# gradle/verification-metadata.xml (see AGENTS.md), which Dependabot can't do.
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    groups:
+      github-actions:
+        patterns:
+          - "*"
+    commit-message:
+      prefix: "ci"

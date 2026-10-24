@@ -34,6 +34,7 @@ import kotlinx.coroutines.withTimeout
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
+import org.junit.Assume.assumeTrue
 import org.junit.Before
 import org.junit.BeforeClass
 import org.junit.Test
@@ -374,6 +375,43 @@ class LocalSignerTest {
         assertEquals("s", reply.get("id").asText())
         assertEquals(LocalSignerProtocol.INTERNAL_ERROR, reply.get("error").get("code").asInt())
         assertTrue(AmberDesktop.engine.pending.value.none { it.appName == name })
+    }
+
+    @Test
+    fun theSocketDirectoryIsRestrictedToItsOwner() {
+        assumeTrue("posix" in FileSystems.getDefault().supportedFileAttributeViews())
+        val dir = LocalSigner.socketPath().parent
+        LocalSigner.stop()
+        // A directory left group/world-readable is tightened back to 0700 on start.
+        Files.setPosixFilePermissions(dir, java.nio.file.attribute.PosixFilePermissions.fromString("rwxr-xr-x"))
+        assertEquals(LocalSigner.Status.RUNNING, LocalSigner.start())
+        assertEquals("rwx------", java.nio.file.attribute.PosixFilePermissions.toString(Files.getPosixFilePermissions(dir)))
+    }
+
+    @Test
+    fun aSymlinkedSocketDirectoryIsRefused() {
+        assumeTrue("posix" in FileSystems.getDefault().supportedFileAttributeViews())
+        val dir = LocalSigner.socketPath().parent
+        LocalSigner.stop()
+        val moved = dir.resolveSibling("nostr-real")
+        Files.move(dir, moved)
+        try {
+            // Someone else's directory behind a link must not receive the socket.
+            Files.createSymbolicLink(dir, Files.createTempDirectory("amber-elsewhere"))
+            assertEquals(LocalSigner.Status.FAILED, LocalSigner.start())
+            assertEquals("is a symbolic link", LocalSigner.privateDirProblem(dir))
+        } finally {
+            Files.deleteIfExists(dir)
+            Files.move(moved, dir)
+        }
+        assertEquals(LocalSigner.Status.RUNNING, LocalSigner.start())
+    }
+
+    @Test
+    fun aFileInPlaceOfTheSocketDirectoryIsRefused() {
+        assumeTrue("posix" in FileSystems.getDefault().supportedFileAttributeViews())
+        val file = Files.createTempFile("amber-not-a-dir", "")
+        assertEquals("is not a directory", LocalSigner.privateDirProblem(file))
     }
 
     @Test

@@ -16,6 +16,7 @@ import java.nio.channels.Channels
 import java.nio.channels.ServerSocketChannel
 import java.nio.channels.SocketChannel
 import java.nio.file.Files
+import java.nio.file.LinkOption
 import java.nio.file.Path
 import java.nio.file.attribute.PosixFilePermissions
 import java.security.MessageDigest
@@ -75,7 +76,12 @@ object LocalSigner {
         status.value = try {
             val dir = path.parent.toFile()
             dir.mkdirs()
-            AppDirs.restrictToOwner(dir)
+            // Checked (and set to 0700) without following links, before anything touches it.
+            privateDirProblem(path.parent)?.let { problem ->
+                AmberLogger.e("LocalSigner", "Not starting: ${path.parent} $problem")
+                return Status.FAILED.also { status.value = it }
+            }
+            if (!isPosix(path)) AppDirs.restrictToOwner(dir)
             if (Files.exists(path)) {
                 if (isLive(path)) {
                     AmberLogger.i("LocalSigner", "$path is served by another signer; not taking it over")
@@ -85,7 +91,16 @@ object LocalSigner {
             }
             val channel = ServerSocketChannel.open(StandardProtocolFamily.UNIX)
             channel.bind(UnixDomainSocketAddress.of(path))
-            runCatching { Files.setPosixFilePermissions(path, PosixFilePermissions.fromString("rw-------")) }
+            if (isPosix(path)) {
+                // The documented 0600 socket: if it can't be set, don't serve.
+                try {
+                    Files.setPosixFilePermissions(path, PosixFilePermissions.fromString("rw-------"))
+                } catch (e: Exception) {
+                    runCatching { channel.close() }
+                    runCatching { Files.deleteIfExists(path) }
+                    throw e
+                }
+            }
             server = channel
             Thread({ acceptLoop(channel) }, "amber-local-signer").apply { isDaemon = true }.start()
             if (shutdownHook == null) {
@@ -113,6 +128,33 @@ object LocalSigner {
         sessions.values.forEach { it.close() }
         runCatching { Files.deleteIfExists(socketPath()) }
         status.value = Status.STOPPED
+    }
+
+    private fun isPosix(path: Path): Boolean = path.fileSystem.supportedFileAttributeViews().contains("posix")
+
+    /**
+     * Why [dir] can't hold the socket, or null when it can. On POSIX systems
+     * it must be a real directory (not a symlink) owned by this user, and is
+     * set to 0700 and read back, so the documented 0600-socket-in-0700-dir
+     * guarantee is enforced rather than best-effort. Windows has no POSIX
+     * permissions; the user-profile ACLs scope access there.
+     */
+    internal fun privateDirProblem(dir: Path): String? {
+        if (!isPosix(dir)) return null
+        return try {
+            when {
+                Files.isSymbolicLink(dir) -> "is a symbolic link"
+                !Files.isDirectory(dir, LinkOption.NOFOLLOW_LINKS) -> "is not a directory"
+                Files.getOwner(dir, LinkOption.NOFOLLOW_LINKS).name != System.getProperty("user.name") -> "is owned by another user"
+                else -> {
+                    val ownerOnly = PosixFilePermissions.fromString("rwx------")
+                    Files.setPosixFilePermissions(dir, ownerOnly)
+                    if (Files.getPosixFilePermissions(dir, LinkOption.NOFOLLOW_LINKS) == ownerOnly) null else "could not be restricted to its owner"
+                }
+            }
+        } catch (e: Exception) {
+            "could not be checked: ${e.message}"
+        }
     }
 
     private fun isLive(path: Path): Boolean = runCatching {

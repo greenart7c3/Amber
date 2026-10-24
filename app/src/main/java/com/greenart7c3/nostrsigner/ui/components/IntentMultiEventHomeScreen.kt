@@ -99,7 +99,9 @@ fun IntentMultiEventHomeScreen(
                 .padding(bottom = 4.dp),
         )
 
-        SigningAs(accountParam)
+        // Confirm signs each request under its own account (intentsByAccount below).
+        val batchAccounts = rememberBatchAccounts(intents.map { it.currentAccount }, accountParam)
+        batchAccounts.SigningAsHeader()
 
         val groups = remember(intents) {
             groupRequests(intents) {
@@ -147,6 +149,7 @@ fun IntentMultiEventHomeScreen(
                         IntentRequestCard(
                             context = context,
                             intent = intent,
+                            signingAs = batchAccounts.forCard(intent.currentAccount),
                             approved = MultiEventScreenIntents.checkedStates[intent.id] ?: true,
                             onApproveChanged = {
                                 MultiEventScreenIntents.checkedStates[intent.id] = it
@@ -170,7 +173,7 @@ fun IntentMultiEventHomeScreen(
                         var closeApp = true
                         onRemoveIntentData(intents, IntentResultType.REMOVE)
                         val localKey = packageName ?: return@launch
-                        val intentsByAccount = intents.groupBy { it.currentAccount.ifBlank { accountParam.npub } }
+                        val intentsByAccount = intents.groupBy { batchAccountNpub(it.currentAccount, accountParam.npub) }
 
                         for ((accountNpub, accountIntents) in intentsByAccount) {
                             val thisAccount = if (accountNpub == accountParam.npub) {
@@ -379,6 +382,7 @@ fun IntentMultiEventHomeScreen(
 private fun IntentRequestCard(
     context: Context,
     intent: IntentData,
+    signingAs: Account?,
     approved: Boolean,
     onApproveChanged: (Boolean) -> Unit,
 ) {
@@ -492,6 +496,8 @@ private fun IntentRequestCard(
                     }
                 }
             }
+
+            signingAs?.let { SigningAs(it) }
 
             AmberToggles(
                 selected = approved,

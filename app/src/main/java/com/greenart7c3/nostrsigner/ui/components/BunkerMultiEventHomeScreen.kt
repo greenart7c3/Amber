@@ -182,7 +182,9 @@ fun BunkerMultiEventHomeScreen(
             )
         }
 
-        SigningAs(accountParam)
+        // Confirm signs each request under its own account (see below).
+        val batchAccounts = rememberBatchAccounts(bunkerRequests.map { it.currentAccount }, accountParam)
+        batchAccounts.SigningAsHeader()
 
         val expandedGroups = remember { mutableStateMapOf<AppRequestGroupKey, Boolean>() }
         LazyColumn(
@@ -237,6 +239,7 @@ fun BunkerMultiEventHomeScreen(
                             BunkerRequestCard(
                                 context = context,
                                 bunkerRequest = bunkerRequest,
+                                signingAs = batchAccounts.forCard(bunkerRequest.currentAccount),
                                 approved = MultiEventScreenIntents.checkedStates[bunkerRequest.queueKey] ?: true,
                                 onApproveChanged = {
                                     MultiEventScreenIntents.checkedStates[bunkerRequest.queueKey] = it
@@ -534,6 +537,7 @@ private fun RequestAppHeader(
 private fun BunkerRequestCard(
     context: Context,
     bunkerRequest: AmberBunkerRequest,
+    signingAs: Account?,
     approved: Boolean,
     onApproveChanged: (Boolean) -> Unit,
 ) {
@@ -643,6 +647,8 @@ private fun BunkerRequestCard(
                     }
                 }
             }
+
+            signingAs?.let { SigningAs(it) }
 
             AmberToggles(
                 selected = approved,

@@ -315,15 +315,44 @@ pub extern "C" fn Java_com_greenart7c3_nostrsigner_tor_ArtiNative_initialize<'ca
     outcome
 }
 
-/// Start the SOCKS5 proxy on the specified port.
+/// Username and password a SOCKS client must present (RFC 1929). Fresh for every
+/// listener, so other apps on the device can neither use Amber's Tor client nor
+/// confirm that the port is it.
+struct SocksCredentials {
+    username: Vec<u8>,
+    password: Vec<u8>,
+}
+
+/// Start the SOCKS5 proxy on the specified port, accepting only clients that
+/// authenticate with `username` / `password`.
 /// Can be called multiple times — stops any existing listener first.
 #[no_mangle]
-pub extern "C" fn Java_com_greenart7c3_nostrsigner_tor_ArtiNative_startSocksProxy(
-    _env: EnvUnowned,
-    _class: JClass,
+pub extern "C" fn Java_com_greenart7c3_nostrsigner_tor_ArtiNative_startSocksProxy<'caller>(
+    mut env: EnvUnowned<'caller>,
+    _class: JClass<'caller>,
     port: jint,
+    username: JString<'caller>,
+    password: JString<'caller>,
 ) -> jint {
     log_info!("Starting SOCKS proxy on port {}", port);
+
+    // `None` for a failed read, as in initialize(): the policy's default.
+    let credentials: Option<SocksCredentials> = env
+        .with_env(|env| -> JniResult<Option<SocksCredentials>> {
+            Ok(match (username.try_to_string(env), password.try_to_string(env)) {
+                (Ok(u), Ok(p)) => Some(SocksCredentials { username: u.into_bytes(), password: p.into_bytes() }),
+                _ => None,
+            })
+        })
+        .resolve::<LogErrorAndDefault>();
+    // An empty secret would let anyone in; refuse rather than run open.
+    let credentials = match credentials {
+        Some(c) if !c.username.is_empty() && !c.password.is_empty() && c.username.len() <= 255 && c.password.len() <= 255 => Arc::new(c),
+        _ => {
+            log_error!("Invalid SOCKS credentials");
+            return -4;
+        }
+    };
 
     // Stop any existing SOCKS server first
     if let Some(handle) = SOCKS_TASK.lock().unwrap().take() {
@@ -374,8 +403,9 @@ pub extern "C" fn Java_com_greenart7c3_nostrsigner_tor_ArtiNative_startSocksProx
             match listener.accept().await {
                 Ok((stream, _peer_addr)) => {
                     let client_clone = Arc::clone(&client);
+                    let credentials = Arc::clone(&credentials);
                     let h = tokio::spawn(async move {
-                        if let Err(e) = handle_socks_connection(stream, client_clone).await {
+                        if let Err(e) = handle_socks_connection(stream, client_clone, credentials).await {
                             log_error!("SOCKS connection error: {:?}", e);
                         }
                     });
@@ -441,22 +471,73 @@ fn socks_reply_for(e: &arti_client::Error) -> u8 {
     }
 }
 
+/// Compares without an early exit, so the time taken does not reveal how much of
+/// a guess matched.
+fn constant_time_eq(a: &[u8], b: &[u8]) -> bool {
+    if a.len() != b.len() {
+        return false;
+    }
+    a.iter().zip(b).fold(0u8, |acc, (x, y)| acc | (x ^ y)) == 0
+}
+
+/// Runs the SOCKS5 greeting and the RFC 1929 username/password exchange.
+/// Only the username/password method is offered; a client that cannot do it,
+/// or presents the wrong credentials, is refused before any Tor use.
+async fn authenticate_socks_client(
+    stream: &mut tokio::net::TcpStream,
+    credentials: &SocksCredentials,
+) -> Result<()> {
+    use tokio::io::{AsyncReadExt, AsyncWriteExt};
+
+    // Greeting: VER, NMETHODS, METHODS...
+    let mut header = [0u8; 2];
+    stream.read_exact(&mut header).await?;
+    if header[0] != 0x05 {
+        return Err(anyhow::anyhow!("Unsupported SOCKS version: {}", header[0]));
+    }
+    let mut methods = vec![0u8; header[1] as usize];
+    stream.read_exact(&mut methods).await?;
+    if !methods.contains(&0x02) {
+        stream.write_all(&[0x05, 0xFF]).await?;
+        return Err(anyhow::anyhow!("SOCKS client did not offer username/password authentication"));
+    }
+    stream.write_all(&[0x05, 0x02]).await?;
+
+    // RFC 1929: VER(1), ULEN, UNAME, PLEN, PASSWD
+    let mut ver_ulen = [0u8; 2];
+    stream.read_exact(&mut ver_ulen).await?;
+    if ver_ulen[0] != 0x01 {
+        stream.write_all(&[0x01, 0x01]).await?;
+        return Err(anyhow::anyhow!("Unsupported SOCKS auth version: {}", ver_ulen[0]));
+    }
+    let mut username = vec![0u8; ver_ulen[1] as usize];
+    stream.read_exact(&mut username).await?;
+    let mut plen = [0u8; 1];
+    stream.read_exact(&mut plen).await?;
+    let mut password = vec![0u8; plen[0] as usize];
+    stream.read_exact(&mut password).await?;
+
+    // Both compared in full, so a wrong username takes as long as a wrong password.
+    let username_ok = constant_time_eq(&username, &credentials.username);
+    let password_ok = constant_time_eq(&password, &credentials.password);
+    if !(username_ok & password_ok) {
+        stream.write_all(&[0x01, 0x01]).await?;
+        return Err(anyhow::anyhow!("SOCKS authentication failed"));
+    }
+    stream.write_all(&[0x01, 0x00]).await?;
+    Ok(())
+}
+
 async fn handle_socks_connection(
     mut stream: tokio::net::TcpStream,
     client: Arc<TorClient<PreferredRuntime>>,
+    credentials: Arc<SocksCredentials>,
 ) -> Result<()> {
     use tokio::io::{AsyncReadExt, AsyncWriteExt};
 
     let mut buf = [0u8; 512];
 
-    // SOCKS5 handshake: read version + methods
-    let n = stream.read(&mut buf).await?;
-    if n < 2 {
-        return Err(anyhow::anyhow!("Invalid SOCKS handshake"));
-    }
-
-    // No auth required
-    stream.write_all(&[0x05, 0x00]).await?;
+    authenticate_socks_client(&mut stream, &credentials).await?;
 
     // Read request
     let n = stream.read(&mut buf).await?;
@@ -684,4 +765,75 @@ pub extern "C" fn Java_com_greenart7c3_nostrsigner_tor_ArtiNative_destroy(
 
     log_info!("Arti client destroyed");
     0
+}
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use tokio::io::{AsyncReadExt, AsyncWriteExt};
+
+    fn credentials() -> SocksCredentials {
+        SocksCredentials { username: b"user".to_vec(), password: b"secret".to_vec() }
+    }
+
+    /// Runs the server side on one end of a loopback pair and `client` on the other;
+    /// returns whether the server accepted, plus every byte it wrote back.
+    async fn handshake(client_bytes: Vec<u8>) -> (bool, Vec<u8>) {
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let addr = listener.local_addr().unwrap();
+        let server = tokio::spawn(async move {
+            let (mut stream, _) = listener.accept().await.unwrap();
+            authenticate_socks_client(&mut stream, &credentials()).await.is_ok()
+        });
+        let mut client = tokio::net::TcpStream::connect(addr).await.unwrap();
+        client.write_all(&client_bytes).await.unwrap();
+        let accepted = server.await.unwrap();
+        let mut reply = Vec::new();
+        client.read_to_end(&mut reply).await.unwrap();
+        (accepted, reply)
+    }
+
+    fn auth_request(username: &[u8], password: &[u8]) -> Vec<u8> {
+        let mut bytes = vec![0x05, 0x02, 0x00, 0x02, 0x01, username.len() as u8];
+        bytes.extend_from_slice(username);
+        bytes.push(password.len() as u8);
+        bytes.extend_from_slice(password);
+        bytes
+    }
+
+    #[tokio::test]
+    async fn correct_credentials_are_accepted() {
+        let (accepted, reply) = handshake(auth_request(b"user", b"secret")).await;
+        assert!(accepted);
+        assert_eq!(reply, vec![0x05, 0x02, 0x01, 0x00]);
+    }
+
+    #[tokio::test]
+    async fn wrong_password_is_refused() {
+        let (accepted, reply) = handshake(auth_request(b"user", b"guess")).await;
+        assert!(!accepted);
+        assert_eq!(reply, vec![0x05, 0x02, 0x01, 0x01]);
+    }
+
+    #[tokio::test]
+    async fn wrong_username_is_refused() {
+        let (accepted, reply) = handshake(auth_request(b"other", b"secret")).await;
+        assert!(!accepted);
+        assert_eq!(reply, vec![0x05, 0x02, 0x01, 0x01]);
+    }
+
+    #[tokio::test]
+    async fn client_without_password_auth_is_refused() {
+        // The pre-auth behavior: offer only "no authentication".
+        let (accepted, reply) = handshake(vec![0x05, 0x01, 0x00]).await;
+        assert!(!accepted);
+        assert_eq!(reply, vec![0x05, 0xFF]);
+    }
+
+    #[test]
+    fn constant_time_eq_compares_whole_values() {
+        assert!(constant_time_eq(b"secret", b"secret"));
+        assert!(!constant_time_eq(b"secret", b"secreT"));
+        assert!(!constant_time_eq(b"secret", b"secret2"));
+        assert!(!constant_time_eq(b"", b"x"));
+    }
 }

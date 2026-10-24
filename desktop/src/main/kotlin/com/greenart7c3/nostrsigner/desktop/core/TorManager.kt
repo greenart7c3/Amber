@@ -1,6 +1,7 @@
 package com.greenart7c3.nostrsigner.desktop.core
 
 import com.greenart7c3.nostrsigner.tor.ArtiNative
+import com.greenart7c3.nostrsigner.tor.TorSocksAuthenticator
 import java.io.File
 import java.net.InetAddress
 import java.net.ServerSocket
@@ -152,10 +153,16 @@ object TorManager {
     }
 
     private fun bindSocksProxy(): Int? {
+        TorSocksAuthenticator.install()
         repeat(SOCKS_BIND_ATTEMPTS) {
             val port = ServerSocket(0, 1, InetAddress.getLoopbackAddress()).use { it.localPort }
-            val result = ArtiNative.startSocksProxy(port)
-            if (result == 0) return port
+            val (username, password) = TorSocksAuthenticator.newCredentials()
+            val result = ArtiNative.startSocksProxy(port, username, password)
+            if (result == 0) {
+                // Published before the port, so no dial can reach the listener without them.
+                TorSocksAuthenticator.set(port, username, password)
+                return port
+            }
             AmberLogger.e(TAG, "Failed to bind the Tor SOCKS proxy on port $port ($result)")
         }
         return null
@@ -164,6 +171,7 @@ object TorManager {
     private fun fail(message: String?) {
         _isRunning.value = false
         _socksPort.value = 0
+        TorSocksAuthenticator.clear()
         updateStatus(TorStatus.Failed(message))
     }
 
@@ -172,6 +180,7 @@ object TorManager {
         job = null
         _isRunning.value = false
         _socksPort.value = 0
+        TorSocksAuthenticator.clear()
         updateStatus(TorStatus.Stopped)
         if (!nativeReady) return
         try {

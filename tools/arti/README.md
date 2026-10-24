@@ -87,7 +87,7 @@ first time it parses a consensus. The patch treats "no progress" like `None`
 |---|---|
 | `initialize(dataDir)` | Create the Tor client (state + cache under `dataDir`) and start the directory download in the background |
 | `isBootstrapped()` / `bootstrapProgressPermille()` | Readiness and download progress, polled by `TorManager` |
-| `startSocksProxy(port)` / `stopSocksProxy()` | Bind / release the SOCKS5 listener; the client stays alive |
+| `startSocksProxy(port, username, password)` / `stopSocksProxy()` | Bind / release the SOCKS5 listener; the client stays alive. The listener only accepts RFC 1929 username/password auth with the given per-listener secret, which `TorSocksAuthenticator` hands to Java's SOCKS client |
 | `destroy()` | Drop the client so the next `initialize` starts over (used by `restart`) |
 | `setLogCallback(cb)` / `getVersion()` | Logging into Amber's log and version string |
 

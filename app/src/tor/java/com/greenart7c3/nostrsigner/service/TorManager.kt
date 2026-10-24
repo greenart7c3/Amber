@@ -18,6 +18,7 @@ import com.greenart7c3.nostrsigner.MainActivity
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.okhttp.HttpClientManager
 import com.greenart7c3.nostrsigner.tor.ArtiNative
+import com.greenart7c3.nostrsigner.tor.TorSocksAuthenticator
 import java.io.File
 import java.net.InetAddress
 import java.net.ServerSocket
@@ -76,6 +77,7 @@ object TorManager {
     fun init(context: Context) {
         if (appContext != null) return
         appContext = context.applicationContext
+        TorSocksAuthenticator.install()
         createNotificationChannel()
     }
 
@@ -241,12 +243,17 @@ object TorManager {
         }
         repeat(SOCKS_BIND_ATTEMPTS) {
             val port = ServerSocket(0, 1, InetAddress.getLoopbackAddress()).use { it.localPort }
+            val (username, password) = TorSocksAuthenticator.newCredentials()
             val result = synchronized(proxyLock) {
                 // stop() may have run while initialize() was blocking.
                 if (!context.isActive) return null
-                ArtiNative.startSocksProxy(port)
+                ArtiNative.startSocksProxy(port, username, password)
             }
-            if (result == 0) return port
+            if (result == 0) {
+                // Published before the port, so no dial can reach the listener without them.
+                TorSocksAuthenticator.set(port, username, password)
+                return port
+            }
             AmberLog.e(TAG, "Failed to bind the Tor SOCKS proxy on port $port ($result)")
         }
         fail("Could not open the Tor SOCKS port")
@@ -262,6 +269,7 @@ object TorManager {
     private fun releaseSocksPort() {
         val released = _socksPort.value
         _socksPort.value = 0
+        TorSocksAuthenticator.clear()
         if (released > 0) {
             HttpClientManager.releaseProxyPort(released)
         }

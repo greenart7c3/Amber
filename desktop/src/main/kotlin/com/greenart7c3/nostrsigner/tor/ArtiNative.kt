@@ -41,9 +41,11 @@ object ArtiNative {
 
     /**
      * Binds the SOCKS5 proxy on 127.0.0.1:[port], replacing any previous listener.
-     * @return 0 on success, negative on error (-3: the port could not be bound).
+     * Clients must authenticate with [username] / [password] (RFC 1929).
+     * @return 0 on success, negative on error (-3: the port could not be bound,
+     * -4: empty or over-long credentials).
      */
-    external fun startSocksProxy(port: Int): Int
+    external fun startSocksProxy(port: Int, username: String, password: String): Int
 
     /** Stops the SOCKS5 listener; the Tor client stays alive. */
     external fun stopSocksProxy(): Int

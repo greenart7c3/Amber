@@ -89,6 +89,12 @@ data class BackupPayload(
     @param:JsonProperty("applications") val applications: List<BackupApplication>,
 )
 
+sealed interface BackupFetchResult {
+    data class Found(val payload: BackupPayload) : BackupFetchResult
+    data object NoBackupFound : BackupFetchResult
+    data class Failed(val message: String) : BackupFetchResult
+}
+
 sealed interface RestoreResult {
     data class Success(val apps: Int, val permissions: Int) : RestoreResult
     data object NoBackupFound : RestoreResult
@@ -415,10 +421,14 @@ object ApplicationBackup {
         RestoreResult.Failed(e.message ?: "Unknown error")
     }
 
-    suspend fun restoreFromRelays(npub: String, account: Account): RestoreResult {
+    /**
+     * Fetches and decrypts the newest backup without restoring it, so the user
+     * can review its applications before [restoreFromPayload] writes them.
+     */
+    suspend fun fetchLatestPayload(account: Account): BackupFetchResult {
         val relays = resolveReadRelays(account)
-        val event = fetchLatestBackupEvent(account, relays) ?: return RestoreResult.NoBackupFound
-        val payload = decryptPayload(event, account) ?: return RestoreResult.Failed("Failed to decrypt backup")
-        return restoreFromPayload(npub, payload)
+        val event = fetchLatestBackupEvent(account, relays) ?: return BackupFetchResult.NoBackupFound
+        val payload = decryptPayload(event, account) ?: return BackupFetchResult.Failed("Failed to decrypt backup")
+        return BackupFetchResult.Found(payload)
     }
 }

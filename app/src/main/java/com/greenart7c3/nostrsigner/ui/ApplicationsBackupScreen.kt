@@ -8,9 +8,12 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -45,6 +48,8 @@ import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.service.ApplicationBackup
+import com.greenart7c3.nostrsigner.service.BackupFetchResult
+import com.greenart7c3.nostrsigner.service.BackupPayload
 import com.greenart7c3.nostrsigner.service.RestoreResult
 import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.components.AmberButton
@@ -66,7 +71,7 @@ fun ApplicationsBackupScreen(
 
     val loadedAccounts = accounts
     var isBusy by remember { mutableStateOf(false) }
-    var pendingRestore by remember { mutableStateOf<Account?>(null) }
+    var pendingRestore by remember { mutableStateOf<Pair<Account, BackupPayload>?>(null) }
 
     Column(modifier = modifier) {
         Text(
@@ -93,24 +98,45 @@ fun ApplicationsBackupScreen(
                     account = account,
                     isBusy = isBusy,
                     onBusyChange = { isBusy = it },
-                    onRequestRestore = { pendingRestore = account },
+                    onRequestRestore = {
+                        isBusy = true
+                        Amber.instance.applicationIOScope.launch {
+                            // Fetch first and let the user review what the backup
+                            // contains; nothing is written until they confirm.
+                            val fetched = ApplicationBackup.fetchLatestPayload(account)
+                            withContext(Dispatchers.Main) {
+                                isBusy = false
+                                when (fetched) {
+                                    is BackupFetchResult.Found -> pendingRestore = account to fetched.payload
+                                    is BackupFetchResult.NoBackupFound ->
+                                        Toast.makeText(context, context.getString(R.string.restore_no_backup_found), Toast.LENGTH_LONG).show()
+                                    is BackupFetchResult.Failed ->
+                                        Toast.makeText(context, context.getString(R.string.restore_failed, fetched.message), Toast.LENGTH_LONG).show()
+                                }
+                            }
+                        }
+                    },
                 )
             }
         }
     }
 
-    pendingRestore?.let { account ->
+    pendingRestore?.let { (account, payload) ->
         AlertDialog(
             onDismissRequest = { pendingRestore = null },
             title = { Text(stringResource(R.string.restore_confirm_title)) },
-            text = { Text(stringResource(R.string.restore_confirm_text)) },
+            text = {
+                BackupContents(payload) {
+                    Text(stringResource(R.string.restore_confirm_text))
+                }
+            },
             confirmButton = {
                 TextButton(onClick = {
                     pendingRestore = null
                     isBusy = true
                     val scope = Amber.instance.applicationIOScope
                     scope.launch(Dispatchers.IO) {
-                        val result = ApplicationBackup.restoreFromRelays(account.npub, account)
+                        val result = ApplicationBackup.restoreFromPayload(account.npub, payload)
                         withContext(Dispatchers.Main) {
                             val msg = when (result) {
                                 is RestoreResult.Success -> context.getString(R.string.restore_success, result.apps, result.permissions)
@@ -260,7 +286,11 @@ fun RestoreBackupDialog(accountStateViewModel: AccountStateViewModel) {
     AlertDialog(
         onDismissRequest = { accountStateViewModel.dismissRestore() },
         title = { Text(stringResource(R.string.signin_restore_title)) },
-        text = { Text(stringResource(R.string.signin_restore_message, apps, perms)) },
+        text = {
+            BackupContents(found.payload) {
+                Text(stringResource(R.string.signin_restore_message, apps, perms))
+            }
+        },
         confirmButton = {
             TextButton(onClick = {
                 accountStateViewModel.acceptRestore { result ->
@@ -280,3 +310,59 @@ fun RestoreBackupDialog(accountStateViewModel: AccountStateViewModel) {
         },
     )
 }
+
+/**
+ * Lists what a backup would restore (name, key, relays and permission count
+ * per application) so the user can spot an entry they don't recognise before
+ * confirming. Applications set to sign every request are flagged.
+ */
+@Composable
+private fun BackupContents(
+    payload: BackupPayload,
+    header: @Composable () -> Unit,
+) {
+    LazyColumn(
+        modifier = Modifier.heightIn(max = 400.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        item { header() }
+        // No item keys: a backup is untrusted input and may repeat a key.
+        items(payload.applications) { app ->
+            // NIP-46 apps are keyed by a pubkey; NIP-55 apps (no relays) by
+            // their package name, which is shown in full.
+            val key = if (app.relays.isEmpty()) app.key else app.key.toShortenHex()
+            Column {
+                Text(
+                    text = app.name.ifBlank { key },
+                    style = MaterialTheme.typography.titleSmall,
+                )
+                Text(
+                    text = key,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color.Gray,
+                )
+                if (app.relays.isNotEmpty()) {
+                    Text(
+                        text = "${stringResource(R.string.relays_used)}: ${app.relays.joinToString()}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color.Gray,
+                    )
+                }
+                Text(
+                    text = "${stringResource(R.string.permissions)}: ${app.permissions.size}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color.Gray,
+                )
+                if (app.signPolicy == SIGN_POLICY_FULL_TRUST) {
+                    Text(
+                        text = stringResource(R.string.sign_policy_fully_explainer),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                }
+            }
+        }
+    }
+}
+
+private const val SIGN_POLICY_FULL_TRUST = 2

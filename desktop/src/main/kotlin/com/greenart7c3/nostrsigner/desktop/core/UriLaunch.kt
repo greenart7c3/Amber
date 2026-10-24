@@ -165,11 +165,8 @@ object UriLaunch {
         }.start()
     }
 
-    /** Peer credentials exist on Linux and macOS; elsewhere the owner-only socket is the guard. */
-    private fun isSameUser(client: SocketChannel): Boolean = runCatching {
-        val peer = client.getOption(jdk.net.ExtendedSocketOptions.SO_PEERCRED)
-        peer.user().name == Files.getOwner(socketPath()).name
-    }.getOrDefault(true)
+    /** See [isSameUserPeer]: fails closed wherever peer credentials exist. */
+    private fun isSameUser(client: SocketChannel): Boolean = isSameUserPeer(client, socketPath())
 
     /**
      * At most one accepted URI per this many milliseconds, on top of the

@@ -1,6 +1,7 @@
 package com.greenart7c3.nostrsigner.ui
 
 import android.app.Activity
+import android.os.Build
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.ActivityResult
@@ -238,6 +239,15 @@ fun SecurityScreen(
                             style = MaterialTheme.typography.bodySmall,
                             color = Color.Gray,
                         )
+                        // setUnlockedDeviceRequired needs API 28 (SecureCryptoHelper), so
+                        // on Android 8 only the software DeviceUnlockPolicy gate applies.
+                        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) {
+                            Text(
+                                text = stringResource(R.string.require_unlocked_device_legacy_note),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.error,
+                            )
+                        }
                         if (requireUnlockedDeviceUpdating) {
                             Row(
                                 horizontalArrangement = Arrangement.spacedBy(8.dp),

@@ -598,6 +598,7 @@
     <string name="wss">wss://…</string>
     <string name="require_unlocked_device">Require unlocked device for key access</string>
     <string name="require_unlocked_device_description">When enabled, the Keystore key used to decrypt your stored account keys cannot be used while the device is locked. This prevents any code running in Amber\'s process from decrypting your keys while the screen is locked. Note: this disables background NIP-46 signing while the device is locked. Toggling this requires re-encrypting all stored keys.</string>
+    <string name="require_unlocked_device_legacy_note">On Android 8 the Keystore cannot enforce this itself. Amber still refuses to use your keys while the device is locked, but the protection is software-only.</string>
     <string name="require_unlocked_device_updating">Re-encrypting all stored keys…</string>
     <string name="require_unlocked_device_do_not_close">Do not close the app or lock the screen until this finishes.</string>
     <string name="insecure_relay_warning">Insecure (cleartext, ws://) relay over the public internet exposes NIP-46 metadata and ciphertext to network observers. Prefer wss://, or use ws:// only for .onion / local-network relays.</string>

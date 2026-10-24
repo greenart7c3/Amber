@@ -18,6 +18,8 @@ import java.util.UUID
 import kotlinx.coroutines.launch
 
 object NostrConnectUtils {
+    private val HEX_PUBKEY = Regex("[0-9a-f]{64}")
+
     /**
      * Splits a query parameter into its name and value on the first `=` only,
      * so values that contain `=` (e.g. base64 padding like "XQUdha4rjh_gjAgHN8X5yg==") are preserved.
@@ -41,6 +43,9 @@ object NostrConnectUtils {
             var url = ""
             var image = ""
             val pubKey = split.first()
+            // The client's key becomes the connection's identity: refuse
+            // anything but a lowercase hex public key (caught and logged below).
+            require(pubKey.matches(HEX_PUBKEY)) { "Invalid public key in nostrconnect URI" }
             val parsedData = IntentUtils.decodeData(split.drop(1).joinToString("") { it })
             val splitParsedData = parsedData.split("&")
             val permissions = mutableListOf<Permission>()

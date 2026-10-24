@@ -75,4 +75,19 @@ class NostrConnectReplaceTest {
 
         assertEquals("Amber Approve nowevil", card.appName)
     }
+
+    @Test
+    fun aNostrConnectKeyMustBeLowercaseHex() = runBlocking {
+        val account = AccountManager.addAccount(KeyPair(), name = "nc-key", signPolicy = 1)
+        val valid = KeyPair().pubKey.toHexKey()
+        listOf(
+            valid.uppercase(),
+            valid.dropLast(1) + "g",
+            valid.dropLast(1),
+            "../" + valid.drop(3),
+        ).forEach { key ->
+            assertEquals(key, "Invalid public key in URI", AmberDesktop.engine.addNostrConnect("nostrconnect://$key?relay=wss%3A%2F%2Fnew.invalid", account))
+        }
+        assertNull(AmberDesktop.engine.addNostrConnect("nostrconnect://$valid?relay=wss%3A%2F%2Fnew.invalid", account))
+    }
 }

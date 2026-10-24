@@ -43,6 +43,9 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
+/** A lowercase hex 32-byte public key, as NIP-01 writes them. */
+private val HEX_PUBKEY = Regex("[0-9a-f]{64}")
+
 fun generateBunkerPrivKey(): String = Nip01Crypto.privKeyCreate().toHexKey()
 
 fun localPubKeyFromPrivKey(privKeyHex: String): String = KeyPair(privKey = privKeyHex.hexToByteArray()).pubKey.toHexKey()
@@ -1344,7 +1347,9 @@ class BunkerEngine(
             val data = uriString.trim().removePrefix("nostrconnect://")
             val split = data.split("?")
             val pubKey = split.first()
-            if (pubKey.length != 64) return "Invalid public key in URI"
+            // The client's key becomes the connection's identity and a p tag
+            // on every reply: accept only a well-formed one.
+            if (!pubKey.matches(HEX_PUBKEY)) return "Invalid public key in URI"
 
             val relays = mutableListOf<NormalizedRelayUrl>()
             var name = ""

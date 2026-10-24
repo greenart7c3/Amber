@@ -618,6 +618,46 @@ class BunkerRequestUtilsTest {
         }
     }
 
+    // The reply came after the bookkeeping, so a failure there (seen with a
+    // malformed sign_event in getDataFromBunker) left the client unanswered.
+    @Test
+    fun `a rejection is answered even when recording it fails`() = runBlocking {
+        val (amber, dao) = amberWithDao(getByKeyReturnsNull = false)
+        coEvery { dao.getByKey(any()) } returns mockk<com.greenart7c3.nostrsigner.database.ApplicationWithPermissions>(relaxed = true)
+        installAmberInstance(amber)
+
+        mockkObject(AmberUtils, com.greenart7c3.nostrsigner.AmberLog)
+        try {
+            every { com.greenart7c3.nostrsigner.AmberLog.e(any(), any(), any()) } returns Unit
+            coEvery { AmberUtils.sendBunkerError(any(), any(), any(), any(), any(), any()) } returns Unit
+            coEvery {
+                AmberUtils.acceptOrRejectPermission(any(), any(), any(), any(), any(), any(), any(), any(), any(), any())
+            } throws IllegalStateException("boom")
+
+            BunkerRequestUtils.sendRejection(
+                key = "localKey",
+                account = newTestAccount(CoroutineScope(SupervisorJob() + Dispatchers.Default)),
+                bunkerRequest = createAmberBunkerRequest(id = "failing-reject"),
+                appName = "TestApp",
+                rememberType = RememberType.ALWAYS,
+                signerType = SignerType.GET_PUBLIC_KEY,
+                kind = null,
+                onLoading = {},
+            )
+
+            coVerify(timeout = 5_000) { AmberUtils.sendBunkerError(any(), any(), any(), any(), any(), any()) }
+        } finally {
+            unmockkObject(AmberUtils, com.greenart7c3.nostrsigner.AmberLog)
+        }
+    }
+
+    @Test
+    fun `getDataFromBunker tolerates malformed sign_event and sign_psbt params`() {
+        assertEquals("", BunkerRequestUtils.getDataFromBunker(mockBunkerRequest("sign_event", arrayOf("not json"))))
+        assertEquals("", BunkerRequestUtils.getDataFromBunker(mockBunkerRequest("sign_event")))
+        assertEquals("", BunkerRequestUtils.getDataFromBunker(mockBunkerRequest("sign_psbt")))
+    }
+
     @Test
     fun `a queued request for a live app is still answered normally`() = runBlocking {
         val (amber, dao) = amberWithDao(getByKeyReturnsNull = false)

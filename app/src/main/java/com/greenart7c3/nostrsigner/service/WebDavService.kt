@@ -25,7 +25,7 @@ internal fun webDavUsesProxy(isPrivateAddress: Boolean, torMode: TorMode): Boole
 object WebDavService {
     private val MEDIA_TYPE = "application/octet-stream".toMediaType()
 
-    private fun createClient(serverUrl: String): OkHttpClient {
+    internal fun createClient(serverUrl: String): OkHttpClient {
         // Single entry point: the HTTPS policy runs before any client exists,
         // so a new WebDAV method cannot skip it and send Basic auth cleartext.
         WebDavTransportPolicy.requireSecureServerUrl(serverUrl)
@@ -64,9 +64,12 @@ object WebDavService {
         // Same-origin redirects are ordinary WebDAV behavior (collection
         // URLs without a trailing slash 301 to slash). OkHttp strips the
         // Authorization header when a redirect crosses to another host, so
-        // credentials never follow.
+        // credentials never follow. Scheme changes are refused: the server URL
+        // is always HTTPS, so one would be a downgrade to HTTP, and a 307/308
+        // would resend the backup body in cleartext. The 3xx is returned as an
+        // error instead.
         builder.followRedirects(true)
-            .followSslRedirects(true)
+            .followSslRedirects(false)
         return builder.build()
     }
 

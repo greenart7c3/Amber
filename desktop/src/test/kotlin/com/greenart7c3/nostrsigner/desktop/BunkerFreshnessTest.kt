@@ -25,10 +25,7 @@ import org.junit.Test
 class BunkerFreshnessTest {
     private val relay = RelayUrlNormalizer.normalizeOrNull("wss://relay.invalid/")!!
 
-    private fun computeSince(): Long {
-        val method = AmberDesktop.engine.javaClass.getDeclaredMethod("computeSince").apply { isAccessible = true }
-        return method.invoke(AmberDesktop.engine) as Long
-    }
+    private fun computeSince(): Long = AmberDesktop.engine.computeSince()
 
     @Test
     fun futureDatedEventDoesNotMoveSinceIntoTheFuture() = runBlocking {

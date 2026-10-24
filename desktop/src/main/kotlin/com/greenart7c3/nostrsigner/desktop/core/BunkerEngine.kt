@@ -247,6 +247,9 @@ class BunkerEngine(
         override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, Long>?): Boolean = size > 512
     }
 
+    /** Oldest createdAt of a request deferred by a mid-request lock; guarded by [seenEvents]. */
+    private var deferredSince: Long? = null
+
     init {
         client.addConnectionListener(this)
     }
@@ -364,9 +367,10 @@ class BunkerEngine(
     private suspend fun updateFilterLocked() = filterMutex.withLock {
         val pendingSubscriptions = linkedMapOf<String, Map<NormalizedRelayUrl, List<Filter>>>()
         val indexEntries = mutableMapOf<String, Pair<String, String>>()
+        // Once per update: it also hands over (and clears) a lock-deferred `since`.
+        val since = computeSince()
 
         AmberDesktop.accounts().forEach { account ->
-            val since = computeSince()
             val store = AmberDesktop.store(account.npub)
             val allConnections = store.apps.value.map { it.app }
             val connectionsWithLocalKey = allConnections.filter { it.localKey.isNotEmpty() }
@@ -427,12 +431,29 @@ class BunkerEngine(
         }
     }
 
-    private fun computeSince(): Long {
+    internal fun computeSince(): Long = synchronized(seenEvents) {
         val now = TimeUtils.now()
-        val latest = synchronized(seenEvents) { seenEvents.values.maxOrNull() ?: 0L }
+        val latest = seenEvents.values.maxOrNull() ?: 0L
         // seenEvents holds sender-chosen created_at values; never let one push
         // `since` past the real clock (relays would drop legitimate requests).
-        return if (latest > 0) minOf(latest, now) else now
+        val since = if (latest > 0) minOf(latest, now) else now
+        // Reach back to a request a lock deferred, so the relays redeliver it.
+        val deferred = deferredSince
+        deferredSince = null
+        if (deferred != null) minOf(since, deferred) else since
+    }
+
+    /**
+     * The passphrase lock came down while [event] was being handled. Forget it
+     * and keep the next subscription's `since` at or before it, so the relays
+     * redeliver it after unlock instead of the request being dropped unanswered
+     * (Android likewise leaves locked requests unopened for redelivery).
+     */
+    internal fun deferUntilUnlock(event: Event) {
+        synchronized(seenEvents) {
+            seenEvents.remove(event.id)
+            deferredSince = deferredSince?.let { minOf(it, event.createdAt) } ?: event.createdAt
+        }
     }
 
     /** Mirrors `EventNotificationConsumer.consume` + `notify`. */
@@ -670,7 +691,10 @@ class BunkerEngine(
 
         // consume() checked the lock on arrival; re-check before any signing
         // work, since the passphrase lock may have come down in between.
-        if (PassphraseLock.isLocked()) return
+        if (PassphraseLock.isLocked()) {
+            deferUntilUnlock(event)
+            return
+        }
 
         // Compute the response payload (also serves as the approval preview).
         val computed = try {
@@ -711,7 +735,10 @@ class BunkerEngine(
             true -> {
                 // Auto-accept publishes a signed result: re-check the lock so
                 // a signer locked mid-request never publishes.
-                if (PassphraseLock.isLocked()) return
+                if (PassphraseLock.isLocked()) {
+                    deferUntilUnlock(event)
+                    return
+                }
                 store.addHistory(HistoryRecord(event.pubKey, type.toString(), kind, TimeUtils.now(), true))
                 app?.let {
                     store.upsert(it.copy(app = it.app.copy(lastUsed = TimeUtils.now())))

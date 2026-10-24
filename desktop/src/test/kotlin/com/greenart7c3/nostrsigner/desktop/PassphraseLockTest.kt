@@ -31,9 +31,19 @@ import org.junit.Test
 /** In-memory stand-in for the OS credential store holding the second unlock factor. */
 private class MemorySecretStore(var value: String? = null) : PasswordStore {
     var available = true
+
+    /** When set, only this many more reads succeed; later ones fail like a stumbling keyring. */
+    var failLoadsAfter: Int? = null
     override val description: String = "test keyring"
 
-    override fun load(): String? = if (available) value else null
+    override fun load(): String? {
+        if (!available) return null
+        failLoadsAfter?.let { remaining ->
+            if (remaining <= 0) return null
+            failLoadsAfter = remaining - 1
+        }
+        return value
+    }
 
     override fun store(secret: String): Boolean {
         if (!available) return false
@@ -239,6 +249,41 @@ class PassphraseLockTest {
         } finally {
             PassphraseLock.targetKdfParams = fastKdf
         }
+        assertEquals(secret, DesktopKeyStore.decrypt(cipher1, "test/secret"))
+
+        // The keyring stumbling right after it unwrapped the blob (one good
+        // read, then failures) must neither drop the second factor nor replace
+        // the secret the current blob depends on: a rewrap reuses that secret.
+        val keyringSecret = keyring.value
+        keyring.failLoadsAfter = 1
+        try {
+            assertTrue(PassphraseLock.changePassphrase(pass.toCharArray(), "flaky keyring 77".toCharArray(), fastKdf))
+        } finally {
+            keyring.failLoadsAfter = null
+        }
+        assertTrue("the second factor is kept", blobJson().contains("\"osSecret\":true"))
+        assertEquals("the stored secret is not replaced", keyringSecret, keyring.value)
+        PassphraseLock.lock()
+        assertTrue(PassphraseLock.unlock("flaky keyring 77".toCharArray()))
+
+        // Same for the Argon2id rehash that runs during unlock.
+        try {
+            PassphraseLock.targetKdfParams = PassphraseLock.KdfParams(memoryKb = 4096, iterations = 2, parallelism = 1)
+            PassphraseLock.lock()
+            keyring.failLoadsAfter = 1
+            assertTrue(PassphraseLock.unlock("flaky keyring 77".toCharArray()))
+        } finally {
+            keyring.failLoadsAfter = null
+            PassphraseLock.targetKdfParams = fastKdf
+        }
+        assertTrue("rehashed to the target cost", blobJson().contains("\"memoryKb\":4096"))
+        assertTrue("the second factor is kept", blobJson().contains("\"osSecret\":true"))
+        assertEquals("the stored secret is not replaced", keyringSecret, keyring.value)
+        PassphraseLock.lock()
+        assertTrue(PassphraseLock.unlock("flaky keyring 77".toCharArray()))
+
+        // Back to the passphrase the other tests in this class use.
+        assertTrue(PassphraseLock.changePassphrase("flaky keyring 77".toCharArray(), pass.toCharArray(), fastKdf))
         assertEquals(secret, DesktopKeyStore.decrypt(cipher1, "test/secret"))
     }
 

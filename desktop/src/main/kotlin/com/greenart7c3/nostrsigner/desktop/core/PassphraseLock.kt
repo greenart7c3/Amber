@@ -167,9 +167,13 @@ object PassphraseLock {
     suspend fun unlock(passphrase: CharArray): Boolean = mutex.withLock {
         if (!isEnabled()) return true
         val blob = readBlob() ?: return false
-        val key = unwrap(blob, passphrase) ?: return false
+        val (key, osSecret) = unwrap(blob, passphrase) ?: return false
         DesktopKeyStore.installMasterKey(key, sourceDescription(blob.osSecret))
-        upgrade(blob, key, passphrase)
+        try {
+            upgrade(blob, key, passphrase, osSecret)
+        } finally {
+            osSecret?.fill(0)
+        }
         state.value = Status.UNLOCKED
         scheduleAutoLock()
         return true
@@ -178,8 +182,9 @@ object PassphraseLock {
     /** Checks the passphrase without installing the master key. */
     suspend fun verify(passphrase: CharArray): Boolean = mutex.withLock {
         val blob = readBlob() ?: return false
-        val key = unwrap(blob, passphrase) ?: return false
+        val (key, osSecret) = unwrap(blob, passphrase) ?: return false
         key.destroy()
+        osSecret?.fill(0)
         true
     }
 
@@ -201,9 +206,16 @@ object PassphraseLock {
     /** Rewraps the master key under a new passphrase; false when [old] is wrong. */
     suspend fun changePassphrase(old: CharArray, new: CharArray, params: KdfParams = targetKdfParams): Boolean = mutex.withLock {
         val blob = readBlob() ?: return false
-        val key = unwrap(blob, old) ?: return false
-        val osSecret = obtainOsSecret()
-        writeBlob(key, new, params, osSecret)
+        val (key, unwrapSecret) = unwrap(blob, old) ?: return false
+        // Rewrap with the very secret that just unwrapped the blob: reading the
+        // store again could fail now and silently drop the second factor, or
+        // replace the secret the current blob still needs.
+        val osSecret = unwrapSecret ?: obtainOsSecret()
+        try {
+            writeBlob(key, new, params, osSecret)
+        } finally {
+            osSecret?.fill(0)
+        }
         DesktopKeyStore.installMasterKey(key, sourceDescription(osSecret != null))
         state.value = Status.UNLOCKED
         scheduleAutoLock()
@@ -268,13 +280,19 @@ object PassphraseLock {
      * Never blocks the unlock — on failure the old blob stays valid and the
      * next unlock retries.
      */
-    private fun upgrade(blob: WrappedKeyBlob, key: SecretKey, passphrase: CharArray) {
+    private fun upgrade(blob: WrappedKeyBlob, key: SecretKey, passphrase: CharArray, unwrapSecret: ByteArray?) {
         try {
             val weakKdf = blob.params.isWeakerThan(targetKdfParams)
             if (blob.osSecret && !weakKdf) return
-            val osSecret = obtainOsSecret()
+            // A blob that has the second factor keeps the exact secret that
+            // unwrapped it; only a blob without one asks the store for a new one.
+            val osSecret = unwrapSecret?.copyOf() ?: obtainOsSecret()
             if (osSecret == null && !weakKdf) return
-            writeBlob(key, passphrase, if (weakKdf) targetKdfParams else blob.params, osSecret)
+            try {
+                writeBlob(key, passphrase, if (weakKdf) targetKdfParams else blob.params, osSecret)
+            } finally {
+                osSecret?.fill(0)
+            }
             DesktopKeyStore.installMasterKey(key, sourceDescription(osSecret != null))
             AmberLogger.i("PassphraseLock", "Rehashed the wrapped master key (second factor: ${osSecret != null})")
         } catch (e: Exception) {
@@ -284,7 +302,9 @@ object PassphraseLock {
 
     /**
      * Returns the credential-store secret, creating it on first use, or null
-     * when the store is unavailable. A new secret is only trusted once it
+     * when the store is unavailable. Only for adding the second factor to a
+     * blob that has none: it may replace the stored secret, which a blob
+     * that already uses one still needs. A new secret is only trusted once it
      * reads back, so a store that accepts writes it cannot return never
      * locks the user out.
      */
@@ -367,7 +387,12 @@ object PassphraseLock {
         AppDirs.writeAtomically(blobFile, mapper.writeValueAsBytes(blob))
     }
 
-    private fun unwrap(blob: WrappedKeyBlob, passphrase: CharArray): WipeableAesKey? {
+    /**
+     * The master key, plus the credential-store secret that unwrapped it (null
+     * for a blob without the second factor), so a rewrap reuses that exact
+     * secret; the caller wipes it.
+     */
+    private fun unwrap(blob: WrappedKeyBlob, passphrase: CharArray): Pair<WipeableAesKey, ByteArray?>? {
         // Checked before the (slow) Argon2 run, and reported separately from a
         // wrong passphrase.
         val osSecret = if (blob.osSecret) {
@@ -384,8 +409,9 @@ object PassphraseLock {
             val plain = cipher.doFinal(decoder.decode(blob.cipherText))
             val key = WipeableAesKey(plain) // copies the input
             plain.fill(0)
-            key
+            key to osSecret
         } catch (_: Exception) {
+            osSecret?.fill(0)
             null // wrong passphrase or tampered header (GCM tag mismatch)
         } finally {
             kek.destroy()

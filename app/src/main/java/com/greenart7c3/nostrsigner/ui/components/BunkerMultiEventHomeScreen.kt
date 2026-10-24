@@ -102,6 +102,9 @@ private fun RequestAppKey.itemKey() = "$account:$key"
 
 private fun AppRequestGroupKey.itemKey() = "${app.itemKey()}:${group.type.name}:${group.payload?.name ?: ""}:${group.kind ?: ""}"
 
+/** The requests a batch may show: everything but connects. */
+internal fun batchableBunkerRequests(requests: List<AmberBunkerRequest>): List<AmberBunkerRequest> = requests.filterNot { it.request is BunkerRequestConnect }
+
 @Composable
 fun BunkerMultiEventHomeScreen(
     modifier: Modifier,
@@ -111,27 +114,28 @@ fun BunkerMultiEventHomeScreen(
     onLoading: (Boolean) -> Unit,
 ) {
     val context = LocalContext.current
-
-    KillSwitchConnectPrompt(hasConnectRequest = bunkerRequests.any { it.request is BunkerRequestConnect })
+    // A connect needs the single screen's account choice and replace prompt, so
+    // it is never part of a batch: it stays queued for its own screen.
+    val batchRequests = remember(bunkerRequests) { batchableBunkerRequests(bunkerRequests) }
     val groupRememberTypes = remember { mutableStateMapOf<AppRequestGroupKey, RememberType>() }
     val groupRelayAuthScopes = remember { mutableStateMapOf<AppRequestGroupKey, RelayAuthScope>() }
     val groupDecryptScopes = remember { mutableStateMapOf<AppRequestGroupKey, DecryptTypeScope>() }
 
     // Requests are grouped by the app that sent them (in arrival order), then by request type.
-    val apps = remember(bunkerRequests) {
-        bunkerRequests.groupBy { it.appKey }.map { (appKey, requests) ->
+    val apps = remember(batchRequests) {
+        batchRequests.groupBy { it.appKey }.map { (appKey, requests) ->
             appKey to groupRequests(requests) { it.requestGroupKey() }
         }
     }
     val appInfos = remember { mutableStateMapOf<RequestAppKey, RequestAppInfo>() }
     fun appInfo(appKey: RequestAppKey): RequestAppInfo = appInfos[appKey]
-        ?: bunkerRequests.first { it.appKey == appKey }.defaultAppInfo()
+        ?: batchRequests.first { it.appKey == appKey }.defaultAppInfo()
 
     LaunchedEffect(Unit) {
         MultiEventScreenIntents.checkedStates.clear()
         MultiEventScreenIntents.rememberType = RememberType.NEVER
         // checkedStates now holds the per-request decision: true = Approve, false = Deny.
-        bunkerRequests.forEach { MultiEventScreenIntents.checkedStates[it.queueKey] = true }
+        batchRequests.forEach { MultiEventScreenIntents.checkedStates[it.queueKey] = true }
     }
 
     // Skipped in previews: encrypted storage and the Amber singleton don't
@@ -183,7 +187,7 @@ fun BunkerMultiEventHomeScreen(
         }
 
         // Confirm signs each request under its own account (see below).
-        val batchAccounts = rememberBatchAccounts(bunkerRequests.map { it.currentAccount }, accountParam)
+        val batchAccounts = rememberBatchAccounts(batchRequests.map { it.currentAccount }, accountParam)
         batchAccounts.SigningAsHeader()
 
         val expandedGroups = remember { mutableStateMapOf<AppRequestGroupKey, Boolean>() }
@@ -261,11 +265,16 @@ fun BunkerMultiEventHomeScreen(
                 Amber.instance.applicationIOScope.launch(Dispatchers.IO) {
                     try {
                         reconnectToRelays()
-                        val closeApp = bunkerRequests.any { it.closeApplication }
-                        BunkerRequestUtils.clearRequests()
-                        EventNotificationConsumer(context).notificationManager().cancelAll()
+                        val closeApp = batchRequests.any { it.closeApplication }
+                        // Only this batch's requests: a connect queued meanwhile stays
+                        // pending, with its notification, for the connect screen.
+                        val notificationManager = EventNotificationConsumer(context).notificationManager()
+                        batchRequests.forEach {
+                            BunkerRequestUtils.remove(it)
+                            notificationManager.cancel(it.queueKey.hashCode())
+                        }
                         finishActivity(closeApp)
-                        for (request in bunkerRequests) {
+                        for (request in batchRequests) {
                             val thisAccount =
                                 if (request.currentAccount.isNotBlank()) {
                                     LocalPreferences.loadFromEncryptedStorage(
@@ -284,7 +293,7 @@ fun BunkerMultiEventHomeScreen(
                             // A queued request whose app row is gone was revoked
                             // while it waited: answer with an error instead of
                             // recreating the connection.
-                            if (savedApplication == null && request.request !is BunkerRequestConnect) {
+                            if (savedApplication == null) {
                                 BunkerRequestUtils.remove(request)
                                 AmberUtils.sendBunkerError(
                                     account = thisAccount,
@@ -394,36 +403,6 @@ fun BunkerMultiEventHomeScreen(
                                         relays = application.application.relays,
                                         context = context,
                                         closeApplication = application.application.closeApplication,
-                                        onLoading = {},
-                                    )
-                                }
-                            } else if (request.request is BunkerRequestConnect) {
-                                // IncomingRequestScreen shows connects on the single screen, so
-                                // this only runs if one slips into a batch. Reuse the single
-                                // screen's path: it saves the client's relays, generates the
-                                // connection key and replies with the nostrconnect secret.
-                                val appName = request.clientMetadata?.name?.ifBlank { null } ?: request.name
-                                if (isApproved) {
-                                    BunkerRequestUtils.sendResult(
-                                        context = context,
-                                        account = thisAccount,
-                                        key = localKey,
-                                        response = request.nostrConnectSecret.ifBlank { "ack" },
-                                        bunkerRequest = request,
-                                        kind = null,
-                                        onLoading = {},
-                                        appName = appName,
-                                        rememberType = RememberType.NEVER,
-                                    )
-                                } else {
-                                    BunkerRequestUtils.sendRejection(
-                                        key = localKey,
-                                        account = thisAccount,
-                                        bunkerRequest = request,
-                                        appName = appName,
-                                        rememberType = RememberType.NEVER,
-                                        signerType = SignerType.CONNECT,
-                                        kind = null,
                                         onLoading = {},
                                     )
                                 }

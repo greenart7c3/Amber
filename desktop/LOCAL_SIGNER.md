@@ -182,7 +182,8 @@ accepted. The result is a full signed event object with `id`, `pubkey` and
 - Plaintext travels as base64 in both directions: you send it base64 to
   encrypt, and decrypt returns it base64.
 - Grants are per context kind: approving with "this kind only" or "all kinds"
-  behaves as for NIP-46.
+  behaves as for NIP-46. The scope is shown in the prompt but is not part of
+  the grant: a remembered grant for kind K covers every scope of kind K.
 
 **Not implemented:** the draft's `list_public_keys` and any `connect` method.
 `get_public_key` is the only way in, as in NIP-55.
@@ -263,7 +264,7 @@ permissions, exactly like a NIP-46 connection:
 
 Your choice can be remembered for a set time or always. Encryption and
 decryption grants are scoped by content type, as on Android. NIP-44 v3 grants
-are scoped by context kind.
+are scoped by context kind only, not by the scope string.
 
 **Pending requests** expire after 10 minutes. If one is dropped instead of
 being answered, the tool still gets a reply:

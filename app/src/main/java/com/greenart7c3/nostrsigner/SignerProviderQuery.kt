@@ -383,6 +383,8 @@ object SignerProviderQuery {
                     // Permission lookup. V3 grants are scoped by (packageName,
                     // SignerType, kind); fall back to a kind=null "all kinds"
                     // grant. V3 grants do NOT satisfy V2 requests and vice versa.
+                    // The context scope string is shown in the prompt but is not
+                    // part of a grant: a remembered kind-K grant covers every scope.
                     var permission = if (isV3) {
                         // V3 grants are kind-scoped; fall back to the explicit
                         // "all kinds" (kind IS NULL) grant only, never to any

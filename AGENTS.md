@@ -97,6 +97,8 @@ Permissions are stored in `ApplicationEntity` + `ApplicationPermissionsEntity` (
 - `acceptUntil` / `rejectUntil` — time-bound grants
 - `kind` — event-kind-specific rules
 
+NIP-44 v3 grants are keyed by the context **kind** only (a kind-K rule, or a kind-less "all kinds" rule); the context scope string (`params[2]`) is shown in the approval prompt but is not stored, so a remembered kind-K grant covers every scope. Desktop (`BunkerEngine`, `LocalSigner`) follows the same model; keep them in step if that ever changes.
+
 Before showing the approval UI, all three ingestion paths query the database; if a matching auto-accept rule exists, signing proceeds silently.
 
 ### Biometric / PIN lock is UI-only

@@ -756,7 +756,7 @@
     <string name="one_week">Una settimana</string>
     <string name="delete_after">Elimina dopo</string>
     <string name="crashreport_found">Trovato report di crash</string>
-    <string name="would_you_like_to_send_the_recent_crash_report_to_amber_in_a_dm_no_personal_information_will_be_shared">Vuoi inviare il recente report di crash ad Amber tramite DM? Nessuna informazione personale verrà condivisa</string>
+    <string name="crash_report_send_prompt">Vuoi inviare l\'ultimo rapporto di arresto anomalo ad Amber tramite DM? Viene inviato dal tuo account, quindi lo sviluppatore vedrà la tua chiave pubblica.</string>
     <string name="copy_crash_report_to_clipboard">Vuoi copiare il report di crash negli appunti e aprire un client per inviarlo ad Amber?</string>
     <string name="crashreport_found_send">Invialo</string>
     <string name="invalid_intent_title">Richiesta non valida</string>

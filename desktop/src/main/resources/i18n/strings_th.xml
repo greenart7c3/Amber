@@ -568,7 +568,7 @@
     <string name="one_week">หนึ่งสัปดาห์</string>
     <string name="delete_after">ลบหลังจาก</string>
     <string name="crashreport_found">พบรายงานการขัดข้อง</string>
-    <string name="would_you_like_to_send_the_recent_crash_report_to_amber_in_a_dm_no_personal_information_will_be_shared">คุณต้องการส่งรายงานการขัดข้องล่าสุดไปยัง Amber ผ่าน DM หรือไม่? ไม่มีข้อมูลส่วนตัวที่จะถูกแชร์</string>
+    <string name="crash_report_send_prompt">คุณต้องการส่งรายงานข้อขัดข้องล่าสุดไปยัง Amber ทาง DM หรือไม่ รายงานจะถูกส่งจากบัญชีของคุณ ดังนั้นนักพัฒนาจะเห็นกุญแจสาธารณะของคุณ</string>
     <string name="copy_crash_report_to_clipboard">คุณต้องการคัดลอกรายงานการขัดข้องไปยังคลิปบอร์ดและเปิด Client เพื่อส่งไปยัง Amber หรือไม่?</string>
     <string name="crashreport_found_send">ส่งเลย</string>
     <string name="d_crash_report_sent">ส่งรายงานข้อขัดข้องแล้ว ขอบคุณ!</string>

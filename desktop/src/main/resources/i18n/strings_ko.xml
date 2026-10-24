@@ -592,7 +592,7 @@
     <string name="one_week">1주</string>
     <string name="delete_after">삭제 기한</string>
     <string name="crashreport_found">충돌 보고서 발견</string>
-    <string name="would_you_like_to_send_the_recent_crash_report_to_amber_in_a_dm_no_personal_information_will_be_shared">최근 충돌 보고서를 DM으로 Amber에 보내시겠습니까? 개인 정보는 공유되지 않습니다</string>
+    <string name="crash_report_send_prompt">최근 충돌 보고서를 DM으로 Amber에 보내시겠습니까? 회원님의 계정에서 전송되므로 개발자가 회원님의 공개 키를 볼 수 있습니다.</string>
     <string name="copy_crash_report_to_clipboard">충돌 보고서를 클립보드에 복사하고 클라이언트를 열어 Amber에 보내시겠습니까?</string>
     <string name="crashreport_found_send">보내기</string>
     <string name="d_crash_report_sent">충돌 보고서를 보냈습니다. 감사합니다!</string>

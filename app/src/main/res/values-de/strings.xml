@@ -752,7 +752,7 @@
     <string name="one_week">Eine Woche</string>
     <string name="delete_after">Löschen nach</string>
     <string name="crashreport_found">Absturzbericht gefunden</string>
-    <string name="would_you_like_to_send_the_recent_crash_report_to_amber_in_a_dm_no_personal_information_will_be_shared">Möchtest du den letzten Absturzbericht per DM an Amber senden? Es werden keine persönlichen Daten weitergegeben</string>
+    <string name="crash_report_send_prompt">Möchten Sie den letzten Absturzbericht per DM an Amber senden? Er wird von Ihrem Konto aus gesendet, daher sieht der Entwickler Ihren öffentlichen Schlüssel.</string>
     <string name="copy_crash_report_to_clipboard">Möchtest du den Absturzbericht in die Zwischenablage kopieren und einen Client öffnen, um ihn an Amber zu senden?</string>
     <string name="crashreport_found_send">Senden</string>
     <string name="invalid_intent_title">Ungültige Anfrage</string>

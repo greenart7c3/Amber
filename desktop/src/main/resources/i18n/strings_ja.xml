@@ -568,7 +568,7 @@
     <string name="one_week">1 週間</string>
     <string name="delete_after">削除するまでの期間</string>
     <string name="crashreport_found">クラッシュレポートが見つかりました</string>
-    <string name="would_you_like_to_send_the_recent_crash_report_to_amber_in_a_dm_no_personal_information_will_be_shared">最近のクラッシュレポートを DM で Amber に送信しますか？個人情報は共有されません</string>
+    <string name="crash_report_send_prompt">最近のクラッシュレポートを DM で Amber に送信しますか？あなたのアカウントから送信されるため、開発者にはあなたの公開鍵が表示されます。</string>
     <string name="copy_crash_report_to_clipboard">クラッシュレポートをクリップボードにコピーして、クライアントを開いて Amber に送信しますか？</string>
     <string name="crashreport_found_send">送信する</string>
     <string name="d_crash_report_sent">クラッシュレポートを送信しました。ありがとうございます！</string>

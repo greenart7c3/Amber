@@ -81,7 +81,7 @@ fun CrashReportScreen(
                 text = if (BuildFlavorChecker.isOfflineFlavor()) {
                     stringResource(R.string.copy_crash_report_to_clipboard)
                 } else {
-                    stringResource(R.string.would_you_like_to_send_the_recent_crash_report_to_amber_in_a_dm_no_personal_information_will_be_shared)
+                    stringResource(R.string.crash_report_send_prompt)
                 },
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,

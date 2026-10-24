@@ -753,7 +753,7 @@
     <string name="one_week">Une semaine</string>
     <string name="delete_after">Supprimer après</string>
     <string name="crashreport_found">Rapport de plantage trouvé</string>
-    <string name="would_you_like_to_send_the_recent_crash_report_to_amber_in_a_dm_no_personal_information_will_be_shared">Souhaitez-vous envoyer le rapport de plantage récent à Amber par DM ? Aucune information personnelle ne sera partagée</string>
+    <string name="crash_report_send_prompt">Voulez-vous envoyer le dernier rapport de plantage à Amber en message privé ? Il est envoyé depuis votre compte, le développeur verra donc votre clé publique.</string>
     <string name="copy_crash_report_to_clipboard">Souhaitez-vous copier le rapport de plantage dans votre presse-papiers et ouvrir un client pour l\'envoyer à Amber ?</string>
     <string name="crashreport_found_send">L\'envoyer</string>
     <string name="invalid_intent_title">Requête invalide</string>

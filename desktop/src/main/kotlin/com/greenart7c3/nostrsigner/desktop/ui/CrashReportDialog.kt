@@ -49,7 +49,7 @@ fun CrashReportDialog(
         text = {
             Column {
                 Text(
-                    Strings.get("would_you_like_to_send_the_recent_crash_report_to_amber_in_a_dm_no_personal_information_will_be_shared", language),
+                    Strings.get("crash_report_send_prompt", language),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )

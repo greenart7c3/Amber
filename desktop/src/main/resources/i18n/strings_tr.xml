@@ -588,7 +588,7 @@
     <string name="one_week">Bir hafta</string>
     <string name="delete_after">Şundan sonra sil:</string>
     <string name="crashreport_found">Çökme Raporu bulundu</string>
-    <string name="would_you_like_to_send_the_recent_crash_report_to_amber_in_a_dm_no_personal_information_will_be_shared">Son çökme raporunu bir DM ile Amber\'a göndermek ister misiniz? Hiçbir kişisel bilgi paylaşılmayacaktır</string>
+    <string name="crash_report_send_prompt">Son çökme raporunu Amber\'a DM ile göndermek ister misiniz? Hesabınızdan gönderildiği için geliştirici açık anahtarınızı görecektir.</string>
     <string name="copy_crash_report_to_clipboard">Çökme raporunu panonuza kopyalamak ve onu Amber\'a göndermek için bir İstemci açmak ister misiniz?</string>
     <string name="crashreport_found_send">Gönder</string>
     <string name="d_crash_report_sent">Çökme raporu gönderildi. Teşekkürler!</string>

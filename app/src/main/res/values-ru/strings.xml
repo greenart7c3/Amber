@@ -757,7 +757,7 @@
     <string name="one_week">Одна неделя</string>
     <string name="delete_after">Удалить через</string>
     <string name="crashreport_found">Найден отчёт об аварии</string>
-    <string name="would_you_like_to_send_the_recent_crash_report_to_amber_in_a_dm_no_personal_information_will_be_shared">Хотите отправить последний отчёт об аварии в Amber через личное сообщение? Персональные данные не будут переданы</string>
+    <string name="crash_report_send_prompt">Отправить последний отчёт о сбое в Amber личным сообщением? Он отправляется с вашей учётной записи, поэтому разработчик увидит ваш открытый ключ.</string>
     <string name="copy_crash_report_to_clipboard">Хотите скопировать отчёт об аварии в буфер обмена и открыть клиент для отправки его в Amber?</string>
     <string name="crashreport_found_send">Отправить</string>
     <string name="invalid_intent_title">Некорректный запрос</string>

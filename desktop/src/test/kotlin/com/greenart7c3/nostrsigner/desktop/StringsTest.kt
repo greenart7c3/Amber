@@ -129,4 +129,15 @@ class StringsTest {
             if (tag != "en") assertTrue("not translated for $tag", value != english)
         }
     }
+
+    @Test
+    fun theCrashReportPromptSaysTheReportComesFromTheAccount() {
+        val english = Strings.get("crash_report_send_prompt", "en")
+        assertTrue(english.contains("your public key"))
+        Strings.supportedLanguages.forEach { (tag, _) ->
+            val value = Strings.get("crash_report_send_prompt", tag)
+            assertTrue("missing for $tag", value.isNotBlank() && value != "crash_report_send_prompt")
+            if (tag != "en") assertTrue("not translated for $tag", value != english)
+        }
+    }
 }

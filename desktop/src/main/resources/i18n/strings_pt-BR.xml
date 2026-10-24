@@ -587,7 +587,7 @@
     <string name="one_week">Uma semana</string>
     <string name="delete_after">Excluir após</string>
     <string name="crashreport_found">Relatório de erro encontrado</string>
-    <string name="would_you_like_to_send_the_recent_crash_report_to_amber_in_a_dm_no_personal_information_will_be_shared">Gostaria de enviar o relatório de falha recente para o Amber em um DM? Nenhuma informação pessoal será compartilhada</string>
+    <string name="crash_report_send_prompt">Deseja enviar o relatório de falha recente para o Amber por DM? Ele é enviado da sua conta, então o desenvolvedor verá sua chave pública.</string>
     <string name="copy_crash_report_to_clipboard">Você gostaria de copiar o relatório de falha para a área de transferência e abrir um Cliente para enviá-lo ao Amber?</string>
     <string name="crashreport_found_send">Enviar</string>
     <string name="d_crash_report_sent">Relatório de falha enviado. Obrigado!</string>

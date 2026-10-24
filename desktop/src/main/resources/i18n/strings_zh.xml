@@ -573,7 +573,7 @@
     <string name="one_week">一周</string>
     <string name="delete_after">删除于</string>
     <string name="crashreport_found">找到崩溃报告</string>
-    <string name="would_you_like_to_send_the_recent_crash_report_to_amber_in_a_dm_no_personal_information_will_be_shared">想要将最近的一个崩溃报告通过私信发送给 Amber 吗？报告不会共享个人信息。</string>
+    <string name="crash_report_send_prompt">是否要通过私信将最近的崩溃报告发送给 Amber？它将从您的账户发送，因此开发者会看到您的公钥。</string>
     <string name="copy_crash_report_to_clipboard">想要复制崩溃报告到剪贴板并打开客户端发送给 Amber 吗？</string>
     <string name="crashreport_found_send">发送</string>
     <string name="d_crash_report_sent">崩溃报告已发送。谢谢！</string>

@@ -141,3 +141,6 @@ quartz/
 trace_processor
 perf-traces
 /desktop/null/
+
+# Editor backups (e.g. nano writes <file>.save)
+*.save

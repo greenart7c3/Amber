@@ -43,6 +43,7 @@ object TorManager {
     private const val TOR_CHANNEL_ID = "TorChannel"
     private const val TOR_CHANNEL_GROUP_ID = "TorGroup"
     private const val TOR_RESTART_REQUEST_CODE = 15
+    private const val TOR_CONTENT_REQUEST_CODE = 16
     private const val BOOTSTRAP_POLL_MS = 500L
     private const val SOCKS_BIND_ATTEMPTS = 5
 
@@ -127,7 +128,7 @@ object TorManager {
         if (ActivityCompat.checkSelfPermission(ctx, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) return
         val contentIntent = Intent(ctx, MainActivity::class.java)
             .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP)
-        val pendingIntent = PendingIntent.getActivity(ctx, 0, contentIntent, PendingIntent.FLAG_MUTABLE)
+        val pendingIntent = PendingIntent.getActivity(ctx, TOR_CONTENT_REQUEST_CODE, contentIntent, PendingIntent.FLAG_IMMUTABLE)
         val restartIntent = Intent(ctx, TorRestartReceiver::class.java)
         val restartPendingIntent = PendingIntent.getBroadcast(
             ctx,

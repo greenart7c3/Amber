@@ -161,7 +161,7 @@ object NotificationUtils {
                 applicationContext,
                 notId,
                 contentIntent,
-                PendingIntent.FLAG_MUTABLE,
+                PendingIntent.FLAG_IMMUTABLE,
             )
 
         BunkerRequestUtils.addRequest(bunkerRequest)

@@ -568,7 +568,7 @@ class Amber :
                 this,
                 10,
                 Intent(this, ConnectivityService::class.java),
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
             )
             val alarmManager = this.getSystemService(ALARM_SERVICE) as AlarmManager
             alarmManager.set(AlarmManager.RTC_WAKEUP, 1000, operation)

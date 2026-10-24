@@ -31,9 +31,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import com.fasterxml.jackson.databind.JsonNode
+import com.greenart7c3.nostrsigner.desktop.core.DecodedPsbt
+import com.greenart7c3.nostrsigner.desktop.core.DecodedPsbtOutput
 import com.greenart7c3.nostrsigner.desktop.core.EncryptedContent
 import com.greenart7c3.nostrsigner.desktop.core.EncryptedContentType
 import com.greenart7c3.nostrsigner.desktop.core.PendingBunkerRequest
+import com.greenart7c3.nostrsigner.desktop.core.PsbtDecoder
 import com.greenart7c3.nostrsigner.desktop.core.SignerDescriptions
 import com.greenart7c3.nostrsigner.desktop.core.SignerType
 import com.greenart7c3.nostrsigner.desktop.core.Strings
@@ -85,18 +88,26 @@ internal sealed interface RequestDetails {
 
     data class OfText(val text: String) : RequestDetails
 
+    /** A sign_psbt request: what the transaction pays, mirroring Android's `SignPsbt`. */
+    data class OfPsbt(val decoded: DecodedPsbt, val psbt: String) : RequestDetails
+
     /** The short text under the request's description on the card. */
-    val summary: String
-        get() = when (this) {
-            // An auth event says nothing in its content: show the relay instead.
-            is OfEvent -> if (event.kind == 22242) {
-                event.tags.firstOrNull { it.size > 1 && it[0] == "relay" }?.get(1) ?: event.content
-            } else {
-                event.content
-            }
-            is OfTags -> tags.format()
-            is OfText -> text
+    fun summary(language: String): String = when (this) {
+        // An auth event says nothing in its content: show the relay instead.
+        is OfEvent -> if (event.kind == 22242) {
+            event.tags.firstOrNull { it.size > 1 && it[0] == "relay" }?.get(1) ?: event.content
+        } else {
+            event.content
         }
+        is OfTags -> tags.format()
+        is OfText -> text
+        is OfPsbt -> decoded.parseError?.let { Strings.format("psbt_decode_error", it, language = language) }
+            ?: listOfNotNull(
+                "${Strings.get("psbt_sending", language)}: ${sats(decoded.totalSent, language)}",
+                "${Strings.get("psbt_change", language)}: ${sats(decoded.totalChange, language)}",
+                decoded.feeSats?.let { "${Strings.get("psbt_fee", language)}: ${sats(it, language)}" },
+            ).joinToString(" · ")
+    }
 
     companion object {
         /** Null when there is nothing to detail (connect, get_public_key, ping…). */
@@ -104,6 +115,7 @@ internal sealed interface RequestDetails {
             req.type == SignerType.SIGN_EVENT ->
                 (DetailEvent.parse(req.result) ?: DetailEvent.parse(req.preview))?.let(::OfEvent)
             req.type == SignerType.DECRYPT_ZAP_EVENT -> DetailEvent.parse(req.preview)?.let(::OfEvent)
+            req.type == SignerType.SIGN_PSBT -> OfPsbt(PsbtDecoder.decode(req.preview, req.account.hexKey), req.preview)
             req.type in contentScopedSignerTypes || req.type in nip44v3SignerTypes -> {
                 val content = req.encryptedContent ?: EncryptedContent.classify(req.preview)
                 when (content.type) {
@@ -160,6 +172,7 @@ internal fun RequestDetailsDialog(
                     }
                     is RequestDetails.OfTags -> TagsSection(Strings.get("tags", language), details.tags)
                     is RequestDetails.OfText -> DetailSection(contentLabel(language), details.text)
+                    is RequestDetails.OfPsbt -> PsbtSections(details, language)
                 }
             }
         },
@@ -167,6 +180,39 @@ internal fun RequestDetailsDialog(
             AmberTextButton(text = Strings.get("d_close", language), onClick = onDismiss)
         },
     )
+}
+
+private fun sats(amount: Long, language: String) = Strings.format("psbt_amount_sats", amount, language = language)
+
+/** Mirrors Android's `PsbtBody`: sending and change outputs, the fee, then the raw PSBT. */
+@Composable
+private fun PsbtSections(details: RequestDetails.OfPsbt, language: String) {
+    val decoded = details.decoded
+    if (decoded.parseError != null) {
+        Text(
+            Strings.format("psbt_decode_error", decoded.parseError, language = language),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.error,
+        )
+    } else {
+        val (change, sending) = decoded.outputs.partition { it.isChange }
+        PsbtOutputs(Strings.get("psbt_sending", language), decoded.totalSent, sending, language)
+        PsbtOutputs(Strings.get("psbt_change", language), decoded.totalChange, change, language)
+        decoded.feeSats?.let { DetailSection(Strings.get("psbt_fee", language), sats(it, language)) }
+    }
+    HorizontalDivider()
+    DetailSection(Strings.get("psbt_raw", language), details.psbt, monospace = true)
+}
+
+@Composable
+private fun PsbtOutputs(title: String, totalSats: Long, outputs: List<DecodedPsbtOutput>, language: String) {
+    if (outputs.isEmpty()) return
+    Text("$title: ${sats(totalSats, language)}", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
+    outputs.forEach { output ->
+        // Non-segwit scripts have no bech32 address: show the script itself.
+        val destination = output.address ?: output.scriptPubKeyHex
+        DetailSection(sats(output.valueSats, language), destination, monospace = output.address == null)
+    }
 }
 
 private fun contentLabel(language: String) = Strings.get("content", language).replaceFirstChar { it.uppercase() }

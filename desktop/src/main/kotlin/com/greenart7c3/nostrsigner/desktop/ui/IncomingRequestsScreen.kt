@@ -149,7 +149,7 @@ private fun RequestCard(
             if (details != null) {
                 // Mirrors the Android BunkerRequestCard: what the event says (or
                 // the text being encrypted/decrypted), the rest behind "See details".
-                val summary = details.summary
+                val summary = details.summary(language)
                 if (summary.isNotBlank()) {
                     Spacer(Modifier.height(8.dp))
                     Text(

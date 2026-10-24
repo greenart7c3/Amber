@@ -8,6 +8,14 @@ import com.greenart7c3.nostrsigner.desktop.core.PendingBunkerRequest
 import com.greenart7c3.nostrsigner.desktop.core.SignerType
 import com.vitorpamplona.quartz.nip01Core.crypto.KeyPair
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequest
+import com.vitorpamplona.quartz.nipBCOnchainZaps.psbt.BitcoinTransaction
+import com.vitorpamplona.quartz.nipBCOnchainZaps.psbt.OutPoint
+import com.vitorpamplona.quartz.nipBCOnchainZaps.psbt.Psbt
+import com.vitorpamplona.quartz.nipBCOnchainZaps.psbt.TxIn
+import com.vitorpamplona.quartz.nipBCOnchainZaps.psbt.TxOut
+import com.vitorpamplona.quartz.nipBCOnchainZaps.psbt.setInputWitnessUtxo
+import com.vitorpamplona.quartz.nipBCOnchainZaps.taproot.TaprootAddress
+import com.vitorpamplona.quartz.utils.Hex
 import java.io.File
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
@@ -66,7 +74,7 @@ class RequestDetailsTest {
         val signed = """{"id":"00","pubkey":"${account.hexKey}","created_at":1700000000,"kind":1,"tags":[["t","amber"]],"content":"gm nostr","sig":"00"}"""
         val details = RequestDetails.of(req(SignerType.SIGN_EVENT, preview = note, result = signed))
         assertTrue(details is RequestDetails.OfEvent)
-        assertEquals("gm nostr", details!!.summary)
+        assertEquals("gm nostr", details!!.summary("en"))
         val event = (details as RequestDetails.OfEvent).event
         assertEquals(account.hexKey, event.pubKey)
         assertEquals(1700000000L, event.createdAt)
@@ -76,18 +84,18 @@ class RequestDetailsTest {
     @Test
     fun authEventsSummarizeTheRelay() {
         val auth = """{"kind":22242,"content":"","tags":[["relay","wss://relay.example"],["challenge","x"]],"created_at":1700000000}"""
-        assertEquals("wss://relay.example", RequestDetails.of(req(SignerType.SIGN_EVENT, preview = auth))!!.summary)
+        assertEquals("wss://relay.example", RequestDetails.of(req(SignerType.SIGN_EVENT, preview = auth))!!.summary("en"))
     }
 
     @Test
     fun encryptedPayloadsAreShownByWhatTheyHold() {
         val event = RequestDetails.of(req(SignerType.NIP44_DECRYPT, preview = note))
         assertTrue(event is RequestDetails.OfEvent)
-        assertEquals("gm nostr", event!!.summary)
+        assertEquals("gm nostr", event!!.summary("en"))
 
         val tags = RequestDetails.of(req(SignerType.NIP04_ENCRYPT, preview = """[["p","abc"],["e","def"]]"""))
         assertTrue(tags is RequestDetails.OfTags)
-        assertEquals("""["p", "abc"], ["e", "def"]""", tags!!.summary)
+        assertEquals("""["p", "abc"], ["e", "def"]""", tags!!.summary("en"))
 
         val text = RequestDetails.of(req(SignerType.NIP44_V3_ENCRYPT, preview = "hello"))
         assertEquals(RequestDetails.OfText("hello"), text)
@@ -116,5 +124,30 @@ class RequestDetailsTest {
         // Answered elsewhere (shortcut, notification, expiry): the dialog closes.
         UiState.pruneRequestState(listOf(connect))
         assertNull(UiState.detailsRequestId.value)
+    }
+
+    private fun taprootScript(xOnly: ByteArray) = TaprootAddress.outputKeyToScriptPubKey(TaprootAddress.tweakOutputKey(xOnly))
+
+    @Test
+    fun signPsbtShowsWhatTheTransactionPays() {
+        val tx = BitcoinTransaction(
+            version = 2,
+            inputs = listOf(TxIn(OutPoint("11".repeat(32), 0))),
+            outputs = listOf(TxOut(60_000, taprootScript(KeyPair().pubKey)), TxOut(39_000, taprootScript(Hex.decode(account.hexKey)))),
+            lockTime = 0,
+        )
+        val psbt = Psbt.fromUnsignedTx(tx).apply { setInputWitnessUtxo(0, TxOut(100_000, taprootScript(Hex.decode(account.hexKey)))) }.toHex()
+
+        val details = RequestDetails.of(req(SignerType.SIGN_PSBT, preview = psbt))
+
+        assertTrue(details is RequestDetails.OfPsbt)
+        assertEquals("Sending: 60000 sats · Change: 39000 sats · Fee: 1000 sats", details!!.summary("en"))
+    }
+
+    @Test
+    fun anUndecodablePsbtSaysSo() {
+        val details = RequestDetails.of(req(SignerType.SIGN_PSBT, preview = "not a psbt"))
+
+        assertTrue(details!!.summary("en").startsWith("Could not decode PSBT"))
     }
 }

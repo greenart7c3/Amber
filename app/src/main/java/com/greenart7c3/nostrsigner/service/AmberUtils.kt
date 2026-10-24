@@ -14,8 +14,10 @@ import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.models.basicPermissions
 import com.greenart7c3.nostrsigner.models.encryptDecryptSignerTypes
 import com.greenart7c3.nostrsigner.models.toPermissionTypeString
+import com.greenart7c3.nostrsigner.service.model.AmberEvent
 import com.greenart7c3.nostrsigner.ui.RememberType
 import com.greenart7c3.nostrsigner.ui.components.DecryptTypeScope
+import com.vitorpamplona.quartz.nip01Core.core.Event
 import com.vitorpamplona.quartz.nip01Core.core.HexKey
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
 import com.vitorpamplona.quartz.nip19Bech32.toNpub
@@ -382,3 +384,13 @@ fun relayAuthRememberType(
  * event would also vouch for a relay the user never approved.
  */
 fun hasAmbiguousRelayTags(kind: Int, tags: Array<Array<String>>): Boolean = kind == 22242 && tags.count { it.size > 1 && it[0] == "relay" } > 1
+
+/**
+ * Whether the auth whitelist refuses a relay auth (kind 22242) for [relayHost]:
+ * a non-empty whitelist rejects every relay outside it, without asking, on
+ * every path that decides a relay auth (provider, single and batch screens).
+ */
+fun isBlockedByAuthWhitelist(kind: Int, relayHost: String, whitelist: List<String> = Amber.instance.settings.authWhitelist): Boolean = kind == 22242 && whitelist.isNotEmpty() && relayHost !in whitelist
+
+/** [isBlockedByAuthWhitelist] for a signed [event], decided on its first relay tag. */
+fun isBlockedByAuthWhitelist(event: Event?): Boolean = event != null && event.kind == 22242 && isBlockedByAuthWhitelist(event.kind, RelayUrlUtils.extractHostAndPort(AmberEvent.relay(event)))

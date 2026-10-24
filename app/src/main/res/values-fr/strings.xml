@@ -846,6 +846,7 @@
     <string name="auth_whitelist">Liste blanche d\'authentification client</string>
     <string name="auth_whitelist_description">Lorsque la liste blanche n\'est pas vide, l\'authentification client aux relays (NIP-42) ne sera autorisée que pour les relays de la liste. Les demandes d\'authentification des autres relays seront automatiquement rejetées.</string>
     <string name="add_relay_to_whitelist">Ajouter un relay à la liste blanche</string>
+    <string name="relay_not_in_auth_whitelist">Ce relay n\'est pas dans votre liste blanche d\'authentification, il sera donc refusé</string>
     <string name="keystore_error_title">Compte inaccessible</string>
     <string name="keystore_error_message">Un ou plusieurs comptes n\'ont pas pu être chargés car le stockage sécurisé (KeyStore) de votre appareil a renvoyé une erreur :\n\n%1$s\n\nIl s\'agit d\'un bug de firmware connu sur certains appareils où le système ne peut pas mettre à niveau les clés de chiffrement stockées.\n\nCe que vous pouvez faire :\n• Si vous avez sauvegardé votre nsec (clé privée), déconnectez-vous du compte concerné et reconnectez-vous — cela créera une nouvelle clé fonctionnelle.\n• Vérifiez si une mise à jour du firmware système est disponible auprès de votre fabricant, ce qui pourrait résoudre le problème.\n• Ne désinstallez pas Amber ; garder l\'application installée préserve la possibilité de récupération si une mise à jour du firmware est publiée.</string>
     <string name="event_kind_31124">État actuel de l\'animal</string>

@@ -845,6 +845,7 @@
     <string name="auth_whitelist">Client-Auth-Whitelist</string>
     <string name="auth_whitelist_description">Wenn die Whitelist nicht leer ist, wird die Relay-Client-Authentifizierung (NIP-42) nur für Relays in der Liste erlaubt. Auth-Anfragen von anderen Relays werden automatisch abgelehnt.</string>
     <string name="add_relay_to_whitelist">Relay zur Whitelist hinzufügen</string>
+    <string name="relay_not_in_auth_whitelist">Dieses Relay steht nicht auf deiner Auth-Whitelist und wird abgelehnt</string>
     <string name="keystore_error_title">Konto nicht zugänglich</string>
     <string name="keystore_error_message">Ein oder mehrere Konten konnten nicht geladen werden, da der sichere Speicher (KeyStore) deines Geräts einen Fehler zurückgegeben hat:\n\n%1$s\n\nDies ist ein bekannter Firmware-Fehler auf einigen Geräten, bei dem das System gespeicherte Verschlüsselungsschlüssel nicht aktualisieren kann.\n\nWas du tun kannst:\n• Wenn du dein nsec (privaten Schlüssel) gesichert hast, melde dich vom betroffenen Konto ab und wieder an — dadurch wird ein neuer, funktionierender Schlüssel erstellt.\n• Suche nach einem System-Firmware-Update deines Geräteherstellers, das dieses Problem möglicherweise behebt.\n• Deinstalliere Amber nicht; die App installiert zu lassen bewahrt die Möglichkeit einer Wiederherstellung, falls ein Firmware-Update veröffentlicht wird.</string>
     <string name="event_kind_31124">Aktueller Haustierstatus</string>

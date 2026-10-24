@@ -828,6 +828,7 @@
     <string name="auth_whitelist">客户端验证白名单</string>
     <string name="auth_whitelist_description">当白名单不为空时，只允许列表中的中继上进行中继客户端身份验证(NIP-42)。其他中继的验证请求将被自动拒绝。</string>
     <string name="add_relay_to_whitelist">添加中继到白名单</string>
+    <string name="relay_not_in_auth_whitelist">此中继不在你的认证白名单中，将被拒绝</string>
     <string name="keystore_error_title">账户无法访问</string>
     <string name="keystore_error_message">无法加载一个或多个账户，因为您的设备 KeyStore 返回了错误：\n\n%1$s\n\n这是某些设备上已知的固件漏洞，系统无法升级保存的加密密钥。\n\n你能做什么：\n•如果您已备份了 nsec（私钥），请先退出受影响的账户然后重新登录以生成一个新的有效密钥。\n•从设备制造商获取系统固件更新，可能会得到修复。\n•不要卸载 Amber；保留好应用以便于在获得固件更新后恢复账户访问。</string>
     <string name="event_kind_31124">当前宠物状态</string>

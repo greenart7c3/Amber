@@ -847,6 +847,7 @@
     <string name="auth_whitelist">Daftar putih auth klien</string>
     <string name="auth_whitelist_description">Ketika daftar putih tidak kosong, autentikasi klien relay (NIP-42) hanya diizinkan untuk relay dalam daftar. Permintaan auth dari relay lain akan ditolak secara otomatis.</string>
     <string name="add_relay_to_whitelist">Tambahkan relay ke daftar putih</string>
+    <string name="relay_not_in_auth_whitelist">Relay ini tidak ada di daftar putih autentikasi Anda, jadi akan ditolak</string>
     <string name="keystore_error_title">Akun Tidak Dapat Diakses</string>
     <string name="keystore_error_message">Satu atau lebih akun tidak dapat dimuat karena penyimpanan aman perangkat Anda (KeyStore) mengembalikan error:\n\n%1$s\n\nIni adalah bug firmware yang diketahui pada beberapa perangkat di mana sistem tidak dapat meningkatkan kunci enkripsi yang tersimpan.\n\nYang dapat Anda lakukan:\n• Jika Anda memiliki nsec (kunci privat) yang dicadangkan, keluar dari akun yang terpengaruh dan masuk kembali — ini akan membuat kunci baru yang berfungsi.\n• Periksa pembaruan firmware sistem dari produsen perangkat Anda, yang mungkin dapat memperbaiki ini.\n• Jangan hapus instalasi Amber; menyimpan aplikasi mempertahankan kemungkinan pemulihan jika pembaruan firmware dirilis.</string>
     <string name="event_kind_31124">Status hewan peliharaan saat ini</string>

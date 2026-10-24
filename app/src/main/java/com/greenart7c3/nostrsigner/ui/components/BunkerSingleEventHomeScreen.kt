@@ -43,6 +43,7 @@ import com.greenart7c3.nostrsigner.service.BunkerRequestUtils
 import com.greenart7c3.nostrsigner.service.IntentUtils
 import com.greenart7c3.nostrsigner.service.PsbtDecoder
 import com.greenart7c3.nostrsigner.service.RelayUrlUtils
+import com.greenart7c3.nostrsigner.service.isBlockedByAuthWhitelist
 import com.greenart7c3.nostrsigner.service.isPrivateEvent
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
 import com.greenart7c3.nostrsigner.service.relayAuthRememberType
@@ -629,8 +630,7 @@ fun BunkerSingleEventHomeScreen(
                 }
 
                 // If the auth whitelist is non-empty and this relay is not in it, auto-reject
-                val authWhitelist = Amber.instance.settings.authWhitelist
-                val blockedByWhitelist = authWhitelist.isNotEmpty() && relayUrl !in authWhitelist
+                val blockedByWhitelist = isBlockedByAuthWhitelist(22242, relayUrl)
 
                 val acceptOrReject = if (blockedByWhitelist) {
                     false

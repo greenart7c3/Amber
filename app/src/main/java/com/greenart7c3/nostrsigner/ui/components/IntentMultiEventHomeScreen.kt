@@ -52,6 +52,7 @@ import com.greenart7c3.nostrsigner.models.TagArrayEncryptedDataKind
 import com.greenart7c3.nostrsigner.service.AmberUtils
 import com.greenart7c3.nostrsigner.service.MultiEventScreenIntents
 import com.greenart7c3.nostrsigner.service.RelayUrlUtils
+import com.greenart7c3.nostrsigner.service.isBlockedByAuthWhitelist
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
 import com.greenart7c3.nostrsigner.service.relayAuthRememberType
 import com.greenart7c3.nostrsigner.ui.RememberType
@@ -84,7 +85,7 @@ fun IntentMultiEventHomeScreen(
         MultiEventScreenIntents.checkedStates.clear()
         MultiEventScreenIntents.rememberType = RememberType.NEVER
         // checkedStates now holds the per-request decision: true = Approve, false = Deny.
-        intents.forEach { MultiEventScreenIntents.checkedStates[it.id] = true }
+        intents.forEach { MultiEventScreenIntents.checkedStates[it.id] = !isBlockedByAuthWhitelist(it.event) }
     }
 
     Column(
@@ -123,7 +124,7 @@ fun IntentMultiEventHomeScreen(
                             approved = groupApproved,
                             expanded = expanded,
                             onApproveChanged = { approve ->
-                                MultiEventScreenIntents.checkedStates.putAll(groupIntents.associate { it.id to approve })
+                                MultiEventScreenIntents.checkedStates.putAll(groupIntents.associate { it.id to (approve && !isBlockedByAuthWhitelist(it.event)) })
                             },
                             onExpandToggle = {
                                 expandedGroups[groupKey] = !(expandedGroups[groupKey] ?: false)
@@ -212,10 +213,13 @@ fun IntentMultiEventHomeScreen(
                             val historyList = mutableListOf<HistoryEntity>()
 
                             for (intentData in accountIntents) {
-                                val isApproved = MultiEventScreenIntents.checkedStates[intentData.id] ?: true
+                                // A relay outside the auth whitelist is rejected without
+                                // remembering it, as on the single screen.
+                                val blockedByWhitelist = isBlockedByAuthWhitelist(intentData.event)
+                                val isApproved = !blockedByWhitelist && (MultiEventScreenIntents.checkedStates[intentData.id] ?: true)
                                 val type = intentData.type
                                 val groupKey = requestGroupKey(type, intentData.event?.kind, intentData.encryptedData, intentData.nip44v3Kind)
-                                val rememberType = groupRememberTypes[groupKey] ?: RememberType.NEVER
+                                val rememberType = if (blockedByWhitelist) RememberType.NEVER else groupRememberTypes[groupKey] ?: RememberType.NEVER
 
                                 if (type == SignerType.SIGN_EVENT) {
                                     val localEvent = intentData.event!!
@@ -499,20 +503,29 @@ private fun IntentRequestCard(
 
             signingAs?.let { SigningAs(it) }
 
-            AmberToggles(
-                selected = approved,
-                options = listOf(true, false),
-                onSelected = onApproveChanged,
-                label = {
-                    if (it) stringResource(R.string.approve) else stringResource(R.string.deny)
-                },
-                indicatorColor = {
-                    if (it) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
-                },
-                selectedTextColor = {
-                    if (it) Color.Black else MaterialTheme.colorScheme.onError
-                },
-            )
+            if (isBlockedByAuthWhitelist(intent.event)) {
+                // Always rejected on confirm, as on the single screen.
+                Text(
+                    text = stringResource(R.string.relay_not_in_auth_whitelist),
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.padding(vertical = 8.dp),
+                )
+            } else {
+                AmberToggles(
+                    selected = approved,
+                    options = listOf(true, false),
+                    onSelected = onApproveChanged,
+                    label = {
+                        if (it) stringResource(R.string.approve) else stringResource(R.string.deny)
+                    },
+                    indicatorColor = {
+                        if (it) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
+                    },
+                    selectedTextColor = {
+                        if (it) Color.Black else MaterialTheme.colorScheme.onError
+                    },
+                )
+            }
         }
     }
 

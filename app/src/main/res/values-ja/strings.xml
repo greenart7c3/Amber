@@ -823,6 +823,7 @@
     <string name="auth_whitelist">クライアント認証ホワイトリスト</string>
     <string name="auth_whitelist_description">ホワイトリストが空でない場合、relay クライアント認証 (NIP-42) はリスト内の relay に対してのみ許可されます。他の relay からの認証リクエストは自動的に拒否されます。</string>
     <string name="add_relay_to_whitelist">relay をホワイトリストに追加</string>
+    <string name="relay_not_in_auth_whitelist">この relay は認証ホワイトリストにないため、拒否されます</string>
     <string name="keystore_error_title">アカウントにアクセスできません</string>
     <string name="keystore_error_message">デバイスのセキュアストレージ (KeyStore) がエラーを返したため、1 つ以上のアカウントを読み込めませんでした:\n\n%1$s\n\nこれはシステムが保存された暗号化キーをアップグレードできない一部のデバイスで確認されている既知のファームウェアバグです。\n\n対処方法:\n• nsec（プライベートキー）がバックアップされている場合は、影響を受けるアカウントからログアウトして再ログインしてください — 新しい動作するキーが作成されます。\n• デバイスメーカーからシステムファームウェアのアップデートを確認してください。修正される可能性があります。\n• Amber をアンインストールしないでください。アプリをインストールしたままにしておくと、ファームウェアアップデートがリリースされた場合に復元できる可能性が残ります。</string>
     <string name="event_kind_31124">現在のペットの状態</string>

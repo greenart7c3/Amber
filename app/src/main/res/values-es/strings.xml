@@ -849,6 +849,7 @@
     <string name="auth_whitelist">Lista blanca de autenticación de cliente</string>
     <string name="auth_whitelist_description">Cuando la lista blanca no está vacía, la autenticación de cliente en relays (NIP-42) solo se permitirá para los relays de la lista. Las solicitudes de autenticación de otros relays se rechazarán automáticamente.</string>
     <string name="add_relay_to_whitelist">Añadir relay a la lista blanca</string>
+    <string name="relay_not_in_auth_whitelist">Este relay no está en tu lista blanca de autenticación, así que se rechazará</string>
     <string name="keystore_error_title">Cuenta inaccesible</string>
     <string name="keystore_error_message">No se pudieron cargar una o más cuentas porque el almacenamiento seguro (KeyStore) de tu dispositivo devolvió un error:\n\n%1$s\n\nEste es un error de firmware conocido en algunos dispositivos donde el sistema no puede actualizar las claves de cifrado almacenadas.\n\nQué puedes hacer:\n• Si tienes tu nsec (clave privada) como copia de seguridad, cierra sesión en la cuenta afectada y vuelve a iniciarla — esto creará una nueva clave funcional.\n• Busca una actualización de firmware del fabricante de tu dispositivo, que podría solucionar esto.\n• No desinstales Amber; mantener la aplicación instalada conserva la posibilidad de recuperación si se publica una actualización de firmware.</string>
     <string name="event_kind_31124">Estado actual de mascota</string>

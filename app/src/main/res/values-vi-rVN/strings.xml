@@ -823,6 +823,7 @@
     <string name="auth_whitelist">Danh sách trắng xác thực máy khách</string>
     <string name="auth_whitelist_description">Khi danh sách trắng không trống, xác thực máy khách relay (NIP-42) chỉ được phép cho các relay trong danh sách. Các yêu cầu xác thực từ relay khác sẽ bị từ chối tự động.</string>
     <string name="add_relay_to_whitelist">Thêm relay vào danh sách trắng</string>
+    <string name="relay_not_in_auth_whitelist">Relay này không có trong danh sách trắng xác thực của bạn nên sẽ bị từ chối</string>
     <string name="keystore_error_title">Tài Khoản Không Thể Truy Cập</string>
     <string name="keystore_error_message">Một hoặc nhiều tài khoản không thể tải được do bộ lưu trữ an toàn (KeyStore) trên thiết bị của bạn trả về lỗi:\n\n%1$s\n\nĐây là lỗi firmware đã biết trên một số thiết bị, nơi hệ thống không thể nâng cấp các khóa mã hóa đã lưu.\n\nBạn có thể làm:\n• Nếu bạn đã sao lưu nsec (khóa riêng tư), hãy đăng xuất khỏi tài khoản bị ảnh hưởng và đăng nhập lại — điều này sẽ tạo ra một khóa mới hoạt động.\n• Kiểm tra cập nhật firmware hệ thống từ nhà sản xuất thiết bị, có thể sửa lỗi này.\n• Không gỡ cài đặt Amber; giữ ứng dụng được cài đặt vẫn bảo tồn khả năng khôi phục nếu có bản cập nhật firmware được phát hành.</string>
     <string name="event_kind_31124">Trạng thái thú cưng hiện tại</string>

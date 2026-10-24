@@ -17,6 +17,7 @@ import com.greenart7c3.nostrsigner.service.AmberUtils
 import com.greenart7c3.nostrsigner.service.IntentUtils
 import com.greenart7c3.nostrsigner.service.RelayUrlUtils
 import com.greenart7c3.nostrsigner.service.hasAmbiguousRelayTags
+import com.greenart7c3.nostrsigner.service.isBlockedByAuthWhitelist
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
 import com.vitorpamplona.quartz.nip01Core.core.Event
 import com.vitorpamplona.quartz.nip57Zaps.LnZapRequestEvent
@@ -148,8 +149,7 @@ object SignerProviderQuery {
                     // required, otherwise any app/NIP-46 client could silently obtain
                     // relay-auth signatures (GHSA-vx4h-56qj-wcp7).
                     if (event.kind == 22242) {
-                        val authWhitelist = Amber.instance.settings.authWhitelist
-                        if (authWhitelist.isNotEmpty() && relayHost !in authWhitelist) {
+                        if (isBlockedByAuthWhitelist(event.kind, relayHost)) {
                             scope.launch {
                                 historyDatabase.dao().addHistory(
                                     listOf(

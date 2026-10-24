@@ -45,6 +45,7 @@ import com.greenart7c3.nostrsigner.ui.navigation.Route
 import com.greenart7c3.nostrsigner.ui.navigation.externalRoute
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toImmutableList
 
 @SuppressLint("StateFlowValueCalledInComposition", "UnrememberedMutableState")
 @Composable
@@ -57,6 +58,8 @@ fun AccountScreen(
     navController: NavHostControllerWrapper,
     isExternalRequest: Boolean = false,
     referrer: Uri? = null,
+    // The owner tag of this activity's MainViewModel: only its requests show.
+    intentOwner: String,
 ) {
     val accountState by accountStateViewModel.accountContent.collectAsState()
     val context = LocalContext.current
@@ -83,7 +86,8 @@ fun AccountScreen(
                     MainLoginPage(accountStateViewModel, NavHostControllerWrapper(newNavController))
                 }
                 is AccountState.LoggedIn -> {
-                    val intents by IntentUtils.intents.collectAsState(initial = persistentListOf())
+                    val allIntents by IntentUtils.intents.collectAsState(initial = persistentListOf())
+                    val intents = remember(allIntents, intentOwner) { allIntents.filter { it.owner == intentOwner }.toImmutableList() }
                     LaunchedEffect(intent) {
                         intent.intent?.let {
                             IntentUtils.getIntentData(
@@ -94,7 +98,7 @@ fun AccountScreen(
                                 state.account,
                                 referrer,
                             )?.let { intentData ->
-                                IntentUtils.addAll(listOf(intentData))
+                                IntentUtils.addAll(listOf(intentData.copy(owner = intentOwner)))
                             }
                         }
                     }

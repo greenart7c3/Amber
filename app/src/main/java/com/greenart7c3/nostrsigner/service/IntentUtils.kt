@@ -151,8 +151,8 @@ object IntentUtils {
 
     fun addAll(list: List<IntentData>) {
         _intents.update { current ->
-            val existingIds = current.mapTo(mutableSetOf()) { it.id }
-            val newList = list.filter { existingIds.add(it.id) }
+            val existingKeys = current.mapTo(mutableSetOf()) { it.queueKey }
+            val newList = list.filter { existingKeys.add(it.queueKey) }
             (current + newList).toPersistentList()
         }
     }

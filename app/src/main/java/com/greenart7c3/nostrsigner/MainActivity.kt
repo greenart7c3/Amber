@@ -149,6 +149,7 @@ class MainActivity : AppCompatActivity() {
                                 referrer = launchReferrer,
                                 bunkerRequests = bunkerRequests.value,
                                 navController = NavHostControllerWrapper(navController),
+                                intentOwner = mainViewModel.ownerId,
                             )
                         }
                     }
@@ -187,7 +188,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         val ownedIds = mainViewModel.addedIntentIds
-        val toRemove = IntentUtils.intents.value.filter { it.id in ownedIds }
+        val toRemove = mainViewModel.ownIntents().filter { it.id in ownedIds }
         if (toRemove.isNotEmpty()) {
             IntentUtils.removeAll(toRemove)
         }

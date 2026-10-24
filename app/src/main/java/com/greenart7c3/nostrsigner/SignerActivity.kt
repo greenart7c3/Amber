@@ -189,6 +189,7 @@ class SignerActivity : AppCompatActivity() {
                                         bunkerRequests = bunkerRequests.value,
                                         navController = NavHostControllerWrapper(navController),
                                         isExternalRequest = true,
+                                        intentOwner = mainViewModel.ownerId,
                                     )
                                 }
                             }
@@ -234,7 +235,7 @@ class SignerActivity : AppCompatActivity() {
     override fun onDestroy() {
         val ownedIds = if (::mainViewModel.isInitialized) mainViewModel.addedIntentIds else emptySet()
         if (ownedIds.isNotEmpty()) {
-            val toRemove = IntentUtils.intents.value.filter { it.id in ownedIds }
+            val toRemove = mainViewModel.ownIntents().filter { it.id in ownedIds }
             if (toRemove.isNotEmpty()) {
                 IntentUtils.removeAll(toRemove)
             }

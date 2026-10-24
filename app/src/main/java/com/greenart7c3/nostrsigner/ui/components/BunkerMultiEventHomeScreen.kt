@@ -133,9 +133,10 @@ fun BunkerMultiEventHomeScreen(
         ?: batchRequests.first { it.appKey == appKey }.defaultAppInfo()
 
     LaunchedEffect(Unit) {
-        MultiEventScreenIntents.checkedStates.clear()
         MultiEventScreenIntents.rememberType = RememberType.NEVER
-        // checkedStates now holds the per-request decision: true = Approve, false = Deny.
+        // checkedStates holds the per-request decision: true = Approve, false = Deny.
+        // It is shared by every open Amber screen, so set only this batch's keys
+        // instead of clearing an intent batch's choices on another screen.
         batchRequests.forEach { MultiEventScreenIntents.checkedStates[it.queueKey] = !isBlockedByAuthWhitelist(it.signedEvent) }
     }
 

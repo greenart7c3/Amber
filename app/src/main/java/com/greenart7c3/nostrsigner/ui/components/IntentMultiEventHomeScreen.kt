@@ -82,10 +82,11 @@ fun IntentMultiEventHomeScreen(
     val groupDecryptScopes = remember { mutableStateMapOf<RequestGroupKey, DecryptTypeScope>() }
 
     LaunchedEffect(Unit) {
-        MultiEventScreenIntents.checkedStates.clear()
         MultiEventScreenIntents.rememberType = RememberType.NEVER
-        // checkedStates now holds the per-request decision: true = Approve, false = Deny.
-        intents.forEach { MultiEventScreenIntents.checkedStates[it.id] = !isBlockedByAuthWhitelist(it.event) }
+        // checkedStates holds the per-request decision: true = Approve, false = Deny.
+        // It is shared by every open Amber screen, so set only this screen's keys
+        // (owner-scoped queueKeys) instead of clearing another screen's choices.
+        intents.forEach { MultiEventScreenIntents.checkedStates[it.queueKey] = !isBlockedByAuthWhitelist(it.event) }
     }
 
     Column(
@@ -117,14 +118,14 @@ fun IntentMultiEventHomeScreen(
                 val expanded = groups.size == 1 || (expandedGroups[groupKey] ?: false)
                 if (groups.size > 1) {
                     item(key = "group-header:${groupKey.type.name}:${groupKey.payload?.name ?: ""}:${groupKey.kind ?: ""}") {
-                        val groupApproved = groupIntents.all { MultiEventScreenIntents.checkedStates[it.id] ?: true }
+                        val groupApproved = groupIntents.all { MultiEventScreenIntents.checkedStates[it.queueKey] ?: true }
                         RequestGroupHeader(
                             label = groupKey.toLabel(context),
                             count = groupIntents.size,
                             approved = groupApproved,
                             expanded = expanded,
                             onApproveChanged = { approve ->
-                                MultiEventScreenIntents.checkedStates.putAll(groupIntents.associate { it.id to (approve && !isBlockedByAuthWhitelist(it.event)) })
+                                MultiEventScreenIntents.checkedStates.putAll(groupIntents.associate { it.queueKey to (approve && !isBlockedByAuthWhitelist(it.event)) })
                             },
                             onExpandToggle = {
                                 expandedGroups[groupKey] = !(expandedGroups[groupKey] ?: false)
@@ -151,9 +152,9 @@ fun IntentMultiEventHomeScreen(
                             context = context,
                             intent = intent,
                             signingAs = batchAccounts.forCard(intent.currentAccount),
-                            approved = MultiEventScreenIntents.checkedStates[intent.id] ?: true,
+                            approved = MultiEventScreenIntents.checkedStates[intent.queueKey] ?: true,
                             onApproveChanged = {
-                                MultiEventScreenIntents.checkedStates[intent.id] = it
+                                MultiEventScreenIntents.checkedStates[intent.queueKey] = it
                             },
                         )
                     }
@@ -216,7 +217,7 @@ fun IntentMultiEventHomeScreen(
                                 // A relay outside the auth whitelist is rejected without
                                 // remembering it, as on the single screen.
                                 val blockedByWhitelist = isBlockedByAuthWhitelist(intentData.event)
-                                val isApproved = !blockedByWhitelist && (MultiEventScreenIntents.checkedStates[intentData.id] ?: true)
+                                val isApproved = !blockedByWhitelist && (MultiEventScreenIntents.checkedStates[intentData.queueKey] ?: true)
                                 val type = intentData.type
                                 val groupKey = requestGroupKey(type, intentData.event?.kind, intentData.encryptedData, intentData.nip44v3Kind)
                                 val rememberType = if (blockedByWhitelist) RememberType.NEVER else groupRememberTypes[groupKey] ?: RememberType.NEVER

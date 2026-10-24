@@ -5,6 +5,10 @@ name: Benchmark APK
 # (R8/minify enabled, not debuggable) so it has no debug overhead. The benchmark
 # flavor uses a distinct applicationId suffix, so it installs side-by-side with a
 # production build.
+#
+# It runs on every push to any branch, so it signs with a dedicated benchmark
+# key (the BENCHMARK_* secrets), never the release key: unreviewed branch code
+# must not get an APK signed with the production certificate.
 
 on:
   push:
@@ -19,6 +23,20 @@ jobs:
     timeout-minutes: 30
 
     steps:
+      - name: Check benchmark signing secrets
+        env:
+          BENCHMARK_SIGNING_KEY: ${{ secrets.BENCHMARK_SIGNING_KEY }}
+          BENCHMARK_KEY_ALIAS: ${{ secrets.BENCHMARK_KEY_ALIAS }}
+          BENCHMARK_KEY_STORE_PASSWORD: ${{ secrets.BENCHMARK_KEY_STORE_PASSWORD }}
+          BENCHMARK_KEY_PASSWORD: ${{ secrets.BENCHMARK_KEY_PASSWORD }}
+        run: |
+          for name in BENCHMARK_SIGNING_KEY BENCHMARK_KEY_ALIAS BENCHMARK_KEY_STORE_PASSWORD BENCHMARK_KEY_PASSWORD; do
+            if [ -z "${!name}" ]; then
+              echo "::error::Missing the $name secret. The benchmark APK is signed with its own keystore, separate from the release key."
+              exit 1
+            fi
+          done
+
       - name: Checkout source
         uses: actions/checkout@v7
 
@@ -51,10 +69,10 @@ jobs:
         uses: r0adkll/sign-android-release@v1
         with:
           releaseDirectory: app/build/outputs/apk/benchmark/release
-          signingKeyBase64: ${{ secrets.SIGNING_KEY }}
-          alias: ${{ secrets.KEY_ALIAS }}
-          keyStorePassword: ${{ secrets.KEY_STORE_PASSWORD }}
-          keyPassword: ${{ secrets.KEY_PASSWORD }}
+          signingKeyBase64: ${{ secrets.BENCHMARK_SIGNING_KEY }}
+          alias: ${{ secrets.BENCHMARK_KEY_ALIAS }}
+          keyStorePassword: ${{ secrets.BENCHMARK_KEY_STORE_PASSWORD }}
+          keyPassword: ${{ secrets.BENCHMARK_KEY_PASSWORD }}
         env:
           BUILD_TOOLS_VERSION: "34.0.0"
 

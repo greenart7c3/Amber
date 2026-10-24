@@ -801,12 +801,10 @@ class EventNotificationConsumer(private val applicationContext: Context) {
         permission: ApplicationWithPermissions?,
         applicationWithSecret: ApplicationWithPermissions?,
     ): String {
-        var name = event.pubKey.toShortenHex()
-        if (permission != null && permission.application.name.isNotBlank()) {
-            name = permission.application.name
-        } else if (applicationWithSecret != null && applicationWithSecret.application.name.isNotBlank()) {
-            name = applicationWithSecret.application.name
-        }
+        // Saved names may predate sanitizing at entry.
+        val name = sequenceOf(permission, applicationWithSecret)
+            .map { sanitizeAppName(it?.application?.name ?: "") }
+            .firstOrNull { it.isNotBlank() } ?: event.pubKey.toShortenHex()
 
         val bunkerPermission = Permission(type.toString().toLowerCase(Locale.current), amberEvent?.kind)
         var message = "$name  ${applicationContext.getString(R.string.requests)} ${bunkerPermission.toLocalizedString(applicationContext)}"

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.greenart7c3.nostrsigner.service.sanitizeAppName
 
 /**
  * Optional client identification metadata a client MAY include as the 4th
@@ -62,7 +63,7 @@ data class BunkerClientMetadata(
         }
 
         private fun fromJson(node: JsonNode): BunkerClientMetadata = BunkerClientMetadata(
-            name = node.get("name")?.asText()?.trim().orEmpty(),
+            name = sanitizeAppName(node.get("name")?.asText().orEmpty()),
             url = node.get("url")?.asText()?.trim().orEmpty(),
             image = node.get("image")?.asText()?.trim().orEmpty(),
         )

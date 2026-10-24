@@ -101,7 +101,7 @@ object IntentUtils {
         val newName = saved.name.ifBlank {
             runCatching {
                 val info = context.packageManager.getApplicationInfo(packageName, 0)
-                context.packageManager.getApplicationLabel(info).toString()
+                sanitizeAppName(context.packageManager.getApplicationLabel(info).toString())
             }.getOrNull().orEmpty()
         }
 
@@ -248,7 +248,7 @@ object IntentUtils {
                     parameter == "compressionType" -> if (parameterData == "gzip") compressionType = CompressionType.GZIP
                     parameter == "callbackUrl" -> callbackUrl = parameterData
                     parameter == "returnType" -> if (parameterData == "event") returnType = ReturnType.EVENT
-                    parameter == "appName" -> appName = parameterData
+                    parameter == "appName" -> appName = sanitizeAppName(parameterData)
                     parameter == "kind" -> nip44v3Kind = parameterData.toIntOrNull()
                     parameter == "scope" -> nip44v3Scope = parameterData
                 }
@@ -417,7 +417,7 @@ object IntentUtils {
         val callbackUrl = intent.extras?.getString("callbackUrl") ?: ""
         var name = if (callbackUrl.isNotBlank()) callbackUrl.toUri().host ?: "" else ""
         if (name.isBlank()) {
-            name = intent.extras?.getString("appName") ?: ""
+            name = sanitizeAppName(intent.extras?.getString("appName") ?: "")
         }
         val pubKey = intent.extras?.getString("pubKey") ?: intent.extras?.getString("pubkey") ?: ""
         val id = intent.extras?.getString("id") ?: ""
@@ -906,7 +906,7 @@ object IntentUtils {
                             if (packageName != null && appName == null) {
                                 try {
                                     val info = context.packageManager.getApplicationInfo(packageName, 0)
-                                    context.packageManager.getApplicationLabel(info).toString()
+                                    sanitizeAppName(context.packageManager.getApplicationLabel(info).toString())
                                 } catch (_: Exception) {
                                     null
                                 }

@@ -39,6 +39,7 @@ import com.greenart7c3.nostrsigner.service.IntentRateLimitInspector
 import com.greenart7c3.nostrsigner.service.IntentRateLimiter
 import com.greenart7c3.nostrsigner.service.IntentUtils
 import com.greenart7c3.nostrsigner.service.safeReferrer
+import com.greenart7c3.nostrsigner.service.sanitizeAppName
 import com.greenart7c3.nostrsigner.ui.AccountScreen
 import com.greenart7c3.nostrsigner.ui.AccountStateViewModel
 import com.greenart7c3.nostrsigner.ui.IntentWrapper
@@ -87,7 +88,7 @@ class SignerActivity : AppCompatActivity() {
                     if (packageName != null) {
                         try {
                             val info = applicationContext.packageManager.getApplicationInfo(packageName, 0)
-                            applicationContext.packageManager.getApplicationLabel(info).toString()
+                            sanitizeAppName(applicationContext.packageManager.getApplicationLabel(info).toString())
                         } catch (_: Exception) {
                             null
                         }
@@ -265,7 +266,7 @@ class SignerActivity : AppCompatActivity() {
         if (pkg.isNullOrBlank()) return getString(R.string.rate_limit_unknown_app)
         return try {
             val info = applicationContext.packageManager.getApplicationInfo(pkg, 0)
-            applicationContext.packageManager.getApplicationLabel(info).toString()
+            sanitizeAppName(applicationContext.packageManager.getApplicationLabel(info).toString())
         } catch (_: Exception) {
             pkg
         }

@@ -59,7 +59,7 @@ object NostrConnectUtils {
                     }
                 }
                 if (paramName == "name") {
-                    name = json
+                    name = sanitizeAppName(json)
                 }
 
                 if (paramName == "url") {

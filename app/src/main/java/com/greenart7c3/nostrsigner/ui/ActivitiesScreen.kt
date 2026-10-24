@@ -56,6 +56,7 @@ import com.greenart7c3.nostrsigner.models.TimeUtils
 import com.greenart7c3.nostrsigner.models.supportedKindNumbers
 import com.greenart7c3.nostrsigner.service.ApplicationNameCache
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
+import com.greenart7c3.nostrsigner.service.sanitizeAppName
 import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.components.ActivityStatsCard
 import com.greenart7c3.nostrsigner.ui.components.EventSection
@@ -374,7 +375,7 @@ fun ApplicationName(
             name = cached
         } else {
             val appName = withContext(Dispatchers.IO) {
-                Amber.instance.getDatabase(account.npub).dao().getAppName(key)
+                Amber.instance.getDatabase(account.npub).dao().getAppName(key)?.let(::sanitizeAppName)?.ifBlank { null }
             }
             if (appName != null) {
                 name = appName

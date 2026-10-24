@@ -47,6 +47,7 @@ import com.greenart7c3.nostrsigner.models.AmberBunkerRequest
 import com.greenart7c3.nostrsigner.models.IntentData
 import com.greenart7c3.nostrsigner.models.TorMode
 import com.greenart7c3.nostrsigner.service.TorManager
+import com.greenart7c3.nostrsigner.service.sanitizeAppName
 import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.NavBackStackEntryWrapper
 import com.greenart7c3.nostrsigner.ui.navigation.Route
@@ -193,17 +194,17 @@ fun AmberTopAppBar(
                                 navBackStackEntry.navBackStackEntry?.arguments?.getString("packageName")?.let { packageName ->
                                     val application = Amber.instance.getDatabase(account.npub).dao().getByKey(packageName)?.application
                                     title = if (destinationRoute.startsWith("Activity/")) {
-                                        "${application?.name?.ifBlank { application.key.toShortenHex() } ?: packageName} - ${routes.find { it.route.startsWith(destinationRoute) }?.title(localContext)}"
+                                        "${application?.name?.let(::sanitizeAppName)?.ifBlank { application.key.toShortenHex() } ?: packageName} - ${routes.find { it.route.startsWith(destinationRoute) }?.title(localContext)}"
                                     } else {
-                                        application?.name?.ifBlank { application.key.toShortenHex() } ?: packageName
+                                        application?.name?.let(::sanitizeAppName)?.ifBlank { application.key.toShortenHex() } ?: packageName
                                     }
                                 }
                                 navBackStackEntry.navBackStackEntry?.arguments?.getString("key")?.let { packageName ->
                                     val application = Amber.instance.getDatabase(account.npub).dao().getByKey(packageName)?.application
                                     title = if (destinationRoute.startsWith("Activity/")) {
-                                        "${application?.name?.ifBlank { application.key.toShortenHex() } ?: packageName} - ${routes.find { it.route.startsWith(destinationRoute) }?.title(localContext)}"
+                                        "${application?.name?.let(::sanitizeAppName)?.ifBlank { application.key.toShortenHex() } ?: packageName} - ${routes.find { it.route.startsWith(destinationRoute) }?.title(localContext)}"
                                     } else {
-                                        application?.name?.ifBlank { application.key.toShortenHex() } ?: packageName
+                                        application?.name?.let(::sanitizeAppName)?.ifBlank { application.key.toShortenHex() } ?: packageName
                                     }
                                 }
                                 navBackStackEntry.navBackStackEntry?.arguments?.getString("url")?.let { url ->
@@ -224,7 +225,7 @@ fun AmberTopAppBar(
                                             application = Amber.instance.getDatabase(account.npub).dao().getByKey(secret)?.application
                                         }
                                     }
-                                    val titleTemp = application?.name?.ifBlank { request.name.ifBlank { application.key.toShortenHex() } } ?: request.name
+                                    val titleTemp = application?.name?.let(::sanitizeAppName)?.ifBlank { request.name.ifBlank { application.key.toShortenHex() } } ?: request.name
                                     title = titleTemp.ifBlank {
                                         routes.find { it.route == destinationRoute }?.title(localContext) ?: ""
                                     }
@@ -249,7 +250,7 @@ fun rememberAppDisplayInfo(packageName: String): AppDisplayInfo {
         runCatching {
             val appInfo = context.packageManager.getApplicationInfo(packageName, 0)
             AppDisplayInfo(
-                name = context.packageManager.getApplicationLabel(appInfo).toString(),
+                name = sanitizeAppName(context.packageManager.getApplicationLabel(appInfo).toString()),
                 icon = context.packageManager.getApplicationIcon(appInfo),
             )
         }.getOrNull() ?: AppDisplayInfo(name = packageName, icon = null)

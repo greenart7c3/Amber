@@ -38,6 +38,7 @@ import com.greenart7c3.nostrsigner.service.isCrossAccountSignEvent
 import com.greenart7c3.nostrsigner.service.isPrivateEvent
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
 import com.greenart7c3.nostrsigner.service.relayAuthRememberType
+import com.greenart7c3.nostrsigner.service.sanitizeAppName
 import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.ToastManager
 import com.vitorpamplona.quartz.nip01Core.core.toHexKey
@@ -77,8 +78,7 @@ fun IntentSingleEventHomeScreen(
         }
     }
 
-    var appName = applicationEntity?.application?.name ?: packageName ?: intentData.name
-    appName = appName.ifBlank { key.toShortenHex() }
+    val appName = sanitizeAppName(applicationEntity?.application?.name ?: packageName ?: intentData.name).ifBlank { key.toShortenHex() }
     val context = LocalContext.current
     val clipboardManager = LocalClipboard.current
 

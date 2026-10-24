@@ -59,6 +59,7 @@ import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.AmberBunkerRequest
 import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.service.TrustScoreService
+import com.greenart7c3.nostrsigner.service.sanitizeAppName
 import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.DeleteAfterType
 import com.greenart7c3.nostrsigner.ui.RememberType
@@ -122,7 +123,7 @@ fun BunkerConnectRequestScreen(
     LaunchedEffect(selectedAccountIndex) {
         val selectedAccount = accounts[selectedAccountIndex]
         val name = withContext(Dispatchers.IO) {
-            bunkerRequest.name.ifBlank { Amber.instance.getDatabase(selectedAccount.npub).dao().getBySecret((bunkerRequest.request as BunkerRequestConnect).secret ?: "")?.application?.name ?: bunkerRequest.localKey.toShortenHex() }
+            bunkerRequest.name.ifBlank { sanitizeAppName(Amber.instance.getDatabase(selectedAccount.npub).dao().getBySecret((bunkerRequest.request as BunkerRequestConnect).secret ?: "")?.application?.name ?: "").ifBlank { bunkerRequest.localKey.toShortenHex() } }
         }
         appName.value = name
     }

@@ -46,6 +46,7 @@ import com.greenart7c3.nostrsigner.service.RelayUrlUtils
 import com.greenart7c3.nostrsigner.service.isPrivateEvent
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
 import com.greenart7c3.nostrsigner.service.relayAuthRememberType
+import com.greenart7c3.nostrsigner.service.sanitizeAppName
 import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.RememberType
 import com.vitorpamplona.quartz.nip01Core.core.toHexKey
@@ -90,8 +91,7 @@ fun BunkerSingleEventHomeScreen(
         }
     }
 
-    var appName = applicationEntity?.application?.name ?: bunkerRequest.name
-    appName = appName.ifBlank { key.toShortenHex() }
+    val appName = sanitizeAppName(applicationEntity?.application?.name ?: bunkerRequest.name).ifBlank { key.toShortenHex() }
     // Prefer the persisted application icon, falling back to the icon carried by
     // the connect request's client metadata (nostr-protocol/nips#2381).
     val appIcon = (applicationEntity?.application?.icon ?: "").ifBlank { bunkerRequest.clientMetadata?.image ?: "" }
@@ -279,7 +279,7 @@ fun BunkerSingleEventHomeScreen(
                             )
                         } else {
                             existingAppKey = existing.app.application.key
-                            existingAppName = existing.app.application.name.ifBlank { existing.app.application.key.toShortenHex() }
+                            existingAppName = sanitizeAppName(existing.app.application.name).ifBlank { existing.app.application.key.toShortenHex() }
                             canCreateNewConnection = existing.canCreateNew
                             showExistingAppDialog = true
                         }

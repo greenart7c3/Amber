@@ -55,6 +55,7 @@ import com.greenart7c3.nostrsigner.service.MultiEventScreenIntents
 import com.greenart7c3.nostrsigner.service.RelayUrlUtils
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
 import com.greenart7c3.nostrsigner.service.relayAuthRememberType
+import com.greenart7c3.nostrsigner.service.sanitizeAppName
 import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.RememberType
 import com.greenart7c3.nostrsigner.ui.theme.AmberPreview
@@ -148,7 +149,7 @@ fun BunkerMultiEventHomeScreen(
                     val cacheKey = "${account.npub.toShortenHex()}-${appKey.key}"
                     val app = Amber.instance.getDatabase(account.npub).dao().getByKey(appKey.key)
                     val name = ApplicationNameCache[cacheKey]
-                        ?: app?.application?.name?.ifBlank { null }?.also { ApplicationNameCache[cacheKey] = it }
+                        ?: app?.application?.name?.let(::sanitizeAppName)?.ifBlank { null }?.also { ApplicationNameCache[cacheKey] = it }
                     val default = appInfo(appKey)
                     appInfos[appKey] = RequestAppInfo(
                         name = name ?: default.name,

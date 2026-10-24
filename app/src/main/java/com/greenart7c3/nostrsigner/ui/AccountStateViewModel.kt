@@ -9,6 +9,7 @@ import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.TorMode
 import com.greenart7c3.nostrsigner.service.ApplicationBackup
+import com.greenart7c3.nostrsigner.service.BackupApplication
 import com.greenart7c3.nostrsigner.service.BackupPayload
 import com.greenart7c3.nostrsigner.service.RestoreResult
 import com.greenart7c3.nostrsigner.service.TorManager
@@ -245,10 +246,11 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
         }
     }
 
-    fun acceptRestore(onResult: (RestoreResult) -> Unit) {
+    /** Restores only [applications], the entries the user kept selected in the prompt. */
+    fun acceptRestore(applications: List<BackupApplication>, onResult: (RestoreResult) -> Unit) {
         val current = restorePrompt.value as? RestorePromptState.Found ?: return
         Amber.instance.applicationIOScope.launch {
-            val result = ApplicationBackup.restoreFromPayload(current.account.npub, current.payload)
+            val result = ApplicationBackup.restoreFromPayload(current.account.npub, current.payload.copy(applications = applications))
             restorePrompt.value = null
             launch(Dispatchers.Main) { onResult(result) }
         }

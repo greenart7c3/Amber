@@ -366,11 +366,18 @@ object ApplicationBackup {
         }
     }
 
+    /**
+     * Whether [app] has outlived its [BackupApplication.deleteAfter]: the
+     * cleanup worker would delete it, so a restore must not bring it back.
+     */
+    internal fun isExpired(app: BackupApplication, now: Long): Boolean = app.deleteAfter in 1..<now
+
     suspend fun restoreFromPayload(npub: String, payload: BackupPayload): RestoreResult = try {
         val dao = Amber.instance.dao(npub)
         var apps = 0
         var permissions = 0
-        payload.applications.forEach { backupApp ->
+        val now = TimeUtils.now()
+        payload.applications.filterNot { isExpired(it, now) }.forEach { backupApp ->
             val entity = ApplicationEntity(
                 key = backupApp.key,
                 name = backupApp.name,

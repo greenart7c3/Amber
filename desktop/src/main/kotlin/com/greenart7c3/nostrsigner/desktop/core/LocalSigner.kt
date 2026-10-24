@@ -203,7 +203,8 @@ object LocalSigner {
                     first = false
                     val hello = runCatching { LocalSignerProtocol.parseHello(line) }.getOrNull()
                     if (hello != null) {
-                        session.name = hello.name
+                        // The tool picks its own label; keep it to one plain line.
+                        session.name = sanitizeAppName(hello.name)
                         session.secret = hello.secret
                         continue
                     }

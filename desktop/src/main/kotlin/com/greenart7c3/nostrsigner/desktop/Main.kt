@@ -39,6 +39,7 @@ import com.greenart7c3.nostrsigner.desktop.core.UriLaunch
 import com.greenart7c3.nostrsigner.desktop.core.allowsQuickApprove
 import com.greenart7c3.nostrsigner.desktop.core.describe
 import com.greenart7c3.nostrsigner.desktop.core.notificationAccountLine
+import com.greenart7c3.nostrsigner.desktop.core.notificationTitle
 import com.greenart7c3.nostrsigner.desktop.ui.App
 import com.greenart7c3.nostrsigner.desktop.ui.MIN_WINDOW_SIZE
 import com.greenart7c3.nostrsigner.desktop.ui.NostrSignerTheme
@@ -325,7 +326,9 @@ fun main(args: Array<String>) {
                 var notified = false
                 if (settings.showNotifications) {
                     val accountLine = request.notificationAccountLine(AccountsStore.accounts.value, language)
-                    val message = listOfNotNull("${request.appName} ${request.type.describe(request.kind, request.encryptedContent, language)}", accountLine).joinToString("\n")
+                    // The client-chosen name is the (plain-text) title; the
+                    // body, which daemons may render as markup, is Amber's own.
+                    val message = listOfNotNull(request.type.describe(request.kind, request.encryptedContent, language), accountLine).joinToString("\n")
                     // Daemons that never draw action buttons get Amber's own popup.
                     val nativeButtons = isLinux && withContext(Dispatchers.IO) { Notifier.linuxDaemonShowsButtons() }
                     if (nativeButtons) {
@@ -340,7 +343,7 @@ fun main(args: Array<String>) {
                             add(Notifier.Action("reject", Strings.get("reject", language)) { answerFromNotification(request, approve = false) })
                         }
                         notified = withContext(Dispatchers.IO) {
-                            Notifier.notify(BuildVariant.appName, message, actions, onActivate = { DesktopTray.windowVisible.value = true })
+                            Notifier.notify(request.notificationTitle(), message, actions, onActivate = { DesktopTray.windowVisible.value = true })
                         }
                     } else {
                         popupRequest = request
@@ -363,7 +366,7 @@ fun main(args: Array<String>) {
             } else {
                 RequestNotificationPopup(
                     request = request,
-                    title = request.appName,
+                    title = request.notificationTitle(),
                     message = listOfNotNull(
                         request.type.describe(request.kind, request.encryptedContent, language),
                         request.notificationAccountLine(AccountsStore.accounts.value, language),

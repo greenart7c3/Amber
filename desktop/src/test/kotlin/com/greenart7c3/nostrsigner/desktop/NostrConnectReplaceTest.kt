@@ -60,4 +60,19 @@ class NostrConnectReplaceTest {
         assertEquals(1, app.app.signPolicy)
         assertFalse(app.permissions.any { it.type == "SIGN_EVENT" && it.kind == 1 })
     }
+
+    @Test
+    fun aNostrConnectNameIsQueuedSanitized() = runBlocking {
+        val account = AccountManager.addAccount(KeyPair(), name = "nc-name", signPolicy = 1)
+        val clientHex = KeyPair().pubKey.toHexKey()
+
+        // A line break and a right-to-left override in the client-chosen name.
+        assertNull(AmberDesktop.engine.addNostrConnect("nostrconnect://$clientHex?relay=wss%3A%2F%2Fnew.invalid&name=Amber%0AApprove%20now%E2%80%AEevil", account))
+        val card = withTimeout(20_000) {
+            while (AmberDesktop.engine.pending.value.none { it.localKey == clientHex }) delay(50)
+            AmberDesktop.engine.pending.value.first { it.localKey == clientHex }
+        }
+
+        assertEquals("Amber Approve nowevil", card.appName)
+    }
 }

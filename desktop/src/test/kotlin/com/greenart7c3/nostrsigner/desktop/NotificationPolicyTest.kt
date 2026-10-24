@@ -3,10 +3,13 @@ package com.greenart7c3.nostrsigner.desktop
 import com.greenart7c3.nostrsigner.desktop.core.AccountManager
 import com.greenart7c3.nostrsigner.desktop.core.AccountRecord
 import com.greenart7c3.nostrsigner.desktop.core.DesktopAccount
+import com.greenart7c3.nostrsigner.desktop.core.NOTIFICATION_APP_NAME_MAX
 import com.greenart7c3.nostrsigner.desktop.core.PendingBunkerRequest
 import com.greenart7c3.nostrsigner.desktop.core.SignerType
 import com.greenart7c3.nostrsigner.desktop.core.allowsQuickApprove
 import com.greenart7c3.nostrsigner.desktop.core.notificationAccountLine
+import com.greenart7c3.nostrsigner.desktop.core.notificationTitle
+import com.greenart7c3.nostrsigner.desktop.core.sanitizeAppName
 import com.greenart7c3.nostrsigner.desktop.core.toShortenHex
 import com.vitorpamplona.quartz.nip01Core.crypto.KeyPair
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequest
@@ -87,5 +90,30 @@ class NotificationPolicyTest {
             "Account: main · ${account.npub.toShortenHex()}",
             req(SignerType.SIGN_EVENT, 1).notificationAccountLine(listOf(mine, other), "en"),
         )
+    }
+
+    @Test
+    fun aClientChosenNameCannotFakeLinesOrDirection() {
+        // Line breaks and tabs become single spaces: no fake second line.
+        assertEquals("Wallet Amber: approve to continue", sanitizeAppName("Wallet\nAmber:\tapprove  to continue"))
+        // Bidi overrides and zero-width characters are dropped.
+        assertEquals("evilgpj.exe", sanitizeAppName("evil\u202Egpj.exe\u200B"))
+        assertEquals("ab", sanitizeAppName("a\u0000\u0007b"))
+        // Ordinary names, including non-Latin ones, are kept as they are.
+        assertEquals("Amethyst", sanitizeAppName("  Amethyst  "))
+        assertEquals("ノストラ 🟣", sanitizeAppName("ノストラ 🟣"))
+    }
+
+    @Test
+    fun aLongNameIsCut() {
+        val cut = sanitizeAppName("x".repeat(200))
+        assertEquals(NOTIFICATION_APP_NAME_MAX, cut.codePointCount(0, cut.length))
+        assertTrue(cut.endsWith("…"))
+    }
+
+    @Test
+    fun aNameThatSanitizesToNothingFallsBackToTheKey() {
+        val blank = req(SignerType.SIGN_EVENT, 1).copy(appName = "\u202E\u200B\n", localKey = "ab".repeat(32))
+        assertEquals("ab".repeat(32).toShortenHex(), blank.notificationTitle())
     }
 }

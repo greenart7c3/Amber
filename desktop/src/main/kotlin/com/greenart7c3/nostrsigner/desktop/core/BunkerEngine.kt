@@ -766,7 +766,8 @@ class BunkerEngine(
             }
 
             null -> {
-                val name = app?.app?.name?.ifBlank { null } ?: event.pubKey.toShortenHex()
+                // Saved names came from a client; older records were stored unsanitized.
+                val name = app?.app?.name?.let(::sanitizeAppName)?.ifBlank { null } ?: event.pubKey.toShortenHex()
                 addPending(
                     PendingBunkerRequest(
                         request = bunkerRequest,
@@ -1389,7 +1390,8 @@ class BunkerEngine(
                     localKey = pubKey,
                     relays = relays,
                     nostrConnectSecret = nostrConnectSecret,
-                    appName = name.ifBlank { pubKey.toShortenHex() },
+                    // Client-chosen: the card, the saved record and every notification show it.
+                    appName = sanitizeAppName(name).ifBlank { pubKey.toShortenHex() },
                     appUrl = url,
                     appIcon = image,
                     requestedPermissions = permissions,

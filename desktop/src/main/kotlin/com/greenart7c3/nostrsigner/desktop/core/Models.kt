@@ -230,6 +230,13 @@ data class AppRecord(
     fun normalizedRelays(): List<NormalizedRelayUrl> = relays.mapNotNull { RelayUrlNormalizer.normalizeOrNull(it) }
 
     fun displayName(): String = name.ifBlank { key.toShortenHex() }
+
+    /**
+     * Whether the user's "delete after" time has passed. Checked on every
+     * request (mirroring Android's `ApplicationEntity.isExpired`), so an
+     * expired connection stops working at once rather than at the next prune.
+     */
+    fun isExpired(now: Long = TimeUtils.now()): Boolean = deleteAfter > 0 && deleteAfter <= now
 }
 
 const val TRANSPORT_NIP46 = "nip46"

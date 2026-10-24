@@ -180,7 +180,7 @@ class AccountStore(val npub: String) {
      */
     @Synchronized
     fun deleteExpiredApps(now: Long = TimeUtils.now()): Int {
-        val expired = apps.value.filter { it.app.deleteAfter in 1 until now }.map { it.app.key }.toSet()
+        val expired = apps.value.filter { it.app.isExpired(now) }.map { it.app.key }.toSet()
         if (expired.isEmpty()) return 0
         apps.value = apps.value.filter { it.app.key !in expired }
         history.value = history.value.filter { it.appKey !in expired }

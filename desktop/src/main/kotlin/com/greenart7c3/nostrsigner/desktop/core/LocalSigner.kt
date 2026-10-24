@@ -287,7 +287,8 @@ object LocalSigner {
     }
 
     private fun findApp(store: AccountStore, session: ClientSession): AppWithPermissions? {
-        val socketApps = store.apps.value.filter { it.app.isLocalSocket }
+        // An expired connection no longer authenticates the client.
+        val socketApps = store.apps.value.filter { it.app.isLocalSocket && !it.app.isExpired() }
         val hash = session.secretHash
         return socketApps.firstOrNull { it.app.key in session.approvedApps || (hash != null && constantTimeEquals(it.app.socketSecretHash, hash)) }
     }

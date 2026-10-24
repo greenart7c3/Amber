@@ -486,7 +486,7 @@ class BunkerEngine(
         // and must never be silently dropped. Checked after verify() and
         // keyed on the proven signer pubkey, so forged events cannot drain a
         // legitimate sender's budget.
-        if (store.getByKey(event.pubKey) == null &&
+        if (store.getByKey(event.pubKey)?.takeUnless { it.app.isExpired() } == null &&
             !rateLimiter.allow("${relay.url}|${event.pubKey}", System.currentTimeMillis())
         ) {
             return
@@ -544,7 +544,14 @@ class BunkerEngine(
             return
         }
 
-        val permission = store.getByKey(event.pubKey)
+        var permission = store.getByKey(event.pubKey)
+        if (permission != null && permission.app.isExpired()) {
+            // Mirrors EventNotificationConsumer: the user set a finite lifetime
+            // on this connection, so answer as an unknown app even before the
+            // prune loop deletes it.
+            store.addLog(relay.url, "bunker", "Connection expired for ${event.pubKey}")
+            permission = null
+        }
         if (permission != null && connectsThroughOtherKey(permission.app.localKey, connectionPrivKey, type)) {
             // Mirrors EventNotificationConsumer: a stored app may only use its
             // own connection key; a request to another connection's key is
@@ -963,7 +970,9 @@ class BunkerEngine(
         }
         val defaultRelays = AmberDesktop.defaultRelays()
 
-        var savedApplication = store.getByKey(key)
+        // An expired connection counts as gone: approving a card queued before
+        // it expired must not sign for it (a new connect replaces it below).
+        var savedApplication = store.getByKey(key)?.takeUnless { it.app.isExpired() }
         if (connectionToReplace(req, acc.npub) != null) {
             // A nostrconnect URI names the client key itself. Approving it
             // replaces the connection saved under that key (the card shows

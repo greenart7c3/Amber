@@ -288,8 +288,61 @@ object UriLaunch {
         MimeType=x-scheme-handler/nostrconnect;
     """.trimIndent() + "\n"
 
-    /** Desktop-entry Exec quoting: double quotes with backslash escapes. */
-    internal fun quoteForDesktopEntry(value: String): String = if (value.none { it in " \t\"'\\" }) value else "\"" + value.replace("\\", "\\\\").replace("\"", "\\\"") + "\""
+    /** Characters that make an Exec argument need quoting (Desktop Entry spec). */
+    private const val EXEC_RESERVED = " \t\"'\\><~|&;$*?#()`"
+
+    /** Characters a quoted Exec argument escapes with a backslash. */
+    private const val EXEC_QUOTE_ESCAPED = "\"`$\\"
+
+    /**
+     * One Exec argument, written as the Desktop Entry spec reads it back: a
+     * literal `%` doubled (field codes), arguments with reserved characters
+     * double-quoted with `"`, `` ` ``, `$` and `\` backslash-escaped, then the
+     * string-level escape that doubles every backslash. A line break cannot
+     * be represented and would end the key, so it is refused.
+     */
+    internal fun quoteForDesktopEntry(value: String): String {
+        val fields = value.replace("%", "%%")
+        if (value.none { it in EXEC_RESERVED }) return escapeDesktopEntryString(fields)
+        val quoted = buildString {
+            append('"')
+            fields.forEach { c ->
+                if (c in EXEC_QUOTE_ESCAPED) append('\\')
+                append(c)
+            }
+            append('"')
+        }
+        return escapeDesktopEntryString(quoted)
+    }
+
+    /** A desktop-entry string value (e.g. `Icon=`): backslashes doubled, line breaks refused. */
+    internal fun escapeDesktopEntryString(value: String): String {
+        require(value.none { it == '\n' || it == '\r' }) { "a desktop-entry value cannot contain a line break" }
+        return value.replace("\\", "\\\\")
+    }
+
+    /** The inverse of [quoteForDesktopEntry] for one argument. */
+    internal fun unquoteDesktopEntryArg(raw: String): String {
+        val string = raw.replace("\\\\", "\\")
+        val unquoted = if (string.length >= 2 && string.startsWith('"') && string.endsWith('"')) {
+            buildString {
+                var i = 1
+                while (i < string.length - 1) {
+                    val c = string[i]
+                    if (c == '\\' && i + 1 < string.length - 1 && string[i + 1] in EXEC_QUOTE_ESCAPED) {
+                        append(string[i + 1])
+                        i += 2
+                    } else {
+                        append(c)
+                        i++
+                    }
+                }
+            }
+        } else {
+            string
+        }
+        return unquoted.replace("%%", "%")
+    }
 
     /** The AppImage file rather than its per-launch mount; see AutoStart.currentExecutable. */
     private fun currentCommandLine(): String? = System.getenv("APPIMAGE")?.takeIf { it.isNotBlank() } ?: runCatching {

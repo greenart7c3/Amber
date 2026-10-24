@@ -257,6 +257,20 @@ class EventNotificationConsumerTest {
         assertEquals("no permission", responses.single().error)
     }
 
+    // Missing params or an unparsable event used to throw inside the
+    // coroutine, leaving the client waiting for an answer that never came.
+    @Test
+    fun `malformed params are answered with an error`() = runBlocking {
+        for (request in listOf(
+            """{"id":"z1","method":"decrypt_zap_event","params":["only-one"]}""",
+            """{"id":"s2","method":"sign_event","params":["not json"]}""",
+            """{"id":"s3","method":"sign_event","params":[]}""",
+        )) {
+            val responses = consumeFromUnknownSender(request) {}
+            assertEquals(request, "invalid params", responses.single().error)
+        }
+    }
+
     @Test
     fun `an expired connection is answered as an unknown app`() = runBlocking {
         val signer = mockk<NostrSignerInternal>(relaxed = true)

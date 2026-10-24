@@ -424,17 +424,33 @@ class EventNotificationConsumer(private val applicationContext: Context) {
 
         var amberEvent: AmberEvent? = null
 
+        // Params come straight from the client. A missing one or an unparsable
+        // event used to throw inside the coroutine, so the client never got an
+        // answer; reply with an error instead.
         val pubKey =
             if (bunkerRequest.method.endsWith("encrypt") || bunkerRequest.method.endsWith("decrypt")) {
-                bunkerRequest.params.first()
+                bunkerRequest.params.firstOrNull()
             } else if (bunkerRequest.method == "decrypt_zap_event") {
-                bunkerRequest.params[1]
+                bunkerRequest.params.getOrNull(1)
             } else if (bunkerRequest.method == "sign_event") {
-                amberEvent = AmberEvent.fromJson(bunkerRequest.params.first())
-                amberEvent.pubKey
+                amberEvent = bunkerRequest.params.firstOrNull()?.let { runCatching { AmberEvent.fromJson(it) }.getOrNull() }
+                amberEvent?.pubKey
             } else {
                 ""
             }
+        if (pubKey == null) {
+            saveLog("Invalid params for request ${bunkerRequest.id} method ${bunkerRequest.method}", relay.url, acc.npub)
+            BunkerRequestUtils.sendBunkerResponse(
+                applicationContext,
+                acc,
+                request,
+                BunkerResponse(bunkerRequest.id, "", "invalid params"),
+                responseRelay.ifEmpty { Amber.instance.settings.defaultRelays },
+                onLoading = {},
+                onDone = {},
+            )
+            return
+        }
 
         var permission = dao.getByKey(event.pubKey)
         if (permission != null && permission.application.isExpired()) {

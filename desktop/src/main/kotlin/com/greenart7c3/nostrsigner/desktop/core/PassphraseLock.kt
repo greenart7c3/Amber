@@ -16,6 +16,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.bouncycastle.crypto.digests.SHA256Digest
@@ -195,6 +196,18 @@ object PassphraseLock {
      */
     fun lock() {
         if (!isEnabled()) return
+        // Waits for an unlock or passphrase change in flight (at most its
+        // Argon2 run) instead of interleaving with it.
+        runBlocking { lockUnderMutex() }
+    }
+
+    /**
+     * Holds the same mutex as [unlock] and [changePassphrase], so a lock can
+     * neither be undone by an unlock that was mid-way (state set back to
+     * UNLOCKED, key reinstalled) nor wipe the key from under one.
+     */
+    private suspend fun lockUnderMutex() = mutex.withLock {
+        if (!isEnabled()) return@withLock
         autoLockJob?.cancel()
         DesktopKeyStore.clearMasterKey()
         AmberDesktop.evictAllAccounts()
@@ -234,7 +247,9 @@ object PassphraseLock {
         autoLockJob = AmberDesktop.applicationIOScope.launch {
             delay(minutes * 60_000L)
             AmberLogger.d("PassphraseLock", "Auto-locking after $minutes minutes")
-            lock()
+            // Suspends on the mutex, so an unlock that reschedules (and so
+            // cancels) this timer meanwhile also cancels the stale lock.
+            lockUnderMutex()
         }
     }
 

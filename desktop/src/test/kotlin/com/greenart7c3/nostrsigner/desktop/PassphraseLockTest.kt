@@ -34,9 +34,17 @@ private class MemorySecretStore(var value: String? = null) : PasswordStore {
 
     /** When set, only this many more reads succeed; later ones fail like a stumbling keyring. */
     var failLoadsAfter: Int? = null
+
+    /** When set, the next read signals [loading] and waits for [release]: holds an unlock mid-way. */
+    var pause: Pair<java.util.concurrent.CountDownLatch, java.util.concurrent.CountDownLatch>? = null
     override val description: String = "test keyring"
 
     override fun load(): String? {
+        pause?.let { (loading, release) ->
+            pause = null
+            loading.countDown()
+            release.await(10, java.util.concurrent.TimeUnit.SECONDS)
+        }
         if (!available) return null
         failLoadsAfter?.let { remaining ->
             if (remaining <= 0) return null
@@ -285,6 +293,24 @@ class PassphraseLockTest {
         // Back to the passphrase the other tests in this class use.
         assertTrue(PassphraseLock.changePassphrase("flaky keyring 77".toCharArray(), pass.toCharArray(), fastKdf))
         assertEquals(secret, DesktopKeyStore.decrypt(cipher1, "test/secret"))
+
+        // A lock (e.g. the auto-lock timer) arriving while an unlock is mid-way
+        // waits for it instead of interleaving: it used to run straight through,
+        // and the paused unlock then reinstalled the key and set UNLOCKED.
+        PassphraseLock.lock()
+        val loading = java.util.concurrent.CountDownLatch(1)
+        val release = java.util.concurrent.CountDownLatch(1)
+        keyring.pause = loading to release
+        val unlocking = kotlin.concurrent.thread { runBlocking { PassphraseLock.unlock(pass.toCharArray()) } }
+        assertTrue(loading.await(10, java.util.concurrent.TimeUnit.SECONDS))
+        val locking = kotlin.concurrent.thread { PassphraseLock.lock() }
+        Thread.sleep(200)
+        release.countDown()
+        unlocking.join(10_000)
+        locking.join(10_000)
+        assertEquals(PassphraseLock.Status.LOCKED, PassphraseLock.state.value)
+        assertFalse("the lock that came last wins: no key left behind", DesktopKeyStore.isMasterKeyAvailable())
+        assertTrue(PassphraseLock.unlock(pass.toCharArray()))
     }
 
     @Test

@@ -6,6 +6,8 @@ import com.greenart7c3.nostrsigner.desktop.core.AppRecord
 import com.greenart7c3.nostrsigner.desktop.core.AppWithPermissions
 import com.greenart7c3.nostrsigner.desktop.core.PendingBunkerRequest
 import com.greenart7c3.nostrsigner.desktop.core.RememberType
+import com.greenart7c3.nostrsigner.desktop.core.generateBunkerPrivKey
+import com.greenart7c3.nostrsigner.desktop.core.localPubKeyFromPrivKey
 import com.vitorpamplona.quartz.nip01Core.core.Event
 import com.vitorpamplona.quartz.nip01Core.core.toHexKey
 import com.vitorpamplona.quartz.nip01Core.crypto.KeyPair
@@ -29,12 +31,12 @@ import org.junit.Test
 class StaleRequestAfterDeleteTest {
     private val relay = RelayUrlNormalizer.normalizeOrNull("wss://relay.invalid/")!!
 
-    private suspend fun signRequest(client: NostrSignerInternal, accountHex: String, id: String): Event {
+    private suspend fun signRequest(client: NostrSignerInternal, connectionHex: String, id: String): Event {
         val template = """{"kind":1,"content":"stale $id","tags":[],"created_at":${TimeUtils.now()}}"""
         val escaped = template.replace("\\", "\\\\").replace("\"", "\\\"")
         val json = """{"id":"$id","method":"sign_event","params":["$escaped"]}"""
-        val content = client.nip44Encrypt(json, accountHex)
-        return client.signerSync.sign(TimeUtils.now(), 24133, arrayOf(arrayOf("p", accountHex)), content)
+        val content = client.nip44Encrypt(json, connectionHex)
+        return client.signerSync.sign(TimeUtils.now(), 24133, arrayOf(arrayOf("p", connectionHex)), content)
     }
 
     /** Queues a sign_event card for a connected app, deletes the app, and returns the stale card. */
@@ -44,9 +46,11 @@ class StaleRequestAfterDeleteTest {
         val clientKp = KeyPair()
         val client = NostrSignerInternal(clientKp)
         val clientHex = clientKp.pubKey.toHexKey()
-        store.upsert(AppWithPermissions(AppRecord(key = clientHex, name = name, relays = listOf(relay.url), pubKey = account.hexKey, isConnected = true, signPolicy = 1)))
+        val connectionKey = generateBunkerPrivKey()
+        store.upsert(AppWithPermissions(AppRecord(key = clientHex, name = name, relays = listOf(relay.url), pubKey = account.hexKey, isConnected = true, signPolicy = 1, localKey = connectionKey)))
+        AmberDesktop.engine.updateFilter()
 
-        launch { AmberDesktop.engine.consume(signRequest(client, account.hexKey, "$name-1"), relay) }
+        launch { AmberDesktop.engine.consume(signRequest(client, localPubKeyFromPrivKey(connectionKey), "$name-1"), relay) }
         val card = withTimeout(20_000) {
             while (AmberDesktop.engine.pending.value.none { it.localKey == clientHex }) delay(50)
             AmberDesktop.engine.pending.value.first { it.localKey == clientHex }

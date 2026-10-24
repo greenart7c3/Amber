@@ -39,7 +39,7 @@ object AppDirs {
         mkdirs()
         // mkdirs() honors the umask (typically 0755); the account's apps,
         // permissions and history live here, so keep it owner-only. Also
-        // tightens directories created by older versions.
+        // tightens a directory that already existed with a looser mode.
         restrictToOwner(this)
     }
 

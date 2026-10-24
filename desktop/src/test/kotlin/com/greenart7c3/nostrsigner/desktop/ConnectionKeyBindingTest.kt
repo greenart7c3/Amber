@@ -64,6 +64,24 @@ class ConnectionKeyBindingTest {
     }
 
     @Test
+    fun aRequestToTheAccountKeyItselfIsIgnored() = runBlocking {
+        // Desktop never hands out the account key as an endpoint: every
+        // connection has its own key, so a request to the account key is not
+        // addressed to any connection.
+        val account = AccountManager.addAccount(KeyPair(), name = "account-key", signPolicy = 1)
+        val store = AmberDesktop.store(account.npub)
+        val client = KeyPair()
+        val clientHex = client.pubKey.toHexKey()
+        store.upsert(AppWithPermissions(AppRecord(key = clientHex, name = "keyless", relays = listOf(relay.url), pubKey = account.hexKey, isConnected = true, signPolicy = 1)))
+        AmberDesktop.engine.updateFilter()
+
+        AmberDesktop.engine.consume(signRequest(NostrSignerInternal(client), account.hexKey, "to-account"), relay)
+        delay(1_000)
+        assertFalse(AmberDesktop.engine.pending.value.any { it.request.id == "to-account" })
+        assertTrue(store.logs.value.none { it.message.contains("from $clientHex") })
+    }
+
+    @Test
     fun onlyNonConnectRequestsOnAnotherKeyAreRefused() {
         assertTrue(connectsThroughOtherKey(appLocalKey = "a", routedPrivKey = "b", type = SignerType.SIGN_EVENT))
         // Its own key, or the account key (no per-connection key): allowed.

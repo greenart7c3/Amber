@@ -99,9 +99,6 @@ object TorManager {
             nativeReady = true
             AmberLogger.i(TAG, "Starting built-in Tor: ${ArtiNative.getVersion()}")
 
-            // kmp-tor's working directory from before the switch to Arti.
-            File(AppDirs.dataDir, "kmptor").takeIf { it.exists() }?.let { runCatching { it.deleteRecursively() } }
-
             val dataDir = File(AppDirs.dataDir, "arti").apply { mkdirs() }
             AppDirs.restrictToOwner(dataDir)
             val result = ArtiNative.initialize(dataDir.absolutePath)

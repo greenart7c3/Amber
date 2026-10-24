@@ -19,7 +19,6 @@ import com.vitorpamplona.quartz.nip01Core.relay.normalizer.RelayUrlNormalizer
 import com.vitorpamplona.quartz.nip01Core.signers.NostrSignerInternal
 import com.vitorpamplona.quartz.nip01Core.tags.people.taggedUsers
 import com.vitorpamplona.quartz.nip04Dm.crypto.EncryptedInfo
-import com.vitorpamplona.quartz.nip19Bech32.toNpub
 import com.vitorpamplona.quartz.nip40Expiration.expiration
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequest
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequestConnect
@@ -126,8 +125,7 @@ data class PendingBunkerRequest(
     /**
      * Whether a connect can be approved for a different account than the one
      * it arrived on: only when the client talks to a per-connection key (a
-     * nostrconnect:// URI or a bunker:// connection key), since a legacy
-     * connection is addressed to — and answered by — the account key itself.
+     * nostrconnect:// URI or a bunker:// connection key), not the account key.
      */
     val canSwitchAccount: Boolean
         get() = type == SignerType.CONNECT && (isNostrConnectUri || signerPrivKey.isNotEmpty() || allowAccountSwitch)
@@ -376,8 +374,9 @@ class BunkerEngine(
         AmberDesktop.accounts().forEach { account ->
             val store = AmberDesktop.store(account.npub)
             val allConnections = store.apps.value.map { it.app }
+            // Every NIP-46 connection has its own key; the account key itself is
+            // never an endpoint, so nothing subscribes to it.
             val connectionsWithLocalKey = allConnections.filter { it.localKey.isNotEmpty() }
-            val hasLegacyConnections = allConnections.any { it.localKey.isEmpty() && it.relays.isNotEmpty() }
 
             for (conn in connectionsWithLocalKey) {
                 val connPubKey = conn.localPubKey()
@@ -397,22 +396,6 @@ class BunkerEngine(
                             since = since,
                         ),
                     )
-                }
-            }
-
-            if (hasLegacyConnections) {
-                val relays = AmberDesktop.savedRelays(account.npub).filterNot { RelayHealthTracker.isDead(it) }
-                if (relays.isNotEmpty()) {
-                    pendingSubscriptions[account.hexKey] = relays.associateWith {
-                        listOf(
-                            Filter(
-                                kinds = listOf(NostrConnectEvent.KIND),
-                                tags = mapOf("p" to listOf(account.hexKey)),
-                                limit = 1,
-                                since = since,
-                            ),
-                        )
-                    }
                 }
             }
         }
@@ -491,17 +474,10 @@ class BunkerEngine(
 
         val taggedKey = event.taggedUsers().firstOrNull() ?: return
 
-        var account = AmberDesktop.accounts().firstOrNull { it.npub == taggedKey.pubKey.hexToByteArray().toNpub() }
-        var connectionPrivKey = ""
-
-        if (account == null) {
-            localKeyIndex[taggedKey.pubKey]?.let { (npub, privKey) ->
-                account = AmberDesktop.account(npub)
-                connectionPrivKey = privKey
-            }
-        }
-
-        val acc = account ?: return
+        // Only a connection's own key routes a request; one tagged to an
+        // account key is not addressed to any connection and is ignored.
+        val (npub, connectionPrivKey) = localKeyIndex[taggedKey.pubKey] ?: return
+        val acc = AmberDesktop.account(npub) ?: return
         val store = AmberDesktop.store(acc.npub)
         // Unknown senders are rate-limited: their events force decrypt/log
         // work and signed error replies, so a flood must cost them silence.
@@ -520,11 +496,7 @@ class BunkerEngine(
         val encryptionType = if (EncryptedInfo.isNIP04(event.content)) EncryptionType.NIP04 else EncryptionType.NIP44
 
         val decrypted = try {
-            if (connectionPrivKey.isNotEmpty()) {
-                NostrSignerInternal(KeyPair(privKey = connectionPrivKey.hexToByteArray())).decrypt(event.content, event.pubKey)
-            } else {
-                acc.decrypt(event.content, event.pubKey)
-            }
+            NostrSignerInternal(KeyPair(privKey = connectionPrivKey.hexToByteArray())).decrypt(event.content, event.pubKey)
         } catch (e: Exception) {
             store.addLog(relay.url, "bunker", "Decryption failed for event ${event.id}: ${e.message}")
             return

@@ -126,10 +126,12 @@ class Amber :
     var settings: AmberSettings = AmberSettings()
 
     /**
-     * False until the first async settings load ([LocalPreferences.reloadApp]) lands. Until
-     * then [settings] is the data-class default, whose torMode (DISABLED) is a guess, not a
-     * decision — any dial in that window must route through the proxy client (preset from
-     * plain prefs in [onCreate]) instead of trusting the default and going to the clearnet.
+     * False until [settings] holds the stored settings. [onCreate] loads them synchronously
+     * ([LocalPreferences.loadSettingsAtStartup]), so this is true before any activity,
+     * service or provider call runs. While false, [settings] is the data-class default,
+     * whose torMode (DISABLED) is a guess, not a decision — any dial in that window must
+     * route through the proxy client (preset from plain prefs in [onCreate]) instead of
+     * trusting the default and going to the clearnet.
      */
     @Volatile var isSettingsLoaded = false
 
@@ -396,6 +398,8 @@ class Amber :
         // callbacks, profile fetches — pick this up via the factory's !isSettingsLoaded
         // gate; without it that window leaks clearnet traffic for Tor users.
         LocalPreferences.presetProxyFromPrefs(this)
+        settings = LocalPreferences.loadSettingsAtStartup(this)
+        isSettingsLoaded = true
         stats.createNotificationChannel()
         Thread.setDefaultUncaughtExceptionHandler(UnexpectedCrashSaver(crashReportCache, applicationIOScope))
 

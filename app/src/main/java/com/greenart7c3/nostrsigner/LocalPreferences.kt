@@ -329,6 +329,20 @@ object LocalPreferences {
 
     fun loadSettingsFromEncryptedStorage(context: Context = Amber.instance): AmberSettings {
         checkNotInMainThread()
+        return readSettings(context)
+    }
+
+    /**
+     * Loads the settings in `Amber.onCreate`, on the main thread, before any
+     * activity, service or ContentProvider call can read them. Otherwise an
+     * approval screen or provider call on a cold start saw the data-class
+     * defaults (an empty auth whitelist, rate limits on, Tor off…) until the
+     * async [reloadApp] landed. They are plain SharedPreferences, like
+     * [presetProxyFromPrefs], so this is a small synchronous read.
+     */
+    fun loadSettingsAtStartup(context: Context): AmberSettings = readSettings(context)
+
+    private fun readSettings(context: Context): AmberSettings {
         sharedPrefs(context).apply {
             // One-time cleanup: the pre-rename legacy key is never read again, so
             // remove it instead of leaving a stale opt-in bit in every prefs file.

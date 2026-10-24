@@ -12,6 +12,7 @@ import com.greenart7c3.nostrsigner.desktop.core.CrashReporter
 import com.greenart7c3.nostrsigner.desktop.core.DesktopKeyStore
 import com.greenart7c3.nostrsigner.desktop.core.PassphraseLock
 import com.greenart7c3.nostrsigner.desktop.core.PasswordStore
+import com.greenart7c3.nostrsigner.desktop.core.StoreGenerations
 import com.vitorpamplona.quartz.nip01Core.core.toHexKey
 import com.vitorpamplona.quartz.nip01Core.crypto.KeyPair
 import java.io.File
@@ -79,6 +80,9 @@ class PassphraseLockTest {
         private val fastKdf = PassphraseLock.KdfParams(memoryKb = 1024, iterations = 1, parallelism = 1)
         private val keyring = MemorySecretStore()
 
+        // The per-file generations, kept off the real keyring.
+        private val generations = HashMap<String, MemorySecretStore>()
+
         @JvmStatic
         @BeforeClass
         fun isolateDataDir() {
@@ -89,6 +93,7 @@ class PassphraseLockTest {
             }
             System.setProperty("user.home", tmp.absolutePath)
             PassphraseLock.osSecretStore = keyring
+            StoreGenerations.storeFor = { context -> generations.getOrPut(context) { MemorySecretStore() } }
             PassphraseLock.targetKdfParams = fastKdf
         }
 
@@ -140,7 +145,7 @@ class PassphraseLockTest {
         assertTrue("the keyring holds the secret", keyring.value != null)
 
         val encrypted = appsFile.readText()
-        assertTrue("encrypted file should carry the marker header", encrypted.startsWith("AMBERENC2:"))
+        assertTrue("encrypted file should carry the marker header", encrypted.startsWith("AMBERENC3:"))
         assertFalse("plaintext app name must not survive in the encrypted file", encrypted.contains(marker))
 
         // A fresh reader (simulating a restart) decrypts it back.
@@ -174,7 +179,7 @@ class PassphraseLockTest {
         assertTrue(PassphraseLock.unlock("correct horse battery staple".toCharArray()))
         assertEquals(secret, DesktopKeyStore.decrypt(cipher1, "test/secret"))
         assertEquals(marker, AmberDesktop.store(account.npub).apps.value.first().app.name)
-        assertTrue("db must stay encrypted while a passphrase is set", appsFile.readText().startsWith("AMBERENC2:"))
+        assertTrue("db must stay encrypted while a passphrase is set", appsFile.readText().startsWith("AMBERENC3:"))
 
         // Changing the passphrase requires the old one and keeps the data.
         assertFalse(PassphraseLock.changePassphrase("nope".toCharArray(), "new passphrase 42".toCharArray(), fastKdf))
@@ -218,6 +223,51 @@ class PassphraseLockTest {
         // A planted plaintext database is rejected too.
         otherAppsFile.writeText("""[{"app":{"key":"evil","name":"planted","pubKey":"${other.hexKey}"},"permissions":[]}]""")
         assertTrue(AccountStore(other.npub).apps.value.isEmpty())
+
+        // Rollback: an older, validly encrypted copy put back after a grant was
+        // removed is refused, so the removed connection does not come back.
+        val otherStore = AmberDesktop.store(other.npub)
+        otherStore.upsert(AppWithPermissions(app = AppRecord(key = "revoked-later", name = "granted", pubKey = other.hexKey)))
+        val olderCopy = otherAppsFile.readText()
+        otherStore.delete("revoked-later")
+        val current = otherAppsFile.readText()
+        val rolledBackBefore = quarantined(otherAppsFile).size
+        otherAppsFile.writeText(olderCopy)
+        assertTrue("a rolled-back copy must not restore a removed connection", AccountStore(other.npub).apps.value.none { it.app.key == "revoked-later" })
+        assertFalse(otherAppsFile.exists())
+        assertEquals(rolledBackBefore + 1, quarantined(otherAppsFile).size)
+
+        // The generation is bound into the ciphertext: raising it in the header breaks the file.
+        val olderGeneration = olderCopy.removePrefix("AMBERENC3:").substringBefore(':').toLong()
+        otherAppsFile.writeText(olderCopy.replaceFirst("AMBERENC3:$olderGeneration:", "AMBERENC3:${olderGeneration + 100}:"))
+        assertTrue(AccountStore(other.npub).apps.value.none { it.app.key == "revoked-later" })
+        assertFalse(otherAppsFile.exists())
+
+        // A copy without a generation header is refused too.
+        val appsContext = "${other.npub}/applications.json"
+        otherAppsFile.writeText(
+            "AMBERENC2:" + DesktopKeyStore.encryptString("""[{"app":{"key":"revoked-later","name":"granted","pubKey":"${other.hexKey}"},"permissions":[]}]""", appsContext),
+        )
+        assertTrue(AccountStore(other.npub).apps.value.isEmpty())
+        assertFalse(otherAppsFile.exists())
+
+        // A crash between writing the file and recording its generation leaves
+        // the file one ahead of the record: it is accepted and the record catches up.
+        otherAppsFile.writeText(current)
+        val currentGeneration = current.removePrefix("AMBERENC3:").substringBefore(':').toLong()
+        generations.getValue(appsContext).value = (currentGeneration - 1).toString()
+        assertEquals(listOf("app-key-2"), AccountStore(other.npub).apps.value.map { it.app.key })
+        assertEquals(currentGeneration.toString(), generations.getValue(appsContext).value)
+
+        // ...even with no generation recorded yet: there is no older format to accept.
+        generations.getValue(appsContext).value = null
+        otherAppsFile.writeText(
+            "AMBERENC2:" + DesktopKeyStore.encryptString("""[{"app":{"key":"app-key-2","name":"other-app","pubKey":"${other.hexKey}"},"permissions":[]}]""", appsContext),
+        )
+        assertTrue(AccountStore(other.npub).apps.value.isEmpty())
+        assertFalse(otherAppsFile.exists())
+        otherAppsFile.writeText(current)
+        generations.getValue(appsContext).value = currentGeneration.toString()
 
         // Swapping account keys between records is rejected.
         val records = AccountsStore.accounts.value

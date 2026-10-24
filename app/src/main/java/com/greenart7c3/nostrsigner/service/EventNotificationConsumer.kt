@@ -74,6 +74,14 @@ import kotlin.io.encoding.Base64
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 
+/**
+ * Whether a request reached a per-connection key ([routedPrivKey]; empty when
+ * it was addressed to the account key) that is not the sending app's own
+ * ([appLocalKey]). A connect is never treated so: it is how a client attaches
+ * to a new connection key.
+ */
+internal fun connectsThroughOtherKey(appLocalKey: String, routedPrivKey: String, type: SignerType): Boolean = routedPrivKey.isNotEmpty() && type != SignerType.CONNECT && appLocalKey != routedPrivKey
+
 class EventNotificationConsumer(private val applicationContext: Context) {
     internal fun saveLog(
         text: String,
@@ -458,6 +466,14 @@ class EventNotificationConsumer(private val applicationContext: Context) {
             // unknown app even before the periodic cleanup deletes the row.
             saveLog("Connection expired for ${event.pubKey}", relay.url, acc.npub)
             permission = null
+        }
+        if (permission != null && connectsThroughOtherKey(permission.application.localKey, connectionPrivKey, type)) {
+            // A stored app may only use its own connection key: a request it
+            // sends to another connection's key is dropped rather than answered
+            // under that connection's identity. A connect is exempt, as that is
+            // how a client attaches to a new key.
+            saveLog("Request ${bunkerRequest.id} from ${event.pubKey} reached another connection's key", relay.url, acc.npub)
+            return
         }
         if (permission != null && ((permission.application.secret != permission.application.key && permission.application.useSecret) || permission.application.isConnected) && type == SignerType.CONNECT) {
             Amber.instance.applicationIOScope.launch {

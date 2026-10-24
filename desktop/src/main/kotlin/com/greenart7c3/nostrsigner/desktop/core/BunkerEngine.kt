@@ -48,10 +48,13 @@ fun generateBunkerPrivKey(): String = Nip01Crypto.privKeyCreate().toHexKey()
 fun localPubKeyFromPrivKey(privKeyHex: String): String = KeyPair(privKey = privKeyHex.hexToByteArray()).pubKey.toHexKey()
 
 /**
- * A NIP-46 request waiting for the user's decision. The response payload is
- * precomputed when the request arrives (mirroring the Android flow, which
- * signs/encrypts up-front so the approval screen can preview the result).
+ * Whether a request reached a per-connection key ([routedPrivKey]; empty when
+ * it was addressed to the account key) that is not the sending app's own
+ * ([appLocalKey]). A connect is never treated so: it is how a client attaches
+ * to a new connection key.
  */
+internal fun connectsThroughOtherKey(appLocalKey: String, routedPrivKey: String, type: SignerType): Boolean = routedPrivKey.isNotEmpty() && type != SignerType.CONNECT && appLocalKey != routedPrivKey
+
 /**
  * NIP-42 names exactly one relay per auth event: authorization, the auth
  * whitelist and the consent screen all decide on the FIRST relay tag, so a
@@ -72,6 +75,11 @@ fun connectionToReplace(req: PendingBunkerRequest, accountNpub: String): AppWith
     return AmberDesktop.store(accountNpub).getByKey(req.localKey)
 }
 
+/**
+ * A NIP-46 request waiting for the user's decision. The response payload is
+ * precomputed when the request arrives (mirroring the Android flow, which
+ * signs/encrypts up-front so the approval screen can preview the result).
+ */
 data class PendingBunkerRequest(
     val request: BunkerRequest,
     val type: SignerType,
@@ -537,6 +545,13 @@ class BunkerEngine(
         }
 
         val permission = store.getByKey(event.pubKey)
+        if (permission != null && connectsThroughOtherKey(permission.app.localKey, connectionPrivKey, type)) {
+            // Mirrors EventNotificationConsumer: a stored app may only use its
+            // own connection key; a request to another connection's key is
+            // dropped. A connect is exempt (that is how a client attaches).
+            store.addLog(relay.url, "bunker", "Request ${bunkerRequest.id} from ${event.pubKey} reached another connection's key")
+            return
+        }
 
         // Already-connected client re-sending `connect`: ack silently.
         if (permission != null &&

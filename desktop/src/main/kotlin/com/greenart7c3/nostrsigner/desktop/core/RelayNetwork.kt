@@ -19,7 +19,8 @@ enum class TorMode {
 
 /**
  * Relays on this machine or the local network (localhost, LAN / VPN
- * addresses, mDNS `.local` names). Tor exits cannot reach them — accept
+ * addresses, mDNS `.local` names; those names are resolved by
+ * [LocalNameDns], never the system resolver). Tor exits cannot reach them — accept
  * plain `ws://` without a warning, and stay
  * connected when the internet goes away.
  */
@@ -86,6 +87,9 @@ object RelayHttpClients {
 
     private val direct: OkHttpClient by lazy {
         OkHttpClient.Builder()
+            // `.localhost` and `.local` never reach the system resolver (see
+            // LocalNameDns); proxied clients hand hosts unresolved to Tor.
+            .dns(LocalNameDns)
             .pingInterval(30, TimeUnit.SECONDS)
             .readTimeout(30, TimeUnit.SECONDS)
             .connectTimeout(30, TimeUnit.SECONDS)

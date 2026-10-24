@@ -23,6 +23,8 @@ jobs:
       version: ${{ steps.v.outputs.version }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
 
       # Installers need a plain X.Y.Z: v6.7.0-pre1 packages as 6.7.0. The
       # desktop build takes its version from amberVersionName, so a tag

@@ -921,4 +921,5 @@
     <string name="d_local_relay">Local</string>
     <string name="d_local_socket">Socket local</string>
     <string name="d_via_local_socket">Via socket local</string>
+    <string name="d_socket_name_unverified">Esta ferramenta escolheu o próprio nome e o Amber não pode verificá-lo. Aprove somente se você acabou de iniciá-la.</string>
 </resources>

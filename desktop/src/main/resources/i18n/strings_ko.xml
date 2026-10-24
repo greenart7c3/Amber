@@ -926,4 +926,5 @@
     <string name="d_local_relay">로컬</string>
     <string name="d_local_socket">로컬 소켓</string>
     <string name="d_via_local_socket">로컬 소켓 경유</string>
+    <string name="d_socket_name_unverified">이 도구는 이름을 스스로 정했으며 Amber는 이를 확인할 수 없습니다. 방금 직접 실행한 경우에만 승인하세요.</string>
 </resources>

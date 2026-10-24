@@ -902,4 +902,5 @@
     <string name="d_local_relay">ภายใน</string>
     <string name="d_local_socket">ซ็อกเก็ตภายในเครื่อง</string>
     <string name="d_via_local_socket">ผ่านซ็อกเก็ตภายในเครื่อง</string>
+    <string name="d_socket_name_unverified">เครื่องมือนี้ตั้งชื่อเอง และ Amber ไม่สามารถยืนยันได้ อนุมัติเฉพาะเมื่อคุณเพิ่งเปิดใช้งานมันเท่านั้น</string>
 </resources>

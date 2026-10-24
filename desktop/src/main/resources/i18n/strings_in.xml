@@ -926,4 +926,5 @@
     <string name="d_local_relay">Lokal</string>
     <string name="d_local_socket">Socket lokal</string>
     <string name="d_via_local_socket">Melalui socket lokal</string>
+    <string name="d_socket_name_unverified">Alat ini memilih namanya sendiri dan Amber tidak dapat memverifikasinya. Setujui hanya jika Anda baru saja menjalankannya.</string>
 </resources>

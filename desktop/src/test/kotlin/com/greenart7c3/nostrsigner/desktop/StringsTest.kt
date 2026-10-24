@@ -118,4 +118,15 @@ class StringsTest {
         assertEquals("Read your public key", SignerDescriptions.permission("get_public_key", null, "en"))
         assertEquals(Strings.get("read_your_public_key", "de"), SignerDescriptions.permission("get_public_key", null, "de"))
     }
+
+    @Test
+    fun theUnverifiedSocketNameWarningIsTranslatedEverywhere() {
+        val english = Strings.get("d_socket_name_unverified", "en")
+        assertEquals("This tool chose its name itself and Amber can't verify it. Approve only if you just started it.", english)
+        Strings.supportedLanguages.forEach { (tag, _) ->
+            val value = Strings.get("d_socket_name_unverified", tag)
+            assertTrue("missing for $tag", value.isNotBlank() && value != "d_socket_name_unverified")
+            if (tag != "en") assertTrue("not translated for $tag", value != english)
+        }
+    }
 }

@@ -133,6 +133,15 @@ private fun RequestCard(
             }
             if (req.isLocalSocket) {
                 Text(Strings.get("d_via_local_socket", language), style = MaterialTheme.typography.bodySmall)
+                // A socket tool names itself in its hello: any local process can
+                // claim a trusted tool's name, so say so before it is approved.
+                if (req.type == SignerType.CONNECT) {
+                    Text(
+                        Strings.get("d_socket_name_unverified", language),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                }
             }
             Spacer(Modifier.height(4.dp))
             Text(req.type.describe(req.kind, req.encryptedContent, language), style = MaterialTheme.typography.bodyLarge)

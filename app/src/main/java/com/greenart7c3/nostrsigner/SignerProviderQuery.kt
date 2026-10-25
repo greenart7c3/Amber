@@ -20,7 +20,7 @@ import com.greenart7c3.nostrsigner.service.hasAmbiguousRelayTags
 import com.greenart7c3.nostrsigner.service.isBlockedByAuthWhitelist
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
 import com.vitorpamplona.quartz.nip01Core.core.Event
-import com.vitorpamplona.quartz.nip57Zaps.LnZapRequestEvent
+import com.vitorpamplona.quartz.nip57Zaps.ZapRequestEvent
 import com.vitorpamplona.quartz.utils.TimeUtils
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -247,7 +247,7 @@ object SignerProviderQuery {
                     val cursor =
                         MatrixCursor(arrayOf("signature", "event", "result")).also {
                             val signature =
-                                if (event.kind == LnZapRequestEvent.KIND &&
+                                if (event.kind == ZapRequestEvent.KIND &&
                                     event.tags.any { tag ->
                                         tag.any { t -> t == "anon" }
                                     }

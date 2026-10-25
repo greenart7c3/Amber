@@ -21,7 +21,6 @@ fun MultiEventHomeScreen(
     if (bunkerRequests.isNotEmpty()) {
         BunkerMultiEventHomeScreen(
             modifier = modifier,
-            packageName = packageName,
             accountParam = accountParam,
             bunkerRequests = bunkerRequests,
             onLoading = onLoading,

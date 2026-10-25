@@ -18,8 +18,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalClipboardManager
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import com.greenart7c3.nostrsigner.desktop.core.CrashReporter
@@ -39,7 +37,7 @@ fun CrashReportDialog(
 ) {
     val language by Strings.currentLanguage.collectAsState()
     val scope = rememberCoroutineScope()
-    val clipboard = LocalClipboardManager.current
+    val copyText = rememberCopyText()
     var edited by remember(report) { mutableStateOf(report) }
     var sending by remember { mutableStateOf(false) }
 
@@ -69,7 +67,7 @@ fun CrashReportDialog(
                     text = Strings.get("copy", language),
                     enabled = !sending,
                     onClick = {
-                        clipboard.setText(AnnotatedString(edited))
+                        copyText(edited)
                         Toaster.toast(Strings.get("d_copied_clipboard", language))
                     },
                 )

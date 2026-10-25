@@ -39,8 +39,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalClipboardManager
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -150,7 +148,7 @@ fun ApplicationDetailScreen(
                 val localSecret = if (app.app.useSecret) "&secret=${app.app.secret}" else ""
                 "bunker://$connectionPubKey?$relayParams$localSecret"
             }
-            val clipboard = LocalClipboardManager.current
+            val copyText = rememberCopyText()
             Spacer(Modifier.height(16.dp))
             Text(Strings.get("d_connection_string", language), style = MaterialTheme.typography.titleSmall)
             Spacer(Modifier.height(4.dp))
@@ -166,7 +164,7 @@ fun ApplicationDetailScreen(
             AmberTextButton(
                 text = Strings.get("copy", language).trim(),
                 onClick = {
-                    clipboard.setText(AnnotatedString(bunkerUri))
+                    copyText(bunkerUri)
                     Toaster.toast(Strings.get("d_connection_string_copied", language))
                 },
             )

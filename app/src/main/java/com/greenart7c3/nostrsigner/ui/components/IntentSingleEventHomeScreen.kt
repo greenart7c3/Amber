@@ -45,7 +45,7 @@ import com.greenart7c3.nostrsigner.ui.ToastManager
 import com.vitorpamplona.quartz.nip01Core.core.toHexKey
 import com.vitorpamplona.quartz.nip19Bech32.bech32.bechToBytes
 import com.vitorpamplona.quartz.nip19Bech32.toNpub
-import com.vitorpamplona.quartz.nip57Zaps.LnZapRequestEvent
+import com.vitorpamplona.quartz.nip57Zaps.ZapRequestEvent
 import com.vitorpamplona.quartz.utils.Hex
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.Dispatchers
@@ -451,7 +451,7 @@ fun IntentSingleEventHomeScreen(
                             key = key,
                             clipboardManager = clipboardManager,
                             event = event.toJson(),
-                            value = if (event is LnZapRequestEvent &&
+                            value = if (event is ZapRequestEvent &&
                                 event.tags.any { tag ->
                                     tag.any { t -> t == "anon" }
                                 }

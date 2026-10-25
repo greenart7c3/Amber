@@ -549,8 +549,7 @@ class BunkerRequestUtilsTest {
             coEvery {
                 AmberUtils.sendBunkerError(any(), any(), any(), any(), any(), any())
             } answers {
-                errors.add(arg(1))
-                Unit
+                errors += arg<AmberBunkerRequest>(1)
             }
 
             BunkerRequestUtils.sendRejection(
@@ -591,8 +590,7 @@ class BunkerRequestUtilsTest {
             coEvery {
                 AmberUtils.sendBunkerError(any(), any(), any(), any(), any(), any())
             } answers {
-                errors.add(arg(1))
-                Unit
+                errors += arg<AmberBunkerRequest>(1)
             }
 
             BunkerRequestUtils.sendResult(

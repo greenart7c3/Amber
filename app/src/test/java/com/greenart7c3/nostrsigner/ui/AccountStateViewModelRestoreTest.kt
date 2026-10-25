@@ -19,6 +19,7 @@ import io.mockk.slot
 import io.mockk.unmockkObject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
@@ -28,6 +29,7 @@ import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class AccountStateViewModelRestoreTest {
     // Unconfined so maybeOfferRestore's internal launch runs to completion on the
     // calling thread; every ApplicationBackup call it makes is a mocked immediate.

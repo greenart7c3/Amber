@@ -308,6 +308,7 @@ class ZapstoreUpdater(
         }
 
         // Safe call needed: the offline flavor compiles against OkHttp 4, where body is nullable
+        @Suppress("USELESS_ELVIS")
         val body = response.body ?: return null
         val contentLength = body.contentLength()
         val apkFile = File(SharedFiles.updatesDir(context), "amber-update-${release.version}.apk")

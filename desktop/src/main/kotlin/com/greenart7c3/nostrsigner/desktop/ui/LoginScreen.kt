@@ -35,8 +35,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalClipboardManager
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -174,7 +172,7 @@ private fun NewKeyPane(scope: kotlinx.coroutines.CoroutineScope) {
     val seedWords = remember { AccountManager.generateSeedWords() }
     var revealed by remember { mutableStateOf(false) }
     var confirmCopy by remember { mutableStateOf(false) }
-    val clipboard = LocalClipboardManager.current
+    val copyText = rememberCopyText()
 
     OutlinedTextField(
         value = name,
@@ -226,7 +224,7 @@ private fun NewKeyPane(scope: kotlinx.coroutines.CoroutineScope) {
                     text = Strings.get("copy_to_clipboard", language),
                     onClick = {
                         confirmCopy = false
-                        clipboard.setText(AnnotatedString(seedWords.joinToString(" ")))
+                        copyText(seedWords.joinToString(" "))
                         Toaster.toast(Strings.get("d_seed_words_copied", language))
                     },
                 )

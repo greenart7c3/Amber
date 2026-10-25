@@ -9,6 +9,7 @@ plugins {
     alias(libs.plugins.jetbrainsCompose)
     alias(libs.plugins.jetbrainsComposeCompiler)
     alias(libs.plugins.gradle.ktlint) version libs.versions.ktlint.get()
+    alias(libs.plugins.detekt)
 }
 
 kotlin {

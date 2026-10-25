@@ -10,8 +10,8 @@ Copilot, Cursor, Codex, etc.) wrote a large part of the diff.
 
 1. **Read and understood the whole diff.** You are the author of record. You
    must be able to explain and defend every line in review.
-2. **Built it and run the checks.** `./gradlew ktlintCheck lint test
-   assembleDebug` must pass. A diff that does not compile will be closed.
+2. **Built it and run the checks.** `./gradlew ktlintCheck detektAll lint
+   test assembleDebug` must pass. A diff that does not compile will be closed.
 3. **Tested the app by hand on a real device or emulator.** Install a build
    that includes the change, run the new flow, and check that the things it
    touches still work. Passing unit tests and green CI do not count as manual

@@ -41,7 +41,6 @@ import androidx.compose.ui.awt.ComposePanel
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -191,7 +190,7 @@ fun RequestNotificationPopup(
             onCloseRequest = onDismiss,
             state = state,
             title = BuildVariant.appName,
-            icon = painterResource("icon.png"),
+            icon = amberIconPainter(),
             undecorated = true,
             transparent = true,
             resizable = false,
@@ -232,7 +231,7 @@ private fun WindowsToast(
     ) {
         Column(Modifier.fillMaxWidth().weight(1f).clickable(onClick = onOpen)) {
             Row(Modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp, top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-                Image(painterResource("icon.png"), contentDescription = null, modifier = Modifier.size(16.dp))
+                Image(amberIconPainter(), contentDescription = null, modifier = Modifier.size(16.dp))
                 Spacer(Modifier.width(8.dp))
                 Text(BuildVariant.appName, color = secondary, fontSize = 12.sp, modifier = Modifier.weight(1f))
                 CloseGlyph(secondary, Strings.get("d_close", language), Modifier.size(32.dp), onDismiss)
@@ -301,7 +300,7 @@ private fun MacNotification(
                 Modifier.weight(1f).fillMaxHeight().clickable(onClick = onOpen).padding(12.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Image(painterResource("icon.png"), contentDescription = null, modifier = Modifier.size(36.dp))
+                Image(amberIconPainter(), contentDescription = null, modifier = Modifier.size(36.dp))
                 Spacer(Modifier.width(10.dp))
                 Column {
                     Text(title, color = primary, fontSize = 13.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)

@@ -47,6 +47,7 @@ class TorProxyReleaseTest {
     private fun socksPortFlow(): MutableStateFlow<Int> {
         val field = TorManager::class.java.getDeclaredField("_socksPort")
         field.isAccessible = true
+        @Suppress("UNCHECKED_CAST")
         return field.get(TorManager) as MutableStateFlow<Int>
     }
 

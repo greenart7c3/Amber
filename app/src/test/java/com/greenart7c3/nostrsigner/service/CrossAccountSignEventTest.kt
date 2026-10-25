@@ -1,6 +1,5 @@
 package com.greenart7c3.nostrsigner.service
 
-import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -115,7 +114,6 @@ class CrossAccountSignEventTest {
         method.isAccessible = true
         return method.callSuspend(
             IntentUtils,
-            mockk<Context>(relaxed = true),
             intent,
             "com.attacker.app",
             null,

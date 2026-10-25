@@ -15,6 +15,8 @@ Amber is a Nostr event signer (NIP-46 / NIP-55), package `com.greenart7c3.nostrs
 
 - `./gradlew ktlintCheck` — Kotlin style check (pre-commit hook runs this).
 - `./gradlew ktlintFormat` — auto-fix formatting issues.
+- `./gradlew detektAll` — unused imports, parameters, variables and private declarations in the app (every flavor, unit and instrumented tests) and desktop, with detekt's type resolution (pre-commit hook runs this). Only those rules are on (`config/detekt/detekt.yml`); suppress a deliberate one at its site with `@Suppress("UnusedParameter")` etc.
+- Kotlin compiler warnings are errors (`allWarningsAsErrors` in the root `build.gradle.kts`): deprecated APIs, needless `?.`/`!!`/`?:`, unused expressions, unchecked casts, missing opt-ins. Fix them; when one is deliberate (e.g. the OkHttp `body` null checks the offline flavor's OkHttp 4 needs), suppress it at the statement.
 - `./gradlew lint` — Android Lint on the default variant; `warningsAsErrors` is on, so any new warning fails the build (pre-commit and pre-push hooks run this). Version-freshness checks (`GradleDependency` etc.) are disabled in `app/build.gradle.kts`; per-path exemptions live in `app/lint.xml`.
 - `./gradlew test --no-daemon` — JVM unit tests for all variants (pre-push hook runs `./gradlew test lint`).
 - Run one test: `./gradlew :app:testFreeDebugUnitTest --tests "com.greenart7c3.nostrsigner.SomeTest"` (or `--tests "*SomeTest.method"`).
@@ -23,7 +25,7 @@ Amber is a Nostr event signer (NIP-46 / NIP-55), package `com.greenart7c3.nostrs
 - `./build.sh <version> <appName>` — builds free + offline release APKs/AABs into `~/release/` and calls `generate_manifest.sh`.
 - Desktop: `./gradlew :desktop:run` (debug build), `:desktop:test`, `:desktop:packageDistributionForCurrentOs`.
 
-Required order when pushing: `ktlintCheck` → `lint` → `test` → build (mirrored by the hooks, but run them directly; do not rely on hooks).
+Required order when pushing: `ktlintCheck` → `detektAll` → `lint` → `test` → build (mirrored by the hooks, but run them directly; do not rely on hooks).
 
 ## Releases / version bumps
 

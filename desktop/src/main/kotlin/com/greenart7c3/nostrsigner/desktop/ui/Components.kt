@@ -26,10 +26,9 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.RadioButton
+import androidx.compose.material3.SecondaryTabRow
 import androidx.compose.material3.Tab
-import androidx.compose.material3.TabRow
 import androidx.compose.material3.TabRowDefaults
-import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -37,12 +36,20 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.graphics.painter.BitmapPainter
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.toComposeImageBitmap
+import androidx.compose.ui.platform.ClipEntry
+import androidx.compose.ui.platform.Clipboard
+import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -53,8 +60,38 @@ import com.greenart7c3.nostrsigner.desktop.core.DeleteAfterType
 import com.greenart7c3.nostrsigner.desktop.core.RememberType
 import com.greenart7c3.nostrsigner.desktop.core.Strings
 import com.greenart7c3.nostrsigner.desktop.core.rememberTypeDisplayOrder
+import java.awt.datatransfer.StringSelection
 import java.awt.image.BufferedImage
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.launch
+import org.jetbrains.skia.Image as SkiaImage
+
+/**
+ * Copies [text] to the system clipboard. Compose's [Clipboard] is suspending,
+ * so the returned function launches the copy in the composition's scope.
+ * ClipEntry's constructor is experimental, but it is the only way to put text
+ * on the desktop clipboard through it.
+ */
+@OptIn(ExperimentalComposeUiApi::class)
+@Composable
+fun rememberCopyText(): (String) -> Unit {
+    val clipboard = LocalClipboard.current
+    val scope = rememberCoroutineScope()
+    return remember(clipboard, scope) {
+        { text -> scope.launch { clipboard.setClipEntry(ClipEntry(StringSelection(text))) } }
+    }
+}
+
+// Read straight from the classpath: the Compose resources library would need
+// a generated Res class for one image.
+private val amberIconBitmap: ImageBitmap by lazy {
+    val bytes = checkNotNull(Toaster::class.java.getResourceAsStream("/icon.png")) { "icon.png is missing from the resources" }.use { it.readAllBytes() }
+    SkiaImage.makeFromEncoded(bytes).toComposeImageBitmap()
+}
+
+/** The app icon, for windows, the tray and the notification popup. */
+@Composable
+fun amberIconPainter(): Painter = remember { BitmapPainter(amberIconBitmap) }
 
 /** Global snackbar feed, the desktop stand-in for the mobile ToastManager. */
 object Toaster {
@@ -77,14 +114,14 @@ fun AmberTabRow(
     titles: List<String>,
     onSelect: (Int) -> Unit,
 ) {
-    TabRow(
+    SecondaryTabRow(
         selectedTabIndex = selectedTabIndex,
         containerColor = Color.Transparent,
         contentColor = MaterialTheme.colorScheme.onBackground,
-        indicator = { tabPositions ->
-            if (selectedTabIndex < tabPositions.size) {
+        indicator = {
+            if (selectedTabIndex < titles.size) {
                 TabRowDefaults.SecondaryIndicator(
-                    Modifier.tabIndicatorOffset(tabPositions[selectedTabIndex]),
+                    Modifier.tabIndicatorOffset(selectedTabIndex),
                     color = orange,
                 )
             }

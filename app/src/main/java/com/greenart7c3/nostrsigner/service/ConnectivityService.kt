@@ -164,7 +164,7 @@ class ConnectivityService : Service() {
                 // Cached dao so the write invalidates CachingApplicationDao's getAll
                 // entry for this account (the service can restart in a live process).
                 val dao = Amber.instance.dao(it.npub)
-                dao.getAllNotConnected()?.forEach { app ->
+                dao.getAllNotConnected().forEach { app ->
                     if (app.application.secret.isNotEmpty() && app.application.secret != app.application.key) {
                         app.application.isConnected = true
                         dao.insertApplicationWithPermissions(app)

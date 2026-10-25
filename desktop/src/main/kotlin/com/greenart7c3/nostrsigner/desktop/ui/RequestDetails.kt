@@ -24,8 +24,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalClipboardManager
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -224,7 +222,7 @@ private fun DetailSection(
     copyValue: String = value,
     monospace: Boolean = false,
 ) {
-    val clipboard = LocalClipboardManager.current
+    val copyText = rememberCopyText()
     val language by Strings.currentLanguage.collectAsState()
     Row(Modifier.fillMaxWidth().padding(vertical = 6.dp), verticalAlignment = Alignment.Top) {
         Column(Modifier.weight(1f)) {
@@ -240,7 +238,7 @@ private fun DetailSection(
         }
         IconButton(
             onClick = {
-                clipboard.setText(AnnotatedString(copyValue))
+                copyText(copyValue)
                 Toaster.toast(Strings.get("d_copied_clipboard", language))
             },
         ) {

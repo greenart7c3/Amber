@@ -34,8 +34,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalClipboardManager
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
@@ -616,7 +614,7 @@ private fun BackupDialog(
     account: DesktopAccount,
     onDismiss: () -> Unit,
 ) {
-    val clipboard = LocalClipboardManager.current
+    val copyText = rememberCopyText()
     val scope = rememberCoroutineScope()
     val language by Strings.currentLanguage.collectAsState()
     var showSecret by remember { mutableStateOf(false) }
@@ -680,7 +678,7 @@ private fun BackupDialog(
                             return@AmberTextButton
                         }
                         ncryptsec = account.nip49Encrypt(password)
-                        clipboard.setText(AnnotatedString(ncryptsec))
+                        copyText(ncryptsec)
                         account.didBackup = true
                         Session.saveMeta(account)
                         Toaster.toast(Strings.get("d_encrypted_key_copied", language))
@@ -707,7 +705,7 @@ private fun BackupDialog(
                     text = Strings.get("d_copy_nsec", language),
                     onClick = {
                         confirmCopy = false
-                        clipboard.setText(AnnotatedString(account.getNsec()))
+                        copyText(account.getNsec())
                         account.didBackup = true
                         Session.saveMeta(account)
                         Toaster.toast(Strings.get("d_nsec_copied", language))

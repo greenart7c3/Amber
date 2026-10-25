@@ -25,8 +25,8 @@ import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequestConnect
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequestSign
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerResponse
 import com.vitorpamplona.quartz.nip46RemoteSigner.NostrConnectEvent
-import com.vitorpamplona.quartz.nip57Zaps.LnZapRequestEvent
 import com.vitorpamplona.quartz.nip57Zaps.PrivateZapRequestBuilder
+import com.vitorpamplona.quartz.nip57Zaps.ZapRequestEvent
 import com.vitorpamplona.quartz.utils.TimeUtils
 import java.net.URLDecoder
 import java.util.UUID
@@ -168,6 +168,8 @@ data class PendingBunkerRequest(
 internal class SenderRateLimiter(
     private val capacity: Int = SenderRateLimiter.DEFAULT_CAPACITY,
     private val windowSeconds: Long = SenderRateLimiter.DEFAULT_WINDOW_SECONDS,
+    // Read in buckets' removeEldestEntry, which detekt doesn't see inside an object expression.
+    @Suppress("UnusedPrivateProperty")
     private val maxSenders: Int = SenderRateLimiter.DEFAULT_MAX_SENDERS,
     private val aggregateCapacity: Int = SenderRateLimiter.DEFAULT_AGGREGATE_CAPACITY,
 ) {
@@ -858,7 +860,7 @@ class BunkerEngine(
 
         SignerType.DECRYPT_ZAP_EVENT -> {
             val eventJson = request.params.first()
-            val zapEvent = Event.fromJson(eventJson) as LnZapRequestEvent
+            val zapEvent = Event.fromJson(eventJson) as ZapRequestEvent
             val decrypted = PrivateZapRequestBuilder().decryptZapEvent(zapEvent, acc.signer.signerSync).toJson()
             ComputedResult(decrypted, decrypted)
         }
@@ -990,7 +992,7 @@ class BunkerEngine(
             store.getByKey(req.request.secret!!)?.let { placeholder ->
                 store.delete(placeholder.app.key)
                 savedApplication = placeholder.copy(app = placeholder.app.copy(key = key))
-                store.upsert(savedApplication!!)
+                store.upsert(savedApplication)
             }
         }
 

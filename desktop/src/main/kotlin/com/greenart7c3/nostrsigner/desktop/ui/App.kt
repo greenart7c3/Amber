@@ -237,7 +237,7 @@ private fun MainContent(
                 )
             } else {
                 when (currentRoute) {
-                    Route.IncomingRequest -> IncomingRequestsScreen(account = account)
+                    Route.IncomingRequest -> IncomingRequestsScreen()
                     Route.Applications -> ApplicationsScreen(
                         account = account,
                         onOpenApplication = { UiState.selectedApplication.value = it },

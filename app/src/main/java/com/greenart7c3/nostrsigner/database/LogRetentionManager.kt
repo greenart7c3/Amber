@@ -161,7 +161,9 @@ object LogRetentionManager {
             }
             AUTO_VACUUM_INCREMENTAL -> if (sqlite.longPragma("freelist_count") > 0) {
                 sqlite.query("PRAGMA incremental_vacuum").use { cursor ->
-                    while (cursor.moveToNext()) Unit
+                    while (cursor.moveToNext()) {
+                        // Stepping through the rows is what frees the pages.
+                    }
                 }
             }
         }

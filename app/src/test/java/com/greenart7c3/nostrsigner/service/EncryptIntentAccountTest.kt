@@ -1,6 +1,5 @@
 package com.greenart7c3.nostrsigner.service
 
-import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -80,7 +79,7 @@ class EncryptIntentAccountTest {
     private suspend fun parse(intent: Intent): IntentData? {
         val method = IntentUtils::class.declaredMemberFunctions.first { it.name == "getIntentDataFromIntent" }
         method.isAccessible = true
-        return method.callSuspend(IntentUtils, mockk<Context>(relaxed = true), intent, "com.example.app", null, account) as IntentData?
+        return method.callSuspend(IntentUtils, intent, "com.example.app", null, account) as IntentData?
     }
 
     @Test

@@ -70,7 +70,7 @@ jobs:
         run: touch keystore.properties
 
       - name: Linter (gradle)
-        run: ./gradlew :desktop:ktlintCheck --no-daemon
+        run: ./gradlew :desktop:ktlintCheck :desktop:detektMain :desktop:detektTest --no-daemon
 
   build:
     name: build (${{ matrix.name }})

@@ -346,8 +346,8 @@ object SecureCryptoHelper {
     ): Boolean {
         val previousKey = keyStore.secretKey(previousAlias)
         if (previousKey != null) {
-            var settled = false
-            for (pass in 1..MAX_SWEEP_PASSES) {
+            // Sweeps until a pass changes nothing, at most MAX_SWEEP_PASSES times.
+            val settled = (1..MAX_SWEEP_PASSES).any {
                 val result = try {
                     sweep(context, activeKey, previousKey)
                 } catch (e: Exception) {
@@ -358,10 +358,7 @@ object SecureCryptoHelper {
                     AmberLog.w(TAG, "Key rotation: ${result.failed} value(s) could not be moved to the new key")
                     return false
                 }
-                if (result.changed == 0) {
-                    settled = true
-                    break
-                }
+                result.changed == 0
             }
             if (!settled) return false
         }

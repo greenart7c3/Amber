@@ -60,7 +60,7 @@ import com.greenart7c3.nostrsigner.ui.theme.AmberPreview
 import com.greenart7c3.nostrsigner.ui.theme.ThemePreviews
 import com.greenart7c3.nostrsigner.ui.theme.previewAccount
 import com.vitorpamplona.quartz.nip01Core.core.Event
-import com.vitorpamplona.quartz.nip57Zaps.LnZapRequestEvent
+import com.vitorpamplona.quartz.nip57Zaps.ZapRequestEvent
 import com.vitorpamplona.quartz.utils.TimeUtils
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
@@ -270,7 +270,7 @@ fun IntentMultiEventHomeScreen(
                                     )
 
                                     if (isApproved) {
-                                        val signature = if (localEvent is LnZapRequestEvent &&
+                                        val signature = if (localEvent is ZapRequestEvent &&
                                             localEvent.tags.any { tag ->
                                                 tag.any { t -> t == "anon" }
                                             }

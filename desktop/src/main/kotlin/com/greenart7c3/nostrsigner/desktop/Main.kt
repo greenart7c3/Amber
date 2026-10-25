@@ -10,7 +10,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.platform.LocalWindowInfo
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.window.Tray
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.WindowPlacement
@@ -45,6 +44,7 @@ import com.greenart7c3.nostrsigner.desktop.ui.MIN_WINDOW_SIZE
 import com.greenart7c3.nostrsigner.desktop.ui.NostrSignerTheme
 import com.greenart7c3.nostrsigner.desktop.ui.RequestNotificationPopup
 import com.greenart7c3.nostrsigner.desktop.ui.UiState
+import com.greenart7c3.nostrsigner.desktop.ui.amberIconPainter
 import com.greenart7c3.nostrsigner.desktop.ui.handleShortcut
 import com.greenart7c3.nostrsigner.desktop.ui.initialWindowSize
 import java.awt.Dimension
@@ -393,7 +393,7 @@ fun main(args: Array<String>) {
 
         if (awtTrayUsable) {
             Tray(
-                icon = painterResource("icon.png"),
+                icon = amberIconPainter(),
                 state = trayState,
                 tooltip = if (pending.isEmpty()) Strings.get("d_tray_tooltip", language) else Strings.format("d_tray_pending", pending.size, language = language),
                 onAction = { DesktopTray.windowVisible.value = true },
@@ -422,7 +422,7 @@ fun main(args: Array<String>) {
             state = windowState,
             visible = windowVisible,
             title = if (pending.isEmpty()) BuildVariant.appName else "${BuildVariant.appName} (${pending.size})",
-            icon = painterResource("icon.png"),
+            icon = amberIconPainter(),
             onPreviewKeyEvent = { event ->
                 handleShortcut(
                     event,

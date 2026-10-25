@@ -5,7 +5,6 @@ import android.content.ClipboardManager
 import android.content.Context
 import androidx.compose.ui.platform.ClipEntry
 import androidx.compose.ui.platform.Clipboard
-import androidx.compose.ui.platform.NativeClipboard
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import kotlin.time.Duration.Companion.seconds
@@ -30,8 +29,6 @@ class SensitiveClipboardTest {
     private val manager = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
 
     private val clipboard = object : Clipboard {
-        override val nativeClipboard: NativeClipboard = manager
-
         override suspend fun getClipEntry(): ClipEntry? = manager.primaryClip?.let { ClipEntry(it) }
 
         override suspend fun setClipEntry(clipEntry: ClipEntry?) {

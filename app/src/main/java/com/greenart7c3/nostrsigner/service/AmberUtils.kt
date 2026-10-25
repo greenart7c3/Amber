@@ -22,7 +22,7 @@ import com.vitorpamplona.quartz.nip01Core.core.HexKey
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
 import com.vitorpamplona.quartz.nip19Bech32.toNpub
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerResponse
-import com.vitorpamplona.quartz.nip57Zaps.LnZapRequestEvent
+import com.vitorpamplona.quartz.nip57Zaps.ZapRequestEvent
 import com.vitorpamplona.quartz.utils.Hex
 import com.vitorpamplona.quartz.utils.TimeUtils
 import kotlin.io.encoding.Base64
@@ -344,7 +344,7 @@ fun sanitizeAppName(name: String, max: Int = APP_NAME_MAX): String {
 fun isPrivateEvent(
     kind: Int,
     tags: Array<Array<String>>,
-): Boolean = kind == LnZapRequestEvent.KIND && tags.any { t -> t.size > 1 && t[0] == "anon" }
+): Boolean = kind == ZapRequestEvent.KIND && tags.any { t -> t.size > 1 && t[0] == "anon" }
 
 /**
  * True when a sign_event payload names a pubkey that the approving account

@@ -25,8 +25,8 @@ import com.vitorpamplona.quartz.nip17Dm.NIP17Factory
 import com.vitorpamplona.quartz.nip17Dm.messages.ChatMessageEvent
 import com.vitorpamplona.quartz.nip19Bech32.toNsec
 import com.vitorpamplona.quartz.nip49PrivKeyEnc.Nip49
-import com.vitorpamplona.quartz.nip57Zaps.LnZapRequestEvent
 import com.vitorpamplona.quartz.nip57Zaps.PrivateZapRequestBuilder
+import com.vitorpamplona.quartz.nip57Zaps.ZapRequestEvent
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -178,7 +178,7 @@ class Account(
         data: String,
     ): String? {
         requirePrivateKeyAccess()
-        val event = Event.fromJson(data) as LnZapRequestEvent
+        val event = Event.fromJson(data) as ZapRequestEvent
         return try {
             PrivateZapRequestBuilder().decryptZapEvent(
                 event = event,

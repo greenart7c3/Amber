@@ -48,7 +48,7 @@ import com.vitorpamplona.quartz.nip01Core.core.Event
 import com.vitorpamplona.quartz.nip01Core.crypto.EventHasher
 import com.vitorpamplona.quartz.nip01Core.jackson.JacksonMapper
 import com.vitorpamplona.quartz.nip19Bech32.toNpub
-import com.vitorpamplona.quartz.nip59Giftwrap.seals.SealedRumorEvent
+import com.vitorpamplona.quartz.nip59Giftwrap.seals.SealEvent
 import com.vitorpamplona.quartz.utils.Hex
 import com.vitorpamplona.quartz.utils.TimeUtils
 import java.io.ByteArrayOutputStream
@@ -205,7 +205,6 @@ object IntentUtils {
     fun isUrlEncoded(input: String): Boolean = URL_ENCODED_REGEX.containsMatchIn(input)
 
     private suspend fun getIntentDataWithoutExtras(
-        context: Context,
         data: String,
         intent: Intent,
         packageName: String?,
@@ -226,7 +225,7 @@ object IntentUtils {
         parameters.removeIf { it.isBlank() }
 
         if (parameters.isEmpty() || parameters.toString() == "[]") {
-            return getIntentDataFromIntent(context, intent, packageName, route, account)
+            return getIntentDataFromIntent(intent, packageName, route, account)
         } else {
             var type = SignerType.INVALID
             var pubKey = ""
@@ -393,7 +392,6 @@ object IntentUtils {
     }
 
     private suspend fun getIntentDataFromIntent(
-        context: Context,
         intent: Intent,
         packageName: String?,
         route: String?,
@@ -629,7 +627,7 @@ object IntentUtils {
                 if (data.startsWith("{")) {
                     try {
                         val event = AmberEvent.fromJson(data)
-                        if (event.kind == SealedRumorEvent.KIND) {
+                        if (event.kind == SealEvent.KIND) {
                             val decryptedSealData = try {
                                 account.decrypt(event.content, account.hexKey)
                             } catch (_: Exception) {
@@ -667,7 +665,7 @@ object IntentUtils {
                 if (result.startsWith("{")) {
                     try {
                         val event = AmberEvent.fromJson(result)
-                        if (event.kind == SealedRumorEvent.KIND) {
+                        if (event.kind == SealEvent.KIND) {
                             val decryptedSealData = try {
                                 account.decrypt(event.content, account.hexKey)
                             } catch (_: Exception) {
@@ -827,9 +825,9 @@ object IntentUtils {
                     dataString = intent.dataString,
                 )
             ) {
-                return getIntentDataWithoutExtras(context, intent.data?.toString() ?: "", intent, packageName, route, localAccount)
+                return getIntentDataWithoutExtras(intent.data?.toString() ?: "", intent, packageName, route, localAccount)
             } else {
-                return getIntentDataFromIntent(context, intent, packageName, route, localAccount)
+                return getIntentDataFromIntent(intent, packageName, route, localAccount)
             }
         } catch (e: Exception) {
             AmberLog.e(Amber.TAG, "Error parsing intent: ${e.message}", e)

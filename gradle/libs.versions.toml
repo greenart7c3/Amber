@@ -26,6 +26,7 @@ kotlin = "2.4.20"
 workRuntimeKtx = "2.12.0"
 agp = "9.4.1"
 ktlint = "14.2.0"
+detekt = "2.0.0-alpha.6"
 ksp = "2.3.12"
 coil = "3.6.3"
 storage = "3.1.0"
@@ -107,6 +108,7 @@ bouncycastle = { module = "org.bouncycastle:bcprov-jdk18on", version = "1.86" }
 androidLibrary = { id = "com.android.library", version.ref = "agp" }
 androidApplication = { id = "com.android.application", version.ref = "agp" }
 gradle_ktlint = { id = "org.jlleitschuh.gradle.ktlint", version = "ktlint" }
+detekt = { id = "dev.detekt", version.ref = "detekt" }
 serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 kotlin_ksp = { id = "com.google.devtools.ksp", version = "ksp" }
 jetbrainsComposeCompiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }

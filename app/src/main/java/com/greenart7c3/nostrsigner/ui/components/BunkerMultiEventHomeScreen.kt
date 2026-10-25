@@ -34,8 +34,6 @@ import androidx.compose.ui.unit.dp
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
-import com.greenart7c3.nostrsigner.database.ApplicationEntity
-import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
 import com.greenart7c3.nostrsigner.database.HistoryEntity
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.AmberBunkerRequest
@@ -110,7 +108,6 @@ internal fun batchableBunkerRequests(requests: List<AmberBunkerRequest>): List<A
 fun BunkerMultiEventHomeScreen(
     modifier: Modifier,
     bunkerRequests: ImmutableList<AmberBunkerRequest>,
-    packageName: String?,
     accountParam: Account,
     onLoading: (Boolean) -> Unit,
 ) {
@@ -308,26 +305,7 @@ fun BunkerMultiEventHomeScreen(
                                 continue
                             }
 
-                            val application =
-                                savedApplication ?: ApplicationWithPermissions(
-                                    application = ApplicationEntity(
-                                        localKey,
-                                        request.clientMetadata?.name ?: "",
-                                        listOf(),
-                                        request.clientMetadata?.url ?: "",
-                                        request.clientMetadata?.image ?: "",
-                                        "",
-                                        thisAccount.hexKey,
-                                        true,
-                                        "",
-                                        false,
-                                        thisAccount.signPolicy,
-                                        request.closeApplication,
-                                        0L,
-                                        lastUsed = TimeUtils.now(),
-                                    ),
-                                    permissions = mutableListOf(),
-                                )
+                            val application = savedApplication
 
                             // A relay outside the auth whitelist is rejected without
                             // remembering it, as on the single screen.
@@ -761,7 +739,6 @@ fun BunkerMultiEventHomeScreenPreview() {
                     encryptedData = ClearTextEncryptedDataKind("encrypted-payload", "Hello Nostr!"),
                 ),
             ),
-            packageName = null,
             accountParam = previewAccount(),
             onLoading = {},
         )
@@ -791,7 +768,6 @@ fun BunkerMultiEventHomeScreenMultipleAppsPreview() {
                     clientMetadata = BunkerClientMetadata(name = "Coracle", url = "https://coracle.social"),
                 ),
             ),
-            packageName = null,
             accountParam = previewAccount(),
             onLoading = {},
         )

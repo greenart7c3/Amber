@@ -37,8 +37,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.platform.LocalClipboardManager
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -208,7 +206,7 @@ private fun NewBunkerDialog(
     val nameFocus = remember { FocusRequester() }
     var bunkerUri by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
-    val clipboard = LocalClipboardManager.current
+    val copyText = rememberCopyText()
     val language by Strings.currentLanguage.collectAsState()
 
     AlertDialog(
@@ -284,7 +282,7 @@ private fun NewBunkerDialog(
                 AmberTextButton(
                     text = Strings.get("copy", language).trim(),
                     onClick = {
-                        clipboard.setText(AnnotatedString(uri))
+                        copyText(uri)
                         Toaster.toast(Strings.get("d_copied_clipboard", language))
                     },
                 )

@@ -403,7 +403,6 @@ class PassphraseLockTest {
         PassphraseLock.lock()
         // Roll the blob back to the pre-release v1 format and plant a
         // plaintext application database next to it.
-        val masterKey: SecretKey = SecretKeySpec(DesktopKeyStore.masterKeyForWrapping().encoded, "AES")
         val goodBlob = File(AppDirs.dataDir, "master.key.enc").readText()
         AmberDesktop.evictAccount(record.npub)
         File(AppDirs.dataDir, "master.key.enc").writeText(

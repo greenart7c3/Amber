@@ -4,6 +4,7 @@ import java.util.Properties
 plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.gradle.ktlint) version libs.versions.ktlint.get()
+    alias(libs.plugins.detekt)
     alias(libs.plugins.kotlin.ksp) version libs.versions.ksp.get()
     alias(libs.plugins.jetbrainsComposeCompiler)
 }

@@ -29,7 +29,6 @@ import io.mockk.mockkStatic
 import io.mockk.spyk
 import io.mockk.unmockkObject
 import io.mockk.unmockkStatic
-import io.mockk.verify
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -220,8 +219,7 @@ class EventNotificationConsumerTest {
             coEvery {
                 BunkerRequestUtils.sendBunkerResponse(any(), any(), any(), any(), any(), any(), any())
             } answers {
-                responses.add(arg(3))
-                Unit
+                responses += arg<BunkerResponse>(3)
             }
             consumer.consume(event, NormalizedRelayUrl("wss://relay.com"))
             onAccount(acc)
@@ -336,8 +334,7 @@ class EventNotificationConsumerTest {
             coEvery {
                 BunkerRequestUtils.sendBunkerResponse(any(), any(), any(), any(), any(), any(), any())
             } answers {
-                responses.add(arg(3))
-                Unit
+                responses += arg<BunkerResponse>(3)
             }
 
             consumer.consume(event, NormalizedRelayUrl("wss://relay.com"))

@@ -41,7 +41,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.greenart7c3.nostrsigner.desktop.core.AccountsStore
 import com.greenart7c3.nostrsigner.desktop.core.AmberDesktop
-import com.greenart7c3.nostrsigner.desktop.core.DesktopAccount
 import com.greenart7c3.nostrsigner.desktop.core.EncryptionScope
 import com.greenart7c3.nostrsigner.desktop.core.LocalRelays
 import com.greenart7c3.nostrsigner.desktop.core.PendingBunkerRequest
@@ -56,7 +55,7 @@ import com.greenart7c3.nostrsigner.desktop.core.nip44v3SignerTypes
 import com.greenart7c3.nostrsigner.desktop.core.toShortenHex
 
 @Composable
-fun IncomingRequestsScreen(account: DesktopAccount) {
+fun IncomingRequestsScreen() {
     val pending by AmberDesktop.engine.pending.collectAsState()
     val language by Strings.currentLanguage.collectAsState()
 

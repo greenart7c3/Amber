@@ -37,7 +37,7 @@ jobs:
         run: touch keystore.properties
 
       - name: Linter (gradle)
-        run: ./gradlew ktlintCheck
+        run: ./gradlew ktlintCheck detektAll
 
       - name: Test (gradle)
         run: ./gradlew test --no-daemon

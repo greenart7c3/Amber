@@ -129,7 +129,7 @@ Debug builds install as `com.greenart7c3.nostrsigner.debug`, next to a release
 install, so you can test without touching your real keys. Both debug flavors
 share that ID, so installing one replaces the other.
 
-The git hooks in `git-hooks/` (pre-commit: `ktlintCheck lint`; pre-push:
+The git hooks in `git-hooks/` (pre-commit: `ktlintCheck detektAll lint`; pre-push:
 `test lint`) are installed automatically by the first Gradle build.
 
 ## Where code belongs
@@ -184,6 +184,7 @@ Run these in order before pushing; CI runs the same checks:
 
 ```bash
 ./gradlew ktlintCheck            # style
+./gradlew detektAll              # unused code
 ./gradlew lint                   # Android Lint, warnings fail the build
 ./gradlew test --no-daemon       # JVM unit tests, all variants
 ./gradlew assembleDebug          # both flavors compile

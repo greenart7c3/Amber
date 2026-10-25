@@ -7,6 +7,7 @@ plugins {
     alias(libs.plugins.serialization) apply false
     alias(libs.plugins.kotlin.ksp) version libs.versions.ksp.get() apply false
     alias(libs.plugins.gradle.ktlint) version libs.versions.ktlint.get() apply false
+    alias(libs.plugins.detekt) apply false
     alias(libs.plugins.kotlinJvm) apply false
     alias(libs.plugins.jetbrainsCompose) apply false
 }
@@ -20,6 +21,23 @@ tasks.register<Copy>("installGitHook") {
     }
 }
 
+// Unused code (config/detekt/detekt.yml) in every flavor's sources and tests.
+// These are detekt's type-resolving tasks: the plain `detekt` task can't
+// resolve types and misses unused variables, properties and functions.
+tasks.register("detektAll") {
+    group = "verification"
+    description = "Checks the app and desktop sources for unused code."
+    dependsOn(
+        ":app:detektFreeDebug",
+        ":app:detektOfflineDebug",
+        ":app:detektFreeDebugUnitTest",
+        ":app:detektOfflineDebugUnitTest",
+        ":app:detektFreeDebugAndroidTest",
+        ":desktop:detektMain",
+        ":desktop:detektTest",
+    )
+}
+
 project(":app") {
     tasks.matching { it.name == "preBuild" }.configureEach {
         dependsOn(rootProject.tasks.named("installGitHook"))
@@ -27,8 +45,18 @@ project(":app") {
 }
 
 subprojects {
+    // `src` covers every source set, including the app's flavor directories.
+    plugins.withId("dev.detekt") {
+        extensions.configure<dev.detekt.gradle.extensions.DetektExtension> {
+            source.setFrom("src")
+        }
+    }
+
     tasks.withType<KotlinCompile>().configureEach {
         compilerOptions {
+            // Deprecations, needless null checks, unused expressions and the like
+            // fail the build; suppress one at its site when it is deliberate.
+            allWarningsAsErrors.set(true)
             val buildDirPath = project.layout.buildDirectory.get().asFile.absolutePath
             if (project.findProperty("composeCompilerReports") == "true") {
                 freeCompilerArgs.addAll(

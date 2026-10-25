@@ -67,7 +67,7 @@ import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequestNip44Encrypt
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequestSign
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerResponse
 import com.vitorpamplona.quartz.nip46RemoteSigner.NostrConnectEvent
-import com.vitorpamplona.quartz.nip59Giftwrap.seals.SealedRumorEvent
+import com.vitorpamplona.quartz.nip59Giftwrap.seals.SealEvent
 import com.vitorpamplona.quartz.utils.TimeUtils
 import java.util.UUID
 import kotlin.io.encoding.Base64
@@ -859,7 +859,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
         if (result.startsWith("{")) {
             try {
                 val event = AmberEvent.fromJson(result)
-                if (event.kind == SealedRumorEvent.KIND) {
+                if (event.kind == SealEvent.KIND) {
                     val decryptedSealData = try {
                         acc.decrypt(event.content, acc.hexKey)
                     } catch (_: Exception) {
@@ -900,7 +900,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
         if (bunkerRequest.message.startsWith("{")) {
             try {
                 val event = AmberEvent.fromJson(bunkerRequest.message)
-                if (event.kind == SealedRumorEvent.KIND) {
+                if (event.kind == SealEvent.KIND) {
                     val decryptedSealData = try {
                         acc.decrypt(event.content, acc.hexKey)
                     } catch (_: Exception) {
@@ -942,7 +942,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
         if (result.startsWith("{")) {
             try {
                 val event = AmberEvent.fromJson(result)
-                if (event.kind == SealedRumorEvent.KIND) {
+                if (event.kind == SealEvent.KIND) {
                     val decryptedSealData = try {
                         acc.decrypt(event.content, acc.hexKey)
                     } catch (_: Exception) {
@@ -983,7 +983,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
         if (bunkerRequest.message.startsWith("{")) {
             try {
                 val event = AmberEvent.fromJson(bunkerRequest.message)
-                if (event.kind == SealedRumorEvent.KIND) {
+                if (event.kind == SealEvent.KIND) {
                     val decryptedSealData = try {
                         acc.decrypt(event.content, acc.hexKey)
                     } catch (_: Exception) {

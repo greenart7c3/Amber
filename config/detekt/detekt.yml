@@ -1,0 +1,25 @@
+# Only the unused-code rules: formatting is ktlint's job, and deprecated or
+# needless code is caught by the Kotlin compiler (warnings fail the build, see
+# allWarningsAsErrors in build.gradle.kts). Without buildUponDefaultConfig,
+# every rule not listed here is off.
+style:
+  active: true
+  UnusedImport:
+    active: true
+  UnusedParameter:
+    active: true
+    aliases: ['UNUSED_PARAMETER', 'unused']
+    allowedNames: 'ignored|expected'
+  UnusedPrivateClass:
+    active: true
+    aliases: ['unused']
+  UnusedPrivateFunction:
+    active: true
+    aliases: ['unused']
+  UnusedPrivateProperty:
+    active: true
+    aliases: ['unused']
+    allowedNames: 'ignored|expected|serialVersionUID'
+  UnusedVariable:
+    active: true
+    aliases: ['UNUSED_VARIABLE', 'unused']

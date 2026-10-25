@@ -1,5 +1,7 @@
 package com.greenart7c3.nostrsigner.desktop
 
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -359,8 +361,13 @@ fun main(args: Array<String>) {
                 }
             }
         }
-        // Focusing Amber shows the request card, so the popup is redundant.
-        LaunchedEffect(windowFocused) { if (windowFocused) popupRequest = null }
+        // Focusing Amber shows the request card, so the popup is redundant —
+        // unless the pointer is on the popup: on macOS clicking it activates
+        // Amber, which focuses the main window before the click reaches the
+        // popup's button, and closing it then would swallow the Approve.
+        val popupHover = remember { MutableInteractionSource() }
+        val popupHovered by popupHover.collectIsHoveredAsState()
+        LaunchedEffect(windowFocused, popupHovered) { if (windowFocused && !popupHovered) popupRequest = null }
         // Close the popup once its request is answered elsewhere or dropped.
         popupRequest?.let { request ->
             if (pending.none { it.isSameEntry(request) }) {
@@ -387,6 +394,7 @@ fun main(args: Array<String>) {
                         DesktopTray.windowVisible.value = true
                     },
                     onDismiss = { popupRequest = null },
+                    hover = popupHover,
                 )
             }
         }

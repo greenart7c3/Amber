@@ -93,7 +93,8 @@ private class PopupAction(val label: String, val onClick: () -> Unit)
  *
  * It follows the OS light/dark appearance, never takes focus, opens Amber when
  * its body is clicked, and closes itself after [POPUP_TIMEOUT_MS] unless the
- * pointer rests on it. Only low-risk requests get Approve (see
+ * pointer rests on it ([hover] reports that, so the caller can keep it open
+ * while it is being clicked). Only low-risk requests get Approve (see
  * [allowsQuickApprove]); the rest only get Reject and are approved on the card.
  */
 @Composable
@@ -106,6 +107,7 @@ fun RequestNotificationPopup(
     onReject: () -> Unit,
     onOpen: () -> Unit,
     onDismiss: () -> Unit,
+    hover: MutableInteractionSource = remember { MutableInteractionSource() },
 ) {
     val cardSize = if (isMac) DpSize(344.dp, 86.dp) else DpSize(364.dp, 160.dp)
     val windowSize = DpSize(cardSize.width + SHADOW_PADDING * 2, cardSize.height + SHADOW_PADDING * 2)
@@ -123,7 +125,6 @@ fun RequestNotificationPopup(
     }
     val state = rememberWindowState(size = windowSize, position = position)
 
-    val hover = remember { MutableInteractionSource() }
     val hovered by hover.collectIsHoveredAsState()
     // Restarts while hovered, so the popup never vanishes under the pointer.
     LaunchedEffect(request.request.id, hovered) {

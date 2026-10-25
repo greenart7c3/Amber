@@ -1,11 +1,7 @@
-import java.io.ByteArrayOutputStream
 import java.io.File
-import java.security.MessageDigest
-import java.time.LocalDateTime
-import java.util.zip.CRC32
-import java.util.zip.ZipEntry
-import java.util.zip.ZipInputStream
-import java.util.zip.ZipOutputStream
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
+import java.util.zip.ZipFile
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 
 plugins {
@@ -76,6 +72,85 @@ dependencies {
     testImplementation(libs.junit)
 }
 
+// Skiko's native library ships as plain files next to the app's jars
+// instead of through skiko-awt-runtime-<os>-<arch>.jar. Compose 1.12 unpacks
+// that jar itself and rewrites what is left of it with the build time as
+// every entry's timestamp, so no two builds of the same commit, and none of
+// the installers, would match (Compose 1.13 keeps the original times). The
+// files are copied byte for byte out of the jar: the native library of this
+// OS and arch, its .sha256 and, on Windows, icudtl.dat, exactly what the
+// plugin unpacks. Non-jar files keep their names in the app folder, the
+// skiko.library.path ($APPDIR) the plugin points skiko at.
+object SkikoNatives {
+    val runtimeJar = Regex("^skiko-awt-runtime-(.+?)-[0-9.]+\\.jar$")
+
+    fun extract(jars: Set<File>, into: File) {
+        into.deleteRecursively()
+        into.mkdirs()
+        for (jar in jars) {
+            val target = runtimeJar.find(jar.name)!!.groupValues[1]
+            ZipFile(jar).use { zip ->
+                for (entry in zip.entries()) {
+                    val name = entry.name.removeSuffix(".sha256")
+                    val native = name.substringBeforeLast('.').endsWith("-$target")
+                    if (entry.isDirectory || '/' in entry.name || !(native || name == "icudtl.dat")) continue
+                    zip.getInputStream(entry).use { File(into, entry.name).outputStream().use(it::copyTo) }
+                }
+            }
+        }
+    }
+}
+
+val skikoRuntimeJars = configurations.runtimeClasspath.get().filter { SkikoNatives.runtimeJar.matches(it.name) }
+val skikoNatives = tasks.register("skikoNatives") {
+    val jars = skikoRuntimeJars
+    val out = layout.buildDirectory.dir("skiko-natives")
+    inputs.files(jars)
+    outputs.dir(out)
+    doLast { SkikoNatives.extract(jars.files, out.get().asFile) }
+}
+
+// On macOS the plugin re-zips every jar it packages (to sign the native
+// libraries inside), stamping each entry with the build time; that is all
+// that differs between two builds there. Set the timestamps in the ZIP
+// headers to a fixed time before the DMG is made (it signs the app ad hoc
+// over these jars). Only the header fields change, not the compressed data.
+object ZipTimestamps {
+    // 1980-02-01 00:00, Gradle's fixed time for reproducible archives.
+    private const val DOS_TIME = 0
+    private const val DOS_DATE = (2 shl 5) or 1
+
+    fun normalize(jar: File) {
+        val zip = jar.readBytes()
+        val buffer = ByteBuffer.wrap(zip).order(ByteOrder.LITTLE_ENDIAN)
+        val end = (zip.size - 22 downTo maxOf(0, zip.size - 22 - 0xFFFF)).firstOrNull { buffer.getInt(it) == 0x06054b50 }
+            ?: error("$jar: no end of central directory")
+        var entry = buffer.getInt(end + 16)
+        repeat(buffer.getShort(end + 10).toInt() and 0xFFFF) {
+            check(buffer.getInt(entry) == 0x02014b50) { "$jar: bad central directory" }
+            val local = buffer.getInt(entry + 42)
+            check(buffer.getInt(local) == 0x04034b50) { "$jar: bad local header" }
+            buffer.putShort(entry + 12, DOS_TIME.toShort()).putShort(entry + 14, DOS_DATE.toShort())
+            buffer.putShort(local + 10, DOS_TIME.toShort()).putShort(local + 12, DOS_DATE.toShort())
+            entry += 46 + (buffer.getShort(entry + 28).toInt() and 0xFFFF) +
+                (buffer.getShort(entry + 30).toInt() and 0xFFFF) + (buffer.getShort(entry + 32).toInt() and 0xFFFF)
+        }
+        jar.writeBytes(zip)
+    }
+}
+
+if (System.getProperty("os.name").startsWith("Mac")) {
+    tasks.withType<org.jetbrains.compose.desktop.application.tasks.AbstractJPackageTask>()
+        .matching { it.name == "createDistributable" || it.name == "createReleaseDistributable" }
+        .configureEach {
+            val image = destinationDir
+            doLast {
+                image.get().asFile.walkTopDown().filter { it.isFile && it.extension == "jar" && it.parentFile.name == "app" }
+                    .forEach(ZipTimestamps::normalize)
+            }
+        }
+}
+
 // `run` is the debug build: BuildVariant keeps its data dir, keyring entry and
 // nostrconnect socket apart from a packaged (release) install on the same
 // machine. Packaged distributions and runDistributable stay release.
@@ -84,6 +159,9 @@ dependencies {
 val debugRunTasks = setOf("run", "hotRun", "hotRunAsync", "hotDev", "hotDevAsync")
 tasks.withType<JavaExec>().matching { it.name in debugRunTasks }.configureEach {
     systemProperty("amber.debug", "true")
+    // The packaged classpath has no skiko-awt-runtime jar (see SkikoNatives).
+    dependsOn(skikoNatives)
+    systemProperty("skiko.library.path", layout.buildDirectory.dir("skiko-natives").get().asFile.absolutePath)
     if (providers.gradleProperty("desktopUriHandler").isPresent) {
         systemProperty("amber.uriHandler", "true")
     }
@@ -99,6 +177,17 @@ val desktopPackageVersion: String = appVersionName.substringBefore('-')
 compose.desktop {
     application {
         mainClass = "com.greenart7c3.nostrsigner.desktop.MainKt"
+        // What from(sourceSets.main) would package, but skiko's natives as
+        // plain files instead of skiko-awt-runtime-*.jar (see SkikoNatives).
+        disableDefaultConfiguration()
+        val jar = tasks.named<Jar>("jar")
+        mainJar.set(jar.flatMap { it.archiveFile })
+        fromFiles(
+            jar.flatMap { it.archiveFile },
+            configurations.runtimeClasspath.get().filter { !SkikoNatives.runtimeJar.matches(it.name) },
+            files(skikoNatives).asFileTree,
+        )
+        dependsOn(jar.get(), skikoNatives.get())
         // Lets Main.kt set the X11 WM_CLASS so Linux docks match the desktop entry.
         jvmArgs += "--add-opens=java.desktop/sun.awt.X11=ALL-UNNAMED"
         // Keep decrypted keys out of files other tools can read: no jcmd/jmap
@@ -162,69 +251,4 @@ compose.desktop {
             isEnabled.set(false)
         }
     }
-}
-
-// Reproducible Linux app image (the .tar.xz and AppImage, see README
-// "Verifying Reproducibility of Amber Desktop"). Compose 1.12 strips the
-// native library out of skiko-awt-runtime-*.jar and rewrites the jar with the
-// build time as every entry's timestamp, so it, its hashed file name and the
-// launcher's Amber.cfg differ between two builds of the same commit; nothing
-// else does. Rewrite it with a fixed timestamp. Compose 1.13 keeps the
-// original times; drop this once it is on a stable release. Not done on
-// macOS, where jpackage has already sealed the bundle's code signature.
-object ReproducibleSkikoJar {
-    // Gradle's own fixed time for reproducible archives, as a local DOS time
-    // so the bytes don't depend on the build machine's time zone.
-    private val entryTime = LocalDateTime.of(1980, 2, 1, 0, 0)
-    private val hashedName = Regex("^(skiko-awt-runtime-.+)-[0-9a-f]+\\.jar$")
-
-    fun normalize(appImage: File) {
-        val jars = appImage.walkTopDown().filter { it.isFile && hashedName.matches(it.name) }.toList()
-        for (jar in jars) {
-            val bytes = rewrite(jar)
-            val hash = MessageDigest.getInstance("SHA-256").digest(bytes)
-                .joinToString("") { "%02x".format(it) }.take(30)
-            val name = "${hashedName.find(jar.name)!!.groupValues[1]}-$hash.jar"
-            jar.delete()
-            File(jar.parentFile, name).writeBytes(bytes)
-            jar.parentFile.listFiles { f -> f.extension == "cfg" }!!.forEach { cfg ->
-                cfg.writeText(cfg.readText().replace(jar.name, name))
-            }
-        }
-    }
-
-    // Entries are stored, not deflated: what is left is a manifest of a few
-    // bytes, and deflate output could vary with the JDK's zlib.
-    private fun rewrite(jar: File): ByteArray {
-        val out = ByteArrayOutputStream()
-        ZipInputStream(jar.inputStream().buffered()).use { zin ->
-            ZipOutputStream(out).use { zout ->
-                generateSequence { zin.nextEntry }.forEach { entry ->
-                    val data = zin.readBytes()
-                    val crc = CRC32().apply { update(data) }
-                    zout.putNextEntry(
-                        ZipEntry(entry.name).apply {
-                            method = ZipEntry.STORED
-                            size = data.size.toLong()
-                            compressedSize = size
-                            this.crc = crc.value
-                            timeLocal = entryTime
-                        },
-                    )
-                    zout.write(data)
-                    zout.closeEntry()
-                }
-            }
-        }
-        return out.toByteArray()
-    }
-}
-
-if (System.getProperty("os.name").startsWith("Linux")) {
-    tasks.withType<org.jetbrains.compose.desktop.application.tasks.AbstractJPackageTask>()
-        .matching { it.name == "createDistributable" || it.name == "createReleaseDistributable" }
-        .configureEach {
-            val image = destinationDir
-            doLast { ReproducibleSkikoJar.normalize(image.get().asFile) }
-        }
 }

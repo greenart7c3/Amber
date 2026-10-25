@@ -1,5 +1,6 @@
 # Rebuilds a release of the Amber desktop app for Linux x86_64 and compares it
-# with the published Amber-X.Y.Z-linux-x86_64.tar.xz and Amber-X.Y.Z-x86_64.AppImage.
+# with the published Amber-X.Y.Z-linux-x86_64.tar.xz, Amber-X.Y.Z-x86_64.AppImage,
+# Amber-X.Y.Z-linux-x86_64.deb and Amber-X.Y.Z-linux-x86_64.rpm.
 # See "Verifying Reproducibility of Amber Desktop" in README.md.
 #
 # The app bundles the runtime of the JDK it was built with, so JDK must be
@@ -12,8 +13,15 @@ ARG VERSION
 ENV VERSION=${VERSION}
 ENV GRADLE_OPTS="-Xmx2048m -Dorg.gradle.daemon=false"
 
+# fakeroot and rpm build the .deb and .rpm; rpm2cpio, cpio and squashfs-tools
+# unpack them. The libraries are the ones the app links against: jpackage
+# derives the .deb's Depends from the packages that provide them here, as it
+# does on the CI runner (desktopdiff.py only notes a different Depends, since
+# it moves with the distro's updates).
 RUN apt-get update && apt-get install -y \
     git curl xz-utils squashfs-tools python3 ca-certificates \
+    fakeroot rpm rpm2cpio cpio \
+    libasound2t64 libfontconfig1 libfreetype6 libgl1 libx11-6 libxext6 libxi6 libxrender1 libxtst6 xdg-utils \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 RUN test -n "$VERSION" || { echo "Pass --build-arg VERSION=vX.Y.Z"; exit 1; }
@@ -24,7 +32,9 @@ RUN mkdir -p /official && \
     URL=https://github.com/greenart7c3/Amber/releases/download/${VERSION} && \
     v=${VERSION#v} && v=${v%%-*} && \
     curl -fsSL -o /official/Amber.tar.xz ${URL}/Amber-${v}-linux-x86_64.tar.xz && \
-    curl -fsSL -o /official/Amber.AppImage ${URL}/Amber-${v}-x86_64.AppImage
+    curl -fsSL -o /official/Amber.AppImage ${URL}/Amber-${v}-x86_64.AppImage && \
+    curl -fsSL -o /official/Amber.deb ${URL}/Amber-${v}-linux-x86_64.deb && \
+    curl -fsSL -o /official/Amber.rpm ${URL}/Amber-${v}-linux-x86_64.rpm
 
 # The bundled libjvm.so names the JDK the release was built with.
 RUN built=$(tar -xJOf /official/Amber.tar.xz Amber/lib/runtime/lib/server/libjvm.so | grep -a -o -m1 'Server VM ([^)]*)' | sed 's/.*(\(.*\))/\1/') && \
@@ -47,11 +57,14 @@ RUN git checkout ${VERSION}
 
 RUN chmod +x gradlew && touch keystore.properties
 
-# The app image the tarball holds, then the AppDir the AppImage is made from.
-RUN ./gradlew :desktop:createDistributable --no-daemon
+# The app image the tarball holds, the AppDir the AppImage is made from, and
+# the .deb and .rpm.
+RUN ./gradlew :desktop:createDistributable :desktop:packageDeb :desktop:packageRpm --no-daemon
 RUN desktop/packaging/linux.sh "${VERSION#v}" /dist
 
 # Compares contents (paths, bytes, symlinks, executable bits), not archive
 # bytes: timestamps and owners depend on the machine, not on the build.
 CMD desktopdiff.py /official/Amber.tar.xz /app/desktop/build/compose/binaries/main/app/Amber && \
-    desktopdiff.py /official/Amber.AppImage /app/desktop/build/linux-bundles/Amber.AppDir
+    desktopdiff.py /official/Amber.AppImage /app/desktop/build/linux-bundles/Amber.AppDir && \
+    desktopdiff.py /official/Amber.deb /app/desktop/build/compose/binaries/main/deb/*.deb && \
+    desktopdiff.py /official/Amber.rpm /app/desktop/build/compose/binaries/main/rpm/*.rpm

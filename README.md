@@ -120,37 +120,69 @@ APKs match!
 
 # Verifying Reproducibility of Amber Desktop
 
-The Linux x86_64 downloads of the desktop app, `Amber-X.Y.Z-linux-x86_64.tar.xz` and `Amber-X.Y.Z-x86_64.AppImage`, can be rebuilt from the tag and compared with the published files:
+Every desktop download can be rebuilt from its tag and compared with the published file using [`desktopdiff.py`](desktopdiff.py). It compares what is inside: every path, file, symlink and executable bit must match, along with the installer's own scripts and tables (`.deb` maintainer scripts, `.rpm` scriptlets and dependencies, MSI custom actions, registry keys and shortcuts). Timestamps, owners and the installers' build dates are not compared, since they depend on when and where the files were packed. Packages are unpacked, never installed or run.
 
-1. The app ships the Java runtime of the JDK it was built with, so the rebuild must use the same Temurin release. Find it in the published tarball:
+The app ships the Java runtime of the JDK it was built with, so a rebuild must use the same [Temurin](https://adoptium.net/temurin/releases/) release. Print it from the download you are checking (`--jdk` takes any of the files below):
 
 ``` bash
-tar -xJOf Amber-X.Y.Z-linux-x86_64.tar.xz Amber/lib/runtime/lib/server/libjvm.so | grep -a -o -m1 'Server VM ([^)]*)'
+python3 desktopdiff.py --jdk Amber-X.Y.Z-linux-x86_64.tar.xz
 ```
 
-`Server VM (21.0.12.1+1-LTS)` means `JDK=21.0.12.1_1` (drop `-LTS`, `+` becomes `_`). If you skip this step and the default is wrong, the build stops and tells you which one to use.
+`21.0.12.1+1-LTS` means Temurin `jdk-21.0.12.1+1`. Use the `.tar.gz` / `.zip` archive of that release, not its installer, which is packaged differently.
 
-2. Build the image with no cache, the release tag and that JDK:
+## Linux (.tar.xz, AppImage, .deb, .rpm)
+
+1. Build the image with no cache, the release tag and that JDK as a Docker tag (drop `-LTS`, `+` becomes `_`). If it is wrong, the build stops and names the right one:
 
 ``` bash
 docker build -f Dockerfile.desktop -t amber-desktop-repro --progress=plain --no-cache --build-arg VERSION=vX.Y.Z --build-arg JDK=21.0.12.1_1 .
 ```
 
-3. Run the container:
+2. Run the container:
 
 ``` bash
 docker run --rm amber-desktop-repro
 ```
 
-4. You should see the following message twice, once for the tarball and once for the AppImage:
+3. You should see `Builds match!` four times: for the tarball, the AppImage, the `.deb` and the `.rpm`. A `Note:` about the `.deb`'s `Depends` or the `.rpm`'s `Requires` doesn't fail the check: jpackage lists the distro packages that provide the app's libraries on the build machine, which change with the distro's updates.
 
-``` bash
-Builds match!
+## Windows (.msi, .exe)
+
+jpackage only builds for the OS it runs on, so rebuild on Windows x64:
+
+1. Unzip the Temurin `.zip` and point `JAVA_HOME` at it.
+2. Build the release:
+
+``` powershell
+git clone https://github.com/greenart7c3/Amber.git
+cd Amber
+git checkout vX.Y.Z
+New-Item keystore.properties
+.\gradlew.bat :desktop:packageMsi :desktop:packageExe
 ```
 
-`desktopdiff.py` compares what is inside the downloads: every path, file, symlink and executable bit must match. Timestamps and owners are not compared, since they depend on the machine that packed the archive. The AppImage is unpacked with `unsquashfs` and never run.
+3. Compare in WSL or on any Linux machine with `msitools` installed (`apt install msitools`). `desktopdiff.py` reads the MSI with msitools rather than `msiexec`, which would run the package's own actions:
 
-The `.deb`, `.rpm`, `.msi`, `.exe` and `.dmg` installers are not reproducible yet. jpackage builds each of them separately, and the Compose plugin stamps one jar inside them (`skiko-awt-runtime-*.jar`) with the build time. That is fixed in Compose 1.13.
+``` bash
+python3 desktopdiff.py Amber-X.Y.Z-windows-x64.msi desktop/build/compose/binaries/main/msi/Amber-X.Y.Z.msi
+python3 desktopdiff.py Amber-X.Y.Z-windows-x64.exe desktop/build/compose/binaries/main/exe/Amber-X.Y.Z.exe
+```
+
+## macOS (.dmg)
+
+Rebuild on a Mac of the same architecture as the download (`arm64` for Apple silicon, `x64` for Intel):
+
+1. Unpack the Temurin `.tar.gz` and `export JAVA_HOME=<unpacked folder>/Contents/Home`.
+2. Build and compare:
+
+``` bash
+git clone https://github.com/greenart7c3/Amber.git
+cd Amber
+git checkout vX.Y.Z
+touch keystore.properties
+./gradlew :desktop:packageDmg
+python3 desktopdiff.py ~/Downloads/Amber-X.Y.Z-macos-arm64.dmg desktop/build/compose/binaries/main/dmg/Amber-X.Y.Z.dmg
+```
 
 # Certificate fingerprint for AppVerifier
 

@@ -154,6 +154,8 @@ Use the committed scripts for cloud environments:
 
 `Dockerfile` + `apkdiff.py` verify reproducible builds: `docker build -t amber-repro --build-arg VERSION=vX.Y.Z --build-arg APK_TYPE=free-arm64-v8a .` then `docker run --rm amber-repro` (expect `APKs match!`).
 
+Desktop: `Dockerfile.desktop` + `desktopdiff.py` rebuild the Linux x86_64 `.tar.xz` and AppImage of a tag and compare their contents with the release (`docker build -f Dockerfile.desktop -t amber-desktop-repro --build-arg VERSION=vX.Y.Z --build-arg JDK=<temurin tag> .`, then `docker run --rm amber-desktop-repro`, expect `Builds match!` twice; README has how to find the JDK). The app bundles the build JDK's runtime, so `desktop.yml` makes setup-java download the official Temurin archive (an empty `RUNNER_TOOL_CACHE`) instead of the runner's preinstalled copy, which differs. `ReproducibleSkikoJar` in `desktop/build.gradle.kts` rewrites the one jar Compose 1.12 stamps with the build time; drop it once Compose 1.13 is stable. jpackage installers (deb/rpm/msi/exe/dmg) are not reproducible yet.
+
 ## Collaboration
 
 For repository collaboration, use ngit and follow `.agents/skills/ngit/SKILL.md` (mirrored at `.claude/skills/ngit/SKILL.md`).

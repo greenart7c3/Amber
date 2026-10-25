@@ -5,12 +5,14 @@ on:
     paths:
       - 'tests/**'
       - 'apkdiff.py'
+      - 'desktopdiff.py'
       - '.github/workflows/**'
   push:
     branches: [master]
     paths:
       - 'tests/**'
       - 'apkdiff.py'
+      - 'desktopdiff.py'
       - '.github/workflows/**'
 
 permissions:

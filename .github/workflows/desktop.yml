@@ -96,8 +96,14 @@ jobs:
         with:
           persist-credentials: false
 
+      # The installers bundle this JDK's runtime, so it must be the official
+      # Temurin archive (what the eclipse-temurin image that reproduces a
+      # release ships), not the runner's preinstalled copy, which differs in
+      # jrt-fs.jar. An empty tool cache makes setup-java download it.
       - name: Set up JDK 21
         uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6
+        env:
+          RUNNER_TOOL_CACHE: ${{ runner.temp }}/toolcache
         with:
           distribution: 'temurin'
           java-version: 21

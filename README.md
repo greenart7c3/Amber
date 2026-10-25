@@ -118,6 +118,40 @@ docker run --rm amber-repro
 APKs match!
 ```
 
+# Verifying Reproducibility of Amber Desktop
+
+The Linux x86_64 downloads of the desktop app, `Amber-X.Y.Z-linux-x86_64.tar.xz` and `Amber-X.Y.Z-x86_64.AppImage`, can be rebuilt from the tag and compared with the published files:
+
+1. The app ships the Java runtime of the JDK it was built with, so the rebuild must use the same Temurin release. Find it in the published tarball:
+
+``` bash
+tar -xJOf Amber-X.Y.Z-linux-x86_64.tar.xz Amber/lib/runtime/lib/server/libjvm.so | grep -a -o -m1 'Server VM ([^)]*)'
+```
+
+`Server VM (21.0.12.1+1-LTS)` means `JDK=21.0.12.1_1` (drop `-LTS`, `+` becomes `_`). If you skip this step and the default is wrong, the build stops and tells you which one to use.
+
+2. Build the image with no cache, the release tag and that JDK:
+
+``` bash
+docker build -f Dockerfile.desktop -t amber-desktop-repro --progress=plain --no-cache --build-arg VERSION=vX.Y.Z --build-arg JDK=21.0.12.1_1 .
+```
+
+3. Run the container:
+
+``` bash
+docker run --rm amber-desktop-repro
+```
+
+4. You should see the following message twice, once for the tarball and once for the AppImage:
+
+``` bash
+Builds match!
+```
+
+`desktopdiff.py` compares what is inside the downloads: every path, file, symlink and executable bit must match. Timestamps and owners are not compared, since they depend on the machine that packed the archive. The AppImage is unpacked with `unsquashfs` and never run.
+
+The `.deb`, `.rpm`, `.msi`, `.exe` and `.dmg` installers are not reproducible yet. jpackage builds each of them separately, and the Compose plugin stamps one jar inside them (`skiko-awt-runtime-*.jar`) with the build time. That is fixed in Compose 1.13.
+
 # Certificate fingerprint for AppVerifier
 
 ``` bash

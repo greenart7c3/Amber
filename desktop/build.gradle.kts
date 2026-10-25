@@ -1,4 +1,11 @@
+import java.io.ByteArrayOutputStream
 import java.io.File
+import java.security.MessageDigest
+import java.time.LocalDateTime
+import java.util.zip.CRC32
+import java.util.zip.ZipEntry
+import java.util.zip.ZipInputStream
+import java.util.zip.ZipOutputStream
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 
 plugins {
@@ -155,4 +162,69 @@ compose.desktop {
             isEnabled.set(false)
         }
     }
+}
+
+// Reproducible Linux app image (the .tar.xz and AppImage, see README
+// "Verifying Reproducibility of Amber Desktop"). Compose 1.12 strips the
+// native library out of skiko-awt-runtime-*.jar and rewrites the jar with the
+// build time as every entry's timestamp, so it, its hashed file name and the
+// launcher's Amber.cfg differ between two builds of the same commit; nothing
+// else does. Rewrite it with a fixed timestamp. Compose 1.13 keeps the
+// original times; drop this once it is on a stable release. Not done on
+// macOS, where jpackage has already sealed the bundle's code signature.
+object ReproducibleSkikoJar {
+    // Gradle's own fixed time for reproducible archives, as a local DOS time
+    // so the bytes don't depend on the build machine's time zone.
+    private val entryTime = LocalDateTime.of(1980, 2, 1, 0, 0)
+    private val hashedName = Regex("^(skiko-awt-runtime-.+)-[0-9a-f]+\\.jar$")
+
+    fun normalize(appImage: File) {
+        val jars = appImage.walkTopDown().filter { it.isFile && hashedName.matches(it.name) }.toList()
+        for (jar in jars) {
+            val bytes = rewrite(jar)
+            val hash = MessageDigest.getInstance("SHA-256").digest(bytes)
+                .joinToString("") { "%02x".format(it) }.take(30)
+            val name = "${hashedName.find(jar.name)!!.groupValues[1]}-$hash.jar"
+            jar.delete()
+            File(jar.parentFile, name).writeBytes(bytes)
+            jar.parentFile.listFiles { f -> f.extension == "cfg" }!!.forEach { cfg ->
+                cfg.writeText(cfg.readText().replace(jar.name, name))
+            }
+        }
+    }
+
+    // Entries are stored, not deflated: what is left is a manifest of a few
+    // bytes, and deflate output could vary with the JDK's zlib.
+    private fun rewrite(jar: File): ByteArray {
+        val out = ByteArrayOutputStream()
+        ZipInputStream(jar.inputStream().buffered()).use { zin ->
+            ZipOutputStream(out).use { zout ->
+                generateSequence { zin.nextEntry }.forEach { entry ->
+                    val data = zin.readBytes()
+                    val crc = CRC32().apply { update(data) }
+                    zout.putNextEntry(
+                        ZipEntry(entry.name).apply {
+                            method = ZipEntry.STORED
+                            size = data.size.toLong()
+                            compressedSize = size
+                            this.crc = crc.value
+                            timeLocal = entryTime
+                        },
+                    )
+                    zout.write(data)
+                    zout.closeEntry()
+                }
+            }
+        }
+        return out.toByteArray()
+    }
+}
+
+if (System.getProperty("os.name").startsWith("Linux")) {
+    tasks.withType<org.jetbrains.compose.desktop.application.tasks.AbstractJPackageTask>()
+        .matching { it.name == "createDistributable" || it.name == "createReleaseDistributable" }
+        .configureEach {
+            val image = destinationDir
+            doLast { ReproducibleSkikoJar.normalize(image.get().asFile) }
+        }
 }

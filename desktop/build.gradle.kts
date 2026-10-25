@@ -205,8 +205,12 @@ compose.desktop {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Exe, TargetFormat.Deb, TargetFormat.Rpm)
             packageName = "Amber"
             // dbus-java authenticates to the session bus with UnixSystem
-            // (actionable Linux notifications, Secret Service keyring).
-            modules("jdk.security.auth")
+            // (actionable Linux notifications, Secret Service keyring), and
+            // the local socket signer checks its peer's user with jdk.net's
+            // SO_PEERCRED. jlink only bundles the modules listed here plus
+            // the ones the plugin detects, so a missing one fails only in the
+            // packaged app (`./gradlew :desktop:run` uses the full JDK).
+            modules("jdk.security.auth", "jdk.net")
             packageVersion = desktopPackageVersion
             description = "Amber - Nostr event signer"
             vendor = "greenart7c3"

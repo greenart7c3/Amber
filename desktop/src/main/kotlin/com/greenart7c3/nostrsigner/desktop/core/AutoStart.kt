@@ -24,7 +24,7 @@ import java.io.File
  * handler registration).
  *
  * Only packaged runs can be supervised: a dev run's command line is a bare
- * gradle invocation with no stable binary ([isSupported] gates the UI).
+ * Gradle invocation with no stable binary ([isSupported] gates the UI).
  */
 object AutoStart {
     private const val UNIT_NAME = "amber.service"
@@ -42,7 +42,7 @@ object AutoStart {
     /** launchd label; also the plist file name. Matches the bundle id. */
     private const val LAUNCH_AGENT_LABEL = "com.greenart7c3.nostrsigner"
 
-    /** Set by the jpackage launcher to the installed binary; absent in dev (gradle) runs. */
+    /** Set by the jpackage launcher to the installed binary; absent in dev (Gradle) runs. */
     private fun packagedExecutable(): String? = System.getProperty("jpackage.app-path")?.takeIf { it.isNotBlank() }
 
     /**

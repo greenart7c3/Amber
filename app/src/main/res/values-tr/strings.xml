@@ -588,8 +588,6 @@
     <string name="ask">Sor</string>
     <string name="never">Asla</string>
     <string name="warning">Uyarı</string>
-    <string name="of_events">%2$s etkinliğin %1$s tanesi</string>
-    <string name="see_details">Ayrıntıları gör</string>
     <string name="is_requiring_some_permissions_please_review_them">%1$s bazı izinler talep ediyor, lütfen onları gözden geçirin.</string>
     <string name="is_requiring_some_permissions_please_review_them2">Bazı izinler talep ediyor, lütfen bunları gözden geçirin.</string>
     <plurals name="several_apps_are_requiring_some_permissions_please_review_them">

@@ -589,8 +589,6 @@
     <string name="ask">Fragen</string>
     <string name="never">Niemals</string>
     <string name="warning">Warnung</string>
-    <string name="of_events">%1$s von %2$s Ereignissen</string>
-    <string name="see_details">Details anzeigen</string>
     <string name="is_requiring_some_permissions_please_review_them">%1$s fordert einige Berechtigungen an, bitte überprüfe sie.</string>
     <string name="is_requiring_some_permissions_please_review_them2">Es werden einige Berechtigungen angefordert, bitte überprüfe sie.</string>
     <plurals name="several_apps_are_requiring_some_permissions_please_review_them">

@@ -13,6 +13,7 @@ import com.vitorpamplona.quartz.nip01Core.crypto.KeyPair
 import com.vitorpamplona.quartz.nip01Core.signers.NostrSignerInternal
 import com.vitorpamplona.quartz.nip19Bech32.toNpub
 import io.mockk.Called
+import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkObject
@@ -82,7 +83,9 @@ class CrossAccountSignEventTest {
         // switched the signing key to it.
         mockkObject(LocalPreferences)
         every { LocalPreferences.loadFromEncryptedStorageSync(any(), any()) } returns null
+        coEvery { LocalPreferences.loadAccount(any(), any()) } returns null
         every { LocalPreferences.loadFromEncryptedStorageSync(any(), eq(accountB.npub)) } returns accountB
+        coEvery { LocalPreferences.loadAccount(any(), eq(accountB.npub)) } returns accountB
     }
 
     @After

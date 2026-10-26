@@ -592,8 +592,6 @@
     <string name="ask">Спросить</string>
     <string name="never">Никогда</string>
     <string name="warning">Предупреждение</string>
-    <string name="of_events">%1$s из %2$s событий</string>
-    <string name="see_details">Подробнее</string>
     <string name="is_requiring_some_permissions_please_review_them">%1$s запрашивает некоторые разрешения, пожалуйста, проверьте их.</string>
     <string name="is_requiring_some_permissions_please_review_them2">Запрашиваются некоторые разрешения, пожалуйста, проверьте их.</string>
     <plurals name="several_apps_are_requiring_some_permissions_please_review_them">

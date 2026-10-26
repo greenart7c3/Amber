@@ -6,7 +6,6 @@ import com.greenart7c3.nostrsigner.desktop.core.BuildVariant
 import dorkbox.systemTray.MenuItem
 import dorkbox.systemTray.Separator
 import dorkbox.systemTray.SystemTray
-import java.awt.event.ActionListener
 import java.io.File
 import java.nio.file.Files
 import java.util.concurrent.Callable
@@ -284,9 +283,9 @@ class NativeTray private constructor(
                 iconStream()?.use { tray.setImage(it) }
                 tray.setTooltip(tooltip)
                 val menu = tray.menu
-                val openItem = MenuItem(openLabel, ActionListener { onToggle() })
-                val lockItem = MenuItem(lockLabel, ActionListener { onLock() })
-                val quitItem = MenuItem(quitLabel, ActionListener { onQuit() })
+                val openItem = MenuItem(openLabel) { onToggle() }
+                val lockItem = MenuItem(lockLabel) { onLock() }
+                val quitItem = MenuItem(quitLabel) { onQuit() }
                 menu.add(openItem)
                 menu.add(lockItem)
                 menu.add(Separator())

@@ -20,6 +20,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.greenart7c3.nostrsigner.AccountInfo
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
@@ -367,7 +368,7 @@ fun IntentSingleEventHomeScreen(
                     defaultScope = RelayAuthScope.SPECIFIC,
                     account = account,
                     onAccept = { rememberType, scope ->
-                        if (isCrossAccountSignEvent(intentData.unsignedEventKey, account.hexKey, event.kind, event.tags, LocalPreferences.allSavedAccounts(context).map { it.npub })) {
+                        if (isCrossAccountSignEvent(intentData.unsignedEventKey, account.hexKey, event.kind, event.tags, LocalPreferences.allSavedAccounts(context).map(AccountInfo::npub))) {
                             ToastManager.toast(
                                 title = context.getString(R.string.warning),
                                 message = context.getString(R.string.event_pubkey_is_not_equal_to_current_logged_in_user),

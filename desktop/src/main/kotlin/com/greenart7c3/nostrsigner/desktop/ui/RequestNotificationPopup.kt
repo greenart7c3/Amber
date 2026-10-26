@@ -62,6 +62,7 @@ import com.sun.jna.Native
 import java.awt.GraphicsEnvironment
 import java.awt.geom.RoundRectangle2D
 import javax.swing.JWindow
+import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.delay
 
 private const val POPUP_TIMEOUT_MS = 60_000L
@@ -129,7 +130,7 @@ fun RequestNotificationPopup(
     // Restarts while hovered, so the popup never vanishes under the pointer.
     LaunchedEffect(request.request.id, hovered) {
         if (!hovered) {
-            delay(POPUP_TIMEOUT_MS)
+            delay(POPUP_TIMEOUT_MS.milliseconds)
             onDismiss()
         }
     }
@@ -267,7 +268,7 @@ private fun WindowsToast(
 /**
  * macOS alert-style notification: app icon, bold title and body on the left,
  * the actions stacked on the right behind a hairline, and the round close
- * button on the top-left corner while hovered.
+ * button in the top-left corner while hovered.
  */
 @Composable
 private fun MacNotification(

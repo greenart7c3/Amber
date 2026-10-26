@@ -29,7 +29,7 @@ Required order when pushing: `ktlintCheck` → `detektAll` → `lint` → `test`
 
 ## Releases / version bumps
 
-When asked to "bump the version" / cut a release, do **all** of the following in a single change — never omit the verification block:
+When asked to "bump the version" / cut a release, do **all** the following in a single change — never omit the verification block:
 
 1. Bump `amberVersionCode` (+1) and `amberVersionName` (new `X.Y.Z`) in `gradle/libs.versions.toml`. These are the only places the version lives: the Android `defaultConfig` and the desktop app (`:desktop`, installers and the runtime `-Damber.version`) both read them, and `desktop-release.yml` fails if the tag does not match `amberVersionName`. Never hard-code a version in `app/build.gradle.kts` or give the desktop its own.
 2. Prepend a new `## Amber X.Y.Z` block at the top of `CHANGELOG.md`, summarizing the non-merge commits since the previous `vX.Y.Z` tag (`git log vX.Y.Z..HEAD --no-merges`), grouped as user-facing bullets. End the block with the standard "Download it with …" line (update the `releases/tag/vX.Y.Z` URL) and the "If you like my work …" donation line.
@@ -38,13 +38,13 @@ When asked to "bump the version" / cut a release, do **all** of the following in
 
 ## Product flavors (dimension `version`)
 
-| Flavor | Notes |
-|--------|-------|
-| `free` (default) | Online: OkHttp, Coil, built-in Tor (Arti, `src/tor`), relay connectivity. Owns `INTERNET`/network permissions. |
-| `offline` | No network stack. `app/src/offline/AndroidManifest.xml` **removes** `INTERNET`/`CHANGE_NETWORK_STATE`/`ACCESS_NETWORK_STATE` with `tools:node="remove"`. |
-| `benchmark` | Mirrors `free` network deps; `applicationIdSuffix=.benchmark`, `versionNameSuffix=-BENCHMARK`; CI builds a signed release per push for side-by-side install. |
+| Flavor           | Notes                                                                                                                                                        |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `free` (default) | Online: OkHttp, Coil, built-in Tor (Arti, `src/tor`), relay connectivity. Owns `INTERNET`/network permissions.                                               |
+| `offline`        | No network stack. `app/src/offline/AndroidManifest.xml` **removes** `INTERNET`/`CHANGE_NETWORK_STATE`/`ACCESS_NETWORK_STATE` with `tools:node="remove"`.     |
+| `benchmark`      | Mirrors `free` network deps; `applicationIdSuffix=.benchmark`, `versionNameSuffix=-BENCHMARK`; CI builds a signed release per push for side-by-side install. |
 
-- Guard any network-only code with `BuildFlavorChecker.isOfflineFlavor()`. There is also `BuildConfig.IS_FDROID_BUILD` (false by default; the F-Droid release workflow flips it true and strips `REQUEST_INSTALL_PACKAGES` via `sed`) — use it to disable self-update / Zapstore.
+- Guard any network-only code with `BuildFlavorChecker.isOfflineFlavor()`. There is also `BuildConfig.IS_FDROID_BUILD` (false by default; the F-Droid release workflow flips it true and strips `REQUEST_INSTALL_PACKAGES` via `sed`) — read it through `BuildFlavorChecker.isFdroidBuild()` to disable self-update / Zapstore, never as the constant, which the IDE would simplify away.
 - **Offline permissions gate:** `check-offline-permissions.yml` runs `./gradlew processOfflineDebugManifest` and greps the merged manifest for the three network permissions. Any new dependency that leaks `INTERNET` etc. will fail this check — verify the offline merged manifest when adding network-capable deps.
 
 ## Modules
@@ -127,18 +127,18 @@ Consequences to keep in mind when touching these paths:
 
 ### Key files
 
-| File | Purpose |
-|------|---------|
-| `Amber.kt` | Application singleton, Nostr client, relay connectivity |
-| `LocalPreferences.kt` | Account/settings persistence, encrypted key storage |
-| `IntentUtils.kt` | Parses `nostrsigner://` URIs, creates `IntentData` objects |
-| `SignerProvider.kt` | ContentProvider IPC signing |
-| `BunkerRequestUtils.kt` | NIP-46 protocol handling, relay responses |
-| `AccountStateViewModel.kt` | Auth state, account switching, toast notifications |
-| `ConnectivityService.kt` | Foreground service, network monitoring, relay reconnection |
-| `BiometricAuthScreen.kt` | UI-only app-launch lock (biometric/PIN); not a signing gate |
-| `Biometrics.kt` | Wraps `BiometricPrompt` / keyguard credential prompt |
-| `SecurityScreen.kt` | Toggles `useAuth` / `usePin` and the re-prompt interval |
+| File                       | Purpose                                                     |
+| -------------------------- | ----------------------------------------------------------- |
+| `Amber.kt`                 | Application singleton, Nostr client, relay connectivity     |
+| `LocalPreferences.kt`      | Account/settings persistence, encrypted key storage         |
+| `IntentUtils.kt`           | Parses `nostrsigner://` URIs, creates `IntentData` objects  |
+| `SignerProvider.kt`        | ContentProvider IPC signing                                 |
+| `BunkerRequestUtils.kt`    | NIP-46 protocol handling, relay responses                   |
+| `AccountStateViewModel.kt` | Auth state, account switching, toast notifications          |
+| `ConnectivityService.kt`   | Foreground service, network monitoring, relay reconnection  |
+| `BiometricAuthScreen.kt`   | UI-only app-launch lock (biometric/PIN); not a signing gate |
+| `Biometrics.kt`            | Wraps `BiometricPrompt` / keyguard credential prompt        |
+| `SecurityScreen.kt`        | Toggles `useAuth` / `usePin` and the re-prompt interval     |
 
 ## Conventions
 

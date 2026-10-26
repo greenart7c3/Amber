@@ -812,7 +812,7 @@ object IntentUtils {
                 if (npub != null) {
                     npub = parsePubKey(npub)
                 }
-                LocalPreferences.loadFromEncryptedStorageSync(context, npub)?.let {
+                LocalPreferences.loadAccount(context, npub)?.let {
                     localAccount = it
                 }
             }
@@ -1069,7 +1069,7 @@ object IntentUtils {
                         if (intentData.type in decryptSignerTypes) {
                             // A decrypt result is the plaintext itself: hide it from
                             // clipboard previews and clear it, like the nsec.
-                            clipboardManager.setSensitiveClip("", result)
+                            clipboardManager.setSensitiveClip(result)
                         } else {
                             clipboardManager.setClipEntry(
                                 ClipEntry(
@@ -1200,7 +1200,7 @@ object IntentUtils {
  * Safe read of the launch referrer. `Activity.getReferrer()` dereferences a null launch
  * intent on some OEM framework builds (e.g. Samsung, Android 12) and crashes when the
  * activity was delivered or left without an intent (see `sendRejection`, which nulls it).
- * Null is also the correct "unknown referrer" answer, which [isBrowserReferrer] already
+ * Null is also the correct "unknown referrer" answer, which [IntentUtils.isBrowserReferrer] already
  * treats as not-a-browser.
  */
 fun Activity.safeReferrer(): Uri? = try {

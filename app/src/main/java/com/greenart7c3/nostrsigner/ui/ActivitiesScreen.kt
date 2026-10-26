@@ -15,7 +15,6 @@ import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -72,7 +71,6 @@ enum class ActivityFilter(val accepted: Boolean?) {
     REJECTED(false),
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ActivitiesScreen(
     modifier: Modifier,

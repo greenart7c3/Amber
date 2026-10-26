@@ -194,7 +194,7 @@ object Notifier {
             .redirectOutput(ProcessBuilder.Redirect.DISCARD)
             .redirectError(ProcessBuilder.Redirect.DISCARD)
             .start()
-        if (process.waitFor(4, TimeUnit.SECONDS)) process.exitValue() == 0 else true
+        !process.waitFor(4, TimeUnit.SECONDS) || process.exitValue() == 0
     } catch (e: Exception) {
         AmberLogger.d("Notifier", "notification command failed: ${command.firstOrNull()} — ${e.message}")
         false

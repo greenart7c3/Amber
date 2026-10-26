@@ -52,7 +52,7 @@ object DesktopKeyStore {
 
     suspend fun decrypt(encryptedText: String, context: String): String = mutex.withLock { decryptString(encryptedText, context) }
 
-    /** [encryptBytes] for secrets the caller wipes afterwards (private keys). */
+    /** [encryptBytes] for secrets the caller wipes afterward (private keys). */
     suspend fun encrypt(plain: ByteArray, context: String): String = mutex.withLock { encryptBytes(plain, context) }
 
     /** [decryptBytes]: the caller owns the result and should wipe it after use. */

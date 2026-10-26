@@ -23,7 +23,6 @@ package com.greenart7c3.nostrsigner.desktop.core
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
 import com.vitorpamplona.quartz.nip01Core.relay.sockets.WebSocket
 import com.vitorpamplona.quartz.nip01Core.relay.sockets.WebSocketListener
-import com.vitorpamplona.quartz.nip01Core.relay.sockets.WebsocketBuilder
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
 import kotlinx.coroutines.CoroutineExceptionHandler
@@ -170,7 +169,7 @@ class OkHttpWebSocket(
                     // a later cancel() is silent too -- so the relay client kept believing it
                     // was connected, with its REQs live, until OkHttp's 120s ping path finally
                     // failed up to two intervals later. Answering completes the handshake and
-                    // OkHttp reports onClosed at once, whether or not the relay still holds the
+                    // OkHttp reports onClosed at once, whether the relay still holds the
                     // TCP session open.
                     //
                     // Always 1000 rather than echoing `code`: close() validates the code it is
@@ -228,16 +227,6 @@ class OkHttpWebSocket(
     }
 
     override fun send(msg: String): Boolean = socket?.send(msg) ?: false
-
-    class Builder(
-        val httpClient: (NormalizedRelayUrl) -> OkHttpClient,
-    ) : WebsocketBuilder {
-        // Called when connecting.
-        override fun build(
-            url: NormalizedRelayUrl,
-            out: WebSocketListener,
-        ): WebSocket = OkHttpWebSocket(url, httpClient, out)
-    }
 }
 
 /**

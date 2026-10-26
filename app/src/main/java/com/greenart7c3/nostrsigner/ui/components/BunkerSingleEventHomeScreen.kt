@@ -760,183 +760,188 @@ fun BunkerSingleEventHomeScreen(
         }
 
         else -> {
-            if (type == SignerType.NIP44_V3_ENCRYPT || type == SignerType.NIP44_V3_DECRYPT) {
-                // NIP-44 v3 requests arrive as a generic BunkerRequest (Quartz
-                // doesn't know the method name); kind/scope are at params[1..2].
-                val v3Kind = BunkerRequestUtils.getNip44v3Kind(bunkerRequest.request)
-                val v3Scope = BunkerRequestUtils.getNip44v3Scope(bunkerRequest.request)
-                val permission = applicationEntity?.permissions?.firstOrNull {
-                    it.pkKey == key && it.type == type.toString() && it.kind == v3Kind
-                } ?: applicationEntity?.permissions?.firstOrNull {
-                    it.pkKey == key && it.type == type.toString() && it.kind == null
+            when (type) {
+                SignerType.NIP44_V3_ENCRYPT, SignerType.NIP44_V3_DECRYPT -> {
+                    // NIP-44 v3 requests arrive as a generic BunkerRequest (Quartz
+                    // doesn't know the method name); kind/scope are at params[1..2].
+                    val v3Kind = BunkerRequestUtils.getNip44v3Kind(bunkerRequest.request)
+                    val v3Scope = BunkerRequestUtils.getNip44v3Scope(bunkerRequest.request)
+                    val permission = applicationEntity?.permissions?.firstOrNull {
+                        it.pkKey == key && it.type == type.toString() && it.kind == v3Kind
+                    } ?: applicationEntity?.permissions?.firstOrNull {
+                        it.pkKey == key && it.type == type.toString() && it.kind == null
+                    }
+
+                    val acceptOrReject = IntentUtils.isRemembered(applicationEntity?.application?.signPolicy, permission)
+
+                    Nip44v3ApprovalData(
+                        modifier = modifier,
+                        isBunker = true,
+                        appName = appName,
+                        iconUrl = appIcon,
+                        packageName = null,
+                        type = type,
+                        account = account,
+                        kind = v3Kind,
+                        scope = v3Scope,
+                        encryptedData = bunkerRequest.encryptedData,
+                        shouldRunOnAccept = acceptOrReject,
+                        onAccept = { rememberType, scope ->
+                            // encryptedData.result holds the Base64 wire value (ciphertext
+                            // for encrypt, base64 plaintext for decrypt), computed when the
+                            // request arrived — same shape as the v2 path.
+                            val result = bunkerRequest.encryptedData?.result ?: ""
+                            // SPECIFIC ⇒ kind-scoped grant; ALL ⇒ broad grant (kind=null).
+                            val grantedKind = if (scope == DecryptTypeScope.SPECIFIC) v3Kind else null
+                            BunkerRequestUtils.sendResult(
+                                context = context,
+                                account = account,
+                                key = key,
+                                response = result,
+                                bunkerRequest = bunkerRequest,
+                                kind = grantedKind,
+                                onLoading = onLoading,
+                                permissions = null,
+                                appName = appName,
+                                signPolicy = null,
+                                shouldCloseApplication = bunkerRequest.closeApplication,
+                                rememberType = rememberType,
+                                decryptTypeScope = scope,
+                            )
+                        },
+                        onReject = { rememberType, scope ->
+                            val grantedKind = if (scope == DecryptTypeScope.SPECIFIC) v3Kind else null
+                            BunkerRequestUtils.sendRejection(
+                                key = key,
+                                account = account,
+                                bunkerRequest = bunkerRequest,
+                                appName = appName,
+                                rememberType = rememberType,
+                                signerType = type,
+                                kind = grantedKind,
+                                onLoading = onLoading,
+                                decryptTypeScope = scope,
+                            )
+                        },
+                    )
                 }
-
-                val acceptOrReject = IntentUtils.isRemembered(applicationEntity?.application?.signPolicy, permission)
-
-                Nip44v3ApprovalData(
-                    modifier = modifier,
-                    isBunker = true,
-                    appName = appName,
-                    iconUrl = appIcon,
-                    packageName = null,
-                    type = type,
-                    account = account,
-                    kind = v3Kind,
-                    scope = v3Scope,
-                    encryptedData = bunkerRequest.encryptedData,
-                    shouldRunOnAccept = acceptOrReject,
-                    onAccept = { rememberType, scope ->
-                        // encryptedData.result holds the Base64 wire value (ciphertext
-                        // for encrypt, base64 plaintext for decrypt), computed when the
-                        // request arrived — same shape as the v2 path.
-                        val result = bunkerRequest.encryptedData?.result ?: ""
-                        // SPECIFIC ⇒ kind-scoped grant; ALL ⇒ broad grant (kind=null).
-                        val grantedKind = if (scope == DecryptTypeScope.SPECIFIC) v3Kind else null
-                        BunkerRequestUtils.sendResult(
-                            context = context,
-                            account = account,
-                            key = key,
-                            response = result,
-                            bunkerRequest = bunkerRequest,
-                            kind = grantedKind,
-                            onLoading = onLoading,
-                            permissions = null,
-                            appName = appName,
-                            signPolicy = null,
-                            shouldCloseApplication = bunkerRequest.closeApplication,
-                            rememberType = rememberType,
-                            decryptTypeScope = scope,
-                        )
-                    },
-                    onReject = { rememberType, scope ->
-                        val grantedKind = if (scope == DecryptTypeScope.SPECIFIC) v3Kind else null
-                        BunkerRequestUtils.sendRejection(
-                            key = key,
-                            account = account,
-                            bunkerRequest = bunkerRequest,
-                            appName = appName,
-                            rememberType = rememberType,
-                            signerType = type,
-                            kind = grantedKind,
-                            onLoading = onLoading,
-                            decryptTypeScope = scope,
-                        )
-                    },
-                )
-            } else if (type == SignerType.DECRYPT_ZAP_EVENT) {
-                val permission =
-                    applicationEntity?.permissions?.firstOrNull {
-                        it.pkKey == key && it.type == type.toString()
-                    }
-
-                val acceptOrReject = permission?.activeDecision(TimeUtils.now())
-
-                BunkerEncryptDecryptData(
-                    modifier = modifier,
-                    encryptedData = bunkerRequest.encryptedData,
-                    shouldRunOnAccept = acceptOrReject,
-                    appName = appName,
-                    type = type,
-                    account = account,
-                    onAccept = { rememberType, scope ->
-                        val result =
-                            if (bunkerRequest.encryptedData?.result == "Could not decrypt the message") {
-                                ""
-                            } else {
-                                bunkerRequest.encryptedData?.result ?: ""
-                            }
-
-                        BunkerRequestUtils.sendResult(
-                            context = context,
-                            account = account,
-                            key = key,
-                            response = result,
-                            bunkerRequest = bunkerRequest,
-                            kind = null,
-                            onLoading = onLoading,
-                            permissions = null,
-                            appName = appName,
-                            signPolicy = null,
-                            shouldCloseApplication = bunkerRequest.closeApplication,
-                            rememberType = rememberType,
-                            decryptTypeScope = scope,
-                        )
-                    },
-                    onReject = { rememberType, scope ->
-                        BunkerRequestUtils.sendRejection(
-                            key = key,
-                            account = account,
-                            bunkerRequest = bunkerRequest,
-                            appName = appName,
-                            rememberType = rememberType,
-                            signerType = type,
-                            kind = null,
-                            onLoading = onLoading,
-                            decryptTypeScope = scope,
-                        )
-                    },
-                )
-            } else if (type == SignerType.SIGN_PSBT) {
-                val psbtHex = bunkerRequest.request.params.first()
-                val permission =
-                    applicationEntity?.permissions?.firstOrNull {
-                        it.pkKey == key && it.type == type.toString()
-                    }
-
-                val acceptOrReject = permission?.activeDecision(TimeUtils.now())
-
-                val decoded = remember(psbtHex) { PsbtDecoder.decode(psbtHex, account.signer.keyPair.pubKey) }
-
-                BunkerSignPsbt(
-                    modifier = modifier,
-                    psbtHex = psbtHex,
-                    decoded = decoded,
-                    shouldRunOnAccept = acceptOrReject,
-                    appName = appName,
-                    iconUrl = appIcon,
-                    onAccept = {
-                        Amber.instance.applicationIOScope.launch(Dispatchers.IO) {
-                            try {
-                                val result = account.signPsbt(psbtHex)
-                                BunkerRequestUtils.sendResult(
-                                    context = context,
-                                    account = account,
-                                    key = key,
-                                    response = result,
-                                    bunkerRequest = bunkerRequest,
-                                    kind = null,
-                                    onLoading = onLoading,
-                                    permissions = null,
-                                    appName = appName,
-                                    signPolicy = null,
-                                    shouldCloseApplication = bunkerRequest.closeApplication,
-                                    rememberType = it,
-                                )
-                            } catch (e: Exception) {
-                                coroutineScope.launch {
-                                    Toast.makeText(
-                                        context,
-                                        e.message ?: "Could not sign the PSBT",
-                                        Toast.LENGTH_SHORT,
-                                    ).show()
-                                }
-                                onLoading(false)
-                            }
+                SignerType.DECRYPT_ZAP_EVENT -> {
+                    val permission =
+                        applicationEntity?.permissions?.firstOrNull {
+                            it.pkKey == key && it.type == type.toString()
                         }
-                    },
-                    onReject = {
-                        BunkerRequestUtils.sendRejection(
-                            key = key,
-                            account = account,
-                            bunkerRequest = bunkerRequest,
-                            appName = appName,
-                            rememberType = it,
-                            signerType = type,
-                            kind = null,
-                            onLoading = onLoading,
-                        )
-                    },
-                )
+
+                    val acceptOrReject = permission?.activeDecision(TimeUtils.now())
+
+                    BunkerEncryptDecryptData(
+                        modifier = modifier,
+                        encryptedData = bunkerRequest.encryptedData,
+                        shouldRunOnAccept = acceptOrReject,
+                        appName = appName,
+                        type = type,
+                        account = account,
+                        onAccept = { rememberType, scope ->
+                            val result =
+                                if (bunkerRequest.encryptedData?.result == "Could not decrypt the message") {
+                                    ""
+                                } else {
+                                    bunkerRequest.encryptedData?.result ?: ""
+                                }
+
+                            BunkerRequestUtils.sendResult(
+                                context = context,
+                                account = account,
+                                key = key,
+                                response = result,
+                                bunkerRequest = bunkerRequest,
+                                kind = null,
+                                onLoading = onLoading,
+                                permissions = null,
+                                appName = appName,
+                                signPolicy = null,
+                                shouldCloseApplication = bunkerRequest.closeApplication,
+                                rememberType = rememberType,
+                                decryptTypeScope = scope,
+                            )
+                        },
+                        onReject = { rememberType, scope ->
+                            BunkerRequestUtils.sendRejection(
+                                key = key,
+                                account = account,
+                                bunkerRequest = bunkerRequest,
+                                appName = appName,
+                                rememberType = rememberType,
+                                signerType = type,
+                                kind = null,
+                                onLoading = onLoading,
+                                decryptTypeScope = scope,
+                            )
+                        },
+                    )
+                }
+                SignerType.SIGN_PSBT -> {
+                    val psbtHex = bunkerRequest.request.params.first()
+                    val permission =
+                        applicationEntity?.permissions?.firstOrNull {
+                            it.pkKey == key && it.type == type.toString()
+                        }
+
+                    val acceptOrReject = permission?.activeDecision(TimeUtils.now())
+
+                    val decoded = remember(psbtHex) { PsbtDecoder.decode(psbtHex, account.signer.keyPair.pubKey) }
+
+                    BunkerSignPsbt(
+                        modifier = modifier,
+                        psbtHex = psbtHex,
+                        decoded = decoded,
+                        shouldRunOnAccept = acceptOrReject,
+                        appName = appName,
+                        iconUrl = appIcon,
+                        onAccept = {
+                            Amber.instance.applicationIOScope.launch(Dispatchers.IO) {
+                                try {
+                                    val result = account.signPsbt(psbtHex)
+                                    BunkerRequestUtils.sendResult(
+                                        context = context,
+                                        account = account,
+                                        key = key,
+                                        response = result,
+                                        bunkerRequest = bunkerRequest,
+                                        kind = null,
+                                        onLoading = onLoading,
+                                        permissions = null,
+                                        appName = appName,
+                                        signPolicy = null,
+                                        shouldCloseApplication = bunkerRequest.closeApplication,
+                                        rememberType = it,
+                                    )
+                                } catch (e: Exception) {
+                                    coroutineScope.launch {
+                                        Toast.makeText(
+                                            context,
+                                            e.message ?: "Could not sign the PSBT",
+                                            Toast.LENGTH_SHORT,
+                                        ).show()
+                                    }
+                                    onLoading(false)
+                                }
+                            }
+                        },
+                        onReject = {
+                            BunkerRequestUtils.sendRejection(
+                                key = key,
+                                account = account,
+                                bunkerRequest = bunkerRequest,
+                                appName = appName,
+                                rememberType = it,
+                                signerType = type,
+                                kind = null,
+                                onLoading = onLoading,
+                            )
+                        },
+                    )
+                }
+                else -> {}
             }
         }
     }

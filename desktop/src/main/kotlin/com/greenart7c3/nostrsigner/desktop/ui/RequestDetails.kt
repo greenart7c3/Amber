@@ -110,12 +110,12 @@ internal sealed interface RequestDetails {
 
     companion object {
         /** Null when there is nothing to detail (connect, get_public_key, ping…). */
-        fun of(req: PendingBunkerRequest): RequestDetails? = when {
-            req.type == SignerType.SIGN_EVENT ->
+        fun of(req: PendingBunkerRequest): RequestDetails? = when (req.type) {
+            SignerType.SIGN_EVENT ->
                 (DetailEvent.parse(req.result) ?: DetailEvent.parse(req.preview))?.let(::OfEvent)
-            req.type == SignerType.DECRYPT_ZAP_EVENT -> DetailEvent.parse(req.preview)?.let(::OfEvent)
-            req.type == SignerType.SIGN_PSBT -> OfPsbt(PsbtDecoder.decode(req.preview, Hex.decode(req.account.hexKey)), req.preview)
-            req.type in contentScopedSignerTypes || req.type in nip44v3SignerTypes -> {
+            SignerType.DECRYPT_ZAP_EVENT -> DetailEvent.parse(req.preview)?.let(::OfEvent)
+            SignerType.SIGN_PSBT -> OfPsbt(PsbtDecoder.decode(req.preview, Hex.decode(req.account.hexKey)), req.preview)
+            in contentScopedSignerTypes, in nip44v3SignerTypes -> {
                 val content = req.encryptedContent ?: EncryptedContent.classify(req.preview)
                 when (content.type) {
                     EncryptedContentType.EVENT -> DetailEvent.parse(req.preview)?.let(::OfEvent)

@@ -46,7 +46,7 @@ class NativeTrayTest {
 
     @Test
     fun createBoundedGivesUpInsteadOfBlockingForever() {
-        // No SNI host exists under gradle test workers, so the probe path
+        // No SNI host exists under Gradle test workers, so the probe path
         // returns null immediately — the contract under test is "returns at
         // all, quickly, without throwing" (the pre-fix hang lived in create()).
         val start = System.nanoTime()

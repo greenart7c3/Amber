@@ -305,8 +305,6 @@ fun BunkerMultiEventHomeScreen(
                                 continue
                             }
 
-                            val application = savedApplication
-
                             // A relay outside the auth whitelist is rejected without
                             // remembering it, as on the single screen.
                             val blockedByWhitelist = isBlockedByAuthWhitelist(request.signedEvent)
@@ -338,7 +336,7 @@ fun BunkerMultiEventHomeScreen(
                                         rememberType = rememberType,
                                     )
                                     AmberUtils.acceptOrRejectPermission(
-                                        application = application,
+                                        application = savedApplication,
                                         key = localKey,
                                         signerType = SignerType.SIGN_EVENT,
                                         kind = localEvent.kind,
@@ -350,7 +348,7 @@ fun BunkerMultiEventHomeScreen(
                                     )
                                 }
 
-                                dao.insertApplicationWithPermissions(application)
+                                dao.insertApplicationWithPermissions(savedApplication)
 
                                 historyDatabase.dao().addHistory(
                                     listOf(
@@ -375,7 +373,7 @@ fun BunkerMultiEventHomeScreen(
                                         thisAccount,
                                         request,
                                         BunkerResponse(request.request.id, localEvent.toJson(), null),
-                                        application.application.relays,
+                                        savedApplication.application.relays,
                                         onLoading = {},
                                         onDone = {},
                                     )
@@ -383,25 +381,24 @@ fun BunkerMultiEventHomeScreen(
                                     AmberUtils.sendBunkerError(
                                         account = thisAccount,
                                         bunkerRequest = request,
-                                        relays = application.application.relays,
+                                        relays = savedApplication.application.relays,
                                         context = context,
-                                        closeApplication = application.application.closeApplication,
+                                        closeApplication = savedApplication.application.closeApplication,
                                         onLoading = {},
                                     )
                                 }
                             } else {
-                                val type = requestType
                                 if (rememberType != RememberType.NEVER) {
-                                    val decryptTypeScope = groupDecryptScopes[groupKey] ?: defaultDecryptTypeScope(type)
-                                    val permissionKind = if (type == SignerType.NIP44_V3_ENCRYPT || type == SignerType.NIP44_V3_DECRYPT) {
+                                    val decryptTypeScope = groupDecryptScopes[groupKey] ?: defaultDecryptTypeScope(requestType)
+                                    val permissionKind = if (requestType == SignerType.NIP44_V3_ENCRYPT || requestType == SignerType.NIP44_V3_DECRYPT) {
                                         if (decryptTypeScope == DecryptTypeScope.SPECIFIC) BunkerRequestUtils.getNip44v3Kind(request.request) else null
                                     } else {
                                         null
                                     }
                                     AmberUtils.acceptOrRejectPermission(
-                                        application,
+                                        savedApplication,
                                         localKey,
-                                        type,
+                                        requestType,
                                         permissionKind,
                                         isApproved,
                                         rememberType,
@@ -411,18 +408,18 @@ fun BunkerMultiEventHomeScreen(
                                     )
                                 }
 
-                                dao.insertApplicationWithPermissions(application)
+                                dao.insertApplicationWithPermissions(savedApplication)
 
                                 historyDatabase.dao().addHistory(
                                     listOf(
                                         HistoryEntity(
                                             0,
                                             localKey,
-                                            type.toString(),
+                                            requestType.toString(),
                                             null,
                                             TimeUtils.now(),
                                             isApproved,
-                                            content = if (type == SignerType.NIP04_DECRYPT || type == SignerType.NIP44_DECRYPT || type == SignerType.DECRYPT_ZAP_EVENT) {
+                                            content = if (requestType == SignerType.NIP04_DECRYPT || requestType == SignerType.NIP44_DECRYPT || requestType == SignerType.DECRYPT_ZAP_EVENT) {
                                                 request.encryptedData?.result ?: ""
                                             } else {
                                                 request.request.params.getOrElse(1) { "" }
@@ -441,7 +438,7 @@ fun BunkerMultiEventHomeScreen(
                                             thisAccount,
                                             request,
                                             BunkerResponse(request.request.id, signature, null),
-                                            application.application.relays,
+                                            savedApplication.application.relays,
                                             onLoading = {},
                                             onDone = {},
                                         )
@@ -451,9 +448,9 @@ fun BunkerMultiEventHomeScreen(
                                     AmberUtils.sendBunkerError(
                                         account = thisAccount,
                                         bunkerRequest = request,
-                                        relays = application.application.relays,
+                                        relays = savedApplication.application.relays,
                                         context = context,
-                                        closeApplication = application.application.closeApplication,
+                                        closeApplication = savedApplication.application.closeApplication,
                                         onLoading = {},
                                     )
                                 }

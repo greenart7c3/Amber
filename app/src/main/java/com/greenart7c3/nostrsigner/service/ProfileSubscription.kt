@@ -159,7 +159,7 @@ class ProfileSubscription(
      * Tracks the account so incoming events update its StateFlows; safe to call from
      * any composable displaying the account.
      */
-    suspend fun updateFilter(account: Account) {
+    fun updateFilter(account: Account) {
         if (BuildFlavorChecker.isOfflineFlavor()) return
 
         val interval = Amber.instance.settings.profileFetchInterval

@@ -618,10 +618,10 @@
     <string name="recover_from_backup">Recuperar do backup</string>
     <string name="importing_account">Importando conta %1$d</string>
     <string name="could_not_connect_to_relay">Não foi possível conectar ao relay. Gostaria de adicioná-lo mesmo assim?</string>
-    <string name="event_kind_25050"></string>
+    <string name="event_kind_25050">Sinalização WebRTC</string>
     <string name="event_kind_9733">Zap privado</string>
     <string name="event_kind_10101">Bons autores da wiki</string>
-    <string name="event_kind_10102"></string>
+    <string name="event_kind_10102">Bons relays de wiki</string>
     <string name="status_service_description">Notificação de relay</string>
     <string name="status">Status do relay</string>
     <string name="kind">Tipo</string>

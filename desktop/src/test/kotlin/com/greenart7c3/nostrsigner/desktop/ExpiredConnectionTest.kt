@@ -12,6 +12,8 @@ import com.vitorpamplona.quartz.nip01Core.crypto.KeyPair
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.RelayUrlNormalizer
 import com.vitorpamplona.quartz.nip01Core.signers.NostrSignerInternal
 import com.vitorpamplona.quartz.utils.TimeUtils
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
@@ -55,7 +57,7 @@ class ExpiredConnectionTest {
         val store = AmberDesktop.store(npub)
 
         AmberDesktop.engine.consume(signRequest(client, connectionHex(npub, clientHex), "expired-1"), relay)
-        delay(1_000)
+        delay(1.seconds)
 
         assertFalse(store.history.value.any { it.appKey == clientHex && it.accepted })
         assertTrue(store.logs.value.any { it.message == "Connection expired for $clientHex" })
@@ -68,8 +70,8 @@ class ExpiredConnectionTest {
 
         AmberDesktop.engine.consume(signRequest(client, connectionHex(npub, clientHex), "live-1"), relay)
 
-        withTimeout(20_000) {
-            while (store.history.value.none { it.appKey == clientHex && it.accepted }) delay(50)
+        withTimeout(20.seconds) {
+            while (store.history.value.none { it.appKey == clientHex && it.accepted }) delay(50.milliseconds)
         }
     }
 }

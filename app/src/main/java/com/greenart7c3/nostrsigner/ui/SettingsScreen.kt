@@ -1,7 +1,6 @@
 package com.greenart7c3.nostrsigner.ui
 
 import android.content.Intent
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
@@ -250,7 +249,7 @@ fun SettingsScreen(
                     onClick = { onNav(Route.Feedback.route) },
                 )
 
-                if (!isOffline && !BuildConfig.IS_FDROID_BUILD) {
+                if (!isOffline && !BuildFlavorChecker.isFdroidBuild()) {
                     val updater = Amber.instance.zapstoreUpdater
                     if (updater != null) {
                         val latestRelease by updater.latestRelease.collectAsStateWithLifecycle()
@@ -499,7 +498,6 @@ private fun SettingsDivider() {
     )
 }
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun SettingsItem(
     title: String,

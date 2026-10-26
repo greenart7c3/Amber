@@ -17,7 +17,7 @@ object CrashReports {
     private fun isPlatformFinalizerTimeout(e: Throwable): Boolean = e is TimeoutException &&
         (
             e.message?.contains("finalize() timed out") == true ||
-                e.stackTrace.any { it.className.startsWith("java.lang.Daemons\$FinalizerDaemon") }
+                e.stackTrace.any { it.className.startsWith($$"java.lang.Daemons$FinalizerDaemon") }
             )
 
     /**

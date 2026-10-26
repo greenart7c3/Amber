@@ -33,7 +33,7 @@
     <string name="active_account">Activar cuenta</string>
     <string name="edit_name">Editar nombre</string>
     <string name="copy">"Copiar "</string>
-    <string name="data_copied_to_the_clipboard"></string>
+    <string name="data_copied_to_the_clipboard">Datos copiados al portapapeles</string>
     <string name="connect_app">Conectar app</string>
     <string name="event_copied_to_the_clipboard">Evento copiado al portapapeles</string>
     <string name="select_deselect_all">Seleccionar/Deseleccionar todo</string>

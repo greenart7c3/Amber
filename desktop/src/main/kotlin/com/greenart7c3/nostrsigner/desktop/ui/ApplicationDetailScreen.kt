@@ -244,113 +244,117 @@ fun ApplicationDetailScreen(
             )
         }
 
-        if (tab == 0) {
-            val permissionsState = rememberLazyListState()
-            ScrollbarBox(rememberScrollbarAdapter(permissionsState), Modifier.weight(1f)) {
-                LazyColumn(
-                    Modifier.fillMaxSize(),
-                    state = permissionsState,
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                    contentPadding = PaddingValues(bottom = 8.dp),
-                ) {
-                    item {
-                        Text(
-                            Strings.get("edit_permissions_description", language),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                    items(app.permissions.size) { index ->
-                        val permission = app.permissions[index]
-                        PermissionCard(
-                            permission = permission,
-                            language = language,
-                            onChange = { updated ->
-                                val newPermissions = app.permissions.toMutableList()
-                                newPermissions[index] = updated
-                                store.upsert(app.copy(permissions = newPermissions))
-                            },
-                            onDelete = {
-                                val newPermissions = app.permissions.toMutableList()
-                                newPermissions.removeAt(index)
-                                store.upsert(app.copy(permissions = newPermissions))
-                            },
-                        )
-                    }
-                    if (app.permissions.isNotEmpty()) {
+        when (tab) {
+            0 -> {
+                val permissionsState = rememberLazyListState()
+                ScrollbarBox(rememberScrollbarAdapter(permissionsState), Modifier.weight(1f)) {
+                    LazyColumn(
+                        Modifier.fillMaxSize(),
+                        state = permissionsState,
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                        contentPadding = PaddingValues(bottom = 8.dp),
+                    ) {
                         item {
+                            Text(
+                                Strings.get("edit_permissions_description", language),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                        items(app.permissions.size) { index ->
+                            val permission = app.permissions[index]
+                            PermissionCard(
+                                permission = permission,
+                                language = language,
+                                onChange = { updated ->
+                                    val newPermissions = app.permissions.toMutableList()
+                                    newPermissions[index] = updated
+                                    store.upsert(app.copy(permissions = newPermissions))
+                                },
+                                onDelete = {
+                                    val newPermissions = app.permissions.toMutableList()
+                                    newPermissions.removeAt(index)
+                                    store.upsert(app.copy(permissions = newPermissions))
+                                },
+                            )
+                        }
+                        if (app.permissions.isNotEmpty()) {
+                            item {
+                                AmberButton(
+                                    modifier = Modifier.padding(top = 12.dp),
+                                    text = Strings.get("remove_all_permissions", language),
+                                    onClick = { showRemoveAll = true },
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+            1 -> {
+                // Mirrors the Android EditConfigurationScreen relay section: the
+                // relays are editable until the client connects (it only listens
+                // on the relays it was handed), then shown read-only.
+                val editable = (app.app.secret.isNotEmpty() || app.app.relays.isNotEmpty()) && !app.app.isConnected
+                var relays by remember(app.app.relays) { mutableStateOf(app.app.relays) }
+                val relaysScroll = rememberScrollState()
+                ScrollbarBox(rememberScrollbarAdapter(relaysScroll), Modifier.weight(1f)) {
+                    Column(Modifier.fillMaxSize().verticalScroll(relaysScroll).padding(bottom = 8.dp)) {
+                        RelayListEditor(
+                            relays = relays,
+                            onChange = { relays = it },
+                            editable = editable,
+                            modifier = Modifier.widthIn(max = 640.dp),
+                        )
+                        if (editable) {
                             AmberButton(
                                 modifier = Modifier.padding(top = 12.dp),
-                                text = Strings.get("remove_all_permissions", language),
-                                onClick = { showRemoveAll = true },
+                                text = Strings.get("update", language),
+                                enabled = relays != app.app.relays,
+                                onClick = {
+                                    if (relays.isEmpty()) {
+                                        Toaster.toast(Strings.get("no_relays_added", language))
+                                        return@AmberButton
+                                    }
+                                    store.upsert(app.copy(app = app.app.copy(relays = relays)))
+                                    scope.launch {
+                                        AmberDesktop.engine.checkForNewRelaysAndUpdateAllFilters()
+                                    }
+                                    Toaster.toast(Strings.get("d_application_updated", language))
+                                },
                             )
                         }
                     }
                 }
             }
-        } else if (tab == 1) {
-            // Mirrors the Android EditConfigurationScreen relay section: the
-            // relays are editable until the client connects (it only listens
-            // on the relays it was handed), then shown read-only.
-            val editable = (app.app.secret.isNotEmpty() || app.app.relays.isNotEmpty()) && !app.app.isConnected
-            var relays by remember(app.app.relays) { mutableStateOf(app.app.relays) }
-            val relaysScroll = rememberScrollState()
-            ScrollbarBox(rememberScrollbarAdapter(relaysScroll), Modifier.weight(1f)) {
-                Column(Modifier.fillMaxSize().verticalScroll(relaysScroll).padding(bottom = 8.dp)) {
-                    RelayListEditor(
-                        relays = relays,
-                        onChange = { relays = it },
-                        editable = editable,
-                        modifier = Modifier.widthIn(max = 640.dp),
-                    )
-                    if (editable) {
-                        AmberButton(
-                            modifier = Modifier.padding(top = 12.dp),
-                            text = Strings.get("update", language),
-                            enabled = relays != app.app.relays,
-                            onClick = {
-                                if (relays.isEmpty()) {
-                                    Toaster.toast(Strings.get("no_relays_added", language))
-                                    return@AmberButton
-                                }
-                                store.upsert(app.copy(app = app.app.copy(relays = relays)))
-                                scope.launch {
-                                    AmberDesktop.engine.checkForNewRelaysAndUpdateAllFilters()
-                                }
-                                Toaster.toast(Strings.get("d_application_updated", language))
-                            },
-                        )
-                    }
-                }
-            }
-        } else {
-            val appHistory = history.filter { it.appKey == appKey }.sortedByDescending { it.time }
-            val historyState = rememberLazyListState()
-            ScrollbarBox(rememberScrollbarAdapter(historyState), Modifier.weight(1f)) {
-                LazyColumn(
-                    Modifier.fillMaxSize(),
-                    state = historyState,
-                    verticalArrangement = Arrangement.spacedBy(2.dp),
-                    contentPadding = PaddingValues(bottom = 8.dp),
-                ) {
-                    if (appHistory.isEmpty()) {
-                        item {
-                            Text(Strings.get("d_no_activity", language), style = MaterialTheme.typography.bodyMedium)
+            else -> {
+                val appHistory = history.filter { it.appKey == appKey }.sortedByDescending { it.time }
+                val historyState = rememberLazyListState()
+                ScrollbarBox(rememberScrollbarAdapter(historyState), Modifier.weight(1f)) {
+                    LazyColumn(
+                        Modifier.fillMaxSize(),
+                        state = historyState,
+                        verticalArrangement = Arrangement.spacedBy(2.dp),
+                        contentPadding = PaddingValues(bottom = 8.dp),
+                    ) {
+                        if (appHistory.isEmpty()) {
+                            item {
+                                Text(Strings.get("d_no_activity", language), style = MaterialTheme.typography.bodyMedium)
+                            }
                         }
-                    }
-                    items(appHistory.size) { index ->
-                        val entry = appHistory[index]
-                        Column(Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
-                            Text(
-                                permissionTitle(entry.type, entry.kind, language),
-                                style = MaterialTheme.typography.bodyMedium,
-                            )
-                            Text(
-                                "${DateFormat.getDateTimeInstance().format(Date(entry.time * 1000))} · " +
-                                    if (entry.accepted) Strings.get("d_accepted", language) else Strings.get("d_rejected", language),
-                                style = MaterialTheme.typography.bodySmall,
-                            )
-                            HorizontalDivider()
+                        items(appHistory.size) { index ->
+                            val entry = appHistory[index]
+                            Column(Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
+                                Text(
+                                    permissionTitle(entry.type, entry.kind, language),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                )
+                                Text(
+                                    "${DateFormat.getDateTimeInstance().format(Date(entry.time * 1000))} · " +
+                                        if (entry.accepted) Strings.get("d_accepted", language) else Strings.get("d_rejected", language),
+                                    style = MaterialTheme.typography.bodySmall,
+                                )
+                                HorizontalDivider()
+                            }
                         }
                     }
                 }

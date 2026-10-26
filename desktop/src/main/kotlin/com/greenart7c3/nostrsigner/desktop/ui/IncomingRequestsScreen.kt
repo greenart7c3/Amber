@@ -342,10 +342,7 @@ private fun RequestCard(
     }
 }
 
-/**
- * "Account: name · npub…" for a request; with [canSwitch] and more than one
- * account, a dropdown to pick the account a connection is saved under.
- */
+/** The keyboard shortcuts that approve or reject [req]. */
 @Composable
 private fun ShortcutHint(
     req: PendingBunkerRequest,
@@ -353,9 +350,9 @@ private fun ShortcutHint(
 ) {
     Text(
         Strings.format(
-            when {
-                req.type == SignerType.CONNECT -> "d_shortcut_hint_connect"
-                req.type in contentScopedSignerTypes || req.type in nip44v3SignerTypes -> "d_shortcut_hint_scope"
+            when (req.type) {
+                SignerType.CONNECT -> "d_shortcut_hint_connect"
+                in contentScopedSignerTypes, in nip44v3SignerTypes -> "d_shortcut_hint_scope"
                 else -> "d_shortcut_hint"
             },
             shortcutLabel("↵"),
@@ -367,6 +364,10 @@ private fun ShortcutHint(
     )
 }
 
+/**
+ * "Account: name · npub…" for a request; with [canSwitch] and more than one
+ * account, a dropdown to pick the account a connection is saved under.
+ */
 @Composable
 private fun SigningAccountRow(
     npub: String,

@@ -189,14 +189,6 @@ private fun DisplayErrorMessages() {
                 ) {
                     ToastManager.clearToasts()
                 }
-            is ConfirmationToastMsg ->
-                InformationDialog(
-                    obj.title,
-                    obj.msg,
-                ) {
-                    obj.onOk()
-                    ToastManager.clearToasts()
-                }
             is AcceptRejectToastMsg ->
                 InformationDialog(
                     obj.title,

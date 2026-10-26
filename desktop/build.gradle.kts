@@ -8,7 +8,7 @@ plugins {
     alias(libs.plugins.kotlinJvm)
     alias(libs.plugins.jetbrainsCompose)
     alias(libs.plugins.jetbrainsComposeCompiler)
-    alias(libs.plugins.gradle.ktlint) version libs.versions.ktlint.get()
+    alias(libs.plugins.gradle.ktlint)
     alias(libs.plugins.detekt)
 }
 
@@ -105,6 +105,7 @@ object SkikoNatives {
 
 val skikoRuntimeJars = configurations.runtimeClasspath.get().filter { SkikoNatives.runtimeJar.matches(it.name) }
 val skikoNatives = tasks.register("skikoNatives") {
+    description = "Extracts skiko's native library from the runtime jar so it ships as plain files."
     val jars = skikoRuntimeJars
     val out = layout.buildDirectory.dir("skiko-natives")
     inputs.files(jars)

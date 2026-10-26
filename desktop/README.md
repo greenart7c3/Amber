@@ -94,19 +94,19 @@ for the JVM) and mirrors the mobile UI and permission model.
 
 Ctrl on Windows/Linux, ⌘ on macOS:
 
-| Shortcut | Action |
-|----------|--------|
-| Ctrl/⌘ + 1–4 | Switch between Incoming requests / Applications / Relays / Settings |
-| ↑ / ↓ | Select a pending request (Incoming requests) |
-| ← / → | Cycle the selected request's "Remember" duration |
-| D | See the selected request's details: the full event (kind, pubkey, date, content, tags) or the text being encrypted/decrypted |
-| Ctrl/⌘ + Enter | Approve the selected request with the chosen duration |
-| Ctrl/⌘ + Shift + Enter | Reject the selected request |
-| Escape | Close the request details, or leave the application detail view |
-| Ctrl/⌘ + L | Lock |
-| Ctrl/⌘ + M | Minimize to tray (keep running in the background) |
-| Ctrl/⌘ + W | Same as Ctrl/⌘ + M |
-| Ctrl/⌘ + Q | Quit |
+| Shortcut               | Action                                                                                                                       |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| Ctrl/⌘ + 1–4           | Switch between Incoming requests / Applications / Relays / Settings                                                          |
+| ↑ / ↓                  | Select a pending request (Incoming requests)                                                                                 |
+| ← / →                  | Cycle the selected request's "Remember" duration                                                                             |
+| D                      | See the selected request's details: the full event (kind, pubkey, date, content, tags) or the text being encrypted/decrypted |
+| Ctrl/⌘ + Enter         | Approve the selected request with the chosen duration                                                                        |
+| Ctrl/⌘ + Shift + Enter | Reject the selected request                                                                                                  |
+| Escape                 | Close the request details, or leave the application detail view                                                              |
+| Ctrl/⌘ + L             | Lock                                                                                                                         |
+| Ctrl/⌘ + M             | Minimize to tray (keep running in the background)                                                                            |
+| Ctrl/⌘ + W             | Same as Ctrl/⌘ + M                                                                                                           |
+| Ctrl/⌘ + Q             | Quit                                                                                                                         |
 
 Not included: NIP-55 (`nostrsigner:` intents and the content provider) —
 that is Android IPC and does not exist on desktop. Web apps and other

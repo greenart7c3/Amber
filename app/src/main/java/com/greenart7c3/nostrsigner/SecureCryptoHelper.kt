@@ -76,7 +76,7 @@ object SecureCryptoHelper {
 
     /**
      * Non-suspending equivalent of [encrypt] for callers that cannot suspend
-     * (Room [Migration.migrate] callbacks, [getByKeySync] synchronous DAO
+     * (Room [androidx.room.migration.Migration.migrate] callbacks, [com.greenart7c3.nostrsigner.database.ApplicationDao.getByKeySync] synchronous DAO
      * reads). The AndroidKeyStore Cipher instance is thread-safe to obtain and
      * use; the suspend variant's [mutex] only guards against concurrent
      * in-flight cipher init within coroutines and is intentionally omitted
@@ -406,10 +406,10 @@ object SecureCryptoHelper {
         }
 
         val accounts = LocalPreferences.allSavedAccounts(context)
-        for (acc in accounts) {
+        for ((npub) in accounts) {
             for (key in listOf(DataStoreAccess.NOSTR_PRIVKEY, DataStoreAccess.SEED_WORDS)) {
-                move(DataStoreAccess.getEncryptedRaw(context, acc.npub, key)) { expected, ciphertext ->
-                    DataStoreAccess.replaceEncryptedRaw(context, acc.npub, key, expected, ciphertext)
+                move(DataStoreAccess.getEncryptedRaw(context, npub, key)) { expected, ciphertext ->
+                    DataStoreAccess.replaceEncryptedRaw(context, npub, key, expected, ciphertext)
                 }
             }
         }
@@ -420,8 +420,8 @@ object SecureCryptoHelper {
             LocalPreferences.replaceWebDavPasswordEncrypted(context, expected, ciphertext)
         }
         // Per-account Room `application` tables (GHSA-5fjp-ghh8-wch8).
-        for (acc in accounts) {
-            val dao = Amber.instance.dao(acc.npub)
+        for ((npub) in accounts) {
+            val dao = Amber.instance.dao(npub)
             for (row in dao.getAllApplicationsRaw()) {
                 move(row.secret) { expected, ciphertext -> dao.replaceSecretRaw(row.key, expected, ciphertext) > 0 }
                 move(row.localKey) { expected, ciphertext -> dao.replaceLocalKeyRaw(row.key, expected, ciphertext) > 0 }

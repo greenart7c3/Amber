@@ -9,6 +9,8 @@ import com.vitorpamplona.quartz.nip01Core.metadata.MetadataEvent
 import com.vitorpamplona.quartz.nip01Core.signers.NostrSignerInternal
 import com.vitorpamplona.quartz.nip19Bech32.toNpub
 import java.io.File
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeoutOrNull
@@ -80,8 +82,8 @@ class ProfileFetcherTest {
         AccountsStore.upsert(AccountRecord(npub = npub))
         ProfileFetcher.refresh(npub)
 
-        val record = withTimeoutOrNull(90_000) {
-            while (AccountsStore.get(npub)?.lastProfileCheck == 0L) delay(250)
+        val record = withTimeoutOrNull(90.seconds) {
+            while (AccountsStore.get(npub)?.lastProfileCheck == 0L) delay(250.milliseconds)
             AccountsStore.get(npub)
         }
         AccountsStore.delete(npub)

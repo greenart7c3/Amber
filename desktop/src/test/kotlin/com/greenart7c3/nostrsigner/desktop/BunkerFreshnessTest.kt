@@ -20,7 +20,7 @@ import org.junit.Test
 /**
  * Sender-chosen created_at must neither poison the subscription `since` nor
  * let stale requests be processed again (the desktop port lacked Android's
- * +/-5 minute window).
+ * +/-5-minute window).
  */
 class BunkerFreshnessTest {
     private val relay = RelayUrlNormalizer.normalizeOrNull("wss://relay.invalid/")!!

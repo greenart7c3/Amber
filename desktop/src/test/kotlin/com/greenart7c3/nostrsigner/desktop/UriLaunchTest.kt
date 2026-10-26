@@ -48,7 +48,7 @@ class UriLaunchTest {
         // A literal % would be read as a field code; $ and ` are escaped in quotes.
         assertEquals("/opt/100%%/Amber", UriLaunch.quoteForDesktopEntry("/opt/100%/Amber"))
         // In the file: quote, the escaped char preceded by two backslashes (quoting + string level).
-        assertEquals("\"/opt/\\\\\$HOME/Amber\"", UriLaunch.quoteForDesktopEntry("/opt/\$HOME/Amber"))
+        assertEquals($$"\"/opt/\\\\$HOME/Amber\"", UriLaunch.quoteForDesktopEntry($$"/opt/$HOME/Amber"))
         assertEquals("\"/opt/\\\\`id\\\\`/Amber\"", UriLaunch.quoteForDesktopEntry("/opt/`id`/Amber"))
         // A literal backslash needs four in the file.
         assertEquals("\"C:\\\\\\\\Amber\"", UriLaunch.quoteForDesktopEntry("C:\\Amber"))
@@ -67,7 +67,7 @@ class UriLaunchTest {
             "/opt/My Apps/Amber",
             "/opt/a\"b/Amber",
             "/opt/100% done/Amber",
-            "/opt/\$HOME/`id`/Amber",
+            $$"/opt/$HOME/`id`/Amber",
             "/opt/back\\slash/Amber",
             "/opt/it's (new) & <odd> ~ | ; * ? #/Amber",
         ).forEach { assertEquals(it, UriLaunch.unquoteDesktopEntryArg(UriLaunch.quoteForDesktopEntry(it))) }

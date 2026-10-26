@@ -51,13 +51,13 @@ enum class RememberType(val screenCode: Int, val labelKey: String) {
  * "Delete after" choice for a new connection, mirroring the Android
  * `DeleteAfterType`: the connection is removed once [deleteAt] passes.
  */
-enum class DeleteAfterType(val screenCode: Int, val labelKey: String, val seconds: Long) {
-    NEVER(0, "never", 0L),
-    FIVE_MINUTES(1, "five_minutes", 300L),
-    TEN_MINUTES(2, "ten_minutes", 600L),
-    ONE_HOUR(3, "one_hour", 3600L),
-    ONE_DAY(4, "one_day", 86400L),
-    ONE_WEEK(5, "one_week", 604800L),
+enum class DeleteAfterType(val labelKey: String, val seconds: Long) {
+    NEVER("never", 0L),
+    FIVE_MINUTES("five_minutes", 300L),
+    TEN_MINUTES("ten_minutes", 600L),
+    ONE_HOUR("one_hour", 3600L),
+    ONE_DAY("one_day", 86400L),
+    ONE_WEEK("one_week", 604800L),
     ;
 
     fun label(language: String = Strings.currentLanguage.value): String = Strings.get(labelKey, language)
@@ -220,7 +220,7 @@ data class AppRecord(
      * request (mirroring Android's `ApplicationEntity.isExpired`), so an
      * expired connection stops working at once rather than at the next prune.
      */
-    fun isExpired(now: Long = TimeUtils.now()): Boolean = deleteAfter > 0 && deleteAfter <= now
+    fun isExpired(now: Long = TimeUtils.now()): Boolean = deleteAfter in 1..now
 }
 
 const val TRANSPORT_NIP46 = "nip46"

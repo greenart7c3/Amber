@@ -5,7 +5,6 @@ import androidx.compose.foundation.VerticalScrollbar
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -67,7 +66,7 @@ import kotlinx.coroutines.launch
 import org.jetbrains.skia.Image as SkiaImage
 
 /**
- * Copies [text] to the system clipboard. Compose's [Clipboard] is suspending,
+ * A function that copies its text to the system clipboard. Compose's [Clipboard] is suspending,
  * so the returned function launches the copy in the composition's scope.
  * ClipEntry's constructor is experimental, but it is the only way to put text
  * on the desktop clipboard through it.
@@ -322,7 +321,6 @@ fun SignPolicySelector(
 }
 
 /** "Delete after" chips for a new connection, mirroring the Android setting row. */
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun DeleteAfterSelector(
     selected: DeleteAfterType,

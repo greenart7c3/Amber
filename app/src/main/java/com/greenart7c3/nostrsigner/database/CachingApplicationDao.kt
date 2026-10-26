@@ -20,7 +20,7 @@ import com.vitorpamplona.quartz.utils.TimeUtils
  * callers to know which exact (type, kind, relay) tuple they touched.
  *
  * Every invalidation bumps a generation counter, and a read only stores its
- * result if the generation is unchanged since the read began. Otherwise a
+ * result if the generation is unchanged since the read began. Otherwise, a
  * delegate read that started before a revocation could land after the
  * invalidation and resurrect the revoked grant in the cache.
  *
@@ -61,7 +61,7 @@ class CachingApplicationDao(
 
     private fun generation(): Long = synchronized(cache) { cacheGeneration }
 
-    private fun lookup(key: Key): Value? = synchronized(cache) { cache.get(key) }
+    private fun lookup(key: Key): Value? = synchronized(cache) { cache[key] }
 
     /** Caches [value] unless an invalidation ran after the read began at [readGeneration]. */
     private fun store(key: Key, value: Value, readGeneration: Long) {
@@ -250,7 +250,7 @@ class CachingApplicationDao(
 
     override suspend fun getAll(pubKey: String): List<ApplicationEntity> {
         val readGeneration = synchronized(getAllCache) {
-            getAllCache.get(pubKey)?.let { return it.toList() }
+            getAllCache[pubKey]?.let { return it.toList() }
             getAllGeneration
         }
         val result = delegate.getAll(pubKey).filterNot { it.isExpired() }

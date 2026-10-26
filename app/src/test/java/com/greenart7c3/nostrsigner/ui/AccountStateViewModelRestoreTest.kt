@@ -47,6 +47,7 @@ class AccountStateViewModelRestoreTest {
         every { LocalPreferences.allSavedAccounts(any()) } returns emptyList()
         coEvery { LocalPreferences.warmAccountCache(any()) } returns Unit
         every { LocalPreferences.loadFromEncryptedStorageSync(any(), any()) } returns null
+        coEvery { LocalPreferences.loadAccount(any(), any()) } returns null
         // Post-logout state: updatePrefsForLogout wipes prefs_<npub>, so the
         // publish-consent flag reads false on relogin.
         every { LocalPreferences.getBackupApplications(any(), any()) } returns false

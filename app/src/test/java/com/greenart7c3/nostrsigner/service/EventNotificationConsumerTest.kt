@@ -103,6 +103,7 @@ class EventNotificationConsumerTest {
         every { event.tags } returns tags
         every { event.taggedUsers() } returns listOf(PTag(account.hexKey))
         coEvery { LocalPreferences.loadFromEncryptedStorageSync(any(), any()) } returns account
+        coEvery { LocalPreferences.loadAccount(any(), any()) } returns account
         return event
     }
 
@@ -145,6 +146,7 @@ class EventNotificationConsumerTest {
         every { event.taggedUsers() } returns listOf(PTag(account.hexKey))
 
         coEvery { LocalPreferences.loadFromEncryptedStorageSync(any(), any()) } returns account
+        coEvery { LocalPreferences.loadAccount(any(), any()) } returns account
         coEvery { bunkerEventDao.exists("event1") } returns true
 
         consumer.consume(event, NormalizedRelayUrl("wss://relay.com"))
@@ -167,6 +169,7 @@ class EventNotificationConsumerTest {
         val locked = spyk(account)
         every { locked.requirePrivateKeyAccess() } throws SecurityException("locked")
         coEvery { LocalPreferences.loadFromEncryptedStorageSync(any(), any()) } returns locked
+        coEvery { LocalPreferences.loadAccount(any(), any()) } returns locked
         coEvery { bunkerEventDao.exists("event2") } returns false
 
         consumer.consume(event, NormalizedRelayUrl("wss://relay.com"))
@@ -208,13 +211,14 @@ class EventNotificationConsumerTest {
         every { event.tags } returns arrayOf(arrayOf("p", acc.hexKey))
         every { event.taggedUsers() } returns listOf(PTag(acc.hexKey))
         coEvery { LocalPreferences.loadFromEncryptedStorageSync(any(), any()) } returns acc
+        coEvery { LocalPreferences.loadAccount(any(), any()) } returns acc
         coEvery { bunkerEventDao.exists(any()) } returns false
         coEvery { dao.getByKey(any()) } returns null
 
         mockkObject(BunkerRequestUtils)
         try {
             every { amber.applicationIOScope } returns CoroutineScope(Dispatchers.Unconfined + SupervisorJob())
-            every { amber.notificationCache.get(any()) } returns null
+            every { amber.notificationCache[any()] } returns null
             val responses = mutableListOf<BunkerResponse>()
             coEvery {
                 BunkerRequestUtils.sendBunkerResponse(any(), any(), any(), any(), any(), any(), any())
@@ -300,6 +304,7 @@ class EventNotificationConsumerTest {
         every { event.taggedUsers() } returns listOf(PTag(expiredAccount.hexKey))
 
         coEvery { LocalPreferences.loadFromEncryptedStorageSync(any(), any()) } returns expiredAccount
+        coEvery { LocalPreferences.loadAccount(any(), any()) } returns expiredAccount
         coEvery { bunkerEventDao.exists("event3") } returns false
 
         val expiredRow = ApplicationEntity(
@@ -329,7 +334,7 @@ class EventNotificationConsumerTest {
             every { amber.applicationIOScope } returns CoroutineScope(Dispatchers.Unconfined + SupervisorJob())
             // The relaxed mock returns 0L (non-null) from the dedup cache, which
             // makes notify() treat the request as already processed.
-            every { amber.notificationCache.get(any()) } returns null
+            every { amber.notificationCache[any()] } returns null
             val responses = mutableListOf<BunkerResponse>()
             coEvery {
                 BunkerRequestUtils.sendBunkerResponse(any(), any(), any(), any(), any(), any(), any())

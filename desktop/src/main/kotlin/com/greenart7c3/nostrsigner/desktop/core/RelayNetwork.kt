@@ -147,11 +147,9 @@ object RelayHttpClients {
     }
 
     /** Mirrors `Amber.isSocksProxyAlive`: whether something listens on the SOCKS port. */
-    fun isSocksProxyAlive(port: Int): Boolean {
-        if (port !in 1..65535) return false
-        return runCatching {
+    fun isSocksProxyAlive(port: Int): Boolean = port in 1..65535 &&
+        runCatching {
             Socket().use { it.connect(InetSocketAddress(LOCALHOST, port), 3000) }
             true
         }.getOrDefault(false)
-    }
 }

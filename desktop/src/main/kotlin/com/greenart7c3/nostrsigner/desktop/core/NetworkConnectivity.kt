@@ -4,6 +4,7 @@ import com.greenart7c3.nostrsigner.common.relays.RelayHealthTracker
 import java.net.InetSocketAddress
 import java.net.Proxy
 import java.net.Socket
+import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -97,14 +98,14 @@ object NetworkConnectivity {
                     Transition.OPENED, Transition.UNCHANGED -> {}
                 }
                 wasOnline = nowOnline
-                delay(CHECK_INTERVAL_MS)
+                delay(CHECK_INTERVAL_MS.milliseconds)
             }
         }
         scope.launch {
-            delay(UPDATE_FILTER_PERIOD_MS)
+            delay(UPDATE_FILTER_PERIOD_MS.milliseconds)
             while (true) {
                 AmberDesktop.engine.updateFilter()
-                delay(UPDATE_FILTER_PERIOD_MS)
+                delay(UPDATE_FILTER_PERIOD_MS.milliseconds)
             }
         }
     }

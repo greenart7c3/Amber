@@ -78,7 +78,7 @@ class NetworkConnectivityProbeTest {
         }
 
         assertTrue(NetworkConnectivity.isOnline())
-        // `any` stops at the first success: exactly one probe target dialled.
+        // `any` stops at the first success: exactly one probe target dialed.
         assertEquals(listOf<SocketAddress?>(InetSocketAddress("1.1.1.1", 53)), dialled)
     }
 

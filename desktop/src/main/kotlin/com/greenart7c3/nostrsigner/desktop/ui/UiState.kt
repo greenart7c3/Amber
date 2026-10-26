@@ -62,7 +62,7 @@ object UiState {
     fun defaultScope(request: PendingBunkerRequest): EncryptionScope = if (request.type in nip44v3SignerTypes) EncryptionScope.SPECIFIC else EncryptionScope.ALL
 
     fun setScopeChoice(requestId: String, scope: EncryptionScope) {
-        scopeChoices.value = scopeChoices.value + (requestId to scope)
+        scopeChoices.value += (requestId to scope)
     }
 
     /**
@@ -78,7 +78,7 @@ object UiState {
     )
 
     fun setConnectChoice(requestId: String, choice: ConnectChoice) {
-        connectChoices.value = connectChoices.value + (requestId to choice)
+        connectChoices.value += (requestId to choice)
     }
 
     /** Approves [request] with the choices made on its card. */
@@ -128,7 +128,7 @@ object UiState {
     fun rememberChoiceFor(requestId: String): RememberType = rememberChoices.value[requestId] ?: RememberType.NEVER
 
     fun setRememberChoice(requestId: String, type: RememberType) {
-        rememberChoices.value = rememberChoices.value + (requestId to type)
+        rememberChoices.value += (requestId to type)
     }
 
     /**
@@ -174,7 +174,7 @@ object UiState {
         return true
     }
 
-    /** A on a selected connect request: cycles the account it will be saved under. */
+    /** The A key on a selected connect request: cycles the account it will be saved under. */
     fun cycleSelectedAccount(): Boolean {
         val request = selectedRequest()?.takeIf { it.canSwitchAccount } ?: return false
         val npubs = AccountsStore.accounts.value.map { it.npub }

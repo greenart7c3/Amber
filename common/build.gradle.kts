@@ -2,7 +2,7 @@
 // plain Kotlin/JVM with no platform APIs, so both can depend on it.
 plugins {
     alias(libs.plugins.kotlinJvm)
-    alias(libs.plugins.gradle.ktlint) version libs.versions.ktlint.get()
+    alias(libs.plugins.gradle.ktlint)
     alias(libs.plugins.detekt)
 }
 

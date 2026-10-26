@@ -33,7 +33,7 @@ object AmberUtils {
      * plaintext travels Base64-encoded: encrypt receives base64(plaintext) and
      * returns the ciphertext; decrypt returns base64(plaintext). The readable
      * plaintext for logs/display comes from the EncryptedDataKind instead (see
-     * [nip44v3Plaintext]). [nip44v3Kind]/[nip44v3Scope] are required for V3.
+     * [com.greenart7c3.nostrsigner.models.nip44v3Plaintext]). [nip44v3Kind]/[nip44v3Scope] are required for V3.
      */
     suspend fun encryptOrDecryptData(
         data: String,

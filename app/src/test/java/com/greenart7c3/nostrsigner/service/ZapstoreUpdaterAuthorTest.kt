@@ -15,6 +15,7 @@ import io.mockk.mockkObject
 import io.mockk.mockkStatic
 import io.mockk.unmockkObject
 import io.mockk.unmockkStatic
+import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -69,7 +70,7 @@ class ZapstoreUpdaterAuthorTest {
 
         updater.onIncomingMessage(mockk<IRelayClient>(relaxed = true), forged.toJson(), EventMessage(releaseSubId, forged))
         // Release processing runs on the updater's own coroutine; give it time to act.
-        delay(1_500)
+        delay(1_500.milliseconds)
 
         assertNull(updater.latestRelease.value)
     }

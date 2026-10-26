@@ -7,14 +7,14 @@ import org.junit.Test
 
 class CrashReportsTest {
     private fun finalizerWatchdogCrash(): TimeoutException {
-        val e = TimeoutException("com.android.internal.os.BinderInternal\$GcWatcher.finalize() timed out after 10 seconds")
+        val e = TimeoutException($$"com.android.internal.os.BinderInternal$GcWatcher.finalize() timed out after 10 seconds")
         e.stackTrace =
             arrayOf(
-                StackTraceElement("com.android.internal.os.BinderInternal\$GcWatcher", "finalize", "BinderInternal.java", 64),
-                StackTraceElement("java.lang.Daemons\$FinalizerDaemon", "doFinalize", "Daemons.java", 389),
-                StackTraceElement("java.lang.Daemons\$FinalizerDaemon", "processReference", "Daemons.java", 369),
-                StackTraceElement("java.lang.Daemons\$FinalizerDaemon", "runInternal", "Daemons.java", 354),
-                StackTraceElement("java.lang.Daemons\$Daemon", "run", "Daemons.java", 135),
+                StackTraceElement($$"com.android.internal.os.BinderInternal$GcWatcher", "finalize", "BinderInternal.java", 64),
+                StackTraceElement($$"java.lang.Daemons$FinalizerDaemon", "doFinalize", "Daemons.java", 389),
+                StackTraceElement($$"java.lang.Daemons$FinalizerDaemon", "processReference", "Daemons.java", 369),
+                StackTraceElement($$"java.lang.Daemons$FinalizerDaemon", "runInternal", "Daemons.java", 354),
+                StackTraceElement($$"java.lang.Daemons$Daemon", "run", "Daemons.java", 135),
                 StackTraceElement("java.lang.Thread", "run", "Thread.java", 1564),
             )
         return e
@@ -31,7 +31,7 @@ class CrashReportsTest {
         e.stackTrace =
             arrayOf(
                 StackTraceElement("android.os.BinderProxy", "finalize", "BinderProxy.java", 100),
-                StackTraceElement("java.lang.Daemons\$FinalizerDaemon", "doFinalize", "Daemons.java", 389),
+                StackTraceElement($$"java.lang.Daemons$FinalizerDaemon", "doFinalize", "Daemons.java", 389),
             )
         assertTrue(CrashReports.isJunkReport(e))
     }

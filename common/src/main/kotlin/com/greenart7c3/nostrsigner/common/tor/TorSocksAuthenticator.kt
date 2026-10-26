@@ -26,7 +26,7 @@ object TorSocksAuthenticator : Authenticator() {
         setDefault(this)
     }
 
-    /** A new random username and password for a listener about to bind [port]. */
+    /** A new random username and password for a listener about to bind its port. */
     fun newCredentials(): Pair<String, String> = randomToken() to randomToken()
 
     /** Publishes the credentials of the listener now bound on [port]. */

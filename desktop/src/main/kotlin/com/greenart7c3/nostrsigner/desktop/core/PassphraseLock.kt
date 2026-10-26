@@ -12,6 +12,7 @@ import java.util.Base64
 import javax.crypto.Cipher
 import javax.crypto.SecretKey
 import javax.crypto.spec.GCMParameterSpec
+import kotlin.time.Duration.Companion.minutes
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -142,7 +143,7 @@ object PassphraseLock {
     /**
      * Turns the lock on: wraps the current master key (creating one if this
      * is a fresh install) under the passphrase and deletes every unprotected
-     * copy. The app stays unlocked afterwards.
+     * copy. The app stays unlocked afterward.
      */
     suspend fun enable(passphrase: CharArray, params: KdfParams = targetKdfParams) = mutex.withLock {
         check(!isEnabled()) { "A passphrase is already set" }
@@ -194,6 +195,8 @@ object PassphraseLock {
      * Incoming NIP-46 requests cannot be decrypted (let alone signed) until
      * the next unlock.
      */
+    // Blocks on purpose: the lock must have happened when this returns.
+    @Suppress("RunBlocking")
     fun lock() {
         if (!isEnabled()) return
         // Waits for an unlock or passphrase change in flight (at most its
@@ -245,7 +248,7 @@ object PassphraseLock {
         val minutes = SettingsStore.settings.value.autoLockMinutes
         if (minutes <= 0) return
         autoLockJob = AmberDesktop.applicationIOScope.launch {
-            delay(minutes * 60_000L)
+            delay(minutes.minutes)
             AmberLogger.d("PassphraseLock", "Auto-locking after $minutes minutes")
             // Suspends on the mutex, so an unlock that reschedules (and so
             // cancels) this timer meanwhile also cancels the stale lock.

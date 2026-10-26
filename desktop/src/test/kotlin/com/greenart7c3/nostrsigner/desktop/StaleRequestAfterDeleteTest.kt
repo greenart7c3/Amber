@@ -14,6 +14,8 @@ import com.vitorpamplona.quartz.nip01Core.crypto.KeyPair
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.RelayUrlNormalizer
 import com.vitorpamplona.quartz.nip01Core.signers.NostrSignerInternal
 import com.vitorpamplona.quartz.utils.TimeUtils
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -51,8 +53,8 @@ class StaleRequestAfterDeleteTest {
         AmberDesktop.engine.updateFilter()
 
         launch { AmberDesktop.engine.consume(signRequest(client, localPubKeyFromPrivKey(connectionKey), "$name-1"), relay) }
-        val card = withTimeout(20_000) {
-            while (AmberDesktop.engine.pending.value.none { it.localKey == clientHex }) delay(50)
+        val card = withTimeout(20.seconds) {
+            while (AmberDesktop.engine.pending.value.none { it.localKey == clientHex }) delay(50.milliseconds)
             AmberDesktop.engine.pending.value.first { it.localKey == clientHex }
         }
         store.delete(clientHex)
@@ -64,7 +66,7 @@ class StaleRequestAfterDeleteTest {
         // Account default "fully trust" is the worst case: a recreated app would auto-sign.
         val (card, npub, clientHex) = staleCard(accountPolicy = 2, name = "stale-reject")
 
-        withTimeoutOrNull(20_000) { AmberDesktop.engine.reject(card, RememberType.NEVER).join() }
+        withTimeoutOrNull(20.seconds) { AmberDesktop.engine.reject(card, RememberType.NEVER).join() }
 
         assertNull(AmberDesktop.store(npub).getByKey(clientHex))
     }
@@ -73,7 +75,7 @@ class StaleRequestAfterDeleteTest {
     fun approvingAStaleCardDoesNotRecreateTheApp() = runBlocking {
         val (card, npub, clientHex) = staleCard(accountPolicy = 1, name = "stale-approve")
 
-        withTimeoutOrNull(20_000) { AmberDesktop.engine.approve(card, RememberType.ALWAYS).join() }
+        withTimeoutOrNull(20.seconds) { AmberDesktop.engine.approve(card, RememberType.ALWAYS).join() }
 
         val store = AmberDesktop.store(npub)
         assertNull(store.getByKey(clientHex))

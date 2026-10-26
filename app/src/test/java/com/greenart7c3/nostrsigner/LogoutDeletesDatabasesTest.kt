@@ -11,6 +11,7 @@ import io.mockk.runs
 import io.mockk.unmockkObject
 import io.mockk.verify
 import io.mockk.verifyOrder
+import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -50,7 +51,7 @@ class LogoutDeletesDatabasesTest {
 
     @Test
     fun logoutDeletesTheAccountDatabasesAfterClosingThem() {
-        LocalPreferences.updatePrefsForLogout(npub, context)
+        runBlocking { LocalPreferences.updatePrefsForLogout(npub, context) }
 
         verifyOrder {
             amber.closeDatabasesFor(npub)

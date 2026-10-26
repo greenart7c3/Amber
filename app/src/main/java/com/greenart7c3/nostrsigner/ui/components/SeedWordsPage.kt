@@ -75,7 +75,7 @@ fun SeedWordsPage(
             AmberButton(
                 onClick = {
                     scope.launch {
-                        clipboardManager.setSensitiveClip("", seedWords.joinToString(" "))
+                        clipboardManager.setSensitiveClip(seedWords.joinToString(" "))
                     }
                 },
                 text = stringResource(R.string.copy_to_clipboard),

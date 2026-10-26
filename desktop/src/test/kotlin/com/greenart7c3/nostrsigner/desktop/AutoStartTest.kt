@@ -54,8 +54,8 @@ class AutoStartTest {
     fun unitEscapesSystemdSpecialsInPaths() {
         // systemd(5): inside double quotes \ and " are escaped with a
         // backslash; $ would start variable expansion and % a specifier.
-        val unit = AutoStart.unitContent("/opt/My \"Apps\"/Am\\ber\$1/bin/Amber")
-        assertTrue(unit.contains("ExecStart=\"/opt/My \\\"Apps\\\"/Am\\\\ber\\\$1/bin/Amber\""))
+        val unit = AutoStart.unitContent($$"/opt/My \"Apps\"/Am\\ber$1/bin/Amber")
+        assertTrue(unit.contains($$"ExecStart=\"/opt/My \\\"Apps\\\"/Am\\\\ber\\$1/bin/Amber\""))
         // Even unquoted values must not leak a specifier.
         val percent = AutoStart.unitContent("/opt/Amber%h/bin/Amber")
         assertTrue(percent.contains("ExecStart=/opt/Amber%%h/bin/Amber"))

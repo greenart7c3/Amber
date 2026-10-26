@@ -11,9 +11,6 @@ open class ToastMsg
 class StringToastMsg(val title: String, val msg: String) : ToastMsg()
 
 @Immutable
-class ConfirmationToastMsg(val title: String, val msg: String, val onOk: () -> Unit) : ToastMsg()
-
-@Immutable
 class AcceptRejectToastMsg(
     val title: String,
     val msg: String,
@@ -42,14 +39,6 @@ object ToastManager {
         message: String,
     ) {
         toasts.tryEmit(StringToastMsg(title, message))
-    }
-
-    fun toast(
-        title: String,
-        message: String,
-        onOk: () -> Unit,
-    ) {
-        toasts.tryEmit(ConfirmationToastMsg(title, message, onOk))
     }
 
     fun toast(

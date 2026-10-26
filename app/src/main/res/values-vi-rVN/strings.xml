@@ -568,8 +568,6 @@
     <string name="ask">Hỏi</string>
     <string name="never">Không bao giờ</string>
     <string name="warning">Cảnh báo</string>
-    <string name="of_events">%1$s trong %2$s sự kiện</string>
-    <string name="see_details">Xem chi tiết</string>
     <string name="is_requiring_some_permissions_please_review_them">%1$s đang yêu cầu một số quyền, vui lòng xem xét chúng.</string>
     <string name="is_requiring_some_permissions_please_review_them2">Đang yêu cầu một số quyền, vui lòng xem xét chúng.</string>
     <plurals name="several_apps_are_requiring_some_permissions_please_review_them">

@@ -352,7 +352,7 @@
     <string name="applications">Anwendungen</string>
     <string name="incoming_request">Eingehende Anfrage</string>
     <string name="back_to">Zurück zu %1$s</string>
-    <string name="scan_qr_code"></string>
+    <string name="scan_qr_code">Einen QR-Code scannen</string>
     <string name="add_a_nsecbunker">Einen nsecbunker hinzufügen</string>
     <string name="nsecbunker_description">Mit dieser Option kann ein nsecbunker manuell hinzugefügt und mit jeder App verwendet werden, die Nostr Connect (NIP-46) unterstützt</string>
     <string name="nostr_connect_qr_description">Wenn deine App einen Nostr-Connect-QR-Code anbietet, kannst du ihn hier scannen. Dieser Anmeldemodus wird üblicherweise von Web-Apps angeboten.</string>

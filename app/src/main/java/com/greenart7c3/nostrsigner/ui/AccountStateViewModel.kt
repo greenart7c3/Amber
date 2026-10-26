@@ -70,7 +70,7 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
             // PendingIntent (a race with composition) and doesn't exist in the
             // offline flavor — so warm here, at the deterministic app start.
             LocalPreferences.warmAccountCache(Amber.instance)
-            LocalPreferences.loadFromEncryptedStorageSync(Amber.instance, currentUser)?.let {
+            LocalPreferences.loadAccount(Amber.instance, currentUser)?.let {
                 startUI(it, route)
             }
             if (currentUser == null) {
@@ -88,8 +88,10 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
 
     fun logOff(npub: String) {
         prepareLogoutOrSwitch()
-        val shouldLogout = LocalPreferences.updatePrefsForLogout(npub, Amber.instance)
-        tryLoginExistingAccount(null, null, forceLogout = shouldLogout)
+        Amber.instance.applicationIOScope.launch {
+            val shouldLogout = LocalPreferences.updatePrefsForLogout(npub, Amber.instance)
+            tryLoginExistingAccount(null, null, forceLogout = shouldLogout)
+        }
     }
 
     fun switchUser(

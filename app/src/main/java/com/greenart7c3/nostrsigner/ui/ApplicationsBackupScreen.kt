@@ -343,7 +343,7 @@ private fun rememberBackupSelection(payload: BackupPayload): BackupSelection = r
 /**
  * Lists what a backup would restore (name, key, relays and permission count
  * per application), each with a checkbox, so the user can leave out entries
- * they don't want or don't recognise. Applications set to sign every request
+ * they don't want or don't recognize. Applications set to sign every request
  * are flagged.
  */
 @Composable

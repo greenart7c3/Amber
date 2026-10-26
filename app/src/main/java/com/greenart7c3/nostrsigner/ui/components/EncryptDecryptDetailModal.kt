@@ -77,8 +77,8 @@ fun EncryptDecryptDetailModal(
                     .verticalScrollbar(scrollState)
                     .verticalScroll(scrollState),
             ) {
-                when {
-                    encryptedData is EventEncryptedDataKind -> {
+                when (encryptedData) {
+                    is EventEncryptedDataKind -> {
                         val event = if (encryptedData.sealEncryptedDataKind is EventEncryptedDataKind) {
                             encryptedData.sealEncryptedDataKind.event.toEvent()
                         } else {
@@ -120,7 +120,7 @@ fun EncryptDecryptDetailModal(
                             )
                         }
                     }
-                    encryptedData is TagArrayEncryptedDataKind -> {
+                    is TagArrayEncryptedDataKind -> {
                         TagsSection(
                             label = stringResource(R.string.tags),
                             tags = encryptedData.tagArray,

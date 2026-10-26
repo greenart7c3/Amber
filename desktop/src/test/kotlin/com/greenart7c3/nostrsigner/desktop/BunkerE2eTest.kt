@@ -30,6 +30,8 @@ import com.vitorpamplona.quartz.utils.TimeUtils
 import java.io.File
 import java.util.UUID
 import java.util.concurrent.TimeUnit
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -37,6 +39,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
@@ -93,7 +96,7 @@ class BunkerE2eTest {
                                     val decrypted = signer.decrypt(msg.event.content, msg.event.pubKey)
                                     val response = JacksonMapper.mapper.readValue(decrypted, BunkerResponse::class.java)
                                     signerPubKey.value = msg.event.pubKey
-                                    responses.value = responses.value + response
+                                    responses.value += response
                                 }
                             }
                         }
@@ -117,7 +120,7 @@ class BunkerE2eTest {
 
         suspend fun send(signerPubKey: String, relay: NormalizedRelayUrl, requestJson: String): Boolean {
             val encrypted = signer.nip44Encrypt(requestJson, signerPubKey)
-            val event = signer.signerSync.sign<com.vitorpamplona.quartz.nip01Core.core.Event>(
+            val event = signer.signerSync.sign<Event>(
                 TimeUtils.now(),
                 NostrConnectEvent.KIND,
                 arrayOf(arrayOf("p", signerPubKey)),
@@ -149,18 +152,18 @@ class BunkerE2eTest {
 
         // Client side.
         val client = Client(relay, KeyPair())
-        delay(3000) // let both subscriptions settle
+        delay(3.seconds) // let both subscriptions settle
 
         // 1. connect — requires the user's approval in the UI.
         val connectJson = """{"id":"e2e-connect","method":"connect","params":["$signerPubKey","$secret"]}"""
         assertEquals(true, client.send(signerPubKey, relay, connectJson))
 
-        withTimeout(30_000) { engine.pending.first { it.isNotEmpty() } }
+        withTimeout(30.seconds) { engine.pending.first { it.isNotEmpty() } }
         val pendingRequest = engine.pending.value.first()
         assertEquals("e2e-connect", pendingRequest.request.id)
         engine.approve(pendingRequest, RememberType.ALWAYS).join()
 
-        val ack = withTimeout(30_000) {
+        val ack = withTimeout(30.seconds) {
             client.responses.first { list -> list.any { it.id == "e2e-connect" } }
         }.first { it.id == "e2e-connect" }
         assertEquals("ack", ack.result)
@@ -169,7 +172,7 @@ class BunkerE2eTest {
         val gpkJson = """{"id":"e2e-gpk","method":"get_public_key","params":[]}"""
         assertEquals(true, client.send(signerPubKey, relay, gpkJson))
 
-        val gpk = withTimeout(30_000) {
+        val gpk = withTimeout(30.seconds) {
             client.responses.first { list -> list.any { it.id == "e2e-gpk" } }
         }.first { it.id == "e2e-gpk" }
         assertEquals(account.hexKey, gpk.result)
@@ -179,10 +182,10 @@ class BunkerE2eTest {
 
     /**
      * Regression: approving must publish the response even if the coroutine
-     * that triggered it is cancelled immediately afterwards — which is exactly
+     * that triggered it is canceled immediately afterward — which is exactly
      * what happens in the UI, where approving removes the request card from the
      * list and tears down its composition scope. The engine runs the work on
-     * its own application scope, so a cancelled caller must not stop delivery.
+     * its own application scope, so a canceled caller must not stop delivery.
      */
     @Test
     fun approvalSurvivesCallerCancellation() = runBlocking {
@@ -199,21 +202,21 @@ class BunkerE2eTest {
         val secret = bunkerUri.substringAfter("secret=")
 
         val client = Client(relay, KeyPair())
-        delay(3000)
+        delay(3.seconds)
 
         client.send(signerPubKey, relay, """{"id":"cc","method":"connect","params":["$signerPubKey","$secret"]}""")
-        withTimeout(30_000) { engine.pending.first { it.isNotEmpty() } }
+        withTimeout(30.seconds) { engine.pending.first { it.isNotEmpty() } }
         val req = engine.pending.value.first()
 
         // Simulate the UI: fire approve from a scope, then cancel that scope
         // right away (as the removed card's composition scope would be).
         val callerScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
         callerScope.launch { engine.approve(req, RememberType.ALWAYS) }
-        delay(50)
+        delay(50.milliseconds)
         callerScope.cancel()
 
-        // Despite the cancelled caller, the ack must still arrive.
-        val ack = withTimeout(30_000) {
+        // Despite the canceled caller, the ack must still arrive.
+        val ack = withTimeout(30.seconds) {
             client.responses.first { l -> l.any { it.id == "cc" } }
         }.first { it.id == "cc" }
         assertEquals("ack", ack.result)
@@ -250,24 +253,24 @@ class BunkerE2eTest {
 
         val clientA = Client(relay, KeyPair())
         val clientB = Client(relay, KeyPair())
-        delay(4000)
+        delay(4.seconds)
 
         // Connect + approve both.
         clientB.send(signerB, relay, """{"id":"cB","method":"connect","params":["$signerB","$secretB"]}""")
         clientA.send(signerA, relay, """{"id":"cA","method":"connect","params":["$signerA","$secretA"]}""")
 
-        withTimeout(30_000) { engine.pending.first { it.size >= 2 } }
-        engine.pending.value.toList().map { engine.approve(it, RememberType.ALWAYS) }.forEach { it.join() }
+        withTimeout(30.seconds) { engine.pending.first { it.size >= 2 } }
+        engine.pending.value.toList().map { engine.approve(it, RememberType.ALWAYS) }.joinAll()
 
-        withTimeout(30_000) { clientA.responses.first { l -> l.any { it.id == "cA" } } }
-        withTimeout(30_000) { clientB.responses.first { l -> l.any { it.id == "cB" } } }
+        withTimeout(30.seconds) { clientA.responses.first { l -> l.any { it.id == "cA" } } }
+        withTimeout(30.seconds) { clientB.responses.first { l -> l.any { it.id == "cB" } } }
 
         // get_public_key on each connection returns that connection's account key.
         clientA.send(signerA, relay, """{"id":"gA","method":"get_public_key","params":[]}""")
         clientB.send(signerB, relay, """{"id":"gB","method":"get_public_key","params":[]}""")
 
-        val gA = withTimeout(30_000) { clientA.responses.first { l -> l.any { it.id == "gA" } } }.first { it.id == "gA" }
-        val gB = withTimeout(30_000) { clientB.responses.first { l -> l.any { it.id == "gB" } } }.first { it.id == "gB" }
+        val gA = withTimeout(30.seconds) { clientA.responses.first { l -> l.any { it.id == "gA" } } }.first { it.id == "gA" }
+        val gB = withTimeout(30.seconds) { clientB.responses.first { l -> l.any { it.id == "gB" } } }.first { it.id == "gB" }
 
         assertEquals(accountA.hexKey, gA.result)
         assertEquals(accountB.hexKey, gB.result)
@@ -298,21 +301,21 @@ class BunkerE2eTest {
         val secret = bunkerUri.substringAfter("secret=")
 
         val client = Client(relay, KeyPair())
-        delay(3000)
+        delay(3.seconds)
 
         client.send(signerPubKey, relay, """{"id":"sw-connect","method":"connect","params":["$signerPubKey","$secret"]}""")
-        withTimeout(30_000) { engine.pending.first { list -> list.any { it.request.id == "sw-connect" } } }
+        withTimeout(30.seconds) { engine.pending.first { list -> list.any { it.request.id == "sw-connect" } } }
         val req = engine.pending.value.first { it.request.id == "sw-connect" }
         assertTrue(req.canSwitchAccount)
         engine.approve(req, RememberType.ALWAYS, accountNpub = accountB.npub).join()
 
-        val ack = withTimeout(30_000) { client.responses.first { l -> l.any { it.id == "sw-connect" } } }.first { it.id == "sw-connect" }
+        val ack = withTimeout(30.seconds) { client.responses.first { l -> l.any { it.id == "sw-connect" } } }.first { it.id == "sw-connect" }
         assertEquals("ack", ack.result)
         assertTrue(AmberDesktop.store(accountA.npub).apps.value.none { it.app.name == "switch-app" })
         assertTrue(AmberDesktop.store(accountB.npub).apps.value.any { it.app.name == "switch-app" && it.app.pubKey == accountB.hexKey })
 
         client.send(signerPubKey, relay, """{"id":"sw-gpk","method":"get_public_key","params":[]}""")
-        val gpk = withTimeout(30_000) { client.responses.first { l -> l.any { it.id == "sw-gpk" } } }.first { it.id == "sw-gpk" }
+        val gpk = withTimeout(30.seconds) { client.responses.first { l -> l.any { it.id == "sw-gpk" } } }.first { it.id == "sw-gpk" }
         assertEquals(accountB.hexKey, gpk.result)
 
         client.stop()
@@ -338,15 +341,15 @@ class BunkerE2eTest {
         val secret = bunkerUri.substringAfter("secret=")
         val client = Client(relay, KeyPair())
         val peer = KeyPair().pubKey.toHexKey()
-        delay(3000)
+        delay(3.seconds)
 
         suspend fun request(json: String) {
             client.send(signerPubKey, relay, json)
         }
-        suspend fun pendingFor(id: String) = withTimeout(30_000) {
+        suspend fun pendingFor(id: String) = withTimeout(30.seconds) {
             engine.pending.first { list -> list.any { it.request.id == id } }
         }.first { it.request.id == id }
-        suspend fun responseFor(id: String) = withTimeout(30_000) {
+        suspend fun responseFor(id: String) = withTimeout(30.seconds) {
             client.responses.first { l -> l.any { it.id == id } }
         }.first { it.id == id }
 
@@ -404,15 +407,15 @@ class BunkerE2eTest {
         val client = Client(relay, KeyPair())
         val peer = KeyPair().pubKey.toHexKey()
         val plain = java.util.Base64.getEncoder().encodeToString("hi".toByteArray())
-        delay(3000)
+        delay(3.seconds)
 
         suspend fun request(json: String) {
             client.send(signerPubKey, relay, json)
         }
-        suspend fun pendingFor(id: String) = withTimeout(30_000) {
+        suspend fun pendingFor(id: String) = withTimeout(30.seconds) {
             engine.pending.first { list -> list.any { it.request.id == id } }
         }.first { it.request.id == id }
-        suspend fun responseFor(id: String) = withTimeout(30_000) {
+        suspend fun responseFor(id: String) = withTimeout(30.seconds) {
             client.responses.first { l -> l.any { it.id == id } }
         }.first { it.id == id }
         fun v3Perms() = AmberDesktop.store(account.npub).apps.value.first { it.app.name == "v3-app" }
@@ -470,7 +473,7 @@ class BunkerE2eTest {
         engine.start()
 
         val client = Client(relay, KeyPair())
-        delay(2000)
+        delay(2.seconds)
 
         val clientPubKey = client.keyPair.pubKey.toHexKey()
         val secret = "nc-secret-123"
@@ -479,23 +482,23 @@ class BunkerE2eTest {
         // Amber imports the URI -> a pending CONNECT request appears.
         val error = engine.addNostrConnect(uri, account)
         assertEquals(null, error)
-        withTimeout(10_000) { engine.pending.first { it.isNotEmpty() } }
+        withTimeout(10.seconds) { engine.pending.first { it.isNotEmpty() } }
         // Simulate the approval UI, which passes the requested permissions so
         // the granted perms (sign_event:1, get_public_key) are remembered.
         val connectReq = engine.pending.value.first()
         engine.approve(connectReq, RememberType.ALWAYS, connectReq.requestedPermissions).join()
 
         // The client receives the connect ack (result == secret) from the signer key.
-        val ack = withTimeout(30_000) {
+        val ack = withTimeout(30.seconds) {
             client.responses.first { l -> l.any { it.result == secret } }
         }.first { it.result == secret }
         assertEquals(secret, ack.result)
 
-        val signerKey = withTimeout(5_000) { client.signerPubKey.first { it != null } }!!
+        val signerKey = withTimeout(5.seconds) { client.signerPubKey.first { it != null } }!!
 
         // Follow-up request goes to the signer's per-connection key.
         client.send(signerKey, relay, """{"id":"nc-gpk","method":"get_public_key","params":[]}""")
-        val gpk = withTimeout(30_000) {
+        val gpk = withTimeout(30.seconds) {
             client.responses.first { l -> l.any { it.id == "nc-gpk" } }
         }.first { it.id == "nc-gpk" }
         assertEquals(account.hexKey, gpk.result)
@@ -505,7 +508,7 @@ class BunkerE2eTest {
         val eventJson = """{"kind":1,"content":"hello from a bunker","tags":[],"created_at":${TimeUtils.now()},"pubkey":"${account.hexKey}"}"""
         val escaped = eventJson.replace("\\", "\\\\").replace("\"", "\\\"")
         client.send(signerKey, relay, """{"id":"nc-sign","method":"sign_event","params":["$escaped"]}""")
-        val signResp = withTimeout(30_000) {
+        val signResp = withTimeout(30.seconds) {
             client.responses.first { l -> l.any { it.id == "nc-sign" } }
         }.first { it.id == "nc-sign" }
         assertTrue("sign_event should not have been rejected: ${signResp.error}", signResp.error.isNullOrEmpty())

@@ -9,6 +9,8 @@ import com.greenart7c3.nostrsigner.desktop.core.RememberType
 import com.greenart7c3.nostrsigner.desktop.core.connectionToReplace
 import com.vitorpamplona.quartz.nip01Core.core.toHexKey
 import com.vitorpamplona.quartz.nip01Core.crypto.KeyPair
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
@@ -40,8 +42,8 @@ class NostrConnectReplaceTest {
 
         val error = AmberDesktop.engine.addNostrConnect("nostrconnect://$clientHex?relay=wss%3A%2F%2Fnew.invalid&name=new-app", account)
         assertNull(error)
-        val card = withTimeout(20_000) {
-            while (AmberDesktop.engine.pending.value.none { it.localKey == clientHex }) delay(50)
+        val card = withTimeout(20.seconds) {
+            while (AmberDesktop.engine.pending.value.none { it.localKey == clientHex }) delay(50.milliseconds)
             AmberDesktop.engine.pending.value.first { it.localKey == clientHex }
         }
 
@@ -50,7 +52,7 @@ class NostrConnectReplaceTest {
         // ...but a bunker:// reconnect under the same key is not a replacement.
         assertNull(connectionToReplace(card.copy(isNostrConnectUri = false), account.npub))
 
-        withTimeoutOrNull(20_000) { AmberDesktop.engine.approve(card, RememberType.NEVER, signPolicy = 1).join() }
+        withTimeoutOrNull(20.seconds) { AmberDesktop.engine.approve(card, RememberType.NEVER, signPolicy = 1).join() }
 
         val app = store.getByKey(clientHex)
         assertNotNull(app)
@@ -68,8 +70,8 @@ class NostrConnectReplaceTest {
 
         // A line break and a right-to-left override in the client-chosen name.
         assertNull(AmberDesktop.engine.addNostrConnect("nostrconnect://$clientHex?relay=wss%3A%2F%2Fnew.invalid&name=Amber%0AApprove%20now%E2%80%AEevil", account))
-        val card = withTimeout(20_000) {
-            while (AmberDesktop.engine.pending.value.none { it.localKey == clientHex }) delay(50)
+        val card = withTimeout(20.seconds) {
+            while (AmberDesktop.engine.pending.value.none { it.localKey == clientHex }) delay(50.milliseconds)
             AmberDesktop.engine.pending.value.first { it.localKey == clientHex }
         }
 

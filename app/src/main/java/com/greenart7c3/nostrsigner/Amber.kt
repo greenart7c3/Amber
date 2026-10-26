@@ -154,18 +154,20 @@ class Amber :
     val stats = AmberRelayStats(client, this)
 
     // logs and stat counts.
-    val listener = NostrClientLoggerListener(this, stats, applicationIOScope).also {
-        client.addConnectionListener(it)
+    init {
+        client.addConnectionListener(NostrClientLoggerListener(this, stats, applicationIOScope))
     }
 
-    // Authenticates with relays.
-    val authCoordinator = RelayAuthenticator(client, applicationIOScope) { _, event, _ ->
-        // One account failing to sign (device locked under requireUnlockedDevice,
-        // or a transient key error) must not abort AUTH for every other account.
-        LocalPreferences.allAccounts(this).mapNotNull { account ->
-            runCatching { account.sign(event) }.onFailure { e ->
-                AmberLog.e(TAG, "NIP-42 auth signing failed for ${account.npub}", e)
-            }.getOrNull()
+    // Authenticates with relays; it registers itself with the client.
+    init {
+        RelayAuthenticator(client, applicationIOScope) { _, event, _ ->
+            // One account failing to sign (device locked under requireUnlockedDevice,
+            // or a transient key error) must not abort AUTH for every other account.
+            LocalPreferences.allAccounts(this).mapNotNull { account ->
+                runCatching { account.sign(event) }.onFailure { e ->
+                    AmberLog.e(TAG, "NIP-42 auth signing failed for ${account.npub}", e)
+                }.getOrNull()
+            }
         }
     }
 
@@ -177,7 +179,7 @@ class Amber :
     // each account (see ProfileSubscriptionEffect) rather than app-wide.
     val profileSubscription = ProfileSubscription(client, this, applicationIOScope)
 
-    val zapstoreUpdater: ZapstoreUpdater? = if (!BuildFlavorChecker.isOfflineFlavor() && !BuildConfig.IS_FDROID_BUILD) {
+    val zapstoreUpdater: ZapstoreUpdater? = if (!BuildFlavorChecker.isOfflineFlavor() && !BuildFlavorChecker.isFdroidBuild()) {
         ZapstoreUpdater(client, applicationIOScope)
     } else {
         null
@@ -232,19 +234,19 @@ class Amber :
     fun isSocksProxyAlive(proxyHost: String, proxyPort: Int): Boolean {
         if (settings.torMode == TorMode.BUILTIN) {
             val port = TorManager.socksPort.value
-            if (port == 0) return false
-            return try {
-                if (TrafficStats.getThreadStatsTag() == -1) {
-                    TrafficStats.setThreadStatsTag(0x0001)
+            return port != 0 &&
+                try {
+                    if (TrafficStats.getThreadStatsTag() == -1) {
+                        TrafficStats.setThreadStatsTag(0x0001)
+                    }
+                    val socket = Socket()
+                    socket.connect(InetSocketAddress(proxyHost, port), 5000)
+                    TrafficStats.tagSocket(socket)
+                    socket.close()
+                    true
+                } catch (_: Exception) {
+                    false
                 }
-                val socket = Socket()
-                socket.connect(InetSocketAddress(proxyHost, port), 5000)
-                TrafficStats.tagSocket(socket)
-                socket.close()
-                true
-            } catch (_: Exception) {
-                false
-            }
         }
         try {
             if (TrafficStats.getThreadStatsTag() == -1) {
@@ -337,7 +339,7 @@ class Amber :
     }
 
     fun startUpdateCheckAlarm() {
-        if (BuildFlavorChecker.isOfflineFlavor() || BuildConfig.IS_FDROID_BUILD) return
+        if (BuildFlavorChecker.isOfflineFlavor() || BuildFlavorChecker.isFdroidBuild()) return
 
         val workManager = WorkManager.getInstance(this)
 

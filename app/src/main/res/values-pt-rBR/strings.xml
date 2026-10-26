@@ -587,8 +587,6 @@
     <string name="ask">Perguntar</string>
     <string name="never">Nunca</string>
     <string name="warning">Atenção</string>
-    <string name="of_events">%1$s de %2$s eventos</string>
-    <string name="see_details">Ver detalhes</string>
     <string name="is_requiring_some_permissions_please_review_them">%1$s precisa de algumas permissões, por favor, revise-as.</string>
     <string name="is_requiring_some_permissions_please_review_them2">Está exigindo algumas permissões, por favor, revise-as.</string>
     <plurals name="several_apps_are_requiring_some_permissions_please_review_them">

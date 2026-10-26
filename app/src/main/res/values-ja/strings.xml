@@ -568,8 +568,6 @@
     <string name="ask">確認する</string>
     <string name="never">しない</string>
     <string name="warning">警告</string>
-    <string name="of_events">%2$s 件中 %1$s 件のイベント</string>
-    <string name="see_details">詳細を見る</string>
     <string name="is_requiring_some_permissions_please_review_them">%1$s がいくつかの権限を要求しています。確認してください。</string>
     <string name="is_requiring_some_permissions_please_review_them2">いくつかの権限を要求しています。確認してください。</string>
     <plurals name="several_apps_are_requiring_some_permissions_please_review_them">

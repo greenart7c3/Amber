@@ -14,6 +14,8 @@ import com.vitorpamplona.quartz.nip01Core.crypto.KeyPair
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.RelayUrlNormalizer
 import com.vitorpamplona.quartz.nip01Core.signers.NostrSignerInternal
 import com.vitorpamplona.quartz.utils.TimeUtils
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
@@ -52,14 +54,14 @@ class ConnectionKeyBindingTest {
 
         // App A addressing app B's connection key: dropped and logged, no card.
         AmberDesktop.engine.consume(signRequest(signer, localPubKeyFromPrivKey(privB), "cross"), relay)
-        delay(1_000)
+        delay(1.seconds)
         assertFalse(AmberDesktop.engine.pending.value.any { it.request.id == "cross" })
         assertTrue(store.logs.value.any { it.message.contains("reached another connection's key") })
 
         // Control: the same request on app A's own key reaches the approval queue.
         AmberDesktop.engine.consume(signRequest(signer, localPubKeyFromPrivKey(privA), "own"), relay)
-        withTimeout(20_000) {
-            while (AmberDesktop.engine.pending.value.none { it.request.id == "own" }) delay(50)
+        withTimeout(20.seconds) {
+            while (AmberDesktop.engine.pending.value.none { it.request.id == "own" }) delay(50.milliseconds)
         }
     }
 
@@ -76,7 +78,7 @@ class ConnectionKeyBindingTest {
         AmberDesktop.engine.updateFilter()
 
         AmberDesktop.engine.consume(signRequest(NostrSignerInternal(client), account.hexKey, "to-account"), relay)
-        delay(1_000)
+        delay(1.seconds)
         assertFalse(AmberDesktop.engine.pending.value.any { it.request.id == "to-account" })
         assertTrue(store.logs.value.none { it.message.contains("from $clientHex") })
     }

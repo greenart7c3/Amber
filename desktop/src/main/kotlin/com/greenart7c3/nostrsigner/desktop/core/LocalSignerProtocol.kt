@@ -64,7 +64,7 @@ object LocalSignerProtocol {
     /** A request mapped onto the NIP-46 shape the engine already understands. */
     data class Call(val type: SignerType, val method: String, val params: List<String>, val account: String?)
 
-    private val mapper get() = JacksonMapper.mapper
+    private val mapper = JacksonMapper.mapper
     private val nodes = JsonNodeFactory.instance
 
     fun handshake(): String = mapper.writeValueAsString(

@@ -3,7 +3,7 @@
 // catch block never reads. Run through the root `unusedCode` task.
 plugins {
     alias(libs.plugins.kotlinJvm)
-    alias(libs.plugins.gradle.ktlint) version libs.versions.ktlint.get()
+    alias(libs.plugins.gradle.ktlint)
     alias(libs.plugins.detekt)
 }
 

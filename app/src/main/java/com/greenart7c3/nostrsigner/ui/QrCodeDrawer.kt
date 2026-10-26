@@ -81,7 +81,7 @@ fun InnerQrCodeDrawer(
             val rowHeight = (size.width - QR_MARGIN_PX * 2f) / qrCode.matrix.height
             val columnWidth = (size.width - QR_MARGIN_PX * 2f) / qrCode.matrix.width
 
-            // Draw all of the finder patterns required by the QR spec. Calculate the ratio
+            // Draw all the finder patterns required by the QR spec. Calculate the ratio
             // of the number of rows/columns to the width and height
             drawQrCodeFinders(
                 sideLength = size.width,
@@ -188,10 +188,8 @@ fun DrawScope.drawAllQrCodeDataBits(
 const val FINDER_PATTERN_ROW_COUNT = 7
 private const val INTERIOR_EXTERIOR_SHAPE_RATIO = 3f / FINDER_PATTERN_ROW_COUNT
 private const val INTERIOR_EXTERIOR_OFFSET_RATIO = 2f / FINDER_PATTERN_ROW_COUNT
-private const val INTERIOR_EXTERIOR_SHAPE_CORNER_RADIUS = 0.12f
 private const val INTERIOR_BACKGROUND_EXTERIOR_SHAPE_RATIO = 5f / FINDER_PATTERN_ROW_COUNT
 private const val INTERIOR_BACKGROUND_EXTERIOR_OFFSET_RATIO = 1f / FINDER_PATTERN_ROW_COUNT
-private const val INTERIOR_BACKGROUND_EXTERIOR_SHAPE_CORNER_RADIUS = 0.5f
 
 /**
  *  A valid QR code has three finder patterns (top left, top right, bottom left).
@@ -215,7 +213,6 @@ internal fun DrawScope.drawQrCodeFinders(
         drawQrCodeFinder(
             topLeft = offset,
             finderPatternSize = finderPatternSize,
-            cornerRadius = CornerRadius.Zero,
             color = color,
         )
     }
@@ -227,7 +224,6 @@ internal fun DrawScope.drawQrCodeFinders(
 private fun DrawScope.drawQrCodeFinder(
     topLeft: Offset,
     finderPatternSize: Size,
-    cornerRadius: CornerRadius,
     color: Color,
 ) {
     drawPath(
@@ -242,7 +238,7 @@ private fun DrawScope.drawQrCodeFinder(
                         offset = topLeft,
                         size = finderPatternSize,
                     ),
-                    cornerRadius = cornerRadius,
+                    cornerRadius = CornerRadius.Zero,
                 ),
             )
 
@@ -260,7 +256,7 @@ private fun DrawScope.drawQrCodeFinder(
                         offset = topLeft + innerBackgroundOffset,
                         size = finderPatternSize * INTERIOR_BACKGROUND_EXTERIOR_SHAPE_RATIO,
                     ),
-                    cornerRadius = cornerRadius * INTERIOR_BACKGROUND_EXTERIOR_SHAPE_CORNER_RADIUS,
+                    cornerRadius = CornerRadius.Zero,
                 ),
             )
 
@@ -278,7 +274,7 @@ private fun DrawScope.drawQrCodeFinder(
                         offset = topLeft + innerRectOffset,
                         size = finderPatternSize * INTERIOR_EXTERIOR_SHAPE_RATIO,
                     ),
-                    cornerRadius = cornerRadius * INTERIOR_EXTERIOR_SHAPE_CORNER_RADIUS,
+                    cornerRadius = CornerRadius.Zero,
                 ),
             )
         },

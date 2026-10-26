@@ -70,8 +70,10 @@ object SignerProviderQuery {
      *   caller (e.g. NIP-46 relay requests).
      * @param operationUri identifies the operation to run, e.g. `content://<appId>.SIGN_EVENT`.
      * @param arguments the operation's input values; their meaning depends on
-     *   [operationUri] (e.g. for SIGN_EVENT: [0] = event json, [2] = npub). See callers.
+     *   [operationUri] (e.g. for SIGN_EVENT: [0] = event JSON, [2] = npub). See callers.
      */
+    // A ContentProvider query answers synchronously, so it blocks on the signer.
+    @Suppress("RunBlocking")
     fun query(
         context: Context,
         requesterId: String,
@@ -605,7 +607,7 @@ object SignerProviderQuery {
                     return localCursor
                 }
                 "content://$appId.PING" -> {
-                    val npub = if (arguments != null && arguments.isNotEmpty()) IntentUtils.parsePubKey(arguments[0]) else null
+                    val npub = if (!arguments.isNullOrEmpty()) IntentUtils.parsePubKey(arguments[0]) else null
                     val account = if (npub != null) {
                         LocalPreferences.loadFromEncryptedStorageSync(context, npub)
                     } else {

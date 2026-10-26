@@ -17,6 +17,7 @@ import com.vitorpamplona.quartz.nip65RelayList.AdvertisedRelayListEvent
 import com.vitorpamplona.quartz.utils.TimeUtils
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
@@ -153,8 +154,8 @@ object ProfileFetcher {
 
         val listener = object : RelayConnectionListener {
             override suspend fun onIncomingMessage(relay: IRelayClient, msgStr: String, msg: Message) {
-                when {
-                    msg is EventMessage && msg.subId == subId -> {
+                when (msg) {
+                    is EventMessage if msg.subId == subId -> {
                         val event = msg.event
                         if (event.verify() && matchesFilter(event, filter)) {
                             synchronized(this) {
@@ -163,7 +164,7 @@ object ProfileFetcher {
                         }
                     }
 
-                    msg is EoseMessage && msg.subId == subId -> {
+                    is EoseMessage if msg.subId == subId -> {
                         pending.remove(relay.url)
                         if (pending.isEmpty()) done.complete(Unit)
                     }
@@ -180,7 +181,7 @@ object ProfileFetcher {
         client.addConnectionListener(listener)
         try {
             client.subscribe(subId, relays.associateWith { listOf(filter) })
-            withTimeoutOrNull(EOSE_TIMEOUT_MS) { done.await() }
+            withTimeoutOrNull(EOSE_TIMEOUT_MS.milliseconds) { done.await() }
         } finally {
             runCatching { client.unsubscribe(subId) }
             client.removeConnectionListener(listener)

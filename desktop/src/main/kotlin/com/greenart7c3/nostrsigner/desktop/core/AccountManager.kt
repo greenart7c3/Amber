@@ -44,7 +44,7 @@ class DesktopAccount(
 
     fun nip49Encrypt(password: String): String = Nip49().encrypt(signer.keyPair.privKey!!.toHexKey(), password)
 
-    /** Zeroes the private key bytes; the account cannot sign afterwards. */
+    /** Zeroes the private key bytes; the account cannot sign afterward. */
     internal fun wipe() {
         signer.keyPair.privKey?.fill(0)
     }

@@ -179,7 +179,7 @@ class OkHttpWebSocket(
             // a later cancel() is silent too -- so the relay client kept believing it
             // was connected, with its REQs live, until OkHttp's 120s ping path finally
             // failed up to two intervals later. Answering completes the handshake and
-            // OkHttp reports onClosed at once, whether or not the relay still holds the
+            // OkHttp reports onClosed at once, whether the relay still holds the
             // TCP session open.
             //
             // Always 1000 rather than echoing `code`: close() validates the code it is

@@ -32,7 +32,11 @@ class SensitiveClipboardTest {
         override suspend fun getClipEntry(): ClipEntry? = manager.primaryClip?.let { ClipEntry(it) }
 
         override suspend fun setClipEntry(clipEntry: ClipEntry?) {
-            if (clipEntry == null) manager.clearPrimaryClip() else manager.setPrimaryClip(clipEntry.clipData)
+            if (clipEntry == null) {
+                manager.clearPrimaryClip()
+            } else {
+                manager.setPrimaryClip(clipEntry.clipData)
+            }
         }
     }
 
@@ -65,7 +69,7 @@ class SensitiveClipboardTest {
 
     @Test
     fun copiedSecretIsClearedWhileAppIsInBackground() = runBlocking {
-        clipboard.setSensitiveClip("", SECRET, 3.seconds)
+        clipboard.setSensitiveClip(SECRET, 3.seconds)
         Thread.sleep(8_000)
         assertNull(readClipboardText())
     }

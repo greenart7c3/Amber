@@ -3,9 +3,9 @@ import java.util.Properties
 
 plugins {
     alias(libs.plugins.androidApplication)
-    alias(libs.plugins.gradle.ktlint) version libs.versions.ktlint.get()
+    alias(libs.plugins.gradle.ktlint)
     alias(libs.plugins.detekt)
-    alias(libs.plugins.kotlin.ksp) version libs.versions.ksp.get()
+    alias(libs.plugins.kotlin.ksp)
     alias(libs.plugins.jetbrainsComposeCompiler)
 }
 
@@ -49,6 +49,8 @@ android {
     }
 
     androidResources {
+        // Still @Incubating in AGP.
+        @Suppress("UnstableApiUsage")
         localeFilters += listOf(
             "bn-rBD",
             "cs",
@@ -302,7 +304,7 @@ dependencies {
 
     // Load images from the web.
     implementation(libs.coil.compose)
-    // view gifs
+    // view GIFs
     implementation(libs.coil.gif)
     // view svgs
     implementation(libs.coil.svg)

@@ -122,7 +122,7 @@ fun SettingsScreen(account: DesktopAccount) {
             }
             SettingsSection(Strings.get("d_theme", language)) {
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    listOf<Pair<Boolean?, String>>(
+                    listOf(
                         null to Strings.get("d_theme_system", language),
                         false to Strings.get("d_theme_light", language),
                         true to Strings.get("d_theme_dark", language),
@@ -386,10 +386,10 @@ private fun TorSection() {
             FilterChip(
                 selected = settings.torMode == mode,
                 onClick = {
-                    when {
-                        mode == settings.torMode -> {}
+                    when (mode) {
+                        settings.torMode -> {}
                         // Like Android: confirm before traffic moves back to the clearnet.
-                        mode == TorMode.DISABLED -> confirmDisable = true
+                        TorMode.DISABLED -> confirmDisable = true
                         else -> applyMode(mode)
                     }
                 },

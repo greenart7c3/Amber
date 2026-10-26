@@ -140,7 +140,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
         }
 
         // First try to match the tagged key to a logged-in account (real pubkey)
-        var acc = LocalPreferences.loadFromEncryptedStorageSync(applicationContext, taggedKey.toNPub())
+        var acc = LocalPreferences.loadAccount(applicationContext, taggedKey.toNPub())
         var connectionPrivKey = ""
 
         if (acc != null) {
@@ -154,7 +154,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
             val taggedHex = taggedKey.pubKey
             val match = LocalKeyAccountIndex.lookup(taggedHex)
             if (match != null) {
-                val resolved = LocalPreferences.loadFromEncryptedStorageSync(applicationContext, match.npub)
+                val resolved = LocalPreferences.loadAccount(applicationContext, match.npub)
                 if (resolved != null) {
                     acc = resolved
                     connectionPrivKey = match.localPrivKey

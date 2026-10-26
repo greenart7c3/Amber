@@ -51,7 +51,7 @@ data class ApplicationEntity(
      * True once the user-chosen finite lifetime for this connection has
      * passed. `deleteAfter == 0` means no lifetime was set.
      */
-    fun isExpired(now: Long = TimeUtils.now()): Boolean = deleteAfter > 0 && deleteAfter <= now
+    fun isExpired(now: Long = TimeUtils.now()): Boolean = deleteAfter in 1..now
 
     companion object {
         fun empty() = ApplicationEntity(

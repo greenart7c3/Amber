@@ -13,12 +13,12 @@ The wrapper is adapted from Amethyst's `tools/arti-build`
 
 The libraries are built once with `build.sh` and committed; CI does not build Rust.
 
-| App | Path | Built with |
-|---|---|---|
+| App                           | Path                                                                      | Built with                                                 |
+| ----------------------------- | ------------------------------------------------------------------------- | ---------------------------------------------------------- |
 | Android (`free`, `benchmark`) | `app/src/tor/jniLibs/{arm64-v8a,armeabi-v7a,x86_64,x86}/libamber_arti.so` | `./build.sh android` (cargo-ndk, NDK pinned in `build.sh`) |
-| Desktop Linux | `desktop/appResources/linux-{x64,arm64}/libamber_arti.so` (glibc ≥ 2.28) | `./build.sh desktop` (cargo-zigbuild) |
-| Desktop Windows | `desktop/appResources/windows-x64/amber_arti.dll` | `./build.sh desktop` (cargo-zigbuild) |
-| Desktop macOS | `desktop/appResources/macos-{x64,arm64}/libamber_arti.dylib` | `./build.sh macos`, on a Mac |
+| Desktop Linux                 | `desktop/appResources/linux-{x64,arm64}/libamber_arti.so` (glibc ≥ 2.28)  | `./build.sh desktop` (cargo-zigbuild)                      |
+| Desktop Windows               | `desktop/appResources/windows-x64/amber_arti.dll`                         | `./build.sh desktop` (cargo-zigbuild)                      |
+| Desktop macOS                 | `desktop/appResources/macos-{x64,arm64}/libamber_arti.dylib`              | `./build.sh macos`, on a Mac                               |
 
 The Android ABIs must match `splits.abi` in `app/build.gradle.kts`. On the
 desktop, Compose ships the current OS's directory as app resources
@@ -83,13 +83,13 @@ first time it parses a consensus. The patch treats "no progress" like `None`
 
 ## JNI surface
 
-| Kotlin (`ArtiNative`) | Purpose |
-|---|---|
-| `initialize(dataDir)` | Create the Tor client (state + cache under `dataDir`) and start the directory download in the background |
-| `isBootstrapped()` / `bootstrapProgressPermille()` | Readiness and download progress, polled by `TorManager` |
+| Kotlin (`ArtiNative`)                                            | Purpose                                                                                                                                                                                                              |
+| ---------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `initialize(dataDir)`                                            | Create the Tor client (state + cache under `dataDir`) and start the directory download in the background                                                                                                             |
+| `isBootstrapped()` / `bootstrapProgressPermille()`               | Readiness and download progress, polled by `TorManager`                                                                                                                                                              |
 | `startSocksProxy(port, username, password)` / `stopSocksProxy()` | Bind / release the SOCKS5 listener; the client stays alive. The listener only accepts RFC 1929 username/password auth with the given per-listener secret, which `TorSocksAuthenticator` hands to Java's SOCKS client |
-| `destroy()` | Drop the client so the next `initialize` starts over (used by `restart`) |
-| `setLogCallback(cb)` / `getVersion()` | Logging into Amber's log and version string |
+| `destroy()`                                                      | Drop the client so the next `initialize` starts over (used by `restart`)                                                                                                                                             |
+| `setLogCallback(cb)` / `getVersion()`                            | Logging into Amber's log and version string                                                                                                                                                                          |
 
 The JNI symbol names are derived from the Kotlin package and class
 (`Java_com_greenart7c3_nostrsigner_tor_ArtiNative_*`), so the Android and

@@ -195,7 +195,7 @@ class Account(
         return NIP17Factory().createMessageNIP17(template, signer)
     }
 
-    suspend fun getNsec(): String {
+    fun getNsec(): String {
         requirePrivateKeyAccess()
         return signer.keyPair.privKey!!.toNsec()
     }
@@ -212,7 +212,7 @@ class Account(
             }
             didBackup = true
             Amber.instance.applicationIOScope.launch(Dispatchers.Main) {
-                clipboardManager.setSensitiveClip("", nsec)
+                clipboardManager.setSensitiveClip(nsec)
 
                 Toast.makeText(
                     Amber.instance,

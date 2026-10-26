@@ -1,18 +1,19 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
-// Top-level build file where you can add configuration options common to all sub-projects/modules.
+// Top-level build file where you can add configuration options common to all subprojects/modules.
 plugins {
     alias(libs.plugins.androidApplication) apply false
     alias(libs.plugins.androidLibrary) apply false
     alias(libs.plugins.serialization) apply false
-    alias(libs.plugins.kotlin.ksp) version libs.versions.ksp.get() apply false
-    alias(libs.plugins.gradle.ktlint) version libs.versions.ktlint.get() apply false
+    alias(libs.plugins.kotlin.ksp) apply false
+    alias(libs.plugins.gradle.ktlint) apply false
     alias(libs.plugins.detekt) apply false
     alias(libs.plugins.kotlinJvm) apply false
     alias(libs.plugins.jetbrainsCompose) apply false
 }
 
 tasks.register<Copy>("installGitHook") {
+    description = "Installs the pre-commit and pre-push hooks from git-hooks/."
     from(File(rootProject.rootDir, "git-hooks/pre-commit"))
     from(File(rootProject.rootDir, "git-hooks/pre-push"))
     into(File(rootProject.rootDir, ".git/hooks"))

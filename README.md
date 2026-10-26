@@ -19,7 +19,7 @@ Amber also runs on Windows, macOS and Linux as a NIP-46 signer built with Compos
 
 - [x] Offline
 - [x] Use nip-46 or make an addendum in nip-46
-- [x] Improve the ui (currently its showing a text with the raw json of the event)
+- [x] Improve the UI (currently it's showing a text with the raw JSON of the event)
 - [x] Check if we can use Amber to sign the events of web applications
 - [x] Change the sign button to just copy the signature of the event
 - [x] Use content provider to sign events in background when you checked the remember my choice option on android
@@ -204,6 +204,6 @@ Check [NIP 55](https://github.com/nostr-protocol/nips/blob/master/55.md) and [NI
 
 # Contributors
 
-<a align="center" href="https://github.com/greenart7c3/amber/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=greenart7c3/amber" />
+<a href="https://github.com/greenart7c3/amber/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=greenart7c3/amber" alt="Contributors" />
 </a>

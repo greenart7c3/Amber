@@ -592,8 +592,6 @@
     <string name="ask">Tanya</string>
     <string name="never">Tidak pernah</string>
     <string name="warning">Peringatan</string>
-    <string name="of_events">%1$s dari %2$s event</string>
-    <string name="see_details">Lihat detail</string>
     <string name="is_requiring_some_permissions_please_review_them">%1$s memerlukan beberapa izin, harap tinjau.</string>
     <string name="is_requiring_some_permissions_please_review_them2">Memerlukan beberapa izin, harap tinjau.</string>
     <plurals name="several_apps_are_requiring_some_permissions_please_review_them">

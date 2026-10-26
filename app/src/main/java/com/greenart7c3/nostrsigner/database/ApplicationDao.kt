@@ -159,7 +159,7 @@ interface ApplicationDao {
      * SIGN_PSBT, the V2 encrypt/decrypt types). Kind- or relay-scoped rows of
      * the same type are a different grant and never stand in for it. The
      * unique index treats NULL kinds as distinct, so duplicates can exist:
-     * an explicit rejection wins (fail safe), then the newest row, instead of
+     * an explicit rejection wins (fail-safe), then the newest row, instead of
      * whatever order SQLite happens to return.
      */
     @Query("SELECT * FROM applicationPermission WHERE pkKey = :key AND type = :type AND kind IS NULL AND relay = '' ORDER BY acceptable ASC, id DESC LIMIT 1")

@@ -50,6 +50,8 @@ import com.greenart7c3.nostrsigner.desktop.ui.amberIconPainter
 import com.greenart7c3.nostrsigner.desktop.ui.handleShortcut
 import com.greenart7c3.nostrsigner.desktop.ui.initialWindowSize
 import java.awt.Dimension
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -161,12 +163,12 @@ private object DesktopTray {
  * before the first window is created; needs
  * `--add-opens java.desktop/sun.awt.X11=ALL-UNNAMED`.
  */
-private fun setX11WindowClass(name: String) {
+private fun setX11WindowClass() {
     runCatching {
         val toolkit = java.awt.Toolkit.getDefaultToolkit()
         toolkit.javaClass.getDeclaredField("awtAppClassName").apply {
             isAccessible = true
-            set(toolkit, name)
+            set(toolkit, AppImageIntegration.WINDOW_CLASS)
         }
     }.onFailure { AmberLogger.e("Main", "could not set WM_CLASS", it) }
 }
@@ -175,7 +177,7 @@ fun main(args: Array<String>) {
     // First, so a crash anywhere below is saved for the report dialog.
     CrashReporter.install()
     // Packaged handler: the URI arrives as an argument. Dev handler
-    // (gradle): it arrives via the drop file (gradle cannot take it as an
+    // (Gradle): it arrives via the drop file (Gradle cannot take it as an
     // argument).
     val launchUri = UriLaunch.extract(args) ?: UriLaunch.readForwardedUri()
     // Single instance: a second launch hands its nostrconnect:// URI to the
@@ -226,7 +228,7 @@ fun main(args: Array<String>) {
         )
     }
 
-    if (DesktopTray.isLinux) setX11WindowClass(AppImageIntegration.WINDOW_CLASS)
+    if (DesktopTray.isLinux) setX11WindowClass()
 
     Session.boot()
 
@@ -262,7 +264,7 @@ fun main(args: Array<String>) {
             snapshotFlow { windowState.placement to windowState.size }
                 .drop(1)
                 .collectLatest { (placement, size) ->
-                    delay(500)
+                    delay(500.milliseconds)
                     SettingsStore.update {
                         if (placement == WindowPlacement.Floating) {
                             it.copy(windowMaximized = false, windowWidth = size.width.value.toInt(), windowHeight = size.height.value.toInt())
@@ -276,7 +278,7 @@ fun main(args: Array<String>) {
         // and connections whose "delete after" time has passed.
         LaunchedEffect(Unit) {
             while (true) {
-                delay(15_000)
+                delay(15.seconds)
                 AmberDesktop.engine.pruneExpired()
                 AmberDesktop.engine.pruneExpiredApplications()
             }

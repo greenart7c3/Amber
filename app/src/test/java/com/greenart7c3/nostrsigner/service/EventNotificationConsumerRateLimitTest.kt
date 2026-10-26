@@ -67,6 +67,7 @@ class EventNotificationConsumerRateLimitTest {
         every { AmberLog.d(any(), any<String>()) } returns Unit
         every { AmberLog.d(any(), any(), any()) } returns Unit
         every { LocalPreferences.loadFromEncryptedStorageSync(any(), any()) } returns account
+        coEvery { LocalPreferences.loadAccount(any(), any()) } returns account
         every { LocalPreferences.allSavedAccounts(any()) } returns emptyList()
         every { NotificationUtils.getOrCreateBunkerChannel(any()) } returns mockk(relaxed = true)
         every { NotificationUtils.getOrCreateErrorsChannel(any()) } returns mockk(relaxed = true)

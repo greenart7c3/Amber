@@ -252,8 +252,9 @@ class SignerProviderQueryTest {
         arguments = arrayOf("ciphertext", "cd".repeat(32), NPUB, kind.toString(), "scope"),
     )
 
-    private fun stubV3Grant(grantedKind: Int) {
-        val grant = decryptRow("NIP44_V3_DECRYPT", accept = true).copy(kind = grantedKind)
+    /** A remembered NIP-44 v3 decrypt grant for kind 30000. */
+    private fun stubV3Grant() {
+        val grant = decryptRow("NIP44_V3_DECRYPT", accept = true).copy(kind = 30_000)
         every { amber.getLogDatabase(any()) } returns mockk(relaxed = true)
         every { dao.getSignPolicy(REQUESTER) } returns null
         // The kind-agnostic lookup has no kind filter, so it finds the grant for any kind.
@@ -266,7 +267,7 @@ class SignerProviderQueryTest {
 
     @Test
     fun `a v3 grant for one kind does not let another kind be decrypted`() {
-        stubV3Grant(grantedKind = 30_000)
+        stubV3Grant()
         try {
             assertNull(queryV3Decrypt(kind = 1))
             coVerify(exactly = 0) { AmberUtils.encryptOrDecryptData(any(), any(), any(), any(), any(), any()) }
@@ -277,7 +278,7 @@ class SignerProviderQueryTest {
 
     @Test
     fun `a v3 grant still decrypts its own kind`() {
-        stubV3Grant(grantedKind = 30_000)
+        stubV3Grant()
         try {
             queryV3Decrypt(kind = 30_000)
             coVerify(exactly = 1) { AmberUtils.encryptOrDecryptData(any(), SignerType.NIP44_V3_DECRYPT, any(), any(), 30_000, "scope") }

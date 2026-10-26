@@ -42,9 +42,9 @@ It's always on: Amber starts the socket at launch.
 
 ## Where the socket is
 
-| Build | Path |
-|-------|------|
-| Release (installed app) | `~/.local/share/nostr/signer.sock` |
+| Build                            | Path                                     |
+| -------------------------------- | ---------------------------------------- |
+| Release (installed app)          | `~/.local/share/nostr/signer.sock`       |
 | Debug (`./gradlew :desktop:run`) | `~/.local/share/nostr/signer-debug.sock` |
 
 The path is the same on every OS. On Windows `~` is the user profile folder,
@@ -105,7 +105,7 @@ Each message is one JSON object on one line: UTF-8, ending in `\n`, at most
 
 **Hello.** The client's first line:
 
-```json
+```jsonl
 {"client":"nak"}
 {"client":"nak","secret":"<secret from an earlier approval>"}
 ```
@@ -118,12 +118,12 @@ client ("Local client").
 **Request:**
 
 ```json
-{"id":"<string or number>","method":"<method>","params":[...]}
+{"id":"<string or number>","method":"<method>","params":["<param>"]}
 ```
 
 **Response.** The `id` is echoed back as a string:
 
-```json
+```jsonl
 {"id":"1","result":"<value>","error":null}
 {"id":"1","result":"<hex pubkey>","secret":"<64 hex>","error":null}
 {"id":"1","result":null,"error":{"code":5,"message":"user rejected"}}
@@ -153,18 +153,18 @@ that got the tool approved.
 The optional `account` param is described in
 [Choosing the account](#choosing-the-account).
 
-| Method | Params | Result |
-|--------|--------|--------|
-| `get_public_key` | `[account?]` | hex pubkey; logs the tool in (see below) |
-| `sign_event` | `[event, account?]` | the signed event (object) |
-| `nip04_encrypt` | `[pubkey, plaintext, account?]` | ciphertext |
-| `nip04_decrypt` | `[pubkey, ciphertext, account?]` | plaintext |
-| `nip44_encrypt` | `[pubkey, plaintext, account?]` | ciphertext |
-| `nip44_decrypt` | `[pubkey, ciphertext, account?]` | plaintext |
-| `nip44v3_encrypt` | `[pubkey, kind, scope, base64 plaintext, account?]` | ciphertext |
-| `nip44v3_decrypt` | `[pubkey, kind, scope, ciphertext, account?]` | base64 plaintext |
-| `decrypt_zap_event` | `[zap request event, account?]` | the decrypted zap request (object) |
-| `ping` | `[account?]` | `"pong"` |
+| Method              | Params                                              | Result                                   |
+| ------------------- | --------------------------------------------------- | ---------------------------------------- |
+| `get_public_key`    | `[account?]`                                        | hex pubkey; logs the tool in (see below) |
+| `sign_event`        | `[event, account?]`                                 | the signed event (object)                |
+| `nip04_encrypt`     | `[pubkey, plaintext, account?]`                     | ciphertext                               |
+| `nip04_decrypt`     | `[pubkey, ciphertext, account?]`                    | plaintext                                |
+| `nip44_encrypt`     | `[pubkey, plaintext, account?]`                     | ciphertext                               |
+| `nip44_decrypt`     | `[pubkey, ciphertext, account?]`                    | plaintext                                |
+| `nip44v3_encrypt`   | `[pubkey, kind, scope, base64 plaintext, account?]` | ciphertext                               |
+| `nip44v3_decrypt`   | `[pubkey, kind, scope, ciphertext, account?]`       | base64 plaintext                         |
+| `decrypt_zap_event` | `[zap request event, account?]`                     | the decrypted zap request (object)       |
+| `ping`              | `[account?]`                                        | `"pong"`                                 |
 
 **Event params.** For `sign_event`, the event is an unsigned event object with
 `kind`, `content`, `tags` and `created_at`. A JSON string of the event is also
@@ -256,11 +256,11 @@ an agent told to "post this as soapbox" passes soapbox's npub.
 After login, a tool's requests are checked against its app's stored
 permissions, exactly like a NIP-46 connection:
 
-| Stored rule | What happens |
-|-------------|--------------|
-| allow (until a time, or always) | answered immediately |
-| deny | answered with error `5` |
-| none | an approval prompt in Incoming requests, with a notification if enabled |
+| Stored rule                     | What happens                                                            |
+| ------------------------------- | ----------------------------------------------------------------------- |
+| allow (until a time, or always) | answered immediately                                                    |
+| deny                            | answered with error `5`                                                 |
+| none                            | an approval prompt in Incoming requests, with a notification if enabled |
 
 Your choice can be remembered for a set time or always. Encryption and
 decryption grants are scoped by content type, as on Android. NIP-44 v3 grants
@@ -269,11 +269,11 @@ are scoped by context kind only, not by the scope string.
 **Pending requests** expire after 10 minutes. If one is dropped instead of
 being answered, the tool still gets a reply:
 
-| Reason | Error |
-|--------|-------|
-| Expired | `10` "request expired" |
-| Amber locked | `10` "signer locked" |
-| Account removed | `10` "account removed" |
+| Reason              | Error                                    |
+| ------------------- | ---------------------------------------- |
+| Expired             | `10` "request expired"                   |
+| Amber locked        | `10` "signer locked"                     |
+| Account removed     | `10` "account removed"                   |
 | Sending side closed | `10` "connection closed before approval" |
 
 If the tool disconnects, or closes its sending side, its pending prompts are
@@ -284,14 +284,14 @@ appear in the account log as `socket` / `local-signer`.
 
 ## Errors
 
-| Code | Meaning | Examples |
-|------|---------|----------|
-| 1 | Invalid request | not JSON, missing `id` or `method`, line over 1 MiB |
-| 2 | Method not supported | `sign_psbt`, `connect`, `list_public_keys` |
-| 3 | Invalid params | wrong param count, wrong types, a v3 kind that isn't a number, an event that can't be signed, ciphertext that can't be decrypted |
-| 4 | Key not found | unknown account param, no accounts in Amber |
-| 5 | User declined | rejected prompt, a remembered "deny" rule, a tool that isn't logged in |
-| 10 | Internal error | signer locked, request expired, account removed |
+| Code | Meaning              | Examples                                                                                                                         |
+| ---- | -------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| 1    | Invalid request      | not JSON, missing `id` or `method`, line over 1 MiB                                                                              |
+| 2    | Method not supported | `sign_psbt`, `connect`, `list_public_keys`                                                                                       |
+| 3    | Invalid params       | wrong param count, wrong types, a v3 kind that isn't a number, an event that can't be signed, ciphertext that can't be decrypted |
+| 4    | Key not found        | unknown account param, no accounts in Amber                                                                                      |
+| 5    | User declined        | rejected prompt, a remembered "deny" rule, a tool that isn't logged in                                                           |
+| 10   | Internal error       | signer locked, request expired, account removed                                                                                  |
 
 Malformed requests are reported first, before lock or account checks, so a
 typo gets code 1, 2 or 3 even while Amber is locked.
@@ -369,12 +369,12 @@ socat - UNIX-CONNECT:$HOME/.local/share/nostr/signer.sock
 
 ## How it works inside Amber
 
-| File | Role |
-|------|------|
+| File                          | Role                                                                                                                                                       |
+| ----------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `core/LocalSignerProtocol.kt` | Wire format: the method table, parsing params into Quartz NIP-46 `BunkerRequest`s, building responses (including the `secret` field), error codes. No I/O. |
-| `core/LocalSigner.kt` | The server: starting and stopping the socket, the peer check, one session per connection, login and secret handling, the per-request flow. |
-| `core/BunkerEngine.kt` | Shared with NIP-46: `computeResult` (sign, encrypt, decrypt, v3), `lookupPermission`, the `pending` queue, `approve`/`reject`, `dropPending`. |
-| `core/Models.kt` | `AppRecord.transport` (`"nip46"` or `"socket"`) and `socketSecretHash`. |
+| `core/LocalSigner.kt`         | The server: starting and stopping the socket, the peer check, one session per connection, login and secret handling, the per-request flow.                 |
+| `core/BunkerEngine.kt`        | Shared with NIP-46: `computeResult` (sign, encrypt, decrypt, v3), `lookupPermission`, the `pending` queue, `approve`/`reject`, `dropPending`.              |
+| `core/Models.kt`              | `AppRecord.transport` (`"nip46"` or `"socket"`) and `socketSecretHash`.                                                                                    |
 
 **Request flow.** For each line, `LocalSigner` does the following.
 

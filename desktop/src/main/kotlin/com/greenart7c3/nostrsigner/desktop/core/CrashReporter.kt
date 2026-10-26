@@ -151,7 +151,7 @@ object ReportAssembler {
         // or crypto exceptions quoting bad input) and file paths: redact key
         // material, long base64 blobs and the home directory, as on Android.
         appendLine("```")
-        appendThrowable(e, indent = "", includeMessages)
+        appendThrowable(e, includeMessages)
         appendLine("```")
     }
 
@@ -161,12 +161,12 @@ object ReportAssembler {
 
     // The whole cause chain (Android stops at the first cause); identity set
     // guards against cyclic causes.
-    private fun StringBuilder.appendThrowable(e: Throwable, indent: String, includeMessages: Boolean) {
+    private fun StringBuilder.appendThrowable(e: Throwable, includeMessages: Boolean) {
         val seen = Collections.newSetFromMap(IdentityHashMap<Throwable, Boolean>())
         var current: Throwable? = e
         var depth = 0
         while (current != null && seen.add(current)) {
-            val pad = indent + "    ".repeat(depth)
+            val pad = "    ".repeat(depth)
             if (depth > 0) {
                 appendLine()
                 append(pad.dropLast(4)).appendLine("Cause:")

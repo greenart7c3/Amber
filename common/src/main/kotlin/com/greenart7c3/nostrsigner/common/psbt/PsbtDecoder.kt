@@ -99,7 +99,7 @@ object PsbtDecoder {
     private const val BECH32M_CONST = 0x2bc830a3L
 
     private fun encodeSegwit(hrp: String, witver: Int, program: ByteArray): String? {
-        val program5 = convertBits(program, 8, 5, true) ?: return null
+        val program5 = toFiveBitGroups(program)
         val data = IntArray(program5.size + 1)
         data[0] = witver
         for (i in program5.indices) data[i + 1] = program5[i]
@@ -112,26 +112,20 @@ object PsbtDecoder {
         return sb.toString()
     }
 
-    private fun convertBits(data: ByteArray, fromBits: Int, toBits: Int, pad: Boolean): IntArray? {
+    /** Regroups [data] from 8-bit bytes into 5-bit values, zero-padding the last one (BIP-173). */
+    private fun toFiveBitGroups(data: ByteArray): IntArray {
         var acc = 0
         var bits = 0
-        val maxv = (1 shl toBits) - 1
         val result = mutableListOf<Int>()
         for (b in data) {
-            val v = b.toInt() and 0xff
-            if (v ushr fromBits != 0) return null
-            acc = (acc shl fromBits) or v
-            bits += fromBits
-            while (bits >= toBits) {
-                bits -= toBits
-                result.add((acc ushr bits) and maxv)
+            acc = (acc shl 8) or (b.toInt() and 0xff)
+            bits += 8
+            while (bits >= 5) {
+                bits -= 5
+                result.add((acc ushr bits) and 31)
             }
         }
-        if (pad) {
-            if (bits > 0) result.add((acc shl (toBits - bits)) and maxv)
-        } else if (bits >= fromBits || ((acc shl (toBits - bits)) and maxv) != 0) {
-            return null
-        }
+        if (bits > 0) result.add((acc shl (5 - bits)) and 31)
         return result.toIntArray()
     }
 

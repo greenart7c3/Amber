@@ -40,7 +40,7 @@ import java.net.URLDecoder
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.io.encoding.Base64
-import kotlin.io.encoding.ExperimentalEncodingApi
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -152,12 +152,12 @@ data class PendingBunkerRequest(
  * sender past [maxSenders] keys. Mirrored by the Android `SenderRateLimiter`.
  */
 internal class SenderRateLimiter(
-    private val capacity: Int = SenderRateLimiter.DEFAULT_CAPACITY,
-    private val windowSeconds: Long = SenderRateLimiter.DEFAULT_WINDOW_SECONDS,
+    private val capacity: Int = DEFAULT_CAPACITY,
+    private val windowSeconds: Long = DEFAULT_WINDOW_SECONDS,
     // Read in buckets' removeEldestEntry, which detekt doesn't see inside an object expression.
     @Suppress("UnusedPrivateProperty")
-    private val maxSenders: Int = SenderRateLimiter.DEFAULT_MAX_SENDERS,
-    private val aggregateCapacity: Int = SenderRateLimiter.DEFAULT_AGGREGATE_CAPACITY,
+    private val maxSenders: Int = DEFAULT_MAX_SENDERS,
+    private val aggregateCapacity: Int = DEFAULT_AGGREGATE_CAPACITY,
 ) {
     private class Bucket(var tokens: Double, var updatedAtMs: Long)
 
@@ -668,9 +668,9 @@ class BunkerEngine(
             store.addLog(relay.url, "bunker", "Rejecting request that cannot be fulfilled: ${e.message}")
             // Mirrors Android's validateNip44v3Request errors; kept generic so
             // a failed decrypt doesn't leak the ciphertext's embedded context.
-            val error = when {
-                type in nip44v3SignerTypes && kind == null -> "kind is required for nip44v3"
-                type == SignerType.NIP44_V3_DECRYPT -> "could not decrypt the message"
+            val error = when (type) {
+                in nip44v3SignerTypes if kind == null -> "kind is required for nip44v3"
+                SignerType.NIP44_V3_DECRYPT -> "could not decrypt the message"
                 else -> "could not process the request"
             }
             sendResponse(
@@ -784,7 +784,6 @@ class BunkerEngine(
 
     internal data class ComputedResult(val result: String, val preview: String)
 
-    @OptIn(ExperimentalEncodingApi::class)
     internal suspend fun computeResult(
         request: BunkerRequest,
         type: SignerType,
@@ -916,7 +915,7 @@ class BunkerEngine(
      * Mirrors `BunkerRequestUtils.sendResult`. Runs on the engine's
      * application scope (a SupervisorJob), never the caller's — approving
      * removes the request card from the UI, so a caller-scoped coroutine would
-     * be cancelled mid-flight (during the publish retry/backoff) before the
+     * be canceled mid-flight (during the publish retry/backoff) before the
      * relay response is ever sent. Returns the [Job] so callers/tests can
      * await completion if they need to.
      */
@@ -1292,7 +1291,7 @@ class BunkerEngine(
     ): Boolean {
         var currentDelay = initialDelayMs
         repeat(maxRetries) { attempt ->
-            delay(currentDelay)
+            delay(currentDelay.milliseconds)
             if (block()) return true
             if (attempt < maxRetries - 1) {
                 currentDelay = (currentDelay * 2).coerceAtMost(maxDelayMs)
@@ -1302,7 +1301,7 @@ class BunkerEngine(
     }
 
     /** Parses a `nostrconnect://` URI and queues it for approval. */
-    suspend fun addNostrConnect(uriString: String, account: DesktopAccount): String? {
+    fun addNostrConnect(uriString: String, account: DesktopAccount): String? {
         try {
             val data = uriString.trim().removePrefix("nostrconnect://")
             val split = data.split("?")

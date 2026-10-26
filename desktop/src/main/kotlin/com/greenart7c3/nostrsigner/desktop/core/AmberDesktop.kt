@@ -41,7 +41,6 @@ object AmberDesktop {
     fun newClient(): NostrClient = NostrClient(socketBuilder, applicationIOScope)
 
     // Authenticates with relays that request NIP-42 AUTH.
-    @Suppress("unused")
     private val authCoordinator by lazy {
         RelayAuthenticator(client, applicationIOScope) { _, event, _ ->
             accounts().map { it.signer.sign(event) }

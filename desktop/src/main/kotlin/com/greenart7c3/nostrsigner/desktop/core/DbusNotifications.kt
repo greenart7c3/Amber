@@ -37,7 +37,7 @@ interface FreedesktopNotifications : DBusInterface {
     class ActionInvoked(path: String, val id: UInt32, val actionKey: String) : DBusSignal(path, id, actionKey)
 
     @DBusMemberName("NotificationClosed")
-    class NotificationClosed(path: String, val id: UInt32, val reason: UInt32) : DBusSignal(path, id, reason)
+    class NotificationClosed(path: String, val id: UInt32, reason: UInt32) : DBusSignal(path, id, reason)
 }
 
 /**

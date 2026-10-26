@@ -333,7 +333,7 @@ object LocalPreferences {
 
     /**
      * Loads the settings in `Amber.onCreate`, on the main thread, before any
-     * activity, service or ContentProvider call can read them. Otherwise an
+     * activity, service or ContentProvider call can read them. Otherwise, an
      * approval screen or provider call on a cold start saw the data-class
      * defaults (an empty auth whitelist, rate limits on, Tor off…) until the
      * async [reloadApp] landed. They are plain SharedPreferences, like
@@ -505,7 +505,7 @@ object LocalPreferences {
     }
 
     /**
-     * Clears the preferences for a given npub, deletes the preferences xml file,
+     * Clears the preferences for a given npub, deletes the preferences XML file,
      * and switches the user to the first account in the list if it exists
      *
      * We need to use `commit()` to write changes to disk and release the file
@@ -513,7 +513,7 @@ object LocalPreferences {
      * condition and the file will probably not be deleted
      */
     @SuppressLint("ApplySharedPref")
-    fun updatePrefsForLogout(npub: String, context: Context): Boolean {
+    suspend fun updatePrefsForLogout(npub: String, context: Context): Boolean {
         // Defense-in-depth (GHSA-8844-q5vh-9j8f, I3): best-effort zeroize the
         // private-key byte array of the logging-out account before dropping
         // the reference from the cache, so the key material does not linger
@@ -535,7 +535,7 @@ object LocalPreferences {
         removeAccount(context, npub)
         deleteUserPreferenceFile(context, npub)
 
-        runBlocking { deleteUserDataStoreFile(context, npub) }
+        deleteUserDataStoreFile(context, npub)
 
         if (savedAccounts(context).isEmpty()) {
             val appPrefs = sharedPrefs(context)
@@ -636,6 +636,8 @@ object LocalPreferences {
         }
     }
 
+    // For synchronous callers (the ContentProvider); coroutines use loadAccount.
+    @Suppress("RunBlocking")
     fun loadFromEncryptedStorageSync(context: Context, npub: String? = null): Account? {
         // Defense-in-depth (GHSA-8844-q5vh-9j8f, I3): previously this warmed
         // the entire cache (runBlocking over all saved accounts) on any cold
@@ -651,6 +653,9 @@ object LocalPreferences {
         if (!containsAccount(context, targetNpub)) return null
         return runBlocking { loadFromEncryptedStorage(context, targetNpub) }
     }
+
+    /** [loadFromEncryptedStorageSync] for callers in a coroutine: [npub], or the current account when null. */
+    suspend fun loadAccount(context: Context, npub: String?): Account? = loadFromEncryptedStorage(context, npub ?: currentAccount(context) ?: return null)
 
     fun setAccountName(
         context: Context,
@@ -869,12 +874,10 @@ object LocalPreferences {
      */
     @Synchronized
     @SuppressLint("UseKtx") // needs commit()'s result, see commitActiveKeystoreAlias
-    fun replaceWebDavPasswordEncrypted(context: Context, expected: String, encryptedPassword: String): Boolean {
-        if (getWebDavPasswordEncrypted(context) != expected) return false
-        return sharedPrefs(context).edit()
+    fun replaceWebDavPasswordEncrypted(context: Context, expected: String, encryptedPassword: String): Boolean = getWebDavPasswordEncrypted(context) == expected &&
+        sharedPrefs(context).edit()
             .putString(SettingsKeys.WEBDAV_PASSWORD_ENCRYPTED.key, encryptedPassword)
             .commit()
-    }
 
     suspend fun saveWebDavSettings(
         context: Context,

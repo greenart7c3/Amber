@@ -22,6 +22,7 @@ import com.greenart7c3.nostrsigner.tor.ArtiNative
 import java.io.File
 import java.net.InetAddress
 import java.net.ServerSocket
+import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -222,7 +223,7 @@ object TorManager {
                 }
                 val permille = ArtiNative.bootstrapProgressPermille()
                 updateStatus(TorStatus.Connecting((permille / 10).coerceIn(0, 99)))
-                delay(BOOTSTRAP_POLL_MS)
+                delay(BOOTSTRAP_POLL_MS.milliseconds)
             }
         } catch (e: CancellationException) {
             throw e

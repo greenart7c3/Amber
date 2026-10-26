@@ -153,7 +153,7 @@ private fun WordField(
     imeAction: ImeAction,
 ) {
     // `remember(word)` resets this state synchronously whenever `word` changes.
-    // Initialising to `word` when it is already a complete BIP-39 entry
+    // Initializing to `word` when it is already a complete BIP-39 entry
     // suppresses the dropdown immediately — no async gap — covering both the
     // paste case (word set externally, onValueChange never called) and the
     // case where the user finishes typing a valid word.

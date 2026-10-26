@@ -45,13 +45,11 @@ class EncryptedBlobInterceptor(
         null
     }
 
-    private fun Response.decryptOrNullWithErrorCorrection(cipher: SymmetricCipher): Response? {
-        return decryptOrNull(cipher) ?: return if (cipher is AESGCM) {
-            // Some clients used the hex string of the nonce as the nonce bytes.
-            decryptOrNull(AESGCM(cipher.keyBytes, cipher.nonce.toHexKey().toByteArray(Charsets.UTF_8)))
-        } else {
-            null
-        }
+    private fun Response.decryptOrNullWithErrorCorrection(cipher: SymmetricCipher): Response? = decryptOrNull(cipher) ?: if (cipher is AESGCM) {
+        // Some clients used the hex string of the nonce as the nonce bytes.
+        decryptOrNull(AESGCM(cipher.keyBytes, cipher.nonce.toHexKey().toByteArray(Charsets.UTF_8)))
+    } else {
+        null
     }
 
     override fun intercept(chain: Interceptor.Chain): Response {

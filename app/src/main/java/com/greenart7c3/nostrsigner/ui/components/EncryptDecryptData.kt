@@ -131,12 +131,9 @@ fun EncryptDecryptData(
                                 stringResource(R.string.show_details),
                             )
                             if (showDetails) {
-                                EventDetailModal(
-                                    encryptedData.sealEncryptedDataKind.event.toEvent(),
-                                    {
-                                        showDetails = false
-                                    },
-                                )
+                                EventDetailModal(encryptedData.sealEncryptedDataKind.event.toEvent()) {
+                                    showDetails = false
+                                }
                             }
                         }
                     } else {
@@ -150,12 +147,9 @@ fun EncryptDecryptData(
                             stringResource(R.string.show_details),
                         )
                         if (showDetails) {
-                            EventDetailModal(
-                                encryptedData.event.toEvent(),
-                                {
-                                    showDetails = false
-                                },
-                            )
+                            EventDetailModal(encryptedData.event.toEvent()) {
+                                showDetails = false
+                            }
                         }
                     }
                 } else {

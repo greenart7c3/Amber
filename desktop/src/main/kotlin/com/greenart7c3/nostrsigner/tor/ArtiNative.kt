@@ -36,7 +36,7 @@ object ArtiNative {
     /** 1 when Tor can carry traffic, 0 while still bootstrapping, -1 without a client. */
     external fun isBootstrapped(): Int
 
-    /** Directory-download progress in permille (0..1000), or -1 without a client. */
+    /** Directory-download progress in per mille (0..1000), or -1 without a client. */
     external fun bootstrapProgressPermille(): Int
 
     /**

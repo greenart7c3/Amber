@@ -15,6 +15,8 @@ import com.vitorpamplona.quartz.nip01Core.signers.NostrSignerInternal
 import com.vitorpamplona.quartz.nip46RemoteSigner.NostrConnectEvent
 import com.vitorpamplona.quartz.utils.TimeUtils
 import java.util.UUID
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withTimeoutOrNull
 
@@ -117,8 +119,8 @@ object RelayChecker {
                 ),
             )
 
-            val canContinue = withTimeoutOrNull(30_000) {
-                while (!connected) delay(200)
+            val canContinue = withTimeoutOrNull(30.seconds) {
+                while (!connected) delay(200.milliseconds)
                 true
             }
             if (canContinue == null) return Outcome.CANNOT_CONNECT
@@ -129,14 +131,14 @@ object RelayChecker {
                 published = client.publishAndConfirm(signedEvent, setOf(relay))
                 if (!published) {
                     attempts++
-                    delay(1_000)
+                    delay(1.seconds)
                 }
             }
             if (!published) return Outcome.FILTER_FAILED
 
             var count = 0
             while (!filterResult && count < 10) {
-                delay(1_000)
+                delay(1.seconds)
                 count++
             }
             return if (filterResult) Outcome.OK else Outcome.FILTER_FAILED

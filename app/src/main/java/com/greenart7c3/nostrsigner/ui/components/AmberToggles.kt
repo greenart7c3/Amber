@@ -38,7 +38,7 @@ import kotlin.math.roundToInt
  * When the segments would become too narrow to fit their labels (many options on a
  * small screen) the row falls back to a fixed minimum segment width and becomes
  * horizontally scrollable, so every option stays usable. In that case a thin
- * scrollbar is shown below the row to signal that it scrolls. Otherwise the
+ * scrollbar is shown below the row to signal that it scrolls. Otherwise, the
  * segments stretch to fill the available width.
  */
 @Composable

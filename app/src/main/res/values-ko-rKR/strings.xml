@@ -592,8 +592,6 @@
     <string name="ask">확인</string>
     <string name="never">안 함</string>
     <string name="warning">경고</string>
-    <string name="of_events">%2$s 이벤트 중 %1$s</string>
-    <string name="see_details">자세히 보기</string>
     <string name="is_requiring_some_permissions_please_review_them">%1$s이(가) 일부 권한을 요청하고 있습니다. 검토해 주세요.</string>
     <string name="is_requiring_some_permissions_please_review_them2">일부 권한을 요청하고 있습니다. 검토해 주세요.</string>
     <plurals name="several_apps_are_requiring_some_permissions_please_review_them">

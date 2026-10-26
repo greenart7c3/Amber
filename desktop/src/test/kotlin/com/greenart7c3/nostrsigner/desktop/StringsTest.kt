@@ -82,7 +82,7 @@ class StringsTest {
             if (tag != "en") {
                 assertTrue(
                     "d_approve not translated for $tag (still English)",
-                    Strings.get("d_approve", tag) != "Approve" || tag == "en",
+                    Strings.get("d_approve", tag) != "Approve",
                 )
             }
         }

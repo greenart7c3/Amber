@@ -131,7 +131,7 @@ fun EventDetailModal(
                         onCopy = {
                             copyToClipboard(
                                 clipboard,
-                                event.tags.joinToString(separator = ", ") { "[${it.joinToString(separator = ", ") { tag -> "\"${tag}\"" }}]" },
+                                event.tags.joinToString(separator = ", ") { tag -> "[${tag.joinToString(separator = ", ") { value -> "\"${value}\"" }}]" },
                             )
                         },
                     )

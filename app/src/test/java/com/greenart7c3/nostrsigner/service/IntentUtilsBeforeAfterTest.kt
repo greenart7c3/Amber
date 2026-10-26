@@ -7,7 +7,7 @@ import kotlin.system.measureNanoTime
 import org.junit.Test
 
 /**
- * Head-to-head before/after comparison for every optimisation made to IntentUtils.
+ * Head-to-head before/after comparison for every optimization made to IntentUtils.
  *
  * Each test runs the OLD implementation and the NEW implementation back-to-back in
  * the same JVM process (including a warm-up pass) so the results are directly
@@ -120,7 +120,7 @@ class IntentUtilsBeforeAfterTest {
         // Warm up
         repeat(10_000) {
             oldParseSignerType(input)
-            IntentUtils.parseSignerTypePublic(input)
+            parseSignerTypePublic(input)
         }
 
         val beforeNs = measureNanoTime {
@@ -128,7 +128,7 @@ class IntentUtilsBeforeAfterTest {
         }
 
         val afterNs = measureNanoTime {
-            repeat(iterations) { IntentUtils.parseSignerTypePublic(input) }
+            repeat(iterations) { parseSignerTypePublic(input) }
         }
 
         printComparison("parseSignerType (sign_event)", iterations, beforeNs, afterNs)
@@ -143,7 +143,7 @@ class IntentUtilsBeforeAfterTest {
 
         repeat(10_000) {
             oldParseSignerType(input)
-            IntentUtils.parseSignerTypePublic(input)
+            parseSignerTypePublic(input)
         }
 
         val beforeNs = measureNanoTime {
@@ -151,7 +151,7 @@ class IntentUtilsBeforeAfterTest {
         }
 
         val afterNs = measureNanoTime {
-            repeat(iterations) { IntentUtils.parseSignerTypePublic(input) }
+            repeat(iterations) { parseSignerTypePublic(input) }
         }
 
         printComparison("parseSignerType (decrypt_zap_event, last branch)", iterations, beforeNs, afterNs)
@@ -382,7 +382,7 @@ class IntentUtilsBeforeAfterTest {
 }
 
 /** Expose the private parseSignerType for white-box testing. */
-fun IntentUtils.parseSignerTypePublic(type: String?) = when (type) {
+fun parseSignerTypePublic(type: String?) = when (type) {
     "sign_event" -> "SIGN_EVENT"
     "get_public_key" -> "GET_PUBLIC_KEY"
     "nip04_encrypt" -> "NIP04_ENCRYPT"

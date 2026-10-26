@@ -161,8 +161,9 @@ class DesktopCoreTest {
         )
     }
 
-    private fun pendingEntry(id: String, localKey: String, account: DesktopAccount) = PendingBunkerRequest(
-        request = BunkerRequest(id, "ping", emptyArray()),
+    /** A ping on [localKey]; every entry reuses the client-chosen request id "X". */
+    private fun pendingEntry(localKey: String, account: DesktopAccount) = PendingBunkerRequest(
+        request = BunkerRequest("X", "ping", emptyArray()),
         type = SignerType.PING,
         account = account,
         localKey = localKey,
@@ -174,13 +175,13 @@ class DesktopCoreTest {
         val engine = AmberDesktop.engine
         val accountA = AccountManager.addAccount(KeyPair(), name = "dedup-a")
         val accountB = AccountManager.addAccount(KeyPair(), name = "dedup-b")
-        val first = pendingEntry("X", "conn-one", accountA)
+        val first = pendingEntry("conn-one", accountA)
 
         engine.addPending(first)
         // Relay clients choose their own request ids: the same id arriving for
         // another connection (or account) must not be swallowed by the first.
-        engine.addPending(pendingEntry("X", "conn-two", accountA))
-        engine.addPending(pendingEntry("X", "conn-one", accountB))
+        engine.addPending(pendingEntry("conn-two", accountA))
+        engine.addPending(pendingEntry("conn-one", accountB))
         assertEquals(3, engine.pending.value.count { it.request.id == "X" })
 
         // The very same (account, connection, id) is still collapsed.
@@ -190,8 +191,8 @@ class DesktopCoreTest {
         // Removal matches the full key, not the bare client id.
         engine.removePending(first)
         assertEquals(2, engine.pending.value.count { it.request.id == "X" })
-        engine.removePending(pendingEntry("X", "conn-two", accountA))
-        engine.removePending(pendingEntry("X", "conn-one", accountB))
+        engine.removePending(pendingEntry("conn-two", accountA))
+        engine.removePending(pendingEntry("conn-one", accountB))
         assertEquals(0, engine.pending.value.count { it.request.id == "X" })
     }
 

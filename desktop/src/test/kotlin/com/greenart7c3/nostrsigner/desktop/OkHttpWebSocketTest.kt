@@ -212,7 +212,7 @@ class OkHttpWebSocketTest {
             assertEquals("the relay's status code is what gets reported", 1000, recorder.closedCode.get())
             assertNull("a clean handshake is not a failure", recorder.failure.get())
 
-            // The session already ended; the usual teardown afterwards must not report it twice.
+            // The session already ended; the usual teardown afterward must not report it twice.
             socket.disconnect()
             assertEquals("one terminal report per session", 1, recorder.closedCount.get())
             assertTrue("a closed socket needs a fresh dial", socket.needsReconnect())

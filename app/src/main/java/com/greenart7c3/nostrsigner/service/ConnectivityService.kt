@@ -23,6 +23,7 @@ import com.greenart7c3.nostrsigner.okhttp.HttpClientManager
 import java.util.Timer
 import java.util.TimerTask
 import kotlin.collections.set
+import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -132,7 +133,7 @@ class ConnectivityService : Service() {
     private fun scheduleRelayReset(reason: String) {
         pendingRelayReset?.cancel()
         pendingRelayReset = scope.launch {
-            delay(NETWORK_SETTLE_MS)
+            delay(NETWORK_SETTLE_MS.milliseconds)
             Amber.instance.resetRelayConnections(reason)
         }
     }

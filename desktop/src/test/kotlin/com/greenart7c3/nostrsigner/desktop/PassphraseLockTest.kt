@@ -37,7 +37,7 @@ private class MemorySecretStore(var value: String? = null) : PasswordStore {
     /** When set, only this many more reads succeed; later ones fail like a stumbling keyring. */
     var failLoadsAfter: Int? = null
 
-    /** When set, the next read signals [loading] and waits for [release]: holds an unlock mid-way. */
+    /** When set, the next read counts down the first latch and waits for the second: holds an unlock mid-way. */
     var pause: Pair<java.util.concurrent.CountDownLatch, java.util.concurrent.CountDownLatch>? = null
     override val description: String = "test keyring"
 
@@ -137,7 +137,7 @@ class PassphraseLockTest {
         assertEquals(secret, DesktopKeyStore.decrypt(cipher1, "test/secret"))
 
         // The unprotected copies are gone.
-        val dataDir = com.greenart7c3.nostrsigner.desktop.core.AppDirs.dataDir
+        val dataDir = AppDirs.dataDir
         assertFalse(File(dataDir, "amber.keystore").exists())
         assertFalse(File(dataDir, "keystore.pass").exists())
         assertTrue(File(dataDir, "master.key.enc").exists())
@@ -469,7 +469,7 @@ class PassphraseLockTest {
         // the wrapped blob exists AND an unprotected master-key copy is still
         // on disk. The startup cleanup must delete the unprotected copies and
         // keep the blob. Safe in any method order: it only fabricates state
-        // that was not there and restores it afterwards.
+        // that was not there and restores it afterward.
         val dataDir = AppDirs.dataDir
         val blob = File(dataDir, "master.key.enc")
         val blobExisted = blob.exists()

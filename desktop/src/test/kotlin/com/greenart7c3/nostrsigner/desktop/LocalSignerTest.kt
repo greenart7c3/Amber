@@ -28,6 +28,7 @@ import java.nio.file.Path
 import java.util.UUID
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.TimeUnit
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
@@ -108,7 +109,7 @@ class LocalSignerTest {
 
     private fun uniqueName() = "cli-${UUID.randomUUID().toString().take(6)}"
 
-    private suspend fun awaitPending(type: SignerType, appName: String): PendingBunkerRequest = withTimeout(10_000) {
+    private suspend fun awaitPending(type: SignerType, appName: String): PendingBunkerRequest = withTimeout(10.seconds) {
         AmberDesktop.engine.pending.first { list -> list.any { it.type == type && it.appName == appName } }
             .first { it.type == type && it.appName == appName }
     }
@@ -317,7 +318,7 @@ class LocalSignerTest {
         c.call("pk", "get_public_key", account.hexKey)
         c.call("bad", "no_such_method")
         c.channel.shutdownOutput()
-        val replies = listOf(c.reply(), c.reply()).associate { it.get("id").asText() to it }
+        val replies = listOf(c.reply(), c.reply()).associateBy { it.get("id").asText() }
         assertEquals(account.hexKey, replies.getValue("pk").get("result").asText())
         assertEquals(LocalSignerProtocol.METHOD_NOT_SUPPORTED, replies.getValue("bad").get("error").get("code").asInt())
     }
@@ -334,7 +335,7 @@ class LocalSignerTest {
         awaitPending(SignerType.SIGN_EVENT, name)
         val kept = awaitPending(SignerType.SIGN_EVENT, otherName)
         c.close()
-        withTimeout(10_000) { AmberDesktop.engine.pending.first { list -> list.none { it.appName == name } } }
+        withTimeout(10.seconds) { AmberDesktop.engine.pending.first { list -> list.none { it.appName == name } } }
         assertTrue("other clients' prompts stay", kept in AmberDesktop.engine.pending.value)
         AmberDesktop.engine.approve(kept, RememberType.NEVER).join()
         assertEquals("o", other.reply().get("id").asText())

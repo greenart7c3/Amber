@@ -114,7 +114,7 @@ object BunkerRequestUtils {
      *
      * A nostrconnect:// client listens only on the relays named in its URI, so those
      * always win, merged with any relays already saved for an app with the same key.
-     * Otherwise a saved app keeps its relays. A brand-new relay-delivered request
+     * Otherwise, a saved app keeps its relays. A brand-new relay-delivered request
      * falls back to the default relays: it carries just the single relay that
      * delivered the event, which may be a write-restricted indexer/profile relay.
      */
@@ -573,7 +573,7 @@ object BunkerRequestUtils {
             // be picked up by the 30-second `ConnectivityService` timer — a
             // window in which the pool could idle-disconnect the relay and
             // lose any RPC published by the client in the meantime.
-            if (type == SignerType.CONNECT || didChangeRelays) {
+            if (type == SignerType.CONNECT) {
                 Amber.instance.checkForNewRelaysAndUpdateAllFilters(didChangeRelays)
             }
             Amber.instance.client.connect()

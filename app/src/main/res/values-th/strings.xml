@@ -21,17 +21,14 @@
     <string name="accept">ยอมรับ</string>
     <string name="decrypt_zap_event">ถอดรหัสอีเวนต์ zap</string>
     <string name="show_details">แสดงรายละเอียด</string>
-    <string name="copy_raw_json">Raw json</string>
     <string name="add_new_account">เพิ่มบัญชีใหม่</string>
     <string name="select_account">เลือกบัญชี</string>
     <string name="active_account">บัญชีที่ใช้งานอยู่</string>
     <string name="edit_name">แก้ไขชื่อ</string>
     <string name="copy">"คัดลอก "</string>
-    <string name="data_copied_to_the_clipboard">คัดลอกข้อมูลไปยังคลิปบอร์ดแล้ว</string>
     <string name="connect_app">เชื่อมต่อแอป</string>
     <string name="event_copied_to_the_clipboard">คัดลอกอีเวนต์ไปยังคลิปบอร์ดแล้ว</string>
     <string name="select_deselect_all">เลือก/ยกเลิกการเลือกทั้งหมด</string>
-    <string name="decrypt_content">ถอดรหัสเนื้อหา</string>
     <string name="support_development">สนับสนุนการพัฒนา</string>
     <string name="source_code">ซอร์สโค้ด</string>
     <string name="show_qr_code">แสดง QR Code</string>

@@ -21,6 +21,42 @@ tasks.register<Copy>("installGitHook") {
     }
 }
 
+// Non-private declarations nothing references and unused catch parameters,
+// across every module's sources (tools/unused-code): detekt sees one file at a
+// time, so it can only report private code.
+val unusedCodeTool by configurations.creating
+
+dependencies {
+    unusedCodeTool(project(":unused-code"))
+}
+
+val unusedCodeModules = listOf("app", "common", "desktop", "tools/unused-code")
+
+// Identifiers the JNI side calls by name (ArtiLogCallback.onLogLine).
+val unusedCodeTokenDirs = listOf("tools/arti/src")
+
+val unusedCode = tasks.register<JavaExec>("unusedCode") {
+    group = "verification"
+    description = "Fails on non-private declarations nothing references and on unused catch parameters."
+    classpath = unusedCodeTool
+    mainClass.set("com.greenart7c3.nostrsigner.tools.unused.MainKt")
+    val root = rootDir
+    args(listOf(root.absolutePath) + unusedCodeModules + "--" + unusedCodeTokenDirs)
+    inputs.files(
+        (unusedCodeModules + unusedCodeTokenDirs).map { dir ->
+            fileTree(dir) {
+                include("**/*.kt", "**/*.xml", "**/*.pro", "**/*.kts", "**/*.rs")
+                exclude("**/build/**")
+            }
+        },
+    ).withPropertyName("sources").withPathSensitivity(PathSensitivity.RELATIVE)
+    val marker = layout.buildDirectory.file("unused-code/ok")
+    outputs.file(marker).withPropertyName("marker")
+    doLast {
+        marker.get().asFile.writeText("")
+    }
+}
+
 // Unused code (config/detekt/detekt.yml) in every flavor's sources and tests.
 // These are detekt's type-resolving tasks: the plain `detekt` task can't
 // resolve types and misses unused variables, properties and functions.
@@ -37,7 +73,10 @@ tasks.register("detektAll") {
         ":common:detektTest",
         ":desktop:detektMain",
         ":desktop:detektTest",
+        ":unused-code:detektMain",
+        ":unused-code:detektTest",
     )
+    dependsOn(unusedCode)
 }
 
 project(":app") {

@@ -80,7 +80,6 @@ private enum class SettingsKeys(val key: String) {
     WEBDAV_USERNAME("webdav_username"),
     WEBDAV_PASSWORD_ENCRYPTED("webdav_password_encrypted"),
     WEBDAV_FILENAME("webdav_filename"),
-    GDRIVE_FOLDER_URI("gdrive_folder_uri"),
     RATE_LIMIT_ENABLED("rate_limit_enabled"),
     RATE_LIMIT_MAX_PER_WINDOW("rate_limit_max_per_window"),
     RATE_LIMIT_WINDOW_SECONDS("rate_limit_window_seconds"),
@@ -672,12 +671,6 @@ object LocalPreferences {
         }
     }
 
-    fun getProfileUrl(context: Context, npub: String): String {
-        sharedPrefs(context, npub).apply {
-            return getString(PrefKeys.PROFILE_URL.key, "") ?: ""
-        }
-    }
-
     fun updateProxy(
         context: Context,
         useProxy: Boolean,
@@ -850,8 +843,6 @@ object LocalPreferences {
 
     fun getWebDavUsername(context: Context): String = sharedPrefs(context).getString(SettingsKeys.WEBDAV_USERNAME.key, "") ?: ""
 
-    fun getWebDavFilename(context: Context): String = sharedPrefs(context).getString(SettingsKeys.WEBDAV_FILENAME.key, "amber_backup.txt") ?: "amber_backup.txt"
-
     suspend fun getWebDavPassword(context: Context): String {
         val encrypted = getWebDavPasswordEncrypted(context)
         return if (encrypted.isBlank()) {
@@ -859,7 +850,7 @@ object LocalPreferences {
         } else {
             try {
                 SecureCryptoHelper.decrypt(encrypted)
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 ""
             }
         }
@@ -900,15 +891,6 @@ object LocalPreferences {
                 putString(SettingsKeys.WEBDAV_PASSWORD_ENCRYPTED.key, encryptedPassword)
                 putString(SettingsKeys.WEBDAV_FILENAME.key, fileName)
             }
-        }
-    }
-
-    // Google Drive folder URI (persisted SAF permission)
-    fun getGdriveFolderUri(context: Context): String = sharedPrefs(context).getString(SettingsKeys.GDRIVE_FOLDER_URI.key, "") ?: ""
-
-    fun saveGdriveFolderUri(context: Context, uri: String) {
-        sharedPrefs(context).edit {
-            apply { putString(SettingsKeys.GDRIVE_FOLDER_URI.key, uri) }
         }
     }
 

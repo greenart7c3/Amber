@@ -167,7 +167,7 @@ object LocalSigner {
         while (channel.isOpen) {
             val client = try {
                 channel.accept()
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 break
             }
             if (!isSameUser(client)) {
@@ -262,7 +262,7 @@ object LocalSigner {
             session.inputClosed = true
             AmberDesktop.engine.dropPending(CLOSED_BEFORE_APPROVAL, session::owns)
             runBlocking { inFlight.joinAll() }
-        } catch (e: LineTooLongException) {
+        } catch (_: LineTooLongException) {
             session.trySend(LocalSignerProtocol.failure("", LocalSignerProtocol.INVALID_REQUEST, "line too long"))
         } catch (e: Exception) {
             AmberLogger.d("LocalSigner", "Client ${session.id} ended: ${e.message}")

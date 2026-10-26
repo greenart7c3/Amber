@@ -11,6 +11,7 @@ on:
     paths: &desktop-paths
       - 'desktop/**'
       - 'common/**'
+      - 'tools/unused-code/**'
       - 'gradle/**'
       - '*.gradle.kts'
       - 'gradle.properties'
@@ -71,7 +72,7 @@ jobs:
         run: touch keystore.properties
 
       - name: Linter (gradle)
-        run: ./gradlew :common:ktlintCheck :common:detektMain :common:detektTest :desktop:ktlintCheck :desktop:detektMain :desktop:detektTest --no-daemon
+        run: ./gradlew :common:ktlintCheck :common:detektMain :common:detektTest :desktop:ktlintCheck :desktop:detektMain :desktop:detektTest :unusedCode --no-daemon
 
   build:
     name: build (${{ matrix.name }})

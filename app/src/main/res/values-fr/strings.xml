@@ -26,17 +26,14 @@
     <string name="accept">Accepter</string>
     <string name="decrypt_zap_event">déchiffrer l\'évènement zap</string>
     <string name="show_details">Afficher les détails</string>
-    <string name="copy_raw_json">JSON brut</string>
     <string name="add_new_account">Ajouter un nouveau compte</string>
     <string name="select_account">Sélectionner un compte</string>
     <string name="active_account">Compte actif</string>
     <string name="edit_name">Modifier le nom</string>
     <string name="copy">"Copier"</string>
-    <string name="data_copied_to_the_clipboard">Données copiées dans le presse-papiers</string>
     <string name="connect_app">Connecter l\'application</string>
     <string name="event_copied_to_the_clipboard">Évènement copié dans le presse-papiers</string>
     <string name="select_deselect_all">Tout sélectionner / désélectionner</string>
-    <string name="decrypt_content">Déchiffrer le contenu</string>
     <string name="support_development">Soutenir le développement</string>
     <string name="source_code">Code source</string>
     <string name="show_qr_code">Afficher le QR code</string>

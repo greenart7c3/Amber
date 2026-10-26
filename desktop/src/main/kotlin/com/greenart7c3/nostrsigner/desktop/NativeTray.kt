@@ -228,7 +228,7 @@ class NativeTray private constructor(
             return try {
                 executor.submit(Callable { create(iconStream, tooltip, openLabel, lockLabel, quitLabel, onToggle, onLock, onQuit) })
                     .get(timeoutMs, TimeUnit.MILLISECONDS)
-            } catch (e: TimeoutException) {
+            } catch (_: TimeoutException) {
                 AmberLogger.i("NativeTray", "Tray init did not finish in ${timeoutMs}ms; continuing without it")
                 null
             } catch (e: Exception) {

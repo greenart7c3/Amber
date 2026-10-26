@@ -78,19 +78,8 @@ interface HistoryDao {
     @Query("SELECT COUNT(*) FROM history WHERE pkKey = :pk AND time >= :sinceSeconds AND accepted = 0")
     suspend fun countRejectedSince(pk: String, sinceSeconds: Long): Long
 
-    @Query("SELECT COUNT(*) FROM history")
-    suspend fun getCount(): Long
-
     @Query("DELETE FROM history WHERE id IN (SELECT id FROM history ORDER BY time ASC LIMIT :count)")
     suspend fun deleteOldestHistory(count: Int): Int
-
-    @Query("SELECT COUNT(*) FROM history WHERE time < :time")
-    @Transaction
-    suspend fun countOldHistory(time: Long): Long
-
-    @Query("SELECT * FROM history WHERE time < :time LIMIT 100")
-    @Transaction
-    suspend fun getOldHistory(time: Long): List<HistoryEntity>
 
     @Query("DELETE FROM history WHERE time < :time")
     @Transaction

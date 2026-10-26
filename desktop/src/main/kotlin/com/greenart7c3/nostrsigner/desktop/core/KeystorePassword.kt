@@ -47,7 +47,7 @@ class OsCredentialStore(
 
     override fun load(): String? = try {
         keyring?.getPassword(service, account)
-    } catch (e: PasswordAccessException) {
+    } catch (_: PasswordAccessException) {
         // Thrown both for "no entry" and "backend broken"; either way there is
         // nothing usable here.
         null

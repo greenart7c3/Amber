@@ -303,10 +303,6 @@ class AmberRelayStat(
         sent++
     }
 
-    fun addReceived() {
-        received++
-    }
-
     fun addFailed() {
         failed++
     }

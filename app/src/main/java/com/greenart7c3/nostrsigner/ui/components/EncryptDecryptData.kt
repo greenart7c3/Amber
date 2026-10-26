@@ -248,11 +248,6 @@ enum class DecryptTypeScope {
     ALL,
 }
 
-data class TagItem(
-    val name: String,
-    val values: List<String>,
-)
-
 @Composable
 fun BunkerEncryptDecryptData(
     modifier: Modifier,

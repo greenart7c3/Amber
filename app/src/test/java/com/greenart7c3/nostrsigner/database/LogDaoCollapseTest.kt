@@ -34,21 +34,13 @@ class LogDaoCollapseTest {
 
         override fun getLogsPaging(): PagingSource<Int, LogEntity> = throw NotImplementedError()
 
-        override fun getLogsByUrl(url: String): Flow<List<LogEntity>> = throw NotImplementedError()
-
         override fun getLogsByUrlPaging(url: String): PagingSource<Int, LogEntity> = throw NotImplementedError()
-
-        override suspend fun getCount(): Long = rows.size.toLong()
 
         override suspend fun deleteOldestLogs(count: Int): Int = throw NotImplementedError()
 
         override suspend fun clearLogs() = rows.clear()
 
         override suspend fun deleteOldLog(time: Long): Int = throw NotImplementedError()
-
-        override suspend fun deleteLog(logEntity: LogEntity) {
-            rows.removeAll { it.id == logEntity.id }
-        }
     }
 
     private fun log(time: Long, message: String = "Connected", url: String = "wss://relay.example/") = LogEntity(0, url, "onConnected", message, time)

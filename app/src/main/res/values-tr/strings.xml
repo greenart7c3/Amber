@@ -26,17 +26,14 @@
     <string name="accept">Kabul et</string>
     <string name="decrypt_zap_event">Zap etkinliği şifresini çözme</string>
     <string name="show_details">Ayrıntıları Göster</string>
-    <string name="copy_raw_json">Ham JSON\'u kopyala</string>
     <string name="add_new_account">Yeni Hesap Ekle</string>
     <string name="select_account">Hesap Seç</string>
     <string name="active_account">Aktif Hesap</string>
     <string name="edit_name">İsmi düzenle</string>
     <string name="copy">"Kopyala "</string>
-    <string name="data_copied_to_the_clipboard">Veri panoya kopyalandı</string>
     <string name="connect_app">Uygulamayı bağla</string>
     <string name="event_copied_to_the_clipboard">Etkinlik panoya kopyalandı</string>
     <string name="select_deselect_all">Tümünü Seç/Seçimi Kaldır</string>
-    <string name="decrypt_content">İçeriğin şifresini çöz</string>
     <string name="support_development">Geliştirmeyi destekle</string>
     <string name="source_code">Kaynak kodu</string>
     <string name="show_qr_code">QR Kodu Göster</string>

@@ -21,17 +21,14 @@
     <string name="accept">承認</string>
     <string name="decrypt_zap_event">zap イベントを復号</string>
     <string name="show_details">詳細を表示</string>
-    <string name="copy_raw_json">生の JSON</string>
     <string name="add_new_account">アカウントを追加</string>
     <string name="select_account">アカウントを選択</string>
     <string name="active_account">アクティブなアカウント</string>
     <string name="edit_name">名前を編集</string>
     <string name="copy">"コピー "</string>
-    <string name="data_copied_to_the_clipboard">データをクリップボードにコピーしました</string>
     <string name="connect_app">アプリを接続</string>
     <string name="event_copied_to_the_clipboard">イベントをクリップボードにコピーしました</string>
     <string name="select_deselect_all">すべて選択／選択解除</string>
-    <string name="decrypt_content">コンテンツを復号</string>
     <string name="support_development">開発を支援</string>
     <string name="source_code">ソースコード</string>
     <string name="show_qr_code">QR コードを表示</string>

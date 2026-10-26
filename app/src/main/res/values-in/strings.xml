@@ -27,17 +27,14 @@
     <string name="accept">Terima</string>
     <string name="decrypt_zap_event">dekripsi event zap</string>
     <string name="show_details">Tampilkan Detail</string>
-    <string name="copy_raw_json">Json mentah</string>
     <string name="add_new_account">Tambah Akun Baru</string>
     <string name="select_account">Pilih Akun</string>
     <string name="active_account">Akun Aktif</string>
     <string name="edit_name">Edit nama</string>
     <string name="copy">"Salin "</string>
-    <string name="data_copied_to_the_clipboard">Data disalin ke clipboard</string>
     <string name="connect_app">Hubungkan aplikasi</string>
     <string name="event_copied_to_the_clipboard">Event disalin ke clipboard</string>
     <string name="select_deselect_all">Pilih/Batalkan pilihan semua</string>
-    <string name="decrypt_content">Dekripsi konten</string>
     <string name="support_development">Dukung pengembangan</string>
     <string name="source_code">Kode sumber</string>
     <string name="show_qr_code">Tampilkan Kode QR</string>

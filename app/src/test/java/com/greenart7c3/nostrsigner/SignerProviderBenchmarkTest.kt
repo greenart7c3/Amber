@@ -189,7 +189,7 @@ class SignerProviderBenchmarkTest {
 
         fun extractHost(url: String): String = try {
             URI(url).host ?: url
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             url
         }
 
@@ -259,7 +259,7 @@ class SignerProviderBenchmarkTest {
 
         fun extractHost(url: String) = try {
             URI(url).host ?: url
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             url
         }
 

@@ -77,7 +77,7 @@ object LocalSignerProtocol {
     private fun readObject(line: String): ObjectNode {
         val node = try {
             mapper.readTree(line)
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             throw RpcException(INVALID_REQUEST, "invalid JSON")
         }
         return node as? ObjectNode ?: throw RpcException(INVALID_REQUEST, "expected a JSON object")
@@ -156,7 +156,7 @@ object LocalSignerProtocol {
         }
         return try {
             mapper.readValue(mapper.writeValueAsString(json), BunkerRequest::class.java)
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             throw RpcException(INVALID_PARAMS, "invalid params for ${call.method}")
         }
     }

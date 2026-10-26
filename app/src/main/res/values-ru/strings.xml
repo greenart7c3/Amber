@@ -27,17 +27,14 @@
     <string name="accept">Принять</string>
     <string name="decrypt_zap_event">расшифровать zap-событие</string>
     <string name="show_details">Показать подробности</string>
-    <string name="copy_raw_json">Исходный JSON</string>
     <string name="add_new_account">Добавить новый аккаунт</string>
     <string name="select_account">Выбрать аккаунт</string>
     <string name="active_account">Активный аккаунт</string>
     <string name="edit_name">Изменить имя</string>
     <string name="copy">"Копировать "</string>
-    <string name="data_copied_to_the_clipboard">Данные скопированы в буфер обмена</string>
     <string name="connect_app">Подключить приложение</string>
     <string name="event_copied_to_the_clipboard">Событие скопировано в буфер обмена</string>
     <string name="select_deselect_all">Выбрать/Снять выбор со всех</string>
-    <string name="decrypt_content">Расшифровать содержимое</string>
     <string name="support_development">Поддержать разработку</string>
     <string name="source_code">Исходный код</string>
     <string name="show_qr_code">Показать QR-код</string>

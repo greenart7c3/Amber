@@ -45,7 +45,6 @@ class NotifierButtonsTest {
             return UInt32(7)
         }
 
-        override fun closeNotification(id: UInt32) = Unit
         override fun getObjectPath() = "/org/freedesktop/Notifications"
     }
 

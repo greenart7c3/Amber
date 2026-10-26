@@ -49,17 +49,14 @@
     <string name="accept">Accept</string>
     <string name="decrypt_zap_event">decrypt zap event</string>
     <string name="show_details">Show Details</string>
-    <string name="copy_raw_json">Raw json</string>
     <string name="add_new_account">Add New Account</string>
     <string name="select_account">Select Account</string>
     <string name="active_account">Active Account</string>
     <string name="edit_name">Edit name</string>
     <string name="copy">"Copy "</string>
-    <string name="data_copied_to_the_clipboard">Data copied to the clipboard</string>
     <string name="connect_app">Connect app</string>
     <string name="event_copied_to_the_clipboard">Event copied to the clipboard</string>
     <string name="select_deselect_all">Select/Deselect all</string>
-    <string name="decrypt_content">Decrypt content</string>
     <string name="support_development_uri" translatable="false">https://greenart7c3.com</string>
     <string name="support_development">Support development</string>
     <string name="source_code">Source code</string>

@@ -33,9 +33,6 @@ interface FreedesktopNotifications : DBusInterface {
         expireTimeout: Int,
     ): UInt32
 
-    @DBusMemberName("CloseNotification")
-    fun closeNotification(id: UInt32)
-
     @DBusMemberName("ActionInvoked")
     class ActionInvoked(path: String, val id: UInt32, val actionKey: String) : DBusSignal(path, id, actionKey)
 

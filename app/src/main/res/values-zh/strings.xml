@@ -26,17 +26,14 @@
     <string name="accept">接受</string>
     <string name="decrypt_zap_event">解密打闪事件</string>
     <string name="show_details">显示详情</string>
-    <string name="copy_raw_json">原始 JSON</string>
     <string name="add_new_account">添加新账户</string>
     <string name="select_account">选择账户</string>
     <string name="active_account">激活账户</string>
     <string name="edit_name">编辑名称</string>
     <string name="copy">"复制"</string>
-    <string name="data_copied_to_the_clipboard">数据已复制到剪贴版</string>
     <string name="connect_app">连接应用</string>
     <string name="event_copied_to_the_clipboard">事件已复制到剪贴板</string>
     <string name="select_deselect_all">全选 / 反选全部</string>
-    <string name="decrypt_content">解密内容</string>
     <string name="support_development">支持开发</string>
     <string name="source_code">源代码</string>
     <string name="show_qr_code">显示二维码</string>

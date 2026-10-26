@@ -1463,8 +1463,6 @@ class BunkerEngine(
             "sign_psbt" -> listOf(SignerType.SIGN_PSBT.toString())
             else -> listOf(type.uppercase())
         }
-
-        fun normalizePermissionType(type: String): String = expandPermissionTypes(type).first()
     }
 }
 

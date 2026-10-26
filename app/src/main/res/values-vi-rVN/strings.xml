@@ -21,17 +21,14 @@
     <string name="accept">Chấp nhận</string>
     <string name="decrypt_zap_event">giải mã sự kiện zap</string>
     <string name="show_details">Hiển Thị Chi Tiết</string>
-    <string name="copy_raw_json">JSON thô</string>
     <string name="add_new_account">Thêm Tài Khoản Mới</string>
     <string name="select_account">Chọn Tài Khoản</string>
     <string name="active_account">Tài Khoản Đang Hoạt Động</string>
     <string name="edit_name">Chỉnh sửa tên</string>
     <string name="copy">"Sao chép "</string>
-    <string name="data_copied_to_the_clipboard">Dữ liệu đã được sao chép vào khay nhớ tạm</string>
     <string name="connect_app">Kết nối ứng dụng</string>
     <string name="event_copied_to_the_clipboard">Sự kiện đã được sao chép vào khay nhớ tạm</string>
     <string name="select_deselect_all">Chọn/Bỏ chọn tất cả</string>
-    <string name="decrypt_content">Giải mã nội dung</string>
     <string name="support_development">Hỗ trợ phát triển</string>
     <string name="source_code">Mã nguồn</string>
     <string name="show_qr_code">Hiện Mã QR</string>

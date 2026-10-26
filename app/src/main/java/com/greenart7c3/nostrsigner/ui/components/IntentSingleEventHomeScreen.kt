@@ -23,23 +23,23 @@ import androidx.compose.ui.unit.sp
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.common.SignerType
+import com.greenart7c3.nostrsigner.common.psbt.PsbtDecoder
+import com.greenart7c3.nostrsigner.common.sanitizeAppName
 import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
 import com.greenart7c3.nostrsigner.database.isAllRelaysGrant
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.IntentData
 import com.greenart7c3.nostrsigner.models.IntentResultType
-import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.models.kindToNip
 import com.greenart7c3.nostrsigner.models.toPermissionType
 import com.greenart7c3.nostrsigner.service.IntentUtils
-import com.greenart7c3.nostrsigner.service.PsbtDecoder
 import com.greenart7c3.nostrsigner.service.RelayUrlUtils
 import com.greenart7c3.nostrsigner.service.isBlockedByAuthWhitelist
 import com.greenart7c3.nostrsigner.service.isCrossAccountSignEvent
 import com.greenart7c3.nostrsigner.service.isPrivateEvent
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
 import com.greenart7c3.nostrsigner.service.relayAuthRememberType
-import com.greenart7c3.nostrsigner.service.sanitizeAppName
 import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.ToastManager
 import com.vitorpamplona.quartz.nip01Core.core.toHexKey
@@ -130,7 +130,7 @@ fun IntentSingleEventHomeScreen(
                 }
 
             val acceptOrReject = IntentUtils.isRemembered(applicationEntity?.application?.signPolicy, permission)
-            val decoded = remember(intentData.data) { PsbtDecoder.decode(intentData.data, account) }
+            val decoded = remember(intentData.data) { PsbtDecoder.decode(intentData.data, account.signer.keyPair.pubKey) }
 
             SignPsbt(
                 modifier = modifier,

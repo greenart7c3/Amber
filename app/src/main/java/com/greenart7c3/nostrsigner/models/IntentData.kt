@@ -1,6 +1,7 @@
 package com.greenart7c3.nostrsigner.models
 
 import androidx.compose.runtime.Immutable
+import com.greenart7c3.nostrsigner.common.SignerType
 import com.vitorpamplona.quartz.nip01Core.core.Event
 import com.vitorpamplona.quartz.nip01Core.core.HexKey
 

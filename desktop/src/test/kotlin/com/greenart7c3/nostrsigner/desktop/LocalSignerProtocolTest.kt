@@ -1,8 +1,8 @@
 package com.greenart7c3.nostrsigner.desktop
 
+import com.greenart7c3.nostrsigner.common.SignerType
 import com.greenart7c3.nostrsigner.desktop.core.LocalSignerProtocol
 import com.greenart7c3.nostrsigner.desktop.core.LocalSignerProtocol.RpcException
-import com.greenart7c3.nostrsigner.desktop.core.SignerType
 import com.vitorpamplona.quartz.nip01Core.core.hexToByteArray
 import com.vitorpamplona.quartz.nip01Core.core.toHexKey
 import com.vitorpamplona.quartz.nip01Core.crypto.KeyPair

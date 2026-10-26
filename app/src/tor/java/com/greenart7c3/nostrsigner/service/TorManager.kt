@@ -16,9 +16,9 @@ import androidx.core.app.NotificationManagerCompat
 import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.MainActivity
 import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.common.tor.TorSocksAuthenticator
 import com.greenart7c3.nostrsigner.okhttp.HttpClientManager
 import com.greenart7c3.nostrsigner.tor.ArtiNative
-import com.greenart7c3.nostrsigner.tor.TorSocksAuthenticator
 import java.io.File
 import java.net.InetAddress
 import java.net.ServerSocket

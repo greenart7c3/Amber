@@ -1,9 +1,9 @@
 package com.greenart7c3.nostrsigner.ui.components
 
+import com.greenart7c3.nostrsigner.common.SignerType
 import com.greenart7c3.nostrsigner.models.CompressionType
 import com.greenart7c3.nostrsigner.models.IntentData
 import com.greenart7c3.nostrsigner.models.ReturnType
-import com.greenart7c3.nostrsigner.models.SignerType
 import org.junit.Assert.assertEquals
 import org.junit.Test
 

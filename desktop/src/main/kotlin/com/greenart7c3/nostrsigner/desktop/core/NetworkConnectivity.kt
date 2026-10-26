@@ -1,5 +1,6 @@
 package com.greenart7c3.nostrsigner.desktop.core
 
+import com.greenart7c3.nostrsigner.common.relays.RelayHealthTracker
 import java.net.InetSocketAddress
 import java.net.Proxy
 import java.net.Socket

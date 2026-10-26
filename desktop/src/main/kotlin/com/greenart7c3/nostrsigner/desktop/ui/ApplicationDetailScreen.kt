@@ -42,6 +42,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.greenart7c3.nostrsigner.common.generateBunkerPrivKey
+import com.greenart7c3.nostrsigner.common.localPubKeyFromPrivKey
 import com.greenart7c3.nostrsigner.desktop.core.AmberDesktop
 import com.greenart7c3.nostrsigner.desktop.core.AppPermissionRecord
 import com.greenart7c3.nostrsigner.desktop.core.AppWithPermissions
@@ -49,9 +51,7 @@ import com.greenart7c3.nostrsigner.desktop.core.DesktopAccount
 import com.greenart7c3.nostrsigner.desktop.core.RememberType
 import com.greenart7c3.nostrsigner.desktop.core.SignerDescriptions
 import com.greenart7c3.nostrsigner.desktop.core.Strings
-import com.greenart7c3.nostrsigner.desktop.core.generateBunkerPrivKey
 import com.greenart7c3.nostrsigner.desktop.core.isLocalSocket
-import com.greenart7c3.nostrsigner.desktop.core.localPubKeyFromPrivKey
 import com.greenart7c3.nostrsigner.desktop.core.toShortenHex
 import java.text.DateFormat
 import java.util.Date

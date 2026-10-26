@@ -40,6 +40,7 @@ dependencies {
     implementation(libs.compose.multiplatform.material3)
     implementation(libs.compose.multiplatform.material.icons.extended)
 
+    implementation(project(":common"))
     implementation(libs.quartz.jvm)
     // Quartz ships jackson-databind but no longer the Kotlin module.
     implementation(libs.jackson.module.kotlin)

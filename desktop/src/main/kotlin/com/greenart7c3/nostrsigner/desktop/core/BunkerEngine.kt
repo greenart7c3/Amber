@@ -1,10 +1,18 @@
 package com.greenart7c3.nostrsigner.desktop.core
 
+import com.greenart7c3.nostrsigner.common.EncryptionType
+import com.greenart7c3.nostrsigner.common.SignerType
+import com.greenart7c3.nostrsigner.common.connectsThroughOtherKey
+import com.greenart7c3.nostrsigner.common.generateBunkerPrivKey
+import com.greenart7c3.nostrsigner.common.hasAmbiguousRelayTags
+import com.greenart7c3.nostrsigner.common.localPubKeyFromPrivKey
+import com.greenart7c3.nostrsigner.common.nip44v3.Nip44v3
+import com.greenart7c3.nostrsigner.common.psbt.PsbtSighashPolicy
+import com.greenart7c3.nostrsigner.common.relays.RelayHealthTracker
+import com.greenart7c3.nostrsigner.common.sanitizeAppName
 import com.vitorpamplona.quartz.nip01Core.core.Event
 import com.vitorpamplona.quartz.nip01Core.core.hexToByteArray
-import com.vitorpamplona.quartz.nip01Core.core.toHexKey
 import com.vitorpamplona.quartz.nip01Core.crypto.KeyPair
-import com.vitorpamplona.quartz.nip01Core.crypto.Nip01Crypto
 import com.vitorpamplona.quartz.nip01Core.crypto.verify
 import com.vitorpamplona.quartz.nip01Core.jackson.JacksonMapper
 import com.vitorpamplona.quartz.nip01Core.relay.client.NostrClient
@@ -44,28 +52,6 @@ import kotlinx.coroutines.sync.withLock
 
 /** A lowercase hex 32-byte public key, as NIP-01 writes them. */
 private val HEX_PUBKEY = Regex("[0-9a-f]{64}")
-
-fun generateBunkerPrivKey(): String = Nip01Crypto.privKeyCreate().toHexKey()
-
-fun localPubKeyFromPrivKey(privKeyHex: String): String = KeyPair(privKey = privKeyHex.hexToByteArray()).pubKey.toHexKey()
-
-/**
- * Whether a request reached a per-connection key ([routedPrivKey]; empty when
- * it was addressed to the account key) that is not the sending app's own
- * ([appLocalKey]). A connect is never treated so: it is how a client attaches
- * to a new connection key.
- */
-internal fun connectsThroughOtherKey(appLocalKey: String, routedPrivKey: String, type: SignerType): Boolean = routedPrivKey.isNotEmpty() && type != SignerType.CONNECT && appLocalKey != routedPrivKey
-
-/**
- * NIP-42 names exactly one relay per auth event: authorization, the auth
- * whitelist and the consent screen all decide on the FIRST relay tag, so a
- * second relay tag would be signed without ever being granted — the signed
- * event would also vouch for a relay the user never approved. The desktop
- * app has no released predecessor, so no legacy client can rely on the
- * old multi-tag behavior.
- */
-internal fun hasAmbiguousRelayTags(kind: Int, tags: Array<Array<String>>): Boolean = kind == 22242 && tags.count { it.size > 1 && it[0] == "relay" } > 1
 
 /**
  * The saved connection that approving [req] for [accountNpub] would replace:

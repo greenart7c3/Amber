@@ -1,10 +1,10 @@
 package com.greenart7c3.nostrsigner.service
 
 import com.greenart7c3.nostrsigner.Amber
+import com.greenart7c3.nostrsigner.common.EncryptionType
+import com.greenart7c3.nostrsigner.common.SignerType
 import com.greenart7c3.nostrsigner.database.ApplicationDao
 import com.greenart7c3.nostrsigner.models.AmberBunkerRequest
-import com.greenart7c3.nostrsigner.models.EncryptionType
-import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.ui.RememberType
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequest

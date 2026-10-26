@@ -67,6 +67,7 @@ navigation-compose = { module = "androidx.navigation:navigation-compose", versio
 quartz = { module = "com.vitorpamplona.quartz:quartz-android", version.ref = "quartz" }
 jackson-module-kotlin = { module = "com.fasterxml.jackson.module:jackson-module-kotlin", version.ref = "jacksonModuleKotlin" }
 quartz-jvm = { module = "com.vitorpamplona.quartz:quartz-jvm", version.ref = "quartz" }
+compose-runtime-annotation = { module = "androidx.compose.runtime:runtime-annotation", version.ref = "compose_ui" }
 kotlinx-collections-immutable = { module = "org.jetbrains.kotlinx:kotlinx-collections-immutable", version.ref = "collections" }
 room-compiler = { module = "androidx.room:room-compiler", version.ref = "roomKtx" }
 room-ktx = { module = "androidx.room:room-ktx", version.ref = "roomKtx" }

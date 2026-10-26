@@ -1,10 +1,10 @@
 package com.greenart7c3.nostrsigner.ui.components
 
+import com.greenart7c3.nostrsigner.common.EncryptionType
 import com.greenart7c3.nostrsigner.database.ApplicationDao
 import com.greenart7c3.nostrsigner.database.ApplicationEntity
 import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
 import com.greenart7c3.nostrsigner.models.AmberBunkerRequest
-import com.greenart7c3.nostrsigner.models.EncryptionType
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequestConnect
 import io.mockk.coEvery
 import io.mockk.mockk

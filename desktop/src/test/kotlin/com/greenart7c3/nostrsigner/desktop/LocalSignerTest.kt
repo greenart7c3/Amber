@@ -1,6 +1,7 @@
 package com.greenart7c3.nostrsigner.desktop
 
 import com.fasterxml.jackson.databind.JsonNode
+import com.greenart7c3.nostrsigner.common.SignerType
 import com.greenart7c3.nostrsigner.desktop.core.AccountManager
 import com.greenart7c3.nostrsigner.desktop.core.AmberDesktop
 import com.greenart7c3.nostrsigner.desktop.core.DesktopAccount
@@ -9,7 +10,6 @@ import com.greenart7c3.nostrsigner.desktop.core.LocalSignerProtocol
 import com.greenart7c3.nostrsigner.desktop.core.PendingBunkerRequest
 import com.greenart7c3.nostrsigner.desktop.core.RememberType
 import com.greenart7c3.nostrsigner.desktop.core.SettingsStore
-import com.greenart7c3.nostrsigner.desktop.core.SignerType
 import com.greenart7c3.nostrsigner.desktop.core.TRANSPORT_SOCKET
 import com.vitorpamplona.quartz.nip01Core.core.Event
 import com.vitorpamplona.quartz.nip01Core.core.toHexKey

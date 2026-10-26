@@ -50,8 +50,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.common.generateBunkerPrivKey
 import com.greenart7c3.nostrsigner.database.ApplicationEntity
-import com.greenart7c3.nostrsigner.database.generateBunkerPrivKey
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.service.LocalKeyAccountIndex
 import com.greenart7c3.nostrsigner.ui.actions.onAddRelay

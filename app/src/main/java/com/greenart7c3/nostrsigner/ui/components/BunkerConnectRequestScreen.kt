@@ -55,11 +55,11 @@ import androidx.compose.ui.unit.sp
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.common.sanitizeAppName
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.AmberBunkerRequest
 import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.service.TrustScoreService
-import com.greenart7c3.nostrsigner.service.sanitizeAppName
 import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.DeleteAfterType
 import com.greenart7c3.nostrsigner.ui.RememberType

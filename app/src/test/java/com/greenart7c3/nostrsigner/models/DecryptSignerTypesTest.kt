@@ -1,5 +1,6 @@
 package com.greenart7c3.nostrsigner.models
 
+import com.greenart7c3.nostrsigner.common.SignerType
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Test

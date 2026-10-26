@@ -10,6 +10,7 @@ on:
     branches: [master]
     paths: &desktop-paths
       - 'desktop/**'
+      - 'common/**'
       - 'gradle/**'
       - '*.gradle.kts'
       - 'gradle.properties'
@@ -70,7 +71,7 @@ jobs:
         run: touch keystore.properties
 
       - name: Linter (gradle)
-        run: ./gradlew :desktop:ktlintCheck :desktop:detektMain :desktop:detektTest --no-daemon
+        run: ./gradlew :common:ktlintCheck :common:detektMain :common:detektTest :desktop:ktlintCheck :desktop:detektMain :desktop:detektTest --no-daemon
 
   build:
     name: build (${{ matrix.name }})
@@ -130,7 +131,7 @@ jobs:
         run: sudo apt-get update -qq && sudo apt-get install -y -qq rpm xvfb
 
       - name: Test (gradle)
-        run: ./gradlew :desktop:test --no-daemon
+        run: ./gradlew :common:test :desktop:test --no-daemon
 
       # .deb/.rpm on Linux, .msi/.exe on Windows (WiX is fetched by the
       # Compose plugin), .dmg on macOS (unsigned).

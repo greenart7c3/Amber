@@ -1,10 +1,10 @@
 package com.greenart7c3.nostrsigner.desktop
 
+import com.greenart7c3.nostrsigner.common.SignerType
 import com.greenart7c3.nostrsigner.desktop.core.AmberDesktop
 import com.greenart7c3.nostrsigner.desktop.core.EncryptionScope
 import com.greenart7c3.nostrsigner.desktop.core.PendingBunkerRequest
 import com.greenart7c3.nostrsigner.desktop.core.RememberType
-import com.greenart7c3.nostrsigner.desktop.core.SignerType
 import com.greenart7c3.nostrsigner.desktop.ui.UiState
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequest
 import java.io.File

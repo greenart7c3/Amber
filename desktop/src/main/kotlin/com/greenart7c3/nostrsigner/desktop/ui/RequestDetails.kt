@@ -29,20 +29,21 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import com.fasterxml.jackson.databind.JsonNode
-import com.greenart7c3.nostrsigner.desktop.core.DecodedPsbt
-import com.greenart7c3.nostrsigner.desktop.core.DecodedPsbtOutput
+import com.greenart7c3.nostrsigner.common.SignerType
+import com.greenart7c3.nostrsigner.common.psbt.DecodedPsbt
+import com.greenart7c3.nostrsigner.common.psbt.DecodedPsbtOutput
+import com.greenart7c3.nostrsigner.common.psbt.PsbtDecoder
 import com.greenart7c3.nostrsigner.desktop.core.EncryptedContent
 import com.greenart7c3.nostrsigner.desktop.core.EncryptedContentType
 import com.greenart7c3.nostrsigner.desktop.core.PendingBunkerRequest
-import com.greenart7c3.nostrsigner.desktop.core.PsbtDecoder
 import com.greenart7c3.nostrsigner.desktop.core.SignerDescriptions
-import com.greenart7c3.nostrsigner.desktop.core.SignerType
 import com.greenart7c3.nostrsigner.desktop.core.Strings
 import com.greenart7c3.nostrsigner.desktop.core.contentScopedSignerTypes
 import com.greenart7c3.nostrsigner.desktop.core.describe
 import com.greenart7c3.nostrsigner.desktop.core.nip44v3SignerTypes
 import com.greenart7c3.nostrsigner.desktop.core.toShortenHex
 import com.vitorpamplona.quartz.nip01Core.jackson.JacksonMapper
+import com.vitorpamplona.quartz.utils.Hex
 import java.text.DateFormat
 import java.util.Date
 
@@ -113,7 +114,7 @@ internal sealed interface RequestDetails {
             req.type == SignerType.SIGN_EVENT ->
                 (DetailEvent.parse(req.result) ?: DetailEvent.parse(req.preview))?.let(::OfEvent)
             req.type == SignerType.DECRYPT_ZAP_EVENT -> DetailEvent.parse(req.preview)?.let(::OfEvent)
-            req.type == SignerType.SIGN_PSBT -> OfPsbt(PsbtDecoder.decode(req.preview, req.account.hexKey), req.preview)
+            req.type == SignerType.SIGN_PSBT -> OfPsbt(PsbtDecoder.decode(req.preview, Hex.decode(req.account.hexKey)), req.preview)
             req.type in contentScopedSignerTypes || req.type in nip44v3SignerTypes -> {
                 val content = req.encryptedContent ?: EncryptedContent.classify(req.preview)
                 when (content.type) {

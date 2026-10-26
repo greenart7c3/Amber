@@ -3,12 +3,13 @@ package com.greenart7c3.nostrsigner.service
 import android.content.Intent
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.AmberLog
+import com.greenart7c3.nostrsigner.common.EncryptionType
+import com.greenart7c3.nostrsigner.common.sanitizeAppName
 import com.greenart7c3.nostrsigner.database.LogEntity
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.AmberBunkerRequest
 import com.greenart7c3.nostrsigner.models.BunkerClientMetadata
 import com.greenart7c3.nostrsigner.models.BunkerMetadata
-import com.greenart7c3.nostrsigner.models.EncryptionType
 import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.models.containsNip
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl

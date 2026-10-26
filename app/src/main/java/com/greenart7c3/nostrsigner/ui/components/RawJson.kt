@@ -21,7 +21,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.TextFieldValue
 import com.greenart7c3.nostrsigner.R
-import com.greenart7c3.nostrsigner.models.SignerType
+import com.greenart7c3.nostrsigner.common.SignerType
 import com.greenart7c3.nostrsigner.ui.theme.ButtonBorder
 import kotlinx.coroutines.launch
 

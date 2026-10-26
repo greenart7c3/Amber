@@ -27,8 +27,8 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.greenart7c3.nostrsigner.R
-import com.greenart7c3.nostrsigner.service.DecodedPsbt
-import com.greenart7c3.nostrsigner.service.DecodedPsbtOutput
+import com.greenart7c3.nostrsigner.common.psbt.DecodedPsbt
+import com.greenart7c3.nostrsigner.common.psbt.DecodedPsbtOutput
 import com.greenart7c3.nostrsigner.ui.RememberType
 import com.greenart7c3.nostrsigner.ui.theme.AmberPreview
 import com.greenart7c3.nostrsigner.ui.theme.ThemePreviews
@@ -131,11 +131,12 @@ fun BunkerSignPsbt(
 
 @Composable
 private fun PsbtBody(psbtHex: String, decoded: DecodedPsbt) {
-    if (decoded.parseError != null) {
+    val parseError = decoded.parseError
+    if (parseError != null) {
         Card(modifier = Modifier.fillMaxWidth()) {
             Column(Modifier.padding(8.dp)) {
                 Text(
-                    stringResource(R.string.psbt_decode_error, decoded.parseError),
+                    stringResource(R.string.psbt_decode_error, parseError),
                     color = MaterialTheme.colorScheme.error,
                 )
             }

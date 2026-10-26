@@ -1,7 +1,7 @@
 package com.greenart7c3.nostrsigner.ui.components
 
+import com.greenart7c3.nostrsigner.common.EncryptionType
 import com.greenart7c3.nostrsigner.models.AmberBunkerRequest
-import com.greenart7c3.nostrsigner.models.EncryptionType
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequest
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequestConnect
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequestPing

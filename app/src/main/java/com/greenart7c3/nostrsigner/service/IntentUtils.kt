@@ -19,6 +19,10 @@ import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.FailedMigrationException
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.common.SignerType
+import com.greenart7c3.nostrsigner.common.hasAmbiguousRelayTags
+import com.greenart7c3.nostrsigner.common.rememberedDecision
+import com.greenart7c3.nostrsigner.common.sanitizeAppName
 import com.greenart7c3.nostrsigner.database.ApplicationEntity
 import com.greenart7c3.nostrsigner.database.ApplicationPermissionsEntity
 import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
@@ -34,7 +38,6 @@ import com.greenart7c3.nostrsigner.models.IntentResultType
 import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.models.PrivateZapEncryptedDataKind
 import com.greenart7c3.nostrsigner.models.ReturnType
-import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.models.TagArrayEncryptedDataKind
 import com.greenart7c3.nostrsigner.models.containsNip
 import com.greenart7c3.nostrsigner.models.decryptSignerTypes
@@ -1190,17 +1193,7 @@ object IntentUtils {
         }
     }
 
-    fun isRemembered(signPolicy: Int?, permission: ApplicationPermissionsEntity?): Boolean? {
-        val decision = permission?.activeDecision(TimeUtils.now())
-        // An active explicit rejection wins over the "fully trust" sign policy.
-        if (decision == false) {
-            return false
-        }
-        if (signPolicy == 2) {
-            return true
-        }
-        return decision
-    }
+    fun isRemembered(signPolicy: Int?, permission: ApplicationPermissionsEntity?): Boolean? = rememberedDecision(signPolicy, permission?.activeDecision(TimeUtils.now()))
 }
 
 /**

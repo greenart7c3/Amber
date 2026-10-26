@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.greenart7c3.nostrsigner.service.sanitizeAppName
+import com.greenart7c3.nostrsigner.common.sanitizeAppName
 
 /**
  * Optional client identification metadata a client MAY include as the 4th

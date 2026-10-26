@@ -32,6 +32,7 @@ import coil3.request.ErrorResult
 import coil3.request.ImageRequest
 import coil3.request.SuccessResult
 import coil3.request.crossfade
+import com.greenart7c3.nostrsigner.common.relays.RelayHealthTracker
 import com.greenart7c3.nostrsigner.database.AppDatabase
 import com.greenart7c3.nostrsigner.database.ApplicationDao
 import com.greenart7c3.nostrsigner.database.CachingApplicationDao
@@ -48,7 +49,6 @@ import com.greenart7c3.nostrsigner.okhttp.HttpClientManager
 import com.greenart7c3.nostrsigner.okhttp.OkHttpWebSocket
 import com.greenart7c3.nostrsigner.relays.AmberRelayStats
 import com.greenart7c3.nostrsigner.relays.NostrClientLoggerListener
-import com.greenart7c3.nostrsigner.relays.RelayHealthTracker
 import com.greenart7c3.nostrsigner.service.ApplicationNameCache
 import com.greenart7c3.nostrsigner.service.BackupApplicationsWorker
 import com.greenart7c3.nostrsigner.service.ClearLogsWorker

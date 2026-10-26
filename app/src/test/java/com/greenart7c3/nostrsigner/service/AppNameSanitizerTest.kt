@@ -1,5 +1,7 @@
 package com.greenart7c3.nostrsigner.service
 
+import com.greenart7c3.nostrsigner.common.APP_NAME_MAX
+import com.greenart7c3.nostrsigner.common.sanitizeAppName
 import com.greenart7c3.nostrsigner.models.BunkerClientMetadata
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue

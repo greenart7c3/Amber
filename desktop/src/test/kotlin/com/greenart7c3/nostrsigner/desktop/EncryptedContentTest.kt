@@ -1,8 +1,8 @@
 package com.greenart7c3.nostrsigner.desktop
 
+import com.greenart7c3.nostrsigner.common.SignerType
 import com.greenart7c3.nostrsigner.desktop.core.EncryptedContent
 import com.greenart7c3.nostrsigner.desktop.core.EncryptedContentType
-import com.greenart7c3.nostrsigner.desktop.core.SignerType
 import com.greenart7c3.nostrsigner.desktop.core.contentPermissionType
 import com.greenart7c3.nostrsigner.desktop.core.describe
 import org.junit.Assert.assertEquals

@@ -2,7 +2,7 @@ package com.greenart7c3.nostrsigner.service
 
 import android.content.Intent
 import com.greenart7c3.nostrsigner.Amber
-import com.greenart7c3.nostrsigner.models.SignerType
+import com.greenart7c3.nostrsigner.common.SignerType
 import com.vitorpamplona.quartz.nip01Core.jackson.JacksonMapper
 import java.net.URLDecoder
 import java.util.concurrent.ConcurrentHashMap

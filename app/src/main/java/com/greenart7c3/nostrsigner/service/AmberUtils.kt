@@ -4,13 +4,13 @@ import android.content.Context
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.toUpperCase
 import com.greenart7c3.nostrsigner.Amber
+import com.greenart7c3.nostrsigner.common.SignerType
 import com.greenart7c3.nostrsigner.database.ApplicationPermissionsEntity
 import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.AmberBunkerRequest
 import com.greenart7c3.nostrsigner.models.EncryptedDataKind
 import com.greenart7c3.nostrsigner.models.Permission
-import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.models.basicPermissions
 import com.greenart7c3.nostrsigner.models.encryptDecryptSignerTypes
 import com.greenart7c3.nostrsigner.models.toPermissionTypeString
@@ -315,32 +315,6 @@ fun String.toShortenHex(): String {
     return replaceRange(8, length - 8, ":")
 }
 
-/** Longest client-chosen app name Amber shows, in characters. */
-internal const val APP_NAME_MAX = 64
-
-/**
- * The client-chosen [name] made safe to show: control, format (bidi
- * overrides, zero-width) and separator characters are dropped, whitespace
- * runs and line breaks become single spaces, and it is cut to [max]
- * characters, so a client cannot fake extra lines or Amber's own text on an
- * approval sheet or notification. Mirrors the desktop `sanitizeAppName`.
- */
-fun sanitizeAppName(name: String, max: Int = APP_NAME_MAX): String {
-    val cleaned = buildString {
-        name.codePoints().forEach { cp ->
-            when (Character.getType(cp).toByte()) {
-                Character.CONTROL, Character.FORMAT, Character.PRIVATE_USE, Character.UNASSIGNED, Character.SURROGATE -> {
-                    if (Character.isWhitespace(cp)) append(' ')
-                }
-                Character.LINE_SEPARATOR, Character.PARAGRAPH_SEPARATOR -> append(' ')
-                else -> appendCodePoint(cp)
-            }
-        }
-    }.replace(Regex("\\s+"), " ").trim()
-    if (cleaned.codePointCount(0, cleaned.length) <= max) return cleaned
-    return cleaned.substring(0, cleaned.offsetByCodePoints(0, max - 1)).trimEnd() + "…"
-}
-
 fun isPrivateEvent(
     kind: Int,
     tags: Array<Array<String>>,
@@ -376,14 +350,6 @@ fun relayAuthRememberType(
     relayUrl: String,
     rememberType: RememberType,
 ): RememberType = if (!allRelays && relayUrl.isBlank()) RememberType.NEVER else rememberType
-
-/**
- * NIP-42 names exactly one relay per auth event: authorization, the auth
- * whitelist and the consent screen all decide on the FIRST relay tag, so a
- * second relay tag would be signed without ever being granted — the signed
- * event would also vouch for a relay the user never approved.
- */
-fun hasAmbiguousRelayTags(kind: Int, tags: Array<Array<String>>): Boolean = kind == 22242 && tags.count { it.size > 1 && it[0] == "relay" } > 1
 
 /**
  * Whether the auth whitelist refuses a relay auth (kind 22242) for [relayHost]:

@@ -2,13 +2,13 @@ package com.greenart7c3.nostrsigner
 
 import android.content.Context
 import android.net.Uri
+import com.greenart7c3.nostrsigner.common.SignerType
 import com.greenart7c3.nostrsigner.database.ApplicationDao
 import com.greenart7c3.nostrsigner.database.ApplicationPermissionsEntity
 import com.greenart7c3.nostrsigner.database.HistoryDao
 import com.greenart7c3.nostrsigner.database.HistoryDatabase
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.AmberSettings
-import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.service.AmberUtils
 import com.greenart7c3.nostrsigner.service.installAmberInstance
 import com.vitorpamplona.quartz.nip01Core.core.Event

@@ -1,15 +1,15 @@
 package com.greenart7c3.nostrsigner.desktop
 
+import com.greenart7c3.nostrsigner.common.APP_NAME_MAX
+import com.greenart7c3.nostrsigner.common.SignerType
+import com.greenart7c3.nostrsigner.common.sanitizeAppName
 import com.greenart7c3.nostrsigner.desktop.core.AccountManager
 import com.greenart7c3.nostrsigner.desktop.core.AccountRecord
 import com.greenart7c3.nostrsigner.desktop.core.DesktopAccount
-import com.greenart7c3.nostrsigner.desktop.core.NOTIFICATION_APP_NAME_MAX
 import com.greenart7c3.nostrsigner.desktop.core.PendingBunkerRequest
-import com.greenart7c3.nostrsigner.desktop.core.SignerType
 import com.greenart7c3.nostrsigner.desktop.core.allowsQuickApprove
 import com.greenart7c3.nostrsigner.desktop.core.notificationAccountLine
 import com.greenart7c3.nostrsigner.desktop.core.notificationTitle
-import com.greenart7c3.nostrsigner.desktop.core.sanitizeAppName
 import com.greenart7c3.nostrsigner.desktop.core.toShortenHex
 import com.vitorpamplona.quartz.nip01Core.crypto.KeyPair
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequest
@@ -107,7 +107,7 @@ class NotificationPolicyTest {
     @Test
     fun aLongNameIsCut() {
         val cut = sanitizeAppName("x".repeat(200))
-        assertEquals(NOTIFICATION_APP_NAME_MAX, cut.codePointCount(0, cut.length))
+        assertEquals(APP_NAME_MAX, cut.codePointCount(0, cut.length))
         assertTrue(cut.endsWith("…"))
     }
 

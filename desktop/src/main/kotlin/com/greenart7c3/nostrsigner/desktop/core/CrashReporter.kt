@@ -1,5 +1,6 @@
 package com.greenart7c3.nostrsigner.desktop.core
 
+import com.greenart7c3.nostrsigner.common.CrashReports
 import com.vitorpamplona.quartz.nip01Core.relay.client.accessories.publishAndConfirm
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
 import com.vitorpamplona.quartz.nip01Core.tags.people.PTag
@@ -55,7 +56,7 @@ object CrashReporter {
      * lose it. The latest crash replaces an older unhandled one.
      */
     fun save(e: Throwable) {
-        if (isJunkReport(e)) return
+        if (CrashReports.isJunkReport(e)) return
         val report = ReportAssembler.buildReport(e)
         AppDirs.writeAtomically(file, storedForm(e, report).toByteArray(Charsets.UTF_8))
         pending.value = report
@@ -123,9 +124,6 @@ object CrashReporter {
             client.disconnect()
         }
     }
-
-    /** Out-of-memory reports are junk: nobody can act on them (same rule as Android). */
-    fun isJunkReport(e: Throwable): Boolean = e is OutOfMemoryError
 }
 
 object ReportAssembler {
@@ -183,19 +181,6 @@ object ReportAssembler {
     fun redact(input: String): String {
         val home = System.getProperty("user.home").orEmpty()
         val withoutHome = if (home.length > 1) input.replace(home, "~") else input
-        return withoutHome
-            .replace(BECH32_REDACT, "<bech32>")
-            .replace(HEXKEY_REDACT, "<hexkey>")
-            .replace(BASE64_REDACT, "<base64>")
+        return CrashReports.redactKeys(withoutHome)
     }
-
-    // bech32 prefixes used by Nostr; bech32 data uses 023456789acdefghjklmnpqrstuvwxyz.
-    private val BECH32_REDACT =
-        Regex("\\b(npub|nsec|note|nprofile|nevent|naddr|nrelay|ncryptsec)1[023456789acdefghjklmnpqrstuvwxyz]{6,}\\b")
-
-    // 64-char lowercase hex keys (pubkeys/event ids/private keys).
-    private val HEXKEY_REDACT = Regex("\\b[0-9a-f]{64}\\b")
-
-    // Long base64 runs (>=32 chars): NIP-04/NIP-44 ciphertexts, payloads.
-    private val BASE64_REDACT = Regex("\\b[A-Za-z0-9+/]{32,}={0,2}\\b")
 }

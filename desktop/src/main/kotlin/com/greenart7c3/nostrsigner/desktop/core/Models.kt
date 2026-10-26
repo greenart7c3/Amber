@@ -1,32 +1,12 @@
 package com.greenart7c3.nostrsigner.desktop.core
 
+import com.greenart7c3.nostrsigner.common.SignerType
+import com.greenart7c3.nostrsigner.common.activeDecision
+import com.greenart7c3.nostrsigner.common.rememberedDecision
 import com.vitorpamplona.quartz.nip01Core.jackson.JacksonMapper
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.RelayUrlNormalizer
 import com.vitorpamplona.quartz.utils.TimeUtils
-
-enum class SignerType {
-    CONNECT,
-    SIGN_EVENT,
-    NIP04_ENCRYPT,
-    NIP04_DECRYPT,
-    NIP44_ENCRYPT,
-    NIP44_DECRYPT,
-    NIP44_V3_ENCRYPT,
-    NIP44_V3_DECRYPT,
-    GET_PUBLIC_KEY,
-    DECRYPT_ZAP_EVENT,
-    PING,
-    INVALID,
-    SWITCH_RELAYS,
-    SIGN_PSBT,
-    LOGOUT,
-}
-
-enum class EncryptionType {
-    NIP44,
-    NIP04,
-}
 
 /** Mirrors the Android `RememberType` screen codes so exports stay compatible. */
 enum class RememberType(val screenCode: Int, val labelKey: String) {
@@ -259,17 +239,8 @@ data class AppPermissionRecord(
     val rejectUntil: Long,
     val relay: String = "",
 ) {
-    /**
-     * Mirrors `ApplicationPermissionsEntity.activeDecision`: the remembered
-     * decision in effect at [now] — true to accept, false to reject, null to
-     * ask. Only the timestamp on the side that [acceptable] selects counts, so
-     * a stale value left on the other side can never decide a request.
-     */
-    fun activeDecision(now: Long): Boolean? = when {
-        !acceptable && rejectUntil > now -> false
-        acceptable && acceptUntil > now -> true
-        else -> null
-    }
+    /** The remembered decision in effect at [now], decided like Android's (see the common `activeDecision`). */
+    fun activeDecision(now: Long): Boolean? = activeDecision(acceptable, acceptUntil, rejectUntil, now)
 }
 
 data class AppWithPermissions(
@@ -357,21 +328,8 @@ data class AccountRecord(
 
 fun String.toShortenHex(): String = if (length <= 16) this else "${take(8)}…${takeLast(8)}"
 
-/**
- * Mirrors `IntentUtils.isRemembered`: true = auto-accept, false = auto-reject,
- * null = ask the user.
- */
-fun isRemembered(signPolicy: Int?, permission: AppPermissionRecord?): Boolean? {
-    val decision = permission?.activeDecision(TimeUtils.now())
-    // An active explicit rejection wins over the "fully trust" sign policy.
-    if (decision == false) {
-        return false
-    }
-    if (signPolicy == 2) {
-        return true
-    }
-    return decision
-}
+/** true = auto-accept, false = auto-reject, null = ask the user (see the common `rememberedDecision`). */
+fun isRemembered(signPolicy: Int?, permission: AppPermissionRecord?): Boolean? = rememberedDecision(signPolicy, permission?.activeDecision(TimeUtils.now()))
 
 /** The NIP-46 method string for a signer type (e.g. SIGN_EVENT -> "sign_event"). */
 fun SignerType.methodString(): String = name.lowercase()

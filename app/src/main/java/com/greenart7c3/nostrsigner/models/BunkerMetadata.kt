@@ -8,7 +8,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer
 import com.fasterxml.jackson.databind.module.SimpleModule
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.greenart7c3.nostrsigner.service.sanitizeAppName
+import com.greenart7c3.nostrsigner.common.sanitizeAppName
 
 data class BunkerMetadata(
     val name: String,

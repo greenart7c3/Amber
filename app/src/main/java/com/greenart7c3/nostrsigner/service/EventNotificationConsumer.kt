@@ -32,6 +32,11 @@ import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.SignerProviderQuery
+import com.greenart7c3.nostrsigner.common.EncryptionType
+import com.greenart7c3.nostrsigner.common.SignerType
+import com.greenart7c3.nostrsigner.common.connectsThroughOtherKey
+import com.greenart7c3.nostrsigner.common.hasAmbiguousRelayTags
+import com.greenart7c3.nostrsigner.common.sanitizeAppName
 import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
 import com.greenart7c3.nostrsigner.database.BunkerEventEntity
 import com.greenart7c3.nostrsigner.database.HistoryEntity
@@ -41,10 +46,8 @@ import com.greenart7c3.nostrsigner.models.AmberBunkerRequest
 import com.greenart7c3.nostrsigner.models.BunkerClientMetadata
 import com.greenart7c3.nostrsigner.models.ClearTextEncryptedDataKind
 import com.greenart7c3.nostrsigner.models.EncryptedDataKind
-import com.greenart7c3.nostrsigner.models.EncryptionType
 import com.greenart7c3.nostrsigner.models.EventEncryptedDataKind
 import com.greenart7c3.nostrsigner.models.Permission
-import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.models.TagArrayEncryptedDataKind
 import com.greenart7c3.nostrsigner.service.NotificationUtils.sendNotification
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
@@ -73,14 +76,6 @@ import java.util.UUID
 import kotlin.io.encoding.Base64
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
-
-/**
- * Whether a request reached a per-connection key ([routedPrivKey]; empty when
- * it was addressed to the account key) that is not the sending app's own
- * ([appLocalKey]). A connect is never treated so: it is how a client attaches
- * to a new connection key.
- */
-internal fun connectsThroughOtherKey(appLocalKey: String, routedPrivKey: String, type: SignerType): Boolean = routedPrivKey.isNotEmpty() && type != SignerType.CONNECT && appLocalKey != routedPrivKey
 
 class EventNotificationConsumer(private val applicationContext: Context) {
     internal fun saveLog(

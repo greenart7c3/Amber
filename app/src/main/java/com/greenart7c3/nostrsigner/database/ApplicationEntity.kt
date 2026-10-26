@@ -6,22 +6,11 @@ import androidx.room.Index
 import androidx.room.PrimaryKey
 import androidx.room.Relation
 import androidx.room.TypeConverter
-import com.vitorpamplona.quartz.nip01Core.core.hexToByteArray
-import com.vitorpamplona.quartz.nip01Core.core.toHexKey
-import com.vitorpamplona.quartz.nip01Core.crypto.KeyPair
-import com.vitorpamplona.quartz.nip01Core.crypto.Nip01Crypto
+import com.greenart7c3.nostrsigner.common.localPubKeyFromPrivKey
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.RelayUrlNormalizer
 import com.vitorpamplona.quartz.utils.TimeUtils
 import kotlin.collections.joinToString
-
-fun generateBunkerPrivKey(): String = Nip01Crypto.privKeyCreate().toHexKey()
-
-fun localPubKeyFromPrivKey(privKeyHex: String): String = try {
-    KeyPair(privKey = privKeyHex.hexToByteArray()).pubKey.toHexKey()
-} catch (_: Exception) {
-    ""
-}
 
 @Entity(
     tableName = "application",

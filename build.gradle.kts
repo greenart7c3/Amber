@@ -26,13 +26,15 @@ tasks.register<Copy>("installGitHook") {
 // resolve types and misses unused variables, properties and functions.
 tasks.register("detektAll") {
     group = "verification"
-    description = "Checks the app and desktop sources for unused code."
+    description = "Checks the app, desktop and common sources for unused code."
     dependsOn(
         ":app:detektFreeDebug",
         ":app:detektOfflineDebug",
         ":app:detektFreeDebugUnitTest",
         ":app:detektOfflineDebugUnitTest",
         ":app:detektFreeDebugAndroidTest",
+        ":common:detektMain",
+        ":common:detektTest",
         ":desktop:detektMain",
         ":desktop:detektTest",
     )

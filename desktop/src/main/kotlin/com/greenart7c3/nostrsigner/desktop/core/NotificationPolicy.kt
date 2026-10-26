@@ -1,5 +1,8 @@
 package com.greenart7c3.nostrsigner.desktop.core
 
+import com.greenart7c3.nostrsigner.common.SignerType
+import com.greenart7c3.nostrsigner.common.sanitizeAppName
+
 /**
  * Event kinds whose signature changes the user's profile, social graph,
  * relays or stored data, or grants access to another service. Approving one
@@ -48,31 +51,6 @@ fun PendingBunkerRequest.notificationAccountLine(accounts: List<AccountRecord>, 
     val name = accounts.firstOrNull { it.npub == account.npub }?.name.orEmpty()
     val label = if (name.isBlank()) account.npub.toShortenHex() else "$name · ${account.npub.toShortenHex()}"
     return "${Strings.get("account", language)}: $label"
-}
-
-/** Longest app name a notification or popup shows, in characters. */
-internal const val NOTIFICATION_APP_NAME_MAX = 64
-
-/**
- * The client-chosen [name] made safe to show as a notification title: control,
- * format (bidi overrides, zero-width) and separator characters are dropped,
- * whitespace runs and line breaks become single spaces, and it is cut to
- * [max] characters, so a client cannot fake extra lines or Amber's own text.
- */
-fun sanitizeAppName(name: String, max: Int = NOTIFICATION_APP_NAME_MAX): String {
-    val cleaned = buildString {
-        name.codePoints().forEach { cp ->
-            when (Character.getType(cp).toByte()) {
-                Character.CONTROL, Character.FORMAT, Character.PRIVATE_USE, Character.UNASSIGNED, Character.SURROGATE -> {
-                    if (Character.isWhitespace(cp)) append(' ')
-                }
-                Character.LINE_SEPARATOR, Character.PARAGRAPH_SEPARATOR -> append(' ')
-                else -> appendCodePoint(cp)
-            }
-        }
-    }.replace(Regex("\\s+"), " ").trim()
-    if (cleaned.codePointCount(0, cleaned.length) <= max) return cleaned
-    return cleaned.substring(0, cleaned.offsetByCodePoints(0, max - 1)).trimEnd() + "…"
 }
 
 /**

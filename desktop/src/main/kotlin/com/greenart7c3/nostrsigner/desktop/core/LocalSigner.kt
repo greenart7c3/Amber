@@ -1,11 +1,11 @@
 package com.greenart7c3.nostrsigner.desktop.core
 
 import com.greenart7c3.nostrsigner.desktop.core.LocalSignerProtocol.RpcException
+import com.vitorpamplona.crypto.random.RandomInstance
 import com.vitorpamplona.quartz.nip01Core.core.toHexKey
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequest
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequestSign
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerResponse
-import com.vitorpamplona.quartz.utils.RandomInstance
 import com.vitorpamplona.quartz.utils.TimeUtils
 import java.io.ByteArrayOutputStream
 import java.io.InputStream

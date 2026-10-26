@@ -1,5 +1,6 @@
 package com.greenart7c3.nostrsigner.desktop.core
 
+import com.vitorpamplona.crypto.random.RandomInstance
 import com.vitorpamplona.quartz.nip01Core.core.Event
 import com.vitorpamplona.quartz.nip01Core.core.toHexKey
 import com.vitorpamplona.quartz.nip01Core.crypto.KeyPair
@@ -11,7 +12,6 @@ import com.vitorpamplona.quartz.nip19Bech32.toNpub
 import com.vitorpamplona.quartz.nip19Bech32.toNsec
 import com.vitorpamplona.quartz.nip49PrivKeyEnc.Nip49
 import com.vitorpamplona.quartz.utils.Hex
-import com.vitorpamplona.quartz.utils.RandomInstance
 import kotlinx.coroutines.flow.MutableStateFlow
 
 /** Desktop counterpart of the Android `Account`. */

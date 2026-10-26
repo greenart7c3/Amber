@@ -1,10 +1,10 @@
 package com.greenart7c3.nostrsigner.service.nip44v3
 
-import com.vitorpamplona.quartz.nip44Encryption.crypto.ChaCha20
-import com.vitorpamplona.quartz.nip44Encryption.crypto.Hkdf
-import com.vitorpamplona.quartz.utils.RandomInstance
+import com.vitorpamplona.crypto.chacha.ChaCha20
+import com.vitorpamplona.crypto.kdf.Hkdf
+import com.vitorpamplona.crypto.mac.MacInstance
+import com.vitorpamplona.crypto.random.RandomInstance
 import com.vitorpamplona.quartz.utils.Secp256k1Instance
-import com.vitorpamplona.quartz.utils.mac.MacInstance
 import kotlin.io.encoding.Base64
 
 /**
@@ -33,7 +33,7 @@ object Nip44v3 {
     private val zeroChaChaNonce = ByteArray(12)
 
     private val hkdf = Hkdf()
-    private val chaCha = ChaCha20()
+    private val chaCha = ChaCha20
 
     class Nip44v3Exception(message: String, cause: Throwable? = null) : RuntimeException(message, cause)
 

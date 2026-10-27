@@ -142,6 +142,13 @@ fun AccountPickerRow(
                 fontSize = 15.sp,
                 modifier = Modifier.padding(start = 16.dp, top = 8.dp, bottom = 8.dp),
             )
+            var query by remember { mutableStateOf("") }
+            val names by rememberAccountNames(accounts)
+            AccountSearchField(
+                query = query,
+                onQueryChange = { query = it },
+                modifier = Modifier.padding(horizontal = 16.dp),
+            )
             val scrollState = rememberScrollState()
             Column(
                 modifier = Modifier
@@ -150,10 +157,16 @@ fun AccountPickerRow(
                     .verticalScroll(scrollState)
                     .padding(horizontal = 12.dp, vertical = 8.dp),
             ) {
-                // Sorted for display only: each row keeps its index into [accounts], which is
-                // what the caller selects by, so reordering never changes the signing account.
+                // Sorted and filtered for display only: each row keeps its index into [accounts],
+                // which is what the caller selects by, so neither changes the signing account.
                 val favorites by LocalPreferences.favoriteAccounts(LocalContext.current).collectAsStateWithLifecycle()
-                accounts.withIndex().toList().favoritesFirst(favorites) { it.value.npub }.forEach { (index, acc) ->
+                val shown = accounts.withIndex().toList()
+                    .filter { (_, acc) -> accountMatchesSearch(query, acc.npub, names[acc.npub].orEmpty()) }
+                    .favoritesFirst(favorites) { it.value.npub }
+                if (shown.isEmpty()) {
+                    NoAccountsFound()
+                }
+                shown.forEach { (index, acc) ->
                     key(acc.npub) {
                         val name by acc.name.collectAsStateWithLifecycle()
                         Row(

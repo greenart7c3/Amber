@@ -935,4 +935,7 @@
     <string name="event_kind_9843">CI-Dienstanfrage</string>
     <string name="event_kind_9844">CI-Dienst stoppen</string>
     <string name="event_kind_30624">Container-Image-Tags</string>
+    <string name="search_accounts">Nach Name oder npub suchen</string>
+    <string name="clear_search">Suche löschen</string>
+    <string name="no_accounts_found">Keine passenden Konten</string>
 </resources>

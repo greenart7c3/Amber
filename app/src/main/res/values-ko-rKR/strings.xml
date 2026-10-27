@@ -937,4 +937,7 @@
     <string name="event_kind_9843">CI 서비스 요청</string>
     <string name="event_kind_9844">CI 서비스 중지</string>
     <string name="event_kind_30624">컨테이너 이미지 태그</string>
+    <string name="search_accounts">이름 또는 npub로 검색</string>
+    <string name="clear_search">검색어 지우기</string>
+    <string name="no_accounts_found">일치하는 계정이 없습니다</string>
 </resources>

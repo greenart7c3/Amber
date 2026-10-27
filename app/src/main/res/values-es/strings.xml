@@ -939,4 +939,7 @@
     <string name="event_kind_9843">Solicitud de servicio de CI</string>
     <string name="event_kind_9844">Detención del servicio de CI</string>
     <string name="event_kind_30624">Etiquetas de imagen de contenedor</string>
+    <string name="search_accounts">Buscar por nombre o npub</string>
+    <string name="clear_search">Borrar búsqueda</string>
+    <string name="no_accounts_found">No hay cuentas que coincidan</string>
 </resources>

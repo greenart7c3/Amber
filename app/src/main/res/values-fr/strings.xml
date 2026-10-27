@@ -936,4 +936,7 @@
     <string name="event_kind_9843">Demande de service CI</string>
     <string name="event_kind_9844">Arrêt du service CI</string>
     <string name="event_kind_30624">Tags d\'image de conteneur</string>
+    <string name="search_accounts">Rechercher par nom ou npub</string>
+    <string name="clear_search">Effacer la recherche</string>
+    <string name="no_accounts_found">Aucun compte correspondant</string>
 </resources>

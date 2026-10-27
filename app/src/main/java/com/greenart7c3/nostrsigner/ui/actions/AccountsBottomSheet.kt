@@ -30,9 +30,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -54,10 +56,14 @@ import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.AccountStateViewModel
 import com.greenart7c3.nostrsigner.ui.NavHostControllerWrapper
+import com.greenart7c3.nostrsigner.ui.components.AccountSearchField
 import com.greenart7c3.nostrsigner.ui.components.ActiveMarker
 import com.greenart7c3.nostrsigner.ui.components.FavoriteAccountButton
+import com.greenart7c3.nostrsigner.ui.components.NoAccountsFound
 import com.greenart7c3.nostrsigner.ui.components.ProfileSubscriptionEffect
+import com.greenart7c3.nostrsigner.ui.components.accountMatchesSearch
 import com.greenart7c3.nostrsigner.ui.components.favoritesFirst
+import com.greenart7c3.nostrsigner.ui.components.rememberAccountNames
 import com.greenart7c3.nostrsigner.ui.navigation.Route
 import com.greenart7c3.nostrsigner.ui.theme.fromHex
 import com.greenart7c3.nostrsigner.ui.verticalScrollbar
@@ -102,26 +108,44 @@ fun AccountsBottomSheet(
         ) {
             val context = LocalContext.current
             val favorites by LocalPreferences.favoriteAccounts(context).collectAsStateWithLifecycle()
-            val accounts = LocalPreferences.allSavedAccounts(context).favoritesFirst(favorites) { it.npub }
+            val savedAccounts = remember { LocalPreferences.allSavedAccounts(context) }
+            // Load the cached Accounts off the main thread (each decrypts once, then is cached) so we
+            // can search and observe their name/picture StateFlows and refresh their metadata while
+            // the sheet is open.
+            val loadedAccounts by produceState(emptyList<Account>(), savedAccounts) {
+                value = withContext(Dispatchers.IO) {
+                    savedAccounts.mapNotNull { LocalPreferences.loadFromEncryptedStorage(context, it.npub) }
+                }
+            }
+            val loadedByNpub = remember(loadedAccounts) { loadedAccounts.associateBy { it.npub } }
+            val names by rememberAccountNames(loadedAccounts)
+            var query by remember { mutableStateOf("") }
+            val accounts = savedAccounts
+                .filter { accountMatchesSearch(query, it.npub, names[it.npub].orEmpty()) }
+                .favoritesFirst(favorites) { it.npub }
             val scrollState = rememberScrollState()
+
+            if (savedAccounts.size > 1) {
+                AccountSearchField(
+                    query = query,
+                    onQueryChange = { query = it },
+                    modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 8.dp),
+                )
+            }
 
             Column(
                 modifier = Modifier
                     .verticalScrollbar(scrollState)
                     .verticalScroll(scrollState),
             ) {
+                if (accounts.isEmpty()) {
+                    NoAccountsFound()
+                }
                 accounts.forEach { acc ->
                     key(acc.npub) {
-                        // Load the cached Account off the main thread (decrypts once, then cached) so we
-                        // can observe its name/picture StateFlows and refresh its metadata while the
-                        // sheet is open.
-                        val loadedAccount by produceState<Account?>(null, acc.npub) {
-                            value = withContext(Dispatchers.IO) {
-                                LocalPreferences.loadFromEncryptedStorage(context, acc.npub)
-                            }
-                        }
+                        val loadedAccount = loadedByNpub[acc.npub]
                         loadedAccount?.let { ProfileSubscriptionEffect(it) }
-                        val name = loadedAccount?.name?.collectAsStateWithLifecycle()?.value ?: ""
+                        val name = names[acc.npub].orEmpty()
                         val profileUrl = loadedAccount?.picture?.collectAsStateWithLifecycle()?.value ?: ""
                         val borderColor = remember(acc.npub) {
                             Color.fromHex(acc.npub.bechToBytes().toHexKey().slice(0..5))

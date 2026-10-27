@@ -944,4 +944,7 @@
     <string name="event_kind_9843">CI service request</string>
     <string name="event_kind_9844">CI service stop</string>
     <string name="event_kind_30624">Container image tags</string>
+    <string name="search_accounts">Search by name or npub</string>
+    <string name="clear_search">Clear search</string>
+    <string name="no_accounts_found">No matching accounts</string>
 </resources>

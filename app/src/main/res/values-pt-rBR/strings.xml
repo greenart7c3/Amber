@@ -934,4 +934,7 @@
     <string name="event_kind_9843">Solicitação de serviço de CI</string>
     <string name="event_kind_9844">Interrupção do serviço de CI</string>
     <string name="event_kind_30624">Tags de imagem de contêiner</string>
+    <string name="search_accounts">Pesquisar por nome ou npub</string>
+    <string name="clear_search">Limpar pesquisa</string>
+    <string name="no_accounts_found">Nenhuma conta correspondente</string>
 </resources>

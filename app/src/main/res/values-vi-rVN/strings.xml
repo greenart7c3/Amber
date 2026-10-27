@@ -913,4 +913,7 @@
     <string name="event_kind_9843">Yêu cầu dịch vụ CI</string>
     <string name="event_kind_9844">Dừng dịch vụ CI</string>
     <string name="event_kind_30624">Thẻ image container</string>
+    <string name="search_accounts">Tìm theo tên hoặc npub</string>
+    <string name="clear_search">Xóa tìm kiếm</string>
+    <string name="no_accounts_found">Không có tài khoản phù hợp</string>
 </resources>

@@ -937,4 +937,7 @@
     <string name="event_kind_9843">Permintaan layanan CI</string>
     <string name="event_kind_9844">Penghentian layanan CI</string>
     <string name="event_kind_30624">Tag image kontainer</string>
+    <string name="search_accounts">Cari berdasarkan nama atau npub</string>
+    <string name="clear_search">Hapus pencarian</string>
+    <string name="no_accounts_found">Tidak ada akun yang cocok</string>
 </resources>

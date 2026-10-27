@@ -939,4 +939,7 @@
     <string name="event_kind_9843">Richiesta servizio CI</string>
     <string name="event_kind_9844">Arresto servizio CI</string>
     <string name="event_kind_30624">Tag dell\'immagine container</string>
+    <string name="search_accounts">Cerca per nome o npub</string>
+    <string name="clear_search">Cancella ricerca</string>
+    <string name="no_accounts_found">Nessun account corrispondente</string>
 </resources>

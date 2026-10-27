@@ -918,4 +918,7 @@
     <string name="event_kind_9843">CI 服务请求</string>
     <string name="event_kind_9844">CI 服务停止</string>
     <string name="event_kind_30624">容器镜像标签</string>
+    <string name="search_accounts">按名称或 npub 搜索</string>
+    <string name="clear_search">清除搜索</string>
+    <string name="no_accounts_found">没有匹配的账户</string>
 </resources>

@@ -940,4 +940,7 @@
     <string name="event_kind_9843">Запрос сервиса CI</string>
     <string name="event_kind_9844">Остановка сервиса CI</string>
     <string name="event_kind_30624">Теги образа контейнера</string>
+    <string name="search_accounts">Поиск по имени или npub</string>
+    <string name="clear_search">Очистить поиск</string>
+    <string name="no_accounts_found">Нет подходящих аккаунтов</string>
 </resources>

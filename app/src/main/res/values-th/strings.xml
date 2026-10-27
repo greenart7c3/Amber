@@ -913,4 +913,7 @@
     <string name="event_kind_9843">คำขอบริการ CI</string>
     <string name="event_kind_9844">หยุดบริการ CI</string>
     <string name="event_kind_30624">แท็กอิมเมจคอนเทนเนอร์</string>
+    <string name="search_accounts">ค้นหาตามชื่อหรือ npub</string>
+    <string name="clear_search">ล้างการค้นหา</string>
+    <string name="no_accounts_found">ไม่พบบัญชีที่ตรงกัน</string>
 </resources>

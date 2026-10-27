@@ -913,4 +913,7 @@
     <string name="event_kind_9843">CI サービスリクエスト</string>
     <string name="event_kind_9844">CI サービス停止</string>
     <string name="event_kind_30624">コンテナイメージタグ</string>
+    <string name="search_accounts">名前またはnpubで検索</string>
+    <string name="clear_search">検索をクリア</string>
+    <string name="no_accounts_found">一致するアカウントはありません</string>
 </resources>

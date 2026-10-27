@@ -934,4 +934,7 @@
     <string name="event_kind_9843">CI hizmet isteği</string>
     <string name="event_kind_9844">CI hizmetini durdurma</string>
     <string name="event_kind_30624">Kapsayıcı imaj etiketleri</string>
+    <string name="search_accounts">Ada veya npub\'a göre ara</string>
+    <string name="clear_search">Aramayı temizle</string>
+    <string name="no_accounts_found">Eşleşen hesap yok</string>
 </resources>

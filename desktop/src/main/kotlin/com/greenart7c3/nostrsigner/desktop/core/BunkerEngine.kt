@@ -3,6 +3,7 @@ package com.greenart7c3.nostrsigner.desktop.core
 import com.greenart7c3.nostrsigner.common.EncryptionType
 import com.greenart7c3.nostrsigner.common.SignerType
 import com.greenart7c3.nostrsigner.common.connectsThroughOtherKey
+import com.greenart7c3.nostrsigner.common.decodeQueryParamValue
 import com.greenart7c3.nostrsigner.common.generateBunkerPrivKey
 import com.greenart7c3.nostrsigner.common.hasAmbiguousRelayTags
 import com.greenart7c3.nostrsigner.common.localPubKeyFromPrivKey
@@ -36,7 +37,6 @@ import com.vitorpamplona.quartz.nip46RemoteSigner.NostrConnectEvent
 import com.vitorpamplona.quartz.nip57Zaps.PrivateZapRequestBuilder
 import com.vitorpamplona.quartz.nip57Zaps.ZapRequestEvent
 import com.vitorpamplona.quartz.utils.TimeUtils
-import java.net.URLDecoder
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.io.encoding.Base64
@@ -1321,7 +1321,7 @@ class BunkerEngine(
                 val parts = param.split("=")
                 if (parts.size < 2) return@forEach
                 val paramName = parts.first()
-                val value = URLDecoder.decode(parts.drop(1).joinToString("="), Charsets.UTF_8)
+                val value = decodeQueryParamValue(parts.drop(1).joinToString("="))
                 when (paramName) {
                     "relay" -> RelayUrlNormalizer.normalizeOrNull(value)?.let { relays.add(it) }
                     "name" -> name = value

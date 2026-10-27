@@ -1,5 +1,7 @@
 package com.greenart7c3.nostrsigner.common
 
+import java.net.URLDecoder
+
 /**
  * Whether a request reached a per-connection key ([routedPrivKey]; empty when
  * it was addressed to the account key) that is not the sending app's own
@@ -40,4 +42,18 @@ fun sanitizeAppName(name: String, max: Int = APP_NAME_MAX): String {
     }.replace(Regex("\\s+"), " ").trim()
     if (cleaned.codePointCount(0, cleaned.length) <= max) return cleaned
     return cleaned.substring(0, cleaned.offsetByCodePoints(0, max - 1)).trimEnd() + "…"
+}
+
+/**
+ * A single query-string value form-decoded exactly once: '+' means a space
+ * (application/x-www-form-urlencoded, how clients like URLSearchParams encode
+ * a name) and a literal '+' arrives as '%2B', so "My+App" shows its space
+ * while "C%2B%2B" keeps its pluses. A stray '%' that is not an escape leaves
+ * the value in its raw form. Decode the raw query per value, never as a whole:
+ * an encoded '&' (%26) inside a value must not split the param in two.
+ */
+fun decodeQueryParamValue(value: String): String = try {
+    URLDecoder.decode(value, "utf-8")
+} catch (_: Exception) {
+    value
 }

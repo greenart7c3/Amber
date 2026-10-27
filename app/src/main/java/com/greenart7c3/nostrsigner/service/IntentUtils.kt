@@ -20,6 +20,7 @@ import com.greenart7c3.nostrsigner.FailedMigrationException
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.common.SignerType
+import com.greenart7c3.nostrsigner.common.decodeQueryParamValue
 import com.greenart7c3.nostrsigner.common.hasAmbiguousRelayTags
 import com.greenart7c3.nostrsigner.common.rememberedDecision
 import com.greenart7c3.nostrsigner.common.sanitizeAppName
@@ -223,8 +224,16 @@ object IntentUtils {
         }
         val decoded = decodeData(data)
         val localData = content.ifEmpty { decoded.split("?").first() }
-        val parameters = if (content.isEmpty()) decoded.split("?").toMutableList() else decodeData(content, false).split("?").toMutableList()
-        parameters.removeAt(0)
+        val parameters = if (content.isEmpty()) {
+            // Split the RAW query and decode each value once (see
+            // decodeQueryParamValue): a form-encoded appName "My+App" shows its
+            // space, and an encoded '&' (%26) inside a value no longer ends up
+            // splitting the param in two.
+            data.replace("nostrsigner:", "").split("?").drop(1).toMutableList()
+        } else {
+            decodeData(content, false).split("?").toMutableList()
+        }
+        if (content.isNotEmpty()) parameters.removeAt(0)
         parameters.removeIf { it.isBlank() }
 
         if (parameters.isEmpty() || parameters.toString() == "[]") {
@@ -242,7 +251,7 @@ object IntentUtils {
             parameters.flatMap { it.split("&") }.forEach {
                 val params = it.split("=").toMutableList()
                 val parameter = params.removeAt(0)
-                val parameterData = params.joinToString("=")
+                val parameterData = decodeQueryParamValue(params.joinToString("="))
                 when {
                     parameter == "type" -> type = parseSignerType(parameterData)
                     // lowercase() avoids the Compose Locale allocation used by the old toLowerCase(Locale.current)

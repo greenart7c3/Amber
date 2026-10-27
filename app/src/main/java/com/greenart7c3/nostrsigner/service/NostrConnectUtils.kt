@@ -4,6 +4,7 @@ import android.content.Intent
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.common.EncryptionType
+import com.greenart7c3.nostrsigner.common.decodeQueryParamValue
 import com.greenart7c3.nostrsigner.common.sanitizeAppName
 import com.greenart7c3.nostrsigner.database.LogEntity
 import com.greenart7c3.nostrsigner.models.Account
@@ -47,12 +48,15 @@ object NostrConnectUtils {
             // The client's key becomes the connection's identity: refuse
             // anything but a lowercase hex public key (caught and logged below).
             require(pubKey.matches(HEX_PUBKEY)) { "Invalid public key in nostrconnect URI" }
-            val parsedData = IntentUtils.decodeData(split.drop(1).joinToString("") { it })
-            val splitParsedData = parsedData.split("&")
             val permissions = mutableListOf<Permission>()
             var nostrConnectSecret = ""
-            splitParsedData.forEach {
-                val (paramName, json) = splitParam(it)
+            // Split the RAW query and form-decode each value exactly once
+            // (decodeQueryParamValue): a client that encodes with
+            // '+' for spaces (URLSearchParams) then shows "My App", not
+            // "My+App", while a literal '+' still arrives as '%2B'.
+            split.drop(1).joinToString("?").split("&").forEach {
+                val (paramName, rawValue) = splitParam(it)
+                val json = decodeQueryParamValue(rawValue)
                 if (paramName == "relay") {
                     val relayUrl = RelayUrlNormalizer.normalizeOrNull(json)
                     if (relayUrl != null) {

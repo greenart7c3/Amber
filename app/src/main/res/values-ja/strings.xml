@@ -24,6 +24,7 @@
     <string name="add_new_account">アカウントを追加</string>
     <string name="select_account">アカウントを選択</string>
     <string name="active_account">アクティブなアカウント</string>
+    <string name="favorite_account">お気に入りのアカウント</string>
     <string name="edit_name">名前を編集</string>
     <string name="copy">"コピー "</string>
     <string name="connect_app">アプリを接続</string>

@@ -36,6 +36,7 @@ import java.security.InvalidKeyException
 import java.security.KeyStoreException
 import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.runBlocking
 
 private enum class PrefKeys(val key: String) {
@@ -63,6 +64,7 @@ private enum class SettingsKeys(val key: String) {
     CURRENT_ACCOUNT("currently_logged_in_account"),
     PIN("pin"),
     SAVED_ACCOUNTS("all_saved_accounts"),
+    FAVORITE_ACCOUNTS("favorite_accounts"),
     USE_PROXY("use_proxy"),
     PROXY_PORT("proxy_port"),
     TOR_MODE("tor_mode"),
@@ -444,6 +446,34 @@ object LocalPreferences {
         }
     }
 
+    private var favoriteAccounts: MutableStateFlow<Set<String>>? = null
+
+    /**
+     * The npubs the user marked as favorites, which the account pickers list first. Keyed by
+     * npub, so renaming an account keeps it and logging it out clears it.
+     */
+    fun favoriteAccounts(context: Context): StateFlow<Set<String>> = favoriteAccountsFlow(context)
+
+    @Synchronized
+    private fun favoriteAccountsFlow(context: Context): MutableStateFlow<Set<String>> = favoriteAccounts ?: MutableStateFlow(
+        sharedPrefs(context).getStringSet(SettingsKeys.FAVORITE_ACCOUNTS.key, null)?.toSet() ?: emptySet(),
+    ).also { favoriteAccounts = it }
+
+    @Synchronized
+    fun setFavoriteAccount(context: Context, npub: String, favorite: Boolean) {
+        val flow = favoriteAccountsFlow(context)
+        val favorites = if (favorite) flow.value + npub else flow.value - npub
+        if (favorites == flow.value) return
+        flow.value = favorites
+        sharedPrefs(context).edit {
+            if (favorites.isEmpty()) {
+                remove(SettingsKeys.FAVORITE_ACCOUNTS.key)
+            } else {
+                putStringSet(SettingsKeys.FAVORITE_ACCOUNTS.key, favorites)
+            }
+        }
+    }
+
     private fun getDirPath(context: Context): String = "${context.filesDir.parent}/shared_prefs/"
 
     private fun addAccount(context: Context, npub: String) {
@@ -533,6 +563,7 @@ object LocalPreferences {
         val userPrefs = sharedPrefs(context, npub)
         userPrefs.edit(commit = true) { clear() }
         removeAccount(context, npub)
+        setFavoriteAccount(context, npub, false)
         deleteUserPreferenceFile(context, npub)
 
         deleteUserDataStoreFile(context, npub)

@@ -30,6 +30,7 @@
     <string name="add_new_account">Aggiungi nuovo account</string>
     <string name="select_account">Seleziona account</string>
     <string name="active_account">Account attivo</string>
+    <string name="favorite_account">Account preferito</string>
     <string name="edit_name">Modifica nome</string>
     <string name="copy">"Copia "</string>
     <string name="connect_app">Collega app</string>

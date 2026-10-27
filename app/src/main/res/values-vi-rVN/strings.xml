@@ -24,6 +24,7 @@
     <string name="add_new_account">Thêm Tài Khoản Mới</string>
     <string name="select_account">Chọn Tài Khoản</string>
     <string name="active_account">Tài Khoản Đang Hoạt Động</string>
+    <string name="favorite_account">Tài khoản yêu thích</string>
     <string name="edit_name">Chỉnh sửa tên</string>
     <string name="copy">"Sao chép "</string>
     <string name="connect_app">Kết nối ứng dụng</string>

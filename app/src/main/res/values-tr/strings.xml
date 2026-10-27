@@ -29,6 +29,7 @@
     <string name="add_new_account">Yeni Hesap Ekle</string>
     <string name="select_account">Hesap Seç</string>
     <string name="active_account">Aktif Hesap</string>
+    <string name="favorite_account">Favori hesap</string>
     <string name="edit_name">İsmi düzenle</string>
     <string name="copy">"Kopyala "</string>
     <string name="connect_app">Uygulamayı bağla</string>

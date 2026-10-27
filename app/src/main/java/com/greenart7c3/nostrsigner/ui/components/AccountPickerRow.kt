@@ -26,18 +26,21 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.service.toShortenHex
@@ -147,49 +150,55 @@ fun AccountPickerRow(
                     .verticalScroll(scrollState)
                     .padding(horizontal = 12.dp, vertical = 8.dp),
             ) {
-                accounts.forEachIndexed { index, acc ->
-                    val name by acc.name.collectAsStateWithLifecycle()
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable {
-                                onSelect(index)
-                                sheetOpen = false
-                            }
-                            .background(
-                                color = if (index == selectedAccountIndex) {
-                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.18f)
-                                } else {
-                                    Color.Transparent
-                                },
-                                shape = RoundedCornerShape(10.dp),
-                            )
-                            .padding(horizontal = 12.dp, vertical = 10.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        ProfilePictureIcon(account = acc)
-                        Spacer(Modifier.width(12.dp))
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = name.ifBlank { acc.npub.toShortenHex() },
-                                fontWeight = FontWeight.Medium,
-                                fontSize = 15.sp,
-                            )
-                            if (name.isNotBlank()) {
+                // Sorted for display only: each row keeps its index into [accounts], which is
+                // what the caller selects by, so reordering never changes the signing account.
+                val favorites by LocalPreferences.favoriteAccounts(LocalContext.current).collectAsStateWithLifecycle()
+                accounts.withIndex().toList().favoritesFirst(favorites) { it.value.npub }.forEach { (index, acc) ->
+                    key(acc.npub) {
+                        val name by acc.name.collectAsStateWithLifecycle()
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    onSelect(index)
+                                    sheetOpen = false
+                                }
+                                .background(
+                                    color = if (index == selectedAccountIndex) {
+                                        MaterialTheme.colorScheme.primary.copy(alpha = 0.18f)
+                                    } else {
+                                        Color.Transparent
+                                    },
+                                    shape = RoundedCornerShape(10.dp),
+                                )
+                                .padding(horizontal = 12.dp, vertical = 10.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            ProfilePictureIcon(account = acc)
+                            Spacer(Modifier.width(12.dp))
+                            Column(modifier = Modifier.weight(1f)) {
                                 Text(
-                                    text = acc.npub.toShortenHex(),
-                                    fontSize = 12.sp,
-                                    fontFamily = FontFamily.Monospace,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    text = name.ifBlank { acc.npub.toShortenHex() },
+                                    fontWeight = FontWeight.Medium,
+                                    fontSize = 15.sp,
+                                )
+                                if (name.isNotBlank()) {
+                                    Text(
+                                        text = acc.npub.toShortenHex(),
+                                        fontSize = 12.sp,
+                                        fontFamily = FontFamily.Monospace,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    )
+                                }
+                            }
+                            if (index == selectedAccountIndex) {
+                                Icon(
+                                    imageVector = Icons.Default.Check,
+                                    contentDescription = null,
+                                    tint = Color(0xFF1D8802),
                                 )
                             }
-                        }
-                        if (index == selectedAccountIndex) {
-                            Icon(
-                                imageVector = Icons.Default.Check,
-                                contentDescription = null,
-                                tint = Color(0xFF1D8802),
-                            )
+                            FavoriteAccountButton(acc.npub, acc.npub in favorites)
                         }
                     }
                 }

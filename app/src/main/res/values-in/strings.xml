@@ -30,6 +30,7 @@
     <string name="add_new_account">Tambah Akun Baru</string>
     <string name="select_account">Pilih Akun</string>
     <string name="active_account">Akun Aktif</string>
+    <string name="favorite_account">Akun favorit</string>
     <string name="edit_name">Edit nama</string>
     <string name="copy">"Salin "</string>
     <string name="connect_app">Hubungkan aplikasi</string>

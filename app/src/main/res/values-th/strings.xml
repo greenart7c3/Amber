@@ -24,6 +24,7 @@
     <string name="add_new_account">เพิ่มบัญชีใหม่</string>
     <string name="select_account">เลือกบัญชี</string>
     <string name="active_account">บัญชีที่ใช้งานอยู่</string>
+    <string name="favorite_account">บัญชีโปรด</string>
     <string name="edit_name">แก้ไขชื่อ</string>
     <string name="copy">"คัดลอก "</string>
     <string name="connect_app">เชื่อมต่อแอป</string>

@@ -29,6 +29,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -54,7 +55,9 @@ import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.AccountStateViewModel
 import com.greenart7c3.nostrsigner.ui.NavHostControllerWrapper
 import com.greenart7c3.nostrsigner.ui.components.ActiveMarker
+import com.greenart7c3.nostrsigner.ui.components.FavoriteAccountButton
 import com.greenart7c3.nostrsigner.ui.components.ProfileSubscriptionEffect
+import com.greenart7c3.nostrsigner.ui.components.favoritesFirst
 import com.greenart7c3.nostrsigner.ui.navigation.Route
 import com.greenart7c3.nostrsigner.ui.theme.fromHex
 import com.greenart7c3.nostrsigner.ui.verticalScrollbar
@@ -98,7 +101,8 @@ fun AccountsBottomSheet(
             ),
         ) {
             val context = LocalContext.current
-            val accounts = LocalPreferences.allSavedAccounts(context)
+            val favorites by LocalPreferences.favoriteAccounts(context).collectAsStateWithLifecycle()
+            val accounts = LocalPreferences.allSavedAccounts(context).favoritesFirst(favorites) { it.npub }
             val scrollState = rememberScrollState()
 
             Column(
@@ -107,114 +111,118 @@ fun AccountsBottomSheet(
                     .verticalScroll(scrollState),
             ) {
                 accounts.forEach { acc ->
-                    // Load the cached Account off the main thread (decrypts once, then cached) so we
-                    // can observe its name/picture StateFlows and refresh its metadata while the
-                    // sheet is open.
-                    val loadedAccount by produceState<Account?>(null, acc.npub) {
-                        value = withContext(Dispatchers.IO) {
-                            LocalPreferences.loadFromEncryptedStorage(context, acc.npub)
-                        }
-                    }
-                    loadedAccount?.let { ProfileSubscriptionEffect(it) }
-                    val name = loadedAccount?.name?.collectAsStateWithLifecycle()?.value ?: ""
-                    val profileUrl = loadedAccount?.picture?.collectAsStateWithLifecycle()?.value ?: ""
-                    val borderColor = remember(acc.npub) {
-                        Color.fromHex(acc.npub.bechToBytes().toHexKey().slice(0..5))
-                    }
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable {
-                                accountStateViewModel.switchUser(acc.npub, null)
+                    key(acc.npub) {
+                        // Load the cached Account off the main thread (decrypts once, then cached) so we
+                        // can observe its name/picture StateFlows and refresh its metadata while the
+                        // sheet is open.
+                        val loadedAccount by produceState<Account?>(null, acc.npub) {
+                            value = withContext(Dispatchers.IO) {
+                                LocalPreferences.loadFromEncryptedStorage(context, acc.npub)
                             }
-                            .padding(16.dp, 16.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
+                        }
+                        loadedAccount?.let { ProfileSubscriptionEffect(it) }
+                        val name = loadedAccount?.name?.collectAsStateWithLifecycle()?.value ?: ""
+                        val profileUrl = loadedAccount?.picture?.collectAsStateWithLifecycle()?.value ?: ""
+                        val borderColor = remember(acc.npub) {
+                            Color.fromHex(acc.npub.bechToBytes().toHexKey().slice(0..5))
+                        }
                         Row(
-                            modifier = Modifier.weight(1f),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    accountStateViewModel.switchUser(acc.npub, null)
+                                }
+                                .padding(16.dp, 16.dp),
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             Row(
                                 modifier = Modifier.weight(1f),
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
-                                if (profileUrl.isNotBlank() && !BuildFlavorChecker.isOfflineFlavor()) {
-                                    SubcomposeAsyncImage(
-                                        model = profileUrl,
-                                        contentDescription = stringResource(R.string.account_picture),
-                                        modifier = Modifier
-                                            .padding(end = 8.dp)
-                                            .clip(RoundedCornerShape(50))
-                                            .height(40.dp)
-                                            .width(40.dp),
-                                        error = {
-                                            Icon(
-                                                Icons.Outlined.Person,
-                                                stringResource(R.string.account_picture),
-                                                modifier = Modifier
-                                                    .border(1.dp, borderColor, CircleShape)
-                                                    .height(40.dp)
-                                                    .width(40.dp),
-                                            )
-                                        },
-                                    )
-                                } else {
-                                    Icon(
-                                        Icons.Outlined.Person,
-                                        stringResource(R.string.account_picture),
-                                        modifier = Modifier
-                                            .padding(end = 8.dp)
-                                            .border(1.dp, borderColor, CircleShape)
-                                            .height(40.dp)
-                                            .width(40.dp),
-                                    )
-                                }
-                                Column(modifier = Modifier.weight(1f)) {
-                                    if (name.isNotBlank()) {
-                                        Text(name)
+                                Row(
+                                    modifier = Modifier.weight(1f),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                ) {
+                                    if (profileUrl.isNotBlank() && !BuildFlavorChecker.isOfflineFlavor()) {
+                                        SubcomposeAsyncImage(
+                                            model = profileUrl,
+                                            contentDescription = stringResource(R.string.account_picture),
+                                            modifier = Modifier
+                                                .padding(end = 8.dp)
+                                                .clip(RoundedCornerShape(50))
+                                                .height(40.dp)
+                                                .width(40.dp),
+                                            error = {
+                                                Icon(
+                                                    Icons.Outlined.Person,
+                                                    stringResource(R.string.account_picture),
+                                                    modifier = Modifier
+                                                        .border(1.dp, borderColor, CircleShape)
+                                                        .height(40.dp)
+                                                        .width(40.dp),
+                                                )
+                                            },
+                                        )
+                                    } else {
+                                        Icon(
+                                            Icons.Outlined.Person,
+                                            stringResource(R.string.account_picture),
+                                            modifier = Modifier
+                                                .padding(end = 8.dp)
+                                                .border(1.dp, borderColor, CircleShape)
+                                                .height(40.dp)
+                                                .width(40.dp),
+                                        )
                                     }
-                                    Text(acc.npub.toShortenHex())
-                                }
-                                Column(modifier = Modifier.width(32.dp)) {
-                                    ActiveMarker(acc, account)
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        if (name.isNotBlank()) {
+                                            Text(name)
+                                        }
+                                        Text(acc.npub.toShortenHex())
+                                    }
+                                    Column(modifier = Modifier.width(32.dp)) {
+                                        ActiveMarker(acc, account)
+                                    }
                                 }
                             }
-                        }
 
-                        IconButton(
-                            onClick = {
-                                scope.launch {
-                                    clipboardManager.setClipEntry(
-                                        ClipEntry(
-                                            ClipData.newPlainText(
-                                                "",
-                                                acc.npub,
+                            FavoriteAccountButton(acc.npub, acc.npub in favorites)
+
+                            IconButton(
+                                onClick = {
+                                    scope.launch {
+                                        clipboardManager.setClipEntry(
+                                            ClipEntry(
+                                                ClipData.newPlainText(
+                                                    "",
+                                                    acc.npub,
+                                                ),
                                             ),
-                                        ),
-                                    )
-                                }
-                            },
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.ContentCopy,
-                                contentDescription = stringResource(R.string.copy_to_clipboard),
-                                tint = MaterialTheme.colorScheme.onSurface,
-                            )
-                        }
+                                        )
+                                    }
+                                },
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.ContentCopy,
+                                    contentDescription = stringResource(R.string.copy_to_clipboard),
+                                    tint = MaterialTheme.colorScheme.onSurface,
+                                )
+                            }
 
-                        IconButton(
-                            onClick = {
-                                onClose()
-                                navController.navController.navigate("EditProfile/${acc.npub}")
-                            },
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Edit,
-                                contentDescription = stringResource(R.string.edit_name),
-                                tint = MaterialTheme.colorScheme.onSurface,
-                            )
+                            IconButton(
+                                onClick = {
+                                    onClose()
+                                    navController.navController.navigate("EditProfile/${acc.npub}")
+                                },
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Edit,
+                                    contentDescription = stringResource(R.string.edit_name),
+                                    tint = MaterialTheme.colorScheme.onSurface,
+                                )
+                            }
+                            LogoutButton(acc, accountStateViewModel)
                         }
-                        LogoutButton(acc, accountStateViewModel)
                     }
                 }
                 Row(

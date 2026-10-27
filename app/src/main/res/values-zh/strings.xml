@@ -29,6 +29,7 @@
     <string name="add_new_account">添加新账户</string>
     <string name="select_account">选择账户</string>
     <string name="active_account">激活账户</string>
+    <string name="favorite_account">收藏的账户</string>
     <string name="edit_name">编辑名称</string>
     <string name="copy">"复制"</string>
     <string name="connect_app">连接应用</string>

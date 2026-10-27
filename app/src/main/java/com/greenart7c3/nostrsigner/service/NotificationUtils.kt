@@ -156,7 +156,9 @@ object NotificationUtils {
             )
                 .setSmallIcon(R.drawable.ic_notification)
                 .setContentTitle(messageTitle)
-                .setContentText(applicationContext.getString(R.string.new_event_to_sign))
+                // The public version is what redacted lock screens render, so it
+                // carries the same request description as the full notification.
+                .setContentText(messageBody)
                 .setGroup(bunkerGroup?.id)
                 // .setGroup(notificationGroupKey) //-> Might need a Group summary as well before we
                 // activate this

@@ -90,6 +90,10 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
         prepareLogoutOrSwitch()
         Amber.instance.applicationIOScope.launch {
             val shouldLogout = LocalPreferences.updatePrefsForLogout(npub, Amber.instance)
+            // The logged-out account's NIP-46 subscriptions, connection keys and
+            // relay sockets must go with it: rebuild the filters from the
+            // remaining accounts, or Amber keeps listening for a deleted key.
+            Amber.instance.checkForNewRelaysAndUpdateAllFilters()
             tryLoginExistingAccount(null, null, forceLogout = shouldLogout)
         }
     }

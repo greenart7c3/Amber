@@ -3,12 +3,13 @@ package com.greenart7c3.nostrsigner.service
 import android.content.Intent
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.AmberLog
+import com.greenart7c3.nostrsigner.common.EncryptionType
+import com.greenart7c3.nostrsigner.common.sanitizeAppName
 import com.greenart7c3.nostrsigner.database.LogEntity
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.AmberBunkerRequest
 import com.greenart7c3.nostrsigner.models.BunkerClientMetadata
 import com.greenart7c3.nostrsigner.models.BunkerMetadata
-import com.greenart7c3.nostrsigner.models.EncryptionType
 import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.models.containsNip
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
@@ -18,6 +19,8 @@ import java.util.UUID
 import kotlinx.coroutines.launch
 
 object NostrConnectUtils {
+    private val HEX_PUBKEY = Regex("[0-9a-f]{64}")
+
     /**
      * Splits a query parameter into its name and value on the first `=` only,
      * so values that contain `=` (e.g. base64 padding like "XQUdha4rjh_gjAgHN8X5yg==") are preserved.
@@ -41,6 +44,9 @@ object NostrConnectUtils {
             var url = ""
             var image = ""
             val pubKey = split.first()
+            // The client's key becomes the connection's identity: refuse
+            // anything but a lowercase hex public key (caught and logged below).
+            require(pubKey.matches(HEX_PUBKEY)) { "Invalid public key in nostrconnect URI" }
             val parsedData = IntentUtils.decodeData(split.drop(1).joinToString("") { it })
             val splitParsedData = parsedData.split("&")
             val permissions = mutableListOf<Permission>()
@@ -54,7 +60,7 @@ object NostrConnectUtils {
                     }
                 }
                 if (paramName == "name") {
-                    name = json
+                    name = sanitizeAppName(json)
                 }
 
                 if (paramName == "url") {

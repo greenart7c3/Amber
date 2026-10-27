@@ -4,20 +4,23 @@ import android.content.Context
 import android.database.Cursor
 import android.database.MatrixCursor
 import android.net.Uri
+import com.greenart7c3.nostrsigner.common.SignerType
+import com.greenart7c3.nostrsigner.common.hasAmbiguousRelayTags
 import com.greenart7c3.nostrsigner.database.ApplicationDao
+import com.greenart7c3.nostrsigner.database.ApplicationPermissionsEntity
 import com.greenart7c3.nostrsigner.database.HistoryEntity
 import com.greenart7c3.nostrsigner.database.LogEntity
 import com.greenart7c3.nostrsigner.models.Account
-import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.models.encryptDecryptSignerTypes
 import com.greenart7c3.nostrsigner.models.kindToNip
 import com.greenart7c3.nostrsigner.models.permissionTypeFromContent
 import com.greenart7c3.nostrsigner.service.AmberUtils
 import com.greenart7c3.nostrsigner.service.IntentUtils
 import com.greenart7c3.nostrsigner.service.RelayUrlUtils
+import com.greenart7c3.nostrsigner.service.isBlockedByAuthWhitelist
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
 import com.vitorpamplona.quartz.nip01Core.core.Event
-import com.vitorpamplona.quartz.nip57Zaps.LnZapRequestEvent
+import com.vitorpamplona.quartz.nip57Zaps.ZapRequestEvent
 import com.vitorpamplona.quartz.utils.TimeUtils
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -67,8 +70,10 @@ object SignerProviderQuery {
      *   caller (e.g. NIP-46 relay requests).
      * @param operationUri identifies the operation to run, e.g. `content://<appId>.SIGN_EVENT`.
      * @param arguments the operation's input values; their meaning depends on
-     *   [operationUri] (e.g. for SIGN_EVENT: [0] = event json, [2] = npub). See callers.
+     *   [operationUri] (e.g. for SIGN_EVENT: [0] = event JSON, [2] = npub). See callers.
      */
+    // A ContentProvider query answers synchronously, so it blocks on the signer.
+    @Suppress("RunBlocking")
     fun query(
         context: Context,
         requesterId: String,
@@ -117,14 +122,36 @@ object SignerProviderQuery {
                         ""
                     }
 
+                    // Authorization below decides on the first relay tag alone; a second
+                    // relay tag would be signed without ever being granted. NIP-42
+                    // defines exactly one relay per auth event, so refuse the rest.
+                    if (hasAmbiguousRelayTags(event.kind, event.tags)) {
+                        scope.launch {
+                            historyDatabase.dao().addHistory(
+                                listOf(
+                                    HistoryEntity(
+                                        0,
+                                        requesterId,
+                                        uriString.replace("content://$appId.", ""),
+                                        event.kind,
+                                        TimeUtils.now(),
+                                        false,
+                                        content = event.toJson(),
+                                    ),
+                                ),
+                                account.npub,
+                            )
+                        }
+                        return MatrixCursor(arrayOf("rejected")).also { it.addRow(arrayOf("true")) }
+                    }
+
                     // The auth whitelist is only a relay constraint: when non-empty, relays
                     // outside the list are auto-rejected. Membership never authorizes signing
                     // by itself — a requester-scoped permission (or user prompt) is still
                     // required, otherwise any app/NIP-46 client could silently obtain
                     // relay-auth signatures (GHSA-vx4h-56qj-wcp7).
                     if (event.kind == 22242) {
-                        val authWhitelist = Amber.instance.settings.authWhitelist
-                        if (authWhitelist.isNotEmpty() && relayHost !in authWhitelist) {
+                        if (isBlockedByAuthWhitelist(event.kind, relayHost)) {
                             scope.launch {
                                 historyDatabase.dao().addHistory(
                                     listOf(
@@ -222,7 +249,7 @@ object SignerProviderQuery {
                     val cursor =
                         MatrixCursor(arrayOf("signature", "event", "result")).also {
                             val signature =
-                                if (event.kind == LnZapRequestEvent.KIND &&
+                                if (event.kind == ZapRequestEvent.KIND &&
                                     event.tags.any { tag ->
                                         tag.any { t -> t == "anon" }
                                     }
@@ -297,15 +324,19 @@ object SignerProviderQuery {
                     // surfaces its own approval flow), so returning null here
                     // is externally identical, but the private key is never
                     // touched for an unknown caller. The classified-specific
-                    // grant case (e.g. a grant for DECRYPT_EVENT only) is
-                    // preserved: ANY row of a relevant type counts as "has a
-                    // relevant grant", so we still proceed to decrypt +
-                    // classify, and the final per-type check below honors
-                    // accept/reject precisely.
+                    // grant case (e.g. an accept for DECRYPT_EVENT only) is
+                    // preserved: any row of a relevant type that can accept
+                    // counts, so we still decrypt + classify, and the final
+                    // per-type check below honors accept/reject precisely.
+                    // Rows that can only reject do not count: decrypting for
+                    // them could only end in "rejected" or "no grant", and
+                    // which one it is would tell the caller how the plaintext
+                    // classified. Returning null without decrypting keeps that
+                    // hidden; the intent flow still applies the rejection.
                     if (!isEncrypt) {
                         val preSignPolicy = permDao.getSignPolicy(requesterId)
                         val preAuthorized = preSignPolicy == 2 ||
-                            hasAnyDecryptPermission(permDao, requesterId, type, v3Kind, stringType)
+                            hasAnyAcceptingDecryptPermission(permDao, requesterId, type, v3Kind, stringType)
                         if (!preAuthorized) {
                             AmberLog.d(
                                 Amber.TAG,
@@ -354,6 +385,8 @@ object SignerProviderQuery {
                     // Permission lookup. V3 grants are scoped by (packageName,
                     // SignerType, kind); fall back to a kind=null "all kinds"
                     // grant. V3 grants do NOT satisfy V2 requests and vice versa.
+                    // The context scope string is shown in the prompt but is not
+                    // part of a grant: a remembered kind-K grant covers every scope.
                     var permission = if (isV3) {
                         // V3 grants are kind-scoped; fall back to the explicit
                         // "all kinds" (kind IS NULL) grant only, never to any
@@ -574,7 +607,7 @@ object SignerProviderQuery {
                     return localCursor
                 }
                 "content://$appId.PING" -> {
-                    val npub = if (arguments != null && arguments.isNotEmpty()) IntentUtils.parsePubKey(arguments[0]) else null
+                    val npub = if (!arguments.isNullOrEmpty()) IntentUtils.parsePubKey(arguments[0]) else null
                     val account = if (npub != null) {
                         LocalPreferences.loadFromEncryptedStorageSync(context, npub)
                     } else {
@@ -674,31 +707,38 @@ object SignerProviderQuery {
      * requester has *any* permission row that could decide a decrypt of this
      * type — generic ([type.toString()]), any of the V2 classified content
      * types, the NIP-level grant, or (for V3) the kind-scoped / all-kinds rows.
-     * Used to short-circuit a decrypt request from a totally unknown caller
-     * *before* the private key is invoked, closing a key-use / timing / error
-     * oracle. Does not inspect accept/reject state: a row that auto-rejects
-     * still counts as "relevant" so the existing classify-and-decide path
-     * below runs and returns [rejectedCursor] as appropriate.
+     * Used to short-circuit a decrypt request *before* the private key is
+     * invoked, closing a key-use / timing / error oracle. Only rows whose
+     * active decision is accept count: a caller that holds nothing but
+     * rejections (or always-ask rows) can never receive a result, and
+     * decrypting for it would reveal the plaintext's classification through
+     * the rejected-versus-null response.
      */
-    private fun hasAnyDecryptPermission(
+    private fun hasAnyAcceptingDecryptPermission(
         permDao: ApplicationDao,
         requesterId: String,
         type: SignerType,
         v3Kind: Int?,
         stringType: String,
     ): Boolean {
-        if (permDao.getPermission(requesterId, type.toString()) != null) return true
+        val now = TimeUtils.now()
+        fun ApplicationPermissionsEntity?.canAccept() = this?.activeDecision(now) == true
 
         if (v3Kind != null) {
-            if (permDao.getPermission(requesterId, type.toString(), v3Kind) != null) return true
-            if (permDao.getPermissionAllKinds(requesterId, type.toString()) != null) return true
+            // Kind-scoped like the final V3 lookup: the kind-agnostic
+            // getPermission(key, type) would match a grant for any other kind,
+            // and a kind-B request then decrypted only to answer "rejected" on
+            // failure versus null on success, a ciphertext-validity oracle.
+            if (permDao.getPermission(requesterId, type.toString(), v3Kind).canAccept()) return true
+            if (permDao.getPermissionAllKinds(requesterId, type.toString()).canAccept()) return true
         } else {
+            if (permDao.getPermission(requesterId, type.toString()).canAccept()) return true
             // V2 classified content-type grants. The set of possible types
             // comes from permissionTypeFromContent / EncryptedDataKind.
-            if (permDao.getPermission(requesterId, "DECRYPT_CLEAR_TEXT") != null) return true
-            if (permDao.getPermission(requesterId, "DECRYPT_EVENT") != null) return true
-            if (permDao.getPermission(requesterId, "DECRYPT_TAG_ARRAY") != null) return true
-            if (permDao.getPermission(requesterId, "DECRYPT_ZAP_EVENT") != null) return true
+            if (permDao.getPermission(requesterId, "DECRYPT_CLEAR_TEXT").canAccept()) return true
+            if (permDao.getPermission(requesterId, "DECRYPT_EVENT").canAccept()) return true
+            if (permDao.getPermission(requesterId, "DECRYPT_TAG_ARRAY").canAccept()) return true
+            if (permDao.getPermission(requesterId, "DECRYPT_ZAP_EVENT").canAccept()) return true
 
             // NIP-level fallback grant (matches the lookup at line ~341-358).
             val nip = when (stringType) {
@@ -707,7 +747,7 @@ object SignerProviderQuery {
                 else -> null
             }
             nip?.let {
-                if (permDao.getPermission(requesterId, "NIP", it) != null) return true
+                if (permDao.getPermission(requesterId, "NIP", it).canAccept()) return true
             }
         }
         return false

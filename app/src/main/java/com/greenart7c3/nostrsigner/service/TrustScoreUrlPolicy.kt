@@ -22,9 +22,9 @@ object TrustScoreUrlPolicy {
         // Drop default ports so one relay has exactly one canonical URL —
         // otherwise wss://relay.example and wss://relay.example:443 get two
         // cache keys and two different API queries.
-        val port = when {
-            scheme == "wss" && uri.port == 443 -> -1
-            scheme == "ws" && uri.port == 80 -> -1
+        val port = when (scheme) {
+            "wss" if uri.port == 443 -> -1
+            "ws" if uri.port == 80 -> -1
             else -> uri.port
         }
         URI(scheme, null, host, port, null, null, null).toASCIIString()

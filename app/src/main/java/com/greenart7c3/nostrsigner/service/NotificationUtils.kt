@@ -118,34 +118,16 @@ object NotificationUtils {
     }
 
     fun NotificationManager.sendNotification(
-        id: String,
         messageBody: String,
         messageTitle: String,
         channelId: String,
         applicationContext: Context,
         bunkerRequest: AmberBunkerRequest,
     ) {
-        sendNotification(
-            id = id,
-            messageBody = messageBody,
-            messageTitle = messageTitle,
-            picture = null,
-            channelId,
-            applicationContext = applicationContext,
-            bunkerRequest,
-        )
-    }
-
-    private fun NotificationManager.sendNotification(
-        id: String,
-        messageBody: String,
-        messageTitle: String,
-        picture: BitmapDrawable?,
-        channelId: String,
-        applicationContext: Context,
-        bunkerRequest: AmberBunkerRequest,
-    ) {
-        val notId = id.hashCode()
+        // One notification per queued request: keyed like the queue, not by the
+        // client-chosen id, or a second client reusing an id would be dropped here
+        // before it is ever queued.
+        val notId = bunkerRequest.queueKey.hashCode()
         val notifications: Array<StatusBarNotification> = activeNotifications
         for (notification in notifications) {
             if (notification.id == notId) {
@@ -161,7 +143,7 @@ object NotificationUtils {
                 applicationContext,
                 notId,
                 contentIntent,
-                PendingIntent.FLAG_MUTABLE,
+                PendingIntent.FLAG_IMMUTABLE,
             )
 
         BunkerRequestUtils.addRequest(bunkerRequest)
@@ -175,7 +157,6 @@ object NotificationUtils {
                 .setSmallIcon(R.drawable.ic_notification)
                 .setContentTitle(messageTitle)
                 .setContentText(applicationContext.getString(R.string.new_event_to_sign))
-                .setLargeIcon(picture?.bitmap)
                 .setGroup(bunkerGroup?.id)
                 // .setGroup(notificationGroupKey) //-> Might need a Group summary as well before we
                 // activate this
@@ -197,7 +178,6 @@ object NotificationUtils {
                 .setSmallIcon(R.drawable.ic_notification)
                 .setContentTitle(messageTitle)
                 .setContentText(messageBody)
-                .setLargeIcon(picture?.bitmap)
                 .setGroup(bunkerGroup?.id)
                 // .setGroup(notificationGroupKey)  //-> Might need a Group summary as well before we
                 // activate this

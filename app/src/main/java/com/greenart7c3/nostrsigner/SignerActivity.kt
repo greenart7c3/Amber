@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.Density
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.rememberNavController
+import com.greenart7c3.nostrsigner.common.sanitizeAppName
 import com.greenart7c3.nostrsigner.okhttp.HttpClientManager
 import com.greenart7c3.nostrsigner.service.BunkerRequestUtils
 import com.greenart7c3.nostrsigner.service.IntentRateLimitInspector
@@ -87,7 +88,7 @@ class SignerActivity : AppCompatActivity() {
                     if (packageName != null) {
                         try {
                             val info = applicationContext.packageManager.getApplicationInfo(packageName, 0)
-                            applicationContext.packageManager.getApplicationLabel(info).toString()
+                            sanitizeAppName(applicationContext.packageManager.getApplicationLabel(info).toString())
                         } catch (_: Exception) {
                             null
                         }
@@ -188,6 +189,7 @@ class SignerActivity : AppCompatActivity() {
                                         bunkerRequests = bunkerRequests.value,
                                         navController = NavHostControllerWrapper(navController),
                                         isExternalRequest = true,
+                                        intentOwner = mainViewModel.ownerId,
                                     )
                                 }
                             }
@@ -233,7 +235,7 @@ class SignerActivity : AppCompatActivity() {
     override fun onDestroy() {
         val ownedIds = if (::mainViewModel.isInitialized) mainViewModel.addedIntentIds else emptySet()
         if (ownedIds.isNotEmpty()) {
-            val toRemove = IntentUtils.intents.value.filter { it.id in ownedIds }
+            val toRemove = mainViewModel.ownIntents().filter { it.id in ownedIds }
             if (toRemove.isNotEmpty()) {
                 IntentUtils.removeAll(toRemove)
             }
@@ -265,7 +267,7 @@ class SignerActivity : AppCompatActivity() {
         if (pkg.isNullOrBlank()) return getString(R.string.rate_limit_unknown_app)
         return try {
             val info = applicationContext.packageManager.getApplicationInfo(pkg, 0)
-            applicationContext.packageManager.getApplicationLabel(info).toString()
+            sanitizeAppName(applicationContext.packageManager.getApplicationLabel(info).toString())
         } catch (_: Exception) {
             pkg
         }

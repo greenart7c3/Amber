@@ -238,6 +238,9 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun bunkerEventDao(): BunkerEventDao
 
     companion object {
+        /** On-disk name of [npub]'s database, also used to delete it at logout. */
+        fun fileName(npub: String) = "amber_db_$npub"
+
         fun getDatabase(
             context: Context,
             npub: String,
@@ -249,7 +252,7 @@ abstract class AppDatabase : RoomDatabase() {
                 Room.databaseBuilder(
                     context,
                     AppDatabase::class.java,
-                    "amber_db_$npub",
+                    fileName(npub),
                 )
                     .setQueryExecutor(executor)
                     .setTransactionExecutor(transactionExecutor)

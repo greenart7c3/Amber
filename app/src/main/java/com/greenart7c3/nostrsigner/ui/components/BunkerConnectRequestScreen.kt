@@ -55,6 +55,7 @@ import androidx.compose.ui.unit.sp
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.common.sanitizeAppName
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.AmberBunkerRequest
 import com.greenart7c3.nostrsigner.models.Permission
@@ -122,7 +123,7 @@ fun BunkerConnectRequestScreen(
     LaunchedEffect(selectedAccountIndex) {
         val selectedAccount = accounts[selectedAccountIndex]
         val name = withContext(Dispatchers.IO) {
-            bunkerRequest.name.ifBlank { Amber.instance.getDatabase(selectedAccount.npub).dao().getBySecret((bunkerRequest.request as BunkerRequestConnect).secret ?: "")?.application?.name ?: bunkerRequest.localKey.toShortenHex() }
+            bunkerRequest.name.ifBlank { sanitizeAppName(Amber.instance.getDatabase(selectedAccount.npub).dao().getBySecret((bunkerRequest.request as BunkerRequestConnect).secret ?: "")?.application?.name ?: "").ifBlank { bunkerRequest.localKey.toShortenHex() } }
         }
         appName.value = name
     }

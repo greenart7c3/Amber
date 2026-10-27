@@ -27,17 +27,14 @@
     <string name="accept">Terima</string>
     <string name="decrypt_zap_event">dekripsi event zap</string>
     <string name="show_details">Tampilkan Detail</string>
-    <string name="copy_raw_json">Json mentah</string>
     <string name="add_new_account">Tambah Akun Baru</string>
     <string name="select_account">Pilih Akun</string>
     <string name="active_account">Akun Aktif</string>
     <string name="edit_name">Edit nama</string>
     <string name="copy">"Salin "</string>
-    <string name="data_copied_to_the_clipboard">Data disalin ke clipboard</string>
     <string name="connect_app">Hubungkan aplikasi</string>
     <string name="event_copied_to_the_clipboard">Event disalin ke clipboard</string>
     <string name="select_deselect_all">Pilih/Batalkan pilihan semua</string>
-    <string name="decrypt_content">Dekripsi konten</string>
     <string name="support_development">Dukung pengembangan</string>
     <string name="source_code">Kode sumber</string>
     <string name="show_qr_code">Tampilkan Kode QR</string>
@@ -595,8 +592,6 @@
     <string name="ask">Tanya</string>
     <string name="never">Tidak pernah</string>
     <string name="warning">Peringatan</string>
-    <string name="of_events">%1$s dari %2$s event</string>
-    <string name="see_details">Lihat detail</string>
     <string name="is_requiring_some_permissions_please_review_them">%1$s memerlukan beberapa izin, harap tinjau.</string>
     <string name="is_requiring_some_permissions_please_review_them2">Memerlukan beberapa izin, harap tinjau.</string>
     <plurals name="several_apps_are_requiring_some_permissions_please_review_them">
@@ -754,7 +749,7 @@
     <string name="one_week">Satu minggu</string>
     <string name="delete_after">Hapus setelah</string>
     <string name="crashreport_found">Laporan Kerusakan ditemukan</string>
-    <string name="would_you_like_to_send_the_recent_crash_report_to_amber_in_a_dm_no_personal_information_will_be_shared">Apakah Anda ingin mengirim laporan kerusakan terbaru ke Amber melalui DM? Tidak ada informasi pribadi yang akan dibagikan</string>
+    <string name="crash_report_send_prompt">Apakah Anda ingin mengirim laporan kerusakan terbaru ke Amber melalui DM? Laporan dikirim dari akun Anda, sehingga pengembang akan melihat kunci publik Anda.</string>
     <string name="copy_crash_report_to_clipboard">Apakah Anda ingin menyalin laporan kerusakan ke clipboard dan membuka Klien untuk mengirimkannya ke Amber?</string>
     <string name="crashreport_found_send">Kirim</string>
     <string name="invalid_intent_title">Permintaan tidak valid</string>
@@ -847,6 +842,7 @@
     <string name="auth_whitelist">Daftar putih auth klien</string>
     <string name="auth_whitelist_description">Ketika daftar putih tidak kosong, autentikasi klien relay (NIP-42) hanya diizinkan untuk relay dalam daftar. Permintaan auth dari relay lain akan ditolak secara otomatis.</string>
     <string name="add_relay_to_whitelist">Tambahkan relay ke daftar putih</string>
+    <string name="relay_not_in_auth_whitelist">Relay ini tidak ada di daftar putih autentikasi Anda, jadi akan ditolak</string>
     <string name="keystore_error_title">Akun Tidak Dapat Diakses</string>
     <string name="keystore_error_message">Satu atau lebih akun tidak dapat dimuat karena penyimpanan aman perangkat Anda (KeyStore) mengembalikan error:\n\n%1$s\n\nIni adalah bug firmware yang diketahui pada beberapa perangkat di mana sistem tidak dapat meningkatkan kunci enkripsi yang tersimpan.\n\nYang dapat Anda lakukan:\n• Jika Anda memiliki nsec (kunci privat) yang dicadangkan, keluar dari akun yang terpengaruh dan masuk kembali — ini akan membuat kunci baru yang berfungsi.\n• Periksa pembaruan firmware sistem dari produsen perangkat Anda, yang mungkin dapat memperbaiki ini.\n• Jangan hapus instalasi Amber; menyimpan aplikasi mempertahankan kemungkinan pemulihan jika pembaruan firmware dirilis.</string>
     <string name="event_kind_31124">Status hewan peliharaan saat ini</string>
@@ -915,6 +911,7 @@
     <string name="update_settings_subtitle">Periksa versi baru</string>
     <string name="require_unlocked_device">Wajibkan perangkat tidak terkunci untuk akses kunci</string>
     <string name="require_unlocked_device_description">Saat diaktifkan, kunci Keystore yang digunakan untuk mendekripsi kunci akun yang Anda simpan tidak dapat digunakan saat perangkat terkunci. Ini mencegah kode apa pun yang berjalan di proses Amber mendekripsi kunci Anda saat layar terkunci. Catatan: ini menonaktifkan penandatanganan NIP-46 di latar belakang saat perangkat terkunci. Mengalihkan ini memerlukan enkripsi ulang semua kunci yang disimpan.</string>
+    <string name="require_unlocked_device_legacy_note">Di Android 8, Keystore tidak dapat menerapkan ini sendiri. Amber tetap menolak menggunakan kunci Anda saat perangkat terkunci, tetapi perlindungannya hanya berbasis perangkat lunak.</string>
     <string name="require_unlocked_device_updating">Mengenkripsi ulang semua kunci yang disimpan…</string>
     <string name="require_unlocked_device_do_not_close">Jangan menutup aplikasi atau mengunci layar sampai proses ini selesai.</string>
     <string name="insecure_relay_warning">Relay yang tidak aman (teks biasa, ws://) melalui internet publik mengekspos metadata dan teks sandi NIP-46 ke pengamat jaringan. Pilih wss://, atau gunakan ws:// hanya untuk relay .onion / jaringan lokal.</string>

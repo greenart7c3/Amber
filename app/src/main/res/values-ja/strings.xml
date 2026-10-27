@@ -21,17 +21,14 @@
     <string name="accept">承認</string>
     <string name="decrypt_zap_event">zap イベントを復号</string>
     <string name="show_details">詳細を表示</string>
-    <string name="copy_raw_json">生の JSON</string>
     <string name="add_new_account">アカウントを追加</string>
     <string name="select_account">アカウントを選択</string>
     <string name="active_account">アクティブなアカウント</string>
     <string name="edit_name">名前を編集</string>
     <string name="copy">"コピー "</string>
-    <string name="data_copied_to_the_clipboard">データをクリップボードにコピーしました</string>
     <string name="connect_app">アプリを接続</string>
     <string name="event_copied_to_the_clipboard">イベントをクリップボードにコピーしました</string>
     <string name="select_deselect_all">すべて選択／選択解除</string>
-    <string name="decrypt_content">コンテンツを復号</string>
     <string name="support_development">開発を支援</string>
     <string name="source_code">ソースコード</string>
     <string name="show_qr_code">QR コードを表示</string>
@@ -571,8 +568,6 @@
     <string name="ask">確認する</string>
     <string name="never">しない</string>
     <string name="warning">警告</string>
-    <string name="of_events">%2$s 件中 %1$s 件のイベント</string>
-    <string name="see_details">詳細を見る</string>
     <string name="is_requiring_some_permissions_please_review_them">%1$s がいくつかの権限を要求しています。確認してください。</string>
     <string name="is_requiring_some_permissions_please_review_them2">いくつかの権限を要求しています。確認してください。</string>
     <plurals name="several_apps_are_requiring_some_permissions_please_review_them">
@@ -730,7 +725,7 @@
     <string name="one_week">1 週間</string>
     <string name="delete_after">削除するまでの期間</string>
     <string name="crashreport_found">クラッシュレポートが見つかりました</string>
-    <string name="would_you_like_to_send_the_recent_crash_report_to_amber_in_a_dm_no_personal_information_will_be_shared">最近のクラッシュレポートを DM で Amber に送信しますか？個人情報は共有されません</string>
+    <string name="crash_report_send_prompt">最近のクラッシュレポートを DM で Amber に送信しますか？あなたのアカウントから送信されるため、開発者にはあなたの公開鍵が表示されます。</string>
     <string name="copy_crash_report_to_clipboard">クラッシュレポートをクリップボードにコピーして、クライアントを開いて Amber に送信しますか？</string>
     <string name="crashreport_found_send">送信する</string>
     <string name="invalid_intent_title">無効なリクエスト</string>
@@ -823,6 +818,7 @@
     <string name="auth_whitelist">クライアント認証ホワイトリスト</string>
     <string name="auth_whitelist_description">ホワイトリストが空でない場合、relay クライアント認証 (NIP-42) はリスト内の relay に対してのみ許可されます。他の relay からの認証リクエストは自動的に拒否されます。</string>
     <string name="add_relay_to_whitelist">relay をホワイトリストに追加</string>
+    <string name="relay_not_in_auth_whitelist">この relay は認証ホワイトリストにないため、拒否されます</string>
     <string name="keystore_error_title">アカウントにアクセスできません</string>
     <string name="keystore_error_message">デバイスのセキュアストレージ (KeyStore) がエラーを返したため、1 つ以上のアカウントを読み込めませんでした:\n\n%1$s\n\nこれはシステムが保存された暗号化キーをアップグレードできない一部のデバイスで確認されている既知のファームウェアバグです。\n\n対処方法:\n• nsec（プライベートキー）がバックアップされている場合は、影響を受けるアカウントからログアウトして再ログインしてください — 新しい動作するキーが作成されます。\n• デバイスメーカーからシステムファームウェアのアップデートを確認してください。修正される可能性があります。\n• Amber をアンインストールしないでください。アプリをインストールしたままにしておくと、ファームウェアアップデートがリリースされた場合に復元できる可能性が残ります。</string>
     <string name="event_kind_31124">現在のペットの状態</string>
@@ -891,6 +887,7 @@
     <string name="update_settings_subtitle">新しいバージョンを確認</string>
     <string name="require_unlocked_device">キーアクセスにデバイスのロック解除を要求する</string>
     <string name="require_unlocked_device_description">有効にすると、保存されたアカウントキーを復号化するために使用されるKeystoreキーは、デバイスがロックされている間は使用できなくなります。これにより、画面がロックされている間にAmberのプロセスで実行されているコードがキーを復号化するのを防ぎます。注：これにより、デバイスがロックされている間、バックグラウンドでのNIP-46署名が無効になります。これを切り替えるには、すべての保存されたキーの再暗号化が必要です。</string>
+    <string name="require_unlocked_device_legacy_note">Android 8 では Keystore 自体はこれを強制できません。デバイスのロック中、Amber は引き続きキーの使用を拒否しますが、保護はソフトウェアのみによるものです。</string>
     <string name="require_unlocked_device_updating">保存されたすべてのキーを再暗号化しています…</string>
     <string name="require_unlocked_device_do_not_close">処理が完了するまで、アプリを閉じたり画面をロックしたりしないでください。</string>
     <string name="insecure_relay_warning">公開インターネットを介した安全でない（クリアテキスト、ws://）リレーは、NIP-46のメタデータと暗号文をネットワークオブザーバーにさらします。wss://を優先するか、.onion / ローカルネットワークリレーの場合のみws://を使用してください。</string>

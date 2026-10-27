@@ -47,11 +47,10 @@ fun newSensitivePlainText(label: CharSequence, text: CharSequence): ClipData {
  * the meantime. Copying another secret replaces the pending clear.
  */
 suspend fun Clipboard.setSensitiveClip(
-    label: CharSequence,
     text: CharSequence,
     clearAfter: Duration = SENSITIVE_CLIPBOARD_CLEAR_DELAY,
 ) {
-    setClipEntry(ClipEntry(newSensitivePlainText(label, text)))
+    setClipEntry(ClipEntry(newSensitivePlainText("", text)))
     scheduleSensitiveClear(Amber.instance, text, clearAfter)
 }
 

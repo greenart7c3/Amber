@@ -21,7 +21,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
@@ -50,7 +49,6 @@ fun SignPolicySettingsScreen(
     )
     var selectedOption by remember { mutableIntStateOf(account.signPolicy) }
     val scope = rememberCoroutineScope()
-    val context = LocalContext.current
 
     Column(
         modifier = modifier

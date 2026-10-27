@@ -156,7 +156,7 @@ chmod +x verify-amber.sh
 
 ## Trusting the Key (Optional)
 
-If you want to suppress the "key not certified" warning and you've verified the key fingerprint through a trusted channel, you can sign the key locally:
+If you want to suppress the "key not certified" warning, and you've verified the key fingerprint through a trusted channel, you can sign the key locally:
 
 ```bash
 gpg --sign-key 44F0AAEB77F373747E3D5444885822EED3A26A6D

@@ -28,7 +28,7 @@ output.
 If you are NOT a regular contributor, this section is required however small
 the change is. See CONTRIBUTING.md § Proof of testing. -->
 
-- [ ] `./gradlew ktlintCheck lint` passes
+- [ ] `./gradlew ktlintCheck detektAll lint` passes
 - [ ] `./gradlew test` passes
 - [ ] `./gradlew assembleDebug` builds both flavors
 - [ ] Tested by hand on a device or emulator (notes below)
@@ -43,7 +43,7 @@ Notes / screenshots:
 
 ## AI assistance
 
-<!-- We accept AI-assisted PRs under the same rules as hand-written ones. -->
+<!-- We accept AI-assisted PRs under the same rules as handwritten ones. -->
 
 - [ ] Drafted with AI assistance, then fully reviewed and tested by hand
 - [ ] Written by hand

@@ -19,6 +19,10 @@ import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.FailedMigrationException
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.common.SignerType
+import com.greenart7c3.nostrsigner.common.hasAmbiguousRelayTags
+import com.greenart7c3.nostrsigner.common.rememberedDecision
+import com.greenart7c3.nostrsigner.common.sanitizeAppName
 import com.greenart7c3.nostrsigner.database.ApplicationEntity
 import com.greenart7c3.nostrsigner.database.ApplicationPermissionsEntity
 import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
@@ -34,19 +38,20 @@ import com.greenart7c3.nostrsigner.models.IntentResultType
 import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.models.PrivateZapEncryptedDataKind
 import com.greenart7c3.nostrsigner.models.ReturnType
-import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.models.TagArrayEncryptedDataKind
 import com.greenart7c3.nostrsigner.models.containsNip
+import com.greenart7c3.nostrsigner.models.decryptSignerTypes
 import com.greenart7c3.nostrsigner.models.encryptDecryptSignerTypes
 import com.greenart7c3.nostrsigner.models.encryptSignerTypes
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
 import com.greenart7c3.nostrsigner.ui.RememberType
 import com.greenart7c3.nostrsigner.ui.components.DecryptTypeScope
+import com.greenart7c3.nostrsigner.ui.setSensitiveClip
 import com.vitorpamplona.quartz.nip01Core.core.Event
 import com.vitorpamplona.quartz.nip01Core.crypto.EventHasher
 import com.vitorpamplona.quartz.nip01Core.jackson.JacksonMapper
 import com.vitorpamplona.quartz.nip19Bech32.toNpub
-import com.vitorpamplona.quartz.nip59Giftwrap.seals.SealedRumorEvent
+import com.vitorpamplona.quartz.nip59Giftwrap.seals.SealEvent
 import com.vitorpamplona.quartz.utils.Hex
 import com.vitorpamplona.quartz.utils.TimeUtils
 import java.io.ByteArrayOutputStream
@@ -99,7 +104,7 @@ object IntentUtils {
         val newName = saved.name.ifBlank {
             runCatching {
                 val info = context.packageManager.getApplicationInfo(packageName, 0)
-                context.packageManager.getApplicationLabel(info).toString()
+                sanitizeAppName(context.packageManager.getApplicationLabel(info).toString())
             }.getOrNull().orEmpty()
         }
 
@@ -149,8 +154,8 @@ object IntentUtils {
 
     fun addAll(list: List<IntentData>) {
         _intents.update { current ->
-            val existingIds = current.mapTo(mutableSetOf()) { it.id }
-            val newList = list.filter { existingIds.add(it.id) }
+            val existingKeys = current.mapTo(mutableSetOf()) { it.queueKey }
+            val newList = list.filter { existingKeys.add(it.queueKey) }
             (current + newList).toPersistentList()
         }
     }
@@ -203,7 +208,6 @@ object IntentUtils {
     fun isUrlEncoded(input: String): Boolean = URL_ENCODED_REGEX.containsMatchIn(input)
 
     private suspend fun getIntentDataWithoutExtras(
-        context: Context,
         data: String,
         intent: Intent,
         packageName: String?,
@@ -224,7 +228,7 @@ object IntentUtils {
         parameters.removeIf { it.isBlank() }
 
         if (parameters.isEmpty() || parameters.toString() == "[]") {
-            return getIntentDataFromIntent(context, intent, packageName, route, account)
+            return getIntentDataFromIntent(intent, packageName, route, account)
         } else {
             var type = SignerType.INVALID
             var pubKey = ""
@@ -246,7 +250,7 @@ object IntentUtils {
                     parameter == "compressionType" -> if (parameterData == "gzip") compressionType = CompressionType.GZIP
                     parameter == "callbackUrl" -> callbackUrl = parameterData
                     parameter == "returnType" -> if (parameterData == "event") returnType = ReturnType.EVENT
-                    parameter == "appName" -> appName = parameterData
+                    parameter == "appName" -> appName = sanitizeAppName(parameterData)
                     parameter == "kind" -> nip44v3Kind = parameterData.toIntOrNull()
                     parameter == "scope" -> nip44v3Scope = parameterData
                 }
@@ -259,15 +263,17 @@ object IntentUtils {
 
             return when (type) {
                 SignerType.SIGN_EVENT -> {
+                    // The signing key follows the account that authorizes this
+                    // request. Never switch to the pubkey named inside the event:
+                    // an app holding a grant on one local account could otherwise
+                    // silently obtain a signature from another stored account.
                     val unsignedEvent = getUnsignedEvent(localData, account)
-                    var localAccount = account
-                    val unsignedEventKey = unsignedEvent.pubKey
-                    if (unsignedEvent.pubKey != account.hexKey) {
-                        LocalPreferences.loadFromEncryptedStorageSync(context, Hex.decode(unsignedEvent.pubKey).toNpub())?.let {
-                            localAccount = it
-                        }
+                    if (hasAmbiguousRelayTags(unsignedEvent.kind, unsignedEvent.tags)) {
+                        emitInvalid(intent, packageName, "Refusing a multi-relay auth event")
+                        return null
                     }
-                    val signedEvent = localAccount.signSync<Event>(
+                    val unsignedEventKey = unsignedEvent.pubKey
+                    val signedEvent = account.signSync<Event>(
                         unsignedEvent.createdAt,
                         unsignedEvent.kind,
                         unsignedEvent.tags,
@@ -340,7 +346,8 @@ object IntentUtils {
                         compression = compressionType,
                         returnType = returnType,
                         permissions = listOf(),
-                        currentAccount = Hex.decode(pubKey).toNpub(),
+                        // The peer (pubKey) is not a local account; the request runs with `account`.
+                        currentAccount = account.npub,
                         route = route,
                         event = null,
                         encryptedData = encryptedDataKind,
@@ -388,7 +395,6 @@ object IntentUtils {
     }
 
     private suspend fun getIntentDataFromIntent(
-        context: Context,
         intent: Intent,
         packageName: String?,
         route: String?,
@@ -412,7 +418,7 @@ object IntentUtils {
         val callbackUrl = intent.extras?.getString("callbackUrl") ?: ""
         var name = if (callbackUrl.isNotBlank()) callbackUrl.toUri().host ?: "" else ""
         if (name.isBlank()) {
-            name = intent.extras?.getString("appName") ?: ""
+            name = sanitizeAppName(intent.extras?.getString("appName") ?: "")
         }
         val pubKey = intent.extras?.getString("pubKey") ?: intent.extras?.getString("pubkey") ?: ""
         val id = intent.extras?.getString("id") ?: ""
@@ -436,16 +442,18 @@ object IntentUtils {
 
         return when (type) {
             SignerType.SIGN_EVENT -> {
+                // The signing key follows the account that authorizes this
+                // request; see the web-path branch above. A pubkey naming
+                // another stored account stays a mismatch for the approval
+                // guard instead of silently re-targeting the signature.
                 val unsignedEvent = getUnsignedEvent(data, account)
-                var localAccount = account
-                val unsignedEventKey = unsignedEvent.pubKey
-                if (unsignedEvent.pubKey != account.hexKey) {
-                    LocalPreferences.loadFromEncryptedStorageSync(context, Hex.decode(unsignedEvent.pubKey).toNpub())?.let {
-                        localAccount = it
-                    }
+                if (hasAmbiguousRelayTags(unsignedEvent.kind, unsignedEvent.tags)) {
+                    emitInvalid(intent, packageName, "Refusing a multi-relay auth event")
+                    return null
                 }
+                val unsignedEventKey = unsignedEvent.pubKey
 
-                val signed = localAccount.signSync<Event>(
+                val signed = account.signSync<Event>(
                     unsignedEvent.createdAt,
                     unsignedEvent.kind,
                     unsignedEvent.tags,
@@ -531,7 +539,8 @@ object IntentUtils {
                     compression = compressionType,
                     returnType = returnType,
                     permissions = permissions?.map { Permission(it.type.trim(), it.kind, it.checked) },
-                    currentAccount = npub ?: Hex.decode(pubKey).toNpub(),
+                    // The peer (pubKey) is not a local account; the request runs with `account`.
+                    currentAccount = npub ?: account.npub,
                     route = route,
                     event = null,
                     encryptedData = encryptedDataKind,
@@ -621,7 +630,7 @@ object IntentUtils {
                 if (data.startsWith("{")) {
                     try {
                         val event = AmberEvent.fromJson(data)
-                        if (event.kind == SealedRumorEvent.KIND) {
+                        if (event.kind == SealEvent.KIND) {
                             val decryptedSealData = try {
                                 account.decrypt(event.content, account.hexKey)
                             } catch (_: Exception) {
@@ -632,7 +641,8 @@ object IntentUtils {
                                 EventEncryptedDataKind(event, EventEncryptedDataKind(sealEvent, null, decryptedSealData), result)
                             } else if (decryptedSealData.startsWith("[")) {
                                 val tagArray = JacksonMapper.fromJsonToTagArray(decryptedSealData)
-                                EventEncryptedDataKind(event, TagArrayEncryptedDataKind(tagArray, decryptedSealData), decryptedSealData)
+                                // The seal is decrypted for the preview only; the caller gets the ciphertext.
+                                EventEncryptedDataKind(event, TagArrayEncryptedDataKind(tagArray, decryptedSealData), result)
                             } else {
                                 EventEncryptedDataKind(event, ClearTextEncryptedDataKind(event.content, decryptedSealData), result)
                             }
@@ -658,7 +668,7 @@ object IntentUtils {
                 if (result.startsWith("{")) {
                     try {
                         val event = AmberEvent.fromJson(result)
-                        if (event.kind == SealedRumorEvent.KIND) {
+                        if (event.kind == SealEvent.KIND) {
                             val decryptedSealData = try {
                                 account.decrypt(event.content, account.hexKey)
                             } catch (_: Exception) {
@@ -670,7 +680,8 @@ object IntentUtils {
                             } else if (decryptedSealData.startsWith("[")) {
                                 try {
                                     val tagArray = JacksonMapper.fromJsonToTagArray(decryptedSealData)
-                                    EventEncryptedDataKind(event, TagArrayEncryptedDataKind(tagArray, decryptedSealData), decryptedSealData)
+                                    // The seal is decrypted for the preview only; the caller gets what it asked to decrypt.
+                                    EventEncryptedDataKind(event, TagArrayEncryptedDataKind(tagArray, decryptedSealData), result)
                                 } catch (e: Exception) {
                                     AmberLog.e("IntentUtils", "Error parsing TagArray: ${e.message}")
                                     EventEncryptedDataKind(event, ClearTextEncryptedDataKind(event.content, decryptedSealData), result)
@@ -801,7 +812,7 @@ object IntentUtils {
                 if (npub != null) {
                     npub = parsePubKey(npub)
                 }
-                LocalPreferences.loadFromEncryptedStorageSync(context, npub)?.let {
+                LocalPreferences.loadAccount(context, npub)?.let {
                     localAccount = it
                 }
             }
@@ -817,9 +828,9 @@ object IntentUtils {
                     dataString = intent.dataString,
                 )
             ) {
-                return getIntentDataWithoutExtras(context, intent.data?.toString() ?: "", intent, packageName, route, localAccount)
+                return getIntentDataWithoutExtras(intent.data?.toString() ?: "", intent, packageName, route, localAccount)
             } else {
-                return getIntentDataFromIntent(context, intent, packageName, route, localAccount)
+                return getIntentDataFromIntent(intent, packageName, route, localAccount)
             }
         } catch (e: Exception) {
             AmberLog.e(Amber.TAG, "Error parsing intent: ${e.message}", e)
@@ -896,7 +907,7 @@ object IntentUtils {
                             if (packageName != null && appName == null) {
                                 try {
                                     val info = context.packageManager.getApplicationInfo(packageName, 0)
-                                    context.packageManager.getApplicationLabel(info).toString()
+                                    sanitizeAppName(context.packageManager.getApplicationLabel(info).toString())
                                 } catch (_: Exception) {
                                     null
                                 }
@@ -1055,11 +1066,17 @@ object IntentUtils {
                         }
 
                     withContext(Dispatchers.Main) {
-                        clipboardManager.setClipEntry(
-                            ClipEntry(
-                                ClipData.newPlainText("", result),
-                            ),
-                        )
+                        if (intentData.type in decryptSignerTypes) {
+                            // A decrypt result is the plaintext itself: hide it from
+                            // clipboard previews and clear it, like the nsec.
+                            clipboardManager.setSensitiveClip(result)
+                        } else {
+                            clipboardManager.setClipEntry(
+                                ClipEntry(
+                                    ClipData.newPlainText("", result),
+                                ),
+                            )
+                        }
 
                         Toast.makeText(
                             context,
@@ -1176,24 +1193,14 @@ object IntentUtils {
         }
     }
 
-    fun isRemembered(signPolicy: Int?, permission: ApplicationPermissionsEntity?): Boolean? {
-        val decision = permission?.activeDecision(TimeUtils.now())
-        // An active explicit rejection wins over the "fully trust" sign policy.
-        if (decision == false) {
-            return false
-        }
-        if (signPolicy == 2) {
-            return true
-        }
-        return decision
-    }
+    fun isRemembered(signPolicy: Int?, permission: ApplicationPermissionsEntity?): Boolean? = rememberedDecision(signPolicy, permission?.activeDecision(TimeUtils.now()))
 }
 
 /**
  * Safe read of the launch referrer. `Activity.getReferrer()` dereferences a null launch
  * intent on some OEM framework builds (e.g. Samsung, Android 12) and crashes when the
  * activity was delivered or left without an intent (see `sendRejection`, which nulls it).
- * Null is also the correct "unknown referrer" answer, which [isBrowserReferrer] already
+ * Null is also the correct "unknown referrer" answer, which [IntentUtils.isBrowserReferrer] already
  * treats as not-a-browser.
  */
 fun Activity.safeReferrer(): Uri? = try {

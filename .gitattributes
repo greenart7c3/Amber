@@ -1,0 +1,7 @@
+# Check out every file exactly as committed, on every OS. Git for Windows
+# (and the Windows CI runner) defaults to core.autocrlf=true, which turns the
+# desktop app's bundled resources into CRLF, so its build no longer matches a
+# release built elsewhere (see "Verifying Reproducibility of Amber Desktop").
+* -text
+# cmd.exe can misread labels in LF batch files.
+*.bat text eol=crlf

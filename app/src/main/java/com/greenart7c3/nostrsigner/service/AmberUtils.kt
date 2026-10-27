@@ -4,22 +4,26 @@ import android.content.Context
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.toUpperCase
 import com.greenart7c3.nostrsigner.Amber
+import com.greenart7c3.nostrsigner.common.SignerType
 import com.greenart7c3.nostrsigner.database.ApplicationPermissionsEntity
 import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.AmberBunkerRequest
 import com.greenart7c3.nostrsigner.models.EncryptedDataKind
 import com.greenart7c3.nostrsigner.models.Permission
-import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.models.basicPermissions
 import com.greenart7c3.nostrsigner.models.encryptDecryptSignerTypes
 import com.greenart7c3.nostrsigner.models.toPermissionTypeString
+import com.greenart7c3.nostrsigner.service.model.AmberEvent
 import com.greenart7c3.nostrsigner.ui.RememberType
 import com.greenart7c3.nostrsigner.ui.components.DecryptTypeScope
+import com.vitorpamplona.quartz.nip01Core.core.Event
 import com.vitorpamplona.quartz.nip01Core.core.HexKey
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
+import com.vitorpamplona.quartz.nip19Bech32.toNpub
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerResponse
-import com.vitorpamplona.quartz.nip57Zaps.LnZapRequestEvent
+import com.vitorpamplona.quartz.nip57Zaps.ZapRequestEvent
+import com.vitorpamplona.quartz.utils.Hex
 import com.vitorpamplona.quartz.utils.TimeUtils
 import kotlin.io.encoding.Base64
 
@@ -29,7 +33,7 @@ object AmberUtils {
      * plaintext travels Base64-encoded: encrypt receives base64(plaintext) and
      * returns the ciphertext; decrypt returns base64(plaintext). The readable
      * plaintext for logs/display comes from the EncryptedDataKind instead (see
-     * [nip44v3Plaintext]). [nip44v3Kind]/[nip44v3Scope] are required for V3.
+     * [com.greenart7c3.nostrsigner.models.nip44v3Plaintext]). [nip44v3Kind]/[nip44v3Scope] are required for V3.
      */
     suspend fun encryptOrDecryptData(
         data: String,
@@ -314,4 +318,45 @@ fun String.toShortenHex(): String {
 fun isPrivateEvent(
     kind: Int,
     tags: Array<Array<String>>,
-): Boolean = kind == LnZapRequestEvent.KIND && tags.any { t -> t.size > 1 && t[0] == "anon" }
+): Boolean = kind == ZapRequestEvent.KIND && tags.any { t -> t.size > 1 && t[0] == "anon" }
+
+/**
+ * True when a sign_event payload names a pubkey that the approving account
+ * must not sign over: any non-blank key other than the approving account's,
+ * except anonymous zap requests (kind 9734 carrying an "anon" tag) whose
+ * named key is not another account stored on this device.
+ */
+fun isCrossAccountSignEvent(
+    unsignedEventKey: String,
+    accountHexKey: String,
+    kind: Int,
+    tags: Array<Array<String>>,
+    savedNpubs: Collection<String>,
+): Boolean {
+    if (unsignedEventKey.isBlank() || unsignedEventKey == accountHexKey) return false
+    if (!isPrivateEvent(kind, tags)) return true
+    return savedNpubs.any { it == Hex.decode(unsignedEventKey).toNpub() }
+}
+
+/**
+ * Remember decision for a kind-22242 relay-auth grant. A blank relay (the
+ * request carried no relay tag, or a malformed one) can never match a future
+ * per-relay lookup, and the DAO reads blank relay as the all-relays wildcard —
+ * remembering a SPECIFIC-scope choice over it would silently grant every
+ * relay. Such a choice is downgraded to "just this time".
+ */
+fun relayAuthRememberType(
+    allRelays: Boolean,
+    relayUrl: String,
+    rememberType: RememberType,
+): RememberType = if (!allRelays && relayUrl.isBlank()) RememberType.NEVER else rememberType
+
+/**
+ * Whether the auth whitelist refuses a relay auth (kind 22242) for [relayHost]:
+ * a non-empty whitelist rejects every relay outside it, without asking, on
+ * every path that decides a relay auth (provider, single and batch screens).
+ */
+fun isBlockedByAuthWhitelist(kind: Int, relayHost: String, whitelist: List<String> = Amber.instance.settings.authWhitelist): Boolean = kind == 22242 && whitelist.isNotEmpty() && relayHost !in whitelist
+
+/** [isBlockedByAuthWhitelist] for a signed [event], decided on its first relay tag. */
+fun isBlockedByAuthWhitelist(event: Event?): Boolean = event != null && event.kind == 22242 && isBlockedByAuthWhitelist(event.kind, RelayUrlUtils.extractHostAndPort(AmberEvent.relay(event)))

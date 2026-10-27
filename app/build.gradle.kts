@@ -3,20 +3,25 @@ import java.util.Properties
 
 plugins {
     alias(libs.plugins.androidApplication)
-    alias(libs.plugins.gradle.ktlint) version libs.versions.ktlint.get()
-    alias(libs.plugins.kotlin.ksp) version libs.versions.ksp.get()
+    alias(libs.plugins.gradle.ktlint)
+    alias(libs.plugins.detekt)
+    alias(libs.plugins.kotlin.ksp)
     alias(libs.plugins.jetbrainsComposeCompiler)
 }
 
 android {
     namespace = "com.greenart7c3.nostrsigner"
     compileSdk = 37
+    // AGP strips native libraries with this NDK while packaging, so it is an
+    // APK input: pinned (and installed by the reproducibility Dockerfile) so
+    // release and verification builds strip identically across AGP bumps.
+    ndkVersion = "28.2.13676358"
 
     defaultConfig {
         applicationId = "com.greenart7c3.nostrsigner"
         minSdk = 26
-        versionCode = 211
-        versionName = "6.6.9"
+        versionCode = libs.versions.amberVersionCode.get().toInt()
+        versionName = libs.versions.amberVersionName.get()
 
         buildConfigField("boolean", "IS_FDROID_BUILD", "false")
 
@@ -44,6 +49,8 @@ android {
     }
 
     androidResources {
+        // Still @Incubating in AGP.
+        @Suppress("UnstableApiUsage")
         localeFilters += listOf(
             "bn-rBD",
             "cs",
@@ -165,6 +172,17 @@ android {
         }
     }
 
+    // Built-in Tor (Arti) for the online flavors: TorManager, the JNI bridge and
+    // the prebuilt libamber_arti.so of every ABI split (built by tools/arti/build.sh).
+    sourceSets {
+        listOf("free", "benchmark").forEach { flavor ->
+            named(flavor) {
+                kotlin.directories.add("src/tor/java")
+                jniLibs.directories.add("src/tor/jniLibs")
+            }
+        }
+    }
+
     splits {
         abi {
             isEnable = true
@@ -186,6 +204,9 @@ android {
             excludes += "META-INF/versions/9/OSGI-INF/MANIFEST.MF"
         }
         jniLibs.useLegacyPackaging = true
+        // Already stripped by tools/arti/build.sh; ship it byte-identical to the
+        // committed file so it can be checked against a rebuild of tools/arti.
+        jniLibs.keepDebugSymbols += "**/libamber_arti.so"
     }
 }
 
@@ -212,9 +233,12 @@ ksp {
 }
 
 dependencies {
+    implementation(project(":common"))
     implementation(libs.quartz) {
         exclude(group = "net.java.dev.jna")
     }
+    // Quartz ships jackson-databind but no longer the Kotlin module.
+    implementation(libs.jackson.module.kotlin)
     implementation(libs.jna) {
         artifact {
             type = "aar"
@@ -273,18 +297,14 @@ dependencies {
 
     "freeImplementation"(libs.okhttp)
     "freeImplementation"(libs.okhttpCoroutines)
-    "freeImplementation"(libs.kmptor.runtime)
-    "freeImplementation"(libs.kmptor.resource.exec)
 
     // benchmark mirrors the `free` online network stack
     "benchmarkImplementation"(libs.okhttp)
     "benchmarkImplementation"(libs.okhttpCoroutines)
-    "benchmarkImplementation"(libs.kmptor.runtime)
-    "benchmarkImplementation"(libs.kmptor.resource.exec)
 
     // Load images from the web.
     implementation(libs.coil.compose)
-    // view gifs
+    // view GIFs
     implementation(libs.coil.gif)
     // view svgs
     implementation(libs.coil.svg)

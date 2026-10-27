@@ -1,0 +1,555 @@
+package com.greenart7c3.nostrsigner.desktop.ui
+
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.TooltipArea
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Apps
+import androidx.compose.material.icons.filled.CellTower
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.UnfoldMore
+import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgedBox
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.VerticalDivider
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.DpSize
+import androidx.compose.ui.unit.dp
+import com.greenart7c3.nostrsigner.desktop.Session
+import com.greenart7c3.nostrsigner.desktop.core.AccountsStore
+import com.greenart7c3.nostrsigner.desktop.core.AmberDesktop
+import com.greenart7c3.nostrsigner.desktop.core.BuildVariant
+import com.greenart7c3.nostrsigner.desktop.core.CrashReporter
+import com.greenart7c3.nostrsigner.desktop.core.DesktopAccount
+import com.greenart7c3.nostrsigner.desktop.core.PassphraseLock
+import com.greenart7c3.nostrsigner.desktop.core.Strings
+import com.greenart7c3.nostrsigner.desktop.core.UriLaunch
+import com.greenart7c3.nostrsigner.desktop.core.toShortenHex
+import kotlinx.coroutines.launch
+
+sealed class Route(val titleKey: String, val subtitleKey: String, val icon: ImageVector) {
+    data object IncomingRequest : Route("d_route_incoming_title", "d_route_incoming_sub", Icons.Default.Notifications)
+    data object Applications : Route("applications", "d_route_applications_sub", Icons.Default.Apps)
+    data object Relays : Route("relays", "d_route_relays_sub", Icons.Default.CellTower)
+    data object Settings : Route("settings", "d_route_settings_sub", Icons.Default.Settings)
+}
+
+val sidebarRoutes = listOf(Route.IncomingRequest, Route.Applications, Route.Relays, Route.Settings)
+
+@Composable
+fun App() {
+    val loading by Session.loading.collectAsState()
+    val account by Session.account.collectAsState()
+    val addingAccount by Session.addingAccount.collectAsState()
+    val pending by AmberDesktop.engine.pending.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    val currentRoute by UiState.currentRoute.collectAsState()
+    val selectedApplication by UiState.selectedApplication.collectAsState()
+    val language by Strings.currentLanguage.collectAsState()
+
+    LaunchedEffect(Unit) {
+        Toaster.messages.collect { snackbarHostState.showSnackbar(it) }
+    }
+
+    // Jump to the approval screen whenever a new request arrives.
+    LaunchedEffect(pending.size) {
+        if (pending.isNotEmpty()) {
+            UiState.navigate(Route.IncomingRequest)
+        }
+    }
+
+    val acc = account
+    if (loading) {
+        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            CircularProgressIndicator()
+        }
+        return
+    }
+
+    val lockStatus by PassphraseLock.state.collectAsState()
+    when (lockStatus) {
+        PassphraseLock.Status.LOCKED -> {
+            UnlockScreen()
+            return
+        }
+
+        // First run: no passphrase yet. Nothing else may load until it is set.
+        PassphraseLock.Status.DISABLED -> {
+            PassphraseSetupScreen()
+            return
+        }
+
+        PassphraseLock.Status.UNLOCKED -> {}
+    }
+
+    // Unlocked, but the account is still being loaded: don't flash the login screen.
+    val ready by Session.ready.collectAsState()
+    if (!ready) {
+        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            CircularProgressIndicator()
+        }
+        return
+    }
+
+    if (acc == null || addingAccount) {
+        LoginScreen(
+            hasAccounts = acc != null,
+            snackbarHostState = snackbarHostState,
+        )
+        return
+    }
+
+    // A nostrconnect:// link opened Amber (launch argument, or forwarded by
+    // a second launch). Process it here — after the gates — so a link
+    // clicked while locked or before an account exists waits for unlock.
+    val launchUri by UriLaunch.pending.collectAsState()
+    LaunchedEffect(launchUri, acc) {
+        val uri = launchUri ?: return@LaunchedEffect
+        UriLaunch.pending.value = null
+        val error = AmberDesktop.engine.addNostrConnect(uri, acc)
+        if (error != null) {
+            Toaster.toast(error)
+        }
+    }
+
+    // A crash report from this or a previous run, offered once an account
+    // can send it (as on Android, after unlock).
+    val crashReport by CrashReporter.pending.collectAsState()
+    crashReport?.let { CrashReportDialog(it, acc) }
+
+    val onSelect: (Route) -> Unit = { UiState.navigate(it) }
+    Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
+    ) { padding ->
+        BoxWithConstraints(Modifier.fillMaxSize().padding(padding)) {
+            // Expanded: full sidebar. Medium: icon rail. Compact: the
+            // navigation moves to a bottom bar under a slim top bar.
+            val layoutWidth = LayoutWidth.of(maxWidth)
+            CompositionLocalProvider(
+                LocalLayoutWidth provides layoutWidth,
+                LocalWindowContentSize provides DpSize(maxWidth, maxHeight),
+            ) {
+                if (layoutWidth == LayoutWidth.COMPACT) {
+                    Column(Modifier.fillMaxSize()) {
+                        CompactTopBar(acc)
+                        HorizontalDivider()
+                        MainContent(acc, currentRoute, selectedApplication, language, Modifier.weight(1f))
+                        BottomNavigation(currentRoute, pending.size, onSelect)
+                    }
+                } else {
+                    Row(Modifier.fillMaxSize()) {
+                        if (layoutWidth == LayoutWidth.EXPANDED) {
+                            Sidebar(acc, currentRoute, pending.size, onSelect)
+                        } else {
+                            NavigationRail(acc, currentRoute, pending.size, onSelect)
+                        }
+                        VerticalDivider()
+                        MainContent(acc, currentRoute, selectedApplication, language, Modifier.weight(1f))
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun MainContent(
+    account: DesktopAccount,
+    currentRoute: Route,
+    selectedApp: String?,
+    language: String,
+    modifier: Modifier = Modifier,
+) {
+    val compact = LocalLayoutWidth.current == LayoutWidth.COMPACT
+    Column(
+        modifier
+            .fillMaxHeight()
+            .background(MaterialTheme.colorScheme.background)
+            .padding(horizontal = if (compact) 16.dp else 28.dp, vertical = if (compact) 12.dp else 20.dp),
+        // On wide windows the capped content column sits centered rather than hugging the sidebar.
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Column(Modifier.widthIn(max = 880.dp).fillMaxWidth()) {
+            if (selectedApp == null) {
+                Text(
+                    Strings.get(currentRoute.titleKey, language),
+                    style = if (compact) MaterialTheme.typography.titleLarge else MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.SemiBold,
+                )
+                Text(
+                    Strings.get(currentRoute.subtitleKey, language),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Spacer(Modifier.height(if (compact) 12.dp else 16.dp))
+            }
+
+            if (selectedApp != null) {
+                ApplicationDetailScreen(
+                    account = account,
+                    appKey = selectedApp,
+                    onBack = { UiState.selectedApplication.value = null },
+                )
+            } else {
+                when (currentRoute) {
+                    Route.IncomingRequest -> IncomingRequestsScreen()
+                    Route.Applications -> ApplicationsScreen(
+                        account = account,
+                        onOpenApplication = { UiState.selectedApplication.value = it },
+                    )
+
+                    Route.Relays -> RelaysScreen()
+                    Route.Settings -> SettingsScreen(account = account)
+                }
+            }
+        }
+    }
+}
+
+/** Compact-width header: app name, relay status and the account switcher. */
+@Composable
+private fun CompactTopBar(account: DesktopAccount) {
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .background(MaterialTheme.colorScheme.surface)
+            .padding(horizontal = 12.dp, vertical = 6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            BuildVariant.appName,
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.padding(horizontal = 4.dp).weight(1f),
+        )
+        RelayStatusWidget()
+        Spacer(Modifier.width(4.dp))
+        AccountSwitcher(account, avatarOnly = true)
+    }
+}
+
+/** Compact-width navigation: the sidebar routes as a bottom bar. */
+@Composable
+private fun BottomNavigation(
+    currentRoute: Route,
+    pendingCount: Int,
+    onSelect: (Route) -> Unit,
+) {
+    val language by Strings.currentLanguage.collectAsState()
+    NavigationBar(containerColor = MaterialTheme.colorScheme.surface) {
+        sidebarRoutes.forEach { route ->
+            val title = Strings.get(route.titleKey, language)
+            NavigationBarItem(
+                selected = route == currentRoute,
+                onClick = { onSelect(route) },
+                icon = { RouteIcon(route, title, if (route == Route.IncomingRequest) pendingCount else 0) },
+                label = { Text(title, maxLines = 1, overflow = TextOverflow.Ellipsis) },
+            )
+        }
+    }
+}
+
+/** Medium-width navigation: the sidebar collapsed to icons, titles in tooltips. */
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun NavigationRail(
+    account: DesktopAccount,
+    currentRoute: Route,
+    pendingCount: Int,
+    onSelect: (Route) -> Unit,
+) {
+    val language by Strings.currentLanguage.collectAsState()
+    Column(
+        Modifier
+            .width(80.dp)
+            .fillMaxHeight()
+            .background(MaterialTheme.colorScheme.surface)
+            .padding(horizontal = 8.dp, vertical = 16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        RelayStatusWidget()
+        Spacer(Modifier.height(16.dp))
+
+        sidebarRoutes.forEachIndexed { index, route ->
+            val title = Strings.get(route.titleKey, language)
+            val selected = route == currentRoute
+            TooltipArea(
+                tooltip = {
+                    Surface(
+                        shape = RoundedCornerShape(4.dp),
+                        color = MaterialTheme.colorScheme.inverseSurface,
+                        contentColor = MaterialTheme.colorScheme.inverseOnSurface,
+                    ) {
+                        Text(
+                            "$title  ${shortcutLabel("${index + 1}")}",
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                        )
+                    }
+                },
+            ) {
+                Surface(
+                    shape = RoundedCornerShape(8.dp),
+                    color = if (selected) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surface,
+                    modifier = Modifier.size(width = 56.dp, height = 40.dp),
+                ) {
+                    Box(Modifier.clickable { onSelect(route) }, contentAlignment = Alignment.Center) {
+                        RouteIcon(route, title, if (route == Route.IncomingRequest) pendingCount else 0)
+                    }
+                }
+            }
+            Spacer(Modifier.height(4.dp))
+        }
+
+        Spacer(Modifier.weight(1f))
+        HorizontalDivider(Modifier.padding(vertical = 8.dp))
+        AccountSwitcher(account, avatarOnly = true)
+    }
+}
+
+@Composable
+private fun RouteIcon(
+    route: Route,
+    title: String,
+    badgeCount: Int,
+) {
+    BadgedBox(badge = { if (badgeCount > 0) Badge { Text("$badgeCount") } }) {
+        Icon(route.icon, title, Modifier.size(20.dp))
+    }
+}
+
+@Composable
+private fun Sidebar(
+    account: DesktopAccount,
+    currentRoute: Route,
+    pendingCount: Int,
+    onSelect: (Route) -> Unit,
+) {
+    Column(
+        Modifier
+            .width(240.dp)
+            .fillMaxHeight()
+            .background(MaterialTheme.colorScheme.surface)
+            .padding(horizontal = 12.dp, vertical = 16.dp),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                BuildVariant.appName,
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(horizontal = 8.dp).weight(1f),
+            )
+            RelayStatusWidget()
+        }
+        Text(
+            Strings.get("d_tagline"),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(horizontal = 8.dp),
+        )
+        Spacer(Modifier.height(20.dp))
+
+        sidebarRoutes.forEachIndexed { index, route ->
+            SidebarItem(
+                route = route,
+                selected = route == currentRoute,
+                badgeCount = if (route == Route.IncomingRequest) pendingCount else 0,
+                shortcut = shortcutLabel("${index + 1}"),
+                onClick = { onSelect(route) },
+            )
+            Spacer(Modifier.height(2.dp))
+        }
+
+        Spacer(Modifier.weight(1f))
+        HorizontalDivider(Modifier.padding(vertical = 8.dp))
+        AccountSwitcher(account)
+    }
+}
+
+@Composable
+private fun SidebarItem(
+    route: Route,
+    selected: Boolean,
+    badgeCount: Int,
+    shortcut: String,
+    onClick: () -> Unit,
+) {
+    val language by Strings.currentLanguage.collectAsState()
+    val title = Strings.get(route.titleKey, language)
+    Surface(
+        shape = RoundedCornerShape(8.dp),
+        color = if (selected) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surface,
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Row(
+            Modifier
+                .clickable(onClick = onClick)
+                .padding(horizontal = 10.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(route.icon, title, Modifier.size(18.dp))
+            Spacer(Modifier.width(10.dp))
+            Text(
+                title,
+                style = MaterialTheme.typography.bodyMedium,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f),
+            )
+            Spacer(Modifier.width(6.dp))
+            if (badgeCount > 0) {
+                Badge { Text("$badgeCount") }
+            } else {
+                Text(
+                    shortcut,
+                    style = MaterialTheme.typography.labelSmall,
+                    // On the selected (amber) row inherit the container's dark
+                    // on-color; otherwise use the muted variant.
+                    color = if (selected) {
+                        MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f)
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    },
+                    maxLines = 1,
+                    softWrap = false,
+                )
+            }
+        }
+    }
+}
+
+/**
+ * The account chip at the bottom of the sidebar: shows the active account and
+ * opens a menu to switch between accounts or add a new one — the desktop
+ * equivalent of the mobile account switcher sheet.
+ */
+@Composable
+private fun AccountSwitcher(
+    account: DesktopAccount,
+    avatarOnly: Boolean = false,
+) {
+    val accounts by AccountsStore.accounts.collectAsState()
+    val name by account.name.collectAsState()
+    val language by Strings.currentLanguage.collectAsState()
+    val scope = rememberCoroutineScope()
+    var expanded by remember { mutableStateOf(false) }
+
+    Box {
+        if (avatarOnly) {
+            Box(
+                Modifier
+                    .clip(CircleShape)
+                    .clickable { expanded = true }
+                    .padding(4.dp),
+            ) {
+                AccountAvatar(account.npub)
+            }
+        } else {
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .clickable { expanded = true }
+                    .padding(horizontal = 8.dp, vertical = 6.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                AccountAvatar(account.npub)
+                Spacer(Modifier.width(10.dp))
+                Column(Modifier.weight(1f)) {
+                    Text(
+                        name.ifBlank { Strings.get("account", language) },
+                        style = MaterialTheme.typography.bodyMedium,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                    Text(
+                        account.npub.toShortenHex(),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+                Icon(Icons.Default.UnfoldMore, Strings.get("d_switch_account", language), Modifier.size(18.dp))
+            }
+        }
+
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+        ) {
+            accounts.forEach { record ->
+                DropdownMenuItem(
+                    leadingIcon = { AccountAvatar(record.npub, size = 24.dp) },
+                    text = {
+                        Text(
+                            (record.name.ifBlank { record.npub.toShortenHex() }) +
+                                if (record.npub == account.npub) "  ✓" else "",
+                        )
+                    },
+                    onClick = {
+                        expanded = false
+                        if (record.npub != account.npub) {
+                            scope.launch { Session.switchTo(record.npub) }
+                        }
+                    },
+                )
+            }
+            HorizontalDivider()
+            DropdownMenuItem(
+                text = { Text(Strings.get("d_add_an_account", language)) },
+                leadingIcon = { Icon(Icons.Default.Add, null, Modifier.size(18.dp)) },
+                onClick = {
+                    expanded = false
+                    Session.addingAccount.value = true
+                },
+            )
+        }
+    }
+}

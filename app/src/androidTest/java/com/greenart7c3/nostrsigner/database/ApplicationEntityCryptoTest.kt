@@ -6,6 +6,7 @@ import androidx.sqlite.db.framework.FrameworkSQLiteOpenHelperFactory
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.greenart7c3.nostrsigner.SecureCryptoHelper
+import com.greenart7c3.nostrsigner.common.localPubKeyFromPrivKey
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals

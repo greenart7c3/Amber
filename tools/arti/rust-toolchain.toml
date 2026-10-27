@@ -1,0 +1,6 @@
+# Pins the Rust toolchain used to build the committed Arti libraries, so a
+# rebuild from the same Cargo.lock produces the same code. rustup installs it
+# on first use; build.sh adds the cross-compilation targets it needs.
+[toolchain]
+channel = "1.98.1"
+profile = "minimal"

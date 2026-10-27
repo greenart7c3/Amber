@@ -45,11 +45,11 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.common.SignerType
 import com.greenart7c3.nostrsigner.database.ApplicationEntity
 import com.greenart7c3.nostrsigner.database.ApplicationPermissionsEntity
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.Permission
-import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.ui.actions.RemoveAllPermissionsDialog
 import com.greenart7c3.nostrsigner.ui.components.AddPermissionsSheet
 import com.greenart7c3.nostrsigner.ui.components.AmberButton

@@ -8,14 +8,19 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -26,6 +31,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
@@ -37,6 +43,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import coil3.compose.SubcomposeAsyncImage
 import com.greenart7c3.nostrsigner.Amber
@@ -45,11 +52,15 @@ import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.service.ApplicationBackup
+import com.greenart7c3.nostrsigner.service.BackupApplication
+import com.greenart7c3.nostrsigner.service.BackupFetchResult
+import com.greenart7c3.nostrsigner.service.BackupPayload
 import com.greenart7c3.nostrsigner.service.RestoreResult
 import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.components.AmberButton
 import com.greenart7c3.nostrsigner.ui.components.ProfileSubscriptionEffect
 import com.greenart7c3.nostrsigner.ui.theme.fromHex
+import com.vitorpamplona.quartz.utils.TimeUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -66,7 +77,7 @@ fun ApplicationsBackupScreen(
 
     val loadedAccounts = accounts
     var isBusy by remember { mutableStateOf(false) }
-    var pendingRestore by remember { mutableStateOf<Account?>(null) }
+    var pendingRestore by remember { mutableStateOf<Pair<Account, BackupPayload>?>(null) }
 
     Column(modifier = modifier) {
         Text(
@@ -93,24 +104,47 @@ fun ApplicationsBackupScreen(
                     account = account,
                     isBusy = isBusy,
                     onBusyChange = { isBusy = it },
-                    onRequestRestore = { pendingRestore = account },
+                    onRequestRestore = {
+                        isBusy = true
+                        Amber.instance.applicationIOScope.launch {
+                            // Fetch first and let the user review what the backup
+                            // contains; nothing is written until they confirm.
+                            val fetched = ApplicationBackup.fetchLatestPayload(account)
+                            withContext(Dispatchers.Main) {
+                                isBusy = false
+                                when (fetched) {
+                                    is BackupFetchResult.Found -> pendingRestore = account to fetched.payload
+                                    is BackupFetchResult.NoBackupFound ->
+                                        Toast.makeText(context, context.getString(R.string.restore_no_backup_found), Toast.LENGTH_LONG).show()
+                                    is BackupFetchResult.Failed ->
+                                        Toast.makeText(context, context.getString(R.string.restore_failed, fetched.message), Toast.LENGTH_LONG).show()
+                                }
+                            }
+                        }
+                    },
                 )
             }
         }
     }
 
-    pendingRestore?.let { account ->
+    pendingRestore?.let { (account, payload) ->
+        val selection = rememberBackupSelection(payload)
         AlertDialog(
             onDismissRequest = { pendingRestore = null },
             title = { Text(stringResource(R.string.restore_confirm_title)) },
-            text = { Text(stringResource(R.string.restore_confirm_text)) },
+            text = {
+                BackupContents(selection) {
+                    Text(stringResource(R.string.restore_confirm_text))
+                }
+            },
             confirmButton = {
-                TextButton(onClick = {
+                TextButton(enabled = selection.hasSelection, onClick = {
                     pendingRestore = null
                     isBusy = true
+                    val selected = payload.copy(applications = selection.selected())
                     val scope = Amber.instance.applicationIOScope
                     scope.launch(Dispatchers.IO) {
-                        val result = ApplicationBackup.restoreFromRelays(account.npub, account)
+                        val result = ApplicationBackup.restoreFromPayload(account.npub, selected)
                         withContext(Dispatchers.Main) {
                             val msg = when (result) {
                                 is RestoreResult.Success -> context.getString(R.string.restore_success, result.apps, result.permissions)
@@ -256,14 +290,19 @@ fun RestoreBackupDialog(accountStateViewModel: AccountStateViewModel) {
     val context = LocalContext.current
     val apps = found.payload.applications.size
     val perms = found.payload.applications.sumOf { it.permissions.size }
+    val selection = rememberBackupSelection(found.payload)
 
     AlertDialog(
         onDismissRequest = { accountStateViewModel.dismissRestore() },
         title = { Text(stringResource(R.string.signin_restore_title)) },
-        text = { Text(stringResource(R.string.signin_restore_message, apps, perms)) },
+        text = {
+            BackupContents(selection) {
+                Text(stringResource(R.string.signin_restore_message, apps, perms))
+            }
+        },
         confirmButton = {
-            TextButton(onClick = {
-                accountStateViewModel.acceptRestore { result ->
+            TextButton(enabled = selection.hasSelection, onClick = {
+                accountStateViewModel.acceptRestore(selection.selected()) { result ->
                     val msg = when (result) {
                         is RestoreResult.Success -> context.getString(R.string.restore_success, result.apps, result.permissions)
                         is RestoreResult.NoBackupFound -> context.getString(R.string.restore_no_backup_found)
@@ -280,3 +319,92 @@ fun RestoreBackupDialog(accountStateViewModel: AccountStateViewModel) {
         },
     )
 }
+
+/**
+ * Which of a backup's applications the user picked to restore. Expired ones
+ * (deleteAfter already passed) are left out, as the cleanup worker would
+ * delete them; the rest start selected. Indexed by position rather than key:
+ * a backup is untrusted input and may repeat a key.
+ */
+private class BackupSelection(val applications: List<BackupApplication>) {
+    val checked = mutableStateListOf<Boolean>().apply { repeat(applications.size) { add(true) } }
+
+    val hasSelection: Boolean get() = checked.any { it }
+
+    fun selected(): List<BackupApplication> = applications.filterIndexed { index, _ -> checked[index] }
+}
+
+@Composable
+private fun rememberBackupSelection(payload: BackupPayload): BackupSelection = remember(payload) {
+    val now = TimeUtils.now()
+    BackupSelection(payload.applications.filterNot { ApplicationBackup.isExpired(it, now) })
+}
+
+/**
+ * Lists what a backup would restore (name, key, relays and permission count
+ * per application), each with a checkbox, so the user can leave out entries
+ * they don't want or don't recognize. Applications set to sign every request
+ * are flagged.
+ */
+@Composable
+private fun BackupContents(
+    selection: BackupSelection,
+    header: @Composable () -> Unit,
+) {
+    LazyColumn(
+        modifier = Modifier.heightIn(max = 400.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        item { header() }
+        itemsIndexed(selection.applications) { index, app ->
+            // NIP-46 apps are keyed by a pubkey; NIP-55 apps (no relays) by
+            // their package name, which is shown in full.
+            val key = if (app.relays.isEmpty()) app.key else app.key.toShortenHex()
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .toggleable(
+                        value = selection.checked[index],
+                        role = Role.Checkbox,
+                        onValueChange = { selection.checked[index] = it },
+                    ),
+            ) {
+                Checkbox(checked = selection.checked[index], onCheckedChange = null)
+                Spacer(modifier = Modifier.width(8.dp))
+                Column {
+                    Text(
+                        text = app.name.ifBlank { key },
+                        style = MaterialTheme.typography.titleSmall,
+                    )
+                    Text(
+                        text = key,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color.Gray,
+                    )
+                    if (app.relays.isNotEmpty()) {
+                        Text(
+                            text = "${stringResource(R.string.relays_used)}: ${app.relays.joinToString()}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color.Gray,
+                        )
+                    }
+                    Text(
+                        text = "${stringResource(R.string.permissions)}: ${app.permissions.size}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color.Gray,
+                    )
+                    if (app.signPolicy == SIGN_POLICY_FULL_TRUST) {
+                        Text(
+                            text = stringResource(R.string.sign_policy_fully_explainer),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.error,
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+private const val SIGN_POLICY_FULL_TRUST = 2

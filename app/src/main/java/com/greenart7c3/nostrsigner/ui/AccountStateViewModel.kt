@@ -9,6 +9,7 @@ import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.TorMode
 import com.greenart7c3.nostrsigner.service.ApplicationBackup
+import com.greenart7c3.nostrsigner.service.BackupApplication
 import com.greenart7c3.nostrsigner.service.BackupPayload
 import com.greenart7c3.nostrsigner.service.RestoreResult
 import com.greenart7c3.nostrsigner.service.TorManager
@@ -69,7 +70,7 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
             // PendingIntent (a race with composition) and doesn't exist in the
             // offline flavor — so warm here, at the deterministic app start.
             LocalPreferences.warmAccountCache(Amber.instance)
-            LocalPreferences.loadFromEncryptedStorageSync(Amber.instance, currentUser)?.let {
+            LocalPreferences.loadAccount(Amber.instance, currentUser)?.let {
                 startUI(it, route)
             }
             if (currentUser == null) {
@@ -87,8 +88,10 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
 
     fun logOff(npub: String) {
         prepareLogoutOrSwitch()
-        val shouldLogout = LocalPreferences.updatePrefsForLogout(npub, Amber.instance)
-        tryLoginExistingAccount(null, null, forceLogout = shouldLogout)
+        Amber.instance.applicationIOScope.launch {
+            val shouldLogout = LocalPreferences.updatePrefsForLogout(npub, Amber.instance)
+            tryLoginExistingAccount(null, null, forceLogout = shouldLogout)
+        }
     }
 
     fun switchUser(
@@ -245,10 +248,11 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
         }
     }
 
-    fun acceptRestore(onResult: (RestoreResult) -> Unit) {
+    /** Restores only [applications], the entries the user kept selected in the prompt. */
+    fun acceptRestore(applications: List<BackupApplication>, onResult: (RestoreResult) -> Unit) {
         val current = restorePrompt.value as? RestorePromptState.Found ?: return
         Amber.instance.applicationIOScope.launch {
-            val result = ApplicationBackup.restoreFromPayload(current.account.npub, current.payload)
+            val result = ApplicationBackup.restoreFromPayload(current.account.npub, current.payload.copy(applications = applications))
             restorePrompt.value = null
             launch(Dispatchers.Main) { onResult(result) }
         }

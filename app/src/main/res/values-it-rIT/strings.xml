@@ -27,17 +27,14 @@
     <string name="accept">Accetta</string>
     <string name="decrypt_zap_event">decifra evento zap</string>
     <string name="show_details">Mostra dettagli</string>
-    <string name="copy_raw_json">Json grezzo</string>
     <string name="add_new_account">Aggiungi nuovo account</string>
     <string name="select_account">Seleziona account</string>
     <string name="active_account">Account attivo</string>
     <string name="edit_name">Modifica nome</string>
     <string name="copy">"Copia "</string>
-    <string name="data_copied_to_the_clipboard">Dati copiati negli appunti</string>
     <string name="connect_app">Collega app</string>
     <string name="event_copied_to_the_clipboard">Evento copiato negli appunti</string>
     <string name="select_deselect_all">Seleziona/Deseleziona tutto</string>
-    <string name="decrypt_content">Decifra contenuto</string>
     <string name="support_development">Supporta lo sviluppo</string>
     <string name="source_code">Codice sorgente</string>
     <string name="show_qr_code">Mostra codice QR</string>
@@ -595,8 +592,6 @@
     <string name="ask">Chiedi</string>
     <string name="never">Mai</string>
     <string name="warning">Avviso</string>
-    <string name="of_events">%1$s di %2$s eventi</string>
-    <string name="see_details">Vedi dettagli</string>
     <string name="is_requiring_some_permissions_please_review_them">%1$s richiede alcuni permessi, ti preghiamo di esaminarli.</string>
     <string name="is_requiring_some_permissions_please_review_them2">Richiede alcuni permessi, ti preghiamo di esaminarli.</string>
     <plurals name="several_apps_are_requiring_some_permissions_please_review_them">
@@ -756,7 +751,7 @@
     <string name="one_week">Una settimana</string>
     <string name="delete_after">Elimina dopo</string>
     <string name="crashreport_found">Trovato report di crash</string>
-    <string name="would_you_like_to_send_the_recent_crash_report_to_amber_in_a_dm_no_personal_information_will_be_shared">Vuoi inviare il recente report di crash ad Amber tramite DM? Nessuna informazione personale verrà condivisa</string>
+    <string name="crash_report_send_prompt">Vuoi inviare l\'ultimo rapporto di arresto anomalo ad Amber tramite DM? Viene inviato dal tuo account, quindi lo sviluppatore vedrà la tua chiave pubblica.</string>
     <string name="copy_crash_report_to_clipboard">Vuoi copiare il report di crash negli appunti e aprire un client per inviarlo ad Amber?</string>
     <string name="crashreport_found_send">Invialo</string>
     <string name="invalid_intent_title">Richiesta non valida</string>
@@ -849,6 +844,7 @@
     <string name="auth_whitelist">Whitelist autenticazione client</string>
     <string name="auth_whitelist_description">Quando la whitelist non è vuota, l\'autenticazione client relay (NIP-42) sarà consentita solo per i relay nell\'elenco. Le richieste di autenticazione dagli altri relay verranno rifiutate automaticamente.</string>
     <string name="add_relay_to_whitelist">Aggiungi relay alla whitelist</string>
+    <string name="relay_not_in_auth_whitelist">Questo relay non è nella tua whitelist di autenticazione, quindi verrà rifiutato</string>
     <string name="keystore_error_title">Account non accessibile</string>
     <string name="keystore_error_message">Uno o più account non hanno potuto essere caricati perché l\'archiviazione sicura del dispositivo (KeyStore) ha restituito un errore:\n\n%1$s\n\nSi tratta di un bug firmware noto su alcuni dispositivi in cui il sistema non riesce ad aggiornare le chiavi di cifratura archiviate.\n\nCosa puoi fare:\n• Se hai un backup del tuo nsec (chiave privata), disconnettiti dall\'account interessato e accedi di nuovo — questo creerà una nuova chiave funzionante.\n• Controlla se è disponibile un aggiornamento firmware dal produttore del dispositivo, che potrebbe risolvere il problema.\n• Non disinstallare Amber; mantenere l\'app installata preserva la possibilità di recupero nel caso venga rilasciato un aggiornamento firmware.</string>
     <string name="event_kind_31124">Stato attuale dell\'animale</string>
@@ -917,6 +913,7 @@
     <string name="update_settings_subtitle">Controlla nuove versioni</string>
     <string name="require_unlocked_device">Richiedi dispositivo sbloccato per l\'accesso alle chiavi</string>
     <string name="require_unlocked_device_description">Se abilitato, la chiave Keystore utilizzata per decrittografare le chiavi del tuo account memorizzate non può essere utilizzata mentre il dispositivo è bloccato. Ciò impedisce a qualsiasi codice in esecuzione nel processo di Amber di decrittografare le tue chiavi mentre lo schermo è bloccato. Nota: questo disabilita la firma NIP-46 in background mentre il dispositivo è bloccato. L\'attivazione di questa opzione richiede la ri-crittografia di tutte le chiavi memorizzate.</string>
+    <string name="require_unlocked_device_legacy_note">Su Android 8 il Keystore non può applicarlo da solo. Amber continua a rifiutarsi di usare le tue chiavi mentre il dispositivo è bloccato, ma la protezione è solo software.</string>
     <string name="require_unlocked_device_updating">Ri-crittografia di tutte le chiavi memorizzate in corso…</string>
     <string name="require_unlocked_device_do_not_close">Non chiudere l\'app e non bloccare lo schermo fino al termine dell\'operazione.</string>
     <string name="insecure_relay_warning">Un relay non sicuro (testo in chiaro, ws://) su internet pubblico espone i metadati NIP-46 e il testo cifrato agli osservatori di rete. Preferisci wss://, o usa ws:// solo per relay .onion / di rete locale.</string>

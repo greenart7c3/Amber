@@ -21,12 +21,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.common.SignerType
 import com.greenart7c3.nostrsigner.models.ClearTextEncryptedDataKind
 import com.greenart7c3.nostrsigner.models.EncryptedDataKind
 import com.greenart7c3.nostrsigner.models.EventEncryptedDataKind
 import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.models.PrivateZapEncryptedDataKind
-import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.models.TagArrayEncryptedDataKind
 import com.greenart7c3.nostrsigner.models.encryptDecryptSignerTypes
 import com.greenart7c3.nostrsigner.ui.RememberType
@@ -49,10 +49,10 @@ fun requestGroupKey(
     eventKind: Int?,
     encryptedData: EncryptedDataKind?,
     nip44v3Kind: Int?,
-): RequestGroupKey = when {
-    type == SignerType.SIGN_EVENT -> RequestGroupKey(type, eventKind, null)
-    type == SignerType.NIP44_V3_ENCRYPT || type == SignerType.NIP44_V3_DECRYPT -> RequestGroupKey(type, nip44v3Kind, null)
-    type in encryptDecryptSignerTypes -> when (encryptedData) {
+): RequestGroupKey = when (type) {
+    SignerType.SIGN_EVENT -> RequestGroupKey(type, eventKind, null)
+    SignerType.NIP44_V3_ENCRYPT, SignerType.NIP44_V3_DECRYPT -> RequestGroupKey(type, nip44v3Kind, null)
+    in encryptDecryptSignerTypes -> when (encryptedData) {
         is EventEncryptedDataKind -> RequestGroupKey(type, encryptedData.event.kind, RequestPayloadShape.EVENT)
         is TagArrayEncryptedDataKind -> RequestGroupKey(type, null, RequestPayloadShape.TAG_ARRAY)
         is ClearTextEncryptedDataKind -> RequestGroupKey(type, null, RequestPayloadShape.CLEAR_TEXT)
@@ -118,10 +118,11 @@ enum class RequestGroupScopeKind {
     NIP44_V3_KIND,
 }
 
-fun RequestGroupKey.scopeKind(): RequestGroupScopeKind = when {
-    type == SignerType.SIGN_EVENT && kind == 22242 -> RequestGroupScopeKind.RELAY_AUTH
-    type == SignerType.NIP44_V3_ENCRYPT || type == SignerType.NIP44_V3_DECRYPT -> RequestGroupScopeKind.NIP44_V3_KIND
-    type in encryptDecryptSignerTypes && type != SignerType.DECRYPT_ZAP_EVENT -> RequestGroupScopeKind.ENCRYPTION_METHOD
+fun RequestGroupKey.scopeKind(): RequestGroupScopeKind = when (type) {
+    SignerType.SIGN_EVENT if kind == 22242 -> RequestGroupScopeKind.RELAY_AUTH
+    SignerType.NIP44_V3_ENCRYPT, SignerType.NIP44_V3_DECRYPT -> RequestGroupScopeKind.NIP44_V3_KIND
+    SignerType.DECRYPT_ZAP_EVENT -> RequestGroupScopeKind.NONE
+    in encryptDecryptSignerTypes -> RequestGroupScopeKind.ENCRYPTION_METHOD
     else -> RequestGroupScopeKind.NONE
 }
 

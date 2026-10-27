@@ -49,17 +49,14 @@
     <string name="accept">Accept</string>
     <string name="decrypt_zap_event">decrypt zap event</string>
     <string name="show_details">Show Details</string>
-    <string name="copy_raw_json">Raw json</string>
     <string name="add_new_account">Add New Account</string>
     <string name="select_account">Select Account</string>
     <string name="active_account">Active Account</string>
     <string name="edit_name">Edit name</string>
     <string name="copy">"Copy "</string>
-    <string name="data_copied_to_the_clipboard">Data copied to the clipboard</string>
     <string name="connect_app">Connect app</string>
     <string name="event_copied_to_the_clipboard">Event copied to the clipboard</string>
     <string name="select_deselect_all">Select/Deselect all</string>
-    <string name="decrypt_content">Decrypt content</string>
     <string name="support_development_uri" translatable="false">https://greenart7c3.com</string>
     <string name="support_development">Support development</string>
     <string name="source_code">Source code</string>
@@ -538,7 +535,7 @@
     <string name="nsecbunker_description">This option allow to add a nsecbunker manually, and use with whichever app supports Nostr Connect (NIP-46)</string>
     <string name="nostr_connect_qr_description">If your app offers you a Nostr Connect QR Code you can scan it from here. Usually this login mode it is offered by web apps.</string>
     <string name="nostr_connect_description">If your app offers you a Nostr Connect URL, you can paste it here. Usually this login mode it is offered by web apps.</string>
-    <string name="new_app_description">Usually Nostr applications have a “Login with Amber” option that permits to use Amber as external signer; when you press that button Amber is launched and you are asked to approve some permissions.\n\nBut you have other options to use Amber:</string>
+    <string name="new_app_description">Usually Nostr applications have a “Login with Amber” option that lets you use Amber as an external signer; when you press that button, Amber is launched and you are asked to approve some permissions.\n\nBut you have other options to use Amber:</string>
     <string name="add_a_new_application">Add a new application</string>
     <string name="account_backup">Account backup</string>
     <string name="export_all_accounts_title">Export All Accounts</string>
@@ -561,7 +558,7 @@
     <string name="cloud_backup_title">Cloud Backup</string>
     <string name="cloud_backup_encryption_section">Encryption Password</string>
     <string name="cloud_backup_encryption_description">This password encrypts your keys before uploading. You will need it to restore.</string>
-    <string name="cloud_backup_password_required">Password is required to backup or restore</string>
+    <string name="cloud_backup_password_required">Password is required to back up or restore</string>
     <string name="cloud_backup_gdrive_section">Google Drive</string>
     <string name="cloud_backup_gdrive_description">Save each account\'s encrypted key directly to Google Drive. No API key required.</string>
     <string name="cloud_backup_gdrive_sheet_description">Each account is saved as its own {npub}.ncryptsec file. Android will ask where to save each one — choose Google Drive to send directly without storing anything on this device.</string>
@@ -598,6 +595,7 @@
     <string name="wss">wss://…</string>
     <string name="require_unlocked_device">Require unlocked device for key access</string>
     <string name="require_unlocked_device_description">When enabled, the Keystore key used to decrypt your stored account keys cannot be used while the device is locked. This prevents any code running in Amber\'s process from decrypting your keys while the screen is locked. Note: this disables background NIP-46 signing while the device is locked. Toggling this requires re-encrypting all stored keys.</string>
+    <string name="require_unlocked_device_legacy_note">On Android 8 the Keystore cannot enforce this itself. Amber still refuses to use your keys while the device is locked, but the protection is software-only.</string>
     <string name="require_unlocked_device_updating">Re-encrypting all stored keys…</string>
     <string name="require_unlocked_device_do_not_close">Do not close the app or lock the screen until this finishes.</string>
     <string name="insecure_relay_warning">Insecure (cleartext, ws://) relay over the public internet exposes NIP-46 metadata and ciphertext to network observers. Prefer wss://, or use ws:// only for .onion / local-network relays.</string>
@@ -624,8 +622,6 @@
     <string name="ask">Ask</string>
     <string name="never">Never</string>
     <string name="warning">Warning</string>
-    <string name="of_events">%1$s of %2$s events</string>
-    <string name="see_details">See details</string>
     <string name="is_requiring_some_permissions_please_review_them">%1$s is requiring some permissions, please review them.</string>
     <string name="is_requiring_some_permissions_please_review_them2">Is requiring some permissions, please review them.</string>
     <plurals name="several_apps_are_requiring_some_permissions_please_review_them">
@@ -646,7 +642,7 @@
     <string name="go_back">Go back</string>
     <string name="your_nostr_account_is_ready">Your Nostr account is ready!</string>
     <string name="you_will_find_it_in_your_account_section_so_you_don_t_need_to_copy_it_right_now">You will find it in your account section, so you don’t need to copy it right now.</string>
-    <string name="please_add_a_nickname_later_you_will_able_to_personalise_your_full_profile_bio_pic_etc_using_your_preferred_nostr_client">Please add a nickname, later you will able to personalise your full profile (bio, pic, etc) using your preferred Nostr client:</string>
+    <string name="please_add_a_nickname_later_you_will_able_to_personalise_your_full_profile_bio_pic_etc_using_your_preferred_nostr_client">Please add a nickname, later you will be able to personalize your full profile (bio, pic, etc.) using your preferred Nostr client:</string>
     <string name="nickname">Your nickname</string>
     <string name="continue_button">Continue</string>
     <string name="permissions_and_connection">Permissions and connection</string>
@@ -787,7 +783,7 @@
     <string name="one_week">One week</string>
     <string name="delete_after">Delete after</string>
     <string name="crashreport_found">Crash Report found</string>
-    <string name="would_you_like_to_send_the_recent_crash_report_to_amber_in_a_dm_no_personal_information_will_be_shared">Would you like to send the recent crash report to Amber in a DM? No personal information will be shared</string>
+    <string name="crash_report_send_prompt">Would you like to send the recent crash report to Amber in a DM? It is sent from your account, so the developer will see your public key.</string>
     <string name="copy_crash_report_to_clipboard">Would you like to copy the crash report to your clipboard and open a Client to send it to Amber?</string>
     <string name="crashreport_found_send">Send it</string>
     <string name="invalid_intent_title">Invalid request</string>
@@ -881,6 +877,7 @@
     <string name="auth_whitelist">Client auth whitelist</string>
     <string name="auth_whitelist_description">When the whitelist is non-empty, relay client authentication (NIP-42) will only be allowed for relays in the list. Auth requests from other relays will be rejected automatically.</string>
     <string name="add_relay_to_whitelist">Add relay to whitelist</string>
+    <string name="relay_not_in_auth_whitelist">This relay isn\'t in your auth whitelist, so it will be rejected</string>
     <string name="keystore_error_title">Account Inaccessible</string>
     <string name="keystore_error_message">One or more accounts could not be loaded because your device\'s secure storage (KeyStore) returned an error:\n\n%1$s\n\nThis is a known firmware bug on some devices where the system cannot upgrade stored encryption keys.\n\nWhat you can do:\n• If you have your nsec (private key) backed up, log out of the affected account and log back in — this will create a new working key.\n• Check for a system firmware update from your device manufacturer, which may fix this.\n• Do not uninstall Amber; keeping the app installed preserves the possibility of recovery if a firmware update is released.</string>
     <string name="event_kind_31124">Current pet state</string>

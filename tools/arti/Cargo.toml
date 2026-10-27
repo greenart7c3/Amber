@@ -1,0 +1,43 @@
+[package]
+name = "amber-arti"
+version = "2.7.0"
+edition = "2021"
+publish = false
+
+# JNI wrapper around Arti (Tor in Rust) for the built-in Tor of the Android app
+# and the desktop app. Adapted from Amethyst's tools/arti-build.
+[lib]
+name = "amber_arti"
+crate-type = ["cdylib"]
+
+[workspace]
+
+[dependencies]
+arti-client = { version = "=0.47.0", default-features = false, features = [
+    "tokio",
+    "rustls",
+    "compression",
+    "onion-service-client",
+    "static-sqlite",
+] }
+tor-rtcompat = { version = "=0.47.0", default-features = false, features = ["tokio", "rustls"] }
+# Direct dep on rustls so we can install the `ring` crypto provider ourselves:
+# since arti-v2.3.0 tor-rtcompat no longer installs one implicitly, and `ring`
+# avoids the cross-compilation pain of aws-lc-rs (Arti's default).
+rustls = { version = "0.23", default-features = false, features = ["ring", "std"] }
+jni = "0.22"
+tokio = { version = "1", features = ["rt-multi-thread", "net", "io-util", "time", "macros"] }
+anyhow = "1"
+
+[profile.release]
+opt-level = "z"
+lto = true
+codegen-units = 1
+strip = true
+panic = "abort"
+
+# saturating-time 0.5.0 (the latest, used by tor-netdoc) loops forever on
+# Windows, where SystemTime has 100ns resolution: see the "Amber patch" comment
+# in patches/saturating-time/src/internal.rs. Drop this once upstream fixes it.
+[patch.crates-io]
+saturating-time = { path = "patches/saturating-time" }

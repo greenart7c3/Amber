@@ -8,6 +8,9 @@ import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.runtime.Immutable
 import androidx.core.content.edit
 import androidx.core.os.LocaleListCompat
+import com.greenart7c3.nostrsigner.database.AppDatabase
+import com.greenart7c3.nostrsigner.database.HistoryDatabase
+import com.greenart7c3.nostrsigner.database.LogDatabase
 import com.greenart7c3.nostrsigner.database.LogRetentionManager
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.AmberSettings
@@ -41,6 +44,7 @@ private enum class PrefKeys(val key: String) {
     SIGN_POLICY("default_sign_policy"),
     PROFILE_URL("profile_url"),
     LAST_METADATA_UPDATE("last_metadata_update"),
+    METADATA_CREATED_AT("metadata_created_at"),
     LAST_CHECK("last_check"),
     USER_RELAYS("user_relays"),
     USER_RELAYS_CREATED_AT("user_relays_created_at"),
@@ -76,7 +80,6 @@ private enum class SettingsKeys(val key: String) {
     WEBDAV_USERNAME("webdav_username"),
     WEBDAV_PASSWORD_ENCRYPTED("webdav_password_encrypted"),
     WEBDAV_FILENAME("webdav_filename"),
-    GDRIVE_FOLDER_URI("gdrive_folder_uri"),
     RATE_LIMIT_ENABLED("rate_limit_enabled"),
     RATE_LIMIT_MAX_PER_WINDOW("rate_limit_max_per_window"),
     RATE_LIMIT_WINDOW_SECONDS("rate_limit_window_seconds"),
@@ -256,6 +259,17 @@ object LocalPreferences {
         }
     }
 
+    /** created_at of the kind-0 event the account's name/picture were last taken from. */
+    fun getMetadataCreatedAt(context: Context, npub: String): Long = sharedPrefs(context, npub).getLong(PrefKeys.METADATA_CREATED_AT.key, 0)
+
+    fun setMetadataCreatedAt(context: Context, npub: String, createdAt: Long) {
+        sharedPrefs(context, npub).edit {
+            apply {
+                putLong(PrefKeys.METADATA_CREATED_AT.key, createdAt)
+            }
+        }
+    }
+
     suspend fun loadPinFromEncryptedStorage(): String? {
         val context = Amber.instance
         // Migration: move PIN from plain SharedPreferences to encrypted DataStore
@@ -314,6 +328,20 @@ object LocalPreferences {
 
     fun loadSettingsFromEncryptedStorage(context: Context = Amber.instance): AmberSettings {
         checkNotInMainThread()
+        return readSettings(context)
+    }
+
+    /**
+     * Loads the settings in `Amber.onCreate`, on the main thread, before any
+     * activity, service or ContentProvider call can read them. Otherwise, an
+     * approval screen or provider call on a cold start saw the data-class
+     * defaults (an empty auth whitelist, rate limits on, Tor off…) until the
+     * async [reloadApp] landed. They are plain SharedPreferences, like
+     * [presetProxyFromPrefs], so this is a small synchronous read.
+     */
+    fun loadSettingsAtStartup(context: Context): AmberSettings = readSettings(context)
+
+    private fun readSettings(context: Context): AmberSettings {
         sharedPrefs(context).apply {
             // One-time cleanup: the pre-rename legacy key is never read again, so
             // remove it instead of leaving a stale opt-in bit in every prefs file.
@@ -477,7 +505,7 @@ object LocalPreferences {
     }
 
     /**
-     * Clears the preferences for a given npub, deletes the preferences xml file,
+     * Clears the preferences for a given npub, deletes the preferences XML file,
      * and switches the user to the first account in the list if it exists
      *
      * We need to use `commit()` to write changes to disk and release the file
@@ -485,7 +513,7 @@ object LocalPreferences {
      * condition and the file will probably not be deleted
      */
     @SuppressLint("ApplySharedPref")
-    fun updatePrefsForLogout(npub: String, context: Context): Boolean {
+    suspend fun updatePrefsForLogout(npub: String, context: Context): Boolean {
         // Defense-in-depth (GHSA-8844-q5vh-9j8f, I3): best-effort zeroize the
         // private-key byte array of the logging-out account before dropping
         // the reference from the cache, so the key material does not linger
@@ -497,12 +525,17 @@ object LocalPreferences {
         // we release file locks and worker-pool threads instead of leaking
         // them for the lifetime of the process.
         Amber.instance.closeDatabasesFor(npub)
+        // Logout deletes all local information for the account, as the logout
+        // dialog says: dropping the databases (with their -wal/-shm/-journal
+        // files) means re-importing the key starts with no connections, grants,
+        // history or logs instead of silently restoring them.
+        deleteAccountDatabases(context, npub)
         val userPrefs = sharedPrefs(context, npub)
         userPrefs.edit(commit = true) { clear() }
         removeAccount(context, npub)
         deleteUserPreferenceFile(context, npub)
 
-        runBlocking { deleteUserDataStoreFile(context, npub) }
+        deleteUserDataStoreFile(context, npub)
 
         if (savedAccounts(context).isEmpty()) {
             val appPrefs = sharedPrefs(context)
@@ -513,6 +546,14 @@ object LocalPreferences {
             return false
         }
         return false
+    }
+
+    internal fun deleteAccountDatabases(context: Context, npub: String) {
+        listOf(AppDatabase.fileName(npub), LogDatabase.fileName(npub), HistoryDatabase.fileName(npub)).forEach { name ->
+            if (!context.deleteDatabase(name) && context.getDatabasePath(name).exists()) {
+                AmberLog.e(Amber.TAG, "Could not delete database $name at logout")
+            }
+        }
     }
 
     suspend fun updatePrefsForLogin(
@@ -595,6 +636,8 @@ object LocalPreferences {
         }
     }
 
+    // For synchronous callers (the ContentProvider); coroutines use loadAccount.
+    @Suppress("RunBlocking")
     fun loadFromEncryptedStorageSync(context: Context, npub: String? = null): Account? {
         // Defense-in-depth (GHSA-8844-q5vh-9j8f, I3): previously this warmed
         // the entire cache (runBlocking over all saved accounts) on any cold
@@ -610,6 +653,9 @@ object LocalPreferences {
         if (!containsAccount(context, targetNpub)) return null
         return runBlocking { loadFromEncryptedStorage(context, targetNpub) }
     }
+
+    /** [loadFromEncryptedStorageSync] for callers in a coroutine: [npub], or the current account when null. */
+    suspend fun loadAccount(context: Context, npub: String?): Account? = loadFromEncryptedStorage(context, npub ?: currentAccount(context) ?: return null)
 
     fun setAccountName(
         context: Context,
@@ -627,12 +673,6 @@ object LocalPreferences {
     fun getAccountName(context: Context, npub: String): String {
         sharedPrefs(context, npub).apply {
             return getString(PrefKeys.ACCOUNT_NAME.key, "") ?: ""
-        }
-    }
-
-    fun getProfileUrl(context: Context, npub: String): String {
-        sharedPrefs(context, npub).apply {
-            return getString(PrefKeys.PROFILE_URL.key, "") ?: ""
         }
     }
 
@@ -808,8 +848,6 @@ object LocalPreferences {
 
     fun getWebDavUsername(context: Context): String = sharedPrefs(context).getString(SettingsKeys.WEBDAV_USERNAME.key, "") ?: ""
 
-    fun getWebDavFilename(context: Context): String = sharedPrefs(context).getString(SettingsKeys.WEBDAV_FILENAME.key, "amber_backup.txt") ?: "amber_backup.txt"
-
     suspend fun getWebDavPassword(context: Context): String {
         val encrypted = getWebDavPasswordEncrypted(context)
         return if (encrypted.isBlank()) {
@@ -817,7 +855,7 @@ object LocalPreferences {
         } else {
             try {
                 SecureCryptoHelper.decrypt(encrypted)
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 ""
             }
         }
@@ -836,12 +874,10 @@ object LocalPreferences {
      */
     @Synchronized
     @SuppressLint("UseKtx") // needs commit()'s result, see commitActiveKeystoreAlias
-    fun replaceWebDavPasswordEncrypted(context: Context, expected: String, encryptedPassword: String): Boolean {
-        if (getWebDavPasswordEncrypted(context) != expected) return false
-        return sharedPrefs(context).edit()
+    fun replaceWebDavPasswordEncrypted(context: Context, expected: String, encryptedPassword: String): Boolean = getWebDavPasswordEncrypted(context) == expected &&
+        sharedPrefs(context).edit()
             .putString(SettingsKeys.WEBDAV_PASSWORD_ENCRYPTED.key, encryptedPassword)
             .commit()
-    }
 
     suspend fun saveWebDavSettings(
         context: Context,
@@ -858,15 +894,6 @@ object LocalPreferences {
                 putString(SettingsKeys.WEBDAV_PASSWORD_ENCRYPTED.key, encryptedPassword)
                 putString(SettingsKeys.WEBDAV_FILENAME.key, fileName)
             }
-        }
-    }
-
-    // Google Drive folder URI (persisted SAF permission)
-    fun getGdriveFolderUri(context: Context): String = sharedPrefs(context).getString(SettingsKeys.GDRIVE_FOLDER_URI.key, "") ?: ""
-
-    fun saveGdriveFolderUri(context: Context, uri: String) {
-        sharedPrefs(context).edit {
-            apply { putString(SettingsKeys.GDRIVE_FOLDER_URI.key, uri) }
         }
     }
 

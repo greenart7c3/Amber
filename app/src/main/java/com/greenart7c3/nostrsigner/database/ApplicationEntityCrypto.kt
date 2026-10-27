@@ -6,7 +6,7 @@ import com.greenart7c3.nostrsigner.SecureCryptoHelper
 
 /**
  * Envelope-encrypts / envelope-decrypts the two NIP-46 secret columns of
- * [ApplicationEntity] ([secret] and [localKey]) using the Keystore-backed
+ * [ApplicationEntity] ([ApplicationEntity.secret] and [ApplicationEntity.localKey]) using the Keystore-backed
  * AES-256-GCM key in [SecureCryptoHelper].
  *
  * Mitigates GHSA-5fjp-ghh8-wch8 (CWE-312): both columns previously lived as
@@ -43,7 +43,7 @@ private fun String.decryptField(): String {
         SecureCryptoHelper.decryptBlocking(this)
     } catch (e: Exception) {
         // Leave the ciphertext in place rather than crashing the DAO read.
-        // See class kdoc for the recovery contract.
+        // See the class KDoc for the recovery contract.
         AmberLog.w(Amber.TAG, "ApplicationEntityCrypto: failed to decrypt field", e)
         this
     }

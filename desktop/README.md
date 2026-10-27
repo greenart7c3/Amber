@@ -1,0 +1,297 @@
+# Amber Desktop (Windows, macOS, Linux)
+
+A Compose for Desktop port of Amber that turns your computer into a NIP-46
+remote signer ("bunker"). It shares the same Nostr stack as the Android app
+(the [Quartz](https://github.com/vitorpamplona/amethyst) library, published
+for the JVM) and mirrors the mobile UI and permission model.
+
+## Features
+
+- Multiple accounts: create a new key (NIP-06 seed words) or import an
+  `nsec`, `ncryptsec` (NIP-49), raw hex key, or mnemonic
+- NIP-46 signing over relays: `connect`, `sign_event`, `get_public_key`,
+  `ping`, `nip04_encrypt/decrypt`, `nip44_encrypt/decrypt`,
+  `nip44v3_encrypt/decrypt`, `decrypt_zap_event`, `sign_psbt`,
+  `switch_relays`, `logout`
+- Connect applications with a `nostrconnect://` URI or by generating a
+  `bunker://` URI (with QR code) — each connection gets its own local key.
+  Clicking a `nostrconnect://` link opens Amber (Linux: registered per user
+  via `xdg-mime`; macOS: declared in the app bundle's Info.plist). On Linux
+  the link is handed to the running instance over a per-user Unix socket:
+  the socket file is mode `0600`, connections from other OS users are
+  dropped via `SO_PEERCRED`, and connection attempts are rate-limited
+- The same permission model as mobile: auto-accept / auto-reject rules per
+  request type and event kind, time-bound grants (5 minutes … always), and
+  per-application sign policies (basic / manual / sign everything)
+- Per-application activity history and relay logs
+- Default bunker relays management
+- Tor (Settings → Tor setup), like the Android app: built-in Tor
+  ([Arti](https://arti.torproject.org), prebuilt for every OS under
+  `appResources/` by `tools/arti/build.sh`) or an external SOCKS proxy such as the
+  system tor service (port 9050) or Tor Browser (9150). Relay connections
+  fail closed while built-in Tor is still starting, and switching modes
+  redials every relay through the new route
+- Local relays: localhost and LAN/VPN addresses (RFC 1918, link-local, CGNAT /
+  Tailscale, IPv6 ULA) and `.local` mDNS names get plain `ws://` by default,
+  always bypass Tor, and stay connected when the internet drops. Every other
+  host counts as public — including `.lan`, `.home.arpa` and `.internal`
+  names, which a router can resolve arbitrarily — so an explicit `ws://`
+  relay there shows the cleartext warning
+- System tray: closing the window minimizes Amber to the tray so it keeps
+  answering requests (with Open / Lock now / Quit menu), and new approval
+  requests raise a system notification and bring the window back — both
+  configurable under Settings → Desktop. The tray uses the freedesktop
+  StatusNotifierItem / AppIndicator protocol on Linux (via the dorkbox
+  SystemTray library), so the icon shows on Wayland compositors such as
+  Hyprland/Sway (through waybar's tray module) and on GNOME/KDE, not just
+  X11. It needs an SNI host (e.g. waybar's `tray` module — note it may sit
+  inside a `group`/drawer that you expand to reveal the icon) and the
+  `libayatana-appindicator` runtime library; Amber automatically bridges the
+  Ayatana library to the legacy `libappindicator3` names dorkbox looks for,
+  so no compat symlink is required. When no SNI host is on the session bus
+  (or tray init takes too long), Amber skips the tray and logs why instead of
+  blocking startup. `AMBER_TRAY_TYPE=Gtk|AppIndicator|AutoDetect`
+  forces the backend and `AMBER_DISABLE_TRAY=1` skips the tray entirely.
+- Notifications go through the OS-native channel: the freedesktop
+  notification daemon (mako, dunst, swaync, GNOME Shell, …) via `notify-send`
+  or `gdbus` on Linux — so they work on Hyprland/Wayland — and the AWT tray
+  notification on Windows and macOS (on macOS it is posted as Amber itself;
+  allow it when macOS asks on first launch, or later under System Settings →
+  Notifications → Amber)
+- Mandatory passphrase lock (see Key storage below)
+- Optional start-on-boot (Settings → Desktop), always starting locked —
+  passphrase required before anything signs. Only offered for installed
+  builds (not `:desktop:run`):
+  - Windows: a per-user `HKCU\Software\Microsoft\Windows\CurrentVersion\Run`
+    entry (no admin rights; also listed under Task Manager → Startup apps)
+  - macOS: a per-user LaunchAgent (`~/Library/LaunchAgents/com.greenart7c3.nostrsigner.plist`)
+    that runs Amber at login (listed under System Settings → General → Login
+    Items & Extensions)
+  - Linux: installs and enables a hardened systemd **user** service that
+    starts Amber with the desktop session. No `MemoryDenyWriteExecute` (the
+    JVM's JIT cannot run under it); the unit still gets
+    `ProtectSystem=strict`, seccomp, `NoNewPrivileges` and friends
+- Windows installer (MSI/EXE) adds a Start Menu entry and a desktop shortcut
+- The window opens fitted to the screen's usable area (never under the
+  taskbar) and remembers its size and maximized state
+- Pending requests expire after 10 minutes (or at the request's NIP-40
+  `expiration`, if sooner), since NIP-46 clients stop waiting long before
++- Relay-side hardening: unknown senders are rate-limited per relay (approved
++  apps are never throttled), an unauthenticated request is answered once
++  without publish retries, and
++  incoming relay-message buffers are bounded, so a hostile relay or client
+  cannot make Amber spin or exhaust its memory
+- Native desktop layout: sidebar navigation with an account switcher, dense
+  list views, and keyboard shortcuts
+- Light/dark theme using the Amber palette
+- Fully localized UI in 14 languages, switchable live under Settings →
+  Language. The Android `strings.xml` translations (and event-kind
+  descriptions) are bundled verbatim under `resources/i18n/strings_<lang>.xml`
+  and loaded by `core/Strings.kt`; desktop-only strings live in
+  `strings_en.xml` (prefixed `d_`) and fall back to English in other locales
+
+## Keyboard shortcuts
+
+Ctrl on Windows/Linux, ⌘ on macOS:
+
+| Shortcut               | Action                                                                                                                       |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| Ctrl/⌘ + 1–4           | Switch between Incoming requests / Applications / Relays / Settings                                                          |
+| ↑ / ↓                  | Select a pending request (Incoming requests)                                                                                 |
+| ← / →                  | Cycle the selected request's "Remember" duration                                                                             |
+| D                      | See the selected request's details: the full event (kind, pubkey, date, content, tags) or the text being encrypted/decrypted |
+| Ctrl/⌘ + Enter         | Approve the selected request with the chosen duration                                                                        |
+| Ctrl/⌘ + Shift + Enter | Reject the selected request                                                                                                  |
+| Escape                 | Close the request details, or leave the application detail view                                                              |
+| Ctrl/⌘ + L             | Lock                                                                                                                         |
+| Ctrl/⌘ + M             | Minimize to tray (keep running in the background)                                                                            |
+| Ctrl/⌘ + W             | Same as Ctrl/⌘ + M                                                                                                           |
+| Ctrl/⌘ + Q             | Quit                                                                                                                         |
+
+Not included: NIP-55 (`nostrsigner:` intents and the content provider) —
+that is Android IPC and does not exist on desktop. Web apps and other
+clients connect through NIP-46 instead.
+
+## Key storage
+
+Private keys are encrypted at rest with AES-256-GCM. The AES key is held in
+a Java KeyStore (PKCS12) file under the application data directory:
+
+- Windows: `%APPDATA%\Amber`
+- macOS: `~/Library/Application Support/Amber`
+- Linux: `$XDG_DATA_HOME/amber` (or `~/.local/share/amber`)
+
+The keystore password is kept in the operating system's credential store:
+
+- macOS: Keychain
+- Windows: Credential Manager
+- Linux: the freedesktop Secret Service (GNOME Keyring / KWallet over D-Bus)
+
+so copying the data directory (or a backup of it) is not enough to unlock
+the keys. On systems without a secret daemon (headless Linux, minimal
+window managers) the password falls back to an owner-only file next to the
+keystore, and is migrated into the credential store automatically the
+first time one becomes available. The Settings screen shows which backend
+is in use.
+
+The per-account backup dialog (Settings → account → Backup) shows the nsec
+and seed words only after you ask for them, and copying either to the
+clipboard first shows a warning: other apps on this computer can read the
+clipboard.
+
+Note the trust model: any process running as your OS user can request the
+secret from the credential store, so this protects against offline attacks
+(disk theft, leaked backups, copied data directories) rather than against
+malware running in your session. Use full-disk encryption and OS login
+protection too.
+
+### Passphrase lock (mandatory)
+
+Amber requires a passphrase: on first run a setup screen asks for one before
+anything else can be used, and installs that already have only the OS
+credential store are migrated to it on the next launch. The AES master key
+is then stored only wrapped (AES-256-GCM) under a key derived from your
+passphrase with **Argon2id**, in `master.key.enc`; the plain keystore and its
+credential-store/file password are deleted. The passphrase is never written
+anywhere. You can change it under **Settings → Security**, but there is no
+way to remove it and go back to unprotected storage.
+
+The passphrase must be at least 12 characters (existing shorter ones keep
+working until you change them). Argon2id runs with 256 MB of memory, 3
+iterations and 4 lanes — about a second on a current desktop CPU — scaled
+down to 128 MB / 64 MB when the JVM heap is small. The cost is stored with
+the wrapped key, so a key wrapped with cheaper parameters (such as the 64 MB
+used by earlier versions) is rewrapped at the next unlock.
+
+When the OS credential store works, it also holds a second unlock factor: a
+random 256-bit secret (entry `master-key-secret` under the
+`com.greenart7c3.nostrsigner` service) that is mixed into the passphrase-
+derived key with HKDF-SHA256. Unwrapping the master key then needs both your
+passphrase **and** that entry, so a copy of the data directory alone cannot
+be brute-forced offline, however weak the passphrase. Without a usable
+credential store the passphrase is the only factor, and Amber adds the
+second one at the next unlock once a store becomes available. If the entry
+cannot be read (keyring locked, secret daemon not running), the unlock
+screen says so instead of reporting a wrong passphrase. To move the data
+directory to another machine, move that credential-store entry along with
+it — or, simpler, restore the accounts there from their nsec or seed words.
+
+With the lock on:
+
+- Copying the data directory (or the credential store) is useless — without
+  the passphrase there is no way to decrypt the keys.
+- The per-account **database** (connected applications, permission grants,
+  request history, relay logs) is also encrypted at rest with the master
+  key — AES-256-GCM, with an `AMBERENC2:` header — so the metadata about
+  which apps you sign for stays private too. Enabling the passphrase
+  re-encrypts existing data immediately.
+  (`settings.json` and `accounts.json` stay plaintext, but the private keys
+  inside `accounts.json` are always encrypted with the master key.)
+- Every ciphertext is bound to what it is (account + key, seed words or
+  database file) as GCM associated data, and a loaded key must match its
+  account's npub. Someone who can edit the data directory therefore cannot
+  move one account's key or database into another account, or plant a
+  plaintext database granting permissions; such files are rejected and kept
+  aside. The header of `master.key.enc` is authenticated too, so it cannot
+  be downgraded — a blob in an unsupported format is refused at unlock.
+- Files are replaced atomically and flushed to disk, so a crash or power
+  loss never leaves a half-written file. A file Amber cannot read is moved
+  aside as `<name>.corrupt-<time>` instead of being overwritten, and the
+  previous `accounts.json` — the only file holding the encrypted keys — is
+  kept as `accounts.json.bak` and restored automatically if needed.
+- Amber asks for the passphrase at startup and auto-locks after an idle
+  timeout — 1 hour by default, selectable (5 min / 15 min / 1 hour / never)
+  under **Settings → Security** — or immediately via **Lock now**. Locking
+  evicts all key material from memory and disconnects the relays, so no
+  request can be signed until you unlock again.
+- Logging out of an account (which deletes its key from this device) asks
+  for the passphrase first.
+
+Locking also wipes the key material instead of just dropping references:
+the master key, every loaded account's private key bytes, and Quartz's
+NIP-04/NIP-44 shared-secret caches. Account keys are decrypted straight into
+byte arrays, never into an (unwipeable) string. The JVM can still leave
+copies behind (garbage collection moves objects), so this narrows the
+window rather than closing it. The launcher also runs the JVM with
+`-XX:+DisableAttachMechanism` (no `jcmd`/`jmap` heap dumps by other
+processes), no heap dump on out-of-memory and no core dump on a crash.
+
+Residual risk it cannot remove: while unlocked, the keys are in the
+process's memory, so malware that can scrape another process's memory or
+log your keystrokes in your session could still capture them — that is
+inherent to any software signer on a general-purpose OS. Hardware-backed,
+per-signature consent (Touch ID / Windows Hello / TPM) would be the next
+step and is tracked as future work.
+
+**If you forget the passphrase there is no recovery** — restore your keys
+from their nsec or seed-word backup instead.
+
+## Crash reports
+
+Like the Android app, Amber saves an uncaught exception as a crash report
+(`crash.trace` in the data directory, owner-only) and, once you unlock,
+shows it in a dialog where you can read and edit it before choosing what to
+do: **Send it** delivers it to the developer as a NIP-17 private DM from the
+current account (through `wss://inbox.nostr.wine` and `wss://nostr.land`,
+expiring after 30 days, over Tor when enabled), **Copy** puts it on the
+clipboard, and **Cancel** discards it. Nothing is sent without that click.
+Before saving, Nostr keys (bech32 and hex), long base64 payloads and your
+home directory path are redacted; the report carries the Amber version, OS,
+architecture, Java runtime and desktop session type. Out-of-memory errors
+are not reported.
+
+## Local socket signer (NIP-5F)
+
+Command-line tools (nak, ngit, scripts, AI agents, …) can sign through Amber
+over a local Unix domain socket at `~/.local/share/nostr/signer.sock`
+(Linux, macOS, Windows 10+), following the NIP-5F draft with NIP-55-style
+accounts: no relays, no per-tool pairing, every request through Amber's
+normal approval and permissions. It's always on.
+
+```bash
+socat - UNIX-CONNECT:$HOME/.local/share/nostr/signer.sock
+{"client":"socat"}
+{"id":"1","method":"get_public_key","params":[]}
+```
+
+Protocol, methods, accounts, tokens, error codes, security model and
+internals: **[LOCAL_SIGNER.md](LOCAL_SIGNER.md)**.
+
+## Run and build
+
+```bash
+./gradlew :desktop:run                                # debug build, run from source
+./gradlew :desktop:runDistributable                   # release build, run from source
+./gradlew :desktop:createDistributable                # runnable app image
+./gradlew :desktop:packageDeb                         # Linux .deb
+./gradlew :desktop:packageRpm                         # Linux .rpm
+./gradlew :desktop:packageMsi                         # Windows .msi (build on Windows)
+./gradlew :desktop:packageExe                         # Windows .exe (build on Windows)
+./gradlew :desktop:packageDmg                         # macOS .dmg (build on macOS)
+./gradlew :desktop:packageDistributionForCurrentOs    # whatever fits the host
+```
+
+`:desktop:run` (and the hot-reload `hotRun`/`hotDev`) is the **debug**
+build, like the Android `debug` build type: it shows as "Amber Debug" and
+keeps its own data dir (`amber-debug` / `Amber Debug`), OS credential store
+entry (`com.greenart7c3.nostrsigner.debug`) and nostrconnect socket, so it can
+run alongside an installed release without touching its keys, accounts or
+single-instance lock. On Linux it does not claim `nostrconnect://` links
+unless run with `-PdesktopUriHandler`. Packaged builds are always release.
+
+The desktop app always carries the Android app's version: both builds read
+`amberVersionName` (and Android `amberVersionCode`) from
+`gradle/libs.versions.toml` (installers drop a `-suffix`, so `6.7.0-pre1`
+packages as `6.7.0`), and the release workflow refuses a tag that does not
+match it. Bump the version there only.
+
+jpackage can only produce installers for the OS it runs on, so release
+builds are made per-platform. Linux packaging needs `fakeroot` (deb) or
+`rpm-build` (rpm) installed.
+
+## Tests
+
+```bash
+./gradlew :desktop:test              # unit tests
+AMBER_E2E=1 ./gradlew :desktop:test  # + a NIP-46 round-trip over a public relay
+```

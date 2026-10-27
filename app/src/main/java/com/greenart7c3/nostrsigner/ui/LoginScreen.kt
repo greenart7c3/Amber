@@ -62,7 +62,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.autofill.ContentType
 import androidx.compose.ui.draw.scale
@@ -116,11 +115,11 @@ import com.greenart7c3.nostrsigner.ui.components.MarkdownText
 import com.greenart7c3.nostrsigner.ui.components.MnemonicLoginInput
 import com.greenart7c3.nostrsigner.ui.components.TitleExplainer
 import com.greenart7c3.nostrsigner.ui.navigation.Route
+import com.vitorpamplona.crypto.random.RandomInstance
 import com.vitorpamplona.quartz.nip01Core.crypto.KeyPair
 import com.vitorpamplona.quartz.nip06KeyDerivation.Bip39Mnemonics
 import com.vitorpamplona.quartz.nip06KeyDerivation.Nip06
 import com.vitorpamplona.quartz.nip19Bech32.toNpub
-import com.vitorpamplona.quartz.utils.RandomInstance
 import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -829,7 +828,7 @@ fun SignUpPage(
 }
 
 @SuppressLint("ConfigurationScreenWidthHeight")
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoginPage(
     accountViewModel: AccountStateViewModel,
@@ -998,7 +997,7 @@ fun LoginPage(
                                     shape = RoundedCornerShape(18.dp),
                                     value = if (mnemonicAccountIndex == 0) "" else mnemonicAccountIndex.toString(),
                                     onValueChange = { value ->
-                                        mnemonicAccountIndex = value.filter { it.isDigit() }.toIntOrNull() ?: 0
+                                        mnemonicAccountIndex = value.filter(Char::isDigit).toIntOrNull() ?: 0
                                         if (errorMessage.isNotEmpty()) errorMessage = ""
                                     },
                                     label = { Text(stringResource(R.string.mnemonic_account_index)) },

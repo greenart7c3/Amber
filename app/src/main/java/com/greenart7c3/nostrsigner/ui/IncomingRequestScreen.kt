@@ -96,7 +96,7 @@ fun IncomingRequestScreen(
             )
         } else if (connectRequest != null || bunkerRequests.size == 1) {
             val bunkerRequest = connectRequest ?: bunkerRequests.first()
-            key(bunkerRequest.request.id) {
+            key(bunkerRequest.queueKey) {
                 BunkerSingleEventHomeScreen(
                     horizontalPadding = horizontalPadding,
                     modifier = modifier,

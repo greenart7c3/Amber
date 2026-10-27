@@ -103,20 +103,3 @@ fun TrustScoreBadge(
         }
     }
 }
-
-/**
- * A compact chip-style trust score indicator.
- */
-@Composable
-fun TrustScoreChip(
-    score: Int?,
-    modifier: Modifier = Modifier,
-    isLoading: Boolean = false,
-) {
-    TrustScoreBadge(
-        score = score,
-        modifier = modifier,
-        isLoading = isLoading,
-        showLabel = false,
-    )
-}

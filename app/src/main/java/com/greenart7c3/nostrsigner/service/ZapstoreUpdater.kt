@@ -137,6 +137,13 @@ class ZapstoreUpdater(
     }
 
     private suspend fun processReleaseEvent(event: Event) {
+        // The authors filter is only a request to the relay, which may ignore it.
+        // The release is the trust root for the URL, hash and file event ids, so it
+        // must be signed by the developer key, not just validly signed by anyone.
+        if (event.pubKey != Amber.DEVELOPER_HEX_KEY) {
+            AmberLog.w(Amber.TAG, "ZapstoreUpdater: ignoring release event ${event.id} from ${event.pubKey}")
+            return
+        }
         if (!event.verify()) {
             AmberLog.w(Amber.TAG, "ZapstoreUpdater: invalid release event: ${event.toJson()}")
             return
@@ -262,11 +269,15 @@ class ZapstoreUpdater(
             downloadProgress.value = 0f
             try {
                 val apkFile = downloadApk(context, release)
-                if (apkFile != null) {
+                if (apkFile == null) {
+                    downloadState.value = DownloadState.ERROR
+                } else if (!UpdateApkVerifier.isTrustedUpdate(context, apkFile)) {
+                    AmberLog.e(Amber.TAG, "ZapstoreUpdater: downloaded APK is not signed as this app; refusing to install")
+                    apkFile.delete()
+                    downloadState.value = DownloadState.ERROR
+                } else {
                     downloadState.value = DownloadState.INSTALLING
                     installApk(context, apkFile)
-                } else {
-                    downloadState.value = DownloadState.ERROR
                 }
             } catch (e: Exception) {
                 if (e is CancellationException) throw e
@@ -277,6 +288,12 @@ class ZapstoreUpdater(
     }
 
     private suspend fun downloadApk(context: Context, release: ZapstoreRelease): File? {
+        // The hash from the developer-signed release is the only integrity check on
+        // the download; without it, fail closed rather than install unverified bytes.
+        val expectedHash = release.hash?.removePrefix("sha256:") ?: run {
+            AmberLog.e(Amber.TAG, "ZapstoreUpdater: release ${release.version} has no hash; refusing to download")
+            return null
+        }
         val settings = withContext(Dispatchers.IO) {
             LocalPreferences.loadSettingsFromEncryptedStorage()
         }
@@ -291,11 +308,12 @@ class ZapstoreUpdater(
         }
 
         // Safe call needed: the offline flavor compiles against OkHttp 4, where body is nullable
+        @Suppress("USELESS_ELVIS")
         val body = response.body ?: return null
         val contentLength = body.contentLength()
-        val apkFile = File(context.cacheDir, "amber-update-${release.version}.apk")
+        val apkFile = File(SharedFiles.updatesDir(context), "amber-update-${release.version}.apk")
 
-        val digest = if (release.hash != null) MessageDigest.getInstance("SHA-256") else null
+        val digest = MessageDigest.getInstance("SHA-256")
         var bytesRead = 0L
 
         apkFile.outputStream().use { output ->
@@ -304,7 +322,7 @@ class ZapstoreUpdater(
                 var read: Int
                 while (input.read(buffer).also { read = it } != -1) {
                     output.write(buffer, 0, read)
-                    digest?.update(buffer, 0, read)
+                    digest.update(buffer, 0, read)
                     bytesRead += read
                     if (contentLength > 0) {
                         downloadProgress.value = bytesRead.toFloat() / contentLength.toFloat()
@@ -313,16 +331,13 @@ class ZapstoreUpdater(
             }
         }
 
-        if (digest != null && release.hash != null) {
-            val actualHash = digest.digest().joinToString("") { "%02x".format(it) }
-            val expectedHash = release.hash.removePrefix("sha256:")
-            if (!actualHash.equals(expectedHash, ignoreCase = true)) {
-                AmberLog.e(Amber.TAG, "ZapstoreUpdater: hash mismatch! expected=$expectedHash actual=$actualHash")
-                apkFile.delete()
-                return null
-            }
-            AmberLog.d(Amber.TAG, "ZapstoreUpdater: hash verified OK")
+        val actualHash = digest.digest().joinToString("") { "%02x".format(it) }
+        if (!actualHash.equals(expectedHash, ignoreCase = true)) {
+            AmberLog.e(Amber.TAG, "ZapstoreUpdater: hash mismatch! expected=$expectedHash actual=$actualHash")
+            apkFile.delete()
+            return null
         }
+        AmberLog.d(Amber.TAG, "ZapstoreUpdater: hash verified OK")
 
         return apkFile
     }
@@ -345,21 +360,29 @@ class ZapstoreUpdater(
         }
     }
 
-    private fun isNewerVersion(version: String): Boolean {
-        val current = BuildConfig.VERSION_NAME.substringBefore("-")
-        if (version == current) return false
-        return try {
-            val newParts = version.substringBefore("-").split(".").map { it.toInt() }
-            val curParts = current.split(".").map { it.toInt() }
+    private fun isNewerVersion(version: String): Boolean = isNewerVersion(version, BuildConfig.VERSION_NAME)
+
+    internal companion object {
+        private val VERSION = Regex("""\d{1,9}(\.\d{1,9})*""")
+
+        /**
+         * Whether release [version] is newer than [current], comparing numeric
+         * dot-separated parts after dropping a `-suffix`. A version that does not
+         * parse is never newer: the old fallback compared strings, so a value
+         * like "x" or "v1.0" sorted above any real release and was offered.
+         */
+        internal fun isNewerVersion(version: String, current: String): Boolean {
+            val newParts = parts(version) ?: return false
+            val curParts = parts(current) ?: return false
             for (i in 0 until maxOf(newParts.size, curParts.size)) {
                 val n = newParts.getOrElse(i) { 0 }
                 val c = curParts.getOrElse(i) { 0 }
                 if (n > c) return true
                 if (n < c) return false
             }
-            false
-        } catch (_: Exception) {
-            version > current
+            return false
         }
+
+        private fun parts(version: String): List<Int>? = version.substringBefore("-").takeIf { VERSION.matches(it) }?.split(".")?.map { it.toInt() }
     }
 }

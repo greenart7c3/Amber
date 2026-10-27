@@ -21,17 +21,14 @@
     <string name="accept">Chấp nhận</string>
     <string name="decrypt_zap_event">giải mã sự kiện zap</string>
     <string name="show_details">Hiển Thị Chi Tiết</string>
-    <string name="copy_raw_json">JSON thô</string>
     <string name="add_new_account">Thêm Tài Khoản Mới</string>
     <string name="select_account">Chọn Tài Khoản</string>
     <string name="active_account">Tài Khoản Đang Hoạt Động</string>
     <string name="edit_name">Chỉnh sửa tên</string>
     <string name="copy">"Sao chép "</string>
-    <string name="data_copied_to_the_clipboard">Dữ liệu đã được sao chép vào khay nhớ tạm</string>
     <string name="connect_app">Kết nối ứng dụng</string>
     <string name="event_copied_to_the_clipboard">Sự kiện đã được sao chép vào khay nhớ tạm</string>
     <string name="select_deselect_all">Chọn/Bỏ chọn tất cả</string>
-    <string name="decrypt_content">Giải mã nội dung</string>
     <string name="support_development">Hỗ trợ phát triển</string>
     <string name="source_code">Mã nguồn</string>
     <string name="show_qr_code">Hiện Mã QR</string>
@@ -571,8 +568,6 @@
     <string name="ask">Hỏi</string>
     <string name="never">Không bao giờ</string>
     <string name="warning">Cảnh báo</string>
-    <string name="of_events">%1$s trong %2$s sự kiện</string>
-    <string name="see_details">Xem chi tiết</string>
     <string name="is_requiring_some_permissions_please_review_them">%1$s đang yêu cầu một số quyền, vui lòng xem xét chúng.</string>
     <string name="is_requiring_some_permissions_please_review_them2">Đang yêu cầu một số quyền, vui lòng xem xét chúng.</string>
     <plurals name="several_apps_are_requiring_some_permissions_please_review_them">
@@ -730,7 +725,7 @@
     <string name="one_week">Một tuần</string>
     <string name="delete_after">Xóa sau</string>
     <string name="crashreport_found">Tìm thấy báo cáo sự cố</string>
-    <string name="would_you_like_to_send_the_recent_crash_report_to_amber_in_a_dm_no_personal_information_will_be_shared">Bạn có muốn gửi báo cáo sự cố gần đây đến Amber qua tin nhắn trực tiếp không? Không có thông tin cá nhân nào được chia sẻ</string>
+    <string name="crash_report_send_prompt">Bạn có muốn gửi báo cáo sự cố gần đây cho Amber qua DM không? Báo cáo được gửi từ tài khoản của bạn, vì vậy nhà phát triển sẽ thấy khóa công khai của bạn.</string>
     <string name="copy_crash_report_to_clipboard">Bạn có muốn sao chép báo cáo sự cố vào khay nhớ tạm và mở Ứng dụng khách để gửi đến Amber không?</string>
     <string name="crashreport_found_send">Gửi đi</string>
     <string name="invalid_intent_title">Yêu cầu không hợp lệ</string>
@@ -823,6 +818,7 @@
     <string name="auth_whitelist">Danh sách trắng xác thực máy khách</string>
     <string name="auth_whitelist_description">Khi danh sách trắng không trống, xác thực máy khách relay (NIP-42) chỉ được phép cho các relay trong danh sách. Các yêu cầu xác thực từ relay khác sẽ bị từ chối tự động.</string>
     <string name="add_relay_to_whitelist">Thêm relay vào danh sách trắng</string>
+    <string name="relay_not_in_auth_whitelist">Relay này không có trong danh sách trắng xác thực của bạn nên sẽ bị từ chối</string>
     <string name="keystore_error_title">Tài Khoản Không Thể Truy Cập</string>
     <string name="keystore_error_message">Một hoặc nhiều tài khoản không thể tải được do bộ lưu trữ an toàn (KeyStore) trên thiết bị của bạn trả về lỗi:\n\n%1$s\n\nĐây là lỗi firmware đã biết trên một số thiết bị, nơi hệ thống không thể nâng cấp các khóa mã hóa đã lưu.\n\nBạn có thể làm:\n• Nếu bạn đã sao lưu nsec (khóa riêng tư), hãy đăng xuất khỏi tài khoản bị ảnh hưởng và đăng nhập lại — điều này sẽ tạo ra một khóa mới hoạt động.\n• Kiểm tra cập nhật firmware hệ thống từ nhà sản xuất thiết bị, có thể sửa lỗi này.\n• Không gỡ cài đặt Amber; giữ ứng dụng được cài đặt vẫn bảo tồn khả năng khôi phục nếu có bản cập nhật firmware được phát hành.</string>
     <string name="event_kind_31124">Trạng thái thú cưng hiện tại</string>
@@ -891,6 +887,7 @@
     <string name="update_settings_subtitle">Kiểm tra phiên bản mới</string>
     <string name="require_unlocked_device">Yêu cầu mở khóa thiết bị để truy cập khóa</string>
     <string name="require_unlocked_device_description">Khi được bật, khóa Keystore dùng để giải mã các khóa tài khoản đã lưu của bạn không thể sử dụng được khi thiết bị đang khóa. Điều này ngăn bất kỳ mã nào chạy trong quy trình của Amber giải mã khóa của bạn khi màn hình đang khóa. Lưu ý: điều này sẽ vô hiệu hóa việc ký NIP-46 trong nền khi thiết bị đang khóa. Việc bật/tắt tính năng này yêu cầu mã hóa lại tất cả các khóa đã lưu.</string>
+    <string name="require_unlocked_device_legacy_note">Trên Android 8, Keystore không thể tự thực thi điều này. Amber vẫn từ chối sử dụng khóa của bạn khi thiết bị đang khóa, nhưng việc bảo vệ chỉ dựa trên phần mềm.</string>
     <string name="require_unlocked_device_updating">Đang mã hóa lại tất cả các khóa đã lưu…</string>
     <string name="require_unlocked_device_do_not_close">Không đóng ứng dụng hoặc khóa màn hình cho đến khi quá trình này hoàn tất.</string>
     <string name="insecure_relay_warning">Relay không an toàn (văn bản thuần túy, ws://) qua internet công cộng sẽ để lộ siêu dữ liệu NIP-46 và văn bản mã hóa cho những người quan sát mạng. Ưu tiên wss:// hoặc chỉ sử dụng ws:// cho các relay .onion / mạng cục bộ.</string>

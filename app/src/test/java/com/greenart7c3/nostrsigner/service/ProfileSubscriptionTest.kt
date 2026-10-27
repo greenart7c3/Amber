@@ -7,10 +7,14 @@ import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.AmberSettings
 import com.greenart7c3.nostrsigner.models.ProfileFetchInterval
 import com.vitorpamplona.quartz.nip01Core.core.Event
+import com.vitorpamplona.quartz.nip01Core.core.toHexKey
+import com.vitorpamplona.quartz.nip01Core.crypto.KeyPair
+import com.vitorpamplona.quartz.nip01Core.metadata.MetadataEvent
 import com.vitorpamplona.quartz.nip01Core.relay.client.NostrClient
 import com.vitorpamplona.quartz.nip01Core.relay.client.single.IRelayClient
 import com.vitorpamplona.quartz.nip01Core.relay.commands.toClient.EoseMessage
 import com.vitorpamplona.quartz.nip01Core.relay.commands.toClient.EventMessage
+import com.vitorpamplona.quartz.nip01Core.signers.NostrSignerInternal
 import com.vitorpamplona.quartz.utils.TimeUtils
 import io.mockk.Runs
 import io.mockk.every
@@ -24,8 +28,10 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.runBlocking
 import org.junit.After
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Assume.assumeFalse
 import org.junit.Before
@@ -51,6 +57,10 @@ class ProfileSubscriptionTest {
         every { LocalPreferences.getLastCheck(any(), any()) } returns 0L
         every { LocalPreferences.setLastCheck(any(), any(), any()) } just Runs
         every { LocalPreferences.setLastMetadataUpdate(any(), any(), any()) } just Runs
+        // In-memory stand-in for the per-account metadata created_at preference.
+        val metadataCreatedAt = mutableMapOf<String, Long>()
+        every { LocalPreferences.getMetadataCreatedAt(any(), any()) } answers { metadataCreatedAt[secondArg()] ?: 0L }
+        every { LocalPreferences.setMetadataCreatedAt(any(), any(), any()) } answers { metadataCreatedAt[secondArg()] = thirdArg() }
 
         subscription = ProfileSubscription(client, mockk(relaxed = true), scope)
     }
@@ -221,5 +231,55 @@ class ProfileSubscriptionTest {
             "Expected no exceptions, got: ${errors.firstOrNull()?.stackTraceToString()}",
             errors.isEmpty(),
         )
+    }
+
+    private fun profileAccount(signer: NostrSignerInternal) = Account(
+        signer = signer,
+        hexKey = signer.keyPair.pubKey.toHexKey(),
+        npub = "npub-profile-${signer.keyPair.pubKey.toHexKey().take(8)}",
+        name = MutableStateFlow(""),
+        picture = MutableStateFlow(""),
+        signPolicy = 0,
+        didBackup = false,
+        scope = scope,
+        keyAccessCheck = {},
+    )
+
+    private fun profile(signer: NostrSignerInternal, createdAt: Long, name: String): MetadataEvent = signer.signerSync.sign(createdAt, MetadataEvent.KIND, emptyArray(), """{"name":"$name","picture":"https://example.com/$name.png"}""")
+
+    // Every queried relay answers, in any order, and any of them may still
+    // serve an older (validly self-signed) profile.
+    @Test
+    fun `an older profile does not overwrite a newer one`() {
+        val signer = NostrSignerInternal(KeyPair())
+        val account = profileAccount(signer)
+
+        subscription.applyMetadata(account, profile(signer, 2_000, "current"))
+        subscription.applyMetadata(account, profile(signer, 1_000, "stale"))
+
+        assertEquals("current", account.name.value)
+        assertEquals("https://example.com/current.png", account.picture.value)
+    }
+
+    @Test
+    fun `a newer profile replaces an older one`() {
+        val signer = NostrSignerInternal(KeyPair())
+        val account = profileAccount(signer)
+
+        subscription.applyMetadata(account, profile(signer, 1_000, "old"))
+        subscription.applyMetadata(account, profile(signer, 2_000, "new"))
+
+        assertEquals("new", account.name.value)
+    }
+
+    @Test
+    fun `a profile with the same created_at is ignored`() {
+        val signer = NostrSignerInternal(KeyPair())
+        val account = profileAccount(signer)
+
+        subscription.applyMetadata(account, profile(signer, 1_000, "first"))
+        subscription.applyMetadata(account, profile(signer, 1_000, "second"))
+
+        assertEquals("first", account.name.value)
     }
 }

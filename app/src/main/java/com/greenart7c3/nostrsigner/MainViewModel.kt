@@ -8,14 +8,17 @@ import androidx.compose.runtime.Stable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavHostController
+import com.greenart7c3.nostrsigner.models.IntentData
 import com.greenart7c3.nostrsigner.service.BunkerRequestUtils
 import com.greenart7c3.nostrsigner.service.IntentUtils
 import com.greenart7c3.nostrsigner.ui.AccountStateViewModel
 import com.greenart7c3.nostrsigner.ui.navigation.Route
+import com.greenart7c3.nostrsigner.ui.navigation.externalRoute
 import com.vitorpamplona.quartz.nip19Bech32.Nip19Parser
 import com.vitorpamplona.quartz.nip19Bech32.entities.NPub
 import com.vitorpamplona.quartz.nip19Bech32.toNpub
 import com.vitorpamplona.quartz.utils.Hex
+import java.util.UUID
 import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -30,6 +33,12 @@ class MainViewModel(val context: Context) : ViewModel() {
     // the intents owned by this activity, avoiding races with a new SignerActivity
     // instance that may have already added its own intents.
     val addedIntentIds = mutableSetOf<String>()
+
+    /** Tags the requests this screen queues; see [IntentData.owner]. */
+    val ownerId: String = UUID.randomUUID().toString()
+
+    /** The queued requests this screen owns. */
+    fun ownIntents(): List<IntentData> = IntentUtils.intents.value.filter { it.owner == ownerId }
 
     fun getAccount(userFromIntent: String?): String? {
         val currentAccount = LocalPreferences.currentAccount(context)
@@ -50,7 +59,7 @@ class MainViewModel(val context: Context) : ViewModel() {
             }
 
             val pubKeys =
-                IntentUtils.intents.value.mapNotNull {
+                ownIntents().mapNotNull {
                     it.event?.pubKey
                 }.filter { it.isNotBlank() } + BunkerRequestUtils.getBunkerRequests().mapNotNull {
                     when (val parsed = Nip19Parser.uriToRoute(it.currentAccount)?.entity) {
@@ -132,15 +141,16 @@ class MainViewModel(val context: Context) : ViewModel() {
         viewModelScope.launch(Dispatchers.IO) {
             val account = LocalPreferences.loadFromEncryptedStorage(context)
             account?.let { acc ->
-                val intentData = IntentUtils.getIntentData(context, intent, callingPackage, intent.getStringExtra("route"), acc, referrer)
+                val route = externalRoute(intent.getStringExtra("route"))
+                val intentData = IntentUtils.getIntentData(context, intent, callingPackage, route, acc, referrer)
                 if (intentData != null) {
-                    IntentUtils.addAll(listOf(intentData))
+                    IntentUtils.addAll(listOf(intentData.copy(owner = ownerId)))
                     addedIntentIds.add(intentData.id)
                     // The calling app is visible to us now; capture its icon/name.
                     IntentUtils.persistNativeAppMetadata(context, acc, callingPackage)
                 }
 
-                intent.getStringExtra("route")?.let { route ->
+                route?.let { route ->
                     viewModelScope.launch(Dispatchers.Main) {
                         var error = true
                         var count = 0

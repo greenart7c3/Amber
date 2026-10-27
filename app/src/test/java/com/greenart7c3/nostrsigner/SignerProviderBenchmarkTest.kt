@@ -15,7 +15,7 @@ import org.junit.Test
 /**
  * Wall-clock benchmarks for the SignerProvider query() performance improvements.
  *
- * Each test pair isolates one before/after change and asserts the optimised path
+ * Each test pair isolates one before/after change and asserts the optimized path
  * is meaningfully faster.  Results are printed so they appear in the test report.
  */
 class SignerProviderBenchmarkTest {
@@ -30,7 +30,7 @@ class SignerProviderBenchmarkTest {
      * If the state flips right after a sleep begins, the caller wastes the rest
      * of the sleep interval before discovering the change.  The test uses a
      * 100 ms sleep (production used 1 000 ms) so the suite completes quickly
-     * while still demonstrating the quantisation effect.
+     * while still demonstrating the quantization effect.
      */
     @Test
     fun `benchmark startup wait - polling wastes remainder of sleep interval`() {
@@ -69,13 +69,13 @@ class SignerProviderBenchmarkTest {
      * Latency is bounded by the coroutine dispatch time, not an arbitrary sleep.
      *
      * Run a warmup pass first so coroutine machinery is JIT-compiled and the
-     * timing reflects steady-state behaviour rather than cold-start overhead.
+     * timing reflects steady-state behavior rather than cold-start overhead.
      */
     @Test
     fun `benchmark startup wait - flow reacts within milliseconds of state change`() {
         val releaseAfterMs = 30L
 
-        // Warmup: initialise coroutine runtime so it doesn't inflate the timed run.
+        // Warmup: initialize coroutine runtime so it doesn't inflate the timed run.
         runBlocking {
             val warmup = MutableStateFlow(true)
             launch {
@@ -158,7 +158,7 @@ class SignerProviderBenchmarkTest {
                 "cached=${cachedNs / 1_000_000}ms  " +
                 "speedup=${"%.2f".format(speedup)}x",
         )
-        // JIT can optimise either path differently depending on prior compilations
+        // JIT can optimize either path differently depending on prior compilations
         // in the same JVM process, so no strict assertion here.  The speedup
         // figure in the output demonstrates the expected gain under steady-state
         // conditions (confirmed by the composite benchmark below).
@@ -189,7 +189,7 @@ class SignerProviderBenchmarkTest {
 
         fun extractHost(url: String): String = try {
             URI(url).host ?: url
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             url
         }
 
@@ -259,7 +259,7 @@ class SignerProviderBenchmarkTest {
 
         fun extractHost(url: String) = try {
             URI(url).host ?: url
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             url
         }
 

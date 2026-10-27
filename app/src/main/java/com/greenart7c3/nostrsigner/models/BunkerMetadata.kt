@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer
 import com.fasterxml.jackson.databind.module.SimpleModule
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.greenart7c3.nostrsigner.common.sanitizeAppName
 
 data class BunkerMetadata(
     val name: String,
@@ -25,7 +26,7 @@ data class BunkerMetadata(
                 )
 
         fun fromJson(jsonObject: JsonNode): BunkerMetadata = BunkerMetadata(
-            name = jsonObject.get("name")?.asText()?.intern() ?: "",
+            name = sanitizeAppName(jsonObject.get("name")?.asText() ?: ""),
             url = jsonObject.get("url")?.asText()?.intern() ?: "",
             description = jsonObject.get("description")?.asText()?.intern() ?: "",
             perms = jsonObject.get("perms")?.asText()?.intern() ?: "",

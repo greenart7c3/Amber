@@ -21,17 +21,14 @@
     <string name="accept">ยอมรับ</string>
     <string name="decrypt_zap_event">ถอดรหัสอีเวนต์ zap</string>
     <string name="show_details">แสดงรายละเอียด</string>
-    <string name="copy_raw_json">Raw json</string>
     <string name="add_new_account">เพิ่มบัญชีใหม่</string>
     <string name="select_account">เลือกบัญชี</string>
     <string name="active_account">บัญชีที่ใช้งานอยู่</string>
     <string name="edit_name">แก้ไขชื่อ</string>
     <string name="copy">"คัดลอก "</string>
-    <string name="data_copied_to_the_clipboard">คัดลอกข้อมูลไปยังคลิปบอร์ดแล้ว</string>
     <string name="connect_app">เชื่อมต่อแอป</string>
     <string name="event_copied_to_the_clipboard">คัดลอกอีเวนต์ไปยังคลิปบอร์ดแล้ว</string>
     <string name="select_deselect_all">เลือก/ยกเลิกการเลือกทั้งหมด</string>
-    <string name="decrypt_content">ถอดรหัสเนื้อหา</string>
     <string name="support_development">สนับสนุนการพัฒนา</string>
     <string name="source_code">ซอร์สโค้ด</string>
     <string name="show_qr_code">แสดง QR Code</string>
@@ -571,8 +568,6 @@
     <string name="ask">ถาม</string>
     <string name="never">ไม่เลย</string>
     <string name="warning">คำเตือน</string>
-    <string name="of_events">%1$s จาก %2$s อีเวนต์</string>
-    <string name="see_details">ดูรายละเอียด</string>
     <string name="is_requiring_some_permissions_please_review_them">%1$s กำลังขอสิทธิ์บางอย่าง โปรดตรวจสอบ</string>
     <string name="is_requiring_some_permissions_please_review_them2">กำลังขอสิทธิ์บางอย่าง โปรดตรวจสอบ</string>
     <plurals name="several_apps_are_requiring_some_permissions_please_review_them">
@@ -730,7 +725,7 @@
     <string name="one_week">หนึ่งสัปดาห์</string>
     <string name="delete_after">ลบหลังจาก</string>
     <string name="crashreport_found">พบรายงานการขัดข้อง</string>
-    <string name="would_you_like_to_send_the_recent_crash_report_to_amber_in_a_dm_no_personal_information_will_be_shared">คุณต้องการส่งรายงานการขัดข้องล่าสุดไปยัง Amber ผ่าน DM หรือไม่? ไม่มีข้อมูลส่วนตัวที่จะถูกแชร์</string>
+    <string name="crash_report_send_prompt">คุณต้องการส่งรายงานข้อขัดข้องล่าสุดไปยัง Amber ทาง DM หรือไม่ รายงานจะถูกส่งจากบัญชีของคุณ ดังนั้นนักพัฒนาจะเห็นกุญแจสาธารณะของคุณ</string>
     <string name="copy_crash_report_to_clipboard">คุณต้องการคัดลอกรายงานการขัดข้องไปยังคลิปบอร์ดและเปิด Client เพื่อส่งไปยัง Amber หรือไม่?</string>
     <string name="crashreport_found_send">ส่งเลย</string>
     <string name="invalid_intent_title">คำขอไม่ถูกต้อง</string>
@@ -823,6 +818,7 @@
     <string name="auth_whitelist">รายการที่อนุญาตสำหรับ client auth</string>
     <string name="auth_whitelist_description">เมื่อรายการที่อนุญาตไม่ว่าง การยืนยันตัวตน client ของ relay (NIP-42) จะได้รับอนุญาตเฉพาะ relay ในรายการเท่านั้น คำขอ auth จาก relay อื่นจะถูกปฏิเสธโดยอัตโนมัติ</string>
     <string name="add_relay_to_whitelist">เพิ่ม relay ไปยังรายการที่อนุญาต</string>
+    <string name="relay_not_in_auth_whitelist">relay นี้ไม่อยู่ในรายการที่อนุญาตสำหรับการยืนยันตัวตน จึงจะถูกปฏิเสธ</string>
     <string name="keystore_error_title">ไม่สามารถเข้าถึงบัญชีได้</string>
     <string name="keystore_error_message">ไม่สามารถโหลดบัญชีหนึ่งรายการหรือมากกว่าได้ เนื่องจากพื้นที่จัดเก็บที่ปลอดภัยของอุปกรณ์ (KeyStore) ส่งคืนข้อผิดพลาด:\n\n%1$s\n\nนี่เป็นข้อบกพร่องเฟิร์มแวร์ที่ทราบในอุปกรณ์บางรุ่น ซึ่งระบบไม่สามารถอัปเกรดคีย์การเข้ารหัสที่จัดเก็บได้\n\nสิ่งที่คุณทำได้:\n• หากคุณมี nsec (คีย์ส่วนตัว) สำรองไว้ ให้ออกจากระบบบัญชีที่ได้รับผลกระทบและล็อกอินใหม่ — นี่จะสร้างคีย์ที่ใช้งานได้ใหม่\n• ตรวจสอบการอัปเดตเฟิร์มแวร์ระบบจากผู้ผลิตอุปกรณ์ของคุณ ซึ่งอาจแก้ไขปัญหานี้ได้\n• อย่าถอนการติดตั้ง Amber การเก็บแอปไว้จะรักษาความเป็นไปได้ในการกู้คืนหากมีการอัปเดตเฟิร์มแวร์</string>
     <string name="event_kind_31124">สถานะสัตว์เลี้ยงปัจจุบัน</string>
@@ -891,6 +887,7 @@
     <string name="update_settings_subtitle">ตรวจหาเวอร์ชันใหม่</string>
     <string name="require_unlocked_device">ต้องปลดล็อกอุปกรณ์เพื่อเข้าถึงคีย์</string>
     <string name="require_unlocked_device_description">เมื่อเปิดใช้งาน คีย์ Keystore ที่ใช้ในการถอดรหัสคีย์บัญชีที่เก็บไว้ของคุณจะไม่สามารถใช้งานได้ในขณะที่อุปกรณ์ถูกล็อก ซึ่งจะช่วยป้องกันไม่ให้โค้ดใดๆ ที่ทำงานในกระบวนการของ Amber ถอดรหัสคีย์ของคุณในขณะที่หน้าจอถูกล็อก หมายเหตุ: การดำเนินการนี้จะปิดใช้งานการลงนาม NIP-46 ในเบื้องหลังในขณะที่อุปกรณ์ถูกล็อก การสลับการตั้งค่านี้ต้องมีการเข้ารหัสคีย์ที่เก็บไว้ทั้งหมดใหม่</string>
+    <string name="require_unlocked_device_legacy_note">บน Android 8 Keystore ไม่สามารถบังคับใช้สิ่งนี้ได้ด้วยตัวเอง Amber ยังคงปฏิเสธการใช้คีย์ของคุณในขณะที่อุปกรณ์ถูกล็อก แต่การป้องกันเป็นแบบซอฟต์แวร์เท่านั้น</string>
     <string name="require_unlocked_device_updating">กำลังเข้ารหัสคีย์ที่เก็บไว้ทั้งหมดใหม่…</string>
     <string name="require_unlocked_device_do_not_close">อย่าปิดแอปหรือล็อกหน้าจอจนกว่าจะเสร็จสิ้น</string>
     <string name="insecure_relay_warning">รีเลย์ที่ไม่ปลอดภัย (ข้อความธรรมดา, ws://) ผ่านอินเทอร์เน็ตสาธารณะจะเปิดเผยข้อมูลเมตาและข้อความไซเฟอร์เท็กซ์ของ NIP-46 ต่อผู้สังเกตการณ์เครือข่าย แนะนำให้ใช้ wss:// หรือใช้ ws:// เฉพาะสำหรับรีเลย์ .onion / เครือข่ายท้องถิ่นเท่านั้น</string>

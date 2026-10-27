@@ -21,7 +21,7 @@
 package com.greenart7c3.nostrsigner.okhttp
 
 import android.util.LruCache
-import com.vitorpamplona.quartz.utils.ciphers.NostrCipher
+import com.vitorpamplona.crypto.SymmetricCipher
 
 /**
  * Neigther ExoPlayer, nor Coil support passing key and nonce to the Interceptor via
@@ -30,16 +30,16 @@ import com.vitorpamplona.quartz.utils.ciphers.NostrCipher
  * This class serves as a key cache to decrypt the body of HTTP calls that need it.
  */
 class EncryptionKeyCache {
-    private val cache = LruCache<String, NostrCipher>(100)
+    private val cache = LruCache<String, SymmetricCipher>(100)
 
     fun add(
         url: String?,
-        cipher: NostrCipher,
+        cipher: SymmetricCipher,
     ) {
         if (cache.get(url) == null) {
             cache.put(url, cipher)
         }
     }
 
-    fun get(url: String): NostrCipher? = cache.get(url)
+    fun get(url: String): SymmetricCipher? = cache.get(url)
 }

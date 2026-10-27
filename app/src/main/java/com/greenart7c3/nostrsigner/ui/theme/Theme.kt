@@ -98,8 +98,6 @@ fun NostrSignerTheme(
     }
 }
 
-fun Color.light(factor: Float = 0.5f) = this.copy(alpha = this.alpha * factor)
-
 fun Color.Companion.fromHex(colorString: String) = try {
     Color("#$colorString".toColorInt())
 } catch (e: Exception) {

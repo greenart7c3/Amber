@@ -25,7 +25,7 @@ import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.LocalPreferences
-import com.greenart7c3.nostrsigner.relays.RelayHealthTracker
+import com.greenart7c3.nostrsigner.common.relays.RelayHealthTracker
 import com.vitorpamplona.quartz.nip01Core.relay.client.NostrClient
 import com.vitorpamplona.quartz.nip01Core.relay.client.listeners.RelayConnectionListener
 import com.vitorpamplona.quartz.nip01Core.relay.client.single.IRelayClient
@@ -183,9 +183,11 @@ class NotificationSubscription(
     }
 
     private fun computeSince(): Long {
-        var since = TimeUtils.now()
+        val now = TimeUtils.now()
         val latest = if (Amber.instance.notificationCache.size() > 0) Amber.instance.notificationCache.snapshot().maxOf { it.value } else 0L
-        if (latest > 0) since = latest
-        return since
+        // The cache holds sender-chosen created_at values recorded before any
+        // authorization; never let one push `since` past the real clock, or
+        // relays would drop every legitimate request until then.
+        return if (latest > 0) minOf(latest, now) else now
     }
 }

@@ -13,7 +13,7 @@ object ApplicationNameCache {
 
     private val cache = LruCache<String, String>(MAX_ENTRIES)
 
-    operator fun get(key: String): String? = synchronized(cache) { cache.get(key) }
+    operator fun get(key: String): String? = synchronized(cache) { cache[key] }
 
     operator fun set(key: String, value: String) {
         synchronized(cache) { cache.put(key, value) }

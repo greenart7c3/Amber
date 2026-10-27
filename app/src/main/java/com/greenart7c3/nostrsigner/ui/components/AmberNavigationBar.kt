@@ -11,7 +11,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Person
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -28,7 +27,6 @@ import com.greenart7c3.nostrsigner.ui.CenterCircularProgressIndicator
 import com.greenart7c3.nostrsigner.ui.navigation.Route
 import com.greenart7c3.nostrsigner.ui.theme.fromHex
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AmberNavigationBar(
     items: List<Route>,

@@ -39,6 +39,9 @@ abstract class HistoryDatabase : RoomDatabase() {
     abstract fun dao(): HistoryDao
 
     companion object {
+        /** On-disk name of [npub]'s database, also used to delete it at logout. */
+        fun fileName(npub: String) = "history_db_$npub"
+
         fun getDatabase(
             context: Context,
             npub: String,
@@ -50,7 +53,7 @@ abstract class HistoryDatabase : RoomDatabase() {
                 Room.databaseBuilder(
                     context,
                     HistoryDatabase::class.java,
-                    "history_db_$npub",
+                    fileName(npub),
                 )
                     .setQueryExecutor(executor)
                     .setTransactionExecutor(transactionExecutor)

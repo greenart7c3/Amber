@@ -20,27 +20,33 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.greenart7c3.nostrsigner.AccountInfo
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.common.SignerType
+import com.greenart7c3.nostrsigner.common.psbt.PsbtDecoder
+import com.greenart7c3.nostrsigner.common.sanitizeAppName
 import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
+import com.greenart7c3.nostrsigner.database.isAllRelaysGrant
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.IntentData
 import com.greenart7c3.nostrsigner.models.IntentResultType
-import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.models.kindToNip
 import com.greenart7c3.nostrsigner.models.toPermissionType
 import com.greenart7c3.nostrsigner.service.IntentUtils
-import com.greenart7c3.nostrsigner.service.PsbtDecoder
 import com.greenart7c3.nostrsigner.service.RelayUrlUtils
+import com.greenart7c3.nostrsigner.service.isBlockedByAuthWhitelist
+import com.greenart7c3.nostrsigner.service.isCrossAccountSignEvent
 import com.greenart7c3.nostrsigner.service.isPrivateEvent
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
+import com.greenart7c3.nostrsigner.service.relayAuthRememberType
 import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.ToastManager
 import com.vitorpamplona.quartz.nip01Core.core.toHexKey
 import com.vitorpamplona.quartz.nip19Bech32.bech32.bechToBytes
 import com.vitorpamplona.quartz.nip19Bech32.toNpub
-import com.vitorpamplona.quartz.nip57Zaps.LnZapRequestEvent
+import com.vitorpamplona.quartz.nip57Zaps.ZapRequestEvent
 import com.vitorpamplona.quartz.utils.Hex
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.Dispatchers
@@ -74,8 +80,7 @@ fun IntentSingleEventHomeScreen(
         }
     }
 
-    var appName = applicationEntity?.application?.name ?: packageName ?: intentData.name
-    appName = appName.ifBlank { key.toShortenHex() }
+    val appName = sanitizeAppName(applicationEntity?.application?.name ?: packageName ?: intentData.name).ifBlank { key.toShortenHex() }
     val context = LocalContext.current
     val clipboardManager = LocalClipboard.current
 
@@ -126,7 +131,7 @@ fun IntentSingleEventHomeScreen(
                 }
 
             val acceptOrReject = IntentUtils.isRemembered(applicationEntity?.application?.signPolicy, permission)
-            val decoded = remember(intentData.data) { PsbtDecoder.decode(intentData.data, account) }
+            val decoded = remember(intentData.data) { PsbtDecoder.decode(intentData.data, account.signer.keyPair.pubKey) }
 
             SignPsbt(
                 modifier = modifier,
@@ -337,16 +342,15 @@ fun IntentSingleEventHomeScreen(
                 // Permission is per-relay hostname extracted from the event's "relay" tag
                 val relayUrl = RelayUrlUtils.extractHostAndPort(AmberEvent.relay(event))
 
-                // Check for relay-specific permission first, then wildcard "*" (all relays)
+                // Check for relay-specific permission first, then an all-relays grant ("*" or blank)
                 val permission = applicationEntity?.permissions?.firstOrNull {
                     it.pkKey == key && it.type == intentData.type.toString() && it.kind == 22242 && it.relay == relayUrl
                 } ?: applicationEntity?.permissions?.firstOrNull {
-                    it.pkKey == key && it.type == intentData.type.toString() && it.kind == 22242 && it.relay == "*"
+                    it.pkKey == key && it.type == intentData.type.toString() && it.kind == 22242 && isAllRelaysGrant(it.relay)
                 }
 
                 // If the auth whitelist is non-empty and this relay is not in it, auto-reject
-                val authWhitelist = Amber.instance.settings.authWhitelist
-                val blockedByWhitelist = authWhitelist.isNotEmpty() && relayUrl !in authWhitelist
+                val blockedByWhitelist = isBlockedByAuthWhitelist(22242, relayUrl)
 
                 val acceptOrReject = if (blockedByWhitelist) {
                     false
@@ -364,7 +368,7 @@ fun IntentSingleEventHomeScreen(
                     defaultScope = RelayAuthScope.SPECIFIC,
                     account = account,
                     onAccept = { rememberType, scope ->
-                        if (intentData.unsignedEventKey.isNotBlank() && intentData.unsignedEventKey != account.hexKey && !isPrivateEvent(event.kind, event.tags)) {
+                        if (isCrossAccountSignEvent(intentData.unsignedEventKey, account.hexKey, event.kind, event.tags, LocalPreferences.allSavedAccounts(context).map(AccountInfo::npub))) {
                             ToastManager.toast(
                                 title = context.getString(R.string.warning),
                                 message = context.getString(R.string.event_pubkey_is_not_equal_to_current_logged_in_user),
@@ -373,6 +377,11 @@ fun IntentSingleEventHomeScreen(
                         }
 
                         val relayPermission = if (scope == RelayAuthScope.ALL) "*" else relayUrl
+                        val relayRemember = relayAuthRememberType(
+                            allRelays = scope == RelayAuthScope.ALL,
+                            relayUrl = relayUrl,
+                            rememberType = rememberType,
+                        )
                         IntentUtils.sendResult(
                             context = context,
                             packageName = packageName,
@@ -388,18 +397,23 @@ fun IntentSingleEventHomeScreen(
                             signPolicy = null,
                             appName = applicationName ?: appName,
                             permissions = null,
-                            rememberType = rememberType,
+                            rememberType = relayRemember,
                             relay = relayPermission,
                         )
                     },
                     onReject = { rememberType, scope ->
                         val relayPermission = if (scope == RelayAuthScope.ALL) "*" else relayUrl
+                        val relayRemember = relayAuthRememberType(
+                            allRelays = scope == RelayAuthScope.ALL,
+                            relayUrl = relayUrl,
+                            rememberType = rememberType,
+                        )
                         IntentUtils.sendRejection(
                             key = key,
                             account = account,
                             intentData = intentData,
                             appName = appName,
-                            rememberType = rememberType,
+                            rememberType = relayRemember,
                             onLoading = onLoading,
                             onRemoveIntentData = onRemoveIntentData,
                             kind = event.kind,
@@ -423,7 +437,7 @@ fun IntentSingleEventHomeScreen(
                     event = event,
                     account = account,
                     onAccept = {
-                        if (intentData.unsignedEventKey.isNotBlank() && intentData.unsignedEventKey != account.hexKey && !isPrivateEvent(event.kind, event.tags)) {
+                        if (isCrossAccountSignEvent(intentData.unsignedEventKey, account.hexKey, event.kind, event.tags, LocalPreferences.allSavedAccounts(context).map { it.npub })) {
                             ToastManager.toast(
                                 title = context.getString(R.string.warning),
                                 message = context.getString(R.string.event_pubkey_is_not_equal_to_current_logged_in_user),
@@ -438,7 +452,7 @@ fun IntentSingleEventHomeScreen(
                             key = key,
                             clipboardManager = clipboardManager,
                             event = event.toJson(),
-                            value = if (event is LnZapRequestEvent &&
+                            value = if (event is ZapRequestEvent &&
                                 event.tags.any { tag ->
                                     tag.any { t -> t == "anon" }
                                 }

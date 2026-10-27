@@ -11,6 +11,7 @@ import com.greenart7c3.nostrsigner.database.ApplicationEntity
 import com.greenart7c3.nostrsigner.database.ApplicationPermissionsEntity
 import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
 import com.greenart7c3.nostrsigner.models.Account
+import com.vitorpamplona.crypto.kdf.Hkdf
 import com.vitorpamplona.quartz.nip01Core.core.Event
 import com.vitorpamplona.quartz.nip01Core.core.toHexKey
 import com.vitorpamplona.quartz.nip01Core.crypto.KeyPair
@@ -24,7 +25,6 @@ import com.vitorpamplona.quartz.nip01Core.relay.filters.Filter
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.RelayUrlNormalizer
 import com.vitorpamplona.quartz.nip01Core.signers.NostrSignerInternal
-import com.vitorpamplona.quartz.nip44Encryption.crypto.Hkdf
 import com.vitorpamplona.quartz.utils.Secp256k1Instance
 import com.vitorpamplona.quartz.utils.TimeUtils
 import java.util.UUID
@@ -88,6 +88,12 @@ data class BackupPayload(
     @param:JsonProperty("ts") val timestamp: Long = TimeUtils.now(),
     @param:JsonProperty("applications") val applications: List<BackupApplication>,
 )
+
+sealed interface BackupFetchResult {
+    data class Found(val payload: BackupPayload) : BackupFetchResult
+    data object NoBackupFound : BackupFetchResult
+    data class Failed(val message: String) : BackupFetchResult
+}
 
 sealed interface RestoreResult {
     data class Success(val apps: Int, val permissions: Int) : RestoreResult
@@ -330,9 +336,11 @@ object ApplicationBackup {
     }
 
     /**
-     * Decrypts backup content with the derived backup key. Falls back to the
-     * legacy identity-key decryption for backups published before the derived
-     * key existed; the next publish overwrites those replaceable events.
+     * Decrypts backup content with the derived backup key. Legacy backups
+     * encrypted from the account key to itself are deliberately not accepted:
+     * any client holding an encrypt grant can produce that ciphertext through
+     * Amber's own nip44_encrypt, so it cannot prove Amber authored the backup.
+     * Upgraded installs overwrite those replaceable events on their next publish.
      */
     internal suspend fun decryptContent(content: String, account: Account): String? = try {
         val backupSigner = backupSigner(account)
@@ -343,14 +351,8 @@ object ApplicationBackup {
         // makes callers skip a valid restore or publish an empty backup over
         // the real one. Rethrow so it surfaces as its own condition.
         if (e is SecurityException || e is IllegalStateException) throw e
-        try {
-            account.nip44Decrypt(content, account.hexKey)
-        } catch (legacy: Exception) {
-            if (legacy is CancellationException) throw legacy
-            if (legacy is SecurityException || legacy is IllegalStateException) throw legacy
-            AmberLog.e(Amber.TAG, "ApplicationBackup: failed to decrypt backup payload", legacy)
-            null
-        }
+        AmberLog.e(Amber.TAG, "ApplicationBackup: failed to decrypt backup payload", e)
+        null
     }
 
     suspend fun decryptPayload(event: Event, account: Account): BackupPayload? {
@@ -364,11 +366,18 @@ object ApplicationBackup {
         }
     }
 
+    /**
+     * Whether [app] has outlived its [BackupApplication.deleteAfter]: the
+     * cleanup worker would delete it, so a restore must not bring it back.
+     */
+    internal fun isExpired(app: BackupApplication, now: Long): Boolean = app.deleteAfter in 1..<now
+
     suspend fun restoreFromPayload(npub: String, payload: BackupPayload): RestoreResult = try {
         val dao = Amber.instance.dao(npub)
         var apps = 0
         var permissions = 0
-        payload.applications.forEach { backupApp ->
+        val now = TimeUtils.now()
+        payload.applications.filterNot { isExpired(it, now) }.forEach { backupApp ->
             val entity = ApplicationEntity(
                 key = backupApp.key,
                 name = backupApp.name,
@@ -419,10 +428,14 @@ object ApplicationBackup {
         RestoreResult.Failed(e.message ?: "Unknown error")
     }
 
-    suspend fun restoreFromRelays(npub: String, account: Account): RestoreResult {
+    /**
+     * Fetches and decrypts the newest backup without restoring it, so the user
+     * can review its applications before [restoreFromPayload] writes them.
+     */
+    suspend fun fetchLatestPayload(account: Account): BackupFetchResult {
         val relays = resolveReadRelays(account)
-        val event = fetchLatestBackupEvent(account, relays) ?: return RestoreResult.NoBackupFound
-        val payload = decryptPayload(event, account) ?: return RestoreResult.Failed("Failed to decrypt backup")
-        return restoreFromPayload(npub, payload)
+        val event = fetchLatestBackupEvent(account, relays) ?: return BackupFetchResult.NoBackupFound
+        val payload = decryptPayload(event, account) ?: return BackupFetchResult.Failed("Failed to decrypt backup")
+        return BackupFetchResult.Found(payload)
     }
 }

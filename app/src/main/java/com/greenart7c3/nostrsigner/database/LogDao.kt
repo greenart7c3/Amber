@@ -2,7 +2,6 @@ package com.greenart7c3.nostrsigner.database
 
 import androidx.paging.PagingSource
 import androidx.room.Dao
-import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.Transaction
@@ -67,13 +66,7 @@ interface LogDao {
     fun getLogsPaging(): PagingSource<Int, LogEntity>
 
     @Query("SELECT * FROM amber_log where url = :url ORDER BY time DESC")
-    fun getLogsByUrl(url: String): Flow<List<LogEntity>>
-
-    @Query("SELECT * FROM amber_log where url = :url ORDER BY time DESC")
     fun getLogsByUrlPaging(url: String): PagingSource<Int, LogEntity>
-
-    @Query("SELECT COUNT(*) FROM amber_log")
-    suspend fun getCount(): Long
 
     @Query("DELETE FROM amber_log WHERE id IN (SELECT id FROM amber_log ORDER BY time ASC LIMIT :count)")
     suspend fun deleteOldestLogs(count: Int): Int
@@ -85,8 +78,4 @@ interface LogDao {
     @Query("DELETE FROM amber_log WHERE time < :time")
     @Transaction
     suspend fun deleteOldLog(time: Long): Int
-
-    @Delete
-    @Transaction
-    suspend fun deleteLog(logEntity: LogEntity)
 }

@@ -32,6 +32,11 @@ import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.SignerProviderQuery
+import com.greenart7c3.nostrsigner.common.EncryptionType
+import com.greenart7c3.nostrsigner.common.SignerType
+import com.greenart7c3.nostrsigner.common.connectsThroughOtherKey
+import com.greenart7c3.nostrsigner.common.hasAmbiguousRelayTags
+import com.greenart7c3.nostrsigner.common.sanitizeAppName
 import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
 import com.greenart7c3.nostrsigner.database.BunkerEventEntity
 import com.greenart7c3.nostrsigner.database.HistoryEntity
@@ -41,10 +46,8 @@ import com.greenart7c3.nostrsigner.models.AmberBunkerRequest
 import com.greenart7c3.nostrsigner.models.BunkerClientMetadata
 import com.greenart7c3.nostrsigner.models.ClearTextEncryptedDataKind
 import com.greenart7c3.nostrsigner.models.EncryptedDataKind
-import com.greenart7c3.nostrsigner.models.EncryptionType
 import com.greenart7c3.nostrsigner.models.EventEncryptedDataKind
 import com.greenart7c3.nostrsigner.models.Permission
-import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.models.TagArrayEncryptedDataKind
 import com.greenart7c3.nostrsigner.service.NotificationUtils.sendNotification
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
@@ -67,7 +70,7 @@ import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequestNip44Encrypt
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequestSign
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerResponse
 import com.vitorpamplona.quartz.nip46RemoteSigner.NostrConnectEvent
-import com.vitorpamplona.quartz.nip59Giftwrap.seals.SealedRumorEvent
+import com.vitorpamplona.quartz.nip59Giftwrap.seals.SealEvent
 import com.vitorpamplona.quartz.utils.TimeUtils
 import java.util.UUID
 import kotlin.io.encoding.Base64
@@ -117,8 +120,6 @@ class EventNotificationConsumer(private val applicationContext: Context) {
         event: Event,
         relay: NormalizedRelayUrl,
     ) {
-        saveLog("New event ${event.id} from ${event.pubKey}", relay.url)
-
         if (!notificationManager().areNotificationsEnabled()) {
             saveLog("notifications disabled", relay.url)
             return
@@ -132,25 +133,6 @@ class EventNotificationConsumer(private val applicationContext: Context) {
             return
         }
 
-        val now = TimeUtils.now()
-        if (event.createdAt < now - TimeUtils.FIVE_MINUTES) {
-            saveLog("Event ${event.id} is too old: ${now - event.createdAt}s ago", relay.url)
-            return
-        }
-        if (event.createdAt > now + TimeUtils.FIVE_MINUTES) {
-            saveLog("Event ${event.id} is in the future: ${event.createdAt - now}s ahead", relay.url)
-            return
-        }
-
-        val expiration = event.expiration()
-        if (expiration != null && expiration < now) {
-            saveLog("Event ${event.id} has expired", relay.url)
-            return
-        }
-
-        NotificationUtils.getOrCreateBunkerChannel(applicationContext)
-        NotificationUtils.getOrCreateErrorsChannel(applicationContext)
-
         val taggedKey = event.taggedUsers().firstOrNull()
         if (taggedKey == null) {
             saveLog("No tagged users found in event ${event.id}", relay.url)
@@ -158,7 +140,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
         }
 
         // First try to match the tagged key to a logged-in account (real pubkey)
-        var acc = LocalPreferences.loadFromEncryptedStorageSync(applicationContext, taggedKey.toNPub())
+        var acc = LocalPreferences.loadAccount(applicationContext, taggedKey.toNPub())
         var connectionPrivKey = ""
 
         if (acc != null) {
@@ -172,7 +154,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
             val taggedHex = taggedKey.pubKey
             val match = LocalKeyAccountIndex.lookup(taggedHex)
             if (match != null) {
-                val resolved = LocalPreferences.loadFromEncryptedStorageSync(applicationContext, match.npub)
+                val resolved = LocalPreferences.loadAccount(applicationContext, match.npub)
                 if (resolved != null) {
                     acc = resolved
                     connectionPrivKey = match.localPrivKey
@@ -185,6 +167,42 @@ class EventNotificationConsumer(private val applicationContext: Context) {
             saveLog("Tagged account ${taggedKey.toNPub()} not logged in", relay.url)
             return
         }
+
+        // Senders that are not a stored connection are rate-limited before any
+        // per-event write, decrypt or signed reply, so a flood costs them
+        // silence instead of the user's battery. Stored connections bypass the
+        // limiter: an approved app legitimately bursts (bulk decrypts, rapid
+        // signing) and must never be dropped. Checked after verify() and keyed
+        // on the proven signer pubkey, so forged events cannot drain a
+        // legitimate sender's budget.
+        if (Amber.instance.dao(acc.npub).getByKeyRaw(event.pubKey) == null &&
+            !senderRateLimiter.allow("${relay.url}|${event.pubKey}", System.currentTimeMillis())
+        ) {
+            AmberLog.d(Amber.TAG, "${relay.url}: rate-limited event ${event.id} from unknown sender ${event.pubKey}")
+            return
+        }
+        saveLog("New event ${event.id} from ${event.pubKey}", relay.url, acc.npub)
+
+        // Freshness is checked after the limiter: these rejections log the
+        // event id, so a flood of signed stale events must be budgeted too.
+        val now = TimeUtils.now()
+        if (event.createdAt < now - TimeUtils.FIVE_MINUTES) {
+            saveLog("Event ${event.id} is too old: ${now - event.createdAt}s ago", relay.url, acc.npub)
+            return
+        }
+        if (event.createdAt > now + TimeUtils.FIVE_MINUTES) {
+            saveLog("Event ${event.id} is in the future: ${event.createdAt - now}s ahead", relay.url, acc.npub)
+            return
+        }
+
+        val expiration = event.expiration()
+        if (expiration != null && expiration < now) {
+            saveLog("Event ${event.id} has expired", relay.url, acc.npub)
+            return
+        }
+
+        NotificationUtils.getOrCreateBunkerChannel(applicationContext)
+        NotificationUtils.getOrCreateErrorsChannel(applicationContext)
 
         val bunkerEventDao = Amber.instance.getDatabase(acc.npub).bunkerEventDao()
         if (bunkerEventDao.exists(event.id)) {
@@ -328,13 +346,36 @@ class EventNotificationConsumer(private val applicationContext: Context) {
         // is already logged above; here we record only non-sensitive metadata.
         saveLog("Decrypted request ${bunkerRequest.id} method ${bunkerRequest.method}", relay.url, acc.npub)
 
-        val signedEvent = if (bunkerRequest is BunkerRequestSign) {
-            acc.sign(bunkerRequest.event)
-        } else {
-            null
+        // Authorization and the consent screen decide on the first relay tag
+        // alone; a second relay tag would be signed without ever being
+        // granted. Answer the client with an error instead of signing.
+        if (bunkerRequest is BunkerRequestSign && hasAmbiguousRelayTags(bunkerRequest.event.kind, bunkerRequest.event.tags)) {
+            saveLog("Refusing a multi-relay auth event ${bunkerRequest.id}", relay.url, acc.npub)
+            val rejection = AmberBunkerRequest(
+                request = bunkerRequest,
+                localKey = event.pubKey,
+                relays = listOf(relay),
+                currentAccount = acc.npub,
+                nostrConnectSecret = "",
+                closeApplication = true,
+                name = "",
+                signedEvent = null,
+                encryptedData = null,
+                encryptionType = if (EncryptedInfo.isNIP04(event.content)) EncryptionType.NIP04 else EncryptionType.NIP44,
+                isNostrConnectUri = false,
+                signerPrivKey = connectionPrivKey,
+            )
+            BunkerRequestUtils.sendBunkerResponse(
+                applicationContext,
+                acc,
+                rejection,
+                BunkerResponse(bunkerRequest.id, "", "refusing a multi-relay auth event"),
+                listOf(relay),
+                onLoading = {},
+                onDone = {},
+            )
+            return
         }
-
-        val encryptedDataKind = getEncryptedDataKind(bunkerRequest, acc, relay.url)
 
         // NIP-46 connect requests may carry optional client metadata as the 4th
         // param (nostr-protocol/nips#2381) so the signer can show who is
@@ -347,6 +388,9 @@ class EventNotificationConsumer(private val applicationContext: Context) {
             null
         }
 
+        // Only addresses the replies sent before authorization below, so it
+        // carries no signed event or decrypted data: the account key is not
+        // used for a sender until it is known to have a connection.
         var request = AmberBunkerRequest(
             request = bunkerRequest,
             localKey = event.pubKey,
@@ -355,8 +399,8 @@ class EventNotificationConsumer(private val applicationContext: Context) {
             nostrConnectSecret = "",
             closeApplication = true,
             name = clientMetadata?.name ?: "",
-            signedEvent = signedEvent,
-            encryptedData = encryptedDataKind,
+            signedEvent = null,
+            encryptedData = null,
             encryptionType = encryptionType,
             isNostrConnectUri = false,
             signerPrivKey = connectionPrivKey,
@@ -383,19 +427,49 @@ class EventNotificationConsumer(private val applicationContext: Context) {
 
         var amberEvent: AmberEvent? = null
 
+        // Params come straight from the client. A missing one or an unparsable
+        // event used to throw inside the coroutine, so the client never got an
+        // answer; reply with an error instead.
         val pubKey =
             if (bunkerRequest.method.endsWith("encrypt") || bunkerRequest.method.endsWith("decrypt")) {
-                bunkerRequest.params.first()
+                bunkerRequest.params.firstOrNull()
             } else if (bunkerRequest.method == "decrypt_zap_event") {
-                bunkerRequest.params[1]
+                bunkerRequest.params.getOrNull(1)
             } else if (bunkerRequest.method == "sign_event") {
-                amberEvent = AmberEvent.fromJson(bunkerRequest.params.first())
-                amberEvent.pubKey
+                amberEvent = bunkerRequest.params.firstOrNull()?.let { runCatching { AmberEvent.fromJson(it) }.getOrNull() }
+                amberEvent?.pubKey
             } else {
                 ""
             }
+        if (pubKey == null) {
+            saveLog("Invalid params for request ${bunkerRequest.id} method ${bunkerRequest.method}", relay.url, acc.npub)
+            BunkerRequestUtils.sendBunkerResponse(
+                applicationContext,
+                acc,
+                request,
+                BunkerResponse(bunkerRequest.id, "", "invalid params"),
+                responseRelay.ifEmpty { Amber.instance.settings.defaultRelays },
+                onLoading = {},
+                onDone = {},
+            )
+            return
+        }
 
-        val permission = dao.getByKey(event.pubKey)
+        var permission = dao.getByKey(event.pubKey)
+        if (permission != null && permission.application.isExpired()) {
+            // The user set a finite lifetime on this connection: answer as an
+            // unknown app even before the periodic cleanup deletes the row.
+            saveLog("Connection expired for ${event.pubKey}", relay.url, acc.npub)
+            permission = null
+        }
+        if (permission != null && connectsThroughOtherKey(permission.application.localKey, connectionPrivKey, type)) {
+            // A stored app may only use its own connection key: a request it
+            // sends to another connection's key is dropped rather than answered
+            // under that connection's identity. A connect is exempt, as that is
+            // how a client attaches to a new key.
+            saveLog("Request ${bunkerRequest.id} from ${event.pubKey} reached another connection's key", relay.url, acc.npub)
+            return
+        }
         if (permission != null && ((permission.application.secret != permission.application.key && permission.application.useSecret) || permission.application.isConnected) && type == SignerType.CONNECT) {
             Amber.instance.applicationIOScope.launch {
                 historyDao
@@ -470,6 +544,16 @@ class EventNotificationConsumer(private val applicationContext: Context) {
             return
         }
 
+        // Authorized sender from here on: a stored connection or a valid
+        // connect secret. Only now sign or decrypt with the account key.
+        val signedEvent = if (bunkerRequest is BunkerRequestSign) {
+            acc.sign(bunkerRequest.event)
+        } else {
+            null
+        }
+
+        val encryptedDataKind = getEncryptedDataKind(bunkerRequest, acc, relay.url)
+
         request = AmberBunkerRequest(
             request = bunkerRequest,
             localKey = event.pubKey,
@@ -530,6 +614,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                             Amber.instance.applicationIOScope.launch {
                                 dao.delete(permission.application.key)
                                 historyDao.deleteHistory(permission.application.key)
+                                BunkerRequestUtils.removeAllForClient(permission.application.key)
                                 Amber.instance.notificationSubscription.updateFilter()
                             }
                         }
@@ -546,7 +631,6 @@ class EventNotificationConsumer(private val applicationContext: Context) {
             if (isRemembered == null) {
                 val message = generateMessage(type, amberEvent, request, event, permission, applicationWithSecret)
                 notificationManager().sendNotification(
-                    bunkerRequest.id,
                     message,
                     "Bunker",
                     "BunkerID",
@@ -653,7 +737,6 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                 val message = generateMessage(type, amberEvent, request, event, permission, applicationWithSecret)
                 notificationManager()
                     .sendNotification(
-                        bunkerRequest.id,
                         message,
                         "Bunker",
                         "BunkerID",
@@ -694,7 +777,6 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                     val message = generateMessage(type, amberEvent, request, event, permission, applicationWithSecret)
                     notificationManager()
                         .sendNotification(
-                            bunkerRequest.id,
                             message,
                             "Bunker",
                             "BunkerID",
@@ -714,12 +796,10 @@ class EventNotificationConsumer(private val applicationContext: Context) {
         permission: ApplicationWithPermissions?,
         applicationWithSecret: ApplicationWithPermissions?,
     ): String {
-        var name = event.pubKey.toShortenHex()
-        if (permission != null && permission.application.name.isNotBlank()) {
-            name = permission.application.name
-        } else if (applicationWithSecret != null && applicationWithSecret.application.name.isNotBlank()) {
-            name = applicationWithSecret.application.name
-        }
+        // Saved names may predate sanitizing at entry.
+        val name = sequenceOf(permission, applicationWithSecret)
+            .map { sanitizeAppName(it?.application?.name ?: "") }
+            .firstOrNull { it.isNotBlank() } ?: event.pubKey.toShortenHex()
 
         val bunkerPermission = Permission(type.toString().toLowerCase(Locale.current), amberEvent?.kind)
         var message = "$name  ${applicationContext.getString(R.string.requests)} ${bunkerPermission.toLocalizedString(applicationContext)}"
@@ -774,7 +854,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
         if (result.startsWith("{")) {
             try {
                 val event = AmberEvent.fromJson(result)
-                if (event.kind == SealedRumorEvent.KIND) {
+                if (event.kind == SealEvent.KIND) {
                     val decryptedSealData = try {
                         acc.decrypt(event.content, acc.hexKey)
                     } catch (_: Exception) {
@@ -786,7 +866,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                     } else if (decryptedSealData.startsWith("[")) {
                         try {
                             val tagArray = JacksonMapper.fromJsonToTagArray(decryptedSealData)
-                            EventEncryptedDataKind(event, TagArrayEncryptedDataKind(tagArray, decryptedSealData), decryptedSealData)
+                            EventEncryptedDataKind(event, TagArrayEncryptedDataKind(tagArray, decryptedSealData), result)
                         } catch (_: Exception) {
                             EventEncryptedDataKind(event, ClearTextEncryptedDataKind(event.content, decryptedSealData), result)
                         }
@@ -815,7 +895,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
         if (bunkerRequest.message.startsWith("{")) {
             try {
                 val event = AmberEvent.fromJson(bunkerRequest.message)
-                if (event.kind == SealedRumorEvent.KIND) {
+                if (event.kind == SealEvent.KIND) {
                     val decryptedSealData = try {
                         acc.decrypt(event.content, acc.hexKey)
                     } catch (_: Exception) {
@@ -827,7 +907,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                     } else if (decryptedSealData.startsWith("[")) {
                         try {
                             val tagArray = JacksonMapper.fromJsonToTagArray(decryptedSealData)
-                            EventEncryptedDataKind(event, TagArrayEncryptedDataKind(tagArray, decryptedSealData), decryptedSealData)
+                            EventEncryptedDataKind(event, TagArrayEncryptedDataKind(tagArray, decryptedSealData), result)
                         } catch (_: Exception) {
                             EventEncryptedDataKind(event, ClearTextEncryptedDataKind(event.content, decryptedSealData), result)
                         }
@@ -857,7 +937,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
         if (result.startsWith("{")) {
             try {
                 val event = AmberEvent.fromJson(result)
-                if (event.kind == SealedRumorEvent.KIND) {
+                if (event.kind == SealEvent.KIND) {
                     val decryptedSealData = try {
                         acc.decrypt(event.content, acc.hexKey)
                     } catch (_: Exception) {
@@ -869,7 +949,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                     } else if (decryptedSealData.startsWith("[")) {
                         try {
                             val tagArray = JacksonMapper.fromJsonToTagArray(decryptedSealData)
-                            EventEncryptedDataKind(event, TagArrayEncryptedDataKind(tagArray, decryptedSealData), decryptedSealData)
+                            EventEncryptedDataKind(event, TagArrayEncryptedDataKind(tagArray, decryptedSealData), result)
                         } catch (_: Exception) {
                             EventEncryptedDataKind(event, ClearTextEncryptedDataKind(event.content, decryptedSealData), result)
                         }
@@ -898,7 +978,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
         if (bunkerRequest.message.startsWith("{")) {
             try {
                 val event = AmberEvent.fromJson(bunkerRequest.message)
-                if (event.kind == SealedRumorEvent.KIND) {
+                if (event.kind == SealEvent.KIND) {
                     val decryptedSealData = try {
                         acc.decrypt(event.content, acc.hexKey)
                     } catch (_: Exception) {
@@ -910,7 +990,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                     } else if (decryptedSealData.startsWith("[")) {
                         try {
                             val tagArray = JacksonMapper.fromJsonToTagArray(decryptedSealData)
-                            EventEncryptedDataKind(event, TagArrayEncryptedDataKind(tagArray, decryptedSealData), decryptedSealData)
+                            EventEncryptedDataKind(event, TagArrayEncryptedDataKind(tagArray, decryptedSealData), result)
                         } catch (_: Exception) {
                             EventEncryptedDataKind(event, ClearTextEncryptedDataKind(event.content, decryptedSealData), result)
                         }
@@ -1002,4 +1082,9 @@ class EventNotificationConsumer(private val applicationContext: Context) {
     }
 
     fun notificationManager(): NotificationManager = ContextCompat.getSystemService(applicationContext, NotificationManager::class.java) as NotificationManager
+
+    companion object {
+        // One budget per process: several call sites construct their own consumer.
+        internal val senderRateLimiter = SenderRateLimiter()
+    }
 }

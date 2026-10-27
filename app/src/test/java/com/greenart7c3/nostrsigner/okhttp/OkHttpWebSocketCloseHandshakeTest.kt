@@ -141,6 +141,8 @@ class OkHttpWebSocketCloseHandshakeTest {
 
         fun awaitClient() = handshaken.await(5, TimeUnit.SECONDS)
 
+        fun awaitClientBriefly() = handshaken.await(300, TimeUnit.MILLISECONDS)
+
         /** Server-initiated CLOSE, status 1000, unmasked as servers send it. The TCP session stays open. */
         fun sendClose() {
             val output = checkNotNull(out) { "no client yet" }
@@ -209,7 +211,7 @@ class OkHttpWebSocketCloseHandshakeTest {
             assertEquals("the relay's status code is what gets reported", 1000, recorder.closedCode.get())
             assertNull("a clean handshake is not a failure", recorder.failure.get())
 
-            // The session already ended; the usual teardown afterwards must not report it twice.
+            // The session already ended; the usual teardown afterward must not report it twice.
             socket.disconnect()
             assertEquals("one terminal report per session", 1, recorder.closedCount.get())
             assertTrue("a closed socket needs a fresh dial", socket.needsReconnect())
@@ -242,6 +244,97 @@ class OkHttpWebSocketCloseHandshakeTest {
             Thread.sleep(500)
             assertEquals("no second report", 1, recorder.closedCount.get())
             assertNull("the cancel's failure must not surface", recorder.failure.get())
+
+            client.dispatcher.executorService.shutdown()
+        }
+    }
+
+    @Test
+    fun `a dial in flight does not need a reconnect`() {
+        TinyRelay().use { relay ->
+            val recorder = Recorder()
+            val client = OkHttpClient()
+            val duringDial = AtomicReference<Boolean?>(null)
+            lateinit var socket: OkHttpWebSocket
+            socket =
+                OkHttpWebSocket(
+                    relay.url,
+                    {
+                        // Asked by connect() itself, mid-dial: a concurrent reconnect pass
+                        // asking now must not tear this dial down and start a second one.
+                        if (duringDial.get() == null) duringDial.set(socket.needsReconnect())
+                        client
+                    },
+                    recorder,
+                )
+
+            socket.connect()
+            assertEquals("a dial in flight was reported as dead", false, duringDial.get())
+            assertTrue("relay never saw the client", relay.awaitClient())
+            assertTrue("no onOpen", recorder.opened.await(5, TimeUnit.SECONDS))
+
+            socket.disconnect()
+            client.dispatcher.executorService.shutdown()
+        }
+    }
+
+    @Test
+    fun `a send from onOpen reaches the socket`() {
+        TinyRelay().use { relay ->
+            val client = OkHttpClient()
+            val sentFromOnOpen = AtomicReference<Boolean?>(null)
+            val opened = CountDownLatch(1)
+            lateinit var socket: OkHttpWebSocket
+            val listener =
+                object : WebSocketListener {
+                    override fun onOpen(
+                        pingMillis: Int,
+                        compression: Boolean,
+                    ) {
+                        // The relay client sends its REQs from here, possibly before
+                        // newWebSocket() has returned to connect().
+                        sentFromOnOpen.set(socket.send("[\"REQ\",\"x\",{}]"))
+                        opened.countDown()
+                    }
+
+                    override suspend fun onMessage(text: String) {}
+
+                    override fun onClosed(
+                        code: Int,
+                        reason: String,
+                    ) {}
+
+                    override fun onFailure(
+                        t: Throwable,
+                        code: Int?,
+                        response: String?,
+                    ) {}
+                }
+            socket = OkHttpWebSocket(relay.url, { client }, listener)
+
+            socket.connect()
+            assertTrue("relay never saw the client", relay.awaitClient())
+            assertTrue("no onOpen", opened.await(5, TimeUnit.SECONDS))
+            assertEquals("a send from onOpen was dropped", true, sentFromOnOpen.get())
+
+            socket.disconnect()
+            client.dispatcher.executorService.shutdown()
+        }
+    }
+
+    @Test
+    fun `disconnect before the dial ends the session without opening or reporting`() {
+        TinyRelay().use { relay ->
+            val recorder = Recorder()
+            val client = OkHttpClient()
+            val socket = OkHttpWebSocket(relay.url, { client }, recorder)
+
+            socket.disconnect()
+            socket.connect()
+
+            assertTrue(socket.needsReconnect())
+            assertEquals("nothing was open, so nothing to report", 0, recorder.closedCount.get())
+            assertTrue("an ended session must not dial", recorder.opened.count == 1L && !relay.awaitClientBriefly())
 
             client.dispatcher.executorService.shutdown()
         }

@@ -20,6 +20,9 @@ abstract class LogDatabase : RoomDatabase() {
     abstract fun dao(): LogDao
 
     companion object {
+        /** On-disk name of [npub]'s database, also used to delete it at logout. */
+        fun fileName(npub: String) = "log_db_$npub"
+
         val migration_1_2 = object : Migration(1, 2) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("CREATE INDEX IF NOT EXISTS `log_by_time_key` ON `amber_log` (`time` DESC)")
@@ -44,7 +47,7 @@ abstract class LogDatabase : RoomDatabase() {
                 Room.databaseBuilder(
                     context,
                     LogDatabase::class.java,
-                    "log_db_$npub",
+                    fileName(npub),
                 )
                     .setQueryExecutor(executor)
                     .setTransactionExecutor(transactionExecutor)

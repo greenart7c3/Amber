@@ -30,6 +30,11 @@
 # preserve access to native classses
 -keep class fr.acinq.secp256k1.** { *; }
 
+# Arti (built-in Tor): JNI entry points, and the log callback the native side calls by name
+-keep class com.greenart7c3.nostrsigner.tor.ArtiNative { native <methods>; }
+-keep interface com.greenart7c3.nostrsigner.tor.ArtiLogCallback { *; }
+-keep class * implements com.greenart7c3.nostrsigner.tor.ArtiLogCallback { public void onLogLine(java.lang.String); }
+
 # JNA For Libsodium
 -keep class com.goterl.lazysodium.** { *; }
 

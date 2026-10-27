@@ -26,17 +26,14 @@
     <string name="accept">Kabul et</string>
     <string name="decrypt_zap_event">Zap etkinliği şifresini çözme</string>
     <string name="show_details">Ayrıntıları Göster</string>
-    <string name="copy_raw_json">Ham JSON\'u kopyala</string>
     <string name="add_new_account">Yeni Hesap Ekle</string>
     <string name="select_account">Hesap Seç</string>
     <string name="active_account">Aktif Hesap</string>
     <string name="edit_name">İsmi düzenle</string>
     <string name="copy">"Kopyala "</string>
-    <string name="data_copied_to_the_clipboard">Veri panoya kopyalandı</string>
     <string name="connect_app">Uygulamayı bağla</string>
     <string name="event_copied_to_the_clipboard">Etkinlik panoya kopyalandı</string>
     <string name="select_deselect_all">Tümünü Seç/Seçimi Kaldır</string>
-    <string name="decrypt_content">İçeriğin şifresini çöz</string>
     <string name="support_development">Geliştirmeyi destekle</string>
     <string name="source_code">Kaynak kodu</string>
     <string name="show_qr_code">QR Kodu Göster</string>
@@ -591,8 +588,6 @@
     <string name="ask">Sor</string>
     <string name="never">Asla</string>
     <string name="warning">Uyarı</string>
-    <string name="of_events">%2$s etkinliğin %1$s tanesi</string>
-    <string name="see_details">Ayrıntıları gör</string>
     <string name="is_requiring_some_permissions_please_review_them">%1$s bazı izinler talep ediyor, lütfen onları gözden geçirin.</string>
     <string name="is_requiring_some_permissions_please_review_them2">Bazı izinler talep ediyor, lütfen bunları gözden geçirin.</string>
     <plurals name="several_apps_are_requiring_some_permissions_please_review_them">
@@ -751,7 +746,7 @@
     <string name="one_week">Bir hafta</string>
     <string name="delete_after">Şundan sonra sil:</string>
     <string name="crashreport_found">Çökme Raporu bulundu</string>
-    <string name="would_you_like_to_send_the_recent_crash_report_to_amber_in_a_dm_no_personal_information_will_be_shared">Son çökme raporunu bir DM ile Amber\'a göndermek ister misiniz? Hiçbir kişisel bilgi paylaşılmayacaktır</string>
+    <string name="crash_report_send_prompt">Son çökme raporunu Amber\'a DM ile göndermek ister misiniz? Hesabınızdan gönderildiği için geliştirici açık anahtarınızı görecektir.</string>
     <string name="copy_crash_report_to_clipboard">Çökme raporunu panonuza kopyalamak ve onu Amber\'a göndermek için bir İstemci açmak ister misiniz?</string>
     <string name="crashreport_found_send">Gönder</string>
     <string name="invalid_intent_title">Geçersiz istek</string>
@@ -844,6 +839,7 @@
     <string name="auth_whitelist">İstemci kimlik doğrulama beyaz listesi</string>
     <string name="auth_whitelist_description">Beyaz liste boş olmadığında relay istemci kimlik doğrulaması (NIP-42) yalnızca listedeki relay\'ler için izin verilir. Diğer relay\'lerden gelen kimlik doğrulama istekleri otomatik olarak reddedilir.</string>
     <string name="add_relay_to_whitelist">Beyaz listeye relay ekle</string>
+    <string name="relay_not_in_auth_whitelist">Bu relay kimlik doğrulama beyaz listenizde değil, bu yüzden reddedilecek</string>
     <string name="keystore_error_title">Hesaba Erişilemiyor</string>
     <string name="keystore_error_message">Cihazınızın güvenli depolama alanı (KeyStore) bir hata döndürdüğünden bir veya daha fazla hesap yüklenemedi:\n\n%1$s\n\nBu, sistemin depolanmış şifreleme anahtarlarını yükseltememesi durumunda bazı cihazlarda görülen bilinen bir donanım yazılımı hatasıdır.\n\nYapabilecekleriniz:\n• nsec (özel anahtar) yedeğiniz varsa etkilenen hesaptan çıkış yapıp tekrar giriş yapın — bu, çalışan yeni bir anahtar oluşturur.\n• Cihaz üreticinizden bir sistem donanım yazılımı güncellemesi olup olmadığını kontrol edin; bu sorunu çözebilir.\n• Amber\'i kaldırmayın; uygulamayı yüklü tutmak, bir donanım yazılımı güncellemesi yayımlandığında kurtarma olasılığını korur.</string>
     <string name="event_kind_31124">Mevcut evcil hayvan durumu</string>
@@ -912,6 +908,7 @@
     <string name="update_settings_subtitle">Yeni sürümleri kontrol edin</string>
     <string name="require_unlocked_device">Anahtar erişimi için kilit açılmış cihaz gerektir</string>
     <string name="require_unlocked_device_description">Etkinleştirildiğinde, kayıtlı hesap anahtarlarınızı çözmek için kullanılan Keystore anahtarı cihaz kilitliyken kullanılamaz. Bu, ekran kilitliyken Amber\'ın sürecinde çalışan herhangi bir kodun anahtarlarınızı çözmesini engeller. Not: Bu, cihaz kilitliyken arka planda NIP-46 imzalama işlemini devre dışı bırakır. Bunu değiştirmek, kayıtlı tüm anahtarların yeniden şifrelenmesini gerektirir.</string>
+    <string name="require_unlocked_device_legacy_note">Android 8\'de Keystore bunu kendisi uygulayamaz. Amber, cihaz kilitliyken anahtarlarınızı kullanmayı yine de reddeder, ancak koruma yalnızca yazılım tabanlıdır.</string>
     <string name="require_unlocked_device_updating">Kayıtlı tüm anahtarlar yeniden şifreleniyor…</string>
     <string name="require_unlocked_device_do_not_close">Bu işlem bitene kadar uygulamayı kapatmayın veya ekranı kilitlemeyin.</string>
     <string name="insecure_relay_warning">Genel internet üzerindeki güvensiz (açık metin, ws://) röle, NIP-46 meta verilerini ve şifreli metni ağ gözlemcilerine ifşa eder. wss:// tercih edin veya ws://\'yi yalnızca .onion / yerel ağ röleleri için kullanın.</string>

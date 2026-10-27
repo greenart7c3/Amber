@@ -27,17 +27,14 @@
     <string name="accept">Принять</string>
     <string name="decrypt_zap_event">расшифровать zap-событие</string>
     <string name="show_details">Показать подробности</string>
-    <string name="copy_raw_json">Исходный JSON</string>
     <string name="add_new_account">Добавить новый аккаунт</string>
     <string name="select_account">Выбрать аккаунт</string>
     <string name="active_account">Активный аккаунт</string>
     <string name="edit_name">Изменить имя</string>
     <string name="copy">"Копировать "</string>
-    <string name="data_copied_to_the_clipboard">Данные скопированы в буфер обмена</string>
     <string name="connect_app">Подключить приложение</string>
     <string name="event_copied_to_the_clipboard">Событие скопировано в буфер обмена</string>
     <string name="select_deselect_all">Выбрать/Снять выбор со всех</string>
-    <string name="decrypt_content">Расшифровать содержимое</string>
     <string name="support_development">Поддержать разработку</string>
     <string name="source_code">Исходный код</string>
     <string name="show_qr_code">Показать QR-код</string>
@@ -595,8 +592,6 @@
     <string name="ask">Спросить</string>
     <string name="never">Никогда</string>
     <string name="warning">Предупреждение</string>
-    <string name="of_events">%1$s из %2$s событий</string>
-    <string name="see_details">Подробнее</string>
     <string name="is_requiring_some_permissions_please_review_them">%1$s запрашивает некоторые разрешения, пожалуйста, проверьте их.</string>
     <string name="is_requiring_some_permissions_please_review_them2">Запрашиваются некоторые разрешения, пожалуйста, проверьте их.</string>
     <plurals name="several_apps_are_requiring_some_permissions_please_review_them">
@@ -757,7 +752,7 @@
     <string name="one_week">Одна неделя</string>
     <string name="delete_after">Удалить через</string>
     <string name="crashreport_found">Найден отчёт об аварии</string>
-    <string name="would_you_like_to_send_the_recent_crash_report_to_amber_in_a_dm_no_personal_information_will_be_shared">Хотите отправить последний отчёт об аварии в Amber через личное сообщение? Персональные данные не будут переданы</string>
+    <string name="crash_report_send_prompt">Отправить последний отчёт о сбое в Amber личным сообщением? Он отправляется с вашей учётной записи, поэтому разработчик увидит ваш открытый ключ.</string>
     <string name="copy_crash_report_to_clipboard">Хотите скопировать отчёт об аварии в буфер обмена и открыть клиент для отправки его в Amber?</string>
     <string name="crashreport_found_send">Отправить</string>
     <string name="invalid_intent_title">Некорректный запрос</string>
@@ -850,6 +845,7 @@
     <string name="auth_whitelist">Белый список аутентификации клиента</string>
     <string name="auth_whitelist_description">Если белый список не пуст, аутентификация клиента relay-сервера (NIP-42) будет разрешена только для relay-серверов из списка. Запросы аутентификации от других relay-серверов будут отклонены автоматически.</string>
     <string name="add_relay_to_whitelist">Добавить relay в белый список</string>
+    <string name="relay_not_in_auth_whitelist">Этого relay нет в вашем белом списке аутентификации, поэтому запрос будет отклонён</string>
     <string name="keystore_error_title">Аккаунт недоступен</string>
     <string name="keystore_error_message">Один или несколько аккаунтов не удалось загрузить, так как защищённое хранилище вашего устройства (KeyStore) вернуло ошибку:\n\n%1$s\n\nЭто известная ошибка прошивки на некоторых устройствах, где система не может обновить сохранённые ключи шифрования.\n\nЧто можно сделать:\n• Если у вас есть резервная копия nsec (закрытого ключа), выйдите из затронутого аккаунта и войдите снова — это создаст новый рабочий ключ.\n• Проверьте наличие обновлений прошивки от производителя устройства, которые могут исправить эту проблему.\n• Не удаляйте Amber; сохранение приложения даёт возможность восстановления в случае выпуска обновления прошивки.</string>
     <string name="event_kind_31124">Текущее состояние питомца</string>
@@ -918,6 +914,7 @@
     <string name="update_settings_subtitle">Проверить наличие новых версий</string>
     <string name="require_unlocked_device">Требовать разблокировки устройства для доступа к ключам</string>
     <string name="require_unlocked_device_description">Если этот параметр включен, ключ Keystore, используемый для расшифровки сохраненных ключей вашей учетной записи, нельзя использовать, пока устройство заблокировано. Это предотвращает расшифровку ваших ключей любым кодом, запущенным в процессе Amber, пока экран заблокирован. Примечание: это отключает фоновую подпись NIP-46, пока устройство заблокировано. Переключение этого параметра требует повторного шифрования всех сохраненных ключей.</string>
+    <string name="require_unlocked_device_legacy_note">На Android 8 Keystore не может обеспечить это сам. Amber по-прежнему отказывается использовать ваши ключи, пока устройство заблокировано, но защита только программная.</string>
     <string name="require_unlocked_device_updating">Повторное шифрование всех сохраненных ключей…</string>
     <string name="require_unlocked_device_do_not_close">Не закрывайте приложение и не блокируйте экран, пока процесс не завершится.</string>
     <string name="insecure_relay_warning">Незащищенное (открытый текст, ws://) реле через общедоступный Интернет раскрывает метаданные NIP-46 и зашифрованный текст сетевым наблюдателям. Предпочитайте wss:// или используйте ws:// только для реле .onion / локальной сети.</string>

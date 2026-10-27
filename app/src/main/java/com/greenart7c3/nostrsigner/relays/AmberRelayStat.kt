@@ -147,7 +147,7 @@ class AmberRelayStats(
                 appContext,
                 0,
                 contentIntent,
-                PendingIntent.FLAG_MUTABLE,
+                PendingIntent.FLAG_IMMUTABLE,
             )
 
         val stopServiceIntent = Intent(appContext, StopServiceReceiver::class.java)
@@ -155,7 +155,7 @@ class AmberRelayStats(
             appContext,
             0,
             stopServiceIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         )
 
         return NotificationCompat.Builder(appContext, channel.id)
@@ -219,7 +219,7 @@ class AmberRelayStats(
                     appContext,
                     0,
                     contentIntent,
-                    PendingIntent.FLAG_MUTABLE,
+                    PendingIntent.FLAG_IMMUTABLE,
                 )
 
             val reconnectIntent = Intent(appContext, ReconnectReceiver::class.java)
@@ -227,7 +227,7 @@ class AmberRelayStats(
                 appContext,
                 0,
                 reconnectIntent,
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
             )
 
             val killSwitchIntent = Intent(appContext, KillSwitchReceiver::class.java)
@@ -235,7 +235,7 @@ class AmberRelayStats(
                 appContext,
                 0,
                 killSwitchIntent,
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
             )
 
             val notificationBuilder =
@@ -301,10 +301,6 @@ class AmberRelayStat(
 ) {
     fun addSent() {
         sent++
-    }
-
-    fun addReceived() {
-        received++
     }
 
     fun addFailed() {

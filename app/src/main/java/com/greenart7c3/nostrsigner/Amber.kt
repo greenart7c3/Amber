@@ -32,6 +32,7 @@ import coil3.request.ErrorResult
 import coil3.request.ImageRequest
 import coil3.request.SuccessResult
 import coil3.request.crossfade
+import com.greenart7c3.nostrsigner.common.relays.RelayHealthTracker
 import com.greenart7c3.nostrsigner.database.AppDatabase
 import com.greenart7c3.nostrsigner.database.ApplicationDao
 import com.greenart7c3.nostrsigner.database.CachingApplicationDao
@@ -48,13 +49,14 @@ import com.greenart7c3.nostrsigner.okhttp.HttpClientManager
 import com.greenart7c3.nostrsigner.okhttp.OkHttpWebSocket
 import com.greenart7c3.nostrsigner.relays.AmberRelayStats
 import com.greenart7c3.nostrsigner.relays.NostrClientLoggerListener
-import com.greenart7c3.nostrsigner.relays.RelayHealthTracker
 import com.greenart7c3.nostrsigner.service.ApplicationNameCache
 import com.greenart7c3.nostrsigner.service.BackupApplicationsWorker
 import com.greenart7c3.nostrsigner.service.ClearLogsWorker
 import com.greenart7c3.nostrsigner.service.ConnectivityService
 import com.greenart7c3.nostrsigner.service.NotificationSubscription
+import com.greenart7c3.nostrsigner.service.PrivateAddress
 import com.greenart7c3.nostrsigner.service.ProfileSubscription
+import com.greenart7c3.nostrsigner.service.SharedFiles
 import com.greenart7c3.nostrsigner.service.TorManager
 import com.greenart7c3.nostrsigner.service.TrustScoreService
 import com.greenart7c3.nostrsigner.service.UpdateCheckWorker
@@ -124,16 +126,18 @@ class Amber :
     var settings: AmberSettings = AmberSettings()
 
     /**
-     * False until the first async settings load ([LocalPreferences.reloadApp]) lands. Until
-     * then [settings] is the data-class default, whose torMode (DISABLED) is a guess, not a
-     * decision — any dial in that window must route through the proxy client (preset from
-     * plain prefs in [onCreate]) instead of trusting the default and going to the clearnet.
+     * False until [settings] holds the stored settings. [onCreate] loads them synchronously
+     * ([LocalPreferences.loadSettingsAtStartup]), so this is true before any activity,
+     * service or provider call runs. While false, [settings] is the data-class default,
+     * whose torMode (DISABLED) is a guess, not a decision — any dial in that window must
+     * route through the proxy client (preset from plain prefs in [onCreate]) instead of
+     * trusting the default and going to the clearnet.
      */
     @Volatile var isSettingsLoaded = false
 
     val factory = OkHttpWebSocket.Builder { url ->
+        if (isPrivateIp(url.url)) return@Builder HttpClientManager.getLocalHttpClient()
         val useProxy = when {
-            isPrivateIp(url.url) -> false
             // Settings load asynchronously; until they land, torMode's default (DISABLED)
             // is a guess, not a decision. Route through the proxy client — preset from
             // plain prefs in onCreate — so a BUILTIN/ORBOT user's pre-Tor dials (network
@@ -150,18 +154,20 @@ class Amber :
     val stats = AmberRelayStats(client, this)
 
     // logs and stat counts.
-    val listener = NostrClientLoggerListener(this, stats, applicationIOScope).also {
-        client.addConnectionListener(it)
+    init {
+        client.addConnectionListener(NostrClientLoggerListener(this, stats, applicationIOScope))
     }
 
-    // Authenticates with relays.
-    val authCoordinator = RelayAuthenticator(client, applicationIOScope) { _, event, _ ->
-        // One account failing to sign (device locked under requireUnlockedDevice,
-        // or a transient key error) must not abort AUTH for every other account.
-        LocalPreferences.allAccounts(this).mapNotNull { account ->
-            runCatching { account.sign(event) }.onFailure { e ->
-                AmberLog.e(TAG, "NIP-42 auth signing failed for ${account.npub}", e)
-            }.getOrNull()
+    // Authenticates with relays; it registers itself with the client.
+    init {
+        RelayAuthenticator(client, applicationIOScope) { _, event, _ ->
+            // One account failing to sign (device locked under requireUnlockedDevice,
+            // or a transient key error) must not abort AUTH for every other account.
+            LocalPreferences.allAccounts(this).mapNotNull { account ->
+                runCatching { account.sign(event) }.onFailure { e ->
+                    AmberLog.e(TAG, "NIP-42 auth signing failed for ${account.npub}", e)
+                }.getOrNull()
+            }
         }
     }
 
@@ -173,7 +179,7 @@ class Amber :
     // each account (see ProfileSubscriptionEffect) rather than app-wide.
     val profileSubscription = ProfileSubscription(client, this, applicationIOScope)
 
-    val zapstoreUpdater: ZapstoreUpdater? = if (!BuildFlavorChecker.isOfflineFlavor() && !BuildConfig.IS_FDROID_BUILD) {
+    val zapstoreUpdater: ZapstoreUpdater? = if (!BuildFlavorChecker.isOfflineFlavor() && !BuildFlavorChecker.isFdroidBuild()) {
         ZapstoreUpdater(client, applicationIOScope)
     } else {
         null
@@ -228,19 +234,19 @@ class Amber :
     fun isSocksProxyAlive(proxyHost: String, proxyPort: Int): Boolean {
         if (settings.torMode == TorMode.BUILTIN) {
             val port = TorManager.socksPort.value
-            if (port == 0) return false
-            return try {
-                if (TrafficStats.getThreadStatsTag() == -1) {
-                    TrafficStats.setThreadStatsTag(0x0001)
+            return port != 0 &&
+                try {
+                    if (TrafficStats.getThreadStatsTag() == -1) {
+                        TrafficStats.setThreadStatsTag(0x0001)
+                    }
+                    val socket = Socket()
+                    socket.connect(InetSocketAddress(proxyHost, port), 5000)
+                    TrafficStats.tagSocket(socket)
+                    socket.close()
+                    true
+                } catch (_: Exception) {
+                    false
                 }
-                val socket = Socket()
-                socket.connect(InetSocketAddress(proxyHost, port), 5000)
-                TrafficStats.tagSocket(socket)
-                socket.close()
-                true
-            } catch (_: Exception) {
-                false
-            }
         }
         try {
             if (TrafficStats.getThreadStatsTag() == -1) {
@@ -333,7 +339,7 @@ class Amber :
     }
 
     fun startUpdateCheckAlarm() {
-        if (BuildFlavorChecker.isOfflineFlavor() || BuildConfig.IS_FDROID_BUILD) return
+        if (BuildFlavorChecker.isOfflineFlavor() || BuildFlavorChecker.isFdroidBuild()) return
 
         val workManager = WorkManager.getInstance(this)
 
@@ -394,6 +400,8 @@ class Amber :
         // callbacks, profile fetches — pick this up via the factory's !isSettingsLoaded
         // gate; without it that window leaks clearnet traffic for Tor users.
         LocalPreferences.presetProxyFromPrefs(this)
+        settings = LocalPreferences.loadSettingsAtStartup(this)
+        isSettingsLoaded = true
         stats.createNotificationChannel()
         Thread.setDefaultUncaughtExceptionHandler(UnexpectedCrashSaver(crashReportCache, applicationIOScope))
 
@@ -429,6 +437,7 @@ class Amber :
 
     fun runMigrations(onDone: () -> Unit) {
         applicationIOScope.launch {
+            runCatching { SharedFiles.cleanUp(this@Amber) }
             try {
                 val currentAccount = LocalPreferences.currentAccount(this@Amber)
                 if (currentAccount.isNullOrBlank() && LocalPreferences.allSavedAccounts(this@Amber).isNotEmpty()) {
@@ -565,7 +574,7 @@ class Amber :
                 this,
                 10,
                 Intent(this, ConnectivityService::class.java),
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
             )
             val alarmManager = this.getSystemService(ALARM_SERVICE) as AlarmManager
             alarmManager.set(AlarmManager.RTC_WAKEUP, 1000, operation)
@@ -709,25 +718,7 @@ class Amber :
         }
     }
 
-    fun isPrivateIp(url: String): Boolean = url.contains("127.0.0.1") ||
-        url.contains("localhost") ||
-        url.contains("192.168.") ||
-        url.contains("172.16.") ||
-        url.contains("172.17.") ||
-        url.contains("172.18.") ||
-        url.contains("172.19.") ||
-        url.contains("172.20.") ||
-        url.contains("172.21.") ||
-        url.contains("172.22.") ||
-        url.contains("172.23.") ||
-        url.contains("172.24.") ||
-        url.contains("172.25.") ||
-        url.contains("172.26.") ||
-        url.contains("172.27.") ||
-        url.contains("172.28.") ||
-        url.contains("172.29.") ||
-        url.contains("172.30.") ||
-        url.contains("172.31.")
+    fun isPrivateIp(url: String): Boolean = PrivateAddress.isPrivate(url)
 
     override fun newImageLoader(context: PlatformContext): ImageLoader {
         val memCache = MemoryCache.Builder()
@@ -739,8 +730,8 @@ class Amber :
             .build()
         val coilCallFactory = okhttp3.Call.Factory { request ->
             val url = request.url.toString()
+            if (isPrivateIp(url)) return@Factory HttpClientManager.getLocalHttpClient().newCall(request)
             val useProxy = when {
-                isPrivateIp(url) -> false
                 !isSettingsLoaded -> true
                 else -> settings.torMode != TorMode.DISABLED
             }

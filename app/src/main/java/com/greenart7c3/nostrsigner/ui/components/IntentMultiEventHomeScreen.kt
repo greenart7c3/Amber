@@ -34,6 +34,7 @@ import androidx.compose.ui.unit.dp
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.common.SignerType
 import com.greenart7c3.nostrsigner.database.ApplicationEntity
 import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
 import com.greenart7c3.nostrsigner.database.HistoryEntity
@@ -47,18 +48,19 @@ import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.models.PrivateZapEncryptedDataKind
 import com.greenart7c3.nostrsigner.models.Result
 import com.greenart7c3.nostrsigner.models.ReturnType
-import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.models.TagArrayEncryptedDataKind
 import com.greenart7c3.nostrsigner.service.AmberUtils
 import com.greenart7c3.nostrsigner.service.MultiEventScreenIntents
 import com.greenart7c3.nostrsigner.service.RelayUrlUtils
+import com.greenart7c3.nostrsigner.service.isBlockedByAuthWhitelist
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
+import com.greenart7c3.nostrsigner.service.relayAuthRememberType
 import com.greenart7c3.nostrsigner.ui.RememberType
 import com.greenart7c3.nostrsigner.ui.theme.AmberPreview
 import com.greenart7c3.nostrsigner.ui.theme.ThemePreviews
 import com.greenart7c3.nostrsigner.ui.theme.previewAccount
 import com.vitorpamplona.quartz.nip01Core.core.Event
-import com.vitorpamplona.quartz.nip57Zaps.LnZapRequestEvent
+import com.vitorpamplona.quartz.nip57Zaps.ZapRequestEvent
 import com.vitorpamplona.quartz.utils.TimeUtils
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
@@ -80,10 +82,11 @@ fun IntentMultiEventHomeScreen(
     val groupDecryptScopes = remember { mutableStateMapOf<RequestGroupKey, DecryptTypeScope>() }
 
     LaunchedEffect(Unit) {
-        MultiEventScreenIntents.checkedStates.clear()
         MultiEventScreenIntents.rememberType = RememberType.NEVER
-        // checkedStates now holds the per-request decision: true = Approve, false = Deny.
-        intents.forEach { MultiEventScreenIntents.checkedStates[it.id] = true }
+        // checkedStates holds the per-request decision: true = Approve, false = Deny.
+        // It is shared by every open Amber screen, so set only this screen's keys
+        // (owner-scoped queueKeys) instead of clearing another screen's choices.
+        intents.forEach { MultiEventScreenIntents.checkedStates[it.queueKey] = !isBlockedByAuthWhitelist(it.event) }
     }
 
     Column(
@@ -98,7 +101,9 @@ fun IntentMultiEventHomeScreen(
                 .padding(bottom = 4.dp),
         )
 
-        SigningAs(accountParam)
+        // Confirm signs each request under its own account (intentsByAccount below).
+        val batchAccounts = rememberBatchAccounts(intents.map { it.currentAccount }, accountParam)
+        batchAccounts.SigningAsHeader()
 
         val groups = remember(intents) {
             groupRequests(intents) {
@@ -113,14 +118,14 @@ fun IntentMultiEventHomeScreen(
                 val expanded = groups.size == 1 || (expandedGroups[groupKey] ?: false)
                 if (groups.size > 1) {
                     item(key = "group-header:${groupKey.type.name}:${groupKey.payload?.name ?: ""}:${groupKey.kind ?: ""}") {
-                        val groupApproved = groupIntents.all { MultiEventScreenIntents.checkedStates[it.id] ?: true }
+                        val groupApproved = groupIntents.all { MultiEventScreenIntents.checkedStates[it.queueKey] ?: true }
                         RequestGroupHeader(
                             label = groupKey.toLabel(context),
                             count = groupIntents.size,
                             approved = groupApproved,
                             expanded = expanded,
                             onApproveChanged = { approve ->
-                                MultiEventScreenIntents.checkedStates.putAll(groupIntents.associate { it.id to approve })
+                                MultiEventScreenIntents.checkedStates.putAll(groupIntents.associate { it.queueKey to (approve && !isBlockedByAuthWhitelist(it.event)) })
                             },
                             onExpandToggle = {
                                 expandedGroups[groupKey] = !(expandedGroups[groupKey] ?: false)
@@ -146,9 +151,10 @@ fun IntentMultiEventHomeScreen(
                         IntentRequestCard(
                             context = context,
                             intent = intent,
-                            approved = MultiEventScreenIntents.checkedStates[intent.id] ?: true,
+                            signingAs = batchAccounts.forCard(intent.currentAccount),
+                            approved = MultiEventScreenIntents.checkedStates[intent.queueKey] ?: true,
                             onApproveChanged = {
-                                MultiEventScreenIntents.checkedStates[intent.id] = it
+                                MultiEventScreenIntents.checkedStates[intent.queueKey] = it
                             },
                         )
                     }
@@ -169,7 +175,7 @@ fun IntentMultiEventHomeScreen(
                         var closeApp = true
                         onRemoveIntentData(intents, IntentResultType.REMOVE)
                         val localKey = packageName ?: return@launch
-                        val intentsByAccount = intents.groupBy { it.currentAccount.ifBlank { accountParam.npub } }
+                        val intentsByAccount = intents.groupBy { batchAccountNpub(it.currentAccount, accountParam.npub) }
 
                         for ((accountNpub, accountIntents) in intentsByAccount) {
                             val thisAccount = if (accountNpub == accountParam.npub) {
@@ -208,10 +214,13 @@ fun IntentMultiEventHomeScreen(
                             val historyList = mutableListOf<HistoryEntity>()
 
                             for (intentData in accountIntents) {
-                                val isApproved = MultiEventScreenIntents.checkedStates[intentData.id] ?: true
+                                // A relay outside the auth whitelist is rejected without
+                                // remembering it, as on the single screen.
+                                val blockedByWhitelist = isBlockedByAuthWhitelist(intentData.event)
+                                val isApproved = !blockedByWhitelist && (MultiEventScreenIntents.checkedStates[intentData.queueKey] ?: true)
                                 val type = intentData.type
                                 val groupKey = requestGroupKey(type, intentData.event?.kind, intentData.encryptedData, intentData.nip44v3Kind)
-                                val rememberType = groupRememberTypes[groupKey] ?: RememberType.NEVER
+                                val rememberType = if (blockedByWhitelist) RememberType.NEVER else groupRememberTypes[groupKey] ?: RememberType.NEVER
 
                                 if (type == SignerType.SIGN_EVENT) {
                                     val localEvent = intentData.event!!
@@ -226,13 +235,22 @@ fun IntentMultiEventHomeScreen(
                                         } else {
                                             ""
                                         }
+                                        // A blank relay-auth relay can never match a
+                                        // per-relay lookup and reads as the all-relays
+                                        // wildcard: remember "just this time" instead.
+                                        val relayRemember = relayAuthRememberType(
+                                            allRelays = localEvent.kind == 22242 &&
+                                                (groupRelayAuthScopes[groupKey] ?: RelayAuthScope.SPECIFIC) == RelayAuthScope.ALL,
+                                            relayUrl = signRelay,
+                                            rememberType = rememberType,
+                                        )
                                         AmberUtils.updatePermission(
                                             application,
                                             localKey,
                                             type,
                                             localEvent.kind,
                                             isApproved,
-                                            rememberType,
+                                            relayRemember,
                                             relay = signRelay,
                                             encryptedData = intentData.encryptedData,
                                         )
@@ -252,7 +270,7 @@ fun IntentMultiEventHomeScreen(
                                     )
 
                                     if (isApproved) {
-                                        val signature = if (localEvent is LnZapRequestEvent &&
+                                        val signature = if (localEvent is ZapRequestEvent &&
                                             localEvent.tags.any { tag ->
                                                 tag.any { t -> t == "anon" }
                                             }
@@ -369,6 +387,7 @@ fun IntentMultiEventHomeScreen(
 private fun IntentRequestCard(
     context: Context,
     intent: IntentData,
+    signingAs: Account?,
     approved: Boolean,
     onApproveChanged: (Boolean) -> Unit,
 ) {
@@ -483,20 +502,31 @@ private fun IntentRequestCard(
                 }
             }
 
-            AmberToggles(
-                selected = approved,
-                options = listOf(true, false),
-                onSelected = onApproveChanged,
-                label = {
-                    if (it) stringResource(R.string.approve) else stringResource(R.string.deny)
-                },
-                indicatorColor = {
-                    if (it) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
-                },
-                selectedTextColor = {
-                    if (it) Color.Black else MaterialTheme.colorScheme.onError
-                },
-            )
+            signingAs?.let { SigningAs(it) }
+
+            if (isBlockedByAuthWhitelist(intent.event)) {
+                // Always rejected on confirm, as on the single screen.
+                Text(
+                    text = stringResource(R.string.relay_not_in_auth_whitelist),
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.padding(vertical = 8.dp),
+                )
+            } else {
+                AmberToggles(
+                    selected = approved,
+                    options = listOf(true, false),
+                    onSelected = onApproveChanged,
+                    label = {
+                        if (it) stringResource(R.string.approve) else stringResource(R.string.deny)
+                    },
+                    indicatorColor = {
+                        if (it) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
+                    },
+                    selectedTextColor = {
+                        if (it) Color.Black else MaterialTheme.colorScheme.onError
+                    },
+                )
+            }
         }
     }
 

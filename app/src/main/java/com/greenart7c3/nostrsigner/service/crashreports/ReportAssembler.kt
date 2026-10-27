@@ -22,6 +22,7 @@ package com.greenart7c3.nostrsigner.service.crashreports
 
 import android.os.Build
 import com.greenart7c3.nostrsigner.BuildConfig
+import com.greenart7c3.nostrsigner.common.CrashReports
 
 class ReportAssembler {
     fun buildReport(e: Throwable): String = buildString {
@@ -77,40 +78,21 @@ class ReportAssembler {
         // (bech32 npub/nsec/etc, 64-char hex keys) and long base64 blobs
         // before persistence so the crash report cannot leak secrets.
         appendLine("```")
-        appendLine(redactSensitive(e.toString()))
+        appendLine(CrashReports.redactKeys(e.toString()))
         e.stackTrace.forEach {
             append("    ")
-            appendLine(redactSensitive(it.toString()))
+            appendLine(CrashReports.redactKeys(it.toString()))
         }
         val cause = e.cause
         if (cause != null) {
             appendLine("\n\nCause:")
             append("    ")
-            appendLine(redactSensitive(cause.toString()))
+            appendLine(CrashReports.redactKeys(cause.toString()))
             cause.stackTrace.forEach {
                 append("        ")
-                appendLine(redactSensitive(it.toString()))
+                appendLine(CrashReports.redactKeys(it.toString()))
             }
         }
         appendLine("```")
-    }
-
-    private fun redactSensitive(input: String): String = input
-        .replace(BECH32_REDACT, "<bech32>")
-        .replace(HEXKEY_REDACT, "<hexkey>")
-        .replace(BASE64_REDACT, "<base64>")
-
-    private companion object {
-        // bech32 prefixes used by Nostr (npub, nsec, note, nprofile, nevent,
-        // naddr, nrelay, ncryptsec). Match the hrp + data part; bech32 uses
-        // the alphabet 023456789acdefghjklmnpqrstuvwxyz (no b, i, o, 1).
-        private val BECH32_REDACT =
-            Regex("\\b(npub|nsec|note|nprofile|nevent|naddr|nrelay|ncryptsec)1[023456789acdefghjklmnpqrstuvwxyz]{6,}\\b")
-
-        // 64-char lowercase hex keys (pubkeys/event ids).
-        private val HEXKEY_REDACT = Regex("\\b[0-9a-f]{64}\\b")
-
-        // Long base64 runs (>=32 chars): NIP-44/44v3 ciphertexts, payloads.
-        private val BASE64_REDACT = Regex("\\b[A-Za-z0-9+/]{32,}={0,2}\\b")
     }
 }

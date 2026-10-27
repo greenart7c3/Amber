@@ -5,18 +5,18 @@ import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.SignerActivity
+import com.greenart7c3.nostrsigner.common.EncryptionType
+import com.greenart7c3.nostrsigner.common.SignerType
+import com.greenart7c3.nostrsigner.common.generateBunkerPrivKey
 import com.greenart7c3.nostrsigner.database.ApplicationEntity
 import com.greenart7c3.nostrsigner.database.ApplicationPermissionsEntity
 import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
 import com.greenart7c3.nostrsigner.database.HistoryEntity
 import com.greenart7c3.nostrsigner.database.LogEntity
-import com.greenart7c3.nostrsigner.database.generateBunkerPrivKey
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.AmberBunkerRequest
 import com.greenart7c3.nostrsigner.models.EncryptedDataKind
-import com.greenart7c3.nostrsigner.models.EncryptionType
 import com.greenart7c3.nostrsigner.models.Permission
-import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.models.encryptDecryptSignerTypes
 import com.greenart7c3.nostrsigner.models.encryptSignerTypes
 import com.greenart7c3.nostrsigner.relays.AmberListenerSingleton
@@ -42,6 +42,7 @@ import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toPersistentList
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -51,9 +52,12 @@ import kotlinx.coroutines.launch
 object BunkerRequestUtils {
     val state = MutableStateFlow<ImmutableList<AmberBunkerRequest>>(persistentListOf())
 
+    // Queued requests are identified by [AmberBunkerRequest.queueKey], never by
+    // the client-chosen JSON-RPC id alone: clients using the same (e.g.
+    // sequential) ids must not drop or replace each other's requests.
     fun addRequest(request: AmberBunkerRequest) {
         state.update { current ->
-            if (current.any { it.request.id == request.request.id }) {
+            if (current.any { it.queueKey == request.queueKey }) {
                 current
             } else {
                 (current + request).toPersistentList()
@@ -65,9 +69,24 @@ object BunkerRequestUtils {
         state.tryEmit(persistentListOf())
     }
 
-    fun remove(id: String) {
+    fun remove(request: AmberBunkerRequest) {
         state.update { current ->
-            current.filter { it.request.id != id }.toPersistentList()
+            current.filter { it.queueKey != request.queueKey }.toPersistentList()
+        }
+    }
+
+    /**
+     * Drops every queued request from [key] (a client whose app was deleted,
+     * reset or logged out), so answering a stale card later cannot resurrect
+     * the revoked connection. Cancels the request notifications when the
+     * queue empties.
+     */
+    fun removeAllForClient(key: String) {
+        state.update { current ->
+            current.filter { it.localKey != key }.toPersistentList()
+        }
+        if (state.value.isEmpty()) {
+            EventNotificationConsumer(Amber.instance).notificationManager().cancelAll()
         }
     }
 
@@ -79,7 +98,7 @@ object BunkerRequestUtils {
      * activity are only dismissed when the queue is empty.
      */
     fun finishRequest(bunkerRequest: AmberBunkerRequest, closeApplication: Boolean) {
-        remove(bunkerRequest.request.id)
+        remove(bunkerRequest)
         if (state.value.isNotEmpty()) return
 
         EventNotificationConsumer(Amber.instance).notificationManager().cancelAll()
@@ -95,7 +114,7 @@ object BunkerRequestUtils {
      *
      * A nostrconnect:// client listens only on the relays named in its URI, so those
      * always win, merged with any relays already saved for an app with the same key.
-     * Otherwise a saved app keeps its relays. A brand-new relay-delivered request
+     * Otherwise, a saved app keeps its relays. A brand-new relay-delivered request
      * falls back to the default relays: it carries just the single relay that
      * delivered the event, which may be a write-restricted indexer/profile relay.
      */
@@ -297,17 +316,15 @@ object BunkerRequestUtils {
 
     fun getDataFromBunker(bunkerRequest: BunkerRequest): String = when (bunkerRequest.method) {
         "connect" -> "ack"
-        "sign_event" -> {
-            val amberEvent = AmberEvent.fromJson(bunkerRequest.params.first())
-            amberEvent.toEvent().toJson()
-        }
+        // Client-supplied: a missing or unparsable param yields "" rather than throwing.
+        "sign_event" -> bunkerRequest.params.firstOrNull()?.let { runCatching { AmberEvent.fromJson(it).toEvent().toJson() }.getOrNull() } ?: ""
         "nip04_encrypt", "nip04_decrypt", "nip44_encrypt", "nip44_decrypt", "decrypt_zap_event" -> bunkerRequest.params.getOrElse(1) { "" }
         // NIP-44 v3 NIP-46 layout: [pubkey, kind, scope, payload]. For
         // `nip44v3_encrypt` the payload is base64-encoded plaintext; for
         // `nip44v3_decrypt` it is the v3 ciphertext.
         "nip44v3_encrypt", "nip44v3_decrypt" -> bunkerRequest.params.getOrElse(3) { "" }
         "ping" -> "pong"
-        "sign_psbt" -> bunkerRequest.params.first()
+        "sign_psbt" -> bunkerRequest.params.firstOrNull() ?: ""
         "logout" -> "ack"
         else -> ""
     }
@@ -372,6 +389,22 @@ object BunkerRequestUtils {
             }
             val relays = responseRelays(bunkerRequest, savedApplication?.application?.relays, defaultRelays)
             val secret = if (bunkerRequest.request is BunkerRequestConnect) bunkerRequest.request.secret ?: "" else ""
+
+            if (savedApplication == null && bunkerRequest.request !is BunkerRequestConnect) {
+                // A queued request whose app row is gone was revoked while it
+                // waited: answer with an error instead of recreating the
+                // revoked connection with fresh grants.
+                finishRequest(bunkerRequest, bunkerRequest.closeApplication)
+                AmberUtils.sendBunkerError(
+                    account,
+                    bunkerRequest,
+                    relays,
+                    Amber.instance,
+                    closeApplication = true,
+                    onLoading = onLoading,
+                )
+                return@launch
+            }
 
             var application =
                 savedApplication ?: ApplicationWithPermissions(
@@ -540,7 +573,7 @@ object BunkerRequestUtils {
             // be picked up by the 30-second `ConnectivityService` timer — a
             // window in which the pool could idle-disconnect the relay and
             // lose any RPC published by the client in the meantime.
-            if (type == SignerType.CONNECT || didChangeRelays) {
+            if (type == SignerType.CONNECT) {
                 Amber.instance.checkForNewRelaysAndUpdateAllFilters(didChangeRelays)
             }
             Amber.instance.client.connect()
@@ -613,6 +646,21 @@ object BunkerRequestUtils {
 
             val secret = if (bunkerRequest.request is BunkerRequestConnect) bunkerRequest.request.secret ?: "" else ""
 
+            if (savedApplication == null && bunkerRequest.request !is BunkerRequestConnect) {
+                // A queued request whose app row is gone was revoked while it
+                // waited: reject it without recreating the connection.
+                finishRequest(bunkerRequest, closeApplication = true)
+                AmberUtils.sendBunkerError(
+                    account,
+                    bunkerRequest,
+                    relays,
+                    Amber.instance,
+                    closeApplication = true,
+                    onLoading = onLoading,
+                )
+                return@launch
+            }
+
             val application =
                 savedApplication ?: ApplicationWithPermissions(
                     application = ApplicationEntity(
@@ -644,49 +692,56 @@ object BunkerRequestUtils {
 
             finishRequest(effectiveBunkerRequest, application.application.closeApplication)
 
-            if (rememberType != RememberType.NEVER) {
-                AmberUtils.acceptOrRejectPermission(
-                    application,
-                    key,
-                    signerType,
-                    kind,
-                    false,
-                    rememberType,
-                    account,
-                    relay,
-                    bunkerRequest.encryptedData,
-                    decryptTypeScope,
-                )
-            }
+            // Bookkeeping must not cost the client its answer: a failure here
+            // (e.g. a malformed request) used to skip the error reply below.
+            try {
+                if (rememberType != RememberType.NEVER) {
+                    AmberUtils.acceptOrRejectPermission(
+                        application,
+                        key,
+                        signerType,
+                        kind,
+                        false,
+                        rememberType,
+                        account,
+                        relay,
+                        bunkerRequest.encryptedData,
+                        decryptTypeScope,
+                    )
+                }
 
-            if (bunkerRequest.request !is BunkerRequestConnect) {
-                Amber.instance.dao(account.npub).insertApplicationWithPermissions(application)
-                val isV3 = signerType == SignerType.NIP44_V3_ENCRYPT || signerType == SignerType.NIP44_V3_DECRYPT
-                // A rejected encrypt request was never performed, so no ciphertext
-                // exists — store nothing rather than leaking the plaintext input.
-                // Decrypt requests carry their ciphertext in the request, so it is
-                // safe to persist and decrypt on demand.
-                val historyContent = if (signerType in encryptSignerTypes) "" else getDataFromBunker(bunkerRequest.request)
-                Amber.instance.getHistoryDatabase(account.npub).dao().addHistory(
-                    listOf(
-                        HistoryEntity(
-                            0,
-                            key,
-                            signerType.toString(),
-                            if (isV3) getNip44v3Kind(bunkerRequest.request) else null,
-                            TimeUtils.now(),
-                            false,
-                            content = historyContent,
-                            encryptionPubKey = if (historyContent.isNotEmpty() && signerType in encryptDecryptSignerTypes && signerType != SignerType.DECRYPT_ZAP_EVENT) {
-                                bunkerRequest.request.params.firstOrNull() ?: ""
-                            } else {
-                                ""
-                            },
-                            encryptionScope = if (isV3) getNip44v3Scope(bunkerRequest.request) else "",
+                if (bunkerRequest.request !is BunkerRequestConnect) {
+                    Amber.instance.dao(account.npub).insertApplicationWithPermissions(application)
+                    val isV3 = signerType == SignerType.NIP44_V3_ENCRYPT || signerType == SignerType.NIP44_V3_DECRYPT
+                    // A rejected encrypt request was never performed, so no ciphertext
+                    // exists — store nothing rather than leaking the plaintext input.
+                    // Decrypt requests carry their ciphertext in the request, so it is
+                    // safe to persist and decrypt on demand.
+                    val historyContent = if (signerType in encryptSignerTypes) "" else getDataFromBunker(bunkerRequest.request)
+                    Amber.instance.getHistoryDatabase(account.npub).dao().addHistory(
+                        listOf(
+                            HistoryEntity(
+                                0,
+                                key,
+                                signerType.toString(),
+                                if (isV3) getNip44v3Kind(bunkerRequest.request) else null,
+                                TimeUtils.now(),
+                                false,
+                                content = historyContent,
+                                encryptionPubKey = if (historyContent.isNotEmpty() && signerType in encryptDecryptSignerTypes && signerType != SignerType.DECRYPT_ZAP_EVENT) {
+                                    bunkerRequest.request.params.firstOrNull() ?: ""
+                                } else {
+                                    ""
+                                },
+                                encryptionScope = if (isV3) getNip44v3Scope(bunkerRequest.request) else "",
+                            ),
                         ),
-                    ),
-                    account.npub,
-                )
+                        account.npub,
+                    )
+                }
+            } catch (e: Exception) {
+                if (e is CancellationException) throw e
+                AmberLog.e(Amber.TAG, "Could not record the rejection of ${bunkerRequest.request.id}", e)
             }
 
             AmberUtils.sendBunkerError(

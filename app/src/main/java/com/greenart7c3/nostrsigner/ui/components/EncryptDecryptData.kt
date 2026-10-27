@@ -27,13 +27,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.common.SignerType
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.ClearTextEncryptedDataKind
 import com.greenart7c3.nostrsigner.models.EncryptedDataKind
 import com.greenart7c3.nostrsigner.models.EventEncryptedDataKind
 import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.models.PrivateZapEncryptedDataKind
-import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.models.TagArrayEncryptedDataKind
 import com.greenart7c3.nostrsigner.ui.RememberType
 import com.greenart7c3.nostrsigner.ui.theme.AmberPreview
@@ -131,12 +131,9 @@ fun EncryptDecryptData(
                                 stringResource(R.string.show_details),
                             )
                             if (showDetails) {
-                                EventDetailModal(
-                                    encryptedData.sealEncryptedDataKind.event.toEvent(),
-                                    {
-                                        showDetails = false
-                                    },
-                                )
+                                EventDetailModal(encryptedData.sealEncryptedDataKind.event.toEvent()) {
+                                    showDetails = false
+                                }
                             }
                         }
                     } else {
@@ -150,12 +147,9 @@ fun EncryptDecryptData(
                             stringResource(R.string.show_details),
                         )
                         if (showDetails) {
-                            EventDetailModal(
-                                encryptedData.event.toEvent(),
-                                {
-                                    showDetails = false
-                                },
-                            )
+                            EventDetailModal(encryptedData.event.toEvent()) {
+                                showDetails = false
+                            }
                         }
                     }
                 } else {
@@ -247,11 +241,6 @@ enum class DecryptTypeScope {
     SPECIFIC,
     ALL,
 }
-
-data class TagItem(
-    val name: String,
-    val values: List<String>,
-)
 
 @Composable
 fun BunkerEncryptDecryptData(

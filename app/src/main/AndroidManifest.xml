@@ -45,7 +45,7 @@
         <receiver
             android:name=".service.KillSwitchReceiver"
             android:enabled="true"
-            android:exported="false"></receiver>
+            android:exported="false" />
         <receiver
             android:name=".service.ReconnectReceiver"
             android:enabled="true"

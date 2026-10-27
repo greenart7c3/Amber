@@ -11,11 +11,15 @@ Amber is a nostr event signer for Android. It allows users to keep their nsec se
 
 </div>
 
+# Desktop
+
+Amber also runs on Windows, macOS and Linux as a NIP-46 signer built with Compose for Desktop. It supports the same accounts, permissions and bunker connections as the Android app (minus NIP-55, which is Android-only IPC). See [desktop/README.md](desktop/README.md) for build and usage instructions.
+
 # Current Features
 
 - [x] Offline
 - [x] Use nip-46 or make an addendum in nip-46
-- [x] Improve the ui (currently its showing a text with the raw json of the event)
+- [x] Improve the UI (currently it's showing a text with the raw JSON of the event)
 - [x] Check if we can use Amber to sign the events of web applications
 - [x] Change the sign button to just copy the signature of the event
 - [x] Use content provider to sign events in background when you checked the remember my choice option on android
@@ -114,6 +118,72 @@ docker run --rm amber-repro
 APKs match!
 ```
 
+# Verifying Reproducibility of Amber Desktop
+
+Every desktop download can be rebuilt from its tag and compared with the published file using [`desktopdiff.py`](desktopdiff.py). It compares what is inside: every path, file, symlink and executable bit must match, along with the installer's own scripts and tables (`.deb` maintainer scripts, `.rpm` scriptlets and dependencies, MSI custom actions, registry keys and shortcuts). Timestamps, owners and the installers' build dates are not compared, since they depend on when and where the files were packed. Packages are unpacked, never installed or run.
+
+The app ships the Java runtime of the JDK it was built with, so a rebuild must use the same [Temurin](https://adoptium.net/temurin/releases/) release. Print it from the download you are checking (`--jdk` takes any of the files below):
+
+``` bash
+python3 desktopdiff.py --jdk Amber-X.Y.Z-linux-x86_64.tar.xz
+```
+
+`21.0.12.1+1-LTS` means Temurin `jdk-21.0.12.1+1`. Use the `.tar.gz` / `.zip` archive of that release, not its installer, which is packaged differently.
+
+## Linux (.tar.xz, AppImage, .deb, .rpm)
+
+1. Build the image with no cache, the release tag and that JDK as a Docker tag (drop `-LTS`, `+` becomes `_`). If it is wrong, the build stops and names the right one:
+
+``` bash
+docker build -f Dockerfile.desktop -t amber-desktop-repro --progress=plain --no-cache --build-arg VERSION=vX.Y.Z --build-arg JDK=21.0.12.1_1 .
+```
+
+2. Run the container:
+
+``` bash
+docker run --rm amber-desktop-repro
+```
+
+3. You should see `Builds match!` four times: for the tarball, the AppImage, the `.deb` and the `.rpm`. A `Note:` about the `.deb`'s `Depends` or the `.rpm`'s `Requires` doesn't fail the check: jpackage lists the distro packages that provide the app's libraries on the build machine, which change with the distro's updates.
+
+## Windows (.msi, .exe)
+
+jpackage only builds for the OS it runs on, so rebuild on Windows x64:
+
+1. Unzip the Temurin `.zip` and point `JAVA_HOME` at it.
+2. Build the release:
+
+``` powershell
+git clone https://github.com/greenart7c3/Amber.git
+cd Amber
+git checkout vX.Y.Z
+New-Item keystore.properties
+.\gradlew.bat :desktop:packageMsi :desktop:packageExe
+```
+
+3. Compare in WSL or on any Linux machine with `msitools` installed (`apt install msitools`). `desktopdiff.py` reads the MSI with msitools rather than `msiexec`, which would run the package's own actions:
+
+``` bash
+python3 desktopdiff.py Amber-X.Y.Z-windows-x64.msi desktop/build/compose/binaries/main/msi/Amber-X.Y.Z.msi
+python3 desktopdiff.py Amber-X.Y.Z-windows-x64.exe desktop/build/compose/binaries/main/exe/Amber-X.Y.Z.exe
+```
+
+## macOS (.dmg)
+
+Rebuild on a Mac of the same architecture as the download (`arm64` for Apple silicon, `x64` for Intel):
+
+1. Unpack the Temurin `.tar.gz` and `export JAVA_HOME=<unpacked folder>/Contents/Home`.
+2. Build and compare:
+
+``` bash
+git clone https://github.com/greenart7c3/Amber.git
+cd Amber
+git checkout vX.Y.Z
+touch keystore.properties
+./gradlew :desktop:packageDmg
+python3 desktopdiff.py ~/Downloads/Amber-X.Y.Z-macos-arm64.dmg desktop/build/compose/binaries/main/dmg/Amber-X.Y.Z.dmg
+```
+
 # Certificate fingerprint for AppVerifier
 
 ``` bash
@@ -134,6 +204,6 @@ Check [NIP 55](https://github.com/nostr-protocol/nips/blob/master/55.md) and [NI
 
 # Contributors
 
-<a align="center" href="https://github.com/greenart7c3/amber/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=greenart7c3/amber" />
+<a href="https://github.com/greenart7c3/amber/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=greenart7c3/amber" alt="Contributors" />
 </a>

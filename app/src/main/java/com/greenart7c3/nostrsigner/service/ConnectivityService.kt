@@ -23,6 +23,7 @@ import com.greenart7c3.nostrsigner.okhttp.HttpClientManager
 import java.util.Timer
 import java.util.TimerTask
 import kotlin.collections.set
+import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -132,7 +133,7 @@ class ConnectivityService : Service() {
     private fun scheduleRelayReset(reason: String) {
         pendingRelayReset?.cancel()
         pendingRelayReset = scope.launch {
-            delay(NETWORK_SETTLE_MS)
+            delay(NETWORK_SETTLE_MS.milliseconds)
             Amber.instance.resetRelayConnections(reason)
         }
     }
@@ -164,7 +165,7 @@ class ConnectivityService : Service() {
                 // Cached dao so the write invalidates CachingApplicationDao's getAll
                 // entry for this account (the service can restart in a live process).
                 val dao = Amber.instance.dao(it.npub)
-                dao.getAllNotConnected()?.forEach { app ->
+                dao.getAllNotConnected().forEach { app ->
                     if (app.application.secret.isNotEmpty() && app.application.secret != app.application.key) {
                         app.application.isConnected = true
                         dao.insertApplicationWithPermissions(app)

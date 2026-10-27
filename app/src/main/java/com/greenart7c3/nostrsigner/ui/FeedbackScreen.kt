@@ -2,7 +2,6 @@ package com.greenart7c3.nostrsigner.ui
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -40,7 +39,6 @@ import com.greenart7c3.nostrsigner.ui.components.AmberButton
 import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun FeedbackScreen(
     modifier: Modifier = Modifier,

@@ -43,7 +43,7 @@ class CachingApplicationDaoTest {
         dao = CachingApplicationDao(delegate)
     }
 
-    private suspend fun stubGetAll(vararg entities: ApplicationEntity) {
+    private fun stubGetAll(vararg entities: ApplicationEntity) {
         coEvery { delegate.getAll(accountKey) } returns entities.toList()
     }
 

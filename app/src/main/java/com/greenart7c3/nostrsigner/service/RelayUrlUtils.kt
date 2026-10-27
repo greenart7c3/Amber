@@ -22,7 +22,7 @@ object RelayUrlUtils {
                 uri.port != -1 -> "$host:${uri.port}"
                 else -> host
             }
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             trimmed
         }
     }

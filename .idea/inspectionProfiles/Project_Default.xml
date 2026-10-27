@@ -73,5 +73,6 @@
       <option name="composableFile" value="true" />
       <option name="previewFile" value="true" />
     </inspection_tool>
+    <inspection_tool class="SpellCheckingInspection" enabled="false" level="TYPO" enabled_by_default="false" />
   </profile>
 </component>

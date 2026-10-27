@@ -1,67 +1,151 @@
-# Repository instructions for Codex / OpenCode
+# Repository instructions for coding agents
 
-Amber is a single-module Android app (`:app`, package `com.greenart7c3.nostrsigner`) — a Nostr event signer (NIP-46 / NIP-55). Despite top-level `lib/`, `commonMain/`, `androidMain/` dirs, `settings.gradle.kts` includes only `:app`; those are not separate Gradle modules.
+These instructions apply to every coding agent working in this repository (Codex, OpenCode, Claude Code, …). `CLAUDE.md` only points here.
+
+Amber is a Nostr event signer (NIP-46 / NIP-55), package `com.greenart7c3.nostrsigner`. `settings.gradle.kts` includes three Gradle modules — `:app` (Android), `:desktop` and `:common`, the logic both share (see [Modules](#modules)).
 
 ## Toolchain
 
 - JDK 21 required (source/target compat 21). CI and `.codex/setup.sh` use Temurin 21.
 - `compileSdk = 37`, `minSdk = 26`, R8 full mode enabled, Gradle parallel + configuration-cache.
 - Room schemas are exported to `app/schemas` via KSP (`room.schemaLocation`).
+- Dependency verification is on: `gradle/verification-metadata.xml` pins the SHA-256 of every dependency and plugin artifact, and the build fails on any artifact that is missing or doesn't match. After adding or bumping a dependency or plugin, regenerate it with `./gradlew --write-verification-metadata sha256 help <the tasks that use it>` (e.g. `assembleDebug test lint` or `:desktop:test :desktop:createDistributable`) and review the diff. The per-OS Compose Desktop runtimes (`desktop-jvm-*` / `skiko-awt-runtime-*` for windows-x64, macos-arm64, macos-x64) and `aapt2` `osx`/`windows` builds only resolve on their own OS, so bump their entries too, or desktop CI on Windows/macOS breaks.
 
 ## Build and validation commands
 
 - `./gradlew ktlintCheck` — Kotlin style check (pre-commit hook runs this).
 - `./gradlew ktlintFormat` — auto-fix formatting issues.
+- `./gradlew detektAll` — unused imports, parameters, variables and private declarations in the app (every flavor, unit and instrumented tests), desktop and common, with detekt's type resolution (pre-commit hook runs this). Only those rules are on (`config/detekt/detekt.yml`); suppress a deliberate one at its site with `@Suppress("UnusedParameter")` etc. It also runs `./gradlew unusedCode` (`tools/unused-code`), which detekt cannot do because it sees one file at a time: across every module's sources it fails on a non-private function, property, class or typealias whose name nothing references (Kotlin sources including tests, XML, ProGuard rules, Gradle scripts and `tools/arti/src` for JNI callbacks), and on a catch parameter the block never reads (name it `_`). Overrides, operators, `main`, enum entries, constructor properties, `@…Preview` and test functions, and Room/serializer-read properties are never reported; mark code that only something outside the sources uses (reflection, the NDK) with `@Suppress("unused")`.
+- Kotlin compiler warnings are errors (`allWarningsAsErrors` in the root `build.gradle.kts`): deprecated APIs, needless `?.`/`!!`/`?:`, unused expressions, unchecked casts, missing opt-ins. Fix them; when one is deliberate (e.g. the OkHttp `body` null checks the offline flavor's OkHttp 4 needs), suppress it at the statement.
 - `./gradlew lint` — Android Lint on the default variant; `warningsAsErrors` is on, so any new warning fails the build (pre-commit and pre-push hooks run this). Version-freshness checks (`GradleDependency` etc.) are disabled in `app/build.gradle.kts`; per-path exemptions live in `app/lint.xml`.
 - `./gradlew test --no-daemon` — JVM unit tests for all variants (pre-push hook runs `./gradlew test lint`).
 - Run one test: `./gradlew :app:testFreeDebugUnitTest --tests "com.greenart7c3.nostrsigner.SomeTest"` (or `--tests "*SomeTest.method"`).
 - `./gradlew assembleDebug --no-daemon` — debug APK for both product flavors.
 - `./gradlew assembleRelease --no-daemon` — release APK; signing only activates when env `SIGN_RELEASE` is set **and** `keystore.properties` exists. CI otherwise `touch`es an empty one.
 - `./build.sh <version> <appName>` — builds free + offline release APKs/AABs into `~/release/` and calls `generate_manifest.sh`.
+- Desktop: `./gradlew :desktop:run` (debug build), `:desktop:test`, `:desktop:packageDistributionForCurrentOs`.
 
-Required order when pushing: `ktlintCheck` → `lint` → `test` → build (mirrored by the hooks, but run them directly; do not rely on hooks).
+Required order when pushing: `ktlintCheck` → `detektAll` → `lint` → `test` → build (mirrored by the hooks, but run them directly; do not rely on hooks).
 
 ## Releases / version bumps
 
-When asked to "bump the version" / cut a release, do **all** of the following in a single change — never omit the verification block:
+When asked to "bump the version" / cut a release, do **all** the following in a single change — never omit the verification block:
 
-1. Bump `versionCode` (+1) and `versionName` (new `X.Y.Z`) in `app/build.gradle.kts` (`defaultConfig`). These are the only places the version lives.
+1. Bump `amberVersionCode` (+1) and `amberVersionName` (new `X.Y.Z`) in `gradle/libs.versions.toml`. These are the only places the version lives: the Android `defaultConfig` and the desktop app (`:desktop`, installers and the runtime `-Damber.version`) both read them, and `desktop-release.yml` fails if the tag does not match `amberVersionName`. Never hard-code a version in `app/build.gradle.kts` or give the desktop its own.
 2. Prepend a new `## Amber X.Y.Z` block at the top of `CHANGELOG.md`, summarizing the non-merge commits since the previous `vX.Y.Z` tag (`git log vX.Y.Z..HEAD --no-merges`), grouped as user-facing bullets. End the block with the standard "Download it with …" line (update the `releases/tag/vX.Y.Z` URL) and the "If you like my work …" donation line.
 3. **Always include the `## Verifying the release` block immediately after the donation line** (before the next `## Amber` heading). Copy it verbatim from the previous release entry and only change the `manifest-vX.Y.Z.txt` / `manifest-vX.Y.Z.txt.sig` filenames to the new version. Do **not** change the `gpg --recv-keys` key id, the `gpg: Signature made Fri 13 Sep 2024 …` block, or the surrounding prose — those are key-specific, not release-specific. This block must be part of the version-bump commit, not a follow-up.
 4. Do not commit unless explicitly asked (per the global rule). Do not edit `build.sh` — it takes the version as an argument.
 
 ## Product flavors (dimension `version`)
 
-| Flavor | Notes |
-|--------|-------|
-| `free` (default) | Online: OkHttp, Coil, kmptor, relay connectivity. Owns `INTERNET`/network permissions. |
-| `offline` | No network stack. `app/src/offline/AndroidManifest.xml` **removes** `INTERNET`/`CHANGE_NETWORK_STATE`/`ACCESS_NETWORK_STATE` with `tools:node="remove"`. |
-| `benchmark` | Mirrors `free` network deps; `applicationIdSuffix=.benchmark`, `versionNameSuffix=-BENCHMARK`; CI builds a signed release per push for side-by-side install. |
+| Flavor           | Notes                                                                                                                                                        |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `free` (default) | Online: OkHttp, Coil, built-in Tor (Arti, `src/tor`), relay connectivity. Owns `INTERNET`/network permissions.                                               |
+| `offline`        | No network stack. `app/src/offline/AndroidManifest.xml` **removes** `INTERNET`/`CHANGE_NETWORK_STATE`/`ACCESS_NETWORK_STATE` with `tools:node="remove"`.     |
+| `benchmark`      | Mirrors `free` network deps; `applicationIdSuffix=.benchmark`, `versionNameSuffix=-BENCHMARK`; CI builds a signed release per push for side-by-side install. |
 
-- Guard any network-only code with `BuildFlavorChecker.isOfflineFlavor()`. There is also `BuildConfig.IS_FDROID_BUILD` (false by default; the F-Droid release workflow flips it true and strips `REQUEST_INSTALL_PACKAGES` via `sed`) — use it to disable self-update / Zapstore.
+- Guard any network-only code with `BuildFlavorChecker.isOfflineFlavor()`. There is also `BuildConfig.IS_FDROID_BUILD` (false by default; the F-Droid release workflow flips it true and strips `REQUEST_INSTALL_PACKAGES` via `sed`) — read it through `BuildFlavorChecker.isFdroidBuild()` to disable self-update / Zapstore, never as the constant, which the IDE would simplify away.
 - **Offline permissions gate:** `check-offline-permissions.yml` runs `./gradlew processOfflineDebugManifest` and greps the merged manifest for the three network permissions. Any new dependency that leaks `INTERNET` etc. will fail this check — verify the offline merged manifest when adding network-capable deps.
 
-## Architecture notes (not obvious from filenames)
+## Modules
 
-Three request ingestion paths all converge on `Account.sign()` / encrypt-decrypt:
-1. `nostrsigner://` / `nostrconnect://` Intent → `SignerActivity` → `IntentUtils` → approval bottom sheet.
-2. ContentProvider IPC → `SignerProvider` (synchronous, `runBlocking`).
-3. NIP-46 relay kind 24133 → `NotificationSubscription` → `EventNotificationConsumer` → `BunkerRequestUtils`.
+- `:app` — the Android app (everything in [Architecture](#architecture-android-app) refers to it).
+- `:common` — plain Kotlin/JVM library both apps depend on (package `com.greenart7c3.nostrsigner.common`) for logic that must behave the same on Android and desktop: `SignerType`/`EncryptionType`, the request policy (`connectsThroughOtherKey`, `hasAmbiguousRelayTags`, `sanitizeAppName`), the remembered-permission decision (`activeDecision`, `rememberedDecision`), per-connection keys, crash-report redaction (`CrashReports`), `Nip44v3`, `PsbtDecoder`/`PsbtSighashPolicy`, `RelayHealthTracker` and `TorSocksAuthenticator`. Put shared logic here instead of copying it into both apps; each app keeps only its storage, UI and platform glue around it. It has no Android or desktop APIs and compiles against Quartz with `compileOnly(quartz-jvm)`: each app ships its own Quartz build (`quartz-android` / `quartz-jvm`), so use only Quartz API both builds have. Its tests run with `./gradlew :common:test` (also part of `./gradlew test`).
+- `:desktop` — Compose for Desktop (JVM) NIP-46 signer for Windows/macOS/Linux; standalone port that mirrors the Android permission model against `quartz-jvm` (no NIP-55). `./gradlew :desktop:run` launches a debug build (`core/BuildVariant.kt`: separate data dir, keyring entry, socket and "Amber Debug" name, so it never touches a release install).
+  - **Bunker engine:** its core mirrors `NotificationSubscription`/`EventNotificationConsumer`/`BunkerRequestUtils` in `desktop/.../core/BunkerEngine.kt` — behavior changes to the Android bunker flow should be ported there too.
+  - **Keys:** AES-encrypted via a PKCS12 Java KeyStore (`DesktopKeyStore`) whose password lives in the OS credential store (Keychain / Credential Manager / Secret Service via `java-keyring`, file fallback — see `KeystorePassword.resolve`). That keystore only exists before first run: the passphrase is mandatory (`PassphraseLock`, setup screen before anything loads), and setting it wraps the master key with Argon2id — combined via HKDF with a random secret in the OS credential store when one works (`osSecretStore`, a second factor) — and deletes the keystore. It adds a startup/auto-lock gate that evicts key material and gates the bunker engine, and encrypts the per-account database (apps/permissions/history/logs) at rest via `writeSecure`/`readSecure`. Every master-key ciphertext is context-bound (GCM AAD, `DesktopKeyStore.encryptString(…, context)`), and while a passphrase is set unbound or plaintext data is rejected. `applications.json` is also rollback-protected: its header carries a generation (`AMBERENC3:<n>:`, bound into the AAD) whose latest value is kept in the OS credential store (`StoreGenerations`), and an older copy is refused. The desktop app has no released predecessor, so there are no migrations: only the current formats are read, and anything else is treated as tampered. Write files with `AppDirs.writeAtomically`; unreadable files are quarantined, never overwritten. Lock wipes key material (`WipeableAesKey`, `DesktopAccount.wipe`, Quartz NIP-04/44 caches): keep secrets in `ByteArray`s (`decryptBytes`), not Strings, and don't hand out an account outside `AmberDesktop.account` (only cached accounts get wiped). State is JSON files per account (no Room).
+  - **Local socket signer:** an always-on NIP-5F local socket signer (`core/LocalSigner.kt` + `LocalSignerProtocol.kt`, `~/.local/share/nostr/signer.sock`) feeds CLI tools through the same `BunkerEngine` permission/approval pipeline as NIP-46: socket apps are `AppRecord`s with `transport = "socket"` and no relays, and their pending requests carry a `responder` that answers over the socket instead of a kind-24133 event. Protocol and internals: `desktop/LOCAL_SIGNER.md`.
+  - **Notifications:** they go through the OS-native channel (`core/Notifier.kt`: freedesktop `notify-send`/`gdbus` on Linux incl. Wayland/Hyprland; AWT tray notification on Windows and macOS — never `osascript` on macOS, it posts as Script Editor, which is never authorized, and is silently dropped), decoupled from the tray. Request notifications carry Approve / Reject (Reject only for connect): on Linux daemons that draw action buttons they are posted over the session D-Bus with dbus-java (`core/DbusNotifications.kt` — the daemon sends `ActionInvoked` only to the posting connection, and notify-send 0.8.8 drops the buttons on GNOME 50); on Windows, macOS and button-less Linux daemons (quickshell, mako, dunst) Amber shows its own native-looking popup (`ui/RequestNotificationPopup.kt`). Request notifications are skipped while the main window is focused (the card is already in view), and focusing it closes a showing popup. On Linux the popup is a POPUP `JWindow` (override-redirect on X11), not a Compose `Window`/JFrame; AWT's peer still types it NORMAL on XWayland, which Hyprland focuses on map, so `markAsX11Popup` sets the peer's `windowType` by reflection (needs the `--add-opens=java.desktop/sun.awt.X11` JVM arg) — never let the popup take keyboard focus. The packaged runtime needs the `jdk.security.auth` module for dbus-java's bus login, which also enables the Secret Service keyring path, and `jdk.net` for the local socket signer's peer check. jlink only bundles the modules listed in `nativeDistributions { modules(...) }` plus what the plugin detects, and `:desktop:run` uses the full JDK, so a missing module only fails in the packaged app: check new JDK-module imports with `jdeps` on `lib/app/*.jar` of `createDistributable`. Focusing the main window closes Amber's own popup, except while the pointer is on it: on macOS clicking the popup activates the app and focuses the main window before the click lands, which used to swallow Approve.
+  - **Crash reports:** `core/CrashReporter.kt` mirrors the Android `UnexpectedCrashSaver`/`ReportAssembler`/`ReportSender` (redacted `crash.trace`, NIP-17 DM to `DEVELOPER_HEX_KEY` on user consent, `ui/CrashReportDialog.kt` after unlock); the version comes from the launcher's `-Damber.version` (`BuildVariant.version`), i.e. `amberVersionName`.
+  - **Tray:** the dorkbox SystemTray library on Linux (`NativeTray.kt`) publishes a StatusNotifierItem/AppIndicator that shows on Wayland compositors; Windows/macOS use the AWT/Compose `Tray`. `AMBER_DISABLE_TRAY=1` skips the native tray.
+  - See `desktop/README.md`.
 
-`Amber.kt` (the `Application` class) is the DI container: owns `applicationIOScope`, the Quartz `NostrClient`, `notificationSubscription`, `isStartingAppState` (set during `runMigrations()` — wait on `isStartingAppState.first { !it }`), and `settings.killSwitch` (disconnects all relays when true).
+## Architecture (Android app)
 
-Per-account isolation: every `npub` gets its own `SharedPreferences` (`prefs_${npub}`), `AppDatabase` (`amber_db_${npub}`), `LogDatabase`, and `HistoryDatabase` — all lazily cached in `ConcurrentHashMap`s in `Amber`. Decrypted keys loaded via `LocalPreferences.loadFromEncryptedStorage()` and cached in `LargeCache`.
+### Request ingestion — three paths
 
-Biometric/PIN lock (`useAuth`/`usePin`, `SecurityScreen`, `BiometricAuthScreen`) is a **UI-only app-launch gate**, not a signing gate. `SignerProvider` and the NIP-46 path never touch it; auto-accept permission rules sign silently on all three paths. Authorization for automatic signing is governed solely by the permission system (`ApplicationEntity` / `ApplicationPermissionsEntity`: `rememberType`, `acceptUntil`/`rejectUntil`, `kind`). Do not wire signing through the biometric prompt.
+External apps and relays reach the signer through three distinct paths:
 
-See `CLAUDE.md` for the key-files table (verified accurate against the current tree).
+1. **`nostrsigner://` / `nostrconnect://` Intent** → `SignerActivity` → parsed by `IntentUtils` → shown as an approval bottom sheet
+2. **ContentProvider IPC** → `SignerProvider` → synchronous signing via `runBlocking`
+3. **NIP-46 relay events** (kind 24133) → `NotificationSubscription` → `EventNotificationConsumer` → `BunkerRequestUtils`
+
+All three paths converge on `Account.sign()` / encrypt/decrypt methods backed by `NostrSignerInternal`.
+
+### Global state — `Amber.kt`
+
+`Amber` is the Application class and acts as the DI container. Key singletons it owns:
+
+- `applicationIOScope` — `CoroutineScope(Dispatchers.IO + SupervisorJob() + exceptionHandler)`, used for all background work
+- `client: NostrClient` — the Quartz Nostr relay client
+- `notificationSubscription` — keeps the NIP-46 filter alive in the background
+- `profileSubscription` — per-account, throttled one-shot metadata fetch; first fetches the user's NIP-65 relay list (kind 10002) and saves it locally, then fetches the metadata (kind 0) from the default profile relays plus the saved user relays; started/stopped by the composables that display each account via `ProfileSubscriptionEffect` (not app-wide)
+- `isStartingAppState: MutableStateFlow<Boolean>` — set to `true` during `runMigrations()`; code that must wait for startup calls `isStartingAppState.first { !it }`
+- `settings.killSwitch` — when true, all relays are disconnected; checked before every relay operation
+
+### Per-account isolation
+
+Every `npub` gets its own:
+- `SharedPreferences` file (`prefs_${npub}`)
+- `AppDatabase` (`amber_db_${npub}`) — apps + permissions
+- `LogDatabase` — operation logs
+- `HistoryDatabase` — request history
+
+All databases are lazy-loaded and cached in `ConcurrentHashMap`s in `Amber`. Account data (including decrypted keys) is loaded via `LocalPreferences.loadFromEncryptedStorage()` and cached in `LargeCache`.
+
+### Permission system
+
+Permissions are stored in `ApplicationEntity` + `ApplicationPermissionsEntity` (Room). Each permission entry has:
+- `rememberType` — auto-accept, auto-reject, or always-ask
+- `acceptUntil` / `rejectUntil` — time-bound grants
+- `kind` — event-kind-specific rules
+
+NIP-44 v3 grants are keyed by the context **kind** only (a kind-K rule, or a kind-less "all kinds" rule); the context scope string (`params[2]`) is shown in the approval prompt but is not stored, so a remembered kind-K grant covers every scope. Desktop (`BunkerEngine`, `LocalSigner`) follows the same model; keep them in step if that ever changes.
+
+Before showing the approval UI, all three ingestion paths query the database; if a matching auto-accept rule exists, signing proceeds silently.
+
+### Biometric / PIN lock is UI-only
+
+The biometric/PIN prompt (`useAuth` / `usePin` in `AmberSettings`, configured in `SecurityScreen`) is **only an app-launch UI gate**, not a signing gate. It is rendered by `BiometricAuthScreen`, which is invoked exclusively from the two UI entry points — `MainActivity` and `SignerActivity` — to unlock the app's screens before any approval bottom sheet is shown.
+
+It does **not** protect the signing operations themselves:
+
+- **ContentProvider IPC** (`SignerProvider`) and **NIP-46 relay events** (`EventNotificationConsumer` → `BunkerRequestUtils`) never touch `BiometricAuthScreen`, `Biometrics`, `useAuth`, or `usePin`. They sign in the background based purely on the permission database.
+- When an auto-accept rule matches, all three paths sign silently **without** triggering the biometric/PIN prompt — including `nostrsigner://` intents, which auto-finish before the UI is interacted with.
+
+In other words, the lock controls who can open and navigate the app UI; it does not stand between a request and `Account.sign()`. Authorization for automatic signing is governed solely by the permission system (`rememberType` / `acceptUntil` / `kind`). Do not wire signing through the biometric prompt.
+
+### The `requireUnlockedDevice` opt-in is a signing gate
+
+Separate from the UI-only lock above, the user can enable **`requireUnlockedDevice`** (SecurityScreen). When enabled, every `Account` private-key operation (`sign`, `signSync`, `nip04*`/`nip44*`, `decrypt`, `signPsbt`, `getNsec`, `seedWords`, `nip49Encrypt`, and the backup derived signer) calls `DeviceUnlockPolicy.requireAccess` first and throws `SecurityException` while the device is locked. The flag is read synchronously from SharedPreferences (`LocalPreferences.getRequireUnlockedDevice`), so the gate is correct even before the async settings load and in the offline flavor.
+
+Consequences to keep in mind when touching these paths:
+
+- Background consumers of gated operations must handle the refusal explicitly: the relay AUTH coordinator isolates per-account failures, `BackupApplicationsWorker` returns `Result.retry()` on the lock refusal, and lock/settings refusals are rethrown (not swallowed) by `validateNip44v3Request` and `ApplicationBackup.decryptContent` so clients and callers see the real condition instead of a decrypt/corruption error.
+- NIP-46 requests are checked before they are opened: while locked, `EventNotificationConsumer` answers clients that have their own connection key with a "locked" error (using only that key), and leaves requests from legacy clients, which are encrypted to the account key, unopened and unrecorded so a re-delivery after unlock is processed.
+- This gate is independent of the biometric/PIN UI lock: with `requireUnlockedDevice=false` (the default), background signing behaves exactly as described above.
+
+### Key files
+
+| File                       | Purpose                                                     |
+| -------------------------- | ----------------------------------------------------------- |
+| `Amber.kt`                 | Application singleton, Nostr client, relay connectivity     |
+| `LocalPreferences.kt`      | Account/settings persistence, encrypted key storage         |
+| `IntentUtils.kt`           | Parses `nostrsigner://` URIs, creates `IntentData` objects  |
+| `SignerProvider.kt`        | ContentProvider IPC signing                                 |
+| `BunkerRequestUtils.kt`    | NIP-46 protocol handling, relay responses                   |
+| `AccountStateViewModel.kt` | Auth state, account switching, toast notifications          |
+| `ConnectivityService.kt`   | Foreground service, network monitoring, relay reconnection  |
+| `BiometricAuthScreen.kt`   | UI-only app-launch lock (biometric/PIN); not a signing gate |
+| `Biometrics.kt`            | Wraps `BiometricPrompt` / keyguard credential prompt        |
+| `SecurityScreen.kt`        | Toggles `useAuth` / `usePin` and the re-prompt interval     |
 
 ## Conventions
 
 - ktlint `android_studio` code style (`.editorconfig`); star imports effectively disabled; trailing commas allowed; `@Composable` functions exempt from the function-naming rule. Run `ktlintFormat` rather than hand-formatting.
 - Translations live in `app/src/main/res/values-<locale>/strings.xml`; `MissingTranslation` lint is intentionally disabled and the shipped locales are pinned by `androidResources.localeFilters` in `app/build.gradle.kts`.
-- **Always translate string resources.** Whenever you add or change a string in `app/src/main/res/values/strings.xml`, add the translated entry to **every** existing `app/src/main/res/values-*/strings.xml` locale file in the same change (list them with `ls app/src/main/res | grep '^values-'`, ignoring `values-night`). Do not ship English placeholders in locale files — write the actual translation, matching the existing tone/registers of that file. Escape apostrophes as `\'` in languages that use them (e.g. French, Italian, Turkish), exactly like neighboring entries.
-- Git hooks (`git-hooks/pre-commit`, `pre-push`) are auto-installed by the root `build.gradle.kts` `installGitHook` task wired into `:app` `preBuild`. Do not rely on them as a substitute for running checks directly.
+- **Strings must be translated in the same change.** Whenever you add or change a string in `app/src/main/res/values/strings.xml` — including `event_kind_*` labels for new Nostr kinds — add the real translation to **every** `app/src/main/res/values-*/strings.xml` locale file (`ls app/src/main/res | grep '^values-'`, ignoring `values-night`) before reporting the work as done. Never stop at English and never copy English into a locale file — write the actual translation, matching the existing tone/register of that file. Because `MissingTranslation` lint is disabled, a passing build does **not** mean the translations are present. Escape apostrophes as `\'` in languages that use them (French, Italian, Turkish, …), exactly like neighboring entries.
+- Git hooks (`git-hooks/pre-commit`, `pre-push`) are auto-installed by the root `build.gradle.kts` `installGitHook` task wired into `:app` `preBuild` — no manual setup needed, but do not rely on them as a substitute for running checks directly.
 
 ## Codex Web / cloud setup
 
@@ -73,4 +157,8 @@ Use the committed scripts for cloud environments:
 
 `Dockerfile` + `apkdiff.py` verify reproducible builds: `docker build -t amber-repro --build-arg VERSION=vX.Y.Z --build-arg APK_TYPE=free-arm64-v8a .` then `docker run --rm amber-repro` (expect `APKs match!`).
 
-- For repository collaboration, use ngit and follow `.agents/skills/ngit/SKILL.md`.
+Desktop: every download is reproducible by content, checked with `desktopdiff.py` (files plus installer scripts/tables; timestamps and build dates ignored; `--jdk` prints the bundled JDK). `Dockerfile.desktop` rebuilds the Linux `.tar.xz`, AppImage, `.deb` and `.rpm` of a tag and compares them with the release; Windows (`.msi`/`.exe`) and macOS (`.dmg`) are rebuilt on that OS (README has the steps). What keeps it that way: `desktop.yml` makes setup-java download the official Temurin archive (an empty `RUNNER_TOOL_CACHE`), since the app bundles that JDK's runtime and the runner's preinstalled copy differs; `SkikoNatives` in `desktop/build.gradle.kts` ships skiko's native library as plain files instead of the skiko-awt-runtime jar, which Compose 1.12 rewrites with the build time (Compose 1.13 fixes that), and `ZipTimestamps` fixes the entry times of the jars the plugin re-zips on macOS; `.gitattributes` turns off line-ending conversion, which made Windows checkouts bundle CRLF resources. Run `python -m unittest discover -s tests` after changing `desktopdiff.py`.
+
+## Collaboration
+
+For repository collaboration, use ngit and follow `.agents/skills/ngit/SKILL.md` (mirrored at `.claude/skills/ngit/SKILL.md`).

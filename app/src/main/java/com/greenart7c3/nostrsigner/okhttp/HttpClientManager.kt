@@ -57,9 +57,20 @@ object HttpClientManager {
     private var defaultTimeout = DEFAULT_TIMEOUT_ON_WIFI
     private var defaultHttpClient: OkHttpClient? = null
     private var defaultHttpClientWithoutProxy: OkHttpClient? = null
+    private var localHttpClient: OkHttpClient? = null
     private var userAgent: String = "Amethyst"
 
     private var currentProxy: Proxy? = null
+
+    /**
+     * Fail-closed placeholder for built-in Tor: a SOCKS proxy on loopback port
+     * 0 that can never connect. Re-installed when Tor releases its port so a
+     * stop or failure cannot leave OkHttp dialing a loopback port that another
+     * app may then bind.
+     */
+    private val failClosedProxy: Proxy by lazy {
+        Proxy(Proxy.Type.SOCKS, InetSocketAddress("127.0.0.1", 0))
+    }
 
     private val cache = EncryptionKeyCache()
 
@@ -77,6 +88,19 @@ object HttpClientManager {
         }
     }
 
+    /**
+     * Re-installs the fail-closed placeholder when the currently configured
+     * proxy still points at [port]. A no-op when the proxy was switched to
+     * something else already (Orbot port, direct), so that choice is not
+     * overwritten by a concurrent Tor teardown.
+     */
+    fun releaseProxyPort(port: Int) {
+        val address = currentProxy?.address() as? InetSocketAddress
+        if (address != null && address.port == port) {
+            setDefaultProxy(failClosedProxy)
+        }
+    }
+
     fun setDefaultTimeout(timeout: Duration) {
         AmberLog.d(Amber.TAG, "Changing timeout to: $timeout")
         if (defaultTimeout.seconds != timeout.seconds) {
@@ -85,6 +109,7 @@ object HttpClientManager {
             // Invalidate; see setDefaultProxy for why we rebuild lazily.
             defaultHttpClient = null
             defaultHttpClientWithoutProxy = null
+            localHttpClient = null
         }
     }
 
@@ -96,12 +121,14 @@ object HttpClientManager {
             // Invalidate; see setDefaultProxy for why we rebuild lazily.
             defaultHttpClient = null
             defaultHttpClientWithoutProxy = null
+            localHttpClient = null
         }
     }
 
     private fun buildHttpClient(
         proxy: Proxy?,
         timeout: Duration,
+        followRedirects: Boolean = true,
     ): OkHttpClient {
         val seconds = if (proxy != null) timeout.seconds * 3 else timeout.seconds
         val duration = Duration.ofSeconds(seconds)
@@ -122,6 +149,8 @@ object HttpClientManager {
             // `NostrClient.onConnected → syncFilters` can re-issue the
             // stranded subscriptions.
             .pingInterval(PING_INTERVAL)
+            .followRedirects(followRedirects)
+            .followSslRedirects(followRedirects)
             .addInterceptor(DefaultContentTypeInterceptor(userAgent))
             .addNetworkInterceptor(LoggingInterceptor())
             .addNetworkInterceptor(EncryptedBlobInterceptor(cache))
@@ -167,6 +196,19 @@ object HttpClientManager {
             defaultHttpClientWithoutProxy = buildHttpClient(null, defaultTimeout)
         }
         defaultHttpClientWithoutProxy!!
+    }
+
+    /**
+     * Direct client for URLs classified as private (local network), which skip
+     * Tor. It never follows redirects: a hop is dialed before any interceptor
+     * could re-check it, so a local host redirecting to a public one would send
+     * that request around Tor and reveal the user's IP.
+     */
+    fun getLocalHttpClient(): OkHttpClient {
+        if (localHttpClient == null) {
+            localHttpClient = buildHttpClient(null, defaultTimeout, followRedirects = false)
+        }
+        return localHttpClient!!
     }
 
     /** Current timeout, already scaled per connection type by callers that need

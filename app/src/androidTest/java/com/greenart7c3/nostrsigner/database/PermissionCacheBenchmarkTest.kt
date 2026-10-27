@@ -22,7 +22,7 @@ import org.junit.runner.RunWith
  *  - warm : caching DAO with the cache pre-primed, every iteration is a hit.
  *
  * Asserts warm is meaningfully faster than raw (5x floor — actual speedup is far
- * larger on a real device since each raw call is a full SQLite roundtrip). Also
+ * larger on a real device since each raw call is a full SQLite roundtrip). Also,
  * sanity-checks that warm and raw return the same row for the same query.
  */
 @RunWith(AndroidJUnit4::class)

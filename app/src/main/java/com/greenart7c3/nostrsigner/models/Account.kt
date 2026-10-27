@@ -10,8 +10,9 @@ import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.DataStoreAccess
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.common.nip44v3.Nip44v3
+import com.greenart7c3.nostrsigner.common.psbt.PsbtSighashPolicy
 import com.greenart7c3.nostrsigner.service.DeviceUnlockPolicy
-import com.greenart7c3.nostrsigner.service.nip44v3.Nip44v3
 import com.greenart7c3.nostrsigner.ui.setSensitiveClip
 import com.vitorpamplona.quartz.nip01Core.core.Event
 import com.vitorpamplona.quartz.nip01Core.core.HexKey
@@ -24,8 +25,8 @@ import com.vitorpamplona.quartz.nip17Dm.NIP17Factory
 import com.vitorpamplona.quartz.nip17Dm.messages.ChatMessageEvent
 import com.vitorpamplona.quartz.nip19Bech32.toNsec
 import com.vitorpamplona.quartz.nip49PrivKeyEnc.Nip49
-import com.vitorpamplona.quartz.nip57Zaps.LnZapRequestEvent
 import com.vitorpamplona.quartz.nip57Zaps.PrivateZapRequestBuilder
+import com.vitorpamplona.quartz.nip57Zaps.ZapRequestEvent
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -145,6 +146,7 @@ class Account(
 
     suspend fun signPsbt(psbtHex: String): String {
         requirePrivateKeyAccess()
+        PsbtSighashPolicy.requireCommitsToAllOutputs(psbtHex, signer.keyPair.pubKey)
         return signer.signPsbt(psbtHex)
     }
 
@@ -176,7 +178,7 @@ class Account(
         data: String,
     ): String? {
         requirePrivateKeyAccess()
-        val event = Event.fromJson(data) as LnZapRequestEvent
+        val event = Event.fromJson(data) as ZapRequestEvent
         return try {
             PrivateZapRequestBuilder().decryptZapEvent(
                 event = event,
@@ -193,7 +195,7 @@ class Account(
         return NIP17Factory().createMessageNIP17(template, signer)
     }
 
-    suspend fun getNsec(): String {
+    fun getNsec(): String {
         requirePrivateKeyAccess()
         return signer.keyPair.privKey!!.toNsec()
     }
@@ -210,7 +212,7 @@ class Account(
             }
             didBackup = true
             Amber.instance.applicationIOScope.launch(Dispatchers.Main) {
-                clipboardManager.setSensitiveClip("", nsec)
+                clipboardManager.setSensitiveClip(nsec)
 
                 Toast.makeText(
                     Amber.instance,

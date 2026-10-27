@@ -5,7 +5,6 @@ import android.content.ClipboardManager
 import android.content.Context
 import androidx.compose.ui.platform.ClipEntry
 import androidx.compose.ui.platform.Clipboard
-import androidx.compose.ui.platform.NativeClipboard
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import kotlin.time.Duration.Companion.seconds
@@ -30,12 +29,14 @@ class SensitiveClipboardTest {
     private val manager = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
 
     private val clipboard = object : Clipboard {
-        override val nativeClipboard: NativeClipboard = manager
-
         override suspend fun getClipEntry(): ClipEntry? = manager.primaryClip?.let { ClipEntry(it) }
 
         override suspend fun setClipEntry(clipEntry: ClipEntry?) {
-            if (clipEntry == null) manager.clearPrimaryClip() else manager.setPrimaryClip(clipEntry.clipData)
+            if (clipEntry == null) {
+                manager.clearPrimaryClip()
+            } else {
+                manager.setPrimaryClip(clipEntry.clipData)
+            }
         }
     }
 
@@ -68,7 +69,7 @@ class SensitiveClipboardTest {
 
     @Test
     fun copiedSecretIsClearedWhileAppIsInBackground() = runBlocking {
-        clipboard.setSensitiveClip("", SECRET, 3.seconds)
+        clipboard.setSensitiveClip(SECRET, 3.seconds)
         Thread.sleep(8_000)
         assertNull(readClipboardText())
     }

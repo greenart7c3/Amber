@@ -15,7 +15,6 @@ import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -49,9 +48,10 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.common.SignerType
+import com.greenart7c3.nostrsigner.common.sanitizeAppName
 import com.greenart7c3.nostrsigner.database.HistoryEntity
 import com.greenart7c3.nostrsigner.models.Account
-import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.models.TimeUtils
 import com.greenart7c3.nostrsigner.models.supportedKindNumbers
 import com.greenart7c3.nostrsigner.service.ApplicationNameCache
@@ -71,7 +71,6 @@ enum class ActivityFilter(val accepted: Boolean?) {
     REJECTED(false),
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ActivitiesScreen(
     modifier: Modifier,
@@ -374,7 +373,7 @@ fun ApplicationName(
             name = cached
         } else {
             val appName = withContext(Dispatchers.IO) {
-                Amber.instance.getDatabase(account.npub).dao().getAppName(key)
+                Amber.instance.getDatabase(account.npub).dao().getAppName(key)?.let(::sanitizeAppName)?.ifBlank { null }
             }
             if (appName != null) {
                 name = appName

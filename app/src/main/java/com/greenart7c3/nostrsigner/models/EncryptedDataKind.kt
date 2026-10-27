@@ -1,5 +1,6 @@
 package com.greenart7c3.nostrsigner.models
 
+import com.greenart7c3.nostrsigner.common.SignerType
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
 
 interface EncryptedDataKind {
@@ -53,6 +54,9 @@ val encryptSignerTypes = setOf(
     SignerType.NIP44_ENCRYPT,
     SignerType.NIP44_V3_ENCRYPT,
 )
+
+/** Types whose result is decrypted plaintext, which must be handled as a secret. */
+val decryptSignerTypes = encryptDecryptSignerTypes - encryptSignerTypes
 
 /**
  * History rows for these request types store the ciphertext (encrypted form) in

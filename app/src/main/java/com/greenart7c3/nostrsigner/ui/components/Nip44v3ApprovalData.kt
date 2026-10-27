@@ -27,11 +27,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.common.SignerType
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.ClearTextEncryptedDataKind
 import com.greenart7c3.nostrsigner.models.EncryptedDataKind
 import com.greenart7c3.nostrsigner.models.Permission
-import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.models.nip44v3Plaintext
 import com.greenart7c3.nostrsigner.ui.RememberType
 import com.greenart7c3.nostrsigner.ui.theme.AmberPreview

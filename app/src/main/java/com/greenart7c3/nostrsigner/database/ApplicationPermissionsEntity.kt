@@ -4,6 +4,7 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import com.greenart7c3.nostrsigner.common.activeDecision
 
 @Entity(
     tableName = "applicationPermission",
@@ -45,9 +46,13 @@ data class ApplicationPermissionsEntity(
      * selects counts, so a stale value left on the other side (for example
      * from an edited backup) can never decide a request.
      */
-    fun activeDecision(now: Long): Boolean? = when {
-        !acceptable && rejectUntil > now -> false
-        acceptable && acceptUntil > now -> true
-        else -> null
-    }
+    fun activeDecision(now: Long): Boolean? = activeDecision(acceptable, acceptUntil, rejectUntil, now)
 }
+
+/**
+ * Whether a kind-22242 grant's [relay] covers every relay. Matches
+ * [ApplicationDao.getWildcardRelayPermission]: an explicit "*", or the blank
+ * relay the basic sign policy stores, both mean all relays, so the approval
+ * screens decide like the provider and NIP-46 paths.
+ */
+fun isAllRelaysGrant(relay: String?): Boolean = relay == "*" || relay.isNullOrEmpty()

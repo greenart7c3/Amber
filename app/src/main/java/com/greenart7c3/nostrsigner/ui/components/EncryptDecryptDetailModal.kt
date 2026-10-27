@@ -23,11 +23,11 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
 import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.common.SignerType
 import com.greenart7c3.nostrsigner.models.ClearTextEncryptedDataKind
 import com.greenart7c3.nostrsigner.models.EncryptedDataKind
 import com.greenart7c3.nostrsigner.models.EventEncryptedDataKind
 import com.greenart7c3.nostrsigner.models.Permission
-import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.models.TagArrayEncryptedDataKind
 import com.greenart7c3.nostrsigner.models.TimeUtils
 import com.greenart7c3.nostrsigner.service.toShortenHex
@@ -77,8 +77,8 @@ fun EncryptDecryptDetailModal(
                     .verticalScrollbar(scrollState)
                     .verticalScroll(scrollState),
             ) {
-                when {
-                    encryptedData is EventEncryptedDataKind -> {
+                when (encryptedData) {
+                    is EventEncryptedDataKind -> {
                         val event = if (encryptedData.sealEncryptedDataKind is EventEncryptedDataKind) {
                             encryptedData.sealEncryptedDataKind.event.toEvent()
                         } else {
@@ -120,7 +120,7 @@ fun EncryptDecryptDetailModal(
                             )
                         }
                     }
-                    encryptedData is TagArrayEncryptedDataKind -> {
+                    is TagArrayEncryptedDataKind -> {
                         TagsSection(
                             label = stringResource(R.string.tags),
                             tags = encryptedData.tagArray,

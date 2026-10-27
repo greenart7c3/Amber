@@ -64,7 +64,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.autofill.ContentType
 import androidx.compose.ui.draw.clip
@@ -115,7 +114,6 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalComposeUiApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun AccountBackupScreen(
     modifier: Modifier,
@@ -264,7 +262,6 @@ private fun TipsCard(expanded: Boolean, onToggle: () -> Unit) {
     }
 }
 
-@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 private fun PasswordCard(
     password: TextFieldValue,
@@ -335,7 +332,6 @@ private fun PasswordCard(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun AccountBackupCard(
     account: Account,
@@ -852,7 +848,7 @@ private fun encryptCopyNSec(
                 account.didBackup = true
                 onBackupDone()
                 Amber.instance.applicationIOScope.launch(Dispatchers.Main) {
-                    clipboardManager.setSensitiveClip("", key)
+                    clipboardManager.setSensitiveClip(key)
                     Toast.makeText(context, context.getString(R.string.secret_key_copied_to_clipboard), Toast.LENGTH_SHORT).show()
                 }
             } catch (_: Exception) {

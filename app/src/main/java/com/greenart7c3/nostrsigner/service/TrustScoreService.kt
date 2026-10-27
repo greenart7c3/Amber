@@ -64,44 +64,6 @@ object TrustScoreService {
     }
 
     /**
-     * Gets the cached score without making a network request.
-     * Returns null if not cached or expired.
-     */
-    fun getCachedScore(relayUrl: String): Int? {
-        if (!isEnabled()) {
-            return null
-        }
-
-        val normalizedUrl = TrustScoreUrlPolicy.publicRelayUrl(relayUrl) ?: return null
-        val cached = cache[normalizedUrl] ?: return null
-
-        val expirationTime = if (cached.isFailed) FAILED_CACHE_DURATION_MS else CACHE_DURATION_MS
-        if (System.currentTimeMillis() - cached.timestamp < expirationTime) {
-            return cached.score
-        }
-        return null
-    }
-
-    /**
-     * Prefetches scores for multiple relay URLs in parallel.
-     */
-    suspend fun prefetchScores(relayUrls: List<String>) {
-        if (!isEnabled()) {
-            return
-        }
-
-        withContext(Dispatchers.IO) {
-            relayUrls.forEach { url ->
-                try {
-                    getScore(url)
-                } catch (e: Exception) {
-                    AmberLog.e(TAG, "Error prefetching score for $url", e)
-                }
-            }
-        }
-    }
-
-    /**
      * Fetches the trust score from the API. The caller resolves the policy
      * normalization once so the URL is computed exactly once per request.
      */
@@ -130,6 +92,7 @@ object TrustScoreService {
                     }
 
                     // Safe call needed: the offline flavor compiles against OkHttp 4, where body is nullable
+                    @Suppress("UNNECESSARY_SAFE_CALL")
                     val body = response.body?.string()
                     if (body == null) {
                         cacheResult(normalizedUrl, null, isFailed = true)

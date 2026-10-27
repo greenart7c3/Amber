@@ -125,6 +125,9 @@ class Amber :
 
     var settings: AmberSettings = AmberSettings()
 
+    /** The appearance chosen in Settings; the activities' themes follow it live. */
+    val themeMode by lazy { MutableStateFlow(LocalPreferences.getThemeMode(this)) }
+
     /**
      * False until [settings] holds the stored settings. [onCreate] loads them synchronously
      * ([LocalPreferences.loadSettingsAtStartup]), so this is true before any activity,

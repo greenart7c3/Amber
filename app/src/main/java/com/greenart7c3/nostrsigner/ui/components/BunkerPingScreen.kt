@@ -26,6 +26,7 @@ import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.ui.RememberType
 import com.greenart7c3.nostrsigner.ui.theme.AmberPreview
 import com.greenart7c3.nostrsigner.ui.theme.ThemePreviews
+import com.greenart7c3.nostrsigner.ui.theme.amoledBorder
 
 @Composable
 fun BunkerPingScreen(
@@ -61,6 +62,7 @@ fun BunkerPingScreen(
         Card(
             modifier = Modifier
                 .fillMaxWidth(),
+            border = amoledBorder(),
         ) {
             Column(Modifier.padding(6.dp)) {
                 Text(

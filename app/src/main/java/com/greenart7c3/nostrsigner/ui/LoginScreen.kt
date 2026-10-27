@@ -31,7 +31,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Visibility
 import androidx.compose.material.icons.outlined.VisibilityOff
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.AlertDialogDefaults
 import androidx.compose.material3.BottomAppBar
+import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
@@ -115,6 +117,8 @@ import com.greenart7c3.nostrsigner.ui.components.MarkdownText
 import com.greenart7c3.nostrsigner.ui.components.MnemonicLoginInput
 import com.greenart7c3.nostrsigner.ui.components.TitleExplainer
 import com.greenart7c3.nostrsigner.ui.navigation.Route
+import com.greenart7c3.nostrsigner.ui.theme.amoledBorder
+import com.greenart7c3.nostrsigner.ui.theme.outlineIfAny
 import com.vitorpamplona.crypto.random.RandomInstance
 import com.vitorpamplona.quartz.nip01Core.crypto.KeyPair
 import com.vitorpamplona.quartz.nip06KeyDerivation.Bip39Mnemonics
@@ -208,6 +212,7 @@ fun MainPage(
             finishAfterImportError = null
         }
         AlertDialog(
+            modifier = Modifier.outlineIfAny(amoledBorder(), AlertDialogDefaults.shape),
             onDismissRequest = dismissImportError,
             title = { Text(stringResource(R.string.recover_from_backup)) },
             text = { Text(stringResource(R.string.import_failed_for_accounts, failedImportLines.joinToString(", "))) },
@@ -226,6 +231,7 @@ fun MainPage(
     if (shouldShowBottomSheet.value) {
         var showCharsPassword by remember { mutableStateOf(false) }
         ModalBottomSheet(
+            modifier = Modifier.outlineIfAny(amoledBorder(), BottomSheetDefaults.ExpandedShape),
             sheetState = sheetState,
             onDismissRequest = {
                 shouldShowBottomSheet.value = false

@@ -943,4 +943,9 @@
     <string name="search_accounts">Поиск по имени или npub</string>
     <string name="clear_search">Очистить поиск</string>
     <string name="no_accounts_found">Нет подходящих аккаунтов</string>
+    <string name="theme">Тема</string>
+    <string name="theme_system">Как в системе</string>
+    <string name="theme_light">Светлая</string>
+    <string name="theme_dark">Тёмная</string>
+    <string name="theme_amoled">Чёрная AMOLED</string>
 </resources>

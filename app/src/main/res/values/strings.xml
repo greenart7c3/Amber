@@ -947,4 +947,9 @@
     <string name="search_accounts">Search by name or npub</string>
     <string name="clear_search">Clear search</string>
     <string name="no_accounts_found">No matching accounts</string>
+    <string name="theme">Theme</string>
+    <string name="theme_system">Follow system</string>
+    <string name="theme_light">Light</string>
+    <string name="theme_dark">Dark</string>
+    <string name="theme_amoled">AMOLED black</string>
 </resources>

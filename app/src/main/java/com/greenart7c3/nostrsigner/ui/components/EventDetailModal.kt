@@ -82,7 +82,8 @@ fun EventDetailModal(
                         title = stringResource(R.string.go_back),
                         icon = ImageVector.vectorResource(R.drawable.back),
                         onClick = onDismiss,
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        tint = MaterialTheme.colorScheme.onPrimary,
+                        fontColor = MaterialTheme.colorScheme.onPrimary,
                     )
                 }
             },

@@ -16,6 +16,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Visibility
 import androidx.compose.material.icons.outlined.VisibilityOff
+import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -57,6 +58,8 @@ import com.greenart7c3.nostrsigner.service.WebDavService
 import com.greenart7c3.nostrsigner.service.WebDavTransportPolicy
 import com.greenart7c3.nostrsigner.ui.CenterCircularProgressIndicator
 import com.greenart7c3.nostrsigner.ui.components.AmberButton
+import com.greenart7c3.nostrsigner.ui.theme.amoledBorder
+import com.greenart7c3.nostrsigner.ui.theme.outlineIfAny
 import java.io.File
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -540,6 +543,7 @@ fun CloudBackupScreen(modifier: Modifier) {
     // (Android system picker — user can choose Google Drive, no local save needed)
     if (showGdriveSheet) {
         ModalBottomSheet(
+            modifier = Modifier.outlineIfAny(amoledBorder(), BottomSheetDefaults.ExpandedShape),
             onDismissRequest = { showGdriveSheet = false },
             sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
         ) {

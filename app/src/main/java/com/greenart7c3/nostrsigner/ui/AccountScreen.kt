@@ -16,6 +16,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.Done
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.AlertDialogDefaults
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.ButtonDefaults
@@ -43,6 +44,8 @@ import com.greenart7c3.nostrsigner.models.IntentResultType
 import com.greenart7c3.nostrsigner.service.IntentUtils
 import com.greenart7c3.nostrsigner.ui.navigation.Route
 import com.greenart7c3.nostrsigner.ui.navigation.externalRoute
+import com.greenart7c3.nostrsigner.ui.theme.amoledBorder
+import com.greenart7c3.nostrsigner.ui.theme.outlineIfAny
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
@@ -215,6 +218,7 @@ fun InformationDialog(
     onReject: () -> Unit,
 ) {
     AlertDialog(
+        modifier = Modifier.outlineIfAny(amoledBorder(), AlertDialogDefaults.shape),
         onDismissRequest = onReject,
         title = { Text(title) },
         text = { SelectionContainer { Text(textContent) } },
@@ -273,6 +277,7 @@ fun InformationDialog(
     onDismiss: () -> Unit,
 ) {
     AlertDialog(
+        modifier = Modifier.outlineIfAny(amoledBorder(), AlertDialogDefaults.shape),
         onDismissRequest = onDismiss,
         title = { Text(title) },
         text = { SelectionContainer { Text(textContent) } },

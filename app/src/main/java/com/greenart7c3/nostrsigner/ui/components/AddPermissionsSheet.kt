@@ -15,6 +15,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.BottomAppBar
+import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -46,6 +47,8 @@ import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.models.supportedKindNumbers
 import com.greenart7c3.nostrsigner.ui.theme.AmberPreview
 import com.greenart7c3.nostrsigner.ui.theme.ThemePreviews
+import com.greenart7c3.nostrsigner.ui.theme.amoledBorder
+import com.greenart7c3.nostrsigner.ui.theme.outlineIfAny
 
 private fun permissionKey(permission: Permission) = "${permission.type}-${permission.kind}"
 
@@ -107,6 +110,8 @@ fun AddPermissionsSheet(
     val hasSelection = selectedPermissions.values.any { it }
 
     ModalBottomSheet(
+
+        modifier = Modifier.outlineIfAny(amoledBorder(), BottomSheetDefaults.ExpandedShape),
         sheetState = sheetState,
         onDismissRequest = onDismiss,
     ) {

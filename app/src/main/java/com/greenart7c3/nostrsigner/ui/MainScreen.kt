@@ -26,6 +26,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.AlertDialogDefaults
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
@@ -84,6 +85,8 @@ import com.greenart7c3.nostrsigner.ui.components.AmberFloatingButton
 import com.greenart7c3.nostrsigner.ui.components.AmberTopAppBar
 import com.greenart7c3.nostrsigner.ui.components.ProfileSubscriptionEffect
 import com.greenart7c3.nostrsigner.ui.navigation.Route
+import com.greenart7c3.nostrsigner.ui.theme.amoledBorder
+import com.greenart7c3.nostrsigner.ui.theme.outlineIfAny
 import java.util.Base64
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.coroutines.Dispatchers
@@ -192,6 +195,7 @@ fun MainScreen(
 
     if (showDialog.value) {
         AlertDialog(
+            modifier = Modifier.outlineIfAny(amoledBorder(), AlertDialogDefaults.shape),
             onDismissRequest = {
                 showDialog.value = false
             },

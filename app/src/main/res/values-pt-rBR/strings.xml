@@ -937,4 +937,9 @@
     <string name="search_accounts">Pesquisar por nome ou npub</string>
     <string name="clear_search">Limpar pesquisa</string>
     <string name="no_accounts_found">Nenhuma conta correspondente</string>
+    <string name="theme">Tema</string>
+    <string name="theme_system">Seguir o sistema</string>
+    <string name="theme_light">Claro</string>
+    <string name="theme_dark">Escuro</string>
+    <string name="theme_amoled">Preto AMOLED</string>
 </resources>

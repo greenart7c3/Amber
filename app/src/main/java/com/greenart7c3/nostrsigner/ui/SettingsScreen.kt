@@ -24,11 +24,13 @@ import androidx.compose.material.icons.filled.Draw
 import androidx.compose.material.icons.filled.Feedback
 import androidx.compose.material.icons.filled.Key
 import androidx.compose.material.icons.filled.Language
+import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.PowerSettingsNew
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.SystemUpdate
 import androidx.compose.material.icons.filled.VerifiedUser
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.AlertDialogDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
@@ -72,19 +74,24 @@ import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
+import com.greenart7c3.nostrsigner.models.ThemeMode
 import com.greenart7c3.nostrsigner.models.TorMode
 import com.greenart7c3.nostrsigner.service.KillSwitchReceiver
 import com.greenart7c3.nostrsigner.service.TorManager
 import com.greenart7c3.nostrsigner.ui.actions.LogoutDialog
 import com.greenart7c3.nostrsigner.ui.components.AmberButton
+import com.greenart7c3.nostrsigner.ui.components.SpinnerSelectionDialog
 import com.greenart7c3.nostrsigner.ui.components.TextSpinner
 import com.greenart7c3.nostrsigner.ui.components.TitleExplainer
 import com.greenart7c3.nostrsigner.ui.navigation.Route
+import com.greenart7c3.nostrsigner.ui.theme.amoledBorder
+import com.greenart7c3.nostrsigner.ui.theme.outlineIfAny
 import com.vitorpamplona.quartz.utils.TimeUtils
 import com.vitorpamplona.quartz.utils.TimeUtils.ONE_WEEK
 import java.text.DecimalFormat
 import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
@@ -104,6 +111,8 @@ fun SettingsScreen(
     var isLoading by remember { mutableStateOf(false) }
     var sizeInMBFormatted by remember { mutableStateOf("") }
     var status by remember { mutableStateOf("") }
+    val themeMode by Amber.instance.themeMode.collectAsStateWithLifecycle()
+    var themeDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         isLoading = true
@@ -114,6 +123,17 @@ fun SettingsScreen(
             val df = DecimalFormat("#.###")
             sizeInMBFormatted = df.format((dbFile.length() + logFile.length() + historyFile.length()) / (1024.0 * 1024.0))
             isLoading = false
+        }
+    }
+
+    if (themeDialog) {
+        SpinnerSelectionDialog(
+            title = stringResource(R.string.theme),
+            options = ThemeMode.entries.map { TitleExplainer(stringResource(it.resourceId)) }.toImmutableList(),
+            onDismiss = { themeDialog = false },
+        ) { index ->
+            themeDialog = false
+            LocalPreferences.updateThemeMode(context, ThemeMode.entries[index])
         }
     }
 
@@ -219,6 +239,13 @@ fun SettingsScreen(
             }
 
             SettingsSection(title = stringResource(R.string.settings_section_general)) {
+                SettingsItem(
+                    title = stringResource(R.string.theme),
+                    subtitle = stringResource(themeMode.resourceId),
+                    painter = rememberVectorPainter(Icons.Default.Palette),
+                    onClick = { themeDialog = true },
+                )
+                SettingsDivider()
                 SettingsItem(
                     title = stringResource(R.string.language),
                     subtitle = stringResource(R.string.language_subtitle),
@@ -380,6 +407,7 @@ fun SettingsScreen(
 
     if (disconnectTorDialog) {
         AlertDialog(
+            modifier = Modifier.outlineIfAny(amoledBorder(), AlertDialogDefaults.shape),
             title = { Text(text = stringResource(R.string.do_you_really_want_to_disable_tor_title)) },
             text = { Text(text = stringResource(R.string.do_you_really_want_to_disable_tor_text)) },
             onDismissRequest = { disconnectTorDialog = false },
@@ -480,6 +508,7 @@ private fun SettingsSection(
             colors = CardDefaults.cardColors(
                 containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
             ),
+            border = amoledBorder(),
         ) {
             Column(
                 modifier = Modifier.fillMaxWidth(),

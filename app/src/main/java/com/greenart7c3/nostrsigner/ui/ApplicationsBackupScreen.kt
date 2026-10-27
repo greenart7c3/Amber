@@ -20,6 +20,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.AlertDialogDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
@@ -59,7 +60,9 @@ import com.greenart7c3.nostrsigner.service.RestoreResult
 import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.components.AmberButton
 import com.greenart7c3.nostrsigner.ui.components.ProfileSubscriptionEffect
+import com.greenart7c3.nostrsigner.ui.theme.amoledBorder
 import com.greenart7c3.nostrsigner.ui.theme.fromHex
+import com.greenart7c3.nostrsigner.ui.theme.outlineIfAny
 import com.vitorpamplona.quartz.utils.TimeUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -130,6 +133,7 @@ fun ApplicationsBackupScreen(
     pendingRestore?.let { (account, payload) ->
         val selection = rememberBackupSelection(payload)
         AlertDialog(
+            modifier = Modifier.outlineIfAny(amoledBorder(), AlertDialogDefaults.shape),
             onDismissRequest = { pendingRestore = null },
             title = { Text(stringResource(R.string.restore_confirm_title)) },
             text = {
@@ -293,6 +297,8 @@ fun RestoreBackupDialog(accountStateViewModel: AccountStateViewModel) {
     val selection = rememberBackupSelection(found.payload)
 
     AlertDialog(
+
+        modifier = Modifier.outlineIfAny(amoledBorder(), AlertDialogDefaults.shape),
         onDismissRequest = { accountStateViewModel.dismissRestore() },
         title = { Text(stringResource(R.string.signin_restore_title)) },
         text = {

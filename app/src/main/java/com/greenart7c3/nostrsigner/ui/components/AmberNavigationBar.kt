@@ -1,7 +1,6 @@
 package com.greenart7c3.nostrsigner.ui.components
 
 import androidx.compose.foundation.border
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.height
@@ -26,6 +25,7 @@ import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.ui.CenterCircularProgressIndicator
 import com.greenart7c3.nostrsigner.ui.navigation.Route
 import com.greenart7c3.nostrsigner.ui.theme.fromHex
+import com.greenart7c3.nostrsigner.ui.theme.isAmberDarkTheme
 
 @Composable
 fun AmberNavigationBar(
@@ -94,7 +94,7 @@ fun AmberNavigationBar(
                                 it.route,
                                 tint = if (selected) {
                                     Color.Black
-                                } else if (isSystemInDarkTheme()) {
+                                } else if (isAmberDarkTheme()) {
                                     Color.White
                                 } else {
                                     Color.Black

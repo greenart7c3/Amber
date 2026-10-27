@@ -916,4 +916,9 @@
     <string name="search_accounts">ค้นหาตามชื่อหรือ npub</string>
     <string name="clear_search">ล้างการค้นหา</string>
     <string name="no_accounts_found">ไม่พบบัญชีที่ตรงกัน</string>
+    <string name="theme">ธีม</string>
+    <string name="theme_system">ตามระบบ</string>
+    <string name="theme_light">สว่าง</string>
+    <string name="theme_dark">มืด</string>
+    <string name="theme_amoled">ดำสนิท AMOLED</string>
 </resources>

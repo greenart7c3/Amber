@@ -58,6 +58,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.greenart7c3.nostrsigner.ui.theme.AmberPreview
 import com.greenart7c3.nostrsigner.ui.theme.ThemePreviews
+import com.greenart7c3.nostrsigner.ui.theme.amoledBorder
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 
@@ -165,6 +166,7 @@ fun <T> SpinnerSelectionDialog(
                 .padding(horizontal = 20.dp),
             color = MaterialTheme.colorScheme.background,
             shape = RoundedCornerShape(24.dp),
+            border = amoledBorder(),
         ) {
             CompositionLocalProvider(
                 LocalDensity provides Density(

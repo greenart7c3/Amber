@@ -16,6 +16,7 @@ import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.AmberSettings
 import com.greenart7c3.nostrsigner.models.ProfileFetchInterval
 import com.greenart7c3.nostrsigner.models.RetentionPeriod
+import com.greenart7c3.nostrsigner.models.ThemeMode
 import com.greenart7c3.nostrsigner.models.TorMode
 import com.greenart7c3.nostrsigner.models.UpdateChannel
 import com.greenart7c3.nostrsigner.models.UpdateCheckFrequency
@@ -91,6 +92,7 @@ private enum class SettingsKeys(val key: String) {
     TRUST_SCORE_ENABLED("trust_score_enabled_v2"),
     REQUIRE_UNLOCKED_DEVICE("require_unlocked_device"),
     ACTIVE_KEYSTORE_ALIAS("active_keystore_alias"),
+    THEME_MODE("theme_mode"),
 }
 
 @Immutable
@@ -192,6 +194,22 @@ object LocalPreferences {
         RetentionPeriod.valueOf(sharedPrefs(context).getString(key.key, default.name)!!)
     } catch (_: IllegalArgumentException) {
         default
+    }
+
+    /** Read synchronously so the first frame of each activity already uses the chosen theme. */
+    fun getThemeMode(context: Context): ThemeMode = try {
+        ThemeMode.valueOf(sharedPrefs(context).getString(SettingsKeys.THEME_MODE.key, ThemeMode.SYSTEM.name)!!)
+    } catch (_: IllegalArgumentException) {
+        ThemeMode.SYSTEM
+    }
+
+    fun updateThemeMode(context: Context, mode: ThemeMode) {
+        sharedPrefs(context).edit {
+            apply {
+                putString(SettingsKeys.THEME_MODE.key, mode.name)
+            }
+        }
+        Amber.instance.themeMode.value = mode
     }
 
     fun getBatteryOptimization(context: Context): Boolean = sharedPrefs(context).getBoolean(SettingsKeys.BATERRY_OPTIMIZATION.key, false)

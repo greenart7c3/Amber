@@ -916,4 +916,9 @@
     <string name="search_accounts">Tìm theo tên hoặc npub</string>
     <string name="clear_search">Xóa tìm kiếm</string>
     <string name="no_accounts_found">Không có tài khoản phù hợp</string>
+    <string name="theme">Giao diện</string>
+    <string name="theme_system">Theo hệ thống</string>
+    <string name="theme_light">Sáng</string>
+    <string name="theme_dark">Tối</string>
+    <string name="theme_amoled">Đen AMOLED</string>
 </resources>

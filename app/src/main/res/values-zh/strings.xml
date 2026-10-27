@@ -921,4 +921,9 @@
     <string name="search_accounts">按名称或 npub 搜索</string>
     <string name="clear_search">清除搜索</string>
     <string name="no_accounts_found">没有匹配的账户</string>
+    <string name="theme">主题</string>
+    <string name="theme_system">跟随系统</string>
+    <string name="theme_light">浅色</string>
+    <string name="theme_dark">深色</string>
+    <string name="theme_amoled">AMOLED 纯黑</string>
 </resources>

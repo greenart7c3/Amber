@@ -942,4 +942,9 @@
     <string name="search_accounts">Buscar por nombre o npub</string>
     <string name="clear_search">Borrar búsqueda</string>
     <string name="no_accounts_found">No hay cuentas que coincidan</string>
+    <string name="theme">Tema</string>
+    <string name="theme_system">Según el sistema</string>
+    <string name="theme_light">Claro</string>
+    <string name="theme_dark">Oscuro</string>
+    <string name="theme_amoled">Negro AMOLED</string>
 </resources>

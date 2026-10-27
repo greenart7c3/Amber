@@ -38,9 +38,11 @@ import androidx.compose.material.icons.outlined.QrCode2
 import androidx.compose.material.icons.outlined.Visibility
 import androidx.compose.material.icons.outlined.VisibilityOff
 import androidx.compose.material.icons.outlined.Warning
+import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -108,7 +110,9 @@ import com.greenart7c3.nostrsigner.ui.components.SeedWordsPage
 import com.greenart7c3.nostrsigner.ui.navigation.Route
 import com.greenart7c3.nostrsigner.ui.setSensitiveClip
 import com.greenart7c3.nostrsigner.ui.theme.Size35dp
+import com.greenart7c3.nostrsigner.ui.theme.amoledBorder
 import com.greenart7c3.nostrsigner.ui.theme.fromHex
+import com.greenart7c3.nostrsigner.ui.theme.outlineIfAny
 import com.vitorpamplona.quartz.nip06KeyDerivation.Nip06
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
@@ -215,7 +219,7 @@ fun AccountBackupScreen(
 
 @Composable
 private fun TipsCard(expanded: Boolean, onToggle: () -> Unit) {
-    ElevatedCard(modifier = Modifier.fillMaxWidth()) {
+    ElevatedCard(modifier = Modifier.fillMaxWidth().outlineIfAny(amoledBorder(), CardDefaults.elevatedShape)) {
         Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -271,7 +275,7 @@ private fun PasswordCard(
     onToggleVisibility: () -> Unit,
     onDone: () -> Unit,
 ) {
-    ElevatedCard(modifier = Modifier.fillMaxWidth()) {
+    ElevatedCard(modifier = Modifier.fillMaxWidth().outlineIfAny(amoledBorder(), CardDefaults.elevatedShape)) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
@@ -345,7 +349,7 @@ private fun AccountBackupCard(
     val name = account.name.collectAsState()
     var didBackup by remember { mutableStateOf(account.didBackup) }
 
-    ElevatedCard(modifier = Modifier.fillMaxWidth()) {
+    ElevatedCard(modifier = Modifier.fillMaxWidth().outlineIfAny(amoledBorder(), CardDefaults.elevatedShape)) {
         Column(modifier = Modifier.padding(16.dp)) {
             // Account header row
             Row(
@@ -684,6 +688,7 @@ private fun SeedWordsButton(
 
     if (showSeedWords.value) {
         ModalBottomSheet(
+            modifier = Modifier.outlineIfAny(amoledBorder(), BottomSheetDefaults.ExpandedShape),
             onDismissRequest = { showSeedWords.value = false },
             sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
         ) {

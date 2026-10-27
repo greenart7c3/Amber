@@ -937,4 +937,9 @@
     <string name="search_accounts">Ada veya npub\'a göre ara</string>
     <string name="clear_search">Aramayı temizle</string>
     <string name="no_accounts_found">Eşleşen hesap yok</string>
+    <string name="theme">Tema</string>
+    <string name="theme_system">Sistemi takip et</string>
+    <string name="theme_light">Açık</string>
+    <string name="theme_dark">Koyu</string>
+    <string name="theme_amoled">AMOLED siyah</string>
 </resources>

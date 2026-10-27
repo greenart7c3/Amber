@@ -916,4 +916,9 @@
     <string name="search_accounts">名前またはnpubで検索</string>
     <string name="clear_search">検索をクリア</string>
     <string name="no_accounts_found">一致するアカウントはありません</string>
+    <string name="theme">テーマ</string>
+    <string name="theme_system">システムに従う</string>
+    <string name="theme_light">ライト</string>
+    <string name="theme_dark">ダーク</string>
+    <string name="theme_amoled">AMOLEDブラック</string>
 </resources>

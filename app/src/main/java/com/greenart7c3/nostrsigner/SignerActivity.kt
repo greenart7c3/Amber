@@ -75,7 +75,8 @@ class SignerActivity : AppCompatActivity() {
         val launchReferrer = safeReferrer()
         intent?.let { mainViewModel.onNewIntent(it, callingPackage, launchReferrer) }
         setContent {
-            NostrSignerTheme {
+            val themeMode by Amber.instance.themeMode.collectAsStateWithLifecycle()
+            NostrSignerTheme(themeMode = themeMode) {
                 HttpClientManager.setDefaultUserAgent("Amber/${BuildConfig.VERSION_NAME}")
 
                 if (intent?.isLaunchFromHistory() == true) {

@@ -82,7 +82,8 @@ class MainActivity : AppCompatActivity() {
                     null
                 }
 
-            NostrSignerTheme {
+            val themeMode by Amber.instance.themeMode.collectAsStateWithLifecycle()
+            NostrSignerTheme(themeMode = themeMode) {
                 CompositionLocalProvider(
                     LocalDensity provides Density(
                         LocalDensity.current.density,

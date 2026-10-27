@@ -940,4 +940,9 @@
     <string name="search_accounts">Cari berdasarkan nama atau npub</string>
     <string name="clear_search">Hapus pencarian</string>
     <string name="no_accounts_found">Tidak ada akun yang cocok</string>
+    <string name="theme">Tema</string>
+    <string name="theme_system">Ikuti sistem</string>
+    <string name="theme_light">Terang</string>
+    <string name="theme_dark">Gelap</string>
+    <string name="theme_amoled">Hitam AMOLED</string>
 </resources>

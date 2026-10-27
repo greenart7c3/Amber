@@ -3,7 +3,6 @@ package com.greenart7c3.nostrsigner.ui.components
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -18,6 +17,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.CompareArrows
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -44,6 +44,9 @@ import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.service.toShortenHex
+import com.greenart7c3.nostrsigner.ui.theme.amoledBorder
+import com.greenart7c3.nostrsigner.ui.theme.isAmberDarkTheme
+import com.greenart7c3.nostrsigner.ui.theme.outlineIfAny
 import com.greenart7c3.nostrsigner.ui.theme.primaryVariant
 import com.greenart7c3.nostrsigner.ui.verticalScrollbar
 
@@ -100,7 +103,7 @@ fun AccountPickerRow(
         }
         if (canSwitch) {
             Spacer(Modifier.width(8.dp))
-            val pillContent = if (isSystemInDarkTheme()) {
+            val pillContent = if (isAmberDarkTheme()) {
                 MaterialTheme.colorScheme.primary
             } else {
                 primaryVariant
@@ -133,6 +136,7 @@ fun AccountPickerRow(
 
     if (sheetOpen) {
         ModalBottomSheet(
+            modifier = Modifier.outlineIfAny(amoledBorder(), BottomSheetDefaults.ExpandedShape),
             sheetState = sheetState,
             onDismissRequest = { sheetOpen = false },
         ) {

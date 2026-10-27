@@ -32,6 +32,7 @@ import com.greenart7c3.nostrsigner.common.psbt.DecodedPsbtOutput
 import com.greenart7c3.nostrsigner.ui.RememberType
 import com.greenart7c3.nostrsigner.ui.theme.AmberPreview
 import com.greenart7c3.nostrsigner.ui.theme.ThemePreviews
+import com.greenart7c3.nostrsigner.ui.theme.amoledBorder
 
 @Composable
 fun SignPsbt(
@@ -133,7 +134,7 @@ fun BunkerSignPsbt(
 private fun PsbtBody(psbtHex: String, decoded: DecodedPsbt) {
     val parseError = decoded.parseError
     if (parseError != null) {
-        Card(modifier = Modifier.fillMaxWidth()) {
+        Card(modifier = Modifier.fillMaxWidth(), border = amoledBorder()) {
             Column(Modifier.padding(8.dp)) {
                 Text(
                     stringResource(R.string.psbt_decode_error, parseError),
@@ -168,7 +169,7 @@ private fun PsbtBody(psbtHex: String, decoded: DecodedPsbt) {
     }
 
     decoded.feeSats?.let {
-        Card(modifier = Modifier.fillMaxWidth()) {
+        Card(modifier = Modifier.fillMaxWidth(), border = amoledBorder()) {
             Row(
                 modifier = Modifier.fillMaxWidth().padding(8.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -186,7 +187,7 @@ private fun PsbtBody(psbtHex: String, decoded: DecodedPsbt) {
 
 @Composable
 private fun SectionCard(title: String, totalSats: Long, entries: List<DecodedPsbtOutput>) {
-    Card(modifier = Modifier.fillMaxWidth()) {
+    Card(modifier = Modifier.fillMaxWidth(), border = amoledBorder()) {
         Column(Modifier.padding(8.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -217,7 +218,7 @@ private fun SectionCard(title: String, totalSats: Long, entries: List<DecodedPsb
 @Composable
 private fun RawPsbtCard(psbtHex: String) {
     var expanded by remember { mutableStateOf(false) }
-    Card(modifier = Modifier.fillMaxWidth()) {
+    Card(modifier = Modifier.fillMaxWidth(), border = amoledBorder()) {
         Column(Modifier.padding(8.dp)) {
             Row(
                 modifier = Modifier

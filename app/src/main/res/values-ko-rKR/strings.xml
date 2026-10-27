@@ -940,4 +940,9 @@
     <string name="search_accounts">이름 또는 npub로 검색</string>
     <string name="clear_search">검색어 지우기</string>
     <string name="no_accounts_found">일치하는 계정이 없습니다</string>
+    <string name="theme">테마</string>
+    <string name="theme_system">시스템 설정 따르기</string>
+    <string name="theme_light">라이트</string>
+    <string name="theme_dark">다크</string>
+    <string name="theme_amoled">AMOLED 블랙</string>
 </resources>

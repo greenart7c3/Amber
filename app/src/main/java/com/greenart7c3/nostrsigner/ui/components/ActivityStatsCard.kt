@@ -43,6 +43,7 @@ import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.database.HistoryDao
 import com.greenart7c3.nostrsigner.models.Account
+import com.greenart7c3.nostrsigner.ui.theme.amoledBorder
 import com.vitorpamplona.quartz.utils.TimeUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -86,6 +87,7 @@ fun ActivityStatsCard(
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant,
         ),
+        border = amoledBorder(),
     ) {
         Row(
             modifier = Modifier

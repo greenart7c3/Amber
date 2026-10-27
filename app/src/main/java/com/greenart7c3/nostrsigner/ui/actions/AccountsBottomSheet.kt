@@ -18,6 +18,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.outlined.Person
+import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -65,7 +66,9 @@ import com.greenart7c3.nostrsigner.ui.components.accountMatchesSearch
 import com.greenart7c3.nostrsigner.ui.components.favoritesFirst
 import com.greenart7c3.nostrsigner.ui.components.rememberAccountNames
 import com.greenart7c3.nostrsigner.ui.navigation.Route
+import com.greenart7c3.nostrsigner.ui.theme.amoledBorder
 import com.greenart7c3.nostrsigner.ui.theme.fromHex
+import com.greenart7c3.nostrsigner.ui.theme.outlineIfAny
 import com.greenart7c3.nostrsigner.ui.verticalScrollbar
 import com.vitorpamplona.quartz.nip01Core.core.toHexKey
 import com.vitorpamplona.quartz.nip19Bech32.bech32.bechToBytes
@@ -86,6 +89,8 @@ fun AccountsBottomSheet(
     val scope = rememberCoroutineScope()
 
     ModalBottomSheet(
+
+        modifier = Modifier.outlineIfAny(amoledBorder(), BottomSheetDefaults.ExpandedShape),
         sheetState = sheetState,
         onDismissRequest = {
             onClose()

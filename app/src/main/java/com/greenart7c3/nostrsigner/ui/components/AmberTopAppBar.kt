@@ -4,7 +4,6 @@ import android.content.Context
 import android.graphics.drawable.Drawable
 import android.widget.Toast
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.material.icons.Icons
@@ -55,6 +54,7 @@ import com.greenart7c3.nostrsigner.ui.navigation.routes
 import com.greenart7c3.nostrsigner.ui.navigation.title
 import com.greenart7c3.nostrsigner.ui.theme.connectedColorDark
 import com.greenart7c3.nostrsigner.ui.theme.connectedColorLight
+import com.greenart7c3.nostrsigner.ui.theme.isAmberDarkTheme
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequestConnect
 import java.util.Base64
 import kotlinx.collections.immutable.ImmutableList
@@ -166,7 +166,7 @@ fun AmberTopAppBar(
                                                     Icons.Outlined.Shield,
                                                     context.getString(R.string.proxy),
                                                     tint = if (isProxyEnabled) {
-                                                        if (isSystemInDarkTheme()) connectedColorDark else connectedColorLight
+                                                        if (isAmberDarkTheme()) connectedColorDark else connectedColorLight
                                                     } else {
                                                         MaterialTheme.colorScheme.error
                                                     },

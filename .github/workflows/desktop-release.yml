@@ -72,7 +72,7 @@ jobs:
           prerelease=$([[ "$TAG" == *-pre* ]] && echo --prerelease || true)
           for attempt in 1 2 3 4 5; do
             gh release view "$TAG" > /dev/null 2>&1 && break
-            gh release create "$TAG" --verify-tag --title "Release refs/tags/$TAG" --notes "" $prerelease && break
+            gh release create "$TAG" --verify-tag --title "Release ${TAG#v}" --notes "" $prerelease && break
             sleep 20
           done
           gh release upload "$TAG" dist/* --clobber

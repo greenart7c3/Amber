@@ -85,6 +85,8 @@ jobs:
         env:
           TAG: ${{ github.ref_name }}
         run: |
+          version=${TAG#v}
+          echo "version=$version" >> "$GITHUB_OUTPUT"
           if [[ "$TAG" == *-pre* ]]; then echo "value=true" >> "$GITHUB_OUTPUT"; else echo "value=false" >> "$GITHUB_OUTPUT"; fi
 
       - name: Create Release and Upload Asset
@@ -93,7 +95,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: ${{ github.ref }}
-          name: Release ${{ github.ref }}
+          name: Release ${{ steps.prerelease.outputs.version }}
           draft: false
           prerelease: ${{ steps.prerelease.outputs.value == 'true' }}
           files: amber-fdroid-universal-${{ github.ref_name }}.apk

@@ -1,0 +1,19 @@
+repository: https://github.com/greenart7c3/Amber
+release_source: https://github.com/greenart7c3/Amber
+match: '^amber-arm64-v8a-.*\.apk$'
+
+name: Amber
+summary: Nostr event signer for Android
+description: |
+  Amber is a nostr event signer for Android. It allows users to keep their nsec segregated in a single, dedicated app. The goal of Amber is to have your smartphone act as a NIP-46 signing device without any need for servers or additional hardware. "Private keys should be exposed to as few systems as possible as each system adds to the attack surface," as the rationale of said NIP states. In addition to native apps, Amber aims to support all current nostr web applications without requiring any extensions or web servers.
+license: MIT
+
+icon: ./fastlane/metadata/android/en-US/images/icon.png
+images:
+  - ./fastlane/metadata/android/en-US/images/phoneScreenshots/01-connect.png
+  - ./fastlane/metadata/android/en-US/images/phoneScreenshots/02-permissions.png
+  - ./fastlane/metadata/android/en-US/images/phoneScreenshots/03-event-details.png
+  - ./fastlane/metadata/android/en-US/images/phoneScreenshots/04-settings.png
+  - ./fastlane/metadata/android/en-US/images/phoneScreenshots/05-security.png
+  - ./fastlane/metadata/android/en-US/images/phoneScreenshots/06-applications-dark.png
+release_notes: ./docs/changelogs/6.6.9.md

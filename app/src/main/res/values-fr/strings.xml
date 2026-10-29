@@ -96,6 +96,8 @@
     <string name="could_not_connect_to_tor">Impossible de se connecter à Tor</string>
     <string name="relays">Relais</string>
     <string name="activity">Activité</string>
+    <string name="sort_applications_alphabetically">Trier par ordre alphabétique</string>
+    <string name="sort_applications_most_recent">Trier par dernière utilisation</string>
     <string name="language">Langue</string>
     <string name="language_description">Pour l\'interface de l\'application</string>
     <string name="no_activities_found">Pas d\'activités trouvées</string>

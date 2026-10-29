@@ -99,6 +99,8 @@
     <string name="could_not_connect_to_tor">Tidak dapat terhubung ke Tor</string>
     <string name="relays">Relay</string>
     <string name="activity">Tampilkan aktivitas</string>
+    <string name="sort_applications_alphabetically">Urutkan sesuai abjad</string>
+    <string name="sort_applications_most_recent">Urutkan berdasarkan terakhir digunakan</string>
     <string name="language">Bahasa</string>
     <string name="language_description">Untuk Antarmuka Aplikasi\'s</string>
     <string name="no_activities_found">Tidak ada aktivitas ditemukan</string>

@@ -853,6 +853,8 @@
     <string name="d_connect_nostrconnect">nostrconnect:// ile bağlan</string>
     <string name="d_create_bunker">Bunker bağlantısı oluştur</string>
     <string name="d_no_apps">Henüz bağlı uygulama yok</string>
+    <string name="d_sort_alphabetically">Alfabetik olarak sırala</string>
+    <string name="d_sort_most_recent">En son kullanılana göre sırala</string>
     <string name="d_app_connected">Bağlandı</string>
     <string name="d_app_waiting">Uygulamanın bağlanması bekleniyor</string>
     <string name="d_permissions_count">%1$s izin</string>

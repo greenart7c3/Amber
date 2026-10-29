@@ -95,6 +95,8 @@
     <string name="could_not_connect_to_tor">Tor\'a bağlanılamadı</string>
     <string name="relays">Relay\'ler</string>
     <string name="activity">Aktiviteyi göster</string>
+    <string name="sort_applications_alphabetically">Alfabetik olarak sırala</string>
+    <string name="sort_applications_most_recent">En son kullanılana göre sırala</string>
     <string name="language">Dil</string>
     <string name="language_description">Uygulama Arayüzü için</string>
     <string name="no_activities_found">Aktivite bulunamadı</string>

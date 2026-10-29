@@ -300,6 +300,8 @@ data class DesktopSettings(
         "wss://directory.yabu.me/",
         "wss://indexer.coracle.social/",
     ),
+    /** Sort the applications list alphabetically instead of by last use. */
+    val sortApplicationsAlphabetically: Boolean = false,
 ) {
     fun normalizedDefaultRelays(): List<NormalizedRelayUrl> = defaultRelays.mapNotNull { RelayUrlNormalizer.normalizeOrNull(it) }
 

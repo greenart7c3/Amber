@@ -99,6 +99,8 @@
     <string name="could_not_connect_to_tor">Не удалось подключиться к Tor</string>
     <string name="relays">Relay-серверы</string>
     <string name="activity">Показать активность</string>
+    <string name="sort_applications_alphabetically">Сортировать по алфавиту</string>
+    <string name="sort_applications_most_recent">Сортировать по последнему использованию</string>
     <string name="language">Язык</string>
     <string name="language_description">Для интерфейса приложения</string>
     <string name="no_activities_found">Активность не найдена</string>

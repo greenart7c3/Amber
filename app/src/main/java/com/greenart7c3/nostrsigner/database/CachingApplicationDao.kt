@@ -264,6 +264,8 @@ class CachingApplicationDao(
 
     override fun getApplicationListItemsPaging(pubKey: String): PagingSource<Int, ApplicationListItem> = delegate.getApplicationListItemsPaging(pubKey)
 
+    override fun getApplicationListItemsPagingByName(pubKey: String): PagingSource<Int, ApplicationListItem> = delegate.getApplicationListItemsPagingByName(pubKey)
+
     override fun getAllRelayLists(): List<RelayListWrapper> = delegate.getAllRelayLists()
 
     override suspend fun getAppName(key: String): String? = delegate.getAppName(key)

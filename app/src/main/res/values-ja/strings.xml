@@ -75,6 +75,8 @@
     <string name="could_not_connect_to_tor">Tor に接続できませんでした</string>
     <string name="relays">Relay</string>
     <string name="activity">アクティビティを表示</string>
+    <string name="sort_applications_alphabetically">アルファベット順に並べ替え</string>
+    <string name="sort_applications_most_recent">最近使用した順に並べ替え</string>
     <string name="language">言語</string>
     <string name="language_description">アプリのインターフェース用</string>
     <string name="no_activities_found">アクティビティが見つかりません</string>

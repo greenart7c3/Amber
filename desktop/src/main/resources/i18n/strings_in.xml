@@ -857,6 +857,8 @@
     <string name="d_connect_nostrconnect">Hubungkan dengan nostrconnect://</string>
     <string name="d_create_bunker">Buat koneksi bunker</string>
     <string name="d_no_apps">Belum ada aplikasi terhubung</string>
+    <string name="d_sort_alphabetically">Urutkan sesuai abjad</string>
+    <string name="d_sort_most_recent">Urutkan berdasarkan terakhir digunakan</string>
     <string name="d_app_connected">Terhubung</string>
     <string name="d_app_waiting">Menunggu aplikasi terhubung</string>
     <string name="d_permissions_count">%1$s izin</string>

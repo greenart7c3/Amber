@@ -68,6 +68,10 @@ interface ApplicationDao {
     @Query("SELECT `key`, name, relays, icon, lastUsed FROM application WHERE pubKey = :pubKey ORDER BY lastUsed DESC")
     fun getApplicationListItemsPaging(pubKey: String): PagingSource<Int, ApplicationListItem>
 
+    /** Alphabetical variant for the Applications list sort toggle (AmberSettings.sortApplicationsAlphabetically). */
+    @Query("SELECT `key`, name, relays, icon, lastUsed FROM application WHERE pubKey = :pubKey ORDER BY name COLLATE NOCASE ASC, lastUsed DESC")
+    fun getApplicationListItemsPagingByName(pubKey: String): PagingSource<Int, ApplicationListItem>
+
     @Query("SELECT name FROM application WHERE `key` = :key LIMIT 1")
     suspend fun getAppName(key: String): String?
 

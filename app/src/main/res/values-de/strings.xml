@@ -96,6 +96,8 @@
     <string name="could_not_connect_to_tor">Konnte keine Verbindung zu Tor aufnehmen</string>
     <string name="relays">Relais</string>
     <string name="activity">Aktivität</string>
+    <string name="sort_applications_alphabetically">Alphabetisch sortieren</string>
+    <string name="sort_applications_most_recent">Nach zuletzt verwendet sortieren</string>
     <string name="language">Sprache</string>
     <string name="language_description">Für die Oberfläche der App</string>
     <string name="no_activities_found">Keine Aktivitäten gefunden</string>

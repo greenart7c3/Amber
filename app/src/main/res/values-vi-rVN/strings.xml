@@ -75,6 +75,8 @@
     <string name="could_not_connect_to_tor">Không thể kết nối với Tor</string>
     <string name="relays">Relay</string>
     <string name="activity">Xem hoạt động</string>
+    <string name="sort_applications_alphabetically">Sắp xếp theo bảng chữ cái</string>
+    <string name="sort_applications_most_recent">Sắp xếp theo lần sử dụng gần nhất</string>
     <string name="language">Ngôn ngữ</string>
     <string name="language_description">Cho Giao Diện Ứng Dụng</string>
     <string name="no_activities_found">Không tìm thấy hoạt động</string>

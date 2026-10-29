@@ -99,6 +99,8 @@
     <string name="could_not_connect_to_tor">Tor에 연결할 수 없습니다</string>
     <string name="relays">Relay</string>
     <string name="activity">활동 보기</string>
+    <string name="sort_applications_alphabetically">알파벳 순으로 정렬</string>
+    <string name="sort_applications_most_recent">최근 사용한 순으로 정렬</string>
     <string name="language">언어</string>
     <string name="language_description">앱 인터페이스용</string>
     <string name="no_activities_found">활동이 없습니다</string>

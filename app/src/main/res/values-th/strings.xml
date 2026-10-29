@@ -75,6 +75,8 @@
     <string name="could_not_connect_to_tor">ไม่สามารถเชื่อมต่อ Tor ได้</string>
     <string name="relays">Relay</string>
     <string name="activity">แสดงกิจกรรม</string>
+    <string name="sort_applications_alphabetically">เรียงตามตัวอักษร</string>
+    <string name="sort_applications_most_recent">เรียงตามการใช้งานล่าสุด</string>
     <string name="language">ภาษา</string>
     <string name="language_description">สำหรับอินเทอร์เฟซของแอป</string>
     <string name="no_activities_found">ไม่พบกิจกรรม</string>

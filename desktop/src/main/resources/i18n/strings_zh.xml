@@ -838,6 +838,8 @@
     <string name="d_connect_nostrconnect">使用 nostrconnect:// 连接</string>
     <string name="d_create_bunker">创建 bunker 连接</string>
     <string name="d_no_apps">尚未连接任何应用程序</string>
+    <string name="d_sort_alphabetically">按字母顺序排序</string>
+    <string name="d_sort_most_recent">按最近使用时间排序</string>
     <string name="d_app_connected">已连接</string>
     <string name="d_app_waiting">等待应用程序连接</string>
     <string name="d_permissions_count">%1$s 项权限</string>

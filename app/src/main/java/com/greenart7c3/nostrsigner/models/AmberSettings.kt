@@ -44,6 +44,7 @@ data class AmberSettings(
     val trustScoreEnabled: Boolean = false,
     val logRetention: RetentionPeriod = RetentionPeriod.SEVEN_DAYS,
     val historyRetention: RetentionPeriod = RetentionPeriod.THIRTY_DAYS,
+    val sortApplicationsAlphabetically: Boolean = false,
 ) {
     val useProxy: Boolean get() = torMode != TorMode.DISABLED
 }

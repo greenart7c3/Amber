@@ -12,7 +12,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.SortByAlpha
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -62,9 +66,14 @@ fun ApplicationsScreen(
 ) {
     // remember: without it every recomposition (killSwitch / backup-warning
     // state flips) builds a new Pager + cold flow and re-runs the initial
-    // load from scratch. Keyed on the account so switching accounts reloads.
+    // load from scratch. Keyed on the account and on the sort toggle so
+    // switching either reloads.
+    var sortAlphabetically by remember(account.hexKey) {
+        mutableStateOf(Amber.instance.settings.sortApplicationsAlphabetically)
+    }
+
     val pager =
-        remember(account.hexKey) {
+        remember(account.hexKey, sortAlphabetically) {
             Pager(
                 PagingConfig(
                     pageSize = 20,
@@ -74,7 +83,12 @@ fun ApplicationsScreen(
                 // Projection excludes the envelope-encrypted secret/localKey
                 // columns: the list renders neither, and each Keystore decrypt
                 // is a binder + TEE round trip (2 x rows per page).
-                Amber.instance.getDatabase(account.npub).dao().getApplicationListItemsPaging(account.hexKey)
+                val dao = Amber.instance.getDatabase(account.npub).dao()
+                if (sortAlphabetically) {
+                    dao.getApplicationListItemsPagingByName(account.hexKey)
+                } else {
+                    dao.getApplicationListItemsPaging(account.hexKey)
+                }
             }
         }
 
@@ -167,13 +181,42 @@ fun ApplicationsScreen(
             }
         } else {
             item {
-                AmberButton(
-                    modifier = Modifier.padding(top = 20.dp),
-                    onClick = {
-                        navControllerWrapper.navController.navigate(Route.Activities.route)
-                    },
-                    text = stringResource(R.string.activity),
-                )
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 20.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    AmberButton(
+                        modifier = Modifier.weight(1f),
+                        onClick = {
+                            navControllerWrapper.navController.navigate(Route.Activities.route)
+                        },
+                        text = stringResource(R.string.activity),
+                    )
+                    IconButton(
+                        onClick = {
+                            val newValue = !sortAlphabetically
+                            sortAlphabetically = newValue
+                            Amber.instance.settings =
+                                Amber.instance.settings.copy(sortApplicationsAlphabetically = newValue)
+                            LocalPreferences.saveSettingsToEncryptedStorage(Amber.instance.settings)
+                        },
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.SortByAlpha,
+                            contentDescription = stringResource(
+                                if (sortAlphabetically) {
+                                    R.string.sort_applications_most_recent
+                                } else {
+                                    R.string.sort_applications_alphabetically
+                                },
+                            ),
+                            tint = if (sortAlphabetically) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onBackground,
+                        )
+                    }
+                }
             }
 
             items(lazyPagingItems.itemCount) { index ->

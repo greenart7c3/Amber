@@ -99,6 +99,8 @@
     <string name="could_not_connect_to_tor">Impossibile connettersi a Tor</string>
     <string name="relays">Relay</string>
     <string name="activity">Mostra attività</string>
+    <string name="sort_applications_alphabetically">Ordina in ordine alfabetico</string>
+    <string name="sort_applications_most_recent">Ordina per ultimo utilizzo</string>
     <string name="language">Lingua</string>
     <string name="language_description">Per l\'interfaccia dell\'app</string>
     <string name="no_activities_found">Nessuna attività trovata</string>

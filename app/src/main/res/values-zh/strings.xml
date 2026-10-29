@@ -80,6 +80,8 @@
     <string name="could_not_connect_to_tor">无法连接到 Tor/Orbot</string>
     <string name="relays">中继</string>
     <string name="activity">活动</string>
+    <string name="sort_applications_alphabetically">按字母顺序排序</string>
+    <string name="sort_applications_most_recent">按最近使用时间排序</string>
     <string name="language">语言</string>
     <string name="language_description">用于应用界面显示</string>
     <string name="no_activities_found">未找到活动</string>

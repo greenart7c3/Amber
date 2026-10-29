@@ -123,6 +123,8 @@
     <string name="could_not_connect_to_tor">Could not connect to Tor</string>
     <string name="relays">Relays</string>
     <string name="activity">Show activity</string>
+    <string name="sort_applications_alphabetically">Sort alphabetically</string>
+    <string name="sort_applications_most_recent">Sort by most recently used</string>
     <string name="language">Language</string>
     <string name="language_description">For the App\'s Interface</string>
     <string name="no_activities_found">No activities found</string>

@@ -833,6 +833,8 @@
     <string name="d_connect_nostrconnect">เชื่อมต่อด้วย nostrconnect://</string>
     <string name="d_create_bunker">สร้างการเชื่อมต่อ bunker</string>
     <string name="d_no_apps">ยังไม่มีแอปพลิเคชันที่เชื่อมต่อ</string>
+    <string name="d_sort_alphabetically">เรียงตามตัวอักษร</string>
+    <string name="d_sort_most_recent">เรียงตามการใช้งานล่าสุด</string>
     <string name="d_app_connected">เชื่อมต่อแล้ว</string>
     <string name="d_app_waiting">กำลังรอให้แอปเชื่อมต่อ</string>
     <string name="d_permissions_count">%1$s สิทธิ์</string>

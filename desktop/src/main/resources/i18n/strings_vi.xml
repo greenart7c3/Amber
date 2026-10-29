@@ -833,6 +833,8 @@
     <string name="d_connect_nostrconnect">Kết nối bằng nostrconnect://</string>
     <string name="d_create_bunker">Tạo kết nối bunker</string>
     <string name="d_no_apps">Chưa có ứng dụng nào kết nối</string>
+    <string name="d_sort_alphabetically">Sắp xếp theo bảng chữ cái</string>
+    <string name="d_sort_most_recent">Sắp xếp theo lần sử dụng gần nhất</string>
     <string name="d_app_connected">Đã kết nối</string>
     <string name="d_app_waiting">Đang chờ ứng dụng kết nối</string>
     <string name="d_permissions_count">%1$s quyền</string>

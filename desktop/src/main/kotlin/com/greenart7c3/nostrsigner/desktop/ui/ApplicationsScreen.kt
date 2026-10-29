@@ -19,9 +19,11 @@ import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.SortByAlpha
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -43,6 +45,7 @@ import androidx.compose.ui.unit.dp
 import com.greenart7c3.nostrsigner.desktop.core.AmberDesktop
 import com.greenart7c3.nostrsigner.desktop.core.DeleteAfterType
 import com.greenart7c3.nostrsigner.desktop.core.DesktopAccount
+import com.greenart7c3.nostrsigner.desktop.core.SettingsStore
 import com.greenart7c3.nostrsigner.desktop.core.Strings
 import com.greenart7c3.nostrsigner.desktop.core.isLocalSocket
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.RelayUrlNormalizer
@@ -58,6 +61,7 @@ fun ApplicationsScreen(
     val store = AmberDesktop.store(account.npub)
     val apps by store.apps.collectAsState()
     val language by Strings.currentLanguage.collectAsState()
+    val settings by SettingsStore.settings.collectAsState()
     var showNostrConnectDialog by remember { mutableStateOf(false) }
     var showBunkerDialog by remember { mutableStateOf(false) }
 
@@ -65,6 +69,20 @@ fun ApplicationsScreen(
         FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             AmberButton(text = Strings.get("d_connect_nostrconnect", language), onClick = { showNostrConnectDialog = true })
             AmberOutlinedButton(text = Strings.get("d_create_bunker", language), onClick = { showBunkerDialog = true })
+            IconButton(
+                onClick = {
+                    SettingsStore.update { it.copy(sortApplicationsAlphabetically = !it.sortApplicationsAlphabetically) }
+                },
+            ) {
+                Icon(
+                    imageVector = Icons.Default.SortByAlpha,
+                    contentDescription = Strings.get(
+                        if (settings.sortApplicationsAlphabetically) "d_sort_most_recent" else "d_sort_alphabetically",
+                        language,
+                    ),
+                    tint = if (settings.sortApplicationsAlphabetically) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onBackground,
+                )
+            }
         }
         Spacer(Modifier.height(16.dp))
 
@@ -80,7 +98,12 @@ fun ApplicationsScreen(
             val listState = rememberLazyListState()
             ScrollbarBox(rememberScrollbarAdapter(listState), Modifier.fillMaxSize()) {
                 LazyColumn(Modifier.fillMaxSize(), state = listState, contentPadding = PaddingValues(bottom = 12.dp)) {
-                    val sorted = apps.sortedByDescending { it.app.lastUsed }
+                    val sorted =
+                        if (settings.sortApplicationsAlphabetically) {
+                            apps.sortedBy { it.app.displayName().lowercase() }
+                        } else {
+                            apps.sortedByDescending { it.app.lastUsed }
+                        }
                     items(sorted.size, key = { sorted[it].app.key }) { index ->
                         val app = sorted[index]
                         Row(

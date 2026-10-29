@@ -857,6 +857,8 @@
     <string name="d_connect_nostrconnect">Подключить через nostrconnect://</string>
     <string name="d_create_bunker">Создать подключение bunker</string>
     <string name="d_no_apps">Пока нет подключённых приложений</string>
+    <string name="d_sort_alphabetically">Сортировать по алфавиту</string>
+    <string name="d_sort_most_recent">Сортировать по последнему использованию</string>
     <string name="d_app_connected">Подключено</string>
     <string name="d_app_waiting">Ожидание подключения приложения</string>
     <string name="d_permissions_count">Разрешений: %1$s</string>

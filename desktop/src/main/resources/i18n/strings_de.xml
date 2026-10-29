@@ -854,6 +854,8 @@
     <string name="d_connect_nostrconnect">Mit nostrconnect:// verbinden</string>
     <string name="d_create_bunker">Bunker-Verbindung erstellen</string>
     <string name="d_no_apps">Noch keine Anwendungen verbunden</string>
+    <string name="d_sort_alphabetically">Alphabetisch sortieren</string>
+    <string name="d_sort_most_recent">Nach zuletzt verwendet sortieren</string>
     <string name="d_app_connected">Verbunden</string>
     <string name="d_app_waiting">Warten auf Verbindung der App</string>
     <string name="d_permissions_count">%1$s Berechtigungen</string>

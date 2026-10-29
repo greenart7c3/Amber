@@ -93,6 +93,7 @@ private enum class SettingsKeys(val key: String) {
     REQUIRE_UNLOCKED_DEVICE("require_unlocked_device"),
     ACTIVE_KEYSTORE_ALIAS("active_keystore_alias"),
     THEME_MODE("theme_mode"),
+    SORT_APPLICATIONS_ALPHABETICALLY("sort_applications_alphabetically"),
 }
 
 @Immutable
@@ -177,6 +178,7 @@ object LocalPreferences {
                 putInt(SettingsKeys.RATE_LIMIT_MAX_PER_WINDOW.key, settings.rateLimitMaxPerWindow)
                 putInt(SettingsKeys.RATE_LIMIT_WINDOW_SECONDS.key, settings.rateLimitWindowSeconds)
                 putBoolean(SettingsKeys.TRUST_SCORE_ENABLED.key, settings.trustScoreEnabled)
+                putBoolean(SettingsKeys.SORT_APPLICATIONS_ALPHABETICALLY.key, settings.sortApplicationsAlphabetically)
             }
         }
     }
@@ -438,6 +440,7 @@ object LocalPreferences {
                 trustScoreEnabled = getBoolean(SettingsKeys.TRUST_SCORE_ENABLED.key, false),
                 logRetention = getLogRetention(context),
                 historyRetention = getHistoryRetention(context),
+                sortApplicationsAlphabetically = getBoolean(SettingsKeys.SORT_APPLICATIONS_ALPHABETICALLY.key, false),
             )
         }
     }

@@ -833,6 +833,8 @@
     <string name="d_connect_nostrconnect">nostrconnect:// で接続</string>
     <string name="d_create_bunker">bunker 接続を作成</string>
     <string name="d_no_apps">接続済みのアプリはまだありません</string>
+    <string name="d_sort_alphabetically">アルファベット順に並べ替え</string>
+    <string name="d_sort_most_recent">最近使用した順に並べ替え</string>
     <string name="d_app_connected">接続済み</string>
     <string name="d_app_waiting">アプリの接続を待機中</string>
     <string name="d_permissions_count">%1$s 件の権限</string>

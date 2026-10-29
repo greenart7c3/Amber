@@ -852,6 +852,8 @@
     <string name="d_connect_nostrconnect">Conectar com nostrconnect://</string>
     <string name="d_create_bunker">Criar uma conexão de bunker</string>
     <string name="d_no_apps">Nenhum aplicativo conectado ainda</string>
+    <string name="d_sort_alphabetically">Ordenar alfabeticamente</string>
+    <string name="d_sort_most_recent">Ordenar por uso mais recente</string>
     <string name="d_app_connected">Conectado</string>
     <string name="d_app_waiting">Aguardando o aplicativo conectar</string>
     <string name="d_permissions_count">%1$s permissões</string>

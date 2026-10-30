@@ -302,6 +302,19 @@ data class DesktopSettings(
     ),
     /** Sort the applications list alphabetically instead of by last use. */
     val sortApplicationsAlphabetically: Boolean = false,
+    /**
+     * Serve a local WebSocket relay for bunker (NIP-46) connections on the
+     * loopback interface ([LocalBunkerRelay]); new bunker connections also
+     * list it beside the default relays. Opt out switches it off.
+     */
+    val localBunkerServer: Boolean = true,
+    /**
+     * Port of the local relay; null = automatic ([LocalBunkerRelay.PORT], or
+     * [LocalBunkerRelay.DEBUG_PORT] for a debug run). Only changeable while
+     * no bunker connection uses the relay — the saved `bunker://` URIs would
+     * keep pointing at the old port.
+     */
+    val localBunkerPort: Int? = null,
 ) {
     fun normalizedDefaultRelays(): List<NormalizedRelayUrl> = defaultRelays.mapNotNull { RelayUrlNormalizer.normalizeOrNull(it) }
 

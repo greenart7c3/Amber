@@ -224,7 +224,7 @@ private fun NewBunkerDialog(
     onDismiss: () -> Unit,
 ) {
     var name by remember { mutableStateOf("") }
-    var relays by remember { mutableStateOf(AmberDesktop.defaultRelays().map { it.url }) }
+    var relays by remember { mutableStateOf(AmberDesktop.newBunkerRelays().map { it.url }) }
     var deleteAfter by remember { mutableStateOf(DeleteAfterType.NEVER) }
     val nameFocus = remember { FocusRequester() }
     var bunkerUri by remember { mutableStateOf<String?>(null) }

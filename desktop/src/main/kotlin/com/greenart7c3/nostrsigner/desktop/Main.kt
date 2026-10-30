@@ -29,6 +29,7 @@ import com.greenart7c3.nostrsigner.desktop.core.AutoStart
 import com.greenart7c3.nostrsigner.desktop.core.BuildVariant
 import com.greenart7c3.nostrsigner.desktop.core.CrashReporter
 import com.greenart7c3.nostrsigner.desktop.core.DesktopAccount
+import com.greenart7c3.nostrsigner.desktop.core.LocalBunkerRelay
 import com.greenart7c3.nostrsigner.desktop.core.LocalSigner
 import com.greenart7c3.nostrsigner.desktop.core.NetworkConnectivity
 import com.greenart7c3.nostrsigner.desktop.core.Notifier
@@ -201,6 +202,9 @@ fun main(args: Array<String>) {
         UriLaunch.startIpcServer()
         // NIP-5F: CLI tools sign over a local socket (always on).
         LocalSigner.start()
+        // Local WebSocket relay for bunker connections (opt out under
+        // Settings -> Desktop): same-machine clients skip the public relays.
+        if (SettingsStore.settings.value.localBunkerServer) LocalBunkerRelay.start(AmberDesktop.localBunkerPort())
     }
     if (launchUri != null) UriLaunch.pending.value = launchUri
 

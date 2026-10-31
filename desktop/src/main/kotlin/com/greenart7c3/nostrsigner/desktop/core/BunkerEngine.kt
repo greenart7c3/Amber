@@ -1270,6 +1270,7 @@ class BunkerEngine(
                 event = buildEvent(),
                 relayList = relays.toSet(),
                 timeoutInSeconds = 5,
+                untilFirstAccept = true,
             )
         }
 

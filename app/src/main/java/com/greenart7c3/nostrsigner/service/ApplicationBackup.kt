@@ -280,7 +280,7 @@ object ApplicationBackup {
                 AmberLog.w(Amber.TAG, "ApplicationBackup: no relays resolved for backup")
                 return false
             }
-            val ok = Amber.instance.client.publishAndConfirm(event, relays)
+            val ok = Amber.instance.client.publishAndConfirm(event, relays, untilFirstAccept = true)
             AmberLog.d(Amber.TAG, "ApplicationBackup: publish for $npub result=$ok relays=${relays.size}")
             return ok
         } catch (e: Exception) {

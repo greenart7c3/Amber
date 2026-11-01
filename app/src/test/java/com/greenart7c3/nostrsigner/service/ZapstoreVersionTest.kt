@@ -26,6 +26,24 @@ class ZapstoreVersionTest {
         assertFalse(newer("6.6.9-rc1"))
     }
 
+    @Test
+    fun ordersPreReleases() {
+        assertTrue(newer("7.0.0-pre2", "7.0.0-pre1"))
+        assertTrue(newer("7.0.0", "7.0.0-pre3"))
+        assertTrue(newer("7.0.0-pre10", "7.0.0-pre9"))
+        assertTrue(newer("7.0.1-pre1", "7.0.0"))
+        assertTrue(newer("7.0.0-pre1", "6.6.9"))
+        assertTrue(newer("7.0.0-pre2", "7.0.0-pre1-DEBUG"))
+        assertTrue(newer("7.0.0-PRE2", "7.0.0-pre1"))
+        assertFalse(newer("7.0.0-pre1", "7.0.0"))
+        assertFalse(newer("7.0.0-pre1", "7.0.0-pre1"))
+        assertFalse(newer("7.0.0-pre1", "7.0.0-pre2"))
+        assertFalse(newer("6.6.9-pre5", "7.0.0-pre1"))
+        // Not a -preN suffix: counts as a final release, as before.
+        assertFalse(newer("7.0.0-preX", "7.0.0"))
+        assertTrue(newer("7.0.0-preX", "7.0.0-pre1"))
+    }
+
     // The old fallback compared the strings, where e.g. "x" or "v1.0" sort
     // above "6.6.9", so an unparsable version was offered as an update.
     @Test

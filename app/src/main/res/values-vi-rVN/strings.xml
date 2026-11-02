@@ -923,4 +923,6 @@
     <string name="theme_light">Sáng</string>
     <string name="theme_dark">Tối</string>
     <string name="theme_amoled">Đen AMOLED</string>
+    <string name="camera_permission_required">Cần quyền truy cập camera</string>
+    <string name="camera_permission_required_message">Amber cần quyền truy cập camera để quét mã QR. Hãy cấp quyền trong cài đặt ứng dụng.</string>
 </resources>

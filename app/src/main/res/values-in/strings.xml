@@ -947,4 +947,6 @@
     <string name="theme_light">Terang</string>
     <string name="theme_dark">Gelap</string>
     <string name="theme_amoled">Hitam AMOLED</string>
+    <string name="camera_permission_required">Izin kamera diperlukan</string>
+    <string name="camera_permission_required_message">Amber memerlukan izin kamera untuk memindai kode QR. Izinkan di pengaturan aplikasi.</string>
 </resources>

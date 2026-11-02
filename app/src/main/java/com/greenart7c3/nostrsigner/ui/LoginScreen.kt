@@ -1064,7 +1064,7 @@ fun LoginPage(
                                     },
                                     leadingIcon = {
                                         if (dialogOpen) {
-                                            SimpleQrCodeScanner { content ->
+                                            SimpleQrCodeScanner(onDismiss = { dialogOpen = false }) { content ->
                                                 dialogOpen = false
                                                 if (!content.isNullOrEmpty()) {
                                                     key.value = TextFieldValue(content.toLowerCase(Locale.current))

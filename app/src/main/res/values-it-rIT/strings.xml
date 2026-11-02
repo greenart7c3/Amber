@@ -949,4 +949,6 @@
     <string name="theme_light">Chiaro</string>
     <string name="theme_dark">Scuro</string>
     <string name="theme_amoled">Nero AMOLED</string>
+    <string name="camera_permission_required">Autorizzazione della fotocamera richiesta</string>
+    <string name="camera_permission_required_message">Amber ha bisogno dell\'autorizzazione della fotocamera per scansionare i codici QR. Consentila nelle impostazioni dell\'app.</string>
 </resources>

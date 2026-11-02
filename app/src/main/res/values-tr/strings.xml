@@ -944,4 +944,6 @@
     <string name="theme_light">Açık</string>
     <string name="theme_dark">Koyu</string>
     <string name="theme_amoled">AMOLED siyah</string>
+    <string name="camera_permission_required">Kamera izni gerekli</string>
+    <string name="camera_permission_required_message">Amber\'in QR kodlarını taraması için kamera iznine ihtiyacı var. Uygulama ayarlarından izin verin.</string>
 </resources>

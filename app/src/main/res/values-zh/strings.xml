@@ -928,4 +928,6 @@
     <string name="theme_light">浅色</string>
     <string name="theme_dark">深色</string>
     <string name="theme_amoled">AMOLED 纯黑</string>
+    <string name="camera_permission_required">需要相机权限</string>
+    <string name="camera_permission_required_message">Amber 需要相机权限才能扫描二维码。请在应用设置中允许。</string>
 </resources>

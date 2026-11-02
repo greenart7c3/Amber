@@ -923,4 +923,6 @@
     <string name="theme_light">สว่าง</string>
     <string name="theme_dark">มืด</string>
     <string name="theme_amoled">ดำสนิท AMOLED</string>
+    <string name="camera_permission_required">ต้องได้รับอนุญาตให้ใช้กล้อง</string>
+    <string name="camera_permission_required_message">Amber ต้องได้รับอนุญาตให้ใช้กล้องเพื่อสแกนคิวอาร์โค้ด โปรดอนุญาตในการตั้งค่าแอป</string>
 </resources>

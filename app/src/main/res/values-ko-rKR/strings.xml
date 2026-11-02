@@ -947,4 +947,6 @@
     <string name="theme_light">라이트</string>
     <string name="theme_dark">다크</string>
     <string name="theme_amoled">AMOLED 블랙</string>
+    <string name="camera_permission_required">카메라 권한이 필요합니다</string>
+    <string name="camera_permission_required_message">Amber에서 QR 코드를 스캔하려면 카메라 권한이 필요합니다. 앱 설정에서 허용해 주세요.</string>
 </resources>

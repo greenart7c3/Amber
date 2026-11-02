@@ -950,4 +950,6 @@
     <string name="theme_light">Светлая</string>
     <string name="theme_dark">Тёмная</string>
     <string name="theme_amoled">Чёрная AMOLED</string>
+    <string name="camera_permission_required">Требуется разрешение на камеру</string>
+    <string name="camera_permission_required_message">Amber нужно разрешение на использование камеры для сканирования QR-кодов. Разрешите его в настройках приложения.</string>
 </resources>

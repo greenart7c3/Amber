@@ -954,4 +954,6 @@
     <string name="theme_light">Light</string>
     <string name="theme_dark">Dark</string>
     <string name="theme_amoled">AMOLED black</string>
+    <string name="camera_permission_required">Camera permission required</string>
+    <string name="camera_permission_required_message">Amber needs the camera permission to scan QR codes. Allow it in the app settings.</string>
 </resources>

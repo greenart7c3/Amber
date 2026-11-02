@@ -44,7 +44,7 @@ fun NewApplicationScreen(
     val title = stringResource(R.string.warning)
     val message = stringResource(R.string.invalid_nostr_connect_uri)
     if (dialogOpen.value) {
-        SimpleQrCodeScanner {
+        SimpleQrCodeScanner(onDismiss = { dialogOpen.value = false }) {
             dialogOpen.value = false
 
             if (it.isNullOrBlank()) {

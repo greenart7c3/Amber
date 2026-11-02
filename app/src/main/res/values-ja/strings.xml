@@ -923,4 +923,6 @@
     <string name="theme_light">ライト</string>
     <string name="theme_dark">ダーク</string>
     <string name="theme_amoled">AMOLEDブラック</string>
+    <string name="camera_permission_required">カメラの権限が必要です</string>
+    <string name="camera_permission_required_message">AmberでQRコードをスキャンするにはカメラの権限が必要です。アプリの設定で許可してください。</string>
 </resources>

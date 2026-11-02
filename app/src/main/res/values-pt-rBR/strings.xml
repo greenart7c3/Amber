@@ -944,4 +944,6 @@
     <string name="theme_light">Claro</string>
     <string name="theme_dark">Escuro</string>
     <string name="theme_amoled">Preto AMOLED</string>
+    <string name="camera_permission_required">Permissão da câmera necessária</string>
+    <string name="camera_permission_required_message">O Amber precisa da permissão da câmera para ler códigos QR. Permita nas configurações do app.</string>
 </resources>

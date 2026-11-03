@@ -16,6 +16,7 @@ import com.vitorpamplona.quartz.nip01Core.crypto.KeyPair
 import com.vitorpamplona.quartz.nip01Core.jackson.JacksonMapper
 import com.vitorpamplona.quartz.nip01Core.signers.NostrSignerInternal
 import com.vitorpamplona.quartz.utils.TimeUtils
+import java.net.InetAddress
 import java.net.ServerSocket
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.LinkedBlockingQueue
@@ -366,7 +367,9 @@ class LocalBunkerRelayTest {
 
     @Test
     fun busyPortIsReportedAsInUse() {
-        ServerSocket(0).use { busy ->
+        // Hold the port on the loopback address the relay binds: on macOS a
+        // wildcard listener does not block a more specific 127.0.0.1 bind.
+        ServerSocket(0, 1, InetAddress.getLoopbackAddress()).use { busy ->
             LocalBunkerRelay.stop()
             assertEquals(Status.IN_USE, LocalBunkerRelay.start(busy.localPort))
             assertNull(LocalBunkerRelay.relayUrl())

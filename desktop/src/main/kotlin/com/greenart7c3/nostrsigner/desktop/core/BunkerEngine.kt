@@ -1387,10 +1387,10 @@ class BunkerEngine(
     ): String {
         val secret = UUID.randomUUID().toString()
         val connPrivKey = generateBunkerPrivKey()
-        // The local relay rides along with whatever relays the caller picked
-        // (the dialog seeds them with the defaults): same-machine clients can
-        // then reach this bunker without any public relay.
-        val uriRelays = (AmberDesktop.newBunkerRelays() + relays).distinct()
+        // Exactly the relays the caller picked: the dialog seeds them with
+        // AmberDesktop.newBunkerRelays() (the local relay plus the defaults),
+        // and any the user removed there must stay out of the URI.
+        val uriRelays = relays.distinct()
         val app = AppWithPermissions(
             app = AppRecord(
                 key = secret,

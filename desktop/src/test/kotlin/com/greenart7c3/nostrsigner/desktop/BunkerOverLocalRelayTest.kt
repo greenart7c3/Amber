@@ -152,7 +152,7 @@ class BunkerOverLocalRelayTest {
         val account = AccountManager.addAccount(KeyPair(), name = "local-relay-e2e")
         val engine = AmberDesktop.engine
         engine.start()
-        val bunkerUri = engine.createBunkerConnection(account, "local-relay-e2e-app", emptyList())
+        val bunkerUri = engine.createBunkerConnection(account, "local-relay-e2e-app", AmberDesktop.newBunkerRelays())
         assertEquals(listOf("relay=${relay.url}"), bunkerUri.substringAfter("?").substringBefore("&secret=").split("&"))
         val signerPubKey = bunkerUri.removePrefix("bunker://").substringBefore("?")
         val secret = bunkerUri.substringAfter("secret=")
@@ -198,7 +198,7 @@ class BunkerOverLocalRelayTest {
         val account = AccountManager.addAccount(KeyPair(), name = "port-guard")
         val engine = AmberDesktop.engine
         engine.start()
-        engine.createBunkerConnection(account, "port-guard-app", emptyList())
+        engine.createBunkerConnection(account, "port-guard-app", AmberDesktop.newBunkerRelays())
 
         val probe2 = ServerSocket(0)
         val port2 = probe2.localPort
@@ -217,6 +217,33 @@ class BunkerOverLocalRelayTest {
         assertEquals("ws://127.0.0.1:$port2/", LocalBunkerRelay.relayUrl()?.url)
 
         engine.updateFilter()
+        AmberDesktop.client.disconnect()
+        LocalBunkerRelay.stop()
+    }
+
+    @Test
+    fun newBunkerKeepsOnlyTheSelectedRelays() = runBlocking {
+        LocalBunkerRelay.stop()
+        assertEquals(Status.RUNNING, LocalBunkerRelay.start(0))
+        val local = LocalBunkerRelay.relayUrl() ?: error("relay did not start")
+        SettingsStore.update {
+            it.copy(
+                defaultRelays = listOf("wss://relay.one.example/", "wss://relay.two.example/"),
+                localBunkerServer = true,
+            )
+        }
+        // The user removed the local relay and one default from the dialog.
+        val selected = AmberDesktop.newBunkerRelays().filter { it != local && it.url != "wss://relay.one.example/" }
+        assertEquals(listOf("wss://relay.two.example/"), selected.map { it.url })
+
+        val account = AccountManager.addAccount(KeyPair(), name = "selected-relays")
+        val bunkerUri = AmberDesktop.engine.createBunkerConnection(account, "selected-relays-app", selected)
+        assertEquals(listOf("relay=wss://relay.two.example/"), bunkerUri.substringAfter("?").substringBefore("&secret=").split("&"))
+        val app = AmberDesktop.store(account.npub).apps.value.first { it.app.name == "selected-relays-app" }
+        assertEquals(listOf("wss://relay.two.example/"), app.app.relays)
+
+        AmberDesktop.store(account.npub).delete(app.app.key)
+        AmberDesktop.engine.updateFilter()
         AmberDesktop.client.disconnect()
         LocalBunkerRelay.stop()
     }

@@ -866,7 +866,7 @@ class Amber :
         // This will automatically connect to these relays even if they are not in the list
         // once the events have been saved, it will disconnect from them unless there are other
         // filters with them
-        return client.publishAndConfirm(event, relays, publishTimeoutSeconds)
+        return client.publishAndConfirm(event, relays, publishTimeoutSeconds, untilFirstAccept = true)
     }
 
     /**

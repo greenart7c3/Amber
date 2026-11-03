@@ -238,6 +238,7 @@ object BunkerRequestUtils {
                 event = signedEvent,
                 relayList = relays.toSet(),
                 timeoutInSeconds = 5,
+                untilFirstAccept = true,
             )
             if (!result) {
                 encryptedContent = if (bunkerRequest.encryptionType == EncryptionType.NIP44) {

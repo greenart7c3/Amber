@@ -114,7 +114,7 @@ object CrashReporter {
         return try {
             client.connect()
             // Every wrap (the developer's and the sender's own copy), as on Android.
-            val accepted = wraps.map { client.publishAndConfirm(it, REPORT_RELAYS) }.any { it }
+            val accepted = wraps.map { client.publishAndConfirm(it, REPORT_RELAYS, untilFirstAccept = true) }.any { it }
             if (accepted) dismiss()
             accepted
         } catch (e: Exception) {

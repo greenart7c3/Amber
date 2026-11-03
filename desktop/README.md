@@ -25,6 +25,18 @@ for the JVM) and mirrors the mobile UI and permission model.
   per-application sign policies (basic / manual / sign everything)
 - Per-application activity history and relay logs
 - Default bunker relays management
+- Local bunker server (opt out under Settings → Desktop): a private WebSocket
+  relay for NIP-46 connections on `ws://127.0.0.1:7777` (`:desktop:run` uses
+  7778; the port is editable there while no bunker connection uses it), so
+  clients on the same machine reach the bunker without any public
+  relay. While it is on, new bunker connections (`bunker://` URIs, and
+  `nostrconnect://` URIs that name no relays) list it beside the default
+  relay. It binds to the loopback interface only, verifies signatures,
+  keeps the last 512 events in memory, and takes requests through the same
+  approval and permission flow as relay traffic. Clients that are not an
+  approved connection are rate limited in the relay itself (denied events
+  skip signature verification, REQ and malformed-command floods are cut
+  off); approved connections are never throttled
 - Tor (Settings → Tor setup), like the Android app: built-in Tor
   ([Arti](https://arti.torproject.org), prebuilt for every OS under
   `appResources/` by `tools/arti/build.sh`) or an external SOCKS proxy such as the

@@ -981,10 +981,13 @@ class BunkerEngine(
             }
         }
 
+        // A brand-new connection (bunker:// or a nostrconnect:// that named no
+        // relays) gets the local WebSocket relay beside the default relays, so
+        // clients on this machine work without any public relay.
         val newConnectionRelays = if (req.isNostrConnectUri) {
-            req.relays.ifEmpty { defaultRelays }
+            req.relays.ifEmpty { AmberDesktop.newBunkerRelays() }
         } else {
-            defaultRelays
+            AmberDesktop.newBunkerRelays()
         }
         // A local socket client never talks to relays.
         val relays = if (req.isLocalSocket) {
@@ -1384,11 +1387,15 @@ class BunkerEngine(
     ): String {
         val secret = UUID.randomUUID().toString()
         val connPrivKey = generateBunkerPrivKey()
+        // The local relay rides along with whatever relays the caller picked
+        // (the dialog seeds them with the defaults): same-machine clients can
+        // then reach this bunker without any public relay.
+        val uriRelays = (AmberDesktop.newBunkerRelays() + relays).distinct()
         val app = AppWithPermissions(
             app = AppRecord(
                 key = secret,
                 name = name,
-                relays = relays.map { it.url },
+                relays = uriRelays.map { it.url },
                 pubKey = account.hexKey,
                 isConnected = false,
                 secret = secret,
@@ -1400,7 +1407,7 @@ class BunkerEngine(
         )
         AmberDesktop.store(account.npub).upsert(app)
         checkForNewRelaysAndUpdateAllFilters()
-        val relayParams = relays.joinToString(separator = "&") { "relay=${it.url}" }
+        val relayParams = uriRelays.joinToString(separator = "&") { "relay=${it.url}" }
         return "bunker://${localPubKeyFromPrivKey(connPrivKey)}?$relayParams&secret=$secret"
     }
 

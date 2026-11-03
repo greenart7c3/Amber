@@ -795,6 +795,11 @@
     <string name="d_notifications_sub">Show a system notification when a request needs your approval.</string>
     <string name="d_start_on_boot">Start on boot</string>
     <string name="d_start_on_boot_sub">Start Amber automatically when you log in. It starts locked — enter your passphrase to sign.</string>
+    <string name="d_local_bunker_server">Local bunker server</string>
+    <string name="d_local_bunker_server_sub">Run a WebSocket relay for bunker (NIP-46) connections on port %1$d of this machine, so clients can connect without public relays. New bunker connections also list it beside the default relays.</string>
+    <string name="d_local_bunker_port">Relay port</string>
+    <string name="d_local_bunker_port_invalid">The port must be a number between 1024 and 65535.</string>
+    <string name="d_local_bunker_port_in_use">Delete the bunker connections that use the local relay before changing its port.</string>
     <string name="d_active">Active</string>
     <string name="d_switch">Switch</string>
     <string name="d_log_out">Log out</string>

@@ -4,6 +4,7 @@ import com.greenart7c3.nostrsigner.common.relays.RelayHealthTracker
 import com.vitorpamplona.quartz.nip01Core.relay.client.NostrClient
 import com.vitorpamplona.quartz.nip01Core.relay.client.auth.RelayAuthenticator
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
+import com.vitorpamplona.quartz.nip01Core.relay.normalizer.RelayUrlNormalizer
 import com.vitorpamplona.quartz.nip01Core.relay.sockets.WebSocketListener
 import com.vitorpamplona.quartz.nip01Core.relay.sockets.WebsocketBuilder
 import com.vitorpamplona.quartz.nip04Dm.crypto.Nip04
@@ -118,6 +119,71 @@ object AmberDesktop {
     val settings: DesktopSettings get() = SettingsStore.settings.value
 
     fun defaultRelays(): List<NormalizedRelayUrl> = settings.normalizedDefaultRelays()
+
+    /**
+     * Relays a NEW bunker connection uses: the local WebSocket relay (when the
+     * opt-out setting is on and the server is actually serving) followed by
+     * the default relays. Clients on this machine can then talk to the bunker
+     * without any public relay.
+     */
+    fun newBunkerRelays(): List<NormalizedRelayUrl> = buildList {
+        val local = if (settings.localBunkerServer) LocalBunkerRelay.relayUrl() else null
+        if (local != null) add(local)
+        addAll(defaultRelays())
+    }.distinct()
+
+    /** The relay port: the user's choice, or the automatic default for this build. */
+    fun localBunkerPort(): Int = settings.localBunkerPort ?: if (BuildVariant.isDebug) LocalBunkerRelay.DEBUG_PORT else LocalBunkerRelay.PORT
+
+    /**
+     * Changes the local relay's port, refused while any saved connection still
+     * lists the relay: its bunker:// URI (and its subscription) would keep
+     * pointing at the old port. Returns a string key for the refusal, or null
+     * when the port was applied.
+     */
+    fun changeLocalBunkerPort(newPort: Int): String? {
+        val current = RelayUrlNormalizer.normalizeOrNull("ws://127.0.0.1:${localBunkerPort()}/") ?: return null
+        val inUse = AccountsStore.accounts.value.any { record ->
+            AmberDesktop.store(record.npub).apps.value.any { app -> app.app.normalizedRelays().contains(current) }
+        }
+        if (inUse) return "d_local_bunker_port_in_use"
+        SettingsStore.update { it.copy(localBunkerPort = newPort) }
+        // A running relay must come down first: start() never rebinds a live one.
+        LocalBunkerRelay.stop()
+        applyLocalBunkerServerSetting()
+        return null
+    }
+
+    /**
+     * Pubkeys the local relay treats as approved senders (never rate limited):
+     * the client key of every saved connection (request senders) and the
+     * connection key (the engine's own response publishes). Expired
+     * connections don't count.
+     */
+    fun approvedRelaySenders(): Set<String> = buildSet {
+        AccountsStore.accounts.value.forEach { record ->
+            AmberDesktop.store(record.npub).apps.value.forEach { app ->
+                if (!app.app.isExpired()) {
+                    add(app.app.key)
+                    if (app.app.localKey.isNotEmpty()) add(app.app.localPubKey())
+                }
+            }
+        }
+    }
+
+    /**
+     * Applies the "local bunker server" setting: starts or stops the loopback
+     * relay, then redials so subscriptions follow (a stopped relay's sockets
+     * are dropped; a fresh one is dialed at once).
+     */
+    fun applyLocalBunkerServerSetting() {
+        if (settings.localBunkerServer) {
+            LocalBunkerRelay.start(localBunkerPort())
+        } else {
+            LocalBunkerRelay.stop()
+        }
+        redialRelays()
+    }
 
     /** Union of every connection's relays, mirroring `Amber.getSavedRelays`. */
     fun savedRelays(npub: String): Set<NormalizedRelayUrl> = buildSet {

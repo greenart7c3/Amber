@@ -164,6 +164,37 @@ fun SettingsScreen(account: DesktopAccount) {
                         },
                     )
                 }
+                SettingSwitch(
+                    title = Strings.get("d_local_bunker_server", language),
+                    description = Strings.format("d_local_bunker_server_sub", AmberDesktop.localBunkerPort(), language = language),
+                    checked = settings.localBunkerServer,
+                    onCheckedChange = { value ->
+                        SettingsStore.update { it.copy(localBunkerServer = value) }
+                        AmberDesktop.applyLocalBunkerServerSetting()
+                    },
+                )
+                Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    var portText by remember(settings.localBunkerPort) { mutableStateOf(AmberDesktop.localBunkerPort().toString()) }
+                    OutlinedTextField(
+                        value = portText,
+                        onValueChange = { portText = it.filter(Char::isDigit).take(5) },
+                        label = { Text(Strings.get("d_local_bunker_port", language)) },
+                        singleLine = true,
+                        modifier = Modifier.widthIn(max = 180.dp),
+                    )
+                    AmberOutlinedButton(
+                        text = Strings.get("save", language),
+                        onClick = {
+                            val port = portText.toIntOrNull()
+                            if (port == null || port !in 1024..65535) {
+                                Toaster.toast(Strings.get("d_local_bunker_port_invalid", language))
+                                return@AmberOutlinedButton
+                            }
+                            val error = AmberDesktop.changeLocalBunkerPort(port)
+                            Toaster.toast(Strings.get(error ?: "d_saved", language))
+                        },
+                    )
+                }
             }
             SettingsSection(Strings.get("connect_via_tor_short", language), Strings.get("tor_subtitle", language)) {
                 TorSection()

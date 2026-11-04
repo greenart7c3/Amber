@@ -84,6 +84,9 @@ for the JVM) and mirrors the mobile UI and permission model.
     JVM's JIT cannot run under it); the unit still gets
     `ProtectSystem=strict`, seccomp, `NoNewPrivileges` and friends
 - Windows installer (MSI/EXE) adds a Start Menu entry and a desktop shortcut
+- Linux tarball: `Amber/install-desktop-entry.sh` adds Amber to the app
+  launcher for the current user (no root; re-run it after moving the folder,
+  `--uninstall` removes the entry). The AppImage adds its own entry on launch
 - The window opens fitted to the screen's usable area (never under the
   taskbar) and remembers its size and maximized state
 - Pending requests expire after 10 minutes (or at the request's NIP-40

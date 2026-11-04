@@ -64,7 +64,11 @@ RUN desktop/packaging/linux.sh "${VERSION#v}" /dist
 
 # Compares contents (paths, bytes, symlinks, executable bits), not archive
 # bytes: timestamps and owners depend on the machine, not on the build.
-CMD desktopdiff.py /official/Amber.tar.xz /app/desktop/build/compose/binaries/main/app/Amber && \
+# The tarball holds the app image plus install-desktop-entry.sh, staged by
+# linux.sh (releases before it was added hold the bare app image).
+CMD tarball=/app/desktop/build/linux-bundles/tarball/Amber && \
+    { [ -d "$tarball" ] || tarball=/app/desktop/build/compose/binaries/main/app/Amber; } && \
+    desktopdiff.py /official/Amber.tar.xz "$tarball" && \
     desktopdiff.py /official/Amber.AppImage /app/desktop/build/linux-bundles/Amber.AppDir && \
     desktopdiff.py /official/Amber.deb /app/desktop/build/compose/binaries/main/deb/*.deb && \
     desktopdiff.py /official/Amber.rpm /app/desktop/build/compose/binaries/main/rpm/*.rpm

@@ -3,6 +3,8 @@
 # (./gradlew :desktop:createDistributable):
 #
 #   Amber-<version>-linux-x86_64.tar.xz   unpack anywhere, run Amber/bin/Amber
+#                                         (Amber/install-desktop-entry.sh adds
+#                                         it to the app launcher)
 #   Amber-<version>-x86_64.AppImage       single self-contained executable
 #
 #   desktop/packaging/linux.sh <version> <out-dir>
@@ -24,7 +26,13 @@ out=$(cd "$out" && pwd)
 rm -rf "$work"
 mkdir -p "$work"
 
-tar -C "$(dirname "$image")" -cJf "$out/Amber-$version-linux-x86_64.tar.xz" Amber
+# The tarball is the app image plus install-desktop-entry.sh, which adds it to
+# the user's app launcher.
+tarroot="$work/tarball"
+mkdir -p "$tarroot"
+cp -a "$image" "$tarroot/Amber"
+install -m 755 "$here/install-desktop-entry.sh" "$tarroot/Amber/install-desktop-entry.sh"
+tar -C "$tarroot" -cJf "$out/Amber-$version-linux-x86_64.tar.xz" Amber
 
 appdir="$work/Amber.AppDir"
 mkdir -p "$appdir/usr/lib"

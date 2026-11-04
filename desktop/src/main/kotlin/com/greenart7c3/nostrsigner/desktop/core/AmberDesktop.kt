@@ -13,7 +13,12 @@ import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 
 /**
@@ -189,6 +194,24 @@ object AmberDesktop {
     fun savedRelays(npub: String): Set<NormalizedRelayUrl> = buildSet {
         store(npub).apps.value.forEach { addAll(it.app.normalizedRelays()) }
         if (isEmpty()) addAll(defaultRelays())
+    }
+
+    /**
+     * Every relay a saved NIP-46 connection of any account subscribes on, kept
+     * live as accounts and connections change. Socket apps have no relays and
+     * contribute nothing.
+     */
+    @OptIn(ExperimentalCoroutinesApi::class)
+    fun connectionRelaysFlow(): Flow<Set<NormalizedRelayUrl>> = AccountsStore.accounts.flatMapLatest { records ->
+        if (records.isEmpty()) {
+            flowOf(emptySet())
+        } else {
+            combine(records.map { store(it.npub).apps }) { perAccount ->
+                perAccount.flatMap { apps ->
+                    apps.filter { it.app.localKey.isNotEmpty() }.flatMap { it.app.normalizedRelays() }
+                }.toSet()
+            }
+        }
     }
 
     /**

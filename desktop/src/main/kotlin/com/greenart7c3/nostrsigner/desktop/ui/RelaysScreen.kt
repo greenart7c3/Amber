@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -55,6 +56,13 @@ fun RelaysScreen() {
     val available by AmberDesktop.client.availableRelaysFlow().collectAsState()
     val connected by AmberDesktop.client.connectedRelaysFlow().collectAsState()
     val language by Strings.currentLanguage.collectAsState()
+    val connectionRelays by remember { AmberDesktop.connectionRelaysFlow() }.collectAsState(emptySet())
+    // Mirrors the Android active relays screen: relays existing connections
+    // still use that are not in the default set get their own section.
+    val connectionOnlyRelays = remember(connectionRelays, settings.defaultRelays) {
+        val defaults = settings.normalizedDefaultRelays().toSet()
+        connectionRelays.filterNot { it in defaults }.map { it.url }.sorted()
+    }
     var newRelay by remember { mutableStateOf("") }
     var checking by remember { mutableStateOf(false) }
     // Non-null while asking "the check failed — add anyway?"; holds the relay
@@ -156,23 +164,15 @@ fun RelaysScreen() {
                 state = listState,
                 contentPadding = PaddingValues(bottom = 8.dp),
             ) {
+                item {
+                    RelaySectionHeader(
+                        Strings.get("default_relays", language),
+                        Strings.get("active_relays_default_description", language),
+                    )
+                }
                 items(settings.defaultRelays.size) { index ->
                     val relay = settings.defaultRelays[index]
-                    Row(
-                        Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 2.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Text(relay, Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium)
-                        if (LocalRelays.isLocal(relay)) {
-                            Text(
-                                Strings.get("d_local_relay", language),
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                            Spacer(Modifier.width(8.dp))
-                        }
-                        RelayConnectionStatus(RelayUrlNormalizer.normalizeOrNull(relay), available, connected)
-                        Spacer(Modifier.width(8.dp))
+                    RelayRow(relay, available, connected) {
                         IconButton(
                             onClick = {
                                 if (settings.defaultRelays.size == 1) {
@@ -189,6 +189,19 @@ fun RelaysScreen() {
                         }
                     }
                     HorizontalDivider()
+                }
+                if (connectionOnlyRelays.isNotEmpty()) {
+                    item {
+                        RelaySectionHeader(
+                            Strings.get("relays_used_by_connections", language),
+                            Strings.get("active_relays_connections_description", language),
+                            Modifier.padding(top = 16.dp),
+                        )
+                    }
+                    items(connectionOnlyRelays.size) { index ->
+                        RelayRow(connectionOnlyRelays[index], available, connected)
+                        HorizontalDivider()
+                    }
                 }
             }
         }
@@ -220,6 +233,46 @@ fun RelaysScreen() {
             )
         }
         Spacer(Modifier.height(12.dp))
+    }
+}
+
+@Composable
+private fun RelaySectionHeader(title: String, description: String, modifier: Modifier = Modifier) {
+    Column(modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 8.dp)) {
+        Text(title, style = MaterialTheme.typography.titleMedium)
+        Text(
+            description,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+}
+
+@Composable
+private fun RelayRow(
+    relay: String,
+    available: Set<NormalizedRelayUrl>,
+    connected: Set<NormalizedRelayUrl>,
+    trailing: @Composable () -> Unit = {},
+) {
+    val language by Strings.currentLanguage.collectAsState()
+    Row(
+        // Rows without a trailing button keep the height of those with one.
+        Modifier.fillMaxWidth().heightIn(min = 48.dp).padding(horizontal = 4.dp, vertical = 2.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(relay, Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium)
+        if (LocalRelays.isLocal(relay)) {
+            Text(
+                Strings.get("d_local_relay", language),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Spacer(Modifier.width(8.dp))
+        }
+        RelayConnectionStatus(RelayUrlNormalizer.normalizeOrNull(relay), available, connected)
+        Spacer(Modifier.width(8.dp))
+        trailing()
     }
 }
 

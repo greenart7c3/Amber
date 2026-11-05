@@ -1145,6 +1145,7 @@ Yang dapat Anda lakukan:
     <string name="d_tray_hide">Sembunyikan Amber</string>
     <string name="d_tray_open">Buka Amber</string>
     <string name="d_tray_quit">Keluar dari Amber</string>
+    <string name="d_hidden_no_tray">Amber masih berjalan dan menjawab permintaan. Buka lagi dari peluncur aplikasi Anda.</string>
     <string name="switch_relays">ingin mengganti relay</string>
     <string name="invalid_request">mengirim permintaan yang tidak valid</string>
     <string name="d_tor_off">Mati</string>

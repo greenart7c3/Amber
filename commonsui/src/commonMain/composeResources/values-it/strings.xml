@@ -1147,6 +1147,7 @@ Cosa puoi fare:
     <string name="d_tray_hide">Nascondi Amber</string>
     <string name="d_tray_open">Apri Amber</string>
     <string name="d_tray_quit">Esci da Amber</string>
+    <string name="d_hidden_no_tray">Amber è ancora in esecuzione e risponde alle richieste. Riaprilo dal launcher delle app.</string>
     <string name="switch_relays">vuole cambiare i relay</string>
     <string name="invalid_request">ha inviato una richiesta non valida</string>
     <string name="d_tor_off">Disattivato</string>

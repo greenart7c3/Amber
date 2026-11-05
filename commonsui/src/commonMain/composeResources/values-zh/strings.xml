@@ -1162,6 +1162,7 @@
     <string name="d_tray_hide">隐藏 Amber</string>
     <string name="d_tray_open">打开 Amber</string>
     <string name="d_tray_quit">退出 Amber</string>
+    <string name="d_hidden_no_tray">Amber 仍在运行并响应请求。可从应用启动器重新打开。</string>
     <string name="switch_relays">想要切换中继</string>
     <string name="invalid_request">发送了无效的请求</string>
     <string name="d_tor_off">关闭</string>

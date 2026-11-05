@@ -9,6 +9,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
@@ -23,6 +24,7 @@ import androidx.compose.ui.window.isTraySupported
 import androidx.compose.ui.window.rememberTrayState
 import com.greenart7c3.nostrsigner.commonsui.Res
 import com.greenart7c3.nostrsigner.commonsui.d_approve
+import com.greenart7c3.nostrsigner.commonsui.d_hidden_no_tray
 import com.greenart7c3.nostrsigner.commonsui.d_lock_now
 import com.greenart7c3.nostrsigner.commonsui.d_tray_hide
 import com.greenart7c3.nostrsigner.commonsui.d_tray_open
@@ -202,7 +204,12 @@ fun main(args: Array<String>) {
     val primary = UriLaunch.tryAcquireSingleInstance()
     if (!primary) {
         if (launchUri != null && UriLaunch.forwardToRunningInstance(launchUri)) return
-        if (launchUri == null) return
+        // Opened from the app launcher: the running instance may be hidden
+        // with no tray icon to bring it back, so ask it to show its window.
+        if (launchUri == null) {
+            UriLaunch.askRunningInstanceToShow()
+            return
+        }
         // Could not forward (no listener): fall through and start anyway.
     } else {
         // macOS delivers nostrconnect:// links as an Apple event, not as an
@@ -311,6 +318,13 @@ fun main(args: Array<String>) {
                 if (uri != null) DesktopTray.windowVisible.value = true
             }
         }
+        // Amber was opened again from the app launcher: show the window.
+        LaunchedEffect(Unit) {
+            UriLaunch.showRequests.collect {
+                DesktopTray.windowVisible.value = true
+                windowState.isMinimized = false
+            }
+        }
         DisposableEffect(Unit) { onDispose { nativeTray?.shutdown() } }
         LaunchedEffect(pending.size, windowVisible, lockStatus, language) {
             nativeTray?.update(
@@ -326,8 +340,24 @@ fun main(args: Array<String>) {
         // still answers requests. On Linux we honor it whenever close-to-tray
         // is enabled — even if no tray icon could be published (Wayland trays
         // are flaky) — so the window at least hides instead of quitting; a new
-        // request (or the tray icon, when present) brings it back.
+        // request, opening Amber again from the app launcher (see
+        // UriLaunch.showRequests) or the tray icon, when present, brings it back.
         val trayActive = settings.closeToTray && (trayUsable || isLinux)
+        val scope = rememberCoroutineScope()
+        // Without a tray icon a hidden Amber looks like it quit: say once per
+        // session that it still runs, and how to bring it back.
+        var noTrayNoticeShown by remember { mutableStateOf(false) }
+        val closeWindow: () -> Unit = {
+            if (!trayActive) {
+                exitApplication()
+            } else {
+                DesktopTray.windowVisible.value = false
+                if (!trayUsable && !noTrayNoticeShown) {
+                    noTrayNoticeShown = true
+                    scope.launch(Dispatchers.IO) { Notifier.notify(BuildVariant.appName, getString(Res.string.d_hidden_no_tray)) }
+                }
+            }
+        }
 
         // Notify when a new approval request arrives. Do NOT force the window
         // open — a minimized Amber should stay minimized and let the user open
@@ -443,13 +473,7 @@ fun main(args: Array<String>) {
         }
 
         Window(
-            onCloseRequest = {
-                if (trayActive) {
-                    DesktopTray.windowVisible.value = false
-                } else {
-                    exitApplication()
-                }
-            },
+            onCloseRequest = closeWindow,
             state = windowState,
             visible = windowVisible,
             title = if (pending.isEmpty()) BuildVariant.appName else "${BuildVariant.appName} (${pending.size})",
@@ -457,9 +481,7 @@ fun main(args: Array<String>) {
             onPreviewKeyEvent = { event ->
                 handleShortcut(
                     event,
-                    hideWindow = {
-                        if (trayActive) DesktopTray.windowVisible.value = false else exitApplication()
-                    },
+                    hideWindow = closeWindow,
                     quit = ::exitApplication,
                 )
             },

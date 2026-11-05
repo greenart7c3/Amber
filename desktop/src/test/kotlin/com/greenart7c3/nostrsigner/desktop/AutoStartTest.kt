@@ -20,7 +20,7 @@ class AutoStartTest {
         assertTrue(unit.contains("ProtectHome=read-only"))
         assertTrue(unit.contains("SystemCallFilter=@system-service"))
         assertTrue(unit.contains("LimitCORE=0"))
-        assertTrue(unit.contains("ReadWritePaths=-%h/.local/share/amber -%h/.local/share/applications %t"))
+        assertTrue(unit.contains("ReadWritePaths=-%h/.local/share/amber -%h/.local/share/applications -%h/.local/share/nostr %t"))
         assertTrue(unit.contains("BindPaths=-/tmp/.X11-unix"))
         // The JVM's JIT needs writable executable memory: this hardening flag
         // would kill the service instantly and must never be emitted.

@@ -1169,6 +1169,7 @@ Android 向け Nostr アプリをすべて見つけるには</string>
     <string name="d_tray_hide">Amber を隠す</string>
     <string name="d_tray_open">Amber を開く</string>
     <string name="d_tray_quit">Amber を終了</string>
+    <string name="d_hidden_no_tray">Amber は引き続き実行中で、リクエストに応答しています。アプリランチャーからもう一度開けます。</string>
     <string name="switch_relays">Relay の切り替えを求めています</string>
     <string name="invalid_request">無効なリクエストを送信しました</string>
     <string name="d_tor_off">オフ</string>

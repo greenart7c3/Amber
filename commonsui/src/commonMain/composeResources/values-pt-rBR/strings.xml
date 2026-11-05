@@ -1147,6 +1147,7 @@ O que você pode fazer:
     <string name="d_tray_hide">Ocultar Amber</string>
     <string name="d_tray_open">Abrir Amber</string>
     <string name="d_tray_quit">Sair do Amber</string>
+    <string name="d_hidden_no_tray">O Amber continua em execução e respondendo a solicitações. Abra-o novamente pelo seu inicializador de aplicativos.</string>
     <string name="switch_relays">quer trocar os relays</string>
     <string name="invalid_request">enviou uma solicitação inválida</string>
     <string name="d_tor_off">Desativado</string>

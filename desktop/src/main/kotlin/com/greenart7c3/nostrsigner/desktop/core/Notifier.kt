@@ -1,5 +1,6 @@
 package com.greenart7c3.nostrsigner.desktop.core
 
+import java.io.File
 import java.util.concurrent.TimeUnit
 
 /**
@@ -149,36 +150,81 @@ object Notifier {
 
     /**
      * Notification daemons that accept actions (and advertise the "actions"
-     * capability) but never draw them as buttons: omarchy's quickshell only
-     * runs the "default" action on click, mako and dunst only offer actions
-     * through a keybinding or menu.
+     * capability) but never draw them as buttons: mako and dunst only offer
+     * actions through a keybinding or menu.
      */
-    private val daemonsWithoutButtons = setOf("quickshell", "mako", "dunst")
+    private val daemonsWithoutButtons = setOf("mako", "dunst")
 
     /**
      * Whether the running Linux notification daemon shows action buttons, so
      * request notifications can carry Approve / Reject. False when the daemon
-     * is one of [daemonsWithoutButtons] or cannot be asked, in which case the
-     * caller draws its own popup instead. Blocks briefly: call off the UI thread.
+     * is one of [daemonsWithoutButtons], a quickshell config not known to draw
+     * them (see [quickshellDrawsButtons]), or cannot be asked, in which case
+     * the caller draws its own popup instead. Blocks briefly: call off the UI
+     * thread.
      */
     fun linuxDaemonShowsButtons(): Boolean = try {
-        val process = ProcessBuilder(
-            "gdbus", "call", "--session",
-            "--dest", "org.freedesktop.Notifications",
-            "--object-path", "/org/freedesktop/Notifications",
-            "--method", "org.freedesktop.Notifications.GetServerInformation",
-        ).redirectError(ProcessBuilder.Redirect.DISCARD).start()
-        val reply = process.inputStream.bufferedReader().use { it.readText() }
-        if (!process.waitFor(4, TimeUnit.SECONDS) || process.exitValue() != 0) {
-            false
-        } else {
-            // Reply: "('gnome-shell', 'GNOME', '50.1', '1.2')"
-            val name = Regex("""\('([^']*)'""").find(reply)?.groupValues?.get(1)?.lowercase()
-            name != null && name !in daemonsWithoutButtons
+        val reply = gdbus("org.freedesktop.Notifications", "/org/freedesktop/Notifications", "org.freedesktop.Notifications.GetServerInformation")
+        // Reply: "('gnome-shell', 'GNOME', '50.1', '1.2')"
+        when (val name = reply?.let { Regex("""\('([^']*)'""").find(it) }?.groupValues?.get(1)?.lowercase()) {
+            null -> false
+            "quickshell" -> quickshellDrawsButtons()
+            else -> name !in daemonsWithoutButtons
         }
     } catch (e: Exception) {
         AmberLogger.d("Notifier", "notification daemon lookup failed: ${e.message}")
         false
+    }
+
+    /**
+     * quickshell is a toolkit, and every shell built on it reports the same
+     * server name, so ask the running one. Omarchy's shell (4.5+) draws every
+     * sender action except "default" as a button on the front card of a stack
+     * (the card click runs "default"); older Omarchy and other quickshell
+     * configs may not draw them, so they keep Amber's popup. Omarchy's
+     * notifications plugin is recognized by its button component.
+     */
+    private fun quickshellDrawsButtons(): Boolean {
+        val reply = gdbus("org.freedesktop.DBus", "/org/freedesktop/DBus", "org.freedesktop.DBus.GetConnectionUnixProcessID", "org.freedesktop.Notifications")
+        val pid = reply?.let { parsePidReply(it) } ?: return false
+        val argv = File("/proc/$pid/cmdline").readText().split('\u0000').filter { it.isNotEmpty() }
+        val configDir = quickshellConfigDir(argv, System.getenv("XDG_CONFIG_HOME"), System.getProperty("user.home")) ?: return false
+        return drawsOmarchyButtons(configDir)
+    }
+
+    /** "(uint32 2258,)" → 2258. */
+    internal fun parsePidReply(reply: String): Long? = Regex("""\(uint32 (\d+),\)""").find(reply)?.groupValues?.get(1)?.toLongOrNull()
+
+    /**
+     * The config directory a quickshell command line runs: `-p`/`--path <dir>`,
+     * `-c`/`--config <name>` under `$XDG_CONFIG_HOME/quickshell`, else that
+     * directory itself.
+     */
+    internal fun quickshellConfigDir(argv: List<String>, xdgConfigHome: String?, home: String): File? {
+        val configRoot = File(xdgConfigHome?.takeIf { it.isNotBlank() } ?: "$home/.config", "quickshell")
+        fun valueOf(vararg flags: String): String? {
+            argv.forEachIndexed { i, arg ->
+                flags.forEach { flag ->
+                    if (arg == flag) return argv.getOrNull(i + 1)
+                    if (arg.startsWith("$flag=")) return arg.substringAfter('=')
+                }
+            }
+            return null
+        }
+        valueOf("-p", "--path")?.let { return File(it) }
+        valueOf("-c", "--config")?.let { return File(configRoot, it) }
+        return configRoot
+    }
+
+    internal fun drawsOmarchyButtons(configDir: File): Boolean = File(configDir, "plugins/notifications/DeedButton.qml").isFile
+
+    /** A `gdbus call` reply, or null when it fails or times out. */
+    private fun gdbus(dest: String, path: String, method: String, vararg args: String): String? {
+        val process = ProcessBuilder(
+            listOf("gdbus", "call", "--session", "--dest", dest, "--object-path", path, "--method", method) + args,
+        ).redirectError(ProcessBuilder.Redirect.DISCARD).start()
+        val reply = process.inputStream.bufferedReader().use { it.readText() }
+        return if (process.waitFor(4, TimeUnit.SECONDS) && process.exitValue() == 0) reply else null
     }
 
     /** Test hook: exercises the process plumbing without depending on the OS. */

@@ -13,13 +13,17 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalInspectionMode
-import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.greenart7c3.nostrsigner.Amber
-import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.commonsui.Res
+import com.greenart7c3.nostrsigner.commonsui.disable_kill_switch
+import com.greenart7c3.nostrsigner.commonsui.kill_switch_connect_message
+import com.greenart7c3.nostrsigner.commonsui.kill_switch_connect_title
+import com.greenart7c3.nostrsigner.commonsui.no
 import com.greenart7c3.nostrsigner.service.KillSwitchReceiver
 import com.greenart7c3.nostrsigner.ui.theme.amoledBorder
 import com.greenart7c3.nostrsigner.ui.theme.outlineIfAny
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * A connect (NIP-46) request can only be answered while Amber is connected to
@@ -40,8 +44,8 @@ fun KillSwitchConnectPrompt(hasConnectRequest: Boolean) {
         val context = LocalContext.current
         AlertDialog(
             modifier = Modifier.outlineIfAny(amoledBorder(), AlertDialogDefaults.shape),
-            title = { Text(text = stringResource(R.string.kill_switch_connect_title)) },
-            text = { Text(text = stringResource(R.string.kill_switch_connect_message)) },
+            title = { Text(text = stringResource(Res.string.kill_switch_connect_title)) },
+            text = { Text(text = stringResource(Res.string.kill_switch_connect_message)) },
             onDismissRequest = { dismissed = true },
             confirmButton = {
                 TextButton(
@@ -50,14 +54,14 @@ fun KillSwitchConnectPrompt(hasConnectRequest: Boolean) {
                         dismissed = true
                     },
                 ) {
-                    Text(text = stringResource(R.string.disable_kill_switch))
+                    Text(text = stringResource(Res.string.disable_kill_switch))
                 }
             },
             dismissButton = {
                 TextButton(
                     onClick = { dismissed = true },
                 ) {
-                    Text(text = stringResource(R.string.no))
+                    Text(text = stringResource(Res.string.no))
                 }
             },
         )

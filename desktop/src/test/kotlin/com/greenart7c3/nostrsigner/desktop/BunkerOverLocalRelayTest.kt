@@ -1,5 +1,7 @@
 package com.greenart7c3.nostrsigner.desktop
 
+import com.greenart7c3.nostrsigner.commonsui.Res
+import com.greenart7c3.nostrsigner.commonsui.d_local_bunker_port_in_use
 import com.greenart7c3.nostrsigner.desktop.core.AccountManager
 import com.greenart7c3.nostrsigner.desktop.core.AmberDesktop
 import com.greenart7c3.nostrsigner.desktop.core.LocalBunkerRelay
@@ -205,7 +207,7 @@ class BunkerOverLocalRelayTest {
         probe2.close()
 
         // A saved connection still lists the relay: the port must not move.
-        assertEquals("d_local_bunker_port_in_use", AmberDesktop.changeLocalBunkerPort(port2))
+        assertEquals(Res.string.d_local_bunker_port_in_use, AmberDesktop.changeLocalBunkerPort(port2))
         assertEquals(port1, LocalBunkerRelay.boundPort)
         assertEquals(relay.url, LocalBunkerRelay.relayUrl()?.url)
 

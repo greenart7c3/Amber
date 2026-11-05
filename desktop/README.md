@@ -100,10 +100,9 @@ for the JVM) and mirrors the mobile UI and permission model.
   list views, and keyboard shortcuts
 - Light/dark theme using the Amber palette
 - Fully localized UI in 14 languages, switchable live under Settings →
-  Language. The Android `strings.xml` translations (and event-kind
-  descriptions) are bundled verbatim under `resources/i18n/strings_<lang>.xml`
-  and loaded by `core/Strings.kt`; desktop-only strings live in
-  `strings_en.xml` (prefixed `d_`) and fall back to English in other locales
+  Language. Every string, Android and desktop (prefixed `d_`) alike, lives in
+  the shared `:commonsui` module (`commonsui/src/commonMain/composeResources`)
+  and is read as Compose Multiplatform resources (`stringResource(Res.string.x)`)
 
 ## Keyboard shortcuts
 

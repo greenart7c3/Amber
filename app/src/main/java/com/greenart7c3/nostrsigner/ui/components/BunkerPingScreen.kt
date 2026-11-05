@@ -14,7 +14,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -22,11 +21,15 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.commonsui.Res
+import com.greenart7c3.nostrsigner.commonsui.ping
+import com.greenart7c3.nostrsigner.commonsui.requests
+import com.greenart7c3.nostrsigner.commonsui.response
 import com.greenart7c3.nostrsigner.ui.RememberType
 import com.greenart7c3.nostrsigner.ui.theme.AmberPreview
 import com.greenart7c3.nostrsigner.ui.theme.ThemePreviews
 import com.greenart7c3.nostrsigner.ui.theme.amoledBorder
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun BunkerPingScreen(
@@ -46,14 +49,14 @@ fun BunkerPingScreen(
     ) {
         RemoteAppIcon(iconUrl, appName)
 
-        val message = stringResource(R.string.ping)
+        val message = stringResource(Res.string.ping)
 
         Text(
             buildAnnotatedString {
                 withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
                     append(appName)
                 }
-                append(" ${stringResource(R.string.requests)} $message")
+                append(" ${stringResource(Res.string.requests)} $message")
             },
             fontSize = 18.sp,
         )
@@ -66,7 +69,7 @@ fun BunkerPingScreen(
         ) {
             Column(Modifier.padding(6.dp)) {
                 Text(
-                    stringResource(R.string.response),
+                    stringResource(Res.string.response),
                     fontWeight = FontWeight.Bold,
                 )
 

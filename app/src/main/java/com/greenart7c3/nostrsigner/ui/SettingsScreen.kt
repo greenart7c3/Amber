@@ -53,7 +53,6 @@ import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.LinkAnnotation
 import androidx.compose.ui.text.ParagraphStyle
 import androidx.compose.ui.text.SpanStyle
@@ -73,6 +72,70 @@ import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.commonsui.Res
+import com.greenart7c3.nostrsigner.commonsui.always
+import com.greenart7c3.nostrsigner.commonsui.amber_github_uri
+import com.greenart7c3.nostrsigner.commonsui.applications_backup
+import com.greenart7c3.nostrsigner.commonsui.applications_backup_subtitle
+import com.greenart7c3.nostrsigner.commonsui.auth_whitelist
+import com.greenart7c3.nostrsigner.commonsui.auth_whitelist_subtitle
+import com.greenart7c3.nostrsigner.commonsui.backup_keys
+import com.greenart7c3.nostrsigner.commonsui.backup_keys_subtitle
+import com.greenart7c3.nostrsigner.commonsui.clear_logs_and_activity
+import com.greenart7c3.nostrsigner.commonsui.connect_via_tor_short
+import com.greenart7c3.nostrsigner.commonsui.database_size_mb
+import com.greenart7c3.nostrsigner.commonsui.deleting_old_log_entries_from
+import com.greenart7c3.nostrsigner.commonsui.disable_kill_switch
+import com.greenart7c3.nostrsigner.commonsui.disconnect_builtin_tor
+import com.greenart7c3.nostrsigner.commonsui.disconnect_from_your_orbot_setup
+import com.greenart7c3.nostrsigner.commonsui.do_you_really_want_to_disable_tor_text
+import com.greenart7c3.nostrsigner.commonsui.do_you_really_want_to_disable_tor_title
+import com.greenart7c3.nostrsigner.commonsui.enable_kill_switch
+import com.greenart7c3.nostrsigner.commonsui.every_time
+import com.greenart7c3.nostrsigner.commonsui.five_minutes
+import com.greenart7c3.nostrsigner.commonsui.five_minutes_short
+import com.greenart7c3.nostrsigner.commonsui.getStringBlocking
+import com.greenart7c3.nostrsigner.commonsui.give_us_feedback
+import com.greenart7c3.nostrsigner.commonsui.give_us_feedback_subtitle
+import com.greenart7c3.nostrsigner.commonsui.kill_switch_settings_subtitle
+import com.greenart7c3.nostrsigner.commonsui.language
+import com.greenart7c3.nostrsigner.commonsui.language_subtitle
+import com.greenart7c3.nostrsigner.commonsui.logs
+import com.greenart7c3.nostrsigner.commonsui.logs_subtitle
+import com.greenart7c3.nostrsigner.commonsui.never
+import com.greenart7c3.nostrsigner.commonsui.no
+import com.greenart7c3.nostrsigner.commonsui.one_day
+import com.greenart7c3.nostrsigner.commonsui.one_day_short
+import com.greenart7c3.nostrsigner.commonsui.one_hour
+import com.greenart7c3.nostrsigner.commonsui.one_hour_short
+import com.greenart7c3.nostrsigner.commonsui.one_minute
+import com.greenart7c3.nostrsigner.commonsui.one_minute_short
+import com.greenart7c3.nostrsigner.commonsui.one_week
+import com.greenart7c3.nostrsigner.commonsui.one_week_short
+import com.greenart7c3.nostrsigner.commonsui.relays
+import com.greenart7c3.nostrsigner.commonsui.relays_subtitle
+import com.greenart7c3.nostrsigner.commonsui.security
+import com.greenart7c3.nostrsigner.commonsui.security_subtitle
+import com.greenart7c3.nostrsigner.commonsui.service_settings
+import com.greenart7c3.nostrsigner.commonsui.service_settings_subtitle
+import com.greenart7c3.nostrsigner.commonsui.settings_section_account
+import com.greenart7c3.nostrsigner.commonsui.settings_section_general
+import com.greenart7c3.nostrsigner.commonsui.settings_section_help
+import com.greenart7c3.nostrsigner.commonsui.settings_section_network
+import com.greenart7c3.nostrsigner.commonsui.settings_section_service
+import com.greenart7c3.nostrsigner.commonsui.sign_policy
+import com.greenart7c3.nostrsigner.commonsui.sign_policy_subtitle
+import com.greenart7c3.nostrsigner.commonsui.source_code
+import com.greenart7c3.nostrsigner.commonsui.support_development
+import com.greenart7c3.nostrsigner.commonsui.support_development_uri
+import com.greenart7c3.nostrsigner.commonsui.ten_minutes
+import com.greenart7c3.nostrsigner.commonsui.ten_minutes_short
+import com.greenart7c3.nostrsigner.commonsui.theme
+import com.greenart7c3.nostrsigner.commonsui.tor_subtitle
+import com.greenart7c3.nostrsigner.commonsui.update_available
+import com.greenart7c3.nostrsigner.commonsui.update_settings
+import com.greenart7c3.nostrsigner.commonsui.update_settings_subtitle
+import com.greenart7c3.nostrsigner.commonsui.yes
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.ThemeMode
 import com.greenart7c3.nostrsigner.models.TorMode
@@ -94,6 +157,8 @@ import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun SettingsScreen(
@@ -128,7 +193,7 @@ fun SettingsScreen(
 
     if (themeDialog) {
         SpinnerSelectionDialog(
-            title = stringResource(R.string.theme),
+            title = stringResource(Res.string.theme),
             options = ThemeMode.entries.map { TitleExplainer(stringResource(it.resourceId)) }.toImmutableList(),
             onDismiss = { themeDialog = false },
         ) { index ->
@@ -157,38 +222,38 @@ fun SettingsScreen(
         Column(
             modifier,
         ) {
-            SettingsSection(title = stringResource(R.string.settings_section_account)) {
+            SettingsSection(title = stringResource(Res.string.settings_section_account)) {
                 SettingsItem(
-                    title = stringResource(R.string.security),
-                    subtitle = stringResource(R.string.security_subtitle),
+                    title = stringResource(Res.string.security),
+                    subtitle = stringResource(Res.string.security_subtitle),
                     painter = rememberVectorPainter(Icons.Default.Security),
                     onClick = { onNav(Route.Security.route) },
                 )
                 SettingsDivider()
                 SettingsItem(
-                    title = stringResource(R.string.backup_keys),
-                    subtitle = stringResource(R.string.backup_keys_subtitle),
+                    title = stringResource(Res.string.backup_keys),
+                    subtitle = stringResource(Res.string.backup_keys_subtitle),
                     painter = rememberVectorPainter(Icons.Default.Key),
                     onClick = { onNav(Route.AccountBackup.route) },
                 )
                 SettingsDivider()
                 SettingsItem(
-                    title = stringResource(R.string.sign_policy),
-                    subtitle = stringResource(R.string.sign_policy_subtitle),
+                    title = stringResource(Res.string.sign_policy),
+                    subtitle = stringResource(Res.string.sign_policy_subtitle),
                     painter = rememberVectorPainter(Icons.Default.Draw),
                     onClick = { onNav(Route.SignPolicy.route) },
                 )
             }
 
             if (!isOffline) {
-                SettingsSection(title = stringResource(R.string.settings_section_network)) {
+                SettingsSection(title = stringResource(Res.string.settings_section_network)) {
                     SettingsItem(
                         title = when (torMode) {
-                            TorMode.BUILTIN -> stringResource(R.string.disconnect_builtin_tor)
-                            TorMode.ORBOT -> stringResource(R.string.disconnect_from_your_orbot_setup)
-                            TorMode.DISABLED -> stringResource(R.string.connect_via_tor_short)
+                            TorMode.BUILTIN -> stringResource(Res.string.disconnect_builtin_tor)
+                            TorMode.ORBOT -> stringResource(Res.string.disconnect_from_your_orbot_setup)
+                            TorMode.DISABLED -> stringResource(Res.string.connect_via_tor_short)
                         },
-                        subtitle = stringResource(R.string.tor_subtitle),
+                        subtitle = stringResource(Res.string.tor_subtitle),
                         painter = painterResource(R.drawable.ic_tor),
                         onLongClick = { onNav(Route.TorSettings.route) },
                         onClick = {
@@ -201,17 +266,17 @@ fun SettingsScreen(
                     )
                     SettingsDivider()
                     SettingsItem(
-                        title = stringResource(R.string.relays),
-                        subtitle = stringResource(R.string.relays_subtitle),
+                        title = stringResource(Res.string.relays),
+                        subtitle = stringResource(Res.string.relays_subtitle),
                         painter = painterResource(R.drawable.relays),
                         onClick = { onNav(Route.RelaysScreen.route) },
                     )
                     SettingsDivider()
                     SettingsItem(
                         title = stringResource(
-                            if (killSwitch) R.string.disable_kill_switch else R.string.enable_kill_switch,
+                            if (killSwitch) Res.string.disable_kill_switch else Res.string.enable_kill_switch,
                         ),
-                        subtitle = stringResource(R.string.kill_switch_settings_subtitle),
+                        subtitle = stringResource(Res.string.kill_switch_settings_subtitle),
                         painter = rememberVectorPainter(Icons.Default.Block),
                         iconTint = if (killSwitch) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onBackground,
                         titleColor = if (killSwitch) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onBackground,
@@ -221,57 +286,57 @@ fun SettingsScreen(
                     )
                 }
 
-                SettingsSection(title = stringResource(R.string.settings_section_service)) {
+                SettingsSection(title = stringResource(Res.string.settings_section_service)) {
                     SettingsItem(
-                        title = stringResource(R.string.service_settings),
-                        subtitle = stringResource(R.string.service_settings_subtitle),
+                        title = stringResource(Res.string.service_settings),
+                        subtitle = stringResource(Res.string.service_settings_subtitle),
                         painter = rememberVectorPainter(Icons.Default.PowerSettingsNew),
                         onClick = { onNav(Route.ServiceSettings.route) },
                     )
                     SettingsDivider()
                     SettingsItem(
-                        title = stringResource(R.string.applications_backup),
-                        subtitle = stringResource(R.string.applications_backup_subtitle),
+                        title = stringResource(Res.string.applications_backup),
+                        subtitle = stringResource(Res.string.applications_backup_subtitle),
                         painter = rememberVectorPainter(Icons.Default.CloudUpload),
                         onClick = { onNav(Route.ApplicationsBackup.route) },
                     )
                 }
             }
 
-            SettingsSection(title = stringResource(R.string.settings_section_general)) {
+            SettingsSection(title = stringResource(Res.string.settings_section_general)) {
                 SettingsItem(
-                    title = stringResource(R.string.theme),
+                    title = stringResource(Res.string.theme),
                     subtitle = stringResource(themeMode.resourceId),
                     painter = rememberVectorPainter(Icons.Default.Palette),
                     onClick = { themeDialog = true },
                 )
                 SettingsDivider()
                 SettingsItem(
-                    title = stringResource(R.string.language),
-                    subtitle = stringResource(R.string.language_subtitle),
+                    title = stringResource(Res.string.language),
+                    subtitle = stringResource(Res.string.language_subtitle),
                     painter = rememberVectorPainter(Icons.Default.Language),
                     onClick = { onNav(Route.Language.route) },
                 )
                 SettingsDivider()
                 SettingsItem(
-                    title = stringResource(R.string.auth_whitelist),
-                    subtitle = stringResource(R.string.auth_whitelist_subtitle),
+                    title = stringResource(Res.string.auth_whitelist),
+                    subtitle = stringResource(Res.string.auth_whitelist_subtitle),
                     painter = rememberVectorPainter(Icons.Default.VerifiedUser),
                     onClick = { onNav(Route.AuthWhitelist.route) },
                 )
                 SettingsDivider()
                 SettingsItem(
-                    title = stringResource(R.string.logs),
-                    subtitle = stringResource(R.string.logs_subtitle),
+                    title = stringResource(Res.string.logs),
+                    subtitle = stringResource(Res.string.logs_subtitle),
                     painter = rememberVectorPainter(Icons.AutoMirrored.Filled.Article),
                     onClick = { onNav(Route.Logs.route) },
                 )
             }
 
-            SettingsSection(title = stringResource(R.string.settings_section_help)) {
+            SettingsSection(title = stringResource(Res.string.settings_section_help)) {
                 SettingsItem(
-                    title = stringResource(R.string.give_us_feedback),
-                    subtitle = stringResource(R.string.give_us_feedback_subtitle),
+                    title = stringResource(Res.string.give_us_feedback),
+                    subtitle = stringResource(Res.string.give_us_feedback_subtitle),
                     painter = rememberVectorPainter(Icons.Default.Feedback),
                     onClick = { onNav(Route.Feedback.route) },
                 )
@@ -285,11 +350,11 @@ fun SettingsScreen(
                         SettingsDivider()
                         SettingsItem(
                             title = if (updateAvailable) {
-                                stringResource(R.string.update_available, latestRelease!!.version)
+                                stringResource(Res.string.update_available, latestRelease!!.version)
                             } else {
-                                stringResource(R.string.update_settings)
+                                stringResource(Res.string.update_settings)
                             },
-                            subtitle = stringResource(R.string.update_settings_subtitle),
+                            subtitle = stringResource(Res.string.update_settings_subtitle),
                             painter = rememberVectorPainter(Icons.Default.SystemUpdate),
                             iconTint = if (updateAvailable) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onBackground,
                             titleColor = if (updateAvailable) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onBackground,
@@ -309,16 +374,16 @@ fun SettingsScreen(
                     .padding(top = 16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                Text(stringResource(R.string.database_size_mb, sizeInMBFormatted), color = Color.Gray)
+                Text(stringResource(Res.string.database_size_mb, sizeInMBFormatted), color = Color.Gray)
                 AmberButton(
                     modifier = Modifier.fillMaxWidth(),
-                    text = stringResource(R.string.clear_logs_and_activity),
+                    text = stringResource(Res.string.clear_logs_and_activity),
                     onClick = {
                         Amber.instance.applicationIOScope.launch {
                             isLoading = true
                             LocalPreferences.allSavedAccounts(Amber.instance).forEach {
                                 try {
-                                    status = context.getString(R.string.deleting_old_log_entries_from, it.npub)
+                                    status = getStringBlocking(Res.string.deleting_old_log_entries_from, it.npub)
                                     val oneWeek = System.currentTimeMillis() - (ONE_WEEK * 1000L)
                                     val oneWeekAgo = TimeUtils.oneWeekAgo()
                                     val historyDatabase = Amber.instance.getHistoryDatabase(it.npub)
@@ -370,7 +435,7 @@ fun SettingsScreen(
                         append("v${BuildConfig.VERSION_NAME}-${BuildConfig.FLAVOR}\n\n")
                         withLink(
                             LinkAnnotation.Url(
-                                context.getString(R.string.amber_github_uri),
+                                getStringBlocking(Res.string.amber_github_uri),
                                 styles = TextLinkStyles(
                                     style = SpanStyle(
                                         color = primaryColor,
@@ -379,11 +444,11 @@ fun SettingsScreen(
                                 ),
                             ),
                         ) {
-                            append("${context.getString(R.string.source_code)}\n\n")
+                            append("${getStringBlocking(Res.string.source_code)}\n\n")
                         }
                         withLink(
                             LinkAnnotation.Url(
-                                context.getString(R.string.support_development_uri),
+                                getStringBlocking(Res.string.support_development_uri),
                                 styles = TextLinkStyles(
                                     style = SpanStyle(
                                         color = primaryColor,
@@ -392,7 +457,7 @@ fun SettingsScreen(
                                 ),
                             ),
                         ) {
-                            append(context.getString(R.string.support_development))
+                            append(getStringBlocking(Res.string.support_development))
                         }
                     }
                     toAnnotatedString()
@@ -408,8 +473,8 @@ fun SettingsScreen(
     if (disconnectTorDialog) {
         AlertDialog(
             modifier = Modifier.outlineIfAny(amoledBorder(), AlertDialogDefaults.shape),
-            title = { Text(text = stringResource(R.string.do_you_really_want_to_disable_tor_title)) },
-            text = { Text(text = stringResource(R.string.do_you_really_want_to_disable_tor_text)) },
+            title = { Text(text = stringResource(Res.string.do_you_really_want_to_disable_tor_title)) },
+            text = { Text(text = stringResource(Res.string.do_you_really_want_to_disable_tor_text)) },
             onDismissRequest = { disconnectTorDialog = false },
             confirmButton = {
                 TextButton(
@@ -425,14 +490,14 @@ fun SettingsScreen(
                         }
                     },
                 ) {
-                    Text(text = stringResource(R.string.yes))
+                    Text(text = stringResource(Res.string.yes))
                 }
             },
             dismissButton = {
                 TextButton(
                     onClick = { disconnectTorDialog = false },
                 ) {
-                    Text(text = stringResource(R.string.no))
+                    Text(text = stringResource(Res.string.no))
                 }
             },
         )
@@ -441,8 +506,8 @@ fun SettingsScreen(
 
 @Composable
 fun SettingsRow(
-    name: Int,
-    description: Int?,
+    name: StringResource,
+    description: StringResource?,
     selectedItems: ImmutableList<TitleExplainer>,
     selectedIndex: Int,
     maxLines: Int = 1,
@@ -593,15 +658,15 @@ private fun SettingsItem(
     }
 }
 
-enum class RememberType(val screenCode: Int, val resourceId: Int, val shortResourceId: Int) {
-    NEVER(0, R.string.never, R.string.never),
-    ONE_MINUTE(1, R.string.one_minute, R.string.one_minute_short),
-    FIVE_MINUTES(2, R.string.five_minutes, R.string.five_minutes_short),
-    TEN_MINUTES(3, R.string.ten_minutes, R.string.ten_minutes_short),
-    ALWAYS(4, R.string.always, R.string.always),
-    ONE_HOUR(5, R.string.one_hour, R.string.one_hour_short),
-    ONE_DAY(6, R.string.one_day, R.string.one_day_short),
-    ONE_WEEK(7, R.string.one_week, R.string.one_week_short),
+enum class RememberType(val screenCode: Int, val resourceId: StringResource, val shortResourceId: StringResource) {
+    NEVER(0, Res.string.never, Res.string.never),
+    ONE_MINUTE(1, Res.string.one_minute, Res.string.one_minute_short),
+    FIVE_MINUTES(2, Res.string.five_minutes, Res.string.five_minutes_short),
+    TEN_MINUTES(3, Res.string.ten_minutes, Res.string.ten_minutes_short),
+    ALWAYS(4, Res.string.always, Res.string.always),
+    ONE_HOUR(5, Res.string.one_hour, Res.string.one_hour_short),
+    ONE_DAY(6, Res.string.one_day, Res.string.one_day_short),
+    ONE_WEEK(7, Res.string.one_week, Res.string.one_week_short),
 }
 
 val rememberTypeDisplayOrder: List<RememberType> = listOf(
@@ -629,13 +694,13 @@ fun parseRememberType(screenCode: Int): RememberType = when (screenCode) {
     else -> RememberType.NEVER
 }
 
-enum class DeleteAfterType(val screenCode: Int, val resourceId: Int) {
-    NEVER(0, R.string.never),
-    FIVE_MINUTES(1, R.string.five_minutes),
-    TEN_MINUTES(2, R.string.ten_minutes),
-    ONE_HOUR(3, R.string.one_hour),
-    ONE_DAY(4, R.string.one_day),
-    ONE_WEEK(5, R.string.one_week),
+enum class DeleteAfterType(val screenCode: Int, val resourceId: StringResource) {
+    NEVER(0, Res.string.never),
+    FIVE_MINUTES(1, Res.string.five_minutes),
+    TEN_MINUTES(2, Res.string.ten_minutes),
+    ONE_HOUR(3, Res.string.one_hour),
+    ONE_DAY(4, Res.string.one_day),
+    ONE_WEEK(5, Res.string.one_week),
 }
 
 fun parseDeleteAfterType(screenCode: Int): DeleteAfterType = when (screenCode) {
@@ -659,11 +724,11 @@ fun deleteAfterToSeconds(deleteAfterType: DeleteAfterType): Long {
     }
 }
 
-enum class BiometricsTimeType(val screenCode: Int, val resourceId: Int) {
-    EVERY_TIME(0, R.string.every_time),
-    ONE_MINUTE(1, R.string.one_minute),
-    FIVE_MINUTES(2, R.string.five_minutes),
-    TEN_MINUTES(3, R.string.ten_minutes),
+enum class BiometricsTimeType(val screenCode: Int, val resourceId: StringResource) {
+    EVERY_TIME(0, Res.string.every_time),
+    ONE_MINUTE(1, Res.string.one_minute),
+    FIVE_MINUTES(2, Res.string.five_minutes),
+    TEN_MINUTES(3, Res.string.ten_minutes),
 }
 
 fun parseBiometricsTimeType(screenCode: Int): BiometricsTimeType = when (screenCode) {

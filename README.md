@@ -45,7 +45,7 @@ Please read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request. If
 
 Issues can be logged on: [https://gitworkshop.dev/greenart7c3@greenart7c3.com/Amber](https://gitworkshop.dev/greenart7c3@greenart7c3.com/Amber)
 
-[GitHub issues](https://github.com/greenart7c3/Amber/issues) and [pull requests](https://github.com/greenart7c3/Amber/pulls) here are also welcome. Translations can be provided by editing the `strings.xml` files under `app/src/main/res/values-<locale>/` and opening a pull request.
+[GitHub issues](https://github.com/greenart7c3/Amber/issues) and [pull requests](https://github.com/greenart7c3/Amber/pulls) here are also welcome. Translations can be provided by editing the `strings.xml` files under `commonsui/src/commonMain/composeResources/values-<locale>/` (shared by the Android and desktop apps) and opening a pull request.
 
 You can also send patches through Nostr using [GitStr](https://github.com/fiatjaf/gitstr) to [this nostr address](https://patch34.pages.dev/naddr1qvzqqqrhnypzqateqake4lc2fn77lflzq30jfpk8uhvtccalc66989er8cdmljceqqz5zmtzv4eqsrpqjs)
 

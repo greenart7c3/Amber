@@ -19,20 +19,27 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.common.psbt.DecodedPsbt
 import com.greenart7c3.nostrsigner.common.psbt.DecodedPsbtOutput
+import com.greenart7c3.nostrsigner.commonsui.Res
+import com.greenart7c3.nostrsigner.commonsui.psbt_change
+import com.greenart7c3.nostrsigner.commonsui.psbt_decode_error
+import com.greenart7c3.nostrsigner.commonsui.psbt_fee
+import com.greenart7c3.nostrsigner.commonsui.psbt_raw
+import com.greenart7c3.nostrsigner.commonsui.psbt_sending
+import com.greenart7c3.nostrsigner.commonsui.requests_message
+import com.greenart7c3.nostrsigner.commonsui.sign_psbt
 import com.greenart7c3.nostrsigner.ui.RememberType
 import com.greenart7c3.nostrsigner.ui.theme.AmberPreview
 import com.greenart7c3.nostrsigner.ui.theme.ThemePreviews
 import com.greenart7c3.nostrsigner.ui.theme.amoledBorder
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun SignPsbt(
@@ -49,11 +56,11 @@ fun SignPsbt(
     Column(modifier) {
         LocalAppIcon(packageName)
 
-        val message = stringResource(R.string.sign_psbt)
+        val message = stringResource(Res.string.sign_psbt)
 
         Text(
             buildAnnotatedString {
-                append(stringResource(R.string.requests_message, message))
+                append(stringResource(Res.string.requests_message, message))
             },
             fontSize = 18.sp,
         )
@@ -96,7 +103,7 @@ fun BunkerSignPsbt(
     Column(modifier) {
         RemoteAppIcon(iconUrl, appName)
 
-        val message = stringResource(R.string.sign_psbt)
+        val message = stringResource(Res.string.sign_psbt)
 
         Text(
             buildAnnotatedString {
@@ -137,7 +144,7 @@ private fun PsbtBody(psbtHex: String, decoded: DecodedPsbt) {
         Card(modifier = Modifier.fillMaxWidth(), border = amoledBorder()) {
             Column(Modifier.padding(8.dp)) {
                 Text(
-                    stringResource(R.string.psbt_decode_error, parseError),
+                    stringResource(Res.string.psbt_decode_error, parseError),
                     color = MaterialTheme.colorScheme.error,
                 )
             }
@@ -152,7 +159,7 @@ private fun PsbtBody(psbtHex: String, decoded: DecodedPsbt) {
 
     if (sending.isNotEmpty()) {
         SectionCard(
-            title = stringResource(R.string.psbt_sending),
+            title = stringResource(Res.string.psbt_sending),
             totalSats = decoded.totalSent,
             entries = sending,
         )
@@ -161,7 +168,7 @@ private fun PsbtBody(psbtHex: String, decoded: DecodedPsbt) {
 
     if (change.isNotEmpty()) {
         SectionCard(
-            title = stringResource(R.string.psbt_change),
+            title = stringResource(Res.string.psbt_change),
             totalSats = decoded.totalChange,
             entries = change,
         )
@@ -175,7 +182,7 @@ private fun PsbtBody(psbtHex: String, decoded: DecodedPsbt) {
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text(stringResource(R.string.psbt_fee), fontWeight = FontWeight.Bold)
+                Text(stringResource(Res.string.psbt_fee), fontWeight = FontWeight.Bold)
                 Text(formatSats(it))
             }
         }
@@ -228,7 +235,7 @@ private fun RawPsbtCard(psbtHex: String) {
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text(stringResource(R.string.psbt_raw), fontWeight = FontWeight.Bold)
+                Text(stringResource(Res.string.psbt_raw), fontWeight = FontWeight.Bold)
                 Text(
                     text = if (expanded) "Hide" else "Show",
                     fontSize = 13.sp,

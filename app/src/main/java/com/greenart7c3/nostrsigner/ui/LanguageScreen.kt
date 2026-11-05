@@ -1,7 +1,6 @@
 package com.greenart7c3.nostrsigner.ui
 
 import android.content.Context
-import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -12,8 +11,12 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.intl.Locale
 import androidx.core.os.LocaleListCompat
 import com.greenart7c3.nostrsigner.Amber
+import com.greenart7c3.nostrsigner.AppLanguage
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.commonsui.Res
+import com.greenart7c3.nostrsigner.commonsui.language
+import com.greenart7c3.nostrsigner.commonsui.language_description
 import com.greenart7c3.nostrsigner.ui.components.TitleExplainer
 import java.io.IOException
 import kotlinx.collections.immutable.ImmutableMap
@@ -41,17 +44,15 @@ fun LanguageScreen(
                 Modifier,
             ) {
                 SettingsRow(
-                    R.string.language,
-                    R.string.language_description,
+                    Res.string.language,
+                    Res.string.language_description,
                     languageList,
                     languageIndex,
                 ) {
                     Amber.instance.applicationIOScope.launch {
                         Amber.instance.settings.language = languageEntries[languageList[it].title]
                         LocalPreferences.saveSettingsToEncryptedStorage(Amber.instance.settings)
-                        AppCompatDelegate.setApplicationLocales(
-                            LocaleListCompat.forLanguageTags(Amber.instance.settings.language),
-                        )
+                        AppLanguage.apply(Amber.instance.settings.language)
                     }
                 }
             }

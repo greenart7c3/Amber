@@ -18,6 +18,19 @@ import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.MainActivity
 import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.commonsui.Res
+import com.greenart7c3.nostrsigner.commonsui.amber_is_running_in_background
+import com.greenart7c3.nostrsigner.commonsui.disable_kill_switch
+import com.greenart7c3.nostrsigner.commonsui.enable_kill_switch
+import com.greenart7c3.nostrsigner.commonsui.getStringBlocking
+import com.greenart7c3.nostrsigner.commonsui.of_connected_relays
+import com.greenart7c3.nostrsigner.commonsui.reconnect
+import com.greenart7c3.nostrsigner.commonsui.service
+import com.greenart7c3.nostrsigner.commonsui.service_description
+import com.greenart7c3.nostrsigner.commonsui.status
+import com.greenart7c3.nostrsigner.commonsui.status_detail
+import com.greenart7c3.nostrsigner.commonsui.status_service_description
+import com.greenart7c3.nostrsigner.commonsui.stop_service
 import com.greenart7c3.nostrsigner.service.KillSwitchReceiver
 import com.greenart7c3.nostrsigner.service.ReconnectReceiver
 import com.greenart7c3.nostrsigner.service.StopServiceReceiver
@@ -88,23 +101,23 @@ class AmberRelayStats(
         val channelId = "ServiceChannel"
         val statusId = "StatusChannel"
         group = NotificationChannelGroupCompat.Builder("ServiceGroup")
-            .setName(appContext.getString(R.string.service))
-            .setDescription(appContext.getString(R.string.service_description))
+            .setName(getStringBlocking(Res.string.service))
+            .setDescription(getStringBlocking(Res.string.service_description))
             .build()
         channel = NotificationChannelCompat.Builder(channelId, NotificationManager.IMPORTANCE_LOW)
-            .setName(appContext.getString(R.string.service))
-            .setDescription(appContext.getString(R.string.amber_is_running_in_background))
+            .setName(getStringBlocking(Res.string.service))
+            .setDescription(getStringBlocking(Res.string.amber_is_running_in_background))
             .setSound(null, null)
             .setGroup(group.id)
             .build()
 
         statusGroup = NotificationChannelGroupCompat.Builder("StatusGroup")
-            .setName(appContext.getString(R.string.status))
-            .setDescription(appContext.getString(R.string.status_service_description))
+            .setName(getStringBlocking(Res.string.status))
+            .setDescription(getStringBlocking(Res.string.status_service_description))
             .build()
         statusChannel = NotificationChannelCompat.Builder(statusId, NotificationManager.IMPORTANCE_MIN)
-            .setName(appContext.getString(R.string.status))
-            .setDescription(appContext.getString(R.string.status_service_description))
+            .setName(getStringBlocking(Res.string.status))
+            .setDescription(getStringBlocking(Res.string.status_service_description))
             .setSound(null, null)
             .setGroup(statusGroup.id)
             .build()
@@ -159,8 +172,8 @@ class AmberRelayStats(
         )
 
         return NotificationCompat.Builder(appContext, channel.id)
-            .setContentTitle(appContext.getString(R.string.service))
-            .setContentText(appContext.getString(R.string.amber_is_running_in_background))
+            .setContentTitle(getStringBlocking(Res.string.service))
+            .setContentText(getStringBlocking(Res.string.amber_is_running_in_background))
             .setSmallIcon(R.drawable.ic_notification)
             .setCategory(Notification.CATEGORY_SERVICE)
             .setOngoing(true)
@@ -169,7 +182,7 @@ class AmberRelayStats(
             .setContentIntent(contentPendingIntent)
             .addAction(
                 R.drawable.ic_notification,
-                appContext.getString(R.string.stop_service),
+                getStringBlocking(Res.string.stop_service),
                 stopServicePendingIntent,
             )
             .build()
@@ -241,19 +254,19 @@ class AmberRelayStats(
             val notificationBuilder =
                 NotificationCompat.Builder(appContext, statusChannel.id)
                     .setGroup(statusGroup.id)
-                    .setContentTitle(appContext.getString(R.string.of_connected_relays, connected.size, available.size))
+                    .setContentTitle(getStringBlocking(Res.string.of_connected_relays, connected.size, available.size))
                     .setStyle(
                         NotificationCompat.BigTextStyle()
                             .bigText(message.trim())
-                            .setBigContentTitle(appContext.getString(R.string.of_connected_relays, connected.size, available.size))
-                            .setSummaryText(appContext.getString(R.string.status_detail)),
+                            .setBigContentTitle(getStringBlocking(Res.string.of_connected_relays, connected.size, available.size))
+                            .setSummaryText(getStringBlocking(Res.string.status_detail)),
                     )
                     .setPriority(NotificationCompat.PRIORITY_MIN)
                     .setOnlyAlertOnce(true)
                     .setSmallIcon(R.drawable.ic_notification)
                     .setContentIntent(contentPendingIntent)
-                    .addAction(R.drawable.ic_notification, appContext.getString(R.string.reconnect), reconnectPendingIntent)
-                    .addAction(R.drawable.ic_notification, appContext.getString(if (Amber.instance.settings.killSwitch.value) R.string.disable_kill_switch else R.string.enable_kill_switch), killSwitchPendingIntent)
+                    .addAction(R.drawable.ic_notification, getStringBlocking(Res.string.reconnect), reconnectPendingIntent)
+                    .addAction(R.drawable.ic_notification, getStringBlocking(if (Amber.instance.settings.killSwitch.value) Res.string.disable_kill_switch else Res.string.enable_kill_switch), killSwitchPendingIntent)
                     .setCategory(Notification.CATEGORY_STATUS)
 
             return notificationBuilder.build()

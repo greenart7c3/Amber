@@ -1,13 +1,16 @@
 package com.greenart7c3.nostrsigner.service
 
-import android.content.Context
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.AmberLog
-import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.SignerActivity
 import com.greenart7c3.nostrsigner.common.EncryptionType
 import com.greenart7c3.nostrsigner.common.SignerType
 import com.greenart7c3.nostrsigner.common.generateBunkerPrivKey
+import com.greenart7c3.nostrsigner.commonsui.Permission
+import com.greenart7c3.nostrsigner.commonsui.Res
+import com.greenart7c3.nostrsigner.commonsui.failed_to_connect_to_tor_orbot
+import com.greenart7c3.nostrsigner.commonsui.getStringBlocking
+import com.greenart7c3.nostrsigner.commonsui.warning
 import com.greenart7c3.nostrsigner.database.ApplicationEntity
 import com.greenart7c3.nostrsigner.database.ApplicationPermissionsEntity
 import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
@@ -16,7 +19,6 @@ import com.greenart7c3.nostrsigner.database.LogEntity
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.AmberBunkerRequest
 import com.greenart7c3.nostrsigner.models.EncryptedDataKind
-import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.models.encryptDecryptSignerTypes
 import com.greenart7c3.nostrsigner.models.encryptSignerTypes
 import com.greenart7c3.nostrsigner.relays.AmberListenerSingleton
@@ -130,7 +132,6 @@ object BunkerRequestUtils {
     }
 
     suspend fun sendBunkerResponse(
-        context: Context,
         account: Account,
         bunkerRequest: AmberBunkerRequest,
         bunkerResponse: BunkerResponse,
@@ -156,7 +157,7 @@ object BunkerRequestUtils {
         if (Amber.instance.settings.useProxy) {
             val isProxyWorking = Amber.instance.isSocksProxyAlive("127.0.0.1", Amber.instance.settings.proxyPort)
             if (!isProxyWorking) {
-                ToastManager.toast(context.getString(R.string.warning), context.getString(R.string.failed_to_connect_to_tor_orbot))
+                ToastManager.toast(getStringBlocking(Res.string.warning), getStringBlocking(Res.string.failed_to_connect_to_tor_orbot))
                 onDone(false)
                 onLoading(false)
                 return
@@ -337,7 +338,6 @@ object BunkerRequestUtils {
     fun getNip44v3Scope(bunkerRequest: BunkerRequest): String = bunkerRequest.params.getOrElse(2) { "" }
 
     fun sendResult(
-        context: Context,
         account: Account,
         key: String,
         response: String,
@@ -400,7 +400,6 @@ object BunkerRequestUtils {
                     account,
                     bunkerRequest,
                     relays,
-                    Amber.instance,
                     closeApplication = true,
                     onLoading = onLoading,
                 )
@@ -586,7 +585,6 @@ object BunkerRequestUtils {
                 bunkerRequest
             }
             sendBunkerResponse(
-                context,
                 account,
                 bunkerRequestWithKey,
                 BunkerResponse(bunkerRequest.request.id, response, null),
@@ -655,7 +653,6 @@ object BunkerRequestUtils {
                     account,
                     bunkerRequest,
                     relays,
-                    Amber.instance,
                     closeApplication = true,
                     onLoading = onLoading,
                 )
@@ -749,7 +746,6 @@ object BunkerRequestUtils {
                 account,
                 effectiveBunkerRequest,
                 relays,
-                Amber.instance,
                 closeApplication = application.application.closeApplication,
                 onLoading = onLoading,
             )

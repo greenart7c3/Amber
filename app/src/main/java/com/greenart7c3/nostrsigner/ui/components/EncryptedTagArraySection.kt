@@ -8,14 +8,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ClipEntry
 import androidx.compose.ui.platform.LocalClipboard
-import androidx.compose.ui.res.stringResource
 import com.greenart7c3.nostrsigner.Amber
-import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.commonsui.Res
+import com.greenart7c3.nostrsigner.commonsui.tags
 import com.greenart7c3.nostrsigner.ui.theme.AmberPreview
 import com.greenart7c3.nostrsigner.ui.theme.ThemePreviews
 import com.vitorpamplona.quartz.nip01Core.core.TagArray
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun EncryptedTagArraySection(
@@ -28,7 +29,7 @@ fun EncryptedTagArraySection(
     ) {
         item {
             TagsSection(
-                stringResource(R.string.tags),
+                stringResource(Res.string.tags),
                 tags,
                 {
                     Amber.instance.applicationIOScope.launch(Dispatchers.Main) {

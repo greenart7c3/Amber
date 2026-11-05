@@ -8,7 +8,9 @@ import com.anggrayudi.storage.file.openInputStream
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.LocalPreferences
-import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.commonsui.Res
+import com.greenart7c3.nostrsigner.commonsui.getStringBlocking
+import com.greenart7c3.nostrsigner.commonsui.importing_account
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.AccountExportData
 import com.vitorpamplona.quartz.nip01Core.core.hexToByteArray
@@ -52,7 +54,7 @@ object AccountExportService {
                         val failedLines = mutableListOf<Int>()
                         reader?.readLines()?.forEachIndexed { index, line ->
                             try {
-                                onText(Amber.instance.getString(R.string.importing_account, index + 1))
+                                onText(getStringBlocking(Res.string.importing_account, index + 1))
 
                                 val accountData = AccountExportData.fromJson(line)
                                 val privKey = Nip49().decrypt(accountData.nsec, password)
@@ -172,7 +174,7 @@ object AccountExportService {
         try {
             content.lines().filter { it.isNotBlank() }.forEachIndexed { index, ncryptsec ->
                 try {
-                    onText(Amber.instance.getString(R.string.importing_account, index + 1))
+                    onText(getStringBlocking(Res.string.importing_account, index + 1))
                     val privKey = Nip49().decrypt(ncryptsec, password)
                     val hexKey = Nip01Crypto.pubKeyCreate(Hex.decode(privKey))
                     val account = Account(

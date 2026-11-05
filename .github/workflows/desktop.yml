@@ -11,6 +11,7 @@ on:
     paths: &desktop-paths
       - 'desktop/**'
       - 'common/**'
+      - 'commonsui/**'
       - 'tools/unused-code/**'
       - 'gradle/**'
       - '*.gradle.kts'

@@ -43,14 +43,33 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import coil3.compose.SubcomposeAsyncImage
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.LocalPreferences
-import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.commonsui.Res
+import com.greenart7c3.nostrsigner.commonsui.applications_backup_explainer
+import com.greenart7c3.nostrsigner.commonsui.backup_failed
+import com.greenart7c3.nostrsigner.commonsui.backup_now
+import com.greenart7c3.nostrsigner.commonsui.backup_success
+import com.greenart7c3.nostrsigner.commonsui.getStringBlocking
+import com.greenart7c3.nostrsigner.commonsui.no
+import com.greenart7c3.nostrsigner.commonsui.permissions
+import com.greenart7c3.nostrsigner.commonsui.relays_used
+import com.greenart7c3.nostrsigner.commonsui.restore_confirm_text
+import com.greenart7c3.nostrsigner.commonsui.restore_confirm_title
+import com.greenart7c3.nostrsigner.commonsui.restore_failed
+import com.greenart7c3.nostrsigner.commonsui.restore_from_relays
+import com.greenart7c3.nostrsigner.commonsui.restore_no_backup_found
+import com.greenart7c3.nostrsigner.commonsui.restore_success
+import com.greenart7c3.nostrsigner.commonsui.sign_policy_fully_explainer
+import com.greenart7c3.nostrsigner.commonsui.signin_restore_accept
+import com.greenart7c3.nostrsigner.commonsui.signin_restore_message
+import com.greenart7c3.nostrsigner.commonsui.signin_restore_skip
+import com.greenart7c3.nostrsigner.commonsui.signin_restore_title
+import com.greenart7c3.nostrsigner.commonsui.yes
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.service.ApplicationBackup
 import com.greenart7c3.nostrsigner.service.BackupApplication
@@ -67,6 +86,7 @@ import com.vitorpamplona.quartz.utils.TimeUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun ApplicationsBackupScreen(
@@ -84,7 +104,7 @@ fun ApplicationsBackupScreen(
 
     Column(modifier = modifier) {
         Text(
-            text = stringResource(R.string.applications_backup_explainer),
+            text = stringResource(Res.string.applications_backup_explainer),
             style = MaterialTheme.typography.bodySmall,
             color = Color.Gray,
         )
@@ -118,9 +138,9 @@ fun ApplicationsBackupScreen(
                                 when (fetched) {
                                     is BackupFetchResult.Found -> pendingRestore = account to fetched.payload
                                     is BackupFetchResult.NoBackupFound ->
-                                        Toast.makeText(context, context.getString(R.string.restore_no_backup_found), Toast.LENGTH_LONG).show()
+                                        Toast.makeText(context, getStringBlocking(Res.string.restore_no_backup_found), Toast.LENGTH_LONG).show()
                                     is BackupFetchResult.Failed ->
-                                        Toast.makeText(context, context.getString(R.string.restore_failed, fetched.message), Toast.LENGTH_LONG).show()
+                                        Toast.makeText(context, getStringBlocking(Res.string.restore_failed, fetched.message), Toast.LENGTH_LONG).show()
                                 }
                             }
                         }
@@ -135,10 +155,10 @@ fun ApplicationsBackupScreen(
         AlertDialog(
             modifier = Modifier.outlineIfAny(amoledBorder(), AlertDialogDefaults.shape),
             onDismissRequest = { pendingRestore = null },
-            title = { Text(stringResource(R.string.restore_confirm_title)) },
+            title = { Text(stringResource(Res.string.restore_confirm_title)) },
             text = {
                 BackupContents(selection) {
-                    Text(stringResource(R.string.restore_confirm_text))
+                    Text(stringResource(Res.string.restore_confirm_text))
                 }
             },
             confirmButton = {
@@ -151,18 +171,18 @@ fun ApplicationsBackupScreen(
                         val result = ApplicationBackup.restoreFromPayload(account.npub, selected)
                         withContext(Dispatchers.Main) {
                             val msg = when (result) {
-                                is RestoreResult.Success -> context.getString(R.string.restore_success, result.apps, result.permissions)
-                                is RestoreResult.NoBackupFound -> context.getString(R.string.restore_no_backup_found)
-                                is RestoreResult.Failed -> context.getString(R.string.restore_failed, result.message)
+                                is RestoreResult.Success -> getStringBlocking(Res.string.restore_success, result.apps, result.permissions)
+                                is RestoreResult.NoBackupFound -> getStringBlocking(Res.string.restore_no_backup_found)
+                                is RestoreResult.Failed -> getStringBlocking(Res.string.restore_failed, result.message)
                             }
                             Toast.makeText(context, msg, Toast.LENGTH_LONG).show()
                             isBusy = false
                         }
                     }
-                }) { Text(stringResource(R.string.yes)) }
+                }) { Text(stringResource(Res.string.yes)) }
             },
             dismissButton = {
-                TextButton(onClick = { pendingRestore = null }) { Text(stringResource(R.string.no)) }
+                TextButton(onClick = { pendingRestore = null }) { Text(stringResource(Res.string.no)) }
             },
         )
     }
@@ -224,7 +244,7 @@ private fun AccountBackupRow(
 
         AmberButton(
             modifier = Modifier.fillMaxWidth(),
-            text = stringResource(R.string.backup_now),
+            text = stringResource(Res.string.backup_now),
             enabled = !isBusy,
             onClick = {
                 if (isBusy) return@AmberButton
@@ -234,7 +254,7 @@ private fun AccountBackupRow(
                     withContext(Dispatchers.Main) {
                         Toast.makeText(
                             context,
-                            if (ok) context.getString(R.string.backup_success) else context.getString(R.string.backup_failed),
+                            if (ok) getStringBlocking(Res.string.backup_success) else getStringBlocking(Res.string.backup_failed),
                             Toast.LENGTH_LONG,
                         ).show()
                         onBusyChange(false)
@@ -247,7 +267,7 @@ private fun AccountBackupRow(
 
         AmberButton(
             modifier = Modifier.fillMaxWidth(),
-            text = stringResource(R.string.restore_from_relays),
+            text = stringResource(Res.string.restore_from_relays),
             enabled = !isBusy,
             onClick = {
                 if (!isBusy) onRequestRestore()
@@ -300,27 +320,27 @@ fun RestoreBackupDialog(accountStateViewModel: AccountStateViewModel) {
 
         modifier = Modifier.outlineIfAny(amoledBorder(), AlertDialogDefaults.shape),
         onDismissRequest = { accountStateViewModel.dismissRestore() },
-        title = { Text(stringResource(R.string.signin_restore_title)) },
+        title = { Text(stringResource(Res.string.signin_restore_title)) },
         text = {
             BackupContents(selection) {
-                Text(stringResource(R.string.signin_restore_message, apps, perms))
+                Text(stringResource(Res.string.signin_restore_message, apps, perms))
             }
         },
         confirmButton = {
             TextButton(enabled = selection.hasSelection, onClick = {
                 accountStateViewModel.acceptRestore(selection.selected()) { result ->
                     val msg = when (result) {
-                        is RestoreResult.Success -> context.getString(R.string.restore_success, result.apps, result.permissions)
-                        is RestoreResult.NoBackupFound -> context.getString(R.string.restore_no_backup_found)
-                        is RestoreResult.Failed -> context.getString(R.string.restore_failed, result.message)
+                        is RestoreResult.Success -> getStringBlocking(Res.string.restore_success, result.apps, result.permissions)
+                        is RestoreResult.NoBackupFound -> getStringBlocking(Res.string.restore_no_backup_found)
+                        is RestoreResult.Failed -> getStringBlocking(Res.string.restore_failed, result.message)
                     }
                     Toast.makeText(context, msg, Toast.LENGTH_LONG).show()
                 }
-            }) { Text(stringResource(R.string.signin_restore_accept)) }
+            }) { Text(stringResource(Res.string.signin_restore_accept)) }
         },
         dismissButton = {
             TextButton(onClick = { accountStateViewModel.dismissRestore() }) {
-                Text(stringResource(R.string.signin_restore_skip))
+                Text(stringResource(Res.string.signin_restore_skip))
             }
         },
     )
@@ -390,19 +410,19 @@ private fun BackupContents(
                     )
                     if (app.relays.isNotEmpty()) {
                         Text(
-                            text = "${stringResource(R.string.relays_used)}: ${app.relays.joinToString()}",
+                            text = "${stringResource(Res.string.relays_used)}: ${app.relays.joinToString()}",
                             style = MaterialTheme.typography.bodySmall,
                             color = Color.Gray,
                         )
                     }
                     Text(
-                        text = "${stringResource(R.string.permissions)}: ${app.permissions.size}",
+                        text = "${stringResource(Res.string.permissions)}: ${app.permissions.size}",
                         style = MaterialTheme.typography.bodySmall,
                         color = Color.Gray,
                     )
                     if (app.signPolicy == SIGN_POLICY_FULL_TRUST) {
                         Text(
-                            text = stringResource(R.string.sign_policy_fully_explainer),
+                            text = stringResource(Res.string.sign_policy_fully_explainer),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.error,
                         )

@@ -75,7 +75,6 @@ import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentType
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -95,7 +94,29 @@ import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.LocalPreferences
-import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.commonsui.Res
+import com.greenart7c3.nostrsigner.commonsui.account_backup
+import com.greenart7c3.nostrsigner.commonsui.account_backup_tips3_md
+import com.greenart7c3.nostrsigner.commonsui.account_backup_tips_md
+import com.greenart7c3.nostrsigner.commonsui.cloud_backup_title
+import com.greenart7c3.nostrsigner.commonsui.copy_to_clipboard
+import com.greenart7c3.nostrsigner.commonsui.do_not_leave_the_app_until_the_key_is_generated
+import com.greenart7c3.nostrsigner.commonsui.encrypt_and_copy_to_clipboard
+import com.greenart7c3.nostrsigner.commonsui.encrypt_and_show_qr_code
+import com.greenart7c3.nostrsigner.commonsui.encryption_password
+import com.greenart7c3.nostrsigner.commonsui.export_all_accounts_title
+import com.greenart7c3.nostrsigner.commonsui.failed_to_encrypt_key
+import com.greenart7c3.nostrsigner.commonsui.failed_to_export_key
+import com.greenart7c3.nostrsigner.commonsui.getStringBlocking
+import com.greenart7c3.nostrsigner.commonsui.hide
+import com.greenart7c3.nostrsigner.commonsui.hide_password
+import com.greenart7c3.nostrsigner.commonsui.make_backup_message
+import com.greenart7c3.nostrsigner.commonsui.password_is_required
+import com.greenart7c3.nostrsigner.commonsui.secret_key_copied_to_clipboard
+import com.greenart7c3.nostrsigner.commonsui.show_password
+import com.greenart7c3.nostrsigner.commonsui.show_qr_code
+import com.greenart7c3.nostrsigner.commonsui.show_seed_words
+import com.greenart7c3.nostrsigner.commonsui.show_tips
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.service.Biometrics.authenticate
 import com.greenart7c3.nostrsigner.service.toShortenHex
@@ -117,6 +138,7 @@ import com.vitorpamplona.quartz.nip06KeyDerivation.Nip06
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun AccountBackupScreen(
@@ -135,7 +157,7 @@ fun AccountBackupScreen(
                 .fillMaxSize(),
         ) {
             if (isLoading) {
-                CenterCircularProgressIndicator(Modifier, text = stringResource(R.string.do_not_leave_the_app_until_the_key_is_generated))
+                CenterCircularProgressIndicator(Modifier, text = stringResource(Res.string.do_not_leave_the_app_until_the_key_is_generated))
             } else {
                 // Collapsible tips section
                 var tipsExpanded by remember { mutableStateOf(false) }
@@ -160,7 +182,7 @@ fun AccountBackupScreen(
                     onToggleVisibility = { showCharsPassword = !showCharsPassword },
                     onDone = {
                         if (password.value.text.isBlank()) {
-                            errorMessage = Amber.instance.getString(R.string.password_is_required)
+                            errorMessage = getStringBlocking(Res.string.password_is_required)
                         }
                         keyboardController?.hide()
                     },
@@ -195,7 +217,7 @@ fun AccountBackupScreen(
                 HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
                 IconRow(
-                    title = stringResource(R.string.export_all_accounts_title),
+                    title = stringResource(Res.string.export_all_accounts_title),
                     icon = Icons.Filled.SaveAlt,
                     tint = MaterialTheme.colorScheme.onBackground,
                     onClick = { navController.navigate(Route.ExportAllAccounts.route) },
@@ -204,7 +226,7 @@ fun AccountBackupScreen(
                 if (!BuildFlavorChecker.isOfflineFlavor()) {
                     Spacer(modifier = Modifier.height(4.dp))
                     IconRow(
-                        title = stringResource(R.string.cloud_backup_title),
+                        title = stringResource(Res.string.cloud_backup_title),
                         icon = Icons.Filled.CloudUpload,
                         tint = MaterialTheme.colorScheme.onBackground,
                         onClick = { navController.navigate(Route.CloudBackup.route) },
@@ -235,13 +257,13 @@ private fun TipsCard(expanded: Boolean, onToggle: () -> Unit) {
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = stringResource(R.string.account_backup),
+                        text = stringResource(Res.string.account_backup),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                     )
                 }
                 TextButton(onClick = onToggle) {
-                    Text(if (expanded) stringResource(R.string.hide) else stringResource(R.string.show_tips))
+                    Text(if (expanded) stringResource(Res.string.hide) else stringResource(Res.string.show_tips))
                     Spacer(modifier = Modifier.width(4.dp))
                     Icon(
                         imageVector = if (expanded) Icons.Outlined.ExpandLess else Icons.Outlined.ExpandMore,
@@ -255,7 +277,7 @@ private fun TipsCard(expanded: Boolean, onToggle: () -> Unit) {
                 Column {
                     HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
 
-                    val content = stringResource(R.string.account_backup_tips_md)
+                    val content = stringResource(Res.string.account_backup_tips_md)
                     MarkdownText(
                         markdown = content,
                         modifier = Modifier.padding(bottom = 4.dp),
@@ -286,13 +308,13 @@ private fun PasswordCard(
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = stringResource(R.string.encryption_password),
+                    text = stringResource(Res.string.encryption_password),
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.SemiBold,
                 )
             }
             Spacer(modifier = Modifier.height(4.dp))
-            val tipsContent = stringResource(R.string.account_backup_tips3_md)
+            val tipsContent = stringResource(Res.string.account_backup_tips3_md)
             MarkdownText(
                 markdown = tipsContent,
                 modifier = Modifier.fillMaxWidth(),
@@ -310,15 +332,15 @@ private fun PasswordCard(
                     imeAction = ImeAction.Done,
                 ),
                 keyboardActions = KeyboardActions(onDone = { onDone() }),
-                placeholder = { Text(text = stringResource(R.string.encryption_password)) },
+                placeholder = { Text(text = stringResource(Res.string.encryption_password)) },
                 trailingIcon = {
                     IconButton(onClick = onToggleVisibility) {
                         Icon(
                             imageVector = if (showCharsPassword) Icons.Outlined.VisibilityOff else Icons.Outlined.Visibility,
                             contentDescription = if (showCharsPassword) {
-                                stringResource(R.string.show_password)
+                                stringResource(Res.string.show_password)
                             } else {
-                                stringResource(R.string.hide_password)
+                                stringResource(Res.string.hide_password)
                             },
                         )
                     }
@@ -416,7 +438,7 @@ private fun AccountBackupCard(
             if (!didBackup) {
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = stringResource(R.string.make_backup_message),
+                    text = stringResource(Res.string.make_backup_message),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.error,
                 )
@@ -486,7 +508,7 @@ private fun NSecQrButton(
                     AmberLog.e(Amber.TAG, "Failed to export secret key", e)
                     showDialog.value = false
                     launch(Dispatchers.Main) {
-                        Toast.makeText(context, context.getString(R.string.failed_to_export_key), Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, getStringBlocking(Res.string.failed_to_export_key), Toast.LENGTH_SHORT).show()
                     }
                 }
             }
@@ -516,7 +538,7 @@ private fun NSecQrButton(
                         if (e is CancellationException) throw e
                         AmberLog.e(Amber.TAG, "Failed to encrypt secret key for QR", e)
                         launch(Dispatchers.Main) {
-                            Toast.makeText(context, context.getString(R.string.failed_to_encrypt_key), Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, getStringBlocking(Res.string.failed_to_encrypt_key), Toast.LENGTH_SHORT).show()
                         }
                     } finally {
                         onLoading(false)
@@ -528,7 +550,7 @@ private fun NSecQrButton(
         }
     }
 
-    val text = stringResource(if (password.isBlank()) R.string.show_qr_code else R.string.encrypt_and_show_qr_code)
+    val text = stringResource(if (password.isBlank()) Res.string.show_qr_code else Res.string.encrypt_and_show_qr_code)
 
     BackupIconButton(
         modifier = modifier,
@@ -552,7 +574,7 @@ private fun NSecQrButton(
                                 if (e is CancellationException) throw e
                                 AmberLog.e(Amber.TAG, "Failed to encrypt secret key for QR", e)
                                 launch(Dispatchers.Main) {
-                                    Toast.makeText(context, context.getString(R.string.failed_to_encrypt_key), Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(context, getStringBlocking(Res.string.failed_to_encrypt_key), Toast.LENGTH_SHORT).show()
                                 }
                             } finally {
                                 onLoading(false)
@@ -709,7 +731,7 @@ private fun SeedWordsButton(
         }
     }
 
-    val text = stringResource(R.string.show_seed_words)
+    val text = stringResource(Res.string.show_seed_words)
 
     BackupIconButton(
         modifier = Modifier.fillMaxWidth(),
@@ -760,7 +782,7 @@ private fun NSecCopyButton(
         }
     }
 
-    val text = stringResource(if (password.isBlank()) R.string.copy_to_clipboard else R.string.encrypt_and_copy_to_clipboard)
+    val text = stringResource(if (password.isBlank()) Res.string.copy_to_clipboard else Res.string.encrypt_and_copy_to_clipboard)
 
     BackupIconButton(
         modifier = modifier,
@@ -843,7 +865,7 @@ private fun encryptCopyNSec(
 ) {
     if (password.isBlank()) {
         Amber.instance.applicationIOScope.launch(Dispatchers.Main) {
-            Toast.makeText(context, context.getString(R.string.password_is_required), Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, getStringBlocking(Res.string.password_is_required), Toast.LENGTH_SHORT).show()
         }
     } else {
         Amber.instance.applicationIOScope.launch(Dispatchers.IO) {
@@ -854,11 +876,11 @@ private fun encryptCopyNSec(
                 onBackupDone()
                 Amber.instance.applicationIOScope.launch(Dispatchers.Main) {
                     clipboardManager.setSensitiveClip(key)
-                    Toast.makeText(context, context.getString(R.string.secret_key_copied_to_clipboard), Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, getStringBlocking(Res.string.secret_key_copied_to_clipboard), Toast.LENGTH_SHORT).show()
                 }
             } catch (_: Exception) {
                 Amber.instance.applicationIOScope.launch(Dispatchers.Main) {
-                    Toast.makeText(context, context.getString(R.string.failed_to_encrypt_key), Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, getStringBlocking(Res.string.failed_to_encrypt_key), Toast.LENGTH_SHORT).show()
                 }
             } finally {
                 onLoading(false)

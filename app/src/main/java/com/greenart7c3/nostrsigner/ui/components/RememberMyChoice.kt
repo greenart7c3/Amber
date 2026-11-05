@@ -16,15 +16,16 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.commonsui.Res
+import com.greenart7c3.nostrsigner.commonsui.automatically_sign_this_for
 import com.greenart7c3.nostrsigner.ui.RememberType
 import com.greenart7c3.nostrsigner.ui.rememberTypeDisplayOrder
 import com.greenart7c3.nostrsigner.ui.theme.AmberPreview
 import com.greenart7c3.nostrsigner.ui.theme.ThemePreviews
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun LabeledBorderBox(
@@ -63,7 +64,7 @@ fun LabeledBorderBox(
 fun RememberMyChoiceToggles(
     selected: RememberType,
     onSelected: (RememberType) -> Unit,
-    label: String = stringResource(R.string.automatically_sign_this_for),
+    label: String = stringResource(Res.string.automatically_sign_this_for),
 ) {
     LabeledBorderBox(
         label = label,

@@ -4,11 +4,13 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavController
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.LocalPreferences
-import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.commonsui.Res
+import com.greenart7c3.nostrsigner.commonsui.getStringBlocking
+import com.greenart7c3.nostrsigner.commonsui.pin
+import com.greenart7c3.nostrsigner.commonsui.pin_does_not_match
 import com.greenart7c3.nostrsigner.ui.components.RandomPinInput
 import com.greenart7c3.nostrsigner.ui.navigation.Route
 import kotlinx.coroutines.Dispatchers
@@ -34,7 +36,6 @@ fun ConfirmPinScreen(
     pin: String,
     navController: NavController,
 ) {
-    val context = LocalContext.current
     val scope = rememberCoroutineScope()
     Column(
         modifier,
@@ -42,7 +43,7 @@ fun ConfirmPinScreen(
         RandomPinInput(
             onPinEntered = { enteredPin ->
                 if (enteredPin != pin) {
-                    ToastManager.toast(context.getString(R.string.pin), context.getString(R.string.pin_does_not_match))
+                    ToastManager.toast(getStringBlocking(Res.string.pin), getStringBlocking(Res.string.pin_does_not_match))
                 } else {
                     val usePin = Amber.instance.settings.usePin
                     scope.launch(Dispatchers.IO) {

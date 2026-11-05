@@ -17,13 +17,17 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.google.zxing.client.android.Intents
-import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.commonsui.Res
+import com.greenart7c3.nostrsigner.commonsui.camera_permission_required
+import com.greenart7c3.nostrsigner.commonsui.camera_permission_required_message
+import com.greenart7c3.nostrsigner.commonsui.cancel
+import com.greenart7c3.nostrsigner.commonsui.settings
 import com.journeyapps.barcodescanner.ScanContract
 import com.journeyapps.barcodescanner.ScanOptions
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun SimpleQrCodeScanner(
@@ -76,8 +80,8 @@ fun SimpleQrCodeScanner(
                 permissionDenied = false
                 onDismiss()
             },
-            title = { Text(stringResource(R.string.camera_permission_required)) },
-            text = { Text(stringResource(R.string.camera_permission_required_message)) },
+            title = { Text(stringResource(Res.string.camera_permission_required)) },
+            text = { Text(stringResource(Res.string.camera_permission_required_message)) },
             confirmButton = {
                 TextButton(
                     onClick = {
@@ -91,7 +95,7 @@ fun SimpleQrCodeScanner(
                         )
                     },
                 ) {
-                    Text(stringResource(R.string.settings))
+                    Text(stringResource(Res.string.settings))
                 }
             },
             dismissButton = {
@@ -101,7 +105,7 @@ fun SimpleQrCodeScanner(
                         onDismiss()
                     },
                 ) {
-                    Text(stringResource(R.string.cancel))
+                    Text(stringResource(Res.string.cancel))
                 }
             },
         )

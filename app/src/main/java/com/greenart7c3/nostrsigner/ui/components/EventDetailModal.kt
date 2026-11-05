@@ -20,18 +20,27 @@ import androidx.compose.ui.platform.ClipEntry
 import androidx.compose.ui.platform.Clipboard
 import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.R
-import com.greenart7c3.nostrsigner.models.Permission
+import com.greenart7c3.nostrsigner.commonsui.Permission
+import com.greenart7c3.nostrsigner.commonsui.Res
+import com.greenart7c3.nostrsigner.commonsui.content
+import com.greenart7c3.nostrsigner.commonsui.date
+import com.greenart7c3.nostrsigner.commonsui.event_kind
+import com.greenart7c3.nostrsigner.commonsui.go_back
+import com.greenart7c3.nostrsigner.commonsui.kind
+import com.greenart7c3.nostrsigner.commonsui.localizedBlocking
+import com.greenart7c3.nostrsigner.commonsui.pubkey
+import com.greenart7c3.nostrsigner.commonsui.tags
 import com.greenart7c3.nostrsigner.models.TimeUtils
 import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.verticalScrollbar
 import com.vitorpamplona.quartz.nip01Core.core.Event
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.stringResource
 
 fun copyToClipboard(clipboard: Clipboard, text: String) {
     Amber.instance.applicationIOScope.launch(Dispatchers.Main) {
@@ -55,8 +64,8 @@ fun EventDetailModal(
         event.kind,
     )
     val context = LocalContext.current
-    val kindTranslation = permission.toLocalizedString(context)
-    val unknownKindString = stringResource(R.string.event_kind, event.kind.toString())
+    val kindTranslation = permission.localizedBlocking()
+    val unknownKindString = stringResource(Res.string.event_kind, event.kind.toString())
     val altTag = event.tags.firstOrNull { it.size > 1 && it[0] == "alt" }?.getOrNull(1)
     val displayTranslation = if (kindTranslation == unknownKindString && altTag != null) altTag else kindTranslation
     val sheetState = rememberModalBottomSheetState(
@@ -79,7 +88,7 @@ fun EventDetailModal(
                 ) {
                     IconRow(
                         center = true,
-                        title = stringResource(R.string.go_back),
+                        title = stringResource(Res.string.go_back),
                         icon = ImageVector.vectorResource(R.drawable.back),
                         onClick = onDismiss,
                         tint = MaterialTheme.colorScheme.onPrimary,
@@ -96,21 +105,21 @@ fun EventDetailModal(
                     .verticalScroll(scrollState),
             ) {
                 EventSection(
-                    stringResource(R.string.kind),
+                    stringResource(Res.string.kind),
                     "${event.kind} - $displayTranslation",
                     {
                         copyToClipboard(clipboard, "${event.kind} - $displayTranslation")
                     },
                 )
                 EventSection(
-                    stringResource(R.string.pubkey),
+                    stringResource(Res.string.pubkey),
                     event.pubKey.toShortenHex(),
                     {
                         copyToClipboard(clipboard, event.pubKey)
                     },
                 )
                 EventSection(
-                    stringResource(R.string.date),
+                    stringResource(Res.string.date),
                     TimeUtils.formatDateTime(context, event.createdAt * 1000, withSeconds = true),
                     {
                         copyToClipboard(clipboard, "${event.createdAt}")
@@ -118,7 +127,7 @@ fun EventDetailModal(
                 )
                 if (event.content.isNotEmpty()) {
                     EventSection(
-                        stringResource(R.string.content),
+                        stringResource(Res.string.content),
                         event.content,
                         {
                             copyToClipboard(clipboard, event.content)
@@ -127,7 +136,7 @@ fun EventDetailModal(
                 }
                 if (event.tags.isNotEmpty()) {
                     TagsSection(
-                        label = stringResource(R.string.tags),
+                        label = stringResource(Res.string.tags),
                         tags = event.tags,
                         onCopy = {
                             copyToClipboard(

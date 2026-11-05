@@ -221,9 +221,9 @@ class EventNotificationConsumerTest {
             every { amber.notificationCache[any()] } returns null
             val responses = mutableListOf<BunkerResponse>()
             coEvery {
-                BunkerRequestUtils.sendBunkerResponse(any(), any(), any(), any(), any(), any(), any())
+                BunkerRequestUtils.sendBunkerResponse(any(), any(), any(), any(), any(), any())
             } answers {
-                responses += arg<BunkerResponse>(3)
+                responses += arg<BunkerResponse>(2)
             }
             consumer.consume(event, NormalizedRelayUrl("wss://relay.com"))
             onAccount(acc)
@@ -337,9 +337,9 @@ class EventNotificationConsumerTest {
             every { amber.notificationCache[any()] } returns null
             val responses = mutableListOf<BunkerResponse>()
             coEvery {
-                BunkerRequestUtils.sendBunkerResponse(any(), any(), any(), any(), any(), any(), any())
+                BunkerRequestUtils.sendBunkerResponse(any(), any(), any(), any(), any(), any())
             } answers {
-                responses += arg<BunkerResponse>(3)
+                responses += arg<BunkerResponse>(2)
             }
 
             consumer.consume(event, NormalizedRelayUrl("wss://relay.com"))

@@ -21,14 +21,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.unit.dp
-import com.greenart7c3.nostrsigner.R
-import com.greenart7c3.nostrsigner.models.Permission
+import com.greenart7c3.nostrsigner.commonsui.Permission
+import com.greenart7c3.nostrsigner.commonsui.Res
+import com.greenart7c3.nostrsigner.commonsui.localizedBlocking
+import com.greenart7c3.nostrsigner.commonsui.select_deselect_all
 import com.greenart7c3.nostrsigner.ui.theme.AmberPreview
 import com.greenart7c3.nostrsigner.ui.theme.ThemePreviews
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun EnabledPermissions(
@@ -68,7 +69,7 @@ fun EnabledPermissions(
                 state = allCheckedState,
                 onClick = { toggleAll() },
             )
-            Text(stringResource(R.string.select_deselect_all))
+            Text(stringResource(Res.string.select_deselect_all))
         }
 
         LazyColumn(
@@ -102,7 +103,7 @@ fun EnabledPermissions(
                         )
                         Text(
                             modifier = Modifier.weight(1f),
-                            text = item.toLocalizedString(LocalContext.current),
+                            text = item.localizedBlocking(),
                         )
                     }
                 }

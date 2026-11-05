@@ -19,7 +19,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -28,7 +27,11 @@ import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.greenart7c3.nostrsigner.Amber
-import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.commonsui.Res
+import com.greenart7c3.nostrsigner.commonsui.clear_logs
+import com.greenart7c3.nostrsigner.commonsui.export_logs
+import com.greenart7c3.nostrsigner.commonsui.getStringBlocking
+import com.greenart7c3.nostrsigner.commonsui.log_repeated
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.TimeUtils
 import com.greenart7c3.nostrsigner.service.SharedFiles
@@ -38,6 +41,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun LogsScreen(
@@ -109,13 +113,13 @@ fun LogsScreen(
                                 context.startActivity(
                                     Intent.createChooser(
                                         shareIntent,
-                                        context.getString(R.string.export_logs),
+                                        getStringBlocking(Res.string.export_logs),
                                     ),
                                 )
                             }
                         }
                     },
-                    text = stringResource(R.string.export_logs),
+                    text = stringResource(Res.string.export_logs),
                 )
                 AmberButton(
                     modifier = Modifier.weight(1f),
@@ -124,7 +128,7 @@ fun LogsScreen(
                             Amber.instance.getLogDatabase(account.npub).dao().clearLogs()
                         }
                     },
-                    text = stringResource(R.string.clear_logs),
+                    text = stringResource(Res.string.clear_logs),
                 )
             }
         }
@@ -161,7 +165,7 @@ fun LogsScreen(
                         )
                         Text(
                             modifier = Modifier.padding(top = 4.dp, bottom = 16.dp),
-                            text = if (log.repeatCount > 1) stringResource(R.string.log_repeated, log.message, log.repeatCount) else log.message,
+                            text = if (log.repeatCount > 1) stringResource(Res.string.log_repeated, log.message, log.repeatCount) else log.message,
                             fontSize = 20.sp,
                         )
 

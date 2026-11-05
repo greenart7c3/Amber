@@ -18,25 +18,35 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.greenart7c3.nostrsigner.Amber
-import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.common.SignerType
+import com.greenart7c3.nostrsigner.commonsui.Permission
+import com.greenart7c3.nostrsigner.commonsui.Res
+import com.greenart7c3.nostrsigner.commonsui.encryption_scope
+import com.greenart7c3.nostrsigner.commonsui.event_kind
+import com.greenart7c3.nostrsigner.commonsui.for_all_kinds
+import com.greenart7c3.nostrsigner.commonsui.for_this_kind_only
+import com.greenart7c3.nostrsigner.commonsui.localizedBlocking
+import com.greenart7c3.nostrsigner.commonsui.nip44_v3_context
+import com.greenart7c3.nostrsigner.commonsui.nip44_v3_kind
+import com.greenart7c3.nostrsigner.commonsui.nip44_v3_no_scope
+import com.greenart7c3.nostrsigner.commonsui.nip44_v3_scope
+import com.greenart7c3.nostrsigner.commonsui.nip44_v3_wants_to_decrypt
+import com.greenart7c3.nostrsigner.commonsui.nip44_v3_wants_to_encrypt
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.ClearTextEncryptedDataKind
 import com.greenart7c3.nostrsigner.models.EncryptedDataKind
-import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.models.nip44v3Plaintext
 import com.greenart7c3.nostrsigner.ui.RememberType
 import com.greenart7c3.nostrsigner.ui.theme.AmberPreview
 import com.greenart7c3.nostrsigner.ui.theme.ThemePreviews
 import com.greenart7c3.nostrsigner.ui.theme.previewAccount
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Dedicated approval screen for NIP-44 v3 encrypt/decrypt requests.
@@ -66,7 +76,7 @@ fun Nip44v3ApprovalData(
     var grantScope by remember { mutableStateOf(defaultScope) }
 
     val isEncrypt = type == SignerType.NIP44_V3_ENCRYPT
-    val messageRes = if (isEncrypt) R.string.nip44_v3_wants_to_encrypt else R.string.nip44_v3_wants_to_decrypt
+    val messageRes = if (isEncrypt) Res.string.nip44_v3_wants_to_encrypt else Res.string.nip44_v3_wants_to_decrypt
     val displayContent = encryptedData.nip44v3Plaintext()
 
     Column(modifier) {
@@ -117,7 +127,7 @@ fun Nip44v3ApprovalData(
 
         Spacer(Modifier.size(8.dp))
         LabeledBorderBox(
-            label = stringResource(R.string.encryption_scope),
+            label = stringResource(Res.string.encryption_scope),
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp),
@@ -129,8 +139,8 @@ fun Nip44v3ApprovalData(
                 label = {
                     stringResource(
                         when (it) {
-                            DecryptTypeScope.SPECIFIC -> R.string.for_this_kind_only
-                            DecryptTypeScope.ALL -> R.string.for_all_kinds
+                            DecryptTypeScope.SPECIFIC -> Res.string.for_this_kind_only
+                            DecryptTypeScope.ALL -> Res.string.for_all_kinds
                         },
                     )
                 },
@@ -165,24 +175,24 @@ fun Nip44v3ContextBox(
     scope: String,
 ) {
     LabeledBorderBox(
-        label = stringResource(R.string.nip44_v3_context),
+        label = stringResource(Res.string.nip44_v3_context),
         modifier = Modifier.fillMaxWidth(),
     ) {
         Column {
             val kindLabel = if (kind != null) {
-                val translation = Permission("sign_event", kind).toLocalizedString(Amber.instance)
-                val unknown = stringResource(R.string.event_kind, kind.toString())
+                val translation = Permission("sign_event", kind).localizedBlocking()
+                val unknown = stringResource(Res.string.event_kind, kind.toString())
                 // toLocalizedString returns the "Event kind N" fallback when the
                 // kind has no translation; only append the name when one exists.
                 if (translation != unknown) "$kind ($translation)" else kind.toString()
             } else {
                 "?"
             }
-            Text(stringResource(R.string.nip44_v3_kind, kindLabel))
+            Text(stringResource(Res.string.nip44_v3_kind, kindLabel))
             Text(
                 stringResource(
-                    R.string.nip44_v3_scope,
-                    scope.ifEmpty { stringResource(R.string.nip44_v3_no_scope) },
+                    Res.string.nip44_v3_scope,
+                    scope.ifEmpty { stringResource(Res.string.nip44_v3_no_scope) },
                 ),
             )
         }

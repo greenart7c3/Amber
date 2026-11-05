@@ -42,15 +42,44 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.greenart7c3.nostrsigner.commonsui.Res
+import com.greenart7c3.nostrsigner.commonsui.add
+import com.greenart7c3.nostrsigner.commonsui.cancel
+import com.greenart7c3.nostrsigner.commonsui.copy
+import com.greenart7c3.nostrsigner.commonsui.d_add_an_application
+import com.greenart7c3.nostrsigner.commonsui.d_add_nsecbunker
+import com.greenart7c3.nostrsigner.commonsui.d_app_connected
+import com.greenart7c3.nostrsigner.commonsui.d_app_waiting
+import com.greenart7c3.nostrsigner.commonsui.d_application_name
+import com.greenart7c3.nostrsigner.commonsui.d_bunker_created
+import com.greenart7c3.nostrsigner.commonsui.d_bunker_desc
+import com.greenart7c3.nostrsigner.commonsui.d_close
+import com.greenart7c3.nostrsigner.commonsui.d_connect_nostrconnect
+import com.greenart7c3.nostrsigner.commonsui.d_copied_clipboard
+import com.greenart7c3.nostrsigner.commonsui.d_create
+import com.greenart7c3.nostrsigner.commonsui.d_create_bunker
+import com.greenart7c3.nostrsigner.commonsui.d_invalid_nostrconnect
+import com.greenart7c3.nostrsigner.commonsui.d_last_used
+import com.greenart7c3.nostrsigner.commonsui.d_local_socket
+import com.greenart7c3.nostrsigner.commonsui.d_name_required
+import com.greenart7c3.nostrsigner.commonsui.d_no_apps
+import com.greenart7c3.nostrsigner.commonsui.d_paste_nostrconnect
+import com.greenart7c3.nostrsigner.commonsui.d_permissions_count
+import com.greenart7c3.nostrsigner.commonsui.d_relays_label
+import com.greenart7c3.nostrsigner.commonsui.d_sort_alphabetically
+import com.greenart7c3.nostrsigner.commonsui.d_sort_most_recent
+import com.greenart7c3.nostrsigner.commonsui.getStringBlocking
+import com.greenart7c3.nostrsigner.commonsui.no_relays_added
+import com.greenart7c3.nostrsigner.commonsui.relays
 import com.greenart7c3.nostrsigner.desktop.core.AmberDesktop
 import com.greenart7c3.nostrsigner.desktop.core.DateTimes
 import com.greenart7c3.nostrsigner.desktop.core.DeleteAfterType
 import com.greenart7c3.nostrsigner.desktop.core.DesktopAccount
 import com.greenart7c3.nostrsigner.desktop.core.SettingsStore
-import com.greenart7c3.nostrsigner.desktop.core.Strings
 import com.greenart7c3.nostrsigner.desktop.core.isLocalSocket
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.RelayUrlNormalizer
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun ApplicationsScreen(
@@ -59,15 +88,14 @@ fun ApplicationsScreen(
 ) {
     val store = AmberDesktop.store(account.npub)
     val apps by store.apps.collectAsState()
-    val language by Strings.currentLanguage.collectAsState()
     val settings by SettingsStore.settings.collectAsState()
     var showNostrConnectDialog by remember { mutableStateOf(false) }
     var showBunkerDialog by remember { mutableStateOf(false) }
 
     Column(Modifier.fillMaxSize()) {
         FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            AmberButton(text = Strings.get("d_connect_nostrconnect", language), onClick = { showNostrConnectDialog = true })
-            AmberOutlinedButton(text = Strings.get("d_create_bunker", language), onClick = { showBunkerDialog = true })
+            AmberButton(text = stringResource(Res.string.d_connect_nostrconnect), onClick = { showNostrConnectDialog = true })
+            AmberOutlinedButton(text = stringResource(Res.string.d_create_bunker), onClick = { showBunkerDialog = true })
             IconButton(
                 onClick = {
                     SettingsStore.update { it.copy(sortApplicationsAlphabetically = !it.sortApplicationsAlphabetically) }
@@ -75,9 +103,8 @@ fun ApplicationsScreen(
             ) {
                 Icon(
                     imageVector = Icons.Default.SortByAlpha,
-                    contentDescription = Strings.get(
-                        if (settings.sortApplicationsAlphabetically) "d_sort_most_recent" else "d_sort_alphabetically",
-                        language,
+                    contentDescription = stringResource(
+                        if (settings.sortApplicationsAlphabetically) Res.string.d_sort_most_recent else Res.string.d_sort_alphabetically,
                     ),
                     tint = if (settings.sortApplicationsAlphabetically) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onBackground,
                 )
@@ -88,7 +115,7 @@ fun ApplicationsScreen(
         if (apps.isEmpty()) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Text(
-                    Strings.get("d_no_apps", language),
+                    stringResource(Res.string.d_no_apps),
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -120,11 +147,11 @@ fun ApplicationsScreen(
                                 )
                                 Text(
                                     buildString {
-                                        append(if (app.app.isConnected) Strings.get("d_app_connected", language) else Strings.get("d_app_waiting", language))
-                                        if (app.app.isLocalSocket) append(" · ${Strings.get("d_local_socket", language)}")
-                                        append(" · ${Strings.format("d_permissions_count", app.permissions.size, language = language)}")
+                                        append(if (app.app.isConnected) stringResource(Res.string.d_app_connected) else stringResource(Res.string.d_app_waiting))
+                                        if (app.app.isLocalSocket) append(" · ${stringResource(Res.string.d_local_socket)}")
+                                        append(" · ${stringResource(Res.string.d_permissions_count, app.permissions.size)}")
                                         if (app.app.lastUsed > 0) {
-                                            append(" · ${Strings.format("d_last_used", DateTimes.format(app.app.lastUsed * 1000), language = language)}")
+                                            append(" · ${stringResource(Res.string.d_last_used, DateTimes.format(app.app.lastUsed * 1000))}")
                                         }
                                     },
                                     style = MaterialTheme.typography.bodySmall,
@@ -132,10 +159,9 @@ fun ApplicationsScreen(
                                 )
                                 if (app.app.relays.isNotEmpty()) {
                                     Text(
-                                        Strings.format(
-                                            "d_relays_label",
+                                        stringResource(
+                                            Res.string.d_relays_label,
                                             app.app.relays.joinToString { it.removePrefix("wss://").removeSuffix("/") },
-                                            language = language,
                                         ),
                                         style = MaterialTheme.typography.bodySmall,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -172,14 +198,13 @@ private fun NostrConnectDialog(
 ) {
     var uri by remember { mutableStateOf("") }
     val scope = rememberCoroutineScope()
-    val language by Strings.currentLanguage.collectAsState()
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(Strings.get("d_add_an_application", language)) },
+        title = { Text(stringResource(Res.string.d_add_an_application)) },
         text = {
             Column {
-                Text(Strings.get("d_paste_nostrconnect", language))
+                Text(stringResource(Res.string.d_paste_nostrconnect))
                 Spacer(Modifier.height(8.dp))
                 OutlinedTextField(
                     value = uri,
@@ -191,11 +216,11 @@ private fun NostrConnectDialog(
         },
         confirmButton = {
             AmberTextButton(
-                text = Strings.get("add", language),
+                text = stringResource(Res.string.add),
                 onClick = {
                     scope.launch {
                         if (!uri.trim().startsWith("nostrconnect://")) {
-                            Toaster.toast(Strings.get("d_invalid_nostrconnect", language))
+                            Toaster.toast(getStringBlocking(Res.string.d_invalid_nostrconnect))
                             return@launch
                         }
                         val error = AmberDesktop.engine.addNostrConnect(uri, account)
@@ -210,7 +235,7 @@ private fun NostrConnectDialog(
         },
         dismissButton = {
             AmberTextButton(
-                text = Strings.get("cancel", language),
+                text = stringResource(Res.string.cancel),
                 onClick = onDismiss,
             )
         },
@@ -229,11 +254,10 @@ private fun NewBunkerDialog(
     var bunkerUri by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
     val copyText = rememberCopyText()
-    val language by Strings.currentLanguage.collectAsState()
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(if (bunkerUri == null) Strings.get("d_add_nsecbunker", language) else Strings.get("d_bunker_created", language)) },
+        title = { Text(if (bunkerUri == null) stringResource(Res.string.d_add_nsecbunker) else stringResource(Res.string.d_bunker_created)) },
         text = {
             Column(
                 Modifier.verticalScroll(rememberScrollState()),
@@ -241,12 +265,12 @@ private fun NewBunkerDialog(
             ) {
                 val uri = bunkerUri
                 if (uri == null) {
-                    Text(Strings.get("d_bunker_desc", language))
+                    Text(stringResource(Res.string.d_bunker_desc))
                     Spacer(Modifier.height(8.dp))
                     OutlinedTextField(
                         value = name,
                         onValueChange = { name = it },
-                        label = { Text(Strings.get("d_application_name", language)) },
+                        label = { Text(stringResource(Res.string.d_application_name)) },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth().focusRequester(nameFocus),
                     )
@@ -257,7 +281,7 @@ private fun NewBunkerDialog(
                     }
                     Spacer(Modifier.height(12.dp))
                     Text(
-                        Strings.get("relays", language),
+                        stringResource(Res.string.relays),
                         style = MaterialTheme.typography.titleSmall,
                         modifier = Modifier.fillMaxWidth(),
                     )
@@ -279,15 +303,15 @@ private fun NewBunkerDialog(
             val uri = bunkerUri
             if (uri == null) {
                 AmberTextButton(
-                    text = Strings.get("d_create", language),
+                    text = stringResource(Res.string.d_create),
                     onClick = {
                         if (name.isBlank()) {
-                            Toaster.toast(Strings.get("d_name_required", language))
+                            Toaster.toast(getStringBlocking(Res.string.d_name_required))
                             return@AmberTextButton
                         }
                         val normalized = relays.mapNotNull { RelayUrlNormalizer.normalizeOrNull(it) }
                         if (normalized.isEmpty()) {
-                            Toaster.toast(Strings.get("no_relays_added", language))
+                            Toaster.toast(getStringBlocking(Res.string.no_relays_added))
                             return@AmberTextButton
                         }
                         scope.launch {
@@ -302,17 +326,17 @@ private fun NewBunkerDialog(
                 )
             } else {
                 AmberTextButton(
-                    text = Strings.get("copy", language).trim(),
+                    text = stringResource(Res.string.copy).trim(),
                     onClick = {
                         copyText(uri)
-                        Toaster.toast(Strings.get("d_copied_clipboard", language))
+                        Toaster.toast(getStringBlocking(Res.string.d_copied_clipboard))
                     },
                 )
             }
         },
         dismissButton = {
             AmberTextButton(
-                text = if (bunkerUri == null) Strings.get("cancel", language) else Strings.get("d_close", language),
+                text = if (bunkerUri == null) stringResource(Res.string.cancel) else stringResource(Res.string.d_close),
                 onClick = onDismiss,
             )
         },

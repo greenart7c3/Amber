@@ -11,7 +11,8 @@ import androidx.room.Query
 import androidx.room.Transaction
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.AmberLog
-import com.greenart7c3.nostrsigner.models.Permission
+import com.greenart7c3.nostrsigner.commonsui.Permission
+import com.greenart7c3.nostrsigner.commonsui.localizedBlocking
 import com.greenart7c3.nostrsigner.models.encryptDecryptHistoryTypeNames
 import com.vitorpamplona.quartz.utils.TimeUtils
 
@@ -108,7 +109,7 @@ interface HistoryDao {
                 // can still be decrypted on demand; only truncate plaintext content.
                 val isEncryptedContent = entity.type in encryptDecryptHistoryTypeNames
                 entity.copy(
-                    translatedPermission = permission.toLocalizedString(Amber.instance, true),
+                    translatedPermission = permission.localizedBlocking(true),
                     content = if (!isEncryptedContent && entity.content.length > MAX_CONTENT_LENGTH) entity.content.take(MAX_CONTENT_LENGTH) else entity.content,
                 )
             }

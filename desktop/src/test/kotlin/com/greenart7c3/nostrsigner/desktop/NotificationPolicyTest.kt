@@ -85,10 +85,10 @@ class NotificationPolicyTest {
         val mine = AccountRecord(npub = account.npub, name = "main")
         val other = AccountRecord(npub = "npub1other", name = "other")
 
-        assertNull(req(SignerType.SIGN_EVENT, 1).notificationAccountLine(listOf(mine), "en"))
+        assertNull(req(SignerType.SIGN_EVENT, 1).notificationAccountLine(listOf(mine)))
         assertEquals(
             "Account: main · ${account.npub.toShortenHex()}",
-            req(SignerType.SIGN_EVENT, 1).notificationAccountLine(listOf(mine, other), "en"),
+            req(SignerType.SIGN_EVENT, 1).notificationAccountLine(listOf(mine, other)),
         )
     }
 

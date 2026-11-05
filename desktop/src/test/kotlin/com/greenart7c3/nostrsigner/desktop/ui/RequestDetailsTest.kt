@@ -74,7 +74,7 @@ class RequestDetailsTest {
         val signed = """{"id":"00","pubkey":"${account.hexKey}","created_at":1700000000,"kind":1,"tags":[["t","amber"]],"content":"gm nostr","sig":"00"}"""
         val details = RequestDetails.of(req(SignerType.SIGN_EVENT, preview = note, result = signed))
         assertTrue(details is RequestDetails.OfEvent)
-        assertEquals("gm nostr", details!!.summary("en"))
+        assertEquals("gm nostr", details!!.summary())
         val event = (details as RequestDetails.OfEvent).event
         assertEquals(account.hexKey, event.pubKey)
         assertEquals(1700000000L, event.createdAt)
@@ -84,18 +84,18 @@ class RequestDetailsTest {
     @Test
     fun authEventsSummarizeTheRelay() {
         val auth = """{"kind":22242,"content":"","tags":[["relay","wss://relay.example"],["challenge","x"]],"created_at":1700000000}"""
-        assertEquals("wss://relay.example", RequestDetails.of(req(SignerType.SIGN_EVENT, preview = auth))!!.summary("en"))
+        assertEquals("wss://relay.example", RequestDetails.of(req(SignerType.SIGN_EVENT, preview = auth))!!.summary())
     }
 
     @Test
     fun encryptedPayloadsAreShownByWhatTheyHold() {
         val event = RequestDetails.of(req(SignerType.NIP44_DECRYPT, preview = note))
         assertTrue(event is RequestDetails.OfEvent)
-        assertEquals("gm nostr", event!!.summary("en"))
+        assertEquals("gm nostr", event!!.summary())
 
         val tags = RequestDetails.of(req(SignerType.NIP04_ENCRYPT, preview = """[["p","abc"],["e","def"]]"""))
         assertTrue(tags is RequestDetails.OfTags)
-        assertEquals("""["p", "abc"], ["e", "def"]""", tags!!.summary("en"))
+        assertEquals("""["p", "abc"], ["e", "def"]""", tags!!.summary())
 
         val text = RequestDetails.of(req(SignerType.NIP44_V3_ENCRYPT, preview = "hello"))
         assertEquals(RequestDetails.OfText("hello"), text)
@@ -141,13 +141,13 @@ class RequestDetailsTest {
         val details = RequestDetails.of(req(SignerType.SIGN_PSBT, preview = psbt))
 
         assertTrue(details is RequestDetails.OfPsbt)
-        assertEquals("Sending: 60000 sats · Change: 39000 sats · Fee: 1000 sats", details!!.summary("en"))
+        assertEquals("Sending: 60000 sats · Change: 39000 sats · Fee: 1000 sats", details!!.summary())
     }
 
     @Test
     fun anUndecodablePsbtSaysSo() {
         val details = RequestDetails.of(req(SignerType.SIGN_PSBT, preview = "not a psbt"))
 
-        assertTrue(details!!.summary("en").startsWith("Could not decode PSBT"))
+        assertTrue(details!!.summary().startsWith("Could not decode PSBT"))
     }
 }

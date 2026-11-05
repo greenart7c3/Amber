@@ -3,12 +3,13 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 // Top-level build file where you can add configuration options common to all subprojects/modules.
 plugins {
     alias(libs.plugins.androidApplication) apply false
-    alias(libs.plugins.androidLibrary) apply false
+    alias(libs.plugins.androidKotlinMultiplatformLibrary) apply false
     alias(libs.plugins.serialization) apply false
     alias(libs.plugins.kotlin.ksp) apply false
     alias(libs.plugins.gradle.ktlint) apply false
     alias(libs.plugins.detekt) apply false
     alias(libs.plugins.kotlinJvm) apply false
+    alias(libs.plugins.kotlinMultiplatform) apply false
     alias(libs.plugins.jetbrainsCompose) apply false
 }
 
@@ -31,7 +32,7 @@ dependencies {
     unusedCodeTool(project(":unused-code"))
 }
 
-val unusedCodeModules = listOf("app", "common", "desktop", "tools/unused-code")
+val unusedCodeModules = listOf("app", "common", "commonsui", "desktop", "tools/unused-code")
 
 // Identifiers the JNI side calls by name (ArtiLogCallback.onLogLine).
 val unusedCodeTokenDirs = listOf("tools/arti/src")
@@ -63,7 +64,7 @@ val unusedCode = tasks.register<JavaExec>("unusedCode") {
 // resolve types and misses unused variables, properties and functions.
 tasks.register("detektAll") {
     group = "verification"
-    description = "Checks the app, desktop and common sources for unused code."
+    description = "Checks the app, desktop, common and commonsui sources for unused code."
     dependsOn(
         ":app:detektFreeDebug",
         ":app:detektOfflineDebug",
@@ -72,6 +73,9 @@ tasks.register("detektAll") {
         ":app:detektFreeDebugAndroidTest",
         ":common:detektMain",
         ":common:detektTest",
+        ":commonsui:detektMainJvm",
+        ":commonsui:detektMainAndroid",
+        ":commonsui:detektTestJvm",
         ":desktop:detektMain",
         ":desktop:detektTest",
         ":unused-code:detektMain",

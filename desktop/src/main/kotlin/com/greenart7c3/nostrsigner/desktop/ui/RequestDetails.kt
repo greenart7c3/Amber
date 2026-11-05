@@ -20,7 +20,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -33,18 +32,35 @@ import com.greenart7c3.nostrsigner.common.SignerType
 import com.greenart7c3.nostrsigner.common.psbt.DecodedPsbt
 import com.greenart7c3.nostrsigner.common.psbt.DecodedPsbtOutput
 import com.greenart7c3.nostrsigner.common.psbt.PsbtDecoder
+import com.greenart7c3.nostrsigner.commonsui.Permission
+import com.greenart7c3.nostrsigner.commonsui.Res
+import com.greenart7c3.nostrsigner.commonsui.content
+import com.greenart7c3.nostrsigner.commonsui.copy
+import com.greenart7c3.nostrsigner.commonsui.d_close
+import com.greenart7c3.nostrsigner.commonsui.d_copied_clipboard
+import com.greenart7c3.nostrsigner.commonsui.date
+import com.greenart7c3.nostrsigner.commonsui.getStringBlocking
+import com.greenart7c3.nostrsigner.commonsui.kind
+import com.greenart7c3.nostrsigner.commonsui.localizedBlocking
+import com.greenart7c3.nostrsigner.commonsui.psbt_amount_sats
+import com.greenart7c3.nostrsigner.commonsui.psbt_change
+import com.greenart7c3.nostrsigner.commonsui.psbt_decode_error
+import com.greenart7c3.nostrsigner.commonsui.psbt_fee
+import com.greenart7c3.nostrsigner.commonsui.psbt_raw
+import com.greenart7c3.nostrsigner.commonsui.psbt_sending
+import com.greenart7c3.nostrsigner.commonsui.pubkey
+import com.greenart7c3.nostrsigner.commonsui.tags
 import com.greenart7c3.nostrsigner.desktop.core.DateTimes
 import com.greenart7c3.nostrsigner.desktop.core.EncryptedContent
 import com.greenart7c3.nostrsigner.desktop.core.EncryptedContentType
 import com.greenart7c3.nostrsigner.desktop.core.PendingBunkerRequest
-import com.greenart7c3.nostrsigner.desktop.core.SignerDescriptions
-import com.greenart7c3.nostrsigner.desktop.core.Strings
 import com.greenart7c3.nostrsigner.desktop.core.contentScopedSignerTypes
 import com.greenart7c3.nostrsigner.desktop.core.describe
 import com.greenart7c3.nostrsigner.desktop.core.nip44v3SignerTypes
 import com.greenart7c3.nostrsigner.desktop.core.toShortenHex
 import com.vitorpamplona.quartz.nip01Core.jackson.JacksonMapper
 import com.vitorpamplona.quartz.utils.Hex
+import org.jetbrains.compose.resources.stringResource
 
 /** The parts of an event the details dialog shows, read from any event JSON. */
 internal data class DetailEvent(
@@ -90,7 +106,7 @@ internal sealed interface RequestDetails {
     data class OfPsbt(val decoded: DecodedPsbt, val psbt: String) : RequestDetails
 
     /** The short text under the request's description on the card. */
-    fun summary(language: String): String = when (this) {
+    fun summary(): String = when (this) {
         // An auth event says nothing in its content: show the relay instead.
         is OfEvent -> if (event.kind == 22242) {
             event.tags.firstOrNull { it.size > 1 && it[0] == "relay" }?.get(1) ?: event.content
@@ -99,11 +115,11 @@ internal sealed interface RequestDetails {
         }
         is OfTags -> tags.format()
         is OfText -> text
-        is OfPsbt -> decoded.parseError?.let { Strings.format("psbt_decode_error", it, language = language) }
+        is OfPsbt -> decoded.parseError?.let { getStringBlocking(Res.string.psbt_decode_error, it) }
             ?: listOfNotNull(
-                "${Strings.get("psbt_sending", language)}: ${sats(decoded.totalSent, language)}",
-                "${Strings.get("psbt_change", language)}: ${sats(decoded.totalChange, language)}",
-                decoded.feeSats?.let { "${Strings.get("psbt_fee", language)}: ${sats(it, language)}" },
+                "${getStringBlocking(Res.string.psbt_sending)}: ${sats(decoded.totalSent)}",
+                "${getStringBlocking(Res.string.psbt_change)}: ${sats(decoded.totalChange)}",
+                decoded.feeSats?.let { "${getStringBlocking(Res.string.psbt_fee)}: ${sats(it)}" },
             ).joinToString(" · ")
     }
 
@@ -134,14 +150,13 @@ internal fun RequestDetailsDialog(
     details: RequestDetails,
     onDismiss: () -> Unit,
 ) {
-    val language by Strings.currentLanguage.collectAsState()
     // Fill small windows (leaving room for the title and buttons), cap on large ones.
     val window = LocalWindowContentSize.current
     AlertDialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(usePlatformDefaultWidth = false),
         modifier = Modifier.widthIn(max = 720.dp).fillMaxWidth().padding(if (LocalLayoutWidth.current == LayoutWidth.COMPACT) 12.dp else 24.dp),
-        title = { Text(req.type.describe(req.kind, req.encryptedContent, language)) },
+        title = { Text(req.type.describe(req.kind, req.encryptedContent)) },
         text = {
             val scroll = rememberScrollState()
             Column(
@@ -151,69 +166,70 @@ internal fun RequestDetailsDialog(
                 when (details) {
                     is RequestDetails.OfEvent -> {
                         val event = details.event
-                        val kindLabel = "${event.kind} - ${SignerDescriptions.signEventDescription(event.kind, language)}"
-                        DetailSection(Strings.get("kind", language), kindLabel)
+                        val kindLabel = "${event.kind} - ${Permission("sign_event", event.kind).localizedBlocking()}"
+                        DetailSection(stringResource(Res.string.kind), kindLabel)
                         if (event.pubKey.isNotBlank()) {
-                            DetailSection(Strings.get("pubkey", language), event.pubKey.toShortenHex(), copyValue = event.pubKey)
+                            DetailSection(stringResource(Res.string.pubkey), event.pubKey.toShortenHex(), copyValue = event.pubKey)
                         }
                         DetailSection(
-                            Strings.get("date", language),
+                            stringResource(Res.string.date),
                             DateTimes.format(event.createdAt * 1000),
                             copyValue = event.createdAt.toString(),
                         )
                         if (event.content.isNotEmpty()) {
-                            DetailSection(contentLabel(language), event.content)
+                            DetailSection(contentLabel(), event.content)
                         }
                         if (event.tags.isNotEmpty()) {
-                            TagsSection(Strings.get("tags", language), event.tags)
+                            TagsSection(stringResource(Res.string.tags), event.tags)
                         }
                     }
-                    is RequestDetails.OfTags -> TagsSection(Strings.get("tags", language), details.tags)
-                    is RequestDetails.OfText -> DetailSection(contentLabel(language), details.text)
-                    is RequestDetails.OfPsbt -> PsbtSections(details, language)
+                    is RequestDetails.OfTags -> TagsSection(stringResource(Res.string.tags), details.tags)
+                    is RequestDetails.OfText -> DetailSection(contentLabel(), details.text)
+                    is RequestDetails.OfPsbt -> PsbtSections(details)
                 }
             }
         },
         confirmButton = {
-            AmberTextButton(text = Strings.get("d_close", language), onClick = onDismiss)
+            AmberTextButton(text = stringResource(Res.string.d_close), onClick = onDismiss)
         },
     )
 }
 
-private fun sats(amount: Long, language: String) = Strings.format("psbt_amount_sats", amount, language = language)
+private fun sats(amount: Long) = getStringBlocking(Res.string.psbt_amount_sats, amount)
 
 /** Mirrors Android's `PsbtBody`: sending and change outputs, the fee, then the raw PSBT. */
 @Composable
-private fun PsbtSections(details: RequestDetails.OfPsbt, language: String) {
+private fun PsbtSections(details: RequestDetails.OfPsbt) {
     val decoded = details.decoded
-    if (decoded.parseError != null) {
+    val parseError = decoded.parseError
+    if (parseError != null) {
         Text(
-            Strings.format("psbt_decode_error", decoded.parseError, language = language),
+            stringResource(Res.string.psbt_decode_error, parseError),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.error,
         )
     } else {
         val (change, sending) = decoded.outputs.partition { it.isChange }
-        PsbtOutputs(Strings.get("psbt_sending", language), decoded.totalSent, sending, language)
-        PsbtOutputs(Strings.get("psbt_change", language), decoded.totalChange, change, language)
-        decoded.feeSats?.let { DetailSection(Strings.get("psbt_fee", language), sats(it, language)) }
+        PsbtOutputs(stringResource(Res.string.psbt_sending), decoded.totalSent, sending)
+        PsbtOutputs(stringResource(Res.string.psbt_change), decoded.totalChange, change)
+        decoded.feeSats?.let { DetailSection(stringResource(Res.string.psbt_fee), sats(it)) }
     }
     HorizontalDivider()
-    DetailSection(Strings.get("psbt_raw", language), details.psbt, monospace = true)
+    DetailSection(stringResource(Res.string.psbt_raw), details.psbt, monospace = true)
 }
 
 @Composable
-private fun PsbtOutputs(title: String, totalSats: Long, outputs: List<DecodedPsbtOutput>, language: String) {
+private fun PsbtOutputs(title: String, totalSats: Long, outputs: List<DecodedPsbtOutput>) {
     if (outputs.isEmpty()) return
-    Text("$title: ${sats(totalSats, language)}", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
+    Text("$title: ${sats(totalSats)}", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
     outputs.forEach { output ->
         // Non-segwit scripts have no bech32 address: show the script itself.
         val destination = output.address ?: output.scriptPubKeyHex
-        DetailSection(sats(output.valueSats, language), destination, monospace = output.address == null)
+        DetailSection(sats(output.valueSats), destination, monospace = output.address == null)
     }
 }
 
-private fun contentLabel(language: String) = Strings.get("content", language).replaceFirstChar { it.uppercase() }
+private fun contentLabel() = getStringBlocking(Res.string.content).replaceFirstChar { it.uppercase() }
 
 @Composable
 private fun DetailSection(
@@ -223,7 +239,6 @@ private fun DetailSection(
     monospace: Boolean = false,
 ) {
     val copyText = rememberCopyText()
-    val language by Strings.currentLanguage.collectAsState()
     Row(Modifier.fillMaxWidth().padding(vertical = 6.dp), verticalAlignment = Alignment.Top) {
         Column(Modifier.weight(1f)) {
             Text(label, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
@@ -239,10 +254,10 @@ private fun DetailSection(
         IconButton(
             onClick = {
                 copyText(copyValue)
-                Toaster.toast(Strings.get("d_copied_clipboard", language))
+                Toaster.toast(getStringBlocking(Res.string.d_copied_clipboard))
             },
         ) {
-            Icon(Icons.Default.ContentCopy, contentDescription = Strings.get("copy", language).trim(), modifier = Modifier.size(18.dp))
+            Icon(Icons.Default.ContentCopy, contentDescription = stringResource(Res.string.copy).trim(), modifier = Modifier.size(18.dp))
         }
     }
     HorizontalDivider()

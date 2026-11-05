@@ -30,11 +30,14 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.commonsui.Res
+import com.greenart7c3.nostrsigner.commonsui.invalid_intent_body
+import com.greenart7c3.nostrsigner.commonsui.invalid_intent_close_app
+import com.greenart7c3.nostrsigner.commonsui.invalid_intent_title
 import com.greenart7c3.nostrsigner.ui.theme.AmberPreview
 import com.greenart7c3.nostrsigner.ui.theme.ThemePreviews
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun InvalidIntentScreen(
@@ -54,12 +57,12 @@ fun InvalidIntentScreen(
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             Text(
-                text = stringResource(R.string.invalid_intent_title),
+                text = stringResource(Res.string.invalid_intent_title),
                 style = MaterialTheme.typography.headlineSmall,
             )
 
             Text(
-                text = stringResource(R.string.invalid_intent_body),
+                text = stringResource(Res.string.invalid_intent_body),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -71,7 +74,7 @@ fun InvalidIntentScreen(
                 .padding(top = 8.dp),
             onClick = onClose,
         ) {
-            Text(stringResource(R.string.invalid_intent_close_app))
+            Text(stringResource(Res.string.invalid_intent_close_app))
         }
     }
 }

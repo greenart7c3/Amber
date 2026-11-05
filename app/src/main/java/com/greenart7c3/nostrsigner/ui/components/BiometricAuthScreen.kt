@@ -19,18 +19,22 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.LocalPreferences
-import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.commonsui.Res
+import com.greenart7c3.nostrsigner.commonsui.authenticate
+import com.greenart7c3.nostrsigner.commonsui.enter_pin
+import com.greenart7c3.nostrsigner.commonsui.getStringBlocking
+import com.greenart7c3.nostrsigner.commonsui.pin_does_not_match
 import com.greenart7c3.nostrsigner.minutesBetween
 import com.greenart7c3.nostrsigner.service.Biometrics
 import com.greenart7c3.nostrsigner.ui.BiometricsTimeType
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun BiometricAuthScreen(
@@ -66,7 +70,7 @@ fun BiometricAuthScreen(
                         showPinDialog = true
                     } else {
                         Biometrics.authenticate(
-                            context.getString(R.string.authenticate),
+                            getStringBlocking(Res.string.authenticate),
                             context,
                             keyguardLauncher,
                             {
@@ -103,7 +107,7 @@ fun BiometricAuthScreen(
                 Amber.instance.applicationIOScope.launch(Dispatchers.Main) {
                     Toast.makeText(
                         context,
-                        Amber.instance.getString(R.string.pin_does_not_match),
+                        getStringBlocking(Res.string.pin_does_not_match),
                         Toast.LENGTH_SHORT,
                     ).show()
                 }
@@ -118,7 +122,7 @@ fun BiometricAuthScreen(
                     Modifier.padding(40.dp),
                 ) {
                     RandomPinInput(
-                        text = stringResource(R.string.enter_pin),
+                        text = stringResource(Res.string.enter_pin),
                         onPinEntered = { enteredPin ->
                             scope.launch(Dispatchers.IO) {
                                 val pin = LocalPreferences.loadPinFromEncryptedStorage()
@@ -133,7 +137,7 @@ fun BiometricAuthScreen(
                                     } else {
                                         Toast.makeText(
                                             context,
-                                            context.getString(R.string.pin_does_not_match),
+                                            getStringBlocking(Res.string.pin_does_not_match),
                                             Toast.LENGTH_SHORT,
                                         ).show()
                                     }

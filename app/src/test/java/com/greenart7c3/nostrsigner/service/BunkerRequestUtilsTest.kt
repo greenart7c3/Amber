@@ -547,7 +547,7 @@ class BunkerRequestUtilsTest {
         try {
             val errors = mutableListOf<AmberBunkerRequest>()
             coEvery {
-                AmberUtils.sendBunkerError(any(), any(), any(), any(), any(), any())
+                AmberUtils.sendBunkerError(any(), any(), any(), any(), any())
             } answers {
                 errors += arg<AmberBunkerRequest>(1)
             }
@@ -565,7 +565,7 @@ class BunkerRequestUtilsTest {
 
             // sendRejection launches on Dispatchers.IO: wait for it to finish.
             coVerify(timeout = 5_000) {
-                AmberUtils.sendBunkerError(any(), any(), any(), any(), any(), any())
+                AmberUtils.sendBunkerError(any(), any(), any(), any(), any())
             }
             coVerify(exactly = 0) { dao.insertApplicationWithPermissions(any()) }
             coVerify(exactly = 0) { dao.insertPermissions(any()) }
@@ -588,13 +588,12 @@ class BunkerRequestUtilsTest {
         try {
             val errors = mutableListOf<AmberBunkerRequest>()
             coEvery {
-                AmberUtils.sendBunkerError(any(), any(), any(), any(), any(), any())
+                AmberUtils.sendBunkerError(any(), any(), any(), any(), any())
             } answers {
                 errors += arg<AmberBunkerRequest>(1)
             }
 
             BunkerRequestUtils.sendResult(
-                context = mockk(relaxed = true),
                 account = newTestAccount(CoroutineScope(SupervisorJob() + Dispatchers.Default)),
                 key = "localKey",
                 response = "sig",
@@ -606,7 +605,7 @@ class BunkerRequestUtilsTest {
 
             // sendResult launches on Dispatchers.IO: wait for it to finish.
             coVerify(timeout = 5_000) {
-                AmberUtils.sendBunkerError(any(), any(), any(), any(), any(), any())
+                AmberUtils.sendBunkerError(any(), any(), any(), any(), any())
             }
             coVerify(exactly = 0) { dao.insertApplicationWithPermissions(any()) }
             coVerify(exactly = 0) { dao.insertPermissions(any()) }
@@ -627,7 +626,7 @@ class BunkerRequestUtilsTest {
         mockkObject(AmberUtils, com.greenart7c3.nostrsigner.AmberLog)
         try {
             every { com.greenart7c3.nostrsigner.AmberLog.e(any(), any(), any()) } returns Unit
-            coEvery { AmberUtils.sendBunkerError(any(), any(), any(), any(), any(), any()) } returns Unit
+            coEvery { AmberUtils.sendBunkerError(any(), any(), any(), any(), any()) } returns Unit
             coEvery {
                 AmberUtils.acceptOrRejectPermission(any(), any(), any(), any(), any(), any(), any(), any(), any(), any())
             } throws IllegalStateException("boom")
@@ -643,7 +642,7 @@ class BunkerRequestUtilsTest {
                 onLoading = {},
             )
 
-            coVerify(timeout = 5_000) { AmberUtils.sendBunkerError(any(), any(), any(), any(), any(), any()) }
+            coVerify(timeout = 5_000) { AmberUtils.sendBunkerError(any(), any(), any(), any(), any()) }
         } finally {
             unmockkObject(AmberUtils, com.greenart7c3.nostrsigner.AmberLog)
         }
@@ -666,7 +665,7 @@ class BunkerRequestUtilsTest {
         mockkObject(AmberUtils)
         try {
             coEvery {
-                AmberUtils.sendBunkerError(any(), any(), any(), any(), any(), any())
+                AmberUtils.sendBunkerError(any(), any(), any(), any(), any())
             } returns Unit
 
             BunkerRequestUtils.sendRejection(
@@ -682,7 +681,7 @@ class BunkerRequestUtilsTest {
 
             coVerify(timeout = 5_000, exactly = 1) { dao.insertApplicationWithPermissions(any()) }
             // The client still gets its rejection reply from the tail of sendRejection.
-            coVerify(timeout = 5_000, exactly = 1) { AmberUtils.sendBunkerError(any(), any(), any(), any(), any(), any()) }
+            coVerify(timeout = 5_000, exactly = 1) { AmberUtils.sendBunkerError(any(), any(), any(), any(), any()) }
         } finally {
             unmockkObject(AmberUtils)
         }

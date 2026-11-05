@@ -40,22 +40,48 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import com.greenart7c3.nostrsigner.commonsui.Res
+import com.greenart7c3.nostrsigner.commonsui.active_relays_connections_description
+import com.greenart7c3.nostrsigner.commonsui.active_relays_default_description
+import com.greenart7c3.nostrsigner.commonsui.add
+import com.greenart7c3.nostrsigner.commonsui.could_not_connect_to_relay
+import com.greenart7c3.nostrsigner.commonsui.d_default_relays
+import com.greenart7c3.nostrsigner.commonsui.d_invalid_relay
+import com.greenart7c3.nostrsigner.commonsui.d_local_relay
+import com.greenart7c3.nostrsigner.commonsui.d_one_relay_required
+import com.greenart7c3.nostrsigner.commonsui.d_reconnect_relays
+import com.greenart7c3.nostrsigner.commonsui.d_reconnecting
+import com.greenart7c3.nostrsigner.commonsui.d_relay_connected
+import com.greenart7c3.nostrsigner.commonsui.d_relay_disconnected
+import com.greenart7c3.nostrsigner.commonsui.d_relay_hint
+import com.greenart7c3.nostrsigner.commonsui.d_relay_not_in_use
+import com.greenart7c3.nostrsigner.commonsui.d_remove_relay
+import com.greenart7c3.nostrsigner.commonsui.d_saved
+import com.greenart7c3.nostrsigner.commonsui.d_working
+import com.greenart7c3.nostrsigner.commonsui.default_relays
+import com.greenart7c3.nostrsigner.commonsui.getStringBlocking
+import com.greenart7c3.nostrsigner.commonsui.insecure_relay_warning
+import com.greenart7c3.nostrsigner.commonsui.no
+import com.greenart7c3.nostrsigner.commonsui.relay
+import com.greenart7c3.nostrsigner.commonsui.relay_filter_failed
+import com.greenart7c3.nostrsigner.commonsui.relays_used_by_connections
+import com.greenart7c3.nostrsigner.commonsui.yes
 import com.greenart7c3.nostrsigner.desktop.core.AmberDesktop
 import com.greenart7c3.nostrsigner.desktop.core.DesktopSettings
 import com.greenart7c3.nostrsigner.desktop.core.LocalRelays
 import com.greenart7c3.nostrsigner.desktop.core.RelayChecker
 import com.greenart7c3.nostrsigner.desktop.core.SettingsStore
-import com.greenart7c3.nostrsigner.desktop.core.Strings
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.RelayUrlNormalizer
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun RelaysScreen() {
     val settings by SettingsStore.settings.collectAsState()
     val available by AmberDesktop.client.availableRelaysFlow().collectAsState()
     val connected by AmberDesktop.client.connectedRelaysFlow().collectAsState()
-    val language by Strings.currentLanguage.collectAsState()
     val connectionRelays by remember { AmberDesktop.connectionRelaysFlow() }.collectAsState(emptySet())
     // Mirrors the Android active relays screen: relays existing connections
     // still use that are not in the default set get their own section.
@@ -67,7 +93,7 @@ fun RelaysScreen() {
     var checking by remember { mutableStateOf(false) }
     // Non-null while asking "the check failed — add anyway?"; holds the relay
     // and the message key (could_not_connect_to_relay / relay_filter_failed).
-    var addAnyway by remember { mutableStateOf<Pair<NormalizedRelayUrl, String>?>(null) }
+    var addAnyway by remember { mutableStateOf<Pair<NormalizedRelayUrl, StringResource>?>(null) }
     val scope = rememberCoroutineScope()
 
     fun addRelay(relay: NormalizedRelayUrl) {
@@ -83,11 +109,11 @@ fun RelaysScreen() {
     addAnyway?.let { (relay, messageKey) ->
         AlertDialog(
             onDismissRequest = { addAnyway = null },
-            title = { Text(Strings.get("relay", language)) },
-            text = { Text(Strings.get(messageKey, language)) },
+            title = { Text(stringResource(Res.string.relay)) },
+            text = { Text(stringResource(messageKey)) },
             confirmButton = {
                 AmberTextButton(
-                    text = Strings.get("yes", language),
+                    text = stringResource(Res.string.yes),
                     onClick = {
                         addAnyway = null
                         addRelay(relay)
@@ -96,7 +122,7 @@ fun RelaysScreen() {
             },
             dismissButton = {
                 AmberTextButton(
-                    text = Strings.get("no", language),
+                    text = stringResource(Res.string.no),
                     onClick = { addAnyway = null },
                 )
             },
@@ -108,13 +134,13 @@ fun RelaysScreen() {
             OutlinedTextField(
                 value = newRelay,
                 onValueChange = { newRelay = it },
-                label = { Text(Strings.get("d_relay_hint", language)) },
+                label = { Text(stringResource(Res.string.d_relay_hint)) },
                 singleLine = true,
                 enabled = !checking,
                 modifier = Modifier.widthIn(max = 420.dp).weight(1f, fill = false),
             )
             AmberOutlinedButton(
-                text = if (checking) Strings.get("d_working", language) else Strings.get("add", language),
+                text = if (checking) stringResource(Res.string.d_working) else stringResource(Res.string.add),
                 enabled = !checking,
                 onClick = {
                     // Mirrors the mobile onAddRelay flow: normalize (bare hosts
@@ -123,7 +149,7 @@ fun RelaysScreen() {
                     // whether to add it anyway.
                     val normalized = RelayChecker.normalizeUserInput(newRelay)
                     if (normalized == null) {
-                        Toaster.toast(Strings.get("d_invalid_relay", language))
+                        Toaster.toast(getStringBlocking(Res.string.d_invalid_relay))
                         return@AmberOutlinedButton
                     }
                     if (settings.defaultRelays.contains(normalized.url)) {
@@ -135,8 +161,8 @@ fun RelaysScreen() {
                         try {
                             when (RelayChecker.check(normalized)) {
                                 RelayChecker.Outcome.OK -> addRelay(normalized)
-                                RelayChecker.Outcome.CANNOT_CONNECT -> addAnyway = normalized to "could_not_connect_to_relay"
-                                RelayChecker.Outcome.FILTER_FAILED -> addAnyway = normalized to "relay_filter_failed"
+                                RelayChecker.Outcome.CANNOT_CONNECT -> addAnyway = normalized to Res.string.could_not_connect_to_relay
+                                RelayChecker.Outcome.FILTER_FAILED -> addAnyway = normalized to Res.string.relay_filter_failed
                             }
                         } finally {
                             checking = false
@@ -149,7 +175,7 @@ fun RelaysScreen() {
         // relay on the public internet is cleartext; fine for .onion / local.
         if (LocalRelays.isInsecure(newRelay)) {
             Text(
-                Strings.get("insecure_relay_warning", language),
+                stringResource(Res.string.insecure_relay_warning),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.error,
                 modifier = Modifier.widthIn(max = 520.dp).padding(top = 4.dp),
@@ -166,8 +192,8 @@ fun RelaysScreen() {
             ) {
                 item {
                     RelaySectionHeader(
-                        Strings.get("default_relays", language),
-                        Strings.get("active_relays_default_description", language),
+                        stringResource(Res.string.default_relays),
+                        stringResource(Res.string.active_relays_default_description),
                     )
                 }
                 items(settings.defaultRelays.size) { index ->
@@ -176,7 +202,7 @@ fun RelaysScreen() {
                         IconButton(
                             onClick = {
                                 if (settings.defaultRelays.size == 1) {
-                                    Toaster.toast(Strings.get("d_one_relay_required", language))
+                                    Toaster.toast(getStringBlocking(Res.string.d_one_relay_required))
                                     return@IconButton
                                 }
                                 SettingsStore.update {
@@ -185,7 +211,7 @@ fun RelaysScreen() {
                                 scope.launch { AmberDesktop.engine.checkForNewRelaysAndUpdateAllFilters() }
                             },
                         ) {
-                            Icon(Icons.Default.Delete, Strings.get("d_remove_relay", language))
+                            Icon(Icons.Default.Delete, stringResource(Res.string.d_remove_relay))
                         }
                     }
                     HorizontalDivider()
@@ -193,8 +219,8 @@ fun RelaysScreen() {
                 if (connectionOnlyRelays.isNotEmpty()) {
                     item {
                         RelaySectionHeader(
-                            Strings.get("relays_used_by_connections", language),
-                            Strings.get("active_relays_connections_description", language),
+                            stringResource(Res.string.relays_used_by_connections),
+                            stringResource(Res.string.active_relays_connections_description),
                             Modifier.padding(top = 16.dp),
                         )
                     }
@@ -209,7 +235,7 @@ fun RelaysScreen() {
         Spacer(Modifier.height(8.dp))
         FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             AmberOutlinedButton(
-                text = Strings.get("d_default_relays", language),
+                text = stringResource(Res.string.d_default_relays),
                 onClick = {
                     // Union with the shipped defaults (same set as Android):
                     // existing relays stay, missing defaults come back.
@@ -218,16 +244,16 @@ fun RelaysScreen() {
                     }
                     scope.launch {
                         AmberDesktop.engine.checkForNewRelaysAndUpdateAllFilters()
-                        Toaster.toast(Strings.get("d_saved", language))
+                        Toaster.toast(getStringBlocking(Res.string.d_saved))
                     }
                 },
             )
             AmberOutlinedButton(
-                text = Strings.get("d_reconnect_relays", language),
+                text = stringResource(Res.string.d_reconnect_relays),
                 onClick = {
                     scope.launch {
                         AmberDesktop.engine.checkForNewRelaysAndUpdateAllFilters(shouldReconnect = true)
-                        Toaster.toast(Strings.get("d_reconnecting", language))
+                        Toaster.toast(getStringBlocking(Res.string.d_reconnecting))
                     }
                 },
             )
@@ -255,7 +281,6 @@ private fun RelayRow(
     connected: Set<NormalizedRelayUrl>,
     trailing: @Composable () -> Unit = {},
 ) {
-    val language by Strings.currentLanguage.collectAsState()
     Row(
         // Rows without a trailing button keep the height of those with one.
         Modifier.fillMaxWidth().heightIn(min = 48.dp).padding(horizontal = 4.dp, vertical = 2.dp),
@@ -264,7 +289,7 @@ private fun RelayRow(
         Text(relay, Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium)
         if (LocalRelays.isLocal(relay)) {
             Text(
-                Strings.get("d_local_relay", language),
+                stringResource(Res.string.d_local_relay),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -287,17 +312,16 @@ private fun RelayConnectionStatus(
     available: Set<NormalizedRelayUrl>,
     connected: Set<NormalizedRelayUrl>,
 ) {
-    val language by Strings.currentLanguage.collectAsState()
     val (color, key) = when {
-        relay != null && relay in connected -> Color(0xFF2E7D32) to "d_relay_connected"
-        relay != null && relay in available -> MaterialTheme.colorScheme.error to "d_relay_disconnected"
-        else -> MaterialTheme.colorScheme.outline to "d_relay_not_in_use"
+        relay != null && relay in connected -> Color(0xFF2E7D32) to Res.string.d_relay_connected
+        relay != null && relay in available -> MaterialTheme.colorScheme.error to Res.string.d_relay_disconnected
+        else -> MaterialTheme.colorScheme.outline to Res.string.d_relay_not_in_use
     }
     Row(verticalAlignment = Alignment.CenterVertically) {
         Box(Modifier.size(8.dp).background(color, CircleShape))
         Spacer(Modifier.width(6.dp))
         Text(
-            Strings.get(key, language),
+            stringResource(key),
             style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )

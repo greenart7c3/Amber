@@ -33,7 +33,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -47,13 +46,20 @@ import androidx.paging.PagingConfig
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.AmberLog
-import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.common.SignerType
 import com.greenart7c3.nostrsigner.common.sanitizeAppName
+import com.greenart7c3.nostrsigner.commonsui.Res
+import com.greenart7c3.nostrsigner.commonsui.content
+import com.greenart7c3.nostrsigner.commonsui.filter_accepted
+import com.greenart7c3.nostrsigner.commonsui.filter_all
+import com.greenart7c3.nostrsigner.commonsui.filter_rejected
+import com.greenart7c3.nostrsigner.commonsui.localizedBlocking
+import com.greenart7c3.nostrsigner.commonsui.no_activities_found
+import com.greenart7c3.nostrsigner.commonsui.supportedKindNumbers
+import com.greenart7c3.nostrsigner.commonsui.tags
 import com.greenart7c3.nostrsigner.database.HistoryEntity
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.TimeUtils
-import com.greenart7c3.nostrsigner.models.supportedKindNumbers
 import com.greenart7c3.nostrsigner.service.ApplicationNameCache
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
 import com.greenart7c3.nostrsigner.service.toShortenHex
@@ -64,6 +70,7 @@ import com.greenart7c3.nostrsigner.ui.components.TagsSection
 import com.greenart7c3.nostrsigner.ui.components.copyToClipboard
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.jetbrains.compose.resources.stringResource
 
 enum class ActivityFilter(val accepted: Boolean?) {
     ALL(null),
@@ -102,7 +109,7 @@ fun ActivitiesScreen(
     val lazyPagingItems = pager.flow.collectAsLazyPagingItems()
 
     val textFieldState by remember { mutableStateOf(TextFieldState(initialText = searchQuery)) }
-    val searchResults = remember(context) { supportedKindNumbers.map { it.toLocalizedString(context, true) } }
+    val searchResults = remember(context) { supportedKindNumbers.map { it.localizedBlocking(true) } }
 
     Column(
         modifier = modifier.padding(top = topPadding),
@@ -150,7 +157,7 @@ fun ActivitiesScreen(
             item {
                 if (lazyPagingItems.itemCount == 0) {
                     Text(
-                        stringResource(R.string.no_activities_found),
+                        stringResource(Res.string.no_activities_found),
                         Modifier
                             .fillMaxWidth()
                             .padding(8.dp),
@@ -270,7 +277,7 @@ fun ActivityRow(activity: HistoryEntity, account: Account) {
                         Spacer(Modifier.height(4.dp))
                         EventSection(
                             padding = 0.dp,
-                            label = stringResource(R.string.content),
+                            label = stringResource(Res.string.content),
                             displayValue = parsedEvent.content,
                             onCopy = { copyToClipboard(clipboard, parsedEvent.content) },
                         )
@@ -280,7 +287,7 @@ fun ActivityRow(activity: HistoryEntity, account: Account) {
                         TagsSection(
                             horizontalPadding = 0,
                             verticalPadding = 0,
-                            label = stringResource(R.string.tags),
+                            label = stringResource(Res.string.tags),
                             tags = parsedEvent.tags,
                             onCopy = {
                                 copyToClipboard(
@@ -339,21 +346,21 @@ fun ActivityFilterRow(
             FilterChip(
                 selected = selected == ActivityFilter.ALL,
                 onClick = { onSelect(ActivityFilter.ALL) },
-                label = { Text(stringResource(R.string.filter_all)) },
+                label = { Text(stringResource(Res.string.filter_all)) },
             )
         }
         item {
             FilterChip(
                 selected = selected == ActivityFilter.ACCEPTED,
                 onClick = { onSelect(ActivityFilter.ACCEPTED) },
-                label = { Text(stringResource(R.string.filter_accepted)) },
+                label = { Text(stringResource(Res.string.filter_accepted)) },
             )
         }
         item {
             FilterChip(
                 selected = selected == ActivityFilter.REJECTED,
                 onClick = { onSelect(ActivityFilter.REJECTED) },
-                label = { Text(stringResource(R.string.filter_rejected)) },
+                label = { Text(stringResource(Res.string.filter_rejected)) },
             )
         }
     }

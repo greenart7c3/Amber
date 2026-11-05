@@ -26,9 +26,13 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.addPathNodes
 import androidx.compose.ui.unit.dp
 import com.greenart7c3.nostrsigner.common.relays.RelayHealthTracker
+import com.greenart7c3.nostrsigner.commonsui.Res
+import com.greenart7c3.nostrsigner.commonsui.d_reconnecting
+import com.greenart7c3.nostrsigner.commonsui.getStringBlocking
+import com.greenart7c3.nostrsigner.commonsui.reconnect
 import com.greenart7c3.nostrsigner.desktop.core.AmberDesktop
-import com.greenart7c3.nostrsigner.desktop.core.Strings
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Connected/available relay counter with a click-to-reconnect action — the
@@ -40,12 +44,11 @@ import kotlinx.coroutines.launch
 fun RelayStatusWidget(modifier: Modifier = Modifier) {
     val available by AmberDesktop.client.availableRelaysFlow().collectAsState()
     val connected by AmberDesktop.client.connectedRelaysFlow().collectAsState()
-    val language by Strings.currentLanguage.collectAsState()
     val scope = rememberCoroutineScope()
 
     if (available.isEmpty() && connected.isEmpty()) return
 
-    val label = Strings.get("reconnect", language)
+    val label = stringResource(Res.string.reconnect)
     TooltipArea(
         modifier = modifier,
         tooltip = {
@@ -67,7 +70,7 @@ fun RelayStatusWidget(modifier: Modifier = Modifier) {
                         RelayHealthTracker.reset()
                         AmberDesktop.engine.updateFilter()
                         AmberDesktop.reconnect()
-                        Toaster.toast(Strings.get("d_reconnecting", language))
+                        Toaster.toast(getStringBlocking(Res.string.d_reconnecting))
                     }
                 }
                 .padding(horizontal = 6.dp, vertical = 4.dp),

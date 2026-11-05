@@ -19,14 +19,16 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.commonsui.Res
+import com.greenart7c3.nostrsigner.commonsui.copy_to_clipboard
+import com.greenart7c3.nostrsigner.commonsui.more
 import com.greenart7c3.nostrsigner.ui.theme.AmberPreview
 import com.greenart7c3.nostrsigner.ui.theme.ThemePreviews
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun TagsSection(
@@ -79,7 +81,7 @@ fun TagsSection(
 
                     if (moreCount > 0) {
                         Text(
-                            text = stringResource(id = R.string.more, moreCount),
+                            text = stringResource(Res.string.more, moreCount),
                             style = MaterialTheme.typography.bodyMedium.copy(
                                 lineHeight = 24.sp,
                             ),
@@ -94,7 +96,7 @@ fun TagsSection(
                 .size(16.dp)
                 .clickable { onCopy() },
             imageVector = Icons.Default.ContentCopy,
-            contentDescription = stringResource(id = R.string.copy_to_clipboard),
+            contentDescription = stringResource(Res.string.copy_to_clipboard),
         )
     }
 }

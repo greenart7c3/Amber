@@ -1,6 +1,5 @@
 package com.greenart7c3.nostrsigner.ui.components
 
-import androidx.annotation.StringRes
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
@@ -35,24 +34,31 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.greenart7c3.nostrsigner.Amber
-import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.commonsui.Res
+import com.greenart7c3.nostrsigner.commonsui.filter_accepted
+import com.greenart7c3.nostrsigner.commonsui.filter_rejected
+import com.greenart7c3.nostrsigner.commonsui.last_24_hours
+import com.greenart7c3.nostrsigner.commonsui.last_30_days
+import com.greenart7c3.nostrsigner.commonsui.last_7_days
+import com.greenart7c3.nostrsigner.commonsui.statistics
 import com.greenart7c3.nostrsigner.database.HistoryDao
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.ui.theme.amoledBorder
 import com.vitorpamplona.quartz.utils.TimeUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.stringResource
 
 private val AcceptedColor = Color(0xFF1D8802)
 private val RejectedColor = Color(0xFFFF6B00)
 
 private data class WindowStats(
-    @StringRes val labelRes: Int,
+    val labelRes: StringResource,
     val accepted: Long,
     val rejected: Long,
 ) {
@@ -97,7 +103,7 @@ fun ActivityStatsCard(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
-                text = stringResource(R.string.statistics),
+                text = stringResource(Res.string.statistics),
                 modifier = Modifier.weight(1f),
                 fontWeight = FontWeight.Bold,
             )
@@ -137,11 +143,11 @@ private fun Legend() {
     Row(verticalAlignment = Alignment.CenterVertically) {
         LegendSwatch(AcceptedColor)
         Spacer(Modifier.width(4.dp))
-        Text(stringResource(R.string.filter_accepted), fontWeight = FontWeight.Medium)
+        Text(stringResource(Res.string.filter_accepted), fontWeight = FontWeight.Medium)
         Spacer(Modifier.width(12.dp))
         LegendSwatch(RejectedColor)
         Spacer(Modifier.width(4.dp))
-        Text(stringResource(R.string.filter_rejected), fontWeight = FontWeight.Medium)
+        Text(stringResource(Res.string.filter_rejected), fontWeight = FontWeight.Medium)
     }
 }
 
@@ -235,9 +241,9 @@ private suspend fun loadStats(dao: HistoryDao, pkKey: String?): List<WindowStats
     val now = TimeUtils.now()
     val day = 24L * 60 * 60
     val windows = listOf(
-        R.string.last_24_hours to day,
-        R.string.last_7_days to 7 * day,
-        R.string.last_30_days to 30 * day,
+        Res.string.last_24_hours to day,
+        Res.string.last_7_days to 7 * day,
+        Res.string.last_30_days to 30 * day,
     )
     return windows.map { (labelRes, windowSeconds) ->
         val since = now - windowSeconds

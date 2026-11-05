@@ -11,11 +11,12 @@ import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.commonsui.Res
+import com.greenart7c3.nostrsigner.commonsui.connect_app
 import com.greenart7c3.nostrsigner.ui.theme.AmberPreview
 import com.greenart7c3.nostrsigner.ui.theme.ThemePreviews
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun NewBunkerFloatingButton(
@@ -38,7 +39,7 @@ fun NewBunkerFloatingButton(
         ) {
             Icon(
                 Icons.Default.Add,
-                contentDescription = stringResource(R.string.connect_app),
+                contentDescription = stringResource(Res.string.connect_app),
             )
         }
     }

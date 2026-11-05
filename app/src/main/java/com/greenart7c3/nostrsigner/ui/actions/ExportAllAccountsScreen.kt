@@ -39,7 +39,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.autofill.ContentType
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentType
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
@@ -50,7 +49,29 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.LocalPreferences
-import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.commonsui.Res
+import com.greenart7c3.nostrsigner.commonsui.accounts_to_export
+import com.greenart7c3.nostrsigner.commonsui.cancel
+import com.greenart7c3.nostrsigner.commonsui.confirm_export_message
+import com.greenart7c3.nostrsigner.commonsui.confirm_export_title
+import com.greenart7c3.nostrsigner.commonsui.confirm_export_warning
+import com.greenart7c3.nostrsigner.commonsui.confirm_password
+import com.greenart7c3.nostrsigner.commonsui.encryption_password
+import com.greenart7c3.nostrsigner.commonsui.enter_strong_password
+import com.greenart7c3.nostrsigner.commonsui.export
+import com.greenart7c3.nostrsigner.commonsui.export_all_accounts_button
+import com.greenart7c3.nostrsigner.commonsui.export_all_accounts_title
+import com.greenart7c3.nostrsigner.commonsui.export_all_accounts_warning
+import com.greenart7c3.nostrsigner.commonsui.export_failed
+import com.greenart7c3.nostrsigner.commonsui.export_success
+import com.greenart7c3.nostrsigner.commonsui.exporting_accounts_progress
+import com.greenart7c3.nostrsigner.commonsui.getStringBlocking
+import com.greenart7c3.nostrsigner.commonsui.hide_password
+import com.greenart7c3.nostrsigner.commonsui.password_is_required
+import com.greenart7c3.nostrsigner.commonsui.password_too_short
+import com.greenart7c3.nostrsigner.commonsui.passwords_do_not_match
+import com.greenart7c3.nostrsigner.commonsui.preparing_export
+import com.greenart7c3.nostrsigner.commonsui.show_password
 import com.greenart7c3.nostrsigner.service.AccountExportService
 import com.greenart7c3.nostrsigner.service.Biometrics.authenticate
 import com.greenart7c3.nostrsigner.ui.CenterCircularProgressIndicator
@@ -63,6 +84,7 @@ import java.util.Date
 import java.util.Locale
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun ExportAllAccountsScreen(
@@ -94,14 +116,14 @@ fun ExportAllAccountsScreen(
         uri?.let {
             Amber.instance.applicationIOScope.launch {
                 isLoading = true
-                exportProgress = context.getString(R.string.preparing_export)
+                exportProgress = getStringBlocking(Res.string.preparing_export)
 
                 val result = AccountExportService.exportAllAccountsEncrypted(
                     context = context,
                     password = password.value.text,
                     onProgress = { current, total ->
-                        exportProgress = context.getString(
-                            R.string.exporting_accounts_progress,
+                        exportProgress = getStringBlocking(
+                            Res.string.exporting_accounts_progress,
                             current,
                             total,
                         )
@@ -124,7 +146,7 @@ fun ExportAllAccountsScreen(
                         launch(Dispatchers.Main) {
                             Toast.makeText(
                                 context,
-                                context.getString(R.string.export_success, accountCount),
+                                getStringBlocking(Res.string.export_success, accountCount),
                                 Toast.LENGTH_LONG,
                             ).show()
                             isLoading = false
@@ -134,7 +156,7 @@ fun ExportAllAccountsScreen(
                         launch(Dispatchers.Main) {
                             Toast.makeText(
                                 context,
-                                context.getString(R.string.export_failed, e.message),
+                                getStringBlocking(Res.string.export_failed, e.message.toString()),
                                 Toast.LENGTH_LONG,
                             ).show()
                             isLoading = false
@@ -145,7 +167,7 @@ fun ExportAllAccountsScreen(
                     launch(Dispatchers.Main) {
                         Toast.makeText(
                             context,
-                            context.getString(R.string.export_failed, e.message),
+                            getStringBlocking(Res.string.export_failed, e.message.toString()),
                             Toast.LENGTH_LONG,
                         ).show()
                         isLoading = false
@@ -183,14 +205,14 @@ fun ExportAllAccountsScreen(
                 )
             } else {
                 // Security warning
-                val warningContent = stringResource(R.string.export_all_accounts_warning)
+                val warningContent = stringResource(Res.string.export_all_accounts_warning)
                 MarkdownText(
                     markdown = warningContent,
                     modifier = Modifier.padding(bottom = 16.dp),
                 )
 
                 Text(
-                    text = stringResource(R.string.accounts_to_export, accountCount),
+                    text = stringResource(Res.string.accounts_to_export, accountCount),
                     style = MaterialTheme.typography.bodyLarge,
                     modifier = Modifier.padding(bottom = 16.dp),
                 )
@@ -215,19 +237,19 @@ fun ExportAllAccountsScreen(
                         imeAction = ImeAction.Next,
                     ),
                     label = {
-                        Text(text = stringResource(R.string.encryption_password))
+                        Text(text = stringResource(Res.string.encryption_password))
                     },
                     placeholder = {
-                        Text(text = stringResource(R.string.enter_strong_password))
+                        Text(text = stringResource(Res.string.enter_strong_password))
                     },
                     trailingIcon = {
                         IconButton(onClick = { showCharsPassword = !showCharsPassword }) {
                             Icon(
                                 imageVector = if (showCharsPassword) Icons.Outlined.VisibilityOff else Icons.Outlined.Visibility,
                                 contentDescription = if (showCharsPassword) {
-                                    stringResource(R.string.hide_password)
+                                    stringResource(Res.string.hide_password)
                                 } else {
-                                    stringResource(R.string.show_password)
+                                    stringResource(Res.string.show_password)
                                 },
                             )
                         }
@@ -262,16 +284,16 @@ fun ExportAllAccountsScreen(
                         },
                     ),
                     label = {
-                        Text(text = stringResource(R.string.confirm_password))
+                        Text(text = stringResource(Res.string.confirm_password))
                     },
                     trailingIcon = {
                         IconButton(onClick = { showCharsPasswordConfirm = !showCharsPasswordConfirm }) {
                             Icon(
                                 imageVector = if (showCharsPasswordConfirm) Icons.Outlined.VisibilityOff else Icons.Outlined.Visibility,
                                 contentDescription = if (showCharsPasswordConfirm) {
-                                    stringResource(R.string.hide_password)
+                                    stringResource(Res.string.hide_password)
                                 } else {
-                                    stringResource(R.string.show_password)
+                                    stringResource(Res.string.show_password)
                                 },
                             )
                         }
@@ -293,23 +315,23 @@ fun ExportAllAccountsScreen(
                 // Export button
                 AmberButton(
                     modifier = Modifier.fillMaxWidth(),
-                    text = stringResource(R.string.export_all_accounts_button),
+                    text = stringResource(Res.string.export_all_accounts_button),
                     onClick = {
                         // Validate password
                         when {
                             password.value.text.isBlank() -> {
-                                errorMessage = context.getString(R.string.password_is_required)
+                                errorMessage = getStringBlocking(Res.string.password_is_required)
                             }
                             password.value.text.length < 8 -> {
-                                errorMessage = context.getString(R.string.password_too_short)
+                                errorMessage = getStringBlocking(Res.string.password_too_short)
                             }
                             password.value.text != passwordConfirm.value.text -> {
-                                errorMessage = context.getString(R.string.passwords_do_not_match)
+                                errorMessage = getStringBlocking(Res.string.passwords_do_not_match)
                             }
                             else -> {
                                 // Require biometric authentication
                                 authenticate(
-                                    title = context.getString(R.string.export_all_accounts_title),
+                                    title = getStringBlocking(Res.string.export_all_accounts_title),
                                     context = context,
                                     keyguardLauncher = keyguardLauncher,
                                     onApproved = {
@@ -339,15 +361,15 @@ fun ExportAllAccountsScreen(
             modifier = Modifier.outlineIfAny(amoledBorder(), AlertDialogDefaults.shape),
             onDismissRequest = { showConfirmationDialog = false },
             title = {
-                Text(text = stringResource(R.string.confirm_export_title))
+                Text(text = stringResource(Res.string.confirm_export_title))
             },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(
-                        text = stringResource(R.string.confirm_export_message, accountCount),
+                        text = stringResource(Res.string.confirm_export_message, accountCount),
                     )
                     Text(
-                        text = stringResource(R.string.confirm_export_warning),
+                        text = stringResource(Res.string.confirm_export_warning),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.error,
                     )
@@ -361,14 +383,14 @@ fun ExportAllAccountsScreen(
                         exportLauncher.launch("amber_backup_$timestamp.jsonl")
                     },
                 ) {
-                    Text(text = stringResource(R.string.export))
+                    Text(text = stringResource(Res.string.export))
                 }
             },
             dismissButton = {
                 TextButton(
                     onClick = { showConfirmationDialog = false },
                 ) {
-                    Text(text = stringResource(R.string.cancel))
+                    Text(text = stringResource(Res.string.cancel))
                 }
             },
         )

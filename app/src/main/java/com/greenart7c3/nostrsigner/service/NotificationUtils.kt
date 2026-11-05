@@ -33,6 +33,15 @@ import androidx.core.app.NotificationCompat
 import com.greenart7c3.nostrsigner.MainActivity
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.SignerActivity
+import com.greenart7c3.nostrsigner.commonsui.Res
+import com.greenart7c3.nostrsigner.commonsui.bunker_notifications
+import com.greenart7c3.nostrsigner.commonsui.error_notifications
+import com.greenart7c3.nostrsigner.commonsui.getStringBlocking
+import com.greenart7c3.nostrsigner.commonsui.new_event_to_sign
+import com.greenart7c3.nostrsigner.commonsui.notifications_for_approving_or_rejecting_bunker_requests
+import com.greenart7c3.nostrsigner.commonsui.update_available
+import com.greenart7c3.nostrsigner.commonsui.update_available_notification_body
+import com.greenart7c3.nostrsigner.commonsui.update_notifications
 import com.greenart7c3.nostrsigner.models.AmberBunkerRequest
 import com.greenart7c3.nostrsigner.ui.navigation.Route
 
@@ -45,22 +54,22 @@ object NotificationUtils {
 
     const val UPDATE_NOTIFICATION_ID = 99901
 
-    fun getOrCreateBunkerGroup(applicationContext: Context): NotificationChannelGroup {
+    fun getOrCreateBunkerGroup(): NotificationChannelGroup {
         if (bunkerGroup != null) return bunkerGroup!!
         bunkerGroup =
             NotificationChannelGroup(
                 "BunkerGroup",
-                applicationContext.getString(R.string.bunker_notifications),
+                getStringBlocking(Res.string.bunker_notifications),
             )
         return bunkerGroup!!
     }
 
-    fun getOrCreateErrorsGroup(applicationContext: Context): NotificationChannelGroup {
+    fun getOrCreateErrorsGroup(): NotificationChannelGroup {
         if (errorsGroup != null) return errorsGroup!!
         errorsGroup =
             NotificationChannelGroup(
                 "ErrorsGroup",
-                applicationContext.getString(R.string.error_notifications),
+                getStringBlocking(Res.string.error_notifications),
             )
         return errorsGroup!!
     }
@@ -68,16 +77,16 @@ object NotificationUtils {
     fun getOrCreateBunkerChannel(applicationContext: Context): NotificationChannel {
         if (bunkerChannel != null) return bunkerChannel!!
 
-        val bunkerGroup = getOrCreateBunkerGroup(applicationContext)
+        val bunkerGroup = getOrCreateBunkerGroup()
 
         bunkerChannel =
             NotificationChannel(
                 "BunkerID",
-                applicationContext.getString(R.string.bunker_notifications),
+                getStringBlocking(Res.string.bunker_notifications),
                 NotificationManager.IMPORTANCE_HIGH,
             )
                 .apply {
-                    description = applicationContext.getString(R.string.notifications_for_approving_or_rejecting_bunker_requests)
+                    description = getStringBlocking(Res.string.notifications_for_approving_or_rejecting_bunker_requests)
                     group = bunkerGroup.id
                 }
 
@@ -94,16 +103,16 @@ object NotificationUtils {
     fun getOrCreateErrorsChannel(applicationContext: Context): NotificationChannel {
         if (errorsChannel != null) return errorsChannel!!
 
-        getOrCreateErrorsGroup(applicationContext)
+        getOrCreateErrorsGroup()
 
         errorsChannel =
             NotificationChannel(
                 "ErrorID",
-                applicationContext.getString(R.string.error_notifications),
+                getStringBlocking(Res.string.error_notifications),
                 NotificationManager.IMPORTANCE_HIGH,
             )
                 .apply {
-                    description = applicationContext.getString(R.string.notifications_for_approving_or_rejecting_bunker_requests)
+                    description = getStringBlocking(Res.string.notifications_for_approving_or_rejecting_bunker_requests)
                     group = errorsGroup?.id
                 }
 
@@ -202,10 +211,10 @@ object NotificationUtils {
         updatesChannel =
             NotificationChannel(
                 "UpdatesID",
-                applicationContext.getString(R.string.update_notifications),
+                getStringBlocking(Res.string.update_notifications),
                 NotificationManager.IMPORTANCE_DEFAULT,
             ).apply {
-                description = applicationContext.getString(R.string.update_notifications)
+                description = getStringBlocking(Res.string.update_notifications)
             }
 
         val notificationManager: NotificationManager =
@@ -236,8 +245,8 @@ object NotificationUtils {
         val builder =
             NotificationCompat.Builder(applicationContext, channel.id)
                 .setSmallIcon(R.drawable.ic_notification)
-                .setContentTitle(applicationContext.getString(R.string.update_available, version))
-                .setContentText(applicationContext.getString(R.string.update_available_notification_body))
+                .setContentTitle(getStringBlocking(Res.string.update_available, version))
+                .setContentText(getStringBlocking(Res.string.update_available_notification_body))
                 .setContentIntent(pendingIntent)
                 .setPriority(NotificationCompat.PRIORITY_DEFAULT)
                 .setAutoCancel(true)
@@ -280,7 +289,7 @@ object NotificationUtils {
             )
                 .setSmallIcon(R.drawable.ic_notification)
                 .setContentTitle(messageTitle)
-                .setContentText(applicationContext.getString(R.string.new_event_to_sign))
+                .setContentText(getStringBlocking(Res.string.new_event_to_sign))
                 .setLargeIcon(picture?.bitmap)
                 .setGroup(errorsGroup?.id)
                 // .setGroup(notificationGroupKey) //-> Might need a Group summary as well before we

@@ -11,14 +11,16 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.commonsui.Res
+import com.greenart7c3.nostrsigner.commonsui.edit_relays
 import com.greenart7c3.nostrsigner.ui.NavBackStackEntryWrapper
 import com.greenart7c3.nostrsigner.ui.NavHostControllerWrapper
 import com.greenart7c3.nostrsigner.ui.navigation.Route
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun AmberFloatingButton(
@@ -37,12 +39,12 @@ fun AmberFloatingButton(
         ) {
             ExtendedFloatingActionButton(
                 text = {
-                    Text(stringResource(R.string.edit_relays))
+                    Text(stringResource(Res.string.edit_relays))
                 },
                 icon = {
                     Icon(
                         ImageVector.vectorResource(R.drawable.settings),
-                        contentDescription = stringResource(R.string.edit_relays),
+                        contentDescription = stringResource(Res.string.edit_relays),
                     )
                 },
                 modifier = Modifier

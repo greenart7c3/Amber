@@ -16,14 +16,16 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.greenart7c3.nostrsigner.Amber
-import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.commonsui.Res
+import com.greenart7c3.nostrsigner.commonsui.invalid_intent_close_app
+import com.greenart7c3.nostrsigner.commonsui.nothing_to_approve_yet
+import com.greenart7c3.nostrsigner.commonsui.why_not_explore_your_favorite_nostr_app_a_bit
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.AmberBunkerRequest
 import com.greenart7c3.nostrsigner.models.IntentData
@@ -33,6 +35,7 @@ import com.greenart7c3.nostrsigner.ui.components.IntentSingleEventHomeScreen
 import com.greenart7c3.nostrsigner.ui.components.MultiEventHomeScreen
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequestConnect
 import kotlinx.collections.immutable.ImmutableList
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun IncomingRequestScreen(
@@ -63,13 +66,13 @@ fun IncomingRequestScreen(
                 Alignment.CenterHorizontally,
             ) {
                 Text(
-                    stringResource(R.string.nothing_to_approve_yet),
+                    stringResource(Res.string.nothing_to_approve_yet),
                     fontWeight = FontWeight.Bold,
                     fontSize = 21.sp,
                 )
                 Spacer(Modifier.size(8.dp))
                 Text(
-                    stringResource(R.string.why_not_explore_your_favorite_nostr_app_a_bit),
+                    stringResource(Res.string.why_not_explore_your_favorite_nostr_app_a_bit),
                     textAlign = TextAlign.Center,
                 )
                 if (isExternalRequest) {
@@ -79,7 +82,7 @@ fun IncomingRequestScreen(
                             Amber.instance.getMainActivity()?.finishAndRemoveTask()
                         },
                     ) {
-                        Text(stringResource(R.string.invalid_intent_close_app))
+                        Text(stringResource(Res.string.invalid_intent_close_app))
                     }
                 }
             }

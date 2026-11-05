@@ -19,19 +19,27 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.common.SignerType
+import com.greenart7c3.nostrsigner.commonsui.Permission
+import com.greenart7c3.nostrsigner.commonsui.Res
+import com.greenart7c3.nostrsigner.commonsui.content
+import com.greenart7c3.nostrsigner.commonsui.date
+import com.greenart7c3.nostrsigner.commonsui.go_back
+import com.greenart7c3.nostrsigner.commonsui.kind
+import com.greenart7c3.nostrsigner.commonsui.localizedBlocking
+import com.greenart7c3.nostrsigner.commonsui.pubkey
+import com.greenart7c3.nostrsigner.commonsui.tags
 import com.greenart7c3.nostrsigner.models.ClearTextEncryptedDataKind
 import com.greenart7c3.nostrsigner.models.EncryptedDataKind
 import com.greenart7c3.nostrsigner.models.EventEncryptedDataKind
-import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.models.TagArrayEncryptedDataKind
 import com.greenart7c3.nostrsigner.models.TimeUtils
 import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.verticalScrollbar
+import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -62,7 +70,7 @@ fun EncryptDecryptDetailModal(
                 ) {
                     IconRow(
                         center = true,
-                        title = stringResource(R.string.go_back),
+                        title = stringResource(Res.string.go_back),
                         icon = ImageVector.vectorResource(R.drawable.back),
                         onClick = onDismiss,
                         tint = MaterialTheme.colorScheme.onPrimary,
@@ -87,30 +95,30 @@ fun EncryptDecryptDetailModal(
                         }
                         val permission = Permission("sign_event", event.kind)
                         EventSection(
-                            stringResource(R.string.kind),
-                            "${event.kind} - ${permission.toLocalizedString(context)}",
-                            { copyToClipboard(clipboard, "${event.kind} - ${permission.toLocalizedString(context)}") },
+                            stringResource(Res.string.kind),
+                            "${event.kind} - ${permission.localizedBlocking()}",
+                            { copyToClipboard(clipboard, "${event.kind} - ${permission.localizedBlocking()}") },
                         )
                         EventSection(
-                            stringResource(R.string.pubkey),
+                            stringResource(Res.string.pubkey),
                             event.pubKey.toShortenHex(),
                             { copyToClipboard(clipboard, event.pubKey) },
                         )
                         EventSection(
-                            stringResource(R.string.date),
+                            stringResource(Res.string.date),
                             TimeUtils.formatDateTime(context, event.createdAt * 1000, withSeconds = true),
                             { copyToClipboard(clipboard, "${event.createdAt}") },
                         )
                         if (event.content.isNotEmpty()) {
                             EventSection(
-                                stringResource(R.string.content),
+                                stringResource(Res.string.content),
                                 event.content,
                                 { copyToClipboard(clipboard, event.content) },
                             )
                         }
                         if (event.tags.isNotEmpty()) {
                             TagsSection(
-                                label = stringResource(R.string.tags),
+                                label = stringResource(Res.string.tags),
                                 tags = event.tags,
                                 onCopy = {
                                     copyToClipboard(
@@ -123,7 +131,7 @@ fun EncryptDecryptDetailModal(
                     }
                     is TagArrayEncryptedDataKind -> {
                         TagsSection(
-                            label = stringResource(R.string.tags),
+                            label = stringResource(Res.string.tags),
                             tags = encryptedData.tagArray,
                             onCopy = {
                                 copyToClipboard(

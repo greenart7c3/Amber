@@ -34,11 +34,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.rememberNavController
 import com.greenart7c3.nostrsigner.Amber
-import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.commonsui.Res
+import com.greenart7c3.nostrsigner.commonsui.keystore_error_message
+import com.greenart7c3.nostrsigner.commonsui.keystore_error_title
+import com.greenart7c3.nostrsigner.commonsui.no
+import com.greenart7c3.nostrsigner.commonsui.ok
+import com.greenart7c3.nostrsigner.commonsui.yes
 import com.greenart7c3.nostrsigner.models.AmberBunkerRequest
 import com.greenart7c3.nostrsigner.models.IntentResultType
 import com.greenart7c3.nostrsigner.service.IntentUtils
@@ -49,6 +53,7 @@ import com.greenart7c3.nostrsigner.ui.theme.outlineIfAny
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
+import org.jetbrains.compose.resources.stringResource
 
 @SuppressLint("StateFlowValueCalledInComposition", "UnrememberedMutableState")
 @Composable
@@ -150,8 +155,8 @@ private fun KeystoreFailureWarning() {
     if (failedAccounts.isNotEmpty() && !dismissed) {
         val accountList = failedAccounts.joinToString("\n") { "• ${it.take(12)}…" }
         InformationDialog(
-            title = stringResource(R.string.keystore_error_title),
-            textContent = stringResource(R.string.keystore_error_message, accountList),
+            title = stringResource(Res.string.keystore_error_title),
+            textContent = stringResource(Res.string.keystore_error_message, accountList),
         ) {
             dismissed = true
         }
@@ -238,7 +243,7 @@ fun InformationDialog(
                     )
                     Spacer(Modifier.width(5.dp))
                     Text(
-                        text = stringResource(R.string.no),
+                        text = stringResource(Res.string.no),
                         color = Color.Black,
                     )
                 }
@@ -260,7 +265,7 @@ fun InformationDialog(
                     )
                     Spacer(Modifier.width(5.dp))
                     Text(
-                        text = stringResource(R.string.yes),
+                        text = stringResource(Res.string.yes),
                         color = Color.Black,
                     )
                 }
@@ -297,7 +302,7 @@ fun InformationDialog(
                     )
                     Spacer(Modifier.width(5.dp))
                     Text(
-                        text = stringResource(R.string.ok),
+                        text = stringResource(Res.string.ok),
                         color = Color.Black,
                     )
                 }

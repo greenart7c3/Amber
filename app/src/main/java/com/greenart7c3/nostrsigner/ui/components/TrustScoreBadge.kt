@@ -13,12 +13,17 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.commonsui.Res
+import com.greenart7c3.nostrsigner.commonsui.trust_excellent
+import com.greenart7c3.nostrsigner.commonsui.trust_fair
+import com.greenart7c3.nostrsigner.commonsui.trust_good
+import com.greenart7c3.nostrsigner.commonsui.trust_poor
+import com.greenart7c3.nostrsigner.commonsui.trust_unknown
 import com.greenart7c3.nostrsigner.service.TrustScoreService
+import org.jetbrains.compose.resources.stringResource
 
 enum class TrustLevel(val color: Color) {
     EXCELLENT(Color(0xFF4CAF50)), // Green - 80-100
@@ -38,11 +43,11 @@ fun getTrustLevel(score: Int?): TrustLevel = when {
 
 @Composable
 fun getTrustLevelLabel(level: TrustLevel): String = when (level) {
-    TrustLevel.EXCELLENT -> stringResource(R.string.trust_excellent)
-    TrustLevel.GOOD -> stringResource(R.string.trust_good)
-    TrustLevel.FAIR -> stringResource(R.string.trust_fair)
-    TrustLevel.POOR -> stringResource(R.string.trust_poor)
-    TrustLevel.UNKNOWN -> stringResource(R.string.trust_unknown)
+    TrustLevel.EXCELLENT -> stringResource(Res.string.trust_excellent)
+    TrustLevel.GOOD -> stringResource(Res.string.trust_good)
+    TrustLevel.FAIR -> stringResource(Res.string.trust_fair)
+    TrustLevel.POOR -> stringResource(Res.string.trust_poor)
+    TrustLevel.UNKNOWN -> stringResource(Res.string.trust_unknown)
 }
 
 /**

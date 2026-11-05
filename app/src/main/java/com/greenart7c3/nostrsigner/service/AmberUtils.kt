@@ -1,16 +1,15 @@
 package com.greenart7c3.nostrsigner.service
 
-import android.content.Context
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.toUpperCase
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.common.SignerType
+import com.greenart7c3.nostrsigner.commonsui.Permission
 import com.greenart7c3.nostrsigner.database.ApplicationPermissionsEntity
 import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.AmberBunkerRequest
 import com.greenart7c3.nostrsigner.models.EncryptedDataKind
-import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.models.basicPermissions
 import com.greenart7c3.nostrsigner.models.encryptDecryptSignerTypes
 import com.greenart7c3.nostrsigner.models.toPermissionTypeString
@@ -72,12 +71,10 @@ object AmberUtils {
         account: Account,
         bunkerRequest: AmberBunkerRequest,
         relays: List<NormalizedRelayUrl>,
-        context: Context,
         closeApplication: Boolean,
         onLoading: (Boolean) -> Unit,
     ) {
         BunkerRequestUtils.sendBunkerResponse(
-            context,
             account,
             bunkerRequest,
             BunkerResponse(bunkerRequest.request.id, "", "user rejected"),

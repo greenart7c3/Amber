@@ -48,12 +48,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.ClipEntry
 import androidx.compose.ui.platform.LocalClipboard
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
-import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.commonsui.Res
+import com.greenart7c3.nostrsigner.commonsui.cancel
+import com.greenart7c3.nostrsigner.commonsui.copy_translation_report_to_clipboard
+import com.greenart7c3.nostrsigner.commonsui.translation_report_send
+import com.greenart7c3.nostrsigner.commonsui.would_you_like_to_send_the_translation_report_to_amber_in_a_dm
 import com.greenart7c3.nostrsigner.models.Account
 import com.vitorpamplona.quartz.nip01Core.relay.client.NostrClient
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
@@ -67,6 +70,7 @@ import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun TranslationReportScreen(
@@ -93,9 +97,9 @@ fun TranslationReportScreen(
         ) {
             Text(
                 text = if (BuildFlavorChecker.isOfflineFlavor()) {
-                    stringResource(R.string.copy_translation_report_to_clipboard)
+                    stringResource(Res.string.copy_translation_report_to_clipboard)
                 } else {
-                    stringResource(R.string.would_you_like_to_send_the_translation_report_to_amber_in_a_dm)
+                    stringResource(Res.string.would_you_like_to_send_the_translation_report_to_amber_in_a_dm)
                 },
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -124,7 +128,7 @@ fun TranslationReportScreen(
                     onDismiss()
                 },
             ) {
-                Text(stringResource(R.string.cancel))
+                Text(stringResource(Res.string.cancel))
             }
 
             Button(
@@ -190,10 +194,10 @@ fun TranslationReportScreen(
                     Icon(
                         imageVector = Icons.Outlined.Done,
                         tint = Color.Black,
-                        contentDescription = stringResource(R.string.translation_report_send),
+                        contentDescription = stringResource(Res.string.translation_report_send),
                     )
                     Spacer(Modifier.size(4.dp))
-                    Text(stringResource(R.string.translation_report_send), color = Color.Black)
+                    Text(stringResource(Res.string.translation_report_send), color = Color.Black)
                 }
             }
         }

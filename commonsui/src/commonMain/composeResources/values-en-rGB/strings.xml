@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- British English: only the strings whose spelling differs from the default (US) English. Everything else falls back to values/strings.xml. -->
+<resources>
+    <string name="service_settings_subtitle">Background service behaviour</string>
+    <string name="applications_backup_subtitle">Back up your authorised apps</string>
+    <string name="favorite_account">Favourite account</string>
+    <string name="why_not_explore_your_favorite_nostr_app_a_bit">Why not explore your favourite nostr app a bit?</string>
+    <string name="event_kind_452">Multi-device join authorisation</string>
+    <string name="event_kind_10054">Favourite podcasts</string>
+    <string name="event_kind_10090">Favourite feeds</string>
+    <string name="nip_32">Labelling</string>
+    <string name="please_add_a_nickname_later_you_will_able_to_personalise_your_full_profile_bio_pic_etc_using_your_preferred_nostr_client">Please add a nickname, later you will be able to personalise your full profile (bio, pic, etc.) using your preferred Nostr client:</string>
+    <string name="event_kind_10000300">Primal wallet authorisation event</string>
+    <string name="event_kind_25050">WebRTC Signalling</string>
+    <string name="event_kind_10012">Favourite relays list</string>
+    <string name="event_kind_3367">Colour Moment</string>
+    <!-- Desktop app -->
+    <string name="d_keep_in_tray_sub">Closing the window minimises Amber to the system tray so it keeps answering requests.</string>
+</resources>

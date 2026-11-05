@@ -12,14 +12,16 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import com.greenart7c3.nostrsigner.LocalPreferences
-import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.commonsui.Res
+import com.greenart7c3.nostrsigner.commonsui.nickname
+import com.greenart7c3.nostrsigner.commonsui.save
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.ui.components.AmberButton
 import com.greenart7c3.nostrsigner.ui.navigation.Route
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun EditProfileScreen(
@@ -44,7 +46,7 @@ fun EditProfileScreen(
                 textFieldvalue = TextFieldValue(it)
             },
             label = {
-                Text(stringResource(R.string.nickname))
+                Text(stringResource(Res.string.nickname))
             },
         )
         AmberButton(
@@ -53,7 +55,7 @@ fun EditProfileScreen(
                 LocalPreferences.setAccountName(context, npub, textFieldvalue.text)
                 accountStateViewModel.switchUser(account.npub, Route.Settings.route)
             },
-            text = stringResource(R.string.save),
+            text = stringResource(Res.string.save),
         )
     }
 }

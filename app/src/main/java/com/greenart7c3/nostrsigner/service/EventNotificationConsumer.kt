@@ -30,13 +30,24 @@ import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.LocalPreferences
-import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.SignerProviderQuery
 import com.greenart7c3.nostrsigner.common.EncryptionType
 import com.greenart7c3.nostrsigner.common.SignerType
 import com.greenart7c3.nostrsigner.common.connectsThroughOtherKey
 import com.greenart7c3.nostrsigner.common.hasAmbiguousRelayTags
 import com.greenart7c3.nostrsigner.common.sanitizeAppName
+import com.greenart7c3.nostrsigner.commonsui.Permission
+import com.greenart7c3.nostrsigner.commonsui.Res
+import com.greenart7c3.nostrsigner.commonsui.getStringBlocking
+import com.greenart7c3.nostrsigner.commonsui.localizedBlocking
+import com.greenart7c3.nostrsigner.commonsui.requests
+import com.greenart7c3.nostrsigner.commonsui.wants_to_encrypt_a_list_of_tags_with
+import com.greenart7c3.nostrsigner.commonsui.wants_to_encrypt_a_text_with
+import com.greenart7c3.nostrsigner.commonsui.wants_to_encrypt_event_kind
+import com.greenart7c3.nostrsigner.commonsui.wants_to_read_a_list_of_tags_from_encrypted_content
+import com.greenart7c3.nostrsigner.commonsui.wants_to_read_a_text_from_encrypted_content
+import com.greenart7c3.nostrsigner.commonsui.wants_to_read_from_encrypted_content
+import com.greenart7c3.nostrsigner.commonsui.wants_you_to_sign_a
 import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
 import com.greenart7c3.nostrsigner.database.BunkerEventEntity
 import com.greenart7c3.nostrsigner.database.HistoryEntity
@@ -47,7 +58,6 @@ import com.greenart7c3.nostrsigner.models.BunkerClientMetadata
 import com.greenart7c3.nostrsigner.models.ClearTextEncryptedDataKind
 import com.greenart7c3.nostrsigner.models.EncryptedDataKind
 import com.greenart7c3.nostrsigner.models.EventEncryptedDataKind
-import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.models.TagArrayEncryptedDataKind
 import com.greenart7c3.nostrsigner.service.NotificationUtils.sendNotification
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
@@ -273,7 +283,6 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                     signerPrivKey = connectionPrivKey,
                 )
                 BunkerRequestUtils.sendBunkerResponse(
-                    applicationContext,
                     acc,
                     request,
                     BunkerResponse(bunkerRequest.id, "", "Amber is locked. Unlock your device and try again."),
@@ -366,7 +375,6 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                 signerPrivKey = connectionPrivKey,
             )
             BunkerRequestUtils.sendBunkerResponse(
-                applicationContext,
                 acc,
                 rejection,
                 BunkerResponse(bunkerRequest.id, "", "refusing a multi-relay auth event"),
@@ -414,7 +422,6 @@ class EventNotificationConsumer(private val applicationContext: Context) {
             // stops waiting for a response it will never otherwise receive.
             val errorRelays = responseRelay.ifEmpty { Amber.instance.settings.defaultRelays }
             BunkerRequestUtils.sendBunkerResponse(
-                applicationContext,
                 acc,
                 request,
                 BunkerResponse(bunkerRequest.id, "", "Unrecognized method: ${bunkerRequest.method}"),
@@ -444,7 +451,6 @@ class EventNotificationConsumer(private val applicationContext: Context) {
         if (pubKey == null) {
             saveLog("Invalid params for request ${bunkerRequest.id} method ${bunkerRequest.method}", relay.url, acc.npub)
             BunkerRequestUtils.sendBunkerResponse(
-                applicationContext,
                 acc,
                 request,
                 BunkerResponse(bunkerRequest.id, "", "invalid params"),
@@ -489,7 +495,6 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                     )
             }
             BunkerRequestUtils.sendBunkerResponse(
-                context = applicationContext,
                 account = acc,
                 bunkerRequest = request,
                 bunkerResponse = BunkerResponse(bunkerRequest.id, request.nostrConnectSecret.ifBlank { "ack" }, null),
@@ -517,7 +522,6 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                 }
                 saveLog("Connection rejected: $message", relay.url, acc.npub)
                 BunkerRequestUtils.sendBunkerResponse(
-                    context = applicationContext,
                     account = acc,
                     bunkerRequest = request,
                     bunkerResponse = BunkerResponse(bunkerRequest.id, "", message),
@@ -533,7 +537,6 @@ class EventNotificationConsumer(private val applicationContext: Context) {
         if (permission == null && applicationWithSecret == null) {
             saveLog("No permission found for ${event.pubKey}", relay.url, acc.npub)
             BunkerRequestUtils.sendBunkerResponse(
-                context = applicationContext,
                 account = acc,
                 bunkerRequest = request,
                 bunkerResponse = BunkerResponse(bunkerRequest.id, "", "no permission"),
@@ -574,7 +577,6 @@ class EventNotificationConsumer(private val applicationContext: Context) {
             permission?.let {
                 val defaultRelays = Amber.instance.settings.defaultRelays
                 BunkerRequestUtils.sendBunkerResponse(
-                    context = applicationContext,
                     account = acc,
                     bunkerRequest = request,
                     bunkerResponse = BunkerResponse(bunkerRequest.id, if (defaultRelays.isEmpty()) null else "[${defaultRelays.joinToString(separator = ",") { "\"${it.url}\"" }}]", null),
@@ -603,7 +605,6 @@ class EventNotificationConsumer(private val applicationContext: Context) {
         if (type == SignerType.LOGOUT) {
             permission?.let {
                 BunkerRequestUtils.sendBunkerResponse(
-                    context = applicationContext,
                     account = acc,
                     bunkerRequest = request,
                     bunkerResponse = BunkerResponse(bunkerRequest.id, "ack", null),
@@ -656,7 +657,6 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                     )
                 }
                 BunkerRequestUtils.sendBunkerResponse(
-                    context = applicationContext,
                     account = acc,
                     bunkerRequest = request,
                     bunkerResponse = BunkerResponse(bunkerRequest.id, "", "user rejected"),
@@ -682,7 +682,6 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                 )
             }
             BunkerRequestUtils.sendBunkerResponse(
-                context = applicationContext,
                 account = acc,
                 bunkerRequest = request,
                 bunkerResponse = BunkerResponse(bunkerRequest.id, acc.hexKey, null),
@@ -707,7 +706,6 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                 if (validationError != null) {
                     saveLog("Rejecting invalid NIP-44 v3 request: $validationError", relay.url, acc.npub)
                     BunkerRequestUtils.sendBunkerResponse(
-                        context = applicationContext,
                         account = acc,
                         bunkerRequest = request,
                         bunkerResponse = BunkerResponse(bunkerRequest.id, "", validationError),
@@ -748,7 +746,6 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                     if (localCursor.getColumnIndex("rejected") > -1) {
                         saveLog("User rejected request ${bunkerRequest.id}", relay.url, acc.npub)
                         BunkerRequestUtils.sendBunkerResponse(
-                            context = applicationContext,
                             account = acc,
                             bunkerRequest = request,
                             bunkerResponse = BunkerResponse(bunkerRequest.id, "", "user rejected"),
@@ -764,7 +761,6 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                         val result = localCursor.getString(index)
 
                         BunkerRequestUtils.sendBunkerResponse(
-                            context = applicationContext,
                             account = acc,
                             bunkerRequest = request,
                             bunkerResponse = BunkerResponse(bunkerRequest.id, result, null),
@@ -802,39 +798,39 @@ class EventNotificationConsumer(private val applicationContext: Context) {
             .firstOrNull { it.isNotBlank() } ?: event.pubKey.toShortenHex()
 
         val bunkerPermission = Permission(type.toString().toLowerCase(Locale.current), amberEvent?.kind)
-        var message = "$name  ${applicationContext.getString(R.string.requests)} ${bunkerPermission.toLocalizedString(applicationContext)}"
+        var message = "$name  ${getStringBlocking(Res.string.requests)} ${bunkerPermission.localizedBlocking()}"
         if (type == SignerType.SIGN_EVENT) {
-            message = "$name ${applicationContext.getString(R.string.wants_you_to_sign_a, bunkerPermission.toLocalizedString(applicationContext))}"
+            message = "$name ${getStringBlocking(Res.string.wants_you_to_sign_a, bunkerPermission.localizedBlocking())}"
         }
         if (type == SignerType.CONNECT) {
-            message = "$name ${bunkerPermission.toLocalizedString(applicationContext)}"
+            message = "$name ${bunkerPermission.localizedBlocking()}"
         }
 
         if (type.name.contains("ENCRYPT")) {
             when (request.encryptedData) {
                 is EventEncryptedDataKind -> {
                     val permission = Permission("sign_event", request.encryptedData.event.kind)
-                    message = "$name ${applicationContext.getString(R.string.wants_to_encrypt_event_kind, permission.toLocalizedString(Amber.instance), type.name.split("_").first())}"
+                    message = "$name ${getStringBlocking(Res.string.wants_to_encrypt_event_kind, permission.localizedBlocking(), type.name.split("_").first())}"
                 }
 
                 is TagArrayEncryptedDataKind -> {
-                    message = "$name ${applicationContext.getString(R.string.wants_to_encrypt_a_list_of_tags_with, type.name.split("_").first())}"
+                    message = "$name ${getStringBlocking(Res.string.wants_to_encrypt_a_list_of_tags_with, type.name.split("_").first())}"
                 }
 
-                else -> message = "$name ${applicationContext.getString(R.string.wants_to_encrypt_a_text_with, type.name.split("_").first())}"
+                else -> message = "$name ${getStringBlocking(Res.string.wants_to_encrypt_a_text_with, type.name.split("_").first())}"
             }
         } else if (type.name.contains("DECRYPT")) {
             when (request.encryptedData) {
                 is EventEncryptedDataKind -> {
                     val permission = Permission("sign_event", request.encryptedData.event.kind)
-                    message = "$name${applicationContext.getString(R.string.wants_to_read_from_encrypted_content, permission.toLocalizedString(Amber.instance), type.name.split("_").first())}"
+                    message = "$name${getStringBlocking(Res.string.wants_to_read_from_encrypted_content, permission.localizedBlocking(), type.name.split("_").first())}"
                 }
 
                 is TagArrayEncryptedDataKind -> {
-                    message = "$name ${applicationContext.getString(R.string.wants_to_read_a_list_of_tags_from_encrypted_content, type.name.split("_").first())}"
+                    message = "$name ${getStringBlocking(Res.string.wants_to_read_a_list_of_tags_from_encrypted_content, type.name.split("_").first())}"
                 }
 
-                else -> message = "$name ${applicationContext.getString(R.string.wants_to_read_a_text_from_encrypted_content, type.name.split("_").first())}"
+                else -> message = "$name ${getStringBlocking(Res.string.wants_to_read_a_text_from_encrypted_content, type.name.split("_").first())}"
             }
         }
         return message

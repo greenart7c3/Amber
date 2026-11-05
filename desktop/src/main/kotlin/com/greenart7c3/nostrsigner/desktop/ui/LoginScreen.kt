@@ -27,7 +27,6 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -40,11 +39,34 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.greenart7c3.nostrsigner.commonsui.Res
+import com.greenart7c3.nostrsigner.commonsui.cancel
+import com.greenart7c3.nostrsigner.commonsui.copy_to_clipboard
+import com.greenart7c3.nostrsigner.commonsui.d_add_a_key
+import com.greenart7c3.nostrsigner.commonsui.d_add_key
+import com.greenart7c3.nostrsigner.commonsui.d_adding
+import com.greenart7c3.nostrsigner.commonsui.d_copy_seed_words_warning
+import com.greenart7c3.nostrsigner.commonsui.d_create_a_new_key
+import com.greenart7c3.nostrsigner.commonsui.d_create_account
+import com.greenart7c3.nostrsigner.commonsui.d_creating
+import com.greenart7c3.nostrsigner.commonsui.d_failed_create_key
+import com.greenart7c3.nostrsigner.commonsui.d_hide_seed_words
+import com.greenart7c3.nostrsigner.commonsui.d_import_key_label
+import com.greenart7c3.nostrsigner.commonsui.d_invalid_key
+import com.greenart7c3.nostrsigner.commonsui.d_name_optional
+import com.greenart7c3.nostrsigner.commonsui.d_password
+import com.greenart7c3.nostrsigner.commonsui.d_seed_words_copied
+import com.greenart7c3.nostrsigner.commonsui.d_seed_words_desc
+import com.greenart7c3.nostrsigner.commonsui.d_tagline
+import com.greenart7c3.nostrsigner.commonsui.d_your_seed_words
+import com.greenart7c3.nostrsigner.commonsui.getStringBlocking
+import com.greenart7c3.nostrsigner.commonsui.show_seed_words
+import com.greenart7c3.nostrsigner.commonsui.warning
 import com.greenart7c3.nostrsigner.desktop.Session
 import com.greenart7c3.nostrsigner.desktop.core.AccountManager
 import com.greenart7c3.nostrsigner.desktop.core.BuildVariant
-import com.greenart7c3.nostrsigner.desktop.core.Strings
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun LoginScreen(
@@ -52,7 +74,6 @@ fun LoginScreen(
     snackbarHostState: SnackbarHostState,
 ) {
     val scope = rememberCoroutineScope()
-    val language by Strings.currentLanguage.collectAsState()
     var tab by remember { mutableStateOf(0) }
 
     LaunchedEffect(Unit) {
@@ -77,7 +98,7 @@ fun LoginScreen(
                     fontWeight = FontWeight.Bold,
                 )
                 Text(
-                    Strings.get("d_tagline", language),
+                    stringResource(Res.string.d_tagline),
                     style = MaterialTheme.typography.bodyMedium,
                     textAlign = TextAlign.Center,
                 )
@@ -85,7 +106,7 @@ fun LoginScreen(
 
                 AmberTabRow(
                     selectedTabIndex = tab,
-                    titles = listOf(Strings.get("d_add_a_key", language), Strings.get("d_create_a_new_key", language)),
+                    titles = listOf(stringResource(Res.string.d_add_a_key), stringResource(Res.string.d_create_a_new_key)),
                     onSelect = { tab = it },
                 )
                 Spacer(Modifier.height(24.dp))
@@ -98,7 +119,7 @@ fun LoginScreen(
 
                 if (hasAccounts) {
                     AmberTextButton(
-                        text = Strings.get("cancel", language),
+                        text = stringResource(Res.string.cancel),
                         onClick = { Session.addingAccount.value = false },
                     )
                 }
@@ -113,7 +134,6 @@ fun LoginScreen(
 
 @Composable
 private fun ImportKeyPane(scope: kotlinx.coroutines.CoroutineScope) {
-    val language by Strings.currentLanguage.collectAsState()
     var key by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var working by remember { mutableStateOf(false) }
@@ -121,7 +141,7 @@ private fun ImportKeyPane(scope: kotlinx.coroutines.CoroutineScope) {
     OutlinedTextField(
         value = key,
         onValueChange = { key = it },
-        label = { Text(Strings.get("d_import_key_label", language)) },
+        label = { Text(stringResource(Res.string.d_import_key_label)) },
         modifier = Modifier.fillMaxWidth(),
         visualTransformation = PasswordVisualTransformation(),
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
@@ -131,7 +151,7 @@ private fun ImportKeyPane(scope: kotlinx.coroutines.CoroutineScope) {
         OutlinedTextField(
             value = password,
             onValueChange = { password = it },
-            label = { Text(Strings.get("d_password", language)) },
+            label = { Text(stringResource(Res.string.d_password)) },
             modifier = Modifier.fillMaxWidth(),
             visualTransformation = PasswordVisualTransformation(),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
@@ -139,7 +159,7 @@ private fun ImportKeyPane(scope: kotlinx.coroutines.CoroutineScope) {
     }
     Spacer(Modifier.height(16.dp))
     AmberButton(
-        text = if (working) Strings.get("d_adding", language) else Strings.get("d_add_key", language),
+        text = if (working) stringResource(Res.string.d_adding) else stringResource(Res.string.d_add_key),
         fillWidth = true,
         enabled = key.isNotBlank() && !working,
         onClick = {
@@ -155,7 +175,7 @@ private fun ImportKeyPane(scope: kotlinx.coroutines.CoroutineScope) {
                         Session.onAccountAdded(account)
                     },
                     onFailure = {
-                        Toaster.toast(it.message ?: Strings.get("d_invalid_key", language))
+                        Toaster.toast(it.message ?: getStringBlocking(Res.string.d_invalid_key))
                     },
                 )
                 working = false
@@ -166,7 +186,6 @@ private fun ImportKeyPane(scope: kotlinx.coroutines.CoroutineScope) {
 
 @Composable
 private fun NewKeyPane(scope: kotlinx.coroutines.CoroutineScope) {
-    val language by Strings.currentLanguage.collectAsState()
     var name by remember { mutableStateOf("") }
     var working by remember { mutableStateOf(false) }
     val seedWords = remember { AccountManager.generateSeedWords() }
@@ -177,13 +196,13 @@ private fun NewKeyPane(scope: kotlinx.coroutines.CoroutineScope) {
     OutlinedTextField(
         value = name,
         onValueChange = { name = it },
-        label = { Text(Strings.get("d_name_optional", language)) },
+        label = { Text(stringResource(Res.string.d_name_optional)) },
         modifier = Modifier.fillMaxWidth(),
     )
     Spacer(Modifier.height(16.dp))
-    Text(Strings.get("d_your_seed_words", language), style = MaterialTheme.typography.titleMedium)
+    Text(stringResource(Res.string.d_your_seed_words), style = MaterialTheme.typography.titleMedium)
     Text(
-        Strings.get("d_seed_words_desc", language),
+        stringResource(Res.string.d_seed_words_desc),
         style = MaterialTheme.typography.bodySmall,
     )
     Spacer(Modifier.height(8.dp))
@@ -191,7 +210,7 @@ private fun NewKeyPane(scope: kotlinx.coroutines.CoroutineScope) {
         if (!revealed) {
             // Hidden until asked for, so they don't sit on screen (or in a screen share) by default.
             Box(Modifier.fillMaxWidth().padding(24.dp), contentAlignment = Alignment.Center) {
-                AmberOutlinedButton(text = Strings.get("show_seed_words", language), onClick = { revealed = true })
+                AmberOutlinedButton(text = stringResource(Res.string.show_seed_words), onClick = { revealed = true })
             }
         } else {
             Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -208,8 +227,8 @@ private fun NewKeyPane(scope: kotlinx.coroutines.CoroutineScope) {
                     }
                 }
                 FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                    AmberTextButton(text = Strings.get("d_hide_seed_words", language), onClick = { revealed = false })
-                    AmberTextButton(text = Strings.get("copy_to_clipboard", language), onClick = { confirmCopy = true })
+                    AmberTextButton(text = stringResource(Res.string.d_hide_seed_words), onClick = { revealed = false })
+                    AmberTextButton(text = stringResource(Res.string.copy_to_clipboard), onClick = { confirmCopy = true })
                 }
             }
         }
@@ -217,26 +236,26 @@ private fun NewKeyPane(scope: kotlinx.coroutines.CoroutineScope) {
     if (confirmCopy) {
         AlertDialog(
             onDismissRequest = { confirmCopy = false },
-            title = { Text(Strings.get("warning", language)) },
-            text = { Text(Strings.get("d_copy_seed_words_warning", language)) },
+            title = { Text(stringResource(Res.string.warning)) },
+            text = { Text(stringResource(Res.string.d_copy_seed_words_warning)) },
             confirmButton = {
                 AmberTextButton(
-                    text = Strings.get("copy_to_clipboard", language),
+                    text = stringResource(Res.string.copy_to_clipboard),
                     onClick = {
                         confirmCopy = false
                         copyText(seedWords.joinToString(" "))
-                        Toaster.toast(Strings.get("d_seed_words_copied", language))
+                        Toaster.toast(getStringBlocking(Res.string.d_seed_words_copied))
                     },
                 )
             },
             dismissButton = {
-                AmberTextButton(text = Strings.get("cancel", language), onClick = { confirmCopy = false })
+                AmberTextButton(text = stringResource(Res.string.cancel), onClick = { confirmCopy = false })
             },
         )
     }
     Spacer(Modifier.height(16.dp))
     AmberButton(
-        text = if (working) Strings.get("d_creating", language) else Strings.get("d_create_account", language),
+        text = if (working) stringResource(Res.string.d_creating) else stringResource(Res.string.d_create_account),
         fillWidth = true,
         enabled = !working,
         onClick = {
@@ -253,7 +272,7 @@ private fun NewKeyPane(scope: kotlinx.coroutines.CoroutineScope) {
                         Session.onAccountAdded(account)
                     },
                     onFailure = {
-                        Toaster.toast(it.message ?: Strings.get("d_failed_create_key", language))
+                        Toaster.toast(it.message ?: getStringBlocking(Res.string.d_failed_create_key))
                     },
                 )
                 working = false

@@ -18,12 +18,17 @@ import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.FailedMigrationException
 import com.greenart7c3.nostrsigner.LocalPreferences
-import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.common.SignerType
 import com.greenart7c3.nostrsigner.common.decodeQueryParamValue
 import com.greenart7c3.nostrsigner.common.hasAmbiguousRelayTags
 import com.greenart7c3.nostrsigner.common.rememberedDecision
 import com.greenart7c3.nostrsigner.common.sanitizeAppName
+import com.greenart7c3.nostrsigner.commonsui.Permission
+import com.greenart7c3.nostrsigner.commonsui.Res
+import com.greenart7c3.nostrsigner.commonsui.containsNip
+import com.greenart7c3.nostrsigner.commonsui.event_copied_to_the_clipboard
+import com.greenart7c3.nostrsigner.commonsui.getStringBlocking
+import com.greenart7c3.nostrsigner.commonsui.signature_copied_to_the_clipboard
 import com.greenart7c3.nostrsigner.database.ApplicationEntity
 import com.greenart7c3.nostrsigner.database.ApplicationPermissionsEntity
 import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
@@ -36,11 +41,9 @@ import com.greenart7c3.nostrsigner.models.EncryptedDataKind
 import com.greenart7c3.nostrsigner.models.EventEncryptedDataKind
 import com.greenart7c3.nostrsigner.models.IntentData
 import com.greenart7c3.nostrsigner.models.IntentResultType
-import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.models.PrivateZapEncryptedDataKind
 import com.greenart7c3.nostrsigner.models.ReturnType
 import com.greenart7c3.nostrsigner.models.TagArrayEncryptedDataKind
-import com.greenart7c3.nostrsigner.models.containsNip
 import com.greenart7c3.nostrsigner.models.decryptSignerTypes
 import com.greenart7c3.nostrsigner.models.encryptDecryptSignerTypes
 import com.greenart7c3.nostrsigner.models.encryptSignerTypes
@@ -447,7 +450,7 @@ object IntentUtils {
             it.checked = true
         }
         permissions?.removeIf { it.kind == null && (it.type == "sign_event" || it.type == "nip") }
-        permissions?.removeIf { it.type == "nip" && (it.kind == null || !it.kind.containsNip()) }
+        permissions?.removeIf { it.type == "nip" && it.kind?.containsNip() != true }
 
         return when (type) {
             SignerType.SIGN_EVENT -> {
@@ -1069,9 +1072,9 @@ object IntentUtils {
                         }
                     val message =
                         if (intentData.returnType == ReturnType.SIGNATURE) {
-                            context.getString(R.string.signature_copied_to_the_clipboard)
+                            getStringBlocking(Res.string.signature_copied_to_the_clipboard)
                         } else {
-                            context.getString(R.string.event_copied_to_the_clipboard)
+                            getStringBlocking(Res.string.event_copied_to_the_clipboard)
                         }
 
                     withContext(Dispatchers.Main) {

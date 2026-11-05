@@ -23,16 +23,19 @@ import androidx.compose.ui.unit.sp
 import com.greenart7c3.nostrsigner.AccountInfo
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.LocalPreferences
-import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.common.SignerType
 import com.greenart7c3.nostrsigner.common.psbt.PsbtDecoder
 import com.greenart7c3.nostrsigner.common.sanitizeAppName
+import com.greenart7c3.nostrsigner.commonsui.Res
+import com.greenart7c3.nostrsigner.commonsui.event_pubkey_is_not_equal_to_current_logged_in_user
+import com.greenart7c3.nostrsigner.commonsui.getStringBlocking
+import com.greenart7c3.nostrsigner.commonsui.kindToNip
+import com.greenart7c3.nostrsigner.commonsui.warning
 import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
 import com.greenart7c3.nostrsigner.database.isAllRelaysGrant
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.IntentData
 import com.greenart7c3.nostrsigner.models.IntentResultType
-import com.greenart7c3.nostrsigner.models.kindToNip
 import com.greenart7c3.nostrsigner.models.toPermissionType
 import com.greenart7c3.nostrsigner.service.IntentUtils
 import com.greenart7c3.nostrsigner.service.RelayUrlUtils
@@ -159,7 +162,7 @@ fun IntentSingleEventHomeScreen(
                             )
                         } catch (e: Exception) {
                             ToastManager.toast(
-                                title = context.getString(R.string.warning),
+                                title = getStringBlocking(Res.string.warning),
                                 message = e.message ?: "Could not sign the PSBT",
                             )
                             onLoading(false)
@@ -370,8 +373,8 @@ fun IntentSingleEventHomeScreen(
                     onAccept = { rememberType, scope ->
                         if (isCrossAccountSignEvent(intentData.unsignedEventKey, account.hexKey, event.kind, event.tags, LocalPreferences.allSavedAccounts(context).map(AccountInfo::npub))) {
                             ToastManager.toast(
-                                title = context.getString(R.string.warning),
-                                message = context.getString(R.string.event_pubkey_is_not_equal_to_current_logged_in_user),
+                                title = getStringBlocking(Res.string.warning),
+                                message = getStringBlocking(Res.string.event_pubkey_is_not_equal_to_current_logged_in_user),
                             )
                             return@BunkerRelayAuthScreen
                         }
@@ -439,8 +442,8 @@ fun IntentSingleEventHomeScreen(
                     onAccept = {
                         if (isCrossAccountSignEvent(intentData.unsignedEventKey, account.hexKey, event.kind, event.tags, LocalPreferences.allSavedAccounts(context).map { it.npub })) {
                             ToastManager.toast(
-                                title = context.getString(R.string.warning),
-                                message = context.getString(R.string.event_pubkey_is_not_equal_to_current_logged_in_user),
+                                title = getStringBlocking(Res.string.warning),
+                                message = getStringBlocking(Res.string.event_pubkey_is_not_equal_to_current_logged_in_user),
                             )
                             return@EventData
                         }

@@ -27,17 +27,28 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import com.greenart7c3.nostrsigner.Amber
-import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.commonsui.Res
+import com.greenart7c3.nostrsigner.commonsui.body_text_optional
+import com.greenart7c3.nostrsigner.commonsui.bug_report
+import com.greenart7c3.nostrsigner.commonsui.enhancement_request
+import com.greenart7c3.nostrsigner.commonsui.failed_to_send_event
+import com.greenart7c3.nostrsigner.commonsui.feedback_sent
+import com.greenart7c3.nostrsigner.commonsui.feedback_type
+import com.greenart7c3.nostrsigner.commonsui.getStringBlocking
+import com.greenart7c3.nostrsigner.commonsui.required
+import com.greenart7c3.nostrsigner.commonsui.send
+import com.greenart7c3.nostrsigner.commonsui.subject
+import com.greenart7c3.nostrsigner.commonsui.warning
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.FeedbackType
 import com.greenart7c3.nostrsigner.ui.components.AmberButton
 import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun FeedbackScreen(
@@ -64,7 +75,7 @@ fun FeedbackScreen(
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(
-                    text = stringResource(R.string.feedback_type),
+                    text = stringResource(Res.string.feedback_type),
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -81,8 +92,8 @@ fun FeedbackScreen(
                                 Text(
                                     text = stringResource(
                                         when (type) {
-                                            FeedbackType.BUG_REPORT -> R.string.bug_report
-                                            FeedbackType.ENHANCEMENT_REQUEST -> R.string.enhancement_request
+                                            FeedbackType.BUG_REPORT -> Res.string.bug_report
+                                            FeedbackType.ENHANCEMENT_REQUEST -> Res.string.enhancement_request
                                         },
                                     ),
                                 )
@@ -111,12 +122,12 @@ fun FeedbackScreen(
                 modifier = Modifier.fillMaxWidth(),
                 maxLines = 3,
                 label = {
-                    Text(stringResource(R.string.subject))
+                    Text(stringResource(Res.string.subject))
                 },
                 textStyle = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium),
                 isError = header.text.isBlank(),
                 supportingText = if (header.text.isBlank()) {
-                    { Text(stringResource(R.string.required)) }
+                    { Text(stringResource(Res.string.required)) }
                 } else {
                     null
                 },
@@ -129,7 +140,7 @@ fun FeedbackScreen(
                     .fillMaxWidth()
                     .height(200.dp),
                 label = {
-                    Text(stringResource(R.string.body_text_optional))
+                    Text(stringResource(Res.string.body_text_optional))
                 },
                 textStyle = MaterialTheme.typography.bodyLarge,
             )
@@ -144,7 +155,7 @@ fun FeedbackScreen(
         ) {
             AmberButton(
                 enabled = header.text.isNotBlank(),
-                text = stringResource(R.string.send),
+                text = stringResource(Res.string.send),
                 onClick = {
                     Amber.instance.applicationIOScope.launch {
                         try {
@@ -157,15 +168,15 @@ fun FeedbackScreen(
                             )
                             if (result) {
                                 ToastManager.toast(
-                                    Amber.instance.getString(R.string.warning),
-                                    Amber.instance.getString(R.string.feedback_sent),
+                                    getStringBlocking(Res.string.warning),
+                                    getStringBlocking(Res.string.feedback_sent),
                                 )
                                 onLoading(false)
                                 onDismiss()
                             } else {
                                 ToastManager.toast(
-                                    Amber.instance.getString(R.string.warning),
-                                    Amber.instance.getString(R.string.failed_to_send_event),
+                                    getStringBlocking(Res.string.warning),
+                                    getStringBlocking(Res.string.failed_to_send_event),
                                 )
                                 onLoading(false)
                             }

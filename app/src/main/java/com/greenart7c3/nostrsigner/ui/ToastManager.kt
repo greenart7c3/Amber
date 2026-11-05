@@ -3,6 +3,7 @@ package com.greenart7c3.nostrsigner.ui
 import androidx.compose.runtime.Immutable
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
+import org.jetbrains.compose.resources.StringResource
 
 @Immutable
 open class ToastMsg
@@ -20,8 +21,8 @@ class AcceptRejectToastMsg(
 
 @Immutable
 class ResourceToastMsg(
-    val titleResId: Int,
-    val resourceId: Int,
+    val titleResId: StringResource,
+    val resourceId: StringResource,
     val params: Array<out String>? = null,
 ) : ToastMsg()
 

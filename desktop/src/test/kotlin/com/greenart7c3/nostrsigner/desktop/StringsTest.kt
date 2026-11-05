@@ -9,6 +9,9 @@ import org.junit.Test
 
 /** The localized string loader and the ported event-kind descriptions. */
 class StringsTest {
+    /** en-GB only overrides spellings, so most of its strings legitimately match English. */
+    private fun isEnglish(tag: String) = tag == "en" || tag.startsWith("en-")
+
     @Test
     fun everyShippedLanguageLoadsAndHasKindTranslations() {
         Strings.supportedLanguages.forEach { (tag, _) ->
@@ -23,6 +26,14 @@ class StringsTest {
         assertEquals("Short text note", Strings.get("event_kind_1", "en"))
         assertEquals("Kurztext-Note", Strings.get("event_kind_1", "de"))
         assertEquals("Nota de texto corta", Strings.get("event_kind_1", "es"))
+    }
+
+    @Test
+    fun britishEnglishOverridesSpellingAndFallsBackToEnglish() {
+        assertEquals("Favourite relays list", Strings.get("event_kind_10012", "en-GB"))
+        assertEquals("Favorite relays list", Strings.get("event_kind_10012", "en"))
+        // Keys the en-GB file doesn't override come from strings_en.xml.
+        assertEquals("Short text note", Strings.get("event_kind_1", "en-GB"))
     }
 
     @Test
@@ -79,7 +90,7 @@ class StringsTest {
         Strings.supportedLanguages.forEach { (tag, _) ->
             val value = Strings.get("d_approve", tag)
             assertTrue("d_approve missing for $tag", value.isNotBlank() && value != "d_approve")
-            if (tag != "en") {
+            if (!isEnglish(tag)) {
                 assertTrue(
                     "d_approve not translated for $tag (still English)",
                     Strings.get("d_approve", tag) != "Approve",
@@ -93,7 +104,7 @@ class StringsTest {
 
     @Test
     fun requestDescriptionsAreTranslatedInEveryLanguage() {
-        Strings.supportedLanguages.filter { it.first != "en" }.forEach { (tag, _) ->
+        Strings.supportedLanguages.filterNot { isEnglish(it.first) }.forEach { (tag, _) ->
             assertTrue(
                 "switch_relays not translated for $tag",
                 Strings.get("switch_relays", tag) != Strings.get("switch_relays", "en"),
@@ -126,7 +137,7 @@ class StringsTest {
         Strings.supportedLanguages.forEach { (tag, _) ->
             val value = Strings.get("d_socket_name_unverified", tag)
             assertTrue("missing for $tag", value.isNotBlank() && value != "d_socket_name_unverified")
-            if (tag != "en") assertTrue("not translated for $tag", value != english)
+            if (!isEnglish(tag)) assertTrue("not translated for $tag", value != english)
         }
     }
 
@@ -137,7 +148,7 @@ class StringsTest {
         Strings.supportedLanguages.forEach { (tag, _) ->
             val value = Strings.get("crash_report_send_prompt", tag)
             assertTrue("missing for $tag", value.isNotBlank() && value != "crash_report_send_prompt")
-            if (tag != "en") assertTrue("not translated for $tag", value != english)
+            if (!isEnglish(tag)) assertTrue("not translated for $tag", value != english)
         }
     }
 }

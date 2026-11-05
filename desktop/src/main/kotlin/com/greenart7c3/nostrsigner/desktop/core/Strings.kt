@@ -19,6 +19,7 @@ object Strings {
     /** Languages that ship a translation, by IETF-ish tag matching the file name. */
     val supportedLanguages = listOf(
         "en" to "English",
+        "en-GB" to "English (UK)",
         "de" to "Deutsch",
         "es" to "Español",
         "fr" to "Français",

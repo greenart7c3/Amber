@@ -1169,6 +1169,7 @@
     <string name="d_tray_hide">ซ่อน Amber</string>
     <string name="d_tray_open">เปิด Amber</string>
     <string name="d_tray_quit">ออกจาก Amber</string>
+    <string name="d_hidden_no_tray">Amber ยังทำงานอยู่และตอบคำขอต่างๆ เปิดอีกครั้งได้จากตัวเรียกใช้แอป</string>
     <string name="switch_relays">ต้องการเปลี่ยน Relay</string>
     <string name="invalid_request">ส่งคำขอที่ไม่ถูกต้อง</string>
     <string name="d_tor_off">ปิด</string>

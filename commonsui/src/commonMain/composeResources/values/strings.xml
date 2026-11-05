@@ -1156,6 +1156,7 @@ What you can do:
     <string name="d_tray_hide">Hide Amber</string>
     <string name="d_tray_open">Open Amber</string>
     <string name="d_tray_quit">Quit Amber</string>
+    <string name="d_hidden_no_tray">Amber is still running and answering requests. Open it again from your app launcher.</string>
     <string name="d_tor_off">Off</string>
     <string name="d_tor_external">External Tor proxy</string>
     <string name="d_tor_external_sub">Use a Tor daemon already running on this computer. The system tor service listens on port 9050, Tor Browser on 9150.</string>

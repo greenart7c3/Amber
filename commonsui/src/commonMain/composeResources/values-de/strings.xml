@@ -1146,6 +1146,7 @@ Was du tun kannst:
     <string name="d_tray_hide">Amber ausblenden</string>
     <string name="d_tray_open">Amber öffnen</string>
     <string name="d_tray_quit">Amber beenden</string>
+    <string name="d_hidden_no_tray">Amber läuft weiter und beantwortet Anfragen. Öffne es wieder über deinen App-Starter.</string>
     <string name="switch_relays">möchte die Relais wechseln</string>
     <string name="invalid_request">hat eine ungültige Anfrage gesendet</string>
     <string name="d_tor_off">Aus</string>

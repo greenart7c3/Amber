@@ -12,6 +12,8 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
 import java.nio.file.attribute.PosixFilePermissions
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 
 /**
@@ -24,7 +26,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
  *   there is one (see [installMacOpenUriHandler]).
  * - A file lock makes the app single-instance: a second launch forwards the
  *   URI over a private unix socket in the runtime dir to the running
- *   instance and exits.
+ *   instance and exits. A launch without a URI (the app launcher) sends
+ *   [SHOW_MESSAGE] instead, so the running instance shows its window: it may
+ *   be hidden with no tray icon to bring it back (see [showRequests]).
  * - The running instance listens on that socket and exposes forwarded URIs
  *   as [pending]; the UI processes each one through `addNostrConnect` once
  *   an account is unlocked (a link clicked while locked waits for unlock).
@@ -45,6 +49,12 @@ object UriLaunch {
 
     /** Latest nostrconnect:// URI this process received but has not handled yet. */
     val pending = MutableStateFlow<String?>(null)
+
+    /** What a second launch without a URI sends: "show your window". */
+    internal const val SHOW_MESSAGE = "amber:show"
+
+    /** Emits when a second launch without a URI asked this instance to show its window. */
+    val showRequests = MutableSharedFlow<Unit>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
     /** First nostrconnect:// URI among the launch arguments, if any. */
     fun extract(args: Array<String>): String? = args.firstOrNull { it.startsWith(PREFIX) }
@@ -120,11 +130,16 @@ object UriLaunch {
         }
     }
 
+    /** Asks the running instance to show its window (see [SHOW_MESSAGE]). */
+    fun askRunningInstanceToShow(): Boolean = send(SHOW_MESSAGE)
+
     /** Hands [uri] to the running instance over the unix socket. */
-    fun forwardToRunningInstance(uri: String): Boolean = runCatching {
+    fun forwardToRunningInstance(uri: String): Boolean = send(uri)
+
+    private fun send(message: String): Boolean = runCatching {
         SocketChannel.open(StandardProtocolFamily.UNIX).use { channel ->
             channel.connect(UnixDomainSocketAddress.of(socketPath()))
-            channel.write(ByteBuffer.wrap(uri.toByteArray(Charsets.UTF_8)))
+            channel.write(ByteBuffer.wrap(message.toByteArray(Charsets.UTF_8)))
             true
         }
     }.getOrDefault(false)
@@ -190,6 +205,10 @@ object UriLaunch {
             if (buffer.position() >= buffer.capacity()) break
         }
         val uri = String(buffer.array(), 0, buffer.position(), Charsets.UTF_8).trim()
+        if (uri == SHOW_MESSAGE) {
+            showRequests.tryEmit(Unit)
+            return
+        }
         if (!uri.startsWith(PREFIX)) return
         if (pending.value != null) {
             AmberLogger.d("UriLaunch", "Ignored a forwarded URI; one is already pending")

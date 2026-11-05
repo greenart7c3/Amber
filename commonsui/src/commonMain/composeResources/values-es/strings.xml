@@ -1147,6 +1147,7 @@ Qué puedes hacer:
     <string name="d_tray_hide">Ocultar Amber</string>
     <string name="d_tray_open">Abrir Amber</string>
     <string name="d_tray_quit">Salir de Amber</string>
+    <string name="d_hidden_no_tray">Amber sigue en ejecución y respondiendo solicitudes. Vuelve a abrirlo desde tu lanzador de aplicaciones.</string>
     <string name="switch_relays">quiere cambiar los relays</string>
     <string name="invalid_request">envió una solicitud no válida</string>
     <string name="d_tor_off">Desactivado</string>

@@ -6,6 +6,11 @@ import java.nio.file.FileSystems
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.attribute.PosixFilePermission
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.async
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -90,5 +95,23 @@ class UriLaunchIpcTest {
 
         assertTrue(UriLaunch.forwardToRunningInstance("not-a-nostrconnect-uri"))
         assertFalse("garbage was published as pending", await(600) { UriLaunch.pending.value != null })
+    }
+
+    @Test
+    fun aLaunchWithoutAUriAsksTheRunningInstanceToShowItsWindow() {
+        Assume.assumeTrue(UriLaunch.isLinux)
+
+        UriLaunch.startIpcServer()
+        assertTrue(await { Files.exists(socketPath) })
+
+        runBlocking {
+            withTimeout(5_000) {
+                // Subscribed before the request is sent: the flow does not replay.
+                val shown = async(start = CoroutineStart.UNDISPATCHED) { UriLaunch.showRequests.first() }
+                assertTrue(UriLaunch.askRunningInstanceToShow())
+                shown.await()
+            }
+        }
+        assertEquals("a show request is not a URI", null, UriLaunch.pending.value)
     }
 }

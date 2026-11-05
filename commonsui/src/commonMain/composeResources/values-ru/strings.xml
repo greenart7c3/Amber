@@ -1148,6 +1148,7 @@
     <string name="d_tray_hide">Скрыть Amber</string>
     <string name="d_tray_open">Открыть Amber</string>
     <string name="d_tray_quit">Выйти из Amber</string>
+    <string name="d_hidden_no_tray">Amber продолжает работать и отвечать на запросы. Откройте его снова из меню приложений.</string>
     <string name="switch_relays">хочет сменить Relay-серверы</string>
     <string name="invalid_request">отправил недопустимый запрос</string>
     <string name="d_tor_off">Выкл.</string>

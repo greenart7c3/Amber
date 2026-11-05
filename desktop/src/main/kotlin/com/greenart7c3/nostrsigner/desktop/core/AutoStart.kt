@@ -20,8 +20,9 @@ import java.io.File
  * Hardening mirrors Opal's unit with one deliberate exception: no
  * MemoryDenyWriteExecute, which the JVM cannot survive (the JIT needs
  * writable executable memory). The unit needs write access to: the data dir,
- * the runtime dir (nostrconnect socket) and the applications dir (scheme
- * handler registration).
+ * the runtime dir (nostrconnect socket), the applications dir (scheme
+ * handler registration) and `~/.local/share/nostr` (the NIP-5F local signer
+ * socket, see [LocalSigner]).
  *
  * Only packaged runs can be supervised: a dev run's command line is a bare
  * Gradle invocation with no stable binary ([isSupported] gates the UI).
@@ -96,6 +97,7 @@ object AutoStart {
                 AmberLogger.e("AutoStart", "Executable or AppImage cache path contains control characters; refusing to write a corrupt unit")
                 return
             }
+            prepareLocalSignerDir()
             unitFile().writeText(unitContent(exe, cachePath))
             systemctl("daemon-reload")
             if (enabled) {
@@ -217,6 +219,17 @@ object AutoStart {
     }
 
     /**
+     * The local signer's socket dir must exist before the unit starts, like
+     * [prepareAppImageCache]'s: a missing ReadWritePaths entry is skipped and
+     * the sandbox could then not create it, so the local signer would not
+     * start. Owner-only, as [LocalSigner] requires.
+     */
+    private fun prepareLocalSignerDir() {
+        val dir = LocalSigner.socketPath().parent.toFile()
+        if (!dir.exists() && dir.mkdirs()) AppDirs.restrictToOwner(dir)
+    }
+
+    /**
      * [appImageCacheDir] is set when [exePath] is an AppImage: under
      * NoNewPrivileges and the syscall filter it cannot FUSE-mount itself
      * (setuid fusermount3, mount(2)), so the unit has it extract into that
@@ -231,7 +244,7 @@ object AutoStart {
         return baseUnitContent(exePath).replace(READ_WRITE_PATHS_LINE, READ_WRITE_PATHS_LINE + appImage)
     }
 
-    private const val READ_WRITE_PATHS_LINE = "ReadWritePaths=-%h/.local/share/amber -%h/.local/share/applications %t\n"
+    private const val READ_WRITE_PATHS_LINE = "ReadWritePaths=-%h/.local/share/amber -%h/.local/share/applications -%h/.local/share/nostr %t\n"
 
     private fun baseUnitContent(exePath: String): String = """
         [Unit]
@@ -252,7 +265,7 @@ object AutoStart {
         BindPaths=-/tmp/.X11-unix
         ProtectSystem=strict
         ProtectHome=read-only
-        ReadWritePaths=-%h/.local/share/amber -%h/.local/share/applications %t
+        ReadWritePaths=-%h/.local/share/amber -%h/.local/share/applications -%h/.local/share/nostr %t
         ProtectKernelTunables=yes
         ProtectKernelModules=yes
         ProtectControlGroups=yes

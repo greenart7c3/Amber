@@ -1145,6 +1145,7 @@ Android용 모든 Nostr 앱 보기:</string>
     <string name="d_tray_hide">Amber 숨기기</string>
     <string name="d_tray_open">Amber 열기</string>
     <string name="d_tray_quit">Amber 종료</string>
+    <string name="d_hidden_no_tray">Amber가 계속 실행 중이며 요청에 응답하고 있습니다. 앱 실행기에서 다시 열 수 있습니다.</string>
     <string name="switch_relays">Relay 전환을 요청합니다</string>
     <string name="invalid_request">잘못된 요청을 보냈습니다</string>
     <string name="d_tor_off">끄기</string>

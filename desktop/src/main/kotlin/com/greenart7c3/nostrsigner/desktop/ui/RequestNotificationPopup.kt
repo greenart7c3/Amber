@@ -186,6 +186,7 @@ fun RequestNotificationPopup(
                 // Create the native window first so it can be typed before it maps.
                 addNotify()
                 markAsX11Popup(this)
+                keepBounds(this)
                 isVisible = true
             }
             onDispose { popup.dispose() }
@@ -349,6 +350,29 @@ private fun CloseGlyph(color: Color, label: String, modifier: Modifier, onClick:
     ) {
         Text("✕", color = color, fontSize = fontSize.sp)
     }
+}
+
+/**
+ * Puts the popup back where and how big it was placed whenever the compositor
+ * moves or resizes it. Hyprland applies window rules even to override-redirect
+ * XWayland windows, so a rule that floats, sizes and centers every new window
+ * (Omarchy's floating workspace layout) turned the toast into a large window in
+ * the middle of the screen. An override-redirect window owns its geometry, so
+ * the compositor accepts the bounds it sets back.
+ */
+private fun keepBounds(window: java.awt.Window) {
+    val wanted = window.bounds
+    window.addComponentListener(
+        object : java.awt.event.ComponentAdapter() {
+            override fun componentMoved(e: java.awt.event.ComponentEvent) = restore()
+
+            override fun componentResized(e: java.awt.event.ComponentEvent) = restore()
+
+            private fun restore() {
+                if (window.bounds != wanted) window.bounds = wanted
+            }
+        },
+    )
 }
 
 /**

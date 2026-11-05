@@ -1146,6 +1146,7 @@ Yapabilecekleriniz:
     <string name="d_tray_hide">Amber'i gizle</string>
     <string name="d_tray_open">Amber'i aç</string>
     <string name="d_tray_quit">Amber'den çık</string>
+    <string name="d_hidden_no_tray">Amber çalışmaya ve istekleri yanıtlamaya devam ediyor. Uygulama başlatıcınızdan yeniden açın.</string>
     <string name="switch_relays">Relay'leri değiştirmek istiyor</string>
     <string name="invalid_request">geçersiz bir istek gönderdi</string>
     <string name="d_tor_off">Kapalı</string>

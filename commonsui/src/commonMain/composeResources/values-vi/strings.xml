@@ -1169,6 +1169,7 @@ Bạn có thể làm:
     <string name="d_tray_hide">Ẩn Amber</string>
     <string name="d_tray_open">Mở Amber</string>
     <string name="d_tray_quit">Thoát Amber</string>
+    <string name="d_hidden_no_tray">Amber vẫn đang chạy và trả lời các yêu cầu. Hãy mở lại từ trình khởi chạy ứng dụng.</string>
     <string name="switch_relays">muốn chuyển relay</string>
     <string name="invalid_request">đã gửi một yêu cầu không hợp lệ</string>
     <string name="d_tor_off">Tắt</string>

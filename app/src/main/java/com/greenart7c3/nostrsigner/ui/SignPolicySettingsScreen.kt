@@ -21,15 +21,20 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.commonsui.Res
+import com.greenart7c3.nostrsigner.commonsui.save
+import com.greenart7c3.nostrsigner.commonsui.sign_policy_basic
+import com.greenart7c3.nostrsigner.commonsui.sign_policy_basic_explainer
+import com.greenart7c3.nostrsigner.commonsui.sign_policy_manual
+import com.greenart7c3.nostrsigner.commonsui.sign_policy_manual_explainer
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.ui.components.AmberButton
 import com.greenart7c3.nostrsigner.ui.components.TitleExplainer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun SignPolicySettingsScreen(
@@ -39,12 +44,12 @@ fun SignPolicySettingsScreen(
 ) {
     val radioOptions = listOf(
         TitleExplainer(
-            title = stringResource(R.string.sign_policy_basic),
-            explainer = stringResource(R.string.sign_policy_basic_explainer),
+            title = stringResource(Res.string.sign_policy_basic),
+            explainer = stringResource(Res.string.sign_policy_basic_explainer),
         ),
         TitleExplainer(
-            title = stringResource(R.string.sign_policy_manual),
-            explainer = stringResource(R.string.sign_policy_manual_explainer),
+            title = stringResource(Res.string.sign_policy_manual),
+            explainer = stringResource(Res.string.sign_policy_manual_explainer),
         ),
     )
     var selectedOption by remember { mutableIntStateOf(account.signPolicy) }
@@ -109,7 +114,7 @@ fun SignPolicySettingsScreen(
                     }
                 }
             },
-            text = stringResource(R.string.save),
+            text = stringResource(Res.string.save),
         )
     }
 }

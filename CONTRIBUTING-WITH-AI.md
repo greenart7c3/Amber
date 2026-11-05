@@ -67,7 +67,7 @@ Put these in the **Test plan** section of the
   for new logic. Tests that only exercise mocks don't count as proof the real
   code path works.
 - **Translations:** every new or changed string translated in every existing
-  `values-<locale>/strings.xml`.
+  `commonsui/src/commonMain/composeResources/values-<locale>/strings.xml`.
 
 If testing on the device finds bugs, fix them in separate commits whose
 messages name the root cause. Don't squash them into the feature commit.

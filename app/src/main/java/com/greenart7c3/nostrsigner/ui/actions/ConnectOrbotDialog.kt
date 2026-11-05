@@ -36,17 +36,26 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.greenart7c3.nostrsigner.Amber
-import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.commonsui.Res
+import com.greenart7c3.nostrsigner.commonsui.builtin_tor_active
+import com.greenart7c3.nostrsigner.commonsui.builtin_tor_description
+import com.greenart7c3.nostrsigner.commonsui.builtin_tor_title
+import com.greenart7c3.nostrsigner.commonsui.connect_through_your_orbot_setup_markdown
+import com.greenart7c3.nostrsigner.commonsui.invalid_port_number
+import com.greenart7c3.nostrsigner.commonsui.orbot_socks_port
+import com.greenart7c3.nostrsigner.commonsui.orbot_title
+import com.greenart7c3.nostrsigner.commonsui.use_builtin_tor
+import com.greenart7c3.nostrsigner.commonsui.use_orbot
 import com.greenart7c3.nostrsigner.models.TorMode
 import com.greenart7c3.nostrsigner.ui.components.AmberButton
 import com.greenart7c3.nostrsigner.ui.components.MarkdownText
 import kotlinx.coroutines.CancellationException
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun ConnectOrbotScreen(
@@ -61,7 +70,7 @@ fun ConnectOrbotScreen(
         modifier = modifier,
     ) {
         Text(
-            text = stringResource(R.string.builtin_tor_title),
+            text = stringResource(Res.string.builtin_tor_title),
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
         )
@@ -69,7 +78,7 @@ fun ConnectOrbotScreen(
         Spacer(modifier = Modifier.height(8.dp))
 
         Text(
-            text = stringResource(R.string.builtin_tor_description),
+            text = stringResource(Res.string.builtin_tor_description),
             style = MaterialTheme.typography.bodyMedium,
         )
 
@@ -79,9 +88,9 @@ fun ConnectOrbotScreen(
             modifier = Modifier.fillMaxWidth(),
             onClick = onBuiltinTor,
             text = if (Amber.instance.settings.torMode == TorMode.BUILTIN) {
-                stringResource(R.string.builtin_tor_active)
+                stringResource(Res.string.builtin_tor_active)
             } else {
-                stringResource(R.string.use_builtin_tor)
+                stringResource(Res.string.use_builtin_tor)
             },
             enabled = Amber.instance.settings.torMode != TorMode.BUILTIN,
         )
@@ -93,14 +102,14 @@ fun ConnectOrbotScreen(
         Spacer(modifier = Modifier.height(24.dp))
 
         Text(
-            text = stringResource(R.string.orbot_title),
+            text = stringResource(Res.string.orbot_title),
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
         )
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        val content1 = stringResource(R.string.connect_through_your_orbot_setup_markdown)
+        val content1 = stringResource(Res.string.connect_through_your_orbot_setup_markdown)
         MarkdownText(content1)
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -113,7 +122,7 @@ fun ConnectOrbotScreen(
                 capitalization = KeyboardCapitalization.None,
                 keyboardType = KeyboardType.Number,
             ),
-            label = { Text(text = stringResource(R.string.orbot_socks_port)) },
+            label = { Text(text = stringResource(Res.string.orbot_socks_port)) },
             placeholder = {
                 Text(
                     text = "9050",
@@ -121,7 +130,7 @@ fun ConnectOrbotScreen(
             },
         )
 
-        val toastMessage = stringResource(R.string.invalid_port_number)
+        val toastMessage = stringResource(Res.string.invalid_port_number)
 
         AmberButton(
             modifier = Modifier.padding(top = 20.dp),
@@ -136,7 +145,7 @@ fun ConnectOrbotScreen(
 
                 onPost(portNumber.value.toInt())
             },
-            text = stringResource(R.string.use_orbot),
+            text = stringResource(Res.string.use_orbot),
         )
     }
 }

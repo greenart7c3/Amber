@@ -1,7 +1,6 @@
 package com.greenart7c3.nostrsigner.ui.actions
 
 import android.annotation.SuppressLint
-import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -41,7 +40,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.TextFieldValue
@@ -57,10 +55,26 @@ import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.LocalPreferences
-import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.checkNotInMainThread
+import com.greenart7c3.nostrsigner.commonsui.Res
+import com.greenart7c3.nostrsigner.commonsui.active_relays_connections_description
+import com.greenart7c3.nostrsigner.commonsui.active_relays_default_description
+import com.greenart7c3.nostrsigner.commonsui.add
+import com.greenart7c3.nostrsigner.commonsui.could_not_connect_to_relay
+import com.greenart7c3.nostrsigner.commonsui.default_relay_text
+import com.greenart7c3.nostrsigner.commonsui.default_relays
+import com.greenart7c3.nostrsigner.commonsui.getStringBlocking
+import com.greenart7c3.nostrsigner.commonsui.insecure_relay_warning
+import com.greenart7c3.nostrsigner.commonsui.log_repeated
+import com.greenart7c3.nostrsigner.commonsui.manage_the_relays_used_for_communicating_with_external_applications
+import com.greenart7c3.nostrsigner.commonsui.paste_from_clipboard
+import com.greenart7c3.nostrsigner.commonsui.relay
+import com.greenart7c3.nostrsigner.commonsui.relay_filter_failed
+import com.greenart7c3.nostrsigner.commonsui.relays_used_by_connections
+import com.greenart7c3.nostrsigner.commonsui.testing_relay
+import com.greenart7c3.nostrsigner.commonsui.wss
 import com.greenart7c3.nostrsigner.models.Account
-import com.greenart7c3.nostrsigner.models.TimeUtils.formatLongToCustomDateTimeWithSeconds
+import com.greenart7c3.nostrsigner.models.TimeUtils as AmberTimeUtils
 import com.greenart7c3.nostrsigner.models.defaultAppRelays
 import com.greenart7c3.nostrsigner.relays.AmberListenerSingleton
 import com.greenart7c3.nostrsigner.service.TrustScoreService
@@ -98,6 +112,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun DefaultRelaysScreen(
@@ -105,7 +120,6 @@ fun DefaultRelaysScreen(
     account: Account,
 ) {
     val scope = rememberCoroutineScope()
-    val context = LocalContext.current
     val clipboardManager = LocalClipboard.current
     val textFieldRelay = remember { mutableStateOf(TextFieldValue("")) }
     val isLoading = remember { mutableStateOf(false) }
@@ -138,7 +152,7 @@ fun DefaultRelaysScreen(
         if (isLoading.value) {
             CenterCircularProgressIndicator(
                 Modifier,
-                text = stringResource(R.string.testing_relay),
+                text = stringResource(Res.string.testing_relay),
             )
         } else {
             Column(
@@ -168,12 +182,12 @@ fun DefaultRelaysScreen(
                                 }
                             }
                         },
-                        text = stringResource(R.string.default_relay_text),
+                        text = stringResource(Res.string.default_relay_text),
                     )
                 }
 
                 Text(
-                    text = stringResource(R.string.manage_the_relays_used_for_communicating_with_external_applications),
+                    text = stringResource(Res.string.manage_the_relays_used_for_communicating_with_external_applications),
                     modifier = Modifier.padding(bottom = 8.dp),
                 )
 
@@ -198,7 +212,6 @@ fun DefaultRelaysScreen(
                                     relays2,
                                     scope,
                                     account,
-                                    context,
                                     onDone = {
                                         Amber.instance.settings = Amber.instance.settings.copy(
                                             defaultRelays = relays2,
@@ -218,7 +231,7 @@ fun DefaultRelaysScreen(
                         },
                     ),
                     label = {
-                        Text(stringResource(R.string.wss))
+                        Text(stringResource(Res.string.wss))
                     },
                     leadingIcon = {
                         IconButton(
@@ -233,7 +246,7 @@ fun DefaultRelaysScreen(
                         ) {
                             Icon(
                                 Icons.Default.ContentPaste,
-                                contentDescription = stringResource(R.string.paste_from_clipboard),
+                                contentDescription = stringResource(Res.string.paste_from_clipboard),
                             )
                         }
                     },
@@ -251,7 +264,6 @@ fun DefaultRelaysScreen(
                                         relays2,
                                         scope,
                                         account,
-                                        context,
                                         onDone = {
                                             Amber.instance.settings = Amber.instance.settings.copy(
                                                 defaultRelays = relays2,
@@ -272,7 +284,7 @@ fun DefaultRelaysScreen(
                         ) {
                             Icon(
                                 Icons.Default.Add,
-                                contentDescription = stringResource(R.string.add),
+                                contentDescription = stringResource(Res.string.add),
                             )
                         }
                     },
@@ -291,7 +303,7 @@ fun DefaultRelaysScreen(
                     !Amber.instance.isPrivateIp(text)
                 if (showInsecureWarning) {
                     Text(
-                        text = stringResource(R.string.insecure_relay_warning),
+                        text = stringResource(Res.string.insecure_relay_warning),
                         color = MaterialTheme.colorScheme.error,
                         modifier = Modifier.padding(vertical = 8.dp),
                         fontSize = 12.sp,
@@ -341,7 +353,6 @@ fun onAddRelay(
     relays2: SnapshotStateList<NormalizedRelayUrl>,
     scope: CoroutineScope,
     account: Account,
-    context: Context,
     shouldCheckForBunker: Boolean = true,
     onDone: () -> Unit,
 ) {
@@ -425,8 +436,8 @@ fun onAddRelay(
 
                     override fun onCannotConnect(relay: IRelayClient, errorMessage: String) {
                         ToastManager.toast(
-                            context.getString(R.string.relay),
-                            context.getString(R.string.could_not_connect_to_relay),
+                            getStringBlocking(Res.string.relay),
+                            getStringBlocking(Res.string.could_not_connect_to_relay),
                             onAccept = {
                                 relays2.add(addedWSS)
                                 onDone()
@@ -471,8 +482,8 @@ fun onAddRelay(
 
                 if (canContinue == null) {
                     ToastManager.toast(
-                        context.getString(R.string.relay),
-                        context.getString(R.string.could_not_connect_to_relay),
+                        getStringBlocking(Res.string.relay),
+                        getStringBlocking(Res.string.could_not_connect_to_relay),
                         onAccept = {
                             relays2.add(addedWSS)
                             onDone()
@@ -524,8 +535,8 @@ fun onAddRelay(
                     onDone()
                 } else if (!filterResult) {
                     ToastManager.toast(
-                        context.getString(R.string.relay),
-                        context.getString(R.string.relay_filter_failed),
+                        getStringBlocking(Res.string.relay),
+                        getStringBlocking(Res.string.relay_filter_failed),
                         onAccept = {
                             relays2.add(addedWSS)
                             onDone()
@@ -551,6 +562,7 @@ fun RelayLogScreen(
     account: Account,
     url: String,
 ) {
+    val context = LocalContext.current
     val pager =
         Pager(
             PagingConfig(
@@ -580,7 +592,7 @@ fun RelayLogScreen(
                     ) {
                         Text(
                             modifier = Modifier.padding(top = 16.dp),
-                            text = formatLongToCustomDateTimeWithSeconds(log.time),
+                            text = AmberTimeUtils.formatDateTime(context, log.time, withSeconds = true),
                             fontSize = 14.sp,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
@@ -592,7 +604,7 @@ fun RelayLogScreen(
                         )
                         Text(
                             modifier = Modifier.padding(top = 4.dp, bottom = 16.dp),
-                            text = if (log.repeatCount > 1) stringResource(R.string.log_repeated, log.message, log.repeatCount) else log.message,
+                            text = if (log.repeatCount > 1) stringResource(Res.string.log_repeated, log.message, log.repeatCount) else log.message,
                             fontSize = 20.sp,
                         )
 
@@ -656,9 +668,9 @@ fun ActiveRelaysScreen(
         modifier = modifier
             .fillMaxSize(),
     ) {
-        SectionLabel(stringResource(R.string.default_relays))
+        SectionLabel(stringResource(Res.string.default_relays))
         Text(
-            text = stringResource(R.string.active_relays_default_description),
+            text = stringResource(Res.string.active_relays_default_description),
             fontSize = 14.sp,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -667,9 +679,9 @@ fun ActiveRelaysScreen(
         }
 
         if (connectionRelays.isNotEmpty()) {
-            SectionLabel(stringResource(R.string.relays_used_by_connections))
+            SectionLabel(stringResource(Res.string.relays_used_by_connections))
             Text(
-                text = stringResource(R.string.active_relays_connections_description),
+                text = stringResource(Res.string.active_relays_connections_description),
                 fontSize = 14.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )

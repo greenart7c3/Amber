@@ -16,7 +16,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -24,12 +23,17 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.commonsui.Res
+import com.greenart7c3.nostrsigner.commonsui.for_all_relays
+import com.greenart7c3.nostrsigner.commonsui.for_this_relay_only
+import com.greenart7c3.nostrsigner.commonsui.relay_auth_request
+import com.greenart7c3.nostrsigner.commonsui.relay_auth_scope
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.ui.RememberType
 import com.greenart7c3.nostrsigner.ui.theme.AmberPreview
 import com.greenart7c3.nostrsigner.ui.theme.ThemePreviews
 import com.greenart7c3.nostrsigner.ui.theme.previewAccount
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Scope for a kind 22242 relay authentication permission.
@@ -80,7 +84,7 @@ fun BunkerRelayAuthScreen(
                     append(appName)
                 }
                 append(" ")
-                append(stringResource(R.string.relay_auth_request, ""))
+                append(stringResource(Res.string.relay_auth_request, ""))
             },
             fontSize = 18.sp,
             textAlign = TextAlign.Center,
@@ -108,7 +112,7 @@ fun BunkerRelayAuthScreen(
         Spacer(modifier = Modifier.weight(1f))
 
         LabeledBorderBox(
-            label = stringResource(R.string.relay_auth_scope),
+            label = stringResource(Res.string.relay_auth_scope),
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp),
@@ -120,8 +124,8 @@ fun BunkerRelayAuthScreen(
                 label = {
                     stringResource(
                         when (it) {
-                            RelayAuthScope.SPECIFIC -> R.string.for_this_relay_only
-                            RelayAuthScope.ALL -> R.string.for_all_relays
+                            RelayAuthScope.SPECIFIC -> Res.string.for_this_relay_only
+                            RelayAuthScope.ALL -> Res.string.for_all_relays
                         },
                     )
                 },

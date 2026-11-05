@@ -11,6 +11,7 @@ import com.greenart7c3.nostrsigner.common.nip44v3.Nip44v3
 import com.greenart7c3.nostrsigner.common.psbt.PsbtSighashPolicy
 import com.greenart7c3.nostrsigner.common.relays.RelayHealthTracker
 import com.greenart7c3.nostrsigner.common.sanitizeAppName
+import com.greenart7c3.nostrsigner.commonsui.Permission
 import com.vitorpamplona.quartz.nip01Core.core.Event
 import com.vitorpamplona.quartz.nip01Core.core.hexToByteArray
 import com.vitorpamplona.quartz.nip01Core.crypto.KeyPair
@@ -78,7 +79,7 @@ data class PendingBunkerRequest(
     val appName: String = "",
     val appUrl: String = "",
     val appIcon: String = "",
-    val requestedPermissions: List<RequestedPermission> = emptyList(),
+    val requestedPermissions: List<Permission> = emptyList(),
     val kind: Int? = null,
     val preview: String = "",
     val result: String = "",
@@ -922,7 +923,7 @@ class BunkerEngine(
     fun approve(
         req: PendingBunkerRequest,
         rememberType: RememberType,
-        grantedPermissions: List<RequestedPermission> = emptyList(),
+        grantedPermissions: List<Permission> = emptyList(),
         signPolicy: Int? = null,
         deleteAfter: Long = 0L,
         accountNpub: String? = null,
@@ -932,7 +933,7 @@ class BunkerEngine(
     private suspend fun doApprove(
         req: PendingBunkerRequest,
         rememberType: RememberType,
-        grantedPermissions: List<RequestedPermission> = emptyList(),
+        grantedPermissions: List<Permission> = emptyList(),
         signPolicy: Int? = null,
         deleteAfter: Long = 0L,
         accountNpub: String? = null,
@@ -1150,7 +1151,7 @@ class BunkerEngine(
     private fun applySignPolicy(
         application: AppWithPermissions,
         signPolicy: Int,
-        permissions: List<RequestedPermission>,
+        permissions: List<Permission>,
     ) {
         when (signPolicy) {
             0 -> {
@@ -1167,7 +1168,7 @@ class BunkerEngine(
         }
     }
 
-    private fun addAcceptedPermission(application: AppWithPermissions, perm: RequestedPermission) {
+    private fun addAcceptedPermission(application: AppWithPermissions, perm: Permission) {
         // A requested perm can map to more than one stored permission type: the
         // request path keys encrypt/decrypt by NIP (NIP04_ENCRYPT/NIP44_ENCRYPT),
         // but a content-scoped or generic perm (encrypt_event, encrypt) is
@@ -1319,7 +1320,7 @@ class BunkerEngine(
             var url = ""
             var image = ""
             var nostrConnectSecret = ""
-            val permissions = mutableListOf<RequestedPermission>()
+            val permissions = mutableListOf<Permission>()
 
             split.drop(1).joinToString("?").split("&").forEach { param ->
                 val parts = param.split("=")
@@ -1411,12 +1412,12 @@ class BunkerEngine(
         return "bunker://${localPubKeyFromPrivKey(connPrivKey)}?$relayParams&secret=$secret"
     }
 
-    private fun parsePermissionsParam(permissions: String?): List<RequestedPermission> {
+    private fun parsePermissionsParam(permissions: String?): List<Permission> {
         if (permissions.isNullOrBlank()) return emptyList()
         return permissions.split(",").mapNotNull { perm ->
             if (perm.isBlank()) return@mapNotNull null
             val parts = perm.split(":")
-            RequestedPermission(parts.first().trim(), parts.getOrNull(1)?.toIntOrNull())
+            Permission(parts.first().trim(), parts.getOrNull(1)?.toIntOrNull())
         }
     }
 

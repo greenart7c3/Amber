@@ -6,6 +6,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -20,6 +21,16 @@ import androidx.compose.ui.window.WindowState
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.isTraySupported
 import androidx.compose.ui.window.rememberTrayState
+import com.greenart7c3.nostrsigner.commonsui.Res
+import com.greenart7c3.nostrsigner.commonsui.d_approve
+import com.greenart7c3.nostrsigner.commonsui.d_lock_now
+import com.greenart7c3.nostrsigner.commonsui.d_tray_hide
+import com.greenart7c3.nostrsigner.commonsui.d_tray_open
+import com.greenart7c3.nostrsigner.commonsui.d_tray_pending
+import com.greenart7c3.nostrsigner.commonsui.d_tray_quit
+import com.greenart7c3.nostrsigner.commonsui.d_tray_tooltip
+import com.greenart7c3.nostrsigner.commonsui.getStringBlocking
+import com.greenart7c3.nostrsigner.commonsui.reject
 import com.greenart7c3.nostrsigner.desktop.core.AccountManager
 import com.greenart7c3.nostrsigner.desktop.core.AccountsStore
 import com.greenart7c3.nostrsigner.desktop.core.AmberDesktop
@@ -60,6 +71,8 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.jetbrains.compose.resources.getString
+import org.jetbrains.compose.resources.stringResource
 
 /** Desktop counterpart of `AccountStateViewModel`: which account is active. */
 object Session {
@@ -177,6 +190,8 @@ private fun setX11WindowClass() {
 fun main(args: Array<String>) {
     // First, so a crash anywhere below is saved for the report dialog.
     CrashReporter.install()
+    // Before any string is read: Compose resources follow the default locale.
+    Strings.install()
     // Packaged handler: the URI arrives as an argument. Dev handler
     // (Gradle): it arrives via the drop file (Gradle cannot take it as an
     // argument).
@@ -222,10 +237,10 @@ fun main(args: Array<String>) {
     if (DesktopTray.isLinux && System.getenv("AMBER_DISABLE_TRAY") == null) {
         DesktopTray.instance = NativeTray.createBounded(
             iconStream = { NativeTray::class.java.getResourceAsStream("/icon.png") },
-            tooltip = Strings.get("d_tray_tooltip"),
-            openLabel = Strings.get("d_tray_open"),
-            lockLabel = Strings.get("d_lock_now"),
-            quitLabel = Strings.get("d_tray_quit"),
+            tooltip = getStringBlocking(Res.string.d_tray_tooltip),
+            openLabel = getStringBlocking(Res.string.d_tray_open),
+            lockLabel = getStringBlocking(Res.string.d_lock_now),
+            quitLabel = getStringBlocking(Res.string.d_tray_quit),
             onToggle = { DesktopTray.windowVisible.value = !DesktopTray.windowVisible.value },
             onLock = { PassphraseLock.lock() },
             onQuit = { DesktopTray.quitRequested.value = true },
@@ -299,9 +314,9 @@ fun main(args: Array<String>) {
         DisposableEffect(Unit) { onDispose { nativeTray?.shutdown() } }
         LaunchedEffect(pending.size, windowVisible, lockStatus, language) {
             nativeTray?.update(
-                tooltip = if (pending.isEmpty()) Strings.get("d_tray_tooltip", language) else Strings.format("d_tray_pending", pending.size, language = language),
-                openLabel = if (windowVisible) Strings.get("d_tray_hide", language) else Strings.get("d_tray_open", language),
-                lockLabel = Strings.get("d_lock_now", language),
+                tooltip = if (pending.isEmpty()) getString(Res.string.d_tray_tooltip) else getString(Res.string.d_tray_pending, pending.size),
+                openLabel = if (windowVisible) getString(Res.string.d_tray_hide) else getString(Res.string.d_tray_open),
+                lockLabel = getString(Res.string.d_lock_now),
                 showLock = lockStatus == PassphraseLock.Status.UNLOCKED,
             )
         }
@@ -335,10 +350,10 @@ fun main(args: Array<String>) {
             if (request != null && !(DesktopTray.windowVisible.value && windowFocused)) {
                 var notified = false
                 if (settings.showNotifications) {
-                    val accountLine = request.notificationAccountLine(AccountsStore.accounts.value, language)
+                    val accountLine = request.notificationAccountLine(AccountsStore.accounts.value)
                     // The client-chosen name is the (plain-text) title; the
                     // body, which daemons may render as markup, is Amber's own.
-                    val message = listOfNotNull(request.type.describe(request.kind, request.encryptedContent, language), accountLine).joinToString("\n")
+                    val message = listOfNotNull(request.type.describe(request.kind, request.encryptedContent), accountLine).joinToString("\n")
                     // Daemons that never draw action buttons get Amber's own popup.
                     val nativeButtons = isLinux && withContext(Dispatchers.IO) { Notifier.linuxDaemonShowsButtons() }
                     if (nativeButtons) {
@@ -348,9 +363,9 @@ fun main(args: Array<String>) {
                         // from here; the rest need their card, so only Reject.
                         val actions = buildList {
                             if (request.allowsQuickApprove()) {
-                                add(Notifier.Action("approve", Strings.get("d_approve", language)) { answerFromNotification(request, approve = true) })
+                                add(Notifier.Action("approve", getString(Res.string.d_approve)) { answerFromNotification(request, approve = true) })
                             }
-                            add(Notifier.Action("reject", Strings.get("reject", language)) { answerFromNotification(request, approve = false) })
+                            add(Notifier.Action("reject", getString(Res.string.reject)) { answerFromNotification(request, approve = false) })
                         }
                         notified = withContext(Dispatchers.IO) {
                             Notifier.notify(request.notificationTitle(), message, actions, onActivate = { DesktopTray.windowVisible.value = true })
@@ -383,10 +398,9 @@ fun main(args: Array<String>) {
                     request = request,
                     title = request.notificationTitle(),
                     message = listOfNotNull(
-                        request.type.describe(request.kind, request.encryptedContent, language),
-                        request.notificationAccountLine(AccountsStore.accounts.value, language),
+                        request.type.describe(request.kind, request.encryptedContent),
+                        request.notificationAccountLine(AccountsStore.accounts.value),
                     ).joinToString("\n"),
-                    language = language,
                     onApprove = {
                         popupRequest = null
                         answerFromNotification(request, approve = true)
@@ -406,23 +420,26 @@ fun main(args: Array<String>) {
         }
 
         if (awtTrayUsable) {
-            Tray(
-                icon = amberIconPainter(),
-                state = trayState,
-                tooltip = if (pending.isEmpty()) Strings.get("d_tray_tooltip", language) else Strings.format("d_tray_pending", pending.size, language = language),
-                onAction = { DesktopTray.windowVisible.value = true },
-                menu = {
-                    Item(
-                        if (windowVisible) Strings.get("d_tray_hide", language) else Strings.get("d_tray_open", language),
-                        onClick = { DesktopTray.windowVisible.value = !DesktopTray.windowVisible.value },
-                    )
-                    if (lockStatus == PassphraseLock.Status.UNLOCKED) {
-                        Item(Strings.get("d_lock_now", language), onClick = { PassphraseLock.lock() })
-                    }
-                    Separator()
-                    Item(Strings.get("d_tray_quit", language), onClick = ::exitApplication)
-                },
-            )
+            // Rebuilt on a language change, so the menu labels follow it.
+            key(language) {
+                Tray(
+                    icon = amberIconPainter(),
+                    state = trayState,
+                    tooltip = if (pending.isEmpty()) getStringBlocking(Res.string.d_tray_tooltip) else getStringBlocking(Res.string.d_tray_pending, pending.size),
+                    onAction = { DesktopTray.windowVisible.value = true },
+                    menu = {
+                        Item(
+                            if (windowVisible) stringResource(Res.string.d_tray_hide) else stringResource(Res.string.d_tray_open),
+                            onClick = { DesktopTray.windowVisible.value = !DesktopTray.windowVisible.value },
+                        )
+                        if (lockStatus == PassphraseLock.Status.UNLOCKED) {
+                            Item(stringResource(Res.string.d_lock_now), onClick = { PassphraseLock.lock() })
+                        }
+                        Separator()
+                        Item(stringResource(Res.string.d_tray_quit), onClick = ::exitApplication)
+                    },
+                )
+            }
         }
 
         Window(
@@ -452,8 +469,11 @@ fun main(args: Array<String>) {
             }
             val focused = LocalWindowInfo.current.isWindowFocused
             LaunchedEffect(focused) { windowFocused = focused }
-            NostrSignerTheme {
-                App()
+            // Strings follow the JVM default locale (Strings.setLanguage): recompose them all.
+            key(language) {
+                NostrSignerTheme {
+                    App()
+                }
             }
         }
     }

@@ -18,18 +18,22 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.LocalPreferences
-import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.commonsui.Res
+import com.greenart7c3.nostrsigner.commonsui.active_relays
+import com.greenart7c3.nostrsigner.commonsui.default_profile_relays
+import com.greenart7c3.nostrsigner.commonsui.relay_trust_score
+import com.greenart7c3.nostrsigner.commonsui.relay_trust_score_description
 import com.greenart7c3.nostrsigner.service.TrustScoreService
 import com.greenart7c3.nostrsigner.ui.components.AmberButton
 import com.greenart7c3.nostrsigner.ui.navigation.Route
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun RelaysScreen(
@@ -55,14 +59,14 @@ fun RelaysScreen(
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         AmberButton(
-            text = stringResource(R.string.active_relays),
+            text = stringResource(Res.string.active_relays),
             onClick = {
                 navController.navigate(Route.ActiveRelays.route)
             },
         )
 
         AmberButton(
-            text = stringResource(R.string.default_profile_relays),
+            text = stringResource(Res.string.default_profile_relays),
             onClick = {
                 navController.navigate(Route.DefaultProfileRelaysScreen.route)
             },
@@ -80,9 +84,9 @@ fun RelaysScreen(
                     .padding(horizontal = 8.dp, vertical = 4.dp),
             ) {
                 Column(modifier = Modifier.weight(1f)) {
-                    Text(text = stringResource(R.string.relay_trust_score))
+                    Text(text = stringResource(Res.string.relay_trust_score))
                     Text(
-                        text = stringResource(R.string.relay_trust_score_description),
+                        text = stringResource(Res.string.relay_trust_score_description),
                         style = MaterialTheme.typography.bodySmall,
                         color = Color.Gray,
                     )

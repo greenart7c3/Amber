@@ -12,7 +12,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.LinkAnnotation
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextLinkStyles
@@ -23,13 +22,27 @@ import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.navigation.NavController
 import com.greenart7c3.nostrsigner.Amber
-import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.commonsui.Res
+import com.greenart7c3.nostrsigner.commonsui.add_a_nsecbunker
+import com.greenart7c3.nostrsigner.commonsui.discover_more
+import com.greenart7c3.nostrsigner.commonsui.invalid_nostr_connect_uri
+import com.greenart7c3.nostrsigner.commonsui.new_app_description
+import com.greenart7c3.nostrsigner.commonsui.nostr_app
+import com.greenart7c3.nostrsigner.commonsui.nostr_connect_description
+import com.greenart7c3.nostrsigner.commonsui.nostr_connect_qr_description
+import com.greenart7c3.nostrsigner.commonsui.nsecbunker_description
+import com.greenart7c3.nostrsigner.commonsui.paste_from_clipboard
+import com.greenart7c3.nostrsigner.commonsui.scan_qr_code
+import com.greenart7c3.nostrsigner.commonsui.warning
+import com.greenart7c3.nostrsigner.commonsui.zapstore
+import com.greenart7c3.nostrsigner.commonsui.zapstore_website
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.service.IntentUtils
 import com.greenart7c3.nostrsigner.ui.components.AmberButton
 import com.greenart7c3.nostrsigner.ui.navigation.Route
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun NewApplicationScreen(
@@ -41,8 +54,8 @@ fun NewApplicationScreen(
     val clipboardManager = LocalClipboard.current
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    val title = stringResource(R.string.warning)
-    val message = stringResource(R.string.invalid_nostr_connect_uri)
+    val title = stringResource(Res.string.warning)
+    val message = stringResource(Res.string.invalid_nostr_connect_uri)
     if (dialogOpen.value) {
         SimpleQrCodeScanner(onDismiss = { dialogOpen.value = false }) {
             dialogOpen.value = false
@@ -81,7 +94,7 @@ fun NewApplicationScreen(
     ) {
         Text(
             modifier = Modifier.padding(bottom = 20.dp),
-            text = stringResource(R.string.new_app_description),
+            text = stringResource(Res.string.new_app_description),
         )
 
         AmberButton(
@@ -117,44 +130,44 @@ fun NewApplicationScreen(
                     )
                 }
             },
-            text = stringResource(R.string.paste_from_clipboard),
+            text = stringResource(Res.string.paste_from_clipboard),
         )
 
         Text(
             modifier = Modifier.padding(bottom = 20.dp),
-            text = stringResource(R.string.nostr_connect_description),
+            text = stringResource(Res.string.nostr_connect_description),
         )
 
         AmberButton(
             onClick = {
                 dialogOpen.value = true
             },
-            text = stringResource(R.string.scan_qr_code),
+            text = stringResource(Res.string.scan_qr_code),
         )
 
         Text(
             modifier = Modifier.padding(bottom = 20.dp),
-            text = stringResource(R.string.nostr_connect_qr_description),
+            text = stringResource(Res.string.nostr_connect_qr_description),
         )
 
         AmberButton(
             onClick = {
                 navController.navigate(Route.NewNsecBunker.route)
             },
-            text = stringResource(R.string.add_a_nsecbunker),
+            text = stringResource(Res.string.add_a_nsecbunker),
         )
 
         Text(
             modifier = Modifier.padding(bottom = 20.dp),
-            text = stringResource(R.string.nsecbunker_description),
+            text = stringResource(Res.string.nsecbunker_description),
         )
 
         Text(
             buildAnnotatedString {
-                append(stringResource(R.string.discover_more))
+                append(stringResource(Res.string.discover_more))
                 withLink(
                     LinkAnnotation.Url(
-                        "https://" + stringResource(R.string.nostr_app),
+                        "https://" + stringResource(Res.string.nostr_app),
                         styles = TextLinkStyles(
                             style = SpanStyle(
                                 textDecoration = TextDecoration.Underline,
@@ -162,12 +175,12 @@ fun NewApplicationScreen(
                         ),
                     ),
                 ) {
-                    append(" " + stringResource(R.string.nostr_app))
+                    append(" " + stringResource(Res.string.nostr_app))
                 }
                 append(" or ")
                 withLink(
                     LinkAnnotation.Url(
-                        if (Amber.instance.isZapstoreInstalled()) "zapstore://" else stringResource(R.string.zapstore_website),
+                        if (Amber.instance.isZapstoreInstalled()) "zapstore://" else stringResource(Res.string.zapstore_website),
                         styles = TextLinkStyles(
                             style = SpanStyle(
                                 textDecoration = TextDecoration.Underline,
@@ -175,7 +188,7 @@ fun NewApplicationScreen(
                         ),
                     ),
                 ) {
-                    append(stringResource(R.string.zapstore))
+                    append(stringResource(Res.string.zapstore))
                 }
             },
         )

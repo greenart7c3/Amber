@@ -1,24 +1,25 @@
 package com.greenart7c3.nostrsigner.desktop.core
 
-import java.util.concurrent.ConcurrentHashMap
-import javax.xml.parsers.DocumentBuilderFactory
+import java.util.Locale
 import kotlinx.coroutines.flow.MutableStateFlow
 
 /**
- * Localized strings, ported from the Android app's `res/values` strings.xml
- * files. The very same XML files are bundled under `resources/i18n` as
- * `strings_<lang>.xml`
- * and parsed at runtime, so the desktop app carries the same translations
- * (and event-kind descriptions) with no divergence.
+ * The UI language. Strings are the Compose resources of the `:commonsui`
+ * module, shared with the Android app: composables read them with
+ * `stringResource(Res.string.<name>)`, other code with `getString` or
+ * `getStringBlocking`.
  *
- * English (`strings_en.xml`) is always loaded as the fallback; the selected
- * language overlays it. Any key missing from a translation falls back to
- * English, then to the key itself.
+ * Compose resources pick the translation from the JVM default locale, so the
+ * selected language is applied with [Locale.setDefault]; the
+ * [Locale.Category.FORMAT] locale stays the OS one, so dates and numbers keep
+ * the user's regional format. The window content is keyed on
+ * [currentLanguage], so a change recomposes every string.
  */
 object Strings {
-    /** Languages that ship a translation, by IETF-ish tag matching the file name. */
+    /** Languages that ship a translation, by IETF-ish tag (the stored setting). */
     val supportedLanguages = listOf(
         "en" to "English",
+        "en-GB" to "English (UK)",
         "de" to "Deutsch",
         "es" to "Español",
         "fr" to "Français",
@@ -34,10 +35,10 @@ object Strings {
         "zh" to "中文",
     )
 
-    private val english: Map<String, String> by lazy { parse("en") }
-    private val cache = ConcurrentHashMap<String, Map<String, String>>()
+    private val systemLocale: Locale = Locale.getDefault()
+    private val formatLocale: Locale = Locale.getDefault(Locale.Category.FORMAT)
 
-    /** Current language tag; drives recomposition of localized text. */
+    /** Current language tag; the window content recomposes when it changes. */
     val currentLanguage = MutableStateFlow(resolveInitialLanguage())
 
     private fun resolveInitialLanguage(): String {
@@ -46,99 +47,31 @@ object Strings {
         return matchSystemLanguage()
     }
 
-    /** Best-effort match of the OS locale to a shipped translation. */
-    fun matchSystemLanguage(): String {
-        val locale = java.util.Locale.getDefault()
-        val tag = "${locale.language}-${locale.country}"
-        supportedLanguages.firstOrNull { it.first.equals(tag, ignoreCase = true) }?.let { return it.first }
-        supportedLanguages.firstOrNull { it.first.equals(locale.language, ignoreCase = true) }?.let { return it.first }
+    /** Best-effort match of [locale] (the OS one) to a shipped translation. */
+    fun matchSystemLanguage(locale: Locale = systemLocale): String {
+        // forLanguageTag normalizes legacy codes ("in" is "id" on Java 17+).
+        fun Locale.matches(tag: String, withCountry: Boolean): Boolean {
+            val other = Locale.forLanguageTag(tag)
+            return language == other.language && (!withCountry || (other.country.isNotEmpty() && country == other.country))
+        }
+        supportedLanguages.firstOrNull { locale.matches(it.first, withCountry = true) }?.let { return it.first }
+        supportedLanguages.firstOrNull { locale.matches(it.first, withCountry = false) }?.let { return it.first }
         return "en"
     }
 
+    /** Applies the stored (or OS-matched) language; call before any string is read. */
+    fun install() {
+        applyLocale(currentLanguage.value)
+    }
+
     fun setLanguage(tag: String) {
+        applyLocale(tag)
         currentLanguage.value = tag
         SettingsStore.update { it.copy(language = tag) }
     }
 
-    private fun table(tag: String): Map<String, String> = if (tag == "en") english else cache.getOrPut(tag) { parse(tag) }
-
-    /** Raw lookup for the given language, English fallback, then the key. */
-    fun get(key: String, language: String = currentLanguage.value): String = table(language)[key] ?: english[key] ?: key
-
-    /** Lookup with positional `%1$s`/`%s` argument substitution. */
-    fun format(key: String, vararg args: Any?, language: String = currentLanguage.value): String {
-        val template = get(key, language)
-        return try {
-            String.format(template, *args)
-        } catch (_: Exception) {
-            template
-        }
-    }
-
-    private fun parse(tag: String): Map<String, String> {
-        val stream = javaClass.getResourceAsStream("/i18n/strings_$tag.xml") ?: return emptyMap()
-        return try {
-            val doc = DocumentBuilderFactory.newInstance()
-                .apply { isNamespaceAware = false }
-                .newDocumentBuilder()
-                .parse(stream)
-            val nodes = doc.getElementsByTagName("string")
-            buildMap {
-                for (i in 0 until nodes.length) {
-                    val node = nodes.item(i)
-                    val name = node.attributes?.getNamedItem("name")?.nodeValue ?: continue
-                    put(name, unescapeAndroid(node.textContent ?: ""))
-                }
-            }
-        } catch (e: Exception) {
-            AmberLogger.e("Strings", "Failed to parse strings_$tag.xml", e)
-            emptyMap()
-        } finally {
-            stream.close()
-        }
-    }
-
-    /**
-     * Reverses Android's string escaping. The XML parser already resolves
-     * entities like `&amp;`; this handles the backslash escapes Android uses
-     * (`\'`, `\"`, `\n`, `\t`, `\\`, `\uXXXX`) and trims the optional surrounding quotes
-     * Android allows around whitespace-significant strings.
-     */
-    private fun unescapeAndroid(raw: String): String {
-        var s = raw
-        if (s.length >= 2 && s.first() == '"' && s.last() == '"') {
-            s = s.substring(1, s.length - 1)
-        }
-        val out = StringBuilder(s.length)
-        var i = 0
-        while (i < s.length) {
-            val c = s[i]
-            if (c == '\\' && i + 1 < s.length) {
-                when (val next = s[i + 1]) {
-                    'n' -> out.append('\n')
-                    't' -> out.append('\t')
-                    '\'' -> out.append('\'')
-                    '"' -> out.append('"')
-                    '\\' -> out.append('\\')
-                    'u' -> {
-                        // \uXXXX, e.g. the ellipsis in "Starting Tor…"
-                        val hex = s.substring(i + 2, minOf(i + 6, s.length))
-                        val code = if (hex.length == 4) hex.toIntOrNull(16) else null
-                        if (code != null) {
-                            out.append(code.toChar())
-                            i += 6
-                            continue
-                        }
-                        out.append(next)
-                    }
-                    else -> out.append(next)
-                }
-                i += 2
-            } else {
-                out.append(c)
-                i++
-            }
-        }
-        return out.toString()
+    private fun applyLocale(tag: String) {
+        Locale.setDefault(Locale.forLanguageTag(tag))
+        Locale.setDefault(Locale.Category.FORMAT, formatLocale)
     }
 }

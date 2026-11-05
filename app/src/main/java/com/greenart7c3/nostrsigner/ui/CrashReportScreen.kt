@@ -45,14 +45,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalClipboard
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
-import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.commonsui.Res
+import com.greenart7c3.nostrsigner.commonsui.cancel
+import com.greenart7c3.nostrsigner.commonsui.copy_crash_report_to_clipboard
+import com.greenart7c3.nostrsigner.commonsui.crash_report_send_prompt
+import com.greenart7c3.nostrsigner.commonsui.crashreport_found_send
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.service.ReportSender
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun CrashReportScreen(
@@ -79,9 +83,9 @@ fun CrashReportScreen(
         ) {
             Text(
                 text = if (BuildFlavorChecker.isOfflineFlavor()) {
-                    stringResource(R.string.copy_crash_report_to_clipboard)
+                    stringResource(Res.string.copy_crash_report_to_clipboard)
                 } else {
-                    stringResource(R.string.crash_report_send_prompt)
+                    stringResource(Res.string.crash_report_send_prompt)
                 },
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -110,7 +114,7 @@ fun CrashReportScreen(
                     onDismiss()
                 },
             ) {
-                Text(stringResource(R.string.cancel))
+                Text(stringResource(Res.string.cancel))
             }
 
             Button(
@@ -136,10 +140,10 @@ fun CrashReportScreen(
                     Icon(
                         imageVector = Icons.Outlined.Done,
                         tint = Color.Black,
-                        contentDescription = stringResource(R.string.crashreport_found_send),
+                        contentDescription = stringResource(Res.string.crashreport_found_send),
                     )
                     Spacer(Modifier.size(4.dp))
-                    Text(stringResource(R.string.crashreport_found_send), color = Color.Black)
+                    Text(stringResource(Res.string.crashreport_found_send), color = Color.Black)
                 }
             }
         }

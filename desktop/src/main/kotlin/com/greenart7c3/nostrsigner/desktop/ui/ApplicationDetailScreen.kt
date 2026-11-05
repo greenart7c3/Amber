@@ -44,19 +44,58 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.greenart7c3.nostrsigner.common.generateBunkerPrivKey
 import com.greenart7c3.nostrsigner.common.localPubKeyFromPrivKey
+import com.greenart7c3.nostrsigner.commonsui.Permission
+import com.greenart7c3.nostrsigner.commonsui.Res
+import com.greenart7c3.nostrsigner.commonsui.action
+import com.greenart7c3.nostrsigner.commonsui.allow
+import com.greenart7c3.nostrsigner.commonsui.ask
+import com.greenart7c3.nostrsigner.commonsui.automatically_sign_this_for
+import com.greenart7c3.nostrsigner.commonsui.cancel
+import com.greenart7c3.nostrsigner.commonsui.copy
+import com.greenart7c3.nostrsigner.commonsui.d_accepted
+import com.greenart7c3.nostrsigner.commonsui.d_activity
+import com.greenart7c3.nostrsigner.commonsui.d_application_removed
+import com.greenart7c3.nostrsigner.commonsui.d_application_updated
+import com.greenart7c3.nostrsigner.commonsui.d_back
+import com.greenart7c3.nostrsigner.commonsui.d_connection_string
+import com.greenart7c3.nostrsigner.commonsui.d_connection_string_copied
+import com.greenart7c3.nostrsigner.commonsui.d_delete_permission
+import com.greenart7c3.nostrsigner.commonsui.d_disconnect_delete
+import com.greenart7c3.nostrsigner.commonsui.d_key_label
+import com.greenart7c3.nostrsigner.commonsui.d_local_socket
+import com.greenart7c3.nostrsigner.commonsui.d_no_activity
+import com.greenart7c3.nostrsigner.commonsui.d_rejected
+import com.greenart7c3.nostrsigner.commonsui.d_relays_label
+import com.greenart7c3.nostrsigner.commonsui.d_reset_bunker_message
+import com.greenart7c3.nostrsigner.commonsui.d_saved
+import com.greenart7c3.nostrsigner.commonsui.deny
+import com.greenart7c3.nostrsigner.commonsui.edit_permissions_description
+import com.greenart7c3.nostrsigner.commonsui.for_all_kinds
+import com.greenart7c3.nostrsigner.commonsui.for_all_relays
+import com.greenart7c3.nostrsigner.commonsui.getStringBlocking
+import com.greenart7c3.nostrsigner.commonsui.localizedBlocking
+import com.greenart7c3.nostrsigner.commonsui.name
+import com.greenart7c3.nostrsigner.commonsui.no_relays_added
+import com.greenart7c3.nostrsigner.commonsui.permissions
+import com.greenart7c3.nostrsigner.commonsui.relays
+import com.greenart7c3.nostrsigner.commonsui.remove
+import com.greenart7c3.nostrsigner.commonsui.remove_all_message
+import com.greenart7c3.nostrsigner.commonsui.remove_all_permissions
+import com.greenart7c3.nostrsigner.commonsui.reset_bunker
+import com.greenart7c3.nostrsigner.commonsui.save
+import com.greenart7c3.nostrsigner.commonsui.sign
+import com.greenart7c3.nostrsigner.commonsui.update
 import com.greenart7c3.nostrsigner.desktop.core.AmberDesktop
 import com.greenart7c3.nostrsigner.desktop.core.AppPermissionRecord
 import com.greenart7c3.nostrsigner.desktop.core.AppWithPermissions
+import com.greenart7c3.nostrsigner.desktop.core.DateTimes
 import com.greenart7c3.nostrsigner.desktop.core.DesktopAccount
 import com.greenart7c3.nostrsigner.desktop.core.RememberType
-import com.greenart7c3.nostrsigner.desktop.core.SignerDescriptions
-import com.greenart7c3.nostrsigner.desktop.core.Strings
 import com.greenart7c3.nostrsigner.desktop.core.isLocalSocket
 import com.greenart7c3.nostrsigner.desktop.core.toShortenHex
-import java.text.DateFormat
-import java.util.Date
 import java.util.UUID
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun ApplicationDetailScreen(
@@ -67,7 +106,6 @@ fun ApplicationDetailScreen(
     val store = AmberDesktop.store(account.npub)
     val apps by store.apps.collectAsState()
     val history by store.history.collectAsState()
-    val language by Strings.currentLanguage.collectAsState()
     val scope = rememberCoroutineScope()
     val app = apps.firstOrNull { it.app.key == appKey }
     var tab by remember { mutableStateOf(0) }
@@ -82,7 +120,7 @@ fun ApplicationDetailScreen(
     Column(Modifier.fillMaxSize()) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             IconButton(onClick = onBack) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, Strings.get("d_back", language))
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(Res.string.d_back))
             }
             Column {
                 Text(
@@ -92,9 +130,9 @@ fun ApplicationDetailScreen(
                 )
                 Text(
                     buildString {
-                        append(Strings.format("d_key_label", app.app.key.toShortenHex(), language = language))
-                        if (app.app.isLocalSocket) append(" · ${Strings.get("d_local_socket", language)}")
-                        if (app.app.relays.isNotEmpty()) append(" · ${Strings.format("d_relays_label", app.app.relays.joinToString(), language = language)}")
+                        append(stringResource(Res.string.d_key_label, app.app.key.toShortenHex()))
+                        if (app.app.isLocalSocket) append(" · ${stringResource(Res.string.d_local_socket)}")
+                        if (app.app.relays.isNotEmpty()) append(" · ${stringResource(Res.string.d_relays_label, app.app.relays.joinToString())}")
                     },
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -107,15 +145,15 @@ fun ApplicationDetailScreen(
             OutlinedTextField(
                 value = name,
                 onValueChange = { name = it },
-                label = { Text(Strings.get("name", language)) },
+                label = { Text(stringResource(Res.string.name)) },
                 singleLine = true,
                 modifier = Modifier.widthIn(max = 420.dp).weight(1f, fill = false),
             )
             AmberOutlinedButton(
-                text = Strings.get("save", language),
+                text = stringResource(Res.string.save),
                 onClick = {
                     store.upsert(app.copy(app = app.app.copy(name = name)))
-                    Toaster.toast(Strings.get("d_application_updated", language))
+                    Toaster.toast(getStringBlocking(Res.string.d_application_updated))
                 },
             )
         }
@@ -126,9 +164,9 @@ fun ApplicationDetailScreen(
         AmberTabRow(
             selectedTabIndex = if (isSocket && tab == 2) 1 else tab,
             titles = if (isSocket) {
-                listOf(Strings.get("permissions", language), Strings.get("d_activity", language))
+                listOf(stringResource(Res.string.permissions), stringResource(Res.string.d_activity))
             } else {
-                listOf(Strings.get("permissions", language), Strings.get("relays", language), Strings.get("d_activity", language))
+                listOf(stringResource(Res.string.permissions), stringResource(Res.string.relays), stringResource(Res.string.d_activity))
             },
             onSelect = { tab = if (isSocket && it == 1) 2 else it },
         )
@@ -150,7 +188,7 @@ fun ApplicationDetailScreen(
             }
             val copyText = rememberCopyText()
             Spacer(Modifier.height(16.dp))
-            Text(Strings.get("d_connection_string", language), style = MaterialTheme.typography.titleSmall)
+            Text(stringResource(Res.string.d_connection_string), style = MaterialTheme.typography.titleSmall)
             Spacer(Modifier.height(4.dp))
             Text(
                 bunkerUri,
@@ -162,10 +200,10 @@ fun ApplicationDetailScreen(
                     .padding(8.dp),
             )
             AmberTextButton(
-                text = Strings.get("copy", language).trim(),
+                text = stringResource(Res.string.copy).trim(),
                 onClick = {
                     copyText(bunkerUri)
-                    Toaster.toast(Strings.get("d_connection_string_copied", language))
+                    Toaster.toast(getStringBlocking(Res.string.d_connection_string_copied))
                 },
             )
             Spacer(Modifier.height(12.dp))
@@ -176,11 +214,11 @@ fun ApplicationDetailScreen(
             if (showResetBunker) {
                 AlertDialog(
                     onDismissRequest = { showResetBunker = false },
-                    title = { Text(Strings.get("reset_bunker", language)) },
-                    text = { Text(Strings.get("d_reset_bunker_message", language)) },
+                    title = { Text(stringResource(Res.string.reset_bunker)) },
+                    text = { Text(stringResource(Res.string.d_reset_bunker_message)) },
                     confirmButton = {
                         AmberTextButton(
-                            text = Strings.get("reset_bunker", language),
+                            text = stringResource(Res.string.reset_bunker),
                             onClick = {
                                 showResetBunker = false
                                 val oldKey = app.app.key
@@ -201,20 +239,20 @@ fun ApplicationDetailScreen(
                                 scope.launch {
                                     AmberDesktop.engine.checkForNewRelaysAndUpdateAllFilters()
                                 }
-                                Toaster.toast(Strings.get("d_saved", language))
+                                Toaster.toast(getStringBlocking(Res.string.d_saved))
                             },
                         )
                     },
                     dismissButton = {
                         AmberTextButton(
-                            text = Strings.get("cancel", language),
+                            text = stringResource(Res.string.cancel),
                             onClick = { showResetBunker = false },
                         )
                     },
                 )
             }
             AmberOutlinedButton(
-                text = Strings.get("reset_bunker", language),
+                text = stringResource(Res.string.reset_bunker),
                 onClick = { showResetBunker = true },
             )
             Spacer(Modifier.height(12.dp))
@@ -224,11 +262,11 @@ fun ApplicationDetailScreen(
         if (showRemoveAll) {
             AlertDialog(
                 onDismissRequest = { showRemoveAll = false },
-                title = { Text(Strings.get("remove", language)) },
-                text = { Text(Strings.get("remove_all_message", language)) },
+                title = { Text(stringResource(Res.string.remove)) },
+                text = { Text(stringResource(Res.string.remove_all_message)) },
                 confirmButton = {
                     AmberTextButton(
-                        text = Strings.get("remove", language),
+                        text = stringResource(Res.string.remove),
                         onClick = {
                             showRemoveAll = false
                             store.upsert(app.copy(permissions = mutableListOf()))
@@ -237,7 +275,7 @@ fun ApplicationDetailScreen(
                 },
                 dismissButton = {
                     AmberTextButton(
-                        text = Strings.get("cancel", language),
+                        text = stringResource(Res.string.cancel),
                         onClick = { showRemoveAll = false },
                     )
                 },
@@ -256,7 +294,7 @@ fun ApplicationDetailScreen(
                     ) {
                         item {
                             Text(
-                                Strings.get("edit_permissions_description", language),
+                                stringResource(Res.string.edit_permissions_description),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
@@ -265,7 +303,6 @@ fun ApplicationDetailScreen(
                             val permission = app.permissions[index]
                             PermissionCard(
                                 permission = permission,
-                                language = language,
                                 onChange = { updated ->
                                     val newPermissions = app.permissions.toMutableList()
                                     newPermissions[index] = updated
@@ -282,7 +319,7 @@ fun ApplicationDetailScreen(
                             item {
                                 AmberButton(
                                     modifier = Modifier.padding(top = 12.dp),
-                                    text = Strings.get("remove_all_permissions", language),
+                                    text = stringResource(Res.string.remove_all_permissions),
                                     onClick = { showRemoveAll = true },
                                 )
                             }
@@ -308,18 +345,18 @@ fun ApplicationDetailScreen(
                         if (editable) {
                             AmberButton(
                                 modifier = Modifier.padding(top = 12.dp),
-                                text = Strings.get("update", language),
+                                text = stringResource(Res.string.update),
                                 enabled = relays != app.app.relays,
                                 onClick = {
                                     if (relays.isEmpty()) {
-                                        Toaster.toast(Strings.get("no_relays_added", language))
+                                        Toaster.toast(getStringBlocking(Res.string.no_relays_added))
                                         return@AmberButton
                                     }
                                     store.upsert(app.copy(app = app.app.copy(relays = relays)))
                                     scope.launch {
                                         AmberDesktop.engine.checkForNewRelaysAndUpdateAllFilters()
                                     }
-                                    Toaster.toast(Strings.get("d_application_updated", language))
+                                    Toaster.toast(getStringBlocking(Res.string.d_application_updated))
                                 },
                             )
                         }
@@ -338,19 +375,19 @@ fun ApplicationDetailScreen(
                     ) {
                         if (appHistory.isEmpty()) {
                             item {
-                                Text(Strings.get("d_no_activity", language), style = MaterialTheme.typography.bodyMedium)
+                                Text(stringResource(Res.string.d_no_activity), style = MaterialTheme.typography.bodyMedium)
                             }
                         }
                         items(appHistory.size) { index ->
                             val entry = appHistory[index]
                             Column(Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
                                 Text(
-                                    permissionTitle(entry.type, entry.kind, language),
+                                    permissionTitle(entry.type, entry.kind),
                                     style = MaterialTheme.typography.bodyMedium,
                                 )
                                 Text(
-                                    "${DateFormat.getDateTimeInstance().format(Date(entry.time * 1000))} · " +
-                                        if (entry.accepted) Strings.get("d_accepted", language) else Strings.get("d_rejected", language),
+                                    "${DateTimes.format(entry.time * 1000)} · " +
+                                        if (entry.accepted) stringResource(Res.string.d_accepted) else stringResource(Res.string.d_rejected),
                                     style = MaterialTheme.typography.bodySmall,
                                 )
                                 HorizontalDivider()
@@ -363,7 +400,7 @@ fun ApplicationDetailScreen(
 
         Spacer(Modifier.height(8.dp))
         AmberOutlinedButton(
-            text = Strings.get("d_disconnect_delete", language),
+            text = stringResource(Res.string.d_disconnect_delete),
             onClick = {
                 // Deleting drops this screen from composition, so run the
                 // unsubscribe on the application scope (not this composable's)
@@ -374,7 +411,7 @@ fun ApplicationDetailScreen(
                     // Queued requests from the removed app must not linger as approval cards.
                     AmberDesktop.engine.dropPending("application removed") { it.account.npub == account.npub && it.localKey == appKey }
                     AmberDesktop.engine.checkForNewRelaysAndUpdateAllFilters()
-                    Toaster.toast(Strings.get("d_application_removed", language))
+                    Toaster.toast(getStringBlocking(Res.string.d_application_removed))
                 }
                 onBack()
             },
@@ -388,13 +425,13 @@ fun ApplicationDetailScreen(
  * method description, wrapped in "Sign %1$s" for signing types like the
  * mobile screens do.
  */
-private fun permissionTitle(type: String, kind: Int?, language: String): String {
-    val description = SignerDescriptions.permission(type, kind, language)
+private fun permissionTitle(type: String, kind: Int?): String {
+    val description = Permission(type, kind).localizedBlocking()
     return when (type.trim().lowercase()) {
-        "sign_event", "nip" -> Strings.format("sign", description, language = language)
+        "sign_event", "nip" -> getStringBlocking(Res.string.sign, description)
         // NIP-44 v3 grants are per context kind, or for all kinds without one.
         "nip44_v3_encrypt", "nip44_v3_decrypt" ->
-            "$description · " + (kind?.let { "$it (${SignerDescriptions.signEventDescription(it, language)})" } ?: Strings.get("for_all_kinds", language))
+            "$description · " + (kind?.let { "$it (${Permission("sign_event", it).localizedBlocking()})" } ?: getStringBlocking(Res.string.for_all_kinds))
         else -> description
     }
 }
@@ -408,11 +445,10 @@ private fun permissionTitle(type: String, kind: Int?, language: String): String 
 @Composable
 private fun PermissionCard(
     permission: AppPermissionRecord,
-    language: String,
     onChange: (AppPermissionRecord) -> Unit,
     onDelete: () -> Unit,
 ) {
-    val title = permissionTitle(permission.type, permission.kind, language)
+    val title = permissionTitle(permission.type, permission.kind)
 
     // Mirrors the mobile mapping: accept window -> Allow, reject window ->
     // Deny, neither -> Ask; a NEVER remember choice edits as ALWAYS.
@@ -447,35 +483,35 @@ private fun PermissionCard(
                 Text(title, style = MaterialTheme.typography.bodyLarge)
                 if (permission.kind == 22242 && permission.relay.isNotEmpty()) {
                     Text(
-                        if (permission.relay == "*") Strings.get("for_all_relays", language) else permission.relay,
+                        if (permission.relay == "*") stringResource(Res.string.for_all_relays) else permission.relay,
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
             }
             IconButton(onClick = onDelete) {
-                Icon(Icons.Default.Delete, Strings.get("d_delete_permission", language))
+                Icon(Icons.Default.Delete, stringResource(Res.string.d_delete_permission))
             }
         }
 
         Text(
-            Strings.get("action", language),
+            stringResource(Res.string.action),
             style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            listOf(0 to "allow", 1 to "deny", 2 to "ask").forEach { (index, key) ->
+            listOf(0 to Res.string.allow, 1 to Res.string.deny, 2 to Res.string.ask).forEach { (index, key) ->
                 FilterChip(
                     selected = optionIndex == index,
                     onClick = { set(index, rememberType) },
-                    label = { Text(Strings.get(key, language)) },
+                    label = { Text(stringResource(key)) },
                 )
             }
         }
 
         if (optionIndex != 2) {
             Text(
-                Strings.get("automatically_sign_this_for", language),
+                stringResource(Res.string.automatically_sign_this_for),
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -491,7 +527,7 @@ private fun PermissionCard(
                     FilterChip(
                         selected = rememberType == type,
                         onClick = { set(optionIndex, type) },
-                        label = { Text(type.shortLabel(language)) },
+                        label = { Text(type.shortLabel()) },
                     )
                 }
             }

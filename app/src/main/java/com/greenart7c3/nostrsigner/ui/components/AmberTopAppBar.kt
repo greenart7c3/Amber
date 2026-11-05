@@ -42,6 +42,12 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.common.sanitizeAppName
+import com.greenart7c3.nostrsigner.commonsui.Res
+import com.greenart7c3.nostrsigner.commonsui.getStringBlocking
+import com.greenart7c3.nostrsigner.commonsui.proxy
+import com.greenart7c3.nostrsigner.commonsui.proxy_is_connected
+import com.greenart7c3.nostrsigner.commonsui.proxy_is_not_working
+import com.greenart7c3.nostrsigner.commonsui.reconnect
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.AmberBunkerRequest
 import com.greenart7c3.nostrsigner.models.IntentData
@@ -89,7 +95,7 @@ fun AmberTopAppBar(
                                     positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
                                     tooltip = {
                                         PlainTooltip {
-                                            Text(text = context.getString(R.string.reconnect))
+                                            Text(text = getStringBlocking(Res.string.reconnect))
                                         }
                                     },
                                     state = rememberTooltipState(),
@@ -111,7 +117,7 @@ fun AmberTopAppBar(
                                         Text("${relayStats.value.second.size}/${relayStats.value.first.size}")
                                         Icon(
                                             imageVector = ImageVector.vectorResource(R.drawable.relays),
-                                            contentDescription = context.getString(R.string.reconnect),
+                                            contentDescription = getStringBlocking(Res.string.reconnect),
                                             tint = LocalContentColor.current,
                                         )
                                     }
@@ -146,7 +152,7 @@ fun AmberTopAppBar(
                                         positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
                                         tooltip = {
                                             PlainTooltip {
-                                                Text(text = if (isProxyEnabled) context.getString(R.string.proxy_is_connected) else context.getString(R.string.proxy_is_not_working))
+                                                Text(text = if (isProxyEnabled) getStringBlocking(Res.string.proxy_is_connected) else getStringBlocking(Res.string.proxy_is_not_working))
                                             }
                                         },
                                         state = rememberTooltipState(),
@@ -155,16 +161,16 @@ fun AmberTopAppBar(
                                             onClick = {
                                                 scope.launch {
                                                     if (isProxyEnabled) {
-                                                        Toast.makeText(context, context.getString(R.string.proxy_is_connected), Toast.LENGTH_SHORT).show()
+                                                        Toast.makeText(context, getStringBlocking(Res.string.proxy_is_connected), Toast.LENGTH_SHORT).show()
                                                     } else {
-                                                        Toast.makeText(context, context.getString(R.string.proxy_is_not_working), Toast.LENGTH_SHORT).show()
+                                                        Toast.makeText(context, getStringBlocking(Res.string.proxy_is_not_working), Toast.LENGTH_SHORT).show()
                                                     }
                                                 }
                                             },
                                             content = {
                                                 Icon(
                                                     Icons.Outlined.Shield,
-                                                    context.getString(R.string.proxy),
+                                                    getStringBlocking(Res.string.proxy),
                                                     tint = if (isProxyEnabled) {
                                                         if (isAmberDarkTheme()) connectedColorDark else connectedColorLight
                                                     } else {
@@ -180,21 +186,20 @@ fun AmberTopAppBar(
                     }
                 },
                 title = {
-                    val localContext = LocalContext.current
                     val configuration = LocalConfiguration.current
                     var title by remember(destinationRoute, configuration) {
-                        mutableStateOf(routes.find { it.route.startsWith(destinationRoute) }?.title(localContext) ?: "")
+                        mutableStateOf(routes.find { it.route.startsWith(destinationRoute) }?.title() ?: "")
                     }
                     LaunchedEffect(destinationRoute, configuration) {
                         if (destinationRoute.startsWith("Permission/") || destinationRoute.startsWith("Activity/") || destinationRoute.startsWith("RelayLogScreen/") || destinationRoute.startsWith("qrcode/")) {
                             launch(Dispatchers.IO) {
                                 navBackStackEntry.navBackStackEntry?.arguments?.getString("content")?.let {
-                                    title = Route.QrCode.title(localContext)
+                                    title = Route.QrCode.title()
                                 }
                                 navBackStackEntry.navBackStackEntry?.arguments?.getString("packageName")?.let { packageName ->
                                     val application = Amber.instance.getDatabase(account.npub).dao().getByKey(packageName)?.application
                                     title = if (destinationRoute.startsWith("Activity/")) {
-                                        "${application?.name?.let(::sanitizeAppName)?.ifBlank { application.key.toShortenHex() } ?: packageName} - ${routes.find { it.route.startsWith(destinationRoute) }?.title(localContext)}"
+                                        "${application?.name?.let(::sanitizeAppName)?.ifBlank { application.key.toShortenHex() } ?: packageName} - ${routes.find { it.route.startsWith(destinationRoute) }?.title()}"
                                     } else {
                                         application?.name?.let(::sanitizeAppName)?.ifBlank { application.key.toShortenHex() } ?: packageName
                                     }
@@ -202,7 +207,7 @@ fun AmberTopAppBar(
                                 navBackStackEntry.navBackStackEntry?.arguments?.getString("key")?.let { packageName ->
                                     val application = Amber.instance.getDatabase(account.npub).dao().getByKey(packageName)?.application
                                     title = if (destinationRoute.startsWith("Activity/")) {
-                                        "${application?.name?.let(::sanitizeAppName)?.ifBlank { application.key.toShortenHex() } ?: packageName} - ${routes.find { it.route.startsWith(destinationRoute) }?.title(localContext)}"
+                                        "${application?.name?.let(::sanitizeAppName)?.ifBlank { application.key.toShortenHex() } ?: packageName} - ${routes.find { it.route.startsWith(destinationRoute) }?.title()}"
                                     } else {
                                         application?.name?.let(::sanitizeAppName)?.ifBlank { application.key.toShortenHex() } ?: packageName
                                     }
@@ -227,10 +232,10 @@ fun AmberTopAppBar(
                                     }
                                     val titleTemp = application?.name?.let(::sanitizeAppName)?.ifBlank { request.name.ifBlank { application.key.toShortenHex() } } ?: request.name
                                     title = titleTemp.ifBlank {
-                                        routes.find { it.route == destinationRoute }?.title(localContext) ?: ""
+                                        routes.find { it.route == destinationRoute }?.title() ?: ""
                                     }
                                 } else {
-                                    title = routes.find { it.route == destinationRoute }?.title(localContext) ?: ""
+                                    title = routes.find { it.route == destinationRoute }?.title() ?: ""
                                 }
                             }
                         }

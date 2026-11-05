@@ -6,10 +6,13 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
-import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.commonsui.Res
+import com.greenart7c3.nostrsigner.commonsui.cancel
+import com.greenart7c3.nostrsigner.commonsui.remove
+import com.greenart7c3.nostrsigner.commonsui.remove_all_message
 import com.greenart7c3.nostrsigner.ui.theme.amoledBorder
 import com.greenart7c3.nostrsigner.ui.theme.outlineIfAny
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun RemoveAllPermissionsDialog(
@@ -19,10 +22,10 @@ fun RemoveAllPermissionsDialog(
     AlertDialog(
         modifier = Modifier.outlineIfAny(amoledBorder(), AlertDialogDefaults.shape),
         title = {
-            Text(text = stringResource(R.string.remove))
+            Text(text = stringResource(Res.string.remove))
         },
         text = {
-            Text(text = stringResource(R.string.remove_all_message))
+            Text(text = stringResource(Res.string.remove_all_message))
         },
         onDismissRequest = {
             onCancel()
@@ -33,7 +36,7 @@ fun RemoveAllPermissionsDialog(
                     onConfirm()
                 },
             ) {
-                Text(text = stringResource(R.string.remove))
+                Text(text = stringResource(Res.string.remove))
             }
         },
         dismissButton = {
@@ -42,7 +45,7 @@ fun RemoveAllPermissionsDialog(
                     onCancel()
                 },
             ) {
-                Text(text = stringResource(R.string.cancel))
+                Text(text = stringResource(Res.string.cancel))
             }
         },
     )

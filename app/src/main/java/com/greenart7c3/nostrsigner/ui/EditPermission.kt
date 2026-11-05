@@ -33,8 +33,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.ClipEntry
 import androidx.compose.ui.platform.LocalClipboard
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.style.TextAlign
@@ -46,10 +44,28 @@ import androidx.navigation.NavController
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.common.SignerType
+import com.greenart7c3.nostrsigner.commonsui.Permission
+import com.greenart7c3.nostrsigner.commonsui.Res
+import com.greenart7c3.nostrsigner.commonsui.action
+import com.greenart7c3.nostrsigner.commonsui.activity
+import com.greenart7c3.nostrsigner.commonsui.add_permission
+import com.greenart7c3.nostrsigner.commonsui.allow
+import com.greenart7c3.nostrsigner.commonsui.ask
+import com.greenart7c3.nostrsigner.commonsui.automatically_sign_this_for
+import com.greenart7c3.nostrsigner.commonsui.connected_app_warning
+import com.greenart7c3.nostrsigner.commonsui.copy_to_clipboard
+import com.greenart7c3.nostrsigner.commonsui.delete
+import com.greenart7c3.nostrsigner.commonsui.deny
+import com.greenart7c3.nostrsigner.commonsui.edit_configuration
+import com.greenart7c3.nostrsigner.commonsui.edit_permissions_description
+import com.greenart7c3.nostrsigner.commonsui.for_all_relays
+import com.greenart7c3.nostrsigner.commonsui.getStringBlocking
+import com.greenart7c3.nostrsigner.commonsui.localizedBlocking
+import com.greenart7c3.nostrsigner.commonsui.remove_all_permissions
+import com.greenart7c3.nostrsigner.commonsui.sign
 import com.greenart7c3.nostrsigner.database.ApplicationEntity
 import com.greenart7c3.nostrsigner.database.ApplicationPermissionsEntity
 import com.greenart7c3.nostrsigner.models.Account
-import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.ui.actions.RemoveAllPermissionsDialog
 import com.greenart7c3.nostrsigner.ui.components.AddPermissionsSheet
 import com.greenart7c3.nostrsigner.ui.components.AmberButton
@@ -61,6 +77,7 @@ import com.vitorpamplona.quartz.utils.TimeUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun EditPermission(
@@ -142,7 +159,7 @@ fun EditPermission(
         if (applicationData.relays.isNotEmpty()) {
             if (applicationData.isConnected) {
                 Text(
-                    stringResource(R.string.connected_app_warning),
+                    stringResource(Res.string.connected_app_warning),
                 )
                 Spacer(Modifier.height(12.dp))
             }
@@ -167,7 +184,7 @@ fun EditPermission(
                         )
                     }
                 },
-                text = stringResource(R.string.copy_to_clipboard),
+                text = stringResource(Res.string.copy_to_clipboard),
             )
 
             Spacer(Modifier.height(12.dp))
@@ -178,7 +195,7 @@ fun EditPermission(
             onClick = {
                 navController.navigate("Activity/${applicationData.key}")
             },
-            text = stringResource(R.string.activity),
+            text = stringResource(Res.string.activity),
         )
 
         AmberButton(
@@ -186,14 +203,14 @@ fun EditPermission(
             onClick = {
                 navController.navigate("EditConfiguration/${applicationData.key}")
             },
-            text = stringResource(R.string.edit_configuration),
+            text = stringResource(Res.string.edit_configuration),
         )
 
         Text(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(bottom = 20.dp),
-            text = stringResource(R.string.edit_permissions_description),
+            text = stringResource(Res.string.edit_permissions_description),
         )
 
         if (applicationData.key.isNotEmpty()) {
@@ -231,7 +248,7 @@ fun EditPermission(
                 onClick = {
                     showAddPermissions = true
                 },
-                text = stringResource(R.string.add_permission),
+                text = stringResource(Res.string.add_permission),
             )
         }
 
@@ -262,7 +279,7 @@ fun EditPermission(
                 onClick = {
                     wantsToRemovePermissions = true
                 },
-                text = stringResource(R.string.remove_all_permissions),
+                text = stringResource(Res.string.remove_all_permissions),
                 textColor = Color.White,
             )
         }
@@ -309,7 +326,6 @@ fun PermissionRow(
     permission: ApplicationPermissionsEntity,
     onToggle: (ApplicationPermissionsEntity) -> Unit,
 ) {
-    val context = LocalContext.current
     val message = remember(permission.type, permission.kind, permission.acceptable, permission.relay) {
         val localPermission = Permission(
             permission.type.toLowerCase(Locale.current),
@@ -317,12 +333,12 @@ fun PermissionRow(
         )
 
         if (permission.type == "SIGN_EVENT" || permission.type == "NIP") {
-            context.getString(
-                R.string.sign,
-                localPermission.toLocalizedString(context),
+            getStringBlocking(
+                Res.string.sign,
+                localPermission.localizedBlocking(),
             )
         } else {
-            localPermission.toLocalizedString(context, permission.type == SignerType.CONNECT.name)
+            localPermission.localizedBlocking(permission.type == SignerType.CONNECT.name)
         }
     }
     var optionIndex by remember {
@@ -366,7 +382,7 @@ fun PermissionRow(
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp),
                 text = if (permission.relay == "*") {
-                    context.getString(R.string.for_all_relays)
+                    getStringBlocking(Res.string.for_all_relays)
                 } else {
                     permission.relay
                 },
@@ -377,7 +393,7 @@ fun PermissionRow(
         }
 
         LabeledBorderBox(
-            label = stringResource(R.string.action),
+            label = stringResource(Res.string.action),
             modifier = Modifier.padding(horizontal = 4.dp, vertical = 4.dp),
         ) {
             AmberToggles(
@@ -395,9 +411,9 @@ fun PermissionRow(
                 label = {
                     stringResource(
                         when (it) {
-                            0 -> R.string.allow
-                            1 -> R.string.deny
-                            else -> R.string.ask
+                            0 -> Res.string.allow
+                            1 -> Res.string.deny
+                            else -> Res.string.ask
                         },
                     )
                 },
@@ -406,7 +422,7 @@ fun PermissionRow(
 
         if (optionIndex != 2) {
             LabeledBorderBox(
-                label = stringResource(R.string.automatically_sign_this_for),
+                label = stringResource(Res.string.automatically_sign_this_for),
                 modifier = Modifier.padding(horizontal = 4.dp, vertical = 4.dp),
             ) {
                 AmberToggles(
@@ -483,7 +499,7 @@ fun RelayCard(
             ) {
                 Icon(
                     ImageVector.vectorResource(R.drawable.delete),
-                    stringResource(R.string.delete),
+                    stringResource(Res.string.delete),
                 )
             }
         }

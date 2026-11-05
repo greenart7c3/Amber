@@ -225,12 +225,13 @@ description.
 
 ## Translations
 
-- Strings live in `app/src/main/res/values/strings.xml` (English) and
-  `app/src/main/res/values-<locale>/strings.xml`.
+- Strings, shared by the Android and desktop apps, live in `commonsui/src/commonMain/composeResources/values/strings.xml` (English) and
+  `commonsui/src/commonMain/composeResources/values-<locale>/strings.xml`.
 - To improve a translation, edit the locale's `strings.xml` and open a PR.
 - When you add or change an English string, add the translated entry to every
-  existing locale file in the same change. Escape apostrophes as `\'` where
-  the neighboring entries do.
+  existing locale file in the same change. The text is plain (Compose
+  resources): write apostrophes, quotes and line breaks as they are, with no
+  Android-style `\'` or `\n` escaping, and use `%1$s` / `%1$d` for arguments.
 
 ## Releases
 

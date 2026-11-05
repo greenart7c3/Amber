@@ -11,7 +11,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -20,10 +19,21 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
+import com.greenart7c3.nostrsigner.commonsui.Res
+import com.greenart7c3.nostrsigner.commonsui.cancel
+import com.greenart7c3.nostrsigner.commonsui.copy
+import com.greenart7c3.nostrsigner.commonsui.crash_report_send_prompt
+import com.greenart7c3.nostrsigner.commonsui.crashreport_found
+import com.greenart7c3.nostrsigner.commonsui.crashreport_found_send
+import com.greenart7c3.nostrsigner.commonsui.d_copied_clipboard
+import com.greenart7c3.nostrsigner.commonsui.d_crash_report_send_failed
+import com.greenart7c3.nostrsigner.commonsui.d_crash_report_sent
+import com.greenart7c3.nostrsigner.commonsui.d_working
+import com.greenart7c3.nostrsigner.commonsui.getStringBlocking
 import com.greenart7c3.nostrsigner.desktop.core.CrashReporter
 import com.greenart7c3.nostrsigner.desktop.core.DesktopAccount
-import com.greenart7c3.nostrsigner.desktop.core.Strings
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Desktop counterpart of the Android `CrashReportScreen`: shows the saved
@@ -35,7 +45,6 @@ fun CrashReportDialog(
     report: String,
     account: DesktopAccount,
 ) {
-    val language by Strings.currentLanguage.collectAsState()
     val scope = rememberCoroutineScope()
     val copyText = rememberCopyText()
     var edited by remember(report) { mutableStateOf(report) }
@@ -43,11 +52,11 @@ fun CrashReportDialog(
 
     AlertDialog(
         onDismissRequest = {},
-        title = { Text(Strings.get("crashreport_found", language)) },
+        title = { Text(stringResource(Res.string.crashreport_found)) },
         text = {
             Column {
                 Text(
-                    Strings.get("crash_report_send_prompt", language),
+                    stringResource(Res.string.crash_report_send_prompt),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -64,23 +73,23 @@ fun CrashReportDialog(
         confirmButton = {
             Row {
                 AmberTextButton(
-                    text = Strings.get("copy", language),
+                    text = stringResource(Res.string.copy),
                     enabled = !sending,
                     onClick = {
                         copyText(edited)
-                        Toaster.toast(Strings.get("d_copied_clipboard", language))
+                        Toaster.toast(getStringBlocking(Res.string.d_copied_clipboard))
                     },
                 )
                 AmberTextButton(
-                    text = if (sending) Strings.get("d_working", language) else Strings.get("crashreport_found_send", language),
+                    text = if (sending) stringResource(Res.string.d_working) else stringResource(Res.string.crashreport_found_send),
                     enabled = !sending && edited.isNotBlank(),
                     onClick = {
                         sending = true
                         scope.launch {
                             if (CrashReporter.send(account, edited)) {
-                                Toaster.toast(Strings.get("d_crash_report_sent", language))
+                                Toaster.toast(getStringBlocking(Res.string.d_crash_report_sent))
                             } else {
-                                Toaster.toast(Strings.get("d_crash_report_send_failed", language))
+                                Toaster.toast(getStringBlocking(Res.string.d_crash_report_send_failed))
                             }
                             sending = false
                         }
@@ -90,7 +99,7 @@ fun CrashReportDialog(
         },
         dismissButton = {
             AmberTextButton(
-                text = Strings.get("cancel", language),
+                text = stringResource(Res.string.cancel),
                 enabled = !sending,
                 onClick = { CrashReporter.dismiss() },
             )

@@ -23,16 +23,19 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.toLowerCase
 import androidx.compose.ui.unit.dp
-import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.common.SignerType
+import com.greenart7c3.nostrsigner.commonsui.Permission
+import com.greenart7c3.nostrsigner.commonsui.Res
+import com.greenart7c3.nostrsigner.commonsui.connect
+import com.greenart7c3.nostrsigner.commonsui.event_kind
+import com.greenart7c3.nostrsigner.commonsui.go_back
+import com.greenart7c3.nostrsigner.commonsui.is_requiring_to_sign_these_events_related_to_permission
+import com.greenart7c3.nostrsigner.commonsui.localizedBlocking
 import com.greenart7c3.nostrsigner.models.ClearTextEncryptedDataKind
 import com.greenart7c3.nostrsigner.models.EventEncryptedDataKind
-import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.models.TagArrayEncryptedDataKind
 import com.greenart7c3.nostrsigner.service.BunkerRequestUtils
 import com.greenart7c3.nostrsigner.service.MultiEventScreenIntents
@@ -40,13 +43,13 @@ import com.greenart7c3.nostrsigner.service.model.AmberEvent
 import com.greenart7c3.nostrsigner.ui.components.AmberButton
 import com.greenart7c3.nostrsigner.ui.components.RememberMyChoice
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequestSign
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun SeeDetailsScreen(
     modifier: Modifier = Modifier,
     onBack: () -> Unit,
 ) {
-    val context = LocalContext.current
     Column(
         modifier = modifier
             .fillMaxSize(),
@@ -75,10 +78,10 @@ fun SeeDetailsScreen(
             }
 
             val message = if (type == SignerType.CONNECT) {
-                stringResource(R.string.connect)
+                stringResource(Res.string.connect)
             } else {
-                val kindTranslation = permission.toLocalizedString(context)
-                val unknownKindString = stringResource(R.string.event_kind, permission.kind?.toString() ?: "")
+                val kindTranslation = permission.localizedBlocking()
+                val unknownKindString = stringResource(Res.string.event_kind, permission.kind?.toString() ?: "")
                 if (kindTranslation == unknownKindString && type == SignerType.SIGN_EVENT) {
                     val event = if (MultiEventScreenIntents.intents.isNotEmpty()) {
                         MultiEventScreenIntents.intents.first().event!!
@@ -92,7 +95,7 @@ fun SeeDetailsScreen(
                 }
             }
             Text(
-                stringResource(R.string.is_requiring_to_sign_these_events_related_to_permission, MultiEventScreenIntents.appName, message),
+                stringResource(Res.string.is_requiring_to_sign_these_events_related_to_permission, MultiEventScreenIntents.appName, message),
                 Modifier
                     .fillMaxWidth()
                     .padding(bottom = 20.dp),
@@ -251,7 +254,7 @@ fun SeeDetailsScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(vertical = 16.dp),
-            text = stringResource(R.string.go_back),
+            text = stringResource(Res.string.go_back),
             onClick = onBack,
         )
     }

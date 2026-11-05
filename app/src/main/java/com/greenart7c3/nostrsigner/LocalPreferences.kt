@@ -4,10 +4,8 @@ import android.annotation.SuppressLint
 import android.app.KeyguardManager
 import android.content.Context
 import android.content.SharedPreferences
-import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.runtime.Immutable
 import androidx.core.content.edit
-import androidx.core.os.LocaleListCompat
 import com.greenart7c3.nostrsigner.database.AppDatabase
 import com.greenart7c3.nostrsigner.database.HistoryDatabase
 import com.greenart7c3.nostrsigner.database.LogDatabase
@@ -316,11 +314,7 @@ object LocalPreferences {
         warmAccountCache(context)
         context.settings = loadSettingsFromEncryptedStorage(context)
         context.isSettingsLoaded = true
-        context.settings.language?.let {
-            AppCompatDelegate.setApplicationLocales(
-                LocaleListCompat.forLanguageTags(it),
-            )
-        }
+        context.settings.language?.let { AppLanguage.apply(it) }
     }
 
     /**

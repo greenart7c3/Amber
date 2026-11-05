@@ -27,19 +27,23 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboard
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.LocalPreferences
-import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.commonsui.Res
+import com.greenart7c3.nostrsigner.commonsui.add
+import com.greenart7c3.nostrsigner.commonsui.add_relay_to_whitelist
+import com.greenart7c3.nostrsigner.commonsui.auth_whitelist_description
+import com.greenart7c3.nostrsigner.commonsui.paste_from_clipboard
 import com.greenart7c3.nostrsigner.service.RelayUrlUtils
 import com.greenart7c3.nostrsigner.service.TrustScoreService
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.RelayUrlNormalizer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun AuthWhitelistScreen(
@@ -91,7 +95,7 @@ fun AuthWhitelistScreen(
                 .fillMaxSize(),
         ) {
             Text(
-                text = stringResource(R.string.auth_whitelist_description),
+                text = stringResource(Res.string.auth_whitelist_description),
                 modifier = Modifier.padding(bottom = 8.dp),
             )
 
@@ -110,7 +114,7 @@ fun AuthWhitelistScreen(
                     onDone = { addEntry() },
                 ),
                 label = {
-                    Text(stringResource(R.string.add_relay_to_whitelist))
+                    Text(stringResource(Res.string.add_relay_to_whitelist))
                 },
                 leadingIcon = {
                     IconButton(
@@ -125,7 +129,7 @@ fun AuthWhitelistScreen(
                     ) {
                         Icon(
                             Icons.Default.ContentPaste,
-                            contentDescription = stringResource(R.string.paste_from_clipboard),
+                            contentDescription = stringResource(Res.string.paste_from_clipboard),
                         )
                     }
                 },
@@ -139,7 +143,7 @@ fun AuthWhitelistScreen(
                     ) {
                         Icon(
                             Icons.Default.Add,
-                            contentDescription = stringResource(R.string.add),
+                            contentDescription = stringResource(Res.string.add),
                         )
                     }
                 },

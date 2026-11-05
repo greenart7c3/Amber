@@ -34,7 +34,8 @@ private val IDENTIFIER = Regex("[A-Za-z_][A-Za-z0-9_]*")
 
 private val TOKEN_EXTENSIONS = setOf("xml", "pro", "kts", "rs")
 
-private fun isTestSourceSet(name: String) = name.startsWith("test") || name.startsWith("androidTest")
+// Android/JVM (test, testFree…, androidTest) and Kotlin Multiplatform (jvmTest, commonTest…) test source sets.
+private fun isTestSourceSet(name: String) = name.startsWith("test") || name.startsWith("androidTest") || name.endsWith("Test")
 
 private fun walk(dir: File): Sequence<File> = dir.walkTopDown().onEnter { it.name != "build" && !it.name.startsWith(".") }.filter { it.isFile }
 

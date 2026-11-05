@@ -23,13 +23,26 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.LocalPreferences
-import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.commonsui.Res
+import com.greenart7c3.nostrsigner.commonsui.auto_check_updates
+import com.greenart7c3.nostrsigner.commonsui.check_for_updates_now
+import com.greenart7c3.nostrsigner.commonsui.checking_for_updates
+import com.greenart7c3.nostrsigner.commonsui.current_version
+import com.greenart7c3.nostrsigner.commonsui.download_and_install_update
+import com.greenart7c3.nostrsigner.commonsui.downloading_update
+import com.greenart7c3.nostrsigner.commonsui.installing_update
+import com.greenart7c3.nostrsigner.commonsui.up_to_date
+import com.greenart7c3.nostrsigner.commonsui.update_available
+import com.greenart7c3.nostrsigner.commonsui.update_channel
+import com.greenart7c3.nostrsigner.commonsui.update_channel_description
+import com.greenart7c3.nostrsigner.commonsui.update_check_frequency
+import com.greenart7c3.nostrsigner.commonsui.update_download_failed
+import com.greenart7c3.nostrsigner.commonsui.updates_not_available
 import com.greenart7c3.nostrsigner.models.UpdateChannel
 import com.greenart7c3.nostrsigner.models.UpdateCheckFrequency
 import com.greenart7c3.nostrsigner.service.DownloadState
@@ -37,6 +50,7 @@ import com.greenart7c3.nostrsigner.ui.components.TitleExplainer
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun UpdateSettingsScreen(modifier: Modifier = Modifier) {
@@ -46,7 +60,7 @@ fun UpdateSettingsScreen(modifier: Modifier = Modifier) {
     Column(modifier = modifier) {
         // Current version
         Text(
-            text = stringResource(R.string.current_version, BuildConfig.VERSION_NAME),
+            text = stringResource(Res.string.current_version, BuildConfig.VERSION_NAME),
             style = MaterialTheme.typography.bodyMedium,
             color = Color.Gray,
             modifier = Modifier.padding(bottom = 8.dp),
@@ -57,7 +71,7 @@ fun UpdateSettingsScreen(modifier: Modifier = Modifier) {
         val updater = Amber.instance.zapstoreUpdater
         if (updater == null) {
             Text(
-                text = stringResource(R.string.updates_not_available),
+                text = stringResource(Res.string.updates_not_available),
                 color = Color.Gray,
             )
             return@Column
@@ -73,12 +87,12 @@ fun UpdateSettingsScreen(modifier: Modifier = Modifier) {
 
         // Status row
         val statusText = when {
-            dlState == DownloadState.DOWNLOADING -> stringResource(R.string.downloading_update)
-            dlState == DownloadState.INSTALLING -> stringResource(R.string.installing_update)
-            dlState == DownloadState.ERROR -> stringResource(R.string.update_download_failed)
-            latestRelease != null -> stringResource(R.string.update_available, latestRelease!!.version)
-            isChecking -> stringResource(R.string.checking_for_updates)
-            else -> stringResource(R.string.up_to_date)
+            dlState == DownloadState.DOWNLOADING -> stringResource(Res.string.downloading_update)
+            dlState == DownloadState.INSTALLING -> stringResource(Res.string.installing_update)
+            dlState == DownloadState.ERROR -> stringResource(Res.string.update_download_failed)
+            latestRelease != null -> stringResource(Res.string.update_available, latestRelease!!.version)
+            isChecking -> stringResource(Res.string.checking_for_updates)
+            else -> stringResource(Res.string.up_to_date)
         }
         val statusColor = when {
             dlState == DownloadState.ERROR -> MaterialTheme.colorScheme.error
@@ -118,9 +132,9 @@ fun UpdateSettingsScreen(modifier: Modifier = Modifier) {
         ) {
             Text(
                 text = if (latestRelease != null && dlState == DownloadState.IDLE) {
-                    stringResource(R.string.download_and_install_update)
+                    stringResource(Res.string.download_and_install_update)
                 } else {
-                    stringResource(R.string.check_for_updates_now)
+                    stringResource(Res.string.check_for_updates_now)
                 },
             )
         }
@@ -136,7 +150,7 @@ fun UpdateSettingsScreen(modifier: Modifier = Modifier) {
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
-                text = stringResource(R.string.auto_check_updates),
+                text = stringResource(Res.string.auto_check_updates),
                 modifier = Modifier.weight(1f),
             )
             Switch(
@@ -159,7 +173,7 @@ fun UpdateSettingsScreen(modifier: Modifier = Modifier) {
             }.toImmutableList()
 
             SettingsRow(
-                name = R.string.update_check_frequency,
+                name = Res.string.update_check_frequency,
                 description = null,
                 selectedItems = frequencyOptions,
                 selectedIndex = UpdateCheckFrequency.entries.indexOf(frequency),
@@ -180,8 +194,8 @@ fun UpdateSettingsScreen(modifier: Modifier = Modifier) {
         }.toImmutableList()
 
         SettingsRow(
-            name = R.string.update_channel,
-            description = R.string.update_channel_description,
+            name = Res.string.update_channel,
+            description = Res.string.update_channel_description,
             selectedItems = channelOptions,
             selectedIndex = UpdateChannel.entries.indexOf(channel),
             onSelect = { index ->

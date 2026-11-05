@@ -20,7 +20,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboard
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -29,12 +28,17 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.greenart7c3.nostrsigner.Amber
-import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.commonsui.Res
+import com.greenart7c3.nostrsigner.commonsui.copy_to_clipboard
+import com.greenart7c3.nostrsigner.commonsui.next
+import com.greenart7c3.nostrsigner.commonsui.seed_words_explainer
+import com.greenart7c3.nostrsigner.commonsui.seed_words_title
 import com.greenart7c3.nostrsigner.ui.setSensitiveClip
 import com.greenart7c3.nostrsigner.ui.theme.AmberPreview
 import com.greenart7c3.nostrsigner.ui.theme.ThemePreviews
 import com.greenart7c3.nostrsigner.ui.verticalScrollbar
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun SeedWordsPage(
@@ -58,7 +62,7 @@ fun SeedWordsPage(
         ) {
             Text(
                 modifier = Modifier.fillMaxWidth(),
-                text = stringResource(R.string.seed_words_title),
+                text = stringResource(Res.string.seed_words_title),
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center,
@@ -66,7 +70,7 @@ fun SeedWordsPage(
             Spacer(modifier = Modifier.height(4.dp))
 
             Text(
-                text = stringResource(R.string.seed_words_explainer),
+                text = stringResource(Res.string.seed_words_explainer),
                 textAlign = TextAlign.Center,
             )
 
@@ -78,7 +82,7 @@ fun SeedWordsPage(
                         clipboardManager.setSensitiveClip(seedWords.joinToString(" "))
                     }
                 },
-                text = stringResource(R.string.copy_to_clipboard),
+                text = stringResource(Res.string.copy_to_clipboard),
             )
 
             Row(
@@ -140,7 +144,7 @@ fun SeedWordsPage(
             if (showNextButton) {
                 AmberButton(
                     onClick = onNextPage,
-                    text = stringResource(R.string.next),
+                    text = stringResource(Res.string.next),
                 )
             }
         }

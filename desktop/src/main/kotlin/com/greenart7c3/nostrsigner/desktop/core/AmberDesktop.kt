@@ -1,6 +1,8 @@
 package com.greenart7c3.nostrsigner.desktop.core
 
 import com.greenart7c3.nostrsigner.common.relays.RelayHealthTracker
+import com.greenart7c3.nostrsigner.commonsui.Res
+import com.greenart7c3.nostrsigner.commonsui.d_local_bunker_port_in_use
 import com.vitorpamplona.quartz.nip01Core.relay.client.NostrClient
 import com.vitorpamplona.quartz.nip01Core.relay.client.auth.RelayAuthenticator
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
@@ -20,6 +22,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.StringResource
 
 /**
  * Desktop counterpart of the Android `Amber` Application singleton: owns the
@@ -143,15 +146,15 @@ object AmberDesktop {
     /**
      * Changes the local relay's port, refused while any saved connection still
      * lists the relay: its bunker:// URI (and its subscription) would keep
-     * pointing at the old port. Returns a string key for the refusal, or null
+     * pointing at the old port. Returns the string for the refusal, or null
      * when the port was applied.
      */
-    fun changeLocalBunkerPort(newPort: Int): String? {
+    fun changeLocalBunkerPort(newPort: Int): StringResource? {
         val current = RelayUrlNormalizer.normalizeOrNull("ws://127.0.0.1:${localBunkerPort()}/") ?: return null
         val inUse = AccountsStore.accounts.value.any { record ->
             AmberDesktop.store(record.npub).apps.value.any { app -> app.app.normalizedRelays().contains(current) }
         }
-        if (inUse) return "d_local_bunker_port_in_use"
+        if (inUse) return Res.string.d_local_bunker_port_in_use
         SettingsStore.update { it.copy(localBunkerPort = newPort) }
         // A running relay must come down first: start() never rebinds a live one.
         LocalBunkerRelay.stop()

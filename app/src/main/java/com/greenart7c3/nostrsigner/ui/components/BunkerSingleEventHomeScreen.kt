@@ -22,7 +22,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -30,17 +29,24 @@ import androidx.compose.ui.unit.sp
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.LocalPreferences
-import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.common.SignerType
 import com.greenart7c3.nostrsigner.common.psbt.PsbtDecoder
 import com.greenart7c3.nostrsigner.common.sanitizeAppName
+import com.greenart7c3.nostrsigner.commonsui.Permission
+import com.greenart7c3.nostrsigner.commonsui.Res
+import com.greenart7c3.nostrsigner.commonsui.cancel
+import com.greenart7c3.nostrsigner.commonsui.create_a_new_connection
+import com.greenart7c3.nostrsigner.commonsui.event_pubkey_is_not_equal_to_current_logged_in_user
+import com.greenart7c3.nostrsigner.commonsui.getStringBlocking
+import com.greenart7c3.nostrsigner.commonsui.kindToNip
+import com.greenart7c3.nostrsigner.commonsui.replace
+import com.greenart7c3.nostrsigner.commonsui.replace_app_message
+import com.greenart7c3.nostrsigner.commonsui.replace_connection
 import com.greenart7c3.nostrsigner.database.ApplicationDao
 import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
 import com.greenart7c3.nostrsigner.database.isAllRelaysGrant
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.AmberBunkerRequest
-import com.greenart7c3.nostrsigner.models.Permission
-import com.greenart7c3.nostrsigner.models.kindToNip
 import com.greenart7c3.nostrsigner.models.toPermissionType
 import com.greenart7c3.nostrsigner.service.BunkerRequestUtils
 import com.greenart7c3.nostrsigner.service.IntentUtils
@@ -69,6 +75,7 @@ import com.vitorpamplona.quartz.utils.TimeUtils
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun BunkerSingleEventHomeScreen(
@@ -121,7 +128,6 @@ fun BunkerSingleEventHomeScreen(
                     val result = "pong"
 
                     BunkerRequestUtils.sendResult(
-                        context = context,
                         account = account,
                         key = key,
                         response = result,
@@ -165,10 +171,10 @@ fun BunkerSingleEventHomeScreen(
                 AlertDialog(
                     modifier = Modifier.outlineIfAny(amoledBorder(), AlertDialogDefaults.shape),
                     title = {
-                        Text(text = stringResource(R.string.replace_connection))
+                        Text(text = stringResource(Res.string.replace_connection))
                     },
                     text = {
-                        Text(text = stringResource(R.string.replace_app_message, existingAppName))
+                        Text(text = stringResource(Res.string.replace_app_message, existingAppName))
                     },
                     onDismissRequest = {
                         showExistingAppDialog = false
@@ -181,7 +187,6 @@ fun BunkerSingleEventHomeScreen(
 
                                     BunkerRequestUtils.sendResult(
                                         oldKey = existingAppKey,
-                                        context = context,
                                         account = selectedAccount,
                                         key = key,
                                         response = result,
@@ -196,16 +201,15 @@ fun BunkerSingleEventHomeScreen(
                                         deleteAfter = localDeleteAfter,
                                     )
                                 },
-                                text = stringResource(R.string.replace),
+                                text = stringResource(Res.string.replace),
                             )
                             if (canCreateNewConnection) {
                                 AmberButton(
-                                    text = stringResource(R.string.create_a_new_connection),
+                                    text = stringResource(Res.string.create_a_new_connection),
                                     onClick = {
                                         val result = bunkerRequest.nostrConnectSecret.ifBlank { "ack" }
 
                                         BunkerRequestUtils.sendResult(
-                                            context = context,
                                             account = selectedAccount,
                                             key = key,
                                             response = result,
@@ -223,7 +227,7 @@ fun BunkerSingleEventHomeScreen(
                                 )
                             }
                             AmberButton(
-                                text = stringResource(R.string.cancel),
+                                text = stringResource(Res.string.cancel),
                                 onClick = {
                                     showExistingAppDialog = false
                                 },
@@ -268,7 +272,6 @@ fun BunkerSingleEventHomeScreen(
                         val existing = connectionToReplace(Amber.instance.getDatabase(acc.npub).dao(), bunkerRequest, key)
                         if (existing == null) {
                             BunkerRequestUtils.sendResult(
-                                context = context,
                                 account = acc,
                                 key = key,
                                 response = result,
@@ -313,7 +316,6 @@ fun BunkerSingleEventHomeScreen(
                     val result = account.hexKey
 
                     BunkerRequestUtils.sendResult(
-                        context = context,
                         account = account,
                         key = key,
                         response = result,
@@ -374,7 +376,6 @@ fun BunkerSingleEventHomeScreen(
                 account = account,
                 onAccept = { rememberType, scope ->
                     BunkerRequestUtils.sendResult(
-                        context = context,
                         account = account,
                         key = key,
                         response = bunkerRequest.encryptedData?.result ?: "",
@@ -439,7 +440,6 @@ fun BunkerSingleEventHomeScreen(
                     val result = bunkerRequest.encryptedData?.result ?: ""
 
                     BunkerRequestUtils.sendResult(
-                        context = context,
                         account = account,
                         key = key,
                         response = result,
@@ -504,7 +504,6 @@ fun BunkerSingleEventHomeScreen(
                     val result = bunkerRequest.encryptedData?.result ?: ""
 
                     BunkerRequestUtils.sendResult(
-                        context = context,
                         account = account,
                         key = key,
                         response = result,
@@ -569,7 +568,6 @@ fun BunkerSingleEventHomeScreen(
                     val result = bunkerRequest.encryptedData?.result ?: ""
 
                     BunkerRequestUtils.sendResult(
-                        context = context,
                         account = account,
                         key = key,
                         response = result,
@@ -655,7 +653,7 @@ fun BunkerSingleEventHomeScreen(
                             coroutineScope.launch {
                                 Toast.makeText(
                                     context,
-                                    context.getString(R.string.event_pubkey_is_not_equal_to_current_logged_in_user),
+                                    getStringBlocking(Res.string.event_pubkey_is_not_equal_to_current_logged_in_user),
                                     Toast.LENGTH_SHORT,
                                 ).show()
                             }
@@ -669,7 +667,6 @@ fun BunkerSingleEventHomeScreen(
                             rememberType = rememberType,
                         )
                         BunkerRequestUtils.sendResult(
-                            context = context,
                             account = account,
                             key = key,
                             response = event.toJson(),
@@ -725,7 +722,7 @@ fun BunkerSingleEventHomeScreen(
                             coroutineScope.launch {
                                 Toast.makeText(
                                     context,
-                                    context.getString(R.string.event_pubkey_is_not_equal_to_current_logged_in_user),
+                                    getStringBlocking(Res.string.event_pubkey_is_not_equal_to_current_logged_in_user),
                                     Toast.LENGTH_SHORT,
                                 ).show()
                             }
@@ -733,7 +730,6 @@ fun BunkerSingleEventHomeScreen(
                         }
 
                         BunkerRequestUtils.sendResult(
-                            context = context,
                             account = account,
                             key = key,
                             response = event.toJson(),
@@ -798,7 +794,6 @@ fun BunkerSingleEventHomeScreen(
                             // SPECIFIC ⇒ kind-scoped grant; ALL ⇒ broad grant (kind=null).
                             val grantedKind = if (scope == DecryptTypeScope.SPECIFIC) v3Kind else null
                             BunkerRequestUtils.sendResult(
-                                context = context,
                                 account = account,
                                 key = key,
                                 response = result,
@@ -853,7 +848,6 @@ fun BunkerSingleEventHomeScreen(
                                 }
 
                             BunkerRequestUtils.sendResult(
-                                context = context,
                                 account = account,
                                 key = key,
                                 response = result,
@@ -906,7 +900,6 @@ fun BunkerSingleEventHomeScreen(
                                 try {
                                     val result = account.signPsbt(psbtHex)
                                     BunkerRequestUtils.sendResult(
-                                        context = context,
                                         account = account,
                                         key = key,
                                         response = result,

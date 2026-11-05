@@ -44,7 +44,6 @@ import androidx.compose.ui.platform.ClipEntry
 import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
@@ -52,7 +51,12 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.SubcomposeAsyncImage
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.LocalPreferences
-import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.commonsui.Res
+import com.greenart7c3.nostrsigner.commonsui.account_picture
+import com.greenart7c3.nostrsigner.commonsui.add_new_account
+import com.greenart7c3.nostrsigner.commonsui.copy_to_clipboard
+import com.greenart7c3.nostrsigner.commonsui.edit_name
+import com.greenart7c3.nostrsigner.commonsui.select_account
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.AccountStateViewModel
@@ -75,6 +79,7 @@ import com.vitorpamplona.quartz.nip19Bech32.bech32.bechToBytes
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -103,7 +108,7 @@ fun AccountsBottomSheet(
             horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(stringResource(R.string.select_account), fontWeight = FontWeight.Bold)
+            Text(stringResource(Res.string.select_account), fontWeight = FontWeight.Bold)
         }
         CompositionLocalProvider(
             LocalDensity provides Density(
@@ -175,7 +180,7 @@ fun AccountsBottomSheet(
                                     if (profileUrl.isNotBlank() && !BuildFlavorChecker.isOfflineFlavor()) {
                                         SubcomposeAsyncImage(
                                             model = profileUrl,
-                                            contentDescription = stringResource(R.string.account_picture),
+                                            contentDescription = stringResource(Res.string.account_picture),
                                             modifier = Modifier
                                                 .padding(end = 8.dp)
                                                 .clip(RoundedCornerShape(50))
@@ -184,7 +189,7 @@ fun AccountsBottomSheet(
                                             error = {
                                                 Icon(
                                                     Icons.Outlined.Person,
-                                                    stringResource(R.string.account_picture),
+                                                    stringResource(Res.string.account_picture),
                                                     modifier = Modifier
                                                         .border(1.dp, borderColor, CircleShape)
                                                         .height(40.dp)
@@ -195,7 +200,7 @@ fun AccountsBottomSheet(
                                     } else {
                                         Icon(
                                             Icons.Outlined.Person,
-                                            stringResource(R.string.account_picture),
+                                            stringResource(Res.string.account_picture),
                                             modifier = Modifier
                                                 .padding(end = 8.dp)
                                                 .border(1.dp, borderColor, CircleShape)
@@ -233,7 +238,7 @@ fun AccountsBottomSheet(
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.ContentCopy,
-                                    contentDescription = stringResource(R.string.copy_to_clipboard),
+                                    contentDescription = stringResource(Res.string.copy_to_clipboard),
                                     tint = MaterialTheme.colorScheme.onSurface,
                                 )
                             }
@@ -246,7 +251,7 @@ fun AccountsBottomSheet(
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.Edit,
-                                    contentDescription = stringResource(R.string.edit_name),
+                                    contentDescription = stringResource(Res.string.edit_name),
                                     tint = MaterialTheme.colorScheme.onSurface,
                                 )
                             }
@@ -267,7 +272,7 @@ fun AccountsBottomSheet(
                             navController.navController.navigate(Route.Login.route)
                         },
                         content = {
-                            Text(stringResource(R.string.add_new_account))
+                            Text(stringResource(Res.string.add_new_account))
                         },
                     )
                 }

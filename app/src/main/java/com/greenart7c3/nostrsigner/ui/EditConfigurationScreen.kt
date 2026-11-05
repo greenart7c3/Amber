@@ -37,8 +37,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.input.ImeAction
@@ -49,6 +47,17 @@ import androidx.compose.ui.unit.dp
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.common.generateBunkerPrivKey
+import com.greenart7c3.nostrsigner.commonsui.Res
+import com.greenart7c3.nostrsigner.commonsui.add
+import com.greenart7c3.nostrsigner.commonsui.close_application
+import com.greenart7c3.nostrsigner.commonsui.delete
+import com.greenart7c3.nostrsigner.commonsui.delete_application
+import com.greenart7c3.nostrsigner.commonsui.edit_configuration_description
+import com.greenart7c3.nostrsigner.commonsui.name
+import com.greenart7c3.nostrsigner.commonsui.reset_bunker
+import com.greenart7c3.nostrsigner.commonsui.testing_relay
+import com.greenart7c3.nostrsigner.commonsui.update
+import com.greenart7c3.nostrsigner.commonsui.wss
 import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.service.BunkerRequestUtils
@@ -65,6 +74,7 @@ import kotlin.collections.set
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun EditConfigurationScreen(
@@ -73,7 +83,6 @@ fun EditConfigurationScreen(
     account: Account,
     onNav: (String) -> Unit,
 ) {
-    val context = LocalContext.current
     val scope = rememberCoroutineScope()
     var application by remember { mutableStateOf<ApplicationWithPermissions?>(null) }
     var name by remember { mutableStateOf(TextFieldValue(AnnotatedString(""))) }
@@ -122,7 +131,7 @@ fun EditConfigurationScreen(
         CenterCircularProgressIndicator(
             modifier,
             if (textFieldRelay.value.text.isNotBlank()) {
-                stringResource(R.string.testing_relay)
+                stringResource(Res.string.testing_relay)
             } else {
                 null
             },
@@ -132,7 +141,7 @@ fun EditConfigurationScreen(
             modifier
                 .fillMaxSize(),
         ) {
-            Text(stringResource(R.string.edit_configuration_description))
+            Text(stringResource(Res.string.edit_configuration_description))
 
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -146,7 +155,7 @@ fun EditConfigurationScreen(
                 onValueChange = {
                     name = it
                 },
-                label = { Text(stringResource(R.string.name)) },
+                label = { Text(stringResource(Res.string.name)) },
                 modifier = Modifier.fillMaxWidth(),
             )
 
@@ -161,7 +170,7 @@ fun EditConfigurationScreen(
             ) {
                 Text(
                     modifier = Modifier.weight(1f),
-                    text = stringResource(R.string.close_application),
+                    text = stringResource(Res.string.close_application),
                 )
                 Switch(
                     checked = closeApp,
@@ -194,14 +203,13 @@ fun EditConfigurationScreen(
                                     relays,
                                     scope,
                                     account,
-                                    context,
                                     onDone = {},
                                 )
                             }
                         },
                     ),
                     label = {
-                        Text(stringResource(R.string.wss))
+                        Text(stringResource(Res.string.wss))
                     },
                     trailingIcon = {
                         IconButton(
@@ -217,7 +225,6 @@ fun EditConfigurationScreen(
                                         relays,
                                         scope,
                                         account,
-                                        context,
                                         onDone = {},
                                     )
                                 }
@@ -225,7 +232,7 @@ fun EditConfigurationScreen(
                             content = {
                                 Icon(
                                     Icons.Default.Add,
-                                    contentDescription = stringResource(R.string.add),
+                                    contentDescription = stringResource(Res.string.add),
                                 )
                             },
                         )
@@ -273,7 +280,7 @@ fun EditConfigurationScreen(
                             ) {
                                 Icon(
                                     ImageVector.vectorResource(R.drawable.delete),
-                                    stringResource(R.string.delete),
+                                    stringResource(Res.string.delete),
                                 )
                             }
                         }
@@ -338,7 +345,7 @@ fun EditConfigurationScreen(
                         }
                     }
                 },
-                text = stringResource(R.string.update),
+                text = stringResource(Res.string.update),
             )
 
             AmberButton(
@@ -380,7 +387,7 @@ fun EditConfigurationScreen(
                         }
                     }
                 },
-                text = stringResource(R.string.reset_bunker),
+                text = stringResource(Res.string.reset_bunker),
                 textColor = Color.White,
             )
 
@@ -407,7 +414,7 @@ fun EditConfigurationScreen(
                         }
                     }
                 },
-                text = stringResource(R.string.delete_application),
+                text = stringResource(Res.string.delete_application),
                 textColor = Color.White,
             )
         }

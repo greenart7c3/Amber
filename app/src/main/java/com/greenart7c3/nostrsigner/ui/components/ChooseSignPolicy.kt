@@ -19,12 +19,18 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.commonsui.Res
+import com.greenart7c3.nostrsigner.commonsui.sign_policy_basic
+import com.greenart7c3.nostrsigner.commonsui.sign_policy_basic_explainer
+import com.greenart7c3.nostrsigner.commonsui.sign_policy_fully
+import com.greenart7c3.nostrsigner.commonsui.sign_policy_fully_explainer
+import com.greenart7c3.nostrsigner.commonsui.sign_policy_manual_new_app
+import com.greenart7c3.nostrsigner.commonsui.sign_policy_manual_new_app_explainer
 import com.greenart7c3.nostrsigner.ui.theme.AmberPreview
 import com.greenart7c3.nostrsigner.ui.theme.ThemePreviews
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun ChooseSignPolicy(
@@ -33,16 +39,16 @@ fun ChooseSignPolicy(
 ) {
     val radioOptions = listOf(
         TitleExplainer(
-            title = stringResource(R.string.sign_policy_basic),
-            explainer = stringResource(R.string.sign_policy_basic_explainer),
+            title = stringResource(Res.string.sign_policy_basic),
+            explainer = stringResource(Res.string.sign_policy_basic_explainer),
         ),
         TitleExplainer(
-            title = stringResource(R.string.sign_policy_manual_new_app),
-            explainer = stringResource(R.string.sign_policy_manual_new_app_explainer),
+            title = stringResource(Res.string.sign_policy_manual_new_app),
+            explainer = stringResource(Res.string.sign_policy_manual_new_app_explainer),
         ),
         TitleExplainer(
-            title = stringResource(R.string.sign_policy_fully),
-            explainer = stringResource(R.string.sign_policy_fully_explainer),
+            title = stringResource(Res.string.sign_policy_fully),
+            explainer = stringResource(Res.string.sign_policy_fully_explainer),
         ),
     )
     radioOptions.forEachIndexed { index, option ->

@@ -20,19 +20,21 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.SubcomposeAsyncImage
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
-import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.commonsui.Res
+import com.greenart7c3.nostrsigner.commonsui.account_picture
+import com.greenart7c3.nostrsigner.commonsui.signing_as
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.theme.AmberPreview
 import com.greenart7c3.nostrsigner.ui.theme.ThemePreviews
 import com.greenart7c3.nostrsigner.ui.theme.fromHex
 import com.greenart7c3.nostrsigner.ui.theme.previewAccount
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun SigningAs(account: Account, modifier: Modifier = Modifier) {
@@ -44,7 +46,7 @@ fun SigningAs(account: Account, modifier: Modifier = Modifier) {
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(
-            text = stringResource(R.string.signing_as),
+            text = stringResource(Res.string.signing_as),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -56,7 +58,7 @@ fun SigningAs(account: Account, modifier: Modifier = Modifier) {
             if (profileUrl.isNotBlank() && !BuildFlavorChecker.isOfflineFlavor()) {
                 SubcomposeAsyncImage(
                     model = profileUrl,
-                    contentDescription = stringResource(R.string.account_picture),
+                    contentDescription = stringResource(Res.string.account_picture),
                     modifier = Modifier
                         .clip(RoundedCornerShape(50))
                         .height(30.dp)
@@ -64,7 +66,7 @@ fun SigningAs(account: Account, modifier: Modifier = Modifier) {
                     error = {
                         Icon(
                             Icons.Outlined.Person,
-                            stringResource(R.string.account_picture),
+                            stringResource(Res.string.account_picture),
                             modifier = Modifier
                                 .border(
                                     1.dp,
@@ -79,7 +81,7 @@ fun SigningAs(account: Account, modifier: Modifier = Modifier) {
             } else {
                 Icon(
                     Icons.Outlined.Person,
-                    stringResource(R.string.account_picture),
+                    stringResource(Res.string.account_picture),
                     modifier = Modifier
                         .border(
                             1.dp,

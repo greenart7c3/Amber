@@ -8,11 +8,13 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.commonsui.Res
+import com.greenart7c3.nostrsigner.commonsui.accept
+import com.greenart7c3.nostrsigner.commonsui.reject
 import com.greenart7c3.nostrsigner.ui.theme.AmberPreview
 import com.greenart7c3.nostrsigner.ui.theme.ThemePreviews
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun AcceptRejectButtons(
@@ -31,13 +33,13 @@ fun AcceptRejectButtons(
             colors = ButtonDefaults.buttonColors(
                 containerColor = Color(0xFFFF6B00),
             ),
-            text = stringResource(R.string.reject),
+            text = stringResource(Res.string.reject),
         )
 
         AmberButton(
             Modifier.weight(1f),
             onClick = onAccept,
-            text = stringResource(R.string.accept),
+            text = stringResource(Res.string.accept),
         )
     }
 }

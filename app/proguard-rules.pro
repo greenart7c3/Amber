@@ -69,6 +69,8 @@
 -keep class com.vitorpamplona.amethyst.model.** { *; }
 -keep class com.vitorpamplona.amethyst.service.** { *; }
 -keep class com.greenart7c3.nostrsigner.models.** { *; }
+# Permission (and its Jackson (de)serializers) moved here from models with the shared strings.
+-keep class com.greenart7c3.nostrsigner.commonsui.Permission** { *; }
 -keep class com.greenart7c3.nostrsigner.service.** { *; }
 
 -dontwarn edu.umd.cs.findbugs.annotations.NonNull

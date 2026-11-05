@@ -8,9 +8,10 @@ import androidx.compose.material3.IconToggleButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
 import com.greenart7c3.nostrsigner.LocalPreferences
-import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.commonsui.Res
+import com.greenart7c3.nostrsigner.commonsui.favorite_account
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Orders accounts with the [favorites] first, keeping the saved order within each group.
@@ -34,7 +35,7 @@ fun FavoriteAccountButton(
     ) {
         Icon(
             imageVector = if (isFavorite) Icons.Filled.Star else Icons.Filled.StarBorder,
-            contentDescription = stringResource(R.string.favorite_account),
+            contentDescription = stringResource(Res.string.favorite_account),
             tint = if (isFavorite) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }

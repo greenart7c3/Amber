@@ -234,6 +234,7 @@ ksp {
 
 dependencies {
     implementation(project(":common"))
+    implementation(project(":commonsui"))
     implementation(libs.quartz) {
         exclude(group = "net.java.dev.jna")
     }

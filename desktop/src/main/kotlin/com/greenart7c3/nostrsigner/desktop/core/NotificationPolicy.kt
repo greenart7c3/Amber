@@ -2,6 +2,9 @@ package com.greenart7c3.nostrsigner.desktop.core
 
 import com.greenart7c3.nostrsigner.common.SignerType
 import com.greenart7c3.nostrsigner.common.sanitizeAppName
+import com.greenart7c3.nostrsigner.commonsui.Res
+import com.greenart7c3.nostrsigner.commonsui.account
+import com.greenart7c3.nostrsigner.commonsui.getStringBlocking
 
 /**
  * Event kinds whose signature changes the user's profile, social graph,
@@ -46,11 +49,11 @@ fun PendingBunkerRequest.allowsQuickApprove(): Boolean = when (type) {
  * more than one account, so the user can tell which one would sign; null with
  * a single account. Matches the request card's account label.
  */
-fun PendingBunkerRequest.notificationAccountLine(accounts: List<AccountRecord>, language: String): String? {
+fun PendingBunkerRequest.notificationAccountLine(accounts: List<AccountRecord>): String? {
     if (accounts.size < 2) return null
     val name = accounts.firstOrNull { it.npub == account.npub }?.name.orEmpty()
     val label = if (name.isBlank()) account.npub.toShortenHex() else "$name · ${account.npub.toShortenHex()}"
-    return "${Strings.get("account", language)}: $label"
+    return "${getStringBlocking(Res.string.account)}: $label"
 }
 
 /**

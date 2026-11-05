@@ -16,7 +16,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.capitalize
@@ -25,14 +24,28 @@ import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.greenart7c3.nostrsigner.Amber
-import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.common.SignerType
+import com.greenart7c3.nostrsigner.commonsui.Permission
+import com.greenart7c3.nostrsigner.commonsui.Res
+import com.greenart7c3.nostrsigner.commonsui.decrypt_zap_event
+import com.greenart7c3.nostrsigner.commonsui.encryption_scope
+import com.greenart7c3.nostrsigner.commonsui.event_kind
+import com.greenart7c3.nostrsigner.commonsui.following
+import com.greenart7c3.nostrsigner.commonsui.for_all_methods
+import com.greenart7c3.nostrsigner.commonsui.for_this_method_only
+import com.greenart7c3.nostrsigner.commonsui.localizedBlocking
+import com.greenart7c3.nostrsigner.commonsui.show_details
+import com.greenart7c3.nostrsigner.commonsui.wants_to_encrypt_this_list_of_tags_with
+import com.greenart7c3.nostrsigner.commonsui.wants_to_encrypt_this_text_with
+import com.greenart7c3.nostrsigner.commonsui.wants_to_encrypt_with
+import com.greenart7c3.nostrsigner.commonsui.wants_to_read_from_encrypted_content
+import com.greenart7c3.nostrsigner.commonsui.wants_to_read_this_list_of_tags_from_encrypted_content
+import com.greenart7c3.nostrsigner.commonsui.wants_to_read_this_text_from_encrypted_content
+import com.greenart7c3.nostrsigner.commonsui.wants_you_to
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.ClearTextEncryptedDataKind
 import com.greenart7c3.nostrsigner.models.EncryptedDataKind
 import com.greenart7c3.nostrsigner.models.EventEncryptedDataKind
-import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.models.PrivateZapEncryptedDataKind
 import com.greenart7c3.nostrsigner.models.TagArrayEncryptedDataKind
 import com.greenart7c3.nostrsigner.ui.RememberType
@@ -40,6 +53,7 @@ import com.greenart7c3.nostrsigner.ui.theme.AmberPreview
 import com.greenart7c3.nostrsigner.ui.theme.ThemePreviews
 import com.greenart7c3.nostrsigner.ui.theme.previewAccount
 import com.vitorpamplona.quartz.nip02FollowList.ContactListEvent
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun EncryptDecryptData(
@@ -68,39 +82,39 @@ fun EncryptDecryptData(
             when (encryptedData) {
                 is EventEncryptedDataKind -> {
                     val permission = Permission("sign_event", encryptedData.event.kind)
-                    val kindTranslation = permission.toLocalizedString(Amber.instance)
-                    val unknownKindString = stringResource(R.string.event_kind, encryptedData.event.kind.toString())
+                    val kindTranslation = permission.localizedBlocking()
+                    val unknownKindString = stringResource(Res.string.event_kind, encryptedData.event.kind.toString())
                     val altTag = encryptedData.event.tags.firstOrNull { it.size > 1 && it[0] == "alt" }?.getOrNull(1)
                     val displayTranslation = if (kindTranslation == unknownKindString && altTag != null) altTag else kindTranslation
-                    stringResource(R.string.wants_to_encrypt_with, displayTranslation, type.name.split("_").first())
+                    stringResource(Res.string.wants_to_encrypt_with, displayTranslation, type.name.split("_").first())
                 }
 
                 is TagArrayEncryptedDataKind -> {
-                    stringResource(R.string.wants_to_encrypt_this_list_of_tags_with, type.name.split("_").first())
+                    stringResource(Res.string.wants_to_encrypt_this_list_of_tags_with, type.name.split("_").first())
                 }
 
-                else -> stringResource(R.string.wants_to_encrypt_this_text_with, type.name.split("_").first())
+                else -> stringResource(Res.string.wants_to_encrypt_this_text_with, type.name.split("_").first())
             }
         } else {
             when (encryptedData) {
                 is EventEncryptedDataKind -> {
                     val permission = Permission("sign_event", encryptedData.event.kind)
-                    val kindTranslation = permission.toLocalizedString(Amber.instance)
-                    val unknownKindString = stringResource(R.string.event_kind, encryptedData.event.kind.toString())
+                    val kindTranslation = permission.localizedBlocking()
+                    val unknownKindString = stringResource(Res.string.event_kind, encryptedData.event.kind.toString())
                     val altTag = encryptedData.event.tags.firstOrNull { it.size > 1 && it[0] == "alt" }?.getOrNull(1)
                     val displayTranslation = if (kindTranslation == unknownKindString && altTag != null) altTag else kindTranslation
-                    stringResource(R.string.wants_to_read_from_encrypted_content, displayTranslation, type.name.split("_").first())
+                    stringResource(Res.string.wants_to_read_from_encrypted_content, displayTranslation, type.name.split("_").first())
                 }
 
                 is TagArrayEncryptedDataKind -> {
-                    stringResource(R.string.wants_to_read_this_list_of_tags_from_encrypted_content, type.name.split("_").first())
+                    stringResource(Res.string.wants_to_read_this_list_of_tags_from_encrypted_content, type.name.split("_").first())
                 }
 
                 is PrivateZapEncryptedDataKind -> {
-                    stringResource(R.string.wants_you_to, stringResource(R.string.decrypt_zap_event))
+                    stringResource(Res.string.wants_you_to, stringResource(Res.string.decrypt_zap_event))
                 }
 
-                else -> stringResource(R.string.wants_to_read_this_text_from_encrypted_content, type.name.split("_").first())
+                else -> stringResource(Res.string.wants_to_read_this_text_from_encrypted_content, type.name.split("_").first())
             }
         }
 
@@ -128,7 +142,7 @@ fun EncryptDecryptData(
                                 onCLick = {
                                     showDetails = !showDetails
                                 },
-                                stringResource(R.string.show_details),
+                                stringResource(Res.string.show_details),
                             )
                             if (showDetails) {
                                 EventDetailModal(encryptedData.sealEncryptedDataKind.event.toEvent()) {
@@ -144,7 +158,7 @@ fun EncryptDecryptData(
                             onCLick = {
                                 showDetails = !showDetails
                             },
-                            stringResource(R.string.show_details),
+                            stringResource(Res.string.show_details),
                         )
                         if (showDetails) {
                             EventDetailModal(encryptedData.event.toEvent()) {
@@ -189,7 +203,7 @@ fun EncryptDecryptData(
         if (showScopeToggle) {
             Spacer(Modifier.size(8.dp))
             LabeledBorderBox(
-                label = stringResource(R.string.encryption_scope),
+                label = stringResource(Res.string.encryption_scope),
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp),
@@ -201,8 +215,8 @@ fun EncryptDecryptData(
                     label = {
                         stringResource(
                             when (it) {
-                                DecryptTypeScope.SPECIFIC -> R.string.for_this_method_only
-                                DecryptTypeScope.ALL -> R.string.for_all_methods
+                                DecryptTypeScope.SPECIFIC -> Res.string.for_this_method_only
+                                DecryptTypeScope.ALL -> Res.string.for_all_methods
                             },
                         )
                     },
@@ -275,35 +289,35 @@ fun BunkerEncryptDecryptData(
                     when (encryptedData) {
                         is EventEncryptedDataKind -> {
                             val permission = Permission("sign_event", encryptedData.event.kind)
-                            val kindTranslation = permission.toLocalizedString(Amber.instance)
-                            val unknownKindString = stringResource(R.string.event_kind, encryptedData.event.kind.toString())
+                            val kindTranslation = permission.localizedBlocking()
+                            val unknownKindString = stringResource(Res.string.event_kind, encryptedData.event.kind.toString())
                             val altTag = encryptedData.event.tags.firstOrNull { it.size > 1 && it[0] == "alt" }?.getOrNull(1)
                             val displayTranslation = if (kindTranslation == unknownKindString && altTag != null) altTag else kindTranslation
-                            append(stringResource(R.string.wants_to_encrypt_with, displayTranslation, type.name.split("_").first()))
+                            append(stringResource(Res.string.wants_to_encrypt_with, displayTranslation, type.name.split("_").first()))
                         }
 
                         is TagArrayEncryptedDataKind -> {
-                            append(stringResource(R.string.wants_to_encrypt_this_list_of_tags_with, type.name.split("_").first()))
+                            append(stringResource(Res.string.wants_to_encrypt_this_list_of_tags_with, type.name.split("_").first()))
                         }
 
-                        else -> append(stringResource(R.string.wants_to_encrypt_this_text_with, type.name.split("_").first()))
+                        else -> append(stringResource(Res.string.wants_to_encrypt_this_text_with, type.name.split("_").first()))
                     }
                 } else {
                     when (encryptedData) {
                         is EventEncryptedDataKind -> {
                             val permission = Permission("sign_event", encryptedData.event.kind)
-                            val kindTranslation = permission.toLocalizedString(Amber.instance)
-                            val unknownKindString = stringResource(R.string.event_kind, encryptedData.event.kind.toString())
+                            val kindTranslation = permission.localizedBlocking()
+                            val unknownKindString = stringResource(Res.string.event_kind, encryptedData.event.kind.toString())
                             val altTag = encryptedData.event.tags.firstOrNull { it.size > 1 && it[0] == "alt" }?.getOrNull(1)
                             val displayTranslation = if (kindTranslation == unknownKindString && altTag != null) altTag else kindTranslation
-                            append(stringResource(R.string.wants_to_read_from_encrypted_content, displayTranslation, type.name.split("_").first()))
+                            append(stringResource(Res.string.wants_to_read_from_encrypted_content, displayTranslation, type.name.split("_").first()))
                         }
 
                         is TagArrayEncryptedDataKind -> {
-                            append(stringResource(R.string.wants_to_read_this_list_of_tags_from_encrypted_content, type.name.split("_").first()))
+                            append(stringResource(Res.string.wants_to_read_this_list_of_tags_from_encrypted_content, type.name.split("_").first()))
                         }
 
-                        else -> append(stringResource(R.string.wants_to_read_this_text_from_encrypted_content, type.name.split("_").first()))
+                        else -> append(stringResource(Res.string.wants_to_read_this_text_from_encrypted_content, type.name.split("_").first()))
                     }
                 }
             },
@@ -325,7 +339,7 @@ fun BunkerEncryptDecryptData(
                             val content = if (encryptedData.sealEncryptedDataKind.event.kind == 22242) encryptedData.sealEncryptedDataKind.event.relay() else encryptedData.sealEncryptedDataKind.event.content
                             if (encryptedData.event.kind == ContactListEvent.KIND) {
                                 ContactListDetail(
-                                    title = stringResource(R.string.following),
+                                    title = stringResource(Res.string.following),
                                     text = "${encryptedData.event.verifiedFollowKeySet().size}",
                                 )
                             } else {
@@ -341,7 +355,7 @@ fun BunkerEncryptDecryptData(
                         val content = if (encryptedData.event.kind == 22242) encryptedData.event.relay() else encryptedData.event.content
                         if (encryptedData.event.kind == ContactListEvent.KIND) {
                             ContactListDetail(
-                                title = stringResource(R.string.following),
+                                title = stringResource(Res.string.following),
                                 text = "${encryptedData.event.verifiedFollowKeySet().size}",
                             )
                         } else {
@@ -390,7 +404,7 @@ fun BunkerEncryptDecryptData(
         if (showScopeToggle) {
             Spacer(Modifier.size(8.dp))
             LabeledBorderBox(
-                label = stringResource(R.string.encryption_scope),
+                label = stringResource(Res.string.encryption_scope),
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp),
@@ -402,8 +416,8 @@ fun BunkerEncryptDecryptData(
                     label = {
                         stringResource(
                             when (it) {
-                                DecryptTypeScope.SPECIFIC -> R.string.for_this_method_only
-                                DecryptTypeScope.ALL -> R.string.for_all_methods
+                                DecryptTypeScope.SPECIFIC -> Res.string.for_this_method_only
+                                DecryptTypeScope.ALL -> Res.string.for_all_methods
                             },
                         )
                     },

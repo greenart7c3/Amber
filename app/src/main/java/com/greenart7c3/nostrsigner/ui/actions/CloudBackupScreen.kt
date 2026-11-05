@@ -37,7 +37,6 @@ import androidx.compose.ui.autofill.ContentType
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentType
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -50,7 +49,47 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.LocalPreferences
-import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.commonsui.Res
+import com.greenart7c3.nostrsigner.commonsui.cloud_backup_downloading
+import com.greenart7c3.nostrsigner.commonsui.cloud_backup_encryption_description
+import com.greenart7c3.nostrsigner.commonsui.cloud_backup_encryption_section
+import com.greenart7c3.nostrsigner.commonsui.cloud_backup_failed
+import com.greenart7c3.nostrsigner.commonsui.cloud_backup_gdrive_backup
+import com.greenart7c3.nostrsigner.commonsui.cloud_backup_gdrive_description
+import com.greenart7c3.nostrsigner.commonsui.cloud_backup_gdrive_open
+import com.greenart7c3.nostrsigner.commonsui.cloud_backup_gdrive_restore
+import com.greenart7c3.nostrsigner.commonsui.cloud_backup_gdrive_section
+import com.greenart7c3.nostrsigner.commonsui.cloud_backup_gdrive_sheet_description
+import com.greenart7c3.nostrsigner.commonsui.cloud_backup_partial_failure
+import com.greenart7c3.nostrsigner.commonsui.cloud_backup_password_required
+import com.greenart7c3.nostrsigner.commonsui.cloud_backup_restore_success
+import com.greenart7c3.nostrsigner.commonsui.cloud_backup_restoring
+import com.greenart7c3.nostrsigner.commonsui.cloud_backup_share_title
+import com.greenart7c3.nostrsigner.commonsui.cloud_backup_success
+import com.greenart7c3.nostrsigner.commonsui.cloud_backup_testing_connection
+import com.greenart7c3.nostrsigner.commonsui.cloud_backup_uploading
+import com.greenart7c3.nostrsigner.commonsui.cloud_backup_webdav_backup
+import com.greenart7c3.nostrsigner.commonsui.cloud_backup_webdav_connected
+import com.greenart7c3.nostrsigner.commonsui.cloud_backup_webdav_description
+import com.greenart7c3.nostrsigner.commonsui.cloud_backup_webdav_npub_required
+import com.greenart7c3.nostrsigner.commonsui.cloud_backup_webdav_password
+import com.greenart7c3.nostrsigner.commonsui.cloud_backup_webdav_restore
+import com.greenart7c3.nostrsigner.commonsui.cloud_backup_webdav_restore_npub
+import com.greenart7c3.nostrsigner.commonsui.cloud_backup_webdav_save
+import com.greenart7c3.nostrsigner.commonsui.cloud_backup_webdav_saved
+import com.greenart7c3.nostrsigner.commonsui.cloud_backup_webdav_section
+import com.greenart7c3.nostrsigner.commonsui.cloud_backup_webdav_test
+import com.greenart7c3.nostrsigner.commonsui.cloud_backup_webdav_url
+import com.greenart7c3.nostrsigner.commonsui.cloud_backup_webdav_url_required
+import com.greenart7c3.nostrsigner.commonsui.cloud_backup_webdav_username
+import com.greenart7c3.nostrsigner.commonsui.encryption_password
+import com.greenart7c3.nostrsigner.commonsui.enter_strong_password
+import com.greenart7c3.nostrsigner.commonsui.exporting_accounts_progress
+import com.greenart7c3.nostrsigner.commonsui.getStringBlocking
+import com.greenart7c3.nostrsigner.commonsui.hide_password
+import com.greenart7c3.nostrsigner.commonsui.password_too_short
+import com.greenart7c3.nostrsigner.commonsui.preparing_export
+import com.greenart7c3.nostrsigner.commonsui.show_password
 import com.greenart7c3.nostrsigner.service.AccountExportService
 import com.greenart7c3.nostrsigner.service.Biometrics.authenticate
 import com.greenart7c3.nostrsigner.service.SharedFiles
@@ -64,6 +103,7 @@ import java.io.File
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -125,19 +165,19 @@ fun CloudBackupScreen(modifier: Modifier) {
                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             }
         }
-        context.startActivity(Intent.createChooser(shareIntent, context.getString(R.string.cloud_backup_share_title)))
+        context.startActivity(Intent.createChooser(shareIntent, getStringBlocking(Res.string.cloud_backup_share_title)))
     }
 
     // Restore: pick any .ncryptsec file and import it
     val filePickerLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         uri?.let { fileUri ->
             if (password.text.isBlank()) {
-                passwordError = context.getString(R.string.cloud_backup_password_required)
+                passwordError = getStringBlocking(Res.string.cloud_backup_password_required)
                 return@let
             }
             Amber.instance.applicationIOScope.launch {
                 isLoading = true
-                statusText = context.getString(R.string.cloud_backup_restoring)
+                statusText = getStringBlocking(Res.string.cloud_backup_restoring)
                 val content = withContext(Dispatchers.IO) {
                     context.contentResolver.openInputStream(fileUri)?.bufferedReader()?.readText() ?: ""
                 }
@@ -148,7 +188,7 @@ fun CloudBackupScreen(modifier: Modifier) {
                     onText = { t -> statusText = t },
                     onFinish = {
                         Amber.instance.applicationIOScope.launch(Dispatchers.Main) {
-                            Toast.makeText(context, context.getString(R.string.cloud_backup_restore_success), Toast.LENGTH_LONG).show()
+                            Toast.makeText(context, getStringBlocking(Res.string.cloud_backup_restore_success), Toast.LENGTH_LONG).show()
                             statusText = ""
                             isLoading = false
                         }
@@ -166,12 +206,12 @@ fun CloudBackupScreen(modifier: Modifier) {
     Column(modifier = modifier.padding(16.dp)) {
         // --- Encryption password (shared) ---
         Text(
-            text = stringResource(R.string.cloud_backup_encryption_section),
+            text = stringResource(Res.string.cloud_backup_encryption_section),
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
         )
         Text(
-            text = stringResource(R.string.cloud_backup_encryption_description),
+            text = stringResource(Res.string.cloud_backup_encryption_description),
             style = MaterialTheme.typography.bodySmall,
             color = Color.Gray,
         )
@@ -185,8 +225,8 @@ fun CloudBackupScreen(modifier: Modifier) {
                 password = it
                 passwordError = ""
             },
-            label = { Text(text = stringResource(R.string.encryption_password)) },
-            placeholder = { Text(text = stringResource(R.string.enter_strong_password)) },
+            label = { Text(text = stringResource(Res.string.encryption_password)) },
+            placeholder = { Text(text = stringResource(Res.string.enter_strong_password)) },
             isError = passwordError.isNotBlank(),
             supportingText = if (passwordError.isNotBlank()) {
                 { Text(text = passwordError, color = MaterialTheme.colorScheme.error) }
@@ -198,9 +238,9 @@ fun CloudBackupScreen(modifier: Modifier) {
                     Icon(
                         imageVector = if (showPassword) Icons.Outlined.VisibilityOff else Icons.Outlined.Visibility,
                         contentDescription = if (showPassword) {
-                            stringResource(R.string.hide_password)
+                            stringResource(Res.string.hide_password)
                         } else {
-                            stringResource(R.string.show_password)
+                            stringResource(Res.string.show_password)
                         },
                     )
                 }
@@ -217,22 +257,22 @@ fun CloudBackupScreen(modifier: Modifier) {
 
         // --- Google Drive row ---
         Text(
-            text = stringResource(R.string.cloud_backup_gdrive_section),
+            text = stringResource(Res.string.cloud_backup_gdrive_section),
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
         )
         Text(
-            text = stringResource(R.string.cloud_backup_gdrive_description),
+            text = stringResource(Res.string.cloud_backup_gdrive_description),
             style = MaterialTheme.typography.bodySmall,
             color = Color.Gray,
         )
         Spacer(modifier = Modifier.height(8.dp))
         AmberButton(
             modifier = Modifier.fillMaxWidth(),
-            text = stringResource(R.string.cloud_backup_gdrive_open),
+            text = stringResource(Res.string.cloud_backup_gdrive_open),
             onClick = {
                 if (password.text.isBlank()) {
-                    passwordError = context.getString(R.string.cloud_backup_password_required)
+                    passwordError = getStringBlocking(Res.string.cloud_backup_password_required)
                 } else {
                     showGdriveSheet = true
                 }
@@ -245,12 +285,12 @@ fun CloudBackupScreen(modifier: Modifier) {
 
         // --- WebDAV section ---
         Text(
-            text = stringResource(R.string.cloud_backup_webdav_section),
+            text = stringResource(Res.string.cloud_backup_webdav_section),
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
         )
         Text(
-            text = stringResource(R.string.cloud_backup_webdav_description),
+            text = stringResource(Res.string.cloud_backup_webdav_description),
             style = MaterialTheme.typography.bodySmall,
             color = Color.Gray,
         )
@@ -263,7 +303,7 @@ fun CloudBackupScreen(modifier: Modifier) {
                 webDavUrl = it
                 webDavError = ""
             },
-            label = { Text(text = stringResource(R.string.cloud_backup_webdav_url)) },
+            label = { Text(text = stringResource(Res.string.cloud_backup_webdav_url)) },
             placeholder = { Text(text = "https://dav.example.com/remote.php/dav/files/user/") },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri, imeAction = ImeAction.Next),
             singleLine = true,
@@ -278,7 +318,7 @@ fun CloudBackupScreen(modifier: Modifier) {
                 webDavUsername = it
                 webDavError = ""
             },
-            label = { Text(text = stringResource(R.string.cloud_backup_webdav_username)) },
+            label = { Text(text = stringResource(Res.string.cloud_backup_webdav_username)) },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text, imeAction = ImeAction.Next),
             singleLine = true,
         )
@@ -294,15 +334,15 @@ fun CloudBackupScreen(modifier: Modifier) {
                 webDavPassword = it
                 webDavError = ""
             },
-            label = { Text(text = stringResource(R.string.cloud_backup_webdav_password)) },
+            label = { Text(text = stringResource(Res.string.cloud_backup_webdav_password)) },
             trailingIcon = {
                 IconButton(onClick = { showWebDavPassword = !showWebDavPassword }) {
                     Icon(
                         imageVector = if (showWebDavPassword) Icons.Outlined.VisibilityOff else Icons.Outlined.Visibility,
                         contentDescription = if (showWebDavPassword) {
-                            stringResource(R.string.hide_password)
+                            stringResource(Res.string.hide_password)
                         } else {
-                            stringResource(R.string.show_password)
+                            stringResource(Res.string.show_password)
                         },
                     )
                 }
@@ -326,7 +366,7 @@ fun CloudBackupScreen(modifier: Modifier) {
         ) {
             AmberButton(
                 modifier = Modifier.weight(1f),
-                text = stringResource(R.string.cloud_backup_webdav_save),
+                text = stringResource(Res.string.cloud_backup_webdav_save),
                 onClick = {
                     Amber.instance.applicationIOScope.launch {
                         // Enforce the HTTPS policy at save time: an http:// URL
@@ -336,7 +376,7 @@ fun CloudBackupScreen(modifier: Modifier) {
                             WebDavTransportPolicy.requireSecureServerUrl(webDavUrl.text)
                         } catch (e: Exception) {
                             withContext(Dispatchers.Main) {
-                                webDavError = e.message ?: context.getString(R.string.cloud_backup_webdav_url_required)
+                                webDavError = e.message ?: getStringBlocking(Res.string.cloud_backup_webdav_url_required)
                             }
                             return@launch
                         }
@@ -348,7 +388,7 @@ fun CloudBackupScreen(modifier: Modifier) {
                             fileName = "",
                         )
                         withContext(Dispatchers.Main) {
-                            Toast.makeText(context, context.getString(R.string.cloud_backup_webdav_saved), Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, getStringBlocking(Res.string.cloud_backup_webdav_saved), Toast.LENGTH_SHORT).show()
                         }
                     }
                 },
@@ -356,14 +396,14 @@ fun CloudBackupScreen(modifier: Modifier) {
 
             AmberButton(
                 modifier = Modifier.weight(1f),
-                text = stringResource(R.string.cloud_backup_webdav_test),
+                text = stringResource(Res.string.cloud_backup_webdav_test),
                 onClick = {
                     if (webDavUrl.text.isBlank()) {
-                        webDavError = context.getString(R.string.cloud_backup_webdav_url_required)
+                        webDavError = getStringBlocking(Res.string.cloud_backup_webdav_url_required)
                     } else {
                         Amber.instance.applicationIOScope.launch {
                             isLoading = true
-                            statusText = context.getString(R.string.cloud_backup_testing_connection)
+                            statusText = getStringBlocking(Res.string.cloud_backup_testing_connection)
                             val result = withContext(Dispatchers.IO) {
                                 WebDavService.testConnection(
                                     serverUrl = webDavUrl.text,
@@ -373,9 +413,9 @@ fun CloudBackupScreen(modifier: Modifier) {
                             }
                             withContext(Dispatchers.Main) {
                                 if (result.isSuccess) {
-                                    Toast.makeText(context, context.getString(R.string.cloud_backup_webdav_connected), Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(context, getStringBlocking(Res.string.cloud_backup_webdav_connected), Toast.LENGTH_SHORT).show()
                                 } else {
-                                    Toast.makeText(context, context.getString(R.string.cloud_backup_failed, result.exceptionOrNull()?.message), Toast.LENGTH_LONG).show()
+                                    Toast.makeText(context, getStringBlocking(Res.string.cloud_backup_failed, result.exceptionOrNull()?.message.toString()), Toast.LENGTH_LONG).show()
                                 }
                                 isLoading = false
                                 statusText = ""
@@ -390,27 +430,27 @@ fun CloudBackupScreen(modifier: Modifier) {
 
         AmberButton(
             modifier = Modifier.fillMaxWidth(),
-            text = stringResource(R.string.cloud_backup_webdav_backup),
+            text = stringResource(Res.string.cloud_backup_webdav_backup),
             onClick = {
                 when {
-                    password.text.isBlank() -> passwordError = context.getString(R.string.cloud_backup_password_required)
-                    password.text.length < 8 -> passwordError = context.getString(R.string.password_too_short)
-                    webDavUrl.text.isBlank() -> webDavError = context.getString(R.string.cloud_backup_webdav_url_required)
+                    password.text.isBlank() -> passwordError = getStringBlocking(Res.string.cloud_backup_password_required)
+                    password.text.length < 8 -> passwordError = getStringBlocking(Res.string.password_too_short)
+                    webDavUrl.text.isBlank() -> webDavError = getStringBlocking(Res.string.cloud_backup_webdav_url_required)
                     else -> {
                         authenticate(
-                            title = context.getString(R.string.cloud_backup_webdav_backup),
+                            title = getStringBlocking(Res.string.cloud_backup_webdav_backup),
                             context = context,
                             keyguardLauncher = keyguardLauncher,
                             onApproved = {
                                 Amber.instance.applicationIOScope.launch {
                                     isLoading = true
-                                    statusText = context.getString(R.string.preparing_export)
+                                    statusText = getStringBlocking(Res.string.preparing_export)
 
                                     try {
                                         WebDavTransportPolicy.requireSecureServerUrl(webDavUrl.text)
                                     } catch (e: Exception) {
                                         isLoading = false
-                                        statusText = e.message ?: context.getString(R.string.cloud_backup_webdav_url_required)
+                                        statusText = e.message ?: getStringBlocking(Res.string.cloud_backup_webdav_url_required)
                                         return@launch
                                     }
 
@@ -426,14 +466,14 @@ fun CloudBackupScreen(modifier: Modifier) {
                                         context = context,
                                         password = password.text,
                                         onProgress = { cur, tot ->
-                                            statusText = context.getString(R.string.exporting_accounts_progress, cur, tot)
+                                            statusText = getStringBlocking(Res.string.exporting_accounts_progress, cur, tot)
                                         },
                                     )
 
                                     exportResult.onSuccess { pairs ->
                                         var allOk = true
                                         pairs.forEachIndexed { index, (npub, ncryptsec) ->
-                                            statusText = context.getString(R.string.cloud_backup_uploading) + " (${index + 1}/${pairs.size})"
+                                            statusText = getStringBlocking(Res.string.cloud_backup_uploading) + " (${index + 1}/${pairs.size})"
                                             val uploadResult = withContext(Dispatchers.IO) {
                                                 WebDavService.uploadFile(
                                                     serverUrl = webDavUrl.text,
@@ -447,16 +487,16 @@ fun CloudBackupScreen(modifier: Modifier) {
                                         }
                                         withContext(Dispatchers.Main) {
                                             if (allOk) {
-                                                Toast.makeText(context, context.getString(R.string.cloud_backup_success, "${pairs.size} accounts"), Toast.LENGTH_LONG).show()
+                                                Toast.makeText(context, getStringBlocking(Res.string.cloud_backup_success, "${pairs.size} accounts"), Toast.LENGTH_LONG).show()
                                             } else {
-                                                Toast.makeText(context, context.getString(R.string.cloud_backup_partial_failure), Toast.LENGTH_LONG).show()
+                                                Toast.makeText(context, getStringBlocking(Res.string.cloud_backup_partial_failure), Toast.LENGTH_LONG).show()
                                             }
                                             isLoading = false
                                             statusText = ""
                                         }
                                     }.onFailure { e ->
                                         withContext(Dispatchers.Main) {
-                                            Toast.makeText(context, context.getString(R.string.cloud_backup_failed, e.message), Toast.LENGTH_LONG).show()
+                                            Toast.makeText(context, getStringBlocking(Res.string.cloud_backup_failed, e.message.toString()), Toast.LENGTH_LONG).show()
                                             isLoading = false
                                             statusText = ""
                                         }
@@ -480,7 +520,7 @@ fun CloudBackupScreen(modifier: Modifier) {
             modifier = Modifier.fillMaxWidth(),
             value = webDavRestoreNpub,
             onValueChange = { webDavRestoreNpub = it },
-            label = { Text(text = stringResource(R.string.cloud_backup_webdav_restore_npub)) },
+            label = { Text(text = stringResource(Res.string.cloud_backup_webdav_restore_npub)) },
             placeholder = { Text(text = "npub1...") },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text, imeAction = ImeAction.Done),
             keyboardActions = KeyboardActions(onDone = { keyboardController?.hide() }),
@@ -491,16 +531,16 @@ fun CloudBackupScreen(modifier: Modifier) {
 
         AmberButton(
             modifier = Modifier.fillMaxWidth(),
-            text = stringResource(R.string.cloud_backup_webdav_restore),
+            text = stringResource(Res.string.cloud_backup_webdav_restore),
             onClick = {
                 when {
-                    password.text.isBlank() -> passwordError = context.getString(R.string.cloud_backup_password_required)
-                    webDavUrl.text.isBlank() -> webDavError = context.getString(R.string.cloud_backup_webdav_url_required)
-                    webDavRestoreNpub.text.isBlank() -> webDavError = context.getString(R.string.cloud_backup_webdav_npub_required)
+                    password.text.isBlank() -> passwordError = getStringBlocking(Res.string.cloud_backup_password_required)
+                    webDavUrl.text.isBlank() -> webDavError = getStringBlocking(Res.string.cloud_backup_webdav_url_required)
+                    webDavRestoreNpub.text.isBlank() -> webDavError = getStringBlocking(Res.string.cloud_backup_webdav_npub_required)
                     else -> {
                         Amber.instance.applicationIOScope.launch {
                             isLoading = true
-                            statusText = context.getString(R.string.cloud_backup_downloading)
+                            statusText = getStringBlocking(Res.string.cloud_backup_downloading)
 
                             val downloadResult = withContext(Dispatchers.IO) {
                                 WebDavService.downloadLatestFile(
@@ -519,7 +559,7 @@ fun CloudBackupScreen(modifier: Modifier) {
                                     onText = { t -> statusText = t },
                                     onFinish = {
                                         Amber.instance.applicationIOScope.launch(Dispatchers.Main) {
-                                            Toast.makeText(context, context.getString(R.string.cloud_backup_restore_success), Toast.LENGTH_LONG).show()
+                                            Toast.makeText(context, getStringBlocking(Res.string.cloud_backup_restore_success), Toast.LENGTH_LONG).show()
                                             statusText = ""
                                             isLoading = false
                                         }
@@ -527,7 +567,7 @@ fun CloudBackupScreen(modifier: Modifier) {
                                 )
                             }.onFailure { e ->
                                 withContext(Dispatchers.Main) {
-                                    Toast.makeText(context, context.getString(R.string.cloud_backup_failed, e.message), Toast.LENGTH_LONG).show()
+                                    Toast.makeText(context, getStringBlocking(Res.string.cloud_backup_failed, e.message.toString()), Toast.LENGTH_LONG).show()
                                     isLoading = false
                                     statusText = ""
                                 }
@@ -555,12 +595,12 @@ fun CloudBackupScreen(modifier: Modifier) {
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 Text(
-                    text = stringResource(R.string.cloud_backup_gdrive_section),
+                    text = stringResource(Res.string.cloud_backup_gdrive_section),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                 )
                 Text(
-                    text = stringResource(R.string.cloud_backup_gdrive_sheet_description),
+                    text = stringResource(Res.string.cloud_backup_gdrive_sheet_description),
                     style = MaterialTheme.typography.bodySmall,
                     color = Color.Gray,
                 )
@@ -570,22 +610,22 @@ fun CloudBackupScreen(modifier: Modifier) {
                 // Backup: export all accounts and launch CreateDocument for each, one at a time
                 AmberButton(
                     modifier = Modifier.fillMaxWidth(),
-                    text = stringResource(R.string.cloud_backup_gdrive_backup),
+                    text = stringResource(Res.string.cloud_backup_gdrive_backup),
                     onClick = {
                         authenticate(
-                            title = context.getString(R.string.cloud_backup_gdrive_backup),
+                            title = getStringBlocking(Res.string.cloud_backup_gdrive_backup),
                             context = context,
                             keyguardLauncher = keyguardLauncher,
                             onApproved = {
                                 showGdriveSheet = false
                                 Amber.instance.applicationIOScope.launch {
                                     isLoading = true
-                                    statusText = context.getString(R.string.preparing_export)
+                                    statusText = getStringBlocking(Res.string.preparing_export)
                                     val result = AccountExportService.exportPerAccountNcryptsec(
                                         context = context,
                                         password = password.text,
                                         onProgress = { cur, tot ->
-                                            statusText = context.getString(R.string.exporting_accounts_progress, cur, tot)
+                                            statusText = getStringBlocking(Res.string.exporting_accounts_progress, cur, tot)
                                         },
                                     )
                                     result.onSuccess { pairs ->
@@ -598,7 +638,7 @@ fun CloudBackupScreen(modifier: Modifier) {
                                         }
                                     }.onFailure { e ->
                                         withContext(Dispatchers.Main) {
-                                            Toast.makeText(context, context.getString(R.string.cloud_backup_failed, e.message), Toast.LENGTH_LONG).show()
+                                            Toast.makeText(context, getStringBlocking(Res.string.cloud_backup_failed, e.message.toString()), Toast.LENGTH_LONG).show()
                                             isLoading = false
                                             statusText = ""
                                         }
@@ -617,7 +657,7 @@ fun CloudBackupScreen(modifier: Modifier) {
                 // Restore: user picks a .ncryptsec file from any provider (Google Drive, etc.)
                 AmberButton(
                     modifier = Modifier.fillMaxWidth(),
-                    text = stringResource(R.string.cloud_backup_gdrive_restore),
+                    text = stringResource(Res.string.cloud_backup_gdrive_restore),
                     onClick = {
                         showGdriveSheet = false
                         filePickerLauncher.launch("*/*")

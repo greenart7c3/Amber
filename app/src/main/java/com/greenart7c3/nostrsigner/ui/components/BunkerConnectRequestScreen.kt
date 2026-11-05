@@ -44,7 +44,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -57,9 +56,20 @@ import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.common.sanitizeAppName
+import com.greenart7c3.nostrsigner.commonsui.Permission
+import com.greenart7c3.nostrsigner.commonsui.Res
+import com.greenart7c3.nostrsigner.commonsui.account
+import com.greenart7c3.nostrsigner.commonsui.add_permission
+import com.greenart7c3.nostrsigner.commonsui.advanced
+import com.greenart7c3.nostrsigner.commonsui.cancel
+import com.greenart7c3.nostrsigner.commonsui.close_application
+import com.greenart7c3.nostrsigner.commonsui.connect
+import com.greenart7c3.nostrsigner.commonsui.delete_after
+import com.greenart7c3.nostrsigner.commonsui.go_back
+import com.greenart7c3.nostrsigner.commonsui.permissions
+import com.greenart7c3.nostrsigner.commonsui.relays_used
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.AmberBunkerRequest
-import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.service.TrustScoreService
 import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.DeleteAfterType
@@ -76,6 +86,7 @@ import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -188,7 +199,7 @@ fun BunkerConnectRequestScreen(
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color(0xFFFF6B00),
                     ),
-                    text = stringResource(R.string.cancel),
+                    text = stringResource(Res.string.cancel),
                 )
 
                 AmberButton(
@@ -197,7 +208,7 @@ fun BunkerConnectRequestScreen(
                         val deleteAfter = deleteAfterToSeconds(parseDeleteAfterType(deleteAfterIndex))
                         onAccept(localPermissions, selectedOption, closeApp, RememberType.ALWAYS, deleteAfter, accounts[selectedAccountIndex])
                     },
-                    text = stringResource(R.string.connect),
+                    text = stringResource(Res.string.connect),
                 )
             }
         },
@@ -239,7 +250,7 @@ fun BunkerConnectRequestScreen(
             }
 
             // Account section
-            SectionLabel(stringResource(R.string.account))
+            SectionLabel(stringResource(Res.string.account))
             AccountPickerRow(
                 accounts = accounts,
                 selectedAccountIndex = selectedAccountIndex,
@@ -248,7 +259,7 @@ fun BunkerConnectRequestScreen(
 
             // Relays with trust scores
             if (connectionRelays.isNotEmpty()) {
-                SectionLabel(stringResource(R.string.relays_used))
+                SectionLabel(stringResource(Res.string.relays_used))
                 connectionRelays.forEach { relay ->
                     Row(
                         modifier = Modifier
@@ -282,7 +293,7 @@ fun BunkerConnectRequestScreen(
             }
 
             // Permissions section
-            SectionLabel(stringResource(R.string.permissions))
+            SectionLabel(stringResource(Res.string.permissions))
             ChooseSignPolicy(
                 selectedOption = selectedOption,
                 onSelected = {
@@ -304,7 +315,7 @@ fun BunkerConnectRequestScreen(
                             ),
                             shape = RoundedCornerShape(20),
                             content = {
-                                Text(stringResource(R.string.permissions))
+                                Text(stringResource(Res.string.permissions))
                             },
                             onClick = {
                                 showModal = true
@@ -324,7 +335,7 @@ fun BunkerConnectRequestScreen(
                                     BottomAppBar {
                                         IconRow(
                                             center = true,
-                                            title = stringResource(R.string.go_back),
+                                            title = stringResource(Res.string.go_back),
                                             icon = ImageVector.vectorResource(R.drawable.back),
                                             onClick = {
                                                 showModal = false
@@ -355,7 +366,7 @@ fun BunkerConnectRequestScreen(
                         ),
                         shape = RoundedCornerShape(20),
                         content = {
-                            Text(stringResource(R.string.add_permission))
+                            Text(stringResource(Res.string.add_permission))
                         },
                         onClick = {
                             showAddPermissions = true
@@ -384,7 +395,7 @@ fun BunkerConnectRequestScreen(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
-                    text = stringResource(R.string.advanced).uppercase(),
+                    text = stringResource(Res.string.advanced).uppercase(),
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Medium,
                     letterSpacing = 1.5.sp,
@@ -413,7 +424,7 @@ fun BunkerConnectRequestScreen(
                     ) {
                         Text(
                             modifier = Modifier.weight(1f),
-                            text = stringResource(R.string.close_application),
+                            text = stringResource(Res.string.close_application),
                             fontSize = 14.sp,
                         )
                         Switch(
@@ -428,7 +439,7 @@ fun BunkerConnectRequestScreen(
                         Modifier.padding(vertical = 6.dp),
                     ) {
                         SettingsRow(
-                            R.string.delete_after,
+                            Res.string.delete_after,
                             null,
                             deleteAfterItems,
                             deleteAfterIndex,

@@ -34,6 +34,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.rememberNavController
 import com.greenart7c3.nostrsigner.common.sanitizeAppName
+import com.greenart7c3.nostrsigner.commonsui.Res
+import com.greenart7c3.nostrsigner.commonsui.getStringBlocking
+import com.greenart7c3.nostrsigner.commonsui.rate_limit_too_many_requests
+import com.greenart7c3.nostrsigner.commonsui.rate_limit_unknown_app
 import com.greenart7c3.nostrsigner.okhttp.HttpClientManager
 import com.greenart7c3.nostrsigner.service.BunkerRequestUtils
 import com.greenart7c3.nostrsigner.service.IntentRateLimitInspector
@@ -255,7 +259,7 @@ class SignerActivity : AppCompatActivity() {
         if (IntentRateLimiter.shouldShowToast(key)) {
             Toast.makeText(
                 applicationContext,
-                getString(R.string.rate_limit_too_many_requests, resolveCallerLabel(callingPackage)),
+                getStringBlocking(Res.string.rate_limit_too_many_requests, resolveCallerLabel(callingPackage)),
                 Toast.LENGTH_SHORT,
             ).show()
         }
@@ -265,7 +269,7 @@ class SignerActivity : AppCompatActivity() {
     }
 
     private fun resolveCallerLabel(pkg: String?): String {
-        if (pkg.isNullOrBlank()) return getString(R.string.rate_limit_unknown_app)
+        if (pkg.isNullOrBlank()) return getStringBlocking(Res.string.rate_limit_unknown_app)
         return try {
             val info = applicationContext.packageManager.getApplicationInfo(pkg, 0)
             sanitizeAppName(applicationContext.packageManager.getApplicationLabel(info).toString())

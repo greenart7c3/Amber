@@ -33,7 +33,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
@@ -42,8 +41,15 @@ import androidx.compose.ui.unit.sp
 import androidx.core.graphics.drawable.toBitmap
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.commonsui.Permission
+import com.greenart7c3.nostrsigner.commonsui.Res
+import com.greenart7c3.nostrsigner.commonsui.account
+import com.greenart7c3.nostrsigner.commonsui.add_permission
+import com.greenart7c3.nostrsigner.commonsui.cancel
+import com.greenart7c3.nostrsigner.commonsui.connect
+import com.greenart7c3.nostrsigner.commonsui.go_back
+import com.greenart7c3.nostrsigner.commonsui.permissions
 import com.greenart7c3.nostrsigner.models.Account
-import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.ui.RememberType
 import com.greenart7c3.nostrsigner.ui.theme.AmberPreview
 import com.greenart7c3.nostrsigner.ui.theme.ThemePreviews
@@ -52,6 +58,7 @@ import com.greenart7c3.nostrsigner.ui.theme.outlineIfAny
 import com.greenart7c3.nostrsigner.ui.theme.previewAccount
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
+import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -134,7 +141,7 @@ fun LoginWithPubKey(
             }
 
             // Account section
-            SectionLabel(stringResource(R.string.account))
+            SectionLabel(stringResource(Res.string.account))
             AccountPickerRow(
                 accounts = accounts,
                 selectedAccountIndex = selectedAccountIndex,
@@ -142,7 +149,7 @@ fun LoginWithPubKey(
             )
 
             // Permissions section
-            SectionLabel(stringResource(R.string.permissions))
+            SectionLabel(stringResource(Res.string.permissions))
             ChooseSignPolicy(
                 selectedOption = selectedOption,
                 onSelected = {
@@ -164,7 +171,7 @@ fun LoginWithPubKey(
                             ),
                             shape = RoundedCornerShape(20),
                             content = {
-                                Text(stringResource(R.string.permissions))
+                                Text(stringResource(Res.string.permissions))
                             },
                             onClick = {
                                 showModal = true
@@ -184,7 +191,7 @@ fun LoginWithPubKey(
                                     BottomAppBar {
                                         IconRow(
                                             center = true,
-                                            title = stringResource(R.string.go_back),
+                                            title = stringResource(Res.string.go_back),
                                             icon = ImageVector.vectorResource(R.drawable.back),
                                             onClick = {
                                                 showModal = false
@@ -215,7 +222,7 @@ fun LoginWithPubKey(
                         ),
                         shape = RoundedCornerShape(20),
                         content = {
-                            Text(stringResource(R.string.add_permission))
+                            Text(stringResource(Res.string.add_permission))
                         },
                         onClick = {
                             showAddPermissions = true
@@ -252,7 +259,7 @@ fun LoginWithPubKey(
                 colors = ButtonDefaults.buttonColors(
                     containerColor = Color(0xFFFF6B00),
                 ),
-                text = stringResource(R.string.cancel),
+                text = stringResource(Res.string.cancel),
             )
 
             AmberButton(
@@ -260,7 +267,7 @@ fun LoginWithPubKey(
                 onClick = {
                     onAccept(localPermissions, selectedOption, true, rememberType, accounts[selectedAccountIndex])
                 },
-                text = stringResource(R.string.connect),
+                text = stringResource(Res.string.connect),
             )
         }
     }

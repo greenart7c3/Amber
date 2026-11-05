@@ -27,7 +27,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.LinkAnnotation
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextLinkStyles
@@ -45,7 +45,20 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.LocalPreferences
-import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.commonsui.Res
+import com.greenart7c3.nostrsigner.commonsui.activity
+import com.greenart7c3.nostrsigner.commonsui.backup
+import com.greenart7c3.nostrsigner.commonsui.congratulations_your_new_account_is_ready
+import com.greenart7c3.nostrsigner.commonsui.disable_kill_switch
+import com.greenart7c3.nostrsigner.commonsui.kill_switch_message
+import com.greenart7c3.nostrsigner.commonsui.make_backup_message
+import com.greenart7c3.nostrsigner.commonsui.never
+import com.greenart7c3.nostrsigner.commonsui.nostr_app
+import com.greenart7c3.nostrsigner.commonsui.sort_applications_alphabetically
+import com.greenart7c3.nostrsigner.commonsui.sort_applications_most_recent
+import com.greenart7c3.nostrsigner.commonsui.your_account_is_ready_to_use
+import com.greenart7c3.nostrsigner.commonsui.zapstore
+import com.greenart7c3.nostrsigner.commonsui.zapstore_website
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.TimeUtils
 import com.greenart7c3.nostrsigner.service.KillSwitchReceiver
@@ -57,6 +70,7 @@ import com.greenart7c3.nostrsigner.ui.navigation.Route
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.displayUrl
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun ApplicationsScreen(
@@ -110,8 +124,8 @@ fun ApplicationsScreen(
         if (killSwitch.value) {
             item {
                 AmberWarningCard(
-                    message = stringResource(R.string.kill_switch_message),
-                    buttonText = stringResource(R.string.disable_kill_switch),
+                    message = stringResource(Res.string.kill_switch_message),
+                    buttonText = stringResource(Res.string.disable_kill_switch),
                     onClick = {
                         val killSwitchIntent = Intent(Amber.instance, KillSwitchReceiver::class.java)
                         Amber.instance.sendBroadcast(killSwitchIntent)
@@ -129,8 +143,8 @@ fun ApplicationsScreen(
             }
             item {
                 AmberWarningCard(
-                    message = stringResource(R.string.make_backup_message),
-                    buttonText = stringResource(R.string.backup),
+                    message = stringResource(Res.string.make_backup_message),
+                    buttonText = stringResource(Res.string.backup),
                     onClick = {
                         navControllerWrapper.navController.navigate(Route.AccountBackup.route)
                     },
@@ -142,7 +156,7 @@ fun ApplicationsScreen(
             item {
                 Text(
                     modifier = Modifier.padding(top = 8.dp),
-                    text = stringResource(R.string.congratulations_your_new_account_is_ready),
+                    text = stringResource(Res.string.congratulations_your_new_account_is_ready),
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
                 )
@@ -150,10 +164,10 @@ fun ApplicationsScreen(
             item {
                 Text(
                     buildAnnotatedString {
-                        append(stringResource(R.string.your_account_is_ready_to_use))
+                        append(stringResource(Res.string.your_account_is_ready_to_use))
                         withLink(
                             LinkAnnotation.Url(
-                                "https://" + stringResource(R.string.nostr_app),
+                                "https://" + stringResource(Res.string.nostr_app),
                                 styles = TextLinkStyles(
                                     style = SpanStyle(
                                         textDecoration = TextDecoration.Underline,
@@ -161,12 +175,12 @@ fun ApplicationsScreen(
                                 ),
                             ),
                         ) {
-                            append(" " + stringResource(R.string.nostr_app))
+                            append(" " + stringResource(Res.string.nostr_app))
                         }
                         append(" or ")
                         withLink(
                             LinkAnnotation.Url(
-                                if (Amber.instance.isZapstoreInstalled()) "zapstore://" else stringResource(R.string.zapstore_website),
+                                if (Amber.instance.isZapstoreInstalled()) "zapstore://" else stringResource(Res.string.zapstore_website),
                                 styles = TextLinkStyles(
                                     style = SpanStyle(
                                         textDecoration = TextDecoration.Underline,
@@ -174,7 +188,7 @@ fun ApplicationsScreen(
                                 ),
                             ),
                         ) {
-                            append(stringResource(R.string.zapstore))
+                            append(stringResource(Res.string.zapstore))
                         }
                     },
                 )
@@ -193,7 +207,7 @@ fun ApplicationsScreen(
                         onClick = {
                             navControllerWrapper.navController.navigate(Route.Activities.route)
                         },
-                        text = stringResource(R.string.activity),
+                        text = stringResource(Res.string.activity),
                     )
                     IconButton(
                         onClick = {
@@ -208,9 +222,9 @@ fun ApplicationsScreen(
                             imageVector = Icons.Default.SortByAlpha,
                             contentDescription = stringResource(
                                 if (sortAlphabetically) {
-                                    R.string.sort_applications_most_recent
+                                    Res.string.sort_applications_most_recent
                                 } else {
-                                    R.string.sort_applications_alphabetically
+                                    Res.string.sort_applications_alphabetically
                                 },
                             ),
                             tint = if (sortAlphabetically) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onBackground,
@@ -280,7 +294,7 @@ fun ApplicationsScreen(
                                 )
                                 Text(
                                     modifier = Modifier.padding(top = 4.dp, bottom = 16.dp),
-                                    text = if (applicationWithHistory.lastUsed == 0L) stringResource(R.string.never) else TimeUtils.formatLongToCustomDateTime(applicationWithHistory.lastUsed * 1000),
+                                    text = if (applicationWithHistory.lastUsed == 0L) stringResource(Res.string.never) else TimeUtils.formatDateTime(LocalContext.current, applicationWithHistory.lastUsed * 1000),
                                     fontSize = 16.sp,
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis,

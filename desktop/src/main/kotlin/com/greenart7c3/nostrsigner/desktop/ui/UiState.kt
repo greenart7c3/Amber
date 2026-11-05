@@ -9,6 +9,11 @@ import androidx.compose.ui.input.key.isShiftPressed
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.type
 import com.greenart7c3.nostrsigner.common.SignerType
+import com.greenart7c3.nostrsigner.commonsui.Permission
+import com.greenart7c3.nostrsigner.commonsui.Res
+import com.greenart7c3.nostrsigner.commonsui.d_request_approved
+import com.greenart7c3.nostrsigner.commonsui.d_request_rejected
+import com.greenart7c3.nostrsigner.commonsui.getStringBlocking
 import com.greenart7c3.nostrsigner.desktop.Session
 import com.greenart7c3.nostrsigner.desktop.core.AccountsStore
 import com.greenart7c3.nostrsigner.desktop.core.AmberDesktop
@@ -17,8 +22,6 @@ import com.greenart7c3.nostrsigner.desktop.core.EncryptionScope
 import com.greenart7c3.nostrsigner.desktop.core.PassphraseLock
 import com.greenart7c3.nostrsigner.desktop.core.PendingBunkerRequest
 import com.greenart7c3.nostrsigner.desktop.core.RememberType
-import com.greenart7c3.nostrsigner.desktop.core.RequestedPermission
-import com.greenart7c3.nostrsigner.desktop.core.Strings
 import com.greenart7c3.nostrsigner.desktop.core.contentScopedSignerTypes
 import com.greenart7c3.nostrsigner.desktop.core.nip44v3SignerTypes
 import com.greenart7c3.nostrsigner.desktop.core.rememberTypeDisplayOrder
@@ -27,7 +30,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 /** Options picked on a connect request card (mirrors Android's BunkerConnectRequestScreen). */
 data class ConnectChoice(
     val signPolicy: Int,
-    val granted: List<RequestedPermission>,
+    val granted: List<Permission>,
     val accountNpub: String,
     val deleteAfter: DeleteAfterType = DeleteAfterType.NEVER,
 )
@@ -311,10 +314,10 @@ fun handleShortcut(
             val request = UiState.selectedRequest() ?: return false
             if (event.isShiftPressed) {
                 UiState.reject(request)
-                Toaster.toast(Strings.get("d_request_rejected"))
+                Toaster.toast(getStringBlocking(Res.string.d_request_rejected))
             } else {
                 UiState.approve(request)
-                Toaster.toast(Strings.get("d_request_approved"))
+                Toaster.toast(getStringBlocking(Res.string.d_request_approved))
             }
         }
 

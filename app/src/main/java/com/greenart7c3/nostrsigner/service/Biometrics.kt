@@ -11,6 +11,11 @@ import androidx.biometric.BiometricManager
 import androidx.biometric.BiometricPrompt
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.commonsui.Res
+import com.greenart7c3.nostrsigner.commonsui.biometric_authentication_failed
+import com.greenart7c3.nostrsigner.commonsui.biometric_authentication_failed_explainer
+import com.greenart7c3.nostrsigner.commonsui.biometric_authentication_failed_explainer_with_error
+import com.greenart7c3.nostrsigner.commonsui.getStringBlocking
 
 object Biometrics {
     fun authenticate(
@@ -71,9 +76,9 @@ object Biometrics {
                             BiometricPrompt.ERROR_LOCKOUT -> keyguardPrompt()
                             else ->
                                 onError(
-                                    context.getString(R.string.biometric_authentication_failed),
-                                    context.getString(
-                                        R.string.biometric_authentication_failed_explainer_with_error,
+                                    getStringBlocking(Res.string.biometric_authentication_failed),
+                                    getStringBlocking(
+                                        Res.string.biometric_authentication_failed_explainer_with_error,
                                         errString,
                                     ),
                                 )
@@ -83,8 +88,8 @@ object Biometrics {
                     override fun onAuthenticationFailed() {
                         super.onAuthenticationFailed()
                         onError(
-                            context.getString(R.string.biometric_authentication_failed),
-                            context.getString(R.string.biometric_authentication_failed_explainer),
+                            getStringBlocking(Res.string.biometric_authentication_failed),
+                            getStringBlocking(Res.string.biometric_authentication_failed_explainer),
                         )
                     }
 

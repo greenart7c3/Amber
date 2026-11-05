@@ -31,7 +31,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -42,10 +41,15 @@ import androidx.compose.ui.text.toLowerCase
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.PopupProperties
-import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.commonsui.Res
+import com.greenart7c3.nostrsigner.commonsui.mnemonic_12_words
+import com.greenart7c3.nostrsigner.commonsui.mnemonic_24_words
+import com.greenart7c3.nostrsigner.commonsui.mnemonic_words_entered
+import com.greenart7c3.nostrsigner.commonsui.paste_from_clipboard
 import com.greenart7c3.nostrsigner.ui.theme.AmberPreview
 import com.greenart7c3.nostrsigner.ui.theme.ThemePreviews
 import com.vitorpamplona.quartz.nip06KeyDerivation.Bip39Mnemonics
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun MnemonicLoginInput(
@@ -69,18 +73,18 @@ fun MnemonicLoginInput(
             FilterChip(
                 selected = wordCount == 12,
                 onClick = { onWordCountChange(12) },
-                label = { Text(stringResource(R.string.mnemonic_12_words)) },
+                label = { Text(stringResource(Res.string.mnemonic_12_words)) },
             )
             FilterChip(
                 selected = wordCount == 24,
                 onClick = { onWordCountChange(24) },
-                label = { Text(stringResource(R.string.mnemonic_24_words)) },
+                label = { Text(stringResource(Res.string.mnemonic_24_words)) },
             )
             Spacer(Modifier.weight(1f))
             IconButton(onClick = onPaste) {
                 Icon(
                     imageVector = Icons.Outlined.ContentPaste,
-                    contentDescription = stringResource(R.string.paste_from_clipboard),
+                    contentDescription = stringResource(Res.string.paste_from_clipboard),
                     tint = MaterialTheme.colorScheme.primary,
                 )
             }
@@ -131,7 +135,7 @@ fun MnemonicLoginInput(
 
         val filledCount = words.count { it.isNotBlank() }
         Text(
-            text = stringResource(R.string.mnemonic_words_entered, filledCount, wordCount),
+            text = stringResource(Res.string.mnemonic_words_entered, filledCount, wordCount),
             style = MaterialTheme.typography.bodySmall,
             color = if (filledCount == wordCount) {
                 MaterialTheme.colorScheme.primary

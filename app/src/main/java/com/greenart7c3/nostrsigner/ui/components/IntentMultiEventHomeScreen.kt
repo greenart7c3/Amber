@@ -1,7 +1,6 @@
 package com.greenart7c3.nostrsigner.ui.components
 
 import android.app.Activity
-import android.content.Context
 import android.content.Intent
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Column
@@ -26,15 +25,31 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.capitalize
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.toLowerCase
 import androidx.compose.ui.unit.dp
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.LocalPreferences
-import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.common.SignerType
+import com.greenart7c3.nostrsigner.commonsui.Permission
+import com.greenart7c3.nostrsigner.commonsui.Res
+import com.greenart7c3.nostrsigner.commonsui.approve
+import com.greenart7c3.nostrsigner.commonsui.confirm
+import com.greenart7c3.nostrsigner.commonsui.connect
+import com.greenart7c3.nostrsigner.commonsui.decrypt_zap_event
+import com.greenart7c3.nostrsigner.commonsui.deny
+import com.greenart7c3.nostrsigner.commonsui.encrypt_this_list_of_tags_with
+import com.greenart7c3.nostrsigner.commonsui.encrypt_this_text_with
+import com.greenart7c3.nostrsigner.commonsui.encrypt_with
+import com.greenart7c3.nostrsigner.commonsui.event_kind
+import com.greenart7c3.nostrsigner.commonsui.is_requiring_some_permissions_please_review_them2
+import com.greenart7c3.nostrsigner.commonsui.localizedBlocking
+import com.greenart7c3.nostrsigner.commonsui.read_from_encrypted_content
+import com.greenart7c3.nostrsigner.commonsui.read_this_list_of_tags_from_encrypted_content
+import com.greenart7c3.nostrsigner.commonsui.read_this_text_from_encrypted_content
+import com.greenart7c3.nostrsigner.commonsui.relay_not_in_auth_whitelist
+import com.greenart7c3.nostrsigner.commonsui.show_details
 import com.greenart7c3.nostrsigner.database.ApplicationEntity
 import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
 import com.greenart7c3.nostrsigner.database.HistoryEntity
@@ -44,7 +59,6 @@ import com.greenart7c3.nostrsigner.models.CompressionType
 import com.greenart7c3.nostrsigner.models.EventEncryptedDataKind
 import com.greenart7c3.nostrsigner.models.IntentData
 import com.greenart7c3.nostrsigner.models.IntentResultType
-import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.models.PrivateZapEncryptedDataKind
 import com.greenart7c3.nostrsigner.models.Result
 import com.greenart7c3.nostrsigner.models.ReturnType
@@ -66,6 +80,7 @@ import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun IntentMultiEventHomeScreen(
@@ -95,7 +110,7 @@ fun IntentMultiEventHomeScreen(
         LocalAppIcon(packageName)
 
         Text(
-            stringResource(R.string.is_requiring_some_permissions_please_review_them2),
+            stringResource(Res.string.is_requiring_some_permissions_please_review_them2),
             Modifier
                 .fillMaxWidth()
                 .padding(bottom = 4.dp),
@@ -120,7 +135,7 @@ fun IntentMultiEventHomeScreen(
                     item(key = "group-header:${groupKey.type.name}:${groupKey.payload?.name ?: ""}:${groupKey.kind ?: ""}") {
                         val groupApproved = groupIntents.all { MultiEventScreenIntents.checkedStates[it.queueKey] ?: true }
                         RequestGroupHeader(
-                            label = groupKey.toLabel(context),
+                            label = groupKey.toLabel(),
                             count = groupIntents.size,
                             approved = groupApproved,
                             expanded = expanded,
@@ -149,7 +164,6 @@ fun IntentMultiEventHomeScreen(
                 if (expanded) {
                     items(groupIntents, key = { it.id }) { intent ->
                         IntentRequestCard(
-                            context = context,
                             intent = intent,
                             signingAs = batchAccounts.forCard(intent.currentAccount),
                             approved = MultiEventScreenIntents.checkedStates[intent.queueKey] ?: true,
@@ -166,7 +180,7 @@ fun IntentMultiEventHomeScreen(
             Modifier
                 .fillMaxWidth()
                 .padding(vertical = 16.dp),
-            text = stringResource(R.string.confirm),
+            text = stringResource(Res.string.confirm),
             onClick = {
                 onLoading(true)
                 Amber.instance.applicationIOScope.launch(Dispatchers.IO) {
@@ -385,7 +399,6 @@ fun IntentMultiEventHomeScreen(
 
 @Composable
 private fun IntentRequestCard(
-    context: Context,
     intent: IntentData,
     signingAs: Account?,
     approved: Boolean,
@@ -402,39 +415,39 @@ private fun IntentRequestCard(
     }
 
     var label = if (type == SignerType.CONNECT) {
-        stringResource(R.string.connect)
+        stringResource(Res.string.connect)
     } else {
         val encryptedData = intent.encryptedData
         if (type.toString().contains("ENCRYPT")) {
             when (encryptedData) {
                 is EventEncryptedDataKind -> {
                     val p = Permission("sign_event", encryptedData.event.kind)
-                    stringResource(R.string.encrypt_with, p.toLocalizedString(context), type.toString().split("_").first())
+                    stringResource(Res.string.encrypt_with, p.localizedBlocking(), type.toString().split("_").first())
                 }
                 is TagArrayEncryptedDataKind -> {
-                    stringResource(R.string.encrypt_this_list_of_tags_with, type.toString().split("_").first())
+                    stringResource(Res.string.encrypt_this_list_of_tags_with, type.toString().split("_").first())
                 }
-                else -> stringResource(R.string.encrypt_this_text_with, type.toString().split("_").first())
+                else -> stringResource(Res.string.encrypt_this_text_with, type.toString().split("_").first())
             }
         } else if (type.toString().contains("DECRYPT")) {
             when (encryptedData) {
                 is EventEncryptedDataKind -> {
                     val p = Permission("sign_event", encryptedData.event.kind)
-                    stringResource(R.string.read_from_encrypted_content, p.toLocalizedString(context), type.toString().split("_").first())
+                    stringResource(Res.string.read_from_encrypted_content, p.localizedBlocking(), type.toString().split("_").first())
                 }
                 is TagArrayEncryptedDataKind -> {
-                    stringResource(R.string.read_this_list_of_tags_from_encrypted_content, type.toString().split("_").first())
+                    stringResource(Res.string.read_this_list_of_tags_from_encrypted_content, type.toString().split("_").first())
                 }
                 is PrivateZapEncryptedDataKind -> {
-                    stringResource(R.string.decrypt_zap_event).capitalize(Locale.current)
+                    stringResource(Res.string.decrypt_zap_event).capitalize(Locale.current)
                 }
-                else -> stringResource(R.string.read_this_text_from_encrypted_content, type.toString().split("_").first())
+                else -> stringResource(Res.string.read_this_text_from_encrypted_content, type.toString().split("_").first())
             }
         } else {
-            permission.toLocalizedString(context)
+            permission.localizedBlocking()
         }
     }
-    val unknownKindString = stringResource(R.string.event_kind, permission.kind?.toString() ?: "")
+    val unknownKindString = stringResource(Res.string.event_kind, permission.kind?.toString() ?: "")
     if (label == unknownKindString && type == SignerType.SIGN_EVENT) {
         val altTag = intent.event?.tags?.firstOrNull { it.size > 1 && it[0] == "alt" }?.getOrNull(1)
         label = altTag ?: label
@@ -496,7 +509,7 @@ private fun IntentRequestCard(
                     if (hasDetails) {
                         RawJsonButton(
                             onCLick = { showDetails = true },
-                            text = stringResource(R.string.show_details),
+                            text = stringResource(Res.string.show_details),
                         )
                     }
                 }
@@ -507,7 +520,7 @@ private fun IntentRequestCard(
             if (isBlockedByAuthWhitelist(intent.event)) {
                 // Always rejected on confirm, as on the single screen.
                 Text(
-                    text = stringResource(R.string.relay_not_in_auth_whitelist),
+                    text = stringResource(Res.string.relay_not_in_auth_whitelist),
                     color = MaterialTheme.colorScheme.error,
                     modifier = Modifier.padding(vertical = 8.dp),
                 )
@@ -517,7 +530,7 @@ private fun IntentRequestCard(
                     options = listOf(true, false),
                     onSelected = onApproveChanged,
                     label = {
-                        if (it) stringResource(R.string.approve) else stringResource(R.string.deny)
+                        if (it) stringResource(Res.string.approve) else stringResource(Res.string.deny)
                     },
                     indicatorColor = {
                         if (it) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error

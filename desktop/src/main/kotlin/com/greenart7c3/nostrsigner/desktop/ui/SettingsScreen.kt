@@ -38,11 +38,113 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.isTraySupported
+import com.greenart7c3.nostrsigner.commonsui.Res
+import com.greenart7c3.nostrsigner.commonsui.account
+import com.greenart7c3.nostrsigner.commonsui.accounts
+import com.greenart7c3.nostrsigner.commonsui.backup_keys
+import com.greenart7c3.nostrsigner.commonsui.builtin_tor_active
+import com.greenart7c3.nostrsigner.commonsui.builtin_tor_description
+import com.greenart7c3.nostrsigner.commonsui.builtin_tor_title
+import com.greenart7c3.nostrsigner.commonsui.cancel
+import com.greenart7c3.nostrsigner.commonsui.connect_via_tor_short
+import com.greenart7c3.nostrsigner.commonsui.d_active
+import com.greenart7c3.nostrsigner.commonsui.d_add_an_account
+import com.greenart7c3.nostrsigner.commonsui.d_change_passphrase
+import com.greenart7c3.nostrsigner.commonsui.d_change_the_passphrase
+import com.greenart7c3.nostrsigner.commonsui.d_clear
+import com.greenart7c3.nostrsigner.commonsui.d_close
+import com.greenart7c3.nostrsigner.commonsui.d_copy_nsec
+import com.greenart7c3.nostrsigner.commonsui.d_copy_nsec_warning
+import com.greenart7c3.nostrsigner.commonsui.d_current_passphrase
+import com.greenart7c3.nostrsigner.commonsui.d_desktop
+import com.greenart7c3.nostrsigner.commonsui.d_diagnostics
+import com.greenart7c3.nostrsigner.commonsui.d_encrypt_and_copy
+import com.greenart7c3.nostrsigner.commonsui.d_encrypted_backup
+import com.greenart7c3.nostrsigner.commonsui.d_encrypted_key_copied
+import com.greenart7c3.nostrsigner.commonsui.d_failed_update_passphrase
+import com.greenart7c3.nostrsigner.commonsui.d_keep_in_tray
+import com.greenart7c3.nostrsigner.commonsui.d_keep_in_tray_sub
+import com.greenart7c3.nostrsigner.commonsui.d_local_bunker_port
+import com.greenart7c3.nostrsigner.commonsui.d_local_bunker_port_invalid
+import com.greenart7c3.nostrsigner.commonsui.d_local_bunker_server
+import com.greenart7c3.nostrsigner.commonsui.d_local_bunker_server_sub
+import com.greenart7c3.nostrsigner.commonsui.d_lock_15min
+import com.greenart7c3.nostrsigner.commonsui.d_lock_1hour
+import com.greenart7c3.nostrsigner.commonsui.d_lock_5min
+import com.greenart7c3.nostrsigner.commonsui.d_lock_after
+import com.greenart7c3.nostrsigner.commonsui.d_lock_never
+import com.greenart7c3.nostrsigner.commonsui.d_lock_now
+import com.greenart7c3.nostrsigner.commonsui.d_log_out
+import com.greenart7c3.nostrsigner.commonsui.d_log_out_confirm
+import com.greenart7c3.nostrsigner.commonsui.d_log_out_passphrase
+import com.greenart7c3.nostrsigner.commonsui.d_log_out_q
+import com.greenart7c3.nostrsigner.commonsui.d_logs
+import com.greenart7c3.nostrsigner.commonsui.d_new_passphrase
+import com.greenart7c3.nostrsigner.commonsui.d_no_logs
+import com.greenart7c3.nostrsigner.commonsui.d_notifications
+import com.greenart7c3.nostrsigner.commonsui.d_notifications_sub
+import com.greenart7c3.nostrsigner.commonsui.d_nsec_copied
+import com.greenart7c3.nostrsigner.commonsui.d_os_secret_unavailable
+import com.greenart7c3.nostrsigner.commonsui.d_passphrase
+import com.greenart7c3.nostrsigner.commonsui.d_passphrase_changed
+import com.greenart7c3.nostrsigner.commonsui.d_passphrase_never_stored
+import com.greenart7c3.nostrsigner.commonsui.d_passphrases_no_match
+import com.greenart7c3.nostrsigner.commonsui.d_password
+import com.greenart7c3.nostrsigner.commonsui.d_password_required
+import com.greenart7c3.nostrsigner.commonsui.d_policy_approve
+import com.greenart7c3.nostrsigner.commonsui.d_policy_basic
+import com.greenart7c3.nostrsigner.commonsui.d_policy_sign_all
+import com.greenart7c3.nostrsigner.commonsui.d_public_key
+import com.greenart7c3.nostrsigner.commonsui.d_repeat_passphrase
+import com.greenart7c3.nostrsigner.commonsui.d_saved
+import com.greenart7c3.nostrsigner.commonsui.d_secret_key_nsec
+import com.greenart7c3.nostrsigner.commonsui.d_security_keys_desc
+import com.greenart7c3.nostrsigner.commonsui.d_seed_words
+import com.greenart7c3.nostrsigner.commonsui.d_show
+import com.greenart7c3.nostrsigner.commonsui.d_sign_policy
+import com.greenart7c3.nostrsigner.commonsui.d_sign_policy_sub
+import com.greenart7c3.nostrsigner.commonsui.d_start_on_boot
+import com.greenart7c3.nostrsigner.commonsui.d_start_on_boot_sub
+import com.greenart7c3.nostrsigner.commonsui.d_switch
+import com.greenart7c3.nostrsigner.commonsui.d_theme
+import com.greenart7c3.nostrsigner.commonsui.d_theme_dark
+import com.greenart7c3.nostrsigner.commonsui.d_theme_light
+import com.greenart7c3.nostrsigner.commonsui.d_theme_system
+import com.greenart7c3.nostrsigner.commonsui.d_tor_external
+import com.greenart7c3.nostrsigner.commonsui.d_tor_external_sub
+import com.greenart7c3.nostrsigner.commonsui.d_tor_invalid_port
+import com.greenart7c3.nostrsigner.commonsui.d_tor_local_note
+import com.greenart7c3.nostrsigner.commonsui.d_tor_off
+import com.greenart7c3.nostrsigner.commonsui.d_tor_proxy_ok
+import com.greenart7c3.nostrsigner.commonsui.d_tor_socks_port
+import com.greenart7c3.nostrsigner.commonsui.d_tor_stopped
+import com.greenart7c3.nostrsigner.commonsui.d_use_12_chars
+import com.greenart7c3.nostrsigner.commonsui.d_view_logs
+import com.greenart7c3.nostrsigner.commonsui.d_working
+import com.greenart7c3.nostrsigner.commonsui.d_wrong_current_passphrase
+import com.greenart7c3.nostrsigner.commonsui.d_wrong_passphrase
+import com.greenart7c3.nostrsigner.commonsui.do_you_really_want_to_disable_tor_text
+import com.greenart7c3.nostrsigner.commonsui.do_you_really_want_to_disable_tor_title
+import com.greenart7c3.nostrsigner.commonsui.failed_to_connect_to_tor_orbot
+import com.greenart7c3.nostrsigner.commonsui.getStringBlocking
+import com.greenart7c3.nostrsigner.commonsui.language
+import com.greenart7c3.nostrsigner.commonsui.name
+import com.greenart7c3.nostrsigner.commonsui.no
+import com.greenart7c3.nostrsigner.commonsui.save
+import com.greenart7c3.nostrsigner.commonsui.security
+import com.greenart7c3.nostrsigner.commonsui.tor_connecting
+import com.greenart7c3.nostrsigner.commonsui.tor_connection_failed
+import com.greenart7c3.nostrsigner.commonsui.tor_restart
+import com.greenart7c3.nostrsigner.commonsui.tor_starting
+import com.greenart7c3.nostrsigner.commonsui.tor_subtitle
+import com.greenart7c3.nostrsigner.commonsui.warning
+import com.greenart7c3.nostrsigner.commonsui.yes
 import com.greenart7c3.nostrsigner.desktop.Session
 import com.greenart7c3.nostrsigner.desktop.core.AccountManager
 import com.greenart7c3.nostrsigner.desktop.core.AccountsStore
 import com.greenart7c3.nostrsigner.desktop.core.AmberDesktop
 import com.greenart7c3.nostrsigner.desktop.core.AutoStart
+import com.greenart7c3.nostrsigner.desktop.core.DateTimes
 import com.greenart7c3.nostrsigner.desktop.core.DesktopAccount
 import com.greenart7c3.nostrsigner.desktop.core.DesktopKeyStore
 import com.greenart7c3.nostrsigner.desktop.core.PassphraseLock
@@ -53,18 +155,16 @@ import com.greenart7c3.nostrsigner.desktop.core.TorManager
 import com.greenart7c3.nostrsigner.desktop.core.TorMode
 import com.greenart7c3.nostrsigner.desktop.core.TorStatus
 import com.greenart7c3.nostrsigner.desktop.core.toShortenHex
-import java.text.DateFormat
-import java.util.Date
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun SettingsScreen(account: DesktopAccount) {
     val scope = rememberCoroutineScope()
     val settings by SettingsStore.settings.collectAsState()
     val accounts by AccountsStore.accounts.collectAsState()
-    val language by Strings.currentLanguage.collectAsState()
     var showBackupDialog by remember { mutableStateOf(false) }
     var showLogsDialog by remember { mutableStateOf(false) }
     var showLogoutConfirm by remember { mutableStateOf<String?>(null) }
@@ -75,37 +175,37 @@ fun SettingsScreen(account: DesktopAccount) {
     val scrollState = rememberScrollState()
     ScrollbarBox(rememberScrollbarAdapter(scrollState), Modifier.fillMaxSize()) {
         Column(Modifier.fillMaxSize().verticalScroll(scrollState)) {
-            SettingsSection(Strings.get("account", language)) {
+            SettingsSection(stringResource(Res.string.account)) {
                 Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     OutlinedTextField(
                         value = name,
                         onValueChange = { name = it },
-                        label = { Text(Strings.get("name", language)) },
+                        label = { Text(stringResource(Res.string.name)) },
                         singleLine = true,
                         modifier = Modifier.widthIn(max = 420.dp).weight(1f, fill = false),
                     )
                     AmberOutlinedButton(
-                        text = Strings.get("save", language),
+                        text = stringResource(Res.string.save),
                         onClick = {
                             account.name.value = name
                             Session.saveMeta(account)
-                            Toaster.toast(Strings.get("d_saved", language))
+                            Toaster.toast(getStringBlocking(Res.string.d_saved))
                         },
                     )
                 }
                 Text(
-                    Strings.format("d_public_key", account.npub, language = language),
+                    stringResource(Res.string.d_public_key, account.npub),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 Spacer(Modifier.height(8.dp))
-                AmberButton(text = Strings.get("backup_keys", language), onClick = { showBackupDialog = true })
+                AmberButton(text = stringResource(Res.string.backup_keys), onClick = { showBackupDialog = true })
             }
-            SettingsSection(Strings.get("d_sign_policy", language), Strings.get("d_sign_policy_sub", language)) {
+            SettingsSection(stringResource(Res.string.d_sign_policy), stringResource(Res.string.d_sign_policy_sub)) {
                 val policies = listOf(
-                    0 to Strings.get("d_policy_basic", language),
-                    1 to Strings.get("d_policy_approve", language),
-                    2 to Strings.get("d_policy_sign_all", language),
+                    0 to stringResource(Res.string.d_policy_basic),
+                    1 to stringResource(Res.string.d_policy_approve),
+                    2 to stringResource(Res.string.d_policy_sign_all),
                 )
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     policies.forEach { (value, label) ->
@@ -120,12 +220,12 @@ fun SettingsScreen(account: DesktopAccount) {
                     }
                 }
             }
-            SettingsSection(Strings.get("d_theme", language)) {
+            SettingsSection(stringResource(Res.string.d_theme)) {
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     listOf(
-                        null to Strings.get("d_theme_system", language),
-                        false to Strings.get("d_theme_light", language),
-                        true to Strings.get("d_theme_dark", language),
+                        null to stringResource(Res.string.d_theme_system),
+                        false to stringResource(Res.string.d_theme_light),
+                        true to stringResource(Res.string.d_theme_dark),
                     ).forEach { (value, label) ->
                         FilterChip(
                             selected = settings.darkTheme == value,
@@ -135,28 +235,28 @@ fun SettingsScreen(account: DesktopAccount) {
                     }
                 }
             }
-            SettingsSection(Strings.get("language", language)) {
+            SettingsSection(stringResource(Res.string.language)) {
                 LanguagePicker()
             }
-            SettingsSection(Strings.get("d_desktop", language)) {
+            SettingsSection(stringResource(Res.string.d_desktop)) {
                 if (isTraySupported) {
                     SettingSwitch(
-                        title = Strings.get("d_keep_in_tray", language),
-                        description = Strings.get("d_keep_in_tray_sub", language),
+                        title = stringResource(Res.string.d_keep_in_tray),
+                        description = stringResource(Res.string.d_keep_in_tray_sub),
                         checked = settings.closeToTray,
                         onCheckedChange = { value -> SettingsStore.update { it.copy(closeToTray = value) } },
                     )
                 }
                 SettingSwitch(
-                    title = Strings.get("d_notifications", language),
-                    description = Strings.get("d_notifications_sub", language),
+                    title = stringResource(Res.string.d_notifications),
+                    description = stringResource(Res.string.d_notifications_sub),
                     checked = settings.showNotifications,
                     onCheckedChange = { value -> SettingsStore.update { it.copy(showNotifications = value) } },
                 )
                 if (AutoStart.isSupported()) {
                     SettingSwitch(
-                        title = Strings.get("d_start_on_boot", language),
-                        description = Strings.get("d_start_on_boot_sub", language),
+                        title = stringResource(Res.string.d_start_on_boot),
+                        description = stringResource(Res.string.d_start_on_boot_sub),
                         checked = settings.startOnBoot,
                         onCheckedChange = { value ->
                             SettingsStore.update { it.copy(startOnBoot = value) }
@@ -165,8 +265,8 @@ fun SettingsScreen(account: DesktopAccount) {
                     )
                 }
                 SettingSwitch(
-                    title = Strings.get("d_local_bunker_server", language),
-                    description = Strings.format("d_local_bunker_server_sub", AmberDesktop.localBunkerPort(), language = language),
+                    title = stringResource(Res.string.d_local_bunker_server),
+                    description = stringResource(Res.string.d_local_bunker_server_sub, AmberDesktop.localBunkerPort()),
                     checked = settings.localBunkerServer,
                     onCheckedChange = { value ->
                         SettingsStore.update { it.copy(localBunkerServer = value) }
@@ -178,28 +278,28 @@ fun SettingsScreen(account: DesktopAccount) {
                     OutlinedTextField(
                         value = portText,
                         onValueChange = { portText = it.filter(Char::isDigit).take(5) },
-                        label = { Text(Strings.get("d_local_bunker_port", language)) },
+                        label = { Text(stringResource(Res.string.d_local_bunker_port)) },
                         singleLine = true,
                         modifier = Modifier.widthIn(max = 180.dp),
                     )
                     AmberOutlinedButton(
-                        text = Strings.get("save", language),
+                        text = stringResource(Res.string.save),
                         onClick = {
                             val port = portText.toIntOrNull()
                             if (port == null || port !in 1024..65535) {
-                                Toaster.toast(Strings.get("d_local_bunker_port_invalid", language))
+                                Toaster.toast(getStringBlocking(Res.string.d_local_bunker_port_invalid))
                                 return@AmberOutlinedButton
                             }
                             val error = AmberDesktop.changeLocalBunkerPort(port)
-                            Toaster.toast(Strings.get(error ?: "d_saved", language))
+                            Toaster.toast(getStringBlocking(error ?: Res.string.d_saved))
                         },
                     )
                 }
             }
-            SettingsSection(Strings.get("connect_via_tor_short", language), Strings.get("tor_subtitle", language)) {
+            SettingsSection(stringResource(Res.string.connect_via_tor_short), stringResource(Res.string.tor_subtitle)) {
                 TorSection()
             }
-            SettingsSection(Strings.get("accounts", language)) {
+            SettingsSection(stringResource(Res.string.accounts)) {
                 accounts.forEach { record ->
                     Row(
                         Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 2.dp),
@@ -214,7 +314,7 @@ fun SettingsScreen(account: DesktopAccount) {
                             )
                             if (record.npub == account.npub) {
                                 Text(
-                                    Strings.get("d_active", language),
+                                    stringResource(Res.string.d_active),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
@@ -222,28 +322,28 @@ fun SettingsScreen(account: DesktopAccount) {
                         }
                         if (record.npub != account.npub) {
                             AmberTextButton(
-                                text = Strings.get("d_switch", language),
+                                text = stringResource(Res.string.d_switch),
                                 onClick = { scope.launch { Session.switchTo(record.npub) } },
                             )
                         }
                         AmberTextButton(
-                            text = Strings.get("d_log_out", language),
+                            text = stringResource(Res.string.d_log_out),
                             onClick = { showLogoutConfirm = record.npub },
                         )
                     }
                     HorizontalDivider()
                 }
                 Spacer(Modifier.height(8.dp))
-                AmberOutlinedButton(text = Strings.get("d_add_an_account", language), onClick = { Session.addingAccount.value = true })
+                AmberOutlinedButton(text = stringResource(Res.string.d_add_an_account), onClick = { Session.addingAccount.value = true })
             }
             SettingsSection(
-                Strings.get("security", language),
-                Strings.format("d_security_keys_desc", DesktopKeyStore.passwordSourceDescription ?: "…", language = language),
+                stringResource(Res.string.security),
+                stringResource(Res.string.d_security_keys_desc, DesktopKeyStore.passwordSourceDescription ?: "…"),
             ) {
                 SecuritySection()
             }
-            SettingsSection(Strings.get("d_diagnostics", language)) {
-                AmberOutlinedButton(text = Strings.get("d_view_logs", language), onClick = { showLogsDialog = true })
+            SettingsSection(stringResource(Res.string.d_diagnostics)) {
+                AmberOutlinedButton(text = stringResource(Res.string.d_view_logs), onClick = { showLogsDialog = true })
             }
             Spacer(Modifier.height(24.dp))
         }
@@ -260,17 +360,17 @@ fun SettingsScreen(account: DesktopAccount) {
         var loggingOut by remember { mutableStateOf(false) }
         AlertDialog(
             onDismissRequest = { if (!loggingOut) showLogoutConfirm = null },
-            title = { Text(Strings.get("d_log_out_q", language)) },
+            title = { Text(stringResource(Res.string.d_log_out_q)) },
             text = {
                 Column {
-                    Text(Strings.get("d_log_out_confirm", language))
+                    Text(stringResource(Res.string.d_log_out_confirm))
                     Spacer(Modifier.height(8.dp))
-                    Text(Strings.get("d_log_out_passphrase", language))
+                    Text(stringResource(Res.string.d_log_out_passphrase))
                     Spacer(Modifier.height(4.dp))
                     OutlinedTextField(
                         value = logoutPassphrase,
                         onValueChange = { logoutPassphrase = it },
-                        label = { Text(Strings.get("d_passphrase", language)) },
+                        label = { Text(stringResource(Res.string.d_passphrase)) },
                         singleLine = true,
                         visualTransformation = PasswordVisualTransformation(),
                         enabled = !loggingOut,
@@ -280,7 +380,7 @@ fun SettingsScreen(account: DesktopAccount) {
             },
             confirmButton = {
                 AmberTextButton(
-                    text = if (loggingOut) Strings.get("d_working", language) else Strings.get("d_log_out", language),
+                    text = if (loggingOut) stringResource(Res.string.d_working) else stringResource(Res.string.d_log_out),
                     enabled = !loggingOut,
                     onClick = {
                         loggingOut = true
@@ -290,10 +390,10 @@ fun SettingsScreen(account: DesktopAccount) {
                                     showLogoutConfirm = null
                                     Session.logout(npub)
                                 } else {
-                                    Toaster.toast(Strings.get("d_wrong_passphrase", language))
+                                    Toaster.toast(getStringBlocking(Res.string.d_wrong_passphrase))
                                 }
                             } catch (e: PassphraseLock.OsSecretUnavailableException) {
-                                Toaster.toast(Strings.format("d_os_secret_unavailable", e.storeDescription, language = language))
+                                Toaster.toast(getStringBlocking(Res.string.d_os_secret_unavailable, e.storeDescription))
                             }
                             loggingOut = false
                         }
@@ -302,7 +402,7 @@ fun SettingsScreen(account: DesktopAccount) {
             },
             dismissButton = {
                 AmberTextButton(
-                    text = Strings.get("cancel", language),
+                    text = stringResource(Res.string.cancel),
                     enabled = !loggingOut,
                     onClick = { showLogoutConfirm = null },
                 )
@@ -391,7 +491,6 @@ private fun SettingSwitch(
 @Composable
 private fun TorSection() {
     val settings by SettingsStore.settings.collectAsState()
-    val language by Strings.currentLanguage.collectAsState()
     val torStatus by TorManager.status.collectAsState()
     val scope = rememberCoroutineScope()
     var confirmDisable by remember { mutableStateOf(false) }
@@ -403,16 +502,16 @@ private fun TorSection() {
         if (mode == TorMode.EXTERNAL) {
             scope.launch {
                 val alive = withContext(Dispatchers.IO) { RelayHttpClients.isSocksProxyAlive(port) }
-                Toaster.toast(Strings.get(if (alive) "d_tor_proxy_ok" else "failed_to_connect_to_tor_orbot", language))
+                Toaster.toast(getStringBlocking(if (alive) Res.string.d_tor_proxy_ok else Res.string.failed_to_connect_to_tor_orbot))
             }
         }
     }
 
     FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         listOf(
-            TorMode.DISABLED to Strings.get("d_tor_off", language),
-            TorMode.BUILTIN to Strings.get("builtin_tor_title", language),
-            TorMode.EXTERNAL to Strings.get("d_tor_external", language),
+            TorMode.DISABLED to stringResource(Res.string.d_tor_off),
+            TorMode.BUILTIN to stringResource(Res.string.builtin_tor_title),
+            TorMode.EXTERNAL to stringResource(Res.string.d_tor_external),
         ).forEach { (mode, label) ->
             FilterChip(
                 selected = settings.torMode == mode,
@@ -431,17 +530,17 @@ private fun TorSection() {
     Spacer(Modifier.height(4.dp))
     when (settings.torMode) {
         TorMode.BUILTIN -> {
-            Text(Strings.get("builtin_tor_description", language), style = MaterialTheme.typography.bodySmall)
+            Text(stringResource(Res.string.builtin_tor_description), style = MaterialTheme.typography.bodySmall)
             Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 val statusText = when (val status = torStatus) {
-                    TorStatus.Stopped -> Strings.get("d_tor_stopped", language)
+                    TorStatus.Stopped -> stringResource(Res.string.d_tor_stopped)
                     is TorStatus.Connecting -> if (status.percentage <= 0) {
-                        Strings.get("tor_starting", language)
+                        stringResource(Res.string.tor_starting)
                     } else {
-                        Strings.format("tor_connecting", status.percentage, language = language)
+                        stringResource(Res.string.tor_connecting, status.percentage)
                     }
-                    TorStatus.Connected -> Strings.get("builtin_tor_active", language)
-                    is TorStatus.Failed -> listOfNotNull(Strings.get("tor_connection_failed", language), status.message?.takeIf { it.isNotBlank() }).joinToString(": ")
+                    TorStatus.Connected -> stringResource(Res.string.builtin_tor_active)
+                    is TorStatus.Failed -> listOfNotNull(stringResource(Res.string.tor_connection_failed), status.message?.takeIf { it.isNotBlank() }).joinToString(": ")
                 }
                 Text(
                     statusText,
@@ -450,29 +549,29 @@ private fun TorSection() {
                     modifier = Modifier.weight(1f, fill = false),
                 )
                 AmberTextButton(
-                    text = Strings.get("tor_restart", language),
+                    text = stringResource(Res.string.tor_restart),
                     onClick = { TorManager.restart(AmberDesktop.applicationIOScope) },
                 )
             }
         }
 
         TorMode.EXTERNAL -> {
-            Text(Strings.get("d_tor_external_sub", language), style = MaterialTheme.typography.bodySmall)
+            Text(stringResource(Res.string.d_tor_external_sub), style = MaterialTheme.typography.bodySmall)
             Spacer(Modifier.height(4.dp))
             Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 OutlinedTextField(
                     value = portText,
                     onValueChange = { value -> portText = value.filter { it.isDigit() }.take(5) },
-                    label = { Text(Strings.get("d_tor_socks_port", language)) },
+                    label = { Text(stringResource(Res.string.d_tor_socks_port)) },
                     singleLine = true,
                     modifier = Modifier.widthIn(max = 200.dp),
                 )
                 AmberOutlinedButton(
-                    text = Strings.get("save", language),
+                    text = stringResource(Res.string.save),
                     onClick = {
                         val port = portText.toIntOrNull()
                         if (port == null || port !in 1..65535) {
-                            Toaster.toast(Strings.get("d_tor_invalid_port", language))
+                            Toaster.toast(getStringBlocking(Res.string.d_tor_invalid_port))
                         } else {
                             applyMode(TorMode.EXTERNAL, port)
                         }
@@ -484,7 +583,7 @@ private fun TorSection() {
         TorMode.DISABLED -> {}
     }
     Text(
-        Strings.get("d_tor_local_note", language),
+        stringResource(Res.string.d_tor_local_note),
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
@@ -492,11 +591,11 @@ private fun TorSection() {
     if (confirmDisable) {
         AlertDialog(
             onDismissRequest = { confirmDisable = false },
-            title = { Text(Strings.get("do_you_really_want_to_disable_tor_title", language)) },
-            text = { Text(Strings.get("do_you_really_want_to_disable_tor_text", language)) },
+            title = { Text(stringResource(Res.string.do_you_really_want_to_disable_tor_title)) },
+            text = { Text(stringResource(Res.string.do_you_really_want_to_disable_tor_text)) },
             confirmButton = {
                 AmberTextButton(
-                    text = Strings.get("yes", language),
+                    text = stringResource(Res.string.yes),
                     onClick = {
                         confirmDisable = false
                         applyMode(TorMode.DISABLED)
@@ -504,7 +603,7 @@ private fun TorSection() {
                 )
             },
             dismissButton = {
-                AmberTextButton(text = Strings.get("no", language), onClick = { confirmDisable = false })
+                AmberTextButton(text = stringResource(Res.string.no), onClick = { confirmDisable = false })
             },
         )
     }
@@ -513,27 +612,26 @@ private fun TorSection() {
 @Composable
 private fun SecuritySection() {
     val settings by SettingsStore.settings.collectAsState()
-    val language by Strings.currentLanguage.collectAsState()
     var showChangeDialog by remember { mutableStateOf(false) }
 
     FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         AmberOutlinedButton(
-            text = Strings.get("d_lock_now", language),
+            text = stringResource(Res.string.d_lock_now),
             onClick = { PassphraseLock.lock() },
         )
         AmberOutlinedButton(
-            text = Strings.get("d_change_passphrase", language),
+            text = stringResource(Res.string.d_change_passphrase),
             onClick = { showChangeDialog = true },
         )
     }
     Spacer(Modifier.height(8.dp))
-    Text(Strings.get("d_lock_after", language), style = MaterialTheme.typography.bodySmall)
+    Text(stringResource(Res.string.d_lock_after), style = MaterialTheme.typography.bodySmall)
     FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         listOf(
-            0 to Strings.get("d_lock_never", language),
-            5 to Strings.get("d_lock_5min", language),
-            15 to Strings.get("d_lock_15min", language),
-            60 to Strings.get("d_lock_1hour", language),
+            0 to stringResource(Res.string.d_lock_never),
+            5 to stringResource(Res.string.d_lock_5min),
+            15 to stringResource(Res.string.d_lock_15min),
+            60 to stringResource(Res.string.d_lock_1hour),
         ).forEach { (minutes, label) ->
             FilterChip(
                 selected = settings.autoLockMinutes == minutes,
@@ -554,7 +652,6 @@ private fun SecuritySection() {
 @Composable
 private fun ChangePassphraseDialog(onDismiss: () -> Unit) {
     val scope = rememberCoroutineScope()
-    val language by Strings.currentLanguage.collectAsState()
     var current by remember { mutableStateOf("") }
     var new by remember { mutableStateOf("") }
     var confirm by remember { mutableStateOf("") }
@@ -562,18 +659,18 @@ private fun ChangePassphraseDialog(onDismiss: () -> Unit) {
 
     AlertDialog(
         onDismissRequest = { if (!working) onDismiss() },
-        title = { Text(Strings.get("d_change_the_passphrase", language)) },
+        title = { Text(stringResource(Res.string.d_change_the_passphrase)) },
         text = {
             Column {
                 Text(
-                    Strings.get("d_passphrase_never_stored", language),
+                    stringResource(Res.string.d_passphrase_never_stored),
                     style = MaterialTheme.typography.bodySmall,
                 )
                 Spacer(Modifier.height(8.dp))
                 OutlinedTextField(
                     value = current,
                     onValueChange = { current = it },
-                    label = { Text(Strings.get("d_current_passphrase", language)) },
+                    label = { Text(stringResource(Res.string.d_current_passphrase)) },
                     singleLine = true,
                     visualTransformation = PasswordVisualTransformation(),
                     modifier = Modifier.fillMaxWidth(),
@@ -582,7 +679,7 @@ private fun ChangePassphraseDialog(onDismiss: () -> Unit) {
                 OutlinedTextField(
                     value = new,
                     onValueChange = { new = it },
-                    label = { Text(Strings.get("d_new_passphrase", language)) },
+                    label = { Text(stringResource(Res.string.d_new_passphrase)) },
                     singleLine = true,
                     visualTransformation = PasswordVisualTransformation(),
                     modifier = Modifier.fillMaxWidth(),
@@ -591,7 +688,7 @@ private fun ChangePassphraseDialog(onDismiss: () -> Unit) {
                 OutlinedTextField(
                     value = confirm,
                     onValueChange = { confirm = it },
-                    label = { Text(Strings.get("d_repeat_passphrase", language)) },
+                    label = { Text(stringResource(Res.string.d_repeat_passphrase)) },
                     singleLine = true,
                     visualTransformation = PasswordVisualTransformation(),
                     modifier = Modifier.fillMaxWidth(),
@@ -600,30 +697,30 @@ private fun ChangePassphraseDialog(onDismiss: () -> Unit) {
         },
         confirmButton = {
             AmberTextButton(
-                text = if (working) Strings.get("d_working", language) else Strings.get("save", language),
+                text = if (working) stringResource(Res.string.d_working) else stringResource(Res.string.save),
                 enabled = !working,
                 onClick = {
                     if (new.length < PassphraseLock.MIN_PASSPHRASE_LENGTH) {
-                        Toaster.toast(Strings.get("d_use_12_chars", language))
+                        Toaster.toast(getStringBlocking(Res.string.d_use_12_chars))
                         return@AmberTextButton
                     }
                     if (new != confirm) {
-                        Toaster.toast(Strings.get("d_passphrases_no_match", language))
+                        Toaster.toast(getStringBlocking(Res.string.d_passphrases_no_match))
                         return@AmberTextButton
                     }
                     working = true
                     scope.launch {
                         try {
                             if (PassphraseLock.changePassphrase(current.toCharArray(), new.toCharArray())) {
-                                Toaster.toast(Strings.get("d_passphrase_changed", language))
+                                Toaster.toast(getStringBlocking(Res.string.d_passphrase_changed))
                                 onDismiss()
                             } else {
-                                Toaster.toast(Strings.get("d_wrong_current_passphrase", language))
+                                Toaster.toast(getStringBlocking(Res.string.d_wrong_current_passphrase))
                             }
                         } catch (e: PassphraseLock.OsSecretUnavailableException) {
-                            Toaster.toast(Strings.format("d_os_secret_unavailable", e.storeDescription, language = language))
+                            Toaster.toast(getStringBlocking(Res.string.d_os_secret_unavailable, e.storeDescription))
                         } catch (e: Exception) {
-                            Toaster.toast(e.message ?: Strings.get("d_failed_update_passphrase", language))
+                            Toaster.toast(e.message ?: getStringBlocking(Res.string.d_failed_update_passphrase))
                         }
                         working = false
                     }
@@ -632,7 +729,7 @@ private fun ChangePassphraseDialog(onDismiss: () -> Unit) {
         },
         dismissButton = {
             AmberTextButton(
-                text = Strings.get("cancel", language),
+                text = stringResource(Res.string.cancel),
                 enabled = !working,
                 onClick = onDismiss,
             )
@@ -647,7 +744,6 @@ private fun BackupDialog(
 ) {
     val copyText = rememberCopyText()
     val scope = rememberCoroutineScope()
-    val language by Strings.currentLanguage.collectAsState()
     var showSecret by remember { mutableStateOf(false) }
     var confirmCopy by remember { mutableStateOf(false) }
     var password by remember { mutableStateOf("") }
@@ -656,20 +752,20 @@ private fun BackupDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(Strings.get("backup_keys", language)) },
+        title = { Text(stringResource(Res.string.backup_keys)) },
         text = {
             Column(Modifier.verticalScroll(rememberScrollState())) {
-                Text(Strings.get("d_secret_key_nsec", language), style = MaterialTheme.typography.titleSmall)
+                Text(stringResource(Res.string.d_secret_key_nsec), style = MaterialTheme.typography.titleSmall)
                 if (showSecret) {
                     Text(account.getNsec(), fontFamily = FontFamily.Monospace, style = MaterialTheme.typography.bodySmall)
                     if (seedWords.isNotBlank()) {
                         Spacer(Modifier.height(8.dp))
-                        Text(Strings.get("d_seed_words", language), style = MaterialTheme.typography.titleSmall)
+                        Text(stringResource(Res.string.d_seed_words), style = MaterialTheme.typography.titleSmall)
                         Text(seedWords, fontFamily = FontFamily.Monospace, style = MaterialTheme.typography.bodySmall)
                     }
                 } else {
                     AmberTextButton(
-                        text = Strings.get("d_show", language),
+                        text = stringResource(Res.string.d_show),
                         onClick = {
                             showSecret = true
                             scope.launch { seedWords = AccountManager.seedWords(account.npub) }
@@ -678,17 +774,17 @@ private fun BackupDialog(
                 }
                 Row {
                     AmberTextButton(
-                        text = Strings.get("d_copy_nsec", language),
+                        text = stringResource(Res.string.d_copy_nsec),
                         onClick = { confirmCopy = true },
                     )
                 }
 
                 Spacer(Modifier.height(12.dp))
-                Text(Strings.get("d_encrypted_backup", language), style = MaterialTheme.typography.titleSmall)
+                Text(stringResource(Res.string.d_encrypted_backup), style = MaterialTheme.typography.titleSmall)
                 OutlinedTextField(
                     value = password,
                     onValueChange = { password = it },
-                    label = { Text(Strings.get("d_password", language)) },
+                    label = { Text(stringResource(Res.string.d_password)) },
                     visualTransformation = PasswordVisualTransformation(),
                     modifier = Modifier.fillMaxWidth(),
                 )
@@ -702,24 +798,24 @@ private fun BackupDialog(
                     )
                 }
                 AmberTextButton(
-                    text = Strings.get("d_encrypt_and_copy", language),
+                    text = stringResource(Res.string.d_encrypt_and_copy),
                     onClick = {
                         if (password.isBlank()) {
-                            Toaster.toast(Strings.get("d_password_required", language))
+                            Toaster.toast(getStringBlocking(Res.string.d_password_required))
                             return@AmberTextButton
                         }
                         ncryptsec = account.nip49Encrypt(password)
                         copyText(ncryptsec)
                         account.didBackup = true
                         Session.saveMeta(account)
-                        Toaster.toast(Strings.get("d_encrypted_key_copied", language))
+                        Toaster.toast(getStringBlocking(Res.string.d_encrypted_key_copied))
                     },
                 )
             }
         },
         confirmButton = {
             AmberTextButton(
-                text = Strings.get("d_close", language),
+                text = stringResource(Res.string.d_close),
                 onClick = onDismiss,
             )
         },
@@ -729,22 +825,22 @@ private fun BackupDialog(
         // is full control of the account.
         AlertDialog(
             onDismissRequest = { confirmCopy = false },
-            title = { Text(Strings.get("warning", language)) },
-            text = { Text(Strings.get("d_copy_nsec_warning", language)) },
+            title = { Text(stringResource(Res.string.warning)) },
+            text = { Text(stringResource(Res.string.d_copy_nsec_warning)) },
             confirmButton = {
                 AmberTextButton(
-                    text = Strings.get("d_copy_nsec", language),
+                    text = stringResource(Res.string.d_copy_nsec),
                     onClick = {
                         confirmCopy = false
                         copyText(account.getNsec())
                         account.didBackup = true
                         Session.saveMeta(account)
-                        Toaster.toast(Strings.get("d_nsec_copied", language))
+                        Toaster.toast(getStringBlocking(Res.string.d_nsec_copied))
                     },
                 )
             },
             dismissButton = {
-                AmberTextButton(text = Strings.get("cancel", language), onClick = { confirmCopy = false })
+                AmberTextButton(text = stringResource(Res.string.cancel), onClick = { confirmCopy = false })
             },
         )
     }
@@ -757,20 +853,19 @@ private fun LogsDialog(
 ) {
     val store = AmberDesktop.store(account.npub)
     val logs by store.logs.collectAsState()
-    val language by Strings.currentLanguage.collectAsState()
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(Strings.get("d_logs", language)) },
+        title = { Text(stringResource(Res.string.d_logs)) },
         text = {
             val window = LocalWindowContentSize.current
             Column(Modifier.heightIn(max = (window.height - 220.dp).coerceIn(120.dp, 420.dp)).verticalScroll(rememberScrollState())) {
                 if (logs.isEmpty()) {
-                    Text(Strings.get("d_no_logs", language))
+                    Text(stringResource(Res.string.d_no_logs))
                 }
                 logs.sortedByDescending { it.time }.forEach { log ->
                     Text(
-                        "${DateFormat.getDateTimeInstance().format(Date(log.time))} · ${log.type} · ${log.url}",
+                        "${DateTimes.format(log.time)} · ${log.type} · ${log.url}",
                         style = MaterialTheme.typography.bodySmall,
                     )
                     Text(log.message, style = MaterialTheme.typography.bodyMedium)
@@ -780,7 +875,7 @@ private fun LogsDialog(
         },
         confirmButton = {
             AmberTextButton(
-                text = Strings.get("d_clear", language),
+                text = stringResource(Res.string.d_clear),
                 onClick = {
                     store.clearLogs()
                 },
@@ -788,7 +883,7 @@ private fun LogsDialog(
         },
         dismissButton = {
             AmberTextButton(
-                text = Strings.get("d_close", language),
+                text = stringResource(Res.string.d_close),
                 onClick = onDismiss,
             )
         },

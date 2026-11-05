@@ -36,19 +36,27 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.greenart7c3.nostrsigner.R
-import com.greenart7c3.nostrsigner.models.Permission
-import com.greenart7c3.nostrsigner.models.supportedKindNumbers
+import com.greenart7c3.nostrsigner.commonsui.Permission
+import com.greenart7c3.nostrsigner.commonsui.Res
+import com.greenart7c3.nostrsigner.commonsui.add
+import com.greenart7c3.nostrsigner.commonsui.add_permission_description
+import com.greenart7c3.nostrsigner.commonsui.custom_event_kind
+import com.greenart7c3.nostrsigner.commonsui.custom_event_kind_already_added
+import com.greenart7c3.nostrsigner.commonsui.go_back
+import com.greenart7c3.nostrsigner.commonsui.localizedBlocking
+import com.greenart7c3.nostrsigner.commonsui.no_permissions_found
+import com.greenart7c3.nostrsigner.commonsui.search_permissions
+import com.greenart7c3.nostrsigner.commonsui.supportedKindNumbers
 import com.greenart7c3.nostrsigner.ui.theme.AmberPreview
 import com.greenart7c3.nostrsigner.ui.theme.ThemePreviews
 import com.greenart7c3.nostrsigner.ui.theme.amoledBorder
 import com.greenart7c3.nostrsigner.ui.theme.outlineIfAny
+import org.jetbrains.compose.resources.stringResource
 
 private fun permissionKey(permission: Permission) = "${permission.type}-${permission.kind}"
 
@@ -63,7 +71,6 @@ fun AddPermissionsSheet(
     onAdd: (List<Permission>) -> Unit,
     onDismiss: () -> Unit,
 ) {
-    val context = LocalContext.current
     val sheetState = rememberModalBottomSheetState(
         skipPartiallyExpanded = true,
     )
@@ -100,7 +107,7 @@ fun AddPermissionsSheet(
             allCandidates
         } else {
             allCandidates.filter {
-                it.toLocalizedString(context, true).contains(search, ignoreCase = true) ||
+                it.localizedBlocking(true).contains(search, ignoreCase = true) ||
                     it.kind.toString().contains(search) ||
                     it.type.contains(search, ignoreCase = true)
             }
@@ -128,11 +135,11 @@ fun AddPermissionsSheet(
                                 )
                                 onDismiss()
                             },
-                            text = stringResource(R.string.add),
+                            text = stringResource(Res.string.add),
                         )
                         IconRow(
                             center = true,
-                            title = stringResource(R.string.go_back),
+                            title = stringResource(Res.string.go_back),
                             icon = ImageVector.vectorResource(R.drawable.back),
                             onClick = onDismiss,
                             tint = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -150,7 +157,7 @@ fun AddPermissionsSheet(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp, vertical = 8.dp),
-                    text = stringResource(R.string.add_permission_description),
+                    text = stringResource(Res.string.add_permission_description),
                     style = MaterialTheme.typography.bodyMedium,
                 )
 
@@ -160,7 +167,7 @@ fun AddPermissionsSheet(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp),
-                    placeholder = { Text(stringResource(R.string.search_permissions)) },
+                    placeholder = { Text(stringResource(Res.string.search_permissions)) },
                     leadingIcon = {
                         Icon(Icons.Default.Search, contentDescription = null)
                     },
@@ -178,12 +185,12 @@ fun AddPermissionsSheet(
                         value = customKind,
                         onValueChange = { customKind = it.filter { char -> char.isDigit() } },
                         modifier = Modifier.weight(1f),
-                        label = { Text(stringResource(R.string.custom_event_kind)) },
+                        label = { Text(stringResource(Res.string.custom_event_kind)) },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         singleLine = true,
                         isError = customKindExists,
                         supportingText = if (customKindExists) {
-                            { Text(stringResource(R.string.custom_event_kind_already_added)) }
+                            { Text(stringResource(Res.string.custom_event_kind_already_added)) }
                         } else {
                             null
                         },
@@ -198,7 +205,7 @@ fun AddPermissionsSheet(
                             customKind = ""
                         },
                     ) {
-                        Text(stringResource(R.string.add))
+                        Text(stringResource(Res.string.add))
                     }
                 }
 
@@ -209,7 +216,7 @@ fun AddPermissionsSheet(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(16.dp),
-                        text = stringResource(R.string.no_permissions_found),
+                        text = stringResource(Res.string.no_permissions_found),
                         textAlign = TextAlign.Center,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -242,7 +249,7 @@ fun AddPermissionsSheet(
                                     },
                                 )
                                 Text(
-                                    text = item.toLocalizedString(context, true),
+                                    text = item.localizedBlocking(true),
                                     style = MaterialTheme.typography.bodyMedium,
                                 )
                             }

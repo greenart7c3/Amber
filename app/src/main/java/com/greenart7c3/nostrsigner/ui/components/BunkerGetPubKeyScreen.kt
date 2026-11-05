@@ -12,16 +12,17 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.greenart7c3.nostrsigner.R
-import com.greenart7c3.nostrsigner.models.Permission
+import com.greenart7c3.nostrsigner.commonsui.Permission
+import com.greenart7c3.nostrsigner.commonsui.Res
+import com.greenart7c3.nostrsigner.commonsui.would_like_your_permission_to_read_your_public_key_and_sign_events_on_your_behalf
 import com.greenart7c3.nostrsigner.ui.RememberType
 import com.greenart7c3.nostrsigner.ui.theme.AmberPreview
 import com.greenart7c3.nostrsigner.ui.theme.ThemePreviews
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun BunkerGetPubKeyScreen(
@@ -47,7 +48,7 @@ fun BunkerGetPubKeyScreen(
         )
 
         Text(
-            stringResource(R.string.would_like_your_permission_to_read_your_public_key_and_sign_events_on_your_behalf),
+            stringResource(Res.string.would_like_your_permission_to_read_your_public_key_and_sign_events_on_your_behalf),
         )
 
         Spacer(modifier = Modifier.weight(1f))

@@ -40,32 +40,62 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.greenart7c3.nostrsigner.common.SignerType
+import com.greenart7c3.nostrsigner.commonsui.Permission
+import com.greenart7c3.nostrsigner.commonsui.Res
+import com.greenart7c3.nostrsigner.commonsui.account
+import com.greenart7c3.nostrsigner.commonsui.d_approve
+import com.greenart7c3.nostrsigner.commonsui.d_no_requests_sub
+import com.greenart7c3.nostrsigner.commonsui.d_no_requests_title
+import com.greenart7c3.nostrsigner.commonsui.d_relays_label
+import com.greenart7c3.nostrsigner.commonsui.d_request_approved
+import com.greenart7c3.nostrsigner.commonsui.d_request_rejected
+import com.greenart7c3.nostrsigner.commonsui.d_shortcut_hint
+import com.greenart7c3.nostrsigner.commonsui.d_shortcut_hint_connect
+import com.greenart7c3.nostrsigner.commonsui.d_shortcut_hint_scope
+import com.greenart7c3.nostrsigner.commonsui.d_socket_name_unverified
+import com.greenart7c3.nostrsigner.commonsui.d_via_local_socket
+import com.greenart7c3.nostrsigner.commonsui.d_working
+import com.greenart7c3.nostrsigner.commonsui.encryption_scope
+import com.greenart7c3.nostrsigner.commonsui.for_all_kinds
+import com.greenart7c3.nostrsigner.commonsui.for_all_methods
+import com.greenart7c3.nostrsigner.commonsui.for_this_kind_only
+import com.greenart7c3.nostrsigner.commonsui.for_this_method_only
+import com.greenart7c3.nostrsigner.commonsui.getStringBlocking
+import com.greenart7c3.nostrsigner.commonsui.insecure_relay_warning
+import com.greenart7c3.nostrsigner.commonsui.localizedBlocking
+import com.greenart7c3.nostrsigner.commonsui.nip44_v3_context
+import com.greenart7c3.nostrsigner.commonsui.nip44_v3_kind
+import com.greenart7c3.nostrsigner.commonsui.nip44_v3_no_scope
+import com.greenart7c3.nostrsigner.commonsui.nip44_v3_scope
+import com.greenart7c3.nostrsigner.commonsui.permissions
+import com.greenart7c3.nostrsigner.commonsui.reject
+import com.greenart7c3.nostrsigner.commonsui.replace_app_message
+import com.greenart7c3.nostrsigner.commonsui.see_details
+import com.greenart7c3.nostrsigner.commonsui.switch_account
 import com.greenart7c3.nostrsigner.desktop.core.AccountsStore
 import com.greenart7c3.nostrsigner.desktop.core.AmberDesktop
 import com.greenart7c3.nostrsigner.desktop.core.EncryptionScope
 import com.greenart7c3.nostrsigner.desktop.core.LocalRelays
 import com.greenart7c3.nostrsigner.desktop.core.PendingBunkerRequest
 import com.greenart7c3.nostrsigner.desktop.core.RememberType
-import com.greenart7c3.nostrsigner.desktop.core.SignerDescriptions
-import com.greenart7c3.nostrsigner.desktop.core.Strings
 import com.greenart7c3.nostrsigner.desktop.core.connectionToReplace
 import com.greenart7c3.nostrsigner.desktop.core.contentScopedSignerTypes
 import com.greenart7c3.nostrsigner.desktop.core.describe
 import com.greenart7c3.nostrsigner.desktop.core.nip44v3SignerTypes
 import com.greenart7c3.nostrsigner.desktop.core.toShortenHex
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun IncomingRequestsScreen() {
     val pending by AmberDesktop.engine.pending.collectAsState()
-    val language by Strings.currentLanguage.collectAsState()
 
     if (pending.isEmpty()) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(Strings.get("d_no_requests_title", language), style = MaterialTheme.typography.titleMedium)
+                Text(stringResource(Res.string.d_no_requests_title), style = MaterialTheme.typography.titleMedium)
                 Spacer(Modifier.height(8.dp))
                 Text(
-                    Strings.get("d_no_requests_sub", language),
+                    stringResource(Res.string.d_no_requests_sub),
                     style = MaterialTheme.typography.bodyMedium,
                 )
             }
@@ -112,7 +142,6 @@ private fun RequestCard(
 ) {
     val rememberChoices by UiState.rememberChoices.collectAsState()
     val rememberType = rememberChoices[req.queueKey] ?: RememberType.NEVER
-    val language by Strings.currentLanguage.collectAsState()
     var working by remember { mutableStateOf(false) }
     val connectChoices by UiState.connectChoices.collectAsState()
     val connectChoice = connectChoices[req.queueKey] ?: UiState.connectChoiceFor(req)
@@ -131,19 +160,19 @@ private fun RequestCard(
                 Text(req.appUrl, style = MaterialTheme.typography.bodySmall)
             }
             if (req.isLocalSocket) {
-                Text(Strings.get("d_via_local_socket", language), style = MaterialTheme.typography.bodySmall)
+                Text(stringResource(Res.string.d_via_local_socket), style = MaterialTheme.typography.bodySmall)
                 // A socket tool names itself in its hello: any local process can
                 // claim a trusted tool's name, so say so before it is approved.
                 if (req.type == SignerType.CONNECT) {
                     Text(
-                        Strings.get("d_socket_name_unverified", language),
+                        stringResource(Res.string.d_socket_name_unverified),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.error,
                     )
                 }
             }
             Spacer(Modifier.height(4.dp))
-            Text(req.type.describe(req.kind, req.encryptedContent, language), style = MaterialTheme.typography.bodyLarge)
+            Text(req.type.describe(req.kind, req.encryptedContent), style = MaterialTheme.typography.bodyLarge)
             Spacer(Modifier.height(4.dp))
             // The account that signs this request; a connect can be moved to
             // another account, like the Android connect screen's picker.
@@ -157,7 +186,7 @@ private fun RequestCard(
             if (details != null) {
                 // Mirrors the Android BunkerRequestCard: what the event says (or
                 // the text being encrypted/decrypted), the rest behind "See details".
-                val summary = details.summary(language)
+                val summary = details.summary()
                 if (summary.isNotBlank()) {
                     Spacer(Modifier.height(8.dp))
                     Text(
@@ -169,7 +198,7 @@ private fun RequestCard(
                     )
                 }
                 AmberTextButton(
-                    text = "${Strings.get("see_details", language)} (D)",
+                    text = "${stringResource(Res.string.see_details)} (D)",
                     onClick = { UiState.detailsRequestId.value = req.queueKey },
                 )
                 val detailsId by UiState.detailsRequestId.collectAsState()
@@ -200,10 +229,9 @@ private fun RequestCard(
                 if (replaced != null) {
                     Spacer(Modifier.height(8.dp))
                     Text(
-                        Strings.format(
-                            "replace_app_message",
+                        stringResource(
+                            Res.string.replace_app_message,
                             replaced.app.name.ifBlank { replaced.app.key.toShortenHex() },
-                            language = language,
                         ),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.error,
@@ -216,12 +244,12 @@ private fun RequestCard(
                 if (!req.isLocalSocket && req.relays.isNotEmpty()) {
                     Spacer(Modifier.height(8.dp))
                     Text(
-                        Strings.format("d_relays_label", req.relays.joinToString { it.url }, language = language),
+                        stringResource(Res.string.d_relays_label, req.relays.joinToString { it.url }),
                         style = MaterialTheme.typography.bodySmall,
                     )
                     if (req.relays.any { LocalRelays.isInsecure(it.url) }) {
                         Text(
-                            Strings.get("insecure_relay_warning", language),
+                            stringResource(Res.string.insecure_relay_warning),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.error,
                             modifier = Modifier.padding(top = 4.dp),
@@ -232,7 +260,7 @@ private fun RequestCard(
                 // policy (requested permissions are only granted one by one
                 // under the manual policy) and when to delete the connection.
                 Spacer(Modifier.height(8.dp))
-                Text(Strings.get("permissions", language), style = MaterialTheme.typography.titleSmall)
+                Text(stringResource(Res.string.permissions), style = MaterialTheme.typography.titleSmall)
                 SignPolicySelector(connectChoice.signPolicy) {
                     UiState.setConnectChoice(req.queueKey, connectChoice.copy(signPolicy = it))
                 }
@@ -249,7 +277,7 @@ private fun RequestCard(
                                     },
                                 )
                                 Text(
-                                    SignerDescriptions.permission(perm.type, perm.kind, language),
+                                    Permission(perm.type, perm.kind).localizedBlocking(),
                                     style = MaterialTheme.typography.bodyMedium,
                                 )
                             }
@@ -268,11 +296,11 @@ private fun RequestCard(
                 // Mirrors Android's Nip44v3ContextBox: the kind + scope the
                 // ciphertext is bound to, i.e. what is being granted.
                 Spacer(Modifier.height(4.dp))
-                Text(Strings.get("nip44_v3_context", language), style = MaterialTheme.typography.labelMedium)
-                val kindLabel = req.kind?.let { "$it (${SignerDescriptions.signEventDescription(it, language)})" } ?: "-"
-                Text(Strings.format("nip44_v3_kind", kindLabel, language = language), style = MaterialTheme.typography.bodySmall)
+                Text(stringResource(Res.string.nip44_v3_context), style = MaterialTheme.typography.labelMedium)
+                val kindLabel = req.kind?.let { "$it (${Permission("sign_event", it).localizedBlocking()})" } ?: "-"
+                Text(stringResource(Res.string.nip44_v3_kind, kindLabel), style = MaterialTheme.typography.bodySmall)
                 Text(
-                    Strings.format("nip44_v3_scope", req.nip44v3Scope.ifEmpty { Strings.get("nip44_v3_no_scope", language) }, language = language),
+                    stringResource(Res.string.nip44_v3_scope, req.nip44v3Scope.ifEmpty { stringResource(Res.string.nip44_v3_no_scope) }),
                     style = MaterialTheme.typography.bodySmall,
                 )
             }
@@ -281,18 +309,18 @@ private fun RequestCard(
                 // this content type or the whole NIP; NIP-44 v3 this kind or all.
                 val scopeChoices by UiState.scopeChoices.collectAsState()
                 val scope = scopeChoices[req.queueKey] ?: UiState.defaultScope(req)
-                Text(Strings.get("encryption_scope", language), style = MaterialTheme.typography.labelMedium)
+                Text(stringResource(Res.string.encryption_scope), style = MaterialTheme.typography.labelMedium)
                 val options = if (isV3) {
-                    listOf(EncryptionScope.SPECIFIC to "for_this_kind_only", EncryptionScope.ALL to "for_all_kinds")
+                    listOf(EncryptionScope.SPECIFIC to Res.string.for_this_kind_only, EncryptionScope.ALL to Res.string.for_all_kinds)
                 } else {
-                    listOf(EncryptionScope.SPECIFIC to "for_this_method_only", EncryptionScope.ALL to "for_all_methods")
+                    listOf(EncryptionScope.SPECIFIC to Res.string.for_this_method_only, EncryptionScope.ALL to Res.string.for_all_methods)
                 }
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     options.forEach { (value, key) ->
                         FilterChip(
                             selected = scope == value,
                             onClick = { UiState.setScopeChoice(req.queueKey, value) },
-                            label = { Text(Strings.get(key, language)) },
+                            label = { Text(stringResource(key)) },
                         )
                     }
                 }
@@ -309,7 +337,7 @@ private fun RequestCard(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 AmberButton(
-                    text = if (working) Strings.get("d_working", language) else Strings.get("d_approve", language),
+                    text = if (working) stringResource(Res.string.d_working) else stringResource(Res.string.d_approve),
                     enabled = !working,
                     onClick = {
                         working = true
@@ -317,26 +345,26 @@ private fun RequestCard(
                         // survives this card leaving composition and still
                         // publishes the relay response. Toast optimistically.
                         UiState.approve(req)
-                        Toaster.toast(Strings.get("d_request_approved", language))
+                        Toaster.toast(getStringBlocking(Res.string.d_request_approved))
                     },
                 )
                 AmberOutlinedButton(
-                    text = Strings.get("reject", language),
+                    text = stringResource(Res.string.reject),
                     onClick = {
                         working = true
                         UiState.reject(req)
-                        Toaster.toast(Strings.get("d_request_rejected", language))
+                        Toaster.toast(getStringBlocking(Res.string.d_request_rejected))
                     },
                 )
                 if (!compact) {
                     Spacer(Modifier.weight(1f))
-                    ShortcutHint(req, language)
+                    ShortcutHint(req)
                 }
             }
             // Too narrow to share the row with the buttons: hint underneath.
             if (compact) {
                 Spacer(Modifier.height(6.dp))
-                ShortcutHint(req, language)
+                ShortcutHint(req)
             }
         }
     }
@@ -346,18 +374,16 @@ private fun RequestCard(
 @Composable
 private fun ShortcutHint(
     req: PendingBunkerRequest,
-    language: String,
 ) {
     Text(
-        Strings.format(
+        stringResource(
             when (req.type) {
-                SignerType.CONNECT -> "d_shortcut_hint_connect"
-                in contentScopedSignerTypes, in nip44v3SignerTypes -> "d_shortcut_hint_scope"
-                else -> "d_shortcut_hint"
+                SignerType.CONNECT -> Res.string.d_shortcut_hint_connect
+                in contentScopedSignerTypes, in nip44v3SignerTypes -> Res.string.d_shortcut_hint_scope
+                else -> Res.string.d_shortcut_hint
             },
             shortcutLabel("↵"),
             shortcutLabel("↵", shift = true),
-            language = language,
         ),
         style = MaterialTheme.typography.labelSmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -374,7 +400,6 @@ private fun SigningAccountRow(
     canSwitch: Boolean,
     onSelect: (String) -> Unit,
 ) {
-    val language by Strings.currentLanguage.collectAsState()
     val accounts by AccountsStore.accounts.collectAsState()
     var expanded by remember { mutableStateOf(false) }
     val switchable = canSwitch && accounts.size > 1
@@ -386,7 +411,7 @@ private fun SigningAccountRow(
 
     Row(verticalAlignment = Alignment.CenterVertically) {
         Text(
-            "${Strings.get("account", language)}:",
+            "${stringResource(Res.string.account)}:",
             style = MaterialTheme.typography.bodyMedium,
         )
         Spacer(Modifier.width(6.dp))
@@ -400,7 +425,7 @@ private fun SigningAccountRow(
             Spacer(Modifier.width(8.dp))
             Box {
                 AmberTextButton(
-                    text = "${Strings.get("switch_account", language)} (A)",
+                    text = "${stringResource(Res.string.switch_account)} (A)",
                     onClick = { expanded = true },
                 )
                 DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {

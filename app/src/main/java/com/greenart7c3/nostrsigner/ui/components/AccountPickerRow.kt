@@ -34,14 +34,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.greenart7c3.nostrsigner.LocalPreferences
-import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.commonsui.Res
+import com.greenart7c3.nostrsigner.commonsui.select_account
+import com.greenart7c3.nostrsigner.commonsui.switch_account
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.theme.amoledBorder
@@ -49,6 +50,7 @@ import com.greenart7c3.nostrsigner.ui.theme.isAmberDarkTheme
 import com.greenart7c3.nostrsigner.ui.theme.outlineIfAny
 import com.greenart7c3.nostrsigner.ui.theme.primaryVariant
 import com.greenart7c3.nostrsigner.ui.verticalScrollbar
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Single tappable account row with avatar + name + Switch pill.
@@ -125,7 +127,7 @@ fun AccountPickerRow(
                 )
                 Spacer(Modifier.width(6.dp))
                 Text(
-                    text = stringResource(R.string.switch_account),
+                    text = stringResource(Res.string.switch_account),
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Medium,
                     color = pillContent,
@@ -141,7 +143,7 @@ fun AccountPickerRow(
             onDismissRequest = { sheetOpen = false },
         ) {
             Text(
-                text = stringResource(R.string.select_account),
+                text = stringResource(Res.string.select_account),
                 fontWeight = FontWeight.Medium,
                 fontSize = 15.sp,
                 modifier = Modifier.padding(start = 16.dp, top = 8.dp, bottom = 8.dp),

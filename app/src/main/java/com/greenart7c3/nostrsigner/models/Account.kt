@@ -9,9 +9,11 @@ import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.DataStoreAccess
 import com.greenart7c3.nostrsigner.LocalPreferences
-import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.common.nip44v3.Nip44v3
 import com.greenart7c3.nostrsigner.common.psbt.PsbtSighashPolicy
+import com.greenart7c3.nostrsigner.commonsui.Res
+import com.greenart7c3.nostrsigner.commonsui.getStringBlocking
+import com.greenart7c3.nostrsigner.commonsui.secret_key_copied_to_clipboard
 import com.greenart7c3.nostrsigner.service.DeviceUnlockPolicy
 import com.greenart7c3.nostrsigner.ui.setSensitiveClip
 import com.vitorpamplona.quartz.nip01Core.core.Event
@@ -216,7 +218,7 @@ class Account(
 
                 Toast.makeText(
                     Amber.instance,
-                    Amber.instance.getString(R.string.secret_key_copied_to_clipboard),
+                    getStringBlocking(Res.string.secret_key_copied_to_clipboard),
                     Toast.LENGTH_SHORT,
                 ).show()
             }

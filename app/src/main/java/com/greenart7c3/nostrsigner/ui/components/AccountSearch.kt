@@ -17,7 +17,6 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
@@ -25,11 +24,15 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.commonsui.Res
+import com.greenart7c3.nostrsigner.commonsui.clear_search
+import com.greenart7c3.nostrsigner.commonsui.no_accounts_found
+import com.greenart7c3.nostrsigner.commonsui.search_accounts
 import com.greenart7c3.nostrsigner.models.Account
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Whether an account with [npub] and display [name] matches the account search [query]. The
@@ -70,12 +73,12 @@ fun AccountSearchField(
         value = query,
         onValueChange = onQueryChange,
         modifier = modifier.fillMaxWidth(),
-        placeholder = { Text(stringResource(R.string.search_accounts)) },
+        placeholder = { Text(stringResource(Res.string.search_accounts)) },
         leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
         trailingIcon = if (query.isNotEmpty()) {
             {
                 IconButton(onClick = { onQueryChange("") }) {
-                    Icon(Icons.Default.Clear, contentDescription = stringResource(R.string.clear_search))
+                    Icon(Icons.Default.Clear, contentDescription = stringResource(Res.string.clear_search))
                 }
             }
         } else {
@@ -95,7 +98,7 @@ fun AccountSearchField(
 @Composable
 fun NoAccountsFound(modifier: Modifier = Modifier) {
     Text(
-        text = stringResource(R.string.no_accounts_found),
+        text = stringResource(Res.string.no_accounts_found),
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         modifier = modifier
             .fillMaxWidth()

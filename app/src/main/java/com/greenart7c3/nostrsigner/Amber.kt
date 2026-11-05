@@ -33,6 +33,10 @@ import coil3.request.ImageRequest
 import coil3.request.SuccessResult
 import coil3.request.crossfade
 import com.greenart7c3.nostrsigner.common.relays.RelayHealthTracker
+import com.greenart7c3.nostrsigner.commonsui.Res
+import com.greenart7c3.nostrsigner.commonsui.getStringBlocking
+import com.greenart7c3.nostrsigner.commonsui.network_permission_message
+import com.greenart7c3.nostrsigner.commonsui.warning
 import com.greenart7c3.nostrsigner.database.AppDatabase
 import com.greenart7c3.nostrsigner.database.ApplicationDao
 import com.greenart7c3.nostrsigner.database.CachingApplicationDao
@@ -262,9 +266,9 @@ class Amber :
             return true
         } catch (e: Exception) {
             if (e.message?.contains("EACCES (Permission denied)") == true) {
-                ToastManager.toast(getString(R.string.warning), getString(R.string.network_permission_message))
+                ToastManager.toast(getStringBlocking(Res.string.warning), getStringBlocking(Res.string.network_permission_message))
             } else if (e.message?.contains("socket failed: EPERM (Operation not permitted)") == true) {
-                ToastManager.toast(getString(R.string.warning), getString(R.string.network_permission_message))
+                ToastManager.toast(getStringBlocking(Res.string.warning), getStringBlocking(Res.string.network_permission_message))
             }
             AmberLog.e(TAG, "Failed to connect to proxy", e)
             return false
@@ -405,6 +409,9 @@ class Amber :
         LocalPreferences.presetProxyFromPrefs(this)
         settings = LocalPreferences.loadSettingsAtStartup(this)
         isSettingsLoaded = true
+        // Before any string is read: notification channels below, and background work
+        // that builds notifications before an activity has applied the language.
+        settings.language?.let { AppLanguage.apply(it) }
         stats.createNotificationChannel()
         Thread.setDefaultUncaughtExceptionHandler(UnexpectedCrashSaver(crashReportCache, applicationIOScope))
 
@@ -415,11 +422,11 @@ class Amber :
             SingletonImageLoader.get(this@Amber)
         }
 
-        // The first ZoneId.systemDefault() call lazily mmaps tzdata from disk.
+        // The first time zone lookup lazily mmaps tzdata from disk.
         // Force it here so it never happens on the main thread during the first
         // timestamp formatted in composition (StrictMode DiskReadViolation).
         applicationIOScope.launch {
-            AmberTimeUtils.warmUp()
+            AmberTimeUtils.warmUp(this@Amber)
         }
     }
 

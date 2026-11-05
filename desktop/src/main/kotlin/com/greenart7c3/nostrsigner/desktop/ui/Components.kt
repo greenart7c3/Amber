@@ -31,7 +31,6 @@ import androidx.compose.material3.TabRowDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -55,14 +54,24 @@ import androidx.compose.ui.unit.dp
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.EncodeHintType
 import com.google.zxing.qrcode.QRCodeWriter
+import com.greenart7c3.nostrsigner.commonsui.Res
+import com.greenart7c3.nostrsigner.commonsui.d_qr_code
+import com.greenart7c3.nostrsigner.commonsui.d_remember_prefix
+import com.greenart7c3.nostrsigner.commonsui.delete_after
+import com.greenart7c3.nostrsigner.commonsui.sign_policy_basic
+import com.greenart7c3.nostrsigner.commonsui.sign_policy_basic_explainer
+import com.greenart7c3.nostrsigner.commonsui.sign_policy_fully
+import com.greenart7c3.nostrsigner.commonsui.sign_policy_fully_explainer
+import com.greenart7c3.nostrsigner.commonsui.sign_policy_manual_new_app
+import com.greenart7c3.nostrsigner.commonsui.sign_policy_manual_new_app_explainer
 import com.greenart7c3.nostrsigner.desktop.core.DeleteAfterType
 import com.greenart7c3.nostrsigner.desktop.core.RememberType
-import com.greenart7c3.nostrsigner.desktop.core.Strings
 import com.greenart7c3.nostrsigner.desktop.core.rememberTypeDisplayOrder
 import java.awt.datatransfer.StringSelection
 import java.awt.image.BufferedImage
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.skia.Image as SkiaImage
 
 /**
@@ -210,12 +219,11 @@ fun RememberTypeSelector(
     onValueChange: (RememberType) -> Unit,
 ) {
     var expanded by remember { mutableStateOf(false) }
-    val language by Strings.currentLanguage.collectAsState()
     OutlinedButton(
         onClick = { expanded = true },
         shape = ButtonBorder,
     ) {
-        Text(Strings.format("d_remember_prefix", value.label(language), language = language), style = MaterialTheme.typography.bodySmall)
+        Text(stringResource(Res.string.d_remember_prefix, value.label()), style = MaterialTheme.typography.bodySmall)
     }
     DropdownMenu(
         expanded = expanded,
@@ -223,7 +231,7 @@ fun RememberTypeSelector(
     ) {
         rememberTypeDisplayOrder.forEach { type ->
             DropdownMenuItem(
-                text = { Text(type.label(language)) },
+                text = { Text(type.label()) },
                 onClick = {
                     onValueChange(type)
                     expanded = false
@@ -257,7 +265,7 @@ fun QrCodeImage(
     }
     Image(
         bitmap = image,
-        contentDescription = Strings.get("d_qr_code"),
+        contentDescription = stringResource(Res.string.d_qr_code),
         modifier = modifier.size(size),
     )
 }
@@ -291,12 +299,11 @@ fun SignPolicySelector(
     selected: Int,
     onSelect: (Int) -> Unit,
 ) {
-    val language by Strings.currentLanguage.collectAsState()
     Column(Modifier.selectableGroup()) {
         listOf(
-            Triple(0, "sign_policy_basic", "sign_policy_basic_explainer"),
-            Triple(1, "sign_policy_manual_new_app", "sign_policy_manual_new_app_explainer"),
-            Triple(2, "sign_policy_fully", "sign_policy_fully_explainer"),
+            Triple(0, Res.string.sign_policy_basic, Res.string.sign_policy_basic_explainer),
+            Triple(1, Res.string.sign_policy_manual_new_app, Res.string.sign_policy_manual_new_app_explainer),
+            Triple(2, Res.string.sign_policy_fully, Res.string.sign_policy_fully_explainer),
         ).forEach { (value, titleKey, explainerKey) ->
             Row(
                 Modifier
@@ -308,9 +315,9 @@ fun SignPolicySelector(
                 RadioButton(selected = selected == value, onClick = null)
                 Spacer(Modifier.width(8.dp))
                 Column {
-                    Text(Strings.get(titleKey, language), style = MaterialTheme.typography.bodyMedium)
+                    Text(stringResource(titleKey), style = MaterialTheme.typography.bodyMedium)
                     Text(
-                        Strings.get(explainerKey, language),
+                        stringResource(explainerKey),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -326,10 +333,9 @@ fun DeleteAfterSelector(
     selected: DeleteAfterType,
     onSelect: (DeleteAfterType) -> Unit,
 ) {
-    val language by Strings.currentLanguage.collectAsState()
     Column {
         Text(
-            Strings.get("delete_after", language),
+            stringResource(Res.string.delete_after),
             style = MaterialTheme.typography.titleSmall,
         )
         FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -337,7 +343,7 @@ fun DeleteAfterSelector(
                 FilterChip(
                     selected = selected == type,
                     onClick = { onSelect(type) },
-                    label = { Text(type.label(language)) },
+                    label = { Text(type.label()) },
                 )
             }
         }

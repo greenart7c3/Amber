@@ -1,6 +1,5 @@
 package com.greenart7c3.nostrsigner.ui.components
 
-import android.content.Context
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
@@ -18,18 +17,39 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.common.SignerType
+import com.greenart7c3.nostrsigner.commonsui.Permission
+import com.greenart7c3.nostrsigner.commonsui.Res
+import com.greenart7c3.nostrsigner.commonsui.approve
+import com.greenart7c3.nostrsigner.commonsui.connect
+import com.greenart7c3.nostrsigner.commonsui.decrypt_zap_event
+import com.greenart7c3.nostrsigner.commonsui.deny
+import com.greenart7c3.nostrsigner.commonsui.encrypt_this_list_of_tags_with
+import com.greenart7c3.nostrsigner.commonsui.encrypt_this_text_with
+import com.greenart7c3.nostrsigner.commonsui.encrypt_with
+import com.greenart7c3.nostrsigner.commonsui.encryption_scope
+import com.greenart7c3.nostrsigner.commonsui.for_all_kinds
+import com.greenart7c3.nostrsigner.commonsui.for_all_methods
+import com.greenart7c3.nostrsigner.commonsui.for_all_relays
+import com.greenart7c3.nostrsigner.commonsui.for_this_kind_only
+import com.greenart7c3.nostrsigner.commonsui.for_this_method_only
+import com.greenart7c3.nostrsigner.commonsui.for_this_relay_only
+import com.greenart7c3.nostrsigner.commonsui.getStringBlocking
+import com.greenart7c3.nostrsigner.commonsui.localizedBlocking
+import com.greenart7c3.nostrsigner.commonsui.read_from_encrypted_content
+import com.greenart7c3.nostrsigner.commonsui.read_this_list_of_tags_from_encrypted_content
+import com.greenart7c3.nostrsigner.commonsui.read_this_text_from_encrypted_content
+import com.greenart7c3.nostrsigner.commonsui.relay_auth_scope
+import com.greenart7c3.nostrsigner.commonsui.remember_my_choice_for
 import com.greenart7c3.nostrsigner.models.ClearTextEncryptedDataKind
 import com.greenart7c3.nostrsigner.models.EncryptedDataKind
 import com.greenart7c3.nostrsigner.models.EventEncryptedDataKind
-import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.models.PrivateZapEncryptedDataKind
 import com.greenart7c3.nostrsigner.models.TagArrayEncryptedDataKind
 import com.greenart7c3.nostrsigner.models.encryptDecryptSignerTypes
 import com.greenart7c3.nostrsigner.ui.RememberType
+import org.jetbrains.compose.resources.stringResource
 
 enum class RequestPayloadShape {
     EVENT,
@@ -74,40 +94,40 @@ fun <T> groupRequests(
         ),
     )
 
-fun RequestGroupKey.toLabel(context: Context): String {
+fun RequestGroupKey.toLabel(): String {
     val isEncrypt = type.name.contains("ENCRYPT")
     val nip = type.name.split("_").first()
     return when {
-        type == SignerType.CONNECT -> context.getString(R.string.connect)
-        type == SignerType.SIGN_EVENT -> Permission("sign_event", kind).toLocalizedString(context)
+        type == SignerType.CONNECT -> getStringBlocking(Res.string.connect)
+        type == SignerType.SIGN_EVENT -> Permission("sign_event", kind).localizedBlocking()
         payload == RequestPayloadShape.EVENT -> {
-            val kindLabel = Permission("sign_event", kind).toLocalizedString(context)
+            val kindLabel = Permission("sign_event", kind).localizedBlocking()
             if (isEncrypt) {
-                context.getString(R.string.encrypt_with, kindLabel, nip)
+                getStringBlocking(Res.string.encrypt_with, kindLabel, nip)
             } else {
-                context.getString(R.string.read_from_encrypted_content, kindLabel, nip)
+                getStringBlocking(Res.string.read_from_encrypted_content, kindLabel, nip)
             }
         }
         payload == RequestPayloadShape.TAG_ARRAY -> if (isEncrypt) {
-            context.getString(R.string.encrypt_this_list_of_tags_with, nip)
+            getStringBlocking(Res.string.encrypt_this_list_of_tags_with, nip)
         } else {
-            context.getString(R.string.read_this_list_of_tags_from_encrypted_content, nip)
+            getStringBlocking(Res.string.read_this_list_of_tags_from_encrypted_content, nip)
         }
         payload == RequestPayloadShape.CLEAR_TEXT -> if (isEncrypt) {
-            context.getString(R.string.encrypt_this_text_with, nip)
+            getStringBlocking(Res.string.encrypt_this_text_with, nip)
         } else {
-            context.getString(R.string.read_this_text_from_encrypted_content, nip)
+            getStringBlocking(Res.string.read_this_text_from_encrypted_content, nip)
         }
-        payload == RequestPayloadShape.PRIVATE_ZAP -> context.getString(R.string.decrypt_zap_event).replaceFirstChar { it.uppercase() }
+        payload == RequestPayloadShape.PRIVATE_ZAP -> getStringBlocking(Res.string.decrypt_zap_event).replaceFirstChar { it.uppercase() }
         (type == SignerType.NIP44_V3_ENCRYPT || type == SignerType.NIP44_V3_DECRYPT) && kind != null -> {
-            val kindLabel = Permission("sign_event", kind).toLocalizedString(context)
+            val kindLabel = Permission("sign_event", kind).localizedBlocking()
             if (isEncrypt) {
-                context.getString(R.string.encrypt_with, kindLabel, nip)
+                getStringBlocking(Res.string.encrypt_with, kindLabel, nip)
             } else {
-                context.getString(R.string.read_from_encrypted_content, kindLabel, nip)
+                getStringBlocking(Res.string.read_from_encrypted_content, kindLabel, nip)
             }
         }
-        else -> Permission(type.name.lowercase(), null).toLocalizedString(context)
+        else -> Permission(type.name.lowercase(), null).localizedBlocking()
     }
 }
 
@@ -154,7 +174,7 @@ fun RequestGroupOptions(
         when (groupKey.scopeKind()) {
             RequestGroupScopeKind.RELAY_AUTH -> {
                 LabeledBorderBox(
-                    label = stringResource(R.string.relay_auth_scope),
+                    label = stringResource(Res.string.relay_auth_scope),
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(bottom = 8.dp),
@@ -166,8 +186,8 @@ fun RequestGroupOptions(
                         label = {
                             stringResource(
                                 when (it) {
-                                    RelayAuthScope.SPECIFIC -> R.string.for_this_relay_only
-                                    RelayAuthScope.ALL -> R.string.for_all_relays
+                                    RelayAuthScope.SPECIFIC -> Res.string.for_this_relay_only
+                                    RelayAuthScope.ALL -> Res.string.for_all_relays
                                 },
                             )
                         },
@@ -176,7 +196,7 @@ fun RequestGroupOptions(
             }
             RequestGroupScopeKind.ENCRYPTION_METHOD -> {
                 LabeledBorderBox(
-                    label = stringResource(R.string.encryption_scope),
+                    label = stringResource(Res.string.encryption_scope),
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(bottom = 8.dp),
@@ -188,8 +208,8 @@ fun RequestGroupOptions(
                         label = {
                             stringResource(
                                 when (it) {
-                                    DecryptTypeScope.SPECIFIC -> R.string.for_this_method_only
-                                    DecryptTypeScope.ALL -> R.string.for_all_methods
+                                    DecryptTypeScope.SPECIFIC -> Res.string.for_this_method_only
+                                    DecryptTypeScope.ALL -> Res.string.for_all_methods
                                 },
                             )
                         },
@@ -199,7 +219,7 @@ fun RequestGroupOptions(
             RequestGroupScopeKind.NIP44_V3_KIND -> {
                 if (groupKey.kind != null) {
                     LabeledBorderBox(
-                        label = stringResource(R.string.encryption_scope),
+                        label = stringResource(Res.string.encryption_scope),
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(bottom = 8.dp),
@@ -211,8 +231,8 @@ fun RequestGroupOptions(
                             label = {
                                 stringResource(
                                     when (it) {
-                                        DecryptTypeScope.SPECIFIC -> R.string.for_this_kind_only
-                                        DecryptTypeScope.ALL -> R.string.for_all_kinds
+                                        DecryptTypeScope.SPECIFIC -> Res.string.for_this_kind_only
+                                        DecryptTypeScope.ALL -> Res.string.for_all_kinds
                                     },
                                 )
                             },
@@ -226,7 +246,7 @@ fun RequestGroupOptions(
         RememberMyChoiceToggles(
             selected = rememberType,
             onSelected = onRememberTypeChanged,
-            label = stringResource(R.string.remember_my_choice_for),
+            label = stringResource(Res.string.remember_my_choice_for),
         )
     }
 }
@@ -272,7 +292,7 @@ fun RequestGroupHeader(
             options = listOf(true, false),
             onSelected = onApproveChanged,
             label = {
-                if (it) stringResource(R.string.approve) else stringResource(R.string.deny)
+                if (it) stringResource(Res.string.approve) else stringResource(Res.string.deny)
             },
             indicatorColor = {
                 if (it) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error

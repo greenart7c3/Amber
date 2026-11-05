@@ -12,14 +12,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
 import com.greenart7c3.nostrsigner.AccountInfo
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.LocalPreferences
-import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.commonsui.Res
+import com.greenart7c3.nostrsigner.commonsui.logout
 import com.greenart7c3.nostrsigner.ui.AccountStateViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun LogoutButton(
@@ -57,7 +58,7 @@ fun LogoutButton(
     ) {
         Icon(
             imageVector = Icons.AutoMirrored.Default.Logout,
-            contentDescription = stringResource(R.string.logout),
+            contentDescription = stringResource(Res.string.logout),
             tint = MaterialTheme.colorScheme.onSurface,
         )
     }

@@ -18,7 +18,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -28,11 +27,27 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.greenart7c3.nostrsigner.commonsui.Res
+import com.greenart7c3.nostrsigner.commonsui.add
+import com.greenart7c3.nostrsigner.commonsui.could_not_connect_to_relay
+import com.greenart7c3.nostrsigner.commonsui.d_invalid_relay
+import com.greenart7c3.nostrsigner.commonsui.d_local_relay
+import com.greenart7c3.nostrsigner.commonsui.d_relay_hint
+import com.greenart7c3.nostrsigner.commonsui.d_remove_relay
+import com.greenart7c3.nostrsigner.commonsui.d_working
+import com.greenart7c3.nostrsigner.commonsui.getStringBlocking
+import com.greenart7c3.nostrsigner.commonsui.insecure_relay_warning
+import com.greenart7c3.nostrsigner.commonsui.no
+import com.greenart7c3.nostrsigner.commonsui.no_relays_added
+import com.greenart7c3.nostrsigner.commonsui.relay
+import com.greenart7c3.nostrsigner.commonsui.relay_filter_failed
+import com.greenart7c3.nostrsigner.commonsui.yes
 import com.greenart7c3.nostrsigner.desktop.core.LocalRelays
 import com.greenart7c3.nostrsigner.desktop.core.RelayChecker
-import com.greenart7c3.nostrsigner.desktop.core.Strings
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Editable list of a connection's relays, mirroring the Android relay
@@ -51,12 +66,11 @@ fun RelayListEditor(
     modifier: Modifier = Modifier,
     editable: Boolean = true,
 ) {
-    val language by Strings.currentLanguage.collectAsState()
     var newRelay by remember { mutableStateOf("") }
     var checking by remember { mutableStateOf(false) }
     // Non-null while asking "the check failed — add anyway?"; holds the relay
     // and the message key (could_not_connect_to_relay / relay_filter_failed).
-    var addAnyway by remember { mutableStateOf<Pair<NormalizedRelayUrl, String>?>(null) }
+    var addAnyway by remember { mutableStateOf<Pair<NormalizedRelayUrl, StringResource>?>(null) }
     val scope = rememberCoroutineScope()
 
     fun addRelay(relay: NormalizedRelayUrl) {
@@ -67,11 +81,11 @@ fun RelayListEditor(
     addAnyway?.let { (relay, messageKey) ->
         AlertDialog(
             onDismissRequest = { addAnyway = null },
-            title = { Text(Strings.get("relay", language)) },
-            text = { Text(Strings.get(messageKey, language)) },
+            title = { Text(stringResource(Res.string.relay)) },
+            text = { Text(stringResource(messageKey)) },
             confirmButton = {
                 AmberTextButton(
-                    text = Strings.get("yes", language),
+                    text = stringResource(Res.string.yes),
                     onClick = {
                         addAnyway = null
                         addRelay(relay)
@@ -80,7 +94,7 @@ fun RelayListEditor(
             },
             dismissButton = {
                 AmberTextButton(
-                    text = Strings.get("no", language),
+                    text = stringResource(Res.string.no),
                     onClick = { addAnyway = null },
                 )
             },
@@ -93,18 +107,18 @@ fun RelayListEditor(
                 OutlinedTextField(
                     value = newRelay,
                     onValueChange = { newRelay = it },
-                    label = { Text(Strings.get("d_relay_hint", language)) },
+                    label = { Text(stringResource(Res.string.d_relay_hint)) },
                     singleLine = true,
                     enabled = !checking,
                     modifier = Modifier.weight(1f),
                 )
                 AmberOutlinedButton(
-                    text = if (checking) Strings.get("d_working", language) else Strings.get("add", language),
+                    text = if (checking) stringResource(Res.string.d_working) else stringResource(Res.string.add),
                     enabled = !checking,
                     onClick = {
                         val normalized = RelayChecker.normalizeUserInput(newRelay)
                         if (normalized == null) {
-                            Toaster.toast(Strings.get("d_invalid_relay", language))
+                            Toaster.toast(getStringBlocking(Res.string.d_invalid_relay))
                             return@AmberOutlinedButton
                         }
                         if (relays.contains(normalized.url)) {
@@ -116,8 +130,8 @@ fun RelayListEditor(
                             try {
                                 when (RelayChecker.check(normalized)) {
                                     RelayChecker.Outcome.OK -> addRelay(normalized)
-                                    RelayChecker.Outcome.CANNOT_CONNECT -> addAnyway = normalized to "could_not_connect_to_relay"
-                                    RelayChecker.Outcome.FILTER_FAILED -> addAnyway = normalized to "relay_filter_failed"
+                                    RelayChecker.Outcome.CANNOT_CONNECT -> addAnyway = normalized to Res.string.could_not_connect_to_relay
+                                    RelayChecker.Outcome.FILTER_FAILED -> addAnyway = normalized to Res.string.relay_filter_failed
                                 }
                             } finally {
                                 checking = false
@@ -128,7 +142,7 @@ fun RelayListEditor(
             }
             if (LocalRelays.isInsecure(newRelay)) {
                 Text(
-                    Strings.get("insecure_relay_warning", language),
+                    stringResource(Res.string.insecure_relay_warning),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.error,
                     modifier = Modifier.padding(top = 4.dp),
@@ -139,7 +153,7 @@ fun RelayListEditor(
 
         if (relays.isEmpty()) {
             Text(
-                Strings.get("no_relays_added", language),
+                stringResource(Res.string.no_relays_added),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(vertical = 8.dp),
@@ -160,7 +174,7 @@ fun RelayListEditor(
                 )
                 if (LocalRelays.isLocal(relay)) {
                     Text(
-                        Strings.get("d_local_relay", language),
+                        stringResource(Res.string.d_local_relay),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -168,7 +182,7 @@ fun RelayListEditor(
                 }
                 if (editable) {
                     IconButton(onClick = { onChange(relays.filter { it != relay }) }) {
-                        Icon(Icons.Default.Delete, Strings.get("d_remove_relay", language))
+                        Icon(Icons.Default.Delete, stringResource(Res.string.d_remove_relay))
                     }
                 }
             }

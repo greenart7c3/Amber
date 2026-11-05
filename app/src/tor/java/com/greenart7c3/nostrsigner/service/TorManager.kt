@@ -17,6 +17,16 @@ import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.MainActivity
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.common.tor.TorSocksAuthenticator
+import com.greenart7c3.nostrsigner.commonsui.Res
+import com.greenart7c3.nostrsigner.commonsui.builtin_tor_active
+import com.greenart7c3.nostrsigner.commonsui.builtin_tor_title
+import com.greenart7c3.nostrsigner.commonsui.getStringBlocking
+import com.greenart7c3.nostrsigner.commonsui.tor_connecting
+import com.greenart7c3.nostrsigner.commonsui.tor_connection_failed
+import com.greenart7c3.nostrsigner.commonsui.tor_restart
+import com.greenart7c3.nostrsigner.commonsui.tor_retrying
+import com.greenart7c3.nostrsigner.commonsui.tor_starting
+import com.greenart7c3.nostrsigner.commonsui.tor_status_channel_description
 import com.greenart7c3.nostrsigner.okhttp.HttpClientManager
 import com.greenart7c3.nostrsigner.tor.ArtiNative
 import java.io.File
@@ -85,12 +95,12 @@ object TorManager {
     private fun createNotificationChannel() {
         val ctx = appContext ?: return
         val group = NotificationChannelGroupCompat.Builder(TOR_CHANNEL_GROUP_ID)
-            .setName(ctx.getString(R.string.builtin_tor_title))
-            .setDescription(ctx.getString(R.string.tor_status_channel_description))
+            .setName(getStringBlocking(Res.string.builtin_tor_title))
+            .setDescription(getStringBlocking(Res.string.tor_status_channel_description))
             .build()
         val channel = NotificationChannelCompat.Builder(TOR_CHANNEL_ID, NotificationManager.IMPORTANCE_LOW)
-            .setName(ctx.getString(R.string.builtin_tor_title))
-            .setDescription(ctx.getString(R.string.tor_status_channel_description))
+            .setName(getStringBlocking(Res.string.builtin_tor_title))
+            .setDescription(getStringBlocking(Res.string.tor_status_channel_description))
             .setSound(null, null)
             .setGroup(group.id)
             .build()
@@ -102,23 +112,23 @@ object TorManager {
     private fun updateStatus(status: TorStatus) {
         if (_status.value == status) return
         _status.value = status
-        val ctx = appContext ?: return
+        if (appContext == null) return
         when (status) {
             is TorStatus.Stopped -> cancelNotification()
             is TorStatus.Connecting -> {
                 val text = if (status.percentage <= 0) {
-                    ctx.getString(R.string.tor_starting)
+                    getStringBlocking(Res.string.tor_starting)
                 } else {
-                    ctx.getString(R.string.tor_connecting, status.percentage)
+                    getStringBlocking(Res.string.tor_connecting, status.percentage)
                 }
                 showNotification(text, progress = status.percentage)
             }
-            is TorStatus.Connected -> showNotification(ctx.getString(R.string.builtin_tor_active))
+            is TorStatus.Connected -> showNotification(getStringBlocking(Res.string.builtin_tor_active))
             is TorStatus.Failed -> {
                 val text = if (status.message.isNullOrBlank()) {
-                    ctx.getString(R.string.tor_connection_failed)
+                    getStringBlocking(Res.string.tor_connection_failed)
                 } else {
-                    "${ctx.getString(R.string.tor_connection_failed)}: ${status.message}"
+                    "${getStringBlocking(Res.string.tor_connection_failed)}: ${status.message}"
                 }
                 showNotification(text, ongoing = false)
             }
@@ -140,13 +150,13 @@ object TorManager {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         )
         val builder = NotificationCompat.Builder(ctx, TOR_CHANNEL_ID)
-            .setContentTitle(ctx.getString(R.string.builtin_tor_title))
+            .setContentTitle(getStringBlocking(Res.string.builtin_tor_title))
             .setContentText(text)
             .setSmallIcon(R.drawable.ic_tor)
             .setOngoing(ongoing)
             .setOnlyAlertOnce(true)
             .setContentIntent(pendingIntent)
-            .addAction(0, ctx.getString(R.string.tor_restart), restartPendingIntent)
+            .addAction(0, getStringBlocking(Res.string.tor_restart), restartPendingIntent)
         if (progress != null) {
             builder.setProgress(100, progress, progress <= 0)
         }
@@ -158,7 +168,7 @@ object TorManager {
     }
 
     fun showRetrying() {
-        appContext?.let { showNotification(it.getString(R.string.tor_retrying)) }
+        appContext?.let { showNotification(getStringBlocking(Res.string.tor_retrying)) }
     }
 
     /**
@@ -167,7 +177,7 @@ object TorManager {
      * away; the Restart action is the way back to a connection attempt.
      */
     fun showFailed() {
-        appContext?.let { showNotification(it.getString(R.string.tor_connection_failed), ongoing = false) }
+        appContext?.let { showNotification(getStringBlocking(Res.string.tor_connection_failed), ongoing = false) }
     }
 
     fun start(context: Context, scope: CoroutineScope) {

@@ -53,10 +53,13 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.WindowPosition
 import androidx.compose.ui.window.rememberWindowState
+import com.greenart7c3.nostrsigner.commonsui.Res
+import com.greenart7c3.nostrsigner.commonsui.d_approve
+import com.greenart7c3.nostrsigner.commonsui.d_close
+import com.greenart7c3.nostrsigner.commonsui.reject
 import com.greenart7c3.nostrsigner.desktop.core.AmberLogger
 import com.greenart7c3.nostrsigner.desktop.core.BuildVariant
 import com.greenart7c3.nostrsigner.desktop.core.PendingBunkerRequest
-import com.greenart7c3.nostrsigner.desktop.core.Strings
 import com.greenart7c3.nostrsigner.desktop.core.allowsQuickApprove
 import com.sun.jna.Native
 import java.awt.GraphicsEnvironment
@@ -64,6 +67,7 @@ import java.awt.geom.RoundRectangle2D
 import javax.swing.JWindow
 import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.delay
+import org.jetbrains.compose.resources.stringResource
 
 private const val POPUP_TIMEOUT_MS = 60_000L
 
@@ -103,7 +107,6 @@ fun RequestNotificationPopup(
     request: PendingBunkerRequest,
     title: String,
     message: String,
-    language: String,
     onApprove: () -> Unit,
     onReject: () -> Unit,
     onOpen: () -> Unit,
@@ -136,8 +139,8 @@ fun RequestNotificationPopup(
     }
 
     val actions = buildList {
-        if (request.allowsQuickApprove()) add(PopupAction(Strings.get("d_approve", language), onApprove))
-        add(PopupAction(Strings.get("reject", language), onReject))
+        if (request.allowsQuickApprove()) add(PopupAction(stringResource(Res.string.d_approve), onApprove))
+        add(PopupAction(stringResource(Res.string.reject), onReject))
     }
 
     val content: @Composable (Dp) -> Unit = { margin ->
@@ -149,9 +152,9 @@ fun RequestNotificationPopup(
                 enter = fadeIn() + slideInHorizontally { it / 3 },
             ) {
                 if (isMac) {
-                    MacNotification(title, message, actions, dark, hover, onOpen, onDismiss, language)
+                    MacNotification(title, message, actions, dark, hover, onOpen, onDismiss)
                 } else {
-                    WindowsToast(title, message, actions, dark, hover, onOpen, onDismiss, language)
+                    WindowsToast(title, message, actions, dark, hover, onOpen, onDismiss)
                 }
             }
         }
@@ -212,7 +215,6 @@ private fun WindowsToast(
     hover: MutableInteractionSource,
     onOpen: () -> Unit,
     onDismiss: () -> Unit,
-    language: String,
 ) {
     val background = if (dark) Color(0xFF2C2C2C) else Color(0xFFF3F3F3)
     val outline = if (dark) Color(0x1FFFFFFF) else Color(0x14000000)
@@ -236,7 +238,7 @@ private fun WindowsToast(
                 Image(amberIconPainter(), contentDescription = null, modifier = Modifier.size(16.dp))
                 Spacer(Modifier.width(8.dp))
                 Text(BuildVariant.appName, color = secondary, fontSize = 12.sp, modifier = Modifier.weight(1f))
-                CloseGlyph(secondary, Strings.get("d_close", language), Modifier.size(32.dp), onDismiss)
+                CloseGlyph(secondary, stringResource(Res.string.d_close), Modifier.size(32.dp), onDismiss)
             }
             Column(Modifier.padding(horizontal = 16.dp)) {
                 Text(title, color = primary, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
@@ -279,7 +281,6 @@ private fun MacNotification(
     hover: MutableInteractionSource,
     onOpen: () -> Unit,
     onDismiss: () -> Unit,
-    language: String,
 ) {
     val background = if (dark) Color(0xF2323232) else Color(0xF5F6F6F6)
     val outline = if (dark) Color(0x24FFFFFF) else Color(0x1A000000)
@@ -325,7 +326,7 @@ private fun MacNotification(
         if (hovered) {
             CloseGlyph(
                 secondary,
-                Strings.get("d_close", language),
+                stringResource(Res.string.d_close),
                 Modifier
                     .offset((-6).dp, (-6).dp)
                     .size(20.dp)

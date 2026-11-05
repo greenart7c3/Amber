@@ -25,8 +25,9 @@ import androidx.paging.PagingConfig
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.AmberLog
+import com.greenart7c3.nostrsigner.commonsui.localizedBlocking
+import com.greenart7c3.nostrsigner.commonsui.supportedKindNumbers
 import com.greenart7c3.nostrsigner.models.Account
-import com.greenart7c3.nostrsigner.models.supportedKindNumbers
 import com.greenart7c3.nostrsigner.ui.ActivityFilter
 import com.greenart7c3.nostrsigner.ui.ActivityFilterRow
 import com.greenart7c3.nostrsigner.ui.ActivityRow
@@ -65,7 +66,7 @@ fun ActivityScreen(
     val lazyPagingItems = pager.flow.collectAsLazyPagingItems()
 
     val textFieldState by remember { mutableStateOf(TextFieldState(initialText = searchQuery)) }
-    val searchResults = remember(context) { supportedKindNumbers.map { it.toLocalizedString(context, true) } }
+    val searchResults = remember(context) { supportedKindNumbers.map { it.localizedBlocking(true) } }
 
     Column(
         modifier = modifier.padding(top = topPadding),

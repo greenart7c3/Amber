@@ -1,6 +1,5 @@
 package com.greenart7c3.nostrsigner.ui.components
 
-import android.content.Context
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -25,25 +24,39 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalInspectionMode
-import androidx.compose.ui.res.pluralStringResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.capitalize
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.toLowerCase
 import androidx.compose.ui.unit.dp
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.LocalPreferences
-import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.common.EncryptionType
 import com.greenart7c3.nostrsigner.common.SignerType
 import com.greenart7c3.nostrsigner.common.sanitizeAppName
+import com.greenart7c3.nostrsigner.commonsui.Permission
+import com.greenart7c3.nostrsigner.commonsui.Res
+import com.greenart7c3.nostrsigner.commonsui.approve
+import com.greenart7c3.nostrsigner.commonsui.confirm
+import com.greenart7c3.nostrsigner.commonsui.connect
+import com.greenart7c3.nostrsigner.commonsui.decrypt_zap_event
+import com.greenart7c3.nostrsigner.commonsui.deny
+import com.greenart7c3.nostrsigner.commonsui.encrypt_this_list_of_tags_with
+import com.greenart7c3.nostrsigner.commonsui.encrypt_this_text_with
+import com.greenart7c3.nostrsigner.commonsui.encrypt_with
+import com.greenart7c3.nostrsigner.commonsui.is_requiring_some_permissions_please_review_them
+import com.greenart7c3.nostrsigner.commonsui.localizedBlocking
+import com.greenart7c3.nostrsigner.commonsui.read_from_encrypted_content
+import com.greenart7c3.nostrsigner.commonsui.read_this_list_of_tags_from_encrypted_content
+import com.greenart7c3.nostrsigner.commonsui.read_this_text_from_encrypted_content
+import com.greenart7c3.nostrsigner.commonsui.relay_not_in_auth_whitelist
+import com.greenart7c3.nostrsigner.commonsui.several_apps_are_requiring_some_permissions_please_review_them
+import com.greenart7c3.nostrsigner.commonsui.show_details
 import com.greenart7c3.nostrsigner.database.HistoryEntity
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.AmberBunkerRequest
 import com.greenart7c3.nostrsigner.models.BunkerClientMetadata
 import com.greenart7c3.nostrsigner.models.ClearTextEncryptedDataKind
 import com.greenart7c3.nostrsigner.models.EventEncryptedDataKind
-import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.models.PrivateZapEncryptedDataKind
 import com.greenart7c3.nostrsigner.models.TagArrayEncryptedDataKind
 import com.greenart7c3.nostrsigner.service.AmberUtils
@@ -74,6 +87,8 @@ import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.pluralStringResource
+import org.jetbrains.compose.resources.stringResource
 
 /** The app a bunker request comes from: the client key, per signing account. */
 private data class RequestAppKey(val account: String, val key: String)
@@ -171,14 +186,14 @@ fun BunkerMultiEventHomeScreen(
             RemoteAppIcon(info.icon, info.name)
 
             Text(
-                stringResource(R.string.is_requiring_some_permissions_please_review_them, info.name),
+                stringResource(Res.string.is_requiring_some_permissions_please_review_them, info.name),
                 Modifier
                     .fillMaxWidth()
                     .padding(bottom = 4.dp),
             )
         } else {
             Text(
-                pluralStringResource(R.plurals.several_apps_are_requiring_some_permissions_please_review_them, apps.size, apps.size),
+                pluralStringResource(Res.plurals.several_apps_are_requiring_some_permissions_please_review_them, apps.size, apps.size),
                 Modifier
                     .fillMaxWidth()
                     .padding(vertical = 8.dp),
@@ -211,7 +226,7 @@ fun BunkerMultiEventHomeScreen(
                         item(key = "group-header:${groupKey.itemKey()}") {
                             val groupApproved = groupItems.all { MultiEventScreenIntents.checkedStates[it.queueKey] ?: true }
                             RequestGroupHeader(
-                                label = requestGroupKey.toLabel(context),
+                                label = requestGroupKey.toLabel(),
                                 count = groupItems.size,
                                 approved = groupApproved,
                                 expanded = expanded,
@@ -240,7 +255,6 @@ fun BunkerMultiEventHomeScreen(
                     if (expanded) {
                         items(groupItems, key = { it.queueKey }) { bunkerRequest ->
                             BunkerRequestCard(
-                                context = context,
                                 bunkerRequest = bunkerRequest,
                                 signingAs = batchAccounts.forCard(bunkerRequest.currentAccount),
                                 approved = MultiEventScreenIntents.checkedStates[bunkerRequest.queueKey] ?: true,
@@ -258,7 +272,7 @@ fun BunkerMultiEventHomeScreen(
             Modifier
                 .fillMaxWidth()
                 .padding(vertical = 16.dp),
-            text = stringResource(R.string.confirm),
+            text = stringResource(Res.string.confirm),
             onClick = {
                 onLoading(true)
                 Amber.instance.applicationIOScope.launch(Dispatchers.IO) {
@@ -298,7 +312,6 @@ fun BunkerMultiEventHomeScreen(
                                     account = thisAccount,
                                     bunkerRequest = request,
                                     relays = BunkerRequestUtils.responseRelays(request, null, Amber.instance.settings.defaultRelays),
-                                    context = context,
                                     closeApplication = request.closeApplication,
                                     onLoading = {},
                                 )
@@ -369,7 +382,6 @@ fun BunkerMultiEventHomeScreen(
 
                                 if (isApproved) {
                                     BunkerRequestUtils.sendBunkerResponse(
-                                        context,
                                         thisAccount,
                                         request,
                                         BunkerResponse(request.request.id, localEvent.toJson(), null),
@@ -382,7 +394,6 @@ fun BunkerMultiEventHomeScreen(
                                         account = thisAccount,
                                         bunkerRequest = request,
                                         relays = savedApplication.application.relays,
-                                        context = context,
                                         closeApplication = savedApplication.application.closeApplication,
                                         onLoading = {},
                                     )
@@ -434,7 +445,6 @@ fun BunkerMultiEventHomeScreen(
                                     if (signature != null) {
                                         BunkerRequestUtils.remove(request)
                                         BunkerRequestUtils.sendBunkerResponse(
-                                            context,
                                             thisAccount,
                                             request,
                                             BunkerResponse(request.request.id, signature, null),
@@ -449,7 +459,6 @@ fun BunkerMultiEventHomeScreen(
                                         account = thisAccount,
                                         bunkerRequest = request,
                                         relays = savedApplication.application.relays,
-                                        context = context,
                                         closeApplication = savedApplication.application.closeApplication,
                                         onLoading = {},
                                     )
@@ -494,7 +503,6 @@ private fun RequestAppHeader(
 
 @Composable
 private fun BunkerRequestCard(
-    context: Context,
     bunkerRequest: AmberBunkerRequest,
     signingAs: Account?,
     approved: Boolean,
@@ -512,36 +520,36 @@ private fun BunkerRequestCard(
     }
 
     val label = if (type == SignerType.CONNECT) {
-        stringResource(R.string.connect)
+        stringResource(Res.string.connect)
     } else {
         val encryptedData = bunkerRequest.encryptedData
         if (type.toString().contains("ENCRYPT")) {
             when (encryptedData) {
                 is EventEncryptedDataKind -> {
                     val p = Permission("sign_event", encryptedData.event.kind)
-                    stringResource(R.string.encrypt_with, p.toLocalizedString(context), type.toString().split("_").first())
+                    stringResource(Res.string.encrypt_with, p.localizedBlocking(), type.toString().split("_").first())
                 }
                 is TagArrayEncryptedDataKind -> {
-                    stringResource(R.string.encrypt_this_list_of_tags_with, type.toString().split("_").first())
+                    stringResource(Res.string.encrypt_this_list_of_tags_with, type.toString().split("_").first())
                 }
-                else -> stringResource(R.string.encrypt_this_text_with, type.toString().split("_").first())
+                else -> stringResource(Res.string.encrypt_this_text_with, type.toString().split("_").first())
             }
         } else if (type.toString().contains("DECRYPT")) {
             when (encryptedData) {
                 is EventEncryptedDataKind -> {
                     val p = Permission("sign_event", encryptedData.event.kind)
-                    stringResource(R.string.read_from_encrypted_content, p.toLocalizedString(context), type.toString().split("_").first())
+                    stringResource(Res.string.read_from_encrypted_content, p.localizedBlocking(), type.toString().split("_").first())
                 }
                 is TagArrayEncryptedDataKind -> {
-                    stringResource(R.string.read_this_list_of_tags_from_encrypted_content, type.toString().split("_").first())
+                    stringResource(Res.string.read_this_list_of_tags_from_encrypted_content, type.toString().split("_").first())
                 }
                 is PrivateZapEncryptedDataKind -> {
-                    stringResource(R.string.decrypt_zap_event).capitalize(Locale.current)
+                    stringResource(Res.string.decrypt_zap_event).capitalize(Locale.current)
                 }
-                else -> stringResource(R.string.read_this_text_from_encrypted_content, type.toString().split("_").first())
+                else -> stringResource(Res.string.read_this_text_from_encrypted_content, type.toString().split("_").first())
             }
         } else {
-            permission.toLocalizedString(context)
+            permission.localizedBlocking()
         }
     }
 
@@ -601,7 +609,7 @@ private fun BunkerRequestCard(
                     if (hasDetails) {
                         RawJsonButton(
                             onCLick = { showDetails = true },
-                            text = stringResource(R.string.show_details),
+                            text = stringResource(Res.string.show_details),
                         )
                     }
                 }
@@ -612,7 +620,7 @@ private fun BunkerRequestCard(
             if (isBlockedByAuthWhitelist(bunkerRequest.signedEvent)) {
                 // Always rejected on confirm, as on the single screen.
                 Text(
-                    text = stringResource(R.string.relay_not_in_auth_whitelist),
+                    text = stringResource(Res.string.relay_not_in_auth_whitelist),
                     color = MaterialTheme.colorScheme.error,
                     modifier = Modifier.padding(vertical = 8.dp),
                 )
@@ -622,7 +630,7 @@ private fun BunkerRequestCard(
                     options = listOf(true, false),
                     onSelected = onApproveChanged,
                     label = {
-                        if (it) stringResource(R.string.approve) else stringResource(R.string.deny)
+                        if (it) stringResource(Res.string.approve) else stringResource(Res.string.deny)
                     },
                     indicatorColor = {
                         if (it) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error

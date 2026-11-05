@@ -46,7 +46,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
@@ -61,7 +60,13 @@ import androidx.navigation.navArgument
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.LocalPreferences
-import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.commonsui.Res
+import com.greenart7c3.nostrsigner.commonsui.allow
+import com.greenart7c3.nostrsigner.commonsui.could_not_connect_to_tor
+import com.greenart7c3.nostrsigner.commonsui.deny
+import com.greenart7c3.nostrsigner.commonsui.getStringBlocking
+import com.greenart7c3.nostrsigner.commonsui.notifications_are_needed_to_use_amber_as_a_nsec_bunker
+import com.greenart7c3.nostrsigner.commonsui.permission_needed
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.AmberBunkerRequest
 import com.greenart7c3.nostrsigner.models.IntentData
@@ -91,6 +96,7 @@ import java.util.Base64
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.stringResource
 
 private fun ManagedActivityResultLauncher<String, Boolean>.tryLaunchPostNotifications() {
     try {
@@ -200,10 +206,10 @@ fun MainScreen(
                 showDialog.value = false
             },
             title = {
-                Text(text = stringResource(R.string.permission_needed))
+                Text(text = stringResource(Res.string.permission_needed))
             },
             text = {
-                Text(text = stringResource(R.string.notifications_are_needed_to_use_amber_as_a_nsec_bunker))
+                Text(text = stringResource(Res.string.notifications_are_needed_to_use_amber_as_a_nsec_bunker))
             },
             confirmButton = {
                 Button(
@@ -212,7 +218,7 @@ fun MainScreen(
                         requestPermissionLauncher.tryLaunchPostNotifications()
                     },
                 ) {
-                    Text(text = stringResource(R.string.allow))
+                    Text(text = stringResource(Res.string.allow))
                 }
             },
             dismissButton = {
@@ -222,7 +228,7 @@ fun MainScreen(
                         LocalPreferences.updateShouldShowRationale(context, false)
                     },
                 ) {
-                    Text(text = stringResource(R.string.deny))
+                    Text(text = stringResource(Res.string.deny))
                 }
             },
         )
@@ -915,7 +921,7 @@ fun MainScreen(
                                     scope.launch {
                                         Toast.makeText(
                                             context,
-                                            context.getString(R.string.could_not_connect_to_tor),
+                                            getStringBlocking(Res.string.could_not_connect_to_tor),
                                             Toast.LENGTH_SHORT,
                                         ).show()
                                     }

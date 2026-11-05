@@ -16,8 +16,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.capitalize
@@ -28,14 +26,20 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.greenart7c3.nostrsigner.Amber
-import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.commonsui.Permission
+import com.greenart7c3.nostrsigner.commonsui.Res
+import com.greenart7c3.nostrsigner.commonsui.event_kind
+import com.greenart7c3.nostrsigner.commonsui.localizedBlocking
+import com.greenart7c3.nostrsigner.commonsui.report_missing_event_kind_translation
+import com.greenart7c3.nostrsigner.commonsui.show_details
+import com.greenart7c3.nostrsigner.commonsui.wants_you_to_sign_a
 import com.greenart7c3.nostrsigner.models.Account
-import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.ui.RememberType
 import com.greenart7c3.nostrsigner.ui.theme.AmberPreview
 import com.greenart7c3.nostrsigner.ui.theme.ThemePreviews
 import com.greenart7c3.nostrsigner.ui.theme.previewAccount
 import com.vitorpamplona.quartz.nip01Core.core.Event
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun EventData(
@@ -50,7 +54,6 @@ fun EventData(
     var showMore by androidx.compose.runtime.remember {
         mutableStateOf(false)
     }
-    val context = LocalContext.current
     var rememberType by remember {
         mutableStateOf(RememberType.NEVER)
     }
@@ -62,11 +65,11 @@ fun EventData(
         LocalAppIcon(packageName)
 
         val permission = Permission("sign_event", event.kind)
-        val kindTranslation = permission.toLocalizedString(context)
-        val unknownKindString = stringResource(R.string.event_kind, event.kind.toString())
+        val kindTranslation = permission.localizedBlocking()
+        val unknownKindString = stringResource(Res.string.event_kind, event.kind.toString())
         val altTag = event.tags.firstOrNull { it.size > 1 && it[0] == "alt" }?.getOrNull(1)
         val displayTranslation = if (kindTranslation == unknownKindString && altTag != null) altTag else kindTranslation
-        val text = stringResource(R.string.wants_you_to_sign_a, displayTranslation)
+        val text = stringResource(Res.string.wants_you_to_sign_a, displayTranslation)
         Text(
             text.capitalize(Locale.current),
             fontSize = 18.sp,
@@ -83,7 +86,7 @@ fun EventData(
             onCLick = {
                 showMore = !showMore
             },
-            stringResource(R.string.show_details),
+            stringResource(Res.string.show_details),
         )
 
         Spacer(Modifier.size(16.dp))
@@ -136,7 +139,6 @@ fun BunkerEventData(
     var showMore by androidx.compose.runtime.remember {
         mutableStateOf(false)
     }
-    val context = LocalContext.current
     var rememberType by remember {
         mutableStateOf(RememberType.NEVER)
     }
@@ -148,11 +150,11 @@ fun BunkerEventData(
         Spacer(Modifier.size(16.dp))
         RemoteAppIcon(iconUrl, appName)
         val permission = Permission("sign_event", event.kind)
-        val kindTranslation = permission.toLocalizedString(context)
-        val unknownKindString = stringResource(R.string.event_kind, event.kind.toString())
+        val kindTranslation = permission.localizedBlocking()
+        val unknownKindString = stringResource(Res.string.event_kind, event.kind.toString())
         val altTag = event.tags.firstOrNull { it.size > 1 && it[0] == "alt" }?.getOrNull(1)
         val displayTranslation = if (kindTranslation == unknownKindString && altTag != null) altTag else kindTranslation
-        val text = stringResource(R.string.wants_you_to_sign_a, displayTranslation)
+        val text = stringResource(Res.string.wants_you_to_sign_a, displayTranslation)
         Text(
             buildAnnotatedString {
                 withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
@@ -173,7 +175,7 @@ fun BunkerEventData(
             onCLick = {
                 showMore = !showMore
             },
-            stringResource(R.string.show_details),
+            stringResource(Res.string.show_details),
         )
 
         Spacer(Modifier.size(16.dp))
@@ -238,7 +240,7 @@ fun ReportMissingEventKindButton(kind: Int, appName: String? = null) {
             }
             Amber.instance.pendingTranslationReport.value = text
         },
-        text = stringResource(R.string.report_missing_event_kind_translation),
+        text = stringResource(Res.string.report_missing_event_kind_translation),
     )
 }
 private fun previewEvent() = Event(

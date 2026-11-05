@@ -32,7 +32,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.TextFieldValue
@@ -40,7 +39,14 @@ import androidx.compose.ui.unit.dp
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.LocalPreferences
-import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.commonsui.Res
+import com.greenart7c3.nostrsigner.commonsui.add
+import com.greenart7c3.nostrsigner.commonsui.manage_the_relays_used_to_fetch_your_profile_data
+import com.greenart7c3.nostrsigner.commonsui.paste_from_clipboard
+import com.greenart7c3.nostrsigner.commonsui.profile_fetch_interval
+import com.greenart7c3.nostrsigner.commonsui.profile_fetch_interval_description
+import com.greenart7c3.nostrsigner.commonsui.testing_relay
+import com.greenart7c3.nostrsigner.commonsui.wss
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.ProfileFetchInterval
 import com.greenart7c3.nostrsigner.service.TrustScoreService
@@ -49,6 +55,7 @@ import com.greenart7c3.nostrsigner.ui.components.TitleExplainer
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun DefaultProfileRelaysScreen(
@@ -97,7 +104,7 @@ fun DefaultProfileRelaysScreen(
         if (isLoading.value) {
             CenterCircularProgressIndicator(
                 Modifier,
-                text = stringResource(R.string.testing_relay),
+                text = stringResource(Res.string.testing_relay),
             )
         } else {
             Column(
@@ -106,7 +113,7 @@ fun DefaultProfileRelaysScreen(
                     .fillMaxSize(),
             ) {
                 Text(
-                    text = stringResource(R.string.manage_the_relays_used_to_fetch_your_profile_data),
+                    text = stringResource(Res.string.manage_the_relays_used_to_fetch_your_profile_data),
                     modifier = Modifier.padding(bottom = 8.dp),
                 )
 
@@ -115,8 +122,8 @@ fun DefaultProfileRelaysScreen(
                 }.toImmutableList()
 
                 SettingsRow(
-                    name = R.string.profile_fetch_interval,
-                    description = R.string.profile_fetch_interval_description,
+                    name = Res.string.profile_fetch_interval,
+                    description = Res.string.profile_fetch_interval_description,
                     selectedItems = fetchIntervalOptions,
                     selectedIndex = ProfileFetchInterval.entries.indexOf(fetchInterval),
                     onSelect = { index ->
@@ -151,7 +158,6 @@ fun DefaultProfileRelaysScreen(
                                     relays2,
                                     scope,
                                     account,
-                                    context,
                                     shouldCheckForBunker = false,
                                     onDone = {
                                         Amber.instance.settings = Amber.instance.settings.copy(
@@ -172,7 +178,7 @@ fun DefaultProfileRelaysScreen(
                         },
                     ),
                     label = {
-                        Text(stringResource(R.string.wss))
+                        Text(stringResource(Res.string.wss))
                     },
                     leadingIcon = {
                         IconButton(
@@ -187,7 +193,7 @@ fun DefaultProfileRelaysScreen(
                         ) {
                             Icon(
                                 Icons.Default.ContentPaste,
-                                contentDescription = stringResource(R.string.paste_from_clipboard),
+                                contentDescription = stringResource(Res.string.paste_from_clipboard),
                             )
                         }
                     },
@@ -205,7 +211,6 @@ fun DefaultProfileRelaysScreen(
                                         relays2,
                                         scope,
                                         account,
-                                        context,
                                         shouldCheckForBunker = false,
                                         onDone = {
                                             Amber.instance.settings = Amber.instance.settings.copy(
@@ -227,7 +232,7 @@ fun DefaultProfileRelaysScreen(
                         ) {
                             Icon(
                                 Icons.Default.Add,
-                                contentDescription = stringResource(R.string.add),
+                                contentDescription = stringResource(Res.string.add),
                             )
                         }
                     },

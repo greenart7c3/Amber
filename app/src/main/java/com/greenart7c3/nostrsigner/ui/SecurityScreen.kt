@@ -33,13 +33,29 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.LocalPreferences
-import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.commonsui.Res
+import com.greenart7c3.nostrsigner.commonsui.authenticate
+import com.greenart7c3.nostrsigner.commonsui.enable_biometrics
+import com.greenart7c3.nostrsigner.commonsui.getStringBlocking
+import com.greenart7c3.nostrsigner.commonsui.history_retention
+import com.greenart7c3.nostrsigner.commonsui.history_retention_description
+import com.greenart7c3.nostrsigner.commonsui.log_retention
+import com.greenart7c3.nostrsigner.commonsui.log_retention_description
+import com.greenart7c3.nostrsigner.commonsui.privacy_mode
+import com.greenart7c3.nostrsigner.commonsui.privacy_mode_description
+import com.greenart7c3.nostrsigner.commonsui.require_unlocked_device
+import com.greenart7c3.nostrsigner.commonsui.require_unlocked_device_description
+import com.greenart7c3.nostrsigner.commonsui.require_unlocked_device_do_not_close
+import com.greenart7c3.nostrsigner.commonsui.require_unlocked_device_legacy_note
+import com.greenart7c3.nostrsigner.commonsui.require_unlocked_device_updating
+import com.greenart7c3.nostrsigner.commonsui.save
+import com.greenart7c3.nostrsigner.commonsui.setup_pin
+import com.greenart7c3.nostrsigner.commonsui.when_to_ask
 import com.greenart7c3.nostrsigner.models.RetentionPeriod
 import com.greenart7c3.nostrsigner.service.Biometrics.authenticate
 import com.greenart7c3.nostrsigner.ui.components.AmberButton
@@ -49,6 +65,7 @@ import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun SecurityScreen(
@@ -86,7 +103,7 @@ fun SecurityScreen(
 
     fun toggleBiometrics() {
         authenticate(
-            title = context.getString(R.string.authenticate),
+            title = getStringBlocking(Res.string.authenticate),
             context = context,
             keyguardLauncher = biometricsKeyguardLauncher,
             onApproved = {
@@ -147,7 +164,7 @@ fun SecurityScreen(
                 ) {
                     Text(
                         modifier = Modifier.weight(1f),
-                        text = stringResource(R.string.enable_biometrics),
+                        text = stringResource(Res.string.enable_biometrics),
                     )
                     Switch(
                         checked = enableBiometrics,
@@ -172,9 +189,9 @@ fun SecurityScreen(
                         },
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
-                        Text(text = stringResource(R.string.privacy_mode))
+                        Text(text = stringResource(Res.string.privacy_mode))
                         Text(
-                            text = stringResource(R.string.privacy_mode_description),
+                            text = stringResource(Res.string.privacy_mode_description),
                             style = MaterialTheme.typography.bodySmall,
                             color = Color.Gray,
                         )
@@ -193,8 +210,8 @@ fun SecurityScreen(
                 if (!privacyMode) {
                     Box(Modifier.padding(horizontal = 8.dp, vertical = 4.dp)) {
                         SettingsRow(
-                            name = R.string.log_retention,
-                            description = R.string.log_retention_description,
+                            name = Res.string.log_retention,
+                            description = Res.string.log_retention_description,
                             selectedItems = retentionItems,
                             selectedIndex = RetentionPeriod.entries.indexOf(logRetention),
                         ) { index ->
@@ -207,8 +224,8 @@ fun SecurityScreen(
                     }
                     Box(Modifier.padding(horizontal = 8.dp, vertical = 4.dp)) {
                         SettingsRow(
-                            name = R.string.history_retention,
-                            description = R.string.history_retention_description,
+                            name = Res.string.history_retention,
+                            description = Res.string.history_retention_description,
                             selectedItems = retentionItems,
                             selectedIndex = RetentionPeriod.entries.indexOf(historyRetention),
                         ) { index ->
@@ -233,9 +250,9 @@ fun SecurityScreen(
                         },
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
-                        Text(text = stringResource(R.string.require_unlocked_device))
+                        Text(text = stringResource(Res.string.require_unlocked_device))
                         Text(
-                            text = stringResource(R.string.require_unlocked_device_description),
+                            text = stringResource(Res.string.require_unlocked_device_description),
                             style = MaterialTheme.typography.bodySmall,
                             color = Color.Gray,
                         )
@@ -243,7 +260,7 @@ fun SecurityScreen(
                         // on Android 8 only the software DeviceUnlockPolicy gate applies.
                         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) {
                             Text(
-                                text = stringResource(R.string.require_unlocked_device_legacy_note),
+                                text = stringResource(Res.string.require_unlocked_device_legacy_note),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.error,
                             )
@@ -258,12 +275,12 @@ fun SecurityScreen(
                                     strokeWidth = 2.dp,
                                 )
                                 Text(
-                                    text = stringResource(R.string.require_unlocked_device_updating),
+                                    text = stringResource(Res.string.require_unlocked_device_updating),
                                     style = MaterialTheme.typography.bodySmall,
                                 )
                             }
                             Text(
-                                text = stringResource(R.string.require_unlocked_device_do_not_close),
+                                text = stringResource(Res.string.require_unlocked_device_do_not_close),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.error,
                             )
@@ -298,7 +315,7 @@ fun SecurityScreen(
                 ) {
                     Text(
                         modifier = Modifier.weight(1f),
-                        text = stringResource(R.string.setup_pin),
+                        text = stringResource(Res.string.setup_pin),
                     )
                     Switch(
                         checked = setupPin,
@@ -322,8 +339,8 @@ fun SecurityScreen(
                         .padding(8.dp),
                 ) {
                     SettingsRow(
-                        R.string.when_to_ask,
-                        R.string.when_to_ask,
+                        Res.string.when_to_ask,
+                        Res.string.when_to_ask,
                         biometricItems,
                         biometricsIndex,
                     ) {
@@ -345,7 +362,7 @@ fun SecurityScreen(
                         }
                     }
                 },
-                text = stringResource(R.string.save),
+                text = stringResource(Res.string.save),
             )
         }
     }

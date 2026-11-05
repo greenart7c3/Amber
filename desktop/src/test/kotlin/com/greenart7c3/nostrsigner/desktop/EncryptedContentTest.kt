@@ -35,8 +35,8 @@ class EncryptedContentTest {
 
     @Test
     fun describesWhatIsEncrypted() {
-        assertEquals("wants to encrypt this text with NIP44", SignerType.NIP44_ENCRYPT.describe(null, EncryptedContent(EncryptedContentType.CLEAR_TEXT), "en"))
-        assertEquals("wants to read this list of tags from NIP04 encrypted content", SignerType.NIP04_DECRYPT.describe(null, EncryptedContent(EncryptedContentType.TAG_ARRAY), "en"))
-        assertTrue(SignerType.NIP44_ENCRYPT.describe(null, EncryptedContent(EncryptedContentType.EVENT, 1), "en").contains("Short text note"))
+        assertEquals("wants to encrypt this text with NIP44", SignerType.NIP44_ENCRYPT.describe(null, EncryptedContent(EncryptedContentType.CLEAR_TEXT)))
+        assertEquals("wants to read this list of tags from NIP04 encrypted content", SignerType.NIP04_DECRYPT.describe(null, EncryptedContent(EncryptedContentType.TAG_ARRAY)))
+        assertTrue(SignerType.NIP44_ENCRYPT.describe(null, EncryptedContent(EncryptedContentType.EVENT, 1)).contains("Short text note"))
     }
 }

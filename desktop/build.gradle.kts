@@ -29,6 +29,10 @@ tasks.test {
     // XDG_DATA_HOME at the pristine home instead.
     environment("XDG_DATA_HOME", File(testHome, "xdg-data").absolutePath)
     systemProperty("user.home", testHome.absolutePath)
+    // Strings follow the JVM default locale: assertions on English text must not
+    // depend on the machine running the tests.
+    systemProperty("user.language", "en")
+    systemProperty("user.country", "US")
     doFirst {
         testHome.deleteRecursively()
         testHome.mkdirs()
@@ -39,6 +43,8 @@ dependencies {
     implementation(compose.desktop.currentOs)
     implementation(libs.compose.multiplatform.material3)
     implementation(libs.compose.multiplatform.material.icons.extended)
+    // Every string (Compose resources) and the permission descriptions, shared with Android.
+    implementation(project(":commonsui"))
 
     implementation(project(":common"))
     implementation(libs.quartz.jvm)
@@ -199,6 +205,10 @@ compose.desktop {
         jvmArgs += listOf("-XX:+DisableAttachMechanism", "-XX:-HeapDumpOnOutOfMemoryError", "-XX:-CreateCoredumpOnCrash")
         // The version crash reports carry (BuildVariant.version).
         jvmArgs += "-Damber.version=$appVersionName"
+        // Dates follow the OS format (core/DateTimes.kt): the HOST provider
+        // reads the user's Windows/macOS date and time settings (12/24-hour,
+        // custom patterns); Linux has no HOST adapter and falls back to CLDR.
+        jvmArgs += "-Djava.locale.providers=HOST,CLDR"
 
         nativeDistributions {
             // Built-in Tor: the prebuilt Arti library of each OS/arch

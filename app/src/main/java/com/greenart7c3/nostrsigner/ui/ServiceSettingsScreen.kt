@@ -19,13 +19,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.LocalPreferences
-import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.commonsui.Res
+import com.greenart7c3.nostrsigner.commonsui.start_service_on_boot
+import com.greenart7c3.nostrsigner.commonsui.start_service_on_boot_description
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun ServiceSettingsScreen(modifier: Modifier = Modifier) {
@@ -49,9 +51,9 @@ fun ServiceSettingsScreen(modifier: Modifier = Modifier) {
                 },
         ) {
             Column(modifier = Modifier.weight(1f)) {
-                Text(text = stringResource(R.string.start_service_on_boot))
+                Text(text = stringResource(Res.string.start_service_on_boot))
                 Text(
-                    text = stringResource(R.string.start_service_on_boot_description),
+                    text = stringResource(Res.string.start_service_on_boot_description),
                     style = MaterialTheme.typography.bodySmall,
                     color = Color.Gray,
                 )

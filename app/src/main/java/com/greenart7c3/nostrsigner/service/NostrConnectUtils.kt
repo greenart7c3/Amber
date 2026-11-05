@@ -6,13 +6,13 @@ import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.common.EncryptionType
 import com.greenart7c3.nostrsigner.common.decodeQueryParamValue
 import com.greenart7c3.nostrsigner.common.sanitizeAppName
+import com.greenart7c3.nostrsigner.commonsui.Permission
+import com.greenart7c3.nostrsigner.commonsui.containsNip
 import com.greenart7c3.nostrsigner.database.LogEntity
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.AmberBunkerRequest
 import com.greenart7c3.nostrsigner.models.BunkerClientMetadata
 import com.greenart7c3.nostrsigner.models.BunkerMetadata
-import com.greenart7c3.nostrsigner.models.Permission
-import com.greenart7c3.nostrsigner.models.containsNip
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.RelayUrlNormalizer
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequestConnect
@@ -137,7 +137,7 @@ object NostrConnectUtils {
             }
 
             permissions.removeIf { it.kind == null && (it.type == "sign_event" || it.type == "nip") }
-            permissions.removeIf { it.type == "nip" && (it.kind == null || !it.kind.containsNip()) }
+            permissions.removeIf { it.type == "nip" && it.kind?.containsNip() != true }
 
             val clientMetadata = BunkerClientMetadata(name = name, url = url, image = image)
                 .takeUnless { it.isEmpty() }

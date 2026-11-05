@@ -1,5 +1,7 @@
 package com.greenart7c3.nostrsigner.models
 
+import com.greenart7c3.nostrsigner.commonsui.Permission
+
 val basicPermissions = listOf(
     Permission("get_public_key", null),
     Permission("encrypt_clear_text", null),

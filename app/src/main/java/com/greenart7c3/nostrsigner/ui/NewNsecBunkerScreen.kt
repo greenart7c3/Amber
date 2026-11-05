@@ -37,9 +37,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.ClipEntry
 import androidx.compose.ui.platform.LocalClipboard
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -49,8 +47,23 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.greenart7c3.nostrsigner.Amber
-import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.common.generateBunkerPrivKey
+import com.greenart7c3.nostrsigner.commonsui.Res
+import com.greenart7c3.nostrsigner.commonsui.copy_to_clipboard
+import com.greenart7c3.nostrsigner.commonsui.create
+import com.greenart7c3.nostrsigner.commonsui.create_nsecbunker_description
+import com.greenart7c3.nostrsigner.commonsui.delete_after
+import com.greenart7c3.nostrsigner.commonsui.kill_switch_message
+import com.greenart7c3.nostrsigner.commonsui.name
+import com.greenart7c3.nostrsigner.commonsui.name_cannot_be_empty
+import com.greenart7c3.nostrsigner.commonsui.no_relays_added
+import com.greenart7c3.nostrsigner.commonsui.paste_from_clipboard
+import com.greenart7c3.nostrsigner.commonsui.reconnect
+import com.greenart7c3.nostrsigner.commonsui.relays
+import com.greenart7c3.nostrsigner.commonsui.testing_relay
+import com.greenart7c3.nostrsigner.commonsui.use_this_url_in_your_app
+import com.greenart7c3.nostrsigner.commonsui.wss
+import com.greenart7c3.nostrsigner.commonsui.your_nsec_bunker_has_been_created
 import com.greenart7c3.nostrsigner.database.ApplicationEntity
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.service.LocalKeyAccountIndex
@@ -65,6 +78,7 @@ import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun NewNsecBunkerScreen(
@@ -74,7 +88,6 @@ fun NewNsecBunkerScreen(
 ) {
     val secret = remember { mutableStateOf(UUID.randomUUID().toString()) }
     var name by remember { mutableStateOf(TextFieldValue(AnnotatedString(""))) }
-    val context = LocalContext.current
     val clipboardManager = LocalClipboard.current
 
     val relays =
@@ -107,19 +120,19 @@ fun NewNsecBunkerScreen(
     if (isLoading.value) {
         CenterCircularProgressIndicator(
             modifier = Modifier,
-            text = stringResource(R.string.testing_relay),
+            text = stringResource(Res.string.testing_relay),
         )
     } else {
         Column(
             modifier = modifier
                 .fillMaxSize(),
         ) {
-            Text(stringResource(R.string.create_nsecbunker_description))
+            Text(stringResource(Res.string.create_nsecbunker_description))
 
             OutlinedTextField(
                 value = name,
                 onValueChange = { name = it },
-                label = { Text(stringResource(R.string.name)) },
+                label = { Text(stringResource(Res.string.name)) },
                 keyboardOptions = KeyboardOptions(
                     imeAction = ImeAction.Next,
                 ),
@@ -136,7 +149,7 @@ fun NewNsecBunkerScreen(
 
             Box {
                 SettingsRow(
-                    R.string.delete_after,
+                    Res.string.delete_after,
                     null,
                     deleteAfterItems,
                     deleteAfterIndex,
@@ -171,7 +184,6 @@ fun NewNsecBunkerScreen(
                                     relays,
                                     scope,
                                     account = account,
-                                    context,
                                     onDone = {
                                     },
                                 )
@@ -179,7 +191,7 @@ fun NewNsecBunkerScreen(
                         },
                     ),
                     label = {
-                        Text(stringResource(R.string.wss))
+                        Text(stringResource(Res.string.wss))
                     },
                     leadingIcon = {
                         IconButton(
@@ -194,7 +206,7 @@ fun NewNsecBunkerScreen(
                         ) {
                             Icon(
                                 Icons.Default.ContentPaste,
-                                contentDescription = stringResource(R.string.paste_from_clipboard),
+                                contentDescription = stringResource(Res.string.paste_from_clipboard),
                             )
                         }
                     },
@@ -212,7 +224,6 @@ fun NewNsecBunkerScreen(
                                         relays,
                                         scope,
                                         account = account,
-                                        context,
                                         onDone = {
                                         },
                                     )
@@ -239,13 +250,13 @@ fun NewNsecBunkerScreen(
                 )
             }
 
-            val title = stringResource(R.string.relays)
-            val noRelaysMessage = stringResource(R.string.no_relays_added)
-            val noNameMessage = stringResource(R.string.name_cannot_be_empty)
+            val title = stringResource(Res.string.relays)
+            val noRelaysMessage = stringResource(Res.string.no_relays_added)
+            val noNameMessage = stringResource(Res.string.name_cannot_be_empty)
 
             AmberButton(
                 Modifier.padding(top = 20.dp),
-                text = stringResource(R.string.create),
+                text = stringResource(Res.string.create),
                 onClick = {
                     if (relays.isEmpty()) {
                         ToastManager.toast(
@@ -347,9 +358,9 @@ fun NewNsecBunkerCreatedScreen(
         )
     } else if (preparationFailed) {
         Column(modifier = modifier.padding(16.dp)) {
-            if (killSwitch) Text(stringResource(R.string.kill_switch_message))
+            if (killSwitch) Text(stringResource(Res.string.kill_switch_message))
             AmberButton(
-                text = stringResource(R.string.reconnect),
+                text = stringResource(Res.string.reconnect),
                 enabled = !killSwitch,
                 onClick = { refreshAttempt++ },
             )
@@ -370,7 +381,7 @@ fun NewNsecBunkerCreatedScreen(
                 horizontalArrangement = Arrangement.Center,
             ) {
                 Text(
-                    text = stringResource(R.string.your_nsec_bunker_has_been_created),
+                    text = stringResource(Res.string.your_nsec_bunker_has_been_created),
                     fontWeight = FontWeight.Bold,
                     fontSize = 24.sp,
                 )
@@ -378,7 +389,7 @@ fun NewNsecBunkerCreatedScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            Text(stringResource(R.string.use_this_url_in_your_app))
+            Text(stringResource(Res.string.use_this_url_in_your_app))
 
             Spacer(modifier = Modifier.height(8.dp))
 
@@ -403,7 +414,7 @@ fun NewNsecBunkerCreatedScreen(
                         )
                     }
                 },
-                text = stringResource(R.string.copy_to_clipboard),
+                text = stringResource(Res.string.copy_to_clipboard),
             )
         }
     }

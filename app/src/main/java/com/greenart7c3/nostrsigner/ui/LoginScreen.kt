@@ -77,7 +77,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.stringResource as androidStringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.semantics.contentType
 import androidx.compose.ui.semantics.semantics
@@ -108,6 +108,55 @@ import androidx.navigation.compose.composable
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.commonsui.Res
+import com.greenart7c3.nostrsigner.commonsui.a_nostr_secure_signer
+import com.greenart7c3.nostrsigner.commonsui.add_a_key
+import com.greenart7c3.nostrsigner.commonsui.amber_github_uri
+import com.greenart7c3.nostrsigner.commonsui.amber_is_a_free_and_open_source_project
+import com.greenart7c3.nostrsigner.commonsui.builtin_tor_active
+import com.greenart7c3.nostrsigner.commonsui.builtin_tor_description
+import com.greenart7c3.nostrsigner.commonsui.builtin_tor_title
+import com.greenart7c3.nostrsigner.commonsui.check_the_code
+import com.greenart7c3.nostrsigner.commonsui.connect_through_your_orbot_setup_markdown2
+import com.greenart7c3.nostrsigner.commonsui.connect_via_tor_short
+import com.greenart7c3.nostrsigner.commonsui.continue_button
+import com.greenart7c3.nostrsigner.commonsui.do_not_leave_the_app_until_the_key_is_generated
+import com.greenart7c3.nostrsigner.commonsui.encryption_password
+import com.greenart7c3.nostrsigner.commonsui.enter_recovery_phrase_description
+import com.greenart7c3.nostrsigner.commonsui.enter_strong_password
+import com.greenart7c3.nostrsigner.commonsui.finish
+import com.greenart7c3.nostrsigner.commonsui.generate_a_new_key
+import com.greenart7c3.nostrsigner.commonsui.go_back
+import com.greenart7c3.nostrsigner.commonsui.hide_password
+import com.greenart7c3.nostrsigner.commonsui.import_failed_for_accounts
+import com.greenart7c3.nostrsigner.commonsui.key_is_required
+import com.greenart7c3.nostrsigner.commonsui.login_mode_private_key
+import com.greenart7c3.nostrsigner.commonsui.login_mode_recovery_phrase
+import com.greenart7c3.nostrsigner.commonsui.mnemonic_account_index
+import com.greenart7c3.nostrsigner.commonsui.mnemonic_account_index_description
+import com.greenart7c3.nostrsigner.commonsui.ncryptsec_password
+import com.greenart7c3.nostrsigner.commonsui.next
+import com.greenart7c3.nostrsigner.commonsui.nickname
+import com.greenart7c3.nostrsigner.commonsui.nsec
+import com.greenart7c3.nostrsigner.commonsui.ok
+import com.greenart7c3.nostrsigner.commonsui.orbot_socks_port
+import com.greenart7c3.nostrsigner.commonsui.orbot_title
+import com.greenart7c3.nostrsigner.commonsui.password_is_required
+import com.greenart7c3.nostrsigner.commonsui.permissions_and_connection
+import com.greenart7c3.nostrsigner.commonsui.please_add_a_nickname_later_you_will_able_to_personalise_your_full_profile_bio_pic_etc_using_your_preferred_nostr_client
+import com.greenart7c3.nostrsigner.commonsui.recover_from_backup
+import com.greenart7c3.nostrsigner.commonsui.setup_amber_with_your_nostr_private_key_you_can_enter_different_versions_nsec_ncryptsec_or_hex_you_can_also_scan_it_from_a_qr_code
+import com.greenart7c3.nostrsigner.commonsui.show_password
+import com.greenart7c3.nostrsigner.commonsui.sign_policy_basic
+import com.greenart7c3.nostrsigner.commonsui.sign_policy_basic_explainer
+import com.greenart7c3.nostrsigner.commonsui.sign_policy_explainer
+import com.greenart7c3.nostrsigner.commonsui.sign_policy_manual
+import com.greenart7c3.nostrsigner.commonsui.sign_policy_manual_explainer
+import com.greenart7c3.nostrsigner.commonsui.use_builtin_tor
+import com.greenart7c3.nostrsigner.commonsui.use_orbot
+import com.greenart7c3.nostrsigner.commonsui.you_will_find_it_in_your_account_section_so_you_don_t_need_to_copy_it_right_now
+import com.greenart7c3.nostrsigner.commonsui.your_nostr_account_explainer
+import com.greenart7c3.nostrsigner.commonsui.your_nostr_account_is_ready
 import com.greenart7c3.nostrsigner.models.TorMode
 import com.greenart7c3.nostrsigner.service.AccountExportService
 import com.greenart7c3.nostrsigner.ui.components.AmberButton
@@ -128,6 +177,7 @@ import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("ConfigurationScreenWidthHeight")
@@ -214,10 +264,10 @@ fun MainPage(
         AlertDialog(
             modifier = Modifier.outlineIfAny(amoledBorder(), AlertDialogDefaults.shape),
             onDismissRequest = dismissImportError,
-            title = { Text(stringResource(R.string.recover_from_backup)) },
-            text = { Text(stringResource(R.string.import_failed_for_accounts, failedImportLines.joinToString(", "))) },
+            title = { Text(stringResource(Res.string.recover_from_backup)) },
+            text = { Text(stringResource(Res.string.import_failed_for_accounts, failedImportLines.joinToString(", "))) },
             confirmButton = {
-                TextButton(onClick = dismissImportError) { Text(stringResource(R.string.ok)) }
+                TextButton(onClick = dismissImportError) { Text(stringResource(Res.string.ok)) }
             },
         )
     }
@@ -262,19 +312,19 @@ fun MainPage(
                             imeAction = ImeAction.Next,
                         ),
                         label = {
-                            Text(text = stringResource(R.string.encryption_password))
+                            Text(text = stringResource(Res.string.encryption_password))
                         },
                         placeholder = {
-                            Text(text = stringResource(R.string.enter_strong_password))
+                            Text(text = stringResource(Res.string.enter_strong_password))
                         },
                         trailingIcon = {
                             IconButton(onClick = { showCharsPassword = !showCharsPassword }) {
                                 Icon(
                                     imageVector = if (showCharsPassword) Icons.Outlined.VisibilityOff else Icons.Outlined.Visibility,
                                     contentDescription = if (showCharsPassword) {
-                                        stringResource(R.string.hide_password)
+                                        stringResource(Res.string.hide_password)
                                     } else {
-                                        stringResource(R.string.show_password)
+                                        stringResource(Res.string.show_password)
                                     },
                                 )
                             }
@@ -285,7 +335,7 @@ fun MainPage(
                         onClick = {
                             selectFileLauncher.launch("*/*")
                         },
-                        text = stringResource(R.string.recover_from_backup),
+                        text = stringResource(Res.string.recover_from_backup),
                     )
                 }
             }
@@ -312,11 +362,11 @@ fun MainPage(
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
                     Text(
-                        text = stringResource(R.string.app_name_release).toUpperCase(Locale.current),
+                        text = androidStringResource(R.string.app_name_release).toUpperCase(Locale.current),
                         fontSize = 36.sp,
                     )
                     Text(
-                        text = stringResource(R.string.a_nostr_secure_signer),
+                        text = stringResource(Res.string.a_nostr_secure_signer),
                         fontSize = 16.sp,
                         color = Color(0xFFC98500),
                     )
@@ -339,7 +389,7 @@ fun MainPage(
                                     navHostControllerWrapper.navController.navigate("loginPage")
                                 }
                             },
-                            text = stringResource(R.string.add_a_key),
+                            text = stringResource(Res.string.add_a_key),
                         )
 
                         AmberButton(
@@ -348,22 +398,22 @@ fun MainPage(
                                     navHostControllerWrapper.navController.navigate("create")
                                 }
                             },
-                            text = stringResource(R.string.generate_a_new_key),
+                            text = stringResource(Res.string.generate_a_new_key),
                         )
 
                         AmberButton(
                             onClick = {
                                 shouldShowBottomSheet.value = true
                             },
-                            text = stringResource(R.string.recover_from_backup),
+                            text = stringResource(Res.string.recover_from_backup),
                         )
                     }
 
                     Spacer(Modifier.weight(1f))
 
-                    val message = stringResource(R.string.amber_is_a_free_and_open_source_project)
-                    val githubUri = stringResource(R.string.amber_github_uri)
-                    val checkTheCodeMessage = stringResource(R.string.check_the_code)
+                    val message = stringResource(Res.string.amber_is_a_free_and_open_source_project)
+                    val githubUri = stringResource(Res.string.amber_github_uri)
+                    val checkTheCodeMessage = stringResource(Res.string.check_the_code)
 
                     Text(
                         modifier = Modifier.padding(bottom = 20.dp),
@@ -483,10 +533,10 @@ fun SignUpPage(
                 title = {
                     when (state.currentPage) {
                         0 -> {
-                            Text(text = stringResource(R.string.generate_a_new_key))
+                            Text(text = stringResource(Res.string.generate_a_new_key))
                         }
                         else -> {
-                            Text(text = stringResource(R.string.permissions_and_connection))
+                            Text(text = stringResource(Res.string.permissions_and_connection))
                         }
                     }
                 },
@@ -496,7 +546,7 @@ fun SignUpPage(
             BottomAppBar {
                 IconRow(
                     center = true,
-                    title = stringResource(R.string.go_back),
+                    title = stringResource(Res.string.go_back),
                     icon = ImageVector.vectorResource(R.drawable.back),
                     onClick = {
                         if (state.currentPage > 0) {
@@ -517,7 +567,7 @@ fun SignUpPage(
         if (loading) {
             CenterCircularProgressIndicator(
                 Modifier.fillMaxSize(),
-                stringResource(R.string.do_not_leave_the_app_until_the_key_is_generated),
+                stringResource(Res.string.do_not_leave_the_app_until_the_key_is_generated),
             )
         } else {
             HorizontalPager(
@@ -542,12 +592,12 @@ fun SignUpPage(
                                 .imePadding(),
                         ) {
                             Text(
-                                text = stringResource(R.string.your_nostr_account_is_ready),
+                                text = stringResource(Res.string.your_nostr_account_is_ready),
                                 fontWeight = FontWeight.Bold,
                                 modifier = Modifier.padding(bottom = 8.dp),
                             )
                             Text(
-                                text = stringResource(R.string.your_nostr_account_explainer),
+                                text = stringResource(Res.string.your_nostr_account_explainer),
                                 modifier = Modifier.padding(bottom = 8.dp),
                             )
                             Box(
@@ -562,10 +612,10 @@ fun SignUpPage(
                                 )
                             }
                             Spacer(Modifier.height(8.dp))
-                            Text(stringResource(R.string.you_will_find_it_in_your_account_section_so_you_don_t_need_to_copy_it_right_now))
+                            Text(stringResource(Res.string.you_will_find_it_in_your_account_section_so_you_don_t_need_to_copy_it_right_now))
 
                             Text(
-                                text = stringResource(R.string.please_add_a_nickname_later_you_will_able_to_personalise_your_full_profile_bio_pic_etc_using_your_preferred_nostr_client),
+                                text = stringResource(Res.string.please_add_a_nickname_later_you_will_able_to_personalise_your_full_profile_bio_pic_etc_using_your_preferred_nostr_client),
                                 modifier = Modifier.padding(top = 20.dp, bottom = 8.dp),
                             )
                             OutlinedTextField(
@@ -575,7 +625,7 @@ fun SignUpPage(
                                 },
                                 placeholder = {
                                     Text(
-                                        stringResource(R.string.nickname),
+                                        stringResource(Res.string.nickname),
                                         color = TextFieldDefaults.colors().unfocusedPlaceholderColor,
                                     )
                                 },
@@ -609,7 +659,7 @@ fun SignUpPage(
                                         state.animateScrollToPage(1)
                                     }
                                 },
-                                text = stringResource(R.string.continue_button),
+                                text = stringResource(Res.string.continue_button),
                             )
                         }
                     }
@@ -618,12 +668,12 @@ fun SignUpPage(
                         val scrollState = rememberScrollState()
                         val radioOptions = listOf(
                             TitleExplainer(
-                                title = stringResource(R.string.sign_policy_basic),
-                                explainer = stringResource(R.string.sign_policy_basic_explainer),
+                                title = stringResource(Res.string.sign_policy_basic),
+                                explainer = stringResource(Res.string.sign_policy_basic_explainer),
                             ),
                             TitleExplainer(
-                                title = stringResource(R.string.sign_policy_manual),
-                                explainer = stringResource(R.string.sign_policy_manual_explainer),
+                                title = stringResource(Res.string.sign_policy_manual),
+                                explainer = stringResource(Res.string.sign_policy_manual_explainer),
                             ),
                         )
                         var selectedOption by remember { mutableIntStateOf(0) }
@@ -639,7 +689,7 @@ fun SignUpPage(
                                 .padding(top = verticalPadding * 1.5f),
                         ) {
                             Text(
-                                text = stringResource(R.string.sign_policy_explainer),
+                                text = stringResource(Res.string.sign_policy_explainer),
                             )
                             Column(
                                 Modifier.padding(vertical = 10.dp),
@@ -712,19 +762,19 @@ fun SignUpPage(
                                         modifier = Modifier
                                             .weight(1f)
                                             .padding(start = 8.dp),
-                                        text = stringResource(R.string.connect_via_tor_short),
+                                        text = stringResource(Res.string.connect_via_tor_short),
                                     )
                                 }
 
                                 if (torMode != TorMode.DISABLED) {
                                     Text(
-                                        text = stringResource(R.string.builtin_tor_title),
+                                        text = stringResource(Res.string.builtin_tor_title),
                                         style = MaterialTheme.typography.titleMedium,
                                         fontWeight = FontWeight.Bold,
                                     )
                                     Spacer(modifier = Modifier.height(8.dp))
                                     Text(
-                                        text = stringResource(R.string.builtin_tor_description),
+                                        text = stringResource(Res.string.builtin_tor_description),
                                         style = MaterialTheme.typography.bodyMedium,
                                     )
                                     Spacer(modifier = Modifier.height(8.dp))
@@ -732,9 +782,9 @@ fun SignUpPage(
                                         modifier = Modifier.fillMaxWidth(),
                                         onClick = { torMode = TorMode.BUILTIN },
                                         text = if (torMode == TorMode.BUILTIN) {
-                                            stringResource(R.string.builtin_tor_active)
+                                            stringResource(Res.string.builtin_tor_active)
                                         } else {
-                                            stringResource(R.string.use_builtin_tor)
+                                            stringResource(Res.string.use_builtin_tor)
                                         },
                                         enabled = torMode != TorMode.BUILTIN,
                                     )
@@ -744,13 +794,13 @@ fun SignUpPage(
                                     Spacer(modifier = Modifier.height(24.dp))
 
                                     Text(
-                                        text = stringResource(R.string.orbot_title),
+                                        text = stringResource(Res.string.orbot_title),
                                         style = MaterialTheme.typography.titleMedium,
                                         fontWeight = FontWeight.Bold,
                                     )
                                     Spacer(modifier = Modifier.height(8.dp))
 
-                                    val content1 = stringResource(R.string.connect_through_your_orbot_setup_markdown2)
+                                    val content1 = stringResource(Res.string.connect_through_your_orbot_setup_markdown2)
                                     MarkdownText(
                                         markdown = content1,
                                         modifier = Modifier.padding(vertical = 8.dp),
@@ -763,13 +813,13 @@ fun SignUpPage(
                                         },
                                         label = {
                                             Text(
-                                                text = stringResource(R.string.orbot_socks_port),
+                                                text = stringResource(Res.string.orbot_socks_port),
                                                 color = TextFieldDefaults.colors().unfocusedPlaceholderColor,
                                             )
                                         },
                                         placeholder = {
                                             Text(
-                                                stringResource(R.string.orbot_socks_port),
+                                                stringResource(Res.string.orbot_socks_port),
                                                 color = TextFieldDefaults.colors().unfocusedPlaceholderColor,
                                             )
                                         },
@@ -787,9 +837,9 @@ fun SignUpPage(
                                         modifier = Modifier.fillMaxWidth().padding(bottom = 20.dp),
                                         onClick = { torMode = TorMode.ORBOT },
                                         text = if (torMode == TorMode.ORBOT) {
-                                            stringResource(R.string.use_orbot) + " ✓"
+                                            stringResource(Res.string.use_orbot) + " ✓"
                                         } else {
-                                            stringResource(R.string.use_orbot)
+                                            stringResource(Res.string.use_orbot)
                                         },
                                         enabled = torMode != TorMode.ORBOT,
                                     )
@@ -823,7 +873,7 @@ fun SignUpPage(
                                         }
                                     }
                                 },
-                                text = stringResource(R.string.finish),
+                                text = stringResource(Res.string.finish),
                             )
                         }
                     }
@@ -878,9 +928,9 @@ fun LoginPage(
             CenterAlignedTopAppBar(
                 title = {
                     if (pageState.currentPage == 0) {
-                        Text(text = stringResource(R.string.add_a_key))
+                        Text(text = stringResource(Res.string.add_a_key))
                     } else {
-                        Text(text = stringResource(R.string.permissions_and_connection))
+                        Text(text = stringResource(Res.string.permissions_and_connection))
                     }
                 },
             )
@@ -889,7 +939,7 @@ fun LoginPage(
             BottomAppBar {
                 IconRow(
                     center = true,
-                    title = stringResource(R.string.go_back),
+                    title = stringResource(Res.string.go_back),
                     icon = ImageVector.vectorResource(R.drawable.back),
                     onClick = {
                         if (pageState.currentPage > 0) {
@@ -914,7 +964,7 @@ fun LoginPage(
             if (isLoading) {
                 CenterCircularProgressIndicator(
                     Modifier,
-                    stringResource(R.string.do_not_leave_the_app_until_the_key_is_generated),
+                    stringResource(Res.string.do_not_leave_the_app_until_the_key_is_generated),
                 )
             } else {
                 when (page) {
@@ -935,8 +985,8 @@ fun LoginPage(
                             var showPassword by remember { mutableStateOf(false) }
                             var showCharsPassword by remember { mutableStateOf(false) }
 
-                            val keyRequiredMessage = stringResource(R.string.key_is_required)
-                            val passwordRequiredMessage = stringResource(R.string.password_is_required)
+                            val keyRequiredMessage = stringResource(Res.string.key_is_required)
+                            val passwordRequiredMessage = stringResource(Res.string.password_is_required)
 
                             // Input mode selector
                             Row(
@@ -949,7 +999,7 @@ fun LoginPage(
                                         isMnemonicMode = false
                                         errorMessage = ""
                                     },
-                                    label = { Text(stringResource(R.string.login_mode_private_key)) },
+                                    label = { Text(stringResource(Res.string.login_mode_private_key)) },
                                 )
                                 FilterChip(
                                     selected = isMnemonicMode,
@@ -957,14 +1007,14 @@ fun LoginPage(
                                         isMnemonicMode = true
                                         errorMessage = ""
                                     },
-                                    label = { Text(stringResource(R.string.login_mode_recovery_phrase)) },
+                                    label = { Text(stringResource(Res.string.login_mode_recovery_phrase)) },
                                 )
                             }
 
                             Spacer(modifier = Modifier.height(12.dp))
 
                             if (isMnemonicMode) {
-                                Text(stringResource(R.string.enter_recovery_phrase_description))
+                                Text(stringResource(Res.string.enter_recovery_phrase_description))
 
                                 Spacer(modifier = Modifier.height(12.dp))
 
@@ -1006,10 +1056,10 @@ fun LoginPage(
                                         mnemonicAccountIndex = value.filter(Char::isDigit).toIntOrNull() ?: 0
                                         if (errorMessage.isNotEmpty()) errorMessage = ""
                                     },
-                                    label = { Text(stringResource(R.string.mnemonic_account_index)) },
+                                    label = { Text(stringResource(Res.string.mnemonic_account_index)) },
                                     placeholder = { Text("0") },
                                     supportingText = {
-                                        Text(stringResource(R.string.mnemonic_account_index_description, mnemonicAccountIndex))
+                                        Text(stringResource(Res.string.mnemonic_account_index_description, mnemonicAccountIndex))
                                     },
                                     keyboardOptions = KeyboardOptions(
                                         keyboardType = KeyboardType.Number,
@@ -1019,7 +1069,7 @@ fun LoginPage(
                                 )
                             } else {
                                 Text(
-                                    stringResource(R.string.setup_amber_with_your_nostr_private_key_you_can_enter_different_versions_nsec_ncryptsec_or_hex_you_can_also_scan_it_from_a_qr_code),
+                                    stringResource(Res.string.setup_amber_with_your_nostr_private_key_you_can_enter_different_versions_nsec_ncryptsec_or_hex_you_can_also_scan_it_from_a_qr_code),
                                 )
 
                                 OutlinedTextField(
@@ -1045,7 +1095,7 @@ fun LoginPage(
                                     ),
                                     placeholder = {
                                         Text(
-                                            text = stringResource(R.string.nsec),
+                                            text = stringResource(Res.string.nsec),
                                         )
                                     },
                                     trailingIcon = {
@@ -1054,9 +1104,9 @@ fun LoginPage(
                                                 Icon(
                                                     imageVector = if (showPassword) Icons.Outlined.VisibilityOff else Icons.Outlined.Visibility,
                                                     contentDescription = if (showPassword) {
-                                                        stringResource(R.string.show_password)
+                                                        stringResource(Res.string.show_password)
                                                     } else {
-                                                        stringResource(R.string.hide_password)
+                                                        stringResource(Res.string.hide_password)
                                                     },
                                                 )
                                             }
@@ -1145,7 +1195,7 @@ fun LoginPage(
                                         ),
                                         placeholder = {
                                             Text(
-                                                text = stringResource(R.string.ncryptsec_password),
+                                                text = stringResource(Res.string.ncryptsec_password),
                                             )
                                         },
                                         trailingIcon = {
@@ -1154,10 +1204,10 @@ fun LoginPage(
                                                     Icon(
                                                         imageVector = if (showCharsPassword) Icons.Outlined.VisibilityOff else Icons.Outlined.Visibility,
                                                         contentDescription = if (showCharsPassword) {
-                                                            stringResource(R.string.show_password)
+                                                            stringResource(Res.string.show_password)
                                                         } else {
                                                             stringResource(
-                                                                R.string.hide_password,
+                                                                Res.string.hide_password,
                                                             )
                                                         },
                                                     )
@@ -1271,7 +1321,7 @@ fun LoginPage(
                                         }
                                     }
                                 },
-                                text = stringResource(R.string.next),
+                                text = stringResource(Res.string.next),
                             )
                         }
                     }
@@ -1279,12 +1329,12 @@ fun LoginPage(
                     1 -> {
                         val radioOptions = listOf(
                             TitleExplainer(
-                                title = stringResource(R.string.sign_policy_basic),
-                                explainer = stringResource(R.string.sign_policy_basic_explainer),
+                                title = stringResource(Res.string.sign_policy_basic),
+                                explainer = stringResource(Res.string.sign_policy_basic_explainer),
                             ),
                             TitleExplainer(
-                                title = stringResource(R.string.sign_policy_manual),
-                                explainer = stringResource(R.string.sign_policy_manual_explainer),
+                                title = stringResource(Res.string.sign_policy_manual),
+                                explainer = stringResource(Res.string.sign_policy_manual_explainer),
                             ),
                         )
                         var selectedOption by remember { mutableIntStateOf(0) }
@@ -1302,7 +1352,7 @@ fun LoginPage(
                                 .padding(top = verticalPadding * 1.5f),
                         ) {
                             Text(
-                                text = stringResource(R.string.sign_policy_explainer),
+                                text = stringResource(Res.string.sign_policy_explainer),
                             )
                             Column(
                                 Modifier.padding(vertical = 10.dp),
@@ -1374,19 +1424,19 @@ fun LoginPage(
                                         modifier = Modifier
                                             .weight(1f)
                                             .padding(start = 8.dp),
-                                        text = stringResource(R.string.connect_via_tor_short),
+                                        text = stringResource(Res.string.connect_via_tor_short),
                                     )
                                 }
 
                                 if (torMode != TorMode.DISABLED) {
                                     Text(
-                                        text = stringResource(R.string.builtin_tor_title),
+                                        text = stringResource(Res.string.builtin_tor_title),
                                         style = MaterialTheme.typography.titleMedium,
                                         fontWeight = FontWeight.Bold,
                                     )
                                     Spacer(modifier = Modifier.height(8.dp))
                                     Text(
-                                        text = stringResource(R.string.builtin_tor_description),
+                                        text = stringResource(Res.string.builtin_tor_description),
                                         style = MaterialTheme.typography.bodyMedium,
                                     )
                                     Spacer(modifier = Modifier.height(8.dp))
@@ -1394,9 +1444,9 @@ fun LoginPage(
                                         modifier = Modifier.fillMaxWidth(),
                                         onClick = { torMode = TorMode.BUILTIN },
                                         text = if (torMode == TorMode.BUILTIN) {
-                                            stringResource(R.string.builtin_tor_active)
+                                            stringResource(Res.string.builtin_tor_active)
                                         } else {
-                                            stringResource(R.string.use_builtin_tor)
+                                            stringResource(Res.string.use_builtin_tor)
                                         },
                                         enabled = torMode != TorMode.BUILTIN,
                                     )
@@ -1406,13 +1456,13 @@ fun LoginPage(
                                     Spacer(modifier = Modifier.height(24.dp))
 
                                     Text(
-                                        text = stringResource(R.string.orbot_title),
+                                        text = stringResource(Res.string.orbot_title),
                                         style = MaterialTheme.typography.titleMedium,
                                         fontWeight = FontWeight.Bold,
                                     )
                                     Spacer(modifier = Modifier.height(8.dp))
 
-                                    val content1 = stringResource(R.string.connect_through_your_orbot_setup_markdown2)
+                                    val content1 = stringResource(Res.string.connect_through_your_orbot_setup_markdown2)
                                     MarkdownText(
                                         markdown = content1,
                                         modifier = Modifier.padding(vertical = 8.dp),
@@ -1425,13 +1475,13 @@ fun LoginPage(
                                         },
                                         label = {
                                             Text(
-                                                text = stringResource(R.string.orbot_socks_port),
+                                                text = stringResource(Res.string.orbot_socks_port),
                                                 color = TextFieldDefaults.colors().unfocusedPlaceholderColor,
                                             )
                                         },
                                         placeholder = {
                                             Text(
-                                                stringResource(R.string.orbot_socks_port),
+                                                stringResource(Res.string.orbot_socks_port),
                                                 color = TextFieldDefaults.colors().unfocusedPlaceholderColor,
                                             )
                                         },
@@ -1449,9 +1499,9 @@ fun LoginPage(
                                         modifier = Modifier.fillMaxWidth().padding(bottom = 20.dp),
                                         onClick = { torMode = TorMode.ORBOT },
                                         text = if (torMode == TorMode.ORBOT) {
-                                            stringResource(R.string.use_orbot) + " ✓"
+                                            stringResource(Res.string.use_orbot) + " ✓"
                                         } else {
-                                            stringResource(R.string.use_orbot)
+                                            stringResource(Res.string.use_orbot)
                                         },
                                         enabled = torMode != TorMode.ORBOT,
                                     )
@@ -1487,7 +1537,7 @@ fun LoginPage(
                                         }
                                     }
                                 },
-                                text = stringResource(R.string.finish),
+                                text = stringResource(Res.string.finish),
                             )
                         }
                     }

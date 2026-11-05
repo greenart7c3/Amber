@@ -3,36 +3,76 @@ package com.greenart7c3.nostrsigner.desktop.core
 import com.greenart7c3.nostrsigner.common.SignerType
 import com.greenart7c3.nostrsigner.common.activeDecision
 import com.greenart7c3.nostrsigner.common.rememberedDecision
+import com.greenart7c3.nostrsigner.commonsui.Permission
+import com.greenart7c3.nostrsigner.commonsui.Res
+import com.greenart7c3.nostrsigner.commonsui.always
+import com.greenart7c3.nostrsigner.commonsui.d_remember_10m
+import com.greenart7c3.nostrsigner.commonsui.d_remember_1d
+import com.greenart7c3.nostrsigner.commonsui.d_remember_1h
+import com.greenart7c3.nostrsigner.commonsui.d_remember_1m
+import com.greenart7c3.nostrsigner.commonsui.d_remember_1w
+import com.greenart7c3.nostrsigner.commonsui.d_remember_5m
+import com.greenart7c3.nostrsigner.commonsui.d_remember_always
+import com.greenart7c3.nostrsigner.commonsui.d_remember_never
+import com.greenart7c3.nostrsigner.commonsui.five_minutes
+import com.greenart7c3.nostrsigner.commonsui.five_minutes_short
+import com.greenart7c3.nostrsigner.commonsui.getStringBlocking
+import com.greenart7c3.nostrsigner.commonsui.invalid_request
+import com.greenart7c3.nostrsigner.commonsui.localizedBlocking
+import com.greenart7c3.nostrsigner.commonsui.logout
+import com.greenart7c3.nostrsigner.commonsui.never
+import com.greenart7c3.nostrsigner.commonsui.nip44_v3_wants_to_decrypt
+import com.greenart7c3.nostrsigner.commonsui.nip44_v3_wants_to_encrypt
+import com.greenart7c3.nostrsigner.commonsui.one_day
+import com.greenart7c3.nostrsigner.commonsui.one_day_short
+import com.greenart7c3.nostrsigner.commonsui.one_hour
+import com.greenart7c3.nostrsigner.commonsui.one_hour_short
+import com.greenart7c3.nostrsigner.commonsui.one_minute_short
+import com.greenart7c3.nostrsigner.commonsui.one_week
+import com.greenart7c3.nostrsigner.commonsui.one_week_short
+import com.greenart7c3.nostrsigner.commonsui.ping
+import com.greenart7c3.nostrsigner.commonsui.requests
+import com.greenart7c3.nostrsigner.commonsui.switch_relays
+import com.greenart7c3.nostrsigner.commonsui.ten_minutes
+import com.greenart7c3.nostrsigner.commonsui.ten_minutes_short
+import com.greenart7c3.nostrsigner.commonsui.wants_to_encrypt_this_list_of_tags_with
+import com.greenart7c3.nostrsigner.commonsui.wants_to_encrypt_this_text_with
+import com.greenart7c3.nostrsigner.commonsui.wants_to_encrypt_with
+import com.greenart7c3.nostrsigner.commonsui.wants_to_read_from_encrypted_content
+import com.greenart7c3.nostrsigner.commonsui.wants_to_read_this_list_of_tags_from_encrypted_content
+import com.greenart7c3.nostrsigner.commonsui.wants_to_read_this_text_from_encrypted_content
+import com.greenart7c3.nostrsigner.commonsui.wants_you_to_sign_a
 import com.vitorpamplona.quartz.nip01Core.jackson.JacksonMapper
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.RelayUrlNormalizer
 import com.vitorpamplona.quartz.utils.TimeUtils
+import org.jetbrains.compose.resources.StringResource
 
 /** Mirrors the Android `RememberType` screen codes so exports stay compatible. */
-enum class RememberType(val screenCode: Int, val labelKey: String) {
-    NEVER(0, "d_remember_never"),
-    ONE_MINUTE(1, "d_remember_1m"),
-    FIVE_MINUTES(2, "d_remember_5m"),
-    TEN_MINUTES(3, "d_remember_10m"),
-    ALWAYS(4, "d_remember_always"),
-    ONE_HOUR(5, "d_remember_1h"),
-    ONE_DAY(6, "d_remember_1d"),
-    ONE_WEEK(7, "d_remember_1w"),
+enum class RememberType(val screenCode: Int, val labelRes: StringResource) {
+    NEVER(0, Res.string.d_remember_never),
+    ONE_MINUTE(1, Res.string.d_remember_1m),
+    FIVE_MINUTES(2, Res.string.d_remember_5m),
+    TEN_MINUTES(3, Res.string.d_remember_10m),
+    ALWAYS(4, Res.string.d_remember_always),
+    ONE_HOUR(5, Res.string.d_remember_1h),
+    ONE_DAY(6, Res.string.d_remember_1d),
+    ONE_WEEK(7, Res.string.d_remember_1w),
     ;
 
     /** Localized display label. */
-    fun label(language: String = Strings.currentLanguage.value): String = Strings.get(labelKey, language)
+    fun label(): String = getStringBlocking(labelRes)
 
     /** Compact label, mirroring the Android `shortResourceId` ("5m", "1h", …). */
-    fun shortLabel(language: String = Strings.currentLanguage.value): String = when (this) {
-        NEVER -> Strings.get("never", language)
-        ONE_MINUTE -> Strings.get("one_minute_short", language)
-        FIVE_MINUTES -> Strings.get("five_minutes_short", language)
-        TEN_MINUTES -> Strings.get("ten_minutes_short", language)
-        ALWAYS -> Strings.get("always", language)
-        ONE_HOUR -> Strings.get("one_hour_short", language)
-        ONE_DAY -> Strings.get("one_day_short", language)
-        ONE_WEEK -> Strings.get("one_week_short", language)
+    fun shortLabel(): String = when (this) {
+        NEVER -> getStringBlocking(Res.string.never)
+        ONE_MINUTE -> getStringBlocking(Res.string.one_minute_short)
+        FIVE_MINUTES -> getStringBlocking(Res.string.five_minutes_short)
+        TEN_MINUTES -> getStringBlocking(Res.string.ten_minutes_short)
+        ALWAYS -> getStringBlocking(Res.string.always)
+        ONE_HOUR -> getStringBlocking(Res.string.one_hour_short)
+        ONE_DAY -> getStringBlocking(Res.string.one_day_short)
+        ONE_WEEK -> getStringBlocking(Res.string.one_week_short)
     }
 
     fun acceptUntil(): Long = when (this) {
@@ -51,16 +91,16 @@ enum class RememberType(val screenCode: Int, val labelKey: String) {
  * "Delete after" choice for a new connection, mirroring the Android
  * `DeleteAfterType`: the connection is removed once [deleteAt] passes.
  */
-enum class DeleteAfterType(val labelKey: String, val seconds: Long) {
-    NEVER("never", 0L),
-    FIVE_MINUTES("five_minutes", 300L),
-    TEN_MINUTES("ten_minutes", 600L),
-    ONE_HOUR("one_hour", 3600L),
-    ONE_DAY("one_day", 86400L),
-    ONE_WEEK("one_week", 604800L),
+enum class DeleteAfterType(val labelRes: StringResource, val seconds: Long) {
+    NEVER(Res.string.never, 0L),
+    FIVE_MINUTES(Res.string.five_minutes, 300L),
+    TEN_MINUTES(Res.string.ten_minutes, 600L),
+    ONE_HOUR(Res.string.one_hour, 3600L),
+    ONE_DAY(Res.string.one_day, 86400L),
+    ONE_WEEK(Res.string.one_week, 604800L),
     ;
 
-    fun label(language: String = Strings.currentLanguage.value): String = Strings.get(labelKey, language)
+    fun label(): String = getStringBlocking(labelRes)
 
     /** Unix seconds to store in [AppRecord.deleteAfter]; 0 means never. */
     fun deleteAt(now: Long = TimeUtils.now()): Long = if (this == NEVER) 0L else now + seconds
@@ -76,39 +116,33 @@ val rememberTypeDisplayOrder = listOf(
     RememberType.ALWAYS,
 )
 
-data class RequestedPermission(
-    val type: String,
-    val kind: Int?,
-    var checked: Boolean = true,
-)
-
 val basicPermissions = listOf(
-    RequestedPermission("get_public_key", null),
-    RequestedPermission("encrypt_clear_text", null),
-    RequestedPermission("decrypt_clear_text", null),
-    RequestedPermission("encrypt_event", null),
-    RequestedPermission("decrypt_event", null),
-    RequestedPermission("encrypt_tag_array", null),
-    RequestedPermission("decrypt_tag_array", null),
-    RequestedPermission("decrypt_zap_event", null),
-    RequestedPermission("sign_event", 0),
-    RequestedPermission("sign_event", 1),
-    RequestedPermission("sign_event", 3),
-    RequestedPermission("sign_event", 4),
-    RequestedPermission("sign_event", 5),
-    RequestedPermission("sign_event", 6),
-    RequestedPermission("sign_event", 7),
-    RequestedPermission("sign_event", 9734),
-    RequestedPermission("sign_event", 9735),
-    RequestedPermission("sign_event", 10000),
-    RequestedPermission("sign_event", 10002),
-    RequestedPermission("sign_event", 10003),
-    RequestedPermission("sign_event", 10013),
-    RequestedPermission("sign_event", 31234),
-    RequestedPermission("sign_event", 30078),
-    RequestedPermission("sign_event", 22242),
-    RequestedPermission("sign_event", 27235),
-    RequestedPermission("sign_event", 30023),
+    Permission("get_public_key", null),
+    Permission("encrypt_clear_text", null),
+    Permission("decrypt_clear_text", null),
+    Permission("encrypt_event", null),
+    Permission("decrypt_event", null),
+    Permission("encrypt_tag_array", null),
+    Permission("decrypt_tag_array", null),
+    Permission("decrypt_zap_event", null),
+    Permission("sign_event", 0),
+    Permission("sign_event", 1),
+    Permission("sign_event", 3),
+    Permission("sign_event", 4),
+    Permission("sign_event", 5),
+    Permission("sign_event", 6),
+    Permission("sign_event", 7),
+    Permission("sign_event", 9734),
+    Permission("sign_event", 9735),
+    Permission("sign_event", 10000),
+    Permission("sign_event", 10002),
+    Permission("sign_event", 10003),
+    Permission("sign_event", 10013),
+    Permission("sign_event", 31234),
+    Permission("sign_event", 30078),
+    Permission("sign_event", 22242),
+    Permission("sign_event", 27235),
+    Permission("sign_event", 30023),
 )
 
 /**
@@ -354,20 +388,19 @@ fun SignerType.methodString(): String = name.lowercase()
  * text note" — built from the same translations and event-kind descriptions
  * as the Android app.
  */
-fun SignerType.describe(kind: Int?, language: String = Strings.currentLanguage.value): String = when (this) {
-    SignerType.CONNECT -> SignerDescriptions.permission("connect", null, language)
-    SignerType.SIGN_EVENT -> Strings.format(
-        "wants_you_to_sign_a",
-        SignerDescriptions.signEventDescription(kind, language),
-        language = language,
+fun SignerType.describe(kind: Int?): String = when (this) {
+    SignerType.CONNECT -> Permission("connect", null).localizedBlocking()
+    SignerType.SIGN_EVENT -> getStringBlocking(
+        Res.string.wants_you_to_sign_a,
+        Permission("sign_event", kind).localizedBlocking(),
     )
-    SignerType.SWITCH_RELAYS -> Strings.get("switch_relays", language)
-    SignerType.LOGOUT -> Strings.get("logout", language)
-    SignerType.INVALID -> Strings.get("invalid_request", language)
-    SignerType.PING -> Strings.get("ping", language)
-    SignerType.NIP44_V3_ENCRYPT -> Strings.get("nip44_v3_wants_to_encrypt", language)
-    SignerType.NIP44_V3_DECRYPT -> Strings.get("nip44_v3_wants_to_decrypt", language)
-    else -> "${Strings.get("requests", language)} ${SignerDescriptions.permission(methodString(), kind, language)}"
+    SignerType.SWITCH_RELAYS -> getStringBlocking(Res.string.switch_relays)
+    SignerType.LOGOUT -> getStringBlocking(Res.string.logout)
+    SignerType.INVALID -> getStringBlocking(Res.string.invalid_request)
+    SignerType.PING -> getStringBlocking(Res.string.ping)
+    SignerType.NIP44_V3_ENCRYPT -> getStringBlocking(Res.string.nip44_v3_wants_to_encrypt)
+    SignerType.NIP44_V3_DECRYPT -> getStringBlocking(Res.string.nip44_v3_wants_to_decrypt)
+    else -> "${getStringBlocking(Res.string.requests)} ${Permission(methodString(), kind).localizedBlocking()}"
 }
 
 /**
@@ -375,21 +408,21 @@ fun SignerType.describe(kind: Int?, language: String = Strings.currentLanguage.v
  * text with NIP44", "wants to read Short text note from NIP04 encrypted
  * content", … Falls back to [describe] for other request types.
  */
-fun SignerType.describe(kind: Int?, content: EncryptedContent?, language: String = Strings.currentLanguage.value): String {
-    if (this !in contentScopedSignerTypes || content == null) return describe(kind, language)
+fun SignerType.describe(kind: Int?, content: EncryptedContent?): String {
+    if (this !in contentScopedSignerTypes || content == null) return describe(kind)
     val nip = name.substringBefore('_')
     val isEncrypt = this == SignerType.NIP04_ENCRYPT || this == SignerType.NIP44_ENCRYPT
     val text = when (content.type) {
         EncryptedContentType.EVENT -> {
-            val what = SignerDescriptions.signEventDescription(content.eventKind, language)
-            Strings.format(if (isEncrypt) "wants_to_encrypt_with" else "wants_to_read_from_encrypted_content", what, nip, language = language)
+            val what = Permission("sign_event", content.eventKind).localizedBlocking()
+            getStringBlocking(if (isEncrypt) Res.string.wants_to_encrypt_with else Res.string.wants_to_read_from_encrypted_content, what, nip)
         }
 
         EncryptedContentType.TAG_ARRAY ->
-            Strings.format(if (isEncrypt) "wants_to_encrypt_this_list_of_tags_with" else "wants_to_read_this_list_of_tags_from_encrypted_content", nip, language = language)
+            getStringBlocking(if (isEncrypt) Res.string.wants_to_encrypt_this_list_of_tags_with else Res.string.wants_to_read_this_list_of_tags_from_encrypted_content, nip)
 
         EncryptedContentType.CLEAR_TEXT ->
-            Strings.format(if (isEncrypt) "wants_to_encrypt_this_text_with" else "wants_to_read_this_text_from_encrypted_content", nip, language = language)
+            getStringBlocking(if (isEncrypt) Res.string.wants_to_encrypt_this_text_with else Res.string.wants_to_read_this_text_from_encrypted_content, nip)
     }
     return text.trim()
 }

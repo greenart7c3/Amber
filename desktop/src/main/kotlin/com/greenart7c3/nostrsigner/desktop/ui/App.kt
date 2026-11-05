@@ -59,6 +59,19 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
+import com.greenart7c3.nostrsigner.commonsui.Res
+import com.greenart7c3.nostrsigner.commonsui.account
+import com.greenart7c3.nostrsigner.commonsui.applications
+import com.greenart7c3.nostrsigner.commonsui.d_add_an_account
+import com.greenart7c3.nostrsigner.commonsui.d_route_applications_sub
+import com.greenart7c3.nostrsigner.commonsui.d_route_incoming_sub
+import com.greenart7c3.nostrsigner.commonsui.d_route_incoming_title
+import com.greenart7c3.nostrsigner.commonsui.d_route_relays_sub
+import com.greenart7c3.nostrsigner.commonsui.d_route_settings_sub
+import com.greenart7c3.nostrsigner.commonsui.d_switch_account
+import com.greenart7c3.nostrsigner.commonsui.d_tagline
+import com.greenart7c3.nostrsigner.commonsui.relays
+import com.greenart7c3.nostrsigner.commonsui.settings
 import com.greenart7c3.nostrsigner.desktop.Session
 import com.greenart7c3.nostrsigner.desktop.core.AccountsStore
 import com.greenart7c3.nostrsigner.desktop.core.AmberDesktop
@@ -66,16 +79,17 @@ import com.greenart7c3.nostrsigner.desktop.core.BuildVariant
 import com.greenart7c3.nostrsigner.desktop.core.CrashReporter
 import com.greenart7c3.nostrsigner.desktop.core.DesktopAccount
 import com.greenart7c3.nostrsigner.desktop.core.PassphraseLock
-import com.greenart7c3.nostrsigner.desktop.core.Strings
 import com.greenart7c3.nostrsigner.desktop.core.UriLaunch
 import com.greenart7c3.nostrsigner.desktop.core.toShortenHex
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.stringResource
 
-sealed class Route(val titleKey: String, val subtitleKey: String, val icon: ImageVector) {
-    data object IncomingRequest : Route("d_route_incoming_title", "d_route_incoming_sub", Icons.Default.Notifications)
-    data object Applications : Route("applications", "d_route_applications_sub", Icons.Default.Apps)
-    data object Relays : Route("relays", "d_route_relays_sub", Icons.Default.CellTower)
-    data object Settings : Route("settings", "d_route_settings_sub", Icons.Default.Settings)
+sealed class Route(val title: StringResource, val subtitle: StringResource, val icon: ImageVector) {
+    data object IncomingRequest : Route(Res.string.d_route_incoming_title, Res.string.d_route_incoming_sub, Icons.Default.Notifications)
+    data object Applications : Route(Res.string.applications, Res.string.d_route_applications_sub, Icons.Default.Apps)
+    data object Relays : Route(Res.string.relays, Res.string.d_route_relays_sub, Icons.Default.CellTower)
+    data object Settings : Route(Res.string.settings, Res.string.d_route_settings_sub, Icons.Default.Settings)
 }
 
 val sidebarRoutes = listOf(Route.IncomingRequest, Route.Applications, Route.Relays, Route.Settings)
@@ -90,7 +104,6 @@ fun App() {
 
     val currentRoute by UiState.currentRoute.collectAsState()
     val selectedApplication by UiState.selectedApplication.collectAsState()
-    val language by Strings.currentLanguage.collectAsState()
 
     LaunchedEffect(Unit) {
         Toaster.messages.collect { snackbarHostState.showSnackbar(it) }
@@ -178,7 +191,7 @@ fun App() {
                     Column(Modifier.fillMaxSize()) {
                         CompactTopBar(acc)
                         HorizontalDivider()
-                        MainContent(acc, currentRoute, selectedApplication, language, Modifier.weight(1f))
+                        MainContent(acc, currentRoute, selectedApplication, Modifier.weight(1f))
                         BottomNavigation(currentRoute, pending.size, onSelect)
                     }
                 } else {
@@ -189,7 +202,7 @@ fun App() {
                             NavigationRail(acc, currentRoute, pending.size, onSelect)
                         }
                         VerticalDivider()
-                        MainContent(acc, currentRoute, selectedApplication, language, Modifier.weight(1f))
+                        MainContent(acc, currentRoute, selectedApplication, Modifier.weight(1f))
                     }
                 }
             }
@@ -202,7 +215,6 @@ private fun MainContent(
     account: DesktopAccount,
     currentRoute: Route,
     selectedApp: String?,
-    language: String,
     modifier: Modifier = Modifier,
 ) {
     val compact = LocalLayoutWidth.current == LayoutWidth.COMPACT
@@ -217,12 +229,12 @@ private fun MainContent(
         Column(Modifier.widthIn(max = 880.dp).fillMaxWidth()) {
             if (selectedApp == null) {
                 Text(
-                    Strings.get(currentRoute.titleKey, language),
+                    stringResource(currentRoute.title),
                     style = if (compact) MaterialTheme.typography.titleLarge else MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.SemiBold,
                 )
                 Text(
-                    Strings.get(currentRoute.subtitleKey, language),
+                    stringResource(currentRoute.subtitle),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -282,10 +294,9 @@ private fun BottomNavigation(
     pendingCount: Int,
     onSelect: (Route) -> Unit,
 ) {
-    val language by Strings.currentLanguage.collectAsState()
     NavigationBar(containerColor = MaterialTheme.colorScheme.surface) {
         sidebarRoutes.forEach { route ->
-            val title = Strings.get(route.titleKey, language)
+            val title = stringResource(route.title)
             NavigationBarItem(
                 selected = route == currentRoute,
                 onClick = { onSelect(route) },
@@ -305,7 +316,6 @@ private fun NavigationRail(
     pendingCount: Int,
     onSelect: (Route) -> Unit,
 ) {
-    val language by Strings.currentLanguage.collectAsState()
     Column(
         Modifier
             .width(80.dp)
@@ -318,7 +328,7 @@ private fun NavigationRail(
         Spacer(Modifier.height(16.dp))
 
         sidebarRoutes.forEachIndexed { index, route ->
-            val title = Strings.get(route.titleKey, language)
+            val title = stringResource(route.title)
             val selected = route == currentRoute
             TooltipArea(
                 tooltip = {
@@ -389,7 +399,7 @@ private fun Sidebar(
             RelayStatusWidget()
         }
         Text(
-            Strings.get("d_tagline"),
+            stringResource(Res.string.d_tagline),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(horizontal = 8.dp),
@@ -421,8 +431,7 @@ private fun SidebarItem(
     shortcut: String,
     onClick: () -> Unit,
 ) {
-    val language by Strings.currentLanguage.collectAsState()
-    val title = Strings.get(route.titleKey, language)
+    val title = stringResource(route.title)
     Surface(
         shape = RoundedCornerShape(8.dp),
         color = if (selected) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surface,
@@ -477,7 +486,6 @@ private fun AccountSwitcher(
 ) {
     val accounts by AccountsStore.accounts.collectAsState()
     val name by account.name.collectAsState()
-    val language by Strings.currentLanguage.collectAsState()
     val scope = rememberCoroutineScope()
     var expanded by remember { mutableStateOf(false) }
 
@@ -503,7 +511,7 @@ private fun AccountSwitcher(
                 Spacer(Modifier.width(10.dp))
                 Column(Modifier.weight(1f)) {
                     Text(
-                        name.ifBlank { Strings.get("account", language) },
+                        name.ifBlank { stringResource(Res.string.account) },
                         style = MaterialTheme.typography.bodyMedium,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
@@ -516,7 +524,7 @@ private fun AccountSwitcher(
                         overflow = TextOverflow.Ellipsis,
                     )
                 }
-                Icon(Icons.Default.UnfoldMore, Strings.get("d_switch_account", language), Modifier.size(18.dp))
+                Icon(Icons.Default.UnfoldMore, stringResource(Res.string.d_switch_account), Modifier.size(18.dp))
             }
         }
 
@@ -543,7 +551,7 @@ private fun AccountSwitcher(
             }
             HorizontalDivider()
             DropdownMenuItem(
-                text = { Text(Strings.get("d_add_an_account", language)) },
+                text = { Text(stringResource(Res.string.d_add_an_account)) },
                 leadingIcon = { Icon(Icons.Default.Add, null, Modifier.size(18.dp)) },
                 onClick = {
                     expanded = false

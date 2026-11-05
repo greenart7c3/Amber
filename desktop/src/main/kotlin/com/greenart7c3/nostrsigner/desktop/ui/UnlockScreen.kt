@@ -15,7 +15,6 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -34,15 +33,31 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import com.greenart7c3.nostrsigner.commonsui.Res
+import com.greenart7c3.nostrsigner.commonsui.d_failed_update_passphrase
+import com.greenart7c3.nostrsigner.commonsui.d_locked
+import com.greenart7c3.nostrsigner.commonsui.d_new_passphrase
+import com.greenart7c3.nostrsigner.commonsui.d_os_secret_unavailable
+import com.greenart7c3.nostrsigner.commonsui.d_passphrase
+import com.greenart7c3.nostrsigner.commonsui.d_passphrase_desc
+import com.greenart7c3.nostrsigner.commonsui.d_passphrase_never_stored
+import com.greenart7c3.nostrsigner.commonsui.d_passphrases_no_match
+import com.greenart7c3.nostrsigner.commonsui.d_repeat_passphrase
+import com.greenart7c3.nostrsigner.commonsui.d_set_passphrase
+import com.greenart7c3.nostrsigner.commonsui.d_unlock
+import com.greenart7c3.nostrsigner.commonsui.d_unlocking
+import com.greenart7c3.nostrsigner.commonsui.d_use_12_chars
+import com.greenart7c3.nostrsigner.commonsui.d_working
+import com.greenart7c3.nostrsigner.commonsui.d_wrong_passphrase
+import com.greenart7c3.nostrsigner.commonsui.getStringBlocking
 import com.greenart7c3.nostrsigner.desktop.core.BuildVariant
 import com.greenart7c3.nostrsigner.desktop.core.PassphraseLock
-import com.greenart7c3.nostrsigner.desktop.core.Strings
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun UnlockScreen() {
     val scope = rememberCoroutineScope()
-    val language by Strings.currentLanguage.collectAsState()
     var passphrase by remember { mutableStateOf("") }
     var error by remember { mutableStateOf<String?>(null) }
     var working by remember { mutableStateOf(false) }
@@ -59,23 +74,23 @@ fun UnlockScreen() {
                 if (PassphraseLock.unlock(passphrase.toCharArray())) {
                     passphrase = ""
                 } else {
-                    error = Strings.get("d_wrong_passphrase", language)
+                    error = getStringBlocking(Res.string.d_wrong_passphrase)
                 }
             } catch (e: PassphraseLock.OsSecretUnavailableException) {
-                error = Strings.format("d_os_secret_unavailable", e.storeDescription, language = language)
+                error = getStringBlocking(Res.string.d_os_secret_unavailable, e.storeDescription)
             }
             working = false
         }
     }
 
     LockScreenScaffold(
-        subtitle = Strings.get("d_locked", language),
+        subtitle = stringResource(Res.string.d_locked),
         onEnter = { submit() },
     ) {
         OutlinedTextField(
             value = passphrase,
             onValueChange = { passphrase = it },
-            label = { Text(Strings.get("d_passphrase", language)) },
+            label = { Text(stringResource(Res.string.d_passphrase)) },
             singleLine = true,
             visualTransformation = PasswordVisualTransformation(),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
@@ -87,7 +102,7 @@ fun UnlockScreen() {
         }
         Spacer(Modifier.height(16.dp))
         AmberButton(
-            text = if (working) Strings.get("d_unlocking", language) else Strings.get("d_unlock", language),
+            text = if (working) stringResource(Res.string.d_unlocking) else stringResource(Res.string.d_unlock),
             fillWidth = true,
             enabled = passphrase.isNotEmpty() && !working,
             onClick = ::submit,
@@ -102,7 +117,6 @@ fun UnlockScreen() {
 @Composable
 fun PassphraseSetupScreen() {
     val scope = rememberCoroutineScope()
-    val language by Strings.currentLanguage.collectAsState()
     var passphrase by remember { mutableStateOf("") }
     var confirm by remember { mutableStateOf("") }
     var error by remember { mutableStateOf<String?>(null) }
@@ -115,11 +129,11 @@ fun PassphraseSetupScreen() {
         if (working) return
         error = null
         if (passphrase.length < PassphraseLock.MIN_PASSPHRASE_LENGTH) {
-            error = Strings.get("d_use_12_chars", language)
+            error = getStringBlocking(Res.string.d_use_12_chars)
             return
         }
         if (passphrase != confirm) {
-            error = Strings.get("d_passphrases_no_match", language)
+            error = getStringBlocking(Res.string.d_passphrases_no_match)
             return
         }
         working = true
@@ -129,20 +143,20 @@ fun PassphraseSetupScreen() {
                 passphrase = ""
                 confirm = ""
             } catch (e: Exception) {
-                error = e.message ?: Strings.get("d_failed_update_passphrase", language)
+                error = e.message ?: getStringBlocking(Res.string.d_failed_update_passphrase)
             }
             working = false
         }
     }
 
     LockScreenScaffold(
-        subtitle = Strings.get("d_passphrase_desc", language),
+        subtitle = stringResource(Res.string.d_passphrase_desc),
         onEnter = { submit() },
     ) {
         OutlinedTextField(
             value = passphrase,
             onValueChange = { passphrase = it },
-            label = { Text(Strings.get("d_new_passphrase", language)) },
+            label = { Text(stringResource(Res.string.d_new_passphrase)) },
             singleLine = true,
             visualTransformation = PasswordVisualTransformation(),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
@@ -152,7 +166,7 @@ fun PassphraseSetupScreen() {
         OutlinedTextField(
             value = confirm,
             onValueChange = { confirm = it },
-            label = { Text(Strings.get("d_repeat_passphrase", language)) },
+            label = { Text(stringResource(Res.string.d_repeat_passphrase)) },
             singleLine = true,
             visualTransformation = PasswordVisualTransformation(),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
@@ -164,14 +178,14 @@ fun PassphraseSetupScreen() {
         }
         Spacer(Modifier.height(16.dp))
         AmberButton(
-            text = if (working) Strings.get("d_working", language) else Strings.get("d_set_passphrase", language),
+            text = if (working) stringResource(Res.string.d_working) else stringResource(Res.string.d_set_passphrase),
             fillWidth = true,
             enabled = !working,
             onClick = ::submit,
         )
         Spacer(Modifier.height(8.dp))
         Text(
-            Strings.get("d_passphrase_never_stored", language),
+            stringResource(Res.string.d_passphrase_never_stored),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )

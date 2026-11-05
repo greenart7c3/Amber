@@ -1021,6 +1021,11 @@ Android용 모든 Nostr 앱 보기:</string>
     <string name="d_notifications_sub">요청에 승인이 필요할 때 시스템 알림을 표시합니다.</string>
     <string name="d_start_on_boot">부팅 시 시작</string>
     <string name="d_start_on_boot_sub">로그인할 때 Amber를 자동으로 시작합니다. 잠긴 상태로 시작되므로 서명하려면 암호를 입력하세요.</string>
+    <string name="d_local_bunker_server">로컬 bunker 서버</string>
+    <string name="d_local_bunker_server_sub">이 기기의 %1$d번 포트에서 bunker(NIP-46) 연결용 WebSocket relay를 실행하여 클라이언트가 공개 relay 없이 연결할 수 있게 합니다. 새 bunker 연결에도 기본 relay와 함께 이 relay가 포함됩니다.</string>
+    <string name="d_local_bunker_port">relay 포트</string>
+    <string name="d_local_bunker_port_invalid">포트는 1024에서 65535 사이의 숫자여야 합니다.</string>
+    <string name="d_local_bunker_port_in_use">포트를 변경하기 전에 로컬 relay를 사용하는 bunker 연결을 삭제하세요.</string>
     <string name="d_active">활성</string>
     <string name="d_switch">전환</string>
     <string name="d_log_out">로그아웃</string>

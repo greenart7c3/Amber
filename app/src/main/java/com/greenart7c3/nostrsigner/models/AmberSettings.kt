@@ -45,6 +45,19 @@ data class AmberSettings(
     val logRetention: RetentionPeriod = RetentionPeriod.SEVEN_DAYS,
     val historyRetention: RetentionPeriod = RetentionPeriod.THIRTY_DAYS,
     val sortApplicationsAlphabetically: Boolean = false,
+    /**
+     * Serve a local WebSocket relay for bunker (NIP-46) connections on the
+     * loopback interface (`LocalBunkerRelayServer`); new bunker connections
+     * also list it beside the default relays. Opt-in on Android (the desktop
+     * runs it by default); never runs in the offline flavor.
+     */
+    val localBunkerServer: Boolean = false,
+    /**
+     * Port of the local relay; null = automatic (`LocalBunkerRelayServer.defaultPort`).
+     * Only changeable while no bunker connection uses the relay: the saved
+     * `bunker://` URIs would keep pointing at the old port.
+     */
+    val localBunkerPort: Int? = null,
 ) {
     val useProxy: Boolean get() = torMode != TorMode.DISABLED
 }

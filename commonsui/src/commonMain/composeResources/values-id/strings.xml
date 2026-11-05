@@ -1021,6 +1021,11 @@ Yang dapat Anda lakukan:
     <string name="d_notifications_sub">Tampilkan notifikasi sistem saat ada permintaan yang perlu persetujuan Anda.</string>
     <string name="d_start_on_boot">Mulai saat boot</string>
     <string name="d_start_on_boot_sub">Mulai Amber secara otomatis saat Anda masuk. Terbuka dalam keadaan terkunci — masukkan frasa sandi Anda untuk menandatangani.</string>
+    <string name="d_local_bunker_server">Server bunker lokal</string>
+    <string name="d_local_bunker_server_sub">Menjalankan relay WebSocket untuk koneksi bunker (NIP-46) di port %1$d perangkat ini, sehingga klien dapat terhubung tanpa relay publik. Koneksi bunker baru juga mencantumkannya di samping relay default.</string>
+    <string name="d_local_bunker_port">Port relay</string>
+    <string name="d_local_bunker_port_invalid">Port harus berupa angka antara 1024 dan 65535.</string>
+    <string name="d_local_bunker_port_in_use">Hapus koneksi bunker yang menggunakan relay lokal sebelum mengubah port-nya.</string>
     <string name="d_active">Aktif</string>
     <string name="d_switch">Ganti</string>
     <string name="d_log_out">Keluar</string>

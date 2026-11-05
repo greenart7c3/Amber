@@ -1022,6 +1022,11 @@ Was du tun kannst:
     <string name="d_notifications_sub">Eine Systembenachrichtigung anzeigen, wenn eine Anfrage deine Genehmigung erfordert.</string>
     <string name="d_start_on_boot">Beim Start ausführen</string>
     <string name="d_start_on_boot_sub">Amber automatisch starten, wenn du dich anmeldest. Es startet gesperrt — gib deine Passphrase ein, um zu signieren.</string>
+    <string name="d_local_bunker_server">Lokaler Bunker-Server</string>
+    <string name="d_local_bunker_server_sub">Betreibt auf Port %1$d dieses Geräts ein WebSocket-Relais für Bunker-Verbindungen (NIP-46), damit sich Clients ohne öffentliche Relais verbinden können. Neue Bunker-Verbindungen führen es zusätzlich zu den Standard-Relais auf.</string>
+    <string name="d_local_bunker_port">Relais-Port</string>
+    <string name="d_local_bunker_port_invalid">Der Port muss eine Zahl zwischen 1024 und 65535 sein.</string>
+    <string name="d_local_bunker_port_in_use">Lösche die Bunker-Verbindungen, die das lokale Relais nutzen, bevor du seinen Port änderst.</string>
     <string name="d_active">Aktiv</string>
     <string name="d_switch">Wechseln</string>
     <string name="d_log_out">Abmelden</string>

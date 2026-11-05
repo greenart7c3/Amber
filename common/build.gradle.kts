@@ -18,6 +18,8 @@ dependencies {
     // Each app ships its own Quartz build (quartz-android or quartz-jvm, which
     // share this API), so this module only compiles against it.
     compileOnly(libs.quartz.jvm)
+    // StateFlow for LocalRelayServer.status; both apps get coroutines through Quartz.
+    compileOnly(libs.kotlinx.coroutines.core)
     // @Immutable for the Android app's Compose compiler; not needed at runtime.
     compileOnly(libs.compose.runtime.annotation)
 

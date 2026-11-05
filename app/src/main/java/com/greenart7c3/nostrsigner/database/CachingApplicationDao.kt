@@ -284,6 +284,8 @@ class CachingApplicationDao(
 
     override suspend fun getAllByKey(key: String): List<ApplicationPermissionsEntity> = delegate.getAllByKey(key)
 
+    override fun getAllKeys(): List<String> = delegate.getAllKeys()
+
     override fun getApplicationKeyNames(): List<ApplicationKeyName> = delegate.getApplicationKeyNames()
 
     override fun getAllRejectedPermissions(): List<ApplicationPermissionsEntity> = delegate.getAllRejectedPermissions()

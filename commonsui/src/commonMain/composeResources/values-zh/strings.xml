@@ -1038,6 +1038,11 @@
     <string name="d_notifications_sub">当请求需要你批准时显示系统通知。</string>
     <string name="d_start_on_boot">开机自动启动</string>
     <string name="d_start_on_boot_sub">登录时自动启动 Amber。启动时处于锁定状态——输入密码短语后才能签名。</string>
+    <string name="d_local_bunker_server">本地 bunker 服务器</string>
+    <string name="d_local_bunker_server_sub">在本设备的 %1$d 端口上运行一个用于 bunker（NIP-46）连接的 WebSocket 中继，让客户端无需公共中继即可连接。新的 bunker 连接也会在默认中继旁列出它。</string>
+    <string name="d_local_bunker_port">中继端口</string>
+    <string name="d_local_bunker_port_invalid">端口必须是 1024 到 65535 之间的数字。</string>
+    <string name="d_local_bunker_port_in_use">更改端口前，请先删除使用本地中继的 bunker 连接。</string>
     <string name="d_active">当前</string>
     <string name="d_switch">切换</string>
     <string name="d_log_out">退出登录</string>

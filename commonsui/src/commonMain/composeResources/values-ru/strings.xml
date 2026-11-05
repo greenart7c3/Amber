@@ -1024,6 +1024,11 @@
     <string name="d_notifications_sub">Показывать системное уведомление, когда запрос требует вашего одобрения.</string>
     <string name="d_start_on_boot">Запускать при включении</string>
     <string name="d_start_on_boot_sub">Запускает Amber автоматически при входе в систему. Он запускается заблокированным — введите пароль-фразу для подписи.</string>
+    <string name="d_local_bunker_server">Локальный bunker-сервер</string>
+    <string name="d_local_bunker_server_sub">Запускает WebSocket relay-сервер для bunker-подключений (NIP-46) на порту %1$d этого устройства, чтобы клиенты могли подключаться без публичных relay-серверов. Новые bunker-подключения также указывают его рядом с relay-серверами по умолчанию.</string>
+    <string name="d_local_bunker_port">Порт relay-сервера</string>
+    <string name="d_local_bunker_port_invalid">Порт должен быть числом от 1024 до 65535.</string>
+    <string name="d_local_bunker_port_in_use">Удалите bunker-подключения, использующие локальный relay-сервер, прежде чем менять его порт.</string>
     <string name="d_active">Активен</string>
     <string name="d_switch">Переключить</string>
     <string name="d_log_out">Выйти</string>

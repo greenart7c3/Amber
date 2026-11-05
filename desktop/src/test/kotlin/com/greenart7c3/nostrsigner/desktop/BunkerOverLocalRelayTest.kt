@@ -1,11 +1,11 @@
 package com.greenart7c3.nostrsigner.desktop
 
+import com.greenart7c3.nostrsigner.common.relays.LocalRelayServer.Status
 import com.greenart7c3.nostrsigner.commonsui.Res
 import com.greenart7c3.nostrsigner.commonsui.d_local_bunker_port_in_use
 import com.greenart7c3.nostrsigner.desktop.core.AccountManager
 import com.greenart7c3.nostrsigner.desktop.core.AmberDesktop
 import com.greenart7c3.nostrsigner.desktop.core.LocalBunkerRelay
-import com.greenart7c3.nostrsigner.desktop.core.LocalBunkerRelay.Status
 import com.greenart7c3.nostrsigner.desktop.core.OkHttpWebSocket
 import com.greenart7c3.nostrsigner.desktop.core.RememberType
 import com.greenart7c3.nostrsigner.desktop.core.SettingsStore

@@ -1,4 +1,4 @@
-package com.greenart7c3.nostrsigner.service
+package com.greenart7c3.nostrsigner.common.relays
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse

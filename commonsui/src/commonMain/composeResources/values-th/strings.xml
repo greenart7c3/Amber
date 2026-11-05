@@ -1045,6 +1045,11 @@
     <string name="d_notifications_sub">แสดงการแจ้งเตือนของระบบเมื่อมีคำขอที่ต้องการการอนุมัติของคุณ</string>
     <string name="d_start_on_boot">เริ่มต้นเมื่อบูตเครื่อง</string>
     <string name="d_start_on_boot_sub">เริ่ม Amber โดยอัตโนมัติเมื่อคุณล็อกอิน มันจะเริ่มในสถานะล็อก — ป้อนวลีรหัสผ่านเพื่อลงนาม</string>
+    <string name="d_local_bunker_server">เซิร์ฟเวอร์ bunker ภายในเครื่อง</string>
+    <string name="d_local_bunker_server_sub">เรียกใช้ relay แบบ WebSocket สำหรับการเชื่อมต่อ bunker (NIP-46) บนพอร์ต %1$d ของอุปกรณ์นี้ เพื่อให้ไคลเอนต์เชื่อมต่อได้โดยไม่ต้องใช้ relay สาธารณะ การเชื่อมต่อ bunker ใหม่จะระบุ relay นี้ไว้คู่กับ relay เริ่มต้นด้วย</string>
+    <string name="d_local_bunker_port">พอร์ตของ relay</string>
+    <string name="d_local_bunker_port_invalid">พอร์ตต้องเป็นตัวเลขระหว่าง 1024 ถึง 65535</string>
+    <string name="d_local_bunker_port_in_use">ลบการเชื่อมต่อ bunker ที่ใช้ relay ภายในเครื่องก่อนเปลี่ยนพอร์ต</string>
     <string name="d_active">ใช้งานอยู่</string>
     <string name="d_switch">สลับ</string>
     <string name="d_log_out">ออกจากระบบ</string>

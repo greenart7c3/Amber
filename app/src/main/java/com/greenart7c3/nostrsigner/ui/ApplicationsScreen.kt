@@ -27,6 +27,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.LinkAnnotation
 import androidx.compose.ui.text.SpanStyle
@@ -280,7 +281,7 @@ fun ApplicationsScreen(
                                 )
                                 Text(
                                     modifier = Modifier.padding(top = 4.dp, bottom = 16.dp),
-                                    text = if (applicationWithHistory.lastUsed == 0L) stringResource(R.string.never) else TimeUtils.formatLongToCustomDateTime(applicationWithHistory.lastUsed * 1000),
+                                    text = if (applicationWithHistory.lastUsed == 0L) stringResource(R.string.never) else TimeUtils.formatDateTime(LocalContext.current, applicationWithHistory.lastUsed * 1000),
                                     fontSize = 16.sp,
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis,

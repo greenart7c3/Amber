@@ -43,6 +43,7 @@ import com.greenart7c3.nostrsigner.desktop.core.AccountManager
 import com.greenart7c3.nostrsigner.desktop.core.AccountsStore
 import com.greenart7c3.nostrsigner.desktop.core.AmberDesktop
 import com.greenart7c3.nostrsigner.desktop.core.AutoStart
+import com.greenart7c3.nostrsigner.desktop.core.DateTimes
 import com.greenart7c3.nostrsigner.desktop.core.DesktopAccount
 import com.greenart7c3.nostrsigner.desktop.core.DesktopKeyStore
 import com.greenart7c3.nostrsigner.desktop.core.PassphraseLock
@@ -53,8 +54,6 @@ import com.greenart7c3.nostrsigner.desktop.core.TorManager
 import com.greenart7c3.nostrsigner.desktop.core.TorMode
 import com.greenart7c3.nostrsigner.desktop.core.TorStatus
 import com.greenart7c3.nostrsigner.desktop.core.toShortenHex
-import java.text.DateFormat
-import java.util.Date
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -770,7 +769,7 @@ private fun LogsDialog(
                 }
                 logs.sortedByDescending { it.time }.forEach { log ->
                     Text(
-                        "${DateFormat.getDateTimeInstance().format(Date(log.time))} · ${log.type} · ${log.url}",
+                        "${DateTimes.format(log.time)} · ${log.type} · ${log.url}",
                         style = MaterialTheme.typography.bodySmall,
                     )
                     Text(log.message, style = MaterialTheme.typography.bodyMedium)

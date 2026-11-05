@@ -60,7 +60,7 @@ import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.checkNotInMainThread
 import com.greenart7c3.nostrsigner.models.Account
-import com.greenart7c3.nostrsigner.models.TimeUtils.formatLongToCustomDateTimeWithSeconds
+import com.greenart7c3.nostrsigner.models.TimeUtils as AmberTimeUtils
 import com.greenart7c3.nostrsigner.models.defaultAppRelays
 import com.greenart7c3.nostrsigner.relays.AmberListenerSingleton
 import com.greenart7c3.nostrsigner.service.TrustScoreService
@@ -551,6 +551,7 @@ fun RelayLogScreen(
     account: Account,
     url: String,
 ) {
+    val context = LocalContext.current
     val pager =
         Pager(
             PagingConfig(
@@ -580,7 +581,7 @@ fun RelayLogScreen(
                     ) {
                         Text(
                             modifier = Modifier.padding(top = 16.dp),
-                            text = formatLongToCustomDateTimeWithSeconds(log.time),
+                            text = AmberTimeUtils.formatDateTime(context, log.time, withSeconds = true),
                             fontSize = 14.sp,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,

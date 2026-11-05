@@ -43,14 +43,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.greenart7c3.nostrsigner.desktop.core.AmberDesktop
+import com.greenart7c3.nostrsigner.desktop.core.DateTimes
 import com.greenart7c3.nostrsigner.desktop.core.DeleteAfterType
 import com.greenart7c3.nostrsigner.desktop.core.DesktopAccount
 import com.greenart7c3.nostrsigner.desktop.core.SettingsStore
 import com.greenart7c3.nostrsigner.desktop.core.Strings
 import com.greenart7c3.nostrsigner.desktop.core.isLocalSocket
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.RelayUrlNormalizer
-import java.text.DateFormat
-import java.util.Date
 import kotlinx.coroutines.launch
 
 @Composable
@@ -125,7 +124,7 @@ fun ApplicationsScreen(
                                         if (app.app.isLocalSocket) append(" · ${Strings.get("d_local_socket", language)}")
                                         append(" · ${Strings.format("d_permissions_count", app.permissions.size, language = language)}")
                                         if (app.app.lastUsed > 0) {
-                                            append(" · ${Strings.format("d_last_used", DateFormat.getDateTimeInstance().format(Date(app.app.lastUsed * 1000)), language = language)}")
+                                            append(" · ${Strings.format("d_last_used", DateTimes.format(app.app.lastUsed * 1000), language = language)}")
                                         }
                                     },
                                     style = MaterialTheme.typography.bodySmall,

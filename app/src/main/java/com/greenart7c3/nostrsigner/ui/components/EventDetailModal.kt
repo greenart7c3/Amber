@@ -111,7 +111,7 @@ fun EventDetailModal(
                 )
                 EventSection(
                     stringResource(R.string.date),
-                    TimeUtils.formatLongToCustomDateTimeWithSeconds(event.createdAt * 1000),
+                    TimeUtils.formatDateTime(context, event.createdAt * 1000, withSeconds = true),
                     {
                         copyToClipboard(clipboard, "${event.createdAt}")
                     },

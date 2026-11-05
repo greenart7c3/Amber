@@ -85,7 +85,7 @@ fun LogsScreen(
                             val logsText =
                                 logs.joinToString("\n") { log ->
                                     val time =
-                                        TimeUtils.formatLongToCustomDateTimeWithSeconds(log.time)
+                                        TimeUtils.formatDateTime(context, log.time, withSeconds = true)
                                     val repeats = if (log.repeatCount > 1) " (x${log.repeatCount})" else ""
                                     "$time | ${log.url} | ${log.type} | ${log.message}$repeats"
                                 }
@@ -142,7 +142,7 @@ fun LogsScreen(
                     ) {
                         Text(
                             modifier = Modifier.padding(top = 16.dp),
-                            text = TimeUtils.formatLongToCustomDateTimeWithSeconds(log.time),
+                            text = TimeUtils.formatDateTime(context, log.time, withSeconds = true),
                             fontSize = 14.sp,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,

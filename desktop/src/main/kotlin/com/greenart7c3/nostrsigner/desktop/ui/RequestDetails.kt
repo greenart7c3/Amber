@@ -33,6 +33,7 @@ import com.greenart7c3.nostrsigner.common.SignerType
 import com.greenart7c3.nostrsigner.common.psbt.DecodedPsbt
 import com.greenart7c3.nostrsigner.common.psbt.DecodedPsbtOutput
 import com.greenart7c3.nostrsigner.common.psbt.PsbtDecoder
+import com.greenart7c3.nostrsigner.desktop.core.DateTimes
 import com.greenart7c3.nostrsigner.desktop.core.EncryptedContent
 import com.greenart7c3.nostrsigner.desktop.core.EncryptedContentType
 import com.greenart7c3.nostrsigner.desktop.core.PendingBunkerRequest
@@ -44,8 +45,6 @@ import com.greenart7c3.nostrsigner.desktop.core.nip44v3SignerTypes
 import com.greenart7c3.nostrsigner.desktop.core.toShortenHex
 import com.vitorpamplona.quartz.nip01Core.jackson.JacksonMapper
 import com.vitorpamplona.quartz.utils.Hex
-import java.text.DateFormat
-import java.util.Date
 
 /** The parts of an event the details dialog shows, read from any event JSON. */
 internal data class DetailEvent(
@@ -159,7 +158,7 @@ internal fun RequestDetailsDialog(
                         }
                         DetailSection(
                             Strings.get("date", language),
-                            DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.MEDIUM).format(Date(event.createdAt * 1000)),
+                            DateTimes.format(event.createdAt * 1000),
                             copyValue = event.createdAt.toString(),
                         )
                         if (event.content.isNotEmpty()) {

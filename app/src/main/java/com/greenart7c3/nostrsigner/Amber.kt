@@ -415,11 +415,11 @@ class Amber :
             SingletonImageLoader.get(this@Amber)
         }
 
-        // The first ZoneId.systemDefault() call lazily mmaps tzdata from disk.
+        // The first time zone lookup lazily mmaps tzdata from disk.
         // Force it here so it never happens on the main thread during the first
         // timestamp formatted in composition (StrictMode DiskReadViolation).
         applicationIOScope.launch {
-            AmberTimeUtils.warmUp()
+            AmberTimeUtils.warmUp(this@Amber)
         }
     }
 

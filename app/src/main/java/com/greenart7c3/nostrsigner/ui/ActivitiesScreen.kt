@@ -229,6 +229,7 @@ suspend fun decryptHistoryContent(activity: HistoryEntity, account: Account): St
 @Composable
 fun ActivityRow(activity: HistoryEntity, account: Account) {
     val clipboard = LocalClipboard.current
+    val context = LocalContext.current
     val displayContent by produceState(initialValue = "", activity.id, activity.content) {
         value = withContext(Dispatchers.IO) { decryptHistoryContent(activity, account) }
     }
@@ -305,7 +306,7 @@ fun ActivityRow(activity: HistoryEntity, account: Account) {
 
                 Text(
                     modifier = Modifier.padding(top = 4.dp, bottom = 16.dp),
-                    text = TimeUtils.formatLongToCustomDateTimeWithSeconds(activity.time * 1000),
+                    text = TimeUtils.formatDateTime(context, activity.time * 1000, withSeconds = true),
                     fontSize = 16.sp,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,

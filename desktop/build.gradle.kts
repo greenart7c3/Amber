@@ -199,6 +199,10 @@ compose.desktop {
         jvmArgs += listOf("-XX:+DisableAttachMechanism", "-XX:-HeapDumpOnOutOfMemoryError", "-XX:-CreateCoredumpOnCrash")
         // The version crash reports carry (BuildVariant.version).
         jvmArgs += "-Damber.version=$appVersionName"
+        // Dates follow the OS format (core/DateTimes.kt): the HOST provider
+        // reads the user's Windows/macOS date and time settings (12/24-hour,
+        // custom patterns); Linux has no HOST adapter and falls back to CLDR.
+        jvmArgs += "-Djava.locale.providers=HOST,CLDR"
 
         nativeDistributions {
             // Built-in Tor: the prebuilt Arti library of each OS/arch

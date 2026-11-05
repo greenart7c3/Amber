@@ -47,14 +47,13 @@ import com.greenart7c3.nostrsigner.common.localPubKeyFromPrivKey
 import com.greenart7c3.nostrsigner.desktop.core.AmberDesktop
 import com.greenart7c3.nostrsigner.desktop.core.AppPermissionRecord
 import com.greenart7c3.nostrsigner.desktop.core.AppWithPermissions
+import com.greenart7c3.nostrsigner.desktop.core.DateTimes
 import com.greenart7c3.nostrsigner.desktop.core.DesktopAccount
 import com.greenart7c3.nostrsigner.desktop.core.RememberType
 import com.greenart7c3.nostrsigner.desktop.core.SignerDescriptions
 import com.greenart7c3.nostrsigner.desktop.core.Strings
 import com.greenart7c3.nostrsigner.desktop.core.isLocalSocket
 import com.greenart7c3.nostrsigner.desktop.core.toShortenHex
-import java.text.DateFormat
-import java.util.Date
 import java.util.UUID
 import kotlinx.coroutines.launch
 
@@ -349,7 +348,7 @@ fun ApplicationDetailScreen(
                                     style = MaterialTheme.typography.bodyMedium,
                                 )
                                 Text(
-                                    "${DateFormat.getDateTimeInstance().format(Date(entry.time * 1000))} · " +
+                                    "${DateTimes.format(entry.time * 1000)} · " +
                                         if (entry.accepted) Strings.get("d_accepted", language) else Strings.get("d_rejected", language),
                                     style = MaterialTheme.typography.bodySmall,
                                 )

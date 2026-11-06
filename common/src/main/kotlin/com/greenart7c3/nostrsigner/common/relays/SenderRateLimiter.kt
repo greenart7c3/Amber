@@ -1,20 +1,21 @@
-package com.greenart7c3.nostrsigner.service
+package com.greenart7c3.nostrsigner.common.relays
 
 /**
  * Token buckets limiting NIP-46 events from senders that are not a stored
  * connection: [capacity] events per [windowSeconds] for each sender, refilled
  * steadily, and [aggregateCapacity] per window across all of them. Every
- * request costs a Room write, a decrypt, a parse and usually a signed reply,
+ * request costs a decrypt, a parse, log writes and usually a signed reply,
  * so a flood must cost the sender silence instead of the user's battery.
  *
  * The per-sender bucket stops one key from using up the shared budget. The
  * aggregate bucket is what bounds the total work, since a fresh key costs an
- * attacker nothing. Keyed by `(relay url, sender pubkey)`; the map is bounded,
- * evicting the oldest sender past [maxSenders] keys.
- *
- * Port of the desktop `SenderRateLimiter` (desktop/.../core/BunkerEngine.kt).
+ * attacker nothing. Callers pick the key (the bunker engines use
+ * `(relay url, sender pubkey)`, [LocalRelayServer] the sender pubkey or the
+ * client connection); the map is bounded, evicting the oldest sender past
+ * [maxSenders] keys. Used by the Android `EventNotificationConsumer`, the
+ * desktop `BunkerEngine` and [LocalRelayServer].
  */
-internal class SenderRateLimiter(
+class SenderRateLimiter(
     private val capacity: Int = DEFAULT_CAPACITY,
     private val windowSeconds: Long = DEFAULT_WINDOW_SECONDS,
     // Read in buckets' removeEldestEntry, which detekt doesn't see inside an object expression.
@@ -55,7 +56,7 @@ internal class SenderRateLimiter(
         @Synchronized get() = buckets.size
 
     @Synchronized
-    internal fun resetForTest() {
+    fun resetForTest() {
         buckets.clear()
         aggregate = null
     }

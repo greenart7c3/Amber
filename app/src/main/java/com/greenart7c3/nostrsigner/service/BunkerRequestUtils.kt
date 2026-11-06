@@ -388,7 +388,15 @@ object BunkerRequestUtils {
             if (bunkerRequest.request is BunkerRequestConnect) {
                 savedApplication?.application?.deleteAfter = deleteAfter
             }
-            val relays = responseRelays(bunkerRequest, savedApplication?.application?.relays, defaultRelays)
+            // A brand-new connection that names no relays of its own also gets
+            // the local relay beside the default relays (desktop BunkerEngine
+            // does the same), so clients on this device need no public relay.
+            val fallbackRelays = if (savedApplication == null && bunkerRequest.request is BunkerRequestConnect) {
+                LocalBunkerRelayServer.newBunkerRelays()
+            } else {
+                defaultRelays
+            }
+            val relays = responseRelays(bunkerRequest, savedApplication?.application?.relays, fallbackRelays)
             val secret = if (bunkerRequest.request is BunkerRequestConnect) bunkerRequest.request.secret ?: "" else ""
 
             if (savedApplication == null && bunkerRequest.request !is BunkerRequestConnect) {

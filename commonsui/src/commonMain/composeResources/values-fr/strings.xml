@@ -1023,6 +1023,11 @@ Ce que vous pouvez faire :
     <string name="d_notifications_sub">Afficher une notification système lorsqu'une requête nécessite votre approbation.</string>
     <string name="d_start_on_boot">Lancer au démarrage</string>
     <string name="d_start_on_boot_sub">Lance Amber automatiquement à l'ouverture de session. Il démarre verrouillé — saisissez votre phrase secrète pour signer.</string>
+    <string name="d_local_bunker_server">Serveur bunker local</string>
+    <string name="d_local_bunker_server_sub">Exécute un relais WebSocket pour les connexions bunker (NIP-46) sur le port %1$d de cet appareil, afin que les clients puissent se connecter sans relais publics. Les nouvelles connexions bunker l'indiquent aussi à côté des relais par défaut.</string>
+    <string name="d_local_bunker_port">Port du relais</string>
+    <string name="d_local_bunker_port_invalid">Le port doit être un nombre compris entre 1024 et 65535.</string>
+    <string name="d_local_bunker_port_in_use">Supprimez les connexions bunker qui utilisent le relais local avant de changer son port.</string>
     <string name="d_active">Actif</string>
     <string name="d_switch">Changer</string>
     <string name="d_log_out">Se déconnecter</string>

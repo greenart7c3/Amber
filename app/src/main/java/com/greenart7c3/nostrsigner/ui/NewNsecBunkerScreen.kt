@@ -66,6 +66,7 @@ import com.greenart7c3.nostrsigner.commonsui.wss
 import com.greenart7c3.nostrsigner.commonsui.your_nsec_bunker_has_been_created
 import com.greenart7c3.nostrsigner.database.ApplicationEntity
 import com.greenart7c3.nostrsigner.models.Account
+import com.greenart7c3.nostrsigner.service.LocalBunkerRelayServer
 import com.greenart7c3.nostrsigner.service.LocalKeyAccountIndex
 import com.greenart7c3.nostrsigner.ui.actions.onAddRelay
 import com.greenart7c3.nostrsigner.ui.components.AmberButton
@@ -92,7 +93,9 @@ fun NewNsecBunkerScreen(
 
     val relays =
         remember {
-            mutableStateListOf(*Amber.instance.settings.defaultRelays.toTypedArray())
+            // The local relay rides along with the defaults, so clients on this
+            // device can reach the bunker without any public relay.
+            mutableStateListOf(*LocalBunkerRelayServer.newBunkerRelays().toTypedArray())
         }
 
     val textFieldRelay = remember {

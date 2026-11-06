@@ -3,12 +3,12 @@ package com.greenart7c3.nostrsigner.desktop
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.greenart7c3.nostrsigner.common.generateBunkerPrivKey
 import com.greenart7c3.nostrsigner.common.localPubKeyFromPrivKey
+import com.greenart7c3.nostrsigner.common.relays.LocalRelayServer.Status
 import com.greenart7c3.nostrsigner.desktop.core.AccountManager
 import com.greenart7c3.nostrsigner.desktop.core.AmberDesktop
 import com.greenart7c3.nostrsigner.desktop.core.AppRecord
 import com.greenart7c3.nostrsigner.desktop.core.AppWithPermissions
 import com.greenart7c3.nostrsigner.desktop.core.LocalBunkerRelay
-import com.greenart7c3.nostrsigner.desktop.core.LocalBunkerRelay.Status
 import com.vitorpamplona.quartz.nip01Core.core.Event
 import com.vitorpamplona.quartz.nip01Core.core.hexToByteArray
 import com.vitorpamplona.quartz.nip01Core.core.toHexKey

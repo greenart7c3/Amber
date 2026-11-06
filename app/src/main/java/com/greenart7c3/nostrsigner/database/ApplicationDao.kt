@@ -140,6 +140,10 @@ interface ApplicationDao {
     @Query("SELECT * FROM applicationPermission WHERE pkKey = :key")
     suspend fun getAllByKey(key: String): List<ApplicationPermissionsEntity>
 
+    /** Every connection's client key: the senders the local bunker relay never rate limits. */
+    @Query("SELECT `key` FROM application")
+    fun getAllKeys(): List<String>
+
     @Query("SELECT `key`, `name` FROM application WHERE name <> ''")
     fun getApplicationKeyNames(): List<ApplicationKeyName>
 

@@ -57,6 +57,7 @@ import com.greenart7c3.nostrsigner.service.ApplicationNameCache
 import com.greenart7c3.nostrsigner.service.BackupApplicationsWorker
 import com.greenart7c3.nostrsigner.service.ClearLogsWorker
 import com.greenart7c3.nostrsigner.service.ConnectivityService
+import com.greenart7c3.nostrsigner.service.LocalBunkerRelayServer
 import com.greenart7c3.nostrsigner.service.NotificationSubscription
 import com.greenart7c3.nostrsigner.service.PrivateAddress
 import com.greenart7c3.nostrsigner.service.ProfileSubscription
@@ -465,6 +466,12 @@ class Amber :
 
                 HttpClientManager.getHttpClient(false)
                 HttpClientManager.getHttpClient(true)
+
+                // Local WebSocket relay for bunker connections (opt in under
+                // Settings -> Relays): up before the relays are dialed, so
+                // connections that list it subscribe at once. Loopback only,
+                // so it never waits for Tor.
+                LocalBunkerRelayServer.startIfEnabled()
 
                 launch(Dispatchers.Main) {
                     if (!processLifecycleObserverRegistered) {

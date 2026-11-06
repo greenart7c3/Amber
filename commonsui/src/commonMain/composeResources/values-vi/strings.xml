@@ -1045,6 +1045,11 @@ Bạn có thể làm:
     <string name="d_notifications_sub">Hiển thị thông báo hệ thống khi có yêu cầu cần bạn phê duyệt.</string>
     <string name="d_start_on_boot">Khởi động cùng hệ thống</string>
     <string name="d_start_on_boot_sub">Khởi động Amber tự động khi bạn đăng nhập. Nó khởi động ở trạng thái khóa — nhập cụm mật khẩu để ký.</string>
+    <string name="d_local_bunker_server">Máy chủ bunker cục bộ</string>
+    <string name="d_local_bunker_server_sub">Chạy một relay WebSocket cho các kết nối bunker (NIP-46) trên cổng %1$d của thiết bị này, để client có thể kết nối mà không cần relay công khai. Các kết nối bunker mới cũng liệt kê nó bên cạnh các relay mặc định.</string>
+    <string name="d_local_bunker_port">Cổng relay</string>
+    <string name="d_local_bunker_port_invalid">Cổng phải là một số từ 1024 đến 65535.</string>
+    <string name="d_local_bunker_port_in_use">Hãy xóa các kết nối bunker đang dùng relay cục bộ trước khi đổi cổng của nó.</string>
     <string name="d_active">Đang hoạt động</string>
     <string name="d_switch">Chuyển</string>
     <string name="d_log_out">Đăng xuất</string>

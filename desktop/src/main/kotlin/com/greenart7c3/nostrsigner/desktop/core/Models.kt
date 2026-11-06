@@ -343,8 +343,8 @@ data class DesktopSettings(
      */
     val localBunkerServer: Boolean = true,
     /**
-     * Port of the local relay; null = automatic ([LocalBunkerRelay.PORT], or
-     * [LocalBunkerRelay.DEBUG_PORT] for a debug run). Only changeable while
+     * Port of the local relay; null = automatic (`LocalRelayServer.DEFAULT_PORT`, or
+     * `LocalRelayServer.DEBUG_PORT` for a debug run). Only changeable while
      * no bunker connection uses the relay — the saved `bunker://` URIs would
      * keep pointing at the old port.
      */

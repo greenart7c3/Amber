@@ -1023,6 +1023,11 @@ O que você pode fazer:
     <string name="d_notifications_sub">Mostrar uma notificação do sistema quando uma solicitação precisar da sua aprovação.</string>
     <string name="d_start_on_boot">Iniciar na inicialização</string>
     <string name="d_start_on_boot_sub">Inicia o Amber automaticamente quando você entra. Ele começa bloqueado — digite sua senha para assinar.</string>
+    <string name="d_local_bunker_server">Servidor bunker local</string>
+    <string name="d_local_bunker_server_sub">Executa um relay WebSocket para conexões bunker (NIP-46) na porta %1$d deste dispositivo, para que os clientes se conectem sem relays públicos. As novas conexões bunker também o incluem ao lado dos relays padrão.</string>
+    <string name="d_local_bunker_port">Porta do relay</string>
+    <string name="d_local_bunker_port_invalid">A porta deve ser um número entre 1024 e 65535.</string>
+    <string name="d_local_bunker_port_in_use">Exclua as conexões bunker que usam o relay local antes de alterar a porta dele.</string>
     <string name="d_active">Ativo</string>
     <string name="d_switch">Trocar</string>
     <string name="d_log_out">Sair</string>

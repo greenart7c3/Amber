@@ -1022,6 +1022,11 @@ Yapabilecekleriniz:
     <string name="d_notifications_sub">Bir istek onayınızı gerektirdiğinde sistem bildirimi göster.</string>
     <string name="d_start_on_boot">Açılışta başlat</string>
     <string name="d_start_on_boot_sub">Oturum açtığınızda Amber'i otomatik başlatır. Kilitli başlar; imzalamak için parolanızı girin.</string>
+    <string name="d_local_bunker_server">Yerel bunker sunucusu</string>
+    <string name="d_local_bunker_server_sub">Bu cihazın %1$d numaralı portunda bunker (NIP-46) bağlantıları için bir WebSocket relay'i çalıştırır; böylece istemciler herkese açık relay'ler olmadan bağlanabilir. Yeni bunker bağlantıları da onu varsayılan relay'lerin yanında listeler.</string>
+    <string name="d_local_bunker_port">Relay portu</string>
+    <string name="d_local_bunker_port_invalid">Port 1024 ile 65535 arasında bir sayı olmalıdır.</string>
+    <string name="d_local_bunker_port_in_use">Portunu değiştirmeden önce yerel relay'i kullanan bunker bağlantılarını silin.</string>
     <string name="d_active">Etkin</string>
     <string name="d_switch">Değiştir</string>
     <string name="d_log_out">Çıkış yap</string>

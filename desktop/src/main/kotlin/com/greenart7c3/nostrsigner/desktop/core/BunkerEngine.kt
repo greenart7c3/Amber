@@ -10,6 +10,7 @@ import com.greenart7c3.nostrsigner.common.localPubKeyFromPrivKey
 import com.greenart7c3.nostrsigner.common.nip44v3.Nip44v3
 import com.greenart7c3.nostrsigner.common.psbt.PsbtSighashPolicy
 import com.greenart7c3.nostrsigner.common.relays.RelayHealthTracker
+import com.greenart7c3.nostrsigner.common.relays.SenderRateLimiter
 import com.greenart7c3.nostrsigner.common.sanitizeAppName
 import com.greenart7c3.nostrsigner.commonsui.Permission
 import com.vitorpamplona.quartz.nip01Core.core.Event
@@ -139,65 +140,6 @@ data class PendingBunkerRequest(
      * selection or per-request choices on it.
      */
     val queueKey: String get() = "${account.npub}|$localKey|${request.id}"
-}
-
-/**
- * Token buckets limiting NIP-46 senders: [capacity] events per
- * [windowSeconds] for each sender, refilled steadily, and
- * [aggregateCapacity] per window across all of them, so neither one sender
- * nor a flood of fresh keys can swamp the engine (every request costs a
- * decrypt, log writes, and — if answered — a signed relay publish). The
- * per-sender bucket stops one key from using up the shared budget; the
- * aggregate bucket bounds the total, since a fresh key costs nothing. Keyed
- * by `(relay url, sender pubkey)`; the map is bounded, evicting the oldest
- * sender past [maxSenders] keys. Mirrored by the Android `SenderRateLimiter`.
- */
-internal class SenderRateLimiter(
-    private val capacity: Int = DEFAULT_CAPACITY,
-    private val windowSeconds: Long = DEFAULT_WINDOW_SECONDS,
-    // Read in buckets' removeEldestEntry, which detekt doesn't see inside an object expression.
-    @Suppress("UnusedPrivateProperty")
-    private val maxSenders: Int = DEFAULT_MAX_SENDERS,
-    private val aggregateCapacity: Int = DEFAULT_AGGREGATE_CAPACITY,
-) {
-    private class Bucket(var tokens: Double, var updatedAtMs: Long)
-
-    private val buckets = object : LinkedHashMap<String, Bucket>(64, 0.75f, false) {
-        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, Bucket>?): Boolean = size > maxSenders
-    }
-    private var aggregate: Bucket? = null
-
-    /** Whether one more event from [key] is allowed at [nowMs]; excess is dropped silently. */
-    @Synchronized
-    fun allow(key: String, nowMs: Long): Boolean {
-        val bucket = buckets.getOrPut(key) { Bucket(capacity.toDouble(), nowMs) }
-        if (!take(bucket, capacity, nowMs)) return false
-        val shared = aggregate ?: Bucket(aggregateCapacity.toDouble(), nowMs).also { aggregate = it }
-        return take(shared, aggregateCapacity, nowMs)
-    }
-
-    private fun take(bucket: Bucket, bucketCapacity: Int, nowMs: Long): Boolean {
-        val refillPerMs = bucketCapacity.toDouble() / (windowSeconds * 1000.0)
-        val tokens = (bucket.tokens + (nowMs - bucket.updatedAtMs) * refillPerMs).coerceIn(0.0, bucketCapacity.toDouble())
-        bucket.updatedAtMs = nowMs
-        return if (tokens >= 1.0) {
-            bucket.tokens = tokens - 1.0
-            true
-        } else {
-            bucket.tokens = tokens
-            false
-        }
-    }
-
-    val trackedSenders: Int
-        @Synchronized get() = buckets.size
-
-    companion object {
-        const val DEFAULT_CAPACITY = 10
-        const val DEFAULT_WINDOW_SECONDS = 60L
-        const val DEFAULT_MAX_SENDERS = 4096
-        const val DEFAULT_AGGREGATE_CAPACITY = 60
-    }
 }
 
 /**

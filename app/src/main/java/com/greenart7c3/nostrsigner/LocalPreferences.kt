@@ -92,6 +92,8 @@ private enum class SettingsKeys(val key: String) {
     ACTIVE_KEYSTORE_ALIAS("active_keystore_alias"),
     THEME_MODE("theme_mode"),
     SORT_APPLICATIONS_ALPHABETICALLY("sort_applications_alphabetically"),
+    LOCAL_BUNKER_SERVER("local_bunker_server"),
+    LOCAL_BUNKER_PORT("local_bunker_port"),
 }
 
 @Immutable
@@ -177,6 +179,9 @@ object LocalPreferences {
                 putInt(SettingsKeys.RATE_LIMIT_WINDOW_SECONDS.key, settings.rateLimitWindowSeconds)
                 putBoolean(SettingsKeys.TRUST_SCORE_ENABLED.key, settings.trustScoreEnabled)
                 putBoolean(SettingsKeys.SORT_APPLICATIONS_ALPHABETICALLY.key, settings.sortApplicationsAlphabetically)
+                putBoolean(SettingsKeys.LOCAL_BUNKER_SERVER.key, settings.localBunkerServer)
+                val localBunkerPort = settings.localBunkerPort
+                if (localBunkerPort != null) putInt(SettingsKeys.LOCAL_BUNKER_PORT.key, localBunkerPort) else remove(SettingsKeys.LOCAL_BUNKER_PORT.key)
             }
         }
     }
@@ -435,6 +440,8 @@ object LocalPreferences {
                 logRetention = getLogRetention(context),
                 historyRetention = getHistoryRetention(context),
                 sortApplicationsAlphabetically = getBoolean(SettingsKeys.SORT_APPLICATIONS_ALPHABETICALLY.key, false),
+                localBunkerServer = getBoolean(SettingsKeys.LOCAL_BUNKER_SERVER.key, false),
+                localBunkerPort = if (contains(SettingsKeys.LOCAL_BUNKER_PORT.key)) getInt(SettingsKeys.LOCAL_BUNKER_PORT.key, 0) else null,
             )
         }
     }

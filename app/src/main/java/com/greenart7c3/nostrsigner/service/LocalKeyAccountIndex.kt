@@ -14,6 +14,9 @@ object LocalKeyAccountIndex {
 
     fun lookup(localPubKey: String): Match? = byLocalPubKey[localPubKey]
 
+    /** Every connection key the signer answers with. */
+    fun localPubKeys(): Set<String> = byLocalPubKey.keys
+
     fun replaceAll(entries: Map<String, Match>) {
         byLocalPubKey = entries.toMap()
     }

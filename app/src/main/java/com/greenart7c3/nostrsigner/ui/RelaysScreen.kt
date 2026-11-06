@@ -174,9 +174,12 @@ private fun LocalBunkerServerSettings() {
             label = { Text(stringResource(Res.string.d_local_bunker_port)) },
             singleLine = true,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done),
-            modifier = Modifier.weight(1f),
+            modifier = Modifier.weight(2f),
         )
+        // AmberButton fills the width it gets, so without a weight it would
+        // take the whole row and squeeze the port field to nothing.
         AmberButton(
+            modifier = Modifier.weight(1f),
             text = stringResource(Res.string.save),
             onClick = {
                 val newPort = portText.toIntOrNull()

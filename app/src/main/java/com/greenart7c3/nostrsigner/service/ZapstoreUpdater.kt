@@ -43,7 +43,10 @@ private val EOSE_TIMEOUT = 15.seconds
 private const val RELEASE_KIND = 30063
 private val UPDATE_RELAY_URLS = listOf(
     "wss://relay.zapstore.dev",
-    "wss://nos.lol",
+    "wss://relay.primal.net",
+    "wss://relay.snort.social",
+    "wss://offchain.pub",
+    "wss://purplerelay.com",
 )
 private const val APP_IDENTIFIER = "com.greenart7c3.nostrsigner"
 private const val STABLE_CHANNEL = "main"
@@ -96,8 +99,8 @@ class ZapstoreUpdater(
                     is EventMessage if msg.subId == fileSubId -> processFileEvent(msg.event)
                     // Each relay is asked separately and answers on its own schedule, so a
                     // phase only ends once every relay has sent EOSE (or on the timeout):
-                    // pre-releases are only on nos.lol, and the zapstore relay's early empty
-                    // EOSE must not end the check before nos.lol answers.
+                    // pre-releases are never on the zapstore relay, and its early empty
+                    // EOSE must not end the check before the other relays answer.
                     is EoseMessage if msg.subId == releaseSubId -> {
                         pendingReleaseEose.remove(relay)
                         if (pendingReleaseEose.isEmpty()) onReleaseEose()
@@ -137,9 +140,9 @@ class ZapstoreUpdater(
         }
 
         // Subscribe to release events (kind 30063) from the developer. Stable releases
-        // are on both relays, pre-releases (channel "beta") only on nos.lol. Stable asks
-        // for the main channel only: with limit 1, nos.lol would otherwise return a
-        // newer pre-release that processReleaseEvent then drops.
+        // are on every relay, pre-releases (channel "beta") on every relay except the
+        // zapstore one. Stable asks for the main channel only: with limit 1, the others
+        // would otherwise return a newer pre-release that processReleaseEvent then drops.
         val tags = if (settings.updateChannel == UpdateChannel.STABLE) {
             mapOf("i" to listOf(APP_IDENTIFIER), "c" to listOf(STABLE_CHANNEL))
         } else {

@@ -22,8 +22,6 @@ import com.greenart7c3.nostrsigner.desktop.core.EncryptionScope
 import com.greenart7c3.nostrsigner.desktop.core.PassphraseLock
 import com.greenart7c3.nostrsigner.desktop.core.PendingBunkerRequest
 import com.greenart7c3.nostrsigner.desktop.core.RememberType
-import com.greenart7c3.nostrsigner.desktop.core.contentScopedSignerTypes
-import com.greenart7c3.nostrsigner.desktop.core.nip44v3SignerTypes
 import com.greenart7c3.nostrsigner.desktop.core.rememberTypeDisplayOrder
 import kotlinx.coroutines.flow.MutableStateFlow
 
@@ -60,9 +58,7 @@ object UiState {
      */
     val scopeChoices = MutableStateFlow<Map<String, EncryptionScope>>(emptyMap())
 
-    fun scopeChoiceFor(request: PendingBunkerRequest): EncryptionScope = scopeChoices.value[request.queueKey] ?: defaultScope(request)
-
-    fun defaultScope(request: PendingBunkerRequest): EncryptionScope = if (request.type in nip44v3SignerTypes) EncryptionScope.SPECIFIC else EncryptionScope.ALL
+    fun scopeChoiceFor(request: PendingBunkerRequest): EncryptionScope = scopeChoices.value[request.queueKey] ?: request.defaultScope
 
     fun setScopeChoice(requestId: String, scope: EncryptionScope) {
         scopeChoices.value += (requestId to scope)
@@ -171,7 +167,7 @@ object UiState {
     }
 
     fun toggleSelectedScope(): Boolean {
-        val request = selectedRequest()?.takeIf { it.type in contentScopedSignerTypes || it.type in nip44v3SignerTypes } ?: return false
+        val request = selectedRequest()?.takeIf { it.hasScopeChoice } ?: return false
         val next = if (scopeChoiceFor(request) == EncryptionScope.ALL) EncryptionScope.SPECIFIC else EncryptionScope.ALL
         setScopeChoice(request.queueKey, next)
         return true

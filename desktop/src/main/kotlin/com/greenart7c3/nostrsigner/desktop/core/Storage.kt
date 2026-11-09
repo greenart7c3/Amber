@@ -3,6 +3,9 @@ package com.greenart7c3.nostrsigner.desktop.core
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
+import com.greenart7c3.nostrsigner.common.RELAY_AUTH_KIND
+import com.greenart7c3.nostrsigner.common.SignerType
+import com.greenart7c3.nostrsigner.common.isAllRelaysGrant
 import com.vitorpamplona.quartz.utils.TimeUtils
 import java.io.File
 import java.security.MessageDigest
@@ -241,6 +244,16 @@ class AccountStore(val npub: String) {
 
     fun getPermission(key: String, type: String, kind: Int? = null): AppPermissionRecord? = getByKey(key)?.permissions?.firstOrNull {
         it.type == type && it.kind == kind
+    }
+
+    /**
+     * The kind-22242 grant deciding a relay auth for [relayHost], like the
+     * Android `getPermissionForRelay` then `getWildcardRelayPermission`: a
+     * grant for this relay first, then an all-relays one ("*" or blank).
+     */
+    fun getRelayAuthPermission(key: String, relayHost: String): AppPermissionRecord? {
+        val grants = getByKey(key)?.permissions?.filter { it.type == SignerType.SIGN_EVENT.toString() && it.kind == RELAY_AUTH_KIND }.orEmpty()
+        return grants.firstOrNull { relayHost.isNotEmpty() && it.relay == relayHost } ?: grants.firstOrNull { isAllRelaysGrant(it.relay) }
     }
 
     @Synchronized

@@ -1,6 +1,9 @@
 package com.greenart7c3.nostrsigner.desktop.core
 
+import com.greenart7c3.nostrsigner.common.RELAY_AUTH_KIND
 import com.greenart7c3.nostrsigner.common.SignerType
+import com.greenart7c3.nostrsigner.common.isBlockedByAuthWhitelist
+import com.greenart7c3.nostrsigner.common.relayAuthHost
 import com.greenart7c3.nostrsigner.common.sanitizeAppName
 import com.greenart7c3.nostrsigner.desktop.core.LocalSignerProtocol.RpcException
 import com.vitorpamplona.crypto.random.RandomInstance
@@ -401,6 +404,15 @@ object LocalSigner {
             else -> null
         }
 
+        // Relay auth is granted per relay; a relay outside a non-empty auth
+        // whitelist is rejected without asking (see BunkerEngine.handleRequest).
+        val relayHost = if (request is BunkerRequestSign && kind == RELAY_AUTH_KIND) relayAuthHost(request.event.tags) else ""
+        if (isBlockedByAuthWhitelist(kind, relayHost, AmberDesktop.settings.authWhitelist)) {
+            store.addLog("socket", "local-signer", "Relay auth for $relayHost is not in the auth whitelist")
+            store.addHistory(HistoryRecord(app.app.key, type.toString(), kind, TimeUtils.now(), false))
+            throw RpcException(LocalSignerProtocol.USER_DECLINED, LocalSignerProtocol.USER_REJECTED)
+        }
+
         val computed = try {
             engine.computeResult(request, type, acc)
         } catch (e: CancellationException) {
@@ -411,7 +423,7 @@ object LocalSigner {
         }
 
         val encryptedContent = if (type in contentScopedSignerTypes) EncryptedContent.classify(computed.preview) else null
-        val permission = engine.lookupPermission(store, app.app.key, type, kind, encryptedContent)
+        val permission = engine.lookupPermission(store, app.app.key, type, kind, encryptedContent, relayHost)
 
         when (isRemembered(app.app.signPolicy, permission)) {
             true -> {
@@ -441,6 +453,7 @@ object LocalSigner {
                         result = computed.result,
                         encryptedContent = encryptedContent,
                         nip44v3Scope = if (type in nip44v3SignerTypes) call.params.getOrElse(2) { "" } else "",
+                        relayHost = relayHost,
                         expiresAt = TimeUtils.now() + BunkerEngine.PENDING_TTL_SECONDS,
                         responder = { response -> answer.complete(response) },
                     ),

@@ -58,8 +58,10 @@ import com.greenart7c3.nostrsigner.commonsui.d_working
 import com.greenart7c3.nostrsigner.commonsui.encryption_scope
 import com.greenart7c3.nostrsigner.commonsui.for_all_kinds
 import com.greenart7c3.nostrsigner.commonsui.for_all_methods
+import com.greenart7c3.nostrsigner.commonsui.for_all_relays
 import com.greenart7c3.nostrsigner.commonsui.for_this_kind_only
 import com.greenart7c3.nostrsigner.commonsui.for_this_method_only
+import com.greenart7c3.nostrsigner.commonsui.for_this_relay_only
 import com.greenart7c3.nostrsigner.commonsui.getStringBlocking
 import com.greenart7c3.nostrsigner.commonsui.insecure_relay_warning
 import com.greenart7c3.nostrsigner.commonsui.localizedBlocking
@@ -69,6 +71,7 @@ import com.greenart7c3.nostrsigner.commonsui.nip44_v3_no_scope
 import com.greenart7c3.nostrsigner.commonsui.nip44_v3_scope
 import com.greenart7c3.nostrsigner.commonsui.permissions
 import com.greenart7c3.nostrsigner.commonsui.reject
+import com.greenart7c3.nostrsigner.commonsui.relay_auth_scope
 import com.greenart7c3.nostrsigner.commonsui.replace_app_message
 import com.greenart7c3.nostrsigner.commonsui.see_details
 import com.greenart7c3.nostrsigner.commonsui.switch_account
@@ -79,7 +82,6 @@ import com.greenart7c3.nostrsigner.desktop.core.LocalRelays
 import com.greenart7c3.nostrsigner.desktop.core.PendingBunkerRequest
 import com.greenart7c3.nostrsigner.desktop.core.RememberType
 import com.greenart7c3.nostrsigner.desktop.core.connectionToReplace
-import com.greenart7c3.nostrsigner.desktop.core.contentScopedSignerTypes
 import com.greenart7c3.nostrsigner.desktop.core.describe
 import com.greenart7c3.nostrsigner.desktop.core.nip44v3SignerTypes
 import com.greenart7c3.nostrsigner.desktop.core.toShortenHex
@@ -304,13 +306,19 @@ private fun RequestCard(
                     style = MaterialTheme.typography.bodySmall,
                 )
             }
-            if (req.type in contentScopedSignerTypes || isV3) {
+            if (req.hasScopeChoice) {
                 // Mirrors the Android "Encryption scope" toggle: NIP-04/44 grants
-                // this content type or the whole NIP; NIP-44 v3 this kind or all.
+                // this content type or the whole NIP; NIP-44 v3 this kind or all;
+                // relay auth (BunkerRelayAuthScreen) this relay or every relay.
                 val scopeChoices by UiState.scopeChoices.collectAsState()
-                val scope = scopeChoices[req.queueKey] ?: UiState.defaultScope(req)
-                Text(stringResource(Res.string.encryption_scope), style = MaterialTheme.typography.labelMedium)
-                val options = if (isV3) {
+                val scope = scopeChoices[req.queueKey] ?: req.defaultScope
+                Text(
+                    stringResource(if (req.isRelayAuth) Res.string.relay_auth_scope else Res.string.encryption_scope),
+                    style = MaterialTheme.typography.labelMedium,
+                )
+                val options = if (req.isRelayAuth) {
+                    listOf(EncryptionScope.SPECIFIC to Res.string.for_this_relay_only, EncryptionScope.ALL to Res.string.for_all_relays)
+                } else if (isV3) {
                     listOf(EncryptionScope.SPECIFIC to Res.string.for_this_kind_only, EncryptionScope.ALL to Res.string.for_all_kinds)
                 } else {
                     listOf(EncryptionScope.SPECIFIC to Res.string.for_this_method_only, EncryptionScope.ALL to Res.string.for_all_methods)
@@ -377,9 +385,9 @@ private fun ShortcutHint(
 ) {
     Text(
         stringResource(
-            when (req.type) {
-                SignerType.CONNECT -> Res.string.d_shortcut_hint_connect
-                in contentScopedSignerTypes, in nip44v3SignerTypes -> Res.string.d_shortcut_hint_scope
+            when {
+                req.type == SignerType.CONNECT -> Res.string.d_shortcut_hint_connect
+                req.hasScopeChoice -> Res.string.d_shortcut_hint_scope
                 else -> Res.string.d_shortcut_hint
             },
             shortcutLabel("↵"),

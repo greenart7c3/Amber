@@ -1,29 +1,12 @@
 package com.greenart7c3.nostrsigner.service
 
-import java.net.URI
+import com.greenart7c3.nostrsigner.common.relayHostAndPort
 
 object RelayUrlUtils {
     /**
      * Normalizes a relay URL/host into a comparable "host[:port]" form used by
-     * the auth whitelist and per-relay permission lookups. A bare host:port
-     * input (e.g. "relay.example.com:8080") would otherwise be parsed by
-     * java.net.URI as a scheme, so we prepend "wss://" when no scheme is
-     * present.
+     * the auth whitelist and per-relay permission lookups; shared with the
+     * desktop app (see the common [relayHostAndPort]).
      */
-    fun extractHostAndPort(input: String?): String {
-        if (input.isNullOrBlank()) return ""
-        val trimmed = input.trim().trimEnd('/')
-        return try {
-            val withScheme = if (trimmed.contains("://")) trimmed else "wss://$trimmed"
-            val uri = URI(withScheme)
-            val host = uri.host
-            when {
-                host.isNullOrBlank() -> trimmed
-                uri.port != -1 -> "$host:${uri.port}"
-                else -> host
-            }
-        } catch (_: Exception) {
-            trimmed
-        }
-    }
+    fun extractHostAndPort(input: String?): String = relayHostAndPort(input)
 }

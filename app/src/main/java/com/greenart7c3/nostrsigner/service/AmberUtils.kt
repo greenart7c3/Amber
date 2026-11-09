@@ -4,6 +4,7 @@ import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.toUpperCase
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.common.SignerType
+import com.greenart7c3.nostrsigner.common.canRememberRelayAuth
 import com.greenart7c3.nostrsigner.commonsui.Permission
 import com.greenart7c3.nostrsigner.database.ApplicationPermissionsEntity
 import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
@@ -346,14 +347,14 @@ fun relayAuthRememberType(
     allRelays: Boolean,
     relayUrl: String,
     rememberType: RememberType,
-): RememberType = if (!allRelays && relayUrl.isBlank()) RememberType.NEVER else rememberType
+): RememberType = if (canRememberRelayAuth(allRelays, relayUrl)) rememberType else RememberType.NEVER
 
 /**
  * Whether the auth whitelist refuses a relay auth (kind 22242) for [relayHost]:
  * a non-empty whitelist rejects every relay outside it, without asking, on
  * every path that decides a relay auth (provider, single and batch screens).
  */
-fun isBlockedByAuthWhitelist(kind: Int, relayHost: String, whitelist: List<String> = Amber.instance.settings.authWhitelist): Boolean = kind == 22242 && whitelist.isNotEmpty() && relayHost !in whitelist
+fun isBlockedByAuthWhitelist(kind: Int, relayHost: String, whitelist: List<String> = Amber.instance.settings.authWhitelist): Boolean = com.greenart7c3.nostrsigner.common.isBlockedByAuthWhitelist(kind, relayHost, whitelist)
 
 /** [isBlockedByAuthWhitelist] for a signed [event], decided on its first relay tag. */
 fun isBlockedByAuthWhitelist(event: Event?): Boolean = event != null && event.kind == 22242 && isBlockedByAuthWhitelist(event.kind, RelayUrlUtils.extractHostAndPort(AmberEvent.relay(event)))

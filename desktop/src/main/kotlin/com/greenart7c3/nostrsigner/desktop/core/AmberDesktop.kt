@@ -53,7 +53,13 @@ object AmberDesktop {
     // Authenticates with relays that request NIP-42 AUTH.
     private val authCoordinator by lazy {
         RelayAuthenticator(client, applicationIOScope) { _, event, _ ->
-            accounts().map { it.signer.sign(event) }
+            // Like Android: one account failing to sign (e.g. its key was
+            // wiped by the lock mid-AUTH) must not abort AUTH for the others.
+            accounts().mapNotNull { account ->
+                runCatching { account.signer.sign(event) }.onFailure { e ->
+                    AmberLogger.e("AmberDesktop", "NIP-42 auth signing failed for ${account.npub}", e)
+                }.getOrNull()
+            }
         }
     }
 

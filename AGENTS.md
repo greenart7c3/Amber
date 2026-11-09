@@ -47,7 +47,7 @@ When asked to "bump the version" / cut a release, do **all** the following in a 
 | Flavor           | Notes                                                                                                                                                        |
 | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `free` (default) | Online: OkHttp, Coil, built-in Tor (Arti, `src/tor`), relay connectivity. Owns `INTERNET`/network permissions.                                               |
-| `offline`        | No network stack. `app/src/offline/AndroidManifest.xml` **removes** `INTERNET`/`CHANGE_NETWORK_STATE`/`ACCESS_NETWORK_STATE` with `tools:node="remove"`.     |
+| `offline`        | No network stack. `app/src/offline/AndroidManifest.xml` **removes** `INTERNET`/`CHANGE_NETWORK_STATE`/`ACCESS_NETWORK_STATE` with `tools:node="remove"`. `applicationIdSuffix=.offline` and launcher name "Amber Offline" (separate Zapstore listing, `zapstore-offline.yaml`).     |
 | `benchmark`      | Mirrors `free` network deps; `applicationIdSuffix=.benchmark`, `versionNameSuffix=-BENCHMARK`; CI builds a signed release per push for side-by-side install. |
 
 - Guard any network-only code with `BuildFlavorChecker.isOfflineFlavor()`. There is also `BuildConfig.IS_FDROID_BUILD` (false by default; the F-Droid release workflow flips it true and strips `REQUEST_INSTALL_PACKAGES` via `sed`) — read it through `BuildFlavorChecker.isFdroidBuild()` to disable self-update / Zapstore, never as the constant, which the IDE would simplify away.

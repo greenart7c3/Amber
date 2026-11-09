@@ -159,8 +159,11 @@ android {
             isDefault = true
             dimension = "version"
         }
+        // Distinct applicationId so the offline build installs side-by-side with the
+        // online one instead of replacing it.
         register("offline") {
             dimension = "version"
+            applicationIdSuffix = ".offline"
         }
         // Online variant (same network stack as `free`) built and uploaded by CI on
         // every push so changes can be installed and reviewed per commit. The distinct
@@ -214,12 +217,20 @@ android {
 // resValue sets app_name to "Amber". Build-type resValues take precedence over
 // product-flavor resValues, so override app_name here via the variant API (the
 // highest-priority tier) to give the side-by-side benchmark install its own
-// launcher name.
+// launcher name. The offline flavor has its own applicationId too, so it gets
+// its own name the same way.
 androidComponents {
     onVariants(selector().withFlavor("version" to "benchmark")) { variant ->
         variant.resValues.put(
             variant.makeResValueKey("string", "app_name"),
             com.android.build.api.variant.ResValue("@string/app_name_benchmark"),
+        )
+    }
+    onVariants(selector().withFlavor("version" to "offline")) { variant ->
+        val name = if (variant.buildType == "debug") "app_name_offline_debug" else "app_name_offline"
+        variant.resValues.put(
+            variant.makeResValueKey("string", "app_name"),
+            com.android.build.api.variant.ResValue("@string/$name"),
         )
     }
 }

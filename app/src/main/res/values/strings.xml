@@ -7,4 +7,6 @@
     <!-- Referenced indirectly through resValue("string", "app_name", ...) in build.gradle.kts -->
     <string name="app_name_debug" translatable="false" tools:ignore="UnusedResources">Amber Debug</string>
     <string name="app_name_benchmark" translatable="false" tools:ignore="UnusedResources">Amber Benchmark</string>
+    <string name="app_name_offline" translatable="false" tools:ignore="UnusedResources">Amber Offline</string>
+    <string name="app_name_offline_debug" translatable="false" tools:ignore="UnusedResources">Amber Offline Debug</string>
 </resources>

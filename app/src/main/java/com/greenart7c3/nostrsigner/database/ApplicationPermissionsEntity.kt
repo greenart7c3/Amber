@@ -55,4 +55,4 @@ data class ApplicationPermissionsEntity(
  * relay the basic sign policy stores, both mean all relays, so the approval
  * screens decide like the provider and NIP-46 paths.
  */
-fun isAllRelaysGrant(relay: String?): Boolean = relay == "*" || relay.isNullOrEmpty()
+fun isAllRelaysGrant(relay: String?): Boolean = com.greenart7c3.nostrsigner.common.isAllRelaysGrant(relay)

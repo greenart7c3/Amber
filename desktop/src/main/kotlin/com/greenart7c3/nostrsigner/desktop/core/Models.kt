@@ -349,6 +349,12 @@ data class DesktopSettings(
      * keep pointing at the old port.
      */
     val localBunkerPort: Int? = null,
+    /**
+     * Mirrors the Android `authWhitelist`: relay hosts ("host[:port]") relay
+     * auth (kind 22242) may be signed for. Empty = any relay; otherwise auth
+     * for any other relay is rejected without asking.
+     */
+    val authWhitelist: List<String> = emptyList(),
 ) {
     fun normalizedDefaultRelays(): List<NormalizedRelayUrl> = defaultRelays.mapNotNull { RelayUrlNormalizer.normalizeOrNull(it) }
 

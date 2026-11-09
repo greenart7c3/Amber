@@ -1,14 +1,18 @@
 package com.greenart7c3.nostrsigner.desktop.core
 
 import com.greenart7c3.nostrsigner.common.EncryptionType
+import com.greenart7c3.nostrsigner.common.RELAY_AUTH_KIND
 import com.greenart7c3.nostrsigner.common.SignerType
+import com.greenart7c3.nostrsigner.common.canRememberRelayAuth
 import com.greenart7c3.nostrsigner.common.connectsThroughOtherKey
 import com.greenart7c3.nostrsigner.common.decodeQueryParamValue
 import com.greenart7c3.nostrsigner.common.generateBunkerPrivKey
 import com.greenart7c3.nostrsigner.common.hasAmbiguousRelayTags
+import com.greenart7c3.nostrsigner.common.isBlockedByAuthWhitelist
 import com.greenart7c3.nostrsigner.common.localPubKeyFromPrivKey
 import com.greenart7c3.nostrsigner.common.nip44v3.Nip44v3
 import com.greenart7c3.nostrsigner.common.psbt.PsbtSighashPolicy
+import com.greenart7c3.nostrsigner.common.relayAuthHost
 import com.greenart7c3.nostrsigner.common.relays.RelayHealthTracker
 import com.greenart7c3.nostrsigner.common.relays.SenderRateLimiter
 import com.greenart7c3.nostrsigner.common.sanitizeAppName
@@ -91,6 +95,8 @@ data class PendingBunkerRequest(
     val encryptedContent: EncryptedContent? = null,
     /** NIP-44 v3 context scope string (params[2]); the context kind is [kind]. */
     val nip44v3Scope: String = "",
+    /** Relay auth (kind 22242) only: the "host[:port]" of the relay being authenticated to. */
+    val relayHost: String = "",
     /**
      * Unix seconds after which the request is dropped from the queue, or null
      * to keep it until answered. NIP-46 gives no signal when a client stops
@@ -123,6 +129,36 @@ data class PendingBunkerRequest(
      * [EncryptionScope.SPECIFIC], or no kind (all kinds) for ALL, like Android.
      */
     fun permissionKind(scope: EncryptionScope): Int? = if (type in nip44v3SignerTypes && scope == EncryptionScope.ALL) null else kind
+
+    /** A NIP-42 relay auth: granted per relay ([relayHost]) or for all relays, never per NIP. */
+    val isRelayAuth: Boolean get() = type == SignerType.SIGN_EVENT && kind == RELAY_AUTH_KIND
+
+    /** Whether the approval card offers a scope choice ("S" toggles it). */
+    val hasScopeChoice: Boolean get() = type in contentScopedSignerTypes || type in nip44v3SignerTypes || isRelayAuth
+
+    /**
+     * Relay a remembered relay-auth choice is stored under, like Android:
+     * this relay for [EncryptionScope.SPECIFIC], "*" (every relay) for ALL.
+     */
+    fun permissionRelay(scope: EncryptionScope): String = when {
+        !isRelayAuth -> ""
+        scope == EncryptionScope.ALL -> "*"
+        else -> relayHost
+    }
+
+    /**
+     * Scope the approval card starts on, like Android: NIP-44 v3 this kind
+     * only, relay auth this relay only, NIP-04/NIP-44 the whole NIP.
+     */
+    val defaultScope: EncryptionScope
+        get() = if (type in nip44v3SignerTypes || isRelayAuth) EncryptionScope.SPECIFIC else EncryptionScope.ALL
+
+    /**
+     * Whether a choice made with [scope] may be remembered: a "this relay
+     * only" relay auth whose event names no relay is applied once only,
+     * since a blank relay would read as a grant for every relay.
+     */
+    fun canRemember(scope: EncryptionScope): Boolean = !isRelayAuth || canRememberRelayAuth(scope == EncryptionScope.ALL, relayHost)
 
     /**
      * Queue identity for dedup/removal. Relay clients choose their own request
@@ -595,6 +631,39 @@ class BunkerEngine(
         }
         val signPolicy = app?.app?.signPolicy
 
+        // Mirrors EventNotificationConsumer: authorization and the approval
+        // card decide on the first relay tag alone, so a second one would be
+        // signed without ever being granted.
+        if (bunkerRequest is BunkerRequestSign && hasAmbiguousRelayTags(bunkerRequest.event.kind, bunkerRequest.event.tags)) {
+            store.addLog(relay.url, "bunker", "Refusing a multi-relay auth event ${bunkerRequest.id}")
+            sendResponse(
+                acc,
+                effectivePrivKey,
+                event.pubKey,
+                encryptionType,
+                BunkerResponse(bunkerRequest.id, "", "refusing a multi-relay auth event"),
+                relays,
+            )
+            return
+        }
+
+        // Relay auth is granted per relay; a relay outside a non-empty auth
+        // whitelist is rejected without asking, like Android.
+        val relayHost = if (bunkerRequest is BunkerRequestSign && kind == RELAY_AUTH_KIND) relayAuthHost(bunkerRequest.event.tags) else ""
+        if (isBlockedByAuthWhitelist(kind, relayHost, AmberDesktop.settings.authWhitelist)) {
+            store.addLog(relay.url, "bunker", "Relay auth for $relayHost is not in the auth whitelist")
+            store.addHistory(HistoryRecord(event.pubKey, type.toString(), kind, TimeUtils.now(), false))
+            sendResponse(
+                acc,
+                effectivePrivKey,
+                event.pubKey,
+                encryptionType,
+                BunkerResponse(bunkerRequest.id, "", "user rejected"),
+                relays,
+            )
+            return
+        }
+
         // consume() checked the lock on arrival; re-check before any signing
         // work, since the passphrase lock may have come down in between.
         if (PassphraseLock.isLocked()) {
@@ -631,7 +700,7 @@ class BunkerEngine(
         // Android: classify the plaintext (the encrypt input, or the decrypt
         // result) and try that grant, then the whole-NIP grant, then `nip:N`.
         val encryptedContent = if (type in contentScopedSignerTypes) EncryptedContent.classify(computed.preview) else null
-        val permissionType = lookupPermission(store, event.pubKey, type, kind, encryptedContent)
+        val permissionType = lookupPermission(store, event.pubKey, type, kind, encryptedContent, relayHost)
         // A first-time `connect` always goes through the approval UI: approving
         // is what migrates the bunker placeholder to the client key and grants
         // the default permissions. Reconnects were already acked above.
@@ -694,6 +763,7 @@ class BunkerEngine(
                         signerPrivKey = effectivePrivKey,
                         encryptedContent = encryptedContent,
                         nip44v3Scope = if (type in nip44v3SignerTypes) bunkerRequest.params.getOrElse(2) { "" } else "",
+                        relayHost = relayHost,
                         expiresAt = minOf(TimeUtils.now() + PENDING_TTL_SECONDS, event.expiration() ?: Long.MAX_VALUE),
                     ),
                 )
@@ -708,7 +778,11 @@ class BunkerEngine(
         type: SignerType,
         kind: Int?,
         encryptedContent: EncryptedContent?,
+        relayHost: String,
     ): AppPermissionRecord? = when (type) {
+        // Relay auth is granted per relay or for all relays, like Android.
+        SignerType.SIGN_EVENT if kind == RELAY_AUTH_KIND -> store.getRelayAuthPermission(appKey, relayHost)
+
         SignerType.SIGN_EVENT -> store.getPermission(appKey, type.toString(), kind)
 
         // v3 grants are kind-scoped, falling back to the explicit "all
@@ -869,7 +943,7 @@ class BunkerEngine(
         signPolicy: Int? = null,
         deleteAfter: Long = 0L,
         accountNpub: String? = null,
-        encryptionScope: EncryptionScope = EncryptionScope.ALL,
+        encryptionScope: EncryptionScope = req.defaultScope,
     ): Job = scope.launch { doApprove(req, rememberType, grantedPermissions, signPolicy, deleteAfter, accountNpub, encryptionScope) }
 
     private suspend fun doApprove(
@@ -995,8 +1069,8 @@ class BunkerEngine(
                     AppPermissionRecord(SignerType.PING.toString(), null, true, RememberType.ALWAYS.screenCode, Long.MAX_VALUE / 1000, 0),
                 )
             }
-        } else if (rememberType != RememberType.NEVER) {
-            acceptOrRejectPermission(application, req.type, req.permissionKind(encryptionScope), true, rememberType, req.encryptedContent, encryptionScope)
+        } else if (rememberType != RememberType.NEVER && req.canRemember(encryptionScope)) {
+            acceptOrRejectPermission(application, req.type, req.permissionKind(encryptionScope), true, rememberType, req.encryptedContent, encryptionScope, req.permissionRelay(encryptionScope))
         }
 
         store.upsert(application)
@@ -1034,7 +1108,7 @@ class BunkerEngine(
     fun reject(
         req: PendingBunkerRequest,
         rememberType: RememberType,
-        encryptionScope: EncryptionScope = EncryptionScope.ALL,
+        encryptionScope: EncryptionScope = req.defaultScope,
     ): Job = scope.launch { doReject(req, rememberType, encryptionScope) }
 
     private suspend fun doReject(
@@ -1066,8 +1140,8 @@ class BunkerEngine(
         // rejection never creates an application: if the app was deleted while
         // the card was queued, there is nothing to record the rejection on.
         if (savedApplication != null && req.request !is BunkerRequestConnect && req.type != SignerType.CONNECT) {
-            if (rememberType != RememberType.NEVER) {
-                acceptOrRejectPermission(savedApplication, req.type, req.permissionKind(encryptionScope), false, rememberType, req.encryptedContent, encryptionScope)
+            if (rememberType != RememberType.NEVER && req.canRemember(encryptionScope)) {
+                acceptOrRejectPermission(savedApplication, req.type, req.permissionKind(encryptionScope), false, rememberType, req.encryptedContent, encryptionScope, req.permissionRelay(encryptionScope))
             }
             store.upsert(savedApplication)
             store.addHistory(HistoryRecord(key, req.type.toString(), req.kind, TimeUtils.now(), false))
@@ -1139,13 +1213,20 @@ class BunkerEngine(
         rememberType: RememberType,
         content: EncryptedContent? = null,
         scope: EncryptionScope = EncryptionScope.ALL,
+        relay: String = "",
     ) {
         val until = rememberType.acceptUntil()
         val contentScoped = type in contentScopedSignerTypes
         val typeStr = if (contentScoped && scope == EncryptionScope.SPECIFIC) type.contentPermissionType(content) else type.toString()
 
         if (kind != null) {
-            application.permissions.removeIf { it.kind == kind && it.type == typeStr && it.relay.isEmpty() }
+            // Relay auth grants: "*" replaces every relay's grant for this
+            // kind, a specific relay only its own entry (Android's insertPermissions).
+            when {
+                relay == "*" -> application.permissions.removeIf { it.kind == kind && it.type == typeStr }
+                relay.isNotEmpty() -> application.permissions.removeIf { it.kind == kind && it.type == typeStr && it.relay == relay }
+                else -> application.permissions.removeIf { it.kind == kind && it.type == typeStr && it.relay.isEmpty() }
+            }
         } else {
             application.permissions.removeIf { it.type == typeStr && it.type != "SIGN_EVENT" }
             if (contentScoped) {
@@ -1165,6 +1246,7 @@ class BunkerEngine(
                 rememberType = rememberType.screenCode,
                 acceptUntil = if (accepted) until else 0,
                 rejectUntil = if (accepted) 0 else until,
+                relay = relay,
             ),
         )
     }

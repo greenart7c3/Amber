@@ -38,9 +38,14 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.isTraySupported
+import com.greenart7c3.nostrsigner.common.relayHostAndPort
 import com.greenart7c3.nostrsigner.commonsui.Res
 import com.greenart7c3.nostrsigner.commonsui.account
 import com.greenart7c3.nostrsigner.commonsui.accounts
+import com.greenart7c3.nostrsigner.commonsui.add
+import com.greenart7c3.nostrsigner.commonsui.add_relay_to_whitelist
+import com.greenart7c3.nostrsigner.commonsui.auth_whitelist
+import com.greenart7c3.nostrsigner.commonsui.auth_whitelist_description
 import com.greenart7c3.nostrsigner.commonsui.backup_keys
 import com.greenart7c3.nostrsigner.commonsui.builtin_tor_active
 import com.greenart7c3.nostrsigner.commonsui.builtin_tor_description
@@ -130,6 +135,7 @@ import com.greenart7c3.nostrsigner.commonsui.getStringBlocking
 import com.greenart7c3.nostrsigner.commonsui.language
 import com.greenart7c3.nostrsigner.commonsui.name
 import com.greenart7c3.nostrsigner.commonsui.no
+import com.greenart7c3.nostrsigner.commonsui.remove
 import com.greenart7c3.nostrsigner.commonsui.save
 import com.greenart7c3.nostrsigner.commonsui.security
 import com.greenart7c3.nostrsigner.commonsui.tor_connecting
@@ -298,6 +304,9 @@ fun SettingsScreen(account: DesktopAccount) {
             }
             SettingsSection(stringResource(Res.string.connect_via_tor_short), stringResource(Res.string.tor_subtitle)) {
                 TorSection()
+            }
+            SettingsSection(stringResource(Res.string.auth_whitelist), stringResource(Res.string.auth_whitelist_description)) {
+                AuthWhitelistSection()
             }
             SettingsSection(stringResource(Res.string.accounts)) {
                 accounts.forEach { record ->
@@ -888,4 +897,52 @@ private fun LogsDialog(
             )
         },
     )
+}
+
+/**
+ * Mirrors the Android `AuthWhitelistScreen`: the relay hosts relay auth
+ * (kind 22242) may be signed for. Entries are stored as "host[:port]", the
+ * form the request path compares against.
+ */
+@Composable
+private fun AuthWhitelistSection() {
+    val settings by SettingsStore.settings.collectAsState()
+    var input by remember { mutableStateOf("") }
+
+    fun addEntry() {
+        val host = relayHostAndPort(input)
+        if (host.isNotBlank() && host !in settings.authWhitelist) {
+            SettingsStore.update { it.copy(authWhitelist = it.authWhitelist + host) }
+        }
+        input = ""
+    }
+
+    Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+        OutlinedTextField(
+            value = input,
+            onValueChange = { input = it },
+            label = { Text(stringResource(Res.string.add_relay_to_whitelist)) },
+            singleLine = true,
+            modifier = Modifier.weight(1f),
+        )
+        Spacer(Modifier.width(8.dp))
+        AmberOutlinedButton(
+            text = stringResource(Res.string.add),
+            enabled = relayHostAndPort(input).isNotBlank(),
+            onClick = { addEntry() },
+        )
+    }
+    settings.authWhitelist.forEach { host ->
+        Row(
+            Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 2.dp),
+            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+        ) {
+            Text(host, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
+            AmberTextButton(
+                text = stringResource(Res.string.remove),
+                onClick = { SettingsStore.update { it.copy(authWhitelist = it.authWhitelist - host) } },
+            )
+        }
+        HorizontalDivider()
+    }
 }

@@ -16,6 +16,7 @@ import java.security.ProviderException
 import java.security.UnrecoverableKeyException
 import javax.crypto.AEADBadTagException
 import javax.crypto.Cipher
+import javax.crypto.IllegalBlockSizeException
 import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
 import javax.crypto.spec.GCMParameterSpec
@@ -42,6 +43,11 @@ object SecureCryptoHelper {
     // A sweep that rewrote anything is repeated, so a value written with the
     // previous key while the sweep was running is still picked up.
     private const val MAX_SWEEP_PASSES = 3
+
+    // keystore2 runs out of operation slots device-wide, not per app, so a
+    // single pruning can be followed by another while it clears.
+    private const val MAX_CIPHER_ATTEMPTS = 3
+    private const val PRUNED_RETRY_DELAY_MS = 10L
     private val mutex = Mutex()
 
     /**
@@ -85,7 +91,7 @@ object SecureCryptoHelper {
      */
     fun encryptBlocking(plainText: String): String = withFreshKeyRetry { handle -> encryptWithKey(handle.key, plainText) }
 
-    private fun encryptWithKey(key: SecretKey, plainText: String): String {
+    private fun encryptWithKey(key: SecretKey, plainText: String): String = retryPrunedOperation {
         val cipher = Cipher.getInstance(TRANSFORMATION)
         cipher.init(Cipher.ENCRYPT_MODE, key)
         val iv = cipher.iv
@@ -96,7 +102,7 @@ object SecureCryptoHelper {
         combined.put(iv)
         combined.put(cipherText)
 
-        return Base64.encodeToString(combined.array(), Base64.NO_WRAP)
+        Base64.encodeToString(combined.array(), Base64.NO_WRAP)
     }
 
     /**
@@ -120,12 +126,45 @@ object SecureCryptoHelper {
         val iv = ByteArray(IV_SIZE).also { buffer.get(it) }
         val cipherText = ByteArray(buffer.remaining()).also { buffer.get(it) }
 
-        val cipher = Cipher.getInstance(TRANSFORMATION)
-        val spec = GCMParameterSpec(TAG_SIZE, iv)
-        cipher.init(Cipher.DECRYPT_MODE, key, spec)
+        return retryPrunedOperation {
+            val cipher = Cipher.getInstance(TRANSFORMATION)
+            val spec = GCMParameterSpec(TAG_SIZE, iv)
+            cipher.init(Cipher.DECRYPT_MODE, key, spec)
 
-        val plainBytes = cipher.doFinal(cipherText)
-        return String(plainBytes, Charsets.UTF_8)
+            String(cipher.doFinal(cipherText), Charsets.UTF_8)
+        }
+    }
+
+    /**
+     * Runs [block] again when keystore2 finalized the operation underneath
+     * it. The daemon caps how many cipher operations can be open at once
+     * across every app on the device and prunes an open one when it runs out,
+     * after which `doFinal` fails with `INVALID_OPERATION_HANDLE` ("Call on
+     * finalized operation with outcome: Pruned", public code 15 /
+     * `ERROR_KEY_OPERATION_EXPIRED`). The key and the ciphertext are
+     * untouched, so a fresh [Cipher] — built by every attempt of [block] —
+     * succeeds. Every other failure, including the last attempt's, propagates
+     * unchanged, which keeps the `AEADBadTagException` fallback in
+     * [decryptWithHandle] and the failure handling of [migrateCiphertext] as
+     * they were.
+     *
+     * Retries are not logged: this is an expected, self-healing race, and a
+     * failure that survives them still surfaces through the caller.
+     */
+    internal fun <T> retryPrunedOperation(
+        isPruned: (Throwable) -> Boolean = { it.isPrunedKeystoreOperation() },
+        block: () -> T,
+    ): T {
+        var attempt = 1
+        while (true) {
+            try {
+                return block()
+            } catch (e: Exception) {
+                if (attempt >= MAX_CIPHER_ATTEMPTS || !isPruned(e)) throw e
+                Thread.sleep(PRUNED_RETRY_DELAY_MS * attempt)
+                attempt++
+            }
+        }
     }
 
     /**
@@ -485,6 +524,36 @@ object SecureCryptoHelper {
             AmberLog.w(TAG, "Failed to delete unused Keystore alias $alias", e)
         }
     }
+}
+
+/**
+ * Whether [this] is keystore2 having pruned an in-flight operation, which is
+ * transient and worth retrying, as opposed to a real cipher or key failure.
+ * Older keystore versions surface it as a [ProviderException] carrying the
+ * same cause. Top-level so a unit test can classify a cause chain it builds
+ * itself: `android.security.KeyStoreException` has no public constructor and
+ * is missing from the stub `android.jar` JVM tests compile against.
+ */
+internal fun Throwable.isPrunedKeystoreOperation(
+    isExpiredKeystoreError: (Throwable) -> Boolean = { it.isExpiredKeystoreError() },
+): Boolean {
+    if (this !is IllegalBlockSizeException && this !is ProviderException) return false
+    var current: Throwable? = this
+    while (current != null) {
+        if (isExpiredKeystoreError(current)) return true
+        val next = current.cause
+        current = if (next === current) null else next
+    }
+    return false
+}
+
+private fun Throwable.isExpiredKeystoreError(): Boolean {
+    // android.security.KeyStoreException arrived with the keystore2 API
+    // (API 33), which is also where pruning open operations began.
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return false
+    if (this !is android.security.KeyStoreException) return false
+    return isTransientFailure ||
+        getNumericErrorCode() == android.security.KeyStoreException.ERROR_KEY_OPERATION_EXPIRED
 }
 
 fun Context.hasStrongBox(): Boolean {

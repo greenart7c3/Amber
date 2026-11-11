@@ -1,9 +1,55 @@
-# Only the unused-code rules: formatting is ktlint's job, and deprecated or
-# needless code is caught by the Kotlin compiler (warnings fail the build, see
-# allWarningsAsErrors in build.gradle.kts). Without buildUponDefaultConfig,
-# every rule not listed here is off.
+# Structure rules (complexity and a few style rules) plus the unused-code
+# rules: formatting is ktlint's job, and deprecated or needless code is caught
+# by the Kotlin compiler (warnings fail the build, see allWarningsAsErrors in
+# build.gradle.kts). Without buildUponDefaultConfig, every rule not listed here
+# is off.
+#
+# Existing violations live in each module's detekt-baseline.xml: new code is
+# checked, old code is grandfathered. Never add a new entry to a baseline by
+# hand; split the function or the class instead, and delete the matching entry
+# when you do. Baselines are regenerated (and only ever shrink) with
+# `./gradlew --no-parallel detektBaselineAll`, see AGENTS.md.
+complexity:
+  active: true
+  ComplexCondition:
+    active: true
+    allowedConditions: 3
+  CyclomaticComplexMethod:
+    active: true
+    allowedComplexity: 15
+  LargeClass:
+    active: true
+    allowedLines: 600
+  LongMethod:
+    active: true
+    allowedLines: 60
+  LongParameterList:
+    active: true
+    allowedFunctionParameters: 8
+    ignoreDefaultParameters: true
+    # A screen's parameters are data, not decisions; the Compose convention
+    # also wants modifier and trailing slots there.
+    ignoreAnnotatedParameter: ['Composable']
+  NestedBlockDepth:
+    active: true
+    allowedDepth: 4
+  TooManyFunctions:
+    active: true
+    allowedFunctionsPerFile: 25
+    # Private helpers are the way a long file is split without new files.
+    ignorePrivate: true
+    excludes: ['**/test/**', '**/androidTest/**', '**/jvmTest/**']
+
 style:
   active: true
+  ReturnCount:
+    active: true
+    max: 3
+    excludeGuardClauses: true
+  ThrowsCount:
+    active: true
+    max: 2
+    excludeGuardClauses: true
   UnusedImport:
     active: true
   UnusedParameter:

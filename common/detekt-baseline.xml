@@ -1,0 +1,10 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>LongParameterList:LocalRelayServer.kt:RelayFilter</ID>
+    <ID>ReturnCount:LocalRelayServer.kt:RelayCore.Connection$private fun handshake: Boolean</ID>
+    <ID>ThrowsCount:LocalRelayServer.kt:RelayCore.Connection$private fun nextMessage: String?</ID>
+    <ID>ThrowsCount:LocalRelayServer.kt:RelayCore.Connection$private fun readFrame: Frame</ID>
+  </CurrentIssues>
+</SmellBaseline>

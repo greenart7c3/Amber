@@ -11,6 +11,13 @@ plugins {
     alias(libs.plugins.jetbrainsComposeCompiler)
     alias(libs.plugins.gradle.ktlint)
     alias(libs.plugins.detekt)
+    alias(libs.plugins.kover)
+}
+
+dependencies {
+    // Compose-specific rules (ModifierMissing, ViewModelForwarding, …) on top of
+    // config/detekt/detekt.yml.
+    detektPlugins(libs.detekt.compose.rules)
 }
 
 kotlin {

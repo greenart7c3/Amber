@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.kotlinJvm)
     alias(libs.plugins.gradle.ktlint)
     alias(libs.plugins.detekt)
+    alias(libs.plugins.kover)
 }
 
 kotlin {
@@ -27,4 +28,21 @@ dependencies {
     testImplementation(libs.junit)
     // Native secp256k1 for the JVM, which Quartz's crypto runs on in tests.
     testImplementation(libs.secp256k1.jni.jvm)
+}
+
+kover {
+    reports {
+        total {
+            verify {
+                rule {
+                    // :common's own unit tests cover ~44% of its lines; the rest is
+                    // exercised by :desktop's tests (LocalRelayServer and the bunker
+                    // flow), which the merged report at build/reports/kover counts.
+                    // A ratchet: raise it when coverage improves, never lower it to
+                    // make a change pass.
+                    minBound(44)
+                }
+            }
+        }
+    }
 }

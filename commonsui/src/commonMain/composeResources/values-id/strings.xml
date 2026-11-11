@@ -1165,4 +1165,8 @@ Yang dapat Anda lakukan:
     <string name="d_local_socket">Socket lokal</string>
     <string name="d_via_local_socket">Melalui socket lokal</string>
     <string name="d_socket_name_unverified">Alat ini memilih namanya sendiri dan Amber tidak dapat memverifikasinya. Setujui hanya jika Anda baru saja menjalankannya.</string>
+    <!-- Onboarding notice: the offline flavor has its own application id since 7.0.0 -->
+    <string name="offline_previous_install_title">Akun Anda ada di aplikasi sebelumnya</string>
+    <string name="offline_previous_install_body">Amber Offline sekarang aplikasi terpisah, jadi aplikasi ini dimulai kosong. Akun Anda masih ada di aplikasi Amber yang Anda pasang sebelumnya: buka aplikasi itu, ekspor cadangan di sana, lalu gunakan Pulihkan dari cadangan di sini. Setelah itu aplikasi lama bisa Anda hapus.</string>
+    <string name="offline_previous_install_open">Buka aplikasi sebelumnya</string>
 </resources>

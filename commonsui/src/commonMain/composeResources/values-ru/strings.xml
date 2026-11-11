@@ -1168,4 +1168,8 @@
     <string name="d_local_socket">Локальный сокет</string>
     <string name="d_via_local_socket">Через локальный сокет</string>
     <string name="d_socket_name_unverified">Этот инструмент сам выбрал своё имя, и Amber не может его проверить. Одобряйте, только если вы только что его запустили.</string>
+    <!-- Onboarding notice: the offline flavor has its own application id since 7.0.0 -->
+    <string name="offline_previous_install_title">Ваши аккаунты в прежнем приложении</string>
+    <string name="offline_previous_install_body">Amber Offline теперь отдельное приложение, поэтому оно запустилось пустым. Ваши аккаунты остались в приложении Amber, установленном раньше: откройте его, экспортируйте там резервную копию и воспользуйтесь пунктом «Восстановить из резервной копии» здесь. После этого старое приложение можно удалить.</string>
+    <string name="offline_previous_install_open">Открыть прежнее приложение</string>
 </resources>

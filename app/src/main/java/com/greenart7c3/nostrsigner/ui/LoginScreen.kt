@@ -1,6 +1,9 @@
 package com.greenart7c3.nostrsigner.ui
 
+import android.Manifest
 import android.annotation.SuppressLint
+import android.content.Context
+import android.content.pm.PackageManager
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -106,6 +109,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.greenart7c3.nostrsigner.Amber
+import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.commonsui.Res
@@ -138,6 +142,9 @@ import com.greenart7c3.nostrsigner.commonsui.ncryptsec_password
 import com.greenart7c3.nostrsigner.commonsui.next
 import com.greenart7c3.nostrsigner.commonsui.nickname
 import com.greenart7c3.nostrsigner.commonsui.nsec
+import com.greenart7c3.nostrsigner.commonsui.offline_previous_install_body
+import com.greenart7c3.nostrsigner.commonsui.offline_previous_install_open
+import com.greenart7c3.nostrsigner.commonsui.offline_previous_install_title
 import com.greenart7c3.nostrsigner.commonsui.ok
 import com.greenart7c3.nostrsigner.commonsui.orbot_socks_port
 import com.greenart7c3.nostrsigner.commonsui.orbot_title
@@ -371,6 +378,8 @@ fun MainPage(
                         color = Color(0xFFC98500),
                     )
 
+                    PreviousOfflineInstallNotice(Modifier.padding(top = 12.dp))
+
                     Image(
                         modifier = Modifier.padding(top = 20.dp, bottom = 20.dp),
                         imageVector = ImageVector.vectorResource(R.drawable.frame),
@@ -441,6 +450,87 @@ fun MainPage(
                         },
                     )
                 }
+            }
+        }
+    }
+}
+
+// The application ids an offline Amber can carry: the one shared with the online
+// app (every offline APK released up to 6.6.9) and the one of the separate
+// "Amber Offline" Zapstore listing (7.0.0-pre and later).
+private val OFFLINE_APP_PACKAGES = listOf(
+    "com.greenart7c3.nostrsigner",
+    "com.greenart7c3.nostrsigner.offline",
+)
+
+/**
+ * The package of an installed offline Amber that is not this app, or null.
+ *
+ * Only the INTERNET permission separates an offline install from the online
+ * Amber, which keeps its accounts to itself and needs no notice.
+ */
+private fun previousOfflineInstall(context: Context): String? {
+    if (!BuildFlavorChecker.isOfflineFlavor()) return null
+    // This app holds one of those ids too, and pointing at itself explains
+    // nothing to a user who is looking at an empty install.
+    return OFFLINE_APP_PACKAGES
+        .filter { it != context.packageName }
+        .firstOrNull { isOfflineInstall(context, it) }
+}
+
+@Suppress("DEPRECATION")
+private fun isOfflineInstall(context: Context, packageName: String): Boolean {
+    val permissions = try {
+        context.packageManager.getPackageInfo(packageName, PackageManager.GET_PERMISSIONS).requestedPermissions
+    } catch (_: PackageManager.NameNotFoundException) {
+        return false
+    }
+    return !permissions.orEmpty().contains(Manifest.permission.INTERNET)
+}
+
+/**
+ * The offline app can end up next to an install that still holds the accounts,
+ * when the two use different application ids: an update then arrives as a
+ * separate, empty app, because its data cannot be read across packages. Point
+ * the user at the app that has the accounts instead of showing them a first run.
+ */
+@Composable
+private fun PreviousOfflineInstallNotice(modifier: Modifier = Modifier) {
+    val context = LocalContext.current
+    val previousApp = remember(context) { previousOfflineInstall(context) } ?: return
+    val launchIntent = remember(context) { context.packageManager.getLaunchIntentForPackage(previousApp) }
+
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .background(
+                color = MaterialTheme.colorScheme.primary,
+                shape = RoundedCornerShape(8.dp),
+            )
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Text(
+            text = stringResource(Res.string.offline_previous_install_title),
+            color = Color.Black,
+            fontWeight = FontWeight.Bold,
+            textAlign = TextAlign.Center,
+        )
+        Text(
+            modifier = Modifier.padding(top = 8.dp),
+            text = stringResource(Res.string.offline_previous_install_body),
+            color = Color.Black,
+            textAlign = TextAlign.Center,
+        )
+        if (launchIntent != null) {
+            TextButton(
+                onClick = { context.startActivity(launchIntent) },
+            ) {
+                Text(
+                    text = stringResource(Res.string.offline_previous_install_open),
+                    color = Color.Black,
+                    fontWeight = FontWeight.Bold,
+                )
             }
         }
     }

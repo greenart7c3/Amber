@@ -1189,4 +1189,8 @@ Android 向け Nostr アプリをすべて見つけるには</string>
     <string name="d_local_socket">ローカルソケット</string>
     <string name="d_via_local_socket">ローカルソケット経由</string>
     <string name="d_socket_name_unverified">このツールは名前を自分で決めており、Amber はそれを確認できません。いま自分で起動した場合にのみ承認してください。</string>
+    <!-- Onboarding notice: the offline flavor has its own application id since 7.0.0 -->
+    <string name="offline_previous_install_title">アカウントは以前のアプリにあります</string>
+    <string name="offline_previous_install_body">Amber Offline は別のアプリになったため、空の状態で起動しました。アカウントは以前にインストールした Amber アプリに残っています。そのアプリを開いてバックアップをエクスポートし、ここで「バックアップから復元」を使ってください。その後、古いアプリはアンインストールできます。</string>
+    <string name="offline_previous_install_open">以前のアプリを開く</string>
 </resources>

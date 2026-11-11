@@ -16,4 +16,8 @@
     <string name="event_kind_3367">Colour Moment</string>
     <!-- Desktop app -->
     <string name="d_keep_in_tray_sub">Closing the window minimises Amber to the system tray so it keeps answering requests.</string>
+    <!-- Onboarding notice: the offline flavor has its own application id since 7.0.0 -->
+    <string name="offline_previous_install_title">Your accounts are in the previous app</string>
+    <string name="offline_previous_install_body">Amber Offline is now a separate app, so it started empty. Your accounts are still in the Amber app you had installed before: open it, export a backup there, then use Recover from backup here. You can uninstall the old app after that.</string>
+    <string name="offline_previous_install_open">Open the previous app</string>
 </resources>

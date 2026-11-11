@@ -42,7 +42,13 @@ jobs:
 
       - name: Build AAB and APKs
         run: |
-          ./gradlew bundleFreeRelease bundleOfflineRelease assembleFreeRelease assembleOfflineRelease --stacktrace
+          ./gradlew bundleFreeRelease bundleOfflineRelease assembleFreeRelease assembleOfflineRelease assembleOfflineZapstoreRelease --stacktrace
+
+      # The Zapstore flavor exists for the separate "Amber Offline" listing, which
+      # publishes the arm64-v8a APK only, so drop the other ABIs it also builds.
+      - name: Keep only the arm64-v8a Zapstore offline APK
+        run: |
+          find app/build/outputs/apk/offlinezapstore -type f -name '*.apk' ! -name '*-arm64-v8a-*' -delete
 
       - name: Upload all APKs as artifacts
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7

@@ -1,6 +1,6 @@
 repository: https://github.com/greenart7c3/Amber
 release_source: https://github.com/greenart7c3/Amber
-match: '^amber-offline-arm64-v8a-.*\.apk$'
+match: '^amber-offlinezapstore-arm64-v8a-.*\.apk$'
 
 name: Amber Offline
 summary: Nostr event signer for Android, without network access

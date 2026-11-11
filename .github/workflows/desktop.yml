@@ -54,7 +54,7 @@ jobs:
           persist-credentials: false
 
       - name: Set up JDK 21
-        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6
+        uses: actions/setup-java@77dd5b2ce225ea11469928ac317850245a74ae78 # v6.2.0
         with:
           distribution: 'temurin'
           java-version: 21
@@ -104,7 +104,7 @@ jobs:
       # release ships), not the runner's preinstalled copy, which differs in
       # jrt-fs.jar. An empty tool cache makes setup-java download it.
       - name: Set up JDK 21
-        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6
+        uses: actions/setup-java@77dd5b2ce225ea11469928ac317850245a74ae78 # v6.2.0
         env:
           RUNNER_TOOL_CACHE: ${{ runner.temp }}/toolcache
         with:

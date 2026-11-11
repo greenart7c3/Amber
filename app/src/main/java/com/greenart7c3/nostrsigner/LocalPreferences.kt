@@ -313,9 +313,7 @@ object LocalPreferences {
 
     suspend fun reloadApp() {
         val context = Amber.instance
-        currentAccount = null
-        savedAccounts = null
-        accountCache.clear()
+        invalidateAccountCaches()
         warmAccountCache(context)
         context.settings = loadSettingsFromEncryptedStorage(context)
         context.isSettingsLoaded = true
@@ -445,6 +443,28 @@ object LocalPreferences {
             )
         }
     }
+
+    /**
+     * Forgets the cached account list, current account and decrypted accounts,
+     * so the next read sees what was written straight to the preference files.
+     * [LegacyStorageMigration] runs it because it cannot use [reloadApp]: that
+     * one reloads the settings, which is only allowed off the main thread.
+     */
+    internal fun invalidateAccountCaches() {
+        currentAccount = null
+        savedAccounts = null
+        accountCache.clear()
+    }
+
+    /** The app-wide preference file (`prefs`), for [LegacyStorageMigration]. */
+    internal fun appPreferences(context: Context): SharedPreferences = sharedPrefs(context)
+
+    /** The npub-specific preference file (`prefs_<npub>`), for [LegacyStorageMigration]. */
+    internal fun accountPreferences(context: Context, npub: String): SharedPreferences = sharedPrefs(context, npub)
+
+    internal fun savedAccountList(context: Context): List<String> = savedAccounts(context)
+
+    internal fun replaceSavedAccounts(context: Context, accounts: List<String>) = updateSavedAccounts(context, accounts)
 
     private var savedAccounts: List<String>? = null
 

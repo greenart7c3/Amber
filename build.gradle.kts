@@ -32,7 +32,7 @@ dependencies {
     unusedCodeTool(project(":unused-code"))
 }
 
-val unusedCodeModules = listOf("app", "common", "commonsui", "desktop", "tools/unused-code")
+val unusedCodeModules = listOf("app", "cli", "common", "commonsui", "desktop", "tools/unused-code")
 
 // Identifiers the JNI side calls by name (ArtiLogCallback.onLogLine).
 val unusedCodeTokenDirs = listOf("tools/arti/src")
@@ -71,6 +71,8 @@ tasks.register("detektAll") {
         ":app:detektFreeDebugUnitTest",
         ":app:detektOfflineDebugUnitTest",
         ":app:detektFreeDebugAndroidTest",
+        ":cli:detektMain",
+        ":cli:detektTest",
         ":common:detektMain",
         ":common:detektTest",
         ":commonsui:detektMainJvm",

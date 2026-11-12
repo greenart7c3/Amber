@@ -1,0 +1,149 @@
+name: Test/Build CLI
+
+# Lints, tests and packages the `amber` command line client (:cli) on every OS
+# it ships for, and uploads the self-contained archives so each change can be
+# tried out. Each archive carries its own trimmed Java runtime, so nothing has
+# to be installed. On a v* tag the archives are attached to that release, next
+# to the Android APKs and the desktop installers.
+
+on:
+  pull_request:
+    branches: [master]
+    paths: &cli-paths
+      - 'cli/**'
+      - 'common/**'
+      - 'gradle/**'
+      - '*.gradle.kts'
+      - 'gradle.properties'
+      - '.github/workflows/cli.yml'
+  push:
+    branches: ['**']
+    paths: *cli-paths
+    # Path filters are not evaluated for tags: a release always builds.
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cli-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  build:
+    name: build (${{ matrix.name }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: linux-x86_64
+            os: ubuntu-latest
+          - name: windows-x64
+            os: windows-latest
+          - name: macos-arm64
+            os: macos-latest
+          - name: macos-x64
+            os: macos-15-intel
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      # The archive bundles this JDK's runtime, so take the official Temurin
+      # archive rather than the runner's preinstalled copy, which differs.
+      - name: Set up JDK 21
+        uses: actions/setup-java@77dd5b2ce225ea11469928ac317850245a74ae78 # v6.2.0
+        env:
+          RUNNER_TOOL_CACHE: ${{ runner.temp }}/toolcache
+        with:
+          distribution: 'temurin'
+          java-version: 21
+
+      - name: Cache Gradle
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-${{ runner.arch }}-cli-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', 'gradle/libs.versions.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ runner.arch }}-cli-gradle-
+
+      - name: Create keystore.properties
+        run: touch keystore.properties
+
+      # Unit tests plus the end-to-end ones (a local relay and a fake signer, no
+      # network, no Amber).
+      - name: Test (gradle)
+        run: ./gradlew :cli:ktlintCheck :cli:detektMain :cli:detektTest :cli:test --no-daemon
+
+      # jpackage app image + its archive: amber-cli-<version>-<os>-<arch>.
+      - name: Package (gradle)
+        run: ./gradlew :cli:packageCli --no-daemon
+
+      # Runs the packaged launcher, not java: it carries its own runtime.
+      - name: Smoke test the archive
+        run: |
+          case "${{ matrix.name }}" in
+            linux-*) launcher=cli/build/cli-image/amber-cli/bin/amber ;;
+            windows-*) launcher=cli/build/cli-image/amber-cli/amber.exe ;;
+            macos-*) launcher=cli/build/cli-image/amber-cli.app/Contents/MacOS/amber ;;
+          esac
+          "$launcher" --version
+          "$launcher" help | head -20
+          "$launcher" status || [ $? -eq 3 ]   # 3 = not paired yet, as documented
+
+      - name: Upload archive
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: amber-cli-${{ matrix.name }}
+          path: cli/build/distributions/*
+          retention-days: 14
+          if-no-files-found: error
+
+      - name: Upload test reports
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: amber-cli-test-reports-${{ matrix.name }}
+          path: cli/build/reports
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
+        with:
+          pattern: amber-cli-*
+          path: dist
+          merge-multiple: true
+
+      # create-release.yml (Android) and desktop-release.yml create the release
+      # at the same time; whichever gets there first creates it, the others attach.
+      - name: Attach archives to the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          ls -l dist
+          prerelease=$([[ "$TAG" == *-pre* ]] && echo --prerelease || true)
+          for attempt in 1 2 3 4 5; do
+            gh release view "$TAG" > /dev/null 2>&1 && break
+            gh release create "$TAG" --verify-tag --title "Release ${TAG#v}" --notes "" $prerelease && break
+            sleep 20
+          done
+          gh release upload "$TAG" dist/* --clobber

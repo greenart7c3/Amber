@@ -136,7 +136,7 @@ jobs:
         run: ./gradlew :common:test :desktop:test --no-daemon
 
       # .deb/.rpm on Linux, .msi/.exe on Windows (WiX is fetched by the
-      # Compose plugin), .dmg on macOS (unsigned).
+      # Compose plugin), .dmg on macOS (signed ad hoc, no certificate).
       - name: Package (gradle)
         run: ./gradlew :desktop:packageDistributionForCurrentOs --no-daemon
 

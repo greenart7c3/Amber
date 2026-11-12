@@ -91,10 +91,11 @@ private class PopupAction(val label: String, val onClick: () -> Unit)
  * Amber's own notification for an incoming request, with Approve / Reject
  * buttons, drawn to look like the OS's native notification: a Windows 11
  * toast (bottom-right) or a macOS alert-style notification (top-right). Used
- * on Windows and macOS, where the AWT tray notification cannot carry action
- * buttons, and on Linux daemons that never draw action buttons (toast layout,
- * top-right; daemons that do draw them get the native notification, see
- * [com.greenart7c3.nostrsigner.desktop.core.Notifier.linuxDaemonShowsButtons]).
+ * only where the OS-native notification cannot show the request with buttons
+ * (see [com.greenart7c3.nostrsigner.desktop.core.Notifier.nativeButtons]):
+ * Linux daemons that never draw action buttons (toast layout, top-right), a
+ * macOS app that is unsigned or not allowed to notify, and a native post
+ * that failed.
  *
  * It follows the OS light/dark appearance, never takes focus, opens Amber when
  * its body is clicked, and closes itself after [POPUP_TIMEOUT_MS] unless the

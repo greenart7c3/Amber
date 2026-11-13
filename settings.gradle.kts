@@ -17,6 +17,7 @@ dependencyResolutionManagement {
 }
 rootProject.name = "Nostr Signer"
 include(":app")
+include(":cli")
 include(":common")
 include(":commonsui")
 include(":desktop")

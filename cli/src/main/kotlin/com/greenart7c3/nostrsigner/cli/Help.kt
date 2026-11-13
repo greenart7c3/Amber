@@ -276,9 +276,13 @@ object Help {
           state: online | offline
 
         With --json the same as {"ok":true,"result":{"profile":...,"online":true,...}}.
+        When Amber does not answer, or the pairing still waits for approval, the
+        status is still in "result" but "ok" is false, with "error" and "code"
+        beside it: {"ok":false,"result":{...,"online":false},"error":...,"code":5}.
 
         EXIT CODES
-          0 online    3 not paired (or still waiting for approval)    5 offline
+          0 online    1 invalid answer    3 not paired (or still waiting for approval)
+          4 refused by Amber    5 offline: no answer in time    6 no relay reachable
     """.trimIndent()
 
     private fun logout(): String = """

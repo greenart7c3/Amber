@@ -264,5 +264,34 @@ class Nip46EndToEndTest {
         assertEquals(signer.connectionPubKey, node.get("signer").asText())
         assertEquals(signer.accountPubKey, node.get("user").asText())
         assertEquals(true, node.get("online").asBoolean())
+        assertEquals(true, JacksonMapper.mapper.readTree(status.out.trim()).get("ok").asBoolean())
+
+        // A signer that does not answer: offline, exit 5, and the JSON says so.
+        signer.mode = FakeSigner.Mode.SILENT
+        val silent = amber("status", "--json", "--timeout", "1")
+        assertEquals(silent.err, Exit.TIMEOUT, silent.exit)
+        val silentNode = JacksonMapper.mapper.readTree(silent.out.trim())
+        assertEquals(false, silentNode.get("ok").asBoolean())
+        assertEquals(Exit.TIMEOUT, silentNode.get("code").asInt())
+        assertEquals(false, silentNode.get("result").get("online").asBoolean())
+
+        // The saved relay is down: unreachable, exit 6 as everywhere else.
+        relay.stop()
+        val unreachable = amber("status", "--json", "--timeout", "1")
+        assertEquals(unreachable.err, Exit.UNREACHABLE, unreachable.exit)
+        val unreachableNode = JacksonMapper.mapper.readTree(unreachable.out.trim())
+        assertEquals(false, unreachableNode.get("ok").asBoolean())
+        assertEquals(Exit.UNREACHABLE, unreachableNode.get("code").asInt())
+    }
+
+    @Test
+    fun statusOfAPairingWaitingForApprovalIsNotOk() {
+        assertEquals(Exit.TIMEOUT, amber("connect", "--relay", relayUrl, "--timeout", "1").exit)
+        val status = amber("status", "--json")
+        assertEquals(status.err, Exit.NOT_PAIRED, status.exit)
+        val node = JacksonMapper.mapper.readTree(status.out.trim())
+        assertEquals(false, node.get("ok").asBoolean())
+        assertEquals(Exit.NOT_PAIRED, node.get("code").asInt())
+        assertEquals("waiting-for-approval", node.get("result").get("state").asText())
     }
 }

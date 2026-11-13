@@ -18,8 +18,8 @@ class NotifierFunctionalTest {
         assumeTrue("stub not configured", out != null)
         assumeTrue(System.getProperty("os.name").lowercase().contains("linux"))
 
-        val ok = Notifier.notify("Amber", "TestApp wants you to sign a Short text note")
-        assertTrue("notify() should report delivered", ok)
+        val posted = Notifier.notify("Amber", "TestApp wants you to sign a Short text note")
+        assertTrue("notify() should report delivered", posted != null)
 
         val args = File(out!!).readLines()
         assertTrue("app name flag", args.contains("Amber"))

@@ -34,6 +34,28 @@ class NotifierDaemonTest {
     }
 
     @Test
+    fun dismissesAnOmarchyCardByTitleAsOneArgument() {
+        val dir = File("/usr/share/omarchy/shell")
+        assertEquals(
+            listOf(
+                listOf("omarchy-shell", "-q", "notifications", "dismiss", "Nostr; rm -rf \$HOME"),
+                listOf("qs", "ipc", "-p", "/usr/share/omarchy/shell", "call", "notifications", "dismiss", "Nostr; rm -rf \$HOME"),
+            ),
+            Notifier.omarchyDismissCommands(dir, "Nostr; rm -rf \$HOME"),
+        )
+    }
+
+    @Test
+    fun leavesTitlesThatWouldMatchTooMuchOrLookLikeAnOption() {
+        val dir = File("/usr/share/omarchy/shell")
+        // The shell matches by substring: "ab" is in most summaries.
+        assertTrue(Notifier.omarchyDismissCommands(dir, "ab").isEmpty())
+        assertTrue(Notifier.omarchyDismissCommands(dir, "").isEmpty())
+        assertTrue(Notifier.omarchyDismissCommands(dir, "--pid").isEmpty())
+        assertEquals(2, Notifier.omarchyDismissCommands(dir, "abc").size)
+    }
+
+    @Test
     fun recognizesOmarchyButtonsByItsComponent() {
         val dir = Files.createTempDirectory("qs").toFile()
         try {

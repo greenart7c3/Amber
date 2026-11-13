@@ -1182,4 +1182,8 @@
     <string name="d_local_socket">本地套接字</string>
     <string name="d_via_local_socket">通过本地套接字</string>
     <string name="d_socket_name_unverified">此工具的名称由其自行设定，Amber 无法验证。仅当您刚刚启动它时才批准。</string>
+    <!-- Onboarding notice: the offline flavor has its own application id since 7.0.0 -->
+    <string name="offline_previous_install_title">你的账户在之前的应用里</string>
+    <string name="offline_previous_install_body">Amber Offline 现在是独立的应用，因此启动后是空的。你的账户仍在之前安装的 Amber 应用里：打开它，在那里导出备份，然后在这里使用「从备份恢复」。之后你就可以卸载旧应用了。</string>
+    <string name="offline_previous_install_open">打开之前的应用</string>
 </resources>

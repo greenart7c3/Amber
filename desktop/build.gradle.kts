@@ -152,6 +152,21 @@ object ZipTimestamps {
     }
 }
 
+// On Apple silicon jpackage (JDK 21) signs the app ad hoc, because unsigned
+// code does not run there; on Intel it leaves the app with no signature at
+// all, and macOS then refuses it the notification center (usernotificationsd:
+// "requestAuthorization not allowed"), so request notifications could not be
+// native there. Sign the Intel app ad hoc too: no certificate, no timestamp,
+// so the same files give the same signature.
+object MacAdHocSignature {
+    val needed = System.getProperty("os.arch") in setOf("x86_64", "amd64")
+
+    fun sign(app: File) {
+        val process = ProcessBuilder("codesign", "--force", "--deep", "--sign", "-", app.path).inheritIO().start()
+        check(process.waitFor() == 0) { "codesign failed for $app" }
+    }
+}
+
 if (System.getProperty("os.name").startsWith("Mac")) {
     tasks.withType<org.jetbrains.compose.desktop.application.tasks.AbstractJPackageTask>()
         .matching { it.name == "createDistributable" || it.name == "createReleaseDistributable" }
@@ -160,6 +175,11 @@ if (System.getProperty("os.name").startsWith("Mac")) {
             doLast {
                 image.get().asFile.walkTopDown().filter { it.isFile && it.extension == "jar" && it.parentFile.name == "app" }
                     .forEach(ZipTimestamps::normalize)
+                // After the jars are final: the signature seals them.
+                if (MacAdHocSignature.needed) {
+                    image.get().asFile.listFiles { file -> file.isDirectory && file.extension == "app" }.orEmpty()
+                        .forEach(MacAdHocSignature::sign)
+                }
             }
         }
 }

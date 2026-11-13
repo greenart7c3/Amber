@@ -1189,4 +1189,8 @@ Bạn có thể làm:
     <string name="d_local_socket">Socket cục bộ</string>
     <string name="d_via_local_socket">Qua socket cục bộ</string>
     <string name="d_socket_name_unverified">Công cụ này tự chọn tên của nó và Amber không thể xác minh. Chỉ phê duyệt nếu bạn vừa khởi chạy nó.</string>
+    <!-- Onboarding notice: the offline flavor has its own application id since 7.0.0 -->
+    <string name="offline_previous_install_title">Tài khoản của bạn nằm trong ứng dụng trước đây</string>
+    <string name="offline_previous_install_body">Amber Offline giờ là một ứng dụng riêng nên khởi động trống. Tài khoản của bạn vẫn nằm trong ứng dụng Amber bạn đã cài trước đó: hãy mở ứng dụng ấy, xuất bản sao lưu tại đó, rồi dùng Khôi phục từ bản sao lưu ở đây. Sau đó bạn có thể gỡ cài đặt ứng dụng cũ.</string>
+    <string name="offline_previous_install_open">Mở ứng dụng trước đây</string>
 </resources>

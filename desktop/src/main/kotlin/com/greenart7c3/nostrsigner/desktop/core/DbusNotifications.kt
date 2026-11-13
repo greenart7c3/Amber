@@ -33,6 +33,9 @@ interface FreedesktopNotifications : DBusInterface {
         expireTimeout: Int,
     ): UInt32
 
+    @DBusMemberName("CloseNotification")
+    fun closeNotification(id: UInt32)
+
     @DBusMemberName("ActionInvoked")
     class ActionInvoked(path: String, val id: UInt32, val actionKey: String) : DBusSignal(path, id, actionKey)
 
@@ -113,9 +116,10 @@ internal object DbusNotifications {
     /**
      * Post a notification with [actions] as (key, label) pairs and run
      * [onAction] with the key the user picks ("default" for a body click).
-     * Throws when there is no session bus or notification daemon.
+     * Returns its id, which [close] withdraws again. Throws when there is no
+     * session bus or notification daemon.
      */
-    fun show(appName: String, title: String, message: String, actions: List<Pair<String, String>>, timeoutMs: Int, onAction: (String) -> Unit) {
+    fun show(appName: String, title: String, message: String, actions: List<Pair<String, String>>, timeoutMs: Int, onAction: (String) -> Unit): Long {
         val conn = connection()
         val owner = daemonOwner(conn)
         val daemon = conn.getRemoteObject(BUS_NAME, OBJECT_PATH, FreedesktopNotifications::class.java)
@@ -132,5 +136,26 @@ internal object DbusNotifications {
         daemonOwner = owner
         handlers[id] = onAction
         expiry.schedule({ handlers.remove(id) }, WATCH_MS, TimeUnit.MILLISECONDS)
+        return id
+    }
+
+    /**
+     * Withdraw notification [id] and forget its handler, so a click on the
+     * banner it belonged to can no longer fire [show]'s callback: once the
+     * request it announced is answered, its Approve/Reject must not act on a
+     * request that is already gone. Returns false when the close could not be
+     * sent (no connection, or the daemon went away), so the caller can try
+     * another channel; the handler is dropped either way.
+     */
+    fun close(id: Long): Boolean {
+        handlers.remove(id)
+        val conn = connection ?: return false
+        return try {
+            conn.getRemoteObject(BUS_NAME, OBJECT_PATH, FreedesktopNotifications::class.java).closeNotification(UInt32(id))
+            true
+        } catch (e: Throwable) {
+            AmberLogger.d("DbusNotifications", "closing notification $id failed: ${e.message}")
+            false
+        }
     }
 }

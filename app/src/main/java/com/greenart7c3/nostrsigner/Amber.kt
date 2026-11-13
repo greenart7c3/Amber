@@ -100,6 +100,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeoutOrNull
 import okio.Path.Companion.toOkioPath
 
@@ -402,6 +403,16 @@ class Amber :
         }
 
         instance = this
+        // Before anything reads the account list or the settings: an install that
+        // comes from 3.3.0 or older still keeps them in the EncryptedSharedPreferences
+        // files this version no longer reads, so it would look like a first run.
+        // Synchronous because this is the only point ahead of the three request
+        // paths and the settings load (runMigrations only runs from ConnectivityService,
+        // which the offline flavor does not have); on an install with nothing to
+        // migrate it is a single directory read.
+        if (LegacyStorageMigration.needed(this)) {
+            runBlocking { LegacyStorageMigration.run(this@Amber) }
+        }
         // Before anything can dial: route the proxy client through the user's SOCKS
         // setup (or the fail-closed placeholder for BUILTIN) read synchronously from
         // plain prefs. Dials in the window before the async settings load — network

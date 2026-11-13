@@ -1167,4 +1167,8 @@ Cosa puoi fare:
     <string name="d_local_socket">Socket locale</string>
     <string name="d_via_local_socket">Tramite socket locale</string>
     <string name="d_socket_name_unverified">Questo strumento ha scelto il proprio nome e Amber non può verificarlo. Approva solo se lo hai appena avviato.</string>
+    <!-- Onboarding notice: the offline flavor has its own application id since 7.0.0 -->
+    <string name="offline_previous_install_title">I tuoi account sono nell'app precedente</string>
+    <string name="offline_previous_install_body">Amber Offline ora è un'app separata, quindi parte vuota. I tuoi account sono ancora nell'app Amber che avevi installato prima: aprila, esporta lì un backup e poi usa Ripristina dal backup qui. Dopo puoi disinstallare la vecchia app.</string>
+    <string name="offline_previous_install_open">Apri l'app precedente</string>
 </resources>

@@ -1165,4 +1165,8 @@ Android용 모든 Nostr 앱 보기:</string>
     <string name="d_local_socket">로컬 소켓</string>
     <string name="d_via_local_socket">로컬 소켓 경유</string>
     <string name="d_socket_name_unverified">이 도구는 이름을 스스로 정했으며 Amber는 이를 확인할 수 없습니다. 방금 직접 실행한 경우에만 승인하세요.</string>
+    <!-- Onboarding notice: the offline flavor has its own application id since 7.0.0 -->
+    <string name="offline_previous_install_title">계정은 이전 앱에 있습니다</string>
+    <string name="offline_previous_install_body">Amber Offline은 이제 별도의 앱이라 빈 상태로 시작합니다. 계정은 이전에 설치한 Amber 앱에 그대로 남아 있습니다. 그 앱을 열어 백업을 내보낸 뒤, 여기에서 백업에서 복구를 사용하세요. 그 후에는 이전 앱을 삭제할 수 있습니다.</string>
+    <string name="offline_previous_install_open">이전 앱 열기</string>
 </resources>

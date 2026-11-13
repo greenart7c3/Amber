@@ -37,12 +37,13 @@ dependencies {
 
     // One coverage report for the whole repository: `./gradlew koverHtmlReport`.
     kover(project(":app"))
+    kover(project(":cli"))
     kover(project(":common"))
     kover(project(":commonsui"))
     kover(project(":desktop"))
 }
 
-val unusedCodeModules = listOf("app", "common", "commonsui", "desktop", "tools/architecture-tests", "tools/unused-code")
+val unusedCodeModules = listOf("app", "cli", "common", "commonsui", "desktop", "tools/architecture-tests", "tools/unused-code")
 
 // Modules that put the Compose rules on their detekt classpath (compile form:
 // they also get config/detekt/compose.yml).
@@ -82,13 +83,15 @@ val unusedCode = tasks.register<JavaExec>("unusedCode") {
 // resolve types and misses unused variables, properties and functions.
 tasks.register("detektAll") {
     group = "verification"
-    description = "Checks the app, desktop, common and commonsui sources for complexity and unused code."
+    description = "Checks the app, cli, desktop, common and commonsui sources for complexity and unused code."
     dependsOn(
         ":app:detektFreeDebug",
         ":app:detektOfflineDebug",
         ":app:detektFreeDebugUnitTest",
         ":app:detektOfflineDebugUnitTest",
         ":app:detektFreeDebugAndroidTest",
+        ":cli:detektMain",
+        ":cli:detektTest",
         ":common:detektMain",
         ":common:detektTest",
         ":commonsui:detektMainJvm",
@@ -119,6 +122,8 @@ tasks.register("detektBaselineAll") {
         ":app:detektBaselineOfflineDebugUnitTest",
         ":app:detektBaselineFreeDebugAndroidTest",
         ":app:detektBaselineOfflineDebugAndroidTest",
+        ":cli:detektBaselineMain",
+        ":cli:detektBaselineTest",
         ":common:detektBaselineMain",
         ":common:detektBaselineTest",
         ":commonsui:detektBaselineMainJvm",
@@ -134,6 +139,7 @@ tasks.register("detektBaselineAll") {
 
     val modules = listOf(
         ":app" to "app",
+        ":cli" to "cli",
         ":common" to "common",
         ":commonsui" to "commonsui",
         ":desktop" to "desktop",

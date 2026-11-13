@@ -5,6 +5,8 @@
     <queries>
         <package android:name="com.greenart7c3.nostrsigner.debug" />
         <package android:name="com.greenart7c3.nostrsigner" />
+        <!-- The offline flavors check these two for an older install that still has the accounts -->
+        <package android:name="com.greenart7c3.nostrsigner.offline" />
         <package android:name="dev.zapstore.app" />
         <!-- Lets IntentUtils tell whether a nostrsigner: request was launched by a browser -->
         <intent>

@@ -1166,4 +1166,8 @@ Yapabilecekleriniz:
     <string name="d_local_socket">Yerel soket</string>
     <string name="d_via_local_socket">Yerel soket üzerinden</string>
     <string name="d_socket_name_unverified">Bu araç adını kendisi seçti ve Amber bunu doğrulayamaz. Yalnızca az önce siz başlattıysanız onaylayın.</string>
+    <!-- Onboarding notice: the offline flavor has its own application id since 7.0.0 -->
+    <string name="offline_previous_install_title">Hesaplarınız önceki uygulamada</string>
+    <string name="offline_previous_install_body">Amber Offline artık ayrı bir uygulama, bu yüzden boş olarak başladı. Hesaplarınız daha önce kurduğunuz Amber uygulamasında duruyor: onu açın, orada bir yedek dışa aktarın ve burada Yedekten kurtar seçeneğini kullanın. Bundan sonra eski uygulamayı kaldırabilirsiniz.</string>
+    <string name="offline_previous_install_open">Önceki uygulamayı aç</string>
 </resources>

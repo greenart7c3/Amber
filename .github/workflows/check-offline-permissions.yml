@@ -20,7 +20,7 @@ jobs:
           persist-credentials: false
 
       - name: Set up JDK 21
-        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6
+        uses: actions/setup-java@77dd5b2ce225ea11469928ac317850245a74ae78 # v6.2.0
         with:
           distribution: 'temurin'
           java-version: 21
@@ -38,44 +38,48 @@ jobs:
       - name: Create keystore.properties
         run: touch keystore.properties
 
-      - name: Generate merged manifest for offline build
-        run: ./gradlew processOfflineDebugManifest --no-daemon
+      - name: Generate merged manifest for the offline builds
+        run: ./gradlew processOfflineDebugManifest processOfflineZapstoreDebugManifest --no-daemon
 
-      - name: Check for network permissions in offline merged manifest
+      - name: Check for network permissions in offline merged manifests
         run: |
-          MANIFEST=$(find app/build/intermediates/merged_manifests -name "AndroidManifest.xml" | grep -i offline | head -1)
-          if [ -z "$MANIFEST" ]; then
-            echo "ERROR: Could not find merged manifest for offline build"
-            exit 1
-          fi
-          echo "Checking: $MANIFEST"
           FAILED=0
-          for PERMISSION in android.permission.INTERNET android.permission.CHANGE_NETWORK_STATE android.permission.ACCESS_NETWORK_STATE; do
-            if grep -q "$PERMISSION" "$MANIFEST"; then
-              echo ""
-              echo "ERROR: $PERMISSION found in offline build manifest!"
-              echo "The offline flavor must not include network permissions."
-              echo ""
-              echo "Offending lines:"
-              grep "$PERMISSION" "$MANIFEST"
-              FAILED=1
-            else
-              echo "OK: No $PERMISSION in offline build manifest"
+          # Both flavors are the offline app (the Zapstore one only adds an
+          # applicationId suffix), so both must ship without the network stack.
+          for FLAVOR in offline offlinezapstore; do
+            MANIFEST=$(find app/build/intermediates/merged_manifests -name "AndroidManifest.xml" | grep -E "/(${FLAVOR}Debug|${FLAVOR}/debug)/" | head -1)
+            if [ -z "$MANIFEST" ]; then
+              echo "ERROR: Could not find merged manifest for offline build ($FLAVOR)"
+              exit 1
             fi
-          for COMPONENT in androidx.work.WorkManagerInitializer androidx.work.impl.background.systemjob.SystemJobService; do
-            if grep -q "$COMPONENT" "$MANIFEST"; then
-              echo ""
-              echo "ERROR: $COMPONENT found in offline build manifest!"
-              echo "WorkManager must never initialize in the offline flavor: it tracks"
-              echo "network-constrained work via ConnectivityManager, which crashes with"
-              echo "SecurityException because ACCESS_NETWORK_STATE is removed."
-              echo ""
-              echo "Offending lines:"
-              grep "$COMPONENT" "$MANIFEST"
-              FAILED=1
-            else
-              echo "OK: No $COMPONENT in offline build manifest"
-            fi
-          done
+            echo "Checking ($FLAVOR): $MANIFEST"
+            for PERMISSION in android.permission.INTERNET android.permission.CHANGE_NETWORK_STATE android.permission.ACCESS_NETWORK_STATE; do
+              if grep -q "$PERMISSION" "$MANIFEST"; then
+                echo ""
+                echo "ERROR: $PERMISSION found in the $FLAVOR build manifest!"
+                echo "The offline flavors must not include network permissions."
+                echo ""
+                echo "Offending lines:"
+                grep "$PERMISSION" "$MANIFEST"
+                FAILED=1
+              else
+                echo "OK: No $PERMISSION in the $FLAVOR build manifest"
+              fi
+              for COMPONENT in androidx.work.WorkManagerInitializer androidx.work.impl.background.systemjob.SystemJobService; do
+                if grep -q "$COMPONENT" "$MANIFEST"; then
+                  echo ""
+                  echo "ERROR: $COMPONENT found in the $FLAVOR build manifest!"
+                  echo "WorkManager must never initialize in the offline flavor: it tracks"
+                  echo "network-constrained work via ConnectivityManager, which crashes with"
+                  echo "SecurityException because ACCESS_NETWORK_STATE is removed."
+                  echo ""
+                  echo "Offending lines:"
+                  grep "$COMPONENT" "$MANIFEST"
+                  FAILED=1
+                else
+                  echo "OK: No $COMPONENT in the $FLAVOR build manifest"
+                fi
+              done
+            done
           done
           exit $FAILED

@@ -19,7 +19,7 @@ jobs:
           persist-credentials: false
 
       - name: Set up JDK 21
-        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6
+        uses: actions/setup-java@77dd5b2ce225ea11469928ac317850245a74ae78 # v6.2.0
         with:
           distribution: 'temurin'
           java-version: 21
@@ -42,7 +42,13 @@ jobs:
 
       - name: Build AAB and APKs
         run: |
-          ./gradlew bundleFreeRelease bundleOfflineRelease assembleFreeRelease assembleOfflineRelease --stacktrace
+          ./gradlew bundleFreeRelease bundleOfflineRelease assembleFreeRelease assembleOfflineRelease assembleOfflineZapstoreRelease --stacktrace
+
+      # The Zapstore flavor exists for the separate "Amber Offline" listing, which
+      # publishes the arm64-v8a APK only, so drop the other ABIs it also builds.
+      - name: Keep only the arm64-v8a Zapstore offline APK
+        run: |
+          find app/build/outputs/apk/offlinezapstore -type f -name '*.apk' ! -name '*-arm64-v8a-*' -delete
 
       - name: Upload all APKs as artifacts
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7

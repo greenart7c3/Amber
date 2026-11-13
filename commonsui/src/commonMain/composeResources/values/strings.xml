@@ -974,6 +974,10 @@ What you can do:
     <string name="theme_amoled">AMOLED black</string>
     <string name="camera_permission_required">Camera permission required</string>
     <string name="camera_permission_required_message">Amber needs the camera permission to scan QR codes. Allow it in the app settings.</string>
+    <!-- Onboarding notice: the offline flavor has its own application id since 7.0.0 -->
+    <string name="offline_previous_install_title">Your accounts are in the previous app</string>
+    <string name="offline_previous_install_body">Amber Offline is now a separate app, so it started empty. Your accounts are still in the Amber app you had installed before: open it, export a backup there, then use Recover from backup here. You can uninstall the old app after that.</string>
+    <string name="offline_previous_install_open">Open the previous app</string>
     <!-- Desktop app -->
     <string name="copy_raw_json">Raw json</string>
     <string name="data_copied_to_the_clipboard">Data copied to the clipboard</string>

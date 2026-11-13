@@ -78,7 +78,9 @@
 -dontwarn edu.umd.cs.findbugs.annotations.SuppressFBWarnings
 -dontwarn java.lang.instrument.ClassDefinition
 -dontwarn java.lang.instrument.UnmodifiableClassException
--dontwarn com.google.errorprone.annotations.Immutable
+# tink (androidx.security:security-crypto, which reads the storage Amber used before
+# 3.4.0) carries Error Prone annotations that are not on the runtime classpath.
+-dontwarn com.google.errorprone.annotations.**
 
 -dontwarn java.lang.management.ManagementFactory
 -dontwarn java.lang.management.RuntimeMXBean

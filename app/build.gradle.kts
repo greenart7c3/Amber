@@ -160,9 +160,18 @@ android {
             isDefault = true
             dimension = "version"
         }
-        // Distinct applicationId so the offline build installs side-by-side with the
-        // online one instead of replacing it.
+        // Keeps the online applicationId, like every offline APK released before
+        // 7.0.0: the offline build replaces an installed Amber (keeping its accounts)
+        // instead of installing a second copy, so installs made from the releases page
+        // or Obtainium keep updating in place.
         register("offline") {
+            dimension = "version"
+        }
+        // The same offline app with an applicationId of its own, for the separate
+        // "Amber Offline" Zapstore listing: Zapstore identifies an app by its
+        // applicationId, so that listing cannot publish the online one. CI builds it
+        // and keeps only the arm64-v8a APK, the one zapstore-offline.yaml publishes.
+        register("offlinezapstore") {
             dimension = "version"
             applicationIdSuffix = ".offline"
         }
@@ -184,6 +193,12 @@ android {
                 kotlin.directories.add("src/tor/java")
                 jniLibs.directories.add("src/tor/jniLibs")
             }
+        }
+        // The Zapstore flavor is the offline app: it reuses the offline manifest that
+        // strips the network permissions and the offline TorManager stub.
+        named("offlinezapstore") {
+            manifest.srcFile("src/offline/AndroidManifest.xml")
+            kotlin.directories.add("src/offline/java")
         }
     }
 
@@ -218,8 +233,8 @@ android {
 // resValue sets app_name to "Amber". Build-type resValues take precedence over
 // product-flavor resValues, so override app_name here via the variant API (the
 // highest-priority tier) to give the side-by-side benchmark install its own
-// launcher name. The offline flavor has its own applicationId too, so it gets
-// its own name the same way.
+// launcher name. The offline flavors get their own name the same way, so an offline
+// install is not mistaken for the online one.
 androidComponents {
     onVariants(selector().withFlavor("version" to "benchmark")) { variant ->
         variant.resValues.put(
@@ -227,12 +242,14 @@ androidComponents {
             com.android.build.api.variant.ResValue("@string/app_name_benchmark"),
         )
     }
-    onVariants(selector().withFlavor("version" to "offline")) { variant ->
-        val name = if (variant.buildType == "debug") "app_name_offline_debug" else "app_name_offline"
-        variant.resValues.put(
-            variant.makeResValueKey("string", "app_name"),
-            com.android.build.api.variant.ResValue("@string/$name"),
-        )
+    listOf("offline", "offlinezapstore").forEach { flavor ->
+        onVariants(selector().withFlavor("version" to flavor)) { variant ->
+            val name = if (variant.buildType == "debug") "app_name_offline_debug" else "app_name_offline"
+            variant.resValues.put(
+                variant.makeResValueKey("string", "app_name"),
+                com.android.build.api.variant.ResValue("@string/$name"),
+            )
+        }
     }
 }
 

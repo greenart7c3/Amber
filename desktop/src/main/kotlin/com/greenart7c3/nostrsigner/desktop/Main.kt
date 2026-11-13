@@ -367,14 +367,29 @@ fun main(args: Array<String>) {
         // notification and the client's next request arriving can leave the
         // size unchanged between recompositions.
         var seenPending by remember { mutableStateOf(emptyList<PendingBunkerRequest>()) }
-        // The request shown in Amber's own notification popup: on Windows and
-        // macOS (the AWT notification cannot carry Approve/Reject buttons) and
-        // on Linux daemons that never draw action buttons.
+        // The request shown in Amber's own notification popup: only where the
+        // OS-native notification cannot show it with Approve/Reject buttons
+        // (Linux daemons that never draw them, an unsigned macOS app, a
+        // native post that failed).
         var popupRequest by remember { mutableStateOf<PendingBunkerRequest?>(null) }
+        // The native request notification currently showing per request, so
+        // answering a request — on its card, from the tray window, or from
+        // another notification — also takes its banner down instead of leaving
+        // Approve/Reject buttons pointing at a request that no longer exists.
+        val requestNotifications = remember { mutableMapOf<String, Notifier.Notification>() }
         // Whether the main window has keyboard focus, i.e. the user is looking
         // at Amber, where the request card already shows: no notification then.
         var windowFocused by remember { mutableStateOf(false) }
+        // macOS asks to allow Amber's notifications the first time the
+        // notification center is used: at launch, not over the first request.
+        LaunchedEffect(Unit) { withContext(Dispatchers.IO) { Notifier.nativeButtons() } }
         LaunchedEffect(pending) {
+            // Answered or dropped requests lose their notification; the ones
+            // still pending keep theirs.
+            val live = pending.mapTo(mutableSetOf()) { it.queueKey }
+            requestNotifications.entries.removeAll { (key, posted) ->
+                (key !in live).also { stale -> if (stale) posted.close() }
+            }
             val request = pending.lastOrNull { new -> seenPending.none { it.isSameEntry(new) } }
             seenPending = pending
             if (request != null && !(DesktopTray.windowVisible.value && windowFocused)) {
@@ -384,23 +399,32 @@ fun main(args: Array<String>) {
                     // The client-chosen name is the (plain-text) title; the
                     // body, which daemons may render as markup, is Amber's own.
                     val message = listOfNotNull(request.type.describe(request.kind, request.encryptedContent), accountLine).joinToString("\n")
-                    // Daemons that never draw action buttons get Amber's own popup.
-                    val nativeButtons = isLinux && withContext(Dispatchers.IO) { Notifier.linuxDaemonShowsButtons() }
+                    // Linux daemons that never draw action buttons get Amber's own popup.
+                    val nativeButtons = withContext(Dispatchers.IO) { Notifier.nativeButtons() }
                     if (nativeButtons) {
-                        // The OS-native notification channel (freedesktop /
-                        // notify-send, incl. Wayland/Hyprland), with Approve /
-                        // Reject buttons. Only low-risk requests can be approved
-                        // from here; the rest need their card, so only Reject.
+                        // The OS-native notification channel (freedesktop on
+                        // Linux incl. Wayland/Hyprland, a toast on Windows),
+                        // with Approve / Reject buttons. Only low-risk requests
+                        // can be approved from here; the rest need their card,
+                        // so only Reject.
                         val actions = buildList {
                             if (request.allowsQuickApprove()) {
                                 add(Notifier.Action("approve", getString(Res.string.d_approve)) { answerFromNotification(request, approve = true) })
                             }
                             add(Notifier.Action("reject", getString(Res.string.reject)) { answerFromNotification(request, approve = false) })
                         }
+                        // Posted and registered on the IO thread: the effect is
+                        // cancelled when the queue changes again, and a handle
+                        // lost in that window would leave a stale banner up.
                         notified = withContext(Dispatchers.IO) {
-                            Notifier.notify(request.notificationTitle(), message, actions, onActivate = { DesktopTray.windowVisible.value = true })
+                            val posted = Notifier.notify(request.notificationTitle(), message, actions, onActivate = { DesktopTray.windowVisible.value = true })
+                            if (posted != null) requestNotifications[request.queueKey] = posted
+                            posted != null
                         }
-                    } else {
+                    }
+                    // No native channel with buttons, or it failed (the user
+                    // turned Amber's notifications off, …): Amber's own popup.
+                    if (!notified) {
                         popupRequest = request
                         notified = true
                     }

@@ -89,7 +89,7 @@
     <ID>ReturnCount:BunkerEngine.kt:BunkerEngine$private suspend fun handleRequest</ID>
     <ID>ReturnCount:DesktopKeyStore.kt:DesktopKeyStore$private fun loadOrCreateFromKeystore: SecretKey</ID>
     <ID>ReturnCount:KeystorePassword.kt:KeystorePassword$fun resolve: Resolved</ID>
-    <ID>ReturnCount:Notifier.kt:Notifier$private fun linux: Boolean</ID>
+    <ID>ReturnCount:Notifier.kt:Notifier$private fun linux: Notification?</ID>
     <ID>ReturnCount:UiState.kt:fun handleShortcut: Boolean</ID>
     <ID>ReturnCount:UriLaunch.kt:UriLaunch$private fun readUri</ID>
     <ID>ThrowsCount:LocalSigner.kt:LocalSigner$private suspend fun resolveOrConnect: Triple&lt;DesktopAccount, AppWithPermissions, String?&gt;</ID>

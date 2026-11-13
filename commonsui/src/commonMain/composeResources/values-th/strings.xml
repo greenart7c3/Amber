@@ -1189,4 +1189,8 @@
     <string name="d_local_socket">ซ็อกเก็ตภายในเครื่อง</string>
     <string name="d_via_local_socket">ผ่านซ็อกเก็ตภายในเครื่อง</string>
     <string name="d_socket_name_unverified">เครื่องมือนี้ตั้งชื่อเอง และ Amber ไม่สามารถยืนยันได้ อนุมัติเฉพาะเมื่อคุณเพิ่งเปิดใช้งานมันเท่านั้น</string>
+    <!-- Onboarding notice: the offline flavor has its own application id since 7.0.0 -->
+    <string name="offline_previous_install_title">บัญชีของคุณอยู่ในแอปก่อนหน้า</string>
+    <string name="offline_previous_install_body">Amber Offline เป็นแยกต่างหากแล้ว จึงเริ่มต้นแบบว่างเปล่า บัญชีของคุณยังอยู่ในแอป Amber ที่คุณติดตั้งไว้ก่อนหน้านี้ เปิดแอปนั้น ส่งออกข้อมูลสำรองที่นั่น แล้วใช้กู้คืนจากข้อมูลสำรองที่นี่ หลังจากนั้นจึงถอนการติดตั้งแอปเก่าได้</string>
+    <string name="offline_previous_install_open">เปิดแอปก่อนหน้า</string>
 </resources>

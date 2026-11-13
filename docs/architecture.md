@@ -12,7 +12,8 @@ in files that may only shrink.
 ```
 :app        Android app: UI (Compose), Room, foreground service, NIP-55 provider
 :desktop    Compose Desktop NIP-46 signer, same permission model on JSON files
-:common     plain Kotlin/JVM logic both apps share (no platform APIs)
+:cli        `amber` command line NIP-46 client; holds no accounts or user keys
+:common     plain Kotlin/JVM logic the apps and the CLI share (no platform APIs)
 :commonsui  every user-visible string, as Compose Multiplatform resources
 :architecture-tests   Konsist rules for the layering below (test-only module)
 :unused-code          cross-module "nothing references this" checker (build-only)

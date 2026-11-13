@@ -794,9 +794,10 @@ Discover all Nostr apps for android at</string>
     <string name="one_week">One week</string>
     <string name="delete_after">Delete after</string>
     <string name="crashreport_found">Crash Report found</string>
-    <string name="crash_report_send_prompt">Would you like to send the recent crash report to Amber in a DM? It is sent from your account, so the developer will see your public key.</string>
+    <string name="crash_report_send_prompt">Would you like to send the recent crash report to Amber in an encrypted DM? Send it from your account so the developer sees your public key and can reply, or send it anonymously with a throwaway key.</string>
     <string name="copy_crash_report_to_clipboard">Would you like to copy the crash report to your clipboard and open a Client to send it to Amber?</string>
     <string name="crashreport_found_send">Send it</string>
+    <string name="crash_report_send_anonymously">Send anonymously</string>
     <string name="invalid_intent_title">Invalid request</string>
     <string name="invalid_intent_body">Amber received a malformed nostrsigner request and cannot process it. Please contact the client developer to report this issue.</string>
     <string name="invalid_intent_close_app">Close app</string>

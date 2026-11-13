@@ -782,9 +782,10 @@
     <string name="one_week">一周</string>
     <string name="delete_after">删除于</string>
     <string name="crashreport_found">找到崩溃报告</string>
-    <string name="crash_report_send_prompt">是否要通过私信将最近的崩溃报告发送给 Amber？它将从您的账户发送，因此开发者会看到您的公钥。</string>
+    <string name="crash_report_send_prompt">是否要通过加密私信将最近的崩溃报告发送给 Amber？从您的账户发送，开发者会看到您的公钥并可以回复您；或者使用一次性密钥匿名发送。</string>
     <string name="copy_crash_report_to_clipboard">想要复制崩溃报告到剪贴板并打开客户端发送给 Amber 吗？</string>
     <string name="crashreport_found_send">发送</string>
+    <string name="crash_report_send_anonymously">匿名发送</string>
     <string name="invalid_intent_title">无效的请求</string>
     <string name="invalid_intent_body">Amber 收到了一个无法处理的错误格式 Nostr 签名器请求。请联系客户端开发者报告此问题。</string>
     <string name="invalid_intent_close_app">关闭应用</string>

@@ -52,10 +52,12 @@ import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.commonsui.Res
 import com.greenart7c3.nostrsigner.commonsui.cancel
 import com.greenart7c3.nostrsigner.commonsui.copy_crash_report_to_clipboard
+import com.greenart7c3.nostrsigner.commonsui.crash_report_send_anonymously
 import com.greenart7c3.nostrsigner.commonsui.crash_report_send_prompt
 import com.greenart7c3.nostrsigner.commonsui.crashreport_found_send
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.service.ReportSender
+import com.greenart7c3.nostrsigner.service.crashreports.clearPendingCrashReport
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -101,6 +103,35 @@ fun CrashReportScreen(
             )
         }
 
+        val send = { anonymous: Boolean ->
+            if (editedStack.isNotBlank()) {
+                onLoading(true)
+                ReportSender.send(
+                    account = account,
+                    report = editedStack,
+                    clipboard = clipboardManager,
+                    anonymous = anonymous,
+                    onDone = {
+                        Amber.instance.clearPendingCrashReport()
+                        onLoading(false)
+                        onDismiss()
+                    },
+                )
+            }
+        }
+
+        // Offline the report goes through the clipboard to another client, which signs it.
+        if (!BuildFlavorChecker.isOfflineFlavor()) {
+            OutlinedButton(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 8.dp),
+                onClick = { send(true) },
+            ) {
+                Text(stringResource(Res.string.crash_report_send_anonymously))
+            }
+        }
+
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -110,7 +141,7 @@ fun CrashReportScreen(
             OutlinedButton(
                 modifier = Modifier.weight(1f),
                 onClick = {
-                    Amber.instance.pendingCrashReport = null
+                    Amber.instance.clearPendingCrashReport()
                     onDismiss()
                 },
             ) {
@@ -119,20 +150,7 @@ fun CrashReportScreen(
 
             Button(
                 modifier = Modifier.weight(1f),
-                onClick = {
-                    if (editedStack.isBlank()) return@Button
-                    onLoading(true)
-                    ReportSender.send(
-                        account = account,
-                        report = editedStack,
-                        clipboard = clipboardManager,
-                        onDone = {
-                            Amber.instance.pendingCrashReport = null
-                            onLoading(false)
-                            onDismiss()
-                        },
-                    )
-                },
+                onClick = { send(false) },
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,

@@ -77,10 +77,12 @@ class CrashReporterTest {
         assertFalse(file.exists())
         assertNull(CrashReporter.pending.value)
 
-        // Out-of-memory reports are never saved.
-        CrashReporter.save(OutOfMemoryError("junk"))
-        assertFalse(file.exists())
-        assertNull(CrashReporter.pending.value)
+        // Out-of-memory errors are reported too, with the heap numbers.
+        CrashReporter.save(OutOfMemoryError("Java heap space"))
+        assertTrue(file.exists())
+        assertTrue(CrashReporter.pending.value!!.contains("OutOfMemoryError"))
+        assertTrue(CrashReporter.pending.value!!.contains("| Java heap |"))
+        CrashReporter.dismiss()
     }
 
     @Test

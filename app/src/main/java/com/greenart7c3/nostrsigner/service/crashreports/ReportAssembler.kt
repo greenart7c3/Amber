@@ -21,6 +21,7 @@
 package com.greenart7c3.nostrsigner.service.crashreports
 
 import android.os.Build
+import android.os.Debug
 import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.common.CrashReports
 
@@ -94,5 +95,36 @@ class ReportAssembler {
             }
         }
         appendLine("```")
+
+        appendMemory()
     }
+
+    /**
+     * Thread and heap snapshot: for an `OutOfMemoryError` these say which kind
+     * of memory ran out. Numbers only — this runs while memory may be exhausted.
+     */
+    private fun StringBuilder.appendMemory() {
+        appendLine()
+        appendLine("| Memory | Value |")
+        appendLine("|--------|-------|")
+        append("| Thread | ")
+        append(Thread.currentThread().name)
+        appendLine(" |")
+        val runtime = Runtime.getRuntime()
+        append("| Java heap | max=")
+        append(mb(runtime.maxMemory()))
+        append("MB total=")
+        append(mb(runtime.totalMemory()))
+        append("MB free=")
+        append(mb(runtime.freeMemory()))
+        appendLine("MB |")
+        // A report must not fail on a statistic (and this is unmocked in JVM tests).
+        runCatching { Debug.getNativeHeapAllocatedSize() }.getOrNull()?.let {
+            append("| Native heap | allocated=")
+            append(mb(it))
+            appendLine("MB |")
+        }
+    }
+
+    private fun mb(bytes: Long): Long = bytes / (1024 * 1024)
 }

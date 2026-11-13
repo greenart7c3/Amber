@@ -29,6 +29,12 @@ import com.greenart7c3.nostrsigner.ui.navigation.Route
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
+/** The user sent or dismissed the report: drop it and the exit records it included. */
+fun Amber.clearPendingCrashReport() {
+    pendingCrashReport = null
+    ExitReasons.clearPending(this)
+}
+
 @Composable
 fun DisplayCrashMessages(
     account: Account,
@@ -36,7 +42,16 @@ fun DisplayCrashMessages(
 ) {
     LaunchedEffect(account) {
         withContext(Dispatchers.IO) {
-            val stack = Amber.instance.crashReportCache.loadAndDelete()
+            val exceptions = Amber.instance.crashReportCache.loadAndDelete()
+            // ANRs, low-memory kills and native crashes only appear in the exit records.
+            // The startup detection may still be running: finish it first, or a dismiss
+            // would clear records written after this read, unseen.
+            ExitReasons.detect(Amber.instance)
+            val exits = ExitReasons.pending(Amber.instance)
+            val stack = listOfNotNull(exceptions, exits)
+                .filter { it.isNotBlank() }
+                .joinToString("\n\n")
+                .ifBlank { null }
             if (stack != null) {
                 Amber.instance.pendingCrashReport = stack
                 withContext(Dispatchers.Main) {

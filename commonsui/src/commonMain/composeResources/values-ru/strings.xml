@@ -767,9 +767,10 @@
     <string name="one_week">Одна неделя</string>
     <string name="delete_after">Удалить через</string>
     <string name="crashreport_found">Найден отчёт об аварии</string>
-    <string name="crash_report_send_prompt">Отправить последний отчёт о сбое в Amber личным сообщением? Он отправляется с вашей учётной записи, поэтому разработчик увидит ваш открытый ключ.</string>
+    <string name="crash_report_send_prompt">Отправить последний отчёт о сбое в Amber зашифрованным личным сообщением? Отправьте его со своей учётной записи, чтобы разработчик видел ваш открытый ключ и мог ответить, или отправьте анонимно с одноразовым ключом.</string>
     <string name="copy_crash_report_to_clipboard">Хотите скопировать отчёт об аварии в буфер обмена и открыть клиент для отправки его в Amber?</string>
     <string name="crashreport_found_send">Отправить</string>
+    <string name="crash_report_send_anonymously">Отправить анонимно</string>
     <string name="invalid_intent_title">Некорректный запрос</string>
     <string name="invalid_intent_body">Amber получил некорректный запрос nostrsigner и не может его обработать. Пожалуйста, сообщите об этой проблеме разработчику клиента.</string>
     <string name="invalid_intent_close_app">Закрыть приложение</string>

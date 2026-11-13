@@ -125,6 +125,8 @@ class Amber :
         CoroutineExceptionHandler { _, throwable ->
             AmberLog.e("AmberCoroutine", "Caught exception: ${throwable.message}", throwable)
             if (throwable is FailedMigrationException) throw throwable
+            // The process survived it, so nothing else would report it.
+            if (throwable is OutOfMemoryError) crashReportCache.saveReport(throwable)
         }
 
     val applicationIOScope = CoroutineScope(Dispatchers.IO + SupervisorJob() + exceptionHandler)
@@ -425,7 +427,7 @@ class Amber :
         // that builds notifications before an activity has applied the language.
         settings.language?.let { AppLanguage.apply(it) }
         stats.createNotificationChannel()
-        Thread.setDefaultUncaughtExceptionHandler(UnexpectedCrashSaver(crashReportCache, applicationIOScope))
+        UnexpectedCrashSaver.install(this, crashReportCache, applicationIOScope)
 
         // Build Coil's singleton ImageLoader off the main thread. Its factory
         // (newImageLoader) touches cacheDir, so letting the first AsyncImage

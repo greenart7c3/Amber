@@ -61,8 +61,6 @@
     <ID>CyclomaticComplexMethod:IntentMultiEventHomeScreen.kt:@Composable fun IntentMultiEventHomeScreen</ID>
     <ID>CyclomaticComplexMethod:IntentMultiEventHomeScreen.kt:@Composable private fun IntentRequestCard</ID>
     <ID>CyclomaticComplexMethod:IntentSingleEventHomeScreen.kt:@Composable fun IntentSingleEventHomeScreen</ID>
-    <ID>CyclomaticComplexMethod:IntentUtils.kt:IntentUtils$fun sendResult</ID>
-    <ID>CyclomaticComplexMethod:IntentUtils.kt:IntentUtils$suspend fun getIntentData: IntentData?</ID>
     <ID>CyclomaticComplexMethod:IntentUtilsBeforeAfterTest.kt:IntentUtilsBeforeAfterTest$@Test fun `before-after parameter dispatch - all six keys`</ID>
     <ID>CyclomaticComplexMethod:LocalPreferences.kt:LocalPreferences$private fun readSettings: AmberSettings</ID>
     <ID>CyclomaticComplexMethod:LoginScreen.kt:@SuppressLint("ConfigurationScreenWidthHeight") @OptIn(ExperimentalMaterial3Api::class) @Composable fun LoginPage</ID>
@@ -104,7 +102,6 @@
     <ID>LambdaParameterInRestartableEffect:RememberMyChoice.kt:onReject: (RememberType) -&gt; Unit</ID>
     <ID>LambdaParameterInRestartableEffect:SimpleSearchBar.kt:onSearch: (String) -&gt; Unit</ID>
     <ID>LargeClass:EventNotificationConsumer.kt:EventNotificationConsumer</ID>
-    <ID>LargeClass:IntentUtils.kt:IntentUtils</ID>
     <ID>LargeClass:LocalPreferences.kt:LocalPreferences</ID>
     <ID>LongMethod:AccountBackupScreen.kt:@Composable fun AccountBackupScreen</ID>
     <ID>LongMethod:AccountBackupScreen.kt:@Composable private fun AccountBackupCard</ID>
@@ -165,8 +162,6 @@
     <ID>LongMethod:IntentMultiEventHomeScreen.kt:@Composable fun IntentMultiEventHomeScreen</ID>
     <ID>LongMethod:IntentMultiEventHomeScreen.kt:@Composable private fun IntentRequestCard</ID>
     <ID>LongMethod:IntentSingleEventHomeScreen.kt:@Composable fun IntentSingleEventHomeScreen</ID>
-    <ID>LongMethod:IntentUtils.kt:IntentUtils$fun sendRejection</ID>
-    <ID>LongMethod:IntentUtils.kt:IntentUtils$fun sendResult</ID>
     <ID>LongMethod:LocalPreferences.kt:LocalPreferences$private fun readSettings: AmberSettings</ID>
     <ID>LongMethod:LoginScreen.kt:@OptIn(ExperimentalMaterial3Api::class) @SuppressLint("ConfigurationScreenWidthHeight") @Composable fun MainPage</ID>
     <ID>LongMethod:LoginScreen.kt:@SuppressLint("ConfigurationScreenWidthHeight") @OptIn(ExperimentalMaterial3Api::class) @Composable fun LoginPage</ID>
@@ -361,8 +356,6 @@
     <ID>ReturnCount:EditRelaysDialog.kt:fun onAddRelay</ID>
     <ID>ReturnCount:EventNotificationConsumer.kt:EventNotificationConsumer$private suspend fun notify</ID>
     <ID>ReturnCount:EventNotificationConsumer.kt:EventNotificationConsumer$suspend fun consume</ID>
-    <ID>ReturnCount:IntentUtils.kt:IntentUtils$fun decodeData: String</ID>
-    <ID>ReturnCount:IntentUtils.kt:IntentUtils$suspend fun getIntentData: IntentData?</ID>
     <ID>ReturnCount:MainViewModel.kt:MainViewModel$fun getAccount: String?</ID>
     <ID>ReturnCount:SecureCryptoHelper.kt:SecureCryptoHelper$internal fun migrateCiphertext: CiphertextMigration</ID>
     <ID>ReturnCount:SecureCryptoHelper.kt:SecureCryptoHelper$private suspend fun finishRotation: Boolean</ID>

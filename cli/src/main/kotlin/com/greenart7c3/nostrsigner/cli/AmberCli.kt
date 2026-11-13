@@ -30,7 +30,7 @@ class CliEnvironment(
     val env: (String) -> String? = { System.getenv(it) },
     val stateDir: Path = ConnectionStore.defaultDirectory(),
     /** Where the connections file's key lives; the OS credential store by default. */
-    val secretStore: SecretStore = SecretStore.default(stateDir),
+    val secretStore: SecretStore = SecretStore.default(stateDir, env),
     val openUri: (String) -> Unit = ::openInBrowser,
     /** Called with the nostrconnect URI right after it is printed (tests pair from here). */
     val onPairingUri: (String) -> Unit = {},
@@ -126,12 +126,14 @@ internal class Session(
      * is saved here and every command goes straight through it.
      */
     private fun login(args: Args): Int {
-        val uri = args.positionals.firstOrNull()
-            ?: throw CliError(
-                "login needs the bunker:// URI Amber shows for a connection: " +
-                    "amber login 'bunker://<pubkey>?relay=wss://...&secret=...'",
-                Exit.USAGE,
-            )
+        val missing = CliError(
+            "login needs the bunker:// URI Amber shows for a connection: " +
+                "amber login 'bunker://<pubkey>?relay=wss://...&secret=...', or - to read it from stdin",
+            Exit.USAGE,
+        )
+        val input = args.positionals.firstOrNull() ?: throw missing
+        // "-" keeps the URI's secret out of the process list and the shell history.
+        val uri = if (input == "-") readInput().trim().ifEmpty { throw missing } else input
         val profile = profile(args)
         val existing = store.get(profile)
         if (existing != null && existing.isPaired && !args.has("force")) {
@@ -201,18 +203,22 @@ internal class Session(
                 pendingSecret = secret,
             ),
         )
-        emit(
-            args,
-            mapper.createObjectNode().put("uri", uri).put("state", "waiting-for-approval"),
-            uri,
-        )
-        if (args.has("qr")) printQrCode(err, uri)
-        err.println("Waiting up to ${seconds}s for Amber to approve the connection \"$name\".")
-        err.println("In Amber: paste the URI into \"New connection\" (or scan the QR), then approve it.")
-        if (args.has("open")) environment.openUri(uri)
-        environment.onPairingUri(uri)
         val paired = Nip46Client(keyPair, relays, seconds, err, environment.openUri).use { client ->
-            client.open(client.awaitNostrConnectApproval(secret), userPubKey = "")
+            // The URI leaves the process only once the relays hold the subscription
+            // for the answer: they do not replay an approval that came before it.
+            val signerPubKey = client.awaitNostrConnectApproval(secret) {
+                emit(
+                    args,
+                    mapper.createObjectNode().put("uri", uri).put("state", "waiting-for-approval"),
+                    uri,
+                )
+                if (args.has("qr")) printQrCode(err, uri)
+                err.println("Waiting up to ${seconds}s for Amber to approve the connection \"$name\".")
+                err.println("In Amber: paste the URI into \"New connection\" (or scan the QR), then approve it.")
+                if (args.has("open")) environment.openUri(uri)
+                environment.onPairingUri(uri)
+            }
+            client.open(signerPubKey, userPubKey = "")
             SavedConnection(
                 clientPrivKey = clientPrivKey,
                 signerPubKey = client.signerPubKey().orEmpty(),
@@ -324,7 +330,11 @@ internal class Session(
                 Exit.NOT_PAIRED,
             )
         if (!connection.isPaired) {
-            err.println("profile \"$profile\" is waiting for Amber to approve its pairing: run `amber connect` to show the URI again")
+            val waiting = CliError(
+                "profile \"$profile\" is waiting for Amber to approve its pairing: run `amber connect` to show the URI again",
+                Exit.NOT_PAIRED,
+            )
+            err.println(waiting.message)
             emit(
                 args,
                 mapper.createObjectNode()
@@ -332,19 +342,18 @@ internal class Session(
                     .put("name", connection.name)
                     .put("state", "waiting-for-approval"),
                 "state: waiting-for-approval",
+                waiting,
             )
-            return Exit.NOT_PAIRED
+            return waiting.code
         }
-        var online = false
-        var failure: String? = null
-        try {
-            online = session(connection, timeout(args, defaultSeconds = 15)).use {
-                it.ping()
-                true
-            }
+        // Kept whole: the exit code says why it is offline (5 silent, 6 unreachable, 4 refused).
+        val failure = try {
+            session(connection, timeout(args, defaultSeconds = 15)).use { it.ping() }
+            null
         } catch (e: CliError) {
-            failure = e.message
+            e
         }
+        val online = failure == null
         val node = mapper.createObjectNode()
             .put("profile", profile)
             .put("name", connection.name)
@@ -365,9 +374,10 @@ internal class Session(
                 appendLine("relays: ${connection.relays.joinToString(", ")}")
                 append("state: " + if (online) "online" else "offline")
             },
+            failure,
         )
-        failure?.let { err.println(it) }
-        return if (online) Exit.OK else Exit.TIMEOUT
+        failure?.let { err.println(it.message) }
+        return failure?.code ?: Exit.OK
     }
 
     /** Tells Amber to forget the connection and deletes the local profile. */
@@ -500,18 +510,28 @@ internal class Session(
         .removeSuffix("\n")
 
     /** The command's result on stdout: the plain value, or one `{"ok":…}` object with --json. */
+    /**
+     * With [error], the command still has a [result] to show but exits with the
+     * error's code: the JSON then says `"ok":false` and carries `error` and
+     * `code` beside the result, like the failure envelope.
+     */
     private fun emit(
         args: Args,
         result: JsonNode,
         text: String,
+        error: CliError? = null,
     ) {
         if (!args.has("json")) {
             out.println(text)
             return
         }
         val node = mapper.createObjectNode()
-        node.put("ok", true)
+        node.put("ok", error == null)
         node.set<JsonNode>("result", result)
+        if (error != null) {
+            node.put("error", error.message)
+            node.put("code", error.code)
+        }
         out.println(mapper.writeValueAsString(node))
     }
 

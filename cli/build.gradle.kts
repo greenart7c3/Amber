@@ -76,6 +76,8 @@ val packageCliVersion: String = appVersion.substringBefore('-')
 val generateVersionResource = tasks.register("generateVersionResource") {
     val output = layout.buildDirectory.dir("generated/version")
     val version = appVersion
+    // An input, or a version bump leaves the task up to date with the old version.
+    inputs.property("version", version)
     outputs.dir(output)
     doLast {
         val file = output.get().asFile.resolve("amber-cli.properties")

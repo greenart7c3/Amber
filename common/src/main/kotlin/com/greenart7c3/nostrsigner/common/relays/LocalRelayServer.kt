@@ -59,6 +59,9 @@ open class LocalRelayServer(
     private val tagThread: () -> Unit = {},
     // False where the relay must never run (the Android offline flavor): start() then binds nothing.
     private val isAllowed: () -> Boolean = { true },
+    // False forwards ephemeral kinds (20000-29999) to live subscriptions only, as most
+    // public relays do: tests use it to catch a client that subscribes too late.
+    private val storesEphemeral: Boolean = true,
 ) {
     enum class Status { STOPPED, RUNNING, IN_USE, FAILED }
 
@@ -101,7 +104,7 @@ open class LocalRelayServer(
             val socket = ServerSocket(requestedPort, RelayCore.MAX_CLIENTS, InetAddress.getLoopbackAddress())
             boundPort = socket.localPort
             server = socket
-            core = RelayCore(socket, logger, approvedSenders, tagThread, onAcceptFailure = ::stop)
+            core = RelayCore(socket, logger, approvedSenders, tagThread, storesEphemeral, onAcceptFailure = ::stop)
             logger.i("Listening on ws://127.0.0.1:${socket.localPort}/")
             Status.RUNNING
         } catch (_: BindException) {
@@ -137,9 +140,12 @@ private class RelayCore(
     private val logger: LocalRelayServer.Logger,
     private val approvedSenderSource: () -> Set<String>,
     private val tagThread: () -> Unit,
+    private val storesEphemeral: Boolean,
     private val onAcceptFailure: () -> Unit,
 ) {
     companion object {
+        private val EPHEMERAL_KINDS = 20000..29999
+
         const val MAX_CLIENTS = 64
         const val MAX_EVENTS = 512
         const val MAX_SUBSCRIPTIONS_PER_CLIENT = 20
@@ -166,6 +172,12 @@ private class RelayCore(
     private val connections = ConcurrentHashMap<Long, Connection>()
     private val connectionSeq = AtomicLong()
     private val store = EventStore()
+
+    // Ids of the ephemeral events forwarded but not stored (storesEphemeral off),
+    // so a duplicate is not delivered twice; the oldest are dropped past MAX_EVENTS.
+    private val forwardedEphemeral = object : LinkedHashMap<String, Unit>() {
+        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, Unit>?) = size > MAX_EVENTS
+    }
 
     // Unapproved EVENT senders: per-pubkey token buckets (denied events skip
     // verification — the schnorr check is the CPU cost a flood exploits).
@@ -486,7 +498,11 @@ private class RelayCore(
                 pubKey = event.pubKey,
                 tags = event.tagValues(),
             )
-            val isNew = synchronized(store) { store.add(stored) }
+            val isNew = if (!storesEphemeral && event.kind in EPHEMERAL_KINDS) {
+                synchronized(forwardedEphemeral) { forwardedEphemeral.put(event.id, Unit) == null }
+            } else {
+                synchronized(store) { store.add(stored) }
+            }
             send(ok(event.id, true, ""))
             if (isNew) {
                 // After the ack so the publisher's round trip is never queued behind our fan-out.

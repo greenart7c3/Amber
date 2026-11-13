@@ -15,8 +15,15 @@ macOS and Windows that needs **no Java installed**:
 ```bash
 tar xzf amber-cli-<version>-linux-x86_64.tar.gz     # or the .zip on Windows
 ./amber-cli/bin/amber --version
-install -m 755 amber-cli/bin/amber ~/.local/bin/amber   # optional
+# optional, to run it as `amber`: keep the directory, link the launcher
+mkdir -p ~/.local/opt ~/.local/bin
+mv amber-cli ~/.local/opt/amber-cli
+ln -s ~/.local/opt/amber-cli/bin/amber ~/.local/bin/amber
 ```
+
+The launcher runs the Java runtime bundled beside it in `lib/`, so a copy of
+`bin/amber` on its own cannot start; a symlink works, because the launcher
+follows it back into the directory.
 
 macOS: the app is ad-hoc signed and not notarized, so a browser-downloaded copy
 is quarantined; `xattr -dr com.apple.quarantine amber-cli.app` (or use the
@@ -33,6 +40,14 @@ without packaging.
 
 ```bash
 amber login 'bunker://<connection-pubkey>?relay=wss://...&secret=...'
+```
+
+The URI contains the connection's secret. On a shared machine, pass `-` and
+pipe it in instead, so the secret stays out of the process list and your shell
+history:
+
+```bash
+amber login - < bunker-uri.txt
 ```
 
 **Without one** — let the CLI print a `nostrconnect://` URI and a QR code, then
@@ -94,6 +109,12 @@ credential store — macOS Keychain, Windows Credential Manager, a freedesktop
 Secret Service — and, on a host with none running, in a `0600` key file beside
 it. Another app cannot read the saved client keys; and those keys alone cannot
 sign anything, because Amber approves every request.
+
+That choice is made when the key is first saved and recorded in a `key-store`
+file beside it, so a Secret Service that starts later (a desktop login, another
+D-Bus environment under cron or systemd) does not lock the saved connections
+out. `AMBER_CLI_KEY_STORE=file` or `=keyring` picks the backend explicitly, over
+the recorded one.
 
 Relays for `connect` default to the same list Amber itself uses
 (`wss://auth.nostr1.com/`, `wss://bucket.coracle.social/`,

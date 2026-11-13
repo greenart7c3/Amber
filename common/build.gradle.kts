@@ -35,12 +35,12 @@ kover {
         total {
             verify {
                 rule {
-                    // :common's own unit tests cover ~44% of its lines; the rest is
-                    // exercised by :desktop's tests (LocalRelayServer and the bunker
-                    // flow), which the merged report at build/reports/kover counts.
+                    // :common's own unit tests cover ~85% of its lines, LocalRelayServer
+                    // included; :desktop's tests exercise more of it through the bunker
+                    // flow, which the merged report at build/reports/kover counts.
                     // A ratchet: raise it when coverage improves, never lower it to
                     // make a change pass.
-                    minBound(44)
+                    minBound(85)
                 }
             }
         }

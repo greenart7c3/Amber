@@ -35,7 +35,7 @@ object Help {
           amber help [command]
 
         COMMANDS
-          login <bunker://...>       pair using a bunker URI from Amber
+          login <bunker://...|->     pair using a bunker URI from Amber
           connect                    print a nostrconnect:// URI/QR and pair by approval
           sign-event [JSON|-]        sign an event, print the signed event
           get-public-key             print the hex public key Amber signs with
@@ -51,6 +51,8 @@ object Help {
           With a bunker URI: in Amber, open the connection's details, copy the
           bunker:// URI, then run
             amber login 'bunker://...'
+          The URI carries the connection's secret; on a shared machine pass - and
+          pipe it in, so it stays out of the process list and the shell history.
           Without one: run `amber connect`, paste or scan the printed URI into Amber,
           and approve the connection there.
           Ask for permissions up front so later requests do not prompt again:
@@ -97,7 +99,9 @@ object Help {
           %APPDATA%\amber-cli on Windows) in connections.json, encrypted with
           AES-256-GCM. The key is kept in the OS credential store (macOS Keychain,
           Windows Credential Manager, freedesktop Secret Service); where none is
-          running, a 0600 key file sits next to it. Other users and apps cannot
+          running, a 0600 key file sits next to it. The choice is made once and
+          recorded in a key-store file beside it, so a credential store that later
+          starts (or stops) does not lock the saved connections out. Other users and apps cannot
           read the saved client key, and that key alone cannot sign anything:
           Amber approves every request.
 
@@ -105,6 +109,8 @@ object Help {
           AMBER_PROFILE    default profile when --profile is not given
           AMBER_CLI_HOME   directory holding the saved connections
                            (default: ~/.config/amber-cli, %APPDATA%\amber-cli on Windows)
+          AMBER_CLI_KEY_STORE  file or keyring: where the connections key is kept,
+                           over the recorded choice (a new store, or after moving a store)
 
         EXAMPLES
           # first time, in a terminal a human can see
@@ -128,11 +134,15 @@ object Help {
     """.trimIndent()
 
     private fun login(): String = """
-        amber login <bunker://...>
+        amber login <bunker://...|->
 
         Pairs this machine with a connection Amber already created. Get the URI in
         Amber: open the connection's details and copy its bunker:// URI (it contains
         the connection's public key, its relays and its secret).
+
+        Pass - to read the URI from stdin instead. Other users on the machine can
+        read a command line (and the shell keeps it in its history) for as long as
+        login runs, and the URI's secret is in it.
 
         Amber asks you to approve the new client the first time; after that the
         connection is saved here under --profile (default "default") and every
@@ -144,8 +154,9 @@ object Help {
           0 paired    2 bad URI    4 rejected in Amber    5 approval timed out
           6 no relay reachable
 
-        EXAMPLE
+        EXAMPLES
           amber login 'bunker://abc...?relay=wss://relay.nip46.com/&secret=...'
+          amber login - < bunker-uri.txt
     """.trimIndent()
 
     private fun connect(): String = """
@@ -269,9 +280,13 @@ object Help {
           state: online | offline
 
         With --json the same as {"ok":true,"result":{"profile":...,"online":true,...}}.
+        When Amber does not answer, or the pairing still waits for approval, the
+        status is still in "result" but "ok" is false, with "error" and "code"
+        beside it: {"ok":false,"result":{...,"online":false},"error":...,"code":5}.
 
         EXIT CODES
-          0 online    3 not paired (or still waiting for approval)    5 offline
+          0 online    1 invalid answer    3 not paired (or still waiting for approval)
+          4 refused by Amber    5 offline: no answer in time    6 no relay reachable
     """.trimIndent()
 
     private fun logout(): String = """

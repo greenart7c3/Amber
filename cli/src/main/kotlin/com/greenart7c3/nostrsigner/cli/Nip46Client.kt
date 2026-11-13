@@ -4,7 +4,7 @@ import com.vitorpamplona.quartz.nip01Core.core.Event
 import com.vitorpamplona.quartz.nip01Core.core.toHexKey
 import com.vitorpamplona.quartz.nip01Core.crypto.KeyPair
 import com.vitorpamplona.quartz.nip01Core.relay.client.NostrClient
-import com.vitorpamplona.quartz.nip01Core.relay.client.reqs.DynamicSubscription
+import com.vitorpamplona.quartz.nip01Core.relay.client.reqs.SubscriptionListener
 import com.vitorpamplona.quartz.nip01Core.relay.filters.Filter
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
 import com.vitorpamplona.quartz.nip01Core.signers.EventTemplate
@@ -14,8 +14,11 @@ import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerResponse
 import com.vitorpamplona.quartz.nip46RemoteSigner.NostrConnectEvent
 import com.vitorpamplona.quartz.nip46RemoteSigner.signer.NostrSignerRemote
 import java.io.PrintStream
+import java.util.UUID
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.locks.ReentrantLock
+import kotlin.concurrent.withLock
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -98,25 +101,49 @@ class Nip46Client(
      * Waits for Amber to approve a `nostrconnect://` URI: it answers with the
      * URI's secret, and that answer's author is the connection key to talk to
      * from now on.
+     *
+     * NIP-46 events are ephemeral, so relays do not replay an answer that
+     * arrived before the subscription: [onListening] is where the URI may
+     * leave the process, and it runs only once every relay has answered the
+     * subscription with EOSE (or could not be reached), never before.
      */
-    fun awaitNostrConnectApproval(secret: String): String {
+    fun awaitNostrConnectApproval(
+        secret: String,
+        onListening: () -> Unit,
+    ): String {
+        val subId = "amber-cli-" + UUID.randomUUID().toString().take(8)
+        val filter = Filter(
+            kinds = listOf(NostrConnectEvent.KIND),
+            tags = mapOf("p" to listOf(clientPubKey)),
+        )
+        val listening = RelaysListening(relays.toSet())
         // The subscription is what dials the relays, so it comes first.
-        val subscription = DynamicSubscription(
-            relayClient,
-            {
-                relays.associateWith {
-                    listOf(
-                        Filter(
-                            kinds = listOf(NostrConnectEvent.KIND),
-                            tags = mapOf("p" to listOf(clientPubKey)),
-                        ),
-                    )
-                }
+        relayClient.subscribe(
+            subId,
+            relays.associateWith { listOf(filter) },
+            object : SubscriptionListener {
+                override suspend fun onEvent(
+                    event: Event,
+                    isLive: Boolean,
+                    relay: NormalizedRelayUrl,
+                    forFilters: List<Filter>?,
+                ) = readApproval(event)
+
+                override fun onEose(
+                    relay: NormalizedRelayUrl,
+                    forFilters: List<Filter>?,
+                ) = listening.eose(relay)
+
+                override fun onCannotConnect(
+                    relay: NormalizedRelayUrl,
+                    message: String,
+                    forFilters: List<Filter>?,
+                ) = listening.failed(relay)
             },
-        ) { event -> readApproval(event) }
-        subscription.refresh()
+        )
         try {
-            awaitRelays()
+            if (!listening.await(timeoutSeconds * 1000)) throw unreachable()
+            onListening()
             val deadline = Deadline(timeoutSeconds)
             while (true) {
                 val remaining = deadline.remainingMillis()
@@ -126,7 +153,40 @@ class Nip46Client(
             }
             throw timeout("waiting for Amber to approve the connection")
         } finally {
-            subscription.close()
+            relayClient.unsubscribe(subId)
+        }
+    }
+
+    /**
+     * Which relays have registered the approval subscription. A relay is
+     * settled once it sent EOSE or failed to connect; [await] waits for all of
+     * them and is true when at least one is listening.
+     */
+    private class RelaysListening(
+        private val relays: Set<NormalizedRelayUrl>,
+    ) {
+        private val lock = ReentrantLock()
+        private val changed = lock.newCondition()
+        private val listening = mutableSetOf<NormalizedRelayUrl>()
+        private val failed = mutableSetOf<NormalizedRelayUrl>()
+
+        fun eose(relay: NormalizedRelayUrl) = lock.withLock {
+            failed.remove(relay)
+            listening.add(relay)
+            changed.signalAll()
+        }
+
+        fun failed(relay: NormalizedRelayUrl) = lock.withLock {
+            if (relay !in listening) failed.add(relay)
+            changed.signalAll()
+        }
+
+        fun await(timeoutMillis: Long): Boolean = lock.withLock {
+            var remaining = TimeUnit.MILLISECONDS.toNanos(timeoutMillis)
+            while (remaining > 0 && !relays.all { it in listening || it in failed }) {
+                remaining = changed.awaitNanos(remaining)
+            }
+            listening.isNotEmpty()
         }
     }
 

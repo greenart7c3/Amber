@@ -52,6 +52,9 @@ class Nip46EndToEndTest {
                 ) = Unit
             },
             approvedSenders = { emptySet() },
+            // Like public relays: an answer sent before the client subscribed is lost,
+            // so a client that subscribes too late fails here instead of being rescued.
+            storesEphemeral = false,
         )
         assertEquals(LocalRelayServer.Status.RUNNING, relay.start(0))
         relayUrl = relay.relayUrl()!!.url
@@ -108,6 +111,34 @@ class Nip46EndToEndTest {
         assertEquals(1, event.kind)
         assertEquals("hi from the cli", event.content)
         assertTrue(event.tags.any { it.size == 2 && it[0] == "t" && it[1] == "amber" })
+    }
+
+    @Test
+    fun loginReadsTheBunkerUriFromStdin() {
+        val piped = amber("login", "-", "--timeout", TIMEOUT, stdin = bunkerUri() + "\n")
+        assertEquals(piped.err, Exit.OK, piped.exit)
+        assertEquals(signer.accountPubKey, piped.out.trim())
+        val pubKey = amber("get-public-key", "--timeout", TIMEOUT)
+        assertEquals(pubKey.err, Exit.OK, pubKey.exit)
+        assertEquals(signer.accountPubKey, pubKey.out.trim())
+        val fromStdin = pairing()
+
+        // The argument form saves the same pairing (a new client key aside).
+        assertEquals(Exit.OK, amber("login", bunkerUri(), "--force", "--timeout", TIMEOUT).exit)
+        assertEquals(fromStdin, pairing())
+    }
+
+    @Test
+    fun loginWithEmptyStdinIsAUsageError() {
+        assertEquals(Exit.USAGE, amber("login", "-", stdin = "\n").exit)
+    }
+
+    /** What `status` reports about the saved pairing: signer, user and relays. */
+    private fun pairing(): List<String> {
+        val status = amber("status", "--json", "--timeout", TIMEOUT)
+        assertEquals(status.err + status.out, Exit.OK, status.exit)
+        val node = JacksonMapper.mapper.readTree(status.out.trim()).get("result")
+        return listOf(node.get("signer").asText(), node.get("user").asText(), node.get("relays").toString())
     }
 
     @Test
@@ -233,5 +264,34 @@ class Nip46EndToEndTest {
         assertEquals(signer.connectionPubKey, node.get("signer").asText())
         assertEquals(signer.accountPubKey, node.get("user").asText())
         assertEquals(true, node.get("online").asBoolean())
+        assertEquals(true, JacksonMapper.mapper.readTree(status.out.trim()).get("ok").asBoolean())
+
+        // A signer that does not answer: offline, exit 5, and the JSON says so.
+        signer.mode = FakeSigner.Mode.SILENT
+        val silent = amber("status", "--json", "--timeout", "1")
+        assertEquals(silent.err, Exit.TIMEOUT, silent.exit)
+        val silentNode = JacksonMapper.mapper.readTree(silent.out.trim())
+        assertEquals(false, silentNode.get("ok").asBoolean())
+        assertEquals(Exit.TIMEOUT, silentNode.get("code").asInt())
+        assertEquals(false, silentNode.get("result").get("online").asBoolean())
+
+        // The saved relay is down: unreachable, exit 6 as everywhere else.
+        relay.stop()
+        val unreachable = amber("status", "--json", "--timeout", "1")
+        assertEquals(unreachable.err, Exit.UNREACHABLE, unreachable.exit)
+        val unreachableNode = JacksonMapper.mapper.readTree(unreachable.out.trim())
+        assertEquals(false, unreachableNode.get("ok").asBoolean())
+        assertEquals(Exit.UNREACHABLE, unreachableNode.get("code").asInt())
+    }
+
+    @Test
+    fun statusOfAPairingWaitingForApprovalIsNotOk() {
+        assertEquals(Exit.TIMEOUT, amber("connect", "--relay", relayUrl, "--timeout", "1").exit)
+        val status = amber("status", "--json")
+        assertEquals(status.err, Exit.NOT_PAIRED, status.exit)
+        val node = JacksonMapper.mapper.readTree(status.out.trim())
+        assertEquals(false, node.get("ok").asBoolean())
+        assertEquals(Exit.NOT_PAIRED, node.get("code").asInt())
+        assertEquals("waiting-for-approval", node.get("result").get("state").asText())
     }
 }

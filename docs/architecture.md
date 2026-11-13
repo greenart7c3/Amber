@@ -112,9 +112,10 @@ removes duplicated security logic. Shrinks `app/detekt-baseline.xml`
 
 Done so far: `common/Nip46Requests.kt` holds the method → `SignerType` mapping,
 the NIP-44 v3 kind/scope params, the repeated-connect check and the
-connect-secret refusal, used by both apps. Next: the permission lookup
-(`BunkerEngine.lookupPermission` and its Android counterpart) and response
-construction.
+connect-secret refusal, used by both apps. `permissionLookupOrder` (in
+`common/PermissionDecision.kt`) is the order in which stored grants decide a
+request, resolved by `BunkerEngine.lookupPermission` and `SignerProviderQuery`
+against their own storage. Next: response construction.
 
 ### 2. Split `IntentUtils.kt`
 

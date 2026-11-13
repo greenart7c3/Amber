@@ -30,6 +30,9 @@ import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.common.SignerType
+import com.greenart7c3.nostrsigner.common.nip44v3Kind
+import com.greenart7c3.nostrsigner.common.nip44v3Scope
+import com.greenart7c3.nostrsigner.common.nip46SignerType
 import com.greenart7c3.nostrsigner.common.psbt.PsbtDecoder
 import com.greenart7c3.nostrsigner.common.sanitizeAppName
 import com.greenart7c3.nostrsigner.commonsui.Permission
@@ -108,7 +111,7 @@ fun BunkerSingleEventHomeScreen(
     val appIcon = (applicationEntity?.application?.icon ?: "").ifBlank { bunkerRequest.clientMetadata?.image ?: "" }
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
-    val type = BunkerRequestUtils.getTypeFromBunker(bunkerRequest.request)
+    val type = nip46SignerType(bunkerRequest.request.method)
 
     when (bunkerRequest.request) {
         is BunkerRequestPing -> {
@@ -764,8 +767,8 @@ fun BunkerSingleEventHomeScreen(
                 SignerType.NIP44_V3_ENCRYPT, SignerType.NIP44_V3_DECRYPT -> {
                     // NIP-44 v3 requests arrive as a generic BunkerRequest (Quartz
                     // doesn't know the method name); kind/scope are at params[1..2].
-                    val v3Kind = BunkerRequestUtils.getNip44v3Kind(bunkerRequest.request)
-                    val v3Scope = BunkerRequestUtils.getNip44v3Scope(bunkerRequest.request)
+                    val v3Kind = bunkerRequest.request.nip44v3Kind()
+                    val v3Scope = bunkerRequest.request.nip44v3Scope()
                     val permission = applicationEntity?.permissions?.firstOrNull {
                         it.pkKey == key && it.type == type.toString() && it.kind == v3Kind
                     } ?: applicationEntity?.permissions?.firstOrNull {

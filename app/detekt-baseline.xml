@@ -5,8 +5,6 @@
     <ID>ComplexCondition:AmberTopAppBar.kt:destinationRoute.startsWith("Permission/") || destinationRoute.startsWith("Activity/") || destinationRoute.startsWith("RelayLogScreen/") || destinationRoute.startsWith("qrcode/")</ID>
     <ID>ComplexCondition:ApplicationBackup.kt:ApplicationBackup.&lt;no name provided&gt;$msg is EventMessage &amp;&amp; msg.subId == subId &amp;&amp; msg.event.kind == BACKUP_KIND &amp;&amp; msg.event.pubKey == account.hexKey</ID>
     <ID>ComplexCondition:ApplicationBackup.kt:ApplicationBackup.&lt;no name provided&gt;$msg is EventMessage &amp;&amp; msg.subId == subId &amp;&amp; msg.event.kind == INBOX_KIND &amp;&amp; msg.event.pubKey == account.hexKey</ID>
-    <ID>ComplexCondition:EventNotificationConsumer.kt:EventNotificationConsumer$applicationWithSecret == null || secret.isBlank() || applicationWithSecret.application.isConnected || !applicationWithSecret.application.useSecret</ID>
-    <ID>ComplexCondition:EventNotificationConsumer.kt:EventNotificationConsumer$permission != null &amp;&amp; ((permission.application.secret != permission.application.key &amp;&amp; permission.application.useSecret) || permission.application.isConnected) &amp;&amp; type == SignerType.CONNECT</ID>
     <ID>ComplexCondition:MainActivity.kt:MainActivity$currentAccount != null &amp;&amp; localNpub != null &amp;&amp; currentAccount != localNpub &amp;&amp; localNpub.isNotBlank()</ID>
     <ID>ComplexCondition:MainViewModel.kt:MainViewModel$currentAccount != null &amp;&amp; npub != null &amp;&amp; currentAccount != npub &amp;&amp; npub.isNotBlank()</ID>
     <ID>ComplexCondition:SignerActivity.kt:SignerActivity$currentAccount != null &amp;&amp; localNpub != null &amp;&amp; currentAccount != localNpub &amp;&amp; localNpub.isNotBlank()</ID>
@@ -48,7 +46,6 @@
     <ID>CyclomaticComplexMethod:BunkerConnectRequestScreen.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun BunkerConnectRequestScreen</ID>
     <ID>CyclomaticComplexMethod:BunkerMultiEventHomeScreen.kt:@Composable fun BunkerMultiEventHomeScreen</ID>
     <ID>CyclomaticComplexMethod:BunkerMultiEventHomeScreen.kt:@Composable private fun BunkerRequestCard</ID>
-    <ID>CyclomaticComplexMethod:BunkerRequestUtils.kt:BunkerRequestUtils$fun getTypeFromBunker: SignerType</ID>
     <ID>CyclomaticComplexMethod:BunkerRequestUtils.kt:BunkerRequestUtils$fun sendRejection</ID>
     <ID>CyclomaticComplexMethod:BunkerRequestUtils.kt:BunkerRequestUtils$fun sendResult</ID>
     <ID>CyclomaticComplexMethod:BunkerSingleEventHomeScreen.kt:@Composable fun BunkerSingleEventHomeScreen</ID>

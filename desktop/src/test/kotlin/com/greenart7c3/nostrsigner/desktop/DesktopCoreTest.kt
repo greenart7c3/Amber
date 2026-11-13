@@ -134,14 +134,6 @@ class DesktopCoreTest {
     }
 
     @Test
-    fun bunkerMethodMapping() {
-        assertEquals(SignerType.CONNECT, BunkerEngine.typeFromMethod("connect"))
-        assertEquals(SignerType.SIGN_EVENT, BunkerEngine.typeFromMethod("sign_event"))
-        assertEquals(SignerType.NIP44_DECRYPT, BunkerEngine.typeFromMethod("nip44_decrypt"))
-        assertEquals(SignerType.INVALID, BunkerEngine.typeFromMethod("bogus"))
-    }
-
-    @Test
     fun permissionTypeExpansionMatchesRequestPath() {
         // NIP-specific perms map 1:1 to the type the request path queries.
         assertEquals(listOf("NIP44_ENCRYPT"), BunkerEngine.expandPermissionTypes("nip44_encrypt"))

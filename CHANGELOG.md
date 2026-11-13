@@ -1,23 +1,17 @@
 # Changelog
 
-## Amber 7.0.0-pre3
+## Amber 7.0.0-pre4
 
-- New: a local WebSocket relay on Android (ws://127.0.0.1:7777, off by default, under Settings → Relays) so NIP-46 clients on the phone reach the bunker without public relays
-- New: the offline flavor now installs side-by-side with the online Amber, with its own application id and the launcher name "Amber Offline"
-- New: British English translation
-- New: an install-desktop-entry.sh script in the Linux desktop tarball that adds Amber to the app launcher
-- Show the relays that connections use on the desktop relays screen, with their live status
-- Show native Approve / Reject buttons on request notifications on Omarchy's Hyprland shell
-- Format dates and times with the system date order and 12/24-hour setting on Android and desktop
-- Decide relay auth requests on the desktop per relay like Android does, with an "All relays" choice and a client auth whitelist
-- Show the desktop window again when Amber is opened from the app launcher while it already runs
-- Fix the desktop Linux request popup becoming a large centered window on floating workspaces
-- Fix the start-on-boot service failing to write the local signer socket directory on Linux
-- Fix the squeezed relay port field on the Android relays screen
-- Fix one account failing relay auth on the desktop aborting it for the other accounts
-- Share every string and permission description between the Android and desktop apps, which updates outdated labels on desktop
+- New: an `amber` command line client that asks a running Amber for NIP-46 signatures, so scripts and AI agents can sign events without speaking the protocol, shipped for Linux, macOS and Windows
+- New: send desktop request notifications through the system on Windows and macOS too, with Approve / Reject buttons
+- Show on the onboarding page where your accounts are when an offline Amber is installed under the other application id, with a button to open it
+- Keep the offline app on the online application id so installs from the releases page and Obtainium update in place, and publish the "Amber Offline" Zapstore listing under its own id
+- Check the update relays that are still reliable: relay.zapstore.dev, relay.primal.net, relay.snort.social, offchain.pub and purplerelay.com
+- Fix desktop request notifications staying on screen after the request is answered in Amber
+- Fix accounts of installs from 3.3.0 or older not being restored
+- Fix crashes when the Android keystore prunes a cipher operation, by retrying it
 
-Download it with [Zapstore](https://zapstore.dev/apps/com.greenart7c3.nostrsigner), [Obtainium](https://github.com/ImranR98/Obtainium), [f-droid](https://f-droid.org/packages/com.greenart7c3.nostrsigner) or download it directly in the [releases page](https://github.com/greenart7c3/Amber/releases/tag/v7.0.0-pre3)
+Download it with [Zapstore](https://zapstore.dev/apps/com.greenart7c3.nostrsigner), [Obtainium](https://github.com/ImranR98/Obtainium), [f-droid](https://f-droid.org/packages/com.greenart7c3.nostrsigner) or download it directly in the [releases page](https://github.com/greenart7c3/Amber/releases/tag/v7.0.0-pre4)
 
 If you like my work consider making a [donation](https://greenart7c3.com)
 
@@ -29,10 +23,10 @@ In order to verify the release, you'll need to have `gpg` or `gpg2` installed on
 gpg --keyserver hkps://keys.openpgp.org --recv-keys 44F0AAEB77F373747E3D5444885822EED3A26A6D
 ```
 
-Once you have his PGP key you can verify the release (assuming `manifest-v7.0.0-pre3.txt` and `manifest-v7.0.0-pre3.txt.sig` are in the current directory) with:
+Once you have his PGP key you can verify the release (assuming `manifest-v7.0.0-pre4.txt` and `manifest-v7.0.0-pre4.txt.sig` are in the current directory) with:
 
 ``` bash
-gpg --verify manifest-v7.0.0-pre3.txt.sig manifest-v7.0.0-pre3.txt
+gpg --verify manifest-v7.0.0-pre4.txt.sig manifest-v7.0.0-pre4.txt
 ```
 
 You should see the following if the verification was successful:
@@ -46,7 +40,7 @@ gpg: Good signature from "greenart7c3 <greenart7c3@proton.me>"
 That will verify the signature on the main manifest page which ensures integrity and authenticity of the binaries you've downloaded locally. Next, depending on your operating system you should then re-calculate the sha256 sum of the binary, and compare that with the following hashes:
 
 ``` bash
-cat manifest-v7.0.0-pre3.txt
+cat manifest-v7.0.0-pre4.txt
 ```
 
 One can use the `shasum -a 256 <file name here>` tool in order to re-compute the `sha256` hash of the target binary for your operating system. The produced hash should be compared with the hashes listed above and they should match exactly.

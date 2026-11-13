@@ -5,7 +5,6 @@
     <ID>CyclomaticComplexMethod:AmberCli.kt:Session$fun run: Int</ID>
     <ID>CyclomaticComplexMethod:AmberCli.kt:Session$private fun connect: Int</ID>
     <ID>CyclomaticComplexMethod:Args.kt:Args.Companion$fun parse: Args</ID>
-    <ID>CyclomaticComplexMethod:FakeSigner.kt:FakeSigner$private fun handle</ID>
     <ID>LongMethod:AmberCli.kt:Session$private fun connect: Int</ID>
     <ID>LongMethod:Help.kt:Help$fun overview: String</ID>
     <ID>ReturnCount:AmberCli.kt:Session$fun run: Int</ID>

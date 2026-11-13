@@ -29,11 +29,9 @@ import com.greenart7c3.nostrsigner.commonsui.signature_copied_to_the_clipboard
 import com.greenart7c3.nostrsigner.database.ApplicationEntity
 import com.greenart7c3.nostrsigner.database.ApplicationPermissionsEntity
 import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
-import com.greenart7c3.nostrsigner.database.HistoryEntity
 import com.greenart7c3.nostrsigner.database.LogEntity
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.ClearTextEncryptedDataKind
-import com.greenart7c3.nostrsigner.models.CompressionType
 import com.greenart7c3.nostrsigner.models.EncryptedDataKind
 import com.greenart7c3.nostrsigner.models.EventEncryptedDataKind
 import com.greenart7c3.nostrsigner.models.IntentData
@@ -43,7 +41,6 @@ import com.greenart7c3.nostrsigner.models.ReturnType
 import com.greenart7c3.nostrsigner.models.TagArrayEncryptedDataKind
 import com.greenart7c3.nostrsigner.models.decryptSignerTypes
 import com.greenart7c3.nostrsigner.models.encryptDecryptSignerTypes
-import com.greenart7c3.nostrsigner.models.encryptSignerTypes
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
 import com.greenart7c3.nostrsigner.ui.RememberType
 import com.greenart7c3.nostrsigner.ui.components.DecryptTypeScope
@@ -55,10 +52,8 @@ import com.vitorpamplona.quartz.nip19Bech32.toNpub
 import com.vitorpamplona.quartz.nip59Giftwrap.seals.SealEvent
 import com.vitorpamplona.quartz.utils.Hex
 import com.vitorpamplona.quartz.utils.TimeUtils
-import java.io.ByteArrayOutputStream
 import java.net.URLDecoder
 import java.util.UUID
-import java.util.zip.GZIPOutputStream
 import kotlin.io.encoding.Base64
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
@@ -173,12 +168,10 @@ object IntentUtils {
     private val URL_ENCODED_REGEX = Regex("%[0-9a-fA-F]{2}")
 
     fun decodeData(data: String, replace: Boolean = true, decodeData: Boolean = true): String {
-        if (!decodeData) {
-            if (!replace) return data.replace("nostrsigner:", "")
-            return data.replace("nostrsigner:", "").replace("+", "%2b")
-        }
-        if (!replace) return URLDecoder.decode(data.replace("nostrsigner:", ""), "utf-8")
-        return URLDecoder.decode(data.replace("nostrsigner:", "").replace("+", "%2b"), "utf-8")
+        val stripped = data.replace("nostrsigner:", "")
+        // replace keeps a literal '+' instead of letting URLDecoder turn it into a space.
+        val raw = if (replace) stripped.replace("+", "%2b") else stripped
+        return if (decodeData) URLDecoder.decode(raw, "utf-8") else raw
     }
 
     fun isUrlEncoded(input: String): Boolean = URL_ENCODED_REGEX.containsMatchIn(input)
@@ -479,70 +472,68 @@ object IntentUtils {
         route: String?,
         currentLoggedInAccount: Account,
         referrer: Uri? = null,
-    ): IntentData? {
-        try {
-            if (intent.data == null) {
-                return null
-            }
-
-            if (intent.dataString == "nostrsigner:" && BunkerRequestUtils.getBunkerRequests().isNotEmpty()) {
-                // ditto send this empty request just to open the app when the user has not approved/rejected the bunker request
-                return null
-            }
-
-            if (intent.extras?.getString("id") == null || intent.extras?.getString("id") == "") {
-                intent.putExtra("id", UUID.randomUUID().toString())
-            }
-
-            val id = intent.extras?.getString("id") ?: ""
-            if (intents.value.any { it.id == id }) {
-                return null
-            }
-
-            var localAccount = currentLoggedInAccount
-            if (intent.getStringExtra("current_user") != null) {
-                var npub = intent.getStringExtra("current_user")
-                if (npub != null) {
-                    npub = parsePubKey(npub)
+    ): IntentData? = try {
+        if (isNotNewRequest(intent)) {
+            null
+        } else {
+            val account = requestAccount(context, intent) ?: currentLoggedInAccount
+            when {
+                intent.dataString?.startsWith("nostrconnect:") == true -> {
+                    NostrConnectUtils.getIntentFromNostrConnect(intent, account)
+                    null
                 }
-                LocalPreferences.loadAccount(context, npub)?.let {
-                    localAccount = it
-                }
-            }
-
-            if (intent.dataString?.startsWith("nostrconnect:") == true) {
-                NostrConnectUtils.getIntentFromNostrConnect(intent, localAccount)
-            } else if (
                 isWebRequest(
                     hasApplicationIdExtra = intent.extras?.getString(Browser.EXTRA_APPLICATION_ID) != null,
                     hasBrowsableCategory = intent.hasCategory(Intent.CATEGORY_BROWSABLE),
                     referrerIsBrowser = isBrowserReferrer(context, referrer),
                     typeExtra = intent.extras?.getString("type"),
                     dataString = intent.dataString,
-                )
-            ) {
-                return getIntentDataWithoutExtras(intent.data?.toString() ?: "", intent, packageName, route, localAccount)
-            } else {
-                return getIntentDataFromIntent(intent, packageName, route, localAccount)
-            }
-        } catch (e: Exception) {
-            AmberLog.e(Amber.TAG, "Error parsing intent: ${e.message}", e)
-            emitInvalid(intent, packageName, "Error parsing intent: ${e.message}", e)
-            Amber.instance.applicationIOScope.launch {
-                LocalPreferences.allSavedAccounts(Amber.instance).forEach {
-                    Amber.instance.getLogDatabase(it.npub).dao().insertLogIfEnabled(
-                        LogEntity(
-                            id = 0,
-                            url = "IntentUtils",
-                            type = "Error",
-                            message = e.stackTraceToString(),
-                            time = System.currentTimeMillis(),
-                        ),
-                    )
-                }
+                ) -> getIntentDataWithoutExtras(intent.data?.toString() ?: "", intent, packageName, route, account)
+                else -> getIntentDataFromIntent(intent, packageName, route, account)
             }
         }
-        return null
+    } catch (e: Exception) {
+        reportParseError(intent, packageName, e)
+        null
+    }
+
+    /**
+     * True when [intent] carries nothing to queue: no data, the empty request a
+     * client sends just to bring Amber up while a bunker request waits, or a
+     * request already queued. Gives the request an id first if it has none.
+     */
+    private fun isNotNewRequest(intent: Intent): Boolean {
+        if (intent.data == null) return true
+        if (intent.dataString == "nostrsigner:" && BunkerRequestUtils.getBunkerRequests().isNotEmpty()) return true
+        if (intent.extras?.getString("id").isNullOrEmpty()) {
+            intent.putExtra("id", UUID.randomUUID().toString())
+        }
+        val id = intent.extras?.getString("id") ?: ""
+        return intents.value.any { it.id == id }
+    }
+
+    /** The stored account the `current_user` extra names, if any. */
+    private suspend fun requestAccount(context: Context, intent: Intent): Account? {
+        val currentUser = intent.getStringExtra("current_user") ?: return null
+        return LocalPreferences.loadAccount(context, parsePubKey(currentUser))
+    }
+
+    private fun reportParseError(intent: Intent, packageName: String?, e: Exception) {
+        AmberLog.e(Amber.TAG, "Error parsing intent: ${e.message}", e)
+        emitInvalid(intent, packageName, "Error parsing intent: ${e.message}", e)
+        Amber.instance.applicationIOScope.launch {
+            LocalPreferences.allSavedAccounts(Amber.instance).forEach {
+                Amber.instance.getLogDatabase(it.npub).dao().insertLogIfEnabled(
+                    LogEntity(
+                        id = 0,
+                        url = "IntentUtils",
+                        type = "Error",
+                        message = e.stackTraceToString(),
+                        time = System.currentTimeMillis(),
+                    ),
+                )
+            }
+        }
     }
 
     fun getUnsignedEvent(
@@ -592,41 +583,13 @@ object IntentUtils {
         Amber.instance.applicationIOScope.launch {
             try {
                 val dao = Amber.instance.dao(account.npub)
-                val savedApplication = dao.getByKey(key)
-
-                val application =
-                    savedApplication ?: run {
-                        val localAppName =
-                            if (packageName != null && appName == null) {
-                                try {
-                                    val info = context.packageManager.getApplicationInfo(packageName, 0)
-                                    sanitizeAppName(context.packageManager.getApplicationLabel(info).toString())
-                                } catch (_: Exception) {
-                                    null
-                                }
-                            } else {
-                                appName
-                            }
-                        ApplicationWithPermissions(
-                            application = ApplicationEntity(
-                                key = key,
-                                name = appName ?: localAppName ?: "",
-                                relays = emptyList(),
-                                url = "",
-                                icon = "",
-                                description = "",
-                                pubKey = account.hexKey,
-                                isConnected = true,
-                                secret = "",
-                                useSecret = false,
-                                signPolicy = account.signPolicy,
-                                closeApplication = shouldCloseApplication != false,
-                                deleteAfter = deleteAfter,
-                                lastUsed = TimeUtils.now(),
-                            ),
-                            permissions = mutableListOf(),
-                        )
-                    }
+                val application = dao.getByKey(key) ?: IntentResponse.newApplication(
+                    key = key,
+                    name = appName ?: packageName?.let { installedAppName(context, it) } ?: "",
+                    account = account,
+                    closeApplication = shouldCloseApplication != false,
+                    deleteAfter = deleteAfter,
+                )
                 application.application.isConnected = true
 
                 if (signPolicy != null) {
@@ -649,23 +612,7 @@ object IntentUtils {
                 }
 
                 if (intentData.type == SignerType.GET_PUBLIC_KEY) {
-                    shouldCloseApplication?.let {
-                        application.application.closeApplication = it
-                    }
-                    if (!application.permissions.any { it.type == SignerType.GET_PUBLIC_KEY.toString() }) {
-                        application.permissions.add(
-                            ApplicationPermissionsEntity(
-                                null,
-                                key,
-                                SignerType.GET_PUBLIC_KEY.toString(),
-                                null,
-                                true,
-                                RememberType.ALWAYS.screenCode,
-                                Long.MAX_VALUE / 1000,
-                                0,
-                            ),
-                        )
-                    }
+                    rememberPublicKeyGrant(application, key, shouldCloseApplication)
                 }
 
                 if (packageName != null) {
@@ -674,110 +621,13 @@ object IntentUtils {
                     // launcher icon + label so a first-ever connection populates them
                     // immediately, not only on a later request.
                     persistNativeAppMetadata(context, account, packageName)
-                    val historyDatabase = Amber.instance.getHistoryDatabase(account.npub)
-                    val isV3 = intentData.type == SignerType.NIP44_V3_ENCRYPT || intentData.type == SignerType.NIP44_V3_DECRYPT
-                    // Persist the encrypted form (ciphertext), never the plaintext:
-                    // encrypt requests store their ciphertext output (`value`), decrypt
-                    // requests store the ciphertext input (`intentData.data`). The
-                    // plaintext is recovered on demand in the activity/history UI.
-                    val historyContent = when (intentData.type) {
-                        SignerType.SIGN_EVENT -> event
-                        SignerType.NIP04_ENCRYPT,
-                        SignerType.NIP44_ENCRYPT,
-                        SignerType.NIP44_V3_ENCRYPT,
-                        -> value
-                        else -> intentData.data
-                    }
+                    val content = IntentResponse.historyContent(intentData, accepted = true, event = event, value = value)
+                    val entry = IntentResponse.historyEntry(intentData, key, kind, accepted = true, content = content)
                     Amber.instance.applicationIOScope.launch {
-                        historyDatabase.dao().addHistory(
-                            listOf(
-                                HistoryEntity(
-                                    0,
-                                    key,
-                                    intentData.type.toString(),
-                                    if (isV3) intentData.nip44v3Kind else kind,
-                                    TimeUtils.now(),
-                                    true,
-                                    content = historyContent,
-                                    encryptionPubKey = if (intentData.type in encryptDecryptSignerTypes && intentData.type != SignerType.DECRYPT_ZAP_EVENT) {
-                                        intentData.pubKey
-                                    } else {
-                                        ""
-                                    },
-                                    encryptionScope = if (isV3) intentData.nip44v3Scope else "",
-                                ),
-                            ),
-                            account.npub,
-                        )
-                    }
-
-                    val intent = Intent()
-                    intent.putExtra("signature", value)
-                    intent.putExtra("result", value)
-                    intent.putExtra("id", intentData.id)
-                    intent.putExtra("event", event)
-                    if (intentData.type == SignerType.GET_PUBLIC_KEY) {
-                        intent.putExtra("package", BuildConfig.APPLICATION_ID)
-                    }
-                    Amber.instance.getMainActivity()?.setResult(RESULT_OK, intent)
-                } else if (!intentData.callBackUrl.isNullOrBlank()) {
-                    if (intentData.returnType == ReturnType.SIGNATURE) {
-                        val intent = Intent(Intent.ACTION_VIEW)
-                        intent.data = (intentData.callBackUrl + Uri.encode(value)).toUri()
-                        context.startActivity(intent)
-                    } else {
-                        if (intentData.compression == CompressionType.GZIP) {
-                            // Compress the string using GZIP
-                            val encodedString = ByteArrayOutputStream().use { bos ->
-                                GZIPOutputStream(bos).use { gzos ->
-                                    gzos.write(event.toByteArray())
-                                }
-                                Base64.encode(bos.toByteArray())
-                            }
-
-                            val intent = Intent(Intent.ACTION_VIEW)
-                            intent.data = (intentData.callBackUrl + Uri.encode("Signer1$encodedString")).toUri()
-                            context.startActivity(intent)
-                        } else {
-                            val intent = Intent(Intent.ACTION_VIEW)
-                            intent.data = (intentData.callBackUrl + Uri.encode(event)).toUri()
-                            context.startActivity(intent)
-                        }
-                    }
-                } else {
-                    val result =
-                        if (intentData.returnType == ReturnType.SIGNATURE) {
-                            value
-                        } else {
-                            event
-                        }
-                    val message =
-                        if (intentData.returnType == ReturnType.SIGNATURE) {
-                            getStringBlocking(Res.string.signature_copied_to_the_clipboard)
-                        } else {
-                            getStringBlocking(Res.string.event_copied_to_the_clipboard)
-                        }
-
-                    withContext(Dispatchers.Main) {
-                        if (intentData.type in decryptSignerTypes) {
-                            // A decrypt result is the plaintext itself: hide it from
-                            // clipboard previews and clear it, like the nsec.
-                            clipboardManager.setSensitiveClip(result)
-                        } else {
-                            clipboardManager.setClipEntry(
-                                ClipEntry(
-                                    ClipData.newPlainText("", result),
-                                ),
-                            )
-                        }
-
-                        Toast.makeText(
-                            context,
-                            message,
-                            Toast.LENGTH_SHORT,
-                        ).show()
+                        Amber.instance.getHistoryDatabase(account.npub).dao().addHistory(listOf(entry), account.npub)
                     }
                 }
+                deliverResult(context, packageName, clipboardManager, intentData, event, value)
                 onRemoveIntentData(listOf(intentData), IntentResultType.REMOVE)
                 Amber.instance.getMainActivity()?.let {
                     it.intent = null
@@ -785,6 +635,72 @@ object IntentUtils {
                 }
             } finally {
                 onLoading(false)
+            }
+        }
+    }
+
+    private fun installedAppName(context: Context, packageName: String): String? = try {
+        val info = context.packageManager.getApplicationInfo(packageName, 0)
+        sanitizeAppName(context.packageManager.getApplicationLabel(info).toString())
+    } catch (_: Exception) {
+        null
+    }
+
+    /** A connected app may always read the public key; answering get_public_key also sets whether Amber closes after its requests. */
+    private fun rememberPublicKeyGrant(application: ApplicationWithPermissions, key: String, shouldCloseApplication: Boolean?) {
+        shouldCloseApplication?.let { application.application.closeApplication = it }
+        if (application.permissions.none { it.type == SignerType.GET_PUBLIC_KEY.toString() }) {
+            application.permissions.add(
+                ApplicationPermissionsEntity(
+                    null,
+                    key,
+                    SignerType.GET_PUBLIC_KEY.toString(),
+                    null,
+                    true,
+                    RememberType.ALWAYS.screenCode,
+                    Long.MAX_VALUE / 1000,
+                    0,
+                ),
+            )
+        }
+    }
+
+    /** Hands the result back: as the activity result to a native app, to a web app's callback URL, or else to the clipboard. */
+    private suspend fun deliverResult(
+        context: Context,
+        packageName: String?,
+        clipboardManager: Clipboard,
+        intentData: IntentData,
+        event: String,
+        value: String,
+    ) {
+        if (packageName != null) {
+            val intent = Intent()
+            intent.putExtra("signature", value)
+            intent.putExtra("result", value)
+            intent.putExtra("id", intentData.id)
+            intent.putExtra("event", event)
+            if (intentData.type == SignerType.GET_PUBLIC_KEY) {
+                intent.putExtra("package", BuildConfig.APPLICATION_ID)
+            }
+            Amber.instance.getMainActivity()?.setResult(RESULT_OK, intent)
+        } else if (!intentData.callBackUrl.isNullOrBlank()) {
+            val intent = Intent(Intent.ACTION_VIEW)
+            intent.data = (intentData.callBackUrl + Uri.encode(IntentResponse.callbackPayload(intentData, event, value))).toUri()
+            context.startActivity(intent)
+        } else {
+            val isSignature = intentData.returnType == ReturnType.SIGNATURE
+            val result = if (isSignature) value else event
+            val message = getStringBlocking(if (isSignature) Res.string.signature_copied_to_the_clipboard else Res.string.event_copied_to_the_clipboard)
+            withContext(Dispatchers.Main) {
+                if (intentData.type in decryptSignerTypes) {
+                    // A decrypt result is the plaintext itself: hide it from
+                    // clipboard previews and clear it, like the nsec.
+                    clipboardManager.setSensitiveClip(result)
+                } else {
+                    clipboardManager.setClipEntry(ClipEntry(ClipData.newPlainText("", result)))
+                }
+                Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -807,27 +723,8 @@ object IntentUtils {
                 return@launch
             }
 
-            val savedApplication = Amber.instance.getDatabase(account.npub).dao().getByKey(key)
-            val application =
-                savedApplication ?: ApplicationWithPermissions(
-                    application = ApplicationEntity(
-                        key = key,
-                        name = appName,
-                        relays = emptyList(),
-                        url = "",
-                        icon = "",
-                        description = "",
-                        pubKey = account.hexKey,
-                        isConnected = true,
-                        secret = "",
-                        useSecret = false,
-                        signPolicy = account.signPolicy,
-                        closeApplication = true,
-                        deleteAfter = 0L,
-                        lastUsed = TimeUtils.now(),
-                    ),
-                    permissions = mutableListOf(),
-                )
+            val application = Amber.instance.getDatabase(account.npub).dao().getByKey(key)
+                ?: IntentResponse.newApplication(key, appName, account, closeApplication = true, deleteAfter = 0L)
             if (rememberType != RememberType.NEVER) {
                 AmberUtils.acceptOrRejectPermission(
                     application,
@@ -844,29 +741,9 @@ object IntentUtils {
             }
 
             Amber.instance.dao(account.npub).insertApplicationWithPermissions(application)
-            val isV3 = intentData.type == SignerType.NIP44_V3_ENCRYPT || intentData.type == SignerType.NIP44_V3_DECRYPT
-            // A rejected encrypt request was never performed, so no ciphertext exists —
-            // store nothing rather than leaking the plaintext input. Decrypt requests
-            // carry their ciphertext in the request, so persist it and decrypt on demand.
-            val historyContent = if (intentData.type in encryptSignerTypes) "" else intentData.data
+            val content = IntentResponse.historyContent(intentData, accepted = false, event = "", value = "")
             Amber.instance.getHistoryDatabase(account.npub).dao().addHistory(
-                listOf(
-                    HistoryEntity(
-                        0,
-                        key,
-                        intentData.type.toString(),
-                        if (isV3) intentData.nip44v3Kind else kind,
-                        TimeUtils.now(),
-                        false,
-                        content = historyContent,
-                        encryptionPubKey = if (historyContent.isNotEmpty() && intentData.type in encryptDecryptSignerTypes && intentData.type != SignerType.DECRYPT_ZAP_EVENT) {
-                            intentData.pubKey
-                        } else {
-                            ""
-                        },
-                        encryptionScope = if (isV3) intentData.nip44v3Scope else "",
-                    ),
-                ),
+                listOf(IntentResponse.historyEntry(intentData, key, kind, accepted = false, content = content)),
                 account.npub,
             )
 

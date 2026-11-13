@@ -15,8 +15,15 @@ macOS and Windows that needs **no Java installed**:
 ```bash
 tar xzf amber-cli-<version>-linux-x86_64.tar.gz     # or the .zip on Windows
 ./amber-cli/bin/amber --version
-install -m 755 amber-cli/bin/amber ~/.local/bin/amber   # optional
+# optional, to run it as `amber`: keep the directory, link the launcher
+mkdir -p ~/.local/opt ~/.local/bin
+mv amber-cli ~/.local/opt/amber-cli
+ln -s ~/.local/opt/amber-cli/bin/amber ~/.local/bin/amber
 ```
+
+The launcher runs the Java runtime bundled beside it in `lib/`, so a copy of
+`bin/amber` on its own cannot start; a symlink works, because the launcher
+follows it back into the directory.
 
 macOS: the app is ad-hoc signed and not notarized, so a browser-downloaded copy
 is quarantined; `xattr -dr com.apple.quarantine amber-cli.app` (or use the

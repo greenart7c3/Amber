@@ -13,7 +13,6 @@ import android.os.PersistableBundle
 import android.os.SystemClock
 import androidx.compose.ui.platform.ClipEntry
 import androidx.compose.ui.platform.Clipboard
-import com.greenart7c3.nostrsigner.Amber
 import java.security.MessageDigest
 import java.security.SecureRandom
 import kotlin.time.Duration
@@ -47,11 +46,12 @@ fun newSensitivePlainText(label: CharSequence, text: CharSequence): ClipData {
  * the meantime. Copying another secret replaces the pending clear.
  */
 suspend fun Clipboard.setSensitiveClip(
+    context: Context,
     text: CharSequence,
     clearAfter: Duration = SENSITIVE_CLIPBOARD_CLEAR_DELAY,
 ) {
     setClipEntry(ClipEntry(newSensitivePlainText("", text)))
-    scheduleSensitiveClear(Amber.instance, text, clearAfter)
+    scheduleSensitiveClear(context.applicationContext, text, clearAfter)
 }
 
 private fun scheduleSensitiveClear(

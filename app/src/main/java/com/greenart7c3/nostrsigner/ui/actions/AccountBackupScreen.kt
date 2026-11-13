@@ -875,7 +875,7 @@ private fun encryptCopyNSec(
                 account.didBackup = true
                 onBackupDone()
                 Amber.instance.applicationIOScope.launch(Dispatchers.Main) {
-                    clipboardManager.setSensitiveClip(key)
+                    clipboardManager.setSensitiveClip(context, key)
                     Toast.makeText(context, getStringBlocking(Res.string.secret_key_copied_to_clipboard), Toast.LENGTH_SHORT).show()
                 }
             } catch (_: Exception) {

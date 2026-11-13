@@ -214,7 +214,7 @@ class Account(
             }
             didBackup = true
             Amber.instance.applicationIOScope.launch(Dispatchers.Main) {
-                clipboardManager.setSensitiveClip(nsec)
+                clipboardManager.setSensitiveClip(Amber.instance, nsec)
 
                 Toast.makeText(
                     Amber.instance,

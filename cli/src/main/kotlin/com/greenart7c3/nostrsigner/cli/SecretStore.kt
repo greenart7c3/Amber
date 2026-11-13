@@ -108,6 +108,8 @@ class PinnedSecretStore(
         if (recorded() == chosen) return
         Files.createDirectories(directory)
         Files.writeString(marker, chosen + "\n")
+        // No secret in it, but private like everything else in the directory.
+        runCatching { Files.setPosixFilePermissions(marker, PosixFilePermissions.fromString("rw-------")) }
     }
 
     private companion object {

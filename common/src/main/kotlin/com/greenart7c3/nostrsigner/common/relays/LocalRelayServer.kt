@@ -173,6 +173,12 @@ private class RelayCore(
     private val connectionSeq = AtomicLong()
     private val store = EventStore()
 
+    // Ids of the ephemeral events forwarded but not stored (storesEphemeral off),
+    // so a duplicate is not delivered twice; the oldest are dropped past MAX_EVENTS.
+    private val forwardedEphemeral = object : LinkedHashMap<String, Unit>() {
+        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, Unit>?) = size > MAX_EVENTS
+    }
+
     // Unapproved EVENT senders: per-pubkey token buckets (denied events skip
     // verification — the schnorr check is the CPU cost a flood exploits).
     private val eventLimiter = SenderRateLimiter()
@@ -493,7 +499,7 @@ private class RelayCore(
                 tags = event.tagValues(),
             )
             val isNew = if (!storesEphemeral && event.kind in EPHEMERAL_KINDS) {
-                true
+                synchronized(forwardedEphemeral) { forwardedEphemeral.put(event.id, Unit) == null }
             } else {
                 synchronized(store) { store.add(stored) }
             }

@@ -110,14 +110,18 @@ object IntentRateLimitInspector {
         return IntentRateLimiter.BucketKey(pkg, type.name, kind)
     }
 
-    private fun parseSignerType(value: String): SignerType? = when (value) {
+    // Must cover every type IntentUtils accepts: a type missing here is never rate limited.
+    internal fun parseSignerType(value: String): SignerType? = when (value) {
         "sign_event" -> SignerType.SIGN_EVENT
         "get_public_key" -> SignerType.GET_PUBLIC_KEY
         "nip04_encrypt" -> SignerType.NIP04_ENCRYPT
         "nip04_decrypt" -> SignerType.NIP04_DECRYPT
         "nip44_encrypt" -> SignerType.NIP44_ENCRYPT
         "nip44_decrypt" -> SignerType.NIP44_DECRYPT
+        "nip44v3_encrypt" -> SignerType.NIP44_V3_ENCRYPT
+        "nip44v3_decrypt" -> SignerType.NIP44_V3_DECRYPT
         "decrypt_zap_event" -> SignerType.DECRYPT_ZAP_EVENT
+        "sign_psbt" -> SignerType.SIGN_PSBT
         else -> null
     }
 

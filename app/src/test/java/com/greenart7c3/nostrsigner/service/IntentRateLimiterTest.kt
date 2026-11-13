@@ -1,8 +1,13 @@
 package com.greenart7c3.nostrsigner.service
 
+import android.content.Intent
+import android.os.Bundle
 import com.greenart7c3.nostrsigner.common.SignerType
+import io.mockk.every
+import io.mockk.mockk
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -104,5 +109,37 @@ class IntentRateLimiterTest {
         val b = IntentRateLimiter.BucketKey("pkg", SignerType.SIGN_EVENT.name, 1)
         assertEquals(a, b)
         assertEquals(a.hashCode(), b.hashCode())
+    }
+
+    @Test
+    fun `every NIP-55 request type is classified for rate limiting`() {
+        val types = mapOf(
+            "sign_event" to SignerType.SIGN_EVENT,
+            "get_public_key" to SignerType.GET_PUBLIC_KEY,
+            "nip04_encrypt" to SignerType.NIP04_ENCRYPT,
+            "nip04_decrypt" to SignerType.NIP04_DECRYPT,
+            "nip44_encrypt" to SignerType.NIP44_ENCRYPT,
+            "nip44_decrypt" to SignerType.NIP44_DECRYPT,
+            "nip44v3_encrypt" to SignerType.NIP44_V3_ENCRYPT,
+            "nip44v3_decrypt" to SignerType.NIP44_V3_DECRYPT,
+            "decrypt_zap_event" to SignerType.DECRYPT_ZAP_EVENT,
+            "sign_psbt" to SignerType.SIGN_PSBT,
+        )
+        types.forEach { (name, type) -> assertEquals(name, type, IntentRateLimitInspector.parseSignerType(name)) }
+        assertNull(IntentRateLimitInspector.parseSignerType("nope"))
+    }
+
+    @Test
+    fun `a sign_psbt intent gets a bucket`() {
+        val extras = mockk<Bundle>()
+        every { extras.getString(any()) } returns null
+        every { extras.getString("type") } returns "sign_psbt"
+        val intent = mockk<Intent>(relaxed = true)
+        every { intent.extras } returns extras
+
+        assertEquals(
+            IntentRateLimiter.BucketKey("com.app", SignerType.SIGN_PSBT.name, null),
+            IntentRateLimitInspector.inspect(intent, "com.app"),
+        )
     }
 }

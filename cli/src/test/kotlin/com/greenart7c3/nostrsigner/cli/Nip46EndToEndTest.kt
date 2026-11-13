@@ -52,6 +52,9 @@ class Nip46EndToEndTest {
                 ) = Unit
             },
             approvedSenders = { emptySet() },
+            // Like public relays: an answer sent before the client subscribed is lost,
+            // so a client that subscribes too late fails here instead of being rescued.
+            storesEphemeral = false,
         )
         assertEquals(LocalRelayServer.Status.RUNNING, relay.start(0))
         relayUrl = relay.relayUrl()!!.url

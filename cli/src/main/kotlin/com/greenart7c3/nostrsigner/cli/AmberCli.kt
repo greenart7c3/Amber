@@ -201,18 +201,22 @@ internal class Session(
                 pendingSecret = secret,
             ),
         )
-        emit(
-            args,
-            mapper.createObjectNode().put("uri", uri).put("state", "waiting-for-approval"),
-            uri,
-        )
-        if (args.has("qr")) printQrCode(err, uri)
-        err.println("Waiting up to ${seconds}s for Amber to approve the connection \"$name\".")
-        err.println("In Amber: paste the URI into \"New connection\" (or scan the QR), then approve it.")
-        if (args.has("open")) environment.openUri(uri)
-        environment.onPairingUri(uri)
         val paired = Nip46Client(keyPair, relays, seconds, err, environment.openUri).use { client ->
-            client.open(client.awaitNostrConnectApproval(secret), userPubKey = "")
+            // The URI leaves the process only once the relays hold the subscription
+            // for the answer: they do not replay an approval that came before it.
+            val signerPubKey = client.awaitNostrConnectApproval(secret) {
+                emit(
+                    args,
+                    mapper.createObjectNode().put("uri", uri).put("state", "waiting-for-approval"),
+                    uri,
+                )
+                if (args.has("qr")) printQrCode(err, uri)
+                err.println("Waiting up to ${seconds}s for Amber to approve the connection \"$name\".")
+                err.println("In Amber: paste the URI into \"New connection\" (or scan the QR), then approve it.")
+                if (args.has("open")) environment.openUri(uri)
+                environment.onPairingUri(uri)
+            }
+            client.open(signerPubKey, userPubKey = "")
             SavedConnection(
                 clientPrivKey = clientPrivKey,
                 signerPubKey = client.signerPubKey().orEmpty(),

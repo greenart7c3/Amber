@@ -33,8 +33,13 @@ import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.SignerProviderQuery
 import com.greenart7c3.nostrsigner.common.EncryptionType
 import com.greenart7c3.nostrsigner.common.SignerType
+import com.greenart7c3.nostrsigner.common.connectSecretRejection
 import com.greenart7c3.nostrsigner.common.connectsThroughOtherKey
 import com.greenart7c3.nostrsigner.common.hasAmbiguousRelayTags
+import com.greenart7c3.nostrsigner.common.isRepeatedConnect
+import com.greenart7c3.nostrsigner.common.nip44v3Kind
+import com.greenart7c3.nostrsigner.common.nip44v3Scope
+import com.greenart7c3.nostrsigner.common.nip46SignerType
 import com.greenart7c3.nostrsigner.common.relays.SenderRateLimiter
 import com.greenart7c3.nostrsigner.common.sanitizeAppName
 import com.greenart7c3.nostrsigner.commonsui.Permission
@@ -416,7 +421,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
             clientMetadata = clientMetadata,
         )
 
-        val type = BunkerRequestUtils.getTypeFromBunker(bunkerRequest)
+        val type = nip46SignerType(bunkerRequest.method)
         if (type == SignerType.INVALID) {
             saveLog("Invalid request method ${bunkerRequest.method}", relay.url, acc.npub)
             // Don't fail silently: reply to the client with an error so it
@@ -477,7 +482,9 @@ class EventNotificationConsumer(private val applicationContext: Context) {
             saveLog("Request ${bunkerRequest.id} from ${event.pubKey} reached another connection's key", relay.url, acc.npub)
             return
         }
-        if (permission != null && ((permission.application.secret != permission.application.key && permission.application.useSecret) || permission.application.isConnected) && type == SignerType.CONNECT) {
+        if (permission != null &&
+            isRepeatedConnect(type, permission.application.key, permission.application.secret, permission.application.useSecret, permission.application.isConnected)
+        ) {
             Amber.instance.applicationIOScope.launch {
                 historyDao
                     .addHistory(
@@ -511,16 +518,13 @@ class EventNotificationConsumer(private val applicationContext: Context) {
             val secret = bunkerRequest.secret ?: UUID.randomUUID().toString()
 
             applicationWithSecret = dao.getBySecret(secret)
-            if (applicationWithSecret == null || secret.isBlank() || applicationWithSecret.application.isConnected || !applicationWithSecret.application.useSecret) {
-                val message = if (applicationWithSecret == null) {
-                    "invalid secret"
-                } else if (secret.isBlank()) {
-                    "no secret"
-                } else if (applicationWithSecret.application.isConnected) {
-                    "already connected"
-                } else {
-                    "secret not in use"
-                }
+            val message = connectSecretRejection(
+                secret,
+                appFound = applicationWithSecret != null,
+                appConnected = applicationWithSecret?.application?.isConnected == true,
+                appUsesSecret = applicationWithSecret?.application?.useSecret == true,
+            )
+            if (message != null) {
                 saveLog("Connection rejected: $message", relay.url, acc.npub)
                 BunkerRequestUtils.sendBunkerResponse(
                     account = acc,
@@ -697,8 +701,8 @@ class EventNotificationConsumer(private val applicationContext: Context) {
         val projection = when (type) {
             SignerType.PING -> arrayOf(acc.npub)
             SignerType.NIP44_V3_ENCRYPT, SignerType.NIP44_V3_DECRYPT -> {
-                val kind = BunkerRequestUtils.getNip44v3Kind(bunkerRequest)
-                val scope = BunkerRequestUtils.getNip44v3Scope(bunkerRequest)
+                val kind = bunkerRequest.nip44v3Kind()
+                val scope = bunkerRequest.nip44v3Scope()
                 // A v3 request that can never succeed — missing/invalid kind, a
                 // decrypt whose context (kind/scope) does not match the
                 // ciphertext, a bad MAC/padding, or a non-base64 encrypt payload
@@ -1027,8 +1031,8 @@ class EventNotificationConsumer(private val applicationContext: Context) {
         bunkerRequest: BunkerRequest,
         acc: Account,
     ): EncryptedDataKind? {
-        val kind = BunkerRequestUtils.getNip44v3Kind(bunkerRequest) ?: return null
-        val scope = BunkerRequestUtils.getNip44v3Scope(bunkerRequest)
+        val kind = bunkerRequest.nip44v3Kind() ?: return null
+        val scope = bunkerRequest.nip44v3Scope()
         val data = BunkerRequestUtils.getDataFromBunker(bunkerRequest)
         val pubKey = bunkerRequest.params.firstOrNull() ?: return null
         return try {

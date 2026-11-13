@@ -27,6 +27,7 @@ import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.toLowerCase
 import androidx.compose.ui.unit.dp
 import com.greenart7c3.nostrsigner.common.SignerType
+import com.greenart7c3.nostrsigner.common.nip46SignerType
 import com.greenart7c3.nostrsigner.commonsui.Permission
 import com.greenart7c3.nostrsigner.commonsui.Res
 import com.greenart7c3.nostrsigner.commonsui.connect
@@ -63,7 +64,7 @@ fun SeeDetailsScreen(
             val type = if (MultiEventScreenIntents.intents.isNotEmpty()) {
                 MultiEventScreenIntents.intents.first().type
             } else {
-                BunkerRequestUtils.getTypeFromBunker(MultiEventScreenIntents.bunkerRequests.first().request)
+                nip46SignerType(MultiEventScreenIntents.bunkerRequests.first().request.method)
             }
             val permission = if (type == SignerType.SIGN_EVENT) {
                 val event = if (MultiEventScreenIntents.intents.isNotEmpty()) {

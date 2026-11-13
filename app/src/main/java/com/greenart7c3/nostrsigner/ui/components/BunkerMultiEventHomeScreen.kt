@@ -32,6 +32,8 @@ import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.common.EncryptionType
 import com.greenart7c3.nostrsigner.common.SignerType
+import com.greenart7c3.nostrsigner.common.nip44v3Kind
+import com.greenart7c3.nostrsigner.common.nip46SignerType
 import com.greenart7c3.nostrsigner.common.sanitizeAppName
 import com.greenart7c3.nostrsigner.commonsui.Permission
 import com.greenart7c3.nostrsigner.commonsui.Res
@@ -101,10 +103,10 @@ private data class RequestAppInfo(val name: String, val icon: String)
 private val AmberBunkerRequest.appKey get() = RequestAppKey(currentAccount, localKey)
 
 private fun AmberBunkerRequest.requestGroupKey() = requestGroupKey(
-    type = BunkerRequestUtils.getTypeFromBunker(request),
+    type = nip46SignerType(request.method),
     eventKind = (request as? BunkerRequestSign)?.event?.kind,
     encryptedData = encryptedData,
-    nip44v3Kind = BunkerRequestUtils.getNip44v3Kind(request),
+    nip44v3Kind = request.nip44v3Kind(),
 )
 
 private fun AmberBunkerRequest.defaultAppInfo() = RequestAppInfo(
@@ -322,7 +324,7 @@ fun BunkerMultiEventHomeScreen(
                             // remembering it, as on the single screen.
                             val blockedByWhitelist = isBlockedByAuthWhitelist(request.signedEvent)
                             val isApproved = !blockedByWhitelist && (MultiEventScreenIntents.checkedStates[request.queueKey] ?: true)
-                            val requestType = BunkerRequestUtils.getTypeFromBunker(request.request)
+                            val requestType = nip46SignerType(request.request.method)
                             val groupKey = AppRequestGroupKey(request.appKey, request.requestGroupKey())
                             val rememberType = if (blockedByWhitelist) RememberType.NEVER else groupRememberTypes[groupKey] ?: RememberType.NEVER
 
@@ -402,7 +404,7 @@ fun BunkerMultiEventHomeScreen(
                                 if (rememberType != RememberType.NEVER) {
                                     val decryptTypeScope = groupDecryptScopes[groupKey] ?: defaultDecryptTypeScope(requestType)
                                     val permissionKind = if (requestType == SignerType.NIP44_V3_ENCRYPT || requestType == SignerType.NIP44_V3_DECRYPT) {
-                                        if (decryptTypeScope == DecryptTypeScope.SPECIFIC) BunkerRequestUtils.getNip44v3Kind(request.request) else null
+                                        if (decryptTypeScope == DecryptTypeScope.SPECIFIC) request.request.nip44v3Kind() else null
                                     } else {
                                         null
                                     }
@@ -508,7 +510,7 @@ private fun BunkerRequestCard(
     approved: Boolean,
     onApproveChanged: (Boolean) -> Unit,
 ) {
-    val type = BunkerRequestUtils.getTypeFromBunker(bunkerRequest.request)
+    val type = nip46SignerType(bunkerRequest.request.method)
     var showDetails by remember { mutableStateOf(false) }
     val hasDetails = (type == SignerType.SIGN_EVENT && bunkerRequest.signedEvent != null) ||
         ((type.toString().contains("ENCRYPT") || type.toString().contains("DECRYPT")) && bunkerRequest.encryptedData != null)

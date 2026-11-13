@@ -4,13 +4,18 @@ import com.greenart7c3.nostrsigner.common.EncryptionType
 import com.greenart7c3.nostrsigner.common.RELAY_AUTH_KIND
 import com.greenart7c3.nostrsigner.common.SignerType
 import com.greenart7c3.nostrsigner.common.canRememberRelayAuth
+import com.greenart7c3.nostrsigner.common.connectSecretRejection
 import com.greenart7c3.nostrsigner.common.connectsThroughOtherKey
 import com.greenart7c3.nostrsigner.common.decodeQueryParamValue
 import com.greenart7c3.nostrsigner.common.generateBunkerPrivKey
 import com.greenart7c3.nostrsigner.common.hasAmbiguousRelayTags
 import com.greenart7c3.nostrsigner.common.isBlockedByAuthWhitelist
+import com.greenart7c3.nostrsigner.common.isRepeatedConnect
 import com.greenart7c3.nostrsigner.common.localPubKeyFromPrivKey
 import com.greenart7c3.nostrsigner.common.nip44v3.Nip44v3
+import com.greenart7c3.nostrsigner.common.nip44v3Kind
+import com.greenart7c3.nostrsigner.common.nip44v3Scope
+import com.greenart7c3.nostrsigner.common.nip46SignerType
 import com.greenart7c3.nostrsigner.common.psbt.PsbtSighashPolicy
 import com.greenart7c3.nostrsigner.common.relayAuthHost
 import com.greenart7c3.nostrsigner.common.relays.RelayHealthTracker
@@ -490,7 +495,7 @@ class BunkerEngine(
     ) {
         val store = AmberDesktop.store(acc.npub)
         val responseRelay = listOf(relay)
-        val type = typeFromMethod(bunkerRequest.method)
+        val type = nip46SignerType(bunkerRequest.method)
 
         if (type == SignerType.INVALID) {
             // Unauthenticated error reply: publish once, no retry/backoff —
@@ -525,8 +530,7 @@ class BunkerEngine(
 
         // Already-connected client re-sending `connect`: ack silently.
         if (permission != null &&
-            ((permission.app.secret != permission.app.key && permission.app.useSecret) || permission.app.isConnected) &&
-            type == SignerType.CONNECT
+            isRepeatedConnect(type, permission.app.key, permission.app.secret, permission.app.useSecret, permission.app.isConnected)
         ) {
             store.addHistory(HistoryRecord(permission.app.key, type.toString().lowercase(), null, TimeUtils.now(), true))
             sendResponse(
@@ -544,13 +548,13 @@ class BunkerEngine(
         if (bunkerRequest is BunkerRequestConnect) {
             val secret = bunkerRequest.secret ?: UUID.randomUUID().toString()
             applicationWithSecret = store.getBySecret(secret)
-            if (applicationWithSecret == null || secret.isBlank() || applicationWithSecret.app.isConnected || !applicationWithSecret.app.useSecret) {
-                val message = when {
-                    applicationWithSecret == null -> "invalid secret"
-                    secret.isBlank() -> "no secret"
-                    applicationWithSecret.app.isConnected -> "already connected"
-                    else -> "secret not in use"
-                }
+            val message = connectSecretRejection(
+                secret,
+                appFound = applicationWithSecret != null,
+                appConnected = applicationWithSecret?.app?.isConnected == true,
+                appUsesSecret = applicationWithSecret?.app?.useSecret == true,
+            )
+            if (message != null) {
                 store.addLog(relay.url, "bunker", "Connection rejected: $message")
                 // Unauthenticated error reply: publish once, no retries.
                 sendResponse(
@@ -626,7 +630,7 @@ class BunkerEngine(
         // NIP-44 v3 carries its context kind/scope at params[1..2].
         val kind = when {
             bunkerRequest is BunkerRequestSign -> bunkerRequest.event.kind
-            type in nip44v3SignerTypes -> bunkerRequest.params.getOrNull(1)?.toIntOrNull()
+            type in nip44v3SignerTypes -> bunkerRequest.nip44v3Kind()
             else -> null
         }
         val signPolicy = app?.app?.signPolicy
@@ -762,7 +766,7 @@ class BunkerEngine(
                         encryptionType = encryptionType,
                         signerPrivKey = effectivePrivKey,
                         encryptedContent = encryptedContent,
-                        nip44v3Scope = if (type in nip44v3SignerTypes) bunkerRequest.params.getOrElse(2) { "" } else "",
+                        nip44v3Scope = if (type in nip44v3SignerTypes) bunkerRequest.nip44v3Scope() else "",
                         relayHost = relayHost,
                         expiresAt = minOf(TimeUtils.now() + PENDING_TTL_SECONDS, event.expiration() ?: Long.MAX_VALUE),
                     ),
@@ -1448,24 +1452,6 @@ class BunkerEngine(
     companion object {
         /** How long a relay request waits for a decision before it is dropped. */
         const val PENDING_TTL_SECONDS = 10 * 60L
-
-        fun typeFromMethod(method: String): SignerType = when (method) {
-            "connect" -> SignerType.CONNECT
-            "sign_event" -> SignerType.SIGN_EVENT
-            "get_public_key" -> SignerType.GET_PUBLIC_KEY
-            "nip04_encrypt" -> SignerType.NIP04_ENCRYPT
-            "nip04_decrypt" -> SignerType.NIP04_DECRYPT
-            "nip44_encrypt" -> SignerType.NIP44_ENCRYPT
-            "nip44_decrypt" -> SignerType.NIP44_DECRYPT
-            "nip44v3_encrypt" -> SignerType.NIP44_V3_ENCRYPT
-            "nip44v3_decrypt" -> SignerType.NIP44_V3_DECRYPT
-            "decrypt_zap_event" -> SignerType.DECRYPT_ZAP_EVENT
-            "ping" -> SignerType.PING
-            "switch_relays" -> SignerType.SWITCH_RELAYS
-            "sign_psbt" -> SignerType.SIGN_PSBT
-            "logout" -> SignerType.LOGOUT
-            else -> SignerType.INVALID
-        }
 
         /**
          * Maps a requested permission string to the stored permission type(s)

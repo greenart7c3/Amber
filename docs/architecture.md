@@ -110,6 +110,12 @@ removes duplicated security logic. Shrinks `app/detekt-baseline.xml`
 (`LongMethod`, `CyclomaticComplexMethod` in `EventNotificationConsumer`),
 `desktop/detekt-baseline.xml` (`BunkerEngine`) and the `amberInstanceUsers` set.
 
+Done so far: `common/Nip46Requests.kt` holds the method → `SignerType` mapping,
+the NIP-44 v3 kind/scope params, the repeated-connect check and the
+connect-secret refusal, used by both apps. Next: the permission lookup
+(`BunkerEngine.lookupPermission` and its Android counterpart) and response
+construction.
+
 ### 2. Split `IntentUtils.kt`
 
 Separate parsing (`nostrsigner://` / `nostrconnect://` → a data object),

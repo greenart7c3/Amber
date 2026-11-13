@@ -6,6 +6,9 @@ import com.greenart7c3.nostrsigner.SignerActivity
 import com.greenart7c3.nostrsigner.common.EncryptionType
 import com.greenart7c3.nostrsigner.common.SignerType
 import com.greenart7c3.nostrsigner.common.generateBunkerPrivKey
+import com.greenart7c3.nostrsigner.common.nip44v3Kind
+import com.greenart7c3.nostrsigner.common.nip44v3Scope
+import com.greenart7c3.nostrsigner.common.nip46SignerType
 import com.greenart7c3.nostrsigner.commonsui.Permission
 import com.greenart7c3.nostrsigner.commonsui.Res
 import com.greenart7c3.nostrsigner.commonsui.failed_to_connect_to_tor_orbot
@@ -298,24 +301,6 @@ object BunkerRequestUtils {
         return false
     }
 
-    fun getTypeFromBunker(bunkerRequest: BunkerRequest): SignerType = when (bunkerRequest.method) {
-        "connect" -> SignerType.CONNECT
-        "sign_event" -> SignerType.SIGN_EVENT
-        "get_public_key" -> SignerType.GET_PUBLIC_KEY
-        "nip04_encrypt" -> SignerType.NIP04_ENCRYPT
-        "nip04_decrypt" -> SignerType.NIP04_DECRYPT
-        "nip44_encrypt" -> SignerType.NIP44_ENCRYPT
-        "nip44_decrypt" -> SignerType.NIP44_DECRYPT
-        "nip44v3_encrypt" -> SignerType.NIP44_V3_ENCRYPT
-        "nip44v3_decrypt" -> SignerType.NIP44_V3_DECRYPT
-        "decrypt_zap_event" -> SignerType.DECRYPT_ZAP_EVENT
-        "ping" -> SignerType.PING
-        "switch_relays" -> SignerType.SWITCH_RELAYS
-        "sign_psbt" -> SignerType.SIGN_PSBT
-        "logout" -> SignerType.LOGOUT
-        else -> SignerType.INVALID
-    }
-
     fun getDataFromBunker(bunkerRequest: BunkerRequest): String = when (bunkerRequest.method) {
         "connect" -> "ack"
         // Client-supplied: a missing or unparsable param yields "" rather than throwing.
@@ -330,12 +315,6 @@ object BunkerRequestUtils {
         "logout" -> "ack"
         else -> ""
     }
-
-    /** Extract `kind` from a NIP-44 v3 bunker request; null if missing/invalid. */
-    fun getNip44v3Kind(bunkerRequest: BunkerRequest): Int? = bunkerRequest.params.getOrNull(1)?.toIntOrNull()
-
-    /** Extract `scope` from a NIP-44 v3 bunker request; defaults to empty per spec. */
-    fun getNip44v3Scope(bunkerRequest: BunkerRequest): String = bunkerRequest.params.getOrElse(2) { "" }
 
     fun sendResult(
         account: Account,
@@ -476,7 +455,7 @@ object BunkerRequestUtils {
                 AmberUtils.configureSignPolicy(application, signPolicy, key, permissions)
             }
 
-            val type = getTypeFromBunker(bunkerRequest.request)
+            val type = nip46SignerType(bunkerRequest.request.method)
             if (rememberType != RememberType.NEVER) {
                 AmberUtils.acceptPermission(
                     application = application,
@@ -553,7 +532,7 @@ object BunkerRequestUtils {
                         0,
                         key,
                         type.toString(),
-                        if (isV3) getNip44v3Kind(bunkerRequest.request) else kind,
+                        if (isV3) bunkerRequest.request.nip44v3Kind() else kind,
                         TimeUtils.now(),
                         true,
                         content = historyContent,
@@ -562,7 +541,7 @@ object BunkerRequestUtils {
                         } else {
                             ""
                         },
-                        encryptionScope = if (isV3) getNip44v3Scope(bunkerRequest.request) else "",
+                        encryptionScope = if (isV3) bunkerRequest.request.nip44v3Scope() else "",
                     ),
                 ),
                 account.npub,
@@ -730,7 +709,7 @@ object BunkerRequestUtils {
                                 0,
                                 key,
                                 signerType.toString(),
-                                if (isV3) getNip44v3Kind(bunkerRequest.request) else null,
+                                if (isV3) bunkerRequest.request.nip44v3Kind() else null,
                                 TimeUtils.now(),
                                 false,
                                 content = historyContent,
@@ -739,7 +718,7 @@ object BunkerRequestUtils {
                                 } else {
                                     ""
                                 },
-                                encryptionScope = if (isV3) getNip44v3Scope(bunkerRequest.request) else "",
+                                encryptionScope = if (isV3) bunkerRequest.request.nip44v3Scope() else "",
                             ),
                         ),
                         account.npub,

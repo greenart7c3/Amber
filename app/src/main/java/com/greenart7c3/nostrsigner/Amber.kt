@@ -57,6 +57,7 @@ import com.greenart7c3.nostrsigner.service.ApplicationNameCache
 import com.greenart7c3.nostrsigner.service.BackupApplicationsWorker
 import com.greenart7c3.nostrsigner.service.ClearLogsWorker
 import com.greenart7c3.nostrsigner.service.ConnectivityService
+import com.greenart7c3.nostrsigner.service.IntentRateLimiter
 import com.greenart7c3.nostrsigner.service.LocalBunkerRelayServer
 import com.greenart7c3.nostrsigner.service.NotificationSubscription
 import com.greenart7c3.nostrsigner.service.PrivateAddress
@@ -132,6 +133,10 @@ class Amber :
     val applicationIOScope = CoroutineScope(Dispatchers.IO + SupervisorJob() + exceptionHandler)
 
     var settings: AmberSettings = AmberSettings()
+
+    val intentRateLimiter = IntentRateLimiter(
+        config = { IntentRateLimiter.Config(settings.rateLimitEnabled, settings.rateLimitMaxPerWindow, settings.rateLimitWindowSeconds) },
+    )
 
     /** The appearance chosen in Settings; the activities' themes follow it live. */
     val themeMode by lazy { MutableStateFlow(LocalPreferences.getThemeMode(this)) }

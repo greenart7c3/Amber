@@ -69,7 +69,7 @@ class SensitiveClipboardTest {
 
     @Test
     fun copiedSecretIsClearedWhileAppIsInBackground() = runBlocking {
-        clipboard.setSensitiveClip(SECRET, 3.seconds)
+        clipboard.setSensitiveClip(context, SECRET, 3.seconds)
         Thread.sleep(8_000)
         assertNull(readClipboardText())
     }

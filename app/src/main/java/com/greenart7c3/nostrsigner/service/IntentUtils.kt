@@ -1081,7 +1081,7 @@ object IntentUtils {
                         if (intentData.type in decryptSignerTypes) {
                             // A decrypt result is the plaintext itself: hide it from
                             // clipboard previews and clear it, like the nsec.
-                            clipboardManager.setSensitiveClip(result)
+                            clipboardManager.setSensitiveClip(context, result)
                         } else {
                             clipboardManager.setClipEntry(
                                 ClipEntry(

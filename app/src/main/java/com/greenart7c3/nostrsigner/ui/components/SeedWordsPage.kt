@@ -20,6 +20,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboard
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -46,6 +47,7 @@ fun SeedWordsPage(
     showNextButton: Boolean = true,
     onNextPage: () -> Unit = {},
 ) {
+    val context = LocalContext.current
     val clipboardManager = LocalClipboard.current
     val scope = rememberCoroutineScope()
     val scrollState = rememberScrollState()
@@ -79,7 +81,7 @@ fun SeedWordsPage(
             AmberButton(
                 onClick = {
                     scope.launch {
-                        clipboardManager.setSensitiveClip(seedWords.joinToString(" "))
+                        clipboardManager.setSensitiveClip(context, seedWords.joinToString(" "))
                     }
                 },
                 text = stringResource(Res.string.copy_to_clipboard),

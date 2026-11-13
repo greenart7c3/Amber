@@ -237,7 +237,6 @@ class ArchitectureTest {
             "ui/NewNsecBunkerScreen.kt",
             "ui/RelaysScreen.kt",
             "ui/SecurityScreen.kt",
-            "ui/SensitiveClipboard.kt",
             "ui/ServiceSettingsScreen.kt",
             "ui/SettingsScreen.kt",
             "ui/SetupPinScreen.kt",

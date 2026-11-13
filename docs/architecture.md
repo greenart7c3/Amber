@@ -115,7 +115,12 @@ the NIP-44 v3 kind/scope params, the repeated-connect check and the
 connect-secret refusal, used by both apps. `permissionLookupOrder` (in
 `common/PermissionDecision.kt`) is the order in which stored grants decide a
 request, resolved by `BunkerEngine.lookupPermission` and `SignerProviderQuery`
-against their own storage. Next: response construction.
+against their own storage. `common/Retry.kt` holds the reply retry
+(`retryWithBackoff`) and how often a reply is published: an error reply to a
+sender Amber has not verified goes out once (`UNVERIFIED_REPLY_ATTEMPTS`) on
+both apps. Encrypting and signing the reply stays in each app: on Android it
+goes through `Account`, whose `requireUnlockedDevice` gate a shared helper
+handed the raw key would bypass.
 
 ### 2. Split `IntentUtils.kt`
 

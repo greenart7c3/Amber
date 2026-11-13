@@ -3,12 +3,14 @@ package com.greenart7c3.nostrsigner.service
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.SignerActivity
+import com.greenart7c3.nostrsigner.common.BUNKER_REPLY_ATTEMPTS
 import com.greenart7c3.nostrsigner.common.EncryptionType
 import com.greenart7c3.nostrsigner.common.SignerType
 import com.greenart7c3.nostrsigner.common.generateBunkerPrivKey
 import com.greenart7c3.nostrsigner.common.nip44v3Kind
 import com.greenart7c3.nostrsigner.common.nip44v3Scope
 import com.greenart7c3.nostrsigner.common.nip46SignerType
+import com.greenart7c3.nostrsigner.common.retryWithBackoff
 import com.greenart7c3.nostrsigner.commonsui.Permission
 import com.greenart7c3.nostrsigner.commonsui.Res
 import com.greenart7c3.nostrsigner.commonsui.failed_to_connect_to_tor_orbot
@@ -42,7 +44,6 @@ import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerResponse
 import com.vitorpamplona.quartz.nip46RemoteSigner.NostrConnectEvent
 import com.vitorpamplona.quartz.utils.TimeUtils
 import kotlin.collections.toSet
-import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
@@ -141,6 +142,7 @@ object BunkerRequestUtils {
         relays: List<NormalizedRelayUrl>,
         onLoading: (Boolean) -> Unit,
         onDone: (Boolean) -> Unit,
+        attempts: Int = BUNKER_REPLY_ATTEMPTS,
     ) {
         if (relays.isEmpty()) {
             onDone(true)
@@ -192,6 +194,7 @@ object BunkerRequestUtils {
             relays = relays,
             onLoading = onLoading,
             onDone = onDone,
+            attempts = attempts,
         )
     }
 
@@ -203,6 +206,7 @@ object BunkerRequestUtils {
         relays: List<NormalizedRelayUrl>,
         onLoading: (Boolean) -> Unit,
         onDone: (Boolean) -> Unit,
+        attempts: Int,
     ) {
         val connSigner = if (bunkerRequest.signerPrivKey.isNotEmpty()) {
             try {
@@ -237,7 +241,7 @@ object BunkerRequestUtils {
 
         AmberLog.d(Amber.TAG, "Sending response to relays ${relays.map { relay -> relay.url }} type ${bunkerRequest.request.method}")
 
-        val success = retryWithBackoff {
+        val success = retryWithBackoff(maxRetries = attempts) {
             val result = Amber.instance.client.publishAndConfirm(
                 event = signedEvent,
                 relayList = relays.toSet(),
@@ -277,28 +281,6 @@ object BunkerRequestUtils {
             AmberLog.d(Amber.TAG, "Failed response to relays ${relays.map { relay -> relay.url }} type ${bunkerRequest.request.method}")
         }
         onLoading(false)
-    }
-
-    suspend fun retryWithBackoff(
-        maxRetries: Int = 5,
-        initialDelay: Duration = 200.milliseconds,
-        maxDelay: Duration = 3_200.milliseconds,
-        block: suspend () -> Boolean,
-    ): Boolean {
-        var currentDelay = initialDelay
-
-        repeat(maxRetries) { attempt ->
-            delay(currentDelay)
-            if (block()) {
-                return true
-            }
-
-            if (attempt < maxRetries - 1) {
-                currentDelay = (currentDelay * 2).coerceAtMost(maxDelay)
-            }
-        }
-
-        return false
     }
 
     fun getDataFromBunker(bunkerRequest: BunkerRequest): String = when (bunkerRequest.method) {

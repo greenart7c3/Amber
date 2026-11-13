@@ -381,7 +381,6 @@
     <ID>TooManyFunctions:Amber.kt:Amber : ApplicationLifecycleObserverFactory</ID>
     <ID>TooManyFunctions:ApplicationBackup.kt:ApplicationBackup</ID>
     <ID>TooManyFunctions:ApplicationDao.kt:ApplicationDao</ID>
-    <ID>TooManyFunctions:BunkerRequestUtils.kt:BunkerRequestUtils</ID>
     <ID>TooManyFunctions:CachingApplicationDao.kt:CachingApplicationDao : ApplicationDao</ID>
     <ID>TooManyFunctions:HistoryDao.kt:HistoryDao</ID>
     <ID>TooManyFunctions:IntentUtils.kt:IntentUtils</ID>

@@ -33,6 +33,7 @@ import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.SignerProviderQuery
 import com.greenart7c3.nostrsigner.common.EncryptionType
 import com.greenart7c3.nostrsigner.common.SignerType
+import com.greenart7c3.nostrsigner.common.UNVERIFIED_REPLY_ATTEMPTS
 import com.greenart7c3.nostrsigner.common.connectSecretRejection
 import com.greenart7c3.nostrsigner.common.connectsThroughOtherKey
 import com.greenart7c3.nostrsigner.common.hasAmbiguousRelayTags
@@ -434,6 +435,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                 errorRelays,
                 onLoading = {},
                 onDone = {},
+                attempts = UNVERIFIED_REPLY_ATTEMPTS,
             )
             return
         }
@@ -463,6 +465,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                 responseRelay.ifEmpty { Amber.instance.settings.defaultRelays },
                 onLoading = {},
                 onDone = {},
+                attempts = UNVERIFIED_REPLY_ATTEMPTS,
             )
             return
         }
@@ -533,6 +536,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                     relays = applicationWithSecret?.application?.relays ?: responseRelay,
                     onLoading = { },
                     onDone = { },
+                    attempts = UNVERIFIED_REPLY_ATTEMPTS,
                 )
                 return
             }
@@ -548,6 +552,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                 relays = relays,
                 onLoading = { },
                 onDone = { },
+                attempts = UNVERIFIED_REPLY_ATTEMPTS,
             )
             return
         }

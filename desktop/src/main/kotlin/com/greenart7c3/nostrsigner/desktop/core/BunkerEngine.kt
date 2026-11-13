@@ -1,8 +1,10 @@
 package com.greenart7c3.nostrsigner.desktop.core
 
+import com.greenart7c3.nostrsigner.common.BUNKER_REPLY_ATTEMPTS
 import com.greenart7c3.nostrsigner.common.EncryptionType
 import com.greenart7c3.nostrsigner.common.RELAY_AUTH_KIND
 import com.greenart7c3.nostrsigner.common.SignerType
+import com.greenart7c3.nostrsigner.common.UNVERIFIED_REPLY_ATTEMPTS
 import com.greenart7c3.nostrsigner.common.canRememberRelayAuth
 import com.greenart7c3.nostrsigner.common.connectSecretRejection
 import com.greenart7c3.nostrsigner.common.connectsThroughOtherKey
@@ -21,6 +23,7 @@ import com.greenart7c3.nostrsigner.common.psbt.PsbtSighashPolicy
 import com.greenart7c3.nostrsigner.common.relayAuthHost
 import com.greenart7c3.nostrsigner.common.relays.RelayHealthTracker
 import com.greenart7c3.nostrsigner.common.relays.SenderRateLimiter
+import com.greenart7c3.nostrsigner.common.retryWithBackoff
 import com.greenart7c3.nostrsigner.common.sanitizeAppName
 import com.greenart7c3.nostrsigner.commonsui.Permission
 import com.greenart7c3.nostrsigner.commonsui.kindToNip
@@ -53,7 +56,6 @@ import com.vitorpamplona.quartz.utils.TimeUtils
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.io.encoding.Base64
-import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -509,7 +511,7 @@ class BunkerEngine(
                 encryptionType,
                 BunkerResponse(bunkerRequest.id, "", "Unrecognized method: ${bunkerRequest.method}"),
                 responseRelay.ifEmpty { AmberDesktop.defaultRelays() },
-                attempts = 1,
+                attempts = UNVERIFIED_REPLY_ATTEMPTS,
             )
             return
         }
@@ -566,7 +568,7 @@ class BunkerEngine(
                     encryptionType,
                     BunkerResponse(bunkerRequest.id, "", message),
                     applicationWithSecret?.app?.normalizedRelays() ?: responseRelay,
-                    attempts = 1,
+                    attempts = UNVERIFIED_REPLY_ATTEMPTS,
                 )
                 return
             }
@@ -583,7 +585,7 @@ class BunkerEngine(
                 encryptionType,
                 BunkerResponse(bunkerRequest.id, "", "no permission"),
                 relays,
-                attempts = 1,
+                attempts = UNVERIFIED_REPLY_ATTEMPTS,
             )
             return
         }
@@ -1256,7 +1258,7 @@ class BunkerEngine(
         encryptionType: EncryptionType,
         bunkerResponse: BunkerResponse,
         relays: List<NormalizedRelayUrl>,
-        attempts: Int = 5,
+        attempts: Int = BUNKER_REPLY_ATTEMPTS,
     ): Boolean {
         val store = AmberDesktop.store(account.npub)
         if (relays.isEmpty()) {
@@ -1300,31 +1302,11 @@ class BunkerEngine(
             )
         }
 
-        // Authorized replies get the full retry/backoff; unauthenticated error
-        // replies (attempts = 1) publish once — a forged or unknown sender must
-        // not be able to buy several signed events plus seconds of CPU.
-        val success = if (attempts <= 1) publish() else retryWithBackoff(maxRetries = attempts) { publish() }
+        val success = retryWithBackoff(maxRetries = attempts, block = publish)
 
         val sanitized = "id=${bunkerResponse.id} ${bunkerResponse.error?.let { "error=$it" } ?: "ok"} sent=$success"
         relays.forEach { store.addLog(it.url, "bunker response", sanitized) }
         return success
-    }
-
-    private suspend fun retryWithBackoff(
-        maxRetries: Int = 5,
-        initialDelayMs: Long = 200L,
-        maxDelayMs: Long = 3_200L,
-        block: suspend () -> Boolean,
-    ): Boolean {
-        var currentDelay = initialDelayMs
-        repeat(maxRetries) { attempt ->
-            delay(currentDelay.milliseconds)
-            if (block()) return true
-            if (attempt < maxRetries - 1) {
-                currentDelay = (currentDelay * 2).coerceAtMost(maxDelayMs)
-            }
-        }
-        return false
     }
 
     /** Parses a `nostrconnect://` URI and queues it for approval. */

@@ -26,6 +26,7 @@ dependencies {
 
     testImplementation(libs.quartz.jvm)
     testImplementation(libs.junit)
+    testImplementation(libs.kotlinx.coroutines.core)
     // Native secp256k1 for the JVM, which Quartz's crypto runs on in tests.
     testImplementation(libs.secp256k1.jni.jvm)
 }

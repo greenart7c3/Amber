@@ -58,4 +58,13 @@ class ReportAssemblerTest {
 
         assertFalse("cause hex must be redacted", report.contains(npubHex))
     }
+
+    @Test
+    fun `out of memory report carries the thread and heap numbers`() {
+        val report = ReportAssembler().buildReport(OutOfMemoryError("Failed to allocate"))
+
+        assertTrue(report.startsWith("OutOfMemoryError: "))
+        assertTrue(report.contains("| Thread | ${Thread.currentThread().name} |"))
+        assertTrue(report.contains("| Java heap | max="))
+    }
 }

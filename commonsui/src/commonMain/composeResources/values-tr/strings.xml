@@ -765,9 +765,10 @@ Android için tüm Nostr uygulamalarını şurada keşfedin:</string>
     <string name="one_week">Bir hafta</string>
     <string name="delete_after">Şundan sonra sil:</string>
     <string name="crashreport_found">Çökme Raporu bulundu</string>
-    <string name="crash_report_send_prompt">Son çökme raporunu Amber'a DM ile göndermek ister misiniz? Hesabınızdan gönderildiği için geliştirici açık anahtarınızı görecektir.</string>
+    <string name="crash_report_send_prompt">Son çökme raporunu Amber'a şifreli DM ile göndermek ister misiniz? Geliştiricinin açık anahtarınızı görüp yanıt verebilmesi için hesabınızdan gönderin ya da tek kullanımlık bir anahtarla anonim olarak gönderin.</string>
     <string name="copy_crash_report_to_clipboard">Çökme raporunu panonuza kopyalamak ve onu Amber'a göndermek için bir İstemci açmak ister misiniz?</string>
     <string name="crashreport_found_send">Gönder</string>
+    <string name="crash_report_send_anonymously">Anonim olarak gönder</string>
     <string name="invalid_intent_title">Geçersiz istek</string>
     <string name="invalid_intent_body">Amber, hatalı biçimlendirilmiş bir nostrsigner isteği aldı ve işleyemiyor. Lütfen bu sorunu bildirmek için istemci geliştiricisiyle iletişime geçin.</string>
     <string name="invalid_intent_close_app">Uygulamayı kapat</string>

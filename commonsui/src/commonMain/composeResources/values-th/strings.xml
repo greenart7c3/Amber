@@ -788,9 +788,10 @@
     <string name="one_week">หนึ่งสัปดาห์</string>
     <string name="delete_after">ลบหลังจาก</string>
     <string name="crashreport_found">พบรายงานการขัดข้อง</string>
-    <string name="crash_report_send_prompt">คุณต้องการส่งรายงานข้อขัดข้องล่าสุดไปยัง Amber ทาง DM หรือไม่ รายงานจะถูกส่งจากบัญชีของคุณ ดังนั้นนักพัฒนาจะเห็นกุญแจสาธารณะของคุณ</string>
+    <string name="crash_report_send_prompt">คุณต้องการส่งรายงานข้อขัดข้องล่าสุดไปยัง Amber ทาง DM ที่เข้ารหัสหรือไม่ ส่งจากบัญชีของคุณเพื่อให้นักพัฒนาเห็นกุญแจสาธารณะของคุณและตอบกลับได้ หรือส่งแบบไม่ระบุตัวตนด้วยกุญแจใช้ครั้งเดียว</string>
     <string name="copy_crash_report_to_clipboard">คุณต้องการคัดลอกรายงานการขัดข้องไปยังคลิปบอร์ดและเปิด Client เพื่อส่งไปยัง Amber หรือไม่?</string>
     <string name="crashreport_found_send">ส่งเลย</string>
+    <string name="crash_report_send_anonymously">ส่งแบบไม่ระบุตัวตน</string>
     <string name="invalid_intent_title">คำขอไม่ถูกต้อง</string>
     <string name="invalid_intent_body">Amber ได้รับคำขอ nostrsigner ที่มีรูปแบบไม่ถูกต้องและไม่สามารถประมวลผลได้ โปรดติดต่อนักพัฒนา client เพื่อรายงานปัญหานี้</string>
     <string name="invalid_intent_close_app">ปิดแอป</string>

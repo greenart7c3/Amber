@@ -21,6 +21,8 @@
 package com.greenart7c3.nostrsigner.service.crashreports
 
 import android.content.Context
+import com.greenart7c3.nostrsigner.AmberLog
+import com.greenart7c3.nostrsigner.common.CrashReports
 import java.io.FileInputStream
 import java.io.InputStreamReader
 import kotlinx.coroutines.Dispatchers
@@ -42,10 +44,25 @@ class CrashReportCache(
         null
     }
 
-    fun writeReport(report: String) {
-        val trace = outputStream()
-        trace.write(report.toByteArray())
-        trace.close()
+    private fun writeReport(report: String) {
+        outputStream().use { it.write(report.toByteArray()) }
+    }
+
+    /**
+     * Saves the report for [e] synchronously, after any report not yet shown:
+     * an error the process survived (an OOM in a background job) must not
+     * replace the report of an earlier crash. Never throws — it runs while the
+     * process may be out of memory or about to die.
+     */
+    fun saveReport(e: Throwable) {
+        if (CrashReports.isJunkReport(e)) return
+        try {
+            val report = ReportAssembler().buildReport(e)
+            val existing = inputStreamOrNull()?.use { inStream -> InputStreamReader(inStream).use { it.readText() } }
+            writeReport(if (existing.isNullOrBlank()) report else "$existing\n\n$report")
+        } catch (reportError: Throwable) {
+            AmberLog.e("CrashReportCache", "Could not save the crash report", reportError)
+        }
     }
 
     suspend fun loadAndDelete(): String? = withContext(Dispatchers.IO) {

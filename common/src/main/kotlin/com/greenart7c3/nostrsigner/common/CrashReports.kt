@@ -6,13 +6,15 @@ import java.util.concurrent.TimeoutException
 object CrashReports {
     /**
      * Crashes we never prompt the user to report because nobody can act on them:
-     * - OutOfMemoryError: junk reports.
-     * - Android finalizer-watchdog timeouts (e.g.
-     *   `BinderInternal$GcWatcher.finalize() timed out after 10 seconds`): a known
-     *   AOSP issue raised on the FinalizerDaemon thread with no app frames. The OS
-     *   kills the process regardless; app code cannot catch, prevent, or fix it.
+     * Android finalizer-watchdog timeouts (e.g.
+     * `BinderInternal$GcWatcher.finalize() timed out after 10 seconds`), a known
+     * AOSP issue raised on the FinalizerDaemon thread with no app frames. The OS
+     * kills the process regardless; app code cannot catch, prevent, or fix it.
+     *
+     * `OutOfMemoryError` is reported: with the heap numbers in the report it is
+     * the only way to see what exhausted memory in the field.
      */
-    fun isJunkReport(e: Throwable): Boolean = e is OutOfMemoryError || isPlatformFinalizerTimeout(e)
+    fun isJunkReport(e: Throwable): Boolean = isPlatformFinalizerTimeout(e)
 
     private fun isPlatformFinalizerTimeout(e: Throwable): Boolean = e is TimeoutException &&
         (

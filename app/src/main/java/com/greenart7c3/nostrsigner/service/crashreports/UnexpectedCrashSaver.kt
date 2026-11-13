@@ -20,13 +20,13 @@
  */
 package com.greenart7c3.nostrsigner.service.crashreports
 
-import com.greenart7c3.nostrsigner.common.CrashReports
+import android.content.Context
+import com.greenart7c3.nostrsigner.AmberLog
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
 class UnexpectedCrashSaver(
     val cache: CrashReportCache,
-    val scope: CoroutineScope,
 ) : Thread.UncaughtExceptionHandler {
     private val defaultUEH: Thread.UncaughtExceptionHandler? = Thread.getDefaultUncaughtExceptionHandler()
 
@@ -34,11 +34,24 @@ class UnexpectedCrashSaver(
         t: Thread,
         e: Throwable,
     ) {
-        if (!CrashReports.isJunkReport(e)) {
+        // Synchronous: the default handler kills the process as soon as this
+        // returns, so a report written from a coroutine was usually lost.
+        cache.saveReport(e)
+        defaultUEH?.uncaughtException(t, e)
+    }
+
+    companion object {
+        fun install(
+            context: Context,
+            cache: CrashReportCache,
+            scope: CoroutineScope,
+        ) {
+            Thread.setDefaultUncaughtExceptionHandler(UnexpectedCrashSaver(cache))
+            // ANRs, low-memory kills and native crashes never reach the handler;
+            // Android's exit records are the only trace of them.
             scope.launch {
-                cache.writeReport(ReportAssembler().buildReport(e))
+                ExitReasons.detect(context).forEach { AmberLog.w("ExitReasons", it) }
             }
         }
-        defaultUEH!!.uncaughtException(t, e)
     }
 }

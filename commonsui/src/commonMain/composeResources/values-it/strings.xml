@@ -766,9 +766,10 @@ Scopri tutte le app Nostr per Android su</string>
     <string name="one_week">Una settimana</string>
     <string name="delete_after">Elimina dopo</string>
     <string name="crashreport_found">Trovato report di crash</string>
-    <string name="crash_report_send_prompt">Vuoi inviare l'ultimo rapporto di arresto anomalo ad Amber tramite DM? Viene inviato dal tuo account, quindi lo sviluppatore vedrà la tua chiave pubblica.</string>
+    <string name="crash_report_send_prompt">Vuoi inviare l'ultimo rapporto di arresto anomalo ad Amber tramite DM cifrato? Invialo dal tuo account, così lo sviluppatore vedrà la tua chiave pubblica e potrà risponderti, oppure invialo in modo anonimo con una chiave usa e getta.</string>
     <string name="copy_crash_report_to_clipboard">Vuoi copiare il report di crash negli appunti e aprire un client per inviarlo ad Amber?</string>
     <string name="crashreport_found_send">Invialo</string>
+    <string name="crash_report_send_anonymously">Invia in modo anonimo</string>
     <string name="invalid_intent_title">Richiesta non valida</string>
     <string name="invalid_intent_body">Amber ha ricevuto una richiesta nostrsigner non valida e non può elaborarla. Contatta lo sviluppatore del client per segnalare il problema.</string>
     <string name="invalid_intent_close_app">Chiudi app</string>

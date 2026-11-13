@@ -37,8 +37,8 @@ class CrashReportsTest {
     }
 
     @Test
-    fun `out of memory is junk`() {
-        assertTrue(CrashReports.isJunkReport(OutOfMemoryError()))
+    fun `out of memory is reported`() {
+        assertFalse(CrashReports.isJunkReport(OutOfMemoryError()))
     }
 
     @Test

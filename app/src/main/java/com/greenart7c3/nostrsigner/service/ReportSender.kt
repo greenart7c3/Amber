@@ -28,9 +28,13 @@ import androidx.core.net.toUri
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.models.Account
+import com.vitorpamplona.quartz.nip01Core.crypto.KeyPair
 import com.vitorpamplona.quartz.nip01Core.relay.client.NostrClient
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
+import com.vitorpamplona.quartz.nip01Core.signers.EventTemplate
+import com.vitorpamplona.quartz.nip01Core.signers.NostrSignerInternal
 import com.vitorpamplona.quartz.nip01Core.tags.people.PTag
+import com.vitorpamplona.quartz.nip17Dm.NIP17Factory
 import com.vitorpamplona.quartz.nip17Dm.messages.ChatMessageEvent
 import com.vitorpamplona.quartz.nip19Bech32.toNpub
 import com.vitorpamplona.quartz.nip40Expiration.expiration
@@ -42,21 +46,30 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 object ReportSender {
+    /**
+     * Sends [report] to the developer. With [anonymous] it is signed with a
+     * throwaway key instead of [account], so the developer does not see the
+     * user's public key (and cannot reply).
+     */
     fun send(
         account: Account?,
         report: String,
         clipboard: Clipboard,
+        anonymous: Boolean = false,
         onDone: () -> Unit,
     ) {
         if (report.isBlank()) {
             onDone()
             return
         }
-        val useOffline = BuildFlavorChecker.isOfflineFlavor() || account == null
-        if (useOffline) {
-            sendOffline(report, clipboard, onDone)
-        } else {
-            sendOnline(account, report, onDone)
+        when {
+            BuildFlavorChecker.isOfflineFlavor() -> sendOffline(report, clipboard, onDone)
+            // The sender's own copy would be wrapped to the throwaway key, which nobody keeps.
+            anonymous -> sendOnline(report, onlyToDeveloper = true, onDone) {
+                NIP17Factory().createMessageNIP17(it, NostrSignerInternal(KeyPair()))
+            }
+            account != null -> sendOnline(report, onlyToDeveloper = false, onDone, account::createMessageNIP17)
+            else -> sendOffline(report, clipboard, onDone)
         }
     }
 
@@ -83,9 +96,10 @@ object ReportSender {
     }
 
     private fun sendOnline(
-        account: Account,
         report: String,
+        onlyToDeveloper: Boolean,
         onDone: () -> Unit,
+        createMessage: suspend (EventTemplate<ChatMessageEvent>) -> NIP17Factory.Result,
     ) {
         Amber.instance.applicationIOScope.launch {
             val client = NostrClient(Amber.instance.factory, Amber.instance.applicationIOScope)
@@ -99,8 +113,8 @@ object ReportSender {
                 val thirtyDaysInSeconds = 30L * 86_400
                 expiration(TimeUtils.now() + thirtyDaysInSeconds)
             }
-            val signedEvents = account.createMessageNIP17(template)
-            signedEvents.wraps.forEach { wrap ->
+            val signedEvents = createMessage(template)
+            signedEvents.wraps.filter { !onlyToDeveloper || it.recipientPubKey() == Amber.DEVELOPER_HEX_KEY }.forEach { wrap ->
                 client.publish(
                     event = wrap,
                     relayList = setOf(

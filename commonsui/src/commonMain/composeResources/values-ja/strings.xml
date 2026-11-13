@@ -788,9 +788,10 @@ Android 向け Nostr アプリをすべて見つけるには</string>
     <string name="one_week">1 週間</string>
     <string name="delete_after">削除するまでの期間</string>
     <string name="crashreport_found">クラッシュレポートが見つかりました</string>
-    <string name="crash_report_send_prompt">最近のクラッシュレポートを DM で Amber に送信しますか？あなたのアカウントから送信されるため、開発者にはあなたの公開鍵が表示されます。</string>
+    <string name="crash_report_send_prompt">最近のクラッシュレポートを暗号化された DM で Amber に送信しますか？あなたのアカウントから送信すると開発者にあなたの公開鍵が表示され、返信を受け取れます。使い捨ての鍵で匿名で送信することもできます。</string>
     <string name="copy_crash_report_to_clipboard">クラッシュレポートをクリップボードにコピーして、クライアントを開いて Amber に送信しますか？</string>
     <string name="crashreport_found_send">送信する</string>
+    <string name="crash_report_send_anonymously">匿名で送信</string>
     <string name="invalid_intent_title">無効なリクエスト</string>
     <string name="invalid_intent_body">Amber が不正な nostrsigner リクエストを受け取り、処理できません。この問題をクライアント開発者に報告してください。</string>
     <string name="invalid_intent_close_app">アプリを閉じる</string>

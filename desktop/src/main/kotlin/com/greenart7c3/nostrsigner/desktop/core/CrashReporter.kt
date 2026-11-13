@@ -1,8 +1,10 @@
 package com.greenart7c3.nostrsigner.desktop.core
 
 import com.greenart7c3.nostrsigner.common.CrashReports
+import com.vitorpamplona.quartz.nip01Core.crypto.KeyPair
 import com.vitorpamplona.quartz.nip01Core.relay.client.accessories.publishAndConfirm
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
+import com.vitorpamplona.quartz.nip01Core.signers.NostrSignerInternal
 import com.vitorpamplona.quartz.nip01Core.tags.people.PTag
 import com.vitorpamplona.quartz.nip17Dm.NIP17Factory
 import com.vitorpamplona.quartz.nip17Dm.messages.ChatMessageEvent
@@ -101,15 +103,20 @@ object CrashReporter {
     /**
      * Sends [report] (as edited by the user) gift-wrapped to the developer,
      * expiring after 30 days, through the regular relay route (Tor when
-     * enabled). Returns whether any relay accepted it; the pending report is
-     * cleared only then.
+     * enabled). With [anonymous] it is signed with a throwaway key instead of
+     * [account], so the developer does not see the user's public key (and
+     * cannot reply). Returns whether any relay accepted it; the pending report
+     * is cleared only then.
      */
-    suspend fun send(account: DesktopAccount, report: String): Boolean {
+    suspend fun send(account: DesktopAccount, report: String, anonymous: Boolean = false): Boolean {
         if (report.isBlank()) return false
         val template = ChatMessageEvent.build(msg = report, to = listOf(PTag(DEVELOPER_HEX_KEY))) {
             expiration(TimeUtils.now() + THIRTY_DAYS_SECONDS)
         }
-        val wraps = NIP17Factory().createMessageNIP17(template, account.signer).wraps
+        val signer = if (anonymous) NostrSignerInternal(KeyPair()) else account.signer
+        val wraps = NIP17Factory().createMessageNIP17(template, signer).wraps
+            // The sender's own copy would be wrapped to the throwaway key, which nobody keeps.
+            .filter { !anonymous || it.recipientPubKey() == DEVELOPER_HEX_KEY }
         val client = AmberDesktop.newClient()
         return try {
             client.connect()
@@ -145,6 +152,9 @@ object ReportAssembler {
         System.getenv("XDG_CURRENT_DESKTOP")?.takeIf { it.isNotBlank() }?.let { row("Desktop", it) }
         System.getenv("XDG_SESSION_TYPE")?.takeIf { it.isNotBlank() }?.let { row("Session", it) }
         row("Thread", Thread.currentThread().name)
+        // For an OutOfMemoryError these say how close the heap was to its limit.
+        val runtime = Runtime.getRuntime()
+        row("Java heap", "max=${mb(runtime.maxMemory())}MB total=${mb(runtime.totalMemory())}MB free=${mb(runtime.freeMemory())}MB")
         appendLine()
 
         // Exception messages and stack traces can embed request data (parser
@@ -154,6 +164,8 @@ object ReportAssembler {
         appendThrowable(e, includeMessages)
         appendLine("```")
     }
+
+    private fun mb(bytes: Long): Long = bytes / (1024 * 1024)
 
     private fun StringBuilder.row(name: String, value: String?) {
         append("| ").append(name).append(" | ").append(redact(value ?: "")).appendLine(" |")

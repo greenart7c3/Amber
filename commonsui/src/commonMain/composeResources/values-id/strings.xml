@@ -764,9 +764,10 @@ Temukan semua aplikasi Nostr untuk android di</string>
     <string name="one_week">Satu minggu</string>
     <string name="delete_after">Hapus setelah</string>
     <string name="crashreport_found">Laporan Kerusakan ditemukan</string>
-    <string name="crash_report_send_prompt">Apakah Anda ingin mengirim laporan kerusakan terbaru ke Amber melalui DM? Laporan dikirim dari akun Anda, sehingga pengembang akan melihat kunci publik Anda.</string>
+    <string name="crash_report_send_prompt">Apakah Anda ingin mengirim laporan kerusakan terbaru ke Amber melalui DM terenkripsi? Kirim dari akun Anda agar pengembang melihat kunci publik Anda dan dapat membalas, atau kirim secara anonim dengan kunci sekali pakai.</string>
     <string name="copy_crash_report_to_clipboard">Apakah Anda ingin menyalin laporan kerusakan ke clipboard dan membuka Klien untuk mengirimkannya ke Amber?</string>
     <string name="crashreport_found_send">Kirim</string>
+    <string name="crash_report_send_anonymously">Kirim secara anonim</string>
     <string name="invalid_intent_title">Permintaan tidak valid</string>
     <string name="invalid_intent_body">Amber menerima permintaan nostrsigner yang tidak valid dan tidak dapat memprosesnya. Harap hubungi pengembang klien untuk melaporkan masalah ini.</string>
     <string name="invalid_intent_close_app">Tutup aplikasi</string>

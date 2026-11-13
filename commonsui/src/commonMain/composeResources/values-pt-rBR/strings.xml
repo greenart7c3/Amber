@@ -766,9 +766,10 @@ Descubra todos os aplicativos Nostr para Android em</string>
     <string name="one_week">Uma semana</string>
     <string name="delete_after">Excluir após</string>
     <string name="crashreport_found">Relatório de erro encontrado</string>
-    <string name="crash_report_send_prompt">Deseja enviar o relatório de falha recente para o Amber por DM? Ele é enviado da sua conta, então o desenvolvedor verá sua chave pública.</string>
+    <string name="crash_report_send_prompt">Deseja enviar o relatório de falha recente para o Amber por DM criptografada? Envie da sua conta para que o desenvolvedor veja sua chave pública e possa responder, ou envie anonimamente com uma chave descartável.</string>
     <string name="copy_crash_report_to_clipboard">Você gostaria de copiar o relatório de falha para a área de transferência e abrir um Cliente para enviá-lo ao Amber?</string>
     <string name="crashreport_found_send">Enviar</string>
+    <string name="crash_report_send_anonymously">Enviar anonimamente</string>
     <string name="invalid_intent_title">Solicitação inválida</string>
     <string name="invalid_intent_body">O Amber recebeu uma solicitação nostrsigner malformada e não pode processá-la. Entre em contato com o desenvolvedor do cliente para relatar este problema.</string>
     <string name="invalid_intent_close_app">Fechar app</string>

@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.dp
 import com.greenart7c3.nostrsigner.commonsui.Res
 import com.greenart7c3.nostrsigner.commonsui.cancel
 import com.greenart7c3.nostrsigner.commonsui.copy
+import com.greenart7c3.nostrsigner.commonsui.crash_report_send_anonymously
 import com.greenart7c3.nostrsigner.commonsui.crash_report_send_prompt
 import com.greenart7c3.nostrsigner.commonsui.crashreport_found
 import com.greenart7c3.nostrsigner.commonsui.crashreport_found_send
@@ -38,7 +39,8 @@ import org.jetbrains.compose.resources.stringResource
 /**
  * Desktop counterpart of the Android `CrashReportScreen`: shows the saved
  * report for review and editing, then sends it to the developer as a NIP-17
- * DM from [account], copies it, or discards it.
+ * DM from [account] or anonymously from a throwaway key, copies it, or
+ * discards it.
  */
 @Composable
 fun CrashReportDialog(
@@ -80,20 +82,26 @@ fun CrashReportDialog(
                         Toaster.toast(getStringBlocking(Res.string.d_copied_clipboard))
                     },
                 )
+                val send = { anonymous: Boolean ->
+                    sending = true
+                    scope.launch {
+                        if (CrashReporter.send(account, edited, anonymous)) {
+                            Toaster.toast(getStringBlocking(Res.string.d_crash_report_sent))
+                        } else {
+                            Toaster.toast(getStringBlocking(Res.string.d_crash_report_send_failed))
+                        }
+                        sending = false
+                    }
+                }
+                AmberTextButton(
+                    text = stringResource(Res.string.crash_report_send_anonymously),
+                    enabled = !sending && edited.isNotBlank(),
+                    onClick = { send(true) },
+                )
                 AmberTextButton(
                     text = if (sending) stringResource(Res.string.d_working) else stringResource(Res.string.crashreport_found_send),
                     enabled = !sending && edited.isNotBlank(),
-                    onClick = {
-                        sending = true
-                        scope.launch {
-                            if (CrashReporter.send(account, edited)) {
-                                Toaster.toast(getStringBlocking(Res.string.d_crash_report_sent))
-                            } else {
-                                Toaster.toast(getStringBlocking(Res.string.d_crash_report_send_failed))
-                            }
-                            sending = false
-                        }
-                    },
+                    onClick = { send(false) },
                 )
             }
         },

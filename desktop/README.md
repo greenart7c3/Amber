@@ -69,7 +69,16 @@ for the JVM) and mirrors the mobile UI and permission model.
   or `gdbus` on Linux — so they work on Hyprland/Wayland — and the AWT tray
   notification on Windows and macOS (on macOS it is posted as Amber itself;
   allow it when macOS asks on first launch, or later under System Settings →
-  Notifications → Amber)
+  Notifications → Amber). A request notification carries Approve / Reject
+  (only Reject for a connect) and is taken down again once the request is
+  answered — from the notification itself, its card or the tray window — so
+  no Approve/Reject buttons linger on a request that no longer exists. It is
+  the system's own notification: a freedesktop notification on Linux, a toast
+  on Windows, a Notification Center banner on macOS (hover it and open
+  "Options" for the buttons, or set Amber's alert style to "Alerts" in System
+  Settings to keep it on screen). Where the system cannot show buttons — mako
+  and dunst never draw them, and macOS may not have been allowed to notify —
+  Amber draws its own popup instead
 - Mandatory passphrase lock (see Key storage below)
 - Optional start-on-boot (Settings → Desktop), always starting locked —
   passphrase required before anything signs. Only offered for installed

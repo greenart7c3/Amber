@@ -25,15 +25,16 @@ class NotifierActionTest {
 
         DbusNotifications.busAddress = "unix:path=/nonexistent/amber-test-bus"
         val opened = CountDownLatch(1)
-        val ok = try {
+        val posted = try {
             Notifier.notify("Amber", "TestApp wants you to sign a Short text note") { opened.countDown() }
         } finally {
             DbusNotifications.busAddress = null
         }
-        assertTrue("notify() should report delivered", ok)
+        assertTrue("notify() should report delivered", posted != null)
 
         val args = File(out!!).readLines()
         assertTrue("uses --wait", args.contains("--wait"))
+        assertTrue("asks for the id to be able to take it down", args.contains("--print-id"))
         assertTrue("registers a default action", args.any { it.startsWith("--action=default") })
         assertTrue("callback runs on click", opened.await(3, TimeUnit.SECONDS))
     }

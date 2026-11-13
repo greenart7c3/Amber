@@ -11,6 +11,7 @@ import org.freedesktop.dbus.types.UInt32
 import org.freedesktop.dbus.types.Variant
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Assume.assumeTrue
 import org.junit.Before
@@ -28,7 +29,12 @@ class NotifierButtonsTest {
 
     private class FakeDaemon : FreedesktopNotifications {
         @Volatile var actions: List<String> = emptyList()
+
+        // Read after [closeReceived] fires, which publishes the write.
+        var closed = -1L
+
         val posted = CountDownLatch(1)
+        val closeReceived = CountDownLatch(1)
 
         override fun postNotification(
             appName: String,
@@ -43,6 +49,11 @@ class NotifierButtonsTest {
             this.actions = actions
             posted.countDown()
             return UInt32(7)
+        }
+
+        override fun closeNotification(id: UInt32) {
+            closed = id.toLong()
+            closeReceived.countDown()
         }
 
         override fun getObjectPath() = "/org/freedesktop/Notifications"
@@ -78,7 +89,7 @@ class NotifierButtonsTest {
 
         val invoked = mutableListOf<String>()
         val done = CountDownLatch(1)
-        val ok = Notifier.notify(
+        val posted = Notifier.notify(
             "Amber",
             "TestApp wants you to sign a Short text note",
             listOf(
@@ -89,12 +100,38 @@ class NotifierButtonsTest {
                 },
             ),
         ) { invoked += "default" }
-        assertTrue("notify() should report delivered", ok)
+        assertNotNull("notify() should report delivered", posted)
         assertTrue("posted to the daemon", daemon.posted.await(3, TimeUnit.SECONDS))
         assertEquals(listOf("default", "Open", "approve", "Approve", "reject", "Reject"), daemon.actions)
 
         conn.sendMessage(FreedesktopNotifications.ActionInvoked(daemon.objectPath, UInt32(7), "reject"))
         assertTrue("action runs on click", done.await(3, TimeUnit.SECONDS))
         assertEquals(listOf("reject"), invoked)
+    }
+
+    /**
+     * Answering a request elsewhere (its card, the tray window) must take its
+     * notification down, not leave Approve/Reject buttons behind on a request
+     * that is already gone.
+     */
+    @Test
+    fun closingTheNotificationWithdrawsIt() {
+        val daemon = FakeDaemon()
+        val conn = DBusConnectionBuilder.forAddress(DbusNotifications.busAddress!!).build()
+        daemonConnection = conn
+        conn.requestBusName("org.freedesktop.Notifications")
+        conn.exportObject(daemon.objectPath, daemon)
+
+        val posted = Notifier.notify(
+            "Amber",
+            "TestApp wants you to sign a Short text note",
+            listOf(Notifier.Action("reject", "Reject") {}),
+        )
+        assertNotNull("notify() should report delivered", posted)
+        assertTrue("posted to the daemon", daemon.posted.await(3, TimeUnit.SECONDS))
+
+        posted!!.close()
+        assertTrue("close() asks the daemon to remove it", daemon.closeReceived.await(3, TimeUnit.SECONDS))
+        assertEquals(7L, daemon.closed)
     }
 }

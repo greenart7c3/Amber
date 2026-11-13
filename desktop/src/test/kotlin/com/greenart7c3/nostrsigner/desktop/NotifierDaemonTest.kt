@@ -39,7 +39,7 @@ class NotifierDaemonTest {
         assertEquals(
             listOf(
                 listOf("omarchy-shell", "-q", "notifications", "dismiss", "Nostr; rm -rf \$HOME"),
-                listOf("qs", "ipc", "-p", "/usr/share/omarchy/shell", "call", "notifications", "dismiss", "Nostr; rm -rf \$HOME"),
+                listOf("qs", "ipc", "-p", dir.path, "call", "notifications", "dismiss", "Nostr; rm -rf \$HOME"),
             ),
             Notifier.omarchyDismissCommands(dir, "Nostr; rm -rf \$HOME"),
         )

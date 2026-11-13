@@ -4,8 +4,10 @@ import android.content.Context
 import android.database.Cursor
 import android.database.MatrixCursor
 import android.net.Uri
+import com.greenart7c3.nostrsigner.common.PermissionKey
 import com.greenart7c3.nostrsigner.common.SignerType
 import com.greenart7c3.nostrsigner.common.hasAmbiguousRelayTags
+import com.greenart7c3.nostrsigner.common.permissionLookupOrder
 import com.greenart7c3.nostrsigner.commonsui.kindToNip
 import com.greenart7c3.nostrsigner.database.ApplicationDao
 import com.greenart7c3.nostrsigner.database.ApplicationPermissionsEntity
@@ -172,32 +174,12 @@ object SignerProviderQuery {
                         }
                     }
 
-                    var permission = if (event.kind == 22242) {
+                    val permission = if (event.kind == 22242) {
                         // Kind 22242 = relay client auth (NIP-42): check relay-specific permission first
                         permDao.getPermissionForRelay(requesterId, "SIGN_EVENT", 22242, relayHost)
                             ?: permDao.getWildcardRelayPermission(requesterId, "SIGN_EVENT", 22242)
                     } else {
-                        permDao
-                            .getPermission(
-                                requesterId,
-                                "SIGN_EVENT",
-                                event.kind,
-                            )
-                    }
-                    if (permission == null && event.kind != 22242) {
-                        event.kind.kindToNip()?.let {
-                            val nipNumber = it.toIntOrNull()
-                            permission = if (nipNumber == null) {
-                                null
-                            } else {
-                                permDao
-                                    .getPermission(
-                                        requesterId,
-                                        "NIP",
-                                        nipNumber,
-                                    )
-                            }
-                        }
+                        permDao.firstGrant(requesterId, permissionLookupOrder(SignerType.SIGN_EVENT, event.kind, signNip = event.kind.kindToNip()?.toIntOrNull()))
                     }
                     val signPolicy = permDao.getSignPolicy(requesterId)
                     val isRemembered = IntentUtils.isRemembered(signPolicy, permission) ?: return null
@@ -382,44 +364,14 @@ object SignerProviderQuery {
                             }
                         }
 
-                    // Permission lookup. V3 grants are scoped by (packageName,
-                    // SignerType, kind); fall back to a kind=null "all kinds"
-                    // grant. V3 grants do NOT satisfy V2 requests and vice versa.
-                    // The context scope string is shown in the prompt but is not
-                    // part of a grant: a remembered kind-K grant covers every scope.
-                    var permission = if (isV3) {
-                        // V3 grants are kind-scoped; fall back to the explicit
-                        // "all kinds" (kind IS NULL) grant only, never to any
-                        // other kind — otherwise e.g. a kind-A reject would
-                        // leak to a kind-B request.
-                        permDao.getPermission(requesterId, type.toString(), v3Kind!!)
-                            ?: permDao.getPermissionAllKinds(requesterId, type.toString())
-                    } else {
-                        // Classify the content to determine EncryptedDataKind-based permission type
-                        val classifyContent = if (isEncrypt) content else (result ?: content)
-                        val permType = permissionTypeFromContent(classifyContent, isEncrypt, type)
-                        permDao.getPermission(requesterId, permType)
-                            ?: permDao.getPermission(requesterId, type.toString())
-                    }
-                    if (permission == null && !isV3) {
-                        val nip = when (stringType) {
-                            "NIP04_DECRYPT" -> 4
-                            "NIP44_DECRYPT" -> 44
-                            "NIP04_ENCRYPT" -> 4
-                            "NIP44_ENCRYPT" -> 44
-                            "DECRYPT_ZAP_EVENT" -> null
-                            else -> null
-                        }
-                        nip?.let {
-                            permission =
-                                permDao
-                                    .getPermission(
-                                        requesterId,
-                                        "NIP",
-                                        it,
-                                    )
-                        }
-                    }
+                    // V3 grants do NOT satisfy V2 requests and vice versa. The v3
+                    // context scope is shown in the prompt but is not part of a
+                    // grant: a remembered kind-K grant covers every scope.
+                    // V2 grants are per content type (classified from the
+                    // plaintext: the encrypt input or the decrypt result).
+                    val classifyContent = if (isEncrypt) content else (result ?: content)
+                    val contentType = if (isV3) null else permissionTypeFromContent(classifyContent, isEncrypt, type)
+                    val permission = permDao.firstGrant(requesterId, permissionLookupOrder(type, v3Kind, contentType))
                     val signPolicy = permDao.getSignPolicy(requesterId)
                     val isRemembered = IntentUtils.isRemembered(signPolicy, permission) ?: return null
                     if (!isRemembered) {
@@ -751,5 +703,17 @@ object SignerProviderQuery {
             }
         }
         return false
+    }
+}
+
+/**
+ * The first stored grant of [order] (`permissionLookupOrder`). A kind-less key
+ * is the kind IS NULL row: for NIP-44 v3 that is the "all kinds" grant.
+ */
+private fun ApplicationDao.firstGrant(requesterId: String, order: List<PermissionKey>): ApplicationPermissionsEntity? = order.firstNotNullOfOrNull { (type, kind) ->
+    when {
+        kind != null -> getPermission(requesterId, type, kind)
+        type == SignerType.NIP44_V3_ENCRYPT.name || type == SignerType.NIP44_V3_DECRYPT.name -> getPermissionAllKinds(requesterId, type)
+        else -> getPermission(requesterId, type)
     }
 }

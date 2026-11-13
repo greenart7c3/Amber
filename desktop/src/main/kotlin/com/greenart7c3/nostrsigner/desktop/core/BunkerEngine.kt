@@ -16,12 +16,14 @@ import com.greenart7c3.nostrsigner.common.nip44v3.Nip44v3
 import com.greenart7c3.nostrsigner.common.nip44v3Kind
 import com.greenart7c3.nostrsigner.common.nip44v3Scope
 import com.greenart7c3.nostrsigner.common.nip46SignerType
+import com.greenart7c3.nostrsigner.common.permissionLookupOrder
 import com.greenart7c3.nostrsigner.common.psbt.PsbtSighashPolicy
 import com.greenart7c3.nostrsigner.common.relayAuthHost
 import com.greenart7c3.nostrsigner.common.relays.RelayHealthTracker
 import com.greenart7c3.nostrsigner.common.relays.SenderRateLimiter
 import com.greenart7c3.nostrsigner.common.sanitizeAppName
 import com.greenart7c3.nostrsigner.commonsui.Permission
+import com.greenart7c3.nostrsigner.commonsui.kindToNip
 import com.vitorpamplona.quartz.nip01Core.core.Event
 import com.vitorpamplona.quartz.nip01Core.core.hexToByteArray
 import com.vitorpamplona.quartz.nip01Core.crypto.KeyPair
@@ -787,20 +789,12 @@ class BunkerEngine(
         // Relay auth is granted per relay or for all relays, like Android.
         SignerType.SIGN_EVENT if kind == RELAY_AUTH_KIND -> store.getRelayAuthPermission(appKey, relayHost)
 
-        SignerType.SIGN_EVENT -> store.getPermission(appKey, type.toString(), kind)
-
-        // v3 grants are kind-scoped, falling back to the explicit "all
-        // kinds" grant only (never another kind's), like Android.
-        in nip44v3SignerTypes ->
-            store.getPermission(appKey, type.toString(), kind)
-                ?: store.getPermission(appKey, type.toString(), null)
-
-        in contentScopedSignerTypes ->
-            store.getPermission(appKey, type.contentPermissionType(encryptedContent))
-                ?: store.getPermission(appKey, type.toString())
-                ?: store.getPermission(appKey, "NIP", if (type.name.startsWith("NIP04")) 4 else 44)
-
-        else -> store.getPermission(appKey, type.toString())
+        else -> permissionLookupOrder(
+            type,
+            kind,
+            contentType = if (type in contentScopedSignerTypes) type.contentPermissionType(encryptedContent) else null,
+            signNip = if (type == SignerType.SIGN_EVENT) kind?.kindToNip()?.toIntOrNull() else null,
+        ).firstNotNullOfOrNull { store.getPermission(appKey, it.type, it.kind) }
     }
 
     internal data class ComputedResult(val result: String, val preview: String)

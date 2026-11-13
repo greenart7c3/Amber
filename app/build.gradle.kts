@@ -5,6 +5,7 @@ plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.gradle.ktlint)
     alias(libs.plugins.detekt)
+    alias(libs.plugins.kover)
     alias(libs.plugins.kotlin.ksp)
     alias(libs.plugins.jetbrainsComposeCompiler)
 }
@@ -261,6 +262,9 @@ ksp {
 }
 
 dependencies {
+    // Compose-specific rules (ModifierMissing, ViewModelForwarding, …) on top of
+    // config/detekt/detekt.yml.
+    detektPlugins(libs.detekt.compose.rules)
     implementation(project(":common"))
     implementation(project(":commonsui"))
     implementation(libs.quartz) {
@@ -347,4 +351,14 @@ dependencies {
 
     implementation(libs.lifecycle.process)
     implementation(libs.kotlinx.collections.immutable)
+}
+
+kover {
+    currentProject {
+        instrumentation {
+            // The benchmark flavor compiles the free flavor's sources and runs the
+            // same tests, so measuring it would only duplicate the coverage.
+            disabledForTestTasks.add("testBenchmarkDebugUnitTest")
+        }
+    }
 }

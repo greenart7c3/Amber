@@ -1,0 +1,21 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>CyclomaticComplexMethod:Permission.kt:Permission$fun description: PermissionText</ID>
+    <ID>CyclomaticComplexMethod:Permission.kt:fun nipDescription: PermissionText.Resource?</ID>
+    <ID>LongMethod:Permission.kt:Permission$fun description: PermissionText</ID>
+    <ID>LongMethod:Permission.kt:fun nipDescription: PermissionText.Resource?</ID>
+    <ID>LongMethod:String0.commonMain.kt:@InternalResourceApi internal fun _collectCommonMainString0Resources</ID>
+    <ID>LongMethod:String1.commonMain.kt:@InternalResourceApi internal fun _collectCommonMainString1Resources</ID>
+    <ID>LongMethod:String10.commonMain.kt:@InternalResourceApi internal fun _collectCommonMainString10Resources</ID>
+    <ID>LongMethod:String2.commonMain.kt:@InternalResourceApi internal fun _collectCommonMainString2Resources</ID>
+    <ID>LongMethod:String3.commonMain.kt:@InternalResourceApi internal fun _collectCommonMainString3Resources</ID>
+    <ID>LongMethod:String4.commonMain.kt:@InternalResourceApi internal fun _collectCommonMainString4Resources</ID>
+    <ID>LongMethod:String5.commonMain.kt:@InternalResourceApi internal fun _collectCommonMainString5Resources</ID>
+    <ID>LongMethod:String6.commonMain.kt:@InternalResourceApi internal fun _collectCommonMainString6Resources</ID>
+    <ID>LongMethod:String7.commonMain.kt:@InternalResourceApi internal fun _collectCommonMainString7Resources</ID>
+    <ID>LongMethod:String8.commonMain.kt:@InternalResourceApi internal fun _collectCommonMainString8Resources</ID>
+    <ID>LongMethod:String9.commonMain.kt:@InternalResourceApi internal fun _collectCommonMainString9Resources</ID>
+  </CurrentIssues>
+</SmellBaseline>

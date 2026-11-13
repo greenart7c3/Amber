@@ -1,0 +1,18 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>CyclomaticComplexMethod:AmberCli.kt:Session$fun run: Int</ID>
+    <ID>CyclomaticComplexMethod:AmberCli.kt:Session$private fun connect: Int</ID>
+    <ID>CyclomaticComplexMethod:Args.kt:Args.Companion$fun parse: Args</ID>
+    <ID>CyclomaticComplexMethod:FakeSigner.kt:FakeSigner$private fun handle</ID>
+    <ID>LongMethod:AmberCli.kt:Session$private fun connect: Int</ID>
+    <ID>LongMethod:Help.kt:Help$fun overview: String</ID>
+    <ID>ReturnCount:AmberCli.kt:Session$fun run: Int</ID>
+    <ID>ReturnCount:ConnectionStore.kt:ConnectionStore.Companion$fun defaultDirectory: Path</ID>
+    <ID>ThrowsCount:AmberCli.kt:Session$private fun readTags: Array&lt;Array&lt;String&gt;&gt;</ID>
+    <ID>ThrowsCount:Args.kt:Args.Companion$fun parse: Args</ID>
+    <ID>ThrowsCount:ConnectionStore.kt:ConnectionStore$fun read: ConnectionFile</ID>
+    <ID>TooManyFunctions:Nip46Client.kt:Nip46Client : AutoCloseable</ID>
+  </CurrentIssues>
+</SmellBaseline>

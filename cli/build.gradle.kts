@@ -11,6 +11,7 @@ plugins {
     alias(libs.plugins.kotlinJvm)
     alias(libs.plugins.gradle.ktlint)
     alias(libs.plugins.detekt)
+    alias(libs.plugins.kover)
     application
 }
 

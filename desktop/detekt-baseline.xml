@@ -1,0 +1,104 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>ComplexCondition:AutoStart.kt:AutoStart$value.none { it == ' ' || it == '\t' || it == '"' || it == '\\' || it == '$' }</ID>
+    <ID>ComplexCondition:BunkerEngine.kt:BunkerEngine$application.app.localKey.isBlank() &amp;&amp; req.request is BunkerRequestConnect &amp;&amp; savedApplication == null &amp;&amp; !req.isLocalSocket</ID>
+    <ID>ComplexCondition:BunkerEngine.kt:BunkerEngine$applicationWithSecret == null || secret.isBlank() || applicationWithSecret.app.isConnected || !applicationWithSecret.app.useSecret</ID>
+    <ID>ComplexCondition:BunkerEngine.kt:BunkerEngine$permission != null &amp;&amp; ((permission.app.secret != permission.app.key &amp;&amp; permission.app.useSecret) || permission.app.isConnected) &amp;&amp; type == SignerType.CONNECT</ID>
+    <ID>ComplexCondition:MdnsResolver.kt:MdnsResolver$(type == TYPE_A &amp;&amp; length == 4) || (type == TYPE_AAAA &amp;&amp; length == 16)</ID>
+    <ID>ComplexCondition:Models.kt:EncryptedContent.Companion$node != null &amp;&amp; node.isArray &amp;&amp; node.all { tag -&gt; tag.isArray &amp;&amp; tag.all { it.isTextual } }</ID>
+    <ID>ComplexCondition:Models.kt:EncryptedContent.Companion$node != null &amp;&amp; node.isObject &amp;&amp; kind != null &amp;&amp; kind.canConvertToInt()</ID>
+    <ID>ComplexCondition:RelayNetwork.kt:LocalRelays$address.isLoopbackAddress || address.isSiteLocalAddress || address.isLinkLocalAddress || address.isAnyLocalAddress</ID>
+    <ID>ComplexCondition:UnlockScreen.kt:onEnter != null &amp;&amp; event.type == KeyEventType.KeyUp &amp;&amp; (event.key == Key.Enter || event.key == Key.NumPadEnter)</ID>
+    <ID>ComposableParamOrder:Components.kt:@Composable fun AmberButton</ID>
+    <ID>ComposableParamOrder:Components.kt:@Composable fun AmberOutlinedButton</ID>
+    <ID>CompositionLocalAllowlist:WindowGeometry.kt:/** The current window's content size, provided by [App]. */ val LocalWindowContentSize = staticCompositionLocalOf { DEFAULT_WINDOW_SIZE }</ID>
+    <ID>CompositionLocalAllowlist:WindowGeometry.kt:/** The width bucket of the current window, provided by [App]. */ val LocalLayoutWidth = staticCompositionLocalOf { LayoutWidth.EXPANDED }</ID>
+    <ID>CyclomaticComplexMethod:ApplicationDetailScreen.kt:@Composable fun ApplicationDetailScreen</ID>
+    <ID>CyclomaticComplexMethod:ApplicationDetailScreen.kt:@Composable private fun PermissionCard</ID>
+    <ID>CyclomaticComplexMethod:BunkerEngine.kt:BunkerEngine$fun addNostrConnect: String?</ID>
+    <ID>CyclomaticComplexMethod:BunkerEngine.kt:BunkerEngine$internal suspend fun computeResult: ComputedResult</ID>
+    <ID>CyclomaticComplexMethod:BunkerEngine.kt:BunkerEngine$private fun acceptOrRejectPermission</ID>
+    <ID>CyclomaticComplexMethod:BunkerEngine.kt:BunkerEngine$private suspend fun doApprove</ID>
+    <ID>CyclomaticComplexMethod:BunkerEngine.kt:BunkerEngine$private suspend fun handleRequest</ID>
+    <ID>CyclomaticComplexMethod:BunkerEngine.kt:BunkerEngine$suspend fun consume</ID>
+    <ID>CyclomaticComplexMethod:BunkerEngine.kt:BunkerEngine.Companion$fun expandPermissionTypes: List&lt;String&gt;</ID>
+    <ID>CyclomaticComplexMethod:BunkerEngine.kt:BunkerEngine.Companion$fun typeFromMethod: SignerType</ID>
+    <ID>CyclomaticComplexMethod:IncomingRequestsScreen.kt:@Composable private fun RequestCard</ID>
+    <ID>CyclomaticComplexMethod:LocalSigner.kt:LocalSigner$private suspend fun evaluate: com.fasterxml.jackson.databind.JsonNode</ID>
+    <ID>CyclomaticComplexMethod:Main.kt:fun main</ID>
+    <ID>CyclomaticComplexMethod:RelayListEditor.kt:@Composable fun RelayListEditor</ID>
+    <ID>CyclomaticComplexMethod:SettingsScreen.kt:@Composable fun SettingsScreen</ID>
+    <ID>CyclomaticComplexMethod:SettingsScreen.kt:@Composable private fun TorSection</ID>
+    <ID>CyclomaticComplexMethod:Storage.kt:private inline fun &lt;reified T&gt; readSecure: T?</ID>
+    <ID>CyclomaticComplexMethod:UiState.kt:fun handleShortcut: Boolean</ID>
+    <ID>LambdaParameterEventTrailing:Components.kt:onClick: () -&gt; Unit</ID>
+    <ID>LambdaParameterInRestartableEffect:RequestNotificationPopup.kt:onDismiss: () -&gt; Unit</ID>
+    <ID>LargeClass:BunkerEngine.kt:BunkerEngine : RelayConnectionListener</ID>
+    <ID>LongMethod:App.kt:@Composable fun App</ID>
+    <ID>LongMethod:App.kt:@Composable private fun AccountSwitcher</ID>
+    <ID>LongMethod:ApplicationDetailScreen.kt:@Composable fun ApplicationDetailScreen</ID>
+    <ID>LongMethod:ApplicationDetailScreen.kt:@Composable private fun PermissionCard</ID>
+    <ID>LongMethod:ApplicationsScreen.kt:@Composable fun ApplicationsScreen</ID>
+    <ID>LongMethod:ApplicationsScreen.kt:@Composable private fun NewBunkerDialog</ID>
+    <ID>LongMethod:BunkerEngine.kt:BunkerEngine$fun addNostrConnect: String?</ID>
+    <ID>LongMethod:BunkerEngine.kt:BunkerEngine$private suspend fun doApprove</ID>
+    <ID>LongMethod:BunkerEngine.kt:BunkerEngine$private suspend fun handleRequest</ID>
+    <ID>LongMethod:CrashReportDialog.kt:@Composable fun CrashReportDialog</ID>
+    <ID>LongMethod:IncomingRequestsScreen.kt:@Composable private fun RequestCard</ID>
+    <ID>LongMethod:LocalSigner.kt:LocalSigner$private suspend fun evaluate: com.fasterxml.jackson.databind.JsonNode</ID>
+    <ID>LongMethod:LoginScreen.kt:@Composable private fun NewKeyPane</ID>
+    <ID>LongMethod:Main.kt:fun main</ID>
+    <ID>LongMethod:PassphraseLockTest.kt:PassphraseLockTest$@Test fun fullLifecycle</ID>
+    <ID>LongMethod:RelayListEditor.kt:@Composable fun RelayListEditor</ID>
+    <ID>LongMethod:RelaysScreen.kt:@Composable fun RelaysScreen</ID>
+    <ID>LongMethod:RequestNotificationPopup.kt:@Composable fun RequestNotificationPopup</ID>
+    <ID>LongMethod:SettingsScreen.kt:@Composable fun SettingsScreen</ID>
+    <ID>LongMethod:SettingsScreen.kt:@Composable private fun BackupDialog</ID>
+    <ID>LongMethod:SettingsScreen.kt:@Composable private fun ChangePassphraseDialog</ID>
+    <ID>LongMethod:SettingsScreen.kt:@Composable private fun TorSection</ID>
+    <ID>LongMethod:UiState.kt:fun handleShortcut: Boolean</ID>
+    <ID>ModifierMissing:App.kt:@Composable fun App</ID>
+    <ID>ModifierMissing:ApplicationDetailScreen.kt:@Composable fun ApplicationDetailScreen</ID>
+    <ID>ModifierMissing:ApplicationsScreen.kt:@Composable fun ApplicationsScreen</ID>
+    <ID>ModifierMissing:Components.kt:@Composable fun AmberTabRow</ID>
+    <ID>ModifierMissing:Components.kt:@Composable fun DeleteAfterSelector</ID>
+    <ID>ModifierMissing:Components.kt:@Composable fun RememberTypeSelector</ID>
+    <ID>ModifierMissing:Components.kt:@Composable fun SignPolicySelector</ID>
+    <ID>ModifierMissing:IncomingRequestsScreen.kt:@Composable fun IncomingRequestsScreen</ID>
+    <ID>ModifierMissing:LoginScreen.kt:@Composable fun LoginScreen</ID>
+    <ID>ModifierMissing:RelaysScreen.kt:@Composable fun RelaysScreen</ID>
+    <ID>ModifierMissing:RequestNotificationPopup.kt:@Composable fun RequestNotificationPopup</ID>
+    <ID>ModifierMissing:SettingsScreen.kt:@Composable fun SettingsScreen</ID>
+    <ID>ModifierMissing:UnlockScreen.kt:@Composable fun PassphraseSetupScreen</ID>
+    <ID>ModifierMissing:UnlockScreen.kt:@Composable fun UnlockScreen</ID>
+    <ID>ModifierWithoutDefault:RequestNotificationPopup.kt:modifier: Modifier</ID>
+    <ID>MultipleEmitters:App.kt:@Composable fun App</ID>
+    <ID>MultipleEmitters:LoginScreen.kt:@Composable private fun ImportKeyPane</ID>
+    <ID>MultipleEmitters:LoginScreen.kt:@Composable private fun NewKeyPane</ID>
+    <ID>MultipleEmitters:RequestDetails.kt:@Composable private fun DetailSection</ID>
+    <ID>MultipleEmitters:RequestDetails.kt:@Composable private fun PsbtSections</ID>
+    <ID>MultipleEmitters:SettingsScreen.kt:@Composable private fun SecuritySection</ID>
+    <ID>MultipleEmitters:SettingsScreen.kt:@Composable private fun SettingsSection</ID>
+    <ID>MultipleEmitters:SettingsScreen.kt:@Composable private fun TorSection</ID>
+    <ID>MutableStateAutoboxing:ApplicationDetailScreen.kt:mutableStateOf(0)</ID>
+    <ID>MutableStateAutoboxing:LoginScreen.kt:mutableStateOf(0)</ID>
+    <ID>NestedBlockDepth:AccountAvatar.kt:ProfileImages$private fun download: ByteArray?</ID>
+    <ID>ReturnCount:App.kt:@Composable fun App</ID>
+    <ID>ReturnCount:BunkerEngine.kt:BunkerEngine$private suspend fun handleRequest</ID>
+    <ID>ReturnCount:DesktopKeyStore.kt:DesktopKeyStore$private fun loadOrCreateFromKeystore: SecretKey</ID>
+    <ID>ReturnCount:KeystorePassword.kt:KeystorePassword$fun resolve: Resolved</ID>
+    <ID>ReturnCount:Notifier.kt:Notifier$private fun linux: Notification?</ID>
+    <ID>ReturnCount:UiState.kt:fun handleShortcut: Boolean</ID>
+    <ID>ReturnCount:UriLaunch.kt:UriLaunch$private fun readUri</ID>
+    <ID>ThrowsCount:LocalSigner.kt:LocalSigner$private suspend fun resolveOrConnect: Triple&lt;DesktopAccount, AppWithPermissions, String?&gt;</ID>
+    <ID>ThrowsCount:Storage.kt:private inline fun &lt;reified T&gt; readSecure: T?</ID>
+    <ID>TooManyFunctions:AmberDesktop.kt:AmberDesktop</ID>
+    <ID>TooManyFunctions:BunkerEngine.kt:BunkerEngine : RelayConnectionListener</ID>
+    <ID>TooManyFunctions:DesktopKeyStore.kt:DesktopKeyStore</ID>
+    <ID>TooManyFunctions:Storage.kt:AccountStore</ID>
+    <ID>TooManyFunctions:UiState.kt:UiState</ID>
+    <ID>TooManyFunctions:UriLaunch.kt:UriLaunch</ID>
+  </CurrentIssues>
+</SmellBaseline>

@@ -42,6 +42,16 @@ jobs:
       - name: Test (gradle)
         run: ./gradlew test --no-daemon
 
+      - name: Coverage (gradle)
+        run: ./gradlew koverXmlReport koverHtmlReport :common:koverVerify --no-daemon
+
+      - name: Upload coverage
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: Coverage report
+          path: build/reports/kover
+
       - name: Build APK (gradle)
         run: ./gradlew assembleDebug --no-daemon
 

@@ -10,6 +10,7 @@ plugins {
     alias(libs.plugins.jetbrainsComposeCompiler)
     alias(libs.plugins.gradle.ktlint)
     alias(libs.plugins.detekt)
+    alias(libs.plugins.kover)
 }
 
 kotlin {
@@ -40,6 +41,9 @@ tasks.test {
 }
 
 dependencies {
+    // Compose-specific rules (ModifierMissing, ViewModelForwarding, …) on top of
+    // config/detekt/detekt.yml.
+    detektPlugins(libs.detekt.compose.rules)
     implementation(compose.desktop.currentOs)
     implementation(libs.compose.multiplatform.material3)
     implementation(libs.compose.multiplatform.material.icons.extended)

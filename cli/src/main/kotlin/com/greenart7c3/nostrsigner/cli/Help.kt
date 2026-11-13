@@ -99,7 +99,9 @@ object Help {
           %APPDATA%\amber-cli on Windows) in connections.json, encrypted with
           AES-256-GCM. The key is kept in the OS credential store (macOS Keychain,
           Windows Credential Manager, freedesktop Secret Service); where none is
-          running, a 0600 key file sits next to it. Other users and apps cannot
+          running, a 0600 key file sits next to it. The choice is made once and
+          recorded in a key-store file beside it, so a credential store that later
+          starts (or stops) does not lock the saved connections out. Other users and apps cannot
           read the saved client key, and that key alone cannot sign anything:
           Amber approves every request.
 
@@ -107,6 +109,8 @@ object Help {
           AMBER_PROFILE    default profile when --profile is not given
           AMBER_CLI_HOME   directory holding the saved connections
                            (default: ~/.config/amber-cli, %APPDATA%\amber-cli on Windows)
+          AMBER_CLI_KEY_STORE  file or keyring: where the connections key is kept,
+                           over the recorded choice (a new store, or after moving a store)
 
         EXAMPLES
           # first time, in a terminal a human can see

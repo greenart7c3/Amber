@@ -23,16 +23,96 @@ interface SecretStore {
     fun delete()
 
     companion object {
+        /** `file` or `keyring`: which backend a store uses, over what it recorded. */
+        const val KEY_STORE_ENV = "AMBER_CLI_KEY_STORE"
+
         /**
          * The OS credential store when this machine has one, a private key file
          * next to the connections file otherwise (containers, CI, headless hosts
-         * with no Secret Service running).
+         * with no Secret Service running), chosen once per store: see [PinnedSecretStore].
          */
-        fun default(directory: Path): SecretStore {
-            val keyring = KeyringSecretStore()
-            if (keyring.works()) return keyring
-            return FileSecretStore(directory.resolve("connection.key"))
+        fun default(
+            directory: Path,
+            env: (String) -> String? = { System.getenv(it) },
+        ): SecretStore = PinnedSecretStore(directory, env) { KeyringSecretStore().takeIf { it.works() } }
+    }
+}
+
+/**
+ * Picks the backend for the store in [directory] once and keeps it. Whether an
+ * OS credential store answers can change between runs (a Secret Service that
+ * starts with a desktop login, a different D-Bus environment under cron), and
+ * choosing afresh each time locked a store out of the key it was created with.
+ *
+ * The choice is [SecretStore.KEY_STORE_ENV] when set, else the one recorded in
+ * the `key-store` file beside the connections the first time the key was saved
+ * or read. A store from before that file uses the key file if there is one and
+ * the credential store otherwise; a new one the credential store when
+ * [keyring] finds a working one. A recorded credential store that is not
+ * reachable fails with that reason, not as a missing key.
+ */
+class PinnedSecretStore(
+    private val directory: Path,
+    private val env: (String) -> String?,
+    private val keyring: () -> SecretStore?,
+) : SecretStore {
+    private val marker = directory.resolve("key-store")
+    private val keyFile = directory.resolve("connection.key")
+    private val workingKeyring by lazy { keyring() }
+    private val chosen by lazy { explicit() ?: recorded() ?: fromExistingStore() ?: if (workingKeyring != null) KEYRING else FILE }
+    private val backend: SecretStore by lazy {
+        if (chosen == FILE) {
+            FileSecretStore(keyFile)
+        } else {
+            workingKeyring ?: throw CliError(
+                "the key for ${directory.resolve("connections.json")} is in the OS credential store, " +
+                    "which this session cannot reach (is a Secret Service running?). Run amber where it is " +
+                    "available, or set ${SecretStore.KEY_STORE_ENV}=file to use a key file instead (and pair again).",
+            )
         }
+    }
+
+    override val description: String
+        get() = backend.description
+
+    override fun read(): ByteArray? = backend.read()?.also { pin() }
+
+    override fun write(key: ByteArray) {
+        backend.write(key)
+        pin()
+    }
+
+    override fun delete() {
+        backend.delete()
+        Files.deleteIfExists(marker)
+    }
+
+    private fun explicit(): String? {
+        val value = env(SecretStore.KEY_STORE_ENV)?.trim()?.lowercase()?.ifEmpty { null } ?: return null
+        if (value != FILE && value != KEYRING) {
+            throw CliError("${SecretStore.KEY_STORE_ENV} must be \"file\" or \"keyring\", not \"$value\"", Exit.USAGE)
+        }
+        return value
+    }
+
+    private fun recorded(): String? = runCatching { Files.readString(marker).trim() }.getOrNull()?.takeIf { it == FILE || it == KEYRING }
+
+    // Before the marker existed only the file backend wrote connection.key.
+    private fun fromExistingStore(): String? = when {
+        Files.exists(keyFile) -> FILE
+        Files.exists(directory.resolve("connections.json")) -> KEYRING
+        else -> null
+    }
+
+    private fun pin() {
+        if (recorded() == chosen) return
+        Files.createDirectories(directory)
+        Files.writeString(marker, chosen + "\n")
+    }
+
+    private companion object {
+        const val FILE = "file"
+        const val KEYRING = "keyring"
     }
 }
 

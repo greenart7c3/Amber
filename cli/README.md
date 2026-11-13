@@ -110,6 +110,12 @@ Secret Service — and, on a host with none running, in a `0600` key file beside
 it. Another app cannot read the saved client keys; and those keys alone cannot
 sign anything, because Amber approves every request.
 
+That choice is made when the key is first saved and recorded in a `key-store`
+file beside it, so a Secret Service that starts later (a desktop login, another
+D-Bus environment under cron or systemd) does not lock the saved connections
+out. `AMBER_CLI_KEY_STORE=file` or `=keyring` picks the backend explicitly, over
+the recorded one.
+
 Relays for `connect` default to the same list Amber itself uses
 (`wss://auth.nostr1.com/`, `wss://bucket.coracle.social/`,
 `wss://nrs.primal.net/`, `wss://relay.nip46.com/`), plus the local relay of a

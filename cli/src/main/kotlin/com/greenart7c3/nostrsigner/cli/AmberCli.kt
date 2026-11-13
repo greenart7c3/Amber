@@ -30,7 +30,7 @@ class CliEnvironment(
     val env: (String) -> String? = { System.getenv(it) },
     val stateDir: Path = ConnectionStore.defaultDirectory(),
     /** Where the connections file's key lives; the OS credential store by default. */
-    val secretStore: SecretStore = SecretStore.default(stateDir),
+    val secretStore: SecretStore = SecretStore.default(stateDir, env),
     val openUri: (String) -> Unit = ::openInBrowser,
     /** Called with the nostrconnect URI right after it is printed (tests pair from here). */
     val onPairingUri: (String) -> Unit = {},

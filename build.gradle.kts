@@ -17,11 +17,38 @@ plugins {
     alias(libs.plugins.kover)
 }
 
+/**
+ * The hooks directory git reads for this checkout. In a linked worktree `.git`
+ * is a file pointing at `<main>/.git/worktrees/<name>`, whose `commondir`
+ * leads back to the shared `.git` that holds the hooks for every worktree.
+ * Null outside a git checkout (a source archive), where there is nothing to install.
+ */
+fun gitHooksDir(root: File): File? {
+    val dotGit = File(root, ".git")
+    val gitDir = when {
+        dotGit.isDirectory -> dotGit
+        dotGit.isFile -> dotGit.readText().lineSequence()
+            .firstOrNull { it.startsWith("gitdir:") }
+            ?.removePrefix("gitdir:")?.trim()
+            ?.let { root.resolve(it) }
+            ?: return null
+        else -> return null
+    }
+    val commonDir = File(gitDir, "commondir").takeIf { it.isFile }
+        ?.let { gitDir.resolve(it.readText().trim()) }
+        ?: gitDir
+    return File(commonDir, "hooks").normalize()
+}
+
+val gitHooks = gitHooksDir(rootProject.rootDir)
+
 tasks.register<Copy>("installGitHook") {
     description = "Installs the pre-commit and pre-push hooks from git-hooks/."
     from(File(rootProject.rootDir, "git-hooks/pre-commit"))
     from(File(rootProject.rootDir, "git-hooks/pre-push"))
-    into(File(rootProject.rootDir, ".git/hooks"))
+    val hooks = gitHooks
+    into(hooks ?: layout.buildDirectory.dir("tmp/no-git-hooks").get().asFile)
+    onlyIf("this is a git checkout") { hooks != null }
     filePermissions {
         unix(0b111_111_111)
     }

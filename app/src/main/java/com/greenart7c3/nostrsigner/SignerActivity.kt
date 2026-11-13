@@ -41,7 +41,6 @@ import com.greenart7c3.nostrsigner.commonsui.rate_limit_unknown_app
 import com.greenart7c3.nostrsigner.okhttp.HttpClientManager
 import com.greenart7c3.nostrsigner.service.BunkerRequestUtils
 import com.greenart7c3.nostrsigner.service.IntentRateLimitInspector
-import com.greenart7c3.nostrsigner.service.IntentRateLimiter
 import com.greenart7c3.nostrsigner.service.IntentUtils
 import com.greenart7c3.nostrsigner.service.safeReferrer
 import com.greenart7c3.nostrsigner.ui.AccountScreen
@@ -254,9 +253,10 @@ class SignerActivity : AppCompatActivity() {
     private fun rejectIfRateLimited(intent: Intent?): Boolean {
         if (intent == null) return false
         val key = IntentRateLimitInspector.inspect(intent, callingPackage) ?: return false
-        if (IntentRateLimiter.checkAndRecord(key)) return false
+        val limiter = Amber.instance.intentRateLimiter
+        if (limiter.checkAndRecord(key)) return false
 
-        if (IntentRateLimiter.shouldShowToast(key)) {
+        if (limiter.shouldShowToast(key)) {
             Toast.makeText(
                 applicationContext,
                 getStringBlocking(Res.string.rate_limit_too_many_requests, resolveCallerLabel(callingPackage)),

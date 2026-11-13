@@ -201,7 +201,6 @@ class ArchitectureTest {
             "service/ClearLogsWorker.kt",
             "service/ConnectivityService.kt",
             "service/EventNotificationConsumer.kt",
-            "service/IntentRateLimiter.kt",
             "service/IntentUtils.kt",
             "service/KillSwitchReceiver.kt",
             "service/LocalBunkerRelayServer.kt",

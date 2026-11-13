@@ -1,7 +1,6 @@
 package com.greenart7c3.nostrsigner.service
 
 import android.content.Intent
-import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.common.SignerType
 import com.vitorpamplona.quartz.nip01Core.jackson.JacksonMapper
 import java.net.URLDecoder
@@ -12,16 +11,22 @@ import java.util.concurrent.ConcurrentHashMap
  *
  * Gated only at [com.greenart7c3.nostrsigner.SignerActivity.onCreate] (the "new screen" path).
  * Intents that merge into an already-open approval UI via `onNewIntent` are the legitimate
- * batch flow and are never throttled here.
+ * batch flow and are never throttled here. One instance lives in `Amber`, so the buckets
+ * outlive each activity; [config] is read on every check, so settings changes apply at once.
  */
-object IntentRateLimiter {
-    const val UNKNOWN_PACKAGE = "<unknown>"
-    private const val UNKNOWN_PACKAGE_LIMIT = 3
+class IntentRateLimiter(
+    private val config: () -> Config,
+    private val clock: () -> Long = System::currentTimeMillis,
+) {
+    companion object {
+        const val UNKNOWN_PACKAGE = "<unknown>"
+        private const val UNKNOWN_PACKAGE_LIMIT = 3
 
-    // Cleanup runs at every checkAndRecord; tighter bounds make it harder for a
-    // misbehaving caller to balloon the bucket map before reclamation kicks in.
-    private const val CLEANUP_WHEN_SIZE_EXCEEDS = 64
-    private const val CLEANUP_STALE_MS = 5L * 60L * 1000L
+        // Cleanup runs at every checkAndRecord; tighter bounds make it harder for a
+        // misbehaving caller to balloon the bucket map before reclamation kicks in.
+        private const val CLEANUP_WHEN_SIZE_EXCEEDS = 64
+        private const val CLEANUP_STALE_MS = 5L * 60L * 1000L
+    }
 
     data class BucketKey(
         val pkg: String,
@@ -29,7 +34,7 @@ object IntentRateLimiter {
         val kind: Int? = null,
     )
 
-    internal data class Config(
+    data class Config(
         val enabled: Boolean = true,
         val maxPerWindow: Int = 5,
         val windowSeconds: Int = 30,
@@ -38,29 +43,8 @@ object IntentRateLimiter {
     private val buckets = ConcurrentHashMap<BucketKey, ArrayDeque<Long>>()
     private val lastToastAt = ConcurrentHashMap<BucketKey, Long>()
 
-    @Volatile
-    private var clock: () -> Long = { System.currentTimeMillis() }
-
-    @Volatile
-    private var configOverride: Config? = null
-
-    internal fun setClockForTest(source: () -> Long) {
-        clock = source
-    }
-
-    internal fun setConfigForTest(config: Config?) {
-        configOverride = config
-    }
-
-    internal fun resetForTest() {
-        buckets.clear()
-        lastToastAt.clear()
-        clock = { System.currentTimeMillis() }
-        configOverride = null
-    }
-
     fun checkAndRecord(key: BucketKey): Boolean {
-        val cfg = currentConfig()
+        val cfg = config()
         if (!cfg.enabled) return true
 
         val now = clock()
@@ -84,7 +68,7 @@ object IntentRateLimiter {
     }
 
     fun shouldShowToast(key: BucketKey): Boolean {
-        val cfg = currentConfig()
+        val cfg = config()
         val windowMs = cfg.windowSeconds.toLong() * 1000L
         val now = clock()
         val prev = lastToastAt[key]
@@ -93,16 +77,6 @@ object IntentRateLimiter {
             true
         } else {
             false
-        }
-    }
-
-    private fun currentConfig(): Config {
-        configOverride?.let { return it }
-        return try {
-            val s = Amber.instance.settings
-            Config(s.rateLimitEnabled, s.rateLimitMaxPerWindow, s.rateLimitWindowSeconds)
-        } catch (_: Throwable) {
-            Config()
         }
     }
 

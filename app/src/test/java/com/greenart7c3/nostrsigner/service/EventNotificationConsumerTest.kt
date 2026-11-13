@@ -3,6 +3,7 @@ package com.greenart7c3.nostrsigner.service
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.LocalPreferences
+import com.greenart7c3.nostrsigner.common.UNVERIFIED_REPLY_ATTEMPTS
 import com.greenart7c3.nostrsigner.database.AppDatabase
 import com.greenart7c3.nostrsigner.database.ApplicationDao
 import com.greenart7c3.nostrsigner.database.ApplicationEntity
@@ -180,7 +181,8 @@ class EventNotificationConsumerTest {
     }
 
     /**
-     * Feeds [requestJson] from a sender with no stored connection and returns
+     * the replies; the account is a spy so key use can be verified. Each reply to
+     * this unverified sender must be published once ([UNVERIFIED_REPLY_ATTEMPTS]).
      * the replies; the account is a spy so key use can be verified.
      */
     private suspend fun consumeFromUnknownSender(requestJson: String, onAccount: (Account) -> Unit): List<BunkerResponse> {
@@ -220,13 +222,16 @@ class EventNotificationConsumerTest {
             every { amber.applicationIOScope } returns CoroutineScope(Dispatchers.Unconfined + SupervisorJob())
             every { amber.notificationCache[any()] } returns null
             val responses = mutableListOf<BunkerResponse>()
+            val attempts = mutableListOf<Int>()
             coEvery {
-                BunkerRequestUtils.sendBunkerResponse(any(), any(), any(), any(), any(), any())
+                BunkerRequestUtils.sendBunkerResponse(any(), any(), any(), any(), any(), any(), any())
             } answers {
                 responses += arg<BunkerResponse>(2)
+                attempts += arg<Int>(6)
             }
             consumer.consume(event, NormalizedRelayUrl("wss://relay.com"))
             onAccount(acc)
+            assertEquals(List(responses.size) { UNVERIFIED_REPLY_ATTEMPTS }, attempts)
             return responses
         } finally {
             unmockkObject(BunkerRequestUtils)
@@ -337,7 +342,7 @@ class EventNotificationConsumerTest {
             every { amber.notificationCache[any()] } returns null
             val responses = mutableListOf<BunkerResponse>()
             coEvery {
-                BunkerRequestUtils.sendBunkerResponse(any(), any(), any(), any(), any(), any())
+                BunkerRequestUtils.sendBunkerResponse(any(), any(), any(), any(), any(), any(), any())
             } answers {
                 responses += arg<BunkerResponse>(2)
             }

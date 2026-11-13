@@ -14,7 +14,6 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkObject
 import io.mockk.unmockkObject
-import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -23,7 +22,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -267,93 +265,6 @@ class BunkerRequestUtilsTest {
         assertEquals(1, BunkerRequestUtils.getBunkerRequests().size)
         BunkerRequestUtils.remove(request)
         assertTrue(BunkerRequestUtils.getBunkerRequests().isEmpty())
-    }
-
-    // ===== retryWithBackoff =====
-
-    @Test
-    fun `retryWithBackoff returns true when block succeeds on first attempt`() = runBlocking {
-        var calls = 0
-        val result = BunkerRequestUtils.retryWithBackoff(
-            maxRetries = 3,
-            initialDelay = 1.milliseconds,
-            maxDelay = 4.milliseconds,
-        ) {
-            calls++
-            true
-        }
-        assertTrue(result)
-        assertEquals(1, calls)
-    }
-
-    @Test
-    fun `retryWithBackoff retries and returns true on eventual success`() = runBlocking {
-        var calls = 0
-        val result = BunkerRequestUtils.retryWithBackoff(
-            maxRetries = 5,
-            initialDelay = 1.milliseconds,
-            maxDelay = 4.milliseconds,
-        ) {
-            calls++
-            calls >= 3
-        }
-        assertTrue(result)
-        assertEquals(3, calls)
-    }
-
-    @Test
-    fun `retryWithBackoff returns false when all retries fail`() = runBlocking {
-        var calls = 0
-        val result = BunkerRequestUtils.retryWithBackoff(
-            maxRetries = 3,
-            initialDelay = 1.milliseconds,
-            maxDelay = 4.milliseconds,
-        ) {
-            calls++
-            false
-        }
-        assertFalse(result)
-        assertEquals(3, calls)
-    }
-
-    @Test
-    fun `retryWithBackoff with maxRetries 1 calls block exactly once on failure`() = runBlocking {
-        var calls = 0
-        val result = BunkerRequestUtils.retryWithBackoff(
-            maxRetries = 1,
-            initialDelay = 1.milliseconds,
-            maxDelay = 4.milliseconds,
-        ) {
-            calls++
-            false
-        }
-        assertFalse(result)
-        assertEquals(1, calls)
-    }
-
-    @Test
-    fun `retryWithBackoff with maxRetries 1 returns true on success`() = runBlocking {
-        val result = BunkerRequestUtils.retryWithBackoff(
-            maxRetries = 1,
-            initialDelay = 1.milliseconds,
-            maxDelay = 4.milliseconds,
-        ) { true }
-        assertTrue(result)
-    }
-
-    @Test
-    fun `retryWithBackoff does not exceed maxRetries attempts`() = runBlocking {
-        val maxRetries = 4
-        var calls = 0
-        BunkerRequestUtils.retryWithBackoff(
-            maxRetries = maxRetries,
-            initialDelay = 1.milliseconds,
-            maxDelay = 4.milliseconds,
-        ) {
-            calls++
-            false
-        }
-        assertEquals(maxRetries, calls)
     }
 
     // ===== responseRelays =====

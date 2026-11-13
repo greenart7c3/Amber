@@ -116,6 +116,13 @@ Separate parsing (`nostrsigner://` / `nostrconnect://` → a data object),
 validation and `IntentData` construction, with unit tests for each. Removes its
 `LongMethod`/`CyclomaticComplexMethod` baseline entries.
 
+Done so far: `service/NostrSignerRequest.kt` parses both request forms (the
+URI query of web apps, the intent extras of native apps) into a
+`NostrSignerRequest` without touching a key, and its `rejection()` is the
+validation; `IntentUtils.buildIntentData` is the one place that signs or
+encrypts and builds the `IntentData`. Left: `getIntentData` (account and
+queue lookup) and the response side, `sendResult`/`sendRejection`.
+
 ### 3. Replace `Amber.instance` with constructor injection
 
 Introduce narrow interfaces (`AccountRepository`, `RelayClient`, `SettingsStore`)

@@ -62,9 +62,6 @@
     <ID>CyclomaticComplexMethod:IntentMultiEventHomeScreen.kt:@Composable private fun IntentRequestCard</ID>
     <ID>CyclomaticComplexMethod:IntentSingleEventHomeScreen.kt:@Composable fun IntentSingleEventHomeScreen</ID>
     <ID>CyclomaticComplexMethod:IntentUtils.kt:IntentUtils$fun sendResult</ID>
-    <ID>CyclomaticComplexMethod:IntentUtils.kt:IntentUtils$private suspend fun getEncryptedDataKind: EncryptedDataKind</ID>
-    <ID>CyclomaticComplexMethod:IntentUtils.kt:IntentUtils$private suspend fun getIntentDataFromIntent: IntentData?</ID>
-    <ID>CyclomaticComplexMethod:IntentUtils.kt:IntentUtils$private suspend fun getIntentDataWithoutExtras: IntentData?</ID>
     <ID>CyclomaticComplexMethod:IntentUtils.kt:IntentUtils$suspend fun getIntentData: IntentData?</ID>
     <ID>CyclomaticComplexMethod:IntentUtilsBeforeAfterTest.kt:IntentUtilsBeforeAfterTest$@Test fun `before-after parameter dispatch - all six keys`</ID>
     <ID>CyclomaticComplexMethod:LocalPreferences.kt:LocalPreferences$private fun readSettings: AmberSettings</ID>
@@ -170,9 +167,6 @@
     <ID>LongMethod:IntentSingleEventHomeScreen.kt:@Composable fun IntentSingleEventHomeScreen</ID>
     <ID>LongMethod:IntentUtils.kt:IntentUtils$fun sendRejection</ID>
     <ID>LongMethod:IntentUtils.kt:IntentUtils$fun sendResult</ID>
-    <ID>LongMethod:IntentUtils.kt:IntentUtils$private suspend fun getEncryptedDataKind: EncryptedDataKind</ID>
-    <ID>LongMethod:IntentUtils.kt:IntentUtils$private suspend fun getIntentDataFromIntent: IntentData?</ID>
-    <ID>LongMethod:IntentUtils.kt:IntentUtils$private suspend fun getIntentDataWithoutExtras: IntentData?</ID>
     <ID>LongMethod:LocalPreferences.kt:LocalPreferences$private fun readSettings: AmberSettings</ID>
     <ID>LongMethod:LoginScreen.kt:@OptIn(ExperimentalMaterial3Api::class) @SuppressLint("ConfigurationScreenWidthHeight") @Composable fun MainPage</ID>
     <ID>LongMethod:LoginScreen.kt:@SuppressLint("ConfigurationScreenWidthHeight") @OptIn(ExperimentalMaterial3Api::class) @Composable fun LoginPage</ID>
@@ -295,7 +289,6 @@
     <ID>MutableStateParam:MainScreen.kt:route: MutableState&lt;String?&gt;</ID>
     <ID>NestedBlockDepth:EventNotificationConsumer.kt:EventNotificationConsumer$private suspend fun getEncryptedDataKind: EncryptedDataKind?</ID>
     <ID>NestedBlockDepth:EventNotificationConsumer.kt:EventNotificationConsumer$private suspend fun notify</ID>
-    <ID>NestedBlockDepth:IntentUtils.kt:IntentUtils$private suspend fun getEncryptedDataKind: EncryptedDataKind</ID>
     <ID>NestedBlockDepth:NostrConnectUtils.kt:NostrConnectUtils$fun getIntentFromNostrConnect</ID>
     <ID>NestedBlockDepth:SignerProviderQuery.kt:SignerProviderQuery$@Suppress("RunBlocking") fun query: Cursor?</ID>
     <ID>ParameterNaming:AccountBackupScreen.kt:onBackupDone: () -&gt; Unit</ID>
@@ -369,7 +362,6 @@
     <ID>ReturnCount:EventNotificationConsumer.kt:EventNotificationConsumer$private suspend fun notify</ID>
     <ID>ReturnCount:EventNotificationConsumer.kt:EventNotificationConsumer$suspend fun consume</ID>
     <ID>ReturnCount:IntentUtils.kt:IntentUtils$fun decodeData: String</ID>
-    <ID>ReturnCount:IntentUtils.kt:IntentUtils$private suspend fun getIntentDataWithoutExtras: IntentData?</ID>
     <ID>ReturnCount:IntentUtils.kt:IntentUtils$suspend fun getIntentData: IntentData?</ID>
     <ID>ReturnCount:MainViewModel.kt:MainViewModel$fun getAccount: String?</ID>
     <ID>ReturnCount:SecureCryptoHelper.kt:SecureCryptoHelper$internal fun migrateCiphertext: CiphertextMigration</ID>

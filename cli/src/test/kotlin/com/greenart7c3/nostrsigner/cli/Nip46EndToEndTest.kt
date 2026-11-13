@@ -114,6 +114,34 @@ class Nip46EndToEndTest {
     }
 
     @Test
+    fun loginReadsTheBunkerUriFromStdin() {
+        val piped = amber("login", "-", "--timeout", TIMEOUT, stdin = bunkerUri() + "\n")
+        assertEquals(piped.err, Exit.OK, piped.exit)
+        assertEquals(signer.accountPubKey, piped.out.trim())
+        val pubKey = amber("get-public-key", "--timeout", TIMEOUT)
+        assertEquals(pubKey.err, Exit.OK, pubKey.exit)
+        assertEquals(signer.accountPubKey, pubKey.out.trim())
+        val fromStdin = pairing()
+
+        // The argument form saves the same pairing (a new client key aside).
+        assertEquals(Exit.OK, amber("login", bunkerUri(), "--force", "--timeout", TIMEOUT).exit)
+        assertEquals(fromStdin, pairing())
+    }
+
+    @Test
+    fun loginWithEmptyStdinIsAUsageError() {
+        assertEquals(Exit.USAGE, amber("login", "-", stdin = "\n").exit)
+    }
+
+    /** What `status` reports about the saved pairing: signer, user and relays. */
+    private fun pairing(): List<String> {
+        val status = amber("status", "--json", "--timeout", TIMEOUT)
+        assertEquals(status.err + status.out, Exit.OK, status.exit)
+        val node = JacksonMapper.mapper.readTree(status.out.trim()).get("result")
+        return listOf(node.get("signer").asText(), node.get("user").asText(), node.get("relays").toString())
+    }
+
+    @Test
     fun signEventReadsStdinAndFillsCreatedAt() {
         assertEquals(Exit.OK, amber("login", bunkerUri(), "--timeout", TIMEOUT).exit)
         val signed = amber("sign-event", "-", "--timeout", TIMEOUT, stdin = """{"kind":30023,"content":"from stdin","tags":[]}""")

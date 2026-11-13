@@ -126,12 +126,14 @@ internal class Session(
      * is saved here and every command goes straight through it.
      */
     private fun login(args: Args): Int {
-        val uri = args.positionals.firstOrNull()
-            ?: throw CliError(
-                "login needs the bunker:// URI Amber shows for a connection: " +
-                    "amber login 'bunker://<pubkey>?relay=wss://...&secret=...'",
-                Exit.USAGE,
-            )
+        val missing = CliError(
+            "login needs the bunker:// URI Amber shows for a connection: " +
+                "amber login 'bunker://<pubkey>?relay=wss://...&secret=...', or - to read it from stdin",
+            Exit.USAGE,
+        )
+        val input = args.positionals.firstOrNull() ?: throw missing
+        // "-" keeps the URI's secret out of the process list and the shell history.
+        val uri = if (input == "-") readInput().trim().ifEmpty { throw missing } else input
         val profile = profile(args)
         val existing = store.get(profile)
         if (existing != null && existing.isPaired && !args.has("force")) {

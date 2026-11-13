@@ -42,6 +42,14 @@ without packaging.
 amber login 'bunker://<connection-pubkey>?relay=wss://...&secret=...'
 ```
 
+The URI contains the connection's secret. On a shared machine, pass `-` and
+pipe it in instead, so the secret stays out of the process list and your shell
+history:
+
+```bash
+amber login - < bunker-uri.txt
+```
+
 **Without one** — let the CLI print a `nostrconnect://` URI and a QR code, then
 paste or scan it into Amber and approve the connection there:
 

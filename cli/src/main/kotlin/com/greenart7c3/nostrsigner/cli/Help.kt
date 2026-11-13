@@ -35,7 +35,7 @@ object Help {
           amber help [command]
 
         COMMANDS
-          login <bunker://...>       pair using a bunker URI from Amber
+          login <bunker://...|->     pair using a bunker URI from Amber
           connect                    print a nostrconnect:// URI/QR and pair by approval
           sign-event [JSON|-]        sign an event, print the signed event
           get-public-key             print the hex public key Amber signs with
@@ -51,6 +51,8 @@ object Help {
           With a bunker URI: in Amber, open the connection's details, copy the
           bunker:// URI, then run
             amber login 'bunker://...'
+          The URI carries the connection's secret; on a shared machine pass - and
+          pipe it in, so it stays out of the process list and the shell history.
           Without one: run `amber connect`, paste or scan the printed URI into Amber,
           and approve the connection there.
           Ask for permissions up front so later requests do not prompt again:
@@ -128,11 +130,15 @@ object Help {
     """.trimIndent()
 
     private fun login(): String = """
-        amber login <bunker://...>
+        amber login <bunker://...|->
 
         Pairs this machine with a connection Amber already created. Get the URI in
         Amber: open the connection's details and copy its bunker:// URI (it contains
         the connection's public key, its relays and its secret).
+
+        Pass - to read the URI from stdin instead. Other users on the machine can
+        read a command line (and the shell keeps it in its history) for as long as
+        login runs, and the URI's secret is in it.
 
         Amber asks you to approve the new client the first time; after that the
         connection is saved here under --profile (default "default") and every
@@ -144,8 +150,9 @@ object Help {
           0 paired    2 bad URI    4 rejected in Amber    5 approval timed out
           6 no relay reachable
 
-        EXAMPLE
+        EXAMPLES
           amber login 'bunker://abc...?relay=wss://relay.nip46.com/&secret=...'
+          amber login - < bunker-uri.txt
     """.trimIndent()
 
     private fun connect(): String = """

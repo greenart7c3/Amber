@@ -195,7 +195,6 @@ class ArchitectureTest {
             "service/AccountExportService.kt",
             "service/AmberUtils.kt",
             "service/ApplicationBackup.kt",
-            "service/Biometrics.kt",
             "service/BootReceiver.kt",
             "service/BunkerRequestUtils.kt",
             "service/ClearLogsWorker.kt",

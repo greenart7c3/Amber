@@ -3,13 +3,14 @@ package com.greenart7c3.nostrsigner.service
 import android.annotation.SuppressLint
 import android.app.KeyguardManager
 import android.content.Context
+import android.content.ContextWrapper
 import android.content.Intent
 import android.os.Build
 import androidx.activity.compose.ManagedActivityResultLauncher
 import androidx.activity.result.ActivityResult
 import androidx.biometric.BiometricManager
 import androidx.biometric.BiometricPrompt
-import com.greenart7c3.nostrsigner.Amber
+import androidx.fragment.app.FragmentActivity
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.commonsui.Res
 import com.greenart7c3.nostrsigner.commonsui.biometric_authentication_failed
@@ -25,7 +26,10 @@ object Biometrics {
         onApproved: () -> Unit,
         onError: (String, String) -> Unit,
     ) {
-        val fragmentContext = Amber.instance.getMainActivity()!!
+        // The prompt attaches to the activity showing it; [context] is its (maybe wrapped) context.
+        val fragmentContext = generateSequence(context) { (it as? ContextWrapper)?.baseContext }
+            .filterIsInstance<FragmentActivity>()
+            .firstOrNull() ?: error("Biometrics.authenticate needs an activity context")
         val keyguardManager =
             fragmentContext.getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager
 

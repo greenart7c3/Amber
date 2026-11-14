@@ -104,25 +104,11 @@ object IntentRateLimitInspector {
         val pkg = callingPackage?.takeIf { it.isNotBlank() } ?: IntentRateLimiter.UNKNOWN_PACKAGE
 
         val typeStr = intent.extras?.getString("type") ?: extractTypeFromUrl(intent)
-        val type = typeStr?.let { parseSignerType(it) } ?: return null
+        // The parser IntentUtils uses, so every type it accepts is rate limited.
+        val type = NostrSignerRequestParser.parseSignerType(typeStr).takeIf { it != SignerType.INVALID } ?: return null
 
         val kind = if (type == SignerType.SIGN_EVENT) extractEventKind(intent) else null
         return IntentRateLimiter.BucketKey(pkg, type.name, kind)
-    }
-
-    // Must cover every type IntentUtils accepts: a type missing here is never rate limited.
-    internal fun parseSignerType(value: String): SignerType? = when (value) {
-        "sign_event" -> SignerType.SIGN_EVENT
-        "get_public_key" -> SignerType.GET_PUBLIC_KEY
-        "nip04_encrypt" -> SignerType.NIP04_ENCRYPT
-        "nip04_decrypt" -> SignerType.NIP04_DECRYPT
-        "nip44_encrypt" -> SignerType.NIP44_ENCRYPT
-        "nip44_decrypt" -> SignerType.NIP44_DECRYPT
-        "nip44v3_encrypt" -> SignerType.NIP44_V3_ENCRYPT
-        "nip44v3_decrypt" -> SignerType.NIP44_V3_DECRYPT
-        "decrypt_zap_event" -> SignerType.DECRYPT_ZAP_EVENT
-        "sign_psbt" -> SignerType.SIGN_PSBT
-        else -> null
     }
 
     private fun extractTypeFromUrl(intent: Intent): String? {

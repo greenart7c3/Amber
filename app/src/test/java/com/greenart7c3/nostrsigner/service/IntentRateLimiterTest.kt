@@ -111,8 +111,15 @@ class IntentRateLimiterTest {
         assertEquals(a.hashCode(), b.hashCode())
     }
 
+    private fun intentOfType(type: String): Intent {
+        val extras = mockk<Bundle>()
+        every { extras.getString(any()) } returns null
+        every { extras.getString("type") } returns type
+        return mockk<Intent>(relaxed = true).also { every { it.extras } returns extras }
+    }
+
     @Test
-    fun `every NIP-55 request type is classified for rate limiting`() {
+    fun `every NIP-55 request type gets a bucket`() {
         val types = mapOf(
             "sign_event" to SignerType.SIGN_EVENT,
             "get_public_key" to SignerType.GET_PUBLIC_KEY,
@@ -125,21 +132,13 @@ class IntentRateLimiterTest {
             "decrypt_zap_event" to SignerType.DECRYPT_ZAP_EVENT,
             "sign_psbt" to SignerType.SIGN_PSBT,
         )
-        types.forEach { (name, type) -> assertEquals(name, type, IntentRateLimitInspector.parseSignerType(name)) }
-        assertNull(IntentRateLimitInspector.parseSignerType("nope"))
+        types.forEach { (name, type) ->
+            assertEquals(name, IntentRateLimiter.BucketKey("com.app", type.name, null), IntentRateLimitInspector.inspect(intentOfType(name), "com.app"))
+        }
     }
 
     @Test
-    fun `a sign_psbt intent gets a bucket`() {
-        val extras = mockk<Bundle>()
-        every { extras.getString(any()) } returns null
-        every { extras.getString("type") } returns "sign_psbt"
-        val intent = mockk<Intent>(relaxed = true)
-        every { intent.extras } returns extras
-
-        assertEquals(
-            IntentRateLimiter.BucketKey("com.app", SignerType.SIGN_PSBT.name, null),
-            IntentRateLimitInspector.inspect(intent, "com.app"),
-        )
+    fun `an unknown request type gets no bucket`() {
+        assertNull(IntentRateLimitInspector.inspect(intentOfType("nope"), "com.app"))
     }
 }

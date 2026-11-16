@@ -1,5 +1,6 @@
 package com.greenart7c3.nostrsigner.desktop
 
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -42,6 +43,18 @@ class NativeTrayTest {
             ),
         )
         assertFalse(NativeTray.parseSniHostReply(""))
+    }
+
+    @Test
+    fun awaitSniHostKeepsProbingUntilTheBarRegistersOne() {
+        // At login the bar's tray host can come up after Amber.
+        val replies = ArrayDeque(listOf(false, false, true))
+        assertTrue(NativeTray.awaitSniHost(attempts = 5, intervalMs = 0) { replies.removeFirst() })
+        assertTrue("stops probing once a host is there", replies.isEmpty())
+
+        var probes = 0
+        assertFalse(NativeTray.awaitSniHost(attempts = 3, intervalMs = 0) { probes++ > 99 })
+        assertEquals("gives up after the last attempt", 3, probes)
     }
 
     @Test

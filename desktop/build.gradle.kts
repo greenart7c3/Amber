@@ -64,6 +64,10 @@ dependencies {
     // freedesktop StatusNotifierItem / AppIndicator protocol, so a tray icon
     // shows on Wayland compositors (Hyprland, Sway, GNOME) via waybar etc.
     implementation(libs.dorkbox.systemtray)
+    // SystemTray 4.4 pulls OS 1.8, which waits on `ps x` before reading its
+    // output: past 64 KiB (a busy desktop) it stalls 60 s per check and the
+    // tray misses its init timeout. 1.9+ read first.
+    implementation(libs.dorkbox.os)
     // Session D-Bus for actionable Linux notifications (Approve/Reject
     // buttons): the daemon sends ActionInvoked only to the connection that
     // posted the notification. Already on the classpath via the two above.

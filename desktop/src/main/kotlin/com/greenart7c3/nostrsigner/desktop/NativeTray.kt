@@ -194,10 +194,25 @@ class NativeTray private constructor(
         /** Package-visible for testing: a host is registered only on a `true` reply. */
         internal fun parseSniHostReply(output: String): Boolean = output.contains("true", ignoreCase = true)
 
+        /** Probes up to [attempts] times, [intervalMs] apart; true as soon as a host is registered. */
+        internal fun awaitSniHost(attempts: Int, intervalMs: Long, probe: () -> Boolean = ::sniHostRegistered): Boolean {
+            repeat(attempts) { attempt ->
+                if (probe()) return true
+                if (attempt < attempts - 1) Thread.sleep(intervalMs)
+            }
+            return false
+        }
+
+        private const val HOST_WAIT_ATTEMPTS = 60
+        private const val HOST_WAIT_INTERVAL_MS = 2_000L
+
         /**
          * [create] with two safety nets so a missing/broken tray can never
-         * block the app window: when no SNI host is on the session bus the
-         * tray is skipped outright, and init is abandoned after [timeoutMs].
+         * block the app window: init is abandoned after [timeoutMs], and when
+         * no SNI host is on the session bus nothing is created now. Started
+         * with the session, Amber can come up before the bar's tray host does:
+         * given [onLateTray], a background thread keeps probing for a host for
+         * two minutes and hands it the tray once one appears.
          * On timeout the init thread (daemon) may still complete in the
          * background and publish the icon, but Amber no longer waits for it.
          */
@@ -211,22 +226,38 @@ class NativeTray private constructor(
             onToggle: () -> Unit,
             onLock: () -> Unit,
             onQuit: () -> Unit,
+            onLateTray: ((NativeTray) -> Unit)? = null,
         ): NativeTray? {
+            val build = { create(iconStream, tooltip, openLabel, lockLabel, quitLabel, onToggle, onLock, onQuit) }
             // An explicit AMBER_TRAY_TYPE overrides the host probe (debugging).
-            if (System.getenv("AMBER_TRAY_TYPE") == null && !sniHostRegistered()) {
-                AmberLogger.i(
-                    "NativeTray",
-                    "No StatusNotifierItem host on the session bus; skipping the tray. " +
-                        "(Enable waybar's tray module, or set AMBER_TRAY_TYPE=AppIndicator to force.)",
-                )
+            if (System.getenv("AMBER_TRAY_TYPE") != null || sniHostRegistered()) return runBounded(timeoutMs, build)
+            if (onLateTray == null) {
+                logNoHost()
                 return null
             }
+            AmberLogger.i("NativeTray", "No StatusNotifierItem host on the session bus yet; waiting for one")
+            Thread({
+                if (awaitSniHost(HOST_WAIT_ATTEMPTS, HOST_WAIT_INTERVAL_MS)) {
+                    runBounded(timeoutMs, build)?.let(onLateTray)
+                } else {
+                    logNoHost()
+                }
+            }, "amber-tray-wait").apply { isDaemon = true }.start()
+            return null
+        }
+
+        private fun logNoHost() = AmberLogger.i(
+            "NativeTray",
+            "No StatusNotifierItem host on the session bus; skipping the tray. " +
+                "(Enable waybar's tray module, or set AMBER_TRAY_TYPE=AppIndicator to force.)",
+        )
+
+        private fun runBounded(timeoutMs: Long, build: () -> NativeTray?): NativeTray? {
             val executor = Executors.newSingleThreadExecutor { runnable ->
                 Thread(runnable, "amber-tray-init").apply { isDaemon = true }
             }
             return try {
-                executor.submit(Callable { create(iconStream, tooltip, openLabel, lockLabel, quitLabel, onToggle, onLock, onQuit) })
-                    .get(timeoutMs, TimeUnit.MILLISECONDS)
+                executor.submit(Callable(build)).get(timeoutMs, TimeUnit.MILLISECONDS)
             } catch (_: TimeoutException) {
                 AmberLogger.i("NativeTray", "Tray init did not finish in ${timeoutMs}ms; continuing without it")
                 null

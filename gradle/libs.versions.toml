@@ -107,6 +107,7 @@ secp256k1-jni-jvm = { module = "fr.acinq.secp256k1:secp256k1-kmp-jni-jvm", versi
 leakcanary = { group = "com.android.tools.studio.leakcanary", name = "leakcanary", version.ref = "leakcanary" }
 java-keyring = { module = "com.github.javakeyring:java-keyring", version = "1.0.4" }
 dorkbox-systemtray = { module = "com.dorkbox:SystemTray", version = "4.4" }
+dorkbox-os = { module = "com.dorkbox:OS", version = "1.11" }
 dbus-java-core = { module = "com.github.hypfvieh:dbus-java-core", version.ref = "dbus-java" }
 dbus-java-transport-native-unixsocket = { module = "com.github.hypfvieh:dbus-java-transport-native-unixsocket", version.ref = "dbus-java" }
 slf4j-nop = { module = "org.slf4j:slf4j-nop", version = "2.0.20" }

@@ -168,8 +168,7 @@ private object DesktopTray {
     val windowVisible = MutableStateFlow(true)
     val quitRequested = MutableStateFlow(false)
 
-    @Volatile
-    var instance: NativeTray? = null
+    val instance = MutableStateFlow<NativeTray?>(null)
 }
 
 /**
@@ -240,9 +239,10 @@ fun main(args: Array<String>) {
     // fails to start and SystemTray.get() returns null even when
     // libayatana-appindicator is installed). So start it here, first thing —
     // but never let it block the window: createBounded probes for an SNI host
-    // and abandons init that takes too long.
+    // and abandons init that takes too long. A host that shows up later (the
+    // bar starting after Amber at login) still gets the tray, via onLateTray.
     if (DesktopTray.isLinux && System.getenv("AMBER_DISABLE_TRAY") == null) {
-        DesktopTray.instance = NativeTray.createBounded(
+        NativeTray.createBounded(
             iconStream = { NativeTray::class.java.getResourceAsStream("/icon.png") },
             tooltip = getStringBlocking(Res.string.d_tray_tooltip),
             openLabel = getStringBlocking(Res.string.d_tray_open),
@@ -251,7 +251,8 @@ fun main(args: Array<String>) {
             onToggle = { DesktopTray.windowVisible.value = !DesktopTray.windowVisible.value },
             onLock = { PassphraseLock.lock() },
             onQuit = { DesktopTray.quitRequested.value = true },
-        )
+            onLateTray = { DesktopTray.instance.value = it },
+        )?.let { DesktopTray.instance.value = it }
     }
 
     if (DesktopTray.isLinux) setX11WindowClass()
@@ -275,7 +276,7 @@ fun main(args: Array<String>) {
         val quitRequested by DesktopTray.quitRequested.collectAsState()
         val trayState = rememberTrayState()
         val isLinux = DesktopTray.isLinux
-        val nativeTray = DesktopTray.instance
+        val nativeTray by DesktopTray.instance.collectAsState()
 
         // AWT's tray only works with an XEmbed host, which excludes Wayland; on
         // Linux we use the dorkbox tray (created above) instead, and keep AWT
@@ -325,8 +326,8 @@ fun main(args: Array<String>) {
                 windowState.isMinimized = false
             }
         }
-        DisposableEffect(Unit) { onDispose { nativeTray?.shutdown() } }
-        LaunchedEffect(pending.size, windowVisible, lockStatus, language) {
+        DisposableEffect(Unit) { onDispose { DesktopTray.instance.value?.shutdown() } }
+        LaunchedEffect(nativeTray, pending.size, windowVisible, lockStatus, language) {
             nativeTray?.update(
                 tooltip = if (pending.isEmpty()) getString(Res.string.d_tray_tooltip) else getString(Res.string.d_tray_pending, pending.size),
                 openLabel = if (windowVisible) getString(Res.string.d_tray_hide) else getString(Res.string.d_tray_open),

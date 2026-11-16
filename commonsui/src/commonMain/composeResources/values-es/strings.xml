@@ -1004,6 +1004,7 @@ Qué puedes hacer:
     <string name="d_shortcut_hint">↑↓ seleccionar · ←→ recordar · %1$s aprobar · %2$s rechazar</string>
     <string name="d_shortcut_hint_scope">↑↓ seleccionar · ←→ recordar · S alcance · %1$s aprobar · %2$s rechazar</string>
     <string name="d_shortcut_hint_connect">↑↓ seleccionar · ←→ eliminar después de · 1–3 permisos · A cuenta · %1$s aprobar · %2$s rechazar</string>
+    <string name="d_shortcut_hint_batch">↑↓ seleccionar · Espacio aprobar/rechazar · Mayús+Espacio toda la sección · ←→ recordar · S alcance · D detalles · %1$s confirmar</string>
     <string name="d_remember_prefix">Recordar: %1$s</string>
     <string name="d_qr_code">Código QR</string>
     <string name="d_saved">Guardado</string>

@@ -1026,6 +1026,7 @@ Bạn có thể làm:
     <string name="d_shortcut_hint">↑↓ chọn · ←→ ghi nhớ · %1$s phê duyệt · %2$s từ chối</string>
     <string name="d_shortcut_hint_scope">↑↓ chọn · ←→ ghi nhớ · S phạm vi · %1$s phê duyệt · %2$s từ chối</string>
     <string name="d_shortcut_hint_connect">↑↓ chọn · ←→ xóa sau · 1–3 quyền · A tài khoản · %1$s phê duyệt · %2$s từ chối</string>
+    <string name="d_shortcut_hint_batch">↑↓ chọn · Phím cách phê duyệt/từ chối · Shift+Phím cách cả mục · ←→ ghi nhớ · S phạm vi · D chi tiết · %1$s xác nhận</string>
     <string name="d_remember_prefix">Ghi nhớ: %1$s</string>
     <string name="d_qr_code">Mã QR</string>
     <string name="d_saved">Đã lưu</string>

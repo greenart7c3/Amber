@@ -1026,6 +1026,7 @@
     <string name="d_shortcut_hint">↑↓ เลือก · ←→ จดจำ · %1$s อนุมัติ · %2$s ปฏิเสธ</string>
     <string name="d_shortcut_hint_scope">↑↓ เลือก · ←→ จดจำ · S ขอบเขต · %1$s อนุมัติ · %2$s ปฏิเสธ</string>
     <string name="d_shortcut_hint_connect">↑↓ เลือก · ←→ ลบหลังจาก · 1–3 สิทธิ์ · A บัญชี · %1$s อนุมัติ · %2$s ปฏิเสธ</string>
+    <string name="d_shortcut_hint_batch">↑↓ เลือก · Space อนุมัติ/ปฏิเสธ · Shift+Space ทั้งหมวด · ←→ จดจำ · S ขอบเขต · D รายละเอียด · %1$s ยืนยัน</string>
     <string name="d_remember_prefix">จดจำ: %1$s</string>
     <string name="d_qr_code">QR code</string>
     <string name="d_saved">บันทึกแล้ว</string>

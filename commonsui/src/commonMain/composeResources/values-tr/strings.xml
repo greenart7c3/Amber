@@ -1003,6 +1003,7 @@ Yapabilecekleriniz:
     <string name="d_shortcut_hint">↑↓ seç · ←→ hatırla · %1$s onayla · %2$s reddet</string>
     <string name="d_shortcut_hint_scope">↑↓ seç · ←→ hatırla · S kapsam · %1$s onayla · %2$s reddet</string>
     <string name="d_shortcut_hint_connect">↑↓ seç · ←→ şu süre sonra sil · 1–3 izinler · A hesap · %1$s onayla · %2$s reddet</string>
+    <string name="d_shortcut_hint_batch">↑↓ seç · Boşluk onayla/reddet · Shift+Boşluk tüm bölüm · ←→ hatırla · S kapsam · D ayrıntılar · %1$s doğrula</string>
     <string name="d_remember_prefix">Hatırla: %1$s</string>
     <string name="d_qr_code">QR kodu</string>
     <string name="d_saved">Kaydedildi</string>

@@ -38,6 +38,7 @@ class UiStateTest {
         UiState.selectedRequestId.value = null
         UiState.rememberChoices.value = emptyMap()
         UiState.scopeChoices.value = emptyMap()
+        UiState.batchApproved.value = emptyMap()
     }
 
     @Test
@@ -166,6 +167,69 @@ class UiStateTest {
 
         UiState.cycleRememberChoice(1)
         assertEquals(RememberType.NEVER, UiState.rememberChoiceFor(req.queueKey)) // unchanged
+    }
+
+    @Test
+    fun connectOrOnlyRequestIsShownAloneElseBatched() = runBlocking {
+        val account = com.greenart7c3.nostrsigner.desktop.core.AccountManager.addAccount(
+            com.vitorpamplona.quartz.nip01Core.crypto.KeyPair(),
+        )
+        fun req(id: String, type: SignerType, localKey: String, kind: Int? = null) = PendingBunkerRequest(
+            request = BunkerRequest(id, type.name.lowercase(), arrayOf()),
+            type = type,
+            account = account,
+            localKey = localKey,
+            relays = emptyList(),
+            kind = kind,
+        )
+        val note = req("n1", SignerType.SIGN_EVENT, "app1", kind = 1)
+        val decrypt = req("d1", SignerType.NIP44_DECRYPT, "app1")
+        val note2 = req("n2", SignerType.SIGN_EVENT, "app1", kind = 1)
+        val other = req("o1", SignerType.SIGN_EVENT, "app2", kind = 7)
+        val connect = req("c1", SignerType.CONNECT, "app3")
+
+        assertTrue(com.greenart7c3.nostrsigner.desktop.ui.singleRequest(listOf(note)) === note)
+        assertNull(com.greenart7c3.nostrsigner.desktop.ui.singleRequest(listOf(note, decrypt)))
+        // A connect is never batched: it is shown alone first.
+        assertTrue(com.greenart7c3.nostrsigner.desktop.ui.singleRequest(listOf(note, connect, decrypt)) === connect)
+
+        // Per app in arrival order, then per type (sign before decrypt), kinds kept together.
+        val apps = com.greenart7c3.nostrsigner.desktop.ui.batchApps(listOf(decrypt, note, other, note2, connect))
+        assertEquals(2, apps.size)
+        assertEquals(listOf(listOf(note, note2), listOf(decrypt)), apps[0].groups.map { it.requests })
+        assertEquals(listOf(other), apps[1].requests)
+
+        // In a batch, ←/→ sets "Remember" for the selected request's whole group only.
+        AmberDesktop.engine.pending.value = listOf(decrypt, note, other, note2)
+        UiState.selectedRequestId.value = note2.queueKey
+        UiState.cycleRememberChoice(1)
+        assertEquals(RememberType.FIVE_MINUTES, UiState.rememberChoiceFor(note.queueKey))
+        assertEquals(RememberType.FIVE_MINUTES, UiState.rememberChoiceFor(note2.queueKey))
+        assertEquals(RememberType.NEVER, UiState.rememberChoiceFor(decrypt.queueKey))
+
+        // ↓ follows the screen order: note, note2, decrypt, other.
+        UiState.moveRequestSelection(1)
+        assertEquals(decrypt.queueKey, UiState.selectedRequestId.value)
+
+        // Only shown requests get a decision; Space flips the selected one; prune drops answered ones.
+        UiState.batchApproved.value = emptyMap()
+        assertFalse(UiState.toggleSelectedBatchApproval())
+        UiState.seedBatch(listOf(decrypt, note))
+        assertTrue(UiState.toggleSelectedBatchApproval())
+        assertEquals(mapOf(decrypt.queueKey to false, note.queueKey to true), UiState.batchApproved.value)
+        // Shift+Space flips the selected request's whole section: partly denied -> approve all, then deny all.
+        AmberDesktop.engine.pending.value = listOf(decrypt, note, other, note2)
+        UiState.seedBatch(listOf(decrypt, note, other, note2))
+        UiState.setBatchApproved(listOf(note), false)
+        UiState.selectedRequestId.value = note2.queueKey
+        assertTrue(UiState.toggleSelectedBatchApproval(wholeGroup = true))
+        assertTrue(UiState.batchApproved.value[note.queueKey] == true && UiState.batchApproved.value[note2.queueKey] == true)
+        assertTrue(UiState.toggleSelectedBatchApproval(wholeGroup = true))
+        assertTrue(UiState.batchApproved.value[note.queueKey] == false && UiState.batchApproved.value[note2.queueKey] == false)
+        assertEquals(false, UiState.batchApproved.value[decrypt.queueKey]) // other section untouched
+
+        UiState.pruneRequestState(listOf(note))
+        assertEquals(mapOf(note.queueKey to false), UiState.batchApproved.value)
     }
 
     @Test

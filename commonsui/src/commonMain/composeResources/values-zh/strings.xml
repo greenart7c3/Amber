@@ -1019,6 +1019,7 @@
     <string name="d_shortcut_hint">↑↓ 选择 · ←→ 记住 · %1$s 批准 · %2$s 拒绝</string>
     <string name="d_shortcut_hint_scope">↑↓ 选择 · ←→ 记住 · S 范围 · %1$s 批准 · %2$s 拒绝</string>
     <string name="d_shortcut_hint_connect">↑↓ 选择 · ←→ 删除时间 · 1–3 权限 · A 账户 · %1$s 批准 · %2$s 拒绝</string>
+    <string name="d_shortcut_hint_batch">↑↓ 选择 · 空格 批准/拒绝 · Shift+空格 整个分组 · ←→ 记住 · S 范围 · D 详情 · %1$s 确认</string>
     <string name="d_remember_prefix">记住：%1$s</string>
     <string name="d_qr_code">QR 码</string>
     <string name="d_saved">已保存</string>

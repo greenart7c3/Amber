@@ -111,18 +111,22 @@ class RequestDetailsTest {
     fun detailsShortcutOpensOnlyForRequestsWithDetails() {
         val connect = req(SignerType.CONNECT)
         val sign = req(SignerType.SIGN_EVENT, preview = note)
-        AmberDesktop.engine.pending.value = listOf(connect, sign)
-
+        // A connect is shown alone (never batched), and has no details.
+        AmberDesktop.engine.pending.value = listOf(connect)
         UiState.selectedRequestId.value = connect.queueKey
         assertFalse(UiState.showSelectedDetails())
         assertNull(UiState.detailsRequestId.value)
 
+        AmberDesktop.engine.pending.value = listOf(connect, sign)
+        assertFalse("the sign request waits behind the connect", UiState.showSelectedDetails())
+
+        AmberDesktop.engine.pending.value = listOf(sign)
         UiState.selectedRequestId.value = sign.queueKey
         assertTrue(UiState.showSelectedDetails())
         assertEquals(sign.queueKey, UiState.detailsRequestId.value)
 
         // Answered elsewhere (shortcut, notification, expiry): the dialog closes.
-        UiState.pruneRequestState(listOf(connect))
+        UiState.pruneRequestState(emptyList())
         assertNull(UiState.detailsRequestId.value)
     }
 

@@ -1002,6 +1002,7 @@ Yang dapat Anda lakukan:
     <string name="d_shortcut_hint">↑↓ pilih · ←→ ingat · %1$s setujui · %2$s tolak</string>
     <string name="d_shortcut_hint_scope">↑↓ pilih · ←→ ingat · S cakupan · %1$s setujui · %2$s tolak</string>
     <string name="d_shortcut_hint_connect">↑↓ pilih · ←→ hapus setelah · 1–3 izin · A akun · %1$s setujui · %2$s tolak</string>
+    <string name="d_shortcut_hint_batch">↑↓ pilih · Spasi setujui/tolak · Shift+Spasi seluruh bagian · ←→ ingat · S cakupan · D detail · %1$s konfirmasi</string>
     <string name="d_remember_prefix">Ingat: %1$s</string>
     <string name="d_qr_code">Kode QR</string>
     <string name="d_saved">Tersimpan</string>

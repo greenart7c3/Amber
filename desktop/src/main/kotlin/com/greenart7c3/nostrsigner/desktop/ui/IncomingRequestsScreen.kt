@@ -30,6 +30,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -43,6 +45,8 @@ import com.greenart7c3.nostrsigner.common.SignerType
 import com.greenart7c3.nostrsigner.commonsui.Permission
 import com.greenart7c3.nostrsigner.commonsui.Res
 import com.greenart7c3.nostrsigner.commonsui.account
+import com.greenart7c3.nostrsigner.commonsui.approve
+import com.greenart7c3.nostrsigner.commonsui.confirm
 import com.greenart7c3.nostrsigner.commonsui.d_approve
 import com.greenart7c3.nostrsigner.commonsui.d_no_requests_sub
 import com.greenart7c3.nostrsigner.commonsui.d_no_requests_title
@@ -50,11 +54,13 @@ import com.greenart7c3.nostrsigner.commonsui.d_relays_label
 import com.greenart7c3.nostrsigner.commonsui.d_request_approved
 import com.greenart7c3.nostrsigner.commonsui.d_request_rejected
 import com.greenart7c3.nostrsigner.commonsui.d_shortcut_hint
+import com.greenart7c3.nostrsigner.commonsui.d_shortcut_hint_batch
 import com.greenart7c3.nostrsigner.commonsui.d_shortcut_hint_connect
 import com.greenart7c3.nostrsigner.commonsui.d_shortcut_hint_scope
 import com.greenart7c3.nostrsigner.commonsui.d_socket_name_unverified
 import com.greenart7c3.nostrsigner.commonsui.d_via_local_socket
 import com.greenart7c3.nostrsigner.commonsui.d_working
+import com.greenart7c3.nostrsigner.commonsui.deny
 import com.greenart7c3.nostrsigner.commonsui.encryption_scope
 import com.greenart7c3.nostrsigner.commonsui.for_all_kinds
 import com.greenart7c3.nostrsigner.commonsui.for_all_methods
@@ -64,6 +70,7 @@ import com.greenart7c3.nostrsigner.commonsui.for_this_method_only
 import com.greenart7c3.nostrsigner.commonsui.for_this_relay_only
 import com.greenart7c3.nostrsigner.commonsui.getStringBlocking
 import com.greenart7c3.nostrsigner.commonsui.insecure_relay_warning
+import com.greenart7c3.nostrsigner.commonsui.is_requiring_some_permissions_please_review_them
 import com.greenart7c3.nostrsigner.commonsui.localizedBlocking
 import com.greenart7c3.nostrsigner.commonsui.nip44_v3_context
 import com.greenart7c3.nostrsigner.commonsui.nip44_v3_kind
@@ -74,6 +81,7 @@ import com.greenart7c3.nostrsigner.commonsui.reject
 import com.greenart7c3.nostrsigner.commonsui.relay_auth_scope
 import com.greenart7c3.nostrsigner.commonsui.replace_app_message
 import com.greenart7c3.nostrsigner.commonsui.see_details
+import com.greenart7c3.nostrsigner.commonsui.several_apps_are_requiring_some_permissions_please_review_them
 import com.greenart7c3.nostrsigner.commonsui.switch_account
 import com.greenart7c3.nostrsigner.desktop.core.AccountsStore
 import com.greenart7c3.nostrsigner.desktop.core.AmberDesktop
@@ -85,6 +93,7 @@ import com.greenart7c3.nostrsigner.desktop.core.connectionToReplace
 import com.greenart7c3.nostrsigner.desktop.core.describe
 import com.greenart7c3.nostrsigner.desktop.core.nip44v3SignerTypes
 import com.greenart7c3.nostrsigner.desktop.core.toShortenHex
+import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -105,31 +114,233 @@ fun IncomingRequestsScreen() {
         return
     }
 
-    val selectedId by UiState.selectedRequestId.collectAsState()
-    val listState = rememberLazyListState()
-
-    // Keep the keyboard selection valid and visible as requests come and go.
+    // Keep the keyboard selection valid as requests come and go.
     LaunchedEffect(pending) {
         UiState.pruneRequestState(pending)
     }
-    LaunchedEffect(selectedId) {
-        val index = pending.indexOfFirst { it.queueKey == selectedId }
+
+    // Like Android: a connect, or the only request, gets the full card; several
+    // requests are reviewed together and answered with one Confirm.
+    val single = singleRequest(pending)
+    if (single != null) {
+        val scrollState = rememberScrollState()
+        ScrollbarBox(rememberScrollbarAdapter(scrollState), Modifier.fillMaxSize()) {
+            Column(Modifier.fillMaxSize().verticalScroll(scrollState).padding(vertical = 12.dp)) {
+                key(single.queueKey) {
+                    RequestCard(single)
+                }
+            }
+        }
+    } else {
+        RequestBatch(batchApps(pending))
+    }
+}
+
+/** Several requests (mirrors Android's BunkerMultiEventHomeScreen): per app, per type, one Confirm. */
+@Composable
+private fun RequestBatch(apps: List<RequestApp>) {
+    val selectedId by UiState.selectedRequestId.collectAsState()
+    val approved by UiState.batchApproved.collectAsState()
+    val expanded = remember { mutableStateMapOf<String, Boolean>() }
+    val listState = rememberLazyListState()
+    // An app header (when there are several apps), then that app's groups.
+    val entries: List<Any> = remember(apps) {
+        apps.flatMap { app -> (if (apps.size > 1) listOf<Any>(app) else emptyList()) + app.groups }
+    }
+
+    LaunchedEffect(apps) { UiState.seedBatch(apps.flatMap { it.requests }) }
+    LaunchedEffect(selectedId, entries) {
+        val index = entries.indexOfFirst { entry -> entry is RequestGroup && entry.requests.any { it.queueKey == selectedId } }
         if (index >= 0) listState.animateScrollToItem(index)
     }
 
-    ScrollbarBox(rememberScrollbarAdapter(listState), Modifier.fillMaxSize()) {
-        LazyColumn(
-            Modifier.fillMaxSize(),
-            state = listState,
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-            contentPadding = androidx.compose.foundation.layout.PaddingValues(vertical = 12.dp),
-        ) {
-            items(pending.size, key = { pending[it].queueKey }) { index ->
-                val req = pending[index]
-                RequestCard(
-                    req = req,
-                    selected = req.queueKey == (selectedId ?: pending.firstOrNull()?.queueKey),
-                    onSelect = { UiState.selectedRequestId.value = req.queueKey },
+    Column(Modifier.fillMaxSize().padding(top = 12.dp)) {
+        Text(
+            if (apps.size == 1) {
+                stringResource(Res.string.is_requiring_some_permissions_please_review_them, apps.first().first.displayName())
+            } else {
+                pluralStringResource(Res.plurals.several_apps_are_requiring_some_permissions_please_review_them, apps.size, apps.size)
+            },
+            style = MaterialTheme.typography.titleMedium,
+        )
+        if (apps.size == 1) BatchAppHeader(apps.first(), showName = false)
+        ScrollbarBox(rememberScrollbarAdapter(listState), Modifier.weight(1f).fillMaxWidth()) {
+            LazyColumn(
+                Modifier.fillMaxSize(),
+                state = listState,
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                contentPadding = androidx.compose.foundation.layout.PaddingValues(vertical = 12.dp),
+            ) {
+                items(entries.size, key = { (entries[it] as? RequestGroup)?.id ?: "app:${(entries[it] as RequestApp).first.queueKey}" }) { index ->
+                    when (val entry = entries[index]) {
+                        is RequestApp -> BatchAppHeader(entry, showName = true)
+                        is RequestGroup -> {
+                            val app = apps.first { entry in it.groups }
+                            val collapsible = app.groups.size > 1
+                            BatchGroupCard(
+                                group = entry,
+                                approved = approved,
+                                selectedId = selectedId ?: apps.first().first.queueKey,
+                                collapsible = collapsible,
+                                expanded = !collapsible || expanded[entry.id] == true || entry.requests.any { it.queueKey == selectedId },
+                                onExpandToggle = { expanded[entry.id] = expanded[entry.id] != true },
+                            )
+                        }
+                    }
+                }
+            }
+        }
+        BatchConfirmBar()
+    }
+}
+
+private fun PendingBunkerRequest.displayName() = appName.ifBlank { localKey.toShortenHex() }
+
+/** The app a batch's requests come from, and the account they sign as. */
+@Composable
+private fun BatchAppHeader(
+    app: RequestApp,
+    showName: Boolean,
+) {
+    val req = app.first
+    Column(Modifier.padding(top = 4.dp)) {
+        if (showName) {
+            Text(
+                "${req.displayName()} (${app.requests.size})",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+            )
+        }
+        if (req.appUrl.isNotBlank()) Text(req.appUrl, style = MaterialTheme.typography.bodySmall)
+        if (req.isLocalSocket) Text(stringResource(Res.string.d_via_local_socket), style = MaterialTheme.typography.bodySmall)
+        SigningAccountRow(npub = req.account.npub, canSwitch = false, onSelect = {})
+    }
+}
+
+/** One request type of one app: approve-all checkbox, the group's Remember/scope choice, and its requests. */
+@Composable
+private fun BatchGroupCard(
+    group: RequestGroup,
+    approved: Map<String, Boolean>,
+    selectedId: String,
+    collapsible: Boolean,
+    expanded: Boolean,
+    onExpandToggle: () -> Unit,
+) {
+    val first = group.requests.first()
+    val rememberChoices by UiState.rememberChoices.collectAsState()
+    val scopeChoices by UiState.scopeChoices.collectAsState()
+    Card(Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(12.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Checkbox(
+                    checked = group.requests.all { approved[it.queueKey] != false },
+                    onCheckedChange = { UiState.setBatchApproved(group.requests, it) },
+                )
+                Text(
+                    "${group.type.describe(group.kind, group.content)} (${group.requests.size})",
+                    style = MaterialTheme.typography.titleSmall,
+                    modifier = Modifier.weight(1f),
+                )
+                if (collapsible) {
+                    AmberTextButton(text = if (expanded) "▲" else "▼", onClick = onExpandToggle)
+                }
+            }
+            if (first.hasScopeChoice) {
+                ScopeChips(first, scopeChoices[first.queueKey] ?: first.defaultScope) { UiState.setGroupScope(group.requests, it) }
+            }
+            RememberTypeSelector(rememberChoices[first.queueKey] ?: RememberType.NEVER) { UiState.setGroupRemember(group.requests, it) }
+            if (expanded) {
+                group.requests.forEach { req ->
+                    BatchRequestRow(
+                        req = req,
+                        approved = approved[req.queueKey] != false,
+                        selected = req.queueKey == selectedId,
+                    )
+                }
+            }
+        }
+    }
+}
+
+/** One request in a batch: its Approve/Deny checkbox and what it is about. */
+@Composable
+private fun BatchRequestRow(
+    req: PendingBunkerRequest,
+    approved: Boolean,
+    selected: Boolean,
+) {
+    val details = remember(req) { RequestDetails.of(req) }
+    Card(
+        Modifier.fillMaxWidth().padding(top = 8.dp).clickable { UiState.selectedRequestId.value = req.queueKey },
+        border = if (selected) BorderStroke(2.dp, orange) else null,
+    ) {
+        Row(Modifier.padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
+            Checkbox(checked = approved, onCheckedChange = { UiState.setBatchApproved(listOf(req), it) })
+            Column(Modifier.weight(1f)) {
+                Text(
+                    stringResource(if (approved) Res.string.approve else Res.string.deny),
+                    style = MaterialTheme.typography.labelMedium,
+                )
+                val summary = details?.summary().orEmpty().ifBlank { req.preview }
+                if (summary.isNotBlank()) {
+                    Text(
+                        summary,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 3,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+                if (req.type in nip44v3SignerTypes) {
+                    Text(
+                        stringResource(Res.string.nip44_v3_scope, req.nip44v3Scope.ifEmpty { stringResource(Res.string.nip44_v3_no_scope) }),
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                }
+            }
+            if (details != null) {
+                AmberTextButton(
+                    text = if (selected) "${stringResource(Res.string.see_details)} (D)" else stringResource(Res.string.see_details),
+                    onClick = { UiState.detailsRequestId.value = req.queueKey },
+                )
+                val detailsId by UiState.detailsRequestId.collectAsState()
+                if (detailsId == req.queueKey) {
+                    RequestDetailsDialog(req, details, onDismiss = { UiState.detailsRequestId.value = null })
+                }
+            }
+        }
+    }
+}
+
+/**
+ * The "Encryption scope" toggle: NIP-04/44 grants this content type or the
+ * whole NIP; NIP-44 v3 this kind or all; relay auth this relay or every relay.
+ */
+@Composable
+private fun ScopeChips(
+    req: PendingBunkerRequest,
+    scope: EncryptionScope,
+    onSelect: (EncryptionScope) -> Unit,
+) {
+    val options = if (req.isRelayAuth) {
+        listOf(EncryptionScope.SPECIFIC to Res.string.for_this_relay_only, EncryptionScope.ALL to Res.string.for_all_relays)
+    } else if (req.type in nip44v3SignerTypes) {
+        listOf(EncryptionScope.SPECIFIC to Res.string.for_this_kind_only, EncryptionScope.ALL to Res.string.for_all_kinds)
+    } else {
+        listOf(EncryptionScope.SPECIFIC to Res.string.for_this_method_only, EncryptionScope.ALL to Res.string.for_all_methods)
+    }
+    Column {
+        Text(
+            stringResource(if (req.isRelayAuth) Res.string.relay_auth_scope else Res.string.encryption_scope),
+            style = MaterialTheme.typography.labelMedium,
+        )
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            options.forEach { (value, key) ->
+                FilterChip(
+                    selected = scope == value,
+                    onClick = { onSelect(value) },
+                    label = { Text(stringResource(key)) },
                 )
             }
         }
@@ -139,8 +350,6 @@ fun IncomingRequestsScreen() {
 @Composable
 private fun RequestCard(
     req: PendingBunkerRequest,
-    selected: Boolean,
-    onSelect: () -> Unit,
 ) {
     val rememberChoices by UiState.rememberChoices.collectAsState()
     val rememberType = rememberChoices[req.queueKey] ?: RememberType.NEVER
@@ -148,10 +357,7 @@ private fun RequestCard(
     val connectChoices by UiState.connectChoices.collectAsState()
     val connectChoice = connectChoices[req.queueKey] ?: UiState.connectChoiceFor(req)
 
-    Card(
-        Modifier.fillMaxWidth().clickable(onClick = onSelect),
-        border = if (selected) BorderStroke(2.dp, orange) else null,
-    ) {
+    Card(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(16.dp)) {
             Text(
                 req.appName.ifBlank { req.localKey.toShortenHex() },
@@ -311,27 +517,7 @@ private fun RequestCard(
                 // this content type or the whole NIP; NIP-44 v3 this kind or all;
                 // relay auth (BunkerRelayAuthScreen) this relay or every relay.
                 val scopeChoices by UiState.scopeChoices.collectAsState()
-                val scope = scopeChoices[req.queueKey] ?: req.defaultScope
-                Text(
-                    stringResource(if (req.isRelayAuth) Res.string.relay_auth_scope else Res.string.encryption_scope),
-                    style = MaterialTheme.typography.labelMedium,
-                )
-                val options = if (req.isRelayAuth) {
-                    listOf(EncryptionScope.SPECIFIC to Res.string.for_this_relay_only, EncryptionScope.ALL to Res.string.for_all_relays)
-                } else if (isV3) {
-                    listOf(EncryptionScope.SPECIFIC to Res.string.for_this_kind_only, EncryptionScope.ALL to Res.string.for_all_kinds)
-                } else {
-                    listOf(EncryptionScope.SPECIFIC to Res.string.for_this_method_only, EncryptionScope.ALL to Res.string.for_all_methods)
-                }
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    options.forEach { (value, key) ->
-                        FilterChip(
-                            selected = scope == value,
-                            onClick = { UiState.setScopeChoice(req.queueKey, value) },
-                            label = { Text(stringResource(key)) },
-                        )
-                    }
-                }
+                ScopeChips(req, scopeChoices[req.queueKey] ?: req.defaultScope) { UiState.setScopeChoice(req.queueKey, it) }
                 Spacer(Modifier.height(4.dp))
             }
             if (req.type != SignerType.CONNECT) {
@@ -455,5 +641,23 @@ private fun SigningAccountRow(
                 }
             }
         }
+    }
+}
+
+/** Confirm for the whole batch, with the keyboard shortcuts the batch screen takes. */
+@Composable
+private fun BatchConfirmBar() {
+    Row(Modifier.padding(vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+        AmberButton(
+            text = "${stringResource(Res.string.confirm)} (${shortcutLabel("↵")})",
+            onClick = { UiState.confirmBatch() },
+        )
+        Spacer(Modifier.width(16.dp))
+        Text(
+            stringResource(Res.string.d_shortcut_hint_batch, shortcutLabel("↵")),
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.weight(1f),
+        )
     }
 }

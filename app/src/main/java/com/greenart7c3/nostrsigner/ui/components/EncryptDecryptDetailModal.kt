@@ -17,7 +17,6 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
@@ -48,7 +47,7 @@ fun EncryptDecryptDetailModal(
     encryptedData: EncryptedDataKind?,
     onDismiss: () -> Unit,
 ) {
-    val clipboard = LocalClipboard.current
+    val copyToClipboard = rememberCopyToClipboard()
     val context = LocalContext.current
     val sheetState = rememberModalBottomSheetState(
         skipPartiallyExpanded = true,
@@ -97,23 +96,23 @@ fun EncryptDecryptDetailModal(
                         EventSection(
                             stringResource(Res.string.kind),
                             "${event.kind} - ${permission.localizedBlocking()}",
-                            { copyToClipboard(clipboard, "${event.kind} - ${permission.localizedBlocking()}") },
+                            { copyToClipboard("${event.kind} - ${permission.localizedBlocking()}") },
                         )
                         EventSection(
                             stringResource(Res.string.pubkey),
                             event.pubKey.toShortenHex(),
-                            { copyToClipboard(clipboard, event.pubKey) },
+                            { copyToClipboard(event.pubKey) },
                         )
                         EventSection(
                             stringResource(Res.string.date),
                             TimeUtils.formatDateTime(context, event.createdAt * 1000, withSeconds = true),
-                            { copyToClipboard(clipboard, "${event.createdAt}") },
+                            { copyToClipboard("${event.createdAt}") },
                         )
                         if (event.content.isNotEmpty()) {
                             EventSection(
                                 stringResource(Res.string.content),
                                 event.content,
-                                { copyToClipboard(clipboard, event.content) },
+                                { copyToClipboard(event.content) },
                             )
                         }
                         if (event.tags.isNotEmpty()) {
@@ -122,7 +121,6 @@ fun EncryptDecryptDetailModal(
                                 tags = event.tags,
                                 onCopy = {
                                     copyToClipboard(
-                                        clipboard,
                                         event.tags.joinToString(separator = ", ") { "[${it.joinToString(separator = ", ") { tag -> "\"$tag\"" }}]" },
                                     )
                                 },
@@ -135,7 +133,6 @@ fun EncryptDecryptDetailModal(
                             tags = encryptedData.tagArray,
                             onCopy = {
                                 copyToClipboard(
-                                    clipboard,
                                     encryptedData.tagArray.joinToString(separator = ", ") { "[${it.joinToString(separator = ", ") { tag -> "\"$tag\"" }}]" },
                                 )
                             },

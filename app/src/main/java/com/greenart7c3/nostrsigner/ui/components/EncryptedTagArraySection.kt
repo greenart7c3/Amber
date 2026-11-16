@@ -1,21 +1,15 @@
 package com.greenart7c3.nostrsigner.ui.components
 
-import android.content.ClipData
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.ClipEntry
-import androidx.compose.ui.platform.LocalClipboard
-import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.commonsui.Res
 import com.greenart7c3.nostrsigner.commonsui.tags
 import com.greenart7c3.nostrsigner.ui.theme.AmberPreview
 import com.greenart7c3.nostrsigner.ui.theme.ThemePreviews
 import com.vitorpamplona.quartz.nip01Core.core.TagArray
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -23,7 +17,7 @@ fun EncryptedTagArraySection(
     modifier: Modifier,
     tags: TagArray,
 ) {
-    val clipboard = LocalClipboard.current
+    val copyToClipboard = rememberCopyToClipboard()
     LazyColumn(
         modifier = modifier,
     ) {
@@ -32,13 +26,7 @@ fun EncryptedTagArraySection(
                 stringResource(Res.string.tags),
                 tags,
                 {
-                    Amber.instance.applicationIOScope.launch(Dispatchers.Main) {
-                        clipboard.setClipEntry(
-                            ClipEntry(
-                                ClipData.newPlainText("Tags", tags.joinToString(separator = ", ") { "[${it.joinToString(separator = ", ") { tag -> "\"${tag}\"" }}]" }),
-                            ),
-                        )
-                    }
+                    copyToClipboard(tags.joinToString(separator = ", ") { "[${it.joinToString(separator = ", ") { tag -> "\"${tag}\"" }}]" })
                 },
             )
 

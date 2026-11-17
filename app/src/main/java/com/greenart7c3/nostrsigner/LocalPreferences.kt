@@ -1025,6 +1025,8 @@ object LocalPreferences {
                     picture = MutableStateFlow(picture),
                     signPolicy = signPolicy,
                     didBackup = didBackup,
+                    scope = context.amber.applicationIOScope,
+                    appContext = context.applicationContext,
                 )
             accountCache.put(npub, account)
             if (npub in Amber.instance.keystoreFailedAccounts.value) {

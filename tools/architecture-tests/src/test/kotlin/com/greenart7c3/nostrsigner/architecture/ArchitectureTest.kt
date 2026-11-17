@@ -181,8 +181,6 @@ class ArchitectureTest {
 
         val amberInstanceUsers = setOf(
             "LocalPreferences.kt",
-            "models/Account.kt",
-            "service/AccountExportService.kt",
             "service/ApplicationBackup.kt",
             "service/BunkerRequestUtils.kt",
             "service/EventNotificationConsumer.kt",

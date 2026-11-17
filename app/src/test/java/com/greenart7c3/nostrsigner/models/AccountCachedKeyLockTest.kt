@@ -1,10 +1,10 @@
 package com.greenart7c3.nostrsigner.models
 
 import android.app.KeyguardManager
+import android.content.Context
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.service.DeviceUnlockPolicy
-import com.greenart7c3.nostrsigner.service.installAmberInstance
 import com.vitorpamplona.quartz.nip01Core.core.Event
 import com.vitorpamplona.quartz.nip01Core.signers.NostrSignerInternal
 import io.mockk.Called
@@ -23,7 +23,7 @@ import org.junit.Assert.assertThrows
 import org.junit.Test
 
 class AccountCachedKeyLockTest {
-    private fun newAccount(signer: NostrSignerInternal, scope: CoroutineScope): Account = Account(
+    private fun newAccount(signer: NostrSignerInternal, scope: CoroutineScope, appContext: Context? = null): Account = Account(
         signer = signer,
         hexKey = "owner",
         npub = "npub-owner",
@@ -32,6 +32,7 @@ class AccountCachedKeyLockTest {
         signPolicy = 1,
         didBackup = false,
         scope = scope,
+        appContext = appContext,
     )
 
     @Test
@@ -69,28 +70,39 @@ class AccountCachedKeyLockTest {
     }
 
     @Test
+    fun `default gate refuses when the account has no context to check with`() {
+        val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
+        try {
+            assertThrows(IllegalStateException::class.java) {
+                newAccount(mockk<NostrSignerInternal>(), scope).requirePrivateKeyAccess()
+            }
+        } finally {
+            scope.cancel()
+        }
+    }
+
+    @Test
     fun `default gate reads the stored preference and the keyguard state`() {
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
         val amber = mockk<Amber>()
         val keyguard = mockk<KeyguardManager>()
         every { amber.getSystemService(KeyguardManager::class.java) } returns keyguard
-        installAmberInstance(amber)
         mockkObject(LocalPreferences)
         try {
             // Opt-in off: allowed regardless of lock state, keyguard untouched.
             every { LocalPreferences.getRequireUnlockedDevice(any()) } returns false
             every { keyguard.isDeviceLocked } returns true
-            newAccount(mockk<NostrSignerInternal>(), scope).requirePrivateKeyAccess()
+            newAccount(mockk<NostrSignerInternal>(), scope, amber).requirePrivateKeyAccess()
 
             // Opt-in on, device unlocked: allowed.
             every { LocalPreferences.getRequireUnlockedDevice(any()) } returns true
             every { keyguard.isDeviceLocked } returns false
-            newAccount(mockk<NostrSignerInternal>(), scope).requirePrivateKeyAccess()
+            newAccount(mockk<NostrSignerInternal>(), scope, amber).requirePrivateKeyAccess()
 
             // Opt-in on, device locked: refused.
             every { keyguard.isDeviceLocked } returns true
             assertThrows(SecurityException::class.java) {
-                newAccount(mockk<NostrSignerInternal>(), scope).requirePrivateKeyAccess()
+                newAccount(mockk<NostrSignerInternal>(), scope, amber).requirePrivateKeyAccess()
             }
         } finally {
             scope.cancel()

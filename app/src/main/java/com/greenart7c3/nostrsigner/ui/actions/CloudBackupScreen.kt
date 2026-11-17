@@ -186,6 +186,8 @@ fun CloudBackupScreen(modifier: Modifier) {
                     context.contentResolver.openInputStream(fileUri)?.bufferedReader()?.readText() ?: ""
                 }
                 AccountExportService.importFromNcryptsec(
+                    context = context.applicationContext,
+                    scope = appScope,
                     content = content,
                     password = password.text,
                     onLoading = { loading -> isLoading = loading },
@@ -557,6 +559,8 @@ fun CloudBackupScreen(modifier: Modifier) {
 
                             downloadResult.onSuccess { data ->
                                 AccountExportService.importFromNcryptsec(
+                                    context = context.applicationContext,
+                                    scope = appScope,
                                     content = data,
                                     password = password.text,
                                     onLoading = { loading -> isLoading = loading },

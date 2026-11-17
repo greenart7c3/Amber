@@ -236,6 +236,8 @@ fun MainPage(
             uri?.let {
                 val hasAccounts = LocalPreferences.allAccounts(amber).isNotEmpty()
                 AccountExportService.importAccounts(
+                    context = amber,
+                    scope = appScope,
                     uri = uri,
                     password = password.text,
                     onText = {

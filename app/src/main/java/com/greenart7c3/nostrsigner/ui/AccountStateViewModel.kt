@@ -155,6 +155,8 @@ class AccountStateViewModel(
             signPolicy = signPolicy,
             didBackup = true,
             signer = NostrSignerInternal(keyPair),
+            scope = appScope,
+            appContext = appContext,
         )
 
         if (LocalPreferences.allSavedAccounts(appContext).isEmpty()) {
@@ -194,6 +196,8 @@ class AccountStateViewModel(
             signPolicy = signPolicy,
             didBackup = false,
             signer = NostrSignerInternal(keyPair),
+            scope = appScope,
+            appContext = appContext,
         )
         if (LocalPreferences.allSavedAccounts(appContext).isEmpty()) {
             settingsStore.settings = settingsStore.settings.copy(

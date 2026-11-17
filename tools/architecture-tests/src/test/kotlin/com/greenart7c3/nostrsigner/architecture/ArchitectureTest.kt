@@ -88,6 +88,33 @@ class ArchitectureTest {
     }
 
     @Test
+    fun `Context amber usage can only shrink`() {
+        // Root-package files use the extension without an import (and often without a receiver).
+        val rootUse = Regex("""\bamber\b""")
+        // The same container without the extension: (context.applicationContext as Amber).
+        val castToAmber = Regex("""\bas\??\s+(com\.greenart7c3\.nostrsigner\.)?Amber\b""")
+        val actual = appMain
+            .filter { it.relativePath() != "Amber.kt" }
+            .filter { file ->
+                file.imports.any { it.name == "com.greenart7c3.nostrsigner.amber" } ||
+                    castToAmber.containsMatchIn(file.text) ||
+                    (
+                        file.packagee?.name == "com.greenart7c3.nostrsigner" &&
+                            rootUse.containsMatchIn(file.text.lines().filterNot { it.startsWith("import ") }.joinToString("\n"))
+                        )
+            }
+            .map { it.relativePath() }
+            .toSet()
+
+        assertRatchet(
+            "Context.amber (or a cast to Amber) hands out the whole container: take SettingsStore, AccountRepository or RelayClient " +
+                "(LocalSettingsStore etc. in composables) instead. Entry points the system constructs are the exception.",
+            actual,
+            contextAmberUsers,
+        )
+    }
+
+    @Test
     fun `service and database do not render UI`() {
         val actual = appMain
             .filter { file -> file.relativePath().startsWith("service/") || file.relativePath().startsWith("database/") }
@@ -163,6 +190,42 @@ class ArchitectureTest {
             "ui/EditConfigurationScreen.kt",
             "ui/EditPermission.kt",
             "ui/NewNsecBunkerScreen.kt",
+        )
+
+        val contextAmberUsers = setOf(
+            "LocalPreferences.kt",
+            "MainActivity.kt",
+            "SecureCryptoHelper.kt",
+            "service/BackupApplicationsWorker.kt",
+            "service/BootReceiver.kt",
+            "service/ClearLogsWorker.kt",
+            "service/ConnectivityService.kt",
+            "service/IntentUtils.kt",
+            "service/KillSwitchReceiver.kt",
+            "service/ReconnectReceiver.kt",
+            "service/StopServiceReceiver.kt",
+            "service/TorRestartReceiver.kt",
+            "service/UpdateCheckWorker.kt",
+            "SignerActivity.kt",
+            "SignerProvider.kt",
+            "ui/actions/AccountBackupScreen.kt",
+            "ui/actions/EditRelaysDialog.kt",
+            "ui/ApplicationsBackupScreen.kt",
+            "ui/ApplicationsScreen.kt",
+            "ui/components/AmberTopAppBar.kt",
+            "ui/components/BunkerMultiEventHomeScreen.kt",
+            "ui/components/BunkerSingleEventHomeScreen.kt",
+            "ui/components/EventData.kt",
+            "ui/components/ProfileSubscriptionEffect.kt",
+            "ui/CrashReportScreen.kt",
+            "ui/FeedbackScreen.kt",
+            "ui/LoginScreen.kt",
+            "ui/MainScreen.kt",
+            "ui/NewNsecBunkerScreen.kt",
+            "ui/RelaysScreen.kt",
+            "ui/SettingsScreen.kt",
+            "ui/TranslationReportScreen.kt",
+            "ui/UpdateSettingsScreen.kt",
         )
 
         val composeUiInService = setOf(

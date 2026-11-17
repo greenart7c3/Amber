@@ -12,6 +12,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AlertDialogDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -92,15 +93,15 @@ fun BunkerSingleEventHomeScreen(
             accountRepository = LocalAccountRepository.current,
             bunkerResponder = LocalContext.current.amber.bunkerResponder,
             appScope = LocalAppScope.current,
-            bunkerRequest = bunkerRequest,
-            npub = account.npub,
         ),
     ),
 ) {
-    val application by viewModel.application.collectAsStateWithLifecycle()
+    LaunchedEffect(bunkerRequest, account.npub) { viewModel.load(bunkerRequest, account.npub) }
+    val loaded by viewModel.loaded.collectAsStateWithLifecycle()
     val replacePrompt by viewModel.replacePrompt.collectAsStateWithLifecycle()
     val responder = LocalContext.current.amber.bunkerResponder
-    val request = BunkerSingleRequest(bunkerRequest, account, application)
+    // Only what was loaded for this very request: another one under the same key may have other grants.
+    val request = BunkerSingleRequest(bunkerRequest, account, loaded?.takeIf { it.request === bunkerRequest }?.application)
 
     when (bunkerRequest.request) {
         is BunkerRequestPing -> PingRequest(request, responder, onLoading, modifier)

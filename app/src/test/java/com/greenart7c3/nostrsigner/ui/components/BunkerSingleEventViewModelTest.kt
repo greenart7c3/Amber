@@ -24,6 +24,7 @@ import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertSame
 import org.junit.Before
 import org.junit.Test
 
@@ -51,7 +52,7 @@ class BunkerSingleEventViewModelTest {
         isNostrConnectUri = isNostrConnectUri,
     )
 
-    private fun viewModel(request: AmberBunkerRequest) = BunkerSingleEventViewModel(accountRepository, responder, CoroutineScope(Dispatchers.Unconfined), request, "npub1")
+    private fun viewModel() = BunkerSingleEventViewModel(accountRepository, responder, CoroutineScope(Dispatchers.Unconfined))
 
     @Before
     fun setUp() = Dispatchers.setMain(Dispatchers.Unconfined)
@@ -62,14 +63,38 @@ class BunkerSingleEventViewModelTest {
     @Test
     fun `a connect with a secret loads the app saved under that secret`() {
         coEvery { dao.getBySecret("s3cret") } returns saved
+        val request = connect(secret = "s3cret")
+        val viewModel = viewModel()
 
-        val viewModel = viewModel(connect(secret = "s3cret"))
+        viewModel.load(request, "npub1")
 
         // The load runs on Dispatchers.IO.
         coVerify(timeout = 5_000) { dao.getBySecret("s3cret") }
         Thread.sleep(100)
-        assertEquals("Damus", viewModel.application.value?.application?.name)
+        assertSame(request, viewModel.loaded.value?.request)
+        assertEquals("Damus", viewModel.loaded.value?.application?.application?.name)
         coVerify(exactly = 0) { dao.getByKey(any()) }
+    }
+
+    // A client picks the JSON-RPC id: a later request reusing it gets this ViewModel back,
+    // and must be judged on the grants saved now, not on the first request's load.
+    @Test
+    fun `a later request under the same key is loaded again`() {
+        coEvery { dao.getByKey(clientKey) } returns saved
+        val first = connect(isNostrConnectUri = false)
+        val viewModel = viewModel()
+        viewModel.load(first, "npub1")
+        coVerify(timeout = 5_000) { dao.getByKey(clientKey) }
+        Thread.sleep(100)
+
+        coEvery { dao.getByKey(clientKey) } returns null
+        val second = connect(isNostrConnectUri = false)
+        viewModel.load(second, "npub1")
+
+        coVerify(timeout = 5_000, exactly = 2) { dao.getByKey(clientKey) }
+        Thread.sleep(100)
+        assertSame(second, viewModel.loaded.value?.request)
+        assertNull(viewModel.loaded.value?.application)
     }
 
     @Test
@@ -77,7 +102,7 @@ class BunkerSingleEventViewModelTest {
         coEvery { dao.getByKey(any()) } returns null
         coEvery { dao.getByName(any()) } returns null
         val request = connect()
-        val viewModel = viewModel(request)
+        val viewModel = viewModel()
 
         viewModel.approveConnect(BunkerSingleRequest(request, account, null), approval, onLoading = {})
 
@@ -89,7 +114,7 @@ class BunkerSingleEventViewModelTest {
     fun `a nostrconnect URI reusing a saved key asks before replacing it`() {
         coEvery { dao.getByKey(clientKey) } returns saved
         val request = connect()
-        val viewModel = viewModel(request)
+        val viewModel = viewModel()
 
         viewModel.approveConnect(BunkerSingleRequest(request, account, null), approval, onLoading = {})
 

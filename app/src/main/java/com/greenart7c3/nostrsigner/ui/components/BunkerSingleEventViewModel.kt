@@ -54,6 +54,9 @@ data class BunkerSingleRequest(
     fun nip44v3Decision(): Boolean? = IntentUtils.isRemembered(application?.application?.signPolicy, bunkerPermission(application, key, bunkerRequest))
 }
 
+/** The saved app of [request] (null when it has none), as loaded for that request. */
+data class LoadedApplication(val request: AmberBunkerRequest, val application: ApplicationWithPermissions?)
+
 /** The choices of an approved connect, kept while the user decides whether it replaces a saved connection. */
 data class ConnectApproval(
     val permissions: List<Permission>?,
@@ -77,27 +80,29 @@ data class ReplaceConnectionPrompt(
  * The single bunker request screen: loads the saved app the request comes from and
  * approves a connect, asking first when it would replace a saved connection. The
  * request itself is passed to each call, never kept: a client chooses the JSON-RPC
- * id, so a later request can reuse this ViewModel's key.
+ * id, so a later request can reuse this ViewModel's key, and must be answered from
+ * its own load (a grant revoked in between must not still apply).
  */
 class BunkerSingleEventViewModel(
     private val accountRepository: AccountRepository,
     private val bunkerResponder: BunkerResponder,
     // The connect reply is published even if the screen goes away.
     private val appScope: CoroutineScope,
-    bunkerRequest: AmberBunkerRequest,
-    npub: String,
 ) : ViewModel() {
-    private val _application = MutableStateFlow<ApplicationWithPermissions?>(null)
-    val application: StateFlow<ApplicationWithPermissions?> = _application.asStateFlow()
+    private val _loaded = MutableStateFlow<LoadedApplication?>(null)
+
+    /** The saved app last loaded, with the request it was loaded for. */
+    val loaded: StateFlow<LoadedApplication?> = _loaded.asStateFlow()
 
     private val _replacePrompt = MutableStateFlow<ReplaceConnectionPrompt?>(null)
     val replacePrompt: StateFlow<ReplaceConnectionPrompt?> = _replacePrompt.asStateFlow()
 
-    init {
+    fun load(bunkerRequest: AmberBunkerRequest, npub: String) {
         viewModelScope.launch(Dispatchers.IO) {
             val dao = accountRepository.getDatabase(npub).dao()
             val secret = (bunkerRequest.request as? BunkerRequestConnect)?.secret
-            _application.value = if (!secret.isNullOrBlank()) dao.getBySecret(secret) else dao.getByKey(bunkerRequest.localKey)
+            val application = if (!secret.isNullOrBlank()) dao.getBySecret(secret) else dao.getByKey(bunkerRequest.localKey)
+            _loaded.value = LoadedApplication(bunkerRequest, application)
         }
     }
 
@@ -156,10 +161,8 @@ class BunkerSingleEventViewModel(
             accountRepository: AccountRepository,
             bunkerResponder: BunkerResponder,
             appScope: CoroutineScope,
-            bunkerRequest: AmberBunkerRequest,
-            npub: String,
         ): ViewModelProvider.Factory = viewModelFactory {
-            initializer { BunkerSingleEventViewModel(accountRepository, bunkerResponder, appScope, bunkerRequest, npub) }
+            initializer { BunkerSingleEventViewModel(accountRepository, bunkerResponder, appScope) }
         }
     }
 }

@@ -190,8 +190,9 @@ would replace a saved connection; `BunkerSingleRequest` holds the app name,
 icon and remembered decision, so the screen no longer imports `database/`; one
 composable per request type; the grant lookup is `service/bunkerPermission`,
 sharing the intent lookup's order, unit-tested). The ViewModel keeps only the
-loaded app and the replace prompt and is handed the request on each call, since
-a client chooses the JSON-RPC id a later request can reuse its key.
+loaded app and the replace prompt; the app is loaded for each request and used
+only for that request, since a client chooses the JSON-RPC id and a later
+request can reuse the key (a grant revoked in between must not still apply).
 
 ### 5. Break up `LocalPreferences.kt`
 

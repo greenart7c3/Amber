@@ -17,6 +17,7 @@ import com.greenart7c3.nostrsigner.models.AmberSettings
 import com.greenart7c3.nostrsigner.service.BunkerResponder
 import com.greenart7c3.nostrsigner.service.MultiEventScreenIntents
 import com.greenart7c3.nostrsigner.service.newTestAccount
+import com.greenart7c3.nostrsigner.ui.RememberType
 import com.vitorpamplona.quartz.nip01Core.core.Event
 import com.vitorpamplona.quartz.nip01Core.signers.EventTemplate
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequestSign
@@ -35,6 +36,7 @@ import kotlinx.coroutines.SupervisorJob
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
@@ -102,6 +104,38 @@ class BunkerMultiEventViewModelTest {
         encryptionType = EncryptionType.NIP44,
         isNostrConnectUri = false,
     )
+
+    private fun relayAuthRequest(id: String, relayTag: String?): AmberBunkerRequest {
+        val tags = if (relayTag != null) {
+            arrayOf(arrayOf("relay", relayTag), arrayOf("challenge", "abc"))
+        } else {
+            arrayOf(arrayOf("challenge", "abc"))
+        }
+        return AmberBunkerRequest(
+            request = BunkerRequestSign(
+                id = id,
+                event = EventTemplate(createdAt = 1735689600, kind = 22242, tags = tags, content = ""),
+            ),
+            localKey = "client-key",
+            relays = listOf(),
+            currentAccount = "",
+            nostrConnectSecret = "",
+            closeApplication = false,
+            name = "",
+            signedEvent = Event(
+                id = "1".repeat(64),
+                pubKey = "11".repeat(32),
+                createdAt = 1735689600,
+                kind = 22242,
+                tags = tags,
+                content = "",
+                sig = "77".repeat(64),
+            ),
+            encryptedData = null,
+            encryptionType = EncryptionType.NIP44,
+            isNostrConnectUri = false,
+        )
+    }
 
     private fun viewModel() = BunkerMultiEventViewModel(appContext, settingsStore, accountRepository, relayClient, bunkerResponder, scope, account)
 
@@ -173,5 +207,51 @@ class BunkerMultiEventViewModelTest {
         assertEquals("user rejected", response("id-3").error)
         coVerify(timeout = 5_000, exactly = 0) { dao.insertApplicationWithPermissions(any()) }
         coVerify(exactly = 0) { historyDao.addHistory(any(), any()) }
+    }
+
+    @Test
+    fun `a remembered sign grant keeps its chosen duration`() {
+        val viewModel = viewModel()
+        val request = signRequest("id-4", "remember me an hour")
+        viewModel.choices.setRememberType(AppRequestGroupKey(request.appKey, request.requestGroupKey()), RememberType.ONE_HOUR)
+        viewModel.initChoices(listOf(request))
+
+        viewModel.confirm(listOf(request), activity, {})
+
+        response("id-4")
+        coVerify(timeout = 5_000) { dao.insertApplicationWithPermissions(any()) }
+        val saved = mutableListOf<ApplicationWithPermissions>()
+        coVerify { dao.insertApplicationWithPermissions(capture(saved)) }
+        val grant = saved.last().permissions.single { it.type == "SIGN_EVENT" }
+        assertEquals(1, grant.kind)
+        assertEquals(RememberType.ONE_HOUR.screenCode, grant.rememberType)
+        assertTrue(grant.acceptUntil > TimeUtils.now())
+    }
+
+    @Test
+    fun `relay auth remembers per relay, but a blank relay stays just this time`() {
+        val viewModel = viewModel()
+        val withRelay = relayAuthRequest("id-5", "wss://relay.example.com")
+        val withoutRelay = relayAuthRequest("id-6", null)
+        viewModel.choices.setRememberType(AppRequestGroupKey(withRelay.appKey, withRelay.requestGroupKey()), RememberType.ALWAYS)
+        viewModel.initChoices(listOf(withRelay, withoutRelay))
+
+        viewModel.confirm(listOf(withRelay, withoutRelay), activity, {})
+
+        coVerify(timeout = 5_000, exactly = 2) {
+            bunkerResponder.sendBunkerResponse(any(), any(), any(), any(), any(), any(), any())
+        }
+        // Capture after the wait: a timeout verify re-captures on every poll.
+        val replies = mutableListOf<BunkerResponse>()
+        coVerify { bunkerResponder.sendBunkerResponse(any(), any(), capture(replies), any(), any(), any(), any()) }
+        assertEquals(listOf("id-5", "id-6"), replies.map { it.id })
+        // Each remembered request saves twice: the app row, then its grant.
+        coVerify(timeout = 5_000, exactly = 4) { dao.insertApplicationWithPermissions(savedApplication) }
+        val remembered = savedApplication.permissions.single { it.relay == "relay.example.com" }
+        assertEquals(RememberType.ALWAYS.screenCode, remembered.rememberType)
+        // A blank relay-auth relay reads as the all-relays wildcard in the DAO:
+        // remembering it would silently grant every relay.
+        val downgraded = savedApplication.permissions.single { it.kind == 22242 && it.relay.isEmpty() }
+        assertEquals(RememberType.NEVER.screenCode, downgraded.rememberType)
     }
 }

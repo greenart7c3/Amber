@@ -27,7 +27,7 @@ import com.greenart7c3.nostrsigner.service.MultiEventScreenIntents
 import com.greenart7c3.nostrsigner.service.RelayUrlUtils
 import com.greenart7c3.nostrsigner.service.isBlockedByAuthWhitelist
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
-import com.greenart7c3.nostrsigner.service.relayAuthRememberType
+import com.greenart7c3.nostrsigner.service.signRememberType
 import com.greenart7c3.nostrsigner.ui.RememberType
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequestSign
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerResponse
@@ -196,15 +196,13 @@ class BunkerMultiEventViewModel(
                 allRelays -> "*"
                 else -> RelayUrlUtils.extractHostAndPort(AmberEvent.relay(localEvent))
             }
-            // A blank relay-auth relay can never match a per-relay lookup and reads as
-            // the all-relays wildcard: relayAuthRememberType remembers "just this time" instead.
             AmberUtils.acceptOrRejectPermission(
                 application = savedApplication,
                 key = request.localKey,
                 signerType = SignerType.SIGN_EVENT,
                 kind = localEvent.kind,
                 value = isApproved,
-                rememberType = relayAuthRememberType(allRelays = allRelays, relayUrl = signRelay, rememberType = rememberType),
+                rememberType = signRememberType(localEvent.kind, allRelays, signRelay, rememberType),
                 relay = signRelay,
                 encryptedData = request.encryptedData,
                 dao = dao,

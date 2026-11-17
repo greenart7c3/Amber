@@ -26,7 +26,7 @@ import com.greenart7c3.nostrsigner.service.MultiEventScreenIntents
 import com.greenart7c3.nostrsigner.service.RelayUrlUtils
 import com.greenart7c3.nostrsigner.service.isBlockedByAuthWhitelist
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
-import com.greenart7c3.nostrsigner.service.relayAuthRememberType
+import com.greenart7c3.nostrsigner.service.signRememberType
 import com.greenart7c3.nostrsigner.ui.RememberType
 import com.vitorpamplona.quartz.nip57Zaps.ZapRequestEvent
 import com.vitorpamplona.quartz.utils.TimeUtils
@@ -135,15 +135,13 @@ class IntentMultiEventViewModel(
                 allRelays -> "*"
                 else -> RelayUrlUtils.extractHostAndPort(AmberEvent.relay(event))
             }
-            // A blank relay-auth relay can never match a per-relay lookup and reads as the
-            // all-relays wildcard: relayAuthRememberType remembers "just this time" instead.
             AmberUtils.updatePermission(
                 application,
                 localKey,
                 type,
                 event.kind,
                 approved,
-                relayAuthRememberType(allRelays = allRelays, relayUrl = signRelay, rememberType = rememberType),
+                signRememberType(event.kind, allRelays, signRelay, rememberType),
                 relay = signRelay,
                 encryptedData = intentData.encryptedData,
             )

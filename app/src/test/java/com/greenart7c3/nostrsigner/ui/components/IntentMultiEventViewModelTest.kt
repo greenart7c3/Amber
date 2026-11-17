@@ -20,6 +20,7 @@ import com.greenart7c3.nostrsigner.service.MultiEventScreenIntents
 import com.greenart7c3.nostrsigner.service.newTestAccount
 import com.greenart7c3.nostrsigner.ui.RememberType
 import com.vitorpamplona.quartz.nip01Core.core.Event
+import com.vitorpamplona.quartz.utils.TimeUtils
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -112,5 +113,30 @@ class IntentMultiEventViewModelTest {
         assertEquals(listOf(true, false), history.captured.map { it.accepted })
         verify { activity.setResult(Activity.RESULT_OK, any()) }
         assertEquals(listOf(IntentResultType.REMOVE), removed)
+    }
+
+    @Test
+    fun `a remembered sign grant keeps its chosen duration`() {
+        val viewModel = IntentMultiEventViewModel(mockk<Context>(relaxed = true), settingsStore, accountRepository, scope, "com.example.app", account)
+        val event = Event(
+            id = "2".repeat(64),
+            pubKey = "11".repeat(32),
+            createdAt = 1735689600,
+            kind = 1,
+            tags = arrayOf(arrayOf("t", "amber")),
+            content = "remember an hour",
+            sig = "77".repeat(64),
+        )
+        val approved = intent("10", SignerType.SIGN_EVENT, event = event)
+        viewModel.initChoices(listOf(approved))
+        viewModel.choices.setRememberType(requestGroupKey(SignerType.SIGN_EVENT, 1, null, null), RememberType.ONE_HOUR)
+
+        viewModel.confirm(listOf(approved), activity, { _, _ -> }, {})
+
+        val saved = slot<ApplicationWithPermissions>()
+        coVerify(timeout = 5_000) { dao.insertApplicationWithPermissions(capture(saved)) }
+        val grant = saved.captured.permissions.single { it.type == "SIGN_EVENT" }
+        assertEquals(RememberType.ONE_HOUR.screenCode, grant.rememberType)
+        assertTrue(grant.acceptUntil > TimeUtils.now())
     }
 }

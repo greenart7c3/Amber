@@ -350,6 +350,9 @@ fun relayAuthRememberType(
     rememberType: RememberType,
 ): RememberType = if (canRememberRelayAuth(allRelays, relayUrl)) rememberType else RememberType.NEVER
 
+/** Remember decision for a sign grant of [kind]: only relay auth goes through [relayAuthRememberType]. */
+fun signRememberType(kind: Int, allRelays: Boolean, relayUrl: String, rememberType: RememberType): RememberType = if (kind == 22242) relayAuthRememberType(allRelays, relayUrl, rememberType) else rememberType
+
 /**
  * Whether the auth whitelist refuses a relay auth (kind 22242) for [relayHost]:
  * a non-empty whitelist rejects every relay outside it, without asking, on

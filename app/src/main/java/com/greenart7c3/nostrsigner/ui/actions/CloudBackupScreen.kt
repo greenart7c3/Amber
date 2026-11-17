@@ -47,7 +47,6 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
-import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.commonsui.Res
 import com.greenart7c3.nostrsigner.commonsui.cloud_backup_downloading
@@ -96,6 +95,7 @@ import com.greenart7c3.nostrsigner.service.SharedFiles
 import com.greenart7c3.nostrsigner.service.WebDavService
 import com.greenart7c3.nostrsigner.service.WebDavTransportPolicy
 import com.greenart7c3.nostrsigner.ui.CenterCircularProgressIndicator
+import com.greenart7c3.nostrsigner.ui.LocalAppScope
 import com.greenart7c3.nostrsigner.ui.components.AmberButton
 import com.greenart7c3.nostrsigner.ui.theme.amoledBorder
 import com.greenart7c3.nostrsigner.ui.theme.outlineIfAny
@@ -108,6 +108,7 @@ import org.jetbrains.compose.resources.stringResource
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CloudBackupScreen(modifier: Modifier) {
+    val appScope = LocalAppScope.current
     val context = LocalContext.current
     val keyboardController = LocalSoftwareKeyboardController.current
 
@@ -175,7 +176,7 @@ fun CloudBackupScreen(modifier: Modifier) {
                 passwordError = getStringBlocking(Res.string.cloud_backup_password_required)
                 return@let
             }
-            Amber.instance.applicationIOScope.launch {
+            appScope.launch {
                 isLoading = true
                 statusText = getStringBlocking(Res.string.cloud_backup_restoring)
                 val content = withContext(Dispatchers.IO) {
@@ -187,7 +188,7 @@ fun CloudBackupScreen(modifier: Modifier) {
                     onLoading = { loading -> isLoading = loading },
                     onText = { t -> statusText = t },
                     onFinish = {
-                        Amber.instance.applicationIOScope.launch(Dispatchers.Main) {
+                        appScope.launch(Dispatchers.Main) {
                             Toast.makeText(context, getStringBlocking(Res.string.cloud_backup_restore_success), Toast.LENGTH_LONG).show()
                             statusText = ""
                             isLoading = false
@@ -368,7 +369,7 @@ fun CloudBackupScreen(modifier: Modifier) {
                 modifier = Modifier.weight(1f),
                 text = stringResource(Res.string.cloud_backup_webdav_save),
                 onClick = {
-                    Amber.instance.applicationIOScope.launch {
+                    appScope.launch {
                         // Enforce the HTTPS policy at save time: an http:// URL
                         // must not be stored silently and only fail later from
                         // a generic backup error.
@@ -401,7 +402,7 @@ fun CloudBackupScreen(modifier: Modifier) {
                     if (webDavUrl.text.isBlank()) {
                         webDavError = getStringBlocking(Res.string.cloud_backup_webdav_url_required)
                     } else {
-                        Amber.instance.applicationIOScope.launch {
+                        appScope.launch {
                             isLoading = true
                             statusText = getStringBlocking(Res.string.cloud_backup_testing_connection)
                             val result = withContext(Dispatchers.IO) {
@@ -442,7 +443,7 @@ fun CloudBackupScreen(modifier: Modifier) {
                             context = context,
                             keyguardLauncher = keyguardLauncher,
                             onApproved = {
-                                Amber.instance.applicationIOScope.launch {
+                                appScope.launch {
                                     isLoading = true
                                     statusText = getStringBlocking(Res.string.preparing_export)
 
@@ -504,7 +505,7 @@ fun CloudBackupScreen(modifier: Modifier) {
                                 }
                             },
                             onError = { _, msg ->
-                                Amber.instance.applicationIOScope.launch(Dispatchers.Main) {
+                                appScope.launch(Dispatchers.Main) {
                                     Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
                                 }
                             },
@@ -538,7 +539,7 @@ fun CloudBackupScreen(modifier: Modifier) {
                     webDavUrl.text.isBlank() -> webDavError = getStringBlocking(Res.string.cloud_backup_webdav_url_required)
                     webDavRestoreNpub.text.isBlank() -> webDavError = getStringBlocking(Res.string.cloud_backup_webdav_npub_required)
                     else -> {
-                        Amber.instance.applicationIOScope.launch {
+                        appScope.launch {
                             isLoading = true
                             statusText = getStringBlocking(Res.string.cloud_backup_downloading)
 
@@ -558,7 +559,7 @@ fun CloudBackupScreen(modifier: Modifier) {
                                     onLoading = { loading -> isLoading = loading },
                                     onText = { t -> statusText = t },
                                     onFinish = {
-                                        Amber.instance.applicationIOScope.launch(Dispatchers.Main) {
+                                        appScope.launch(Dispatchers.Main) {
                                             Toast.makeText(context, getStringBlocking(Res.string.cloud_backup_restore_success), Toast.LENGTH_LONG).show()
                                             statusText = ""
                                             isLoading = false
@@ -618,7 +619,7 @@ fun CloudBackupScreen(modifier: Modifier) {
                             keyguardLauncher = keyguardLauncher,
                             onApproved = {
                                 showGdriveSheet = false
-                                Amber.instance.applicationIOScope.launch {
+                                appScope.launch {
                                     isLoading = true
                                     statusText = getStringBlocking(Res.string.preparing_export)
                                     val result = AccountExportService.exportPerAccountNcryptsec(
@@ -646,7 +647,7 @@ fun CloudBackupScreen(modifier: Modifier) {
                                 }
                             },
                             onError = { _, msg ->
-                                Amber.instance.applicationIOScope.launch(Dispatchers.Main) {
+                                appScope.launch(Dispatchers.Main) {
                                     Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
                                 }
                             },

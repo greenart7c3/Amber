@@ -48,10 +48,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.ClipEntry
 import androidx.compose.ui.platform.LocalClipboard
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
+import com.greenart7c3.nostrsigner.amber
 import com.greenart7c3.nostrsigner.commonsui.Res
 import com.greenart7c3.nostrsigner.commonsui.cancel
 import com.greenart7c3.nostrsigner.commonsui.copy_translation_report_to_clipboard
@@ -79,7 +81,8 @@ fun TranslationReportScreen(
     onDismiss: () -> Unit,
     onLoading: (Boolean) -> Unit = {},
 ) {
-    val initialMessage = remember { Amber.instance.pendingTranslationReport.value ?: "" }
+    val amber = LocalContext.current.amber
+    val initialMessage = remember { amber.pendingTranslationReport.value ?: "" }
     var editedMessage by remember { mutableStateOf(initialMessage) }
     val clipboardManager = LocalClipboard.current
 
@@ -124,7 +127,7 @@ fun TranslationReportScreen(
             OutlinedButton(
                 modifier = Modifier.weight(1f),
                 onClick = {
-                    Amber.instance.pendingTranslationReport.value = null
+                    amber.pendingTranslationReport.value = null
                     onDismiss()
                 },
             ) {
@@ -137,7 +140,7 @@ fun TranslationReportScreen(
                     val report = editedMessage.ifBlank { return@Button }
                     onLoading(true)
                     if (BuildFlavorChecker.isOfflineFlavor()) {
-                        Amber.instance.applicationIOScope.launch(Dispatchers.Main) {
+                        amber.applicationIOScope.launch(Dispatchers.Main) {
                             try {
                                 clipboardManager.setClipEntry(
                                     ClipEntry(ClipData.newPlainText("", report)),
@@ -146,19 +149,19 @@ fun TranslationReportScreen(
                                 val npub = Hex.decode(Amber.DEVELOPER_HEX_KEY).toNpub()
                                 intent.data = "nostr:$npub".toUri()
                                 intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
-                                Amber.instance.startActivity(intent)
-                                Amber.instance.pendingTranslationReport.value = null
+                                amber.startActivity(intent)
+                                amber.pendingTranslationReport.value = null
                                 onLoading(false)
                                 onDismiss()
                             } catch (_: Exception) {
-                                Amber.instance.pendingTranslationReport.value = null
+                                amber.pendingTranslationReport.value = null
                                 onLoading(false)
                                 onDismiss()
                             }
                         }
                     } else {
-                        Amber.instance.applicationIOScope.launch {
-                            val client = NostrClient(Amber.instance.factory, Amber.instance.applicationIOScope)
+                        amber.applicationIOScope.launch {
+                            val client = NostrClient(amber.factory, amber.applicationIOScope)
                             client.connect()
 
                             val template = ChatMessageEvent.build(
@@ -179,7 +182,7 @@ fun TranslationReportScreen(
                                     ),
                                 )
                             }
-                            Amber.instance.pendingTranslationReport.value = null
+                            amber.pendingTranslationReport.value = null
                             onLoading(false)
                             onDismiss()
                             delay(10.seconds)

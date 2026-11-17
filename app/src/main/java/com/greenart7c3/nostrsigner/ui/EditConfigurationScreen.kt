@@ -44,7 +44,6 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.common.generateBunkerPrivKey
 import com.greenart7c3.nostrsigner.commonsui.Res
@@ -83,6 +82,8 @@ fun EditConfigurationScreen(
     account: Account,
     onNav: (String) -> Unit,
 ) {
+    val accountRepository = LocalAccountRepository.current
+    val relayClient = LocalRelayClient.current
     val scope = rememberCoroutineScope()
     var application by remember { mutableStateOf<ApplicationWithPermissions?>(null) }
     var name by remember { mutableStateOf(TextFieldValue(AnnotatedString(""))) }
@@ -95,7 +96,7 @@ fun EditConfigurationScreen(
 
     LaunchedEffect(Unit) {
         val applicationWithPermissions = withContext(Dispatchers.IO) {
-            Amber.instance.getDatabase(account.npub).dao().getByKey(key)
+            accountRepository.getDatabase(account.npub).dao().getByKey(key)
         }
 
         application = applicationWithPermissions
@@ -330,14 +331,14 @@ fun EditConfigurationScreen(
                                     relays = relays,
                                     closeApplication = closeApp,
                                 )
-                            Amber.instance.dao(account.npub).delete(it.application)
-                            Amber.instance.dao(account.npub).insertApplicationWithPermissions(
+                            accountRepository.dao(account.npub).delete(it.application)
+                            accountRepository.dao(account.npub).insertApplicationWithPermissions(
                                 ApplicationWithPermissions(
                                     localApplicationData,
                                     it.permissions,
                                 ),
                             )
-                            Amber.instance.checkForNewRelaysAndUpdateAllFilters()
+                            relayClient.checkForNewRelaysAndUpdateAllFilters()
 
                             scope.launch(Dispatchers.Main) {
                                 onNav(Route.Applications.route)
@@ -366,20 +367,20 @@ fun EditConfigurationScreen(
                                 useSecret = true,
                                 localKey = newLocalKey,
                             )
-                            val dao = Amber.instance.dao(account.npub)
+                            val dao = accountRepository.dao(account.npub)
                             // The reset retires the old connection key: drop its
                             // queued requests so a stale card cannot resurrect it.
                             BunkerRequestUtils.removeAllForClient(it.application.key)
                             dao.deletePermissions(it.application.key)
                             dao.delete(it.application)
-                            Amber.instance.getHistoryDatabase(account.npub).dao().deleteHistory(it.application.key)
+                            accountRepository.getHistoryDatabase(account.npub).dao().deleteHistory(it.application.key)
                             dao.insertApplicationWithPermissions(
                                 ApplicationWithPermissions(
                                     resetApp,
                                     it.permissions,
                                 ),
                             )
-                            Amber.instance.checkForNewRelaysAndUpdateAllFilters()
+                            relayClient.checkForNewRelaysAndUpdateAllFilters()
 
                             scope.launch(Dispatchers.Main) {
                                 onNav(Route.Applications.route)
@@ -403,14 +404,14 @@ fun EditConfigurationScreen(
                             // Drop queued requests first: answering a stale card
                             // would otherwise resurrect the deleted connection.
                             BunkerRequestUtils.removeAllForClient(it.application.key)
-                            Amber.instance.dao(account.npub).delete(it.application)
-                            Amber.instance.getHistoryDatabase(account.npub).dao().deleteHistory(it.application.key)
+                            accountRepository.dao(account.npub).delete(it.application)
+                            accountRepository.getHistoryDatabase(account.npub).dao().deleteHistory(it.application.key)
 
                             scope.launch(Dispatchers.Main) {
                                 onNav(Route.Applications.route)
                             }
 
-                            Amber.instance.checkForNewRelaysAndUpdateAllFilters()
+                            relayClient.checkForNewRelaysAndUpdateAllFilters()
                         }
                     }
                 },

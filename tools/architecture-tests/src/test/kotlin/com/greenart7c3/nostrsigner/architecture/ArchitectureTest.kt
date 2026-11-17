@@ -167,9 +167,7 @@ class ArchitectureTest {
 
     private companion object {
         // May only shrink: see the class comment.
-        val databaseInUi = setOf(
-            "ui/EditConfigurationScreen.kt",
-        )
+        val databaseInUi = setOf()
 
         val amberInstanceUsers = setOf(
             "DataStoreAccess.kt",
@@ -208,18 +206,14 @@ class ArchitectureTest {
             "ui/AccountStateViewModel.kt",
             "ui/ApplicationsScreen.kt",
             "ui/DefaultProfileRelaysScreen.kt",
-            "ui/EditConfigurationScreen.kt",
             "ui/LoginScreen.kt",
             "ui/MainScreen.kt",
             "ui/RelaysScreen.kt",
             "ui/SecurityScreen.kt",
             "ui/SettingsScreen.kt",
-            "ui/TranslationReportScreen.kt",
             "ui/actions/AccountBackupScreen.kt",
-            "ui/actions/CloudBackupScreen.kt",
             "ui/actions/EditRelaysDialog.kt",
             "ui/components/AmberTopAppBar.kt",
-            "ui/components/BiometricAuthScreen.kt",
         )
 
         val composeUiInService = setOf(

@@ -180,7 +180,6 @@ class ArchitectureTest {
         )
 
         val amberInstanceUsers = setOf(
-            "service/ApplicationBackup.kt",
             "service/BunkerRequestUtils.kt",
             "service/EventNotificationConsumer.kt",
             "service/IntentUtils.kt",

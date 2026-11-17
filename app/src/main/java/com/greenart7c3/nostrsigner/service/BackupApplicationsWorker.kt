@@ -7,18 +7,20 @@ import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.LocalPreferences
+import com.greenart7c3.nostrsigner.amber
 import kotlin.coroutines.cancellation.CancellationException
 
 class BackupApplicationsWorker(appContext: Context, workerParams: WorkerParameters) : CoroutineWorker(appContext, workerParams) {
 
     override suspend fun doWork(): Result {
+        val amber = applicationContext.amber
         if (BuildFlavorChecker.isOfflineFlavor()) return Result.success()
 
         LocalPreferences.allSavedAccounts(applicationContext).forEach { info ->
             if (!LocalPreferences.getBackupApplications(applicationContext, info.npub)) return@forEach
             try {
                 val account = LocalPreferences.loadFromEncryptedStorage(applicationContext, info.npub) ?: return@forEach
-                ApplicationBackup.publishBackup(info.npub, account)
+                ApplicationBackup.publishBackup(info.npub, account, amber, amber, amber)
             } catch (e: Exception) {
                 if (e is CancellationException) throw e
                 // With requireUnlockedDevice enabled the gate refuses signing

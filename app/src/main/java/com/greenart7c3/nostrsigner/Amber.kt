@@ -629,6 +629,13 @@ class Amber :
         }
     }
 
+    override suspend fun resubscribeAll() {
+        profileSubscription.closeSub()
+        notificationSubscription.closeAllSubs()
+        disconnectIntentionally()
+        checkForNewRelaysAndUpdateAllFilters(shouldReconnect = true)
+    }
+
     override fun disconnectIntentionally() {
         intentionalDisconnectTime = System.currentTimeMillis()
         client.disconnect()

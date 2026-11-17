@@ -92,6 +92,9 @@ import org.jetbrains.compose.resources.stringResource
 fun ApplicationsBackupScreen(
     modifier: Modifier = Modifier,
 ) {
+    val accountRepository = LocalAccountRepository.current
+    val relayClient = LocalRelayClient.current
+    val settingsStore = LocalSettingsStore.current
     val appScope = LocalAppScope.current
     val context = LocalContext.current
 
@@ -133,7 +136,7 @@ fun ApplicationsBackupScreen(
                         appScope.launch {
                             // Fetch first and let the user review what the backup
                             // contains; nothing is written until they confirm.
-                            val fetched = ApplicationBackup.fetchLatestPayload(account)
+                            val fetched = ApplicationBackup.fetchLatestPayload(account, relayClient.client, settingsStore)
                             withContext(Dispatchers.Main) {
                                 isBusy = false
                                 when (fetched) {
@@ -169,7 +172,7 @@ fun ApplicationsBackupScreen(
                     val selected = payload.copy(applications = selection.selected())
                     val scope = appScope
                     scope.launch(Dispatchers.IO) {
-                        val result = ApplicationBackup.restoreFromPayload(account.npub, selected)
+                        val result = ApplicationBackup.restoreFromPayload(account.npub, selected, accountRepository, relayClient)
                         withContext(Dispatchers.Main) {
                             val msg = when (result) {
                                 is RestoreResult.Success -> getStringBlocking(Res.string.restore_success, result.apps, result.permissions)
@@ -196,6 +199,9 @@ private fun AccountBackupRow(
     onBusyChange: (Boolean) -> Unit,
     onRequestRestore: () -> Unit,
 ) {
+    val accountRepository = LocalAccountRepository.current
+    val relayClient = LocalRelayClient.current
+    val settingsStore = LocalSettingsStore.current
     val amber = LocalContext.current.amber
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -252,7 +258,7 @@ private fun AccountBackupRow(
                 if (isBusy) return@AmberButton
                 onBusyChange(true)
                 scope.launch(Dispatchers.IO) {
-                    val ok = ApplicationBackup.publishBackup(account.npub, account)
+                    val ok = ApplicationBackup.publishBackup(account.npub, account, accountRepository, relayClient, settingsStore)
                     withContext(Dispatchers.Main) {
                         Toast.makeText(
                             context,

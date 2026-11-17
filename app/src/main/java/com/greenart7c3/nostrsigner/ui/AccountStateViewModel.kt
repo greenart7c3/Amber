@@ -251,8 +251,8 @@ class AccountStateViewModel(
 
                 restorePrompt.value = RestorePromptState.Loading
 
-                val relays = ApplicationBackup.resolveReadRelays(account)
-                val event = ApplicationBackup.fetchLatestBackupEvent(account, relays)
+                val relays = ApplicationBackup.resolveReadRelays(account, relayClient.client, settingsStore)
+                val event = ApplicationBackup.fetchLatestBackupEvent(account, relays, relayClient.client)
                 if (event == null) {
                     restorePrompt.value = null
                     return@launch
@@ -275,7 +275,7 @@ class AccountStateViewModel(
     fun acceptRestore(applications: List<BackupApplication>, onResult: (RestoreResult) -> Unit) {
         val current = restorePrompt.value as? RestorePromptState.Found ?: return
         appScope.launch {
-            val result = ApplicationBackup.restoreFromPayload(current.account.npub, current.payload.copy(applications = applications))
+            val result = ApplicationBackup.restoreFromPayload(current.account.npub, current.payload.copy(applications = applications), accountRepository, relayClient)
             restorePrompt.value = null
             launch(Dispatchers.Main) { onResult(result) }
         }

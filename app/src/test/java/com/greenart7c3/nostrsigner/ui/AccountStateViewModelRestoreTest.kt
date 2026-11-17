@@ -60,8 +60,8 @@ class AccountStateViewModelRestoreTest {
         installAmberInstance(amber)
 
         mockkObject(ApplicationBackup)
-        coEvery { ApplicationBackup.resolveReadRelays(any()) } returns setOf(mockk())
-        coEvery { ApplicationBackup.fetchLatestBackupEvent(any(), any()) } returns null
+        coEvery { ApplicationBackup.resolveReadRelays(any(), any(), any()) } returns setOf(mockk())
+        coEvery { ApplicationBackup.fetchLatestBackupEvent(any(), any(), any()) } returns null
     }
 
     @After
@@ -80,8 +80,8 @@ class AccountStateViewModelRestoreTest {
         viewModel.maybeOfferRestore(account)
 
         coVerify {
-            ApplicationBackup.resolveReadRelays(account)
-            ApplicationBackup.fetchLatestBackupEvent(account, any())
+            ApplicationBackup.resolveReadRelays(account, any(), any())
+            ApplicationBackup.fetchLatestBackupEvent(account, any(), any())
         }
         assertNull(viewModel.restorePrompt.value)
     }
@@ -94,7 +94,7 @@ class AccountStateViewModelRestoreTest {
         val payload = BackupPayload(applications = listOf(kept, backupApp("unchecked")))
         viewModel.restorePrompt.value = RestorePromptState.Found(account, payload, createdAt = 0)
         val restored = slot<BackupPayload>()
-        coEvery { ApplicationBackup.restoreFromPayload(any(), capture(restored)) } returns RestoreResult.Success(1, 0)
+        coEvery { ApplicationBackup.restoreFromPayload(any(), capture(restored), any(), any()) } returns RestoreResult.Success(1, 0)
 
         viewModel.acceptRestore(listOf(kept)) { }
 

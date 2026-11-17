@@ -24,6 +24,9 @@ interface RelayClient {
     /** Whether the SOCKS proxy (built-in Tor or Orbot) accepts connections. */
     fun isSocksProxyAlive(proxyHost: String, proxyPort: Int): Boolean
 
+    /** Closes every subscription and opens them again from the stored relay lists, e.g. after a restore. */
+    suspend fun resubscribeAll()
+
     /** Drops every socket and dials again; for a change of network. */
     suspend fun resetRelayConnections(reason: String)
 }

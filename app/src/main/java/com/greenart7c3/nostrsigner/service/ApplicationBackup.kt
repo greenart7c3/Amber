@@ -7,6 +7,10 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
+import com.greenart7c3.nostrsigner.data.AccountRepository
+import com.greenart7c3.nostrsigner.data.RelayClient
+import com.greenart7c3.nostrsigner.data.SettingsStore
+import com.greenart7c3.nostrsigner.database.ApplicationDao
 import com.greenart7c3.nostrsigner.database.ApplicationEntity
 import com.greenart7c3.nostrsigner.database.ApplicationPermissionsEntity
 import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
@@ -16,6 +20,7 @@ import com.vitorpamplona.quartz.nip01Core.core.Event
 import com.vitorpamplona.quartz.nip01Core.core.toHexKey
 import com.vitorpamplona.quartz.nip01Core.crypto.KeyPair
 import com.vitorpamplona.quartz.nip01Core.crypto.verify
+import com.vitorpamplona.quartz.nip01Core.relay.client.NostrClient
 import com.vitorpamplona.quartz.nip01Core.relay.client.accessories.publishAndConfirm
 import com.vitorpamplona.quartz.nip01Core.relay.client.listeners.RelayConnectionListener
 import com.vitorpamplona.quartz.nip01Core.relay.client.single.IRelayClient
@@ -132,8 +137,7 @@ object ApplicationBackup {
     private val mapper = jacksonObjectMapper()
         .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
 
-    suspend fun buildPayload(npub: String, account: Account): BackupPayload {
-        val dao = Amber.instance.dao(npub)
+    suspend fun buildPayload(npub: String, account: Account, dao: ApplicationDao): BackupPayload {
         val apps = dao.getAll(account.hexKey)
         val backupApps = apps.map { app ->
             val perms = dao.getAllByKey(app.key)
@@ -177,11 +181,11 @@ object ApplicationBackup {
      * Relays to query when fetching an existing backup:
      * inbox (NIP-65 read-marker) ∪ aggregator ∪ INBOX_FALLBACK_RELAYS.
      */
-    suspend fun resolveReadRelays(account: Account): Set<NormalizedRelayUrl> {
+    suspend fun resolveReadRelays(account: Account, client: NostrClient, settingsStore: SettingsStore): Set<NormalizedRelayUrl> {
         val out = mutableSetOf<NormalizedRelayUrl>()
         AGGREGATOR_RELAY?.let { out.add(it) }
         out.addAll(INBOX_FALLBACK_RELAYS)
-        out.addAll(fetchInboxRelays(account))
+        out.addAll(fetchInboxRelays(account, client, settingsStore))
         return out
     }
 
@@ -190,8 +194,8 @@ object ApplicationBackup {
      * advertised an inbox list yet, fall back to aggregator + INBOX_FALLBACK_RELAYS
      * so the backup still lands somewhere a fresh device can find.
      */
-    suspend fun resolveWriteRelays(account: Account): Set<NormalizedRelayUrl> {
-        val inbox = fetchInboxRelays(account)
+    suspend fun resolveWriteRelays(account: Account, client: NostrClient, settingsStore: SettingsStore): Set<NormalizedRelayUrl> {
+        val inbox = fetchInboxRelays(account, client, settingsStore)
         if (inbox.isNotEmpty()) return inbox
         val out = mutableSetOf<NormalizedRelayUrl>()
         AGGREGATOR_RELAY?.let { out.add(it) }
@@ -199,10 +203,9 @@ object ApplicationBackup {
         return out
     }
 
-    private suspend fun fetchInboxRelays(account: Account): Set<NormalizedRelayUrl> {
-        val client = Amber.instance.client
+    private suspend fun fetchInboxRelays(account: Account, client: NostrClient, settingsStore: SettingsStore): Set<NormalizedRelayUrl> {
         val discoveryRelays = mutableSetOf<NormalizedRelayUrl>().apply {
-            addAll(Amber.instance.settings.defaultProfileRelays)
+            addAll(settingsStore.settings.defaultProfileRelays)
             AGGREGATOR_RELAY?.let { add(it) }
             addAll(INBOX_FALLBACK_RELAYS)
         }
@@ -255,10 +258,10 @@ object ApplicationBackup {
             .toSet()
     }
 
-    suspend fun publishBackup(npub: String, account: Account): Boolean {
+    suspend fun publishBackup(npub: String, account: Account, accountRepository: AccountRepository, relayClient: RelayClient, settingsStore: SettingsStore): Boolean {
         if (BuildFlavorChecker.isOfflineFlavor()) return false
         try {
-            val payload = buildPayload(npub, account)
+            val payload = buildPayload(npub, account, accountRepository.dao(npub))
             if (payload.applications.isEmpty()) {
                 AmberLog.d(Amber.TAG, "ApplicationBackup: no applications to backup for $npub, skipping")
                 return true
@@ -275,12 +278,12 @@ object ApplicationBackup {
                 ),
                 encrypted,
             )
-            val relays = resolveWriteRelays(account)
+            val relays = resolveWriteRelays(account, relayClient.client, settingsStore)
             if (relays.isEmpty()) {
                 AmberLog.w(Amber.TAG, "ApplicationBackup: no relays resolved for backup")
                 return false
             }
-            val ok = Amber.instance.client.publishAndConfirm(event, relays, untilFirstAccept = true)
+            val ok = relayClient.client.publishAndConfirm(event, relays, untilFirstAccept = true)
             AmberLog.d(Amber.TAG, "ApplicationBackup: publish for $npub result=$ok relays=${relays.size}")
             return ok
         } catch (e: Exception) {
@@ -290,11 +293,10 @@ object ApplicationBackup {
         }
     }
 
-    suspend fun fetchLatestBackupEvent(account: Account, relays: Set<NormalizedRelayUrl>): Event? {
+    suspend fun fetchLatestBackupEvent(account: Account, relays: Set<NormalizedRelayUrl>, client: NostrClient): Event? {
         if (BuildFlavorChecker.isOfflineFlavor()) return null
         if (relays.isEmpty()) return null
 
-        val client = Amber.instance.client
         val subId = UUID.randomUUID().toString()
         val received = mutableMapOf<Long, Event>()
 
@@ -372,8 +374,8 @@ object ApplicationBackup {
      */
     internal fun isExpired(app: BackupApplication, now: Long): Boolean = app.deleteAfter in 1..<now
 
-    suspend fun restoreFromPayload(npub: String, payload: BackupPayload): RestoreResult = try {
-        val dao = Amber.instance.dao(npub)
+    suspend fun restoreFromPayload(npub: String, payload: BackupPayload, accountRepository: AccountRepository, relayClient: RelayClient): RestoreResult = try {
+        val dao = accountRepository.dao(npub)
         var apps = 0
         var permissions = 0
         val now = TimeUtils.now()
@@ -417,10 +419,7 @@ object ApplicationBackup {
             apps++
             permissions += perms.size
         }
-        Amber.instance.profileSubscription.closeSub()
-        Amber.instance.notificationSubscription.closeAllSubs()
-        Amber.instance.disconnectIntentionally()
-        Amber.instance.checkForNewRelaysAndUpdateAllFilters(shouldReconnect = true)
+        relayClient.resubscribeAll()
         RestoreResult.Success(apps, permissions)
     } catch (e: Exception) {
         if (e is CancellationException) throw e
@@ -432,9 +431,9 @@ object ApplicationBackup {
      * Fetches and decrypts the newest backup without restoring it, so the user
      * can review its applications before [restoreFromPayload] writes them.
      */
-    suspend fun fetchLatestPayload(account: Account): BackupFetchResult {
-        val relays = resolveReadRelays(account)
-        val event = fetchLatestBackupEvent(account, relays) ?: return BackupFetchResult.NoBackupFound
+    suspend fun fetchLatestPayload(account: Account, client: NostrClient, settingsStore: SettingsStore): BackupFetchResult {
+        val relays = resolveReadRelays(account, client, settingsStore)
+        val event = fetchLatestBackupEvent(account, relays, client) ?: return BackupFetchResult.NoBackupFound
         val payload = decryptPayload(event, account) ?: return BackupFetchResult.Failed("Failed to decrypt backup")
         return BackupFetchResult.Found(payload)
     }

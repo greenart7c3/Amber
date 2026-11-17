@@ -163,6 +163,12 @@ behind ViewModels is step 4.
 composable. This also makes them previewable and testable, and removes their
 `LongMethod`/`ComposableParamOrder` baseline entries.
 
+Done so far: `SettingsScreen` (`SettingsViewModel`, `SettingsUiState` and a
+stateless `SettingsContent` split into one composable per section). The
+ViewModel takes its dependencies through `SettingsViewModel.factory`, used as
+the screen's default `viewModel(...)` argument, as the Compose
+`ViewModelInjection` rule requires.
+
 Done so far: `IntentSingleEventHomeScreen` (`IntentSingleEventViewModel` loads
 the saved app; one composable per request type; the grant lookup is
 `service/intentPermission`, unit-tested). ViewModels may import `database/`

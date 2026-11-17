@@ -1,6 +1,5 @@
 package com.greenart7c3.nostrsigner.ui
 
-import android.content.Intent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
@@ -43,7 +42,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -66,11 +64,9 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.greenart7c3.nostrsigner.Amber
-import com.greenart7c3.nostrsigner.AmberLog
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
-import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.amber
 import com.greenart7c3.nostrsigner.commonsui.Res
@@ -85,7 +81,6 @@ import com.greenart7c3.nostrsigner.commonsui.backup_keys_subtitle
 import com.greenart7c3.nostrsigner.commonsui.clear_logs_and_activity
 import com.greenart7c3.nostrsigner.commonsui.connect_via_tor_short
 import com.greenart7c3.nostrsigner.commonsui.database_size_mb
-import com.greenart7c3.nostrsigner.commonsui.deleting_old_log_entries_from
 import com.greenart7c3.nostrsigner.commonsui.disable_kill_switch
 import com.greenart7c3.nostrsigner.commonsui.disconnect_builtin_tor
 import com.greenart7c3.nostrsigner.commonsui.disconnect_from_your_orbot_setup
@@ -140,62 +135,67 @@ import com.greenart7c3.nostrsigner.commonsui.yes
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.ThemeMode
 import com.greenart7c3.nostrsigner.models.TorMode
-import com.greenart7c3.nostrsigner.service.KillSwitchReceiver
-import com.greenart7c3.nostrsigner.service.TorManager
-import com.greenart7c3.nostrsigner.ui.actions.LogoutDialog
 import com.greenart7c3.nostrsigner.ui.components.AmberButton
 import com.greenart7c3.nostrsigner.ui.components.SpinnerSelectionDialog
 import com.greenart7c3.nostrsigner.ui.components.TextSpinner
 import com.greenart7c3.nostrsigner.ui.components.TitleExplainer
 import com.greenart7c3.nostrsigner.ui.navigation.Route
+import com.greenart7c3.nostrsigner.ui.theme.AmberPreview
+import com.greenart7c3.nostrsigner.ui.theme.ThemePreviews
 import com.greenart7c3.nostrsigner.ui.theme.amoledBorder
 import com.greenart7c3.nostrsigner.ui.theme.outlineIfAny
-import com.vitorpamplona.quartz.utils.TimeUtils
-import com.vitorpamplona.quartz.utils.TimeUtils.ONE_WEEK
-import java.text.DecimalFormat
-import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun SettingsScreen(
-    modifier: Modifier,
-    accountStateViewModel: AccountStateViewModel,
     account: Account,
     onNav: (String) -> Unit,
+    modifier: Modifier = Modifier,
+    settingsViewModel: SettingsViewModel = viewModel(
+        key = "settings-${account.npub}",
+        factory = LocalContext.current.amber.let { amber ->
+            SettingsViewModel.factory(
+                appContext = amber,
+                settingsStore = LocalSettingsStore.current,
+                accountRepository = LocalAccountRepository.current,
+                relayClient = LocalRelayClient.current,
+                appScope = LocalAppScope.current,
+                npub = account.npub,
+                themeMode = amber.themeMode,
+                updater = amber.zapstoreUpdater,
+            )
+        },
+    ),
 ) {
-    val settingsStore = LocalSettingsStore.current
-    val accountRepository = LocalAccountRepository.current
-    val relayClient = LocalRelayClient.current
-    val appScope = LocalAppScope.current
-    val amber = LocalContext.current.amber
-    var logoutDialog by remember { mutableStateOf(false) }
-    val context = LocalContext.current
-    var torMode by remember { mutableStateOf(settingsStore.settings.torMode) }
-    val killSwitch by settingsStore.settings.killSwitch.collectAsStateWithLifecycle()
-    var disconnectTorDialog by remember { mutableStateOf(false) }
-    val scope = rememberCoroutineScope()
-    var isLoading by remember { mutableStateOf(false) }
-    var sizeInMBFormatted by remember { mutableStateOf("") }
-    var status by remember { mutableStateOf("") }
-    val themeMode by amber.themeMode.collectAsStateWithLifecycle()
-    var themeDialog by remember { mutableStateOf(false) }
+    // Each visit: another screen may have changed Tor or reloaded the settings meanwhile.
+    LaunchedEffect(settingsViewModel) { settingsViewModel.refresh() }
+    val state by settingsViewModel.state.collectAsStateWithLifecycle()
+    SettingsContent(
+        state = state,
+        onNav = onNav,
+        onClearOldEntries = settingsViewModel::clearOldEntries,
+        onDisableTor = settingsViewModel::disableTor,
+        onThemeMode = settingsViewModel::setThemeMode,
+        onToggleKillSwitch = settingsViewModel::toggleKillSwitch,
+        modifier = modifier,
+    )
+}
 
-    LaunchedEffect(Unit) {
-        isLoading = true
-        launch(Dispatchers.IO) {
-            val dbFile = context.getDatabasePath("amber_db_${account.npub}")
-            val logFile = context.getDatabasePath("log_db_${account.npub}")
-            val historyFile = context.getDatabasePath("history_db_${account.npub}")
-            val df = DecimalFormat("#.###")
-            sizeInMBFormatted = df.format((dbFile.length() + logFile.length() + historyFile.length()) / (1024.0 * 1024.0))
-            isLoading = false
-        }
-    }
+@Composable
+private fun SettingsContent(
+    state: SettingsUiState,
+    onNav: (String) -> Unit,
+    onClearOldEntries: () -> Unit,
+    onDisableTor: () -> Unit,
+    onThemeMode: (ThemeMode) -> Unit,
+    onToggleKillSwitch: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    var disconnectTorDialog by remember { mutableStateOf(false) }
+    var themeDialog by remember { mutableStateOf(false) }
 
     if (themeDialog) {
         SpinnerSelectionDialog(
@@ -204,308 +204,266 @@ fun SettingsScreen(
             onDismiss = { themeDialog = false },
         ) { index ->
             themeDialog = false
-            LocalPreferences.updateThemeMode(context, ThemeMode.entries[index])
-        }
-    }
-
-    if (logoutDialog) {
-        LogoutDialog(
-            onCancel = {
-                logoutDialog = false
-            },
-            onConfirm = {
-                logoutDialog = false
-                accountStateViewModel.logOff(account.npub)
-            },
-        )
-    }
-
-    if (isLoading) {
-        CenterCircularProgressIndicator(modifier, status)
-    } else {
-        val isOffline = BuildFlavorChecker.isOfflineFlavor()
-
-        Column(
-            modifier,
-        ) {
-            SettingsSection(title = stringResource(Res.string.settings_section_account)) {
-                SettingsItem(
-                    title = stringResource(Res.string.security),
-                    subtitle = stringResource(Res.string.security_subtitle),
-                    painter = rememberVectorPainter(Icons.Default.Security),
-                    onClick = { onNav(Route.Security.route) },
-                )
-                SettingsDivider()
-                SettingsItem(
-                    title = stringResource(Res.string.backup_keys),
-                    subtitle = stringResource(Res.string.backup_keys_subtitle),
-                    painter = rememberVectorPainter(Icons.Default.Key),
-                    onClick = { onNav(Route.AccountBackup.route) },
-                )
-                SettingsDivider()
-                SettingsItem(
-                    title = stringResource(Res.string.sign_policy),
-                    subtitle = stringResource(Res.string.sign_policy_subtitle),
-                    painter = rememberVectorPainter(Icons.Default.Draw),
-                    onClick = { onNav(Route.SignPolicy.route) },
-                )
-            }
-
-            if (!isOffline) {
-                SettingsSection(title = stringResource(Res.string.settings_section_network)) {
-                    SettingsItem(
-                        title = when (torMode) {
-                            TorMode.BUILTIN -> stringResource(Res.string.disconnect_builtin_tor)
-                            TorMode.ORBOT -> stringResource(Res.string.disconnect_from_your_orbot_setup)
-                            TorMode.DISABLED -> stringResource(Res.string.connect_via_tor_short)
-                        },
-                        subtitle = stringResource(Res.string.tor_subtitle),
-                        painter = painterResource(R.drawable.ic_tor),
-                        onLongClick = { onNav(Route.TorSettings.route) },
-                        onClick = {
-                            if (torMode != TorMode.DISABLED) {
-                                disconnectTorDialog = true
-                            } else {
-                                onNav(Route.TorSettings.route)
-                            }
-                        },
-                    )
-                    SettingsDivider()
-                    SettingsItem(
-                        title = stringResource(Res.string.relays),
-                        subtitle = stringResource(Res.string.relays_subtitle),
-                        painter = painterResource(R.drawable.relays),
-                        onClick = { onNav(Route.RelaysScreen.route) },
-                    )
-                    SettingsDivider()
-                    SettingsItem(
-                        title = stringResource(
-                            if (killSwitch) Res.string.disable_kill_switch else Res.string.enable_kill_switch,
-                        ),
-                        subtitle = stringResource(Res.string.kill_switch_settings_subtitle),
-                        painter = rememberVectorPainter(Icons.Default.Block),
-                        iconTint = if (killSwitch) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onBackground,
-                        titleColor = if (killSwitch) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onBackground,
-                        onClick = {
-                            context.sendBroadcast(Intent(context, KillSwitchReceiver::class.java))
-                        },
-                    )
-                }
-
-                SettingsSection(title = stringResource(Res.string.settings_section_service)) {
-                    SettingsItem(
-                        title = stringResource(Res.string.service_settings),
-                        subtitle = stringResource(Res.string.service_settings_subtitle),
-                        painter = rememberVectorPainter(Icons.Default.PowerSettingsNew),
-                        onClick = { onNav(Route.ServiceSettings.route) },
-                    )
-                    SettingsDivider()
-                    SettingsItem(
-                        title = stringResource(Res.string.applications_backup),
-                        subtitle = stringResource(Res.string.applications_backup_subtitle),
-                        painter = rememberVectorPainter(Icons.Default.CloudUpload),
-                        onClick = { onNav(Route.ApplicationsBackup.route) },
-                    )
-                }
-            }
-
-            SettingsSection(title = stringResource(Res.string.settings_section_general)) {
-                SettingsItem(
-                    title = stringResource(Res.string.theme),
-                    subtitle = stringResource(themeMode.resourceId),
-                    painter = rememberVectorPainter(Icons.Default.Palette),
-                    onClick = { themeDialog = true },
-                )
-                SettingsDivider()
-                SettingsItem(
-                    title = stringResource(Res.string.language),
-                    subtitle = stringResource(Res.string.language_subtitle),
-                    painter = rememberVectorPainter(Icons.Default.Language),
-                    onClick = { onNav(Route.Language.route) },
-                )
-                SettingsDivider()
-                SettingsItem(
-                    title = stringResource(Res.string.auth_whitelist),
-                    subtitle = stringResource(Res.string.auth_whitelist_subtitle),
-                    painter = rememberVectorPainter(Icons.Default.VerifiedUser),
-                    onClick = { onNav(Route.AuthWhitelist.route) },
-                )
-                SettingsDivider()
-                SettingsItem(
-                    title = stringResource(Res.string.logs),
-                    subtitle = stringResource(Res.string.logs_subtitle),
-                    painter = rememberVectorPainter(Icons.AutoMirrored.Filled.Article),
-                    onClick = { onNav(Route.Logs.route) },
-                )
-            }
-
-            SettingsSection(title = stringResource(Res.string.settings_section_help)) {
-                SettingsItem(
-                    title = stringResource(Res.string.give_us_feedback),
-                    subtitle = stringResource(Res.string.give_us_feedback_subtitle),
-                    painter = rememberVectorPainter(Icons.Default.Feedback),
-                    onClick = { onNav(Route.Feedback.route) },
-                )
-
-                if (!isOffline && !BuildFlavorChecker.isFdroidBuild()) {
-                    val updater = amber.zapstoreUpdater
-                    if (updater != null) {
-                        val latestRelease by updater.latestRelease.collectAsStateWithLifecycle()
-                        val updateAvailable = latestRelease != null
-
-                        SettingsDivider()
-                        SettingsItem(
-                            title = if (updateAvailable) {
-                                stringResource(Res.string.update_available, latestRelease!!.version)
-                            } else {
-                                stringResource(Res.string.update_settings)
-                            },
-                            subtitle = stringResource(Res.string.update_settings_subtitle),
-                            painter = rememberVectorPainter(Icons.Default.SystemUpdate),
-                            iconTint = if (updateAvailable) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onBackground,
-                            titleColor = if (updateAvailable) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onBackground,
-                            onClick = { onNav(Route.UpdateSettings.route) },
-                        )
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.weight(1f))
-
-            val primaryColor = MaterialTheme.colorScheme.primary
-
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                Text(stringResource(Res.string.database_size_mb, sizeInMBFormatted), color = Color.Gray)
-                AmberButton(
-                    modifier = Modifier.fillMaxWidth(),
-                    text = stringResource(Res.string.clear_logs_and_activity),
-                    onClick = {
-                        appScope.launch {
-                            isLoading = true
-                            LocalPreferences.allSavedAccounts(amber).forEach {
-                                try {
-                                    status = getStringBlocking(Res.string.deleting_old_log_entries_from, it.npub)
-                                    val oneWeek = System.currentTimeMillis() - (ONE_WEEK * 1000L)
-                                    val oneWeekAgo = TimeUtils.oneWeekAgo()
-                                    val historyDatabase = accountRepository.getHistoryDatabase(it.npub)
-                                    val deletedHistory = historyDatabase.dao().deleteOldHistory(oneWeekAgo)
-                                    if (deletedHistory > 0) {
-                                        AmberLog.d(Amber.TAG, "Deleted $deletedHistory old history entries")
-                                    }
-
-                                    val logDatabase = accountRepository.getLogDatabase(it.npub)
-                                    val deletedLogs = logDatabase.dao().deleteOldLog(oneWeek)
-                                    if (deletedLogs > 0) {
-                                        AmberLog.d(Amber.TAG, "Deleted $deletedLogs old log entries")
-                                    }
-
-                                    val dbFile = context.getDatabasePath("amber_db_${account.npub}")
-                                    val logFile = context.getDatabasePath("log_db_${account.npub}")
-                                    val historyFile = context.getDatabasePath("history_db_${account.npub}")
-                                    val df = DecimalFormat("#.###")
-                                    sizeInMBFormatted = df.format((dbFile.length() + logFile.length() + historyFile.length()) / (1024.0 * 1024.0))
-
-                                    status = ""
-                                    isLoading = false
-                                } catch (e: Exception) {
-                                    isLoading = false
-                                    if (e is CancellationException) throw e
-                                    AmberLog.e(Amber.TAG, "Error deleting old log entries", e)
-                                    val dbFile = context.getDatabasePath("amber_db_${account.npub}")
-                                    val logFile = context.getDatabasePath("log_db_${account.npub}")
-                                    val historyFile = context.getDatabasePath("history_db_${account.npub}")
-                                    val df = DecimalFormat("#.###")
-                                    sizeInMBFormatted = df.format((dbFile.length() + logFile.length() + historyFile.length()) / (1024.0 * 1024.0))
-                                    status = ""
-                                }
-                            }
-
-                            relayClient.checkForNewRelaysAndUpdateAllFilters()
-                        }
-                    },
-                )
-            }
-
-            Text(
-                buildAnnotatedString {
-                    withStyle(
-                        style = ParagraphStyle(
-                            textAlign = TextAlign.Center,
-                        ),
-                    ) {
-                        append("v${BuildConfig.VERSION_NAME}-${BuildConfig.FLAVOR}\n\n")
-                        withLink(
-                            LinkAnnotation.Url(
-                                getStringBlocking(Res.string.amber_github_uri),
-                                styles = TextLinkStyles(
-                                    style = SpanStyle(
-                                        color = primaryColor,
-                                        textDecoration = TextDecoration.Underline,
-                                    ),
-                                ),
-                            ),
-                        ) {
-                            append("${getStringBlocking(Res.string.source_code)}\n\n")
-                        }
-                        withLink(
-                            LinkAnnotation.Url(
-                                getStringBlocking(Res.string.support_development_uri),
-                                styles = TextLinkStyles(
-                                    style = SpanStyle(
-                                        color = primaryColor,
-                                        textDecoration = TextDecoration.Underline,
-                                    ),
-                                ),
-                            ),
-                        ) {
-                            append(getStringBlocking(Res.string.support_development))
-                        }
-                    }
-                    toAnnotatedString()
-                },
-                fontSize = 18.sp,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 24.dp),
-            )
+            onThemeMode(ThemeMode.entries[index])
         }
     }
 
     if (disconnectTorDialog) {
-        AlertDialog(
-            modifier = Modifier.outlineIfAny(amoledBorder(), AlertDialogDefaults.shape),
-            title = { Text(text = stringResource(Res.string.do_you_really_want_to_disable_tor_title)) },
-            text = { Text(text = stringResource(Res.string.do_you_really_want_to_disable_tor_text)) },
-            onDismissRequest = { disconnectTorDialog = false },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        disconnectTorDialog = false
-                        torMode = TorMode.DISABLED
-                        scope.launch(Dispatchers.IO) {
-                            if (settingsStore.settings.torMode == TorMode.BUILTIN) {
-                                TorManager.stop()
-                            }
-                            LocalPreferences.updateTorMode(context, TorMode.DISABLED)
-                            relayClient.checkForNewRelaysAndUpdateAllFilters()
-                        }
-                    },
-                ) {
-                    Text(text = stringResource(Res.string.yes))
-                }
+        DisableTorDialog(
+            onConfirm = {
+                disconnectTorDialog = false
+                onDisableTor()
             },
-            dismissButton = {
-                TextButton(
-                    onClick = { disconnectTorDialog = false },
-                ) {
-                    Text(text = stringResource(Res.string.no))
-                }
+            onDismiss = { disconnectTorDialog = false },
+        )
+    }
+
+    if (state.isLoading) {
+        CenterCircularProgressIndicator(modifier, state.status)
+        return
+    }
+
+    Column(modifier) {
+        AccountSection(onNav)
+        if (!BuildFlavorChecker.isOfflineFlavor()) {
+            NetworkSection(
+                state = state,
+                onNav = onNav,
+                onTorClick = {
+                    if (state.torMode != TorMode.DISABLED) disconnectTorDialog = true else onNav(Route.TorSettings.route)
+                },
+                onToggleKillSwitch = onToggleKillSwitch,
+            )
+            ServiceSection(onNav)
+        }
+        GeneralSection(themeMode = state.themeMode, onNav = onNav, onThemeClick = { themeDialog = true })
+        HelpSection(state = state, onNav = onNav)
+        Spacer(modifier = Modifier.weight(1f))
+        DatabaseFooter(databaseSizeMb = state.databaseSizeMb, onClearOldEntries = onClearOldEntries)
+        VersionFooter()
+    }
+}
+
+@Composable
+private fun AccountSection(onNav: (String) -> Unit, modifier: Modifier = Modifier) {
+    SettingsSection(title = stringResource(Res.string.settings_section_account), modifier = modifier) {
+        SettingsItem(
+            title = stringResource(Res.string.security),
+            subtitle = stringResource(Res.string.security_subtitle),
+            painter = rememberVectorPainter(Icons.Default.Security),
+            onClick = { onNav(Route.Security.route) },
+        )
+        SettingsDivider()
+        SettingsItem(
+            title = stringResource(Res.string.backup_keys),
+            subtitle = stringResource(Res.string.backup_keys_subtitle),
+            painter = rememberVectorPainter(Icons.Default.Key),
+            onClick = { onNav(Route.AccountBackup.route) },
+        )
+        SettingsDivider()
+        SettingsItem(
+            title = stringResource(Res.string.sign_policy),
+            subtitle = stringResource(Res.string.sign_policy_subtitle),
+            painter = rememberVectorPainter(Icons.Default.Draw),
+            onClick = { onNav(Route.SignPolicy.route) },
+        )
+    }
+}
+
+@Composable
+private fun NetworkSection(
+    state: SettingsUiState,
+    onNav: (String) -> Unit,
+    onTorClick: () -> Unit,
+    onToggleKillSwitch: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    SettingsSection(title = stringResource(Res.string.settings_section_network), modifier = modifier) {
+        SettingsItem(
+            title = when (state.torMode) {
+                TorMode.BUILTIN -> stringResource(Res.string.disconnect_builtin_tor)
+                TorMode.ORBOT -> stringResource(Res.string.disconnect_from_your_orbot_setup)
+                TorMode.DISABLED -> stringResource(Res.string.connect_via_tor_short)
             },
+            subtitle = stringResource(Res.string.tor_subtitle),
+            painter = painterResource(R.drawable.ic_tor),
+            onLongClick = { onNav(Route.TorSettings.route) },
+            onClick = onTorClick,
+        )
+        SettingsDivider()
+        SettingsItem(
+            title = stringResource(Res.string.relays),
+            subtitle = stringResource(Res.string.relays_subtitle),
+            painter = painterResource(R.drawable.relays),
+            onClick = { onNav(Route.RelaysScreen.route) },
+        )
+        SettingsDivider()
+        val killSwitchColor = if (state.killSwitch) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onBackground
+        SettingsItem(
+            title = stringResource(if (state.killSwitch) Res.string.disable_kill_switch else Res.string.enable_kill_switch),
+            subtitle = stringResource(Res.string.kill_switch_settings_subtitle),
+            painter = rememberVectorPainter(Icons.Default.Block),
+            iconTint = killSwitchColor,
+            titleColor = killSwitchColor,
+            onClick = onToggleKillSwitch,
+        )
+    }
+}
+
+@Composable
+private fun ServiceSection(onNav: (String) -> Unit, modifier: Modifier = Modifier) {
+    SettingsSection(title = stringResource(Res.string.settings_section_service), modifier = modifier) {
+        SettingsItem(
+            title = stringResource(Res.string.service_settings),
+            subtitle = stringResource(Res.string.service_settings_subtitle),
+            painter = rememberVectorPainter(Icons.Default.PowerSettingsNew),
+            onClick = { onNav(Route.ServiceSettings.route) },
+        )
+        SettingsDivider()
+        SettingsItem(
+            title = stringResource(Res.string.applications_backup),
+            subtitle = stringResource(Res.string.applications_backup_subtitle),
+            painter = rememberVectorPainter(Icons.Default.CloudUpload),
+            onClick = { onNav(Route.ApplicationsBackup.route) },
+        )
+    }
+}
+
+@Composable
+private fun GeneralSection(
+    themeMode: ThemeMode,
+    onNav: (String) -> Unit,
+    onThemeClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    SettingsSection(title = stringResource(Res.string.settings_section_general), modifier = modifier) {
+        SettingsItem(
+            title = stringResource(Res.string.theme),
+            subtitle = stringResource(themeMode.resourceId),
+            painter = rememberVectorPainter(Icons.Default.Palette),
+            onClick = onThemeClick,
+        )
+        SettingsDivider()
+        SettingsItem(
+            title = stringResource(Res.string.language),
+            subtitle = stringResource(Res.string.language_subtitle),
+            painter = rememberVectorPainter(Icons.Default.Language),
+            onClick = { onNav(Route.Language.route) },
+        )
+        SettingsDivider()
+        SettingsItem(
+            title = stringResource(Res.string.auth_whitelist),
+            subtitle = stringResource(Res.string.auth_whitelist_subtitle),
+            painter = rememberVectorPainter(Icons.Default.VerifiedUser),
+            onClick = { onNav(Route.AuthWhitelist.route) },
+        )
+        SettingsDivider()
+        SettingsItem(
+            title = stringResource(Res.string.logs),
+            subtitle = stringResource(Res.string.logs_subtitle),
+            painter = rememberVectorPainter(Icons.AutoMirrored.Filled.Article),
+            onClick = { onNav(Route.Logs.route) },
+        )
+    }
+}
+
+@Composable
+private fun HelpSection(state: SettingsUiState, onNav: (String) -> Unit, modifier: Modifier = Modifier) {
+    SettingsSection(title = stringResource(Res.string.settings_section_help), modifier = modifier) {
+        SettingsItem(
+            title = stringResource(Res.string.give_us_feedback),
+            subtitle = stringResource(Res.string.give_us_feedback_subtitle),
+            painter = rememberVectorPainter(Icons.Default.Feedback),
+            onClick = { onNav(Route.Feedback.route) },
+        )
+        if (state.canUpdate) {
+            val version = state.availableVersion
+            val updateColor = if (version != null) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onBackground
+            SettingsDivider()
+            SettingsItem(
+                title = if (version != null) stringResource(Res.string.update_available, version) else stringResource(Res.string.update_settings),
+                subtitle = stringResource(Res.string.update_settings_subtitle),
+                painter = rememberVectorPainter(Icons.Default.SystemUpdate),
+                iconTint = updateColor,
+                titleColor = updateColor,
+                onClick = { onNav(Route.UpdateSettings.route) },
+            )
+        }
+    }
+}
+
+@Composable
+private fun DatabaseFooter(databaseSizeMb: String, onClearOldEntries: () -> Unit, modifier: Modifier = Modifier) {
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(top = 16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Text(stringResource(Res.string.database_size_mb, databaseSizeMb), color = Color.Gray)
+        AmberButton(
+            modifier = Modifier.fillMaxWidth(),
+            text = stringResource(Res.string.clear_logs_and_activity),
+            onClick = onClearOldEntries,
+        )
+    }
+}
+
+@Composable
+private fun VersionFooter(modifier: Modifier = Modifier) {
+    val primaryColor = MaterialTheme.colorScheme.primary
+    val linkStyles = TextLinkStyles(style = SpanStyle(color = primaryColor, textDecoration = TextDecoration.Underline))
+    Text(
+        buildAnnotatedString {
+            withStyle(style = ParagraphStyle(textAlign = TextAlign.Center)) {
+                append("v${BuildConfig.VERSION_NAME}-${BuildConfig.FLAVOR}\n\n")
+                withLink(LinkAnnotation.Url(getStringBlocking(Res.string.amber_github_uri), styles = linkStyles)) {
+                    append("${getStringBlocking(Res.string.source_code)}\n\n")
+                }
+                withLink(LinkAnnotation.Url(getStringBlocking(Res.string.support_development_uri), styles = linkStyles)) {
+                    append(getStringBlocking(Res.string.support_development))
+                }
+            }
+            toAnnotatedString()
+        },
+        fontSize = 18.sp,
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(vertical = 24.dp),
+    )
+}
+
+@Composable
+private fun DisableTorDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
+    AlertDialog(
+        modifier = Modifier.outlineIfAny(amoledBorder(), AlertDialogDefaults.shape),
+        title = { Text(text = stringResource(Res.string.do_you_really_want_to_disable_tor_title)) },
+        text = { Text(text = stringResource(Res.string.do_you_really_want_to_disable_tor_text)) },
+        onDismissRequest = onDismiss,
+        confirmButton = {
+            TextButton(onClick = onConfirm) {
+                Text(text = stringResource(Res.string.yes))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(text = stringResource(Res.string.no))
+            }
+        },
+    )
+}
+
+@ThemePreviews
+@Composable
+internal fun SettingsContentPreview() {
+    AmberPreview {
+        SettingsContent(
+            state = SettingsUiState(torMode = TorMode.BUILTIN, isLoading = false, databaseSizeMb = "1.234", canUpdate = true, availableVersion = "7.0.0"),
+            onNav = {},
+            onClearOldEntries = {},
+            onDisableTor = {},
+            onThemeMode = {},
+            onToggleKillSwitch = {},
         )
     }
 }
@@ -602,11 +560,11 @@ private fun SettingsDivider() {
 private fun SettingsItem(
     title: String,
     painter: Painter,
+    onClick: () -> Unit,
     modifier: Modifier = Modifier,
     subtitle: String? = null,
     iconTint: Color = MaterialTheme.colorScheme.onBackground,
     titleColor: Color = MaterialTheme.colorScheme.onBackground,
-    onClick: () -> Unit,
     onLongClick: (() -> Unit)? = null,
 ) {
     Row(

@@ -213,7 +213,6 @@ class ArchitectureTest {
             "service/WebDavService.kt",
             "service/ZapstoreUpdater.kt",
             "service/crashreports/DisplayCrashMessages.kt",
-            "ui/AccountStateViewModel.kt",
         )
 
         val composeUiInService = setOf(

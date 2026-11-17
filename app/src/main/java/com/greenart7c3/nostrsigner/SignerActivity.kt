@@ -162,7 +162,14 @@ class SignerActivity : AppCompatActivity() {
 
                                     val accountStateViewModel: AccountStateViewModel =
                                         viewModel {
-                                            AccountStateViewModel(npub)
+                                            AccountStateViewModel(
+                                                npub = npub,
+                                                appContext = amber,
+                                                settingsStore = amber,
+                                                accountRepository = amber,
+                                                relayClient = amber,
+                                                appScope = amber.applicationIOScope,
+                                            )
                                         }
 
                                     LaunchedEffect(Unit, bunkerRequests.value) {

@@ -180,6 +180,10 @@ account; `RequestGroupChoices` holds the per-group options; the request list is 
 stateless composable). Previews get an in-memory `SettingsStore` from
 `AmberPreview`.
 
+`BunkerMultiEventHomeScreen` (`BunkerMultiEventViewModel` confirms the batch,
+each request under its own account and app; `BunkerGroupChoices` keys the
+options per app and group; the request cards are stateless composables).
+
 ### 5. Break up `LocalPreferences.kt`
 
 Split settings, account storage and key storage by concern; the key part is

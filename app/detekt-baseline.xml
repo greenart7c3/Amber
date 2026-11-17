@@ -43,8 +43,6 @@
     <ID>CyclomaticComplexMethod:AmberUtils.kt:AmberUtils$fun acceptPermission</ID>
     <ID>CyclomaticComplexMethod:AmberUtils.kt:AmberUtils$fun updatePermission</ID>
     <ID>CyclomaticComplexMethod:BunkerConnectRequestScreen.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun BunkerConnectRequestScreen</ID>
-    <ID>CyclomaticComplexMethod:BunkerMultiEventHomeScreen.kt:@Composable fun BunkerMultiEventHomeScreen</ID>
-    <ID>CyclomaticComplexMethod:BunkerMultiEventHomeScreen.kt:@Composable private fun BunkerRequestCard</ID>
     <ID>CyclomaticComplexMethod:BunkerRequestUtils.kt:BunkerResponder$fun sendRejection</ID>
     <ID>CyclomaticComplexMethod:BunkerRequestUtils.kt:BunkerResponder$fun sendResult</ID>
     <ID>CyclomaticComplexMethod:BunkerSingleEventHomeScreen.kt:@Composable fun BunkerSingleEventHomeScreen</ID>
@@ -74,7 +72,6 @@
     <ID>LambdaParameterEventTrailing:AccountBackupScreen.kt:onBackupDone: () -&gt; Unit</ID>
     <ID>LambdaParameterEventTrailing:AccountBackupScreen.kt:onClick: () -&gt; Unit</ID>
     <ID>LambdaParameterEventTrailing:AccountBackupScreen.kt:onShowQrCode: (String) -&gt; Unit</ID>
-    <ID>LambdaParameterEventTrailing:BunkerMultiEventHomeScreen.kt:onLoading: (Boolean) -&gt; Unit</ID>
     <ID>LambdaParameterEventTrailing:BunkerSingleEventHomeScreen.kt:onLoading: (Boolean) -&gt; Unit</ID>
     <ID>LambdaParameterEventTrailing:ConnectOrbotDialog.kt:onError: (String) -&gt; Unit</ID>
     <ID>LambdaParameterEventTrailing:EditConfigurationScreen.kt:onNav: (String) -&gt; Unit</ID>
@@ -120,7 +117,6 @@
     <ID>LongMethod:AuthWhitelistScreen.kt:@Composable fun AuthWhitelistScreen</ID>
     <ID>LongMethod:BiometricAuthScreen.kt:@Composable fun BiometricAuthScreen</ID>
     <ID>LongMethod:BunkerConnectRequestScreen.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun BunkerConnectRequestScreen</ID>
-    <ID>LongMethod:BunkerMultiEventHomeScreen.kt:@Composable fun BunkerMultiEventHomeScreen</ID>
     <ID>LongMethod:BunkerMultiEventHomeScreen.kt:@Composable private fun BunkerRequestCard</ID>
     <ID>LongMethod:BunkerRelayAuthScreen.kt:@Composable fun BunkerRelayAuthScreen</ID>
     <ID>LongMethod:BunkerRequestUtils.kt:BunkerResponder$fun sendRejection</ID>
@@ -244,7 +240,6 @@
     <ID>ModifierWithoutDefault:ActivityScreen.kt:modifier: Modifier</ID>
     <ID>ModifierWithoutDefault:ApplicationsScreen.kt:modifier: Modifier</ID>
     <ID>ModifierWithoutDefault:BunkerGetPubKeyScreen.kt:modifier: Modifier</ID>
-    <ID>ModifierWithoutDefault:BunkerMultiEventHomeScreen.kt:modifier: Modifier</ID>
     <ID>ModifierWithoutDefault:BunkerPingScreen.kt:modifier: Modifier</ID>
     <ID>ModifierWithoutDefault:BunkerRelayAuthScreen.kt:modifier: Modifier</ID>
     <ID>ModifierWithoutDefault:BunkerSingleEventHomeScreen.kt:modifier: Modifier</ID>

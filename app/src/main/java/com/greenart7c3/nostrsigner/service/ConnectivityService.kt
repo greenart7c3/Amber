@@ -1,6 +1,5 @@
 package com.greenart7c3.nostrsigner.service
 
-import com.greenart7c3.nostrsigner.amber
 import android.app.Service
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -19,6 +18,7 @@ import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.LocalPreferences
+import com.greenart7c3.nostrsigner.amber
 import com.greenart7c3.nostrsigner.models.TorMode
 import com.greenart7c3.nostrsigner.okhttp.HttpClientManager
 import java.util.Timer

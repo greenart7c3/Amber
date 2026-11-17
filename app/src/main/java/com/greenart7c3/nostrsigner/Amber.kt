@@ -700,11 +700,18 @@ class Amber :
     }
 
     override fun getLogDatabase(npub: String): LogDatabase = logDatabases.computeIfAbsent(npub) {
-        LogDatabase.getDatabase(applicationContext, npub).also { LogRetentionManager.watch(npub, it) }
+        LogDatabase.getDatabase(applicationContext, npub).also {
+            it.settingsStore = this
+            LogRetentionManager.watch(npub, it)
+        }
     }
 
     override fun getHistoryDatabase(npub: String): HistoryDatabase = historyDatabases.computeIfAbsent(npub) {
-        HistoryDatabase.getDatabase(applicationContext, npub).also { LogRetentionManager.watch(npub, it) }
+        HistoryDatabase.getDatabase(applicationContext, npub).also {
+            it.settingsStore = this
+            it.accountRepository = this
+            LogRetentionManager.watch(npub, it)
+        }
     }
 
     /**

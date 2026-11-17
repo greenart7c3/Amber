@@ -19,7 +19,7 @@ import com.vitorpamplona.quartz.utils.TimeUtils
 private const val MAX_CONTENT_LENGTH = 500
 
 @Dao
-interface HistoryDao {
+abstract class HistoryDao(private val database: HistoryDatabase) {
     @Query(
         """
     SELECT * FROM history
@@ -28,7 +28,7 @@ interface HistoryDao {
     ORDER BY time DESC
     """,
     )
-    fun getAllHistoryPaging(pk: String, acceptedFilter: Boolean?): PagingSource<Int, HistoryEntity>
+    abstract fun getAllHistoryPaging(pk: String, acceptedFilter: Boolean?): PagingSource<Int, HistoryEntity>
 
     @Query(
         """
@@ -41,7 +41,7 @@ interface HistoryDao {
     ORDER BY time DESC
     """,
     )
-    fun searchAllHistoryPaging(pk: String, query: String, acceptedFilter: Boolean?): PagingSource<Int, HistoryEntity>
+    abstract fun searchAllHistoryPaging(pk: String, query: String, acceptedFilter: Boolean?): PagingSource<Int, HistoryEntity>
 
     @Query(
         """
@@ -50,7 +50,7 @@ interface HistoryDao {
     ORDER BY time DESC
     """,
     )
-    fun getAllHistoryPaging(acceptedFilter: Boolean?): PagingSource<Int, HistoryEntity>
+    abstract fun getAllHistoryPaging(acceptedFilter: Boolean?): PagingSource<Int, HistoryEntity>
 
     @Query(
         """
@@ -62,46 +62,46 @@ interface HistoryDao {
     ORDER BY time DESC
     """,
     )
-    fun searchAllHistoryPaging(query: String, acceptedFilter: Boolean?): PagingSource<Int, HistoryEntity>
+    abstract fun searchAllHistoryPaging(query: String, acceptedFilter: Boolean?): PagingSource<Int, HistoryEntity>
 
     @Query("DELETE FROM history where pkKey = :pk")
-    suspend fun deleteHistory(pk: String)
+    abstract suspend fun deleteHistory(pk: String)
 
     @Query("SELECT COUNT(*) FROM history WHERE time >= :sinceSeconds AND accepted = 1")
-    suspend fun countAcceptedSince(sinceSeconds: Long): Long
+    abstract suspend fun countAcceptedSince(sinceSeconds: Long): Long
 
     @Query("SELECT COUNT(*) FROM history WHERE time >= :sinceSeconds AND accepted = 0")
-    suspend fun countRejectedSince(sinceSeconds: Long): Long
+    abstract suspend fun countRejectedSince(sinceSeconds: Long): Long
 
     @Query("SELECT COUNT(*) FROM history WHERE pkKey = :pk AND time >= :sinceSeconds AND accepted = 1")
-    suspend fun countAcceptedSince(pk: String, sinceSeconds: Long): Long
+    abstract suspend fun countAcceptedSince(pk: String, sinceSeconds: Long): Long
 
     @Query("SELECT COUNT(*) FROM history WHERE pkKey = :pk AND time >= :sinceSeconds AND accepted = 0")
-    suspend fun countRejectedSince(pk: String, sinceSeconds: Long): Long
+    abstract suspend fun countRejectedSince(pk: String, sinceSeconds: Long): Long
 
     @Query("DELETE FROM history WHERE id IN (SELECT id FROM history ORDER BY time ASC LIMIT :count)")
-    suspend fun deleteOldestHistory(count: Int): Int
+    abstract suspend fun deleteOldestHistory(count: Int): Int
 
     @Query("DELETE FROM history WHERE time < :time")
     @Transaction
-    suspend fun deleteOldHistory(time: Long): Int
+    abstract suspend fun deleteOldHistory(time: Long): Int
 
     @Query("DELETE FROM history")
     @Transaction
-    suspend fun clearHistory()
+    abstract suspend fun clearHistory()
 
     @Delete
     @Transaction
-    suspend fun deleteHistory(historyEntity: HistoryEntity)
+    abstract suspend fun deleteHistory(historyEntity: HistoryEntity)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     @Transaction
-    suspend fun innerAddHistory(entities: List<HistoryEntity>)
+    abstract suspend fun innerAddHistory(entities: List<HistoryEntity>)
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     @Transaction
-    suspend fun addHistory(entities: List<HistoryEntity>, npub: String?) {
-        if (Amber.instance.settings.privacyMode) return
+    open suspend fun addHistory(entities: List<HistoryEntity>, npub: String?) {
+        if (database.settingsStore.settings.privacyMode) return
         try {
             val localEntities = entities.map { entity ->
                 val permission = Permission(entity.type.toLowerCase(Locale.current), entity.kind)
@@ -120,7 +120,7 @@ interface HistoryDao {
                 if (pkKey != null) {
                     // Cached dao so the write invalidates CachingApplicationDao's
                     // getAll entry (lastUsed is a column of that projection).
-                    Amber.instance.dao(npub).updateLastUsed(pkKey, lastUsed)
+                    database.accountRepository.dao(npub).updateLastUsed(pkKey, lastUsed)
                 }
             }
         } catch (e: Exception) {

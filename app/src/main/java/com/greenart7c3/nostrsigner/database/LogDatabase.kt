@@ -7,6 +7,8 @@ import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
+import com.greenart7c3.nostrsigner.data.AccountRepository
+import com.greenart7c3.nostrsigner.data.SettingsStore
 import java.util.concurrent.Executors
 
 @Database(
@@ -18,6 +20,9 @@ import java.util.concurrent.Executors
 @TypeConverters(Converters::class)
 abstract class LogDatabase : RoomDatabase() {
     abstract fun dao(): LogDao
+
+    /** Set by the [AccountRepository] that opens the database; [LogDao.insertLogIfEnabled] honors its privacy mode. */
+    lateinit var settingsStore: SettingsStore
 
     companion object {
         /** On-disk name of [npub]'s database, also used to delete it at logout. */

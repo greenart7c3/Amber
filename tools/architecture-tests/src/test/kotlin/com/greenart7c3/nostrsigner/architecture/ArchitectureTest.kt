@@ -184,8 +184,6 @@ class ArchitectureTest {
             "LocalPreferences.kt",
             "SecureCryptoHelper.kt",
             "SignerProviderQuery.kt",
-            "database/HistoryDao.kt",
-            "database/LogDao.kt",
             "database/LogRetentionManager.kt",
             "models/Account.kt",
             "relays/AmberRelayStat.kt",

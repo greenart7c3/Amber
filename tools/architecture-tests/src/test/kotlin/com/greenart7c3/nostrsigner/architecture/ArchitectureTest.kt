@@ -226,7 +226,6 @@ class ArchitectureTest {
             "ui/EditConfigurationScreen.kt",
             "ui/EditPermission.kt",
             "ui/FeedbackScreen.kt",
-            "ui/IncomingRequestScreen.kt",
             "ui/LanguageScreen.kt",
             "ui/LoginScreen.kt",
             "ui/LogsScreen.kt",

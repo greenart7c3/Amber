@@ -47,7 +47,6 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
-import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.commonsui.Res
 import com.greenart7c3.nostrsigner.commonsui.accounts_to_export
@@ -75,6 +74,7 @@ import com.greenart7c3.nostrsigner.commonsui.show_password
 import com.greenart7c3.nostrsigner.service.AccountExportService
 import com.greenart7c3.nostrsigner.service.Biometrics.authenticate
 import com.greenart7c3.nostrsigner.ui.CenterCircularProgressIndicator
+import com.greenart7c3.nostrsigner.ui.LocalAppScope
 import com.greenart7c3.nostrsigner.ui.components.AmberButton
 import com.greenart7c3.nostrsigner.ui.components.MarkdownText
 import com.greenart7c3.nostrsigner.ui.theme.amoledBorder
@@ -91,6 +91,7 @@ fun ExportAllAccountsScreen(
     modifier: Modifier,
 ) {
     val context = LocalContext.current
+    val appScope = LocalAppScope.current
     var isLoading by remember { mutableStateOf(false) }
     var exportProgress by remember { mutableStateOf("") }
     var accountCount by remember { mutableIntStateOf(0) }
@@ -114,7 +115,7 @@ fun ExportAllAccountsScreen(
         ActivityResultContracts.CreateDocument("application/octet-stream"),
     ) { uri ->
         uri?.let {
-            Amber.instance.applicationIOScope.launch {
+            appScope.launch {
                 isLoading = true
                 exportProgress = getStringBlocking(Res.string.preparing_export)
 
@@ -338,7 +339,7 @@ fun ExportAllAccountsScreen(
                                         showConfirmationDialog = true
                                     },
                                     onError = { _, message ->
-                                        Amber.instance.applicationIOScope.launch(Dispatchers.Main) {
+                                        appScope.launch(Dispatchers.Main) {
                                             Toast.makeText(
                                                 context,
                                                 message,

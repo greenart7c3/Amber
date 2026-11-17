@@ -1,6 +1,7 @@
 package com.greenart7c3.nostrsigner.ui.components
 
 import android.view.WindowManager
+import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -28,7 +29,6 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
-import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.commonsui.Res
 import com.greenart7c3.nostrsigner.commonsui.copy_to_clipboard
 import com.greenart7c3.nostrsigner.commonsui.next
@@ -152,18 +152,19 @@ fun SeedWordsPage(
         }
     }
     val lifecycleOwner = LocalLifecycleOwner.current
+    val activity = LocalActivity.current
     DisposableEffect(key1 = lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             when (event) {
                 Lifecycle.Event.ON_START -> {
-                    Amber.instance.getMainActivity()?.window?.setFlags(
+                    activity?.window?.setFlags(
                         WindowManager.LayoutParams.FLAG_SECURE,
                         WindowManager.LayoutParams.FLAG_SECURE,
                     )
                 }
 
                 Lifecycle.Event.ON_PAUSE -> {
-                    Amber.instance.getMainActivity()?.window?.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
+                    activity?.window?.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
                 }
 
                 else -> {}
@@ -172,7 +173,7 @@ fun SeedWordsPage(
         lifecycleOwner.lifecycle.addObserver(observer)
 
         onDispose {
-            Amber.instance.getMainActivity()?.window?.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
+            activity?.window?.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
             lifecycleOwner.lifecycle.removeObserver(observer)
         }
     }

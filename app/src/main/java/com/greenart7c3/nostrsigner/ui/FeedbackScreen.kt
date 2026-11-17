@@ -27,10 +27,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
-import com.greenart7c3.nostrsigner.Amber
+import com.greenart7c3.nostrsigner.amber
 import com.greenart7c3.nostrsigner.commonsui.Res
 import com.greenart7c3.nostrsigner.commonsui.body_text_optional
 import com.greenart7c3.nostrsigner.commonsui.bug_report
@@ -57,6 +58,7 @@ fun FeedbackScreen(
     onDismiss: () -> Unit,
     onLoading: (Boolean) -> Unit,
 ) {
+    val amber = LocalContext.current.amber
     var header by remember { mutableStateOf(TextFieldValue("")) }
     var body by remember { mutableStateOf(TextFieldValue("")) }
     var feedbackType by remember { mutableStateOf(FeedbackType.BUG_REPORT) }
@@ -157,10 +159,10 @@ fun FeedbackScreen(
                 enabled = header.text.isNotBlank(),
                 text = stringResource(Res.string.send),
                 onClick = {
-                    Amber.instance.applicationIOScope.launch {
+                    amber.applicationIOScope.launch {
                         try {
                             onLoading(true)
-                            val result = Amber.instance.sendFeedBack(
+                            val result = amber.sendFeedBack(
                                 header.text,
                                 body.text,
                                 feedbackType,

@@ -45,10 +45,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalClipboard
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
-import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
+import com.greenart7c3.nostrsigner.amber
 import com.greenart7c3.nostrsigner.commonsui.Res
 import com.greenart7c3.nostrsigner.commonsui.cancel
 import com.greenart7c3.nostrsigner.commonsui.copy_crash_report_to_clipboard
@@ -67,7 +68,8 @@ fun CrashReportScreen(
     onDismiss: () -> Unit,
     onLoading: (Boolean) -> Unit = {},
 ) {
-    val initialStack = remember { Amber.instance.pendingCrashReport ?: "" }
+    val amber = LocalContext.current.amber
+    val initialStack = remember { amber.pendingCrashReport ?: "" }
     var editedStack by remember { mutableStateOf(initialStack) }
     val clipboardManager = LocalClipboard.current
 
@@ -112,7 +114,7 @@ fun CrashReportScreen(
                     clipboard = clipboardManager,
                     anonymous = anonymous,
                     onDone = {
-                        Amber.instance.clearPendingCrashReport()
+                        amber.clearPendingCrashReport()
                         onLoading(false)
                         onDismiss()
                     },
@@ -141,7 +143,7 @@ fun CrashReportScreen(
             OutlinedButton(
                 modifier = Modifier.weight(1f),
                 onClick = {
-                    Amber.instance.clearPendingCrashReport()
+                    amber.clearPendingCrashReport()
                     onDismiss()
                 },
             ) {

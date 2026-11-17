@@ -158,7 +158,7 @@ class Amber :
      */
     @Volatile var isSettingsLoaded = false
 
-    val factory = OkHttpWebSocket.Builder { url ->
+    override val factory = OkHttpWebSocket.Builder { url ->
         if (isPrivateIp(url.url)) return@Builder HttpClientManager.getLocalHttpClient()
         val useProxy = when {
             // Settings load asynchronously; until they land, torMode's default (DISABLED)

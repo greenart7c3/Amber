@@ -61,6 +61,7 @@ fun DefaultProfileRelaysScreen(
     modifier: Modifier,
     account: Account,
 ) {
+    val accountRepository = LocalAccountRepository.current
     val settingsStore = LocalSettingsStore.current
     val relayClient = LocalRelayClient.current
     val scope = rememberCoroutineScope()
@@ -159,6 +160,8 @@ fun DefaultProfileRelaysScreen(
                                     relays2,
                                     scope,
                                     account,
+                                    factory = relayClient.factory,
+                                    accountRepository = accountRepository,
                                     shouldCheckForBunker = false,
                                     onDone = {
                                         settingsStore.settings = settingsStore.settings.copy(
@@ -212,6 +215,8 @@ fun DefaultProfileRelaysScreen(
                                         relays2,
                                         scope,
                                         account,
+                                        factory = relayClient.factory,
+                                        accountRepository = accountRepository,
                                         shouldCheckForBunker = false,
                                         onDone = {
                                             settingsStore.settings = settingsStore.settings.copy(

@@ -108,10 +108,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.amber
 import com.greenart7c3.nostrsigner.commonsui.Res
 import com.greenart7c3.nostrsigner.commonsui.a_nostr_secure_signer
 import com.greenart7c3.nostrsigner.commonsui.add_a_key
@@ -193,6 +193,8 @@ fun MainPage(
     navHostControllerWrapper: NavHostControllerWrapper,
     accountViewModel: AccountStateViewModel,
 ) {
+    val appScope = LocalAppScope.current
+    val amber = LocalContext.current.amber
     var isLoading by remember { mutableStateOf(false) }
     var text by remember { mutableStateOf("") }
     var password by remember { mutableStateOf(TextFieldValue()) }
@@ -207,32 +209,32 @@ fun MainPage(
     var finishAfterImportError by remember { mutableStateOf<(() -> Unit)?>(null) }
 
     fun finishImport(hadAccounts: Boolean) {
-        Amber.instance.applicationIOScope.launch {
+        appScope.launch {
             if (hadAccounts) {
-                Amber.instance.applicationIOScope.launch(Dispatchers.Main) {
+                appScope.launch(Dispatchers.Main) {
                     navHostControllerWrapper.navController.navigate(Route.Applications.route) {
                         popUpTo(0)
                     }
                 }
             } else {
-                val accounts = LocalPreferences.allAccounts(Amber.instance)
+                val accounts = LocalPreferences.allAccounts(amber)
                 if (accounts.isNotEmpty()) {
-                    val account = LocalPreferences.loadFromEncryptedStorage(Amber.instance, accounts.first().npub)
+                    val account = LocalPreferences.loadFromEncryptedStorage(amber, accounts.first().npub)
                     account?.let {
                         accountViewModel.startUI(account, null)
                         accountViewModel.maybeOfferRestore(account)
                     }
                 }
             }
-            Amber.instance.notificationSubscription.updateFilter()
+            amber.notificationSubscription.updateFilter()
         }
     }
 
     val selectFileLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         shouldShowBottomSheet.value = false
-        Amber.instance.applicationIOScope.launch {
+        appScope.launch {
             uri?.let {
-                val hasAccounts = LocalPreferences.allAccounts(Amber.instance).isNotEmpty()
+                val hasAccounts = LocalPreferences.allAccounts(amber).isNotEmpty()
                 AccountExportService.importAccounts(
                     uri = uri,
                     password = password.text,
@@ -394,7 +396,7 @@ fun MainPage(
                             contentColor = Color(0xFF4C4C4C),
                             textColor = MaterialTheme.colorScheme.primary,
                             onClick = {
-                                Amber.instance.applicationIOScope.launch(Dispatchers.Main) {
+                                appScope.launch(Dispatchers.Main) {
                                     navHostControllerWrapper.navController.navigate("loginPage")
                                 }
                             },
@@ -403,7 +405,7 @@ fun MainPage(
 
                         AmberButton(
                             onClick = {
-                                Amber.instance.applicationIOScope.launch(Dispatchers.Main) {
+                                appScope.launch(Dispatchers.Main) {
                                     navHostControllerWrapper.navController.navigate("create")
                                 }
                             },
@@ -541,6 +543,8 @@ fun MainLoginPage(
     accountViewModel: AccountStateViewModel,
     navHostControllerWrapper: NavHostControllerWrapper,
 ) {
+    val appScope = LocalAppScope.current
+    val amber = LocalContext.current.amber
     NavHost(
         navHostControllerWrapper.navController,
         startDestination = "login",
@@ -562,8 +566,8 @@ fun MainLoginPage(
                     accountViewModel = accountViewModel,
                     navHostControllerWrapper = navHostControllerWrapper,
                     onFinish = {
-                        Amber.instance.applicationIOScope.launch {
-                            Amber.instance.notificationSubscription.updateFilter()
+                        appScope.launch {
+                            amber.notificationSubscription.updateFilter()
                         }
                     },
                 )
@@ -591,6 +595,7 @@ fun SignUpPage(
     navHostControllerWrapper: NavHostControllerWrapper,
     onFinish: () -> Unit,
 ) {
+    val appScope = LocalAppScope.current
     val scope = rememberCoroutineScope()
     var loading by remember { mutableStateOf(false) }
     val configuration = LocalConfiguration.current
@@ -644,7 +649,7 @@ fun SignUpPage(
                                 state.animateScrollToPage(state.currentPage - 1)
                             }
                         } else {
-                            Amber.instance.applicationIOScope.launch(Dispatchers.Main) {
+                            appScope.launch(Dispatchers.Main) {
                                 navHostControllerWrapper.navController.navigateUp()
                             }
                         }
@@ -948,7 +953,7 @@ fun SignUpPage(
                                         return@AmberButton
                                     }
 
-                                    Amber.instance.applicationIOScope.launch {
+                                    appScope.launch {
                                         loading = true
                                         accountViewModel.newKey(
                                             torMode = torMode,
@@ -958,7 +963,7 @@ fun SignUpPage(
                                             name = nickname.text,
                                         )
                                         loading = false
-                                        Amber.instance.applicationIOScope.launch(Dispatchers.Main) {
+                                        appScope.launch(Dispatchers.Main) {
                                             onFinish()
                                         }
                                     }
@@ -981,6 +986,7 @@ fun LoginPage(
     navHostControllerWrapper: NavHostControllerWrapper,
     onFinish: () -> Unit,
 ) {
+    val appScope = LocalAppScope.current
     var isLoading by remember { mutableStateOf(false) }
     val configuration = LocalConfiguration.current
     val screenWidthDp = configuration.screenWidthDp.dp
@@ -1232,7 +1238,7 @@ fun LoginPage(
                                             }
 
                                             if (key.value.text.isNotBlank() && !(needsPassword.value && password.value.text.isBlank())) {
-                                                Amber.instance.applicationIOScope.launch {
+                                                appScope.launch {
                                                     isLoading = true
                                                     try {
                                                         val isValid = accountViewModel.isValidKey(key.value.text.filter { value -> value.code in 33..126 || value.code == 32 }.toLowerCase(Locale.current).trim(), password.value.text)
@@ -1316,7 +1322,7 @@ fun LoginPage(
                                                 }
 
                                                 if (key.value.text.isNotBlank() && !(needsPassword.value && password.value.text.isBlank())) {
-                                                    Amber.instance.applicationIOScope.launch {
+                                                    appScope.launch {
                                                         isLoading = true
                                                         try {
                                                             val isValid = accountViewModel.isValidKey(key.value.text.filter { value -> value.code in 33..126 || value.code == 32 }.toLowerCase(Locale.current).trim(), password.value.text)
@@ -1358,7 +1364,7 @@ fun LoginPage(
                                 onClick = {
                                     if (isMnemonicMode) {
                                         val mnemonicStr = mnemonicWords.joinToString(" ")
-                                        Amber.instance.applicationIOScope.launch {
+                                        appScope.launch {
                                             isLoading = true
                                             try {
                                                 val isValid = accountViewModel.isValidKey(mnemonicStr, "", mnemonicAccountIndex.toLong())
@@ -1388,7 +1394,7 @@ fun LoginPage(
                                         }
 
                                         if (key.value.text.isNotBlank() && !(needsPassword.value && password.value.text.isBlank())) {
-                                            Amber.instance.applicationIOScope.launch {
+                                            appScope.launch {
                                                 isLoading = true
                                                 try {
                                                     val isValid = accountViewModel.isValidKey(key.value.text.filter { value -> value.code in 33..126 || value.code == 32 }.toLowerCase(Locale.current).trim(), password.value.text)
@@ -1612,7 +1618,7 @@ fun LoginPage(
 
                                     val currentKeyPair = keyPair ?: return@AmberButton
 
-                                    Amber.instance.applicationIOScope.launch {
+                                    appScope.launch {
                                         isLoading = true
                                         accountViewModel.startUI(
                                             keyPair = currentKeyPair,
@@ -1622,7 +1628,7 @@ fun LoginPage(
                                             proxyPort = if (torMode == TorMode.ORBOT) proxyPort.text.toInt() else 9050,
                                         )
                                         isLoading = false
-                                        Amber.instance.applicationIOScope.launch(Dispatchers.Main) {
+                                        appScope.launch(Dispatchers.Main) {
                                             onFinish()
                                         }
                                     }

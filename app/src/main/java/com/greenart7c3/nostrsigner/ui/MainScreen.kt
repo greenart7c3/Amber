@@ -57,9 +57,9 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.navArgument
-import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.LocalPreferences
+import com.greenart7c3.nostrsigner.amber
 import com.greenart7c3.nostrsigner.commonsui.Res
 import com.greenart7c3.nostrsigner.commonsui.allow
 import com.greenart7c3.nostrsigner.commonsui.could_not_connect_to_tor
@@ -136,7 +136,7 @@ private fun askNotificationPermission(
 @SuppressLint("BatteryLife")
 fun requestIgnoreBatteryOptimizations(context: Context) {
     if (BuildFlavorChecker.isOfflineFlavor()) return
-    if (Amber.instance.client.connectedRelaysFlow().value.isEmpty()) return
+    if (context.amber.client.connectedRelaysFlow().value.isEmpty()) return
     val packageName = context.packageName
     val pm = context.getSystemService(PowerManager::class.java)
     if (!pm.isIgnoringBatteryOptimizations(packageName) && !LocalPreferences.getBatteryOptimization(context)) {
@@ -162,6 +162,10 @@ fun MainScreen(
     onRemoveIntentData: (List<IntentData>, IntentResultType) -> Unit,
     isExternalRequest: Boolean = false,
 ) {
+    val settingsStore = LocalSettingsStore.current
+    val relayClient = LocalRelayClient.current
+    val appScope = LocalAppScope.current
+    val amber = LocalContext.current.amber
     val lifecycleOwner = LocalLifecycleOwner.current
     val navBackStackEntry by navController.navController.currentBackStackEntryAsState()
     val destinationRoute = navBackStackEntry?.destination?.route ?: ""
@@ -180,7 +184,7 @@ fun MainScreen(
                     LocalPreferences.updateShouldShowRationale(context, true)
                 }
             } else {
-                Amber.instance.stats.updateNotification()
+                amber.stats.updateNotification()
                 requestIgnoreBatteryOptimizations(context)
             }
         }
@@ -352,8 +356,8 @@ fun MainScreen(
                                 accountViewModel = accountStateViewModel,
                                 navHostControllerWrapper = navController,
                                 onFinish = {
-                                    Amber.instance.applicationIOScope.launch {
-                                        Amber.instance.notificationSubscription.updateFilter()
+                                    appScope.launch {
+                                        amber.notificationSubscription.updateFilter()
                                     }
                                     navController.navController.navigate(Route.Applications.route) {
                                         popUpTo(0)
@@ -475,7 +479,7 @@ fun MainScreen(
                                     .imePadding(),
                                 navController = navController.navController,
                                 onShowQrCode = {
-                                    Amber.instance.applicationIOScope.launch(Dispatchers.Main) {
+                                    appScope.launch(Dispatchers.Main) {
                                         navController.navController.navigate(Route.QrCode.route.replace("{content}", it))
                                     }
                                 },
@@ -890,11 +894,11 @@ fun MainScreen(
                                     .padding(top = verticalPadding * 1.5f),
                                 onPost = {
                                     scope.launch(Dispatchers.IO) {
-                                        if (Amber.instance.settings.torMode == TorMode.BUILTIN) {
+                                        if (settingsStore.settings.torMode == TorMode.BUILTIN) {
                                             TorManager.stop()
                                         }
                                         LocalPreferences.updateProxy(context, true, it)
-                                        Amber.instance.checkForNewRelaysAndUpdateAllFilters()
+                                        relayClient.checkForNewRelaysAndUpdateAllFilters()
                                         scope.launch {
                                             navController.navController.navigate(Route.Settings.route) {
                                                 popUpTo(0)
@@ -904,12 +908,12 @@ fun MainScreen(
                                 },
                                 onBuiltinTor = {
                                     scope.launch(Dispatchers.IO) {
-                                        if (Amber.instance.settings.torMode == TorMode.ORBOT) {
+                                        if (settingsStore.settings.torMode == TorMode.ORBOT) {
                                             HttpClientManager.clearProxy()
                                         }
                                         LocalPreferences.updateTorMode(context, TorMode.BUILTIN)
-                                        TorManager.start(context, Amber.instance.applicationIOScope)
-                                        Amber.instance.checkForNewRelaysAndUpdateAllFilters()
+                                        TorManager.start(context, appScope)
+                                        relayClient.checkForNewRelaysAndUpdateAllFilters()
                                         scope.launch {
                                             navController.navController.navigate(Route.Settings.route) {
                                                 popUpTo(0)
@@ -965,7 +969,7 @@ fun MainScreen(
                                     .imePadding(),
                                 account = account,
                                 onDismiss = {
-                                    Amber.instance.applicationIOScope.launch(Dispatchers.Main) {
+                                    appScope.launch(Dispatchers.Main) {
                                         navController.navController.navigateUp()
                                     }
                                 },
@@ -988,7 +992,7 @@ fun MainScreen(
                                     .padding(top = verticalPadding * 1.5f),
                                 account = account,
                                 onDismiss = {
-                                    Amber.instance.applicationIOScope.launch(Dispatchers.Main) {
+                                    appScope.launch(Dispatchers.Main) {
                                         navController.navController.navigateUp()
                                     }
                                 },
@@ -1011,7 +1015,7 @@ fun MainScreen(
                                     .padding(top = verticalPadding * 1.5f),
                                 account = account,
                                 onDismiss = {
-                                    Amber.instance.applicationIOScope.launch(Dispatchers.Main) {
+                                    appScope.launch(Dispatchers.Main) {
                                         navController.navController.navigateUp()
                                     }
                                 },
@@ -1093,7 +1097,7 @@ fun MainScreen(
             DisplayCrashMessages(account, navController)
 
             LaunchedEffect(account) {
-                Amber.instance.pendingTranslationReport.collect { message ->
+                amber.pendingTranslationReport.collect { message ->
                     if (message != null && navController.navController.currentDestination?.route != Route.TranslationReport.route) {
                         navController.navController.navigate(Route.TranslationReport.route)
                     }

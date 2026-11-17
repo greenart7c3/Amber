@@ -204,6 +204,8 @@ fun EditConfigurationScreen(
                                     relays,
                                     scope,
                                     account,
+                                    factory = relayClient.factory,
+                                    accountRepository = accountRepository,
                                     onDone = {},
                                 )
                             }
@@ -226,6 +228,8 @@ fun EditConfigurationScreen(
                                         relays,
                                         scope,
                                         account,
+                                        factory = relayClient.factory,
+                                        accountRepository = accountRepository,
                                         onDone = {},
                                     )
                                 }

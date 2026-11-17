@@ -376,13 +376,13 @@
     <ID>ViewModelForwarding:AccountsBottomSheet.kt:LogoutButton(acc, accountStateViewModel)</ID>
     <ID>ViewModelForwarding:LoginScreen.kt:LoginPage( accountViewModel = accountViewModel, navHostControllerWrapper = navHostControllerWrapper, onFinish = {}, )</ID>
     <ID>ViewModelForwarding:LoginScreen.kt:MainPage( navHostControllerWrapper = navHostControllerWrapper, accountViewModel = accountViewModel, )</ID>
-    <ID>ViewModelForwarding:LoginScreen.kt:SignUpPage( accountViewModel = accountViewModel, navHostControllerWrapper = navHostControllerWrapper, onFinish = { Amber.instance.applicationIOScope.launch { Amber.instance.notificationSubscription.updateFilter() } }, )</ID>
+    <ID>ViewModelForwarding:LoginScreen.kt:SignUpPage( accountViewModel = accountViewModel, navHostControllerWrapper = navHostControllerWrapper, onFinish = { appScope.launch { amber.notificationSubscription.updateFilter() } }, )</ID>
     <ID>ViewModelForwarding:MainScreen.kt:AccountsBottomSheet( sheetState = sheetState, account = account, accountStateViewModel = accountStateViewModel, navController = navController, onClose = { scope.launch { shouldShowBottomSheet.value = false sheetState.hide() } }, )</ID>
     <ID>ViewModelForwarding:MainScreen.kt:EditProfileScreen( modifier = Modifier .fillMaxSize() .padding(padding) .verticalScrollbar(scrollState) .verticalScroll(scrollState) .padding(horizontal = verticalPadding) .padding(top = verticalPadding * 1.5f), account = account, accountStateViewModel = accountStateViewModel, npub = key, )</ID>
     <ID>ViewModelForwarding:MainScreen.kt:LoginPage( accountViewModel = accountStateViewModel, navHostControllerWrapper = navController, onFinish = { navController.navController.navigate(Route.Applications.route) { popUpTo(0) } }, )</ID>
     <ID>ViewModelForwarding:MainScreen.kt:MainPage( navHostControllerWrapper = navController, accountViewModel = accountStateViewModel, )</ID>
     <ID>ViewModelForwarding:MainScreen.kt:RestoreBackupDialog(accountStateViewModel)</ID>
     <ID>ViewModelForwarding:MainScreen.kt:SettingsScreen( modifier = Modifier .fillMaxSize() .padding(padding) .verticalScrollbar(scrollState) .verticalScroll(scrollState) .padding(horizontal = verticalPadding) .padding(top = verticalPadding * 1.5f), accountStateViewModel = accountStateViewModel, account = account, onNav = { navController.navController.navigate(it) }, )</ID>
-    <ID>ViewModelForwarding:MainScreen.kt:SignUpPage( accountViewModel = accountStateViewModel, navHostControllerWrapper = navController, onFinish = { Amber.instance.applicationIOScope.launch { Amber.instance.notificationSubscription.updateFilter() } navController.navController.navigate(Route.Applications.route) { popUpTo(0) } }, )</ID>
+    <ID>ViewModelForwarding:MainScreen.kt:SignUpPage( accountViewModel = accountStateViewModel, navHostControllerWrapper = navController, onFinish = { appScope.launch { amber.notificationSubscription.updateFilter() } navController.navController.navigate(Route.Applications.route) { popUpTo(0) } }, )</ID>
   </CurrentIssues>
 </SmellBaseline>

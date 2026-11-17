@@ -86,6 +86,7 @@ fun NewNsecBunkerScreen(
     account: Account,
     navController: NavController,
 ) {
+    val relayClient = LocalRelayClient.current
     val accountRepository = LocalAccountRepository.current
     val secret = remember { mutableStateOf(UUID.randomUUID().toString()) }
     var name by remember { mutableStateOf(TextFieldValue(AnnotatedString(""))) }
@@ -187,6 +188,8 @@ fun NewNsecBunkerScreen(
                                     relays,
                                     scope,
                                     account = account,
+                                    factory = relayClient.factory,
+                                    accountRepository = accountRepository,
                                     onDone = {
                                     },
                                 )
@@ -227,6 +230,8 @@ fun NewNsecBunkerScreen(
                                         relays,
                                         scope,
                                         account = account,
+                                        factory = relayClient.factory,
+                                        accountRepository = accountRepository,
                                         onDone = {
                                         },
                                     )

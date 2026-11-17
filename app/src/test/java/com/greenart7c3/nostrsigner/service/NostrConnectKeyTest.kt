@@ -48,7 +48,7 @@ class NostrConnectKeyTest {
         val intent = mockk<Intent>(relaxed = true)
         every { intent.extras } returns extras
         every { intent.dataString } returns "nostrconnect://$key?relay=wss%3A%2F%2Frelay.example&name=test"
-        NostrConnectUtils.getIntentFromNostrConnect(intent, newTestAccount(scope))
+        NostrConnectUtils.getIntentFromNostrConnect(intent, newTestAccount(scope), mockk(relaxed = true), scope)
     }
 
     @Test

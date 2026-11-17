@@ -23,6 +23,7 @@ import com.greenart7c3.nostrsigner.commonsui.trust_good
 import com.greenart7c3.nostrsigner.commonsui.trust_poor
 import com.greenart7c3.nostrsigner.commonsui.trust_unknown
 import com.greenart7c3.nostrsigner.service.TrustScoreService
+import com.greenart7c3.nostrsigner.ui.LocalSettingsStore
 import org.jetbrains.compose.resources.stringResource
 
 enum class TrustLevel(val color: Color) {
@@ -62,7 +63,7 @@ fun TrustScoreBadge(
     isLoading: Boolean = false,
     showLabel: Boolean = false,
 ) {
-    if (!TrustScoreService.isEnabled()) {
+    if (!TrustScoreService.isEnabled(LocalSettingsStore.current.settings)) {
         return
     }
 

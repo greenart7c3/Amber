@@ -253,7 +253,7 @@ class Amber :
 
     @Volatile override var intentionalDisconnectTime = 0L
 
-    fun isSocksProxyAlive(proxyHost: String, proxyPort: Int): Boolean {
+    override fun isSocksProxyAlive(proxyHost: String, proxyPort: Int): Boolean {
         if (settings.torMode == TorMode.BUILTIN) {
             val port = TorManager.socksPort.value
             return port != 0 &&
@@ -416,6 +416,7 @@ class Amber :
         }
 
         instance = this
+        SecureCryptoHelper.install(this)
         // Before anything reads the account list or the settings: an install that
         // comes from 3.3.0 or older still keeps them in the EncryptedSharedPreferences
         // files this version no longer reads, so it would look like a first run.
@@ -702,7 +703,7 @@ class Amber :
     override fun getLogDatabase(npub: String): LogDatabase = logDatabases.computeIfAbsent(npub) {
         LogDatabase.getDatabase(applicationContext, npub).also {
             it.settingsStore = this
-            LogRetentionManager.watch(npub, it)
+            LogRetentionManager.watch(this, applicationIOScope, npub, it)
         }
     }
 
@@ -710,7 +711,7 @@ class Amber :
         HistoryDatabase.getDatabase(applicationContext, npub).also {
             it.settingsStore = this
             it.accountRepository = this
-            LogRetentionManager.watch(npub, it)
+            LogRetentionManager.watch(this, applicationIOScope, npub, it)
         }
     }
 

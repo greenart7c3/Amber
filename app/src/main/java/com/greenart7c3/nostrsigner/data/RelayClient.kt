@@ -21,6 +21,9 @@ interface RelayClient {
     /** Disconnects without counting it as relay failures. */
     fun disconnectIntentionally()
 
+    /** Whether the SOCKS proxy (built-in Tor or Orbot) accepts connections. */
+    fun isSocksProxyAlive(proxyHost: String, proxyPort: Int): Boolean
+
     /** Drops every socket and dials again; for a change of network. */
     suspend fun resetRelayConnections(reason: String)
 }

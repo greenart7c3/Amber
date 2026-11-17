@@ -73,6 +73,7 @@ import com.greenart7c3.nostrsigner.service.TrustScoreService
 import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.DeleteAfterType
 import com.greenart7c3.nostrsigner.ui.LocalAccountRepository
+import com.greenart7c3.nostrsigner.ui.LocalSettingsStore
 import com.greenart7c3.nostrsigner.ui.RememberType
 import com.greenart7c3.nostrsigner.ui.SettingsRow
 import com.greenart7c3.nostrsigner.ui.deleteAfterToSeconds
@@ -100,6 +101,7 @@ fun BunkerConnectRequestScreen(
     onAccept: (List<Permission>?, Int, Boolean?, RememberType, Long, Account) -> Unit,
     onReject: (RememberType) -> Unit,
 ) {
+    val settingsStore = LocalSettingsStore.current
     val localPermissions = remember {
         val snapshot = mutableStateListOf<Permission>()
         permissions?.forEach {
@@ -145,13 +147,13 @@ fun BunkerConnectRequestScreen(
 
     // Fetch trust scores for connection relays
     LaunchedEffect(connectionRelays) {
-        if (TrustScoreService.isEnabled() && connectionRelays.isNotEmpty()) {
+        if (TrustScoreService.isEnabled(settingsStore.settings) && connectionRelays.isNotEmpty()) {
             connectionRelays.forEach { relay ->
                 val url = relay.url
                 if (!trustScores.containsKey(url)) {
                     loadingScores[url] = true
                     launch {
-                        val score = withContext(Dispatchers.IO) { TrustScoreService.getScore(url) }
+                        val score = withContext(Dispatchers.IO) { TrustScoreService.getScore(url, settingsStore.settings) }
                         trustScores[url] = score
                         loadingScores[url] = false
                     }

@@ -21,12 +21,14 @@
 package com.greenart7c3.nostrsigner.service
 
 import android.content.ClipData
+import android.content.Context
 import android.content.Intent
 import androidx.compose.ui.platform.ClipEntry
 import androidx.compose.ui.platform.Clipboard
 import androidx.core.net.toUri
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
+import com.greenart7c3.nostrsigner.data.RelayClient
 import com.greenart7c3.nostrsigner.models.Account
 import com.vitorpamplona.quartz.nip01Core.crypto.KeyPair
 import com.vitorpamplona.quartz.nip01Core.relay.client.NostrClient
@@ -41,11 +43,17 @@ import com.vitorpamplona.quartz.nip40Expiration.expiration
 import com.vitorpamplona.quartz.utils.Hex
 import com.vitorpamplona.quartz.utils.TimeUtils
 import kotlin.time.Duration.Companion.seconds
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-object ReportSender {
+class ReportSender(
+    // The Application context: it opens the nostr: link outside any activity.
+    private val appContext: Context,
+    private val relayClient: RelayClient,
+    private val scope: CoroutineScope,
+) {
     /**
      * Sends [report] to the developer. With [anonymous] it is signed with a
      * throwaway key instead of [account], so the developer does not see the
@@ -78,7 +86,7 @@ object ReportSender {
         clipboard: Clipboard,
         onDone: () -> Unit,
     ) {
-        Amber.instance.applicationIOScope.launch(Dispatchers.Main) {
+        scope.launch(Dispatchers.Main) {
             try {
                 clipboard.setClipEntry(
                     ClipEntry(ClipData.newPlainText("", report)),
@@ -87,7 +95,7 @@ object ReportSender {
                 val npub = Hex.decode(Amber.DEVELOPER_HEX_KEY).toNpub()
                 intent.data = "nostr:$npub".toUri()
                 intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
-                Amber.instance.startActivity(intent)
+                appContext.startActivity(intent)
                 onDone()
             } catch (_: Exception) {
                 onDone()
@@ -101,8 +109,8 @@ object ReportSender {
         onDone: () -> Unit,
         createMessage: suspend (EventTemplate<ChatMessageEvent>) -> NIP17Factory.Result,
     ) {
-        Amber.instance.applicationIOScope.launch {
-            val client = NostrClient(Amber.instance.factory, Amber.instance.applicationIOScope)
+        scope.launch {
+            val client = NostrClient(relayClient.factory, scope)
             client.connect()
 
             val template = ChatMessageEvent.build(

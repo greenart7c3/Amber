@@ -83,6 +83,7 @@ fun EditConfigurationScreen(
     account: Account,
     onNav: (String) -> Unit,
 ) {
+    val settingsStore = LocalSettingsStore.current
     val context = LocalContext.current
     val accountRepository = LocalAccountRepository.current
     val relayClient = LocalRelayClient.current
@@ -111,13 +112,13 @@ fun EditConfigurationScreen(
             )
         }
 
-        if (TrustScoreService.isEnabled()) {
+        if (TrustScoreService.isEnabled(settingsStore.settings)) {
             relays.forEach { relay ->
                 val url = relay.url
                 if (!trustScores.containsKey(url)) {
                     loadingScores[url] = true
                     scope.launch(Dispatchers.IO) {
-                        val score = TrustScoreService.getScore(url)
+                        val score = TrustScoreService.getScore(url, settingsStore.settings)
                         withContext(Dispatchers.Main) {
                             trustScores[url] = score
                             loadingScores[url] = false

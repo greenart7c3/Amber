@@ -1,7 +1,8 @@
 package com.greenart7c3.nostrsigner.service
 
-import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.BuildConfig
+import com.greenart7c3.nostrsigner.data.RelayClient
+import com.greenart7c3.nostrsigner.data.SettingsStore
 import com.greenart7c3.nostrsigner.models.TorMode
 import com.greenart7c3.nostrsigner.okhttp.DefaultContentTypeInterceptor
 import com.greenart7c3.nostrsigner.okhttp.HttpClientManager
@@ -24,7 +25,10 @@ import okhttp3.RequestBody.Companion.toRequestBody
  */
 internal fun webDavUsesProxy(isPrivateAddress: Boolean, torMode: TorMode): Boolean = !isPrivateAddress && torMode != TorMode.DISABLED
 
-object WebDavService {
+class WebDavService(
+    private val settingsStore: SettingsStore,
+    private val relayClient: RelayClient,
+) {
     private val MEDIA_TYPE = "application/octet-stream".toMediaType()
 
     internal fun createClient(serverUrl: String): OkHttpClient {
@@ -32,8 +36,8 @@ object WebDavService {
         // so a new WebDAV method cannot skip it and send Basic auth cleartext.
         WebDavTransportPolicy.requireSecureServerUrl(serverUrl)
         val useProxy = webDavUsesProxy(
-            isPrivateAddress = Amber.instance.isPrivateIp(serverUrl),
-            torMode = Amber.instance.settings.torMode,
+            isPrivateAddress = PrivateAddress.isPrivate(serverUrl),
+            torMode = settingsStore.settings.torMode,
         )
         // Dedicated minimal client: the shared relay stack brings request
         // logging and an URL-keyed decrypt cache that must not apply to
@@ -45,7 +49,7 @@ object WebDavService {
         if (useProxy) {
             // A SOCKS proxy that is still bootstrapping would fail later with a
             // generic connect error; fail here with the real condition.
-            check(Amber.instance.isSocksProxyAlive("127.0.0.1", Amber.instance.settings.proxyPort)) {
+            check(relayClient.isSocksProxyAlive("127.0.0.1", settingsStore.settings.proxyPort)) {
                 "Tor is enabled but its SOCKS proxy is not reachable yet"
             }
             builder.proxy(checkNotNull(HttpClientManager.getCurrentProxy()) { "Tor proxy is not configured yet" })

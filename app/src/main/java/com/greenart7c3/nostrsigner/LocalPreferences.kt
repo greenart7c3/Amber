@@ -889,7 +889,7 @@ object LocalPreferences {
     private suspend fun pruneAllAccounts(context: Context) {
         allSavedAccounts(context).forEach {
             try {
-                LogRetentionManager.prune(it.npub)
+                LogRetentionManager.prune(context, context.amber, it.npub)
             } catch (e: Exception) {
                 if (e is CancellationException) throw e
                 AmberLog.e(Amber.TAG, "Error pruning logs for ${it.npub}", e)

@@ -479,7 +479,7 @@ object IntentUtils {
             val account = requestAccount(context, intent) ?: currentLoggedInAccount
             when {
                 intent.dataString?.startsWith("nostrconnect:") == true -> {
-                    NostrConnectUtils.getIntentFromNostrConnect(intent, account)
+                    NostrConnectUtils.getIntentFromNostrConnect(intent, account, Amber.instance, Amber.instance.applicationIOScope)
                     null
                 }
                 isWebRequest(

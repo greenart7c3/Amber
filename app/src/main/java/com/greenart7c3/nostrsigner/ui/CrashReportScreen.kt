@@ -108,7 +108,7 @@ fun CrashReportScreen(
         val send = { anonymous: Boolean ->
             if (editedStack.isNotBlank()) {
                 onLoading(true)
-                ReportSender.send(
+                ReportSender(amber, amber, amber.applicationIOScope).send(
                     account = account,
                     report = editedStack,
                     clipboard = clipboardManager,

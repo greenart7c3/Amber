@@ -26,6 +26,14 @@ import kotlinx.coroutines.sync.withLock
 object SecureCryptoHelper {
     private const val ANDROID_KEYSTORE = "AndroidKeyStore"
 
+    // Room converters and DAOs encrypt without a context at hand, so Amber.onCreate
+    // installs the application context before anything can reach the key.
+    private lateinit var appContext: Context
+
+    fun install(context: Context) {
+        appContext = context.applicationContext
+    }
+
     // The wrapping key alternates between two aliases. Rotation creates the
     // new key under whichever alias is free, so the key that protects the
     // existing ciphertext is never deleted until every secret has been
@@ -205,10 +213,10 @@ object SecureCryptoHelper {
     }
 
     private fun loadHandle(): KeyHandle {
-        val context = Amber.instance
+        val context = appContext
         val keyStore = getKeyStore()
         val alias = resolveActiveAlias(context, keyStore)
-        val key = keyStore.secretKey(alias) ?: generateSecretKey(alias, LocalPreferences.getRequireUnlockedDevice(context))
+        val key = keyStore.secretKey(alias) ?: generateSecretKey(context, alias, LocalPreferences.getRequireUnlockedDevice(context))
         return KeyHandle(alias, key, keyStore.secretKey(otherAlias(alias)))
     }
 
@@ -237,7 +245,7 @@ object SecureCryptoHelper {
 
     private fun getKeyStore(): KeyStore = KeyStore.getInstance(ANDROID_KEYSTORE).apply { load(null) }
 
-    private fun generateSecretKey(alias: String, requireUnlockedDevice: Boolean): SecretKey {
+    private fun generateSecretKey(context: Context, alias: String, requireUnlockedDevice: Boolean): SecretKey {
         val keyGenerator = KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_AES, ANDROID_KEYSTORE)
         val paramsBuilder = KeyGenParameterSpec.Builder(
             alias,
@@ -257,7 +265,7 @@ object SecureCryptoHelper {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P && requireUnlockedDevice) {
             paramsBuilder.setUnlockedDeviceRequired(true)
             try {
-                if (Amber.instance.hasStrongBox()) {
+                if (context.hasStrongBox()) {
                     paramsBuilder.setIsStrongBoxBacked(true)
                 }
                 keyGenerator.init(paramsBuilder.build())
@@ -308,7 +316,7 @@ object SecureCryptoHelper {
         val oldKey = keyStore.secretKey(oldAlias)
         if (oldKey == null) {
             // No key under either alias, so nothing is encrypted yet.
-            val key = generateSecretKey(oldAlias, requireUnlockedDevice)
+            val key = generateSecretKey(context, oldAlias, requireUnlockedDevice)
             if (!LocalPreferences.commitActiveKeystoreAlias(context, oldAlias, requireUnlockedDevice)) {
                 throw IOException("Failed to persist the key policy")
             }
@@ -326,7 +334,7 @@ object SecureCryptoHelper {
 
         // 1. Generate the replacement and prove it works before relying on it.
         val newKey = try {
-            generateSecretKey(newAlias, requireUnlockedDevice).also { key ->
+            generateSecretKey(context, newAlias, requireUnlockedDevice).also { key ->
                 check(decryptWithKey(key, encryptWithKey(key, KEY_CHECK_PROBE)) == KEY_CHECK_PROBE) { "New key failed a round trip" }
             }
         } catch (e: Exception) {
@@ -460,7 +468,7 @@ object SecureCryptoHelper {
         }
         // Per-account Room `application` tables (GHSA-5fjp-ghh8-wch8).
         for ((npub) in accounts) {
-            val dao = Amber.instance.dao(npub)
+            val dao = context.amber.dao(npub)
             for (row in dao.getAllApplicationsRaw()) {
                 move(row.secret) { expected, ciphertext -> dao.replaceSecretRaw(row.key, expected, ciphertext) > 0 }
                 move(row.localKey) { expected, ciphertext -> dao.replaceLocalKeyRaw(row.key, expected, ciphertext) > 0 }

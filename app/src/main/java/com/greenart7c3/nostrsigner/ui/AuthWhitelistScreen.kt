@@ -59,13 +59,13 @@ fun AuthWhitelistScreen(
     val loadingScores = remember { mutableStateMapOf<String, Boolean>() }
 
     LaunchedEffect(whitelist.toList()) {
-        if (TrustScoreService.isEnabled()) {
+        if (TrustScoreService.isEnabled(settingsStore.settings)) {
             whitelist.forEach { hostname ->
                 if (!trustScores.containsKey(hostname)) {
                     loadingScores[hostname] = true
                     scope.launch(Dispatchers.IO) {
                         val normalizedUrl = RelayUrlNormalizer.normalizeOrNull("wss://$hostname")
-                        val score = normalizedUrl?.let { TrustScoreService.getScore(it.url) }
+                        val score = normalizedUrl?.let { TrustScoreService.getScore(it.url, settingsStore.settings) }
                         trustScores[hostname] = score
                         loadingScores[hostname] = false
                     }

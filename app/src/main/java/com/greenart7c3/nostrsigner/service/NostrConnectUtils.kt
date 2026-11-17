@@ -8,6 +8,7 @@ import com.greenart7c3.nostrsigner.common.decodeQueryParamValue
 import com.greenart7c3.nostrsigner.common.sanitizeAppName
 import com.greenart7c3.nostrsigner.commonsui.Permission
 import com.greenart7c3.nostrsigner.commonsui.containsNip
+import com.greenart7c3.nostrsigner.data.AccountRepository
 import com.greenart7c3.nostrsigner.database.LogEntity
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.AmberBunkerRequest
@@ -17,6 +18,7 @@ import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.RelayUrlNormalizer
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequestConnect
 import java.util.UUID
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
 object NostrConnectUtils {
@@ -32,6 +34,8 @@ object NostrConnectUtils {
     fun getIntentFromNostrConnect(
         intent: Intent,
         account: Account,
+        accountRepository: AccountRepository,
+        scope: CoroutineScope,
     ) {
         if (intent.extras?.getString("id") == null) {
             intent.putExtra("id", UUID.randomUUID().toString().substring(0, 6))
@@ -169,8 +173,8 @@ object NostrConnectUtils {
             )
         } catch (e: Exception) {
             AmberLog.e(Amber.TAG, e.message, e)
-            Amber.instance.applicationIOScope.launch {
-                Amber.instance.getLogDatabase(account.npub).dao().insertLogIfEnabled(
+            scope.launch {
+                accountRepository.getLogDatabase(account.npub).dao().insertLogIfEnabled(
                     LogEntity(
                         0,
                         "nostrconnect",

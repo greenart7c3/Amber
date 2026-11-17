@@ -1,8 +1,8 @@
 package com.greenart7c3.nostrsigner.service
 
-import com.greenart7c3.nostrsigner.Amber
+import com.greenart7c3.nostrsigner.data.SettingsStore
+import com.greenart7c3.nostrsigner.models.AmberSettings
 import com.greenart7c3.nostrsigner.models.TorMode
-import io.mockk.every
 import io.mockk.mockk
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -73,11 +73,11 @@ class WebDavTransportPolicyTest {
 
     @Test
     fun `redirects are followed only within https`() {
-        val amber = mockk<Amber>(relaxed = true)
-        every { amber.isPrivateIp(any()) } returns true
-        installAmberInstance(amber)
-
-        val client = WebDavService.createClient("https://backup.example/dav")
+        // Tor off: the client is direct, so no proxy has to be reachable.
+        val settingsStore = object : SettingsStore {
+            override var settings = AmberSettings(torMode = TorMode.DISABLED)
+        }
+        val client = WebDavService(settingsStore, mockk(relaxed = true)).createClient("https://backup.example/dav")
 
         // Same-scheme redirects (e.g. a collection's trailing-slash 301) still
         // work; an https -> http hop is returned as an error, so a 307/308

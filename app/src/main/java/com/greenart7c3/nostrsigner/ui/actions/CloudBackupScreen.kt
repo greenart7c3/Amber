@@ -96,6 +96,8 @@ import com.greenart7c3.nostrsigner.service.WebDavService
 import com.greenart7c3.nostrsigner.service.WebDavTransportPolicy
 import com.greenart7c3.nostrsigner.ui.CenterCircularProgressIndicator
 import com.greenart7c3.nostrsigner.ui.LocalAppScope
+import com.greenart7c3.nostrsigner.ui.LocalRelayClient
+import com.greenart7c3.nostrsigner.ui.LocalSettingsStore
 import com.greenart7c3.nostrsigner.ui.components.AmberButton
 import com.greenart7c3.nostrsigner.ui.theme.amoledBorder
 import com.greenart7c3.nostrsigner.ui.theme.outlineIfAny
@@ -108,6 +110,7 @@ import org.jetbrains.compose.resources.stringResource
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CloudBackupScreen(modifier: Modifier) {
+    val webDavService = WebDavService(LocalSettingsStore.current, LocalRelayClient.current)
     val appScope = LocalAppScope.current
     val context = LocalContext.current
     val keyboardController = LocalSoftwareKeyboardController.current
@@ -406,7 +409,7 @@ fun CloudBackupScreen(modifier: Modifier) {
                             isLoading = true
                             statusText = getStringBlocking(Res.string.cloud_backup_testing_connection)
                             val result = withContext(Dispatchers.IO) {
-                                WebDavService.testConnection(
+                                webDavService.testConnection(
                                     serverUrl = webDavUrl.text,
                                     username = webDavUsername.text,
                                     password = webDavPassword.text,
@@ -476,7 +479,7 @@ fun CloudBackupScreen(modifier: Modifier) {
                                         pairs.forEachIndexed { index, (npub, ncryptsec) ->
                                             statusText = getStringBlocking(Res.string.cloud_backup_uploading) + " (${index + 1}/${pairs.size})"
                                             val uploadResult = withContext(Dispatchers.IO) {
-                                                WebDavService.uploadFile(
+                                                webDavService.uploadFile(
                                                     serverUrl = webDavUrl.text,
                                                     username = webDavUsername.text,
                                                     password = webDavPassword.text,
@@ -544,7 +547,7 @@ fun CloudBackupScreen(modifier: Modifier) {
                             statusText = getStringBlocking(Res.string.cloud_backup_downloading)
 
                             val downloadResult = withContext(Dispatchers.IO) {
-                                WebDavService.downloadLatestFile(
+                                webDavService.downloadLatestFile(
                                     serverUrl = webDavUrl.text,
                                     username = webDavUsername.text,
                                     password = webDavPassword.text,

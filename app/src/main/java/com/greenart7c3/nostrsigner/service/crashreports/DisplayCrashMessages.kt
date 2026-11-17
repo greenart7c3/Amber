@@ -22,7 +22,9 @@ package com.greenart7c3.nostrsigner.service.crashreports
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.platform.LocalContext
 import com.greenart7c3.nostrsigner.Amber
+import com.greenart7c3.nostrsigner.amber
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.ui.NavHostControllerWrapper
 import com.greenart7c3.nostrsigner.ui.navigation.Route
@@ -40,20 +42,21 @@ fun DisplayCrashMessages(
     account: Account,
     navController: NavHostControllerWrapper,
 ) {
+    val amber = LocalContext.current.amber
     LaunchedEffect(account) {
         withContext(Dispatchers.IO) {
-            val exceptions = Amber.instance.crashReportCache.loadAndDelete()
+            val exceptions = amber.crashReportCache.loadAndDelete()
             // ANRs, low-memory kills and native crashes only appear in the exit records.
             // The startup detection may still be running: finish it first, or a dismiss
             // would clear records written after this read, unseen.
-            ExitReasons.detect(Amber.instance)
-            val exits = ExitReasons.pending(Amber.instance)
+            ExitReasons.detect(amber)
+            val exits = ExitReasons.pending(amber)
             val stack = listOfNotNull(exceptions, exits)
                 .filter { it.isNotBlank() }
                 .joinToString("\n\n")
                 .ifBlank { null }
             if (stack != null) {
-                Amber.instance.pendingCrashReport = stack
+                amber.pendingCrashReport = stack
                 withContext(Dispatchers.Main) {
                     navController.navController.navigate(Route.CrashReport.route)
                 }

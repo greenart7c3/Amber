@@ -140,13 +140,13 @@ fun DefaultRelaysScreen(
 
     // Fetch trust scores for all relays
     LaunchedEffect(relays2.toList()) {
-        if (TrustScoreService.isEnabled()) {
+        if (TrustScoreService.isEnabled(settingsStore.settings)) {
             relays2.forEach { relay ->
                 val url = relay.url
                 if (!trustScores.containsKey(url)) {
                     loadingScores[url] = true
                     scope.launch(Dispatchers.IO) {
-                        val score = TrustScoreService.getScore(url)
+                        val score = TrustScoreService.getScore(url, settingsStore.settings)
                         trustScores[url] = score
                         loadingScores[url] = false
                     }
@@ -669,13 +669,13 @@ fun ActiveRelaysScreen(
 
     // Fetch trust scores for every relay shown
     LaunchedEffect(defaultRelays.toList(), connectionRelays.toList()) {
-        if (TrustScoreService.isEnabled()) {
+        if (TrustScoreService.isEnabled(settingsStore.settings)) {
             (defaultRelays + connectionRelays).forEach { relay ->
                 val url = relay.url
                 if (!trustScores.containsKey(url)) {
                     loadingScores[url] = true
                     scope.launch(Dispatchers.IO) {
-                        val score = TrustScoreService.getScore(url)
+                        val score = TrustScoreService.getScore(url, settingsStore.settings)
                         trustScores[url] = score
                         loadingScores[url] = false
                     }

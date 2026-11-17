@@ -23,7 +23,7 @@ class ClearLogsWorker(appContext: Context, workerParams: WorkerParameters) : Cor
                 val now = System.currentTimeMillis()
                 val threeDaysAgo = now - THREE_DAYS_MILLIS
 
-                LogRetentionManager.prune(it.npub)
+                LogRetentionManager.prune(amber, amber, it.npub)
 
                 val bunkerEventDao = amber.getDatabase(it.npub).bunkerEventDao()
                 val deletedBunkerEvents = bunkerEventDao.deleteOld(threeDaysAgo / 1000)

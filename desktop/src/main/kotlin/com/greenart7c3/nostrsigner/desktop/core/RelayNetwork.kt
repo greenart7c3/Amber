@@ -90,6 +90,9 @@ object RelayHttpClients {
             // `.localhost` and `.local` never reach the system resolver (see
             // LocalNameDns); proxied clients hand hosts unresolved to Tor.
             .dns(LocalNameDns)
+            .addInterceptor { chain ->
+                chain.proceed(chain.request().newBuilder().header("User-Agent", "Amber/${BuildVariant.version}").build())
+            }
             .pingInterval(30, TimeUnit.SECONDS)
             .readTimeout(30, TimeUnit.SECONDS)
             .connectTimeout(30, TimeUnit.SECONDS)

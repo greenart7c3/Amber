@@ -22,6 +22,7 @@ package com.greenart7c3.nostrsigner.okhttp
 
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.AmberLog
+import com.greenart7c3.nostrsigner.BuildConfig
 import java.net.InetSocketAddress
 import java.net.Proxy
 import java.time.Duration
@@ -58,7 +59,7 @@ object HttpClientManager {
     private var defaultHttpClient: OkHttpClient? = null
     private var defaultHttpClientWithoutProxy: OkHttpClient? = null
     private var localHttpClient: OkHttpClient? = null
-    private var userAgent: String = "Amethyst"
+    private var userAgent: String = "Amber/${BuildConfig.VERSION_NAME}"
 
     private var currentProxy: Proxy? = null
 

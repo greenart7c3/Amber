@@ -1,7 +1,9 @@
 package com.greenart7c3.nostrsigner.service
 
 import com.greenart7c3.nostrsigner.Amber
+import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.models.TorMode
+import com.greenart7c3.nostrsigner.okhttp.DefaultContentTypeInterceptor
 import com.greenart7c3.nostrsigner.okhttp.HttpClientManager
 import com.greenart7c3.nostrsigner.okhttp.TaggedSocketFactory
 import com.greenart7c3.nostrsigner.okhttp.TaggingInterceptor
@@ -33,12 +35,13 @@ object WebDavService {
             isPrivateAddress = Amber.instance.isPrivateIp(serverUrl),
             torMode = Amber.instance.settings.torMode,
         )
-        // Dedicated minimal client: the shared relay stack brings a relay
-        // User-Agent interceptor, request logging, and an URL-keyed decrypt
-        // cache that must not apply to backup traffic.
+        // Dedicated minimal client: the shared relay stack brings request
+        // logging and an URL-keyed decrypt cache that must not apply to
+        // backup traffic.
         val builder = OkHttpClient.Builder()
             .socketFactory(TaggedSocketFactory(SocketFactory.getDefault()))
             .addInterceptor(TaggingInterceptor())
+            .addInterceptor(DefaultContentTypeInterceptor("Amber/${BuildConfig.VERSION_NAME}"))
         if (useProxy) {
             // A SOCKS proxy that is still bootstrapping would fail later with a
             // generic connect error; fail here with the real condition.

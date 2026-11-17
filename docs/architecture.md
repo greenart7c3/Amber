@@ -184,6 +184,15 @@ stateless composable). Previews get an in-memory `SettingsStore` from
 each request under its own account and app; `BunkerGroupChoices` keys the
 options per app and group; the request cards are stateless composables).
 
+`BunkerSingleEventHomeScreen` (`BunkerSingleEventViewModel` loads the saved app,
+by connect secret or client key, and approves a connect, asking first when it
+would replace a saved connection; `BunkerSingleRequest` holds the app name,
+icon and remembered decision, so the screen no longer imports `database/`; one
+composable per request type; the grant lookup is `service/bunkerPermission`,
+sharing the intent lookup's order, unit-tested). The ViewModel keeps only the
+loaded app and the replace prompt and is handed the request on each call, since
+a client chooses the JSON-RPC id a later request can reuse its key.
+
 ### 5. Break up `LocalPreferences.kt`
 
 Split settings, account storage and key storage by concern; the key part is

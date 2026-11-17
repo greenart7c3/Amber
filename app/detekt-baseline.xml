@@ -45,7 +45,6 @@
     <ID>CyclomaticComplexMethod:BunkerConnectRequestScreen.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun BunkerConnectRequestScreen</ID>
     <ID>CyclomaticComplexMethod:BunkerRequestUtils.kt:BunkerResponder$fun sendRejection</ID>
     <ID>CyclomaticComplexMethod:BunkerRequestUtils.kt:BunkerResponder$fun sendResult</ID>
-    <ID>CyclomaticComplexMethod:BunkerSingleEventHomeScreen.kt:@Composable fun BunkerSingleEventHomeScreen</ID>
     <ID>CyclomaticComplexMethod:CloudBackupScreen.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun CloudBackupScreen</ID>
     <ID>CyclomaticComplexMethod:EditPermission.kt:@Composable fun PermissionRow</ID>
     <ID>CyclomaticComplexMethod:EditRelaysDialog.kt:fun onAddRelay</ID>
@@ -72,7 +71,6 @@
     <ID>LambdaParameterEventTrailing:AccountBackupScreen.kt:onBackupDone: () -&gt; Unit</ID>
     <ID>LambdaParameterEventTrailing:AccountBackupScreen.kt:onClick: () -&gt; Unit</ID>
     <ID>LambdaParameterEventTrailing:AccountBackupScreen.kt:onShowQrCode: (String) -&gt; Unit</ID>
-    <ID>LambdaParameterEventTrailing:BunkerSingleEventHomeScreen.kt:onLoading: (Boolean) -&gt; Unit</ID>
     <ID>LambdaParameterEventTrailing:ConnectOrbotDialog.kt:onError: (String) -&gt; Unit</ID>
     <ID>LambdaParameterEventTrailing:EditConfigurationScreen.kt:onNav: (String) -&gt; Unit</ID>
     <ID>LambdaParameterEventTrailing:EditPermission.kt:onClick: () -&gt; Unit</ID>
@@ -122,7 +120,6 @@
     <ID>LongMethod:BunkerRequestUtils.kt:BunkerResponder$fun sendRejection</ID>
     <ID>LongMethod:BunkerRequestUtils.kt:BunkerResponder$fun sendResult</ID>
     <ID>LongMethod:BunkerRequestUtils.kt:BunkerResponder$private suspend fun sendBunkerResponse</ID>
-    <ID>LongMethod:BunkerSingleEventHomeScreen.kt:@Composable fun BunkerSingleEventHomeScreen</ID>
     <ID>LongMethod:ChooseSignPolicy.kt:@Composable fun ChooseSignPolicy</ID>
     <ID>LongMethod:CloudBackupScreen.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun CloudBackupScreen</ID>
     <ID>LongMethod:ConnectOrbotDialog.kt:@Composable fun ConnectOrbotScreen</ID>
@@ -242,7 +239,6 @@
     <ID>ModifierWithoutDefault:BunkerGetPubKeyScreen.kt:modifier: Modifier</ID>
     <ID>ModifierWithoutDefault:BunkerPingScreen.kt:modifier: Modifier</ID>
     <ID>ModifierWithoutDefault:BunkerRelayAuthScreen.kt:modifier: Modifier</ID>
-    <ID>ModifierWithoutDefault:BunkerSingleEventHomeScreen.kt:modifier: Modifier</ID>
     <ID>ModifierWithoutDefault:CenterCircularProgressIndicator.kt:modifier: Modifier</ID>
     <ID>ModifierWithoutDefault:CloudBackupScreen.kt:modifier: Modifier</ID>
     <ID>ModifierWithoutDefault:ConnectOrbotDialog.kt:modifier: Modifier</ID>

@@ -27,7 +27,6 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.commonsui.Res
@@ -56,17 +55,18 @@ fun RelaysScreen(
     modifier: Modifier = Modifier,
     navController: NavController,
 ) {
+    val settingsStore = LocalSettingsStore.current
     val scope = rememberCoroutineScope()
-    var trustScoreEnabled by remember { mutableStateOf(Amber.instance.settings.trustScoreEnabled) }
+    var trustScoreEnabled by remember { mutableStateOf(settingsStore.settings.trustScoreEnabled) }
 
     fun setTrustScoreEnabled(enabled: Boolean) {
         trustScoreEnabled = enabled
-        Amber.instance.settings = Amber.instance.settings.copy(trustScoreEnabled = enabled)
+        settingsStore.settings = settingsStore.settings.copy(trustScoreEnabled = enabled)
         if (!enabled) {
             TrustScoreService.clearCache()
         }
         scope.launch(Dispatchers.IO) {
-            LocalPreferences.saveSettingsToEncryptedStorage(Amber.instance.settings)
+            LocalPreferences.saveSettingsToEncryptedStorage(settingsStore.settings)
         }
     }
 
@@ -123,9 +123,10 @@ fun RelaysScreen(
 /** The local bunker relay switch and its port (mirrors desktop Settings -> Desktop). */
 @Composable
 private fun LocalBunkerServerSettings() {
+    val settingsStore = LocalSettingsStore.current
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    var enabled by remember { mutableStateOf(Amber.instance.settings.localBunkerServer) }
+    var enabled by remember { mutableStateOf(settingsStore.settings.localBunkerServer) }
     var port by remember { mutableIntStateOf(LocalBunkerRelayServer.port()) }
     var portText by remember { mutableStateOf(port.toString()) }
     val invalidPort = stringResource(Res.string.d_local_bunker_port_invalid)
@@ -134,9 +135,9 @@ private fun LocalBunkerServerSettings() {
 
     fun setEnabled(value: Boolean) {
         enabled = value
-        Amber.instance.settings = Amber.instance.settings.copy(localBunkerServer = value)
+        settingsStore.settings = settingsStore.settings.copy(localBunkerServer = value)
         scope.launch(Dispatchers.IO) {
-            LocalPreferences.saveSettingsToEncryptedStorage(Amber.instance.settings)
+            LocalPreferences.saveSettingsToEncryptedStorage(settingsStore.settings)
             LocalBunkerRelayServer.applySetting()
         }
     }

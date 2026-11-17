@@ -175,6 +175,11 @@ the saved app; one composable per request type; the grant lookup is
 types (the `databaseInUi` rule exempts `*ViewModel.kt`), since loading data is
 their job.
 
+`IntentMultiEventHomeScreen` (`IntentMultiEventViewModel` confirms the batch, per
+account; `RequestGroupChoices` holds the per-group options; the request list is a
+stateless composable). Previews get an in-memory `SettingsStore` from
+`AmberPreview`.
+
 ### 5. Break up `LocalPreferences.kt`
 
 Split settings, account storage and key storage by concern; the key part is

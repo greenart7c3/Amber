@@ -187,7 +187,6 @@ class ArchitectureTest {
             "ui/components/ActivityStatsCard.kt",
             "ui/components/BunkerMultiEventHomeScreen.kt",
             "ui/components/BunkerSingleEventHomeScreen.kt",
-            "ui/components/IntentMultiEventHomeScreen.kt",
             "ui/components/IntentSingleEventHomeScreen.kt",
             "ui/EditConfigurationScreen.kt",
             "ui/EditPermission.kt",

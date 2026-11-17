@@ -1,7 +1,5 @@
 package com.greenart7c3.nostrsigner.ui.components
 
-import android.app.Activity
-import android.content.Intent
 import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Column
@@ -30,7 +28,7 @@ import androidx.compose.ui.text.capitalize
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.toLowerCase
 import androidx.compose.ui.unit.dp
-import com.greenart7c3.nostrsigner.LocalPreferences
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.greenart7c3.nostrsigner.common.SignerType
 import com.greenart7c3.nostrsigner.commonsui.Permission
 import com.greenart7c3.nostrsigner.commonsui.Res
@@ -50,9 +48,6 @@ import com.greenart7c3.nostrsigner.commonsui.read_this_list_of_tags_from_encrypt
 import com.greenart7c3.nostrsigner.commonsui.read_this_text_from_encrypted_content
 import com.greenart7c3.nostrsigner.commonsui.relay_not_in_auth_whitelist
 import com.greenart7c3.nostrsigner.commonsui.show_details
-import com.greenart7c3.nostrsigner.database.ApplicationEntity
-import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
-import com.greenart7c3.nostrsigner.database.HistoryEntity
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.ClearTextEncryptedDataKind
 import com.greenart7c3.nostrsigner.models.CompressionType
@@ -60,60 +55,46 @@ import com.greenart7c3.nostrsigner.models.EventEncryptedDataKind
 import com.greenart7c3.nostrsigner.models.IntentData
 import com.greenart7c3.nostrsigner.models.IntentResultType
 import com.greenart7c3.nostrsigner.models.PrivateZapEncryptedDataKind
-import com.greenart7c3.nostrsigner.models.Result
 import com.greenart7c3.nostrsigner.models.ReturnType
 import com.greenart7c3.nostrsigner.models.TagArrayEncryptedDataKind
-import com.greenart7c3.nostrsigner.service.AmberUtils
 import com.greenart7c3.nostrsigner.service.MultiEventScreenIntents
-import com.greenart7c3.nostrsigner.service.RelayUrlUtils
 import com.greenart7c3.nostrsigner.service.isBlockedByAuthWhitelist
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
-import com.greenart7c3.nostrsigner.service.relayAuthRememberType
 import com.greenart7c3.nostrsigner.ui.LocalAccountRepository
 import com.greenart7c3.nostrsigner.ui.LocalAppScope
 import com.greenart7c3.nostrsigner.ui.LocalSettingsStore
-import com.greenart7c3.nostrsigner.ui.RememberType
 import com.greenart7c3.nostrsigner.ui.theme.AmberPreview
 import com.greenart7c3.nostrsigner.ui.theme.ThemePreviews
 import com.greenart7c3.nostrsigner.ui.theme.previewAccount
 import com.vitorpamplona.quartz.nip01Core.core.Event
-import com.vitorpamplona.quartz.nip57Zaps.ZapRequestEvent
-import com.vitorpamplona.quartz.utils.TimeUtils
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun IntentMultiEventHomeScreen(
-    modifier: Modifier,
     intents: ImmutableList<IntentData>,
     packageName: String?,
     accountParam: Account,
     onRemoveIntentData: (List<IntentData>, IntentResultType) -> Unit,
     onLoading: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
+    viewModel: IntentMultiEventViewModel = viewModel(
+        key = "intent-multi-${accountParam.npub}-$packageName",
+        factory = IntentMultiEventViewModel.factory(
+            appContext = LocalContext.current.applicationContext,
+            settingsStore = LocalSettingsStore.current,
+            accountRepository = LocalAccountRepository.current,
+            appScope = LocalAppScope.current,
+            packageName = packageName,
+            account = accountParam,
+        ),
+    ),
 ) {
-    val settingsStore = LocalSettingsStore.current
-    val accountRepository = LocalAccountRepository.current
-    val appScope = LocalAppScope.current
     val activity = LocalActivity.current
-    val context = LocalContext.current
-    val groupRememberTypes = remember { mutableStateMapOf<RequestGroupKey, RememberType>() }
-    val groupRelayAuthScopes = remember { mutableStateMapOf<RequestGroupKey, RelayAuthScope>() }
-    val groupDecryptScopes = remember { mutableStateMapOf<RequestGroupKey, DecryptTypeScope>() }
+    LaunchedEffect(Unit) { viewModel.initChoices(intents) }
 
-    LaunchedEffect(Unit) {
-        MultiEventScreenIntents.rememberType = RememberType.NEVER
-        // checkedStates holds the per-request decision: true = Approve, false = Deny.
-        // It is shared by every open Amber screen, so set only this screen's keys
-        // (owner-scoped queueKeys) instead of clearing another screen's choices.
-        intents.forEach { MultiEventScreenIntents.checkedStates[it.queueKey] = !isBlockedByAuthWhitelist(it.event, settingsStore.settings.authWhitelist) }
-    }
-
-    Column(
-        modifier,
-    ) {
+    Column(modifier) {
         LocalAppIcon(packageName)
 
         Text(
@@ -123,284 +104,82 @@ fun IntentMultiEventHomeScreen(
                 .padding(bottom = 4.dp),
         )
 
-        // Confirm signs each request under its own account (intentsByAccount below).
+        // Confirm signs each request under its own account.
         val batchAccounts = rememberBatchAccounts(intents.map { it.currentAccount }, accountParam)
         batchAccounts.SigningAsHeader()
 
-        val groups = remember(intents) {
-            groupRequests(intents) {
-                requestGroupKey(it.type, it.event?.kind, it.encryptedData, it.nip44v3Kind)
-            }
-        }
-        val expandedGroups = remember { mutableStateMapOf<RequestGroupKey, Boolean>() }
-        LazyColumn(
-            Modifier.weight(1f),
-        ) {
-            groups.forEach { (groupKey, groupIntents) ->
-                val expanded = groups.size == 1 || (expandedGroups[groupKey] ?: false)
-                if (groups.size > 1) {
-                    item(key = "group-header:${groupKey.type.name}:${groupKey.payload?.name ?: ""}:${groupKey.kind ?: ""}") {
-                        val groupApproved = groupIntents.all { MultiEventScreenIntents.checkedStates[it.queueKey] ?: true }
-                        RequestGroupHeader(
-                            label = groupKey.toLabel(),
-                            count = groupIntents.size,
-                            approved = groupApproved,
-                            expanded = expanded,
-                            onApproveChanged = { approve ->
-                                MultiEventScreenIntents.checkedStates.putAll(groupIntents.associate { it.queueKey to (approve && !isBlockedByAuthWhitelist(it.event, settingsStore.settings.authWhitelist)) })
-                            },
-                            onExpandToggle = {
-                                expandedGroups[groupKey] = !(expandedGroups[groupKey] ?: false)
-                            },
-                        )
-                    }
-                }
-                if (groupKey.hasGroupOptions()) {
-                    item(key = "group-options:${groupKey.type.name}:${groupKey.payload?.name ?: ""}:${groupKey.kind ?: ""}") {
-                        RequestGroupOptions(
-                            groupKey = groupKey,
-                            rememberType = groupRememberTypes[groupKey] ?: RememberType.NEVER,
-                            onRememberTypeChanged = { groupRememberTypes[groupKey] = it },
-                            relayAuthScope = groupRelayAuthScopes[groupKey] ?: RelayAuthScope.SPECIFIC,
-                            onRelayAuthScopeChanged = { groupRelayAuthScopes[groupKey] = it },
-                            decryptTypeScope = groupDecryptScopes[groupKey] ?: defaultDecryptTypeScope(groupKey.type),
-                            onDecryptTypeScopeChanged = { groupDecryptScopes[groupKey] = it },
-                        )
-                    }
-                }
-                if (expanded) {
-                    items(groupIntents, key = { it.id }) { intent ->
-                        IntentRequestCard(
-                            intent = intent,
-                            signingAs = batchAccounts.forCard(intent.currentAccount),
-                            approved = MultiEventScreenIntents.checkedStates[intent.queueKey] ?: true,
-                            onApproveChanged = {
-                                MultiEventScreenIntents.checkedStates[intent.queueKey] = it
-                            },
-                        )
-                    }
-                }
-            }
-        }
+        IntentRequestGroups(
+            intents = intents,
+            batchAccounts = batchAccounts,
+            choices = viewModel.choices,
+            onGroupApprove = viewModel::setGroupApproved,
+            modifier = Modifier.weight(1f),
+        )
 
         AmberButton(
             Modifier
                 .fillMaxWidth()
                 .padding(vertical = 16.dp),
             text = stringResource(Res.string.confirm),
-            onClick = {
-                onLoading(true)
-                appScope.launch(Dispatchers.IO) {
-                    try {
-                        val results = mutableListOf<Result>()
-                        var closeApp = true
-                        onRemoveIntentData(intents, IntentResultType.REMOVE)
-                        val localKey = packageName ?: return@launch
-                        val intentsByAccount = intents.groupBy { batchAccountNpub(it.currentAccount, accountParam.npub) }
-
-                        for ((accountNpub, accountIntents) in intentsByAccount) {
-                            val thisAccount = if (accountNpub == accountParam.npub) {
-                                accountParam
-                            } else {
-                                LocalPreferences.loadFromEncryptedStorage(context, accountNpub)
-                            } ?: continue
-
-                            val dao = accountRepository.dao(thisAccount.npub)
-                            val historyDatabase = accountRepository.getHistoryDatabase(thisAccount.npub)
-                            val application = dao.getByKey(localKey) ?: ApplicationWithPermissions(
-                                application = ApplicationEntity(
-                                    localKey,
-                                    "",
-                                    listOf(),
-                                    "",
-                                    "",
-                                    "",
-                                    thisAccount.hexKey,
-                                    true,
-                                    "",
-                                    false,
-                                    thisAccount.signPolicy,
-                                    true,
-                                    0L,
-                                    lastUsed = TimeUtils.now(),
-                                ),
-                                permissions = mutableListOf(),
-                            )
-
-                            if (!application.application.closeApplication) {
-                                closeApp = false
-                            }
-
-                            var permissionsChanged = false
-                            val historyList = mutableListOf<HistoryEntity>()
-
-                            for (intentData in accountIntents) {
-                                // A relay outside the auth whitelist is rejected without
-                                // remembering it, as on the single screen.
-                                val blockedByWhitelist = isBlockedByAuthWhitelist(intentData.event, settingsStore.settings.authWhitelist)
-                                val isApproved = !blockedByWhitelist && (MultiEventScreenIntents.checkedStates[intentData.queueKey] ?: true)
-                                val type = intentData.type
-                                val groupKey = requestGroupKey(type, intentData.event?.kind, intentData.encryptedData, intentData.nip44v3Kind)
-                                val rememberType = if (blockedByWhitelist) RememberType.NEVER else groupRememberTypes[groupKey] ?: RememberType.NEVER
-
-                                if (type == SignerType.SIGN_EVENT) {
-                                    val localEvent = intentData.event!!
-
-                                    if (rememberType != RememberType.NEVER) {
-                                        val signRelay = if (localEvent.kind == 22242) {
-                                            if ((groupRelayAuthScopes[groupKey] ?: RelayAuthScope.SPECIFIC) == RelayAuthScope.ALL) {
-                                                "*"
-                                            } else {
-                                                RelayUrlUtils.extractHostAndPort(AmberEvent.relay(localEvent))
-                                            }
-                                        } else {
-                                            ""
-                                        }
-                                        // A blank relay-auth relay can never match a
-                                        // per-relay lookup and reads as the all-relays
-                                        // wildcard: remember "just this time" instead.
-                                        val relayRemember = relayAuthRememberType(
-                                            allRelays = localEvent.kind == 22242 &&
-                                                (groupRelayAuthScopes[groupKey] ?: RelayAuthScope.SPECIFIC) == RelayAuthScope.ALL,
-                                            relayUrl = signRelay,
-                                            rememberType = rememberType,
-                                        )
-                                        AmberUtils.updatePermission(
-                                            application,
-                                            localKey,
-                                            type,
-                                            localEvent.kind,
-                                            isApproved,
-                                            relayRemember,
-                                            relay = signRelay,
-                                            encryptedData = intentData.encryptedData,
-                                        )
-                                        permissionsChanged = true
-                                    }
-
-                                    historyList.add(
-                                        HistoryEntity(
-                                            0,
-                                            localKey,
-                                            type.toString(),
-                                            localEvent.kind,
-                                            TimeUtils.now(),
-                                            isApproved,
-                                            content = localEvent.toJson(),
-                                        ),
-                                    )
-
-                                    if (isApproved) {
-                                        val signature = if (localEvent is ZapRequestEvent &&
-                                            localEvent.tags.any { tag ->
-                                                tag.any { t -> t == "anon" }
-                                            }
-                                        ) {
-                                            localEvent.toJson()
-                                        } else {
-                                            localEvent.sig
-                                        }
-                                        results.add(
-                                            Result(
-                                                null,
-                                                signature = signature,
-                                                result = signature,
-                                                id = intentData.id,
-                                                rejected = null,
-                                            ),
-                                        )
-                                    } else {
-                                        results.add(
-                                            Result(
-                                                null,
-                                                signature = null,
-                                                result = null,
-                                                id = intentData.id,
-                                                rejected = true,
-                                            ),
-                                        )
-                                    }
-                                } else {
-                                    if (rememberType != RememberType.NEVER) {
-                                        val decryptTypeScope = groupDecryptScopes[groupKey] ?: defaultDecryptTypeScope(type)
-                                        val permissionKind = if (type == SignerType.NIP44_V3_ENCRYPT || type == SignerType.NIP44_V3_DECRYPT) {
-                                            if (decryptTypeScope == DecryptTypeScope.SPECIFIC) intentData.nip44v3Kind else null
-                                        } else {
-                                            null
-                                        }
-                                        AmberUtils.updatePermission(
-                                            application,
-                                            localKey,
-                                            type,
-                                            permissionKind,
-                                            isApproved,
-                                            rememberType,
-                                            encryptedData = intentData.encryptedData,
-                                            decryptTypeScope = decryptTypeScope,
-                                        )
-                                        permissionsChanged = true
-                                    }
-
-                                    historyList.add(
-                                        HistoryEntity(
-                                            0,
-                                            localKey,
-                                            type.toString(),
-                                            null,
-                                            TimeUtils.now(),
-                                            isApproved,
-                                            content = if (type == SignerType.NIP04_DECRYPT || type == SignerType.NIP44_DECRYPT || type == SignerType.DECRYPT_ZAP_EVENT) {
-                                                intentData.encryptedData?.result ?: ""
-                                            } else {
-                                                intentData.data
-                                            },
-                                        ),
-                                    )
-
-                                    if (isApproved) {
-                                        val signature = intentData.encryptedData?.result
-                                        if (signature != null) {
-                                            results.add(
-                                                Result(
-                                                    null,
-                                                    signature = signature,
-                                                    result = signature,
-                                                    id = intentData.id,
-                                                    rejected = null,
-                                                ),
-                                            )
-                                        }
-                                    } else {
-                                        results.add(
-                                            Result(
-                                                null,
-                                                signature = null,
-                                                result = null,
-                                                id = intentData.id,
-                                                rejected = true,
-                                            ),
-                                        )
-                                    }
-                                }
-                            }
-
-                            if (permissionsChanged || application.application.key.isBlank()) {
-                                dao.insertApplicationWithPermissions(application)
-                            }
-                            historyDatabase.dao().addHistory(historyList, thisAccount.npub)
-                        }
-
-                        if (results.isNotEmpty()) {
-                            sendResultIntent(activity, results)
-                        }
-
-                        finishActivity(activity, closeApp)
-                    } finally {
-                        onLoading(false)
-                    }
-                }
-            },
+            onClick = { viewModel.confirm(intents, activity, onRemoveIntentData, onLoading) },
         )
+    }
+}
+
+/** The requests grouped by kind, each group with its approve toggle and remember options. */
+@Composable
+private fun IntentRequestGroups(
+    intents: ImmutableList<IntentData>,
+    batchAccounts: BatchAccounts,
+    choices: RequestGroupChoices,
+    onGroupApprove: (List<IntentData>, Boolean) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val groups = remember(intents) {
+        groupRequests(intents) {
+            requestGroupKey(it.type, it.event?.kind, it.encryptedData, it.nip44v3Kind)
+        }
+    }
+    val expandedGroups = remember { mutableStateMapOf<RequestGroupKey, Boolean>() }
+    LazyColumn(modifier) {
+        groups.forEach { (groupKey, groupIntents) ->
+            val expanded = groups.size == 1 || (expandedGroups[groupKey] ?: false)
+            if (groups.size > 1) {
+                item(key = "group-header:${groupKey.type.name}:${groupKey.payload?.name ?: ""}:${groupKey.kind ?: ""}") {
+                    RequestGroupHeader(
+                        label = groupKey.toLabel(),
+                        count = groupIntents.size,
+                        approved = groupIntents.all { MultiEventScreenIntents.checkedStates[it.queueKey] ?: true },
+                        expanded = expanded,
+                        onApproveChanged = { approve -> onGroupApprove(groupIntents, approve) },
+                        onExpandToggle = { expandedGroups[groupKey] = !(expandedGroups[groupKey] ?: false) },
+                    )
+                }
+            }
+            if (groupKey.hasGroupOptions()) {
+                item(key = "group-options:${groupKey.type.name}:${groupKey.payload?.name ?: ""}:${groupKey.kind ?: ""}") {
+                    RequestGroupOptions(
+                        groupKey = groupKey,
+                        rememberType = choices.rememberType(groupKey),
+                        onRememberTypeChanged = { choices.setRememberType(groupKey, it) },
+                        relayAuthScope = choices.relayAuthScope(groupKey),
+                        onRelayAuthScopeChanged = { choices.setRelayAuthScope(groupKey, it) },
+                        decryptTypeScope = choices.decryptScope(groupKey),
+                        onDecryptTypeScopeChanged = { choices.setDecryptScope(groupKey, it) },
+                    )
+                }
+            }
+            if (expanded) {
+                items(groupIntents, key = { it.id }) { intent ->
+                    IntentRequestCard(
+                        intent = intent,
+                        signingAs = batchAccounts.forCard(intent.currentAccount),
+                        approved = MultiEventScreenIntents.checkedStates[intent.queueKey] ?: true,
+                        onApproveChanged = { MultiEventScreenIntents.checkedStates[intent.queueKey] = it },
+                    )
+                }
+            }
+        }
     }
 }
 
@@ -609,7 +388,7 @@ private fun previewSignIntent(id: String, content: String) = previewIntent(
 @Composable
 fun IntentMultiEventHomeScreenPreview() {
     AmberPreview {
-        IntentMultiEventHomeScreen(
+        IntentRequestGroups(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(700.dp)
@@ -624,27 +403,9 @@ fun IntentMultiEventHomeScreenPreview() {
                     encryptedData = ClearTextEncryptedDataKind("encrypted-payload", "Hello Nostr!"),
                 ),
             ),
-            packageName = "com.vitorpamplona.amethyst",
-            accountParam = previewAccount(),
-            onRemoveIntentData = { _, _ -> },
-            onLoading = {},
+            batchAccounts = rememberBatchAccounts(listOf(""), previewAccount()),
+            choices = RequestGroupChoices(),
+            onGroupApprove = { _, _ -> },
         )
     }
-}
-
-private fun finishActivity(activity: Activity?, closeApp: Boolean) {
-    activity?.intent = null
-    if (closeApp) {
-        activity?.finishAndRemoveTask()
-    }
-}
-
-private fun sendResultIntent(
-    activity: Activity?,
-    results: MutableList<Result>,
-) {
-    val json = Permission.mapper.writeValueAsString(results)
-    val intent = Intent()
-    intent.putExtra("results", json)
-    activity?.setResult(Activity.RESULT_OK, intent)
 }

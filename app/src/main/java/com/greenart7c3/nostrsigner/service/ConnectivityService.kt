@@ -1,5 +1,6 @@
 package com.greenart7c3.nostrsigner.service
 
+import com.greenart7c3.nostrsigner.amber
 import android.app.Service
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -32,6 +33,9 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class ConnectivityService : Service() {
+    // The system constructs the service, so it reads the container from its own context once attached.
+    private val amber: Amber get() = applicationContext.amber
+
     private val timer = Timer()
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
@@ -46,10 +50,10 @@ class ConnectivityService : Service() {
         override fun onReceive(context: Context, intent: Intent) {
             if (intent.action != Intent.ACTION_USER_PRESENT) return
             if (!LocalPreferences.getRequireUnlockedDevice(context)) return
-            if (Amber.instance.settings.killSwitch.value) return
+            if (amber.settings.killSwitch.value) return
             AmberLog.d(Amber.TAG, "Device unlocked, refreshing relay subscriptions")
-            Amber.instance.applicationIOScope.launch {
-                Amber.instance.checkForNewRelaysAndUpdateAllFilters()
+            amber.applicationIOScope.launch {
+                amber.checkForNewRelaysAndUpdateAllFilters()
             }
         }
     }
@@ -91,35 +95,35 @@ class ConnectivityService : Service() {
                 val connectivityManager =
                     (getSystemService(ConnectivityManager::class.java) as ConnectivityManager)
                 val capabilities = connectivityManager.getNetworkCapabilities(connectivityManager.activeNetwork)
-                Amber.instance.updateNetworkCapabilities(capabilities)
-                Amber.instance.disconnectIntentionally()
+                amber.updateNetworkCapabilities(capabilities)
+                amber.disconnectIntentionally()
             }
         }
 
     private fun onNetworkState(network: Network, capabilities: NetworkCapabilities) {
         // Always tracked (also under the kill switch) so the detector's baseline is
         // current when relays come back.
-        Amber.instance.updateNetworkCapabilities(capabilities)
+        amber.updateNetworkCapabilities(capabilities)
         val reason = networkChangeDetector.onNetwork(capabilities.toSnapshot(network))
 
-        if (Amber.instance.settings.killSwitch.value) return
+        if (amber.settings.killSwitch.value) return
 
         AmberLog.d(
             "ServiceManager NetworkCallback",
-            "network ${network.networkHandle} mobile ${Amber.instance.isOnMobileDataState.value} wifi ${Amber.instance.isOnWifiDataState.value} vpn ${Amber.instance.isOnVpnState.value} change: $reason",
+            "network ${network.networkHandle} mobile ${amber.isOnMobileDataState.value} wifi ${amber.isOnWifiDataState.value} vpn ${amber.isOnVpnState.value} change: $reason",
         )
 
         if (reason != null) {
-            if (Amber.instance.settings.torMode == TorMode.BUILTIN && !TorManager.isRunning.value) {
+            if (amber.settings.torMode == TorMode.BUILTIN && !TorManager.isRunning.value) {
                 // Built-in Tor gave up earlier (bounded startup retries
                 // in runMigrations). The network is back, so retry now
                 // instead of waiting for a manual restart.
-                TorManager.restart(this, Amber.instance.applicationIOScope)
+                TorManager.restart(this, amber.applicationIOScope)
             }
             scheduleRelayReset(reason)
-        } else if (!Amber.instance.client.isActive()) {
+        } else if (!amber.client.isActive()) {
             scope.launch {
-                Amber.instance.client.connect()
+                amber.client.connect()
             }
         }
     }
@@ -134,7 +138,7 @@ class ConnectivityService : Service() {
         pendingRelayReset?.cancel()
         pendingRelayReset = scope.launch {
             delay(NETWORK_SETTLE_MS.milliseconds)
-            Amber.instance.resetRelayConnections(reason)
+            amber.resetRelayConnections(reason)
         }
     }
 
@@ -153,18 +157,18 @@ class ConnectivityService : Service() {
             TorManager.init(this)
         }
 
-        Amber.instance.startCleanLogsAlarm()
-        Amber.instance.startUpdateCheckAlarm()
-        Amber.instance.startBackupApplicationsAlarm()
+        amber.startCleanLogsAlarm()
+        amber.startUpdateCheckAlarm()
+        amber.startBackupApplicationsAlarm()
 
         HttpClientManager.setDefaultUserAgent("Amber/${BuildConfig.VERSION_NAME}")
 
         LocalPreferences.allSavedAccounts(this).forEach {
-            Amber.instance.databases[it.npub] = Amber.instance.getDatabase(it.npub)
-            Amber.instance.applicationIOScope.launch {
+            amber.databases[it.npub] = amber.getDatabase(it.npub)
+            amber.applicationIOScope.launch {
                 // Cached dao so the write invalidates CachingApplicationDao's getAll
                 // entry for this account (the service can restart in a live process).
-                val dao = Amber.instance.dao(it.npub)
+                val dao = amber.dao(it.npub)
                 dao.getAllNotConnected().forEach { app ->
                     if (app.application.secret.isNotEmpty() && app.application.secret != app.application.key) {
                         app.application.isConnected = true
@@ -174,7 +178,7 @@ class ConnectivityService : Service() {
             }
         }
 
-        Amber.instance.runMigrations(
+        amber.runMigrations(
             onDone = {
                 startFunctions()
             },
@@ -184,13 +188,13 @@ class ConnectivityService : Service() {
     }
 
     fun startFunctions() {
-        Amber.instance.applicationIOScope.launch {
+        amber.applicationIOScope.launch {
             // Wait for Tor to be ready before connecting (if using built-in Tor)
-            Amber.instance.waitForTorIfNeeded()
-            if (!BuildFlavorChecker.isOfflineFlavor() && !Amber.instance.settings.killSwitch.value) {
-                Amber.instance.client.connect()
-                Amber.instance.applicationIOScope.launch {
-                    Amber.instance.checkForNewRelaysAndUpdateAllFilters()
+            amber.waitForTorIfNeeded()
+            if (!BuildFlavorChecker.isOfflineFlavor() && !amber.settings.killSwitch.value) {
+                amber.client.connect()
+                amber.applicationIOScope.launch {
+                    amber.checkForNewRelaysAndUpdateAllFilters()
                 }
             }
 
@@ -199,7 +203,7 @@ class ConnectivityService : Service() {
                     (getSystemService(ConnectivityManager::class.java) as ConnectivityManager)
                 connectivityManager.registerDefaultNetworkCallback(networkCallback)
                 connectivityManager.getNetworkCapabilities(connectivityManager.activeNetwork)?.let {
-                    Amber.instance.updateNetworkCapabilities(it)
+                    amber.updateNetworkCapabilities(it)
                 }
 
                 // USER_PRESENT comes from SystemUI, not the system process, so a
@@ -220,10 +224,10 @@ class ConnectivityService : Service() {
                         if (BuildFlavorChecker.isOfflineFlavor()) {
                             return
                         }
-                        if (Amber.instance.settings.killSwitch.value) return
+                        if (amber.settings.killSwitch.value) return
 
                         scope.launch {
-                            Amber.instance.notificationSubscription.updateFilter()
+                            amber.notificationSubscription.updateFilter()
                         }
                     }
                 },
@@ -265,7 +269,7 @@ class ConnectivityService : Service() {
             ServiceCompat.startForeground(
                 this,
                 1,
-                Amber.instance.stats.createForegroundNotification(),
+                amber.stats.createForegroundNotification(),
                 foregroundServiceType,
             )
         } catch (e: Exception) {

@@ -194,7 +194,6 @@ class ArchitectureTest {
             "service/AmberUtils.kt",
             "service/ApplicationBackup.kt",
             "service/BunkerRequestUtils.kt",
-            "service/ConnectivityService.kt",
             "service/EventNotificationConsumer.kt",
             "service/IntentUtils.kt",
             "service/LocalBunkerRelayServer.kt",

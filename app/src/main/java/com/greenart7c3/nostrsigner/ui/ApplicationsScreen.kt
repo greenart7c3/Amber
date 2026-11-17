@@ -42,9 +42,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.compose.collectAsLazyPagingItems
-import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.LocalPreferences
+import com.greenart7c3.nostrsigner.amber
 import com.greenart7c3.nostrsigner.commonsui.Res
 import com.greenart7c3.nostrsigner.commonsui.activity
 import com.greenart7c3.nostrsigner.commonsui.backup
@@ -78,12 +78,15 @@ fun ApplicationsScreen(
     account: Account,
     navControllerWrapper: NavHostControllerWrapper,
 ) {
+    val settingsStore = LocalSettingsStore.current
+    val accountRepository = LocalAccountRepository.current
+    val amber = LocalContext.current.amber
     // remember: without it every recomposition (killSwitch / backup-warning
     // state flips) builds a new Pager + cold flow and re-runs the initial
     // load from scratch. Keyed on the account and on the sort toggle so
     // switching either reloads.
     var sortAlphabetically by remember(account.hexKey) {
-        mutableStateOf(Amber.instance.settings.sortApplicationsAlphabetically)
+        mutableStateOf(settingsStore.settings.sortApplicationsAlphabetically)
     }
 
     val pager =
@@ -97,7 +100,7 @@ fun ApplicationsScreen(
                 // Projection excludes the envelope-encrypted secret/localKey
                 // columns: the list renders neither, and each Keystore decrypt
                 // is a binder + TEE round trip (2 x rows per page).
-                val dao = Amber.instance.getDatabase(account.npub).dao()
+                val dao = accountRepository.getDatabase(account.npub).dao()
                 if (sortAlphabetically) {
                     dao.getApplicationListItemsPagingByName(account.hexKey)
                 } else {
@@ -112,11 +115,11 @@ fun ApplicationsScreen(
 
     LaunchedEffect(Unit) {
         launch(Dispatchers.IO) {
-            hasAccountsWithoutBackup = LocalPreferences.allAccounts(Amber.instance).any { !it.didBackup }
+            hasAccountsWithoutBackup = LocalPreferences.allAccounts(amber).any { !it.didBackup }
         }
     }
 
-    val killSwitch = Amber.instance.settings.killSwitch.collectAsStateWithLifecycle()
+    val killSwitch = settingsStore.settings.killSwitch.collectAsStateWithLifecycle()
 
     LazyColumn(
         modifier,
@@ -127,9 +130,9 @@ fun ApplicationsScreen(
                     message = stringResource(Res.string.kill_switch_message),
                     buttonText = stringResource(Res.string.disable_kill_switch),
                     onClick = {
-                        val killSwitchIntent = Intent(Amber.instance, KillSwitchReceiver::class.java)
-                        Amber.instance.sendBroadcast(killSwitchIntent)
-                        LocalPreferences.switchToAccount(Amber.instance, account.npub)
+                        val killSwitchIntent = Intent(amber, KillSwitchReceiver::class.java)
+                        amber.sendBroadcast(killSwitchIntent)
+                        LocalPreferences.switchToAccount(amber, account.npub)
                     },
                 )
             }
@@ -180,7 +183,7 @@ fun ApplicationsScreen(
                         append(" or ")
                         withLink(
                             LinkAnnotation.Url(
-                                if (Amber.instance.isZapstoreInstalled()) "zapstore://" else stringResource(Res.string.zapstore_website),
+                                if (amber.isZapstoreInstalled()) "zapstore://" else stringResource(Res.string.zapstore_website),
                                 styles = TextLinkStyles(
                                     style = SpanStyle(
                                         textDecoration = TextDecoration.Underline,
@@ -213,9 +216,9 @@ fun ApplicationsScreen(
                         onClick = {
                             val newValue = !sortAlphabetically
                             sortAlphabetically = newValue
-                            Amber.instance.settings =
-                                Amber.instance.settings.copy(sortApplicationsAlphabetically = newValue)
-                            LocalPreferences.saveSettingsToEncryptedStorage(Amber.instance.settings)
+                            settingsStore.settings =
+                                settingsStore.settings.copy(sortApplicationsAlphabetically = newValue)
+                            LocalPreferences.saveSettingsToEncryptedStorage(settingsStore.settings)
                         },
                     ) {
                         Icon(

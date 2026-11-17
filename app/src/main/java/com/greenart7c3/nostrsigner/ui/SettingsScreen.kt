@@ -72,6 +72,7 @@ import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.amber
 import com.greenart7c3.nostrsigner.commonsui.Res
 import com.greenart7c3.nostrsigner.commonsui.always
 import com.greenart7c3.nostrsigner.commonsui.amber_github_uri
@@ -167,16 +168,21 @@ fun SettingsScreen(
     account: Account,
     onNav: (String) -> Unit,
 ) {
+    val settingsStore = LocalSettingsStore.current
+    val accountRepository = LocalAccountRepository.current
+    val relayClient = LocalRelayClient.current
+    val appScope = LocalAppScope.current
+    val amber = LocalContext.current.amber
     var logoutDialog by remember { mutableStateOf(false) }
     val context = LocalContext.current
-    var torMode by remember { mutableStateOf(Amber.instance.settings.torMode) }
-    val killSwitch by Amber.instance.settings.killSwitch.collectAsStateWithLifecycle()
+    var torMode by remember { mutableStateOf(settingsStore.settings.torMode) }
+    val killSwitch by settingsStore.settings.killSwitch.collectAsStateWithLifecycle()
     var disconnectTorDialog by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
     var isLoading by remember { mutableStateOf(false) }
     var sizeInMBFormatted by remember { mutableStateOf("") }
     var status by remember { mutableStateOf("") }
-    val themeMode by Amber.instance.themeMode.collectAsStateWithLifecycle()
+    val themeMode by amber.themeMode.collectAsStateWithLifecycle()
     var themeDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
@@ -342,7 +348,7 @@ fun SettingsScreen(
                 )
 
                 if (!isOffline && !BuildFlavorChecker.isFdroidBuild()) {
-                    val updater = Amber.instance.zapstoreUpdater
+                    val updater = amber.zapstoreUpdater
                     if (updater != null) {
                         val latestRelease by updater.latestRelease.collectAsStateWithLifecycle()
                         val updateAvailable = latestRelease != null
@@ -379,20 +385,20 @@ fun SettingsScreen(
                     modifier = Modifier.fillMaxWidth(),
                     text = stringResource(Res.string.clear_logs_and_activity),
                     onClick = {
-                        Amber.instance.applicationIOScope.launch {
+                        appScope.launch {
                             isLoading = true
-                            LocalPreferences.allSavedAccounts(Amber.instance).forEach {
+                            LocalPreferences.allSavedAccounts(amber).forEach {
                                 try {
                                     status = getStringBlocking(Res.string.deleting_old_log_entries_from, it.npub)
                                     val oneWeek = System.currentTimeMillis() - (ONE_WEEK * 1000L)
                                     val oneWeekAgo = TimeUtils.oneWeekAgo()
-                                    val historyDatabase = Amber.instance.getHistoryDatabase(it.npub)
+                                    val historyDatabase = accountRepository.getHistoryDatabase(it.npub)
                                     val deletedHistory = historyDatabase.dao().deleteOldHistory(oneWeekAgo)
                                     if (deletedHistory > 0) {
                                         AmberLog.d(Amber.TAG, "Deleted $deletedHistory old history entries")
                                     }
 
-                                    val logDatabase = Amber.instance.getLogDatabase(it.npub)
+                                    val logDatabase = accountRepository.getLogDatabase(it.npub)
                                     val deletedLogs = logDatabase.dao().deleteOldLog(oneWeek)
                                     if (deletedLogs > 0) {
                                         AmberLog.d(Amber.TAG, "Deleted $deletedLogs old log entries")
@@ -419,7 +425,7 @@ fun SettingsScreen(
                                 }
                             }
 
-                            Amber.instance.checkForNewRelaysAndUpdateAllFilters()
+                            relayClient.checkForNewRelaysAndUpdateAllFilters()
                         }
                     },
                 )
@@ -482,11 +488,11 @@ fun SettingsScreen(
                         disconnectTorDialog = false
                         torMode = TorMode.DISABLED
                         scope.launch(Dispatchers.IO) {
-                            if (Amber.instance.settings.torMode == TorMode.BUILTIN) {
+                            if (settingsStore.settings.torMode == TorMode.BUILTIN) {
                                 TorManager.stop()
                             }
                             LocalPreferences.updateTorMode(context, TorMode.DISABLED)
-                            Amber.instance.checkForNewRelaysAndUpdateAllFilters()
+                            relayClient.checkForNewRelaysAndUpdateAllFilters()
                         }
                     },
                 ) {

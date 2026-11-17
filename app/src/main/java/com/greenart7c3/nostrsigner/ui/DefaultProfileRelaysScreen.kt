@@ -36,7 +36,6 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
-import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.commonsui.Res
@@ -62,6 +61,8 @@ fun DefaultProfileRelaysScreen(
     modifier: Modifier,
     account: Account,
 ) {
+    val settingsStore = LocalSettingsStore.current
+    val relayClient = LocalRelayClient.current
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
     val clipboardManager = LocalClipboard.current
@@ -73,11 +74,11 @@ fun DefaultProfileRelaysScreen(
     }
     val relays2 =
         remember {
-            mutableStateListOf(*Amber.instance.settings.defaultProfileRelays.toTypedArray())
+            mutableStateListOf(*settingsStore.settings.defaultProfileRelays.toTypedArray())
         }
     val trustScores = remember { mutableStateMapOf<String, Int?>() }
     val loadingScores = remember { mutableStateMapOf<String, Boolean>() }
-    var fetchInterval by remember { mutableStateOf(Amber.instance.settings.profileFetchInterval) }
+    var fetchInterval by remember { mutableStateOf(settingsStore.settings.profileFetchInterval) }
 
     // Fetch trust scores for all relays
     LaunchedEffect(relays2.toList()) {
@@ -160,13 +161,13 @@ fun DefaultProfileRelaysScreen(
                                     account,
                                     shouldCheckForBunker = false,
                                     onDone = {
-                                        Amber.instance.settings = Amber.instance.settings.copy(
+                                        settingsStore.settings = settingsStore.settings.copy(
                                             defaultProfileRelays = relays2,
                                         )
-                                        LocalPreferences.saveSettingsToEncryptedStorage(Amber.instance.settings)
+                                        LocalPreferences.saveSettingsToEncryptedStorage(settingsStore.settings)
                                         scope.launch(Dispatchers.IO) {
                                             if (!BuildFlavorChecker.isOfflineFlavor()) {
-                                                Amber.instance.checkForNewRelaysAndUpdateAllFilters()
+                                                relayClient.checkForNewRelaysAndUpdateAllFilters()
                                                 isLoading.value = false
                                             } else {
                                                 isLoading.value = false
@@ -213,13 +214,13 @@ fun DefaultProfileRelaysScreen(
                                         account,
                                         shouldCheckForBunker = false,
                                         onDone = {
-                                            Amber.instance.settings = Amber.instance.settings.copy(
+                                            settingsStore.settings = settingsStore.settings.copy(
                                                 defaultProfileRelays = relays2,
                                             )
-                                            LocalPreferences.saveSettingsToEncryptedStorage(Amber.instance.settings)
+                                            LocalPreferences.saveSettingsToEncryptedStorage(settingsStore.settings)
                                             scope.launch(Dispatchers.IO) {
                                                 if (!BuildFlavorChecker.isOfflineFlavor()) {
-                                                    Amber.instance.checkForNewRelaysAndUpdateAllFilters()
+                                                    relayClient.checkForNewRelaysAndUpdateAllFilters()
                                                     isLoading.value = false
                                                 } else {
                                                     isLoading.value = false
@@ -251,13 +252,13 @@ fun DefaultProfileRelaysScreen(
                             onClick = {
                                 isLoading.value = true
                                 relays2.removeAt(it)
-                                Amber.instance.settings = Amber.instance.settings.copy(
+                                settingsStore.settings = settingsStore.settings.copy(
                                     defaultProfileRelays = relays2,
                                 )
-                                LocalPreferences.saveSettingsToEncryptedStorage(Amber.instance.settings)
+                                LocalPreferences.saveSettingsToEncryptedStorage(settingsStore.settings)
                                 scope.launch(Dispatchers.IO) {
                                     if (!BuildFlavorChecker.isOfflineFlavor()) {
-                                        Amber.instance.checkForNewRelaysAndUpdateAllFilters()
+                                        relayClient.checkForNewRelaysAndUpdateAllFilters()
                                         isLoading.value = false
                                     } else {
                                         isLoading.value = false

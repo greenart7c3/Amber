@@ -88,20 +88,6 @@ class ArchitectureTest {
     }
 
     @Test
-    fun `Amber instance usage can only shrink`() {
-        val actual = appMain
-            .filter { it.text.contains("Amber.instance") }
-            .map { it.relativePath() }
-            .toSet()
-
-        assertRatchet(
-            "Amber.instance is the service locator this project is replacing: take the dependency as a parameter instead.",
-            actual,
-            amberInstanceUsers,
-        )
-    }
-
-    @Test
     fun `service and database do not render UI`() {
         val actual = appMain
             .filter { file -> file.relativePath().startsWith("service/") || file.relativePath().startsWith("database/") }
@@ -177,90 +163,6 @@ class ArchitectureTest {
             "ui/EditConfigurationScreen.kt",
             "ui/EditPermission.kt",
             "ui/NewNsecBunkerScreen.kt",
-        )
-
-        val amberInstanceUsers = setOf(
-            "DataStoreAccess.kt",
-            "LocalPreferences.kt",
-            "MainActivity.kt",
-            "SecureCryptoHelper.kt",
-            "SignerActivity.kt",
-            "SignerProviderQuery.kt",
-            "database/HistoryDao.kt",
-            "database/LogDao.kt",
-            "database/LogRetentionManager.kt",
-            "models/Account.kt",
-            "relays/AmberRelayStat.kt",
-            "relays/NostrClientLoggerListener.kt",
-            "service/AccountExportService.kt",
-            "service/AmberUtils.kt",
-            "service/ApplicationBackup.kt",
-            "service/BootReceiver.kt",
-            "service/BunkerRequestUtils.kt",
-            "service/ClearLogsWorker.kt",
-            "service/ConnectivityService.kt",
-            "service/EventNotificationConsumer.kt",
-            "service/IntentUtils.kt",
-            "service/KillSwitchReceiver.kt",
-            "service/LocalBunkerRelayServer.kt",
-            "service/NostrConnectUtils.kt",
-            "service/NotificationSubscription.kt",
-            "service/ProfileSubscription.kt",
-            "service/ReconnectReceiver.kt",
-            "service/ReportSender.kt",
-            "service/StopServiceReceiver.kt",
-            "service/TorRestartReceiver.kt",
-            "service/TrustScoreService.kt",
-            "service/UpdateCheckWorker.kt",
-            "service/WebDavService.kt",
-            "service/ZapstoreUpdater.kt",
-            "service/crashreports/DisplayCrashMessages.kt",
-            "ui/AccountScreen.kt",
-            "ui/AccountStateViewModel.kt",
-            "ui/ActivitiesScreen.kt",
-            "ui/ApplicationsBackupScreen.kt",
-            "ui/ApplicationsScreen.kt",
-            "ui/AuthWhitelistScreen.kt",
-            "ui/CrashReportScreen.kt",
-            "ui/DefaultProfileRelaysScreen.kt",
-            "ui/EditConfigurationScreen.kt",
-            "ui/EditPermission.kt",
-            "ui/FeedbackScreen.kt",
-            "ui/IncomingRequestScreen.kt",
-            "ui/LanguageScreen.kt",
-            "ui/LoginScreen.kt",
-            "ui/LogsScreen.kt",
-            "ui/MainScreen.kt",
-            "ui/NewApplicationScreen.kt",
-            "ui/NewNsecBunkerScreen.kt",
-            "ui/RelaysScreen.kt",
-            "ui/SecurityScreen.kt",
-            "ui/ServiceSettingsScreen.kt",
-            "ui/SettingsScreen.kt",
-            "ui/SetupPinScreen.kt",
-            "ui/TranslationReportScreen.kt",
-            "ui/UpdateSettingsScreen.kt",
-            "ui/actions/AccountBackupScreen.kt",
-            "ui/actions/ActivityScreen.kt",
-            "ui/actions/CloudBackupScreen.kt",
-            "ui/actions/ConnectOrbotDialog.kt",
-            "ui/actions/EditRelaysDialog.kt",
-            "ui/actions/ExportAllAccountsScreen.kt",
-            "ui/actions/LogoutButton.kt",
-            "ui/components/ActivityStatsCard.kt",
-            "ui/components/AmberTopAppBar.kt",
-            "ui/components/BiometricAuthScreen.kt",
-            "ui/components/BunkerConnectRequestScreen.kt",
-            "ui/components/BunkerMultiEventHomeScreen.kt",
-            "ui/components/BunkerSingleEventHomeScreen.kt",
-            "ui/components/EventData.kt",
-            "ui/components/IntentMultiEventHomeScreen.kt",
-            "ui/components/IntentSingleEventHomeScreen.kt",
-            "ui/components/KillSwitchDialog.kt",
-            "ui/components/ProfileSubscriptionEffect.kt",
-            "ui/components/RandomPinInput.kt",
-            "ui/components/SeedWordsPage.kt",
-            "ui/theme/Previews.kt",
         )
 
         val composeUiInService = setOf(

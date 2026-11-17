@@ -37,23 +37,24 @@ fun Amber.clearPendingCrashReport() {
 
 @Composable
 fun DisplayCrashMessages(
+    amber: Amber,
     account: Account,
     navController: NavHostControllerWrapper,
 ) {
     LaunchedEffect(account) {
         withContext(Dispatchers.IO) {
-            val exceptions = Amber.instance.crashReportCache.loadAndDelete()
+            val exceptions = amber.crashReportCache.loadAndDelete()
             // ANRs, low-memory kills and native crashes only appear in the exit records.
             // The startup detection may still be running: finish it first, or a dismiss
             // would clear records written after this read, unseen.
-            ExitReasons.detect(Amber.instance)
-            val exits = ExitReasons.pending(Amber.instance)
+            ExitReasons.detect(amber)
+            val exits = ExitReasons.pending(amber)
             val stack = listOfNotNull(exceptions, exits)
                 .filter { it.isNotBlank() }
                 .joinToString("\n\n")
                 .ifBlank { null }
             if (stack != null) {
-                Amber.instance.pendingCrashReport = stack
+                amber.pendingCrashReport = stack
                 withContext(Dispatchers.Main) {
                     navController.navController.navigate(Route.CrashReport.route)
                 }

@@ -1,12 +1,15 @@
 package com.greenart7c3.nostrsigner.service
 
+import android.content.Context
 import android.net.TrafficStats
-import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.common.relays.LocalRelayServer
+import com.greenart7c3.nostrsigner.data.AccountRepository
+import com.greenart7c3.nostrsigner.data.RelayClient
+import com.greenart7c3.nostrsigner.data.SettingsStore
 import com.vitorpamplona.quartz.nip01Core.core.toHexKey
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.RelayUrlNormalizer
@@ -27,7 +30,13 @@ import com.vitorpamplona.quartz.nip19Bech32.bech32.bechToBytes
  * ([newBunkerRelays]). It lives in the app process, so it serves while that
  * process runs (the foreground `ConnectivityService` keeps it alive).
  */
-object LocalBunkerRelayServer : LocalRelayServer(
+// One per process: Amber owns the instance (Amber.localBunkerRelay).
+class LocalBunkerRelayServer(
+    private val appContext: Context,
+    private val settingsStore: SettingsStore,
+    private val accountRepository: AccountRepository,
+    private val relayClient: RelayClient,
+) : LocalRelayServer(
     logger = object : LocalRelayServer.Logger {
         override fun d(message: String) = AmberLog.d(LocalRelayServer.TAG, message)
 
@@ -35,28 +44,16 @@ object LocalBunkerRelayServer : LocalRelayServer(
 
         override fun e(message: String, throwable: Throwable?) = AmberLog.e(LocalRelayServer.TAG, message, throwable)
     },
-    approvedSenders = { approvedRelaySenders() },
+    approvedSenders = { approvedRelaySenders(appContext, accountRepository) },
     // Same tag as the app's other sockets (TaggedSocketFactory).
     tagThread = { if (TrafficStats.getThreadStatsTag() == -1) TrafficStats.setThreadStatsTag(0x0001) },
     // The offline flavor has no network permission and must never open a port.
     isAllowed = { !BuildFlavorChecker.isOfflineFlavor() },
 ) {
-    private const val BENCHMARK_PORT = 7779
-
     private val isAvailable: Boolean get() = !BuildFlavorChecker.isOfflineFlavor()
 
-    /** The automatic port for this build. */
-    val defaultPort: Int
-        get() = when {
-            @Suppress("KotlinConstantConditions")
-            BuildConfig.FLAVOR
-                == "benchmark" -> BENCHMARK_PORT
-            BuildConfig.DEBUG -> DEBUG_PORT
-            else -> DEFAULT_PORT
-        }
-
     /** The relay port: the user's choice, or the automatic default for this build. */
-    fun port(): Int = Amber.instance.settings.localBunkerPort ?: defaultPort
+    fun port(): Int = settingsStore.settings.localBunkerPort ?: defaultPort
 
     /**
      * Relays a NEW bunker connection uses: the local relay (when the setting
@@ -65,14 +62,14 @@ object LocalBunkerRelayServer : LocalRelayServer(
      * public relay.
      */
     fun newBunkerRelays(): List<NormalizedRelayUrl> = buildList {
-        val local = if (isAvailable && Amber.instance.settings.localBunkerServer) relayUrl() else null
+        val local = if (isAvailable && settingsStore.settings.localBunkerServer) relayUrl() else null
         if (local != null) add(local)
-        addAll(Amber.instance.settings.defaultRelays)
+        addAll(settingsStore.settings.defaultRelays)
     }.distinct()
 
     /** Starts the relay at app start when the setting is on. Call off the main thread. */
     fun startIfEnabled() {
-        if (isAvailable && Amber.instance.settings.localBunkerServer) start(port())
+        if (isAvailable && settingsStore.settings.localBunkerServer) start(port())
     }
 
     /**
@@ -83,8 +80,8 @@ object LocalBunkerRelayServer : LocalRelayServer(
      */
     suspend fun applySetting() {
         if (!isAvailable) return
-        if (Amber.instance.settings.localBunkerServer) start(port()) else stop()
-        Amber.instance.resetRelayConnections("local bunker relay setting changed")
+        if (settingsStore.settings.localBunkerServer) start(port()) else stop()
+        relayClient.resetRelayConnections("local bunker relay setting changed")
     }
 
     /**
@@ -96,16 +93,30 @@ object LocalBunkerRelayServer : LocalRelayServer(
         if (!isAvailable) return false
         val current = RelayUrlNormalizer.normalizeOrNull("ws://127.0.0.1:${port()}/")
         val inUse = current != null &&
-            LocalPreferences.allSavedAccounts(Amber.instance).any { account ->
-                Amber.instance.getDatabase(account.npub).dao().getAllRelayLists().any { current in it.relays }
+            LocalPreferences.allSavedAccounts(appContext).any { account ->
+                accountRepository.getDatabase(account.npub).dao().getAllRelayLists().any { current in it.relays }
             }
         if (inUse) return false
-        Amber.instance.settings = Amber.instance.settings.copy(localBunkerPort = newPort)
-        LocalPreferences.saveSettingsToEncryptedStorage(Amber.instance.settings)
+        settingsStore.settings = settingsStore.settings.copy(localBunkerPort = newPort)
+        LocalPreferences.saveSettingsToEncryptedStorage(appContext, settingsStore.settings)
         // A running relay must come down first: start() never rebinds a live one.
         stop()
         applySetting()
         return true
+    }
+
+    companion object {
+        private const val BENCHMARK_PORT = 7779
+
+        /** The automatic port for this build. */
+        val defaultPort: Int
+            get() = when {
+                @Suppress("KotlinConstantConditions")
+                BuildConfig.FLAVOR
+                    == "benchmark" -> BENCHMARK_PORT
+                BuildConfig.DEBUG -> DEBUG_PORT
+                else -> DEFAULT_PORT
+            }
     }
 }
 
@@ -114,10 +125,10 @@ object LocalBunkerRelayServer : LocalRelayServer(
  * client key of every saved connection (request senders), every connection
  * key and the account keys (what the signer answers with).
  */
-private fun approvedRelaySenders(): Set<String> = buildSet {
-    LocalPreferences.allSavedAccounts(Amber.instance).forEach { account ->
+private fun approvedRelaySenders(context: Context, accountRepository: AccountRepository): Set<String> = buildSet {
+    LocalPreferences.allSavedAccounts(context).forEach { account ->
         runCatching { add(account.npub.bechToBytes().toHexKey()) }
-        addAll(Amber.instance.getDatabase(account.npub).dao().getAllKeys())
+        addAll(accountRepository.getDatabase(account.npub).dao().getAllKeys())
     }
     addAll(LocalKeyAccountIndex.localPubKeys())
 }

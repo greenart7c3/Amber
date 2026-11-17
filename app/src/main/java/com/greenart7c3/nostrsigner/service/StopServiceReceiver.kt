@@ -7,14 +7,16 @@ import android.os.Process
 import androidx.core.app.NotificationManagerCompat
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.AmberLog
+import com.greenart7c3.nostrsigner.amber
 import kotlin.system.exitProcess
 
 class StopServiceReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
+        val amber = context.amber
         AmberLog.d(Amber.TAG, "StopServiceReceiver: stopping service and killing process")
 
         try {
-            Amber.instance.client.disconnect()
+            amber.client.disconnect()
         } catch (e: Exception) {
             AmberLog.e(Amber.TAG, "Failed to disconnect client on stop", e)
         }

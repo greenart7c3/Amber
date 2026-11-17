@@ -1,5 +1,6 @@
 package com.greenart7c3.nostrsigner.ui.components
 
+import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -21,7 +22,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.greenart7c3.nostrsigner.AccountInfo
-import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.common.SignerType
 import com.greenart7c3.nostrsigner.common.psbt.PsbtDecoder
@@ -45,6 +45,9 @@ import com.greenart7c3.nostrsigner.service.isPrivateEvent
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
 import com.greenart7c3.nostrsigner.service.relayAuthRememberType
 import com.greenart7c3.nostrsigner.service.toShortenHex
+import com.greenart7c3.nostrsigner.ui.LocalAccountRepository
+import com.greenart7c3.nostrsigner.ui.LocalAppScope
+import com.greenart7c3.nostrsigner.ui.LocalSettingsStore
 import com.greenart7c3.nostrsigner.ui.ToastManager
 import com.vitorpamplona.quartz.nip01Core.core.toHexKey
 import com.vitorpamplona.quartz.nip19Bech32.bech32.bechToBytes
@@ -66,10 +69,12 @@ fun IntentSingleEventHomeScreen(
     onRemoveIntentData: (List<IntentData>, IntentResultType) -> Unit,
     onLoading: (Boolean) -> Unit,
 ) {
+    val settingsStore = LocalSettingsStore.current
     var applicationEntity by remember {
         mutableStateOf<ApplicationWithPermissions?>(null)
     }
     val key = "$packageName"
+    val accountRepository = LocalAccountRepository.current
 
     LaunchedEffect(Unit) {
         // Browser deep-links (nostrsigner://) arrive with no calling package, so
@@ -79,13 +84,15 @@ fun IntentSingleEventHomeScreen(
         // the shared "null" application: force always-ask for null-package callers.
         if (packageName == null) return@LaunchedEffect
         launch(Dispatchers.IO) {
-            applicationEntity = Amber.instance.getDatabase(account.npub).dao().getByKey(key)
+            applicationEntity = accountRepository.getDatabase(account.npub).dao().getByKey(key)
         }
     }
 
     val appName = sanitizeAppName(applicationEntity?.application?.name ?: packageName ?: intentData.name).ifBlank { key.toShortenHex() }
     val context = LocalContext.current
     val clipboardManager = LocalClipboard.current
+    val activity = LocalActivity.current
+    val appScope = LocalAppScope.current
 
     when (intentData.type) {
         SignerType.GET_PUBLIC_KEY -> {
@@ -118,7 +125,6 @@ fun IntentSingleEventHomeScreen(
                     )
                 },
                 onReject = {
-                    val activity = Amber.instance.getMainActivity()
                     activity?.intent = null
                     activity?.finishAndRemoveTask()
                     onRemoveIntentData(listOf(intentData), IntentResultType.REMOVE)
@@ -143,7 +149,7 @@ fun IntentSingleEventHomeScreen(
                 shouldRunOnAccept = acceptOrReject,
                 packageName = packageName,
                 onAccept = { rememberType ->
-                    Amber.instance.applicationIOScope.launch(Dispatchers.IO) {
+                    appScope.launch(Dispatchers.IO) {
                         try {
                             val result = account.signPsbt(intentData.data)
                             IntentUtils.sendResult(
@@ -171,6 +177,7 @@ fun IntentSingleEventHomeScreen(
                 },
                 onReject = { rememberType ->
                     IntentUtils.sendRejection(
+                        context = context,
                         key = key,
                         account = account,
                         intentData = intentData,
@@ -231,6 +238,7 @@ fun IntentSingleEventHomeScreen(
                 onReject = { rememberType, scope ->
                     val v3Kind = if (scope == DecryptTypeScope.SPECIFIC) intentData.nip44v3Kind else null
                     IntentUtils.sendRejection(
+                        context = context,
                         key = key,
                         account = account,
                         intentData = intentData,
@@ -305,6 +313,7 @@ fun IntentSingleEventHomeScreen(
                 },
                 onReject = { rememberType, scope ->
                     IntentUtils.sendRejection(
+                        context = context,
                         key = key,
                         account = account,
                         intentData = intentData,
@@ -353,7 +362,7 @@ fun IntentSingleEventHomeScreen(
                 }
 
                 // If the auth whitelist is non-empty and this relay is not in it, auto-reject
-                val blockedByWhitelist = isBlockedByAuthWhitelist(22242, relayUrl)
+                val blockedByWhitelist = isBlockedByAuthWhitelist(22242, relayUrl, settingsStore.settings.authWhitelist)
 
                 val acceptOrReject = if (blockedByWhitelist) {
                     false
@@ -412,6 +421,7 @@ fun IntentSingleEventHomeScreen(
                             rememberType = rememberType,
                         )
                         IntentUtils.sendRejection(
+                            context = context,
                             key = key,
                             account = account,
                             intentData = intentData,
@@ -476,6 +486,7 @@ fun IntentSingleEventHomeScreen(
                     },
                     onReject = {
                         IntentUtils.sendRejection(
+                            context = context,
                             key = key,
                             account = account,
                             intentData = intentData,

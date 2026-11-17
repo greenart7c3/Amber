@@ -41,6 +41,22 @@ import org.junit.Before
 import org.junit.Test
 
 class EventNotificationConsumerTest {
+    // A real responder over the mocked Application, spied so tests can stub its replies.
+    private val bunkerResponder by lazy {
+        spyk(
+            BunkerResponder(
+                amber,
+                amber,
+                amber,
+                amber,
+                object : CoroutineScope {
+                    override val coroutineContext get() = amber.applicationIOScope.coroutineContext
+                },
+                mockk(relaxed = true),
+            ) { null },
+        )
+    }
+
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private lateinit var consumer: EventNotificationConsumer
     private lateinit var bunkerEventDao: BunkerEventDao
@@ -64,7 +80,6 @@ class EventNotificationConsumerTest {
         every { amber.applicationIOScope } returns scope
         every { amber.getDatabase(any()) } returns database
         every { amber.dao(any()) } returns dao
-        installAmberInstance(amber)
 
         mockkObject(AmberLog)
         every { AmberLog.d(any(), any()) } returns Unit
@@ -73,7 +88,19 @@ class EventNotificationConsumerTest {
         mockkObject(LocalPreferences)
         account = newTestAccount(scope)
 
-        consumer = spyk(EventNotificationConsumer(mockk(relaxed = true)))
+        consumer = spyk(
+            EventNotificationConsumer(
+                mockk(relaxed = true),
+                settingsStore = amber,
+                accountRepository = amber,
+                // Read on use: tests swap the stubbed scope after setUp.
+                scope = object : CoroutineScope {
+                    override val coroutineContext get() = amber.applicationIOScope.coroutineContext
+                },
+                notificationCache = amber.notificationCache,
+                bunkerResponder = bunkerResponder,
+            ) { amber.notificationSubscription.updateFilter() },
+        )
         every { consumer.saveLog(any(), any(), any()) } returns Unit
         val nm = mockk<android.app.NotificationManager>(relaxed = true)
         every { nm.areNotificationsEnabled() } returns true
@@ -224,7 +251,7 @@ class EventNotificationConsumerTest {
             val responses = mutableListOf<BunkerResponse>()
             val attempts = mutableListOf<Int>()
             coEvery {
-                BunkerRequestUtils.sendBunkerResponse(any(), any(), any(), any(), any(), any(), any())
+                bunkerResponder.sendBunkerResponse(any(), any(), any(), any(), any(), any(), any())
             } answers {
                 responses += arg<BunkerResponse>(2)
                 attempts += arg<Int>(6)
@@ -342,7 +369,7 @@ class EventNotificationConsumerTest {
             every { amber.notificationCache[any()] } returns null
             val responses = mutableListOf<BunkerResponse>()
             coEvery {
-                BunkerRequestUtils.sendBunkerResponse(any(), any(), any(), any(), any(), any(), any())
+                bunkerResponder.sendBunkerResponse(any(), any(), any(), any(), any(), any(), any())
             } answers {
                 responses += arg<BunkerResponse>(2)
             }

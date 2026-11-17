@@ -94,6 +94,7 @@ import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.LocalPreferences
+import com.greenart7c3.nostrsigner.amber
 import com.greenart7c3.nostrsigner.commonsui.Res
 import com.greenart7c3.nostrsigner.commonsui.account_backup
 import com.greenart7c3.nostrsigner.commonsui.account_backup_tips3_md
@@ -122,6 +123,7 @@ import com.greenart7c3.nostrsigner.service.Biometrics.authenticate
 import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.CenterCircularProgressIndicator
 import com.greenart7c3.nostrsigner.ui.InnerQrCodeDrawer
+import com.greenart7c3.nostrsigner.ui.LocalAppScope
 import com.greenart7c3.nostrsigner.ui.QrCodeDrawer
 import com.greenart7c3.nostrsigner.ui.components.CloseButton
 import com.greenart7c3.nostrsigner.ui.components.IconRow
@@ -136,6 +138,7 @@ import com.greenart7c3.nostrsigner.ui.theme.fromHex
 import com.greenart7c3.nostrsigner.ui.theme.outlineIfAny
 import com.vitorpamplona.quartz.nip06KeyDerivation.Nip06
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
@@ -146,6 +149,7 @@ fun AccountBackupScreen(
     navController: NavController,
     onShowQrCode: (String) -> Unit,
 ) {
+    val amber = LocalContext.current.amber
     var isLoading by remember { mutableStateOf(false) }
 
     Surface(
@@ -190,12 +194,12 @@ fun AccountBackupScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                LocalPreferences.allSavedAccounts(Amber.instance).forEach { accountInfo ->
+                LocalPreferences.allSavedAccounts(amber).forEach { accountInfo ->
                     var localAccount by remember { mutableStateOf<Account?>(null) }
                     var seedWords by remember { mutableStateOf("") }
                     LaunchedEffect(Unit) {
                         launch(Dispatchers.IO) {
-                            localAccount = LocalPreferences.loadFromEncryptedStorage(Amber.instance, accountInfo.npub)
+                            localAccount = LocalPreferences.loadFromEncryptedStorage(amber, accountInfo.npub)
                             localAccount?.let { acc ->
                                 seedWords = acc.seedWords()
                             }
@@ -490,6 +494,7 @@ private fun NSecQrButton(
     onBackupDone: () -> Unit,
     onShowQrCode: (String) -> Unit,
 ) {
+    val appScope = LocalAppScope.current
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val showDialog = remember { mutableStateOf(false) }
@@ -515,7 +520,7 @@ private fun NSecQrButton(
         }
         if (nsec.isNotBlank()) {
             QrCodeDialog(content = nsec) {
-                Amber.instance.applicationIOScope.launch {
+                appScope.launch {
                     account.didBackup = true
                     onBackupDone()
                     showDialog.value = false
@@ -527,7 +532,7 @@ private fun NSecQrButton(
     val keyguardLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
         if (result.resultCode == Activity.RESULT_OK) {
             if (password.isNotBlank()) {
-                Amber.instance.applicationIOScope.launch {
+                appScope.launch {
                     onLoading(true)
                     try {
                         val ncryptsec = account.nip49Encrypt(password)
@@ -563,7 +568,7 @@ private fun NSecQrButton(
                 keyguardLauncher = keyguardLauncher,
                 onApproved = {
                     if (password.isNotBlank()) {
-                        Amber.instance.applicationIOScope.launch {
+                        appScope.launch {
                             onLoading(true)
                             try {
                                 val ncryptsec = account.nip49Encrypt(password)
@@ -700,6 +705,7 @@ private fun SeedWordsButton(
     seedWords: String,
     onBackupDone: () -> Unit,
 ) {
+    val appScope = LocalAppScope.current
     val showSeedWords = remember { mutableStateOf(false) }
     val context = LocalContext.current
     val keyguardLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
@@ -744,14 +750,14 @@ private fun SeedWordsButton(
                 context = context,
                 keyguardLauncher = keyguardLauncher,
                 onApproved = {
-                    Amber.instance.applicationIOScope.launch {
+                    appScope.launch {
                         account.didBackup = true
                         onBackupDone()
                         showSeedWords.value = true
                     }
                 },
                 onError = { _, message ->
-                    Amber.instance.applicationIOScope.launch(Dispatchers.Main) {
+                    appScope.launch(Dispatchers.Main) {
                         Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
                     }
                 },
@@ -768,6 +774,8 @@ private fun NSecCopyButton(
     onLoading: (Boolean) -> Unit,
     onBackupDone: () -> Unit,
 ) {
+    val appScope = LocalAppScope.current
+    val amber = LocalContext.current.amber
     val clipboardManager = LocalClipboard.current
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -775,7 +783,7 @@ private fun NSecCopyButton(
     val keyguardLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
         if (result.resultCode == Activity.RESULT_OK) {
             if (password.isNotBlank()) {
-                encryptCopyNSec(password, Amber.instance, account, clipboardManager, onLoading, onBackupDone)
+                encryptCopyNSec(password, amber, account, clipboardManager, appScope, onLoading, onBackupDone)
             } else {
                 copyNSec(account, clipboardManager, onBackupDone)
             }
@@ -798,7 +806,7 @@ private fun NSecCopyButton(
                         account.didBackup = true
                         onBackupDone()
                         if (password.isNotBlank()) {
-                            encryptCopyNSec(password, Amber.instance, account, clipboardManager, onLoading, onBackupDone)
+                            encryptCopyNSec(password, amber, account, clipboardManager, appScope, onLoading, onBackupDone)
                         } else {
                             copyNSec(account, clipboardManager, onBackupDone)
                         }
@@ -860,26 +868,27 @@ private fun encryptCopyNSec(
     context: Context,
     account: Account,
     clipboardManager: Clipboard,
+    appScope: CoroutineScope,
     onLoading: (Boolean) -> Unit,
     onBackupDone: () -> Unit,
 ) {
     if (password.isBlank()) {
-        Amber.instance.applicationIOScope.launch(Dispatchers.Main) {
+        appScope.launch(Dispatchers.Main) {
             Toast.makeText(context, getStringBlocking(Res.string.password_is_required), Toast.LENGTH_SHORT).show()
         }
     } else {
-        Amber.instance.applicationIOScope.launch(Dispatchers.IO) {
+        appScope.launch(Dispatchers.IO) {
             onLoading(true)
             try {
                 val key = account.nip49Encrypt(password)
                 account.didBackup = true
                 onBackupDone()
-                Amber.instance.applicationIOScope.launch(Dispatchers.Main) {
+                appScope.launch(Dispatchers.Main) {
                     clipboardManager.setSensitiveClip(context, key)
                     Toast.makeText(context, getStringBlocking(Res.string.secret_key_copied_to_clipboard), Toast.LENGTH_SHORT).show()
                 }
             } catch (_: Exception) {
-                Amber.instance.applicationIOScope.launch(Dispatchers.Main) {
+                appScope.launch(Dispatchers.Main) {
                     Toast.makeText(context, getStringBlocking(Res.string.failed_to_encrypt_key), Toast.LENGTH_SHORT).show()
                 }
             } finally {

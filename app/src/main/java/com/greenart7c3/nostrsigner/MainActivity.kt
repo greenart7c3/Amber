@@ -34,6 +34,7 @@ import com.greenart7c3.nostrsigner.ui.AccountScreen
 import com.greenart7c3.nostrsigner.ui.AccountStateViewModel
 import com.greenart7c3.nostrsigner.ui.IntentWrapper
 import com.greenart7c3.nostrsigner.ui.NavHostControllerWrapper
+import com.greenart7c3.nostrsigner.ui.appDependencies
 import com.greenart7c3.nostrsigner.ui.components.BiometricAuthScreen
 import com.greenart7c3.nostrsigner.ui.navigation.Route
 import com.greenart7c3.nostrsigner.ui.theme.NostrSignerTheme
@@ -55,7 +56,7 @@ class MainActivity : AppCompatActivity() {
         Amber.isAppInForeground = true
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
-        Amber.instance.setMainActivity(this)
+        amber.setMainActivity(this)
         mainViewModel = MainViewModel(applicationContext)
         // Read once here: getReferrer() crashes on OEM builds (Samsung/Android 12) when
         // the activity has no intent (mIntent == null).
@@ -82,13 +83,14 @@ class MainActivity : AppCompatActivity() {
                     null
                 }
 
-            val themeMode by Amber.instance.themeMode.collectAsStateWithLifecycle()
+            val themeMode by amber.themeMode.collectAsStateWithLifecycle()
             NostrSignerTheme(themeMode = themeMode) {
                 CompositionLocalProvider(
                     LocalDensity provides Density(
                         LocalDensity.current.density,
                         1f,
                     ),
+                    *appDependencies(amber),
                 ) {
                     val navController = rememberNavController()
                     mainViewModel.navController = navController
@@ -118,7 +120,14 @@ class MainActivity : AppCompatActivity() {
 
                             val accountStateViewModel: AccountStateViewModel =
                                 viewModel {
-                                    AccountStateViewModel(npub)
+                                    AccountStateViewModel(
+                                        npub = npub,
+                                        appContext = amber,
+                                        settingsStore = amber,
+                                        accountRepository = amber,
+                                        relayClient = amber,
+                                        appScope = amber.applicationIOScope,
+                                    )
                                 }
 
                             LaunchedEffect(Unit, bunkerRequests.value) {
@@ -168,14 +177,14 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         AmberLog.d(Amber.TAG, "onResume MainActivity")
         Amber.isAppInForeground = true
-        Amber.instance.setMainActivity(this)
-        Amber.instance.startServiceFromUi()
+        amber.setMainActivity(this)
+        amber.startService()
         mainViewModel.showBunkerRequests()
         if (!BuildFlavorChecker.isOfflineFlavor()) {
             val connectivityManager =
                 (getSystemService(ConnectivityManager::class.java) as ConnectivityManager)
             connectivityManager.getNetworkCapabilities(connectivityManager.activeNetwork)?.let {
-                Amber.instance.updateNetworkCapabilities(it)
+                amber.updateNetworkCapabilities(it)
             }
         }
         super.onResume()

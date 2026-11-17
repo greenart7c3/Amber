@@ -1,14 +1,17 @@
 package com.greenart7c3.nostrsigner.database
 
+import android.content.Context
 import androidx.room.InvalidationTracker
 import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.LocalPreferences
+import com.greenart7c3.nostrsigner.data.AccountRepository
 import com.vitorpamplona.quartz.utils.TimeUtils
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.coroutines.cancellation.CancellationException
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -36,27 +39,27 @@ object LogRetentionManager {
     private val locks = ConcurrentHashMap<String, Mutex>()
     private val lastPruneTimes = ConcurrentHashMap<String, Long>()
 
-    suspend fun prune(npub: String) {
-        pruneLogs(npub, Amber.instance.getLogDatabase(npub))
-        pruneHistory(npub, Amber.instance.getHistoryDatabase(npub))
+    suspend fun prune(context: Context, accountRepository: AccountRepository, npub: String) {
+        pruneLogs(context, npub, accountRepository.getLogDatabase(npub))
+        pruneHistory(context, npub, accountRepository.getHistoryDatabase(npub))
     }
 
     /** Prunes [db] in the background after writes, at most once per [MIN_PRUNE_INTERVAL_MILLIS]. */
-    fun watch(npub: String, db: LogDatabase) {
+    fun watch(context: Context, scope: CoroutineScope, npub: String, db: LogDatabase) {
         db.invalidationTracker.addObserver(
             object : InvalidationTracker.Observer("amber_log") {
                 override fun onInvalidated(tables: Set<String>) {
-                    launchThrottled(logKey(npub)) { pruneLogs(npub, db) }
+                    launchThrottled(scope, logKey(npub)) { pruneLogs(context, npub, db) }
                 }
             },
         )
     }
 
-    fun watch(npub: String, db: HistoryDatabase) {
+    fun watch(context: Context, scope: CoroutineScope, npub: String, db: HistoryDatabase) {
         db.invalidationTracker.addObserver(
             object : InvalidationTracker.Observer("history") {
                 override fun onInvalidated(tables: Set<String>) {
-                    launchThrottled(historyKey(npub)) { pruneHistory(npub, db) }
+                    launchThrottled(scope, historyKey(npub)) { pruneHistory(context, npub, db) }
                 }
             },
         )
@@ -66,7 +69,7 @@ object LogRetentionManager {
 
     private fun historyKey(npub: String) = "history_$npub"
 
-    private fun launchThrottled(key: String, block: suspend () -> Unit) {
+    private fun launchThrottled(scope: CoroutineScope, key: String, block: suspend () -> Unit) {
         val now = System.currentTimeMillis()
         var claimed = false
         lastPruneTimes.compute(key) { _, last ->
@@ -78,7 +81,7 @@ object LogRetentionManager {
             }
         }
         if (!claimed) return
-        Amber.instance.applicationIOScope.launch {
+        scope.launch {
             val lock = locks.computeIfAbsent(key) { Mutex() }
             if (!lock.tryLock()) return@launch
             try {
@@ -92,12 +95,12 @@ object LogRetentionManager {
         }
     }
 
-    private suspend fun pruneLogs(npub: String, db: LogDatabase) {
+    private suspend fun pruneLogs(context: Context, npub: String, db: LogDatabase) {
         val key = logKey(npub)
         locks.computeIfAbsent(key) { Mutex() }.withLock {
             lastPruneTimes[key] = System.currentTimeMillis()
             val dao = db.dao()
-            val expired = dao.deleteOldLog(System.currentTimeMillis() - LocalPreferences.getLogRetention(Amber.instance).millis)
+            val expired = dao.deleteOldLog(System.currentTimeMillis() - LocalPreferences.getLogRetention(context).millis)
             val trimmed = trimToBudget(LOG_DB_MAX_BYTES, { liveBytes(db) }) { dao.deleteOldestLogs(PRUNE_BATCH) }
             if (expired > 0 || trimmed > 0) {
                 AmberLog.d(Amber.TAG, "Pruned logs: $expired expired, $trimmed over the size budget")
@@ -106,13 +109,13 @@ object LogRetentionManager {
         }
     }
 
-    private suspend fun pruneHistory(npub: String, db: HistoryDatabase) {
+    private suspend fun pruneHistory(context: Context, npub: String, db: HistoryDatabase) {
         val key = historyKey(npub)
         locks.computeIfAbsent(key) { Mutex() }.withLock {
             lastPruneTimes[key] = System.currentTimeMillis()
             val dao = db.dao()
             // History times are in seconds.
-            val expired = dao.deleteOldHistory(TimeUtils.now() - LocalPreferences.getHistoryRetention(Amber.instance).millis / 1000)
+            val expired = dao.deleteOldHistory(TimeUtils.now() - LocalPreferences.getHistoryRetention(context).millis / 1000)
             val trimmed = trimToBudget(HISTORY_DB_MAX_BYTES, { liveBytes(db) }) { dao.deleteOldestHistory(PRUNE_BATCH) }
             if (expired > 0 || trimmed > 0) {
                 AmberLog.d(Amber.TAG, "Pruned history: $expired expired, $trimmed over the size budget")

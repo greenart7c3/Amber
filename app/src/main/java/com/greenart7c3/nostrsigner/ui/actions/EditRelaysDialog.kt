@@ -1,6 +1,7 @@
 package com.greenart7c3.nostrsigner.ui.actions
 
 import android.annotation.SuppressLint
+import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -55,6 +56,7 @@ import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.LocalPreferences
+import com.greenart7c3.nostrsigner.amber
 import com.greenart7c3.nostrsigner.checkNotInMainThread
 import com.greenart7c3.nostrsigner.commonsui.Res
 import com.greenart7c3.nostrsigner.commonsui.active_relays_connections_description
@@ -76,9 +78,14 @@ import com.greenart7c3.nostrsigner.commonsui.wss
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.TimeUtils as AmberTimeUtils
 import com.greenart7c3.nostrsigner.models.defaultAppRelays
+import com.greenart7c3.nostrsigner.okhttp.OkHttpWebSocket
 import com.greenart7c3.nostrsigner.relays.AmberListenerSingleton
+import com.greenart7c3.nostrsigner.service.PrivateAddress
 import com.greenart7c3.nostrsigner.service.TrustScoreService
 import com.greenart7c3.nostrsigner.ui.CenterCircularProgressIndicator
+import com.greenart7c3.nostrsigner.ui.LocalAccountRepository
+import com.greenart7c3.nostrsigner.ui.LocalRelayClient
+import com.greenart7c3.nostrsigner.ui.LocalSettingsStore
 import com.greenart7c3.nostrsigner.ui.RelayCard
 import com.greenart7c3.nostrsigner.ui.ToastManager
 import com.greenart7c3.nostrsigner.ui.components.AmberButton
@@ -119,23 +126,26 @@ fun DefaultRelaysScreen(
     modifier: Modifier,
     account: Account,
 ) {
+    val context = LocalContext.current
+    val settingsStore = LocalSettingsStore.current
+    val relayClient = LocalRelayClient.current
     val scope = rememberCoroutineScope()
     val clipboardManager = LocalClipboard.current
     val textFieldRelay = remember { mutableStateOf(TextFieldValue("")) }
     val isLoading = remember { mutableStateOf(false) }
-    val relays2 = remember { mutableStateListOf(*Amber.instance.settings.defaultRelays.toTypedArray()) }
+    val relays2 = remember { mutableStateListOf(*settingsStore.settings.defaultRelays.toTypedArray()) }
     val trustScores = remember { mutableStateMapOf<String, Int?>() }
     val loadingScores = remember { mutableStateMapOf<String, Boolean>() }
 
     // Fetch trust scores for all relays
     LaunchedEffect(relays2.toList()) {
-        if (TrustScoreService.isEnabled()) {
+        if (TrustScoreService.isEnabled(settingsStore.settings)) {
             relays2.forEach { relay ->
                 val url = relay.url
                 if (!trustScores.containsKey(url)) {
                     loadingScores[url] = true
                     scope.launch(Dispatchers.IO) {
-                        val score = TrustScoreService.getScore(url)
+                        val score = TrustScoreService.getScore(url, settingsStore.settings)
                         trustScores[url] = score
                         loadingScores[url] = false
                     }
@@ -167,15 +177,15 @@ fun DefaultRelaysScreen(
                         onClick = {
                             relays2.clear()
                             relays2.addAll(defaultAppRelays)
-                            Amber.instance.settings = Amber.instance.settings.copy(
+                            settingsStore.settings = settingsStore.settings.copy(
                                 defaultRelays = relays2,
                             )
-                            LocalPreferences.saveSettingsToEncryptedStorage(Amber.instance.settings)
+                            LocalPreferences.saveSettingsToEncryptedStorage(context, settingsStore.settings)
                             scope.launch(Dispatchers.IO) {
                                 if (!BuildFlavorChecker.isOfflineFlavor()) {
-                                    Amber.instance.checkForNewRelaysAndUpdateAllFilters()
+                                    relayClient.checkForNewRelaysAndUpdateAllFilters()
                                     delay(2.seconds)
-                                    Amber.instance.client.reconnect()
+                                    relayClient.client.reconnect()
                                     isLoading.value = false
                                 } else {
                                     isLoading.value = false
@@ -212,14 +222,16 @@ fun DefaultRelaysScreen(
                                     relays2,
                                     scope,
                                     account,
+                                    factory = relayClient.factory,
+                                    context = context,
                                     onDone = {
-                                        Amber.instance.settings = Amber.instance.settings.copy(
+                                        settingsStore.settings = settingsStore.settings.copy(
                                             defaultRelays = relays2,
                                         )
-                                        LocalPreferences.saveSettingsToEncryptedStorage(Amber.instance.settings)
+                                        LocalPreferences.saveSettingsToEncryptedStorage(context, settingsStore.settings)
                                         scope.launch(Dispatchers.IO) {
                                             if (!BuildFlavorChecker.isOfflineFlavor()) {
-                                                Amber.instance.checkForNewRelaysAndUpdateAllFilters()
+                                                relayClient.checkForNewRelaysAndUpdateAllFilters()
                                                 isLoading.value = false
                                             } else {
                                                 isLoading.value = false
@@ -264,14 +276,16 @@ fun DefaultRelaysScreen(
                                         relays2,
                                         scope,
                                         account,
+                                        factory = relayClient.factory,
+                                        context = context,
                                         onDone = {
-                                            Amber.instance.settings = Amber.instance.settings.copy(
+                                            settingsStore.settings = settingsStore.settings.copy(
                                                 defaultRelays = relays2,
                                             )
-                                            LocalPreferences.saveSettingsToEncryptedStorage(Amber.instance.settings)
+                                            LocalPreferences.saveSettingsToEncryptedStorage(context, settingsStore.settings)
                                             scope.launch(Dispatchers.IO) {
                                                 if (!BuildFlavorChecker.isOfflineFlavor()) {
-                                                    Amber.instance.checkForNewRelaysAndUpdateAllFilters()
+                                                    relayClient.checkForNewRelaysAndUpdateAllFilters()
                                                     isLoading.value = false
                                                 } else {
                                                     isLoading.value = false
@@ -300,7 +314,7 @@ fun DefaultRelaysScreen(
                 val showInsecureWarning = text.startsWith("ws://") &&
                     !text.endsWith(".onion") &&
                     !text.endsWith(".onion/") &&
-                    !Amber.instance.isPrivateIp(text)
+                    !PrivateAddress.isPrivate(text)
                 if (showInsecureWarning) {
                     Text(
                         text = stringResource(Res.string.insecure_relay_warning),
@@ -326,13 +340,13 @@ fun DefaultRelaysScreen(
                                 trustScores.remove(relayUrl)
                                 loadingScores.remove(relayUrl)
                                 relays2.removeAt(it)
-                                Amber.instance.settings = Amber.instance.settings.copy(
+                                settingsStore.settings = settingsStore.settings.copy(
                                     defaultRelays = relays2,
                                 )
-                                LocalPreferences.saveSettingsToEncryptedStorage(Amber.instance.settings)
+                                LocalPreferences.saveSettingsToEncryptedStorage(context, settingsStore.settings)
                                 scope.launch(Dispatchers.IO) {
                                     if (!BuildFlavorChecker.isOfflineFlavor()) {
-                                        Amber.instance.checkForNewRelaysAndUpdateAllFilters()
+                                        relayClient.checkForNewRelaysAndUpdateAllFilters()
                                         isLoading.value = false
                                     } else {
                                         isLoading.value = false
@@ -353,6 +367,8 @@ fun onAddRelay(
     relays2: SnapshotStateList<NormalizedRelayUrl>,
     scope: CoroutineScope,
     account: Account,
+    factory: OkHttpWebSocket.Builder,
+    context: Context,
     shouldCheckForBunker: Boolean = true,
     onDone: () -> Unit,
 ) {
@@ -361,8 +377,8 @@ fun onAddRelay(
     if (url.isNotBlank() && url != "/") {
         isLoading.value = true
 
-        val client = NostrClient(Amber.instance.factory)
-        val isPrivateIp = Amber.instance.isPrivateIp(url)
+        val client = NostrClient(factory)
+        val isPrivateIp = PrivateAddress.isPrivate(url)
         val addedWSS =
             if (!url.startsWith("wss://") && !url.startsWith("ws://")) {
                 if (url.endsWith(".onion") || url.endsWith(".onion/") || isPrivateIp) {
@@ -382,7 +398,7 @@ fun onAddRelay(
 
         scope.launch(Dispatchers.IO) secondLaunch@{
             if (shouldCheckForBunker) {
-                val relays = Amber.instance.getSavedRelays(account)
+                val relays = context.amber.getSavedRelays(account)
                 if (addedWSS in relays) {
                     relays2.add(addedWSS)
                     onDone()
@@ -522,7 +538,7 @@ fun onAddRelay(
                         count++
                     }
                 } else {
-                    AmberListenerSingleton.showErrorMessage()
+                    AmberListenerSingleton.showErrorMessage(context)
                     filterResult = true
                 }
 
@@ -562,6 +578,7 @@ fun RelayLogScreen(
     account: Account,
     url: String,
 ) {
+    val accountRepository = LocalAccountRepository.current
     val context = LocalContext.current
     val pager =
         Pager(
@@ -570,7 +587,7 @@ fun RelayLogScreen(
                 enablePlaceholders = false,
             ),
         ) {
-            Amber.instance.getLogDatabase(account.npub).dao().getLogsByUrlPaging(url)
+            accountRepository.getLogDatabase(account.npub).dao().getLogsByUrlPaging(url)
         }
     val lazyPagingItems = pager.flow.collectAsLazyPagingItems()
 
@@ -626,6 +643,8 @@ fun ActiveRelaysScreen(
     navController: NavController,
     account: Account,
 ) {
+    val settingsStore = LocalSettingsStore.current
+    val accountRepository = LocalAccountRepository.current
     val scope = rememberCoroutineScope()
     // Relays configured as defaults — these are used for every new connection.
     val defaultRelays = remember { mutableStateListOf<NormalizedRelayUrl>() }
@@ -638,8 +657,8 @@ fun ActiveRelaysScreen(
 
     LaunchedEffect(Unit) {
         withContext(Dispatchers.IO) {
-            val defaults = Amber.instance.settings.defaultRelays
-            val saved = Amber.instance.getSavedRelays(account)
+            val defaults = settingsStore.settings.defaultRelays
+            val saved = accountRepository.getSavedRelays(account)
             defaultRelays.clear()
             defaultRelays.addAll(defaults.distinct())
             connectionRelays.clear()
@@ -649,13 +668,13 @@ fun ActiveRelaysScreen(
 
     // Fetch trust scores for every relay shown
     LaunchedEffect(defaultRelays.toList(), connectionRelays.toList()) {
-        if (TrustScoreService.isEnabled()) {
+        if (TrustScoreService.isEnabled(settingsStore.settings)) {
             (defaultRelays + connectionRelays).forEach { relay ->
                 val url = relay.url
                 if (!trustScores.containsKey(url)) {
                     loadingScores[url] = true
                     scope.launch(Dispatchers.IO) {
-                        val score = TrustScoreService.getScore(url)
+                        val score = TrustScoreService.getScore(url, settingsStore.settings)
                         trustScores[url] = score
                         loadingScores[url] = false
                     }
@@ -700,6 +719,8 @@ private fun ActiveRelayRow(
     loadingScores: Map<String, Boolean>,
     navController: NavController,
 ) {
+    val relayClient = LocalRelayClient.current
+    val amber = LocalContext.current.amber
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -719,10 +740,10 @@ private fun ActiveRelayRow(
             verticalArrangement = Arrangement.Center,
         ) {
             val isConnected by remember(relay) {
-                Amber.instance.client.connectedRelaysFlow().map { status ->
+                relayClient.client.connectedRelaysFlow().map { status ->
                     relay in status
                 }
-            }.collectAsStateWithLifecycle(relay in Amber.instance.client.connectedRelaysFlow().value)
+            }.collectAsStateWithLifecycle(relay in relayClient.client.connectedRelaysFlow().value)
 
             Row(
                 modifier = Modifier
@@ -752,7 +773,7 @@ private fun ActiveRelayRow(
             ) {
                 Text(
                     modifier = Modifier.padding(top = 4.dp, bottom = 16.dp),
-                    text = if (isConnected) "${Amber.instance.relayStats.get(relay).pingInMs}ms ping" else "Unavailable",
+                    text = if (isConnected) "${amber.relayStats.get(relay).pingInMs}ms ping" else "Unavailable",
                     fontSize = 16.sp,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,

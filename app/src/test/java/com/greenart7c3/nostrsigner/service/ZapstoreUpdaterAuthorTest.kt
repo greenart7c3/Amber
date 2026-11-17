@@ -40,7 +40,6 @@ class ZapstoreUpdaterAuthorTest {
         every { android.util.Log.w(any<String>(), any<String>(), any()) } returns 0
         every { android.util.Log.e(any(), any()) } returns 0
         every { android.util.Log.e(any(), any(), any()) } returns 0
-        installAmberInstance(mockk<Amber>(relaxed = true))
         mockkObject(LocalPreferences)
         every { LocalPreferences.loadSettingsFromEncryptedStorage(any()) } returns AmberSettings()
     }
@@ -54,7 +53,7 @@ class ZapstoreUpdaterAuthorTest {
 
     @Test
     fun `validly signed release from a non-developer key is ignored`() = runBlocking {
-        val updater = ZapstoreUpdater(mockk<NostrClient>(relaxed = true), scope)
+        val updater = ZapstoreUpdater(mockk<NostrClient>(relaxed = true), scope, relayClient = mockk(relaxed = true), appContext = mockk(relaxed = true))
         val subIdField = ZapstoreUpdater::class.java.getDeclaredField("releaseSubId").apply { isAccessible = true }
         val releaseSubId = subIdField.get(updater) as String
 

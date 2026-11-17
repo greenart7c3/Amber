@@ -3,6 +3,7 @@ package com.greenart7c3.nostrsigner.service
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.LocalPreferences
+import com.greenart7c3.nostrsigner.data.SettingsStore
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.AmberSettings
 import com.greenart7c3.nostrsigner.models.ProfileFetchInterval
@@ -38,6 +39,10 @@ import org.junit.Before
 import org.junit.Test
 
 class ProfileSubscriptionTest {
+    private val settingsStore = object : SettingsStore {
+        override var settings = AmberSettings()
+    }
+
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private val sentSubIds = Collections.synchronizedList(mutableListOf<String>())
     private lateinit var client: NostrClient
@@ -62,7 +67,7 @@ class ProfileSubscriptionTest {
         every { LocalPreferences.getMetadataCreatedAt(any(), any()) } answers { metadataCreatedAt[secondArg()] ?: 0L }
         every { LocalPreferences.setMetadataCreatedAt(any(), any(), any()) } answers { metadataCreatedAt[secondArg()] = thirdArg() }
 
-        subscription = ProfileSubscription(client, mockk(relaxed = true), scope)
+        subscription = ProfileSubscription(client, mockk(relaxed = true), scope, settingsStore = settingsStore, relayClient = mockk(relaxed = true))
     }
 
     @After
@@ -74,7 +79,7 @@ class ProfileSubscriptionTest {
     private fun installAmber(interval: ProfileFetchInterval) {
         val amber = mockk<Amber>(relaxed = true)
         every { amber.settings } returns AmberSettings(profileFetchInterval = interval)
-        installAmberInstance(amber)
+        settingsStore.settings = AmberSettings(profileFetchInterval = interval)
     }
 
     @Test

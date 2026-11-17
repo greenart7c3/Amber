@@ -22,6 +22,7 @@ package com.greenart7c3.nostrsigner.service
 
 import android.app.NotificationManager
 import android.content.Context
+import androidx.collection.LruCache
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.toLowerCase
 import androidx.core.content.ContextCompat
@@ -55,6 +56,8 @@ import com.greenart7c3.nostrsigner.commonsui.wants_to_read_a_list_of_tags_from_e
 import com.greenart7c3.nostrsigner.commonsui.wants_to_read_a_text_from_encrypted_content
 import com.greenart7c3.nostrsigner.commonsui.wants_to_read_from_encrypted_content
 import com.greenart7c3.nostrsigner.commonsui.wants_you_to_sign_a
+import com.greenart7c3.nostrsigner.data.AccountRepository
+import com.greenart7c3.nostrsigner.data.SettingsStore
 import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
 import com.greenart7c3.nostrsigner.database.BunkerEventEntity
 import com.greenart7c3.nostrsigner.database.HistoryEntity
@@ -92,18 +95,30 @@ import com.vitorpamplona.quartz.utils.TimeUtils
 import java.util.UUID
 import kotlin.io.encoding.Base64
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
-class EventNotificationConsumer(private val applicationContext: Context) {
+// Constructor injection: one parameter per dependency.
+@Suppress("LongParameterList")
+class EventNotificationConsumer(
+    private val applicationContext: Context,
+    private val settingsStore: SettingsStore,
+    private val accountRepository: AccountRepository,
+    private val scope: CoroutineScope,
+    private val notificationCache: LruCache<String, Long>,
+    private val bunkerResponder: BunkerResponder,
+    // Refreshes the NIP-46 subscription after a connection is added or removed.
+    private val onConnectionsChanged: suspend () -> Unit,
+) {
     internal fun saveLog(
         text: String,
         url: String,
         npub: String? = null,
     ) {
         AmberLog.d(Amber.TAG, "$url: $text")
-        Amber.instance.applicationIOScope.launch {
+        scope.launch {
             if (npub != null) {
-                val dao = Amber.instance.getLogDatabase(npub).dao()
+                val dao = accountRepository.getLogDatabase(npub).dao()
                 dao.insertLogIfEnabled(
                     LogEntity(
                         0,
@@ -117,7 +132,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                 val accounts = LocalPreferences.allSavedAccounts(applicationContext)
                 accounts.forEach {
                     LocalPreferences.loadFromEncryptedStorage(applicationContext, it.npub)?.let { acc ->
-                        val dao = Amber.instance.getLogDatabase(acc.npub).dao()
+                        val dao = accountRepository.getLogDatabase(acc.npub).dao()
                         dao.insertLogIfEnabled(
                             LogEntity(
                                 0,
@@ -192,7 +207,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
         // signing) and must never be dropped. Checked after verify() and keyed
         // on the proven signer pubkey, so forged events cannot drain a
         // legitimate sender's budget.
-        if (Amber.instance.dao(acc.npub).getByKeyRaw(event.pubKey) == null &&
+        if (accountRepository.dao(acc.npub).getByKeyRaw(event.pubKey) == null &&
             !senderRateLimiter.allow("${relay.url}|${event.pubKey}", System.currentTimeMillis())
         ) {
             AmberLog.d(Amber.TAG, "${relay.url}: rate-limited event ${event.id} from unknown sender ${event.pubKey}")
@@ -221,7 +236,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
         NotificationUtils.getOrCreateBunkerChannel(applicationContext)
         NotificationUtils.getOrCreateErrorsChannel(applicationContext)
 
-        val bunkerEventDao = Amber.instance.getDatabase(acc.npub).bunkerEventDao()
+        val bunkerEventDao = accountRepository.getDatabase(acc.npub).bunkerEventDao()
         if (bunkerEventDao.exists(event.id)) {
             saveLog("Event ${event.id} already processed (persistent cache)", relay.url)
             return
@@ -267,9 +282,9 @@ class EventNotificationConsumer(private val applicationContext: Context) {
         if (event.content.isEmpty()) return
         // The same event usually arrives from several relays; answer it once,
         // like notify() does.
-        if (Amber.instance.notificationCache[event.id] != null) return
-        Amber.instance.notificationCache.put(event.id, event.createdAt)
-        Amber.instance.applicationIOScope.launch {
+        if (notificationCache[event.id] != null) return
+        notificationCache.put(event.id, event.createdAt)
+        scope.launch {
             try {
                 val connSigner = NostrSignerInternal(KeyPair(privKey = connectionPrivKey.hexToByteArray()))
                 val requestStr = connSigner.decrypt(event.content, event.pubKey)
@@ -289,7 +304,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                     isNostrConnectUri = false,
                     signerPrivKey = connectionPrivKey,
                 )
-                BunkerRequestUtils.sendBunkerResponse(
+                bunkerResponder.sendBunkerResponse(
                     acc,
                     request,
                     BunkerResponse(bunkerRequest.id, "", "Amber is locked. Unlock your device and try again."),
@@ -320,7 +335,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
             EncryptionType.NIP44
         }
 
-        Amber.instance.applicationIOScope.launch {
+        scope.launch {
             val decrypted = try {
                 if (connectionPrivKey.isNotEmpty()) {
                     val connSigner = NostrSignerInternal(KeyPair(privKey = connectionPrivKey.hexToByteArray()))
@@ -348,12 +363,12 @@ class EventNotificationConsumer(private val applicationContext: Context) {
         connectionPrivKey: String = "",
     ) {
         val responseRelay = listOf(relay)
-        val dao = Amber.instance.dao(acc.npub)
-        val historyDao = Amber.instance.getHistoryDatabase(acc.npub).dao()
+        val dao = accountRepository.dao(acc.npub)
+        val historyDao = accountRepository.getHistoryDatabase(acc.npub).dao()
 
-        val notification = Amber.instance.notificationCache[event.id]
+        val notification = notificationCache[event.id]
         if (notification != null) return
-        Amber.instance.notificationCache.put(event.id, event.createdAt)
+        notificationCache.put(event.id, event.createdAt)
 
         val bunkerRequest = JacksonMapper.mapper.readValue(requestStr, BunkerRequest::class.java)
 
@@ -381,7 +396,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                 isNostrConnectUri = false,
                 signerPrivKey = connectionPrivKey,
             )
-            BunkerRequestUtils.sendBunkerResponse(
+            bunkerResponder.sendBunkerResponse(
                 acc,
                 rejection,
                 BunkerResponse(bunkerRequest.id, "", "refusing a multi-relay auth event"),
@@ -427,8 +442,8 @@ class EventNotificationConsumer(private val applicationContext: Context) {
             saveLog("Invalid request method ${bunkerRequest.method}", relay.url, acc.npub)
             // Don't fail silently: reply to the client with an error so it
             // stops waiting for a response it will never otherwise receive.
-            val errorRelays = responseRelay.ifEmpty { Amber.instance.settings.defaultRelays }
-            BunkerRequestUtils.sendBunkerResponse(
+            val errorRelays = responseRelay.ifEmpty { settingsStore.settings.defaultRelays }
+            bunkerResponder.sendBunkerResponse(
                 acc,
                 request,
                 BunkerResponse(bunkerRequest.id, "", "Unrecognized method: ${bunkerRequest.method}"),
@@ -458,11 +473,11 @@ class EventNotificationConsumer(private val applicationContext: Context) {
             }
         if (pubKey == null) {
             saveLog("Invalid params for request ${bunkerRequest.id} method ${bunkerRequest.method}", relay.url, acc.npub)
-            BunkerRequestUtils.sendBunkerResponse(
+            bunkerResponder.sendBunkerResponse(
                 acc,
                 request,
                 BunkerResponse(bunkerRequest.id, "", "invalid params"),
-                responseRelay.ifEmpty { Amber.instance.settings.defaultRelays },
+                responseRelay.ifEmpty { settingsStore.settings.defaultRelays },
                 onLoading = {},
                 onDone = {},
                 attempts = UNVERIFIED_REPLY_ATTEMPTS,
@@ -488,7 +503,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
         if (permission != null &&
             isRepeatedConnect(type, permission.application.key, permission.application.secret, permission.application.useSecret, permission.application.isConnected)
         ) {
-            Amber.instance.applicationIOScope.launch {
+            scope.launch {
                 historyDao
                     .addHistory(
                         listOf(
@@ -505,7 +520,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                         acc.npub,
                     )
             }
-            BunkerRequestUtils.sendBunkerResponse(
+            bunkerResponder.sendBunkerResponse(
                 account = acc,
                 bunkerRequest = request,
                 bunkerResponse = BunkerResponse(bunkerRequest.id, request.nostrConnectSecret.ifBlank { "ack" }, null),
@@ -529,7 +544,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
             )
             if (message != null) {
                 saveLog("Connection rejected: $message", relay.url, acc.npub)
-                BunkerRequestUtils.sendBunkerResponse(
+                bunkerResponder.sendBunkerResponse(
                     account = acc,
                     bunkerRequest = request,
                     bunkerResponse = BunkerResponse(bunkerRequest.id, "", message),
@@ -545,7 +560,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
         val relays = permission?.application?.relays ?: applicationWithSecret?.application?.relays ?: responseRelay
         if (permission == null && applicationWithSecret == null) {
             saveLog("No permission found for ${event.pubKey}", relay.url, acc.npub)
-            BunkerRequestUtils.sendBunkerResponse(
+            bunkerResponder.sendBunkerResponse(
                 account = acc,
                 bunkerRequest = request,
                 bunkerResponse = BunkerResponse(bunkerRequest.id, "", "no permission"),
@@ -585,8 +600,8 @@ class EventNotificationConsumer(private val applicationContext: Context) {
 
         if (type == SignerType.SWITCH_RELAYS) {
             permission?.let {
-                val defaultRelays = Amber.instance.settings.defaultRelays
-                BunkerRequestUtils.sendBunkerResponse(
+                val defaultRelays = settingsStore.settings.defaultRelays
+                bunkerResponder.sendBunkerResponse(
                     account = acc,
                     bunkerRequest = request,
                     bunkerResponse = BunkerResponse(bunkerRequest.id, if (defaultRelays.isEmpty()) null else "[${defaultRelays.joinToString(separator = ",") { "\"${it.url}\"" }}]", null),
@@ -594,7 +609,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                     onLoading = { },
                     onDone = {
                         if (it) {
-                            Amber.instance.applicationIOScope.launch {
+                            scope.launch {
                                 dao.delete(permission.application.key)
                                 dao.insertApplicationWithPermissions(
                                     permission.copy(
@@ -603,7 +618,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                                         ),
                                     ),
                                 )
-                                Amber.instance.notificationSubscription.updateFilter()
+                                onConnectionsChanged()
                             }
                         }
                     },
@@ -614,7 +629,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
 
         if (type == SignerType.LOGOUT) {
             permission?.let {
-                BunkerRequestUtils.sendBunkerResponse(
+                bunkerResponder.sendBunkerResponse(
                     account = acc,
                     bunkerRequest = request,
                     bunkerResponse = BunkerResponse(bunkerRequest.id, "ack", null),
@@ -622,11 +637,11 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                     onLoading = { },
                     onDone = { success ->
                         if (success) {
-                            Amber.instance.applicationIOScope.launch {
+                            scope.launch {
                                 dao.delete(permission.application.key)
                                 historyDao.deleteHistory(permission.application.key)
-                                BunkerRequestUtils.removeAllForClient(permission.application.key)
-                                Amber.instance.notificationSubscription.updateFilter()
+                                BunkerRequestUtils.removeAllForClient(applicationContext, permission.application.key)
+                                onConnectionsChanged()
                             }
                         }
                     },
@@ -651,7 +666,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                 return
             }
             if (!isRemembered) {
-                Amber.instance.applicationIOScope.launch {
+                scope.launch {
                     historyDao.addHistory(
                         listOf(
                             HistoryEntity(
@@ -666,7 +681,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                         acc.npub,
                     )
                 }
-                BunkerRequestUtils.sendBunkerResponse(
+                bunkerResponder.sendBunkerResponse(
                     account = acc,
                     bunkerRequest = request,
                     bunkerResponse = BunkerResponse(bunkerRequest.id, "", "user rejected"),
@@ -676,7 +691,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                 )
                 return
             }
-            Amber.instance.applicationIOScope.launch {
+            scope.launch {
                 historyDao.addHistory(
                     listOf(
                         HistoryEntity(
@@ -691,7 +706,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                     acc.npub,
                 )
             }
-            BunkerRequestUtils.sendBunkerResponse(
+            bunkerResponder.sendBunkerResponse(
                 account = acc,
                 bunkerRequest = request,
                 bunkerResponse = BunkerResponse(bunkerRequest.id, acc.hexKey, null),
@@ -715,7 +730,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                 val validationError = validateNip44v3Request(type, kind, scope, data, pubKey, acc)
                 if (validationError != null) {
                     saveLog("Rejecting invalid NIP-44 v3 request: $validationError", relay.url, acc.npub)
-                    BunkerRequestUtils.sendBunkerResponse(
+                    bunkerResponder.sendBunkerResponse(
                         account = acc,
                         bunkerRequest = request,
                         bunkerResponse = BunkerResponse(bunkerRequest.id, "", validationError),
@@ -730,7 +745,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
             else -> arrayOf(data, pubKey, acc.npub)
         }
         val cursor =
-            SignerProviderQuery.query(
+            SignerProviderQuery(settingsStore, accountRepository, scope).query(
                 context = applicationContext,
                 // NIP-46 requests are attributed to the client's pubkey, not an
                 // installed app. There is no installed caller, so nothing to capture.
@@ -755,7 +770,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                 if (localCursor.moveToFirst()) {
                     if (localCursor.getColumnIndex("rejected") > -1) {
                         saveLog("User rejected request ${bunkerRequest.id}", relay.url, acc.npub)
-                        BunkerRequestUtils.sendBunkerResponse(
+                        bunkerResponder.sendBunkerResponse(
                             account = acc,
                             bunkerRequest = request,
                             bunkerResponse = BunkerResponse(bunkerRequest.id, "", "user rejected"),
@@ -770,7 +785,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                         }
                         val result = localCursor.getString(index)
 
-                        BunkerRequestUtils.sendBunkerResponse(
+                        bunkerResponder.sendBunkerResponse(
                             account = acc,
                             bunkerRequest = request,
                             bunkerResponse = BunkerResponse(bunkerRequest.id, result, null),

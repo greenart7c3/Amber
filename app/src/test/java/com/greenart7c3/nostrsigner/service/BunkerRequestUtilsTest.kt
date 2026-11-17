@@ -317,12 +317,14 @@ class BunkerRequestUtilsTest {
         BunkerRequestUtils.addRequest(sign)
         BunkerRequestUtils.addRequest(connect)
 
-        BunkerRequestUtils.finishRequest(connect, closeApplication = true)
+        responder(mockk(relaxed = true)).finishRequest(connect, closeApplication = true)
 
         assertEquals(listOf("sign-id"), BunkerRequestUtils.getBunkerRequests().map { it.request.id })
     }
 
     // ===== stale queued requests for a deleted app (F-14) =====
+
+    private fun responder(amber: Amber) = BunkerResponder(amber, amber, amber, amber, amber.applicationIOScope, mockk(relaxed = true)) { null }
 
     private fun amberWithDao(getByKeyReturnsNull: Boolean): Pair<Amber, ApplicationDao> {
         val dao = mockk<ApplicationDao>(relaxed = true)
@@ -335,7 +337,7 @@ class BunkerRequestUtilsTest {
         every { appContext.getSystemService(android.content.Context.NOTIFICATION_SERVICE) } returns nm
         every { appContext.getSystemService(android.app.NotificationManager::class.java) } returns nm
         val amber = mockk<Amber>(relaxed = true)
-        // finishRequest() wraps Amber.instance itself in the consumer.
+        // The responder built from this Application cancels notifications through it.
         every { amber.getSystemService(android.content.Context.NOTIFICATION_SERVICE) } returns nm
         every { amber.getSystemService(android.app.NotificationManager::class.java) } returns nm
         every { amber.dao(any()) } returns dao
@@ -347,18 +349,17 @@ class BunkerRequestUtilsTest {
     @Test
     fun `rejecting a queued request for a deleted app does not recreate it`() = runBlocking {
         val (amber, dao) = amberWithDao(getByKeyReturnsNull = true)
-        installAmberInstance(amber)
 
         mockkObject(AmberUtils)
         try {
             val errors = mutableListOf<AmberBunkerRequest>()
             coEvery {
-                AmberUtils.sendBunkerError(any(), any(), any(), any(), any())
+                AmberUtils.sendBunkerError(any(), any(), any(), any(), any(), any())
             } answers {
-                errors += arg<AmberBunkerRequest>(1)
+                errors += arg<AmberBunkerRequest>(2)
             }
 
-            BunkerRequestUtils.sendRejection(
+            responder(amber).sendRejection(
                 key = "localKey",
                 account = newTestAccount(CoroutineScope(SupervisorJob() + Dispatchers.Default)),
                 bunkerRequest = createAmberBunkerRequest(id = "stale-reject"),
@@ -371,7 +372,7 @@ class BunkerRequestUtilsTest {
 
             // sendRejection launches on Dispatchers.IO: wait for it to finish.
             coVerify(timeout = 5_000) {
-                AmberUtils.sendBunkerError(any(), any(), any(), any(), any())
+                AmberUtils.sendBunkerError(any(), any(), any(), any(), any(), any())
             }
             coVerify(exactly = 0) { dao.insertApplicationWithPermissions(any()) }
             coVerify(exactly = 0) { dao.insertPermissions(any()) }
@@ -388,18 +389,17 @@ class BunkerRequestUtilsTest {
     @Test
     fun `approving a queued request for a deleted app sends an error and inserts nothing`() = runBlocking {
         val (amber, dao) = amberWithDao(getByKeyReturnsNull = true)
-        installAmberInstance(amber)
 
         mockkObject(AmberUtils)
         try {
             val errors = mutableListOf<AmberBunkerRequest>()
             coEvery {
-                AmberUtils.sendBunkerError(any(), any(), any(), any(), any())
+                AmberUtils.sendBunkerError(any(), any(), any(), any(), any(), any())
             } answers {
-                errors += arg<AmberBunkerRequest>(1)
+                errors += arg<AmberBunkerRequest>(2)
             }
 
-            BunkerRequestUtils.sendResult(
+            responder(amber).sendResult(
                 account = newTestAccount(CoroutineScope(SupervisorJob() + Dispatchers.Default)),
                 key = "localKey",
                 response = "sig",
@@ -411,7 +411,7 @@ class BunkerRequestUtilsTest {
 
             // sendResult launches on Dispatchers.IO: wait for it to finish.
             coVerify(timeout = 5_000) {
-                AmberUtils.sendBunkerError(any(), any(), any(), any(), any())
+                AmberUtils.sendBunkerError(any(), any(), any(), any(), any(), any())
             }
             coVerify(exactly = 0) { dao.insertApplicationWithPermissions(any()) }
             coVerify(exactly = 0) { dao.insertPermissions(any()) }
@@ -427,17 +427,16 @@ class BunkerRequestUtilsTest {
     fun `a rejection is answered even when recording it fails`() = runBlocking {
         val (amber, dao) = amberWithDao(getByKeyReturnsNull = false)
         coEvery { dao.getByKey(any()) } returns mockk<com.greenart7c3.nostrsigner.database.ApplicationWithPermissions>(relaxed = true)
-        installAmberInstance(amber)
 
         mockkObject(AmberUtils, com.greenart7c3.nostrsigner.AmberLog)
         try {
             every { com.greenart7c3.nostrsigner.AmberLog.e(any(), any(), any()) } returns Unit
-            coEvery { AmberUtils.sendBunkerError(any(), any(), any(), any(), any()) } returns Unit
+            coEvery { AmberUtils.sendBunkerError(any(), any(), any(), any(), any(), any()) } returns Unit
             coEvery {
                 AmberUtils.acceptOrRejectPermission(any(), any(), any(), any(), any(), any(), any(), any(), any(), any())
             } throws IllegalStateException("boom")
 
-            BunkerRequestUtils.sendRejection(
+            responder(amber).sendRejection(
                 key = "localKey",
                 account = newTestAccount(CoroutineScope(SupervisorJob() + Dispatchers.Default)),
                 bunkerRequest = createAmberBunkerRequest(id = "failing-reject"),
@@ -448,7 +447,7 @@ class BunkerRequestUtilsTest {
                 onLoading = {},
             )
 
-            coVerify(timeout = 5_000) { AmberUtils.sendBunkerError(any(), any(), any(), any(), any()) }
+            coVerify(timeout = 5_000) { AmberUtils.sendBunkerError(any(), any(), any(), any(), any(), any()) }
         } finally {
             unmockkObject(AmberUtils, com.greenart7c3.nostrsigner.AmberLog)
         }
@@ -466,15 +465,14 @@ class BunkerRequestUtilsTest {
         val (amber, dao) = amberWithDao(getByKeyReturnsNull = false)
         val liveApp = mockk<com.greenart7c3.nostrsigner.database.ApplicationWithPermissions>(relaxed = true)
         coEvery { dao.getByKey(any()) } returns liveApp
-        installAmberInstance(amber)
 
         mockkObject(AmberUtils)
         try {
             coEvery {
-                AmberUtils.sendBunkerError(any(), any(), any(), any(), any())
+                AmberUtils.sendBunkerError(any(), any(), any(), any(), any(), any())
             } returns Unit
 
-            BunkerRequestUtils.sendRejection(
+            responder(amber).sendRejection(
                 key = "localKey",
                 account = newTestAccount(CoroutineScope(SupervisorJob() + Dispatchers.Default)),
                 bunkerRequest = createAmberBunkerRequest(id = "live-reject"),
@@ -487,7 +485,7 @@ class BunkerRequestUtilsTest {
 
             coVerify(timeout = 5_000, exactly = 1) { dao.insertApplicationWithPermissions(any()) }
             // The client still gets its rejection reply from the tail of sendRejection.
-            coVerify(timeout = 5_000, exactly = 1) { AmberUtils.sendBunkerError(any(), any(), any(), any(), any()) }
+            coVerify(timeout = 5_000, exactly = 1) { AmberUtils.sendBunkerError(any(), any(), any(), any(), any(), any()) }
         } finally {
             unmockkObject(AmberUtils)
         }
@@ -500,7 +498,7 @@ class BunkerRequestUtilsTest {
         BunkerRequestUtils.addRequest(a)
         BunkerRequestUtils.addRequest(b)
 
-        BunkerRequestUtils.removeAllForClient("clientA")
+        BunkerRequestUtils.removeAllForClient(mockk(relaxed = true), "clientA")
 
         assertEquals(listOf("b"), BunkerRequestUtils.getBunkerRequests().map { it.request.id })
     }

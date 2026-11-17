@@ -1,9 +1,9 @@
 package com.greenart7c3.nostrsigner.service
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
+import com.greenart7c3.nostrsigner.models.AmberSettings
 import com.greenart7c3.nostrsigner.models.TorMode
 import com.greenart7c3.nostrsigner.okhttp.HttpClientManager
 import java.net.URLEncoder
@@ -27,7 +27,7 @@ object TrustScoreService {
      * Whether trust scores should be fetched and displayed.
      * False on the offline flavor or when the user disabled trust scores in the settings.
      */
-    fun isEnabled(): Boolean = !BuildFlavorChecker.isOfflineFlavor() && Amber.instance.settings.trustScoreEnabled
+    fun isEnabled(settings: AmberSettings): Boolean = !BuildFlavorChecker.isOfflineFlavor() && settings.trustScoreEnabled
 
     /**
      * True when the URL policy excludes this relay from the ratings API entirely
@@ -42,8 +42,8 @@ object TrustScoreService {
      * Gets the trust score for a relay URL.
      * Returns cached value if available and not expired, otherwise fetches from API.
      */
-    suspend fun getScore(relayUrl: String): Int? {
-        if (!isEnabled()) {
+    suspend fun getScore(relayUrl: String, settings: AmberSettings): Int? {
+        if (!isEnabled(settings)) {
             return null
         }
 
@@ -60,24 +60,20 @@ object TrustScoreService {
             }
         }
 
-        return fetchScore(relayUrl, normalizedUrl)
+        return fetchScore(relayUrl, normalizedUrl, settings.torMode)
     }
 
     /**
      * Fetches the trust score from the API. The caller resolves the policy
      * normalization once so the URL is computed exactly once per request.
      */
-    private suspend fun fetchScore(relayUrl: String, normalizedUrl: String): Int? {
-        if (!isEnabled()) {
-            return null
-        }
-
+    private suspend fun fetchScore(relayUrl: String, normalizedUrl: String, torMode: TorMode): Int? {
         return withContext(Dispatchers.IO) {
             try {
                 val encodedUrl = URLEncoder.encode(normalizedUrl, "UTF-8")
                 val requestUrl = "$API_BASE_URL$encodedUrl"
 
-                val client = HttpClientManager.getHttpClient(Amber.instance.settings.torMode != TorMode.DISABLED)
+                val client = HttpClientManager.getHttpClient(torMode != TorMode.DISABLED)
                 val request = Request.Builder()
                     .url(requestUrl)
                     .get()

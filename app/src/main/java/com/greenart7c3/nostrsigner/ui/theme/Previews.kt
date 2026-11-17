@@ -6,6 +6,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
 import com.greenart7c3.nostrsigner.models.Account
+import com.greenart7c3.nostrsigner.ui.LocalSettingsStore
 import com.vitorpamplona.quartz.nip01Core.core.hexToByteArray
 import com.vitorpamplona.quartz.nip01Core.crypto.KeyPair
 import com.vitorpamplona.quartz.nip01Core.signers.NostrSignerInternal
@@ -27,10 +28,10 @@ annotation class ThemePreviews
  * the theme background behind the content, so previews look like the real app
  * in both themes.
  *
- * Previews must only compose components that don't reach global state
- * ([com.greenart7c3.nostrsigner.Amber.instance] or an
- * [com.greenart7c3.nostrsigner.models.Account]) during composition — the
- * Application singleton doesn't exist in the preview renderer.
+ * Previews must only compose components that don't reach the app's dependencies
+ * (the [com.greenart7c3.nostrsigner.ui.LocalSettingsStore] family, the
+ * Application, or an [com.greenart7c3.nostrsigner.models.Account]) during
+ * composition: the preview renderer provides none of them.
  */
 @Composable
 fun AmberPreview(content: @Composable () -> Unit) {

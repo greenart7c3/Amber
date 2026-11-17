@@ -7,6 +7,7 @@ import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
+import com.greenart7c3.nostrsigner.data.SettingsStore
 import java.util.concurrent.Executors
 
 @Database(
@@ -18,6 +19,9 @@ import java.util.concurrent.Executors
 @TypeConverters(Converters::class)
 abstract class LogDatabase : RoomDatabase() {
     abstract fun dao(): LogDao
+
+    /** Set by [getDatabase]; [LogDao.insertLogIfEnabled] honors its privacy mode. */
+    lateinit var settingsStore: SettingsStore
 
     companion object {
         /** On-disk name of [npub]'s database, also used to delete it at logout. */
@@ -39,6 +43,7 @@ abstract class LogDatabase : RoomDatabase() {
         fun getDatabase(
             context: Context,
             npub: String,
+            settingsStore: SettingsStore,
         ): LogDatabase = synchronized(this) {
             val executor = Executors.newCachedThreadPool()
             val transactionExecutor = Executors.newCachedThreadPool()
@@ -54,7 +59,7 @@ abstract class LogDatabase : RoomDatabase() {
                     .addMigrations(migration_1_2, migration_2_3)
                     .build()
 
-            instance
+            instance.also { it.settingsStore = settingsStore }
         }
     }
 }

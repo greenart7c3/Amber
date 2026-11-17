@@ -72,6 +72,8 @@ fun SecurityScreen(
     modifier: Modifier = Modifier,
     navController: NavController,
 ) {
+    val settingsStore = LocalSettingsStore.current
+    val appScope = LocalAppScope.current
     val biometricItems =
         persistentListOf(
             TitleExplainer(stringResource(BiometricsTimeType.EVERY_TIME.resourceId)),
@@ -79,11 +81,11 @@ fun SecurityScreen(
             TitleExplainer(stringResource(BiometricsTimeType.FIVE_MINUTES.resourceId)),
             TitleExplainer(stringResource(BiometricsTimeType.TEN_MINUTES.resourceId)),
         )
-    var enableBiometrics by remember { mutableStateOf(Amber.instance.settings.useAuth) }
-    val setupPin by remember { mutableStateOf(Amber.instance.settings.usePin) }
-    var privacyMode by remember { mutableStateOf(Amber.instance.settings.privacyMode) }
-    var logRetention by remember { mutableStateOf(Amber.instance.settings.logRetention) }
-    var historyRetention by remember { mutableStateOf(Amber.instance.settings.historyRetention) }
+    var enableBiometrics by remember { mutableStateOf(settingsStore.settings.useAuth) }
+    val setupPin by remember { mutableStateOf(settingsStore.settings.usePin) }
+    var privacyMode by remember { mutableStateOf(settingsStore.settings.privacyMode) }
+    var logRetention by remember { mutableStateOf(settingsStore.settings.logRetention) }
+    var historyRetention by remember { mutableStateOf(settingsStore.settings.historyRetention) }
     val retentionItems = RetentionPeriod.entries.map {
         TitleExplainer(stringResource(it.resourceId))
     }.toImmutableList()
@@ -91,7 +93,7 @@ fun SecurityScreen(
     var requireUnlockedDevice by remember { mutableStateOf(LocalPreferences.getRequireUnlockedDevice(context)) }
     var requireUnlockedDeviceUpdating by remember { mutableStateOf(false) }
     var biometricsIndex by remember {
-        mutableIntStateOf(Amber.instance.settings.biometricsTimeType.screenCode)
+        mutableIntStateOf(settingsStore.settings.biometricsTimeType.screenCode)
     }
     val scope = rememberCoroutineScope()
     val biometricsKeyguardLauncher =
@@ -110,7 +112,7 @@ fun SecurityScreen(
                 enableBiometrics = !enableBiometrics
             },
             onError = { _, message ->
-                Amber.instance.applicationIOScope.launch(Dispatchers.Main) {
+                appScope.launch(Dispatchers.Main) {
                     Toast.makeText(
                         context,
                         message,
@@ -128,7 +130,7 @@ fun SecurityScreen(
         // composition scope: key rotation must complete
         // even if the user leaves the screen/app, or
         // stored secrets could be left inaccessible.
-        Amber.instance.applicationIOScope.launch(Dispatchers.IO) {
+        appScope.launch(Dispatchers.IO) {
             try {
                 LocalPreferences.updateRequireUnlockedDevice(context, enabled)
             } catch (e: Exception) {
@@ -217,7 +219,7 @@ fun SecurityScreen(
                         ) { index ->
                             val selected = RetentionPeriod.entries[index]
                             logRetention = selected
-                            Amber.instance.applicationIOScope.launch {
+                            appScope.launch {
                                 LocalPreferences.updateLogRetention(context, selected)
                             }
                         }
@@ -231,7 +233,7 @@ fun SecurityScreen(
                         ) { index ->
                             val selected = RetentionPeriod.entries[index]
                             historyRetention = selected
-                            Amber.instance.applicationIOScope.launch {
+                            appScope.launch {
                                 LocalPreferences.updateHistoryRetention(context, selected)
                             }
                         }
@@ -303,7 +305,7 @@ fun SecurityScreen(
                         .clickable {
                             if (setupPin) {
                                 scope.launch(Dispatchers.IO) {
-                                    val pin = LocalPreferences.loadPinFromEncryptedStorage()
+                                    val pin = LocalPreferences.loadPinFromEncryptedStorage(context)
                                     scope.launch(Dispatchers.Main) {
                                         navController.navigate("${Route.ConfirmPin.route.split("/")[0]}/$pin")
                                     }
@@ -322,7 +324,7 @@ fun SecurityScreen(
                         onCheckedChange = {
                             if (setupPin) {
                                 scope.launch(Dispatchers.IO) {
-                                    val pin = LocalPreferences.loadPinFromEncryptedStorage()
+                                    val pin = LocalPreferences.loadPinFromEncryptedStorage(context)
                                     scope.launch(Dispatchers.Main) {
                                         navController.navigate("${Route.ConfirmPin.route.split("/")[0]}/$pin")
                                     }
@@ -352,11 +354,11 @@ fun SecurityScreen(
             AmberButton(
                 onClick = {
                     scope.launch(Dispatchers.IO) {
-                        Amber.instance.settings = Amber.instance.settings.copy(
+                        settingsStore.settings = settingsStore.settings.copy(
                             useAuth = enableBiometrics,
                             biometricsTimeType = parseBiometricsTimeType(biometricsIndex),
                         )
-                        LocalPreferences.saveSettingsToEncryptedStorage(Amber.instance.settings)
+                        LocalPreferences.saveSettingsToEncryptedStorage(context, settingsStore.settings)
                         scope.launch(Dispatchers.Main) {
                             navController.navigateUp()
                         }

@@ -6,6 +6,7 @@ import androidx.work.WorkerParameters
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
+import com.greenart7c3.nostrsigner.amber
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.flow.first
@@ -18,7 +19,7 @@ class UpdateCheckWorker(appContext: Context, workerParams: WorkerParameters) : C
     override suspend fun doWork(): Result {
         if (BuildFlavorChecker.isOfflineFlavor() || BuildFlavorChecker.isFdroidBuild()) return Result.success()
 
-        val amber = Amber.instance
+        val amber = applicationContext.amber
         if (!amber.settings.autoCheckUpdates) return Result.success()
 
         val updater = amber.zapstoreUpdater ?: return Result.success()

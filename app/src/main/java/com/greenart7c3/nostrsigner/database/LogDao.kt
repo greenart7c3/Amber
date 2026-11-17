@@ -5,21 +5,20 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.Transaction
-import com.greenart7c3.nostrsigner.Amber
 import kotlinx.coroutines.flow.Flow
 
 @Dao
-interface LogDao {
+abstract class LogDao(private val database: LogDatabase) {
     companion object {
         const val COLLAPSE_WINDOW_MILLIS = 60 * 60 * 1000L
     }
 
     @Insert
-    fun insertAll(items: List<LogEntity>)
+    abstract fun insertAll(items: List<LogEntity>)
 
     @Insert
     @Transaction
-    suspend fun insertLog(logEntity: LogEntity)
+    abstract suspend fun insertLog(logEntity: LogEntity)
 
     /**
      * Inserts a log entry unless privacy mode is on, in which case the write is
@@ -27,8 +26,8 @@ interface LogDao {
      * logs should use this instead of [insertLog].
      */
     @Transaction
-    suspend fun insertLogIfEnabled(logEntity: LogEntity) {
-        if (Amber.instance.settings.privacyMode) return
+    open suspend fun insertLogIfEnabled(logEntity: LogEntity) {
+        if (database.settingsStore.settings.privacyMode) return
         insertOrCollapse(logEntity)
     }
 
@@ -39,7 +38,7 @@ interface LogDao {
      * and moves it to the latest time, so the noise doesn't crowd out the rest.
      */
     @Transaction
-    suspend fun insertOrCollapse(logEntity: LogEntity) {
+    open suspend fun insertOrCollapse(logEntity: LogEntity) {
         val existingId = findRecentDuplicate(
             url = logEntity.url,
             type = logEntity.type,
@@ -54,28 +53,28 @@ interface LogDao {
     }
 
     @Query("SELECT id FROM amber_log WHERE url = :url AND type = :type AND message = :message AND time >= :since ORDER BY time DESC LIMIT 1")
-    suspend fun findRecentDuplicate(url: String, type: String, message: String, since: Long): Int?
+    abstract suspend fun findRecentDuplicate(url: String, type: String, message: String, since: Long): Int?
 
     @Query("UPDATE amber_log SET repeatCount = repeatCount + 1, time = MAX(time, :time) WHERE id = :id")
-    suspend fun incrementRepeat(id: Int, time: Long)
+    abstract suspend fun incrementRepeat(id: Int, time: Long)
 
     @Query("SELECT * FROM amber_log ORDER BY time DESC")
-    fun getLogs(): Flow<List<LogEntity>>
+    abstract fun getLogs(): Flow<List<LogEntity>>
 
     @Query("SELECT * FROM amber_log ORDER BY time DESC")
-    fun getLogsPaging(): PagingSource<Int, LogEntity>
+    abstract fun getLogsPaging(): PagingSource<Int, LogEntity>
 
     @Query("SELECT * FROM amber_log where url = :url ORDER BY time DESC")
-    fun getLogsByUrlPaging(url: String): PagingSource<Int, LogEntity>
+    abstract fun getLogsByUrlPaging(url: String): PagingSource<Int, LogEntity>
 
     @Query("DELETE FROM amber_log WHERE id IN (SELECT id FROM amber_log ORDER BY time ASC LIMIT :count)")
-    suspend fun deleteOldestLogs(count: Int): Int
+    abstract suspend fun deleteOldestLogs(count: Int): Int
 
     @Query("DELETE FROM amber_log")
     @Transaction
-    suspend fun clearLogs()
+    abstract suspend fun clearLogs()
 
     @Query("DELETE FROM amber_log WHERE time < :time")
     @Transaction
-    suspend fun deleteOldLog(time: Long): Int
+    abstract suspend fun deleteOldLog(time: Long): Int
 }

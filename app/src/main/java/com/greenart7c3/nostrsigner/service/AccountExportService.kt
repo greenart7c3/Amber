@@ -5,7 +5,6 @@ import android.net.Uri
 import android.widget.Toast
 import com.anggrayudi.storage.extension.toDocumentFile
 import com.anggrayudi.storage.file.openInputStream
-import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.commonsui.Res
@@ -23,6 +22,7 @@ import com.vitorpamplona.quartz.nip19Bech32.toNpub
 import com.vitorpamplona.quartz.nip49PrivKeyEnc.Nip49
 import com.vitorpamplona.quartz.utils.Hex
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
@@ -30,6 +30,8 @@ import kotlinx.coroutines.withContext
 
 object AccountExportService {
     suspend fun importAccounts(
+        context: Context,
+        scope: CoroutineScope,
         uri: Uri,
         password: String,
         onLoading: (isLoading: Boolean) -> Unit,
@@ -38,17 +40,17 @@ object AccountExportService {
     ) {
         onLoading(true)
         try {
-            val file = uri.toDocumentFile(Amber.instance) ?: return
+            val file = uri.toDocumentFile(context) ?: return
             val name = file.name
             if (name?.endsWith(".jsonl") == false) {
-                Amber.instance.applicationIOScope.launch(Dispatchers.Main) {
-                    Toast.makeText(Amber.instance, "File is not a Amber backup", Toast.LENGTH_LONG).show()
+                scope.launch(Dispatchers.Main) {
+                    Toast.makeText(context, "File is not a Amber backup", Toast.LENGTH_LONG).show()
                 }
                 return
             }
 
             if (file.isFile) {
-                file.openInputStream(Amber.instance).use { oi ->
+                file.openInputStream(context).use { oi ->
                     oi?.bufferedReader().use { reader ->
                         var importedCount = 0
                         val failedLines = mutableListOf<Int>()
@@ -67,6 +69,8 @@ object AccountExportService {
                                     signPolicy = accountData.signPolicy,
                                     didBackup = accountData.didBackup,
                                     signer = NostrSignerInternal(KeyPair(privKey.hexToByteArray())),
+                                    scope = scope,
+                                    appContext = context,
                                 )
                                 // The NIP-49 key is authoritative: it decrypted with
                                 // the password and account.npub is derived from it.
@@ -79,8 +83,8 @@ object AccountExportService {
                                     )
                                 }
                                 val seedWords = decryptExportedSeedWords(account, accountData.seedWords, privKey)
-                                LocalPreferences.switchToAccount(Amber.instance, account.npub)
-                                LocalPreferences.updatePrefsForLogin(Amber.instance, account, hexKey.toHexKey(), privKey, seedWords)
+                                LocalPreferences.switchToAccount(context, account.npub)
+                                LocalPreferences.updatePrefsForLogin(context, account, hexKey.toHexKey(), privKey, seedWords)
                                 importedCount++
                             } catch (e: Exception) {
                                 if (e is CancellationException) throw e
@@ -164,6 +168,8 @@ object AccountExportService {
      * Import accounts from ncryptsec lines (one ncryptsec per line).
      */
     suspend fun importFromNcryptsec(
+        context: Context,
+        scope: CoroutineScope,
         content: String,
         password: String,
         onLoading: (isLoading: Boolean) -> Unit,
@@ -185,9 +191,11 @@ object AccountExportService {
                         signPolicy = 1,
                         didBackup = true,
                         signer = NostrSignerInternal(KeyPair(privKey.hexToByteArray())),
+                        scope = scope,
+                        appContext = context,
                     )
-                    LocalPreferences.switchToAccount(Amber.instance, hexKey.toNpub())
-                    LocalPreferences.updatePrefsForLogin(Amber.instance, account, hexKey.toHexKey(), privKey, null)
+                    LocalPreferences.switchToAccount(context, hexKey.toNpub())
+                    LocalPreferences.updatePrefsForLogin(context, account, hexKey.toHexKey(), privKey, null)
                 } catch (e: Exception) {
                     if (e is CancellationException) throw e
                     AmberLog.e("Amber", "Error importing ncryptsec at index $index", e)

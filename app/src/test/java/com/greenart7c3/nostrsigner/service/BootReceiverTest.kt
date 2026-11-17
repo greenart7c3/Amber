@@ -23,11 +23,12 @@ import org.junit.Test
 @OptIn(ExperimentalCoroutinesApi::class)
 class BootReceiverTest {
     private lateinit var amber: Amber
+    private lateinit var context: Context
 
     @Before
     fun setUp() {
         amber = mockk(relaxed = true)
-        installAmberInstance(amber)
+        context = mockk { every { applicationContext } returns amber }
         mockkObject(AmberLog)
         every { AmberLog.d(any(), any<String>()) } returns Unit
         mockkObject(BuildFlavorChecker)
@@ -45,7 +46,7 @@ class BootReceiverTest {
         val intent = mockk<Intent>()
         every { intent.action } returns action
         val scope = CoroutineScope(StandardTestDispatcher(testScheduler))
-        BootReceiver(scope).onReceive(mockk<Context>(), intent)
+        BootReceiver(scope).onReceive(context, intent)
         advanceUntilIdle()
     }
 

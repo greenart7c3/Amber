@@ -41,6 +41,24 @@ import org.junit.Test
  * while stored connections are never limited.
  */
 class EventNotificationConsumerRateLimitTest {
+    private val amber = mockk<Amber>(relaxed = true)
+
+    // A real responder over the mocked Application, spied so tests can stub its replies.
+    private val bunkerResponder by lazy {
+        spyk(
+            BunkerResponder(
+                amber,
+                amber,
+                amber,
+                amber,
+                object : CoroutineScope {
+                    override val coroutineContext get() = amber.applicationIOScope.coroutineContext
+                },
+                mockk(relaxed = true),
+            ) { null },
+        )
+    }
+
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default + CoroutineExceptionHandler { _, _ -> })
     private val relay = NormalizedRelayUrl("wss://relay.example.com/")
     private val appDao = mockk<ApplicationDao>(relaxed = true)
@@ -56,11 +74,9 @@ class EventNotificationConsumerRateLimitTest {
         coEvery { bunkerEventDao.exists(any()) } returns false
         coEvery { appDao.getByKeyRaw(any()) } returns null
 
-        val amber = mockk<Amber>(relaxed = true)
         every { amber.applicationIOScope } returns scope
         every { amber.getDatabase(any()) } returns db
         every { amber.dao(any()) } returns CachingApplicationDao(appDao)
-        installAmberInstance(amber)
 
         val account = newTestAccount(scope)
         accountHex = account.hexKey
@@ -75,7 +91,16 @@ class EventNotificationConsumerRateLimitTest {
 
         val notificationManager = mockk<NotificationManager>()
         every { notificationManager.areNotificationsEnabled() } returns true
-        consumer = spyk(EventNotificationConsumer(mockk(relaxed = true)))
+        consumer = spyk(
+            EventNotificationConsumer(
+                mockk(relaxed = true),
+                settingsStore = amber,
+                accountRepository = amber,
+                scope = amber.applicationIOScope,
+                notificationCache = amber.notificationCache,
+                bunkerResponder = bunkerResponder,
+            ) { amber.notificationSubscription.updateFilter() },
+        )
         every { consumer.notificationManager() } returns notificationManager
     }
 

@@ -1,5 +1,6 @@
 package com.greenart7c3.nostrsigner.service
 
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -34,6 +35,9 @@ import org.junit.Test
  * confirm could not resolve it and skipped the request.
  */
 class EncryptIntentAccountTest {
+    // A context whose Application is a relaxed mock: parsing logs failures through it.
+    private fun appContext(): Context = mockk(relaxed = true) { every { applicationContext } returns mockk<Amber>(relaxed = true) }
+
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private val kp = KeyPair()
     private val account = Account(
@@ -54,7 +58,6 @@ class EncryptIntentAccountTest {
         mockkObject(AmberLog)
         every { AmberLog.e(any(), any(), any()) } returns Unit
         every { AmberLog.e(any(), any()) } returns Unit
-        installAmberInstance(mockk<Amber>(relaxed = true))
     }
 
     @After
@@ -79,7 +82,7 @@ class EncryptIntentAccountTest {
     private suspend fun parse(intent: Intent): IntentData? {
         val method = IntentUtils::class.declaredMemberFunctions.first { it.name == "getIntentDataFromIntent" }
         method.isAccessible = true
-        return method.callSuspend(IntentUtils, intent, "com.example.app", null, account) as IntentData?
+        return method.callSuspend(IntentUtils, appContext(), intent, "com.example.app", null, account) as IntentData?
     }
 
     @Test

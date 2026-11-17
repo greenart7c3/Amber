@@ -37,6 +37,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.ClipEntry
 import androidx.compose.ui.platform.LocalClipboard
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -46,7 +47,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
-import com.greenart7c3.nostrsigner.Amber
+import com.greenart7c3.nostrsigner.amber
 import com.greenart7c3.nostrsigner.common.generateBunkerPrivKey
 import com.greenart7c3.nostrsigner.commonsui.Res
 import com.greenart7c3.nostrsigner.commonsui.copy_to_clipboard
@@ -66,7 +67,6 @@ import com.greenart7c3.nostrsigner.commonsui.wss
 import com.greenart7c3.nostrsigner.commonsui.your_nsec_bunker_has_been_created
 import com.greenart7c3.nostrsigner.database.ApplicationEntity
 import com.greenart7c3.nostrsigner.models.Account
-import com.greenart7c3.nostrsigner.service.LocalBunkerRelayServer
 import com.greenart7c3.nostrsigner.service.LocalKeyAccountIndex
 import com.greenart7c3.nostrsigner.ui.actions.onAddRelay
 import com.greenart7c3.nostrsigner.ui.components.AmberButton
@@ -87,6 +87,10 @@ fun NewNsecBunkerScreen(
     account: Account,
     navController: NavController,
 ) {
+    val localBunkerRelay = LocalContext.current.amber.localBunkerRelay
+    val context = LocalContext.current
+    val relayClient = LocalRelayClient.current
+    val accountRepository = LocalAccountRepository.current
     val secret = remember { mutableStateOf(UUID.randomUUID().toString()) }
     var name by remember { mutableStateOf(TextFieldValue(AnnotatedString(""))) }
     val clipboardManager = LocalClipboard.current
@@ -95,7 +99,7 @@ fun NewNsecBunkerScreen(
         remember {
             // The local relay rides along with the defaults, so clients on this
             // device can reach the bunker without any public relay.
-            mutableStateListOf(*LocalBunkerRelayServer.newBunkerRelays().toTypedArray())
+            mutableStateListOf(*localBunkerRelay.newBunkerRelays().toTypedArray())
         }
 
     val textFieldRelay = remember {
@@ -187,6 +191,8 @@ fun NewNsecBunkerScreen(
                                     relays,
                                     scope,
                                     account = account,
+                                    factory = relayClient.factory,
+                                    context = context,
                                     onDone = {
                                     },
                                 )
@@ -227,6 +233,8 @@ fun NewNsecBunkerScreen(
                                         relays,
                                         scope,
                                         account = account,
+                                        factory = relayClient.factory,
+                                        context = context,
                                         onDone = {
                                         },
                                     )
@@ -302,7 +310,7 @@ fun NewNsecBunkerScreen(
                                 localKey = connPrivKey,
                             )
 
-                        Amber.instance.dao(account.npub).insertApplication(
+                        accountRepository.dao(account.npub).insertApplication(
                             application,
                         )
                         scope.launch(Dispatchers.Main) {
@@ -321,10 +329,13 @@ fun NewNsecBunkerCreatedScreen(
     account: Account,
     key: String,
 ) {
+    val accountRepository = LocalAccountRepository.current
+    val settingsStore = LocalSettingsStore.current
+    val relayClient = LocalRelayClient.current
     val isLoading = remember(account.npub, key) { mutableStateOf(true) }
     var preparationFailed by remember(account.npub, key) { mutableStateOf(false) }
     var refreshAttempt by remember(account.npub, key) { mutableIntStateOf(0) }
-    val killSwitch by Amber.instance.settings.killSwitch.collectAsStateWithLifecycle()
+    val killSwitch by settingsStore.settings.killSwitch.collectAsStateWithLifecycle()
     var application by remember(account.npub, key) { mutableStateOf(ApplicationEntity.empty()) }
     val clipboardManager = LocalClipboard.current
     val scope = rememberCoroutineScope()
@@ -338,9 +349,9 @@ fun NewNsecBunkerCreatedScreen(
                 return@LaunchedEffect
             }
             application = withContext(Dispatchers.IO) {
-                val saved = checkNotNull(Amber.instance.dao(account.npub).getByKey(key)?.application)
+                val saved = checkNotNull(accountRepository.dao(account.npub).getByKey(key)?.application)
                 // Prepare local endpoint routing before exposing the ephemeral-request URI.
-                Amber.instance.checkForNewRelaysAndUpdateAllFilters(shouldReconnect = true)
+                relayClient.checkForNewRelaysAndUpdateAllFilters(shouldReconnect = true)
                 if (saved.localPubKey.isNotEmpty()) {
                     check(LocalKeyAccountIndex.lookup(saved.localPubKey)?.npub == account.npub)
                 }

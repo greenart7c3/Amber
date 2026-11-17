@@ -1,11 +1,15 @@
 package com.greenart7c3.nostrsigner.ui
 
+import android.content.Context
 import androidx.compose.runtime.Stable
 import androidx.lifecycle.ViewModel
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.LocalPreferences
+import com.greenart7c3.nostrsigner.data.AccountRepository
+import com.greenart7c3.nostrsigner.data.RelayClient
+import com.greenart7c3.nostrsigner.data.SettingsStore
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.TorMode
 import com.greenart7c3.nostrsigner.service.ApplicationBackup
@@ -22,6 +26,7 @@ import com.vitorpamplona.quartz.nip19Bech32.toNpub
 import com.vitorpamplona.quartz.nip49PrivKeyEnc.Nip49
 import com.vitorpamplona.quartz.utils.Hex
 import kotlin.coroutines.cancellation.CancellationException
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -35,7 +40,15 @@ sealed interface RestorePromptState {
 }
 
 @Stable
-class AccountStateViewModel(npub: String?) : ViewModel() {
+class AccountStateViewModel(
+    npub: String?,
+    // The Application context: the view model outlives the activity.
+    private val appContext: Context,
+    private val settingsStore: SettingsStore,
+    private val accountRepository: AccountRepository,
+    private val relayClient: RelayClient,
+    private val appScope: CoroutineScope,
+) : ViewModel() {
     private val _accountContent = MutableStateFlow<AccountState>(AccountState.Loading)
     val accountContent = _accountContent.asStateFlow()
     private var observerJob: Job? = null
@@ -53,11 +66,11 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
     ) {
         // Loading the account decrypts keys via the Android KeyStore, which is a slow
         // blocking call. Run it off the main thread to avoid StrictMode violations and jank.
-        Amber.instance.applicationIOScope.launch {
-            var currentUser = npub ?: LocalPreferences.currentAccount(Amber.instance)
-            val allAccounts = LocalPreferences.allSavedAccounts(Amber.instance)
-            if (currentUser != null && !LocalPreferences.containsAccount(Amber.instance, currentUser) && allAccounts.any { it.npub == currentUser }) {
-                currentUser = LocalPreferences.currentAccount(Amber.instance)
+        appScope.launch {
+            var currentUser = npub ?: LocalPreferences.currentAccount(appContext)
+            val allAccounts = LocalPreferences.allSavedAccounts(appContext)
+            if (currentUser != null && !LocalPreferences.containsAccount(appContext, currentUser) && allAccounts.any { it.npub == currentUser }) {
+                currentUser = LocalPreferences.currentAccount(appContext)
             }
             if (forceLogout) {
                 currentUser = null
@@ -69,8 +82,8 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
             // reloadApp() cannot be relied on — it starts via an AlarmManager
             // PendingIntent (a race with composition) and doesn't exist in the
             // offline flavor — so warm here, at the deterministic app start.
-            LocalPreferences.warmAccountCache(Amber.instance)
-            LocalPreferences.loadAccount(Amber.instance, currentUser)?.let {
+            LocalPreferences.warmAccountCache(appContext)
+            LocalPreferences.loadAccount(appContext, currentUser)?.let {
                 startUI(it, route)
             }
             if (currentUser == null) {
@@ -88,12 +101,12 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
 
     fun logOff(npub: String) {
         prepareLogoutOrSwitch()
-        Amber.instance.applicationIOScope.launch {
-            val shouldLogout = LocalPreferences.updatePrefsForLogout(npub, Amber.instance)
+        appScope.launch {
+            val shouldLogout = LocalPreferences.updatePrefsForLogout(npub, appContext)
             // The logged-out account's NIP-46 subscriptions, connection keys and
             // relay sockets must go with it: rebuild the filters from the
             // remaining accounts, or Amber keeps listening for a deleted key.
-            Amber.instance.checkForNewRelaysAndUpdateAllFilters()
+            relayClient.checkForNewRelaysAndUpdateAllFilters()
             tryLoginExistingAccount(null, null, forceLogout = shouldLogout)
         }
     }
@@ -103,7 +116,7 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
         route: String?,
     ) {
         prepareLogoutOrSwitch()
-        LocalPreferences.switchToAccount(Amber.instance, npub)
+        LocalPreferences.switchToAccount(appContext, npub)
         tryLoginExistingAccount(route, npub)
     }
 
@@ -142,21 +155,24 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
             signPolicy = signPolicy,
             didBackup = true,
             signer = NostrSignerInternal(keyPair),
+            scope = appScope,
+            appContext = appContext,
         )
 
-        if (LocalPreferences.allSavedAccounts(Amber.instance).isEmpty()) {
-            Amber.instance.settings = Amber.instance.settings.copy(
+        if (LocalPreferences.allSavedAccounts(appContext).isEmpty()) {
+            settingsStore.settings = settingsStore.settings.copy(
                 torMode = torMode,
                 proxyPort = proxyPort,
             )
             LocalPreferences.saveSettingsToEncryptedStorage(
-                Amber.instance.settings,
+                appContext,
+                settingsStore.settings,
             )
             if (torMode == TorMode.BUILTIN) {
-                TorManager.start(Amber.instance, Amber.instance.applicationIOScope)
+                TorManager.start(appContext, appScope)
             }
         }
-        LocalPreferences.updatePrefsForLogin(Amber.instance, account, keyPair.pubKey.toHexKey(), keyPair.privKey!!.toHexKey(), null)
+        LocalPreferences.updatePrefsForLogin(appContext, account, keyPair.pubKey.toHexKey(), keyPair.privKey!!.toHexKey(), null)
         startUI(account, route)
         maybeOfferRestore(account)
     }
@@ -181,23 +197,26 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
             signPolicy = signPolicy,
             didBackup = false,
             signer = NostrSignerInternal(keyPair),
+            scope = appScope,
+            appContext = appContext,
         )
-        if (LocalPreferences.allSavedAccounts(Amber.instance).isEmpty()) {
-            Amber.instance.settings = Amber.instance.settings.copy(
+        if (LocalPreferences.allSavedAccounts(appContext).isEmpty()) {
+            settingsStore.settings = settingsStore.settings.copy(
                 torMode = torMode,
                 proxyPort = proxyPort,
             )
             LocalPreferences.saveSettingsToEncryptedStorage(
-                Amber.instance.settings,
+                appContext,
+                settingsStore.settings,
             )
             if (torMode == TorMode.BUILTIN) {
-                TorManager.start(Amber.instance, Amber.instance.applicationIOScope)
+                TorManager.start(appContext, appScope)
             }
-            Amber.instance.applicationIOScope.launch {
-                Amber.instance.reconnect()
+            appScope.launch {
+                relayClient.reconnect()
             }
         }
-        LocalPreferences.updatePrefsForLogin(Amber.instance, account, hexKey, privKey, key)
+        LocalPreferences.updatePrefsForLogin(appContext, account, hexKey, privKey, key)
         startUI(account, null)
     }
 
@@ -208,10 +227,10 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
         _accountContent.update { AccountState.LoggedIn(account, route) }
 
         observerJob?.cancel()
-        observerJob = Amber.instance.applicationIOScope.launch(Dispatchers.IO) {
+        observerJob = appScope.launch(Dispatchers.IO) {
             account.saveable.collect {
                 AmberLog.d(Amber.TAG, "Account saved")
-                LocalPreferences.saveToEncryptedStorage(Amber.instance, it.account, null, null, null)
+                LocalPreferences.saveToEncryptedStorage(appContext, it.account, null, null, null)
             }
         }
     }
@@ -225,15 +244,15 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
         // Fetching is a read of a public, self-authored event; the dao check
         // below skips accounts whose local apps are still present.
 
-        Amber.instance.applicationIOScope.launch {
+        appScope.launch {
             try {
-                val dao = Amber.instance.dao(account.npub)
+                val dao = accountRepository.dao(account.npub)
                 if (dao.getAll(account.hexKey).isNotEmpty()) return@launch
 
                 restorePrompt.value = RestorePromptState.Loading
 
-                val relays = ApplicationBackup.resolveReadRelays(account)
-                val event = ApplicationBackup.fetchLatestBackupEvent(account, relays)
+                val relays = ApplicationBackup.resolveReadRelays(account, relayClient.client, settingsStore)
+                val event = ApplicationBackup.fetchLatestBackupEvent(account, relays, relayClient.client)
                 if (event == null) {
                     restorePrompt.value = null
                     return@launch
@@ -255,8 +274,8 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
     /** Restores only [applications], the entries the user kept selected in the prompt. */
     fun acceptRestore(applications: List<BackupApplication>, onResult: (RestoreResult) -> Unit) {
         val current = restorePrompt.value as? RestorePromptState.Found ?: return
-        Amber.instance.applicationIOScope.launch {
-            val result = ApplicationBackup.restoreFromPayload(current.account.npub, current.payload.copy(applications = applications))
+        appScope.launch {
+            val result = ApplicationBackup.restoreFromPayload(current.account.npub, current.payload.copy(applications = applications), accountRepository, relayClient)
             restorePrompt.value = null
             launch(Dispatchers.Main) { onResult(result) }
         }

@@ -60,13 +60,12 @@ class NotificationSubscriptionTest {
         // mirrors per-test dao state without cross-test cache leakage.
         every { amber.dao(any()) } answers { CachingApplicationDao(dao) }
         every { amber.notificationCache } returns LruCache(512)
-        installAmberInstance(amber)
 
         mockkObject(LocalPreferences)
         account = newTestAccount(scope)
         coEvery { LocalPreferences.allAccounts(any()) } returns listOf(account)
 
-        subscription = NotificationSubscription(client, mockk(relaxed = true))
+        subscription = NotificationSubscription(client, mockk(relaxed = true), settingsStore = amber, accountRepository = amber, bunkerResponder = mockk(relaxed = true), scope = amber.applicationIOScope, notificationCache = amber.notificationCache)
     }
 
     @After

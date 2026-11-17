@@ -39,8 +39,8 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.amber
 import com.greenart7c3.nostrsigner.common.sanitizeAppName
 import com.greenart7c3.nostrsigner.commonsui.Res
 import com.greenart7c3.nostrsigner.commonsui.getStringBlocking
@@ -54,6 +54,10 @@ import com.greenart7c3.nostrsigner.models.IntentData
 import com.greenart7c3.nostrsigner.models.TorMode
 import com.greenart7c3.nostrsigner.service.TorManager
 import com.greenart7c3.nostrsigner.service.toShortenHex
+import com.greenart7c3.nostrsigner.ui.LocalAccountRepository
+import com.greenart7c3.nostrsigner.ui.LocalAppScope
+import com.greenart7c3.nostrsigner.ui.LocalRelayClient
+import com.greenart7c3.nostrsigner.ui.LocalSettingsStore
 import com.greenart7c3.nostrsigner.ui.NavBackStackEntryWrapper
 import com.greenart7c3.nostrsigner.ui.navigation.Route
 import com.greenart7c3.nostrsigner.ui.navigation.routes
@@ -81,12 +85,17 @@ fun AmberTopAppBar(
     bunkerRequests: ImmutableList<AmberBunkerRequest>,
     packageName: String?,
 ) {
+    val settingsStore = LocalSettingsStore.current
+    val accountRepository = LocalAccountRepository.current
+    val relayClient = LocalRelayClient.current
+    val appScope = LocalAppScope.current
+    val amber = LocalContext.current.amber
     if (intents.isEmpty() || packageName == null || destinationRoute != Route.IncomingRequest.route) {
         if (destinationRoute != "login" && destinationRoute != "create" && destinationRoute != "loginPage") {
             CenterAlignedTopAppBar(
                 actions = {
                     if (intents.isEmpty() || packageName == null || destinationRoute != Route.IncomingRequest.route) {
-                        val relayStats = Amber.instance.stats.relayStatus.collectAsStateWithLifecycle(Pair(emptySet(), emptySet()))
+                        val relayStats = amber.stats.relayStatus.collectAsStateWithLifecycle(Pair(emptySet(), emptySet()))
                         if (relayStats.value.first.isNotEmpty() || relayStats.value.second.isNotEmpty()) {
                             Row(
                                 horizontalArrangement = Arrangement.spacedBy(4.dp),
@@ -105,15 +114,15 @@ fun AmberTopAppBar(
                                             .minimumInteractiveComponentSize()
                                             .clickable(
                                                 onClick = {
-                                                    Amber.instance.applicationIOScope.launch {
-                                                        Amber.instance.reconnect()
+                                                    appScope.launch {
+                                                        relayClient.reconnect()
                                                     }
                                                 },
                                             ),
                                         horizontalArrangement = Arrangement.spacedBy(4.dp),
                                         verticalAlignment = Alignment.CenterVertically,
                                     ) {
-                                        val relayStats = Amber.instance.stats.relayStatus.collectAsStateWithLifecycle(Pair(emptySet(), emptySet()))
+                                        val relayStats = amber.stats.relayStatus.collectAsStateWithLifecycle(Pair(emptySet(), emptySet()))
                                         Text("${relayStats.value.second.size}/${relayStats.value.first.size}")
                                         Icon(
                                             imageVector = ImageVector.vectorResource(R.drawable.relays),
@@ -123,7 +132,7 @@ fun AmberTopAppBar(
                                     }
                                 }
 
-                                if (Amber.instance.settings.useProxy) {
+                                if (settingsStore.settings.useProxy) {
                                     val torIsRunning by TorManager.isRunning.collectAsStateWithLifecycle()
                                     var orbotProxyEnabled by remember { mutableStateOf(false) }
                                     DisposableEffect(lifecycleOwner) {
@@ -132,9 +141,9 @@ fun AmberTopAppBar(
                                                 Lifecycle.Event.ON_START,
                                                 Lifecycle.Event.ON_RESUME,
                                                 -> {
-                                                    if (Amber.instance.settings.torMode != TorMode.BUILTIN) {
-                                                        Amber.instance.applicationIOScope.launch {
-                                                            orbotProxyEnabled = Amber.instance.isSocksProxyAlive("127.0.0.1", Amber.instance.settings.proxyPort)
+                                                    if (settingsStore.settings.torMode != TorMode.BUILTIN) {
+                                                        appScope.launch {
+                                                            orbotProxyEnabled = amber.isSocksProxyAlive("127.0.0.1", settingsStore.settings.proxyPort)
                                                         }
                                                     }
                                                 }
@@ -146,7 +155,7 @@ fun AmberTopAppBar(
 
                                         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
                                     }
-                                    val isProxyEnabled = if (Amber.instance.settings.torMode == TorMode.BUILTIN) torIsRunning else orbotProxyEnabled
+                                    val isProxyEnabled = if (settingsStore.settings.torMode == TorMode.BUILTIN) torIsRunning else orbotProxyEnabled
 
                                     TooltipBox(
                                         positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
@@ -197,7 +206,7 @@ fun AmberTopAppBar(
                                     title = Route.QrCode.title()
                                 }
                                 navBackStackEntry.navBackStackEntry?.arguments?.getString("packageName")?.let { packageName ->
-                                    val application = Amber.instance.getDatabase(account.npub).dao().getByKey(packageName)?.application
+                                    val application = accountRepository.getDatabase(account.npub).dao().getByKey(packageName)?.application
                                     title = if (destinationRoute.startsWith("Activity/")) {
                                         "${application?.name?.let(::sanitizeAppName)?.ifBlank { application.key.toShortenHex() } ?: packageName} - ${routes.find { it.route.startsWith(destinationRoute) }?.title()}"
                                     } else {
@@ -205,7 +214,7 @@ fun AmberTopAppBar(
                                     }
                                 }
                                 navBackStackEntry.navBackStackEntry?.arguments?.getString("key")?.let { packageName ->
-                                    val application = Amber.instance.getDatabase(account.npub).dao().getByKey(packageName)?.application
+                                    val application = accountRepository.getDatabase(account.npub).dao().getByKey(packageName)?.application
                                     title = if (destinationRoute.startsWith("Activity/")) {
                                         "${application?.name?.let(::sanitizeAppName)?.ifBlank { application.key.toShortenHex() } ?: packageName} - ${routes.find { it.route.startsWith(destinationRoute) }?.title()}"
                                     } else {
@@ -223,11 +232,11 @@ fun AmberTopAppBar(
                                     val request = bunkerRequests.first()
                                     val key = bunkerRequests.first().localKey
 
-                                    var application = Amber.instance.getDatabase(account.npub).dao().getByKey(key)?.application
+                                    var application = accountRepository.getDatabase(account.npub).dao().getByKey(key)?.application
                                     if (application == null && request.request is BunkerRequestConnect) {
                                         val secret = request.request.secret
                                         if (secret != null) {
-                                            application = Amber.instance.getDatabase(account.npub).dao().getByKey(secret)?.application
+                                            application = accountRepository.getDatabase(account.npub).dao().getByKey(secret)?.application
                                         }
                                     }
                                     val titleTemp = application?.name?.let(::sanitizeAppName)?.ifBlank { request.name.ifBlank { application.key.toShortenHex() } } ?: request.name

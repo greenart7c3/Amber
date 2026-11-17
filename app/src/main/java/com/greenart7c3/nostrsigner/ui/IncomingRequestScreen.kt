@@ -1,5 +1,6 @@
 package com.greenart7c3.nostrsigner.ui
 
+import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -21,7 +22,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.commonsui.Res
 import com.greenart7c3.nostrsigner.commonsui.invalid_intent_close_app
 import com.greenart7c3.nostrsigner.commonsui.nothing_to_approve_yet
@@ -77,9 +77,10 @@ fun IncomingRequestScreen(
                 )
                 if (isExternalRequest) {
                     Spacer(Modifier.size(16.dp))
+                    val activity = LocalActivity.current
                     OutlinedButton(
                         onClick = {
-                            Amber.instance.getMainActivity()?.finishAndRemoveTask()
+                            activity?.finishAndRemoveTask()
                         },
                     ) {
                         Text(stringResource(Res.string.invalid_intent_close_app))

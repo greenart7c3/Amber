@@ -1,6 +1,7 @@
 package com.greenart7c3.nostrsigner.models
 
 import android.app.KeyguardManager
+import android.content.Context
 import android.widget.Toast
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
@@ -47,21 +48,26 @@ class Account(
     val picture: MutableStateFlow<String>,
     signPolicy: Int,
     didBackup: Boolean,
-    // Watches name/picture to mark the account saveable; injectable so Compose
-    // previews can build an Account without the Amber Application singleton.
-    scope: CoroutineScope = Amber.instance.applicationIOScope,
+    // Watches name/picture to mark the account saveable, and runs the clipboard copy.
+    private val scope: CoroutineScope,
+    // The application context: key storage, the keyguard and toasts. Previews pass
+    // none, so anything that needs it fails there instead of guessing.
+    private val appContext: Context? = null,
     private val keyAccessCheck: () -> Unit = {
+        val context = checkNotNull(appContext) { "No context to check the device lock with" }
         // REQUIRE_UNLOCKED_DEVICE is a plain SharedPreferences boolean, so read it
         // synchronously: the DataStore-backed settings object may not be loaded yet
         // (offline flavor, WorkManager/ContentProvider cold start), and this gate
         // must see the user's actual decision, not a default-valued guess.
-        val required = LocalPreferences.getRequireUnlockedDevice(Amber.instance)
+        val required = LocalPreferences.getRequireUnlockedDevice(context)
         DeviceUnlockPolicy.requireAccess(required) {
-            val keyguard = Amber.instance.getSystemService(KeyguardManager::class.java)
+            val keyguard = context.getSystemService(KeyguardManager::class.java)
             keyguard?.isDeviceLocked ?: true
         }
     },
 ) {
+    private fun requireContext(): Context = checkNotNull(appContext) { "Account has no application context" }
+
     var signPolicy: Int = signPolicy
         set(value) {
             if (field != value) {
@@ -156,7 +162,7 @@ class Account(
         // Gate before reading: the repair below swallows decrypt failures and
         // would otherwise turn a lock refusal into an erased recovery phrase.
         requirePrivateKeyAccess()
-        val stored = runCatching { DataStoreAccess.getEncryptedKey(Amber.instance, npub, DataStoreAccess.SEED_WORDS) }.getOrNull() ?: ""
+        val stored = runCatching { DataStoreAccess.getEncryptedKey(requireContext(), npub, DataStoreAccess.SEED_WORDS) }.getOrNull() ?: ""
 
         // Lazy repair for accounts restored by pre-fix builds, which stored the
         // NIP-44 ciphertext in SEED_WORDS. If the stored value is not a valid
@@ -169,7 +175,7 @@ class Account(
                 ?.takeIf { Nip06().isValidMnemonic(it) }
                 .orEmpty()
             runCatching {
-                DataStoreAccess.saveEncryptedKey(Amber.instance, npub, DataStoreAccess.SEED_WORDS, repaired)
+                DataStoreAccess.saveEncryptedKey(requireContext(), npub, DataStoreAccess.SEED_WORDS, repaired)
             }
             return repaired
         }
@@ -203,7 +209,7 @@ class Account(
     }
 
     fun copyToClipboard(clipboardManager: Clipboard) {
-        Amber.instance.applicationIOScope.launch {
+        scope.launch {
             val nsec = try {
                 getNsec()
             } catch (e: Exception) {
@@ -213,11 +219,11 @@ class Account(
                 return@launch
             }
             didBackup = true
-            Amber.instance.applicationIOScope.launch(Dispatchers.Main) {
-                clipboardManager.setSensitiveClip(Amber.instance, nsec)
+            scope.launch(Dispatchers.Main) {
+                clipboardManager.setSensitiveClip(requireContext(), nsec)
 
                 Toast.makeText(
-                    Amber.instance,
+                    requireContext(),
                     getStringBlocking(Res.string.secret_key_copied_to_clipboard),
                     Toast.LENGTH_SHORT,
                 ).show()

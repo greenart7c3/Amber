@@ -10,6 +10,7 @@ import com.vitorpamplona.quartz.nip01Core.signers.NostrSignerInternal
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequest
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.spyk
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.intrinsics.suspendCoroutineUninterceptedOrReturn
 import kotlinx.coroutines.CoroutineScope
@@ -29,6 +30,24 @@ import org.junit.Test
  * into a disclosure of that self-encrypted plaintext.
  */
 class EventNotificationConsumerSealResultTest {
+    // A real responder over the mocked Application, spied so tests can stub its replies.
+    private val bunkerResponder by lazy {
+        spyk(
+            BunkerResponder(
+                amber,
+                amber,
+                amber,
+                amber,
+                object : CoroutineScope {
+                    override val coroutineContext get() = amber.applicationIOScope.coroutineContext
+                },
+                mockk(relaxed = true),
+            ) { null },
+        )
+    }
+
+    private val amber = mockk<Amber>(relaxed = true)
+
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private val signer = NostrSignerInternal(KeyPair())
     private val account = Account(
@@ -48,9 +67,7 @@ class EventNotificationConsumerSealResultTest {
 
     @Before
     fun setUp() {
-        val amber = mockk<Amber>(relaxed = true)
         every { amber.applicationIOScope } returns scope
-        installAmberInstance(amber)
     }
 
     @After
@@ -68,7 +85,14 @@ class EventNotificationConsumerSealResultTest {
             String::class.java,
             Continuation::class.java,
         ).apply { isAccessible = true }
-        val consumer = EventNotificationConsumer(mockk(relaxed = true))
+        val consumer = EventNotificationConsumer(
+            mockk(relaxed = true),
+            settingsStore = amber,
+            accountRepository = amber,
+            scope = amber.applicationIOScope,
+            notificationCache = amber.notificationCache,
+            bunkerResponder = bunkerResponder,
+        ) { amber.notificationSubscription.updateFilter() }
         return suspendCoroutineUninterceptedOrReturn<Any?> { c -> fn.invoke(consumer, request, account, "wss://relay.invalid", c) } as EncryptedDataKind
     }
 

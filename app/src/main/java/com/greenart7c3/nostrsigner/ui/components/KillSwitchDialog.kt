@@ -14,13 +14,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.commonsui.Res
 import com.greenart7c3.nostrsigner.commonsui.disable_kill_switch
 import com.greenart7c3.nostrsigner.commonsui.kill_switch_connect_message
 import com.greenart7c3.nostrsigner.commonsui.kill_switch_connect_title
 import com.greenart7c3.nostrsigner.commonsui.no
 import com.greenart7c3.nostrsigner.service.KillSwitchReceiver
+import com.greenart7c3.nostrsigner.ui.LocalSettingsStore
 import com.greenart7c3.nostrsigner.ui.theme.amoledBorder
 import com.greenart7c3.nostrsigner.ui.theme.outlineIfAny
 import org.jetbrains.compose.resources.stringResource
@@ -34,10 +34,10 @@ import org.jetbrains.compose.resources.stringResource
  */
 @Composable
 fun KillSwitchConnectPrompt(hasConnectRequest: Boolean) {
-    // Amber.instance doesn't exist in the preview renderer.
+    // The preview renderer provides no settings.
     if (LocalInspectionMode.current) return
 
-    val killSwitch by Amber.instance.settings.killSwitch.collectAsStateWithLifecycle()
+    val killSwitch by LocalSettingsStore.current.settings.killSwitch.collectAsStateWithLifecycle()
     var dismissed by remember { mutableStateOf(false) }
 
     if (hasConnectRequest && killSwitch && !dismissed) {

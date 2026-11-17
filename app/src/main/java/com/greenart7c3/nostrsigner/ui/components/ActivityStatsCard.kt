@@ -37,7 +37,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.commonsui.Res
 import com.greenart7c3.nostrsigner.commonsui.filter_accepted
 import com.greenart7c3.nostrsigner.commonsui.filter_rejected
@@ -47,6 +46,7 @@ import com.greenart7c3.nostrsigner.commonsui.last_7_days
 import com.greenart7c3.nostrsigner.commonsui.statistics
 import com.greenart7c3.nostrsigner.database.HistoryDao
 import com.greenart7c3.nostrsigner.models.Account
+import com.greenart7c3.nostrsigner.ui.LocalAccountRepository
 import com.greenart7c3.nostrsigner.ui.theme.amoledBorder
 import com.vitorpamplona.quartz.utils.TimeUtils
 import kotlinx.coroutines.Dispatchers
@@ -71,8 +71,9 @@ fun ActivityStatsCard(
     modifier: Modifier = Modifier,
     pkKey: String? = null,
 ) {
+    val accountRepository = LocalAccountRepository.current
     val dao = remember(account.npub) {
-        Amber.instance.getHistoryDatabase(account.npub).dao()
+        accountRepository.getHistoryDatabase(account.npub).dao()
     }
     var expanded by rememberSaveable(account.npub, pkKey) { mutableStateOf(false) }
     var stats by remember(account.npub, pkKey) { mutableStateOf<List<WindowStats>?>(null) }

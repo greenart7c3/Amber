@@ -10,6 +10,7 @@ import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.LocalPreferences
+import com.greenart7c3.nostrsigner.data.RelayClient
 import com.greenart7c3.nostrsigner.models.TorMode
 import com.greenart7c3.nostrsigner.models.UpdateChannel
 import com.greenart7c3.nostrsigner.okhttp.HttpClientManager
@@ -67,6 +68,8 @@ enum class DownloadState {
 class ZapstoreUpdater(
     private val client: NostrClient,
     private val scope: CoroutineScope,
+    private val relayClient: RelayClient,
+    private val appContext: Context,
 ) : RelayConnectionListener {
     val latestRelease = MutableStateFlow<ZapstoreRelease?>(null)
     val isChecking = MutableStateFlow(false)
@@ -136,7 +139,7 @@ class ZapstoreUpdater(
         latestRelease.value = null
 
         val settings = withContext(Dispatchers.IO) {
-            LocalPreferences.loadSettingsFromEncryptedStorage()
+            LocalPreferences.loadSettingsFromEncryptedStorage(appContext)
         }
 
         // Subscribe to release events (kind 30063) from the developer. Stable releases
@@ -211,7 +214,7 @@ class ZapstoreUpdater(
         val channelTag = tags.firstOrNull { it.size > 1 && it[0] == "c" }?.getOrNull(1)
         val isBeta = channelTag.equals("beta", ignoreCase = true)
         val settings = withContext(Dispatchers.IO) {
-            LocalPreferences.loadSettingsFromEncryptedStorage()
+            LocalPreferences.loadSettingsFromEncryptedStorage(appContext)
         }
         if (isBeta && settings.updateChannel == UpdateChannel.STABLE) return
 
@@ -304,13 +307,13 @@ class ZapstoreUpdater(
         phase = CheckPhase.IDLE
         timeoutJob?.cancel()
         timeoutJob = null
-        Amber.instance.intentionalDisconnectTime = System.currentTimeMillis()
+        relayClient.intentionalDisconnectTime = System.currentTimeMillis()
         client.unsubscribe(releaseSubId)
         client.unsubscribe(fileSubId)
         isChecking.value = false
         pendingFileEventIds.clear()
         latestRelease.value?.let { release ->
-            val ctx = Amber.instance
+            val ctx = appContext
             val nm = ctx.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             with(NotificationUtils) { nm.sendUpdateAvailableNotification(release.version, ctx) }
         }
@@ -351,7 +354,7 @@ class ZapstoreUpdater(
             return null
         }
         val settings = withContext(Dispatchers.IO) {
-            LocalPreferences.loadSettingsFromEncryptedStorage()
+            LocalPreferences.loadSettingsFromEncryptedStorage(appContext)
         }
         val useProxy = settings.torMode != TorMode.DISABLED
         val client = HttpClientManager.getHttpClient(useProxy)

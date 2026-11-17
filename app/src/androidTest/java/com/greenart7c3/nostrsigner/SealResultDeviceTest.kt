@@ -74,7 +74,8 @@ class SealResultDeviceTest {
             String::class.java,
             Continuation::class.java,
         ).apply { isAccessible = true }
-        val consumer = EventNotificationConsumer(context)
+        val amber = context.amber
+        val consumer = EventNotificationConsumer(context, amber, amber, amber.applicationIOScope, amber.notificationCache, amber.bunkerResponder) { amber.notificationSubscription.updateFilter() }
         return suspendCoroutineUninterceptedOrReturn<Any?> { c -> fn.invoke(consumer, request, account, "wss://relay.invalid", c) } as EncryptedDataKind
     }
 

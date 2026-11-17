@@ -3,6 +3,7 @@ package com.greenart7c3.nostrsigner
 import android.app.AlarmManager
 import android.app.Application
 import android.app.PendingIntent
+import android.content.Context
 import android.content.Intent
 import android.net.NetworkCapabilities
 import android.net.TrafficStats
@@ -37,6 +38,9 @@ import com.greenart7c3.nostrsigner.commonsui.Res
 import com.greenart7c3.nostrsigner.commonsui.getStringBlocking
 import com.greenart7c3.nostrsigner.commonsui.network_permission_message
 import com.greenart7c3.nostrsigner.commonsui.warning
+import com.greenart7c3.nostrsigner.data.AccountRepository
+import com.greenart7c3.nostrsigner.data.RelayClient
+import com.greenart7c3.nostrsigner.data.SettingsStore
 import com.greenart7c3.nostrsigner.database.AppDatabase
 import com.greenart7c3.nostrsigner.database.ApplicationDao
 import com.greenart7c3.nostrsigner.database.CachingApplicationDao
@@ -45,7 +49,6 @@ import com.greenart7c3.nostrsigner.database.LogDatabase
 import com.greenart7c3.nostrsigner.database.LogRetentionManager
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.AmberSettings
-import com.greenart7c3.nostrsigner.models.FeedbackType
 import com.greenart7c3.nostrsigner.models.TimeUtils as AmberTimeUtils
 import com.greenart7c3.nostrsigner.models.TorMode
 import com.greenart7c3.nostrsigner.models.UpdateCheckFrequency
@@ -55,6 +58,7 @@ import com.greenart7c3.nostrsigner.relays.AmberRelayStats
 import com.greenart7c3.nostrsigner.relays.NostrClientLoggerListener
 import com.greenart7c3.nostrsigner.service.ApplicationNameCache
 import com.greenart7c3.nostrsigner.service.BackupApplicationsWorker
+import com.greenart7c3.nostrsigner.service.BunkerResponder
 import com.greenart7c3.nostrsigner.service.ClearLogsWorker
 import com.greenart7c3.nostrsigner.service.ConnectivityService
 import com.greenart7c3.nostrsigner.service.IntentRateLimiter
@@ -70,21 +74,10 @@ import com.greenart7c3.nostrsigner.service.ZapstoreUpdater
 import com.greenart7c3.nostrsigner.service.crashreports.CrashReportCache
 import com.greenart7c3.nostrsigner.service.crashreports.UnexpectedCrashSaver
 import com.greenart7c3.nostrsigner.ui.ToastManager
-import com.vitorpamplona.quartz.nip01Core.crypto.verify
-import com.vitorpamplona.quartz.nip01Core.hints.EventHintBundle
 import com.vitorpamplona.quartz.nip01Core.relay.client.NostrClient
-import com.vitorpamplona.quartz.nip01Core.relay.client.accessories.fetchFirst
-import com.vitorpamplona.quartz.nip01Core.relay.client.accessories.publishAndConfirm
 import com.vitorpamplona.quartz.nip01Core.relay.client.auth.RelayAuthenticator
 import com.vitorpamplona.quartz.nip01Core.relay.client.stats.RelayStats
-import com.vitorpamplona.quartz.nip01Core.relay.filters.Filter
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
-import com.vitorpamplona.quartz.nip01Core.relay.normalizer.RelayUrlNormalizer
-import com.vitorpamplona.quartz.nip01Core.tags.people.PTag
-import com.vitorpamplona.quartz.nip34Git.issue.GitIssueEvent
-import com.vitorpamplona.quartz.nip34Git.repository.GitRepositoryEvent
-import com.vitorpamplona.quartz.nip65RelayList.AdvertisedRelayListEvent
-import com.vitorpamplona.quartz.utils.TimeUtils
 import java.lang.ref.WeakReference
 import java.net.InetSocketAddress
 import java.net.Socket
@@ -108,7 +101,10 @@ import okio.Path.Companion.toOkioPath
 class Amber :
     Application(),
     LifecycleObserver,
-    SingletonImageLoader.Factory {
+    SingletonImageLoader.Factory,
+    SettingsStore,
+    AccountRepository,
+    RelayClient {
     private var mainActivityRef: WeakReference<AppCompatActivity?>? = null
     val crashReportCache: CrashReportCache by lazy { CrashReportCache(this.applicationContext) }
     var pendingCrashReport: String? = null
@@ -132,7 +128,7 @@ class Amber :
 
     val applicationIOScope = CoroutineScope(Dispatchers.IO + SupervisorJob() + exceptionHandler)
 
-    var settings: AmberSettings = AmberSettings()
+    override var settings: AmberSettings = AmberSettings()
 
     val intentRateLimiter = IntentRateLimiter(
         config = { IntentRateLimiter.Config(settings.rateLimitEnabled, settings.rateLimitMaxPerWindow, settings.rateLimitWindowSeconds) },
@@ -151,8 +147,8 @@ class Amber :
      */
     @Volatile var isSettingsLoaded = false
 
-    val factory = OkHttpWebSocket.Builder { url ->
-        if (isPrivateIp(url.url)) return@Builder HttpClientManager.getLocalHttpClient()
+    override val factory = OkHttpWebSocket.Builder { url ->
+        if (PrivateAddress.isPrivate(url.url)) return@Builder HttpClientManager.getLocalHttpClient()
         val useProxy = when {
             // Settings load asynchronously; until they land, torMode's default (DISABLED)
             // is a guess, not a decision. Route through the proxy client — preset from
@@ -165,13 +161,20 @@ class Amber :
         HttpClientManager.getHttpClient(useProxy)
     }
 
-    val client: NostrClient = NostrClient(factory, applicationIOScope)
+    override val client: NostrClient = NostrClient(factory, applicationIOScope)
 
-    val stats = AmberRelayStats(client, this)
+    // Capacity 10 was too small under bursty NIP-46 traffic — duplicate-detection
+    // started missing recent events. 512 covers high-volume relays without being
+    // a meaningful memory cost (event-id hex strings + Long).
+    val notificationCache = LruCache<String, Long>(512)
+
+    val relayStats = RelayStats(client)
+
+    val stats = AmberRelayStats(client, this, settingsStore = this, relayStats = relayStats, scope = applicationIOScope)
 
     // logs and stat counts.
     init {
-        client.addConnectionListener(NostrClientLoggerListener(this, stats, applicationIOScope))
+        client.addConnectionListener(NostrClientLoggerListener(this, stats, applicationIOScope, settingsStore = this, relayClient = this, accountRepository = this))
     }
 
     // Authenticates with relays; it registers itself with the client.
@@ -187,16 +190,20 @@ class Amber :
         }
     }
 
-    val relayStats = RelayStats(client)
+    // The local WebSocket relay for bunker connections (opt in under Settings -> Relays).
+    val localBunkerRelay by lazy { LocalBunkerRelayServer(this, this, this, this) }
 
-    val notificationSubscription = NotificationSubscription(client, this)
+    // Answers bunker requests; stateless, shared by the NIP-46 consumer and the approval screens.
+    val bunkerResponder by lazy { BunkerResponder(this, this, this, this, applicationIOScope, localBunkerRelay) { getMainActivity() } }
+
+    val notificationSubscription = NotificationSubscription(client, this, settingsStore = this, accountRepository = this, bunkerResponder = bunkerResponder, scope = applicationIOScope, notificationCache = notificationCache)
 
     // Per-account profile metadata fetch, started/stopped by the composables that display
     // each account (see ProfileSubscriptionEffect) rather than app-wide.
-    val profileSubscription = ProfileSubscription(client, this, applicationIOScope)
+    val profileSubscription = ProfileSubscription(client, this, applicationIOScope, settingsStore = this, relayClient = this)
 
     val zapstoreUpdater: ZapstoreUpdater? = if (!BuildFlavorChecker.isOfflineFlavor() && !BuildFlavorChecker.isFdroidBuild()) {
-        ZapstoreUpdater(client, applicationIOScope)
+        ZapstoreUpdater(client, applicationIOScope, relayClient = this, appContext = this)
     } else {
         null
     }
@@ -237,17 +244,11 @@ class Amber :
     val isOnVpnState = mutableStateOf(false)
     val isOnOfflineState = mutableStateOf(false)
 
-    /** npubs whose AndroidKeyStore key failed to decrypt (device KeyMint bug). */
-    val keystoreFailedAccounts = MutableStateFlow<List<String>>(emptyList())
+    override val keystoreFailedAccounts = MutableStateFlow<List<String>>(emptyList())
 
-    @Volatile var intentionalDisconnectTime = 0L
+    @Volatile override var intentionalDisconnectTime = 0L
 
-    // Capacity 10 was too small under bursty NIP-46 traffic — duplicate-detection
-    // started missing recent events. 512 covers high-volume relays without being
-    // a meaningful memory cost (event-id hex strings + Long).
-    val notificationCache = LruCache<String, Long>(512)
-
-    fun isSocksProxyAlive(proxyHost: String, proxyPort: Int): Boolean {
+    override fun isSocksProxyAlive(proxyHost: String, proxyPort: Int): Boolean {
         if (settings.torMode == TorMode.BUILTIN) {
             val port = TorManager.socksPort.value
             return port != 0 &&
@@ -409,7 +410,7 @@ class Amber :
             enableStrictMode()
         }
 
-        instance = this
+        SecureCryptoHelper.install(this)
         // Before anything reads the account list or the settings: an install that
         // comes from 3.3.0 or older still keeps them in the EncryptedSharedPreferences
         // files this version no longer reads, so it would look like a first run.
@@ -472,7 +473,7 @@ class Amber :
                 if (currentAccount.isNullOrBlank() && LocalPreferences.allSavedAccounts(this@Amber).isNotEmpty()) {
                     LocalPreferences.switchToAccount(this@Amber, LocalPreferences.allSavedAccounts(this@Amber).first().npub)
                 }
-                LocalPreferences.reloadApp()
+                LocalPreferences.reloadApp(this@Amber)
 
                 // Finish a wrapping-key rotation that was interrupted, so the
                 // previous key does not outlive the data it protected.
@@ -489,7 +490,7 @@ class Amber :
                 // Settings -> Relays): up before the relays are dialed, so
                 // connections that list it subscribe at once. Loopback only,
                 // so it never waits for Tor.
-                LocalBunkerRelayServer.startIfEnabled()
+                localBunkerRelay.startIfEnabled()
 
                 launch(Dispatchers.Main) {
                     if (!processLifecycleObserverRegistered) {
@@ -597,10 +598,6 @@ class Amber :
         }
     }
 
-    fun startServiceFromUi() {
-        startService()
-    }
-
     fun startService() {
         if (BuildFlavorChecker.isOfflineFlavor()) return
         try {
@@ -619,12 +616,19 @@ class Amber :
         }
     }
 
-    fun disconnectIntentionally() {
+    override suspend fun resubscribeAll() {
+        profileSubscription.closeSub()
+        notificationSubscription.closeAllSubs()
+        disconnectIntentionally()
+        checkForNewRelaysAndUpdateAllFilters(shouldReconnect = true)
+    }
+
+    override fun disconnectIntentionally() {
         intentionalDisconnectTime = System.currentTimeMillis()
         client.disconnect()
     }
 
-    fun reconnect() {
+    override fun reconnect() {
         if (settings.killSwitch.value) {
             return
         }
@@ -653,7 +657,7 @@ class Amber :
      * list, which removes them from the subscriptions entirely. All of it is about the
      * old network, so it is cleared here.
      */
-    suspend fun resetRelayConnections(reason: String) {
+    override suspend fun resetRelayConnections(reason: String) {
         if (BuildFlavorChecker.isOfflineFlavor()) return
         if (settings.killSwitch.value) return
 
@@ -677,7 +681,7 @@ class Amber :
     // fresh RoomDatabase every call, so a racing second caller would build a
     // duplicate that loses the put() and leaks its SQLiteConnection (caught by
     // StrictMode's CloseGuard on finalize).
-    fun getDatabase(npub: String): AppDatabase = databases.computeIfAbsent(npub) {
+    override fun getDatabase(npub: String): AppDatabase = databases.computeIfAbsent(npub) {
         AppDatabase.getDatabase(applicationContext, npub)
     }
 
@@ -686,19 +690,19 @@ class Amber :
      * permission lookups should go through this; writes routed through it also
      * invalidate the cache.
      */
-    fun dao(npub: String): ApplicationDao {
+    override fun dao(npub: String): ApplicationDao {
         cachingDaos[npub]?.let { return it }
         return cachingDaos.computeIfAbsent(npub) {
             CachingApplicationDao(getDatabase(npub).dao())
         }
     }
 
-    fun getLogDatabase(npub: String): LogDatabase = logDatabases.computeIfAbsent(npub) {
-        LogDatabase.getDatabase(applicationContext, npub).also { LogRetentionManager.watch(npub, it) }
+    override fun getLogDatabase(npub: String): LogDatabase = logDatabases.computeIfAbsent(npub) {
+        LogDatabase.getDatabase(applicationContext, npub, this).also { LogRetentionManager.watch(this, applicationIOScope, npub, it) }
     }
 
-    fun getHistoryDatabase(npub: String): HistoryDatabase = historyDatabases.computeIfAbsent(npub) {
-        HistoryDatabase.getDatabase(applicationContext, npub).also { LogRetentionManager.watch(npub, it) }
+    override fun getHistoryDatabase(npub: String): HistoryDatabase = historyDatabases.computeIfAbsent(npub) {
+        HistoryDatabase.getDatabase(applicationContext, npub, this, this).also { LogRetentionManager.watch(this, applicationIOScope, npub, it) }
     }
 
     /**
@@ -706,7 +710,7 @@ class Amber :
      * worker threads are released. Called from the logout path; without it each
      * removed account leaks 3 open Room connections forever.
      */
-    fun closeDatabasesFor(npub: String) {
+    override fun closeDatabasesFor(npub: String) {
         databases.remove(npub)?.runCatching { close() }
         logDatabases.remove(npub)?.runCatching { close() }
         historyDatabases.remove(npub)?.runCatching { close() }
@@ -714,7 +718,7 @@ class Amber :
         ApplicationNameCache.clearForAccount(npub)
     }
 
-    fun getSavedRelays(account: Account): Set<NormalizedRelayUrl> {
+    override fun getSavedRelays(account: Account): Set<NormalizedRelayUrl> {
         val database = getDatabase(account.npub)
         val savedRelays = buildSet {
             database.dao().getAllRelayLists().forEach {
@@ -725,9 +729,7 @@ class Amber :
         return savedRelays
     }
 
-    suspend fun checkForNewRelaysAndUpdateAllFilters(
-        shouldReconnect: Boolean = false,
-    ) {
+    override suspend fun checkForNewRelaysAndUpdateAllFilters(shouldReconnect: Boolean) {
         if (settings.killSwitch.value) {
             disconnectIntentionally()
             return
@@ -753,8 +755,6 @@ class Amber :
         }
     }
 
-    fun isPrivateIp(url: String): Boolean = PrivateAddress.isPrivate(url)
-
     override fun newImageLoader(context: PlatformContext): ImageLoader {
         val memCache = MemoryCache.Builder()
             .maxSizeBytes(32 * 1024 * 1024) // 32 MB cap to prevent DMA-BUF OOM
@@ -765,7 +765,7 @@ class Amber :
             .build()
         val coilCallFactory = okhttp3.Call.Factory { request ->
             val url = request.url.toString()
-            if (isPrivateIp(url)) return@Factory HttpClientManager.getLocalHttpClient().newCall(request)
+            if (PrivateAddress.isPrivate(url)) return@Factory HttpClientManager.getLocalHttpClient().newCall(request)
             val useProxy = when {
                 !isSettingsLoaded -> true
                 else -> settings.torMode != TorMode.DISABLED
@@ -864,137 +864,20 @@ class Amber :
         }
     }
 
-    suspend fun sendFeedBack(
-        subject: String,
-        body: String,
-        type: FeedbackType,
-        account: Account,
-    ): Boolean {
-        val usingTor = settings.torMode != TorMode.DISABLED
-        // Tor round trips are slow; give the relays time to answer OK before
-        // declaring the publish failed.
-        val publishTimeoutSeconds =
-            if (usingTor) FEEDBACK_TOR_PUBLISH_TIMEOUT_SECONDS else FEEDBACK_PUBLISH_TIMEOUT_SECONDS
-
-        val repositoryEvent = fetchAmberRepositoryEvent(usingTor) ?: fallbackRepositoryEvent()
-        val relays = repositoryEvent.relays()
-            .mapNotNull { RelayUrlNormalizer.normalizeOrNull(it) }
-            .toSet()
-            .takeIf { it.isNotEmpty() }
-            ?: setOfNotNull(RelayUrlNormalizer.normalizeOrNull(FEEDBACK_FALLBACK_RELAY))
-
-        val template = GitIssueEvent.build(
-            subject,
-            body,
-            EventHintBundle(repositoryEvent),
-            listOf(PTag(DEVELOPER_HEX_KEY, null)),
-            listOf(if (type == FeedbackType.BUG_REPORT) "bug" else "enhancement"),
-        )
-
-        val event = account.sign(
-            template,
-        )
-
-        // This will automatically connect to these relays even if they are not in the list
-        // once the events have been saved, it will disconnect from them unless there are other
-        // filters with them
-        return client.publishAndConfirm(event, relays, publishTimeoutSeconds, untilFirstAccept = true)
-    }
-
-    /**
-     * NIP-34: a repository announcement's `relays` tag lists the relays its
-     * issues live on. The announcement itself is published on the author's own
-     * relays, so resolve those from their NIP-65 relay list first, then ask
-     * for the announcement. Returns null when either step finds nothing.
-     */
-    private suspend fun fetchAmberRepositoryEvent(usingTor: Boolean): GitRepositoryEvent? {
-        val fetchTimeoutMs = if (usingTor) FEEDBACK_TOR_FETCH_TIMEOUT_MS else FEEDBACK_FETCH_TIMEOUT_MS
-
-        val authorRelays = fetchAuthorRelays(fetchTimeoutMs)
-        val discoveryRelays = (authorRelays + settings.defaultRelays)
-            .takeIf { it.isNotEmpty() }
-            ?: setOfNotNull(RelayUrlNormalizer.normalizeOrNull(FEEDBACK_FALLBACK_RELAY))
-
-        val event = client.fetchFirst(
-            filters = discoveryRelays.associateWith {
-                listOf(
-                    Filter(
-                        kinds = listOf(GitRepositoryEvent.KIND),
-                        authors = listOf(DEVELOPER_HEX_KEY),
-                        tags = mapOf("d" to listOf(AMBER_REPO_IDENTIFIER)),
-                        limit = 1,
-                    ),
-                )
-            },
-            idleTimeoutMs = fetchTimeoutMs,
-        ) ?: return null
-        if (!event.verify()) return null
-
-        return GitRepositoryEvent(
-            event.id,
-            event.pubKey,
-            event.createdAt,
-            event.tags,
-            event.content,
-            event.sig,
-        )
-    }
-
-    private suspend fun fetchAuthorRelays(fetchTimeoutMs: Long): Set<NormalizedRelayUrl> {
-        val discoveryRelays = (settings.defaultProfileRelays + settings.defaultRelays)
-            .toSet()
-            .takeIf { it.isNotEmpty() }
-            ?: setOfNotNull(RelayUrlNormalizer.normalizeOrNull(FEEDBACK_FALLBACK_RELAY))
-
-        val event = client.fetchFirst(
-            filters = discoveryRelays.associateWith {
-                listOf(
-                    Filter(
-                        kinds = listOf(AdvertisedRelayListEvent.KIND),
-                        authors = listOf(DEVELOPER_HEX_KEY),
-                        limit = 1,
-                    ),
-                )
-            },
-            idleTimeoutMs = fetchTimeoutMs,
-        ) ?: return emptySet()
-        if (!event.verify()) return emptySet()
-
-        return AdvertisedRelayListEvent(
-            event.id,
-            event.pubKey,
-            event.createdAt,
-            event.tags,
-            event.content,
-            event.sig,
-        ).relaysNorm().toSet()
-    }
-
-    /** Stand-in used for the issue's `a` tag hint when no announcement was found. */
-    private fun fallbackRepositoryEvent(): GitRepositoryEvent = GitRepositoryEvent(
-        "",
-        DEVELOPER_HEX_KEY,
-        TimeUtils.now(),
-        tags = arrayOf(arrayOf("d", AMBER_REPO_IDENTIFIER)),
-        "",
-        "",
-    )
-
     companion object {
         var isAppInForeground = false
         const val TAG = "Amber"
         private const val MAX_TOR_START_ATTEMPTS = 5
-        lateinit var instance: Amber
-            private set
 
         const val DEVELOPER_HEX_KEY = "7579076d9aff0a4cfdefa7e2045f2486c7e5d8bc63bfc6b45397233e1bbfcb19"
-        private const val AMBER_REPO_IDENTIFIER = "Amber"
-        private const val FEEDBACK_FALLBACK_RELAY = "wss://nos.lol/"
-        private const val FEEDBACK_PUBLISH_TIMEOUT_SECONDS = 15L
-        private const val FEEDBACK_TOR_PUBLISH_TIMEOUT_SECONDS = 60L
-        private const val FEEDBACK_FETCH_TIMEOUT_MS = 30_000L
-        private const val FEEDBACK_TOR_FETCH_TIMEOUT_MS = 60_000L
     }
 }
 
 class FailedMigrationException(msg: String) : Exception(msg)
+
+/**
+ * The application container, for Android entry points (activities, services, receivers,
+ * workers, the provider) that the system constructs and so cannot take it as a parameter.
+ * Everything they create gets its dependencies passed in.
+ */
+val Context.amber: Amber get() = applicationContext as Amber

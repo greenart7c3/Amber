@@ -15,13 +15,13 @@ import org.junit.Before
 import org.junit.Test
 
 class ApplicationBackupRestoreTest {
+    private val amber = mockk<Amber>(relaxed = true)
+
     private val dao = mockk<ApplicationDao>(relaxed = true)
 
     @Before
     fun setUp() {
-        val amber = mockk<Amber>(relaxed = true)
         every { amber.dao(any()) } returns dao
-        installAmberInstance(amber)
     }
 
     private fun app(key: String, deleteAfter: Long = 0) = BackupApplication(
@@ -58,7 +58,7 @@ class ApplicationBackupRestoreTest {
         val written = mutableListOf<ApplicationWithPermissions>()
         coEvery { dao.insertApplicationWithPermissions(capture(written)) } returns Unit
 
-        val result = ApplicationBackup.restoreFromPayload("npub1test", payload)
+        val result = ApplicationBackup.restoreFromPayload("npub1test", payload, amber, amber)
 
         assertEquals(RestoreResult.Success(2, 0), result)
         assertEquals(listOf("pending", "forever"), written.map { it.application.key })

@@ -2,10 +2,10 @@ package com.greenart7c3.nostrsigner.service
 
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.toUpperCase
-import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.common.SignerType
 import com.greenart7c3.nostrsigner.common.canRememberRelayAuth
 import com.greenart7c3.nostrsigner.commonsui.Permission
+import com.greenart7c3.nostrsigner.database.ApplicationDao
 import com.greenart7c3.nostrsigner.database.ApplicationPermissionsEntity
 import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
 import com.greenart7c3.nostrsigner.models.Account
@@ -69,13 +69,14 @@ object AmberUtils {
     }
 
     suspend fun sendBunkerError(
+        bunkerResponder: BunkerResponder,
         account: Account,
         bunkerRequest: AmberBunkerRequest,
         relays: List<NormalizedRelayUrl>,
         closeApplication: Boolean,
         onLoading: (Boolean) -> Unit,
     ) {
-        BunkerRequestUtils.sendBunkerResponse(
+        bunkerResponder.sendBunkerResponse(
             account,
             bunkerRequest,
             BunkerResponse(bunkerRequest.request.id, "", "user rejected"),
@@ -85,7 +86,7 @@ object AmberUtils {
                 if (!result) {
                     onLoading(false)
                 } else {
-                    BunkerRequestUtils.finishRequest(bunkerRequest, closeApplication)
+                    bunkerResponder.finishRequest(bunkerRequest, closeApplication)
                 }
             },
         )
@@ -166,10 +167,10 @@ object AmberUtils {
         kind: Int?,
         value: Boolean,
         rememberType: RememberType,
-        account: Account,
         relay: String = "",
         encryptedData: EncryptedDataKind?,
         decryptTypeScope: DecryptTypeScope = DecryptTypeScope.ALL,
+        dao: ApplicationDao,
     ) {
         updatePermission(
             application,
@@ -183,7 +184,7 @@ object AmberUtils {
             decryptTypeScope,
         )
 
-        Amber.instance.dao(account.npub)
+        dao
             .insertApplicationWithPermissions(application)
     }
 
@@ -354,7 +355,7 @@ fun relayAuthRememberType(
  * a non-empty whitelist rejects every relay outside it, without asking, on
  * every path that decides a relay auth (provider, single and batch screens).
  */
-fun isBlockedByAuthWhitelist(kind: Int, relayHost: String, whitelist: List<String> = Amber.instance.settings.authWhitelist): Boolean = com.greenart7c3.nostrsigner.common.isBlockedByAuthWhitelist(kind, relayHost, whitelist)
+fun isBlockedByAuthWhitelist(kind: Int, relayHost: String, whitelist: List<String>): Boolean = com.greenart7c3.nostrsigner.common.isBlockedByAuthWhitelist(kind, relayHost, whitelist)
 
 /** [isBlockedByAuthWhitelist] for a signed [event], decided on its first relay tag. */
-fun isBlockedByAuthWhitelist(event: Event?): Boolean = event != null && event.kind == 22242 && isBlockedByAuthWhitelist(event.kind, RelayUrlUtils.extractHostAndPort(AmberEvent.relay(event)))
+fun isBlockedByAuthWhitelist(event: Event?, whitelist: List<String>): Boolean = event != null && event.kind == 22242 && isBlockedByAuthWhitelist(event.kind, RelayUrlUtils.extractHostAndPort(AmberEvent.relay(event)), whitelist)

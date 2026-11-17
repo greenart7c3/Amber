@@ -31,13 +31,16 @@ import com.greenart7c3.nostrsigner.commonsui.status
 import com.greenart7c3.nostrsigner.commonsui.status_detail
 import com.greenart7c3.nostrsigner.commonsui.status_service_description
 import com.greenart7c3.nostrsigner.commonsui.stop_service
+import com.greenart7c3.nostrsigner.data.SettingsStore
 import com.greenart7c3.nostrsigner.service.KillSwitchReceiver
 import com.greenart7c3.nostrsigner.service.ReconnectReceiver
 import com.greenart7c3.nostrsigner.service.StopServiceReceiver
 import com.vitorpamplona.quartz.nip01Core.relay.client.NostrClient
+import com.vitorpamplona.quartz.nip01Core.relay.client.stats.RelayStats
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.displayUrl
 import kotlin.time.Duration.Companion.milliseconds
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -48,8 +51,11 @@ import kotlinx.coroutines.launch
 
 @OptIn(FlowPreview::class)
 class AmberRelayStats(
-    client: NostrClient,
+    private val client: NostrClient,
     val appContext: Context,
+    private val settingsStore: SettingsStore,
+    private val relayStats: RelayStats,
+    private val scope: CoroutineScope,
 ) {
     var oldMessage = ""
     var available = emptySet<NormalizedRelayUrl>()
@@ -128,19 +134,19 @@ class AmberRelayStats(
         notificationManager.createNotificationChannelGroup(statusGroup)
         notificationManager.createNotificationChannel(statusChannel)
 
-        Amber.instance.applicationIOScope.launch {
-            Amber.instance.client.availableRelaysFlow().debounce(300.milliseconds).collect {
+        scope.launch {
+            client.availableRelaysFlow().debounce(300.milliseconds).collect {
                 available = it
                 updateNotification()
             }
         }
-        Amber.instance.applicationIOScope.launch {
-            Amber.instance.client.connectedRelaysFlow().debounce(300.milliseconds).collect {
+        scope.launch {
+            client.connectedRelaysFlow().debounce(300.milliseconds).collect {
                 connected = it
                 updateNotification()
             }
         }
-        Amber.instance.applicationIOScope.launch {
+        scope.launch {
             // Trailing-edge debounce for the counter path (addSent/addFailed):
             // the last tick of a burst always renders, at most one notify per
             // 300ms window.
@@ -194,7 +200,7 @@ class AmberRelayStats(
         forceCreate: Boolean = false,
     ): Notification? {
         try {
-            if (available.isEmpty() && connected.isEmpty() && !Amber.instance.settings.killSwitch.value) {
+            if (available.isEmpty() && connected.isEmpty() && !settingsStore.settings.killSwitch.value) {
                 AmberLog.d(Amber.TAG, "No relays available, removing relay notification")
                 val notificationManager = NotificationManagerCompat.from(appContext)
                 notificationManager.cancel(2)
@@ -202,7 +208,7 @@ class AmberRelayStats(
             }
 
             val message = available.joinToString("\n") { relay ->
-                val stats = Amber.instance.relayStats.get(relay)
+                val stats = relayStats.get(relay)
                 val session = get(relay)
 
                 val status = if (relay in connected) "✓" else "✗"
@@ -266,7 +272,7 @@ class AmberRelayStats(
                     .setSmallIcon(R.drawable.ic_notification)
                     .setContentIntent(contentPendingIntent)
                     .addAction(R.drawable.ic_notification, getStringBlocking(Res.string.reconnect), reconnectPendingIntent)
-                    .addAction(R.drawable.ic_notification, getStringBlocking(if (Amber.instance.settings.killSwitch.value) Res.string.disable_kill_switch else Res.string.enable_kill_switch), killSwitchPendingIntent)
+                    .addAction(R.drawable.ic_notification, getStringBlocking(if (settingsStore.settings.killSwitch.value) Res.string.disable_kill_switch else Res.string.enable_kill_switch), killSwitchPendingIntent)
                     .setCategory(Notification.CATEGORY_STATUS)
 
             return notificationBuilder.build()

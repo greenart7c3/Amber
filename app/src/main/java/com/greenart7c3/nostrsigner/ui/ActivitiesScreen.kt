@@ -43,7 +43,6 @@ import androidx.paging.LoadState
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.compose.collectAsLazyPagingItems
-import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.common.SignerType
 import com.greenart7c3.nostrsigner.common.sanitizeAppName
@@ -84,7 +83,7 @@ fun ActivitiesScreen(
     topPadding: Dp,
     account: Account,
 ) {
-    val database = Amber.instance.getHistoryDatabase(account.npub)
+    val database = LocalAccountRepository.current.getHistoryDatabase(account.npub)
 
     val context = LocalContext.current
     var searchQuery by remember { mutableStateOf("") }
@@ -371,6 +370,7 @@ fun ApplicationName(
     account: Account,
 ) {
     var name by remember { mutableStateOf("") }
+    val accountRepository = LocalAccountRepository.current
 
     LaunchedEffect(key) {
         val cacheKey = "${account.npub.toShortenHex()}-$key"
@@ -379,7 +379,7 @@ fun ApplicationName(
             name = cached
         } else {
             val appName = withContext(Dispatchers.IO) {
-                Amber.instance.getDatabase(account.npub).dao().getAppName(key)?.let(::sanitizeAppName)?.ifBlank { null }
+                accountRepository.getDatabase(account.npub).dao().getAppName(key)?.let(::sanitizeAppName)?.ifBlank { null }
             }
             if (appName != null) {
                 name = appName

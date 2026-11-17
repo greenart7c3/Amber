@@ -23,7 +23,6 @@ import androidx.paging.LoadState
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.compose.collectAsLazyPagingItems
-import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.commonsui.localizedBlocking
 import com.greenart7c3.nostrsigner.commonsui.supportedKindNumbers
@@ -31,6 +30,7 @@ import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.ui.ActivityFilter
 import com.greenart7c3.nostrsigner.ui.ActivityFilterRow
 import com.greenart7c3.nostrsigner.ui.ActivityRow
+import com.greenart7c3.nostrsigner.ui.LocalAccountRepository
 import com.greenart7c3.nostrsigner.ui.components.ActivityStatsCard
 import com.greenart7c3.nostrsigner.ui.components.SimpleSearchBar
 
@@ -42,7 +42,7 @@ fun ActivityScreen(
     account: Account,
     key: String,
 ) {
-    val database = Amber.instance.getHistoryDatabase(account.npub)
+    val database = LocalAccountRepository.current.getHistoryDatabase(account.npub)
 
     val context = LocalContext.current
     var searchQuery by remember { mutableStateOf("") }

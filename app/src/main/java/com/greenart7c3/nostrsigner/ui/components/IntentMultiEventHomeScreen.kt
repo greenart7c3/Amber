@@ -2,6 +2,7 @@ package com.greenart7c3.nostrsigner.ui.components
 
 import android.app.Activity
 import android.content.Intent
+import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -29,7 +30,6 @@ import androidx.compose.ui.text.capitalize
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.toLowerCase
 import androidx.compose.ui.unit.dp
-import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.common.SignerType
 import com.greenart7c3.nostrsigner.commonsui.Permission
@@ -69,6 +69,9 @@ import com.greenart7c3.nostrsigner.service.RelayUrlUtils
 import com.greenart7c3.nostrsigner.service.isBlockedByAuthWhitelist
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
 import com.greenart7c3.nostrsigner.service.relayAuthRememberType
+import com.greenart7c3.nostrsigner.ui.LocalAccountRepository
+import com.greenart7c3.nostrsigner.ui.LocalAppScope
+import com.greenart7c3.nostrsigner.ui.LocalSettingsStore
 import com.greenart7c3.nostrsigner.ui.RememberType
 import com.greenart7c3.nostrsigner.ui.theme.AmberPreview
 import com.greenart7c3.nostrsigner.ui.theme.ThemePreviews
@@ -91,6 +94,10 @@ fun IntentMultiEventHomeScreen(
     onRemoveIntentData: (List<IntentData>, IntentResultType) -> Unit,
     onLoading: (Boolean) -> Unit,
 ) {
+    val settingsStore = LocalSettingsStore.current
+    val accountRepository = LocalAccountRepository.current
+    val appScope = LocalAppScope.current
+    val activity = LocalActivity.current
     val context = LocalContext.current
     val groupRememberTypes = remember { mutableStateMapOf<RequestGroupKey, RememberType>() }
     val groupRelayAuthScopes = remember { mutableStateMapOf<RequestGroupKey, RelayAuthScope>() }
@@ -101,7 +108,7 @@ fun IntentMultiEventHomeScreen(
         // checkedStates holds the per-request decision: true = Approve, false = Deny.
         // It is shared by every open Amber screen, so set only this screen's keys
         // (owner-scoped queueKeys) instead of clearing another screen's choices.
-        intents.forEach { MultiEventScreenIntents.checkedStates[it.queueKey] = !isBlockedByAuthWhitelist(it.event) }
+        intents.forEach { MultiEventScreenIntents.checkedStates[it.queueKey] = !isBlockedByAuthWhitelist(it.event, settingsStore.settings.authWhitelist) }
     }
 
     Column(
@@ -140,7 +147,7 @@ fun IntentMultiEventHomeScreen(
                             approved = groupApproved,
                             expanded = expanded,
                             onApproveChanged = { approve ->
-                                MultiEventScreenIntents.checkedStates.putAll(groupIntents.associate { it.queueKey to (approve && !isBlockedByAuthWhitelist(it.event)) })
+                                MultiEventScreenIntents.checkedStates.putAll(groupIntents.associate { it.queueKey to (approve && !isBlockedByAuthWhitelist(it.event, settingsStore.settings.authWhitelist)) })
                             },
                             onExpandToggle = {
                                 expandedGroups[groupKey] = !(expandedGroups[groupKey] ?: false)
@@ -183,7 +190,7 @@ fun IntentMultiEventHomeScreen(
             text = stringResource(Res.string.confirm),
             onClick = {
                 onLoading(true)
-                Amber.instance.applicationIOScope.launch(Dispatchers.IO) {
+                appScope.launch(Dispatchers.IO) {
                     try {
                         val results = mutableListOf<Result>()
                         var closeApp = true
@@ -198,8 +205,8 @@ fun IntentMultiEventHomeScreen(
                                 LocalPreferences.loadFromEncryptedStorage(context, accountNpub)
                             } ?: continue
 
-                            val dao = Amber.instance.dao(thisAccount.npub)
-                            val historyDatabase = Amber.instance.getHistoryDatabase(thisAccount.npub)
+                            val dao = accountRepository.dao(thisAccount.npub)
+                            val historyDatabase = accountRepository.getHistoryDatabase(thisAccount.npub)
                             val application = dao.getByKey(localKey) ?: ApplicationWithPermissions(
                                 application = ApplicationEntity(
                                     localKey,
@@ -230,7 +237,7 @@ fun IntentMultiEventHomeScreen(
                             for (intentData in accountIntents) {
                                 // A relay outside the auth whitelist is rejected without
                                 // remembering it, as on the single screen.
-                                val blockedByWhitelist = isBlockedByAuthWhitelist(intentData.event)
+                                val blockedByWhitelist = isBlockedByAuthWhitelist(intentData.event, settingsStore.settings.authWhitelist)
                                 val isApproved = !blockedByWhitelist && (MultiEventScreenIntents.checkedStates[intentData.queueKey] ?: true)
                                 val type = intentData.type
                                 val groupKey = requestGroupKey(type, intentData.event?.kind, intentData.encryptedData, intentData.nip44v3Kind)
@@ -384,10 +391,10 @@ fun IntentMultiEventHomeScreen(
                         }
 
                         if (results.isNotEmpty()) {
-                            sendResultIntent(results)
+                            sendResultIntent(activity, results)
                         }
 
-                        finishActivity(closeApp)
+                        finishActivity(activity, closeApp)
                     } finally {
                         onLoading(false)
                     }
@@ -404,6 +411,7 @@ private fun IntentRequestCard(
     approved: Boolean,
     onApproveChanged: (Boolean) -> Unit,
 ) {
+    val settingsStore = LocalSettingsStore.current
     val type = intent.type
     var showDetails by remember { mutableStateOf(false) }
     val hasDetails = (type == SignerType.SIGN_EVENT && intent.event != null) ||
@@ -517,7 +525,7 @@ private fun IntentRequestCard(
 
             signingAs?.let { SigningAs(it) }
 
-            if (isBlockedByAuthWhitelist(intent.event)) {
+            if (isBlockedByAuthWhitelist(intent.event, settingsStore.settings.authWhitelist)) {
                 // Always rejected on confirm, as on the single screen.
                 Text(
                     text = stringResource(Res.string.relay_not_in_auth_whitelist),
@@ -624,8 +632,7 @@ fun IntentMultiEventHomeScreenPreview() {
     }
 }
 
-private fun finishActivity(closeApp: Boolean) {
-    val activity = Amber.instance.getMainActivity()
+private fun finishActivity(activity: Activity?, closeApp: Boolean) {
     activity?.intent = null
     if (closeApp) {
         activity?.finishAndRemoveTask()
@@ -633,10 +640,11 @@ private fun finishActivity(closeApp: Boolean) {
 }
 
 private fun sendResultIntent(
+    activity: Activity?,
     results: MutableList<Result>,
 ) {
     val json = Permission.mapper.writeValueAsString(results)
     val intent = Intent()
     intent.putExtra("results", json)
-    Amber.instance.getMainActivity()?.setResult(Activity.RESULT_OK, intent)
+    activity?.setResult(Activity.RESULT_OK, intent)
 }

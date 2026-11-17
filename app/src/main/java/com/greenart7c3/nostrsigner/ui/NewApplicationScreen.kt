@@ -21,7 +21,6 @@ import androidx.compose.ui.text.withLink
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.navigation.NavController
-import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.commonsui.Res
 import com.greenart7c3.nostrsigner.commonsui.add_a_nsecbunker
 import com.greenart7c3.nostrsigner.commonsui.discover_more
@@ -54,6 +53,7 @@ fun NewApplicationScreen(
     val clipboardManager = LocalClipboard.current
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+    val appScope = LocalAppScope.current
     val title = stringResource(Res.string.warning)
     val message = stringResource(Res.string.invalid_nostr_connect_uri)
     if (dialogOpen.value) {
@@ -76,7 +76,7 @@ fun NewApplicationScreen(
                 return@SimpleQrCodeScanner
             }
 
-            Amber.instance.applicationIOScope.launch(Dispatchers.IO) {
+            appScope.launch(Dispatchers.IO) {
                 val intent = Intent(Intent.ACTION_VIEW)
                 intent.data = it.toUri()
                 intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP)
@@ -122,7 +122,7 @@ fun NewApplicationScreen(
                     intent.data = clipboardItemText.toUri()
                     intent.`package` = context.packageName
                     IntentUtils.getIntentData(
-                        context = Amber.instance,
+                        context = context.applicationContext,
                         intent = intent,
                         packageName = null,
                         route = Route.IncomingRequest.route,
@@ -180,7 +180,7 @@ fun NewApplicationScreen(
                 append(" or ")
                 withLink(
                     LinkAnnotation.Url(
-                        if (Amber.instance.isZapstoreInstalled()) "zapstore://" else stringResource(Res.string.zapstore_website),
+                        if (context.isZapstoreInstalled()) "zapstore://" else stringResource(Res.string.zapstore_website),
                         styles = TextLinkStyles(
                             style = SpanStyle(
                                 textDecoration = TextDecoration.Underline,

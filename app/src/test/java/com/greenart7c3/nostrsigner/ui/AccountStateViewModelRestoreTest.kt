@@ -8,7 +8,6 @@ import com.greenart7c3.nostrsigner.service.ApplicationBackup
 import com.greenart7c3.nostrsigner.service.BackupApplication
 import com.greenart7c3.nostrsigner.service.BackupPayload
 import com.greenart7c3.nostrsigner.service.RestoreResult
-import com.greenart7c3.nostrsigner.service.installAmberInstance
 import com.greenart7c3.nostrsigner.service.newTestAccount
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -34,6 +33,7 @@ class AccountStateViewModelRestoreTest {
     // Unconfined so maybeOfferRestore's internal launch runs to completion on the
     // calling thread; every ApplicationBackup call it makes is a mocked immediate.
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
+    private val amber = mockk<Amber>(relaxed = true)
 
     @Before
     fun setUp() {
@@ -54,14 +54,12 @@ class AccountStateViewModelRestoreTest {
 
         val dao = mockk<ApplicationDao>(relaxed = true)
         coEvery { dao.getAll(any()) } returns emptyList()
-        val amber = mockk<Amber>(relaxed = true)
         every { amber.applicationIOScope } returns scope
         every { amber.dao(any()) } returns dao
-        installAmberInstance(amber)
 
         mockkObject(ApplicationBackup)
-        coEvery { ApplicationBackup.resolveReadRelays(any()) } returns setOf(mockk())
-        coEvery { ApplicationBackup.fetchLatestBackupEvent(any(), any()) } returns null
+        coEvery { ApplicationBackup.resolveReadRelays(any(), any(), any()) } returns setOf(mockk())
+        coEvery { ApplicationBackup.fetchLatestBackupEvent(any(), any(), any()) } returns null
     }
 
     @After
@@ -74,33 +72,42 @@ class AccountStateViewModelRestoreTest {
 
     @Test
     fun `maybeOfferRestore reaches relay fetch even with backup publishing disabled`() {
-        val viewModel = AccountStateViewModel(null)
+        val viewModel = newViewModel()
         val account = newTestAccount(scope)
 
         viewModel.maybeOfferRestore(account)
 
         coVerify {
-            ApplicationBackup.resolveReadRelays(account)
-            ApplicationBackup.fetchLatestBackupEvent(account, any())
+            ApplicationBackup.resolveReadRelays(account, any(), any())
+            ApplicationBackup.fetchLatestBackupEvent(account, any(), any())
         }
         assertNull(viewModel.restorePrompt.value)
     }
 
     @Test
     fun `acceptRestore restores only the selected applications`() {
-        val viewModel = AccountStateViewModel(null)
+        val viewModel = newViewModel()
         val account = newTestAccount(scope)
         val kept = backupApp("kept")
         val payload = BackupPayload(applications = listOf(kept, backupApp("unchecked")))
         viewModel.restorePrompt.value = RestorePromptState.Found(account, payload, createdAt = 0)
         val restored = slot<BackupPayload>()
-        coEvery { ApplicationBackup.restoreFromPayload(any(), capture(restored)) } returns RestoreResult.Success(1, 0)
+        coEvery { ApplicationBackup.restoreFromPayload(any(), capture(restored), any(), any()) } returns RestoreResult.Success(1, 0)
 
         viewModel.acceptRestore(listOf(kept)) { }
 
         assertEquals(listOf(kept), restored.captured.applications)
         assertNull(viewModel.restorePrompt.value)
     }
+
+    private fun newViewModel() = AccountStateViewModel(
+        npub = null,
+        appContext = amber,
+        settingsStore = amber,
+        accountRepository = amber,
+        relayClient = amber,
+        appScope = scope,
+    )
 
     private fun backupApp(key: String) = BackupApplication(
         key = key,

@@ -4,8 +4,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavController
-import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.commonsui.Res
 import com.greenart7c3.nostrsigner.commonsui.getStringBlocking
@@ -36,6 +36,8 @@ fun ConfirmPinScreen(
     pin: String,
     navController: NavController,
 ) {
+    val context = LocalContext.current
+    val settingsStore = LocalSettingsStore.current
     val scope = rememberCoroutineScope()
     Column(
         modifier,
@@ -45,16 +47,16 @@ fun ConfirmPinScreen(
                 if (enteredPin != pin) {
                     ToastManager.toast(getStringBlocking(Res.string.pin), getStringBlocking(Res.string.pin_does_not_match))
                 } else {
-                    val usePin = Amber.instance.settings.usePin
+                    val usePin = settingsStore.settings.usePin
                     scope.launch(Dispatchers.IO) {
                         if (usePin) {
-                            Amber.instance.settings = Amber.instance.settings.copy(usePin = false)
-                            LocalPreferences.saveSettingsToEncryptedStorage(Amber.instance.settings)
-                            LocalPreferences.savePinToEncryptedStorage(null)
+                            settingsStore.settings = settingsStore.settings.copy(usePin = false)
+                            LocalPreferences.saveSettingsToEncryptedStorage(context, settingsStore.settings)
+                            LocalPreferences.savePinToEncryptedStorage(context, null)
                         } else {
-                            Amber.instance.settings = Amber.instance.settings.copy(usePin = true)
-                            LocalPreferences.saveSettingsToEncryptedStorage(Amber.instance.settings)
-                            LocalPreferences.savePinToEncryptedStorage(pin)
+                            settingsStore.settings = settingsStore.settings.copy(usePin = true)
+                            LocalPreferences.saveSettingsToEncryptedStorage(context, settingsStore.settings)
+                            LocalPreferences.savePinToEncryptedStorage(context, pin)
                         }
                         scope.launch(Dispatchers.Main) {
                             navController.navigate(Route.Security.route) {

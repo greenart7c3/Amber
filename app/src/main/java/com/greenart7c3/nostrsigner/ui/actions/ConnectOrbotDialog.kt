@@ -40,7 +40,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.commonsui.Res
 import com.greenart7c3.nostrsigner.commonsui.builtin_tor_active
 import com.greenart7c3.nostrsigner.commonsui.builtin_tor_description
@@ -52,6 +51,7 @@ import com.greenart7c3.nostrsigner.commonsui.orbot_title
 import com.greenart7c3.nostrsigner.commonsui.use_builtin_tor
 import com.greenart7c3.nostrsigner.commonsui.use_orbot
 import com.greenart7c3.nostrsigner.models.TorMode
+import com.greenart7c3.nostrsigner.ui.LocalSettingsStore
 import com.greenart7c3.nostrsigner.ui.components.AmberButton
 import com.greenart7c3.nostrsigner.ui.components.MarkdownText
 import kotlinx.coroutines.CancellationException
@@ -64,7 +64,8 @@ fun ConnectOrbotScreen(
     onBuiltinTor: () -> Unit,
     onError: (String) -> Unit,
 ) {
-    val portNumber = remember { mutableStateOf(Amber.instance.settings.proxyPort.toString()) }
+    val settingsStore = LocalSettingsStore.current
+    val portNumber = remember { mutableStateOf(settingsStore.settings.proxyPort.toString()) }
 
     Column(
         modifier = modifier,
@@ -87,12 +88,12 @@ fun ConnectOrbotScreen(
         AmberButton(
             modifier = Modifier.fillMaxWidth(),
             onClick = onBuiltinTor,
-            text = if (Amber.instance.settings.torMode == TorMode.BUILTIN) {
+            text = if (settingsStore.settings.torMode == TorMode.BUILTIN) {
                 stringResource(Res.string.builtin_tor_active)
             } else {
                 stringResource(Res.string.use_builtin_tor)
             },
-            enabled = Amber.instance.settings.torMode != TorMode.BUILTIN,
+            enabled = settingsStore.settings.torMode != TorMode.BUILTIN,
         )
 
         Spacer(modifier = Modifier.height(24.dp))

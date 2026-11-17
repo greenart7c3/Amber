@@ -36,7 +36,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.rememberNavController
-import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.commonsui.Res
 import com.greenart7c3.nostrsigner.commonsui.keystore_error_message
 import com.greenart7c3.nostrsigner.commonsui.keystore_error_title
@@ -149,7 +148,7 @@ fun AccountScreen(
 
 @Composable
 private fun KeystoreFailureWarning() {
-    val failedAccounts by Amber.instance.keystoreFailedAccounts.collectAsState()
+    val failedAccounts by LocalAccountRepository.current.keystoreFailedAccounts.collectAsState()
     var dismissed by remember { mutableStateOf(false) }
 
     if (failedAccounts.isNotEmpty() && !dismissed) {

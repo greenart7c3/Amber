@@ -19,17 +19,17 @@ import org.junit.Before
 import org.junit.Test
 
 class ApplicationBackupFetchTest {
+    private val amber = mockk<Amber>(relaxed = true)
+
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
     private val dao = mockk<ApplicationDao>(relaxed = true)
 
     @Before
     fun setUp() {
-        val amber = mockk<Amber>(relaxed = true)
         every { amber.dao(any()) } returns dao
-        installAmberInstance(amber)
 
         mockkObject(ApplicationBackup)
-        coEvery { ApplicationBackup.resolveReadRelays(any()) } returns setOf(mockk())
+        coEvery { ApplicationBackup.resolveReadRelays(any(), any(), any()) } returns setOf(mockk())
     }
 
     @After
@@ -39,19 +39,19 @@ class ApplicationBackupFetchTest {
 
     @Test
     fun `no backup event is reported as not found`() = runBlocking {
-        coEvery { ApplicationBackup.fetchLatestBackupEvent(any(), any()) } returns null
+        coEvery { ApplicationBackup.fetchLatestBackupEvent(any(), any(), any()) } returns null
 
-        val result = ApplicationBackup.fetchLatestPayload(newTestAccount(scope))
+        val result = ApplicationBackup.fetchLatestPayload(newTestAccount(scope), mockk(relaxed = true), amber)
 
         assertEquals(BackupFetchResult.NoBackupFound, result)
     }
 
     @Test
     fun `an undecryptable backup is reported as failed`() = runBlocking {
-        coEvery { ApplicationBackup.fetchLatestBackupEvent(any(), any()) } returns mockk<Event>()
+        coEvery { ApplicationBackup.fetchLatestBackupEvent(any(), any(), any()) } returns mockk<Event>()
         coEvery { ApplicationBackup.decryptPayload(any(), any()) } returns null
 
-        val result = ApplicationBackup.fetchLatestPayload(newTestAccount(scope))
+        val result = ApplicationBackup.fetchLatestPayload(newTestAccount(scope), mockk(relaxed = true), amber)
 
         assertEquals(BackupFetchResult.Failed("Failed to decrypt backup"), result)
     }
@@ -59,13 +59,13 @@ class ApplicationBackupFetchTest {
     @Test
     fun `a backup is returned for review without being restored`() = runBlocking {
         val payload = BackupPayload(applications = emptyList())
-        coEvery { ApplicationBackup.fetchLatestBackupEvent(any(), any()) } returns mockk<Event>()
+        coEvery { ApplicationBackup.fetchLatestBackupEvent(any(), any(), any()) } returns mockk<Event>()
         coEvery { ApplicationBackup.decryptPayload(any(), any()) } returns payload
 
-        val result = ApplicationBackup.fetchLatestPayload(newTestAccount(scope))
+        val result = ApplicationBackup.fetchLatestPayload(newTestAccount(scope), mockk(relaxed = true), amber)
 
         assertEquals(BackupFetchResult.Found(payload), result)
-        coVerify(exactly = 0) { ApplicationBackup.restoreFromPayload(any(), any()) }
+        coVerify(exactly = 0) { ApplicationBackup.restoreFromPayload(any(), any(), any(), any()) }
         coVerify(exactly = 0) { dao.insertApplicationWithPermissions(any()) }
     }
 }

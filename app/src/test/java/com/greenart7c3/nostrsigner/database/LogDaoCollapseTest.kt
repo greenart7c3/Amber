@@ -1,13 +1,14 @@
 package com.greenart7c3.nostrsigner.database
 
 import androidx.paging.PagingSource
+import io.mockk.mockk
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
 class LogDaoCollapseTest {
-    private class FakeLogDao : LogDao {
+    private class FakeLogDao : LogDao(mockk(relaxed = true)) {
         val rows = mutableListOf<LogEntity>()
         private var nextId = 1
 

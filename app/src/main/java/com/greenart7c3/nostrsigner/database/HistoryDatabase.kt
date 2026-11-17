@@ -7,6 +7,8 @@ import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
+import com.greenart7c3.nostrsigner.data.AccountRepository
+import com.greenart7c3.nostrsigner.data.SettingsStore
 import java.util.concurrent.Executors
 
 val migration_1_2 = object : Migration(1, 2) {
@@ -38,6 +40,11 @@ val migration_3_4 = object : Migration(3, 4) {
 abstract class HistoryDatabase : RoomDatabase() {
     abstract fun dao(): HistoryDao
 
+    // Set by getDatabase: HistoryDao.addHistory honors
+    // the privacy mode and refreshes the cached permission DAO.
+    lateinit var settingsStore: SettingsStore
+    lateinit var accountRepository: AccountRepository
+
     companion object {
         /** On-disk name of [npub]'s database, also used to delete it at logout. */
         fun fileName(npub: String) = "history_db_$npub"
@@ -45,6 +52,8 @@ abstract class HistoryDatabase : RoomDatabase() {
         fun getDatabase(
             context: Context,
             npub: String,
+            settingsStore: SettingsStore,
+            accountRepository: AccountRepository,
         ): HistoryDatabase = synchronized(this) {
             val executor = Executors.newCachedThreadPool()
             val transactionExecutor = Executors.newCachedThreadPool()
@@ -60,7 +69,10 @@ abstract class HistoryDatabase : RoomDatabase() {
                     .addMigrations(migration_1_2, migration_2_3, migration_3_4)
                     .build()
 
-            instance
+            instance.also {
+                it.settingsStore = settingsStore
+                it.accountRepository = accountRepository
+            }
         }
     }
 }

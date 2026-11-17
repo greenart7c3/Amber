@@ -157,8 +157,7 @@ object LocalPreferences {
         }
     }
 
-    fun saveSettingsToEncryptedStorage(settings: AmberSettings) {
-        val context = Amber.instance
+    fun saveSettingsToEncryptedStorage(context: Context, settings: AmberSettings) {
         sharedPrefs(context).edit {
             apply {
                 putStringSet(SettingsKeys.DEFAULT_RELAYS.key, settings.defaultRelays.map { it.url }.toSet())
@@ -214,7 +213,7 @@ object LocalPreferences {
                 putString(SettingsKeys.THEME_MODE.key, mode.name)
             }
         }
-        Amber.instance.themeMode.value = mode
+        context.amber.themeMode.value = mode
     }
 
     fun getBatteryOptimization(context: Context): Boolean = sharedPrefs(context).getBoolean(SettingsKeys.BATERRY_OPTIMIZATION.key, false)
@@ -295,8 +294,7 @@ object LocalPreferences {
         }
     }
 
-    suspend fun loadPinFromEncryptedStorage(): String? {
-        val context = Amber.instance
+    suspend fun loadPinFromEncryptedStorage(context: Context): String? {
         // Migration: move PIN from plain SharedPreferences to encrypted DataStore
         val legacyPin = sharedPrefs(context).getString(SettingsKeys.PIN.key, null)
         if (legacyPin != null) {
@@ -306,18 +304,16 @@ object LocalPreferences {
         return DataStoreAccess.loadPin(context)
     }
 
-    suspend fun savePinToEncryptedStorage(pin: String?) {
-        val context = Amber.instance
+    suspend fun savePinToEncryptedStorage(context: Context, pin: String?) {
         DataStoreAccess.savePin(context, pin)
     }
 
-    suspend fun reloadApp() {
-        val context = Amber.instance
+    suspend fun reloadApp(context: Context) {
         invalidateAccountCaches()
         warmAccountCache(context)
-        context.settings = loadSettingsFromEncryptedStorage(context)
-        context.isSettingsLoaded = true
-        context.settings.language?.let { AppLanguage.apply(it) }
+        context.amber.settings = loadSettingsFromEncryptedStorage(context)
+        context.amber.isSettingsLoaded = true
+        context.amber.settings.language?.let { AppLanguage.apply(it) }
     }
 
     /**
@@ -345,7 +341,7 @@ object LocalPreferences {
 
     fun getStartServiceOnBoot(context: Context): Boolean = sharedPrefs(context).getBoolean(SettingsKeys.START_SERVICE_ON_BOOT.key, true)
 
-    fun loadSettingsFromEncryptedStorage(context: Context = Amber.instance): AmberSettings {
+    fun loadSettingsFromEncryptedStorage(context: Context): AmberSettings {
         checkNotInMainThread()
         return readSettings(context)
     }
@@ -596,7 +592,7 @@ object LocalPreferences {
         // Close Room handles BEFORE deleting on-disk preference/data files so
         // we release file locks and worker-pool threads instead of leaking
         // them for the lifetime of the process.
-        Amber.instance.closeDatabasesFor(npub)
+        context.amber.closeDatabasesFor(npub)
         // Logout deletes all local information for the account, as the logout
         // dialog says: dropping the databases (with their -wal/-shm/-journal
         // files) means re-importing the key starts with no connections, grants,
@@ -761,7 +757,7 @@ object LocalPreferences {
     fun updateTorMode(
         context: Context,
         torMode: TorMode,
-        port: Int = Amber.instance.settings.proxyPort,
+        port: Int = context.amber.settings.proxyPort,
     ) {
         sharedPrefs(context).edit {
             apply {
@@ -769,7 +765,7 @@ object LocalPreferences {
                 putInt(SettingsKeys.PROXY_PORT.key, port)
             }
         }
-        Amber.instance.settings = loadSettingsFromEncryptedStorage()
+        context.amber.settings = loadSettingsFromEncryptedStorage(context)
         when (torMode) {
             TorMode.ORBOT -> HttpClientManager.setDefaultProxyOnPort(port)
             TorMode.DISABLED -> HttpClientManager.clearProxy()
@@ -784,7 +780,7 @@ object LocalPreferences {
                 putBoolean(SettingsKeys.AUTO_CHECK_UPDATES.key, enabled)
             }
         }
-        Amber.instance.settings = loadSettingsFromEncryptedStorage()
+        context.amber.settings = loadSettingsFromEncryptedStorage(context)
     }
 
     fun updateStartServiceOnBoot(context: Context, enabled: Boolean) {
@@ -793,7 +789,7 @@ object LocalPreferences {
                 putBoolean(SettingsKeys.START_SERVICE_ON_BOOT.key, enabled)
             }
         }
-        Amber.instance.settings = loadSettingsFromEncryptedStorage()
+        context.amber.settings = loadSettingsFromEncryptedStorage(context)
     }
 
     /**
@@ -807,12 +803,12 @@ object LocalPreferences {
                 putBoolean(SettingsKeys.PRIVACY_MODE.key, enabled)
             }
         }
-        Amber.instance.settings = loadSettingsFromEncryptedStorage()
+        context.amber.settings = loadSettingsFromEncryptedStorage(context)
         if (enabled) {
             allSavedAccounts(context).forEach {
                 try {
-                    Amber.instance.getLogDatabase(it.npub).dao().clearLogs()
-                    Amber.instance.getHistoryDatabase(it.npub).dao().clearHistory()
+                    context.amber.getLogDatabase(it.npub).dao().clearLogs()
+                    context.amber.getHistoryDatabase(it.npub).dao().clearHistory()
                 } catch (e: Exception) {
                     AmberLog.e(Amber.TAG, "Error wiping data for privacy mode", e)
                 }
@@ -828,7 +824,7 @@ object LocalPreferences {
      */
     suspend fun updateRequireUnlockedDevice(context: Context, enabled: Boolean) {
         SecureCryptoHelper.rotateKey(context, requireUnlockedDevice = enabled)
-        Amber.instance.settings = loadSettingsFromEncryptedStorage()
+        context.amber.settings = loadSettingsFromEncryptedStorage(context)
     }
 
     /** Keystore alias currently used to encrypt new secrets, or null if never recorded. */
@@ -853,7 +849,7 @@ object LocalPreferences {
                 putString(SettingsKeys.UPDATE_CHECK_FREQUENCY.key, frequency.name)
             }
         }
-        Amber.instance.settings = loadSettingsFromEncryptedStorage()
+        context.amber.settings = loadSettingsFromEncryptedStorage(context)
     }
 
     fun updateProfileFetchInterval(context: Context, interval: ProfileFetchInterval) {
@@ -862,7 +858,7 @@ object LocalPreferences {
                 putString(SettingsKeys.PROFILE_FETCH_INTERVAL.key, interval.name)
             }
         }
-        Amber.instance.settings = loadSettingsFromEncryptedStorage()
+        context.amber.settings = loadSettingsFromEncryptedStorage(context)
     }
 
     suspend fun updateLogRetention(context: Context, retention: RetentionPeriod) {
@@ -871,7 +867,7 @@ object LocalPreferences {
                 putString(SettingsKeys.LOG_RETENTION.key, retention.name)
             }
         }
-        Amber.instance.settings = loadSettingsFromEncryptedStorage()
+        context.amber.settings = loadSettingsFromEncryptedStorage(context)
         pruneAllAccounts(context)
     }
 
@@ -881,7 +877,7 @@ object LocalPreferences {
                 putString(SettingsKeys.HISTORY_RETENTION.key, retention.name)
             }
         }
-        Amber.instance.settings = loadSettingsFromEncryptedStorage()
+        context.amber.settings = loadSettingsFromEncryptedStorage(context)
         pruneAllAccounts(context)
     }
 
@@ -889,7 +885,7 @@ object LocalPreferences {
     private suspend fun pruneAllAccounts(context: Context) {
         allSavedAccounts(context).forEach {
             try {
-                LogRetentionManager.prune(it.npub)
+                LogRetentionManager.prune(context, context.amber, it.npub)
             } catch (e: Exception) {
                 if (e is CancellationException) throw e
                 AmberLog.e(Amber.TAG, "Error pruning logs for ${it.npub}", e)
@@ -903,7 +899,7 @@ object LocalPreferences {
                 putString(SettingsKeys.UPDATE_CHANNEL.key, channel.name)
             }
         }
-        Amber.instance.settings = loadSettingsFromEncryptedStorage()
+        context.amber.settings = loadSettingsFromEncryptedStorage(context)
     }
 
     fun getLastUpdateCheckTime(context: Context): Long = sharedPrefs(context).getLong(SettingsKeys.LAST_UPDATE_CHECK_TIME.key, 0L)
@@ -998,7 +994,7 @@ object LocalPreferences {
                 return null
             }
             AmberLog.e(Amber.TAG, "AndroidKeyStore key for $npub is broken (device KeyMint may not support key upgrade). Account skipped.", e)
-            Amber.instance.keystoreFailedAccounts.value = (Amber.instance.keystoreFailedAccounts.value + npub).distinct()
+            context.amber.keystoreFailedAccounts.value = (context.amber.keystoreFailedAccounts.value + npub).distinct()
             return null
         } catch (e: KeyStoreException) {
             if (isKeystoreLockedOut(context)) {
@@ -1006,7 +1002,7 @@ object LocalPreferences {
                 return null
             }
             AmberLog.e(Amber.TAG, "KeyStore operation failed for $npub. Account skipped.", e)
-            Amber.instance.keystoreFailedAccounts.value = (Amber.instance.keystoreFailedAccounts.value + npub).distinct()
+            context.amber.keystoreFailedAccounts.value = (context.amber.keystoreFailedAccounts.value + npub).distinct()
             return null
         }
         sharedPrefs(context, npub).apply {
@@ -1025,10 +1021,12 @@ object LocalPreferences {
                     picture = MutableStateFlow(picture),
                     signPolicy = signPolicy,
                     didBackup = didBackup,
+                    scope = context.amber.applicationIOScope,
+                    appContext = context.applicationContext,
                 )
             accountCache.put(npub, account)
-            if (npub in Amber.instance.keystoreFailedAccounts.value) {
-                Amber.instance.keystoreFailedAccounts.value -= npub
+            if (npub in context.amber.keystoreFailedAccounts.value) {
+                context.amber.keystoreFailedAccounts.value -= npub
             }
             return account
         }

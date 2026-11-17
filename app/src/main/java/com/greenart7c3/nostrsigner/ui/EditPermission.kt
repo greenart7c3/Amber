@@ -41,7 +41,6 @@ import androidx.compose.ui.text.toLowerCase
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.common.SignerType
 import com.greenart7c3.nostrsigner.commonsui.Permission
@@ -86,6 +85,8 @@ fun EditPermission(
     selectedPackage: String,
     navController: NavController,
 ) {
+    val accountRepository = LocalAccountRepository.current
+    val settingsStore = LocalSettingsStore.current
     val clipboardManager = LocalClipboard.current
     val permissions = remember {
         mutableStateListOf<ApplicationPermissionsEntity>()
@@ -103,14 +104,14 @@ fun EditPermission(
     }
     val secret = if (checked) "&secret=${applicationData.secret}" else ""
     var bunkerUri by remember {
-        val relayString = Amber.instance.settings.defaultRelays.joinToString(separator = "&") { "relay=${it.url}" }
+        val relayString = settingsStore.settings.defaultRelays.joinToString(separator = "&") { "relay=${it.url}" }
         mutableStateOf("bunker://${account.hexKey}?$relayString$secret")
     }
     var connectionPubKey by remember { mutableStateOf(account.hexKey) }
 
     LaunchedEffect(selectedPackage) {
         val result = withContext(Dispatchers.IO) {
-            val dao = Amber.instance.dao(account.npub)
+            val dao = accountRepository.dao(account.npub)
             dao.updateExpiredPermissions(TimeUtils.now())
             val perms = dao.getAllByKey(selectedPackage)
                 .sortedBy { "${it.type}-${it.kind}" }
@@ -142,7 +143,7 @@ fun EditPermission(
             },
         ) {
             scope.launch(Dispatchers.IO) {
-                Amber.instance.dao(account.npub)
+                accountRepository.dao(account.npub)
                     .deletePermissions(applicationData.key)
 
                 withContext(Dispatchers.Main) {
@@ -232,7 +233,7 @@ fun EditPermission(
                         }
                         permissions.addAll(newPermissions)
                         scope.launch(Dispatchers.IO) {
-                            Amber.instance
+                            accountRepository
                                 .dao(account.npub)
                                 .insertPermissions(newPermissions)
                         }
@@ -262,7 +263,7 @@ fun EditPermission(
                     }
 
                     scope.launch(Dispatchers.IO) {
-                        Amber.instance
+                        accountRepository
                             .dao(account.npub)
                             .insertPermissions(listOf(updated))
                     }

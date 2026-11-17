@@ -26,7 +26,6 @@ import androidx.core.content.FileProvider
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.compose.collectAsLazyPagingItems
-import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.commonsui.Res
 import com.greenart7c3.nostrsigner.commonsui.clear_logs
 import com.greenart7c3.nostrsigner.commonsui.export_logs
@@ -50,6 +49,7 @@ fun LogsScreen(
 ) {
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
+    val accountRepository = LocalAccountRepository.current
     val pager =
         Pager(
             PagingConfig(
@@ -57,7 +57,7 @@ fun LogsScreen(
                 enablePlaceholders = false,
             ),
         ) {
-            Amber.instance.getLogDatabase(account.npub).dao().getLogsPaging()
+            accountRepository.getLogDatabase(account.npub).dao().getLogsPaging()
         }
 
     val lazyPagingItems = pager.flow.collectAsLazyPagingItems()
@@ -81,7 +81,7 @@ fun LogsScreen(
                     onClick = {
                         scope.launch(Dispatchers.IO) {
                             val logs =
-                                Amber.instance
+                                accountRepository
                                     .getLogDatabase(account.npub)
                                     .dao()
                                     .getLogs()
@@ -125,7 +125,7 @@ fun LogsScreen(
                     modifier = Modifier.weight(1f),
                     onClick = {
                         scope.launch(Dispatchers.IO) {
-                            Amber.instance.getLogDatabase(account.npub).dao().clearLogs()
+                            accountRepository.getLogDatabase(account.npub).dao().clearLogs()
                         }
                     },
                     text = stringResource(Res.string.clear_logs),

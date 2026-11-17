@@ -1,5 +1,8 @@
 package com.greenart7c3.nostrsigner.ui.components
 
+import android.app.Activity
+import android.app.NotificationManager
+import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -28,8 +31,8 @@ import androidx.compose.ui.text.capitalize
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.toLowerCase
 import androidx.compose.ui.unit.dp
-import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.LocalPreferences
+import com.greenart7c3.nostrsigner.amber
 import com.greenart7c3.nostrsigner.common.EncryptionType
 import com.greenart7c3.nostrsigner.common.SignerType
 import com.greenart7c3.nostrsigner.common.nip44v3Kind
@@ -64,13 +67,16 @@ import com.greenart7c3.nostrsigner.models.TagArrayEncryptedDataKind
 import com.greenart7c3.nostrsigner.service.AmberUtils
 import com.greenart7c3.nostrsigner.service.ApplicationNameCache
 import com.greenart7c3.nostrsigner.service.BunkerRequestUtils
-import com.greenart7c3.nostrsigner.service.EventNotificationConsumer
 import com.greenart7c3.nostrsigner.service.MultiEventScreenIntents
 import com.greenart7c3.nostrsigner.service.RelayUrlUtils
 import com.greenart7c3.nostrsigner.service.isBlockedByAuthWhitelist
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
 import com.greenart7c3.nostrsigner.service.relayAuthRememberType
 import com.greenart7c3.nostrsigner.service.toShortenHex
+import com.greenart7c3.nostrsigner.ui.LocalAccountRepository
+import com.greenart7c3.nostrsigner.ui.LocalAppScope
+import com.greenart7c3.nostrsigner.ui.LocalRelayClient
+import com.greenart7c3.nostrsigner.ui.LocalSettingsStore
 import com.greenart7c3.nostrsigner.ui.RememberType
 import com.greenart7c3.nostrsigner.ui.theme.AmberPreview
 import com.greenart7c3.nostrsigner.ui.theme.ThemePreviews
@@ -128,6 +134,12 @@ fun BunkerMultiEventHomeScreen(
     accountParam: Account,
     onLoading: (Boolean) -> Unit,
 ) {
+    val bunkerResponder = LocalContext.current.amber.bunkerResponder
+    val accountRepository = LocalAccountRepository.current
+    val settingsStore = LocalSettingsStore.current
+    val relayClient = LocalRelayClient.current
+    val appScope = LocalAppScope.current
+    val activity = LocalActivity.current
     val context = LocalContext.current
     // A connect needs the single screen's account choice and replace prompt, so
     // it is never part of a batch: it stays queued for its own screen.
@@ -151,7 +163,7 @@ fun BunkerMultiEventHomeScreen(
         // checkedStates holds the per-request decision: true = Approve, false = Deny.
         // It is shared by every open Amber screen, so set only this batch's keys
         // instead of clearing an intent batch's choices on another screen.
-        batchRequests.forEach { MultiEventScreenIntents.checkedStates[it.queueKey] = !isBlockedByAuthWhitelist(it.signedEvent) }
+        batchRequests.forEach { MultiEventScreenIntents.checkedStates[it.queueKey] = !isBlockedByAuthWhitelist(it.signedEvent, settingsStore.settings.authWhitelist) }
     }
 
     // Skipped in previews: encrypted storage and the Amber singleton don't
@@ -167,7 +179,7 @@ fun BunkerMultiEventHomeScreen(
                     } ?: return@forEach
 
                     val cacheKey = "${account.npub.toShortenHex()}-${appKey.key}"
-                    val app = Amber.instance.getDatabase(account.npub).dao().getByKey(appKey.key)
+                    val app = accountRepository.getDatabase(account.npub).dao().getByKey(appKey.key)
                     val name = ApplicationNameCache[cacheKey]
                         ?: app?.application?.name?.let(::sanitizeAppName)?.ifBlank { null }?.also { ApplicationNameCache[cacheKey] = it }
                     val default = appInfo(appKey)
@@ -233,7 +245,7 @@ fun BunkerMultiEventHomeScreen(
                                 approved = groupApproved,
                                 expanded = expanded,
                                 onApproveChanged = { approve ->
-                                    MultiEventScreenIntents.checkedStates.putAll(groupItems.associate { it.queueKey to (approve && !isBlockedByAuthWhitelist(it.signedEvent)) })
+                                    MultiEventScreenIntents.checkedStates.putAll(groupItems.associate { it.queueKey to (approve && !isBlockedByAuthWhitelist(it.signedEvent, settingsStore.settings.authWhitelist)) })
                                 },
                                 onExpandToggle = {
                                     expandedGroups[groupKey] = !(expandedGroups[groupKey] ?: false)
@@ -277,18 +289,18 @@ fun BunkerMultiEventHomeScreen(
             text = stringResource(Res.string.confirm),
             onClick = {
                 onLoading(true)
-                Amber.instance.applicationIOScope.launch(Dispatchers.IO) {
+                appScope.launch(Dispatchers.IO) {
                     try {
-                        reconnectToRelays()
+                        relayClient.checkForNewRelaysAndUpdateAllFilters()
                         val closeApp = batchRequests.any { it.closeApplication }
                         // Only this batch's requests: a connect queued meanwhile stays
                         // pending, with its notification, for the connect screen.
-                        val notificationManager = EventNotificationConsumer(context).notificationManager()
+                        val notificationManager = context.getSystemService(NotificationManager::class.java)
                         batchRequests.forEach {
                             BunkerRequestUtils.remove(it)
                             notificationManager.cancel(it.queueKey.hashCode())
                         }
-                        finishActivity(closeApp)
+                        finishActivity(activity, closeApp)
                         for (request in batchRequests) {
                             val thisAccount =
                                 if (request.currentAccount.isNotBlank()) {
@@ -301,8 +313,8 @@ fun BunkerMultiEventHomeScreen(
                                 } ?: continue
 
                             val localKey = request.localKey
-                            val dao = Amber.instance.dao(thisAccount.npub)
-                            val historyDatabase = Amber.instance.getHistoryDatabase(thisAccount.npub)
+                            val dao = accountRepository.dao(thisAccount.npub)
+                            val historyDatabase = accountRepository.getHistoryDatabase(thisAccount.npub)
                             val savedApplication = dao.getByKey(localKey)
 
                             // A queued request whose app row is gone was revoked
@@ -311,9 +323,10 @@ fun BunkerMultiEventHomeScreen(
                             if (savedApplication == null) {
                                 BunkerRequestUtils.remove(request)
                                 AmberUtils.sendBunkerError(
+                                    bunkerResponder,
                                     account = thisAccount,
                                     bunkerRequest = request,
-                                    relays = BunkerRequestUtils.responseRelays(request, null, Amber.instance.settings.defaultRelays),
+                                    relays = BunkerRequestUtils.responseRelays(request, null, settingsStore.settings.defaultRelays),
                                     closeApplication = request.closeApplication,
                                     onLoading = {},
                                 )
@@ -322,7 +335,7 @@ fun BunkerMultiEventHomeScreen(
 
                             // A relay outside the auth whitelist is rejected without
                             // remembering it, as on the single screen.
-                            val blockedByWhitelist = isBlockedByAuthWhitelist(request.signedEvent)
+                            val blockedByWhitelist = isBlockedByAuthWhitelist(request.signedEvent, settingsStore.settings.authWhitelist)
                             val isApproved = !blockedByWhitelist && (MultiEventScreenIntents.checkedStates[request.queueKey] ?: true)
                             val requestType = nip46SignerType(request.request.method)
                             val groupKey = AppRequestGroupKey(request.appKey, request.requestGroupKey())
@@ -357,9 +370,9 @@ fun BunkerMultiEventHomeScreen(
                                         kind = localEvent.kind,
                                         value = isApproved,
                                         rememberType = relayRemember,
-                                        account = thisAccount,
                                         relay = signRelay,
                                         encryptedData = request.encryptedData,
+                                        dao = accountRepository.dao(thisAccount.npub),
                                     )
                                 }
 
@@ -383,7 +396,7 @@ fun BunkerMultiEventHomeScreen(
                                 BunkerRequestUtils.remove(request)
 
                                 if (isApproved) {
-                                    BunkerRequestUtils.sendBunkerResponse(
+                                    bunkerResponder.sendBunkerResponse(
                                         thisAccount,
                                         request,
                                         BunkerResponse(request.request.id, localEvent.toJson(), null),
@@ -393,6 +406,7 @@ fun BunkerMultiEventHomeScreen(
                                     )
                                 } else {
                                     AmberUtils.sendBunkerError(
+                                        bunkerResponder,
                                         account = thisAccount,
                                         bunkerRequest = request,
                                         relays = savedApplication.application.relays,
@@ -415,9 +429,9 @@ fun BunkerMultiEventHomeScreen(
                                         permissionKind,
                                         isApproved,
                                         rememberType,
-                                        thisAccount,
                                         encryptedData = request.encryptedData,
                                         decryptTypeScope = decryptTypeScope,
+                                        dao = accountRepository.dao(thisAccount.npub),
                                     )
                                 }
 
@@ -446,7 +460,7 @@ fun BunkerMultiEventHomeScreen(
                                     val signature = request.encryptedData?.result
                                     if (signature != null) {
                                         BunkerRequestUtils.remove(request)
-                                        BunkerRequestUtils.sendBunkerResponse(
+                                        bunkerResponder.sendBunkerResponse(
                                             thisAccount,
                                             request,
                                             BunkerResponse(request.request.id, signature, null),
@@ -458,6 +472,7 @@ fun BunkerMultiEventHomeScreen(
                                 } else {
                                     BunkerRequestUtils.remove(request)
                                     AmberUtils.sendBunkerError(
+                                        bunkerResponder,
                                         account = thisAccount,
                                         bunkerRequest = request,
                                         relays = savedApplication.application.relays,
@@ -510,6 +525,7 @@ private fun BunkerRequestCard(
     approved: Boolean,
     onApproveChanged: (Boolean) -> Unit,
 ) {
+    val settingsStore = LocalSettingsStore.current
     val type = nip46SignerType(bunkerRequest.request.method)
     var showDetails by remember { mutableStateOf(false) }
     val hasDetails = (type == SignerType.SIGN_EVENT && bunkerRequest.signedEvent != null) ||
@@ -619,7 +635,7 @@ private fun BunkerRequestCard(
 
             signingAs?.let { SigningAs(it) }
 
-            if (isBlockedByAuthWhitelist(bunkerRequest.signedEvent)) {
+            if (isBlockedByAuthWhitelist(bunkerRequest.signedEvent, settingsStore.settings.authWhitelist)) {
                 // Always rejected on confirm, as on the single screen.
                 Text(
                     text = stringResource(Res.string.relay_not_in_auth_whitelist),
@@ -661,16 +677,11 @@ private fun BunkerRequestCard(
     }
 }
 
-private fun finishActivity(closeApp: Boolean) {
-    val activity = Amber.instance.getMainActivity()
+private fun finishActivity(activity: Activity?, closeApp: Boolean) {
     activity?.intent = null
     if (closeApp) {
         activity?.finishAndRemoveTask()
     }
-}
-
-private suspend fun reconnectToRelays() {
-    Amber.instance.checkForNewRelaysAndUpdateAllFilters()
 }
 
 private const val PREVIEW_LOCAL_KEY = "460c25e682fda7832b52d1f22d3d22b3176d972f60dcdc3212ed8c92ef85065c"

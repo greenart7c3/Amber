@@ -56,7 +56,6 @@ class NotificationSinceClampTest {
         every { amber.dao(any()) } answers { CachingApplicationDao(dao) }
         val cache = LruCache<String, Long>(512)
         every { amber.notificationCache } returns cache
-        installAmberInstance(amber)
         mockkObject(LocalPreferences)
         val account = newTestAccount(scope)
         coEvery { LocalPreferences.allAccounts(any()) } returns listOf(account)
@@ -68,7 +67,7 @@ class NotificationSinceClampTest {
         val before = TimeUtils.now()
         cache.put("legit", before - 30)
         cache.put("attacker", before + 300)
-        NotificationSubscription(client, mockk(relaxed = true)).updateFilter()
+        NotificationSubscription(client, mockk(relaxed = true), settingsStore = amber, accountRepository = amber, bunkerResponder = mockk(relaxed = true), scope = amber.applicationIOScope, notificationCache = cache).updateFilter()
         val after = TimeUtils.now()
 
         val sinces = captured.flatMap { subs -> subs.values.flatten().mapNotNull { it.since } }

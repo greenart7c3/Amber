@@ -29,6 +29,7 @@ import androidx.compose.ui.unit.sp
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.LocalPreferences
+import com.greenart7c3.nostrsigner.amber
 import com.greenart7c3.nostrsigner.common.SignerType
 import com.greenart7c3.nostrsigner.common.nip44v3Kind
 import com.greenart7c3.nostrsigner.common.nip44v3Scope
@@ -51,7 +52,6 @@ import com.greenart7c3.nostrsigner.database.isAllRelaysGrant
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.AmberBunkerRequest
 import com.greenart7c3.nostrsigner.models.toPermissionType
-import com.greenart7c3.nostrsigner.service.BunkerRequestUtils
 import com.greenart7c3.nostrsigner.service.IntentUtils
 import com.greenart7c3.nostrsigner.service.RelayUrlUtils
 import com.greenart7c3.nostrsigner.service.isBlockedByAuthWhitelist
@@ -92,6 +92,7 @@ fun BunkerSingleEventHomeScreen(
     account: Account,
     onLoading: (Boolean) -> Unit,
 ) {
+    val bunkerResponder = LocalContext.current.amber.bunkerResponder
     val settingsStore = LocalSettingsStore.current
     val accountRepository = LocalAccountRepository.current
     val appScope = LocalAppScope.current
@@ -136,7 +137,7 @@ fun BunkerSingleEventHomeScreen(
                 onAccept = {
                     val result = "pong"
 
-                    BunkerRequestUtils.sendResult(
+                    bunkerResponder.sendResult(
                         account = account,
                         key = key,
                         response = result,
@@ -151,7 +152,7 @@ fun BunkerSingleEventHomeScreen(
                     )
                 },
                 onReject = {
-                    BunkerRequestUtils.sendRejection(
+                    bunkerResponder.sendRejection(
                         key = key,
                         account = account,
                         bunkerRequest = bunkerRequest,
@@ -194,7 +195,7 @@ fun BunkerSingleEventHomeScreen(
                                 onClick = {
                                     val result = bunkerRequest.nostrConnectSecret.ifBlank { "ack" }
 
-                                    BunkerRequestUtils.sendResult(
+                                    bunkerResponder.sendResult(
                                         oldKey = existingAppKey,
                                         account = selectedAccount,
                                         key = key,
@@ -218,7 +219,7 @@ fun BunkerSingleEventHomeScreen(
                                     onClick = {
                                         val result = bunkerRequest.nostrConnectSecret.ifBlank { "ack" }
 
-                                        BunkerRequestUtils.sendResult(
+                                        bunkerResponder.sendResult(
                                             account = selectedAccount,
                                             key = key,
                                             response = result,
@@ -280,7 +281,7 @@ fun BunkerSingleEventHomeScreen(
                     appScope.launch {
                         val existing = connectionToReplace(accountRepository.getDatabase(acc.npub).dao(), bunkerRequest, key)
                         if (existing == null) {
-                            BunkerRequestUtils.sendResult(
+                            bunkerResponder.sendResult(
                                 account = acc,
                                 key = key,
                                 response = result,
@@ -303,7 +304,7 @@ fun BunkerSingleEventHomeScreen(
                     }
                 },
                 onReject = {
-                    BunkerRequestUtils.sendRejection(
+                    bunkerResponder.sendRejection(
                         key = key,
                         account = account,
                         bunkerRequest = bunkerRequest,
@@ -324,7 +325,7 @@ fun BunkerSingleEventHomeScreen(
                 onAccept = { permissions, signPolicy, closeApplication, rememberType ->
                     val result = account.hexKey
 
-                    BunkerRequestUtils.sendResult(
+                    bunkerResponder.sendResult(
                         account = account,
                         key = key,
                         response = result,
@@ -339,7 +340,7 @@ fun BunkerSingleEventHomeScreen(
                     )
                 },
                 onReject = {
-                    BunkerRequestUtils.sendRejection(
+                    bunkerResponder.sendRejection(
                         key = key,
                         account = account,
                         bunkerRequest = bunkerRequest,
@@ -384,7 +385,7 @@ fun BunkerSingleEventHomeScreen(
                 type = type,
                 account = account,
                 onAccept = { rememberType, scope ->
-                    BunkerRequestUtils.sendResult(
+                    bunkerResponder.sendResult(
                         account = account,
                         key = key,
                         response = bunkerRequest.encryptedData?.result ?: "",
@@ -400,7 +401,7 @@ fun BunkerSingleEventHomeScreen(
                     )
                 },
                 onReject = { rememberType, scope ->
-                    BunkerRequestUtils.sendRejection(
+                    bunkerResponder.sendRejection(
                         key = key,
                         account = account,
                         bunkerRequest = bunkerRequest,
@@ -448,7 +449,7 @@ fun BunkerSingleEventHomeScreen(
                 onAccept = { rememberType, scope ->
                     val result = bunkerRequest.encryptedData?.result ?: ""
 
-                    BunkerRequestUtils.sendResult(
+                    bunkerResponder.sendResult(
                         account = account,
                         key = key,
                         response = result,
@@ -464,7 +465,7 @@ fun BunkerSingleEventHomeScreen(
                     )
                 },
                 onReject = { rememberType, scope ->
-                    BunkerRequestUtils.sendRejection(
+                    bunkerResponder.sendRejection(
                         key = key,
                         account = account,
                         bunkerRequest = bunkerRequest,
@@ -512,7 +513,7 @@ fun BunkerSingleEventHomeScreen(
                 onAccept = { rememberType, scope ->
                     val result = bunkerRequest.encryptedData?.result ?: ""
 
-                    BunkerRequestUtils.sendResult(
+                    bunkerResponder.sendResult(
                         account = account,
                         key = key,
                         response = result,
@@ -528,7 +529,7 @@ fun BunkerSingleEventHomeScreen(
                     )
                 },
                 onReject = { rememberType, scope ->
-                    BunkerRequestUtils.sendRejection(
+                    bunkerResponder.sendRejection(
                         key = key,
                         account = account,
                         bunkerRequest = bunkerRequest,
@@ -576,7 +577,7 @@ fun BunkerSingleEventHomeScreen(
                 onAccept = { rememberType, scope ->
                     val result = bunkerRequest.encryptedData?.result ?: ""
 
-                    BunkerRequestUtils.sendResult(
+                    bunkerResponder.sendResult(
                         account = account,
                         key = key,
                         response = result,
@@ -592,7 +593,7 @@ fun BunkerSingleEventHomeScreen(
                     )
                 },
                 onReject = { rememberType, scope ->
-                    BunkerRequestUtils.sendRejection(
+                    bunkerResponder.sendRejection(
                         key = key,
                         account = account,
                         bunkerRequest = bunkerRequest,
@@ -675,7 +676,7 @@ fun BunkerSingleEventHomeScreen(
                             relayUrl = relayUrl,
                             rememberType = rememberType,
                         )
-                        BunkerRequestUtils.sendResult(
+                        bunkerResponder.sendResult(
                             account = account,
                             key = key,
                             response = event.toJson(),
@@ -697,7 +698,7 @@ fun BunkerSingleEventHomeScreen(
                             relayUrl = relayUrl,
                             rememberType = rememberType,
                         )
-                        BunkerRequestUtils.sendRejection(
+                        bunkerResponder.sendRejection(
                             key = key,
                             account = account,
                             bunkerRequest = bunkerRequest,
@@ -738,7 +739,7 @@ fun BunkerSingleEventHomeScreen(
                             return@BunkerEventData
                         }
 
-                        BunkerRequestUtils.sendResult(
+                        bunkerResponder.sendResult(
                             account = account,
                             key = key,
                             response = event.toJson(),
@@ -753,7 +754,7 @@ fun BunkerSingleEventHomeScreen(
                         )
                     },
                     onReject = {
-                        BunkerRequestUtils.sendRejection(
+                        bunkerResponder.sendRejection(
                             key = key,
                             account = account,
                             bunkerRequest = bunkerRequest,
@@ -802,7 +803,7 @@ fun BunkerSingleEventHomeScreen(
                             val result = bunkerRequest.encryptedData?.result ?: ""
                             // SPECIFIC ⇒ kind-scoped grant; ALL ⇒ broad grant (kind=null).
                             val grantedKind = if (scope == DecryptTypeScope.SPECIFIC) v3Kind else null
-                            BunkerRequestUtils.sendResult(
+                            bunkerResponder.sendResult(
                                 account = account,
                                 key = key,
                                 response = result,
@@ -819,7 +820,7 @@ fun BunkerSingleEventHomeScreen(
                         },
                         onReject = { rememberType, scope ->
                             val grantedKind = if (scope == DecryptTypeScope.SPECIFIC) v3Kind else null
-                            BunkerRequestUtils.sendRejection(
+                            bunkerResponder.sendRejection(
                                 key = key,
                                 account = account,
                                 bunkerRequest = bunkerRequest,
@@ -856,7 +857,7 @@ fun BunkerSingleEventHomeScreen(
                                     bunkerRequest.encryptedData?.result ?: ""
                                 }
 
-                            BunkerRequestUtils.sendResult(
+                            bunkerResponder.sendResult(
                                 account = account,
                                 key = key,
                                 response = result,
@@ -872,7 +873,7 @@ fun BunkerSingleEventHomeScreen(
                             )
                         },
                         onReject = { rememberType, scope ->
-                            BunkerRequestUtils.sendRejection(
+                            bunkerResponder.sendRejection(
                                 key = key,
                                 account = account,
                                 bunkerRequest = bunkerRequest,
@@ -908,7 +909,7 @@ fun BunkerSingleEventHomeScreen(
                             appScope.launch(Dispatchers.IO) {
                                 try {
                                     val result = account.signPsbt(psbtHex)
-                                    BunkerRequestUtils.sendResult(
+                                    bunkerResponder.sendResult(
                                         account = account,
                                         key = key,
                                         response = result,
@@ -934,7 +935,7 @@ fun BunkerSingleEventHomeScreen(
                             }
                         },
                         onReject = {
-                            BunkerRequestUtils.sendRejection(
+                            bunkerResponder.sendRejection(
                                 key = key,
                                 account = account,
                                 bunkerRequest = bunkerRequest,

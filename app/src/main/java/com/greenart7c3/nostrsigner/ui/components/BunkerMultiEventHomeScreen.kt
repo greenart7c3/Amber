@@ -32,6 +32,7 @@ import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.toLowerCase
 import androidx.compose.ui.unit.dp
 import com.greenart7c3.nostrsigner.LocalPreferences
+import com.greenart7c3.nostrsigner.amber
 import com.greenart7c3.nostrsigner.common.EncryptionType
 import com.greenart7c3.nostrsigner.common.SignerType
 import com.greenart7c3.nostrsigner.common.nip44v3Kind
@@ -133,6 +134,7 @@ fun BunkerMultiEventHomeScreen(
     accountParam: Account,
     onLoading: (Boolean) -> Unit,
 ) {
+    val bunkerResponder = LocalContext.current.amber.bunkerResponder
     val accountRepository = LocalAccountRepository.current
     val settingsStore = LocalSettingsStore.current
     val relayClient = LocalRelayClient.current
@@ -321,6 +323,7 @@ fun BunkerMultiEventHomeScreen(
                             if (savedApplication == null) {
                                 BunkerRequestUtils.remove(request)
                                 AmberUtils.sendBunkerError(
+                                    bunkerResponder,
                                     account = thisAccount,
                                     bunkerRequest = request,
                                     relays = BunkerRequestUtils.responseRelays(request, null, settingsStore.settings.defaultRelays),
@@ -394,7 +397,7 @@ fun BunkerMultiEventHomeScreen(
                                 BunkerRequestUtils.remove(request)
 
                                 if (isApproved) {
-                                    BunkerRequestUtils.sendBunkerResponse(
+                                    bunkerResponder.sendBunkerResponse(
                                         thisAccount,
                                         request,
                                         BunkerResponse(request.request.id, localEvent.toJson(), null),
@@ -404,6 +407,7 @@ fun BunkerMultiEventHomeScreen(
                                     )
                                 } else {
                                     AmberUtils.sendBunkerError(
+                                        bunkerResponder,
                                         account = thisAccount,
                                         bunkerRequest = request,
                                         relays = savedApplication.application.relays,
@@ -458,7 +462,7 @@ fun BunkerMultiEventHomeScreen(
                                     val signature = request.encryptedData?.result
                                     if (signature != null) {
                                         BunkerRequestUtils.remove(request)
-                                        BunkerRequestUtils.sendBunkerResponse(
+                                        bunkerResponder.sendBunkerResponse(
                                             thisAccount,
                                             request,
                                             BunkerResponse(request.request.id, signature, null),
@@ -470,6 +474,7 @@ fun BunkerMultiEventHomeScreen(
                                 } else {
                                     BunkerRequestUtils.remove(request)
                                     AmberUtils.sendBunkerError(
+                                        bunkerResponder,
                                         account = thisAccount,
                                         bunkerRequest = request,
                                         relays = savedApplication.application.relays,

@@ -41,6 +41,22 @@ import org.junit.Before
 import org.junit.Test
 
 class EventNotificationConsumerTest {
+    // A real responder over the mocked Application, spied so tests can stub its replies.
+    private val bunkerResponder by lazy {
+        spyk(
+            BunkerResponder(
+                amber,
+                amber,
+                amber,
+                amber,
+                object : CoroutineScope {
+                    override val coroutineContext get() = amber.applicationIOScope.coroutineContext
+                },
+                mockk(relaxed = true),
+            ) { null },
+        )
+    }
+
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private lateinit var consumer: EventNotificationConsumer
     private lateinit var bunkerEventDao: BunkerEventDao
@@ -83,6 +99,7 @@ class EventNotificationConsumerTest {
                     override val coroutineContext get() = amber.applicationIOScope.coroutineContext
                 },
                 notificationCache = amber.notificationCache,
+                bunkerResponder = bunkerResponder,
             ) { amber.notificationSubscription.updateFilter() },
         )
         every { consumer.saveLog(any(), any(), any()) } returns Unit
@@ -235,7 +252,7 @@ class EventNotificationConsumerTest {
             val responses = mutableListOf<BunkerResponse>()
             val attempts = mutableListOf<Int>()
             coEvery {
-                BunkerRequestUtils.sendBunkerResponse(any(), any(), any(), any(), any(), any(), any())
+                bunkerResponder.sendBunkerResponse(any(), any(), any(), any(), any(), any(), any())
             } answers {
                 responses += arg<BunkerResponse>(2)
                 attempts += arg<Int>(6)
@@ -353,7 +370,7 @@ class EventNotificationConsumerTest {
             every { amber.notificationCache[any()] } returns null
             val responses = mutableListOf<BunkerResponse>()
             coEvery {
-                BunkerRequestUtils.sendBunkerResponse(any(), any(), any(), any(), any(), any(), any())
+                bunkerResponder.sendBunkerResponse(any(), any(), any(), any(), any(), any(), any())
             } answers {
                 responses += arg<BunkerResponse>(2)
             }

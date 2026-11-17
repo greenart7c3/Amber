@@ -104,6 +104,7 @@ class EventNotificationConsumer(
     private val accountRepository: AccountRepository,
     private val scope: CoroutineScope,
     private val notificationCache: LruCache<String, Long>,
+    private val bunkerResponder: BunkerResponder,
     // Refreshes the NIP-46 subscription after a connection is added or removed.
     private val onConnectionsChanged: suspend () -> Unit,
 ) {
@@ -301,7 +302,7 @@ class EventNotificationConsumer(
                     isNostrConnectUri = false,
                     signerPrivKey = connectionPrivKey,
                 )
-                BunkerRequestUtils.sendBunkerResponse(
+                bunkerResponder.sendBunkerResponse(
                     acc,
                     request,
                     BunkerResponse(bunkerRequest.id, "", "Amber is locked. Unlock your device and try again."),
@@ -393,7 +394,7 @@ class EventNotificationConsumer(
                 isNostrConnectUri = false,
                 signerPrivKey = connectionPrivKey,
             )
-            BunkerRequestUtils.sendBunkerResponse(
+            bunkerResponder.sendBunkerResponse(
                 acc,
                 rejection,
                 BunkerResponse(bunkerRequest.id, "", "refusing a multi-relay auth event"),
@@ -440,7 +441,7 @@ class EventNotificationConsumer(
             // Don't fail silently: reply to the client with an error so it
             // stops waiting for a response it will never otherwise receive.
             val errorRelays = responseRelay.ifEmpty { settingsStore.settings.defaultRelays }
-            BunkerRequestUtils.sendBunkerResponse(
+            bunkerResponder.sendBunkerResponse(
                 acc,
                 request,
                 BunkerResponse(bunkerRequest.id, "", "Unrecognized method: ${bunkerRequest.method}"),
@@ -470,7 +471,7 @@ class EventNotificationConsumer(
             }
         if (pubKey == null) {
             saveLog("Invalid params for request ${bunkerRequest.id} method ${bunkerRequest.method}", relay.url, acc.npub)
-            BunkerRequestUtils.sendBunkerResponse(
+            bunkerResponder.sendBunkerResponse(
                 acc,
                 request,
                 BunkerResponse(bunkerRequest.id, "", "invalid params"),
@@ -517,7 +518,7 @@ class EventNotificationConsumer(
                         acc.npub,
                     )
             }
-            BunkerRequestUtils.sendBunkerResponse(
+            bunkerResponder.sendBunkerResponse(
                 account = acc,
                 bunkerRequest = request,
                 bunkerResponse = BunkerResponse(bunkerRequest.id, request.nostrConnectSecret.ifBlank { "ack" }, null),
@@ -541,7 +542,7 @@ class EventNotificationConsumer(
             )
             if (message != null) {
                 saveLog("Connection rejected: $message", relay.url, acc.npub)
-                BunkerRequestUtils.sendBunkerResponse(
+                bunkerResponder.sendBunkerResponse(
                     account = acc,
                     bunkerRequest = request,
                     bunkerResponse = BunkerResponse(bunkerRequest.id, "", message),
@@ -557,7 +558,7 @@ class EventNotificationConsumer(
         val relays = permission?.application?.relays ?: applicationWithSecret?.application?.relays ?: responseRelay
         if (permission == null && applicationWithSecret == null) {
             saveLog("No permission found for ${event.pubKey}", relay.url, acc.npub)
-            BunkerRequestUtils.sendBunkerResponse(
+            bunkerResponder.sendBunkerResponse(
                 account = acc,
                 bunkerRequest = request,
                 bunkerResponse = BunkerResponse(bunkerRequest.id, "", "no permission"),
@@ -598,7 +599,7 @@ class EventNotificationConsumer(
         if (type == SignerType.SWITCH_RELAYS) {
             permission?.let {
                 val defaultRelays = settingsStore.settings.defaultRelays
-                BunkerRequestUtils.sendBunkerResponse(
+                bunkerResponder.sendBunkerResponse(
                     account = acc,
                     bunkerRequest = request,
                     bunkerResponse = BunkerResponse(bunkerRequest.id, if (defaultRelays.isEmpty()) null else "[${defaultRelays.joinToString(separator = ",") { "\"${it.url}\"" }}]", null),
@@ -626,7 +627,7 @@ class EventNotificationConsumer(
 
         if (type == SignerType.LOGOUT) {
             permission?.let {
-                BunkerRequestUtils.sendBunkerResponse(
+                bunkerResponder.sendBunkerResponse(
                     account = acc,
                     bunkerRequest = request,
                     bunkerResponse = BunkerResponse(bunkerRequest.id, "ack", null),
@@ -637,7 +638,7 @@ class EventNotificationConsumer(
                             scope.launch {
                                 dao.delete(permission.application.key)
                                 historyDao.deleteHistory(permission.application.key)
-                                BunkerRequestUtils.removeAllForClient(permission.application.key)
+                                BunkerRequestUtils.removeAllForClient(applicationContext, permission.application.key)
                                 onConnectionsChanged()
                             }
                         }
@@ -678,7 +679,7 @@ class EventNotificationConsumer(
                         acc.npub,
                     )
                 }
-                BunkerRequestUtils.sendBunkerResponse(
+                bunkerResponder.sendBunkerResponse(
                     account = acc,
                     bunkerRequest = request,
                     bunkerResponse = BunkerResponse(bunkerRequest.id, "", "user rejected"),
@@ -703,7 +704,7 @@ class EventNotificationConsumer(
                     acc.npub,
                 )
             }
-            BunkerRequestUtils.sendBunkerResponse(
+            bunkerResponder.sendBunkerResponse(
                 account = acc,
                 bunkerRequest = request,
                 bunkerResponse = BunkerResponse(bunkerRequest.id, acc.hexKey, null),
@@ -727,7 +728,7 @@ class EventNotificationConsumer(
                 val validationError = validateNip44v3Request(type, kind, scope, data, pubKey, acc)
                 if (validationError != null) {
                     saveLog("Rejecting invalid NIP-44 v3 request: $validationError", relay.url, acc.npub)
-                    BunkerRequestUtils.sendBunkerResponse(
+                    bunkerResponder.sendBunkerResponse(
                         account = acc,
                         bunkerRequest = request,
                         bunkerResponse = BunkerResponse(bunkerRequest.id, "", validationError),
@@ -767,7 +768,7 @@ class EventNotificationConsumer(
                 if (localCursor.moveToFirst()) {
                     if (localCursor.getColumnIndex("rejected") > -1) {
                         saveLog("User rejected request ${bunkerRequest.id}", relay.url, acc.npub)
-                        BunkerRequestUtils.sendBunkerResponse(
+                        bunkerResponder.sendBunkerResponse(
                             account = acc,
                             bunkerRequest = request,
                             bunkerResponse = BunkerResponse(bunkerRequest.id, "", "user rejected"),
@@ -782,7 +783,7 @@ class EventNotificationConsumer(
                         }
                         val result = localCursor.getString(index)
 
-                        BunkerRequestUtils.sendBunkerResponse(
+                        bunkerResponder.sendBunkerResponse(
                             account = acc,
                             bunkerRequest = request,
                             bunkerResponse = BunkerResponse(bunkerRequest.id, result, null),

@@ -52,9 +52,10 @@ class NotificationSubscription(
     private val accountRepository: AccountRepository,
     private val scope: CoroutineScope,
     private val notificationCache: LruCache<String, Long>,
+    private val bunkerResponder: BunkerResponder,
 ) : RelayConnectionListener {
     private val eventNotificationConsumer =
-        EventNotificationConsumer(appContext, settingsStore, accountRepository, scope, notificationCache) { updateFilter() }
+        EventNotificationConsumer(appContext, settingsStore, accountRepository, scope, notificationCache, bunkerResponder) { updateFilter() }
 
     // Concurrent: mutated in updateFilter/closeAllSubs (coroutines) while relay I/O
     // threads iterate it in onIncomingMessage (containsValue).

@@ -1,6 +1,8 @@
 package com.greenart7c3.nostrsigner.service
 
+import android.app.Activity
 import android.app.NotificationManager
+import android.content.Context
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.SignerActivity
@@ -17,6 +19,9 @@ import com.greenart7c3.nostrsigner.commonsui.Res
 import com.greenart7c3.nostrsigner.commonsui.failed_to_connect_to_tor_orbot
 import com.greenart7c3.nostrsigner.commonsui.getStringBlocking
 import com.greenart7c3.nostrsigner.commonsui.warning
+import com.greenart7c3.nostrsigner.data.AccountRepository
+import com.greenart7c3.nostrsigner.data.RelayClient
+import com.greenart7c3.nostrsigner.data.SettingsStore
 import com.greenart7c3.nostrsigner.database.ApplicationEntity
 import com.greenart7c3.nostrsigner.database.ApplicationPermissionsEntity
 import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
@@ -50,6 +55,7 @@ import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toPersistentList
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -88,33 +94,16 @@ object BunkerRequestUtils {
      * the revoked connection. Cancels the request notifications when the
      * queue empties.
      */
-    fun removeAllForClient(key: String) {
+    fun removeAllForClient(context: Context, key: String) {
         state.update { current ->
             current.filter { it.localKey != key }.toPersistentList()
         }
         if (state.value.isEmpty()) {
-            Amber.instance.getSystemService(NotificationManager::class.java).cancelAll()
+            context.getSystemService(NotificationManager::class.java).cancelAll()
         }
     }
 
     fun getBunkerRequests(): List<AmberBunkerRequest> = state.value
-
-    /**
-     * Removes [bunkerRequest] from the queue once it has been answered. Other requests
-     * that are still waiting for approval are kept, so the notifications and the
-     * activity are only dismissed when the queue is empty.
-     */
-    fun finishRequest(bunkerRequest: AmberBunkerRequest, closeApplication: Boolean) {
-        remove(bunkerRequest)
-        if (state.value.isNotEmpty()) return
-
-        Amber.instance.getSystemService(NotificationManager::class.java).cancelAll()
-        val activity = Amber.instance.getMainActivity()
-        activity?.intent = null
-        if (closeApplication || activity is SignerActivity) {
-            activity?.finishAndRemoveTask()
-        }
-    }
 
     /**
      * Relays to answer [bunkerRequest] on.
@@ -136,6 +125,55 @@ object BunkerRequestUtils {
         return savedRelays?.ifEmpty { defaultRelays } ?: defaultRelays
     }
 
+    fun getDataFromBunker(bunkerRequest: BunkerRequest): String = when (bunkerRequest.method) {
+        "connect" -> "ack"
+        // Client-supplied: a missing or unparsable param yields "" rather than throwing.
+        "sign_event" -> bunkerRequest.params.firstOrNull()?.let { runCatching { AmberEvent.fromJson(it).toEvent().toJson() }.getOrNull() } ?: ""
+        "nip04_encrypt", "nip04_decrypt", "nip44_encrypt", "nip44_decrypt", "decrypt_zap_event" -> bunkerRequest.params.getOrElse(1) { "" }
+        // NIP-44 v3 NIP-46 layout: [pubkey, kind, scope, payload]. For
+        // `nip44v3_encrypt` the payload is base64-encoded plaintext; for
+        // `nip44v3_decrypt` it is the v3 ciphertext.
+        "nip44v3_encrypt", "nip44v3_decrypt" -> bunkerRequest.params.getOrElse(3) { "" }
+        "ping" -> "pong"
+        "sign_psbt" -> bunkerRequest.params.firstOrNull() ?: ""
+        "logout" -> "ack"
+        else -> ""
+    }
+}
+
+/**
+ * Answers bunker requests: signs or refuses, saves the decision, records history and
+ * logs, and publishes the reply. Built from the app dependencies; the request queue
+ * itself stays in [BunkerRequestUtils].
+ */
+class BunkerResponder(
+    // The Application context: notifications and the error notification.
+    private val appContext: Context,
+    private val settingsStore: SettingsStore,
+    private val accountRepository: AccountRepository,
+    private val relayClient: RelayClient,
+    private val scope: CoroutineScope,
+    private val localBunkerRelay: LocalBunkerRelayServer,
+    // The activity showing the requests, if any; finished once the queue empties.
+    private val currentActivity: () -> Activity?,
+) {
+    /**
+     * Removes [bunkerRequest] from the queue once it has been answered. Other requests
+     * that are still waiting for approval are kept, so the notifications and the
+     * activity are only dismissed when the queue is empty.
+     */
+    fun finishRequest(bunkerRequest: AmberBunkerRequest, closeApplication: Boolean) {
+        BunkerRequestUtils.remove(bunkerRequest)
+        if (BunkerRequestUtils.state.value.isNotEmpty()) return
+
+        appContext.getSystemService(NotificationManager::class.java).cancelAll()
+        val activity = currentActivity()
+        activity?.intent = null
+        if (closeApplication || activity is SignerActivity) {
+            activity?.finishAndRemoveTask()
+        }
+    }
+
     suspend fun sendBunkerResponse(
         account: Account,
         bunkerRequest: AmberBunkerRequest,
@@ -148,7 +186,7 @@ object BunkerRequestUtils {
         if (relays.isEmpty()) {
             onDone(true)
             onLoading(false)
-            Amber.instance.getLogDatabase(account.npub).dao().insertLogIfEnabled(
+            accountRepository.getLogDatabase(account.npub).dao().insertLogIfEnabled(
                 LogEntity(
                     id = 0,
                     url = bunkerRequest.localKey,
@@ -160,8 +198,8 @@ object BunkerRequestUtils {
             return
         }
 
-        if (Amber.instance.settings.useProxy) {
-            val isProxyWorking = Amber.instance.isSocksProxyAlive("127.0.0.1", Amber.instance.settings.proxyPort)
+        if (settingsStore.settings.useProxy) {
+            val isProxyWorking = relayClient.isSocksProxyAlive("127.0.0.1", settingsStore.settings.proxyPort)
             if (!isProxyWorking) {
                 ToastManager.toast(getStringBlocking(Res.string.warning), getStringBlocking(Res.string.failed_to_connect_to_tor_orbot))
                 onDone(false)
@@ -170,12 +208,12 @@ object BunkerRequestUtils {
             }
         }
 
-        Amber.instance.applicationIOScope.launch {
+        scope.launch {
             // Never persist the response result — for a decrypt request it is the
             // plaintext. Record only non-sensitive metadata (id + error status).
             val sanitizedResponse = "id=${bunkerResponse.id} ${bunkerResponse.error?.let { "error=$it" } ?: "ok"}"
             relays.forEach { relay ->
-                Amber.instance.getLogDatabase(account.npub).dao().insertLogIfEnabled(
+                accountRepository.getLogDatabase(account.npub).dao().insertLogIfEnabled(
                     LogEntity(
                         id = 0,
                         url = relay.url,
@@ -243,7 +281,7 @@ object BunkerRequestUtils {
         AmberLog.d(Amber.TAG, "Sending response to relays ${relays.map { relay -> relay.url }} type ${bunkerRequest.request.method}")
 
         val success = retryWithBackoff(maxRetries = attempts) {
-            val result = Amber.instance.client.publishAndConfirm(
+            val result = relayClient.client.publishAndConfirm(
                 event = signedEvent,
                 relayList = relays.toSet(),
                 timeoutInSeconds = 5,
@@ -278,25 +316,10 @@ object BunkerRequestUtils {
             onDone(true)
         } else {
             onDone(false)
-            AmberListenerSingleton.showErrorMessage(Amber.instance)
+            AmberListenerSingleton.showErrorMessage(appContext)
             AmberLog.d(Amber.TAG, "Failed response to relays ${relays.map { relay -> relay.url }} type ${bunkerRequest.request.method}")
         }
         onLoading(false)
-    }
-
-    fun getDataFromBunker(bunkerRequest: BunkerRequest): String = when (bunkerRequest.method) {
-        "connect" -> "ack"
-        // Client-supplied: a missing or unparsable param yields "" rather than throwing.
-        "sign_event" -> bunkerRequest.params.firstOrNull()?.let { runCatching { AmberEvent.fromJson(it).toEvent().toJson() }.getOrNull() } ?: ""
-        "nip04_encrypt", "nip04_decrypt", "nip44_encrypt", "nip44_decrypt", "decrypt_zap_event" -> bunkerRequest.params.getOrElse(1) { "" }
-        // NIP-44 v3 NIP-46 layout: [pubkey, kind, scope, payload]. For
-        // `nip44v3_encrypt` the payload is base64-encoded plaintext; for
-        // `nip44v3_decrypt` it is the v3 ciphertext.
-        "nip44v3_encrypt", "nip44v3_decrypt" -> bunkerRequest.params.getOrElse(3) { "" }
-        "ping" -> "pong"
-        "sign_psbt" -> bunkerRequest.params.firstOrNull() ?: ""
-        "logout" -> "ack"
-        else -> ""
     }
 
     fun sendResult(
@@ -318,10 +341,10 @@ object BunkerRequestUtils {
         decryptTypeScope: DecryptTypeScope = DecryptTypeScope.ALL,
     ) {
         onLoading(true)
-        Amber.instance.applicationIOScope.launch {
-            val dao = Amber.instance.dao(account.npub)
-            val historyDatabase = Amber.instance.getHistoryDatabase(account.npub)
-            val defaultRelays = Amber.instance.settings.defaultRelays
+        scope.launch {
+            val dao = accountRepository.dao(account.npub)
+            val historyDatabase = accountRepository.getHistoryDatabase(account.npub)
+            val defaultRelays = settingsStore.settings.defaultRelays
 
             if (oldKey.isNotBlank()) {
                 dao.delete(oldKey)
@@ -354,11 +377,11 @@ object BunkerRequestUtils {
             // the local relay beside the default relays (desktop BunkerEngine
             // does the same), so clients on this device need no public relay.
             val fallbackRelays = if (savedApplication == null && bunkerRequest.request is BunkerRequestConnect) {
-                Amber.instance.localBunkerRelay.newBunkerRelays()
+                localBunkerRelay.newBunkerRelays()
             } else {
                 defaultRelays
             }
-            val relays = responseRelays(bunkerRequest, savedApplication?.application?.relays, fallbackRelays)
+            val relays = BunkerRequestUtils.responseRelays(bunkerRequest, savedApplication?.application?.relays, fallbackRelays)
             val secret = if (bunkerRequest.request is BunkerRequestConnect) bunkerRequest.request.secret ?: "" else ""
 
             if (savedApplication == null && bunkerRequest.request !is BunkerRequestConnect) {
@@ -367,6 +390,7 @@ object BunkerRequestUtils {
                 // revoked connection with fresh grants.
                 finishRequest(bunkerRequest, bunkerRequest.closeApplication)
                 AmberUtils.sendBunkerError(
+                    this@BunkerResponder,
                     account,
                     bunkerRequest,
                     relays,
@@ -488,7 +512,7 @@ object BunkerRequestUtils {
                     )
                 }
                 // check if application has any relay not in saved relays
-                val savedRelays = Amber.instance.getSavedRelays(account)
+                val savedRelays = accountRepository.getSavedRelays(account)
                 if (relays.any { !savedRelays.contains(it) }) {
                     didChangeRelays = true
                 }
@@ -507,7 +531,7 @@ object BunkerRequestUtils {
                 SignerType.NIP44_V3_ENCRYPT,
                 SignerType.SIGN_EVENT,
                 -> response
-                else -> getDataFromBunker(bunkerRequest.request)
+                else -> BunkerRequestUtils.getDataFromBunker(bunkerRequest.request)
             }
             historyDatabase.dao().addHistory(
                 listOf(
@@ -544,9 +568,9 @@ object BunkerRequestUtils {
             // window in which the pool could idle-disconnect the relay and
             // lose any RPC published by the client in the meantime.
             if (type == SignerType.CONNECT) {
-                Amber.instance.checkForNewRelaysAndUpdateAllFilters(didChangeRelays)
+                relayClient.checkForNewRelaysAndUpdateAllFilters(didChangeRelays)
             }
-            Amber.instance.client.connect()
+            relayClient.client.connect()
 
             val signerPrivKey = application.application.localKey
             val bunkerRequestWithKey = if (signerPrivKey.isNotEmpty() && bunkerRequest.signerPrivKey.isEmpty()) {
@@ -561,7 +585,7 @@ object BunkerRequestUtils {
                 application.application.relays.ifEmpty { relays },
                 onLoading,
                 onDone = {
-                    Amber.instance.applicationIOScope.launch {
+                    scope.launch {
                         if (!it) {
                             if (rememberType != RememberType.NEVER) {
                                 if (type == SignerType.SIGN_EVENT) {
@@ -608,10 +632,10 @@ object BunkerRequestUtils {
         decryptTypeScope: DecryptTypeScope = DecryptTypeScope.ALL,
     ) {
         onLoading(true)
-        Amber.instance.applicationIOScope.launch(Dispatchers.IO) {
-            val savedApplication = Amber.instance.dao(account.npub).getByKey(key)
-            val defaultRelays = Amber.instance.settings.defaultRelays
-            val relays = responseRelays(bunkerRequest, savedApplication?.application?.relays, defaultRelays)
+        scope.launch(Dispatchers.IO) {
+            val savedApplication = accountRepository.dao(account.npub).getByKey(key)
+            val defaultRelays = settingsStore.settings.defaultRelays
+            val relays = BunkerRequestUtils.responseRelays(bunkerRequest, savedApplication?.application?.relays, defaultRelays)
 
             val secret = if (bunkerRequest.request is BunkerRequestConnect) bunkerRequest.request.secret ?: "" else ""
 
@@ -620,6 +644,7 @@ object BunkerRequestUtils {
                 // waited: reject it without recreating the connection.
                 finishRequest(bunkerRequest, closeApplication = true)
                 AmberUtils.sendBunkerError(
+                    this@BunkerResponder,
                     account,
                     bunkerRequest,
                     relays,
@@ -675,19 +700,19 @@ object BunkerRequestUtils {
                         relay,
                         bunkerRequest.encryptedData,
                         decryptTypeScope,
-                        dao = Amber.instance.dao(account.npub),
+                        dao = accountRepository.dao(account.npub),
                     )
                 }
 
                 if (bunkerRequest.request !is BunkerRequestConnect) {
-                    Amber.instance.dao(account.npub).insertApplicationWithPermissions(application)
+                    accountRepository.dao(account.npub).insertApplicationWithPermissions(application)
                     val isV3 = signerType == SignerType.NIP44_V3_ENCRYPT || signerType == SignerType.NIP44_V3_DECRYPT
                     // A rejected encrypt request was never performed, so no ciphertext
                     // exists — store nothing rather than leaking the plaintext input.
                     // Decrypt requests carry their ciphertext in the request, so it is
                     // safe to persist and decrypt on demand.
-                    val historyContent = if (signerType in encryptSignerTypes) "" else getDataFromBunker(bunkerRequest.request)
-                    Amber.instance.getHistoryDatabase(account.npub).dao().addHistory(
+                    val historyContent = if (signerType in encryptSignerTypes) "" else BunkerRequestUtils.getDataFromBunker(bunkerRequest.request)
+                    accountRepository.getHistoryDatabase(account.npub).dao().addHistory(
                         listOf(
                             HistoryEntity(
                                 0,
@@ -714,6 +739,7 @@ object BunkerRequestUtils {
             }
 
             AmberUtils.sendBunkerError(
+                this@BunkerResponder,
                 account,
                 effectiveBunkerRequest,
                 relays,

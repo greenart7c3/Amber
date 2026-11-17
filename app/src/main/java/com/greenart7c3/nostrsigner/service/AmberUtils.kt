@@ -69,13 +69,14 @@ object AmberUtils {
     }
 
     suspend fun sendBunkerError(
+        bunkerResponder: BunkerResponder,
         account: Account,
         bunkerRequest: AmberBunkerRequest,
         relays: List<NormalizedRelayUrl>,
         closeApplication: Boolean,
         onLoading: (Boolean) -> Unit,
     ) {
-        BunkerRequestUtils.sendBunkerResponse(
+        bunkerResponder.sendBunkerResponse(
             account,
             bunkerRequest,
             BunkerResponse(bunkerRequest.request.id, "", "user rejected"),
@@ -85,7 +86,7 @@ object AmberUtils {
                 if (!result) {
                     onLoading(false)
                 } else {
-                    BunkerRequestUtils.finishRequest(bunkerRequest, closeApplication)
+                    bunkerResponder.finishRequest(bunkerRequest, closeApplication)
                 }
             },
         )

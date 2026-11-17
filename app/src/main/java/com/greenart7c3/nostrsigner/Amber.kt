@@ -59,6 +59,7 @@ import com.greenart7c3.nostrsigner.relays.AmberRelayStats
 import com.greenart7c3.nostrsigner.relays.NostrClientLoggerListener
 import com.greenart7c3.nostrsigner.service.ApplicationNameCache
 import com.greenart7c3.nostrsigner.service.BackupApplicationsWorker
+import com.greenart7c3.nostrsigner.service.BunkerResponder
 import com.greenart7c3.nostrsigner.service.ClearLogsWorker
 import com.greenart7c3.nostrsigner.service.ConnectivityService
 import com.greenart7c3.nostrsigner.service.IntentRateLimiter
@@ -201,14 +202,17 @@ class Amber :
         }
     }
 
-    val notificationSubscription = NotificationSubscription(client, this, settingsStore = this, accountRepository = this, scope = applicationIOScope, notificationCache = notificationCache)
+    // The local WebSocket relay for bunker connections (opt in under Settings -> Relays).
+    val localBunkerRelay by lazy { LocalBunkerRelayServer(this, this, this, this) }
+
+    // Answers bunker requests; stateless, shared by the NIP-46 consumer and the approval screens.
+    val bunkerResponder by lazy { BunkerResponder(this, this, this, this, applicationIOScope, localBunkerRelay) { getMainActivity() } }
+
+    val notificationSubscription = NotificationSubscription(client, this, settingsStore = this, accountRepository = this, bunkerResponder = bunkerResponder, scope = applicationIOScope, notificationCache = notificationCache)
 
     // Per-account profile metadata fetch, started/stopped by the composables that display
     // each account (see ProfileSubscriptionEffect) rather than app-wide.
     val profileSubscription = ProfileSubscription(client, this, applicationIOScope, settingsStore = this, relayClient = this)
-
-    // The local WebSocket relay for bunker connections (opt in under Settings -> Relays).
-    val localBunkerRelay by lazy { LocalBunkerRelayServer(this, this, this, this) }
 
     val zapstoreUpdater: ZapstoreUpdater? = if (!BuildFlavorChecker.isOfflineFlavor() && !BuildFlavorChecker.isFdroidBuild()) {
         ZapstoreUpdater(client, applicationIOScope, relayClient = this, appContext = this)

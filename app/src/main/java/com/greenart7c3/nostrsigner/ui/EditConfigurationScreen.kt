@@ -377,7 +377,7 @@ fun EditConfigurationScreen(
                             val dao = accountRepository.dao(account.npub)
                             // The reset retires the old connection key: drop its
                             // queued requests so a stale card cannot resurrect it.
-                            BunkerRequestUtils.removeAllForClient(it.application.key)
+                            BunkerRequestUtils.removeAllForClient(context, it.application.key)
                             dao.deletePermissions(it.application.key)
                             dao.delete(it.application)
                             accountRepository.getHistoryDatabase(account.npub).dao().deleteHistory(it.application.key)
@@ -410,7 +410,7 @@ fun EditConfigurationScreen(
                         scope.launch(Dispatchers.IO) {
                             // Drop queued requests first: answering a stale card
                             // would otherwise resurrect the deleted connection.
-                            BunkerRequestUtils.removeAllForClient(it.application.key)
+                            BunkerRequestUtils.removeAllForClient(context, it.application.key)
                             accountRepository.dao(account.npub).delete(it.application)
                             accountRepository.getHistoryDatabase(account.npub).dao().deleteHistory(it.application.key)
 

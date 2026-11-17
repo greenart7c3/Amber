@@ -80,6 +80,8 @@ class ArchitectureTest {
     fun `the ui package does not talk to the database`() {
         val actual = appMain
             .filter { it.relativePath().startsWith("ui/") }
+            // The layer the rule sends data loading to: a ViewModel may expose what it loaded.
+            .filterNot { it.relativePath().endsWith("ViewModel.kt") }
             .filter { file -> file.imports.any { it.name.startsWith("com.greenart7c3.nostrsigner.database") } }
             .map { it.relativePath() }
             .toSet()

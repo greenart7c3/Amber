@@ -163,6 +163,12 @@ behind ViewModels is step 4.
 composable. This also makes them previewable and testable, and removes their
 `LongMethod`/`ComposableParamOrder` baseline entries.
 
+Done so far: `IntentSingleEventHomeScreen` (`IntentSingleEventViewModel` loads
+the saved app; one composable per request type; the grant lookup is
+`service/intentPermission`, unit-tested). ViewModels may import `database/`
+types (the `databaseInUi` rule exempts `*ViewModel.kt`), since loading data is
+their job.
+
 ### 5. Break up `LocalPreferences.kt`
 
 Split settings, account storage and key storage by concern; the key part is

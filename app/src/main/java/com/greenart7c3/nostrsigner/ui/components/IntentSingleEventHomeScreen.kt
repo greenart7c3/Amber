@@ -1,5 +1,6 @@
 package com.greenart7c3.nostrsigner.ui.components
 
+import android.content.Context
 import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -8,9 +9,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -21,6 +21,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.greenart7c3.nostrsigner.AccountInfo
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.common.SignerType
@@ -29,16 +31,14 @@ import com.greenart7c3.nostrsigner.common.sanitizeAppName
 import com.greenart7c3.nostrsigner.commonsui.Res
 import com.greenart7c3.nostrsigner.commonsui.event_pubkey_is_not_equal_to_current_logged_in_user
 import com.greenart7c3.nostrsigner.commonsui.getStringBlocking
-import com.greenart7c3.nostrsigner.commonsui.kindToNip
 import com.greenart7c3.nostrsigner.commonsui.warning
 import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
-import com.greenart7c3.nostrsigner.database.isAllRelaysGrant
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.IntentData
 import com.greenart7c3.nostrsigner.models.IntentResultType
-import com.greenart7c3.nostrsigner.models.toPermissionType
 import com.greenart7c3.nostrsigner.service.IntentUtils
 import com.greenart7c3.nostrsigner.service.RelayUrlUtils
+import com.greenart7c3.nostrsigner.service.intentPermission
 import com.greenart7c3.nostrsigner.service.isBlockedByAuthWhitelist
 import com.greenart7c3.nostrsigner.service.isCrossAccountSignEvent
 import com.greenart7c3.nostrsigner.service.isPrivateEvent
@@ -48,6 +48,7 @@ import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.LocalAccountRepository
 import com.greenart7c3.nostrsigner.ui.LocalAppScope
 import com.greenart7c3.nostrsigner.ui.LocalSettingsStore
+import com.greenart7c3.nostrsigner.ui.RememberType
 import com.greenart7c3.nostrsigner.ui.ToastManager
 import com.vitorpamplona.quartz.nip01Core.core.toHexKey
 import com.vitorpamplona.quartz.nip19Bech32.bech32.bechToBytes
@@ -58,447 +59,450 @@ import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
+/** What every request type's composable needs about the request and its app. */
+@Immutable
+private data class IntentRequest(
+    val intentData: IntentData,
+    val account: Account,
+    val packageName: String?,
+    // The app name shown on the screen and stored with a rejection.
+    val appName: String,
+    // The name stored with an approval: the caller's own label when it has one.
+    val resultAppName: String,
+    val application: ApplicationWithPermissions?,
+) {
+    val key: String get() = "$packageName"
+
+    fun remembered(relayUrl: String? = null): Boolean? = IntentUtils.isRemembered(application?.application?.signPolicy, intentPermission(application, key, intentData, relayUrl))
+}
+
 @Composable
 fun IntentSingleEventHomeScreen(
     horizontalPadding: Dp,
-    modifier: Modifier,
     packageName: String?,
     applicationName: String?,
     intentData: IntentData,
     account: Account,
     onRemoveIntentData: (List<IntentData>, IntentResultType) -> Unit,
     onLoading: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
+    viewModel: IntentSingleEventViewModel = viewModel(
+        key = "intent-single-${account.npub}-$packageName-${intentData.id}",
+        factory = IntentSingleEventViewModel.factory(LocalAccountRepository.current, account.npub, packageName),
+    ),
 ) {
-    val settingsStore = LocalSettingsStore.current
-    var applicationEntity by remember {
-        mutableStateOf<ApplicationWithPermissions?>(null)
-    }
-    val key = "$packageName"
-    val accountRepository = LocalAccountRepository.current
+    val application by viewModel.application.collectAsStateWithLifecycle()
+    val appName = sanitizeAppName(application?.application?.name ?: packageName ?: intentData.name).ifBlank { "$packageName".toShortenHex() }
+    val request = IntentRequest(intentData, account, packageName, appName, applicationName ?: appName, application)
 
-    LaunchedEffect(Unit) {
-        // Browser deep-links (nostrsigner://) arrive with no calling package, so
-        // every web caller would otherwise share the single "null" key. Honoring a
-        // remembered grant for that shared identity would let a grant given to one
-        // website auto-approve any other website. Never load (and thus never honor)
-        // the shared "null" application: force always-ask for null-package callers.
-        if (packageName == null) return@LaunchedEffect
-        launch(Dispatchers.IO) {
-            applicationEntity = accountRepository.getDatabase(account.npub).dao().getByKey(key)
-        }
+    when (intentData.type) {
+        SignerType.GET_PUBLIC_KEY -> GetPublicKeyRequest(request, horizontalPadding, onRemoveIntentData, onLoading, modifier)
+        SignerType.SIGN_PSBT -> SignPsbtRequest(request, onRemoveIntentData, onLoading, modifier)
+        SignerType.NIP44_V3_ENCRYPT, SignerType.NIP44_V3_DECRYPT -> Nip44v3Request(request, onRemoveIntentData, onLoading, modifier)
+        SignerType.NIP04_DECRYPT, SignerType.NIP04_ENCRYPT, SignerType.NIP44_ENCRYPT, SignerType.NIP44_DECRYPT, SignerType.DECRYPT_ZAP_EVENT ->
+            EncryptDecryptRequest(request, onRemoveIntentData, onLoading, modifier)
+        else -> SignEventRequest(request, onRemoveIntentData, onLoading, modifier)
     }
+}
 
-    val appName = sanitizeAppName(applicationEntity?.application?.name ?: packageName ?: intentData.name).ifBlank { key.toShortenHex() }
+@Composable
+private fun GetPublicKeyRequest(
+    request: IntentRequest,
+    horizontalPadding: Dp,
+    onRemoveIntentData: (List<IntentData>, IntentResultType) -> Unit,
+    onLoading: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
+) {
     val context = LocalContext.current
     val clipboardManager = LocalClipboard.current
     val activity = LocalActivity.current
+    LoginWithPubKey(
+        horizontalPadding = horizontalPadding,
+        packageName = request.packageName,
+        modifier = modifier,
+        account = request.account,
+        permissions = request.intentData.permissions?.toImmutableList(),
+        onAccept = { permissions, signPolicy, closeApplication, rememberType, acc ->
+            val result = acc.hexKey
+            IntentUtils.sendResult(
+                context,
+                request.packageName,
+                acc,
+                request.key,
+                clipboardManager,
+                result,
+                result,
+                request.intentData,
+                null,
+                permissions = permissions,
+                appName = request.resultAppName,
+                onLoading = onLoading,
+                signPolicy = signPolicy,
+                onRemoveIntentData = onRemoveIntentData,
+                shouldCloseApplication = closeApplication,
+                rememberType = rememberType,
+            )
+        },
+        onReject = {
+            activity?.intent = null
+            activity?.finishAndRemoveTask()
+            onRemoveIntentData(listOf(request.intentData), IntentResultType.REMOVE)
+            onLoading(false)
+        },
+    )
+}
+
+@Composable
+private fun SignPsbtRequest(
+    request: IntentRequest,
+    onRemoveIntentData: (List<IntentData>, IntentResultType) -> Unit,
+    onLoading: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val context = LocalContext.current
+    val clipboardManager = LocalClipboard.current
     val appScope = LocalAppScope.current
-
-    when (intentData.type) {
-        SignerType.GET_PUBLIC_KEY -> {
-            LoginWithPubKey(
-                horizontalPadding = horizontalPadding,
-                packageName = packageName,
-                modifier = modifier,
-                account = account,
-                permissions = intentData.permissions?.toImmutableList(),
-                onAccept = { permissions, signPolicy, closeApplication, rememberType, acc ->
-                    val result = acc.hexKey
-
+    val intentData = request.intentData
+    val decoded = remember(intentData.data) { PsbtDecoder.decode(intentData.data, request.account.signer.keyPair.pubKey) }
+    SignPsbt(
+        modifier = modifier,
+        psbtHex = intentData.data,
+        decoded = decoded,
+        shouldRunOnAccept = request.remembered(),
+        packageName = request.packageName,
+        onAccept = { rememberType ->
+            appScope.launch(Dispatchers.IO) {
+                try {
+                    val result = request.account.signPsbt(intentData.data)
                     IntentUtils.sendResult(
                         context,
-                        packageName,
-                        acc,
-                        key,
+                        request.packageName,
+                        request.account,
+                        request.key,
                         clipboardManager,
                         result,
                         result,
                         intentData,
                         null,
-                        permissions = permissions,
-                        appName = applicationName ?: appName,
-                        onLoading = onLoading,
-                        signPolicy = signPolicy,
+                        onLoading,
                         onRemoveIntentData = onRemoveIntentData,
-                        shouldCloseApplication = closeApplication,
                         rememberType = rememberType,
                     )
-                },
-                onReject = {
-                    activity?.intent = null
-                    activity?.finishAndRemoveTask()
-                    onRemoveIntentData(listOf(intentData), IntentResultType.REMOVE)
+                } catch (e: Exception) {
+                    ToastManager.toast(
+                        title = getStringBlocking(Res.string.warning),
+                        message = e.message ?: "Could not sign the PSBT",
+                    )
                     onLoading(false)
-                },
-            )
-        }
-
-        SignerType.SIGN_PSBT -> {
-            val permission =
-                applicationEntity?.permissions?.firstOrNull {
-                    it.pkKey == key && it.type == intentData.type.toString()
                 }
-
-            val acceptOrReject = IntentUtils.isRemembered(applicationEntity?.application?.signPolicy, permission)
-            val decoded = remember(intentData.data) { PsbtDecoder.decode(intentData.data, account.signer.keyPair.pubKey) }
-
-            SignPsbt(
-                modifier = modifier,
-                psbtHex = intentData.data,
-                decoded = decoded,
-                shouldRunOnAccept = acceptOrReject,
-                packageName = packageName,
-                onAccept = { rememberType ->
-                    appScope.launch(Dispatchers.IO) {
-                        try {
-                            val result = account.signPsbt(intentData.data)
-                            IntentUtils.sendResult(
-                                context,
-                                packageName,
-                                account,
-                                key,
-                                clipboardManager,
-                                result,
-                                result,
-                                intentData,
-                                null,
-                                onLoading,
-                                onRemoveIntentData = onRemoveIntentData,
-                                rememberType = rememberType,
-                            )
-                        } catch (e: Exception) {
-                            ToastManager.toast(
-                                title = getStringBlocking(Res.string.warning),
-                                message = e.message ?: "Could not sign the PSBT",
-                            )
-                            onLoading(false)
-                        }
-                    }
-                },
-                onReject = { rememberType ->
-                    IntentUtils.sendRejection(
-                        context = context,
-                        key = key,
-                        account = account,
-                        intentData = intentData,
-                        appName = appName,
-                        rememberType = rememberType,
-                        onLoading = onLoading,
-                        onRemoveIntentData = onRemoveIntentData,
-                        kind = null,
-                    )
-                },
-            )
-        }
-
-        SignerType.NIP44_V3_ENCRYPT, SignerType.NIP44_V3_DECRYPT -> {
-            // V3 grants are scoped by (app, type, kind); fall back to a
-            // kind=null "all kinds" grant. They never satisfy v2/v4 requests.
-            val permType = intentData.type.toString()
-            val permission =
-                applicationEntity?.permissions?.firstOrNull {
-                    it.pkKey == key && it.type == permType && it.kind == intentData.nip44v3Kind
-                } ?: applicationEntity?.permissions?.firstOrNull {
-                    it.pkKey == key && it.type == permType && it.kind == null
-                }
-
-            val acceptOrReject = IntentUtils.isRemembered(applicationEntity?.application?.signPolicy, permission)
-
-            Nip44v3ApprovalData(
-                modifier = modifier,
-                isBunker = false,
-                appName = appName,
-                packageName = packageName,
-                type = intentData.type,
-                account = account,
-                kind = intentData.nip44v3Kind,
-                scope = intentData.nip44v3Scope,
-                encryptedData = intentData.encryptedData,
-                shouldRunOnAccept = acceptOrReject,
-                onAccept = { rememberType, scope ->
-                    val result = intentData.encryptedData?.result ?: ""
-                    // SPECIFIC ⇒ kind-scoped grant; ALL ⇒ all-kinds grant (kind=null).
-                    val v3Kind = if (scope == DecryptTypeScope.SPECIFIC) intentData.nip44v3Kind else null
-                    IntentUtils.sendResult(
-                        context,
-                        packageName,
-                        account,
-                        key,
-                        clipboardManager,
-                        result,
-                        result,
-                        intentData,
-                        v3Kind,
-                        onRemoveIntentData = onRemoveIntentData,
-                        onLoading = onLoading,
-                        rememberType = rememberType,
-                        decryptTypeScope = scope,
-                    )
-                },
-                onReject = { rememberType, scope ->
-                    val v3Kind = if (scope == DecryptTypeScope.SPECIFIC) intentData.nip44v3Kind else null
-                    IntentUtils.sendRejection(
-                        context = context,
-                        key = key,
-                        account = account,
-                        intentData = intentData,
-                        appName = appName,
-                        rememberType = rememberType,
-                        onLoading = onLoading,
-                        onRemoveIntentData = onRemoveIntentData,
-                        kind = v3Kind,
-                        decryptTypeScope = scope,
-                    )
-                },
-            )
-        }
-
-        SignerType.NIP04_DECRYPT, SignerType.NIP04_ENCRYPT, SignerType.NIP44_ENCRYPT, SignerType.NIP44_DECRYPT, SignerType.DECRYPT_ZAP_EVENT -> {
-            val nip = when (intentData.type) {
-                SignerType.NIP04_DECRYPT, SignerType.NIP04_ENCRYPT -> 4
-                SignerType.NIP44_ENCRYPT, SignerType.NIP44_DECRYPT -> 44
-                else -> null
             }
-            val isEncrypt = intentData.type == SignerType.NIP04_ENCRYPT || intentData.type == SignerType.NIP44_ENCRYPT
-            val permType = intentData.encryptedData.toPermissionType(isEncrypt = isEncrypt)
-            var permission =
-                applicationEntity?.permissions?.firstOrNull {
-                    it.pkKey == key && it.type == permType
-                }
-            if (permission == null) {
-                permission =
-                    applicationEntity?.permissions?.firstOrNull {
-                        it.pkKey == key && it.type == intentData.type.toString()
-                    }
-            }
-            if (permission == null && nip != null) {
-                permission =
-                    applicationEntity?.permissions?.firstOrNull {
-                        it.pkKey == key && it.type == "NIP" && it.kind == nip
-                    }
-            }
-
-            val acceptOrReject = IntentUtils.isRemembered(applicationEntity?.application?.signPolicy, permission)
-
-            EncryptDecryptData(
-                modifier = modifier,
-                encryptedData = intentData.encryptedData,
-                shouldRunOnAccept = acceptOrReject,
-                packageName = packageName,
-                type = intentData.type,
-                account = account,
-                onAccept = { rememberType, scope ->
-                    val result =
-                        if (intentData.encryptedData?.result == "Could not decrypt the message" && (intentData.type == SignerType.DECRYPT_ZAP_EVENT)) {
-                            ""
-                        } else {
-                            intentData.encryptedData?.result ?: ""
-                        }
-
-                    IntentUtils.sendResult(
-                        context,
-                        packageName,
-                        account,
-                        key,
-                        clipboardManager,
-                        result,
-                        result,
-                        intentData,
-                        null,
-                        onRemoveIntentData = onRemoveIntentData,
-                        onLoading = onLoading,
-                        rememberType = rememberType,
-                        decryptTypeScope = scope,
-                    )
-                },
-                onReject = { rememberType, scope ->
-                    IntentUtils.sendRejection(
-                        context = context,
-                        key = key,
-                        account = account,
-                        intentData = intentData,
-                        appName = appName,
-                        rememberType = rememberType,
-                        onLoading = onLoading,
-                        onRemoveIntentData = onRemoveIntentData,
-                        kind = null,
-                        decryptTypeScope = scope,
-                    )
-                },
+        },
+        onReject = { rememberType ->
+            IntentUtils.sendRejection(
+                context = context,
+                key = request.key,
+                account = request.account,
+                intentData = intentData,
+                appName = request.appName,
+                rememberType = rememberType,
+                onLoading = onLoading,
+                onRemoveIntentData = onRemoveIntentData,
+                kind = null,
             )
-        }
+        },
+    )
+}
 
-        else -> {
-            val event = intentData.event!!
-            val accounts =
-                LocalPreferences.allSavedAccounts(context).filter {
-                    it.npub.bechToBytes().toHexKey() == event.pubKey
-                }
+@Composable
+private fun Nip44v3Request(
+    request: IntentRequest,
+    onRemoveIntentData: (List<IntentData>, IntentResultType) -> Unit,
+    onLoading: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val context = LocalContext.current
+    val clipboardManager = LocalClipboard.current
+    val intentData = request.intentData
+    Nip44v3ApprovalData(
+        modifier = modifier,
+        isBunker = false,
+        appName = request.appName,
+        packageName = request.packageName,
+        type = intentData.type,
+        account = request.account,
+        kind = intentData.nip44v3Kind,
+        scope = intentData.nip44v3Scope,
+        encryptedData = intentData.encryptedData,
+        shouldRunOnAccept = request.remembered(),
+        onAccept = { rememberType, scope ->
+            val result = intentData.encryptedData?.result ?: ""
+            // SPECIFIC ⇒ kind-scoped grant; ALL ⇒ all-kinds grant (kind=null).
+            val v3Kind = if (scope == DecryptTypeScope.SPECIFIC) intentData.nip44v3Kind else null
+            IntentUtils.sendResult(
+                context,
+                request.packageName,
+                request.account,
+                request.key,
+                clipboardManager,
+                result,
+                result,
+                intentData,
+                v3Kind,
+                onRemoveIntentData = onRemoveIntentData,
+                onLoading = onLoading,
+                rememberType = rememberType,
+                decryptTypeScope = scope,
+            )
+        },
+        onReject = { rememberType, scope ->
+            val v3Kind = if (scope == DecryptTypeScope.SPECIFIC) intentData.nip44v3Kind else null
+            IntentUtils.sendRejection(
+                context = context,
+                key = request.key,
+                account = request.account,
+                intentData = intentData,
+                appName = request.appName,
+                rememberType = rememberType,
+                onLoading = onLoading,
+                onRemoveIntentData = onRemoveIntentData,
+                kind = v3Kind,
+                decryptTypeScope = scope,
+            )
+        },
+    )
+}
 
-            if (accounts.isEmpty() && !isPrivateEvent(event.kind, event.tags)) {
-                Column(
-                    Modifier.fillMaxSize(),
-                    Arrangement.Center,
-                    Alignment.CenterHorizontally,
-                ) {
-                    Text(
-                        Hex.decode(event.pubKey).toNpub().toShortenHex(),
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 21.sp,
-                    )
-                    Spacer(Modifier.size(8.dp))
-                    Text("Not logged in")
-                }
-            } else if (event.kind == 22242) {
-                // Kind 22242 = relay client authentication (NIP-42)
-                // Permission is per-relay hostname extracted from the event's "relay" tag
-                val relayUrl = RelayUrlUtils.extractHostAndPort(AmberEvent.relay(event))
-
-                // Check for relay-specific permission first, then an all-relays grant ("*" or blank)
-                val permission = applicationEntity?.permissions?.firstOrNull {
-                    it.pkKey == key && it.type == intentData.type.toString() && it.kind == 22242 && it.relay == relayUrl
-                } ?: applicationEntity?.permissions?.firstOrNull {
-                    it.pkKey == key && it.type == intentData.type.toString() && it.kind == 22242 && isAllRelaysGrant(it.relay)
-                }
-
-                // If the auth whitelist is non-empty and this relay is not in it, auto-reject
-                val blockedByWhitelist = isBlockedByAuthWhitelist(22242, relayUrl, settingsStore.settings.authWhitelist)
-
-                val acceptOrReject = if (blockedByWhitelist) {
-                    false
-                } else if (permission == null) {
-                    IntentUtils.isRemembered(applicationEntity?.application?.signPolicy, null)
+@Composable
+private fun EncryptDecryptRequest(
+    request: IntentRequest,
+    onRemoveIntentData: (List<IntentData>, IntentResultType) -> Unit,
+    onLoading: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val context = LocalContext.current
+    val clipboardManager = LocalClipboard.current
+    val intentData = request.intentData
+    EncryptDecryptData(
+        modifier = modifier,
+        encryptedData = intentData.encryptedData,
+        shouldRunOnAccept = request.remembered(),
+        packageName = request.packageName,
+        type = intentData.type,
+        account = request.account,
+        onAccept = { rememberType, scope ->
+            val result =
+                if (intentData.encryptedData?.result == "Could not decrypt the message" && (intentData.type == SignerType.DECRYPT_ZAP_EVENT)) {
+                    ""
                 } else {
-                    IntentUtils.isRemembered(applicationEntity?.application?.signPolicy, permission)
+                    intentData.encryptedData?.result ?: ""
                 }
+            IntentUtils.sendResult(
+                context,
+                request.packageName,
+                request.account,
+                request.key,
+                clipboardManager,
+                result,
+                result,
+                intentData,
+                null,
+                onRemoveIntentData = onRemoveIntentData,
+                onLoading = onLoading,
+                rememberType = rememberType,
+                decryptTypeScope = scope,
+            )
+        },
+        onReject = { rememberType, scope ->
+            IntentUtils.sendRejection(
+                context = context,
+                key = request.key,
+                account = request.account,
+                intentData = intentData,
+                appName = request.appName,
+                rememberType = rememberType,
+                onLoading = onLoading,
+                onRemoveIntentData = onRemoveIntentData,
+                kind = null,
+                decryptTypeScope = scope,
+            )
+        },
+    )
+}
 
-                BunkerRelayAuthScreen(
-                    modifier = modifier,
-                    appName = appName,
-                    relayUrl = relayUrl,
-                    shouldAcceptOrReject = acceptOrReject,
-                    defaultScope = RelayAuthScope.SPECIFIC,
-                    account = account,
-                    onAccept = { rememberType, scope ->
-                        if (isCrossAccountSignEvent(intentData.unsignedEventKey, account.hexKey, event.kind, event.tags, LocalPreferences.allSavedAccounts(context).map(AccountInfo::npub))) {
-                            ToastManager.toast(
-                                title = getStringBlocking(Res.string.warning),
-                                message = getStringBlocking(Res.string.event_pubkey_is_not_equal_to_current_logged_in_user),
-                            )
-                            return@BunkerRelayAuthScreen
-                        }
+@Composable
+private fun SignEventRequest(
+    request: IntentRequest,
+    onRemoveIntentData: (List<IntentData>, IntentResultType) -> Unit,
+    onLoading: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val context = LocalContext.current
+    val event = request.intentData.event!!
+    val accounts = LocalPreferences.allSavedAccounts(context).filter { it.npub.bechToBytes().toHexKey() == event.pubKey }
 
-                        val relayPermission = if (scope == RelayAuthScope.ALL) "*" else relayUrl
-                        val relayRemember = relayAuthRememberType(
-                            allRelays = scope == RelayAuthScope.ALL,
-                            relayUrl = relayUrl,
-                            rememberType = rememberType,
-                        )
-                        IntentUtils.sendResult(
-                            context = context,
-                            packageName = packageName,
-                            account = account,
-                            key = key,
-                            clipboardManager = clipboardManager,
-                            event = event.toJson(),
-                            value = event.sig,
-                            intentData = intentData,
-                            kind = event.kind,
-                            onLoading = onLoading,
-                            onRemoveIntentData = onRemoveIntentData,
-                            signPolicy = null,
-                            appName = applicationName ?: appName,
-                            permissions = null,
-                            rememberType = relayRemember,
-                            relay = relayPermission,
-                        )
-                    },
-                    onReject = { rememberType, scope ->
-                        val relayPermission = if (scope == RelayAuthScope.ALL) "*" else relayUrl
-                        val relayRemember = relayAuthRememberType(
-                            allRelays = scope == RelayAuthScope.ALL,
-                            relayUrl = relayUrl,
-                            rememberType = rememberType,
-                        )
-                        IntentUtils.sendRejection(
-                            context = context,
-                            key = key,
-                            account = account,
-                            intentData = intentData,
-                            appName = appName,
-                            rememberType = relayRemember,
-                            onLoading = onLoading,
-                            onRemoveIntentData = onRemoveIntentData,
-                            kind = event.kind,
-                            relay = relayPermission,
-                        )
-                    },
-                )
-            } else {
-                val permission =
-                    applicationEntity?.permissions?.firstOrNull {
-                        val nip = event.kind.kindToNip()?.toIntOrNull()
-                        it.pkKey == key && ((it.type == intentData.type.toString() && it.kind == event.kind) || (nip != null && it.type == "NIP" && it.kind == nip))
-                    }
-
-                val acceptOrReject = IntentUtils.isRemembered(applicationEntity?.application?.signPolicy, permission)
-
-                EventData(
-                    modifier = modifier,
-                    shouldAcceptOrReject = acceptOrReject,
-                    packageName = packageName,
-                    event = event,
-                    account = account,
-                    onAccept = {
-                        if (isCrossAccountSignEvent(intentData.unsignedEventKey, account.hexKey, event.kind, event.tags, LocalPreferences.allSavedAccounts(context).map { it.npub })) {
-                            ToastManager.toast(
-                                title = getStringBlocking(Res.string.warning),
-                                message = getStringBlocking(Res.string.event_pubkey_is_not_equal_to_current_logged_in_user),
-                            )
-                            return@EventData
-                        }
-
-                        IntentUtils.sendResult(
-                            context = context,
-                            packageName = packageName,
-                            account = account,
-                            key = key,
-                            clipboardManager = clipboardManager,
-                            event = event.toJson(),
-                            value = if (event is ZapRequestEvent &&
-                                event.tags.any { tag ->
-                                    tag.any { t -> t == "anon" }
-                                }
-                            ) {
-                                event.toJson()
-                            } else {
-                                event.sig
-                            },
-                            intentData = intentData,
-                            kind = event.kind,
-                            onLoading = onLoading,
-                            onRemoveIntentData = onRemoveIntentData,
-                            signPolicy = null,
-                            appName = applicationName ?: appName,
-                            permissions = null,
-                            rememberType = it,
-                        )
-                    },
-                    onReject = {
-                        IntentUtils.sendRejection(
-                            context = context,
-                            key = key,
-                            account = account,
-                            intentData = intentData,
-                            appName = appName,
-                            rememberType = it,
-                            onLoading = onLoading,
-                            onRemoveIntentData = onRemoveIntentData,
-                            kind = event.kind,
-                        )
-                    },
-                )
-            }
-        }
+    when {
+        accounts.isEmpty() && !isPrivateEvent(event.kind, event.tags) -> NotLoggedIn(event.pubKey, modifier)
+        // Kind 22242 = relay client authentication (NIP-42), granted per relay host.
+        event.kind == 22242 -> RelayAuthRequest(request, onRemoveIntentData, onLoading, modifier)
+        else -> EventRequest(request, onRemoveIntentData, onLoading, modifier)
     }
 }
+
+@Composable
+private fun NotLoggedIn(pubKey: String, modifier: Modifier = Modifier) {
+    Column(
+        modifier.fillMaxSize(),
+        Arrangement.Center,
+        Alignment.CenterHorizontally,
+    ) {
+        Text(
+            Hex.decode(pubKey).toNpub().toShortenHex(),
+            fontWeight = FontWeight.Bold,
+            fontSize = 21.sp,
+        )
+        Spacer(Modifier.size(8.dp))
+        Text("Not logged in")
+    }
+}
+
+@Composable
+private fun RelayAuthRequest(
+    request: IntentRequest,
+    onRemoveIntentData: (List<IntentData>, IntentResultType) -> Unit,
+    onLoading: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val context = LocalContext.current
+    val clipboardManager = LocalClipboard.current
+    val settingsStore = LocalSettingsStore.current
+    val intentData = request.intentData
+    val event = intentData.event!!
+    val relayUrl = RelayUrlUtils.extractHostAndPort(AmberEvent.relay(event))
+    // A non-empty auth whitelist refuses every relay outside it, without asking.
+    val blockedByWhitelist = isBlockedByAuthWhitelist(22242, relayUrl, settingsStore.settings.authWhitelist)
+
+    BunkerRelayAuthScreen(
+        modifier = modifier,
+        appName = request.appName,
+        relayUrl = relayUrl,
+        shouldAcceptOrReject = if (blockedByWhitelist) false else request.remembered(relayUrl),
+        defaultScope = RelayAuthScope.SPECIFIC,
+        account = request.account,
+        onAccept = { rememberType, scope ->
+            if (refuseCrossAccount(context, request)) return@BunkerRelayAuthScreen
+            val (relayPermission, relayRemember) = relayGrant(scope, relayUrl, rememberType)
+            IntentUtils.sendResult(
+                context = context,
+                packageName = request.packageName,
+                account = request.account,
+                key = request.key,
+                clipboardManager = clipboardManager,
+                event = event.toJson(),
+                value = event.sig,
+                intentData = intentData,
+                kind = event.kind,
+                onLoading = onLoading,
+                onRemoveIntentData = onRemoveIntentData,
+                signPolicy = null,
+                appName = request.resultAppName,
+                permissions = null,
+                rememberType = relayRemember,
+                relay = relayPermission,
+            )
+        },
+        onReject = { rememberType, scope ->
+            val (relayPermission, relayRemember) = relayGrant(scope, relayUrl, rememberType)
+            IntentUtils.sendRejection(
+                context = context,
+                key = request.key,
+                account = request.account,
+                intentData = intentData,
+                appName = request.appName,
+                rememberType = relayRemember,
+                onLoading = onLoading,
+                onRemoveIntentData = onRemoveIntentData,
+                kind = event.kind,
+                relay = relayPermission,
+            )
+        },
+    )
+}
+
+@Composable
+private fun EventRequest(
+    request: IntentRequest,
+    onRemoveIntentData: (List<IntentData>, IntentResultType) -> Unit,
+    onLoading: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val context = LocalContext.current
+    val clipboardManager = LocalClipboard.current
+    val intentData = request.intentData
+    val event = intentData.event!!
+    EventData(
+        modifier = modifier,
+        shouldAcceptOrReject = request.remembered(),
+        packageName = request.packageName,
+        event = event,
+        account = request.account,
+        onAccept = {
+            if (refuseCrossAccount(context, request)) return@EventData
+
+            IntentUtils.sendResult(
+                context = context,
+                packageName = request.packageName,
+                account = request.account,
+                key = request.key,
+                clipboardManager = clipboardManager,
+                event = event.toJson(),
+                value = if (event is ZapRequestEvent && event.tags.any { tag -> tag.any { t -> t == "anon" } }) event.toJson() else event.sig,
+                intentData = intentData,
+                kind = event.kind,
+                onLoading = onLoading,
+                onRemoveIntentData = onRemoveIntentData,
+                signPolicy = null,
+                appName = request.resultAppName,
+                permissions = null,
+                rememberType = it,
+            )
+        },
+        onReject = {
+            IntentUtils.sendRejection(
+                context = context,
+                key = request.key,
+                account = request.account,
+                intentData = intentData,
+                appName = request.appName,
+                rememberType = it,
+                onLoading = onLoading,
+                onRemoveIntentData = onRemoveIntentData,
+                kind = event.kind,
+            )
+        },
+    )
+}
+
+// An event naming another stored account is never signed by this one; warns instead.
+private fun refuseCrossAccount(context: Context, request: IntentRequest): Boolean {
+    val event = request.intentData.event!!
+    val crossAccount = isCrossAccountSignEvent(
+        request.intentData.unsignedEventKey,
+        request.account.hexKey,
+        event.kind,
+        event.tags,
+        LocalPreferences.allSavedAccounts(context).map(AccountInfo::npub),
+    )
+    if (crossAccount) {
+        ToastManager.toast(
+            title = getStringBlocking(Res.string.warning),
+            message = getStringBlocking(Res.string.event_pubkey_is_not_equal_to_current_logged_in_user),
+        )
+    }
+    return crossAccount
+}
+
+// The relay a NIP-42 grant covers ("*" for all) and how long it is remembered.
+private fun relayGrant(scope: RelayAuthScope, relayUrl: String, rememberType: RememberType): Pair<String, RememberType> = Pair(
+    if (scope == RelayAuthScope.ALL) "*" else relayUrl,
+    relayAuthRememberType(allRelays = scope == RelayAuthScope.ALL, relayUrl = relayUrl, rememberType = rememberType),
+)

@@ -48,6 +48,7 @@ import com.greenart7c3.nostrsigner.ui.AccountStateViewModel
 import com.greenart7c3.nostrsigner.ui.IntentWrapper
 import com.greenart7c3.nostrsigner.ui.InvalidIntentScreen
 import com.greenart7c3.nostrsigner.ui.NavHostControllerWrapper
+import com.greenart7c3.nostrsigner.ui.appDependencies
 import com.greenart7c3.nostrsigner.ui.components.BiometricAuthScreen
 import com.greenart7c3.nostrsigner.ui.navigation.Route
 import com.greenart7c3.nostrsigner.ui.theme.NostrSignerTheme
@@ -71,14 +72,14 @@ class SignerActivity : AppCompatActivity() {
         // it is the batch merge into an already-open approval screen.
         if (rejectIfRateLimited(intent)) return
 
-        Amber.instance.setMainActivity(this)
+        amber.setMainActivity(this)
         mainViewModel = MainViewModel(applicationContext)
         // Read once here: getReferrer() crashes on OEM builds (Samsung/Android 12) when
         // the activity has no intent (mIntent == null), e.g. after sendRejection() nulls it.
         val launchReferrer = safeReferrer()
         intent?.let { mainViewModel.onNewIntent(it, callingPackage, launchReferrer) }
         setContent {
-            val themeMode by Amber.instance.themeMode.collectAsStateWithLifecycle()
+            val themeMode by amber.themeMode.collectAsStateWithLifecycle()
             NostrSignerTheme(themeMode = themeMode) {
                 HttpClientManager.setDefaultUserAgent("Amber/${BuildConfig.VERSION_NAME}")
 
@@ -105,6 +106,7 @@ class SignerActivity : AppCompatActivity() {
                         LocalDensity.current.density,
                         1f,
                     ),
+                    *appDependencies(amber),
                 ) {
                     val navController = rememberNavController()
                     mainViewModel.navController = navController
@@ -213,8 +215,8 @@ class SignerActivity : AppCompatActivity() {
     override fun onResume() {
         AmberLog.d(Amber.TAG, "onResume SignerActivity")
         Amber.isAppInForeground = true
-        Amber.instance.setMainActivity(this)
-        Amber.instance.startServiceFromUi()
+        amber.setMainActivity(this)
+        amber.startServiceFromUi()
         if (::mainViewModel.isInitialized) {
             mainViewModel.showBunkerRequests()
         }
@@ -222,7 +224,7 @@ class SignerActivity : AppCompatActivity() {
             val connectivityManager =
                 (getSystemService(ConnectivityManager::class.java) as ConnectivityManager)
             connectivityManager.getNetworkCapabilities(connectivityManager.activeNetwork)?.let {
-                Amber.instance.updateNetworkCapabilities(it)
+                amber.updateNetworkCapabilities(it)
             }
         }
         super.onResume()
@@ -253,7 +255,7 @@ class SignerActivity : AppCompatActivity() {
     private fun rejectIfRateLimited(intent: Intent?): Boolean {
         if (intent == null) return false
         val key = IntentRateLimitInspector.inspect(intent, callingPackage) ?: return false
-        val limiter = Amber.instance.intentRateLimiter
+        val limiter = amber.intentRateLimiter
         if (limiter.checkAndRecord(key)) return false
 
         if (limiter.shouldShowToast(key)) {

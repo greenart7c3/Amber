@@ -3,6 +3,7 @@ package com.greenart7c3.nostrsigner
 import android.app.AlarmManager
 import android.app.Application
 import android.app.PendingIntent
+import android.content.Context
 import android.content.Intent
 import android.net.NetworkCapabilities
 import android.net.TrafficStats
@@ -37,6 +38,9 @@ import com.greenart7c3.nostrsigner.commonsui.Res
 import com.greenart7c3.nostrsigner.commonsui.getStringBlocking
 import com.greenart7c3.nostrsigner.commonsui.network_permission_message
 import com.greenart7c3.nostrsigner.commonsui.warning
+import com.greenart7c3.nostrsigner.data.AccountRepository
+import com.greenart7c3.nostrsigner.data.RelayClient
+import com.greenart7c3.nostrsigner.data.SettingsStore
 import com.greenart7c3.nostrsigner.database.AppDatabase
 import com.greenart7c3.nostrsigner.database.ApplicationDao
 import com.greenart7c3.nostrsigner.database.CachingApplicationDao
@@ -108,7 +112,10 @@ import okio.Path.Companion.toOkioPath
 class Amber :
     Application(),
     LifecycleObserver,
-    SingletonImageLoader.Factory {
+    SingletonImageLoader.Factory,
+    SettingsStore,
+    AccountRepository,
+    RelayClient {
     private var mainActivityRef: WeakReference<AppCompatActivity?>? = null
     val crashReportCache: CrashReportCache by lazy { CrashReportCache(this.applicationContext) }
     var pendingCrashReport: String? = null
@@ -132,7 +139,7 @@ class Amber :
 
     val applicationIOScope = CoroutineScope(Dispatchers.IO + SupervisorJob() + exceptionHandler)
 
-    var settings: AmberSettings = AmberSettings()
+    override var settings: AmberSettings = AmberSettings()
 
     val intentRateLimiter = IntentRateLimiter(
         config = { IntentRateLimiter.Config(settings.rateLimitEnabled, settings.rateLimitMaxPerWindow, settings.rateLimitWindowSeconds) },
@@ -165,7 +172,7 @@ class Amber :
         HttpClientManager.getHttpClient(useProxy)
     }
 
-    val client: NostrClient = NostrClient(factory, applicationIOScope)
+    override val client: NostrClient = NostrClient(factory, applicationIOScope)
 
     val stats = AmberRelayStats(client, this)
 
@@ -619,12 +626,12 @@ class Amber :
         }
     }
 
-    fun disconnectIntentionally() {
+    override fun disconnectIntentionally() {
         intentionalDisconnectTime = System.currentTimeMillis()
         client.disconnect()
     }
 
-    fun reconnect() {
+    override fun reconnect() {
         if (settings.killSwitch.value) {
             return
         }
@@ -653,7 +660,7 @@ class Amber :
      * list, which removes them from the subscriptions entirely. All of it is about the
      * old network, so it is cleared here.
      */
-    suspend fun resetRelayConnections(reason: String) {
+    override suspend fun resetRelayConnections(reason: String) {
         if (BuildFlavorChecker.isOfflineFlavor()) return
         if (settings.killSwitch.value) return
 
@@ -677,7 +684,7 @@ class Amber :
     // fresh RoomDatabase every call, so a racing second caller would build a
     // duplicate that loses the put() and leaks its SQLiteConnection (caught by
     // StrictMode's CloseGuard on finalize).
-    fun getDatabase(npub: String): AppDatabase = databases.computeIfAbsent(npub) {
+    override fun getDatabase(npub: String): AppDatabase = databases.computeIfAbsent(npub) {
         AppDatabase.getDatabase(applicationContext, npub)
     }
 
@@ -686,18 +693,18 @@ class Amber :
      * permission lookups should go through this; writes routed through it also
      * invalidate the cache.
      */
-    fun dao(npub: String): ApplicationDao {
+    override fun dao(npub: String): ApplicationDao {
         cachingDaos[npub]?.let { return it }
         return cachingDaos.computeIfAbsent(npub) {
             CachingApplicationDao(getDatabase(npub).dao())
         }
     }
 
-    fun getLogDatabase(npub: String): LogDatabase = logDatabases.computeIfAbsent(npub) {
+    override fun getLogDatabase(npub: String): LogDatabase = logDatabases.computeIfAbsent(npub) {
         LogDatabase.getDatabase(applicationContext, npub).also { LogRetentionManager.watch(npub, it) }
     }
 
-    fun getHistoryDatabase(npub: String): HistoryDatabase = historyDatabases.computeIfAbsent(npub) {
+    override fun getHistoryDatabase(npub: String): HistoryDatabase = historyDatabases.computeIfAbsent(npub) {
         HistoryDatabase.getDatabase(applicationContext, npub).also { LogRetentionManager.watch(npub, it) }
     }
 
@@ -706,7 +713,7 @@ class Amber :
      * worker threads are released. Called from the logout path; without it each
      * removed account leaks 3 open Room connections forever.
      */
-    fun closeDatabasesFor(npub: String) {
+    override fun closeDatabasesFor(npub: String) {
         databases.remove(npub)?.runCatching { close() }
         logDatabases.remove(npub)?.runCatching { close() }
         historyDatabases.remove(npub)?.runCatching { close() }
@@ -714,7 +721,7 @@ class Amber :
         ApplicationNameCache.clearForAccount(npub)
     }
 
-    fun getSavedRelays(account: Account): Set<NormalizedRelayUrl> {
+    override fun getSavedRelays(account: Account): Set<NormalizedRelayUrl> {
         val database = getDatabase(account.npub)
         val savedRelays = buildSet {
             database.dao().getAllRelayLists().forEach {
@@ -725,9 +732,7 @@ class Amber :
         return savedRelays
     }
 
-    suspend fun checkForNewRelaysAndUpdateAllFilters(
-        shouldReconnect: Boolean = false,
-    ) {
+    override suspend fun checkForNewRelaysAndUpdateAllFilters(shouldReconnect: Boolean) {
         if (settings.killSwitch.value) {
             disconnectIntentionally()
             return
@@ -998,3 +1003,10 @@ class Amber :
 }
 
 class FailedMigrationException(msg: String) : Exception(msg)
+
+/**
+ * The application container, for Android entry points (activities, services, receivers,
+ * workers, the provider) that the system constructs and so cannot take it as a parameter.
+ * Everything they create gets its dependencies passed in.
+ */
+val Context.amber: Amber get() = applicationContext as Amber

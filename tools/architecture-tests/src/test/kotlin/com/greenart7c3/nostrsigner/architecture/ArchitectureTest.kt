@@ -182,9 +182,7 @@ class ArchitectureTest {
         val amberInstanceUsers = setOf(
             "DataStoreAccess.kt",
             "LocalPreferences.kt",
-            "MainActivity.kt",
             "SecureCryptoHelper.kt",
-            "SignerActivity.kt",
             "SignerProviderQuery.kt",
             "database/HistoryDao.kt",
             "database/LogDao.kt",

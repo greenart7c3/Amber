@@ -7,6 +7,7 @@ import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.LocalPreferences
+import com.greenart7c3.nostrsigner.amber
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -16,6 +17,7 @@ class BootReceiver(
     private val scope: CoroutineScope = CoroutineScope(Dispatchers.IO + SupervisorJob()),
 ) : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
+        val amber = context.amber
         if (BuildFlavorChecker.isOfflineFlavor()) return
         AmberLog.d(Amber.TAG, "Received intent: ${intent.action}")
 
@@ -29,7 +31,7 @@ class BootReceiver(
                         AmberLog.d(Amber.TAG, "Skipping service start (${intent.action}) (disabled in settings)")
                         return@launch
                     }
-                    Amber.instance.startService()
+                    amber.startService()
                 }
             }
         }

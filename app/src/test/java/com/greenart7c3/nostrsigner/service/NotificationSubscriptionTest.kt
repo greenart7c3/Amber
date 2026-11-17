@@ -66,7 +66,7 @@ class NotificationSubscriptionTest {
         account = newTestAccount(scope)
         coEvery { LocalPreferences.allAccounts(any()) } returns listOf(account)
 
-        subscription = NotificationSubscription(client, mockk(relaxed = true))
+        subscription = NotificationSubscription(client, mockk(relaxed = true), accountRepository = amber, scope = amber.applicationIOScope, notificationCache = amber.notificationCache)
     }
 
     @After

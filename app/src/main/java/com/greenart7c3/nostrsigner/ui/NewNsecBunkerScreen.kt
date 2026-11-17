@@ -37,6 +37,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.ClipEntry
 import androidx.compose.ui.platform.LocalClipboard
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -86,6 +87,7 @@ fun NewNsecBunkerScreen(
     account: Account,
     navController: NavController,
 ) {
+    val context = LocalContext.current
     val relayClient = LocalRelayClient.current
     val accountRepository = LocalAccountRepository.current
     val secret = remember { mutableStateOf(UUID.randomUUID().toString()) }
@@ -189,7 +191,7 @@ fun NewNsecBunkerScreen(
                                     scope,
                                     account = account,
                                     factory = relayClient.factory,
-                                    accountRepository = accountRepository,
+                                    context = context,
                                     onDone = {
                                     },
                                 )
@@ -231,7 +233,7 @@ fun NewNsecBunkerScreen(
                                         scope,
                                         account = account,
                                         factory = relayClient.factory,
-                                        accountRepository = accountRepository,
+                                        context = context,
                                         onDone = {
                                         },
                                     )

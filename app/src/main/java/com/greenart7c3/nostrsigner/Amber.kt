@@ -174,11 +174,18 @@ class Amber :
 
     override val client: NostrClient = NostrClient(factory, applicationIOScope)
 
-    val stats = AmberRelayStats(client, this)
+    // Capacity 10 was too small under bursty NIP-46 traffic — duplicate-detection
+    // started missing recent events. 512 covers high-volume relays without being
+    // a meaningful memory cost (event-id hex strings + Long).
+    val notificationCache = LruCache<String, Long>(512)
+
+    val relayStats = RelayStats(client)
+
+    val stats = AmberRelayStats(client, this, settingsStore = this, relayStats = relayStats, scope = applicationIOScope)
 
     // logs and stat counts.
     init {
-        client.addConnectionListener(NostrClientLoggerListener(this, stats, applicationIOScope))
+        client.addConnectionListener(NostrClientLoggerListener(this, stats, applicationIOScope, settingsStore = this, relayClient = this, accountRepository = this))
     }
 
     // Authenticates with relays; it registers itself with the client.
@@ -194,16 +201,14 @@ class Amber :
         }
     }
 
-    val relayStats = RelayStats(client)
-
-    val notificationSubscription = NotificationSubscription(client, this)
+    val notificationSubscription = NotificationSubscription(client, this, accountRepository = this, scope = applicationIOScope, notificationCache = notificationCache)
 
     // Per-account profile metadata fetch, started/stopped by the composables that display
     // each account (see ProfileSubscriptionEffect) rather than app-wide.
-    val profileSubscription = ProfileSubscription(client, this, applicationIOScope)
+    val profileSubscription = ProfileSubscription(client, this, applicationIOScope, settingsStore = this, relayClient = this)
 
     val zapstoreUpdater: ZapstoreUpdater? = if (!BuildFlavorChecker.isOfflineFlavor() && !BuildFlavorChecker.isFdroidBuild()) {
-        ZapstoreUpdater(client, applicationIOScope)
+        ZapstoreUpdater(client, applicationIOScope, relayClient = this, appContext = this)
     } else {
         null
     }
@@ -246,12 +251,7 @@ class Amber :
 
     override val keystoreFailedAccounts = MutableStateFlow<List<String>>(emptyList())
 
-    @Volatile var intentionalDisconnectTime = 0L
-
-    // Capacity 10 was too small under bursty NIP-46 traffic — duplicate-detection
-    // started missing recent events. 512 covers high-volume relays without being
-    // a meaningful memory cost (event-id hex strings + Long).
-    val notificationCache = LruCache<String, Long>(512)
+    @Volatile override var intentionalDisconnectTime = 0L
 
     fun isSocksProxyAlive(proxyHost: String, proxyPort: Int): Boolean {
         if (settings.torMode == TorMode.BUILTIN) {

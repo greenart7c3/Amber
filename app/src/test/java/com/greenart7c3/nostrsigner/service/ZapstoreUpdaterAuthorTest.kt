@@ -54,7 +54,7 @@ class ZapstoreUpdaterAuthorTest {
 
     @Test
     fun `validly signed release from a non-developer key is ignored`() = runBlocking {
-        val updater = ZapstoreUpdater(mockk<NostrClient>(relaxed = true), scope)
+        val updater = ZapstoreUpdater(mockk<NostrClient>(relaxed = true), scope, relayClient = mockk(relaxed = true), appContext = mockk(relaxed = true))
         val subIdField = ZapstoreUpdater::class.java.getDeclaredField("releaseSubId").apply { isAccessible = true }
         val releaseSubId = subIdField.get(updater) as String
 

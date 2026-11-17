@@ -7,6 +7,9 @@ import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.common.relays.RelayHealthTracker
+import com.greenart7c3.nostrsigner.data.AccountRepository
+import com.greenart7c3.nostrsigner.data.RelayClient
+import com.greenart7c3.nostrsigner.data.SettingsStore
 import com.greenart7c3.nostrsigner.database.LogEntity
 import com.greenart7c3.nostrsigner.service.NotificationUtils.sendErrorNotification
 import com.greenart7c3.nostrsigner.ui.ToastManager
@@ -27,21 +30,21 @@ import kotlinx.coroutines.launch
 object AmberListenerSingleton {
     val latestErrorMessages = mutableListOf<String>()
 
-    fun showErrorMessage() {
+    fun showErrorMessage(context: Context) {
         if (latestErrorMessages.isEmpty()) return
         if (latestErrorMessages.last().isBlank()) return
         if (Amber.isAppInForeground) {
             ToastManager.toast("Error", latestErrorMessages.last())
         } else {
             val notificationManager: NotificationManager =
-                Amber.instance.applicationContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+                context.applicationContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             notificationManager.sendErrorNotification(
                 id = latestErrorMessages.last().hashCode().toString(),
                 channelId = "ErrorID",
                 messageTitle = "Error sending bunker response",
                 messageBody = latestErrorMessages.last(),
                 picture = null,
-                applicationContext = Amber.instance.applicationContext,
+                applicationContext = context.applicationContext,
             )
         }
         latestErrorMessages.clear()
@@ -52,6 +55,9 @@ class NostrClientLoggerListener(
     val context: Context,
     val stats: AmberRelayStats,
     val scope: CoroutineScope,
+    private val settingsStore: SettingsStore,
+    private val relayClient: RelayClient,
+    private val accountRepository: AccountRepository,
 ) : RelayConnectionListener {
     private var reconnectJob: Job? = null
     private var reconnectDelay = 5.seconds
@@ -95,8 +101,8 @@ class NostrClientLoggerListener(
             AmberLog.d(Amber.TAG, "Reconnecting in ${reconnectDelay.inWholeSeconds}s...")
             delay(reconnectDelay)
             reconnectDelay = (reconnectDelay * 2).coerceAtMost(60.seconds)
-            if (!BuildFlavorChecker.isOfflineFlavor() && !Amber.instance.settings.killSwitch.value) {
-                Amber.instance.reconnect()
+            if (!BuildFlavorChecker.isOfflineFlavor() && !settingsStore.settings.killSwitch.value) {
+                relayClient.reconnect()
             }
         }
     }
@@ -109,7 +115,7 @@ class NostrClientLoggerListener(
         scope.launch {
             val account = LocalPreferences.currentAccount(context)
             if (account != null) {
-                Amber.instance.getLogDatabase(account).dao().insertLogIfEnabled(
+                accountRepository.getLogDatabase(account).dao().insertLogIfEnabled(
                     LogEntity(
                         id = 0,
                         url = url,
@@ -120,7 +126,7 @@ class NostrClientLoggerListener(
                 )
             } else {
                 LocalPreferences.allSavedAccounts(context).forEach {
-                    Amber.instance.getLogDatabase(it.npub).dao().insertLogIfEnabled(
+                    accountRepository.getLogDatabase(it.npub).dao().insertLogIfEnabled(
                         LogEntity(
                             id = 0,
                             url = url,
@@ -138,7 +144,7 @@ class NostrClientLoggerListener(
         AmberLog.d(Amber.TAG, "onCannotConnect: ${relay.url.url} error: $errorMessage")
         saveLog(relay.url.url, "onCannotConnect", errorMessage)
 
-        if (System.currentTimeMillis() - Amber.instance.intentionalDisconnectTime < 2_000) {
+        if (System.currentTimeMillis() - relayClient.intentionalDisconnectTime < 2_000) {
             super.onCannotConnect(relay, errorMessage)
             return
         }
@@ -195,7 +201,7 @@ class NostrClientLoggerListener(
         AmberLog.d(Amber.TAG, "onDisconnected: ${relay.url.url}")
         saveLog(relay.url.url, "onDisconnected", "Disconnected")
 
-        if (System.currentTimeMillis() - Amber.instance.intentionalDisconnectTime < 2_000) {
+        if (System.currentTimeMillis() - relayClient.intentionalDisconnectTime < 2_000) {
             AmberLog.d(Amber.TAG, "onDisconnected: ${relay.url.url} intentional, skipping reconnect")
             super.onDisconnected(relay)
             return

@@ -277,7 +277,7 @@ object BunkerRequestUtils {
             onDone(true)
         } else {
             onDone(false)
-            AmberListenerSingleton.showErrorMessage()
+            AmberListenerSingleton.showErrorMessage(Amber.instance)
             AmberLog.d(Amber.TAG, "Failed response to relays ${relays.map { relay -> relay.url }} type ${bunkerRequest.request.method}")
         }
         onLoading(false)

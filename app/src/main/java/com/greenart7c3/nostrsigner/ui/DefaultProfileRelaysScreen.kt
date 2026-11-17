@@ -161,7 +161,7 @@ fun DefaultProfileRelaysScreen(
                                     scope,
                                     account,
                                     factory = relayClient.factory,
-                                    accountRepository = accountRepository,
+                                    context = context,
                                     shouldCheckForBunker = false,
                                     onDone = {
                                         settingsStore.settings = settingsStore.settings.copy(
@@ -216,7 +216,7 @@ fun DefaultProfileRelaysScreen(
                                         scope,
                                         account,
                                         factory = relayClient.factory,
-                                        accountRepository = accountRepository,
+                                        context = context,
                                         shouldCheckForBunker = false,
                                         onDone = {
                                             settingsStore.settings = settingsStore.settings.copy(

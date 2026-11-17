@@ -21,9 +21,10 @@
 package com.greenart7c3.nostrsigner.service
 
 import android.content.Context
-import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.LocalPreferences
+import com.greenart7c3.nostrsigner.data.RelayClient
+import com.greenart7c3.nostrsigner.data.SettingsStore
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.ProfileFetchInterval
 import com.vitorpamplona.quartz.nip01Core.crypto.verify
@@ -53,6 +54,8 @@ class ProfileSubscription(
     val client: NostrClient,
     val appContext: Context,
     val scope: CoroutineScope,
+    private val settingsStore: SettingsStore,
+    private val relayClient: RelayClient,
 ) : RelayConnectionListener {
     // All maps are concurrent: mutated from UI/coroutine threads (updateFilter, closeSub)
     // and read/iterated from relay I/O threads (onIncomingMessage) at the same time.
@@ -95,7 +98,7 @@ class ProfileSubscription(
             val account = hexKey?.let { accounts[it] }
             if (account != null) {
                 scope.launch {
-                    LocalPreferences.setLastCheck(Amber.instance, account.npub, TimeUtils.now())
+                    LocalPreferences.setLastCheck(appContext, account.npub, TimeUtils.now())
                 }
             }
         }
@@ -162,7 +165,7 @@ class ProfileSubscription(
     fun updateFilter(account: Account) {
         if (BuildFlavorChecker.isOfflineFlavor()) return
 
-        val interval = Amber.instance.settings.profileFetchInterval
+        val interval = settingsStore.settings.profileFetchInterval
         if (interval == ProfileFetchInterval.NEVER) return
 
         synchronized(accounts) { accounts[account.hexKey] = account }
@@ -236,7 +239,7 @@ class ProfileSubscription(
 
     private fun unsubscribe(subId: String) {
         timeoutJobs.remove(subId)?.cancel()
-        Amber.instance.intentionalDisconnectTime = System.currentTimeMillis()
+        relayClient.intentionalDisconnectTime = System.currentTimeMillis()
         client.unsubscribe(subId)
         relaysPerSubId.remove(subId)
     }
@@ -262,7 +265,7 @@ class ProfileSubscription(
      * Stops updates for all accounts (e.g. after a backup restore).
      */
     fun closeSub() {
-        Amber.instance.intentionalDisconnectTime = System.currentTimeMillis()
+        relayClient.intentionalDisconnectTime = System.currentTimeMillis()
         (subIds.values + relayListSubIds.values).forEach {
             timeoutJobs.remove(it)?.cancel()
             client.unsubscribe(it)

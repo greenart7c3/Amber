@@ -43,7 +43,7 @@ class ZapstoreUpdaterHashTest {
     }
 
     private suspend fun downloadApk(release: ZapstoreRelease): Any? {
-        val updater = ZapstoreUpdater(mockk(relaxed = true), scope)
+        val updater = ZapstoreUpdater(mockk(relaxed = true), scope, relayClient = mockk(relaxed = true), appContext = mockk(relaxed = true))
         val fn = ZapstoreUpdater::class.java.getDeclaredMethod(
             "downloadApk",
             Context::class.java,

@@ -37,6 +37,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.input.ImeAction
@@ -82,6 +83,7 @@ fun EditConfigurationScreen(
     account: Account,
     onNav: (String) -> Unit,
 ) {
+    val context = LocalContext.current
     val accountRepository = LocalAccountRepository.current
     val relayClient = LocalRelayClient.current
     val scope = rememberCoroutineScope()
@@ -205,7 +207,7 @@ fun EditConfigurationScreen(
                                     scope,
                                     account,
                                     factory = relayClient.factory,
-                                    accountRepository = accountRepository,
+                                    context = context,
                                     onDone = {},
                                 )
                             }
@@ -229,7 +231,7 @@ fun EditConfigurationScreen(
                                         scope,
                                         account,
                                         factory = relayClient.factory,
-                                        accountRepository = accountRepository,
+                                        context = context,
                                         onDone = {},
                                     )
                                 }

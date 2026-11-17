@@ -21,11 +21,12 @@
 package com.greenart7c3.nostrsigner.service
 
 import android.content.Context
-import com.greenart7c3.nostrsigner.Amber
+import androidx.collection.LruCache
 import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.common.relays.RelayHealthTracker
+import com.greenart7c3.nostrsigner.data.AccountRepository
 import com.vitorpamplona.quartz.nip01Core.relay.client.NostrClient
 import com.vitorpamplona.quartz.nip01Core.relay.client.listeners.RelayConnectionListener
 import com.vitorpamplona.quartz.nip01Core.relay.client.single.IRelayClient
@@ -38,6 +39,7 @@ import com.vitorpamplona.quartz.nip46RemoteSigner.NostrConnectEvent
 import com.vitorpamplona.quartz.utils.TimeUtils
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -45,6 +47,9 @@ import kotlinx.coroutines.sync.withLock
 class NotificationSubscription(
     val client: NostrClient,
     val appContext: Context,
+    private val accountRepository: AccountRepository,
+    private val scope: CoroutineScope,
+    private val notificationCache: LruCache<String, Long>,
 ) : RelayConnectionListener {
     private val eventNotificationConsumer = EventNotificationConsumer(appContext)
 
@@ -62,7 +67,7 @@ class NotificationSubscription(
     override suspend fun onIncomingMessage(relay: IRelayClient, msgStr: String, msg: Message) {
         if (msg is EventMessage) {
             if (subIds.containsValue(msg.subId)) {
-                Amber.instance.applicationIOScope.launch {
+                scope.launch {
                     eventNotificationConsumer.consume(msg.event, relay.url)
                 }
             }
@@ -102,7 +107,7 @@ class NotificationSubscription(
                 // getAll re-decrypts every application row through AndroidKeyStore
                 // (a keystore2 binder round-trip per encrypted field) each cycle —
                 // previously the app's dominant native allocator.
-                val allConnections = Amber.instance.dao(account.npub).getAll(account.hexKey)
+                val allConnections = accountRepository.dao(account.npub).getAll(account.hexKey)
                 val connectionsWithLocalKey = allConnections.filter { it.localKey.isNotEmpty() }
                 val hasLegacyConnections = allConnections.any { it.localKey.isEmpty() && it.relays.isNotEmpty() }
 
@@ -116,7 +121,7 @@ class NotificationSubscription(
                     // a socket to them on every refresh. They are re-added once
                     // RelayHealthTracker is reset (network change / manual reconnect) or
                     // they connect successfully again.
-                    val connRelays = conn.relays.ifEmpty { Amber.instance.getSavedRelays(account) }
+                    val connRelays = conn.relays.ifEmpty { accountRepository.getSavedRelays(account) }
                         .filterNot { RelayHealthTracker.isDead(it) }
                     if (connRelays.isEmpty()) continue
 
@@ -135,7 +140,7 @@ class NotificationSubscription(
 
                 // Main account subscription only for legacy connections (no localKey)
                 if (hasLegacyConnections) {
-                    val relays = Amber.instance.getSavedRelays(account)
+                    val relays = accountRepository.getSavedRelays(account)
                         .filterNot { RelayHealthTracker.isDead(it) }
                     if (relays.isNotEmpty()) {
                         activeSubKeys.add(account.hexKey)
@@ -184,7 +189,7 @@ class NotificationSubscription(
 
     private fun computeSince(): Long {
         val now = TimeUtils.now()
-        val latest = if (Amber.instance.notificationCache.size() > 0) Amber.instance.notificationCache.snapshot().maxOf { it.value } else 0L
+        val latest = if (notificationCache.size() > 0) notificationCache.snapshot().maxOf { it.value } else 0L
         // The cache holds sender-chosen created_at values recorded before any
         // authorization; never let one push `since` past the real clock, or
         // relays would drop every legitimate request until then.

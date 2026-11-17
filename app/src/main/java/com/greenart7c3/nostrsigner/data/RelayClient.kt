@@ -15,6 +15,9 @@ interface RelayClient {
 
     fun reconnect()
 
+    /** When relays were last disconnected on purpose; disconnects right after it are not failures. */
+    var intentionalDisconnectTime: Long
+
     /** Disconnects without counting it as relay failures. */
     fun disconnectIntentionally()
 

@@ -1,6 +1,7 @@
 package com.greenart7c3.nostrsigner.ui.actions
 
 import android.annotation.SuppressLint
+import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -74,7 +75,6 @@ import com.greenart7c3.nostrsigner.commonsui.relay_filter_failed
 import com.greenart7c3.nostrsigner.commonsui.relays_used_by_connections
 import com.greenart7c3.nostrsigner.commonsui.testing_relay
 import com.greenart7c3.nostrsigner.commonsui.wss
-import com.greenart7c3.nostrsigner.data.AccountRepository
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.TimeUtils as AmberTimeUtils
 import com.greenart7c3.nostrsigner.models.defaultAppRelays
@@ -126,6 +126,7 @@ fun DefaultRelaysScreen(
     modifier: Modifier,
     account: Account,
 ) {
+    val context = LocalContext.current
     val accountRepository = LocalAccountRepository.current
     val settingsStore = LocalSettingsStore.current
     val relayClient = LocalRelayClient.current
@@ -223,7 +224,7 @@ fun DefaultRelaysScreen(
                                     scope,
                                     account,
                                     factory = relayClient.factory,
-                                    accountRepository = accountRepository,
+                                    context = context,
                                     onDone = {
                                         settingsStore.settings = settingsStore.settings.copy(
                                             defaultRelays = relays2,
@@ -277,7 +278,7 @@ fun DefaultRelaysScreen(
                                         scope,
                                         account,
                                         factory = relayClient.factory,
-                                        accountRepository = accountRepository,
+                                        context = context,
                                         onDone = {
                                             settingsStore.settings = settingsStore.settings.copy(
                                                 defaultRelays = relays2,
@@ -368,7 +369,7 @@ fun onAddRelay(
     scope: CoroutineScope,
     account: Account,
     factory: OkHttpWebSocket.Builder,
-    accountRepository: AccountRepository,
+    context: Context,
     shouldCheckForBunker: Boolean = true,
     onDone: () -> Unit,
 ) {
@@ -398,7 +399,7 @@ fun onAddRelay(
 
         scope.launch(Dispatchers.IO) secondLaunch@{
             if (shouldCheckForBunker) {
-                val relays = accountRepository.getSavedRelays(account)
+                val relays = context.amber.getSavedRelays(account)
                 if (addedWSS in relays) {
                     relays2.add(addedWSS)
                     onDone()
@@ -538,7 +539,7 @@ fun onAddRelay(
                         count++
                     }
                 } else {
-                    AmberListenerSingleton.showErrorMessage()
+                    AmberListenerSingleton.showErrorMessage(context)
                     filterResult = true
                 }
 

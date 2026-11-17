@@ -184,8 +184,6 @@ class ArchitectureTest {
             "SecureCryptoHelper.kt",
             "database/LogRetentionManager.kt",
             "models/Account.kt",
-            "relays/AmberRelayStat.kt",
-            "relays/NostrClientLoggerListener.kt",
             "service/AccountExportService.kt",
             "service/ApplicationBackup.kt",
             "service/BunkerRequestUtils.kt",
@@ -193,12 +191,9 @@ class ArchitectureTest {
             "service/IntentUtils.kt",
             "service/LocalBunkerRelayServer.kt",
             "service/NostrConnectUtils.kt",
-            "service/NotificationSubscription.kt",
-            "service/ProfileSubscription.kt",
             "service/ReportSender.kt",
             "service/TrustScoreService.kt",
             "service/WebDavService.kt",
-            "service/ZapstoreUpdater.kt",
             "service/crashreports/DisplayCrashMessages.kt",
         )
 

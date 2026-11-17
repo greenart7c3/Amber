@@ -75,7 +75,15 @@ class EventNotificationConsumerRateLimitTest {
 
         val notificationManager = mockk<NotificationManager>()
         every { notificationManager.areNotificationsEnabled() } returns true
-        consumer = spyk(EventNotificationConsumer(mockk(relaxed = true)))
+        consumer = spyk(
+            EventNotificationConsumer(
+                mockk(relaxed = true),
+                settingsStore = amber,
+                accountRepository = amber,
+                scope = amber.applicationIOScope,
+                notificationCache = amber.notificationCache,
+            ) { amber.notificationSubscription.updateFilter() },
+        )
         every { consumer.notificationManager() } returns notificationManager
     }
 

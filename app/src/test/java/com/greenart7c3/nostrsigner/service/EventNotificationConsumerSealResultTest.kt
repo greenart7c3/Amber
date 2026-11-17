@@ -29,6 +29,8 @@ import org.junit.Test
  * into a disclosure of that self-encrypted plaintext.
  */
 class EventNotificationConsumerSealResultTest {
+    private val amber = mockk<Amber>(relaxed = true)
+
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private val signer = NostrSignerInternal(KeyPair())
     private val account = Account(
@@ -48,7 +50,6 @@ class EventNotificationConsumerSealResultTest {
 
     @Before
     fun setUp() {
-        val amber = mockk<Amber>(relaxed = true)
         every { amber.applicationIOScope } returns scope
         installAmberInstance(amber)
     }
@@ -68,7 +69,13 @@ class EventNotificationConsumerSealResultTest {
             String::class.java,
             Continuation::class.java,
         ).apply { isAccessible = true }
-        val consumer = EventNotificationConsumer(mockk(relaxed = true))
+        val consumer = EventNotificationConsumer(
+            mockk(relaxed = true),
+            settingsStore = amber,
+            accountRepository = amber,
+            scope = amber.applicationIOScope,
+            notificationCache = amber.notificationCache,
+        ) { amber.notificationSubscription.updateFilter() }
         return suspendCoroutineUninterceptedOrReturn<Any?> { c -> fn.invoke(consumer, request, account, "wss://relay.invalid", c) } as EncryptedDataKind
     }
 

@@ -27,6 +27,7 @@ import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.common.relays.RelayHealthTracker
 import com.greenart7c3.nostrsigner.data.AccountRepository
+import com.greenart7c3.nostrsigner.data.SettingsStore
 import com.vitorpamplona.quartz.nip01Core.relay.client.NostrClient
 import com.vitorpamplona.quartz.nip01Core.relay.client.listeners.RelayConnectionListener
 import com.vitorpamplona.quartz.nip01Core.relay.client.single.IRelayClient
@@ -47,11 +48,13 @@ import kotlinx.coroutines.sync.withLock
 class NotificationSubscription(
     val client: NostrClient,
     val appContext: Context,
+    private val settingsStore: SettingsStore,
     private val accountRepository: AccountRepository,
     private val scope: CoroutineScope,
     private val notificationCache: LruCache<String, Long>,
 ) : RelayConnectionListener {
-    private val eventNotificationConsumer = EventNotificationConsumer(appContext)
+    private val eventNotificationConsumer =
+        EventNotificationConsumer(appContext, settingsStore, accountRepository, scope, notificationCache) { updateFilter() }
 
     // Concurrent: mutated in updateFilter/closeAllSubs (coroutines) while relay I/O
     // threads iterate it in onIncomingMessage (containsValue).

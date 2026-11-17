@@ -68,7 +68,7 @@ class NotificationSinceClampTest {
         val before = TimeUtils.now()
         cache.put("legit", before - 30)
         cache.put("attacker", before + 300)
-        NotificationSubscription(client, mockk(relaxed = true), accountRepository = amber, scope = amber.applicationIOScope, notificationCache = cache).updateFilter()
+        NotificationSubscription(client, mockk(relaxed = true), settingsStore = amber, accountRepository = amber, scope = amber.applicationIOScope, notificationCache = cache).updateFilter()
         val after = TimeUtils.now()
 
         val sinces = captured.flatMap { subs -> subs.values.flatten().mapNotNull { it.since } }

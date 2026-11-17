@@ -73,7 +73,18 @@ class EventNotificationConsumerTest {
         mockkObject(LocalPreferences)
         account = newTestAccount(scope)
 
-        consumer = spyk(EventNotificationConsumer(mockk(relaxed = true)))
+        consumer = spyk(
+            EventNotificationConsumer(
+                mockk(relaxed = true),
+                settingsStore = amber,
+                accountRepository = amber,
+                // Read on use: tests swap the stubbed scope after setUp.
+                scope = object : CoroutineScope {
+                    override val coroutineContext get() = amber.applicationIOScope.coroutineContext
+                },
+                notificationCache = amber.notificationCache,
+            ) { amber.notificationSubscription.updateFilter() },
+        )
         every { consumer.saveLog(any(), any(), any()) } returns Unit
         val nm = mockk<android.app.NotificationManager>(relaxed = true)
         every { nm.areNotificationsEnabled() } returns true

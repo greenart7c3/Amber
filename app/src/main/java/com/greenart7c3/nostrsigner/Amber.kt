@@ -201,7 +201,7 @@ class Amber :
         }
     }
 
-    val notificationSubscription = NotificationSubscription(client, this, accountRepository = this, scope = applicationIOScope, notificationCache = notificationCache)
+    val notificationSubscription = NotificationSubscription(client, this, settingsStore = this, accountRepository = this, scope = applicationIOScope, notificationCache = notificationCache)
 
     // Per-account profile metadata fetch, started/stopped by the composables that display
     // each account (see ProfileSubscriptionEffect) rather than app-wide.

@@ -1,6 +1,7 @@
 package com.greenart7c3.nostrsigner.ui.components
 
 import android.app.Activity
+import android.app.NotificationManager
 import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Column
@@ -65,7 +66,6 @@ import com.greenart7c3.nostrsigner.models.TagArrayEncryptedDataKind
 import com.greenart7c3.nostrsigner.service.AmberUtils
 import com.greenart7c3.nostrsigner.service.ApplicationNameCache
 import com.greenart7c3.nostrsigner.service.BunkerRequestUtils
-import com.greenart7c3.nostrsigner.service.EventNotificationConsumer
 import com.greenart7c3.nostrsigner.service.MultiEventScreenIntents
 import com.greenart7c3.nostrsigner.service.RelayUrlUtils
 import com.greenart7c3.nostrsigner.service.isBlockedByAuthWhitelist
@@ -293,7 +293,7 @@ fun BunkerMultiEventHomeScreen(
                         val closeApp = batchRequests.any { it.closeApplication }
                         // Only this batch's requests: a connect queued meanwhile stays
                         // pending, with its notification, for the connect screen.
-                        val notificationManager = EventNotificationConsumer(context).notificationManager()
+                        val notificationManager = context.getSystemService(NotificationManager::class.java)
                         batchRequests.forEach {
                             BunkerRequestUtils.remove(it)
                             notificationManager.cancel(it.queueKey.hashCode())

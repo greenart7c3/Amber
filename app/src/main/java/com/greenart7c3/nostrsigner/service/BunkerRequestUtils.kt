@@ -1,5 +1,6 @@
 package com.greenart7c3.nostrsigner.service
 
+import android.app.NotificationManager
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.SignerActivity
@@ -92,7 +93,7 @@ object BunkerRequestUtils {
             current.filter { it.localKey != key }.toPersistentList()
         }
         if (state.value.isEmpty()) {
-            EventNotificationConsumer(Amber.instance).notificationManager().cancelAll()
+            Amber.instance.getSystemService(NotificationManager::class.java).cancelAll()
         }
     }
 
@@ -107,7 +108,7 @@ object BunkerRequestUtils {
         remove(bunkerRequest)
         if (state.value.isNotEmpty()) return
 
-        EventNotificationConsumer(Amber.instance).notificationManager().cancelAll()
+        Amber.instance.getSystemService(NotificationManager::class.java).cancelAll()
         val activity = Amber.instance.getMainActivity()
         activity?.intent = null
         if (closeApplication || activity is SignerActivity) {

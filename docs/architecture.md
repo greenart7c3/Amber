@@ -88,7 +88,8 @@ footprint small.
   rewrites the files from the current findings, so fixed code disappears from
   them. Never add an entry by hand.
 - **Architecture tests** (`tools/architecture-tests`, Konsist) — `:common` and
-  `:commonsui` stay platform free, `ui/` does not import Room, `service/` and `database/` do not depend on
+  `:commonsui` stay platform free, `ui/` does not import Room, `Context.amber` cannot spread to a new file,
+  `service/` and `database/` do not depend on
   Compose UI, the desktop `core/` does not import `ui/`, ViewModels are named
   `ViewModel`. The allow-lists at the bottom of `ArchitectureTest.kt` are
   ratchets too: they fail when an entry no longer violates the rule, so they

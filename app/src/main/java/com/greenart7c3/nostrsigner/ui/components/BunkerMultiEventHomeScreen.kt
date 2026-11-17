@@ -1,5 +1,7 @@
 package com.greenart7c3.nostrsigner.ui.components
 
+import android.app.Activity
+import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -28,7 +30,6 @@ import androidx.compose.ui.text.capitalize
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.toLowerCase
 import androidx.compose.ui.unit.dp
-import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.common.EncryptionType
 import com.greenart7c3.nostrsigner.common.SignerType
@@ -71,6 +72,10 @@ import com.greenart7c3.nostrsigner.service.isBlockedByAuthWhitelist
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
 import com.greenart7c3.nostrsigner.service.relayAuthRememberType
 import com.greenart7c3.nostrsigner.service.toShortenHex
+import com.greenart7c3.nostrsigner.ui.LocalAccountRepository
+import com.greenart7c3.nostrsigner.ui.LocalAppScope
+import com.greenart7c3.nostrsigner.ui.LocalRelayClient
+import com.greenart7c3.nostrsigner.ui.LocalSettingsStore
 import com.greenart7c3.nostrsigner.ui.RememberType
 import com.greenart7c3.nostrsigner.ui.theme.AmberPreview
 import com.greenart7c3.nostrsigner.ui.theme.ThemePreviews
@@ -128,6 +133,11 @@ fun BunkerMultiEventHomeScreen(
     accountParam: Account,
     onLoading: (Boolean) -> Unit,
 ) {
+    val accountRepository = LocalAccountRepository.current
+    val settingsStore = LocalSettingsStore.current
+    val relayClient = LocalRelayClient.current
+    val appScope = LocalAppScope.current
+    val activity = LocalActivity.current
     val context = LocalContext.current
     // A connect needs the single screen's account choice and replace prompt, so
     // it is never part of a batch: it stays queued for its own screen.
@@ -167,7 +177,7 @@ fun BunkerMultiEventHomeScreen(
                     } ?: return@forEach
 
                     val cacheKey = "${account.npub.toShortenHex()}-${appKey.key}"
-                    val app = Amber.instance.getDatabase(account.npub).dao().getByKey(appKey.key)
+                    val app = accountRepository.getDatabase(account.npub).dao().getByKey(appKey.key)
                     val name = ApplicationNameCache[cacheKey]
                         ?: app?.application?.name?.let(::sanitizeAppName)?.ifBlank { null }?.also { ApplicationNameCache[cacheKey] = it }
                     val default = appInfo(appKey)
@@ -277,9 +287,9 @@ fun BunkerMultiEventHomeScreen(
             text = stringResource(Res.string.confirm),
             onClick = {
                 onLoading(true)
-                Amber.instance.applicationIOScope.launch(Dispatchers.IO) {
+                appScope.launch(Dispatchers.IO) {
                     try {
-                        reconnectToRelays()
+                        relayClient.checkForNewRelaysAndUpdateAllFilters()
                         val closeApp = batchRequests.any { it.closeApplication }
                         // Only this batch's requests: a connect queued meanwhile stays
                         // pending, with its notification, for the connect screen.
@@ -288,7 +298,7 @@ fun BunkerMultiEventHomeScreen(
                             BunkerRequestUtils.remove(it)
                             notificationManager.cancel(it.queueKey.hashCode())
                         }
-                        finishActivity(closeApp)
+                        finishActivity(activity, closeApp)
                         for (request in batchRequests) {
                             val thisAccount =
                                 if (request.currentAccount.isNotBlank()) {
@@ -301,8 +311,8 @@ fun BunkerMultiEventHomeScreen(
                                 } ?: continue
 
                             val localKey = request.localKey
-                            val dao = Amber.instance.dao(thisAccount.npub)
-                            val historyDatabase = Amber.instance.getHistoryDatabase(thisAccount.npub)
+                            val dao = accountRepository.dao(thisAccount.npub)
+                            val historyDatabase = accountRepository.getHistoryDatabase(thisAccount.npub)
                             val savedApplication = dao.getByKey(localKey)
 
                             // A queued request whose app row is gone was revoked
@@ -313,7 +323,7 @@ fun BunkerMultiEventHomeScreen(
                                 AmberUtils.sendBunkerError(
                                     account = thisAccount,
                                     bunkerRequest = request,
-                                    relays = BunkerRequestUtils.responseRelays(request, null, Amber.instance.settings.defaultRelays),
+                                    relays = BunkerRequestUtils.responseRelays(request, null, settingsStore.settings.defaultRelays),
                                     closeApplication = request.closeApplication,
                                     onLoading = {},
                                 )
@@ -661,16 +671,11 @@ private fun BunkerRequestCard(
     }
 }
 
-private fun finishActivity(closeApp: Boolean) {
-    val activity = Amber.instance.getMainActivity()
+private fun finishActivity(activity: Activity?, closeApp: Boolean) {
     activity?.intent = null
     if (closeApp) {
         activity?.finishAndRemoveTask()
     }
-}
-
-private suspend fun reconnectToRelays() {
-    Amber.instance.checkForNewRelaysAndUpdateAllFilters()
 }
 
 private const val PREVIEW_LOCAL_KEY = "460c25e682fda7832b52d1f22d3d22b3176d972f60dcdc3212ed8c92ef85065c"

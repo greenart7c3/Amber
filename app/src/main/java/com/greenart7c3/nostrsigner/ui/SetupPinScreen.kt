@@ -5,7 +5,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavController
-import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.commonsui.Res
 import com.greenart7c3.nostrsigner.commonsui.getStringBlocking
@@ -36,6 +35,7 @@ fun ConfirmPinScreen(
     pin: String,
     navController: NavController,
 ) {
+    val settingsStore = LocalSettingsStore.current
     val scope = rememberCoroutineScope()
     Column(
         modifier,
@@ -45,15 +45,15 @@ fun ConfirmPinScreen(
                 if (enteredPin != pin) {
                     ToastManager.toast(getStringBlocking(Res.string.pin), getStringBlocking(Res.string.pin_does_not_match))
                 } else {
-                    val usePin = Amber.instance.settings.usePin
+                    val usePin = settingsStore.settings.usePin
                     scope.launch(Dispatchers.IO) {
                         if (usePin) {
-                            Amber.instance.settings = Amber.instance.settings.copy(usePin = false)
-                            LocalPreferences.saveSettingsToEncryptedStorage(Amber.instance.settings)
+                            settingsStore.settings = settingsStore.settings.copy(usePin = false)
+                            LocalPreferences.saveSettingsToEncryptedStorage(settingsStore.settings)
                             LocalPreferences.savePinToEncryptedStorage(null)
                         } else {
-                            Amber.instance.settings = Amber.instance.settings.copy(usePin = true)
-                            LocalPreferences.saveSettingsToEncryptedStorage(Amber.instance.settings)
+                            settingsStore.settings = settingsStore.settings.copy(usePin = true)
+                            LocalPreferences.saveSettingsToEncryptedStorage(settingsStore.settings)
                             LocalPreferences.savePinToEncryptedStorage(pin)
                         }
                         scope.launch(Dispatchers.Main) {

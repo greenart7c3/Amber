@@ -14,15 +14,15 @@ import androidx.compose.material3.ModalBottomSheetProperties
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.ClipEntry
-import androidx.compose.ui.platform.Clipboard
 import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
-import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.commonsui.Permission
 import com.greenart7c3.nostrsigner.commonsui.Res
@@ -38,17 +38,20 @@ import com.greenart7c3.nostrsigner.models.TimeUtils
 import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.verticalScrollbar
 import com.vitorpamplona.quartz.nip01Core.core.Event
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 
-fun copyToClipboard(clipboard: Clipboard, text: String) {
-    Amber.instance.applicationIOScope.launch(Dispatchers.Main) {
-        clipboard.setClipEntry(
-            ClipEntry(
-                ClipData.newPlainText("Tags", text),
-            ),
-        )
+/** A copy action that runs on the calling composable's scope, like the other copy buttons. */
+@Composable
+fun rememberCopyToClipboard(): (String) -> Unit {
+    val clipboard = LocalClipboard.current
+    val scope = rememberCoroutineScope()
+    return remember(clipboard, scope) {
+        { text ->
+            scope.launch {
+                clipboard.setClipEntry(ClipEntry(ClipData.newPlainText("Tags", text)))
+            }
+        }
     }
 }
 
@@ -58,7 +61,7 @@ fun EventDetailModal(
     event: Event,
     onDismiss: () -> Unit,
 ) {
-    val clipboard = LocalClipboard.current
+    val copyToClipboard = rememberCopyToClipboard()
     val permission = Permission(
         "sign_event",
         event.kind,
@@ -108,21 +111,21 @@ fun EventDetailModal(
                     stringResource(Res.string.kind),
                     "${event.kind} - $displayTranslation",
                     {
-                        copyToClipboard(clipboard, "${event.kind} - $displayTranslation")
+                        copyToClipboard("${event.kind} - $displayTranslation")
                     },
                 )
                 EventSection(
                     stringResource(Res.string.pubkey),
                     event.pubKey.toShortenHex(),
                     {
-                        copyToClipboard(clipboard, event.pubKey)
+                        copyToClipboard(event.pubKey)
                     },
                 )
                 EventSection(
                     stringResource(Res.string.date),
                     TimeUtils.formatDateTime(context, event.createdAt * 1000, withSeconds = true),
                     {
-                        copyToClipboard(clipboard, "${event.createdAt}")
+                        copyToClipboard("${event.createdAt}")
                     },
                 )
                 if (event.content.isNotEmpty()) {
@@ -130,7 +133,7 @@ fun EventDetailModal(
                         stringResource(Res.string.content),
                         event.content,
                         {
-                            copyToClipboard(clipboard, event.content)
+                            copyToClipboard(event.content)
                         },
                     )
                 }
@@ -140,7 +143,6 @@ fun EventDetailModal(
                         tags = event.tags,
                         onCopy = {
                             copyToClipboard(
-                                clipboard,
                                 event.tags.joinToString(separator = ", ") { tag -> "[${tag.joinToString(separator = ", ") { value -> "\"${value}\"" }}]" },
                             )
                         },

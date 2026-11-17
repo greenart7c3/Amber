@@ -31,7 +31,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -67,7 +66,7 @@ import com.greenart7c3.nostrsigner.ui.components.ActivityStatsCard
 import com.greenart7c3.nostrsigner.ui.components.EventSection
 import com.greenart7c3.nostrsigner.ui.components.SimpleSearchBar
 import com.greenart7c3.nostrsigner.ui.components.TagsSection
-import com.greenart7c3.nostrsigner.ui.components.copyToClipboard
+import com.greenart7c3.nostrsigner.ui.components.rememberCopyToClipboard
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.compose.resources.stringResource
@@ -235,7 +234,7 @@ suspend fun decryptHistoryContent(activity: HistoryEntity, account: Account): St
 
 @Composable
 fun ActivityRow(activity: HistoryEntity, account: Account) {
-    val clipboard = LocalClipboard.current
+    val copyToClipboard = rememberCopyToClipboard()
     val context = LocalContext.current
     val displayContent by produceState(initialValue = "", activity.id, activity.content) {
         value = withContext(Dispatchers.IO) { decryptHistoryContent(activity, account) }
@@ -279,7 +278,7 @@ fun ActivityRow(activity: HistoryEntity, account: Account) {
                             padding = 0.dp,
                             label = stringResource(Res.string.content),
                             displayValue = parsedEvent.content,
-                            onCopy = { copyToClipboard(clipboard, parsedEvent.content) },
+                            onCopy = { copyToClipboard(parsedEvent.content) },
                         )
                     }
                     if (parsedEvent.tags.isNotEmpty()) {
@@ -291,7 +290,6 @@ fun ActivityRow(activity: HistoryEntity, account: Account) {
                             tags = parsedEvent.tags,
                             onCopy = {
                                 copyToClipboard(
-                                    clipboard,
                                     parsedEvent.tags.joinToString(separator = ", ") {
                                         "[${it.joinToString(separator = ", ") { tag -> "\"$tag\"" }}]"
                                     },

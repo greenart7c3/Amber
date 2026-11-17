@@ -4,8 +4,12 @@ import android.content.res.Configuration
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.remember
 import androidx.compose.ui.tooling.preview.Preview
+import com.greenart7c3.nostrsigner.data.SettingsStore
 import com.greenart7c3.nostrsigner.models.Account
+import com.greenart7c3.nostrsigner.models.AmberSettings
 import com.greenart7c3.nostrsigner.ui.LocalSettingsStore
 import com.vitorpamplona.quartz.nip01Core.core.hexToByteArray
 import com.vitorpamplona.quartz.nip01Core.crypto.KeyPair
@@ -28,16 +32,24 @@ annotation class ThemePreviews
  * the theme background behind the content, so previews look like the real app
  * in both themes.
  *
- * Previews must only compose components that don't reach the app's dependencies
- * (the [com.greenart7c3.nostrsigner.ui.LocalSettingsStore] family, the
- * Application, or an [com.greenart7c3.nostrsigner.models.Account]) during
- * composition: the preview renderer provides none of them.
+ * Previews get an in-memory [LocalSettingsStore]; they must not compose components
+ * that reach the other app dependencies (databases, relays, the Application) or
+ * an [com.greenart7c3.nostrsigner.models.Account]'s keys during composition.
  */
 @Composable
 fun AmberPreview(content: @Composable () -> Unit) {
-    NostrSignerTheme {
-        Surface(color = MaterialTheme.colorScheme.background) {
-            content()
+    // Settings live in memory, so components that read them render; the databases
+    // and relays stay unavailable.
+    val settingsStore = remember {
+        object : SettingsStore {
+            override var settings = AmberSettings()
+        }
+    }
+    CompositionLocalProvider(LocalSettingsStore provides settingsStore) {
+        NostrSignerTheme {
+            Surface(color = MaterialTheme.colorScheme.background) {
+                content()
+            }
         }
     }
 }

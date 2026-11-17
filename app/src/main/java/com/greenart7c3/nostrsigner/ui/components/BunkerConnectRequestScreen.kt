@@ -52,7 +52,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.common.sanitizeAppName
@@ -73,6 +72,7 @@ import com.greenart7c3.nostrsigner.models.AmberBunkerRequest
 import com.greenart7c3.nostrsigner.service.TrustScoreService
 import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.DeleteAfterType
+import com.greenart7c3.nostrsigner.ui.LocalAccountRepository
 import com.greenart7c3.nostrsigner.ui.RememberType
 import com.greenart7c3.nostrsigner.ui.SettingsRow
 import com.greenart7c3.nostrsigner.ui.deleteAfterToSeconds
@@ -133,11 +133,12 @@ fun BunkerConnectRequestScreen(
     val trustScores = remember { mutableStateMapOf<String, Int?>() }
     val loadingScores = remember { mutableStateMapOf<String, Boolean>() }
     val appName = remember { mutableStateOf(bunkerRequest.name) }
+    val accountRepository = LocalAccountRepository.current
 
     LaunchedEffect(selectedAccountIndex) {
         val selectedAccount = accounts[selectedAccountIndex]
         val name = withContext(Dispatchers.IO) {
-            bunkerRequest.name.ifBlank { sanitizeAppName(Amber.instance.getDatabase(selectedAccount.npub).dao().getBySecret((bunkerRequest.request as BunkerRequestConnect).secret ?: "")?.application?.name ?: "").ifBlank { bunkerRequest.localKey.toShortenHex() } }
+            bunkerRequest.name.ifBlank { sanitizeAppName(accountRepository.getDatabase(selectedAccount.npub).dao().getBySecret((bunkerRequest.request as BunkerRequestConnect).secret ?: "")?.application?.name ?: "").ifBlank { bunkerRequest.localKey.toShortenHex() } }
         }
         appName.value = name
     }

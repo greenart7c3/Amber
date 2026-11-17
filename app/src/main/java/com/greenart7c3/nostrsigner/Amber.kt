@@ -244,8 +244,7 @@ class Amber :
     val isOnVpnState = mutableStateOf(false)
     val isOnOfflineState = mutableStateOf(false)
 
-    /** npubs whose AndroidKeyStore key failed to decrypt (device KeyMint bug). */
-    val keystoreFailedAccounts = MutableStateFlow<List<String>>(emptyList())
+    override val keystoreFailedAccounts = MutableStateFlow<List<String>>(emptyList())
 
     @Volatile var intentionalDisconnectTime = 0L
 

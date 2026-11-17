@@ -13,11 +13,11 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import com.greenart7c3.nostrsigner.AccountInfo
-import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.commonsui.Res
 import com.greenart7c3.nostrsigner.commonsui.logout
 import com.greenart7c3.nostrsigner.ui.AccountStateViewModel
+import com.greenart7c3.nostrsigner.ui.LocalAccountRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
@@ -29,6 +29,7 @@ fun LogoutButton(
 ) {
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
+    val accountRepository = LocalAccountRepository.current
     var logoutDialog by remember { mutableStateOf(false) }
     if (logoutDialog) {
         LogoutDialog(
@@ -39,7 +40,7 @@ fun LogoutButton(
                 scope.launch(Dispatchers.IO) {
                     val account = LocalPreferences.loadFromEncryptedStorage(context, acc.npub)
                     account?.let {
-                        val dao = Amber.instance.dao(it.npub)
+                        val dao = accountRepository.dao(it.npub)
                         val permissions = dao.getAll(it.hexKey)
                         permissions.forEach { app ->
                             dao.delete(app)

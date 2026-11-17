@@ -20,7 +20,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.commonsui.Res
 import com.greenart7c3.nostrsigner.commonsui.start_service_on_boot
@@ -31,9 +30,10 @@ import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun ServiceSettingsScreen(modifier: Modifier = Modifier) {
+    val settingsStore = LocalSettingsStore.current
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    var startServiceOnBoot by remember { mutableStateOf(Amber.instance.settings.startServiceOnBoot) }
+    var startServiceOnBoot by remember { mutableStateOf(settingsStore.settings.startServiceOnBoot) }
 
     Column(modifier = modifier) {
         Row(

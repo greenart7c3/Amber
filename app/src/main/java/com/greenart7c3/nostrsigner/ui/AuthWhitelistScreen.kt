@@ -27,6 +27,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboard
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.TextFieldValue
@@ -48,6 +49,7 @@ import org.jetbrains.compose.resources.stringResource
 fun AuthWhitelistScreen(
     modifier: Modifier = Modifier,
 ) {
+    val context = LocalContext.current
     val settingsStore = LocalSettingsStore.current
     val scope = rememberCoroutineScope()
     val clipboardManager = LocalClipboard.current
@@ -80,7 +82,7 @@ fun AuthWhitelistScreen(
         if (url.isNotBlank() && url !in whitelist) {
             whitelist.add(url)
             settingsStore.settings = settingsStore.settings.copy(authWhitelist = whitelist.toList())
-            LocalPreferences.saveSettingsToEncryptedStorage(settingsStore.settings)
+            LocalPreferences.saveSettingsToEncryptedStorage(context, settingsStore.settings)
             textFieldRelay.value = TextFieldValue("")
         }
     }
@@ -169,7 +171,7 @@ fun AuthWhitelistScreen(
                                 authWhitelist = whitelist.toList(),
                             )
                             scope.launch(Dispatchers.IO) {
-                                LocalPreferences.saveSettingsToEncryptedStorage(settingsStore.settings)
+                                LocalPreferences.saveSettingsToEncryptedStorage(context, settingsStore.settings)
                             }
                         },
                     )

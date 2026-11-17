@@ -278,7 +278,7 @@ class ProfileSubscription(
 
     /** Default profile relays from the settings plus the user's own saved relay list. */
     private fun profileRelays(account: Account): Set<NormalizedRelayUrl> {
-        val defaultRelays = LocalPreferences.loadSettingsFromEncryptedStorage().defaultProfileRelays
+        val defaultRelays = LocalPreferences.loadSettingsFromEncryptedStorage(appContext).defaultProfileRelays
         val userRelays = LocalPreferences.getUserRelays(appContext, account.npub)
         return (defaultRelays + userRelays).toSet()
     }

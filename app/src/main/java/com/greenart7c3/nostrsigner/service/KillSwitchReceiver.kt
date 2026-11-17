@@ -12,7 +12,7 @@ class KillSwitchReceiver : BroadcastReceiver() {
         val amber = context.amber
         amber.applicationIOScope.launch {
             amber.settings.killSwitch.emit(!amber.settings.killSwitch.value)
-            LocalPreferences.saveSettingsToEncryptedStorage(amber.settings)
+            LocalPreferences.saveSettingsToEncryptedStorage(context, amber.settings)
             if (amber.settings.killSwitch.value) {
                 amber.client.disconnect()
             } else {

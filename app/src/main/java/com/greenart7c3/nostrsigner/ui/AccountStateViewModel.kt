@@ -165,6 +165,7 @@ class AccountStateViewModel(
                 proxyPort = proxyPort,
             )
             LocalPreferences.saveSettingsToEncryptedStorage(
+                appContext,
                 settingsStore.settings,
             )
             if (torMode == TorMode.BUILTIN) {
@@ -205,6 +206,7 @@ class AccountStateViewModel(
                 proxyPort = proxyPort,
             )
             LocalPreferences.saveSettingsToEncryptedStorage(
+                appContext,
                 settingsStore.settings,
             )
             if (torMode == TorMode.BUILTIN) {

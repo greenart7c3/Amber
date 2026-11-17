@@ -83,7 +83,7 @@ fun BiometricAuthScreen(
                                     lastBiometricsTime = System.currentTimeMillis(),
                                 )
 
-                                LocalPreferences.saveSettingsToEncryptedStorage(settingsStore.settings)
+                                LocalPreferences.saveSettingsToEncryptedStorage(context, settingsStore.settings)
                                 onAuth(true)
                             },
                             { _, message ->
@@ -130,13 +130,13 @@ fun BiometricAuthScreen(
                         text = stringResource(Res.string.enter_pin),
                         onPinEntered = { enteredPin ->
                             scope.launch(Dispatchers.IO) {
-                                val pin = LocalPreferences.loadPinFromEncryptedStorage()
+                                val pin = LocalPreferences.loadPinFromEncryptedStorage(context)
                                 scope.launch(Dispatchers.Main) {
                                     if (enteredPin == pin) {
                                         settingsStore.settings = settingsStore.settings.copy(
                                             lastBiometricsTime = System.currentTimeMillis(),
                                         )
-                                        LocalPreferences.saveSettingsToEncryptedStorage(settingsStore.settings)
+                                        LocalPreferences.saveSettingsToEncryptedStorage(context, settingsStore.settings)
                                         onAuth(true)
                                         showPinDialog = false
                                     } else {

@@ -305,7 +305,7 @@ fun SecurityScreen(
                         .clickable {
                             if (setupPin) {
                                 scope.launch(Dispatchers.IO) {
-                                    val pin = LocalPreferences.loadPinFromEncryptedStorage()
+                                    val pin = LocalPreferences.loadPinFromEncryptedStorage(context)
                                     scope.launch(Dispatchers.Main) {
                                         navController.navigate("${Route.ConfirmPin.route.split("/")[0]}/$pin")
                                     }
@@ -324,7 +324,7 @@ fun SecurityScreen(
                         onCheckedChange = {
                             if (setupPin) {
                                 scope.launch(Dispatchers.IO) {
-                                    val pin = LocalPreferences.loadPinFromEncryptedStorage()
+                                    val pin = LocalPreferences.loadPinFromEncryptedStorage(context)
                                     scope.launch(Dispatchers.Main) {
                                         navController.navigate("${Route.ConfirmPin.route.split("/")[0]}/$pin")
                                     }
@@ -358,7 +358,7 @@ fun SecurityScreen(
                             useAuth = enableBiometrics,
                             biometricsTimeType = parseBiometricsTimeType(biometricsIndex),
                         )
-                        LocalPreferences.saveSettingsToEncryptedStorage(settingsStore.settings)
+                        LocalPreferences.saveSettingsToEncryptedStorage(context, settingsStore.settings)
                         scope.launch(Dispatchers.Main) {
                             navController.navigateUp()
                         }

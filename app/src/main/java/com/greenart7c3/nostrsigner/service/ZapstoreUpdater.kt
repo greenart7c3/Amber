@@ -139,7 +139,7 @@ class ZapstoreUpdater(
         latestRelease.value = null
 
         val settings = withContext(Dispatchers.IO) {
-            LocalPreferences.loadSettingsFromEncryptedStorage()
+            LocalPreferences.loadSettingsFromEncryptedStorage(appContext)
         }
 
         // Subscribe to release events (kind 30063) from the developer. Stable releases
@@ -214,7 +214,7 @@ class ZapstoreUpdater(
         val channelTag = tags.firstOrNull { it.size > 1 && it[0] == "c" }?.getOrNull(1)
         val isBeta = channelTag.equals("beta", ignoreCase = true)
         val settings = withContext(Dispatchers.IO) {
-            LocalPreferences.loadSettingsFromEncryptedStorage()
+            LocalPreferences.loadSettingsFromEncryptedStorage(appContext)
         }
         if (isBeta && settings.updateChannel == UpdateChannel.STABLE) return
 
@@ -354,7 +354,7 @@ class ZapstoreUpdater(
             return null
         }
         val settings = withContext(Dispatchers.IO) {
-            LocalPreferences.loadSettingsFromEncryptedStorage()
+            LocalPreferences.loadSettingsFromEncryptedStorage(appContext)
         }
         val useProxy = settings.torMode != TorMode.DISABLED
         val client = HttpClientManager.getHttpClient(useProxy)

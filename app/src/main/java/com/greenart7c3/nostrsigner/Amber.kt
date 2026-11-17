@@ -207,6 +207,9 @@ class Amber :
     // each account (see ProfileSubscriptionEffect) rather than app-wide.
     val profileSubscription = ProfileSubscription(client, this, applicationIOScope, settingsStore = this, relayClient = this)
 
+    // The local WebSocket relay for bunker connections (opt in under Settings -> Relays).
+    val localBunkerRelay by lazy { LocalBunkerRelayServer(this, this, this, this) }
+
     val zapstoreUpdater: ZapstoreUpdater? = if (!BuildFlavorChecker.isOfflineFlavor() && !BuildFlavorChecker.isFdroidBuild()) {
         ZapstoreUpdater(client, applicationIOScope, relayClient = this, appContext = this)
     } else {
@@ -479,7 +482,7 @@ class Amber :
                 if (currentAccount.isNullOrBlank() && LocalPreferences.allSavedAccounts(this@Amber).isNotEmpty()) {
                     LocalPreferences.switchToAccount(this@Amber, LocalPreferences.allSavedAccounts(this@Amber).first().npub)
                 }
-                LocalPreferences.reloadApp()
+                LocalPreferences.reloadApp(this@Amber)
 
                 // Finish a wrapping-key rotation that was interrupted, so the
                 // previous key does not outlive the data it protected.
@@ -496,7 +499,7 @@ class Amber :
                 // Settings -> Relays): up before the relays are dialed, so
                 // connections that list it subscribe at once. Loopback only,
                 // so it never waits for Tor.
-                LocalBunkerRelayServer.startIfEnabled()
+                localBunkerRelay.startIfEnabled()
 
                 launch(Dispatchers.Main) {
                     if (!processLifecycleObserverRegistered) {

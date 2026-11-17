@@ -29,6 +29,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.LocalPreferences
+import com.greenart7c3.nostrsigner.amber
 import com.greenart7c3.nostrsigner.commonsui.Res
 import com.greenart7c3.nostrsigner.commonsui.active_relays
 import com.greenart7c3.nostrsigner.commonsui.d_local_bunker_port
@@ -41,7 +42,6 @@ import com.greenart7c3.nostrsigner.commonsui.default_profile_relays
 import com.greenart7c3.nostrsigner.commonsui.relay_trust_score
 import com.greenart7c3.nostrsigner.commonsui.relay_trust_score_description
 import com.greenart7c3.nostrsigner.commonsui.save
-import com.greenart7c3.nostrsigner.service.LocalBunkerRelayServer
 import com.greenart7c3.nostrsigner.service.TrustScoreService
 import com.greenart7c3.nostrsigner.ui.components.AmberButton
 import com.greenart7c3.nostrsigner.ui.navigation.Route
@@ -55,6 +55,7 @@ fun RelaysScreen(
     modifier: Modifier = Modifier,
     navController: NavController,
 ) {
+    val context = LocalContext.current
     val settingsStore = LocalSettingsStore.current
     val scope = rememberCoroutineScope()
     var trustScoreEnabled by remember { mutableStateOf(settingsStore.settings.trustScoreEnabled) }
@@ -66,7 +67,7 @@ fun RelaysScreen(
             TrustScoreService.clearCache()
         }
         scope.launch(Dispatchers.IO) {
-            LocalPreferences.saveSettingsToEncryptedStorage(settingsStore.settings)
+            LocalPreferences.saveSettingsToEncryptedStorage(context, settingsStore.settings)
         }
     }
 
@@ -123,11 +124,12 @@ fun RelaysScreen(
 /** The local bunker relay switch and its port (mirrors desktop Settings -> Desktop). */
 @Composable
 private fun LocalBunkerServerSettings() {
+    val localBunkerRelay = LocalContext.current.amber.localBunkerRelay
     val settingsStore = LocalSettingsStore.current
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     var enabled by remember { mutableStateOf(settingsStore.settings.localBunkerServer) }
-    var port by remember { mutableIntStateOf(LocalBunkerRelayServer.port()) }
+    var port by remember { mutableIntStateOf(localBunkerRelay.port()) }
     var portText by remember { mutableStateOf(port.toString()) }
     val invalidPort = stringResource(Res.string.d_local_bunker_port_invalid)
     val portInUse = stringResource(Res.string.d_local_bunker_port_in_use)
@@ -137,8 +139,8 @@ private fun LocalBunkerServerSettings() {
         enabled = value
         settingsStore.settings = settingsStore.settings.copy(localBunkerServer = value)
         scope.launch(Dispatchers.IO) {
-            LocalPreferences.saveSettingsToEncryptedStorage(settingsStore.settings)
-            LocalBunkerRelayServer.applySetting()
+            LocalPreferences.saveSettingsToEncryptedStorage(context, settingsStore.settings)
+            localBunkerRelay.applySetting()
         }
     }
 
@@ -189,7 +191,7 @@ private fun LocalBunkerServerSettings() {
                     return@AmberButton
                 }
                 scope.launch(Dispatchers.IO) {
-                    val applied = LocalBunkerRelayServer.changePort(newPort)
+                    val applied = localBunkerRelay.changePort(newPort)
                     withContext(Dispatchers.Main) {
                         if (applied) port = newPort else portText = port.toString()
                         Toast.makeText(context, if (applied) saved else portInUse, Toast.LENGTH_SHORT).show()

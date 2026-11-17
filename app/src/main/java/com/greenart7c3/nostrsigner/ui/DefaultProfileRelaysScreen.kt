@@ -167,7 +167,7 @@ fun DefaultProfileRelaysScreen(
                                         settingsStore.settings = settingsStore.settings.copy(
                                             defaultProfileRelays = relays2,
                                         )
-                                        LocalPreferences.saveSettingsToEncryptedStorage(settingsStore.settings)
+                                        LocalPreferences.saveSettingsToEncryptedStorage(context, settingsStore.settings)
                                         scope.launch(Dispatchers.IO) {
                                             if (!BuildFlavorChecker.isOfflineFlavor()) {
                                                 relayClient.checkForNewRelaysAndUpdateAllFilters()
@@ -222,7 +222,7 @@ fun DefaultProfileRelaysScreen(
                                             settingsStore.settings = settingsStore.settings.copy(
                                                 defaultProfileRelays = relays2,
                                             )
-                                            LocalPreferences.saveSettingsToEncryptedStorage(settingsStore.settings)
+                                            LocalPreferences.saveSettingsToEncryptedStorage(context, settingsStore.settings)
                                             scope.launch(Dispatchers.IO) {
                                                 if (!BuildFlavorChecker.isOfflineFlavor()) {
                                                     relayClient.checkForNewRelaysAndUpdateAllFilters()
@@ -260,7 +260,7 @@ fun DefaultProfileRelaysScreen(
                                 settingsStore.settings = settingsStore.settings.copy(
                                     defaultProfileRelays = relays2,
                                 )
-                                LocalPreferences.saveSettingsToEncryptedStorage(settingsStore.settings)
+                                LocalPreferences.saveSettingsToEncryptedStorage(context, settingsStore.settings)
                                 scope.launch(Dispatchers.IO) {
                                     if (!BuildFlavorChecker.isOfflineFlavor()) {
                                         relayClient.checkForNewRelaysAndUpdateAllFilters()

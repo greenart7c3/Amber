@@ -29,6 +29,7 @@ class LogoutDeletesDatabasesTest {
     @Before
     fun setUp() {
         installAmberInstance(amber)
+        every { context.applicationContext } returns amber
         mockkObject(LocalPreferences, AmberLog)
         every { AmberLog.d(any(), any<String>()) } returns Unit
         every { AmberLog.d(any(), any(), any()) } returns Unit

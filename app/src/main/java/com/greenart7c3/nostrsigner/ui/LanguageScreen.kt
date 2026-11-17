@@ -52,7 +52,7 @@ fun LanguageScreen(
                 ) {
                     appScope.launch {
                         settingsStore.settings.language = languageEntries[languageList[it].title]
-                        LocalPreferences.saveSettingsToEncryptedStorage(settingsStore.settings)
+                        LocalPreferences.saveSettingsToEncryptedStorage(context, settingsStore.settings)
                         AppLanguage.apply(settingsStore.settings.language)
                     }
                 }

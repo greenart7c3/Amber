@@ -353,7 +353,7 @@ object BunkerRequestUtils {
             // the local relay beside the default relays (desktop BunkerEngine
             // does the same), so clients on this device need no public relay.
             val fallbackRelays = if (savedApplication == null && bunkerRequest.request is BunkerRequestConnect) {
-                LocalBunkerRelayServer.newBunkerRelays()
+                Amber.instance.localBunkerRelay.newBunkerRelays()
             } else {
                 defaultRelays
             }

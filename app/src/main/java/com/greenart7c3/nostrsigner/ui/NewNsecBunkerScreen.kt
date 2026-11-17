@@ -47,6 +47,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
+import com.greenart7c3.nostrsigner.amber
 import com.greenart7c3.nostrsigner.common.generateBunkerPrivKey
 import com.greenart7c3.nostrsigner.commonsui.Res
 import com.greenart7c3.nostrsigner.commonsui.copy_to_clipboard
@@ -66,7 +67,6 @@ import com.greenart7c3.nostrsigner.commonsui.wss
 import com.greenart7c3.nostrsigner.commonsui.your_nsec_bunker_has_been_created
 import com.greenart7c3.nostrsigner.database.ApplicationEntity
 import com.greenart7c3.nostrsigner.models.Account
-import com.greenart7c3.nostrsigner.service.LocalBunkerRelayServer
 import com.greenart7c3.nostrsigner.service.LocalKeyAccountIndex
 import com.greenart7c3.nostrsigner.ui.actions.onAddRelay
 import com.greenart7c3.nostrsigner.ui.components.AmberButton
@@ -87,6 +87,7 @@ fun NewNsecBunkerScreen(
     account: Account,
     navController: NavController,
 ) {
+    val localBunkerRelay = LocalContext.current.amber.localBunkerRelay
     val context = LocalContext.current
     val relayClient = LocalRelayClient.current
     val accountRepository = LocalAccountRepository.current
@@ -98,7 +99,7 @@ fun NewNsecBunkerScreen(
         remember {
             // The local relay rides along with the defaults, so clients on this
             // device can reach the bunker without any public relay.
-            mutableStateListOf(*LocalBunkerRelayServer.newBunkerRelays().toTypedArray())
+            mutableStateListOf(*localBunkerRelay.newBunkerRelays().toTypedArray())
         }
 
     val textFieldRelay = remember {

@@ -78,6 +78,7 @@ fun ApplicationsScreen(
     account: Account,
     navControllerWrapper: NavHostControllerWrapper,
 ) {
+    val context = LocalContext.current
     val settingsStore = LocalSettingsStore.current
     val accountRepository = LocalAccountRepository.current
     val amber = LocalContext.current.amber
@@ -218,7 +219,7 @@ fun ApplicationsScreen(
                             sortAlphabetically = newValue
                             settingsStore.settings =
                                 settingsStore.settings.copy(sortApplicationsAlphabetically = newValue)
-                            LocalPreferences.saveSettingsToEncryptedStorage(settingsStore.settings)
+                            LocalPreferences.saveSettingsToEncryptedStorage(context, settingsStore.settings)
                         },
                     ) {
                         Icon(

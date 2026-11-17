@@ -712,34 +712,37 @@ object IntentUtils {
         decryptTypeScope: DecryptTypeScope = DecryptTypeScope.ALL,
     ) {
         context.amber.applicationIOScope.launch(Dispatchers.IO) {
-            if (key == "null") {
-                onLoading(false)
-                return@launch
-            }
+            // A web request (no calling package) shares the "null" key with every website:
+            // as on approval, nothing is remembered or saved for it, but it is still
+            // answered and its sheet closed.
+            val closeApplication = if (key == "null") {
+                true
+            } else {
+                val application = context.amber.getDatabase(account.npub).dao().getByKey(key)
+                    ?: IntentResponse.newApplication(key, appName, account, closeApplication = true, deleteAfter = 0L)
+                if (rememberType != RememberType.NEVER) {
+                    AmberUtils.acceptOrRejectPermission(
+                        application,
+                        key,
+                        intentData.type,
+                        kind,
+                        false,
+                        rememberType,
+                        relay,
+                        intentData.encryptedData,
+                        decryptTypeScope,
+                        dao = context.amber.dao(account.npub),
+                    )
+                }
 
-            val application = context.amber.getDatabase(account.npub).dao().getByKey(key)
-                ?: IntentResponse.newApplication(key, appName, account, closeApplication = true, deleteAfter = 0L)
-            if (rememberType != RememberType.NEVER) {
-                AmberUtils.acceptOrRejectPermission(
-                    application,
-                    key,
-                    intentData.type,
-                    kind,
-                    false,
-                    rememberType,
-                    relay,
-                    intentData.encryptedData,
-                    decryptTypeScope,
-                    dao = context.amber.dao(account.npub),
+                context.amber.dao(account.npub).insertApplicationWithPermissions(application)
+                val content = IntentResponse.historyContent(intentData, accepted = false, event = "", value = "")
+                context.amber.getHistoryDatabase(account.npub).dao().addHistory(
+                    listOf(IntentResponse.historyEntry(intentData, key, kind, accepted = false, content = content)),
+                    account.npub,
                 )
+                application.application.closeApplication
             }
-
-            context.amber.dao(account.npub).insertApplicationWithPermissions(application)
-            val content = IntentResponse.historyContent(intentData, accepted = false, event = "", value = "")
-            context.amber.getHistoryDatabase(account.npub).dao().addHistory(
-                listOf(IntentResponse.historyEntry(intentData, key, kind, accepted = false, content = content)),
-                account.npub,
-            )
 
             val activity = context.amber.getMainActivity()
             activity?.intent = null
@@ -749,7 +752,7 @@ object IntentUtils {
                     .also { it.putExtra("rejected", true) }
                     .also { it.putExtra("id", intentData.id) },
             )
-            if (application.application.closeApplication) {
+            if (closeApplication) {
                 activity?.finishAndRemoveTask()
             }
             onRemoveIntentData(listOf(intentData), IntentResultType.REMOVE)

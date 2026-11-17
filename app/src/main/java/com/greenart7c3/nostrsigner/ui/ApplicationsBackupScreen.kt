@@ -46,9 +46,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import coil3.compose.SubcomposeAsyncImage
-import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.LocalPreferences
+import com.greenart7c3.nostrsigner.amber
 import com.greenart7c3.nostrsigner.commonsui.Res
 import com.greenart7c3.nostrsigner.commonsui.applications_backup_explainer
 import com.greenart7c3.nostrsigner.commonsui.backup_failed
@@ -92,6 +92,7 @@ import org.jetbrains.compose.resources.stringResource
 fun ApplicationsBackupScreen(
     modifier: Modifier = Modifier,
 ) {
+    val appScope = LocalAppScope.current
     val context = LocalContext.current
 
     val accounts by produceState<List<Account>?>(initialValue = null) {
@@ -129,7 +130,7 @@ fun ApplicationsBackupScreen(
                     onBusyChange = { isBusy = it },
                     onRequestRestore = {
                         isBusy = true
-                        Amber.instance.applicationIOScope.launch {
+                        appScope.launch {
                             // Fetch first and let the user review what the backup
                             // contains; nothing is written until they confirm.
                             val fetched = ApplicationBackup.fetchLatestPayload(account)
@@ -166,7 +167,7 @@ fun ApplicationsBackupScreen(
                     pendingRestore = null
                     isBusy = true
                     val selected = payload.copy(applications = selection.selected())
-                    val scope = Amber.instance.applicationIOScope
+                    val scope = appScope
                     scope.launch(Dispatchers.IO) {
                         val result = ApplicationBackup.restoreFromPayload(account.npub, selected)
                         withContext(Dispatchers.Main) {
@@ -195,6 +196,7 @@ private fun AccountBackupRow(
     onBusyChange: (Boolean) -> Unit,
     onRequestRestore: () -> Unit,
 ) {
+    val amber = LocalContext.current.amber
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     ProfileSubscriptionEffect(account)
@@ -231,9 +233,9 @@ private fun AccountBackupRow(
                     scope.launch(Dispatchers.IO) {
                         LocalPreferences.setBackupApplications(context, account.npub, enabled)
                         if (LocalPreferences.anyAccountBackupEnabled(context)) {
-                            Amber.instance.startBackupApplicationsAlarm()
+                            amber.startBackupApplicationsAlarm()
                         } else {
-                            Amber.instance.cancelBackupApplicationsAlarm()
+                            amber.cancelBackupApplicationsAlarm()
                         }
                     }
                 },

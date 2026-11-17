@@ -31,7 +31,6 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
-import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.commonsui.Res
 import com.greenart7c3.nostrsigner.commonsui.add
@@ -49,11 +48,12 @@ import org.jetbrains.compose.resources.stringResource
 fun AuthWhitelistScreen(
     modifier: Modifier = Modifier,
 ) {
+    val settingsStore = LocalSettingsStore.current
     val scope = rememberCoroutineScope()
     val clipboardManager = LocalClipboard.current
     val textFieldRelay = remember { mutableStateOf(TextFieldValue("")) }
     val whitelist = remember {
-        mutableStateListOf(*Amber.instance.settings.authWhitelist.toTypedArray())
+        mutableStateListOf(*settingsStore.settings.authWhitelist.toTypedArray())
     }
     val trustScores = remember { mutableStateMapOf<String, Int?>() }
     val loadingScores = remember { mutableStateMapOf<String, Boolean>() }
@@ -79,8 +79,8 @@ fun AuthWhitelistScreen(
         val url = RelayUrlUtils.extractHostAndPort(input)
         if (url.isNotBlank() && url !in whitelist) {
             whitelist.add(url)
-            Amber.instance.settings = Amber.instance.settings.copy(authWhitelist = whitelist.toList())
-            LocalPreferences.saveSettingsToEncryptedStorage(Amber.instance.settings)
+            settingsStore.settings = settingsStore.settings.copy(authWhitelist = whitelist.toList())
+            LocalPreferences.saveSettingsToEncryptedStorage(settingsStore.settings)
             textFieldRelay.value = TextFieldValue("")
         }
     }
@@ -165,11 +165,11 @@ fun AuthWhitelistScreen(
                         showTrustScore = !TrustScoreService.isExcludedFromScoring("wss://$hostname"),
                         onClick = {
                             whitelist.removeAt(index)
-                            Amber.instance.settings = Amber.instance.settings.copy(
+                            settingsStore.settings = settingsStore.settings.copy(
                                 authWhitelist = whitelist.toList(),
                             )
                             scope.launch(Dispatchers.IO) {
-                                LocalPreferences.saveSettingsToEncryptedStorage(Amber.instance.settings)
+                                LocalPreferences.saveSettingsToEncryptedStorage(settingsStore.settings)
                             }
                         },
                     )

@@ -169,11 +169,8 @@ class ArchitectureTest {
         // May only shrink: see the class comment.
         val databaseInUi = setOf(
             "ui/components/BunkerMultiEventHomeScreen.kt",
-            "ui/components/BunkerSingleEventHomeScreen.kt",
-            "ui/components/IntentMultiEventHomeScreen.kt",
             "ui/EditConfigurationScreen.kt",
             "ui/EditPermission.kt",
-            "ui/NewNsecBunkerScreen.kt",
         )
 
         val amberInstanceUsers = setOf(
@@ -211,16 +208,13 @@ class ArchitectureTest {
             "service/ZapstoreUpdater.kt",
             "service/crashreports/DisplayCrashMessages.kt",
             "ui/AccountStateViewModel.kt",
-            "ui/ApplicationsBackupScreen.kt",
             "ui/ApplicationsScreen.kt",
-            "ui/AuthWhitelistScreen.kt",
             "ui/DefaultProfileRelaysScreen.kt",
             "ui/EditConfigurationScreen.kt",
             "ui/EditPermission.kt",
             "ui/LanguageScreen.kt",
             "ui/LoginScreen.kt",
             "ui/MainScreen.kt",
-            "ui/NewNsecBunkerScreen.kt",
             "ui/RelaysScreen.kt",
             "ui/SecurityScreen.kt",
             "ui/SettingsScreen.kt",
@@ -233,8 +227,6 @@ class ArchitectureTest {
             "ui/components/AmberTopAppBar.kt",
             "ui/components/BiometricAuthScreen.kt",
             "ui/components/BunkerMultiEventHomeScreen.kt",
-            "ui/components/BunkerSingleEventHomeScreen.kt",
-            "ui/components/IntentMultiEventHomeScreen.kt",
         )
 
         val composeUiInService = setOf(

@@ -59,6 +59,8 @@ import com.greenart7c3.nostrsigner.service.isPrivateEvent
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
 import com.greenart7c3.nostrsigner.service.relayAuthRememberType
 import com.greenart7c3.nostrsigner.service.toShortenHex
+import com.greenart7c3.nostrsigner.ui.LocalAccountRepository
+import com.greenart7c3.nostrsigner.ui.LocalAppScope
 import com.greenart7c3.nostrsigner.ui.RememberType
 import com.greenart7c3.nostrsigner.ui.theme.amoledBorder
 import com.greenart7c3.nostrsigner.ui.theme.outlineIfAny
@@ -89,6 +91,8 @@ fun BunkerSingleEventHomeScreen(
     account: Account,
     onLoading: (Boolean) -> Unit,
 ) {
+    val accountRepository = LocalAccountRepository.current
+    val appScope = LocalAppScope.current
     var applicationEntity by remember {
         mutableStateOf<ApplicationWithPermissions?>(null)
     }
@@ -98,9 +102,9 @@ fun BunkerSingleEventHomeScreen(
         launch(Dispatchers.IO) {
             applicationEntity =
                 if (bunkerRequest.request is BunkerRequestConnect && bunkerRequest.request.secret?.isNotBlank() == true) {
-                    Amber.instance.getDatabase(account.npub).dao().getBySecret(bunkerRequest.request.secret!!)
+                    accountRepository.getDatabase(account.npub).dao().getBySecret(bunkerRequest.request.secret!!)
                 } else {
-                    Amber.instance.getDatabase(account.npub).dao().getByKey(key)
+                    accountRepository.getDatabase(account.npub).dao().getByKey(key)
                 }
         }
     }
@@ -271,8 +275,8 @@ fun BunkerSingleEventHomeScreen(
                     localDeleteAfter = deleteAfter
                     selectedAccount = acc
 
-                    Amber.instance.applicationIOScope.launch {
-                        val existing = connectionToReplace(Amber.instance.getDatabase(acc.npub).dao(), bunkerRequest, key)
+                    appScope.launch {
+                        val existing = connectionToReplace(accountRepository.getDatabase(acc.npub).dao(), bunkerRequest, key)
                         if (existing == null) {
                             BunkerRequestUtils.sendResult(
                                 account = acc,
@@ -899,7 +903,7 @@ fun BunkerSingleEventHomeScreen(
                         appName = appName,
                         iconUrl = appIcon,
                         onAccept = {
-                            Amber.instance.applicationIOScope.launch(Dispatchers.IO) {
+                            appScope.launch(Dispatchers.IO) {
                                 try {
                                     val result = account.signPsbt(psbtHex)
                                     BunkerRequestUtils.sendResult(

@@ -2,6 +2,7 @@ package com.greenart7c3.nostrsigner.ui.components
 
 import android.app.Activity
 import android.content.Intent
+import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -29,7 +30,6 @@ import androidx.compose.ui.text.capitalize
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.toLowerCase
 import androidx.compose.ui.unit.dp
-import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.common.SignerType
 import com.greenart7c3.nostrsigner.commonsui.Permission
@@ -69,6 +69,8 @@ import com.greenart7c3.nostrsigner.service.RelayUrlUtils
 import com.greenart7c3.nostrsigner.service.isBlockedByAuthWhitelist
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
 import com.greenart7c3.nostrsigner.service.relayAuthRememberType
+import com.greenart7c3.nostrsigner.ui.LocalAccountRepository
+import com.greenart7c3.nostrsigner.ui.LocalAppScope
 import com.greenart7c3.nostrsigner.ui.RememberType
 import com.greenart7c3.nostrsigner.ui.theme.AmberPreview
 import com.greenart7c3.nostrsigner.ui.theme.ThemePreviews
@@ -91,6 +93,9 @@ fun IntentMultiEventHomeScreen(
     onRemoveIntentData: (List<IntentData>, IntentResultType) -> Unit,
     onLoading: (Boolean) -> Unit,
 ) {
+    val accountRepository = LocalAccountRepository.current
+    val appScope = LocalAppScope.current
+    val activity = LocalActivity.current
     val context = LocalContext.current
     val groupRememberTypes = remember { mutableStateMapOf<RequestGroupKey, RememberType>() }
     val groupRelayAuthScopes = remember { mutableStateMapOf<RequestGroupKey, RelayAuthScope>() }
@@ -183,7 +188,7 @@ fun IntentMultiEventHomeScreen(
             text = stringResource(Res.string.confirm),
             onClick = {
                 onLoading(true)
-                Amber.instance.applicationIOScope.launch(Dispatchers.IO) {
+                appScope.launch(Dispatchers.IO) {
                     try {
                         val results = mutableListOf<Result>()
                         var closeApp = true
@@ -198,8 +203,8 @@ fun IntentMultiEventHomeScreen(
                                 LocalPreferences.loadFromEncryptedStorage(context, accountNpub)
                             } ?: continue
 
-                            val dao = Amber.instance.dao(thisAccount.npub)
-                            val historyDatabase = Amber.instance.getHistoryDatabase(thisAccount.npub)
+                            val dao = accountRepository.dao(thisAccount.npub)
+                            val historyDatabase = accountRepository.getHistoryDatabase(thisAccount.npub)
                             val application = dao.getByKey(localKey) ?: ApplicationWithPermissions(
                                 application = ApplicationEntity(
                                     localKey,
@@ -384,10 +389,10 @@ fun IntentMultiEventHomeScreen(
                         }
 
                         if (results.isNotEmpty()) {
-                            sendResultIntent(results)
+                            sendResultIntent(activity, results)
                         }
 
-                        finishActivity(closeApp)
+                        finishActivity(activity, closeApp)
                     } finally {
                         onLoading(false)
                     }
@@ -624,8 +629,7 @@ fun IntentMultiEventHomeScreenPreview() {
     }
 }
 
-private fun finishActivity(closeApp: Boolean) {
-    val activity = Amber.instance.getMainActivity()
+private fun finishActivity(activity: Activity?, closeApp: Boolean) {
     activity?.intent = null
     if (closeApp) {
         activity?.finishAndRemoveTask()
@@ -633,10 +637,11 @@ private fun finishActivity(closeApp: Boolean) {
 }
 
 private fun sendResultIntent(
+    activity: Activity?,
     results: MutableList<Result>,
 ) {
     val json = Permission.mapper.writeValueAsString(results)
     val intent = Intent()
     intent.putExtra("results", json)
-    Amber.instance.getMainActivity()?.setResult(Activity.RESULT_OK, intent)
+    activity?.setResult(Activity.RESULT_OK, intent)
 }

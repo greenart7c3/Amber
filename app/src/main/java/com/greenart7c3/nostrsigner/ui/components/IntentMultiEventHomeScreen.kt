@@ -71,6 +71,7 @@ import com.greenart7c3.nostrsigner.service.model.AmberEvent
 import com.greenart7c3.nostrsigner.service.relayAuthRememberType
 import com.greenart7c3.nostrsigner.ui.LocalAccountRepository
 import com.greenart7c3.nostrsigner.ui.LocalAppScope
+import com.greenart7c3.nostrsigner.ui.LocalSettingsStore
 import com.greenart7c3.nostrsigner.ui.RememberType
 import com.greenart7c3.nostrsigner.ui.theme.AmberPreview
 import com.greenart7c3.nostrsigner.ui.theme.ThemePreviews
@@ -93,6 +94,7 @@ fun IntentMultiEventHomeScreen(
     onRemoveIntentData: (List<IntentData>, IntentResultType) -> Unit,
     onLoading: (Boolean) -> Unit,
 ) {
+    val settingsStore = LocalSettingsStore.current
     val accountRepository = LocalAccountRepository.current
     val appScope = LocalAppScope.current
     val activity = LocalActivity.current
@@ -106,7 +108,7 @@ fun IntentMultiEventHomeScreen(
         // checkedStates holds the per-request decision: true = Approve, false = Deny.
         // It is shared by every open Amber screen, so set only this screen's keys
         // (owner-scoped queueKeys) instead of clearing another screen's choices.
-        intents.forEach { MultiEventScreenIntents.checkedStates[it.queueKey] = !isBlockedByAuthWhitelist(it.event) }
+        intents.forEach { MultiEventScreenIntents.checkedStates[it.queueKey] = !isBlockedByAuthWhitelist(it.event, settingsStore.settings.authWhitelist) }
     }
 
     Column(
@@ -145,7 +147,7 @@ fun IntentMultiEventHomeScreen(
                             approved = groupApproved,
                             expanded = expanded,
                             onApproveChanged = { approve ->
-                                MultiEventScreenIntents.checkedStates.putAll(groupIntents.associate { it.queueKey to (approve && !isBlockedByAuthWhitelist(it.event)) })
+                                MultiEventScreenIntents.checkedStates.putAll(groupIntents.associate { it.queueKey to (approve && !isBlockedByAuthWhitelist(it.event, settingsStore.settings.authWhitelist)) })
                             },
                             onExpandToggle = {
                                 expandedGroups[groupKey] = !(expandedGroups[groupKey] ?: false)
@@ -235,7 +237,7 @@ fun IntentMultiEventHomeScreen(
                             for (intentData in accountIntents) {
                                 // A relay outside the auth whitelist is rejected without
                                 // remembering it, as on the single screen.
-                                val blockedByWhitelist = isBlockedByAuthWhitelist(intentData.event)
+                                val blockedByWhitelist = isBlockedByAuthWhitelist(intentData.event, settingsStore.settings.authWhitelist)
                                 val isApproved = !blockedByWhitelist && (MultiEventScreenIntents.checkedStates[intentData.queueKey] ?: true)
                                 val type = intentData.type
                                 val groupKey = requestGroupKey(type, intentData.event?.kind, intentData.encryptedData, intentData.nip44v3Kind)
@@ -409,6 +411,7 @@ private fun IntentRequestCard(
     approved: Boolean,
     onApproveChanged: (Boolean) -> Unit,
 ) {
+    val settingsStore = LocalSettingsStore.current
     val type = intent.type
     var showDetails by remember { mutableStateOf(false) }
     val hasDetails = (type == SignerType.SIGN_EVENT && intent.event != null) ||
@@ -522,7 +525,7 @@ private fun IntentRequestCard(
 
             signingAs?.let { SigningAs(it) }
 
-            if (isBlockedByAuthWhitelist(intent.event)) {
+            if (isBlockedByAuthWhitelist(intent.event, settingsStore.settings.authWhitelist)) {
                 // Always rejected on confirm, as on the single screen.
                 Text(
                     text = stringResource(Res.string.relay_not_in_auth_whitelist),

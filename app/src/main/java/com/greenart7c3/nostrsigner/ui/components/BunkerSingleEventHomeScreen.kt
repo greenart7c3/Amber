@@ -61,6 +61,7 @@ import com.greenart7c3.nostrsigner.service.relayAuthRememberType
 import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.LocalAccountRepository
 import com.greenart7c3.nostrsigner.ui.LocalAppScope
+import com.greenart7c3.nostrsigner.ui.LocalSettingsStore
 import com.greenart7c3.nostrsigner.ui.RememberType
 import com.greenart7c3.nostrsigner.ui.theme.amoledBorder
 import com.greenart7c3.nostrsigner.ui.theme.outlineIfAny
@@ -91,6 +92,7 @@ fun BunkerSingleEventHomeScreen(
     account: Account,
     onLoading: (Boolean) -> Unit,
 ) {
+    val settingsStore = LocalSettingsStore.current
     val accountRepository = LocalAccountRepository.current
     val appScope = LocalAppScope.current
     var applicationEntity by remember {
@@ -639,7 +641,7 @@ fun BunkerSingleEventHomeScreen(
                 }
 
                 // If the auth whitelist is non-empty and this relay is not in it, auto-reject
-                val blockedByWhitelist = isBlockedByAuthWhitelist(22242, relayUrl)
+                val blockedByWhitelist = isBlockedByAuthWhitelist(22242, relayUrl, settingsStore.settings.authWhitelist)
 
                 val acceptOrReject = if (blockedByWhitelist) {
                     false

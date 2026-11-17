@@ -730,7 +730,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
             else -> arrayOf(data, pubKey, acc.npub)
         }
         val cursor =
-            SignerProviderQuery.query(
+            SignerProviderQuery(Amber.instance, Amber.instance, Amber.instance.applicationIOScope).query(
                 context = applicationContext,
                 // NIP-46 requests are attributed to the client's pubkey, not an
                 // installed app. There is no installed caller, so nothing to capture.

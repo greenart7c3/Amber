@@ -9,6 +9,8 @@ import com.greenart7c3.nostrsigner.common.SignerType
 import com.greenart7c3.nostrsigner.common.hasAmbiguousRelayTags
 import com.greenart7c3.nostrsigner.common.permissionLookupOrder
 import com.greenart7c3.nostrsigner.commonsui.kindToNip
+import com.greenart7c3.nostrsigner.data.AccountRepository
+import com.greenart7c3.nostrsigner.data.SettingsStore
 import com.greenart7c3.nostrsigner.database.ApplicationDao
 import com.greenart7c3.nostrsigner.database.ApplicationPermissionsEntity
 import com.greenart7c3.nostrsigner.database.HistoryEntity
@@ -24,6 +26,7 @@ import com.greenart7c3.nostrsigner.service.model.AmberEvent
 import com.vitorpamplona.quartz.nip01Core.core.Event
 import com.vitorpamplona.quartz.nip57Zaps.ZapRequestEvent
 import com.vitorpamplona.quartz.utils.TimeUtils
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
@@ -36,8 +39,11 @@ import kotlinx.coroutines.runBlocking
  *    (the NIP-46 relay path), which call [query] directly instead of going through
  *    a same-app [android.content.ContentResolver] round-trip.
  */
-object SignerProviderQuery {
-    private val scope get() = Amber.instance.applicationIOScope
+class SignerProviderQuery(
+    private val settingsStore: SettingsStore,
+    private val accountRepository: AccountRepository,
+    private val scope: CoroutineScope,
+) {
 
     private fun rejectedCursor(): Cursor = MatrixCursor(arrayOf("rejected")).also { it.addRow(arrayOf("true")) }
 
@@ -113,8 +119,8 @@ object SignerProviderQuery {
                         return null
                     }
 
-                    val historyDatabase = Amber.instance.getHistoryDatabase(account.npub)
-                    val permDao = Amber.instance.dao(account.npub)
+                    val historyDatabase = accountRepository.getHistoryDatabase(account.npub)
+                    val permDao = accountRepository.dao(account.npub)
 
                     // For kind 22242 (NIP-42 relay auth), extract relay host once for the
                     // whitelist gate and the requester-scoped permission checks below.
@@ -153,7 +159,7 @@ object SignerProviderQuery {
                     // required, otherwise any app/NIP-46 client could silently obtain
                     // relay-auth signatures (GHSA-vx4h-56qj-wcp7).
                     if (event.kind == 22242) {
-                        if (isBlockedByAuthWhitelist(event.kind, relayHost)) {
+                        if (isBlockedByAuthWhitelist(event.kind, relayHost, settingsStore.settings.authWhitelist)) {
                             scope.launch {
                                 historyDatabase.dao().addHistory(
                                     listOf(
@@ -259,9 +265,9 @@ object SignerProviderQuery {
                     val pubkey = arguments[1]
                     val account = LocalPreferences.loadFromEncryptedStorageSync(context, npub) ?: return null
                     captureCallerMetadata(context, callerPackageName, account)
-                    val logDatabase = Amber.instance.getLogDatabase(account.npub)
-                    val historyDatabase = Amber.instance.getHistoryDatabase(account.npub)
-                    val permDao = Amber.instance.dao(account.npub)
+                    val logDatabase = accountRepository.getLogDatabase(account.npub)
+                    val historyDatabase = accountRepository.getHistoryDatabase(account.npub)
+                    val permDao = accountRepository.dao(account.npub)
                     val type =
                         when (stringType) {
                             "NIP04_DECRYPT" -> SignerType.NIP04_DECRYPT
@@ -481,8 +487,8 @@ object SignerProviderQuery {
                         return null
                     }
                     captureCallerMetadata(context, callerPackageName, account)
-                    val historyDatabase = Amber.instance.getHistoryDatabase(account.npub)
-                    val permDao = Amber.instance.dao(account.npub)
+                    val historyDatabase = accountRepository.getHistoryDatabase(account.npub)
+                    val permDao = accountRepository.dao(account.npub)
                     val permission =
                         permDao
                             .getPermission(
@@ -521,7 +527,7 @@ object SignerProviderQuery {
                     } catch (e: Exception) {
                         AmberLog.d(Amber.TAG, "Failed to sign psbt", e)
                         scope.launch {
-                            val logDb = Amber.instance.getLogDatabase(account.npub)
+                            val logDb = accountRepository.getLogDatabase(account.npub)
                             logDb.dao().insertLogIfEnabled(
                                 LogEntity(
                                     0,
@@ -564,7 +570,7 @@ object SignerProviderQuery {
                         LocalPreferences.loadFromEncryptedStorageSync(context, npub)
                     } else {
                         LocalPreferences.allSavedAccounts(context).firstNotNullOfOrNull { accountInfo ->
-                            val localDatabase = Amber.instance.getDatabase(accountInfo.npub)
+                            val localDatabase = accountRepository.getDatabase(accountInfo.npub)
                             val hasAccount = localDatabase.dao().getByKeySync(requesterId) != null
                             if (hasAccount) {
                                 LocalPreferences.loadFromEncryptedStorageSync(context, accountInfo.npub)
@@ -577,8 +583,8 @@ object SignerProviderQuery {
                         return null
                     }
                     captureCallerMetadata(context, callerPackageName, account)
-                    val historyDatabase = Amber.instance.getHistoryDatabase(account.npub)
-                    val permDao = Amber.instance.dao(account.npub)
+                    val historyDatabase = accountRepository.getHistoryDatabase(account.npub)
+                    val permDao = accountRepository.dao(account.npub)
                     val permission =
                         permDao
                             .getPermission(
@@ -638,7 +644,7 @@ object SignerProviderQuery {
         } catch (e: Exception) {
             scope.launch {
                 LocalPreferences.allSavedAccounts(context).forEach { accInfo ->
-                    val database = Amber.instance.getLogDatabase(accInfo.npub)
+                    val database = accountRepository.getLogDatabase(accInfo.npub)
                     database.dao().insertLogIfEnabled(
                         LogEntity(
                             0,

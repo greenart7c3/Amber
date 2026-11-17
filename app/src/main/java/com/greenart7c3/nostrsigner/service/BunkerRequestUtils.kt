@@ -674,6 +674,7 @@ object BunkerRequestUtils {
                         relay,
                         bunkerRequest.encryptedData,
                         decryptTypeScope,
+                        dao = Amber.instance.dao(account.npub),
                     )
                 }
 

@@ -737,6 +737,7 @@ object IntentUtils {
                     relay,
                     intentData.encryptedData,
                     decryptTypeScope,
+                    dao = Amber.instance.dao(account.npub),
                 )
             }
 

@@ -47,6 +47,7 @@ import com.greenart7c3.nostrsigner.service.relayAuthRememberType
 import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.LocalAccountRepository
 import com.greenart7c3.nostrsigner.ui.LocalAppScope
+import com.greenart7c3.nostrsigner.ui.LocalSettingsStore
 import com.greenart7c3.nostrsigner.ui.ToastManager
 import com.vitorpamplona.quartz.nip01Core.core.toHexKey
 import com.vitorpamplona.quartz.nip19Bech32.bech32.bechToBytes
@@ -68,6 +69,7 @@ fun IntentSingleEventHomeScreen(
     onRemoveIntentData: (List<IntentData>, IntentResultType) -> Unit,
     onLoading: (Boolean) -> Unit,
 ) {
+    val settingsStore = LocalSettingsStore.current
     var applicationEntity by remember {
         mutableStateOf<ApplicationWithPermissions?>(null)
     }
@@ -357,7 +359,7 @@ fun IntentSingleEventHomeScreen(
                 }
 
                 // If the auth whitelist is non-empty and this relay is not in it, auto-reject
-                val blockedByWhitelist = isBlockedByAuthWhitelist(22242, relayUrl)
+                val blockedByWhitelist = isBlockedByAuthWhitelist(22242, relayUrl, settingsStore.settings.authWhitelist)
 
                 val acceptOrReject = if (blockedByWhitelist) {
                     false

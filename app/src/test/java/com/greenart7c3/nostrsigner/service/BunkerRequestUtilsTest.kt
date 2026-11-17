@@ -377,7 +377,7 @@ class BunkerRequestUtilsTest {
             coVerify(exactly = 0) { dao.insertPermissions(any()) }
             coVerify(exactly = 0) { dao.insertPermissions2(any()) }
             coVerify(exactly = 0) {
-                AmberUtils.acceptOrRejectPermission(any(), any(), any(), any(), any(), any(), any(), any(), any(), any())
+                AmberUtils.acceptOrRejectPermission(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any())
             }
             assertEquals(1, errors.size)
         } finally {
@@ -434,7 +434,7 @@ class BunkerRequestUtilsTest {
             every { com.greenart7c3.nostrsigner.AmberLog.e(any(), any(), any()) } returns Unit
             coEvery { AmberUtils.sendBunkerError(any(), any(), any(), any(), any()) } returns Unit
             coEvery {
-                AmberUtils.acceptOrRejectPermission(any(), any(), any(), any(), any(), any(), any(), any(), any(), any())
+                AmberUtils.acceptOrRejectPermission(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any())
             } throws IllegalStateException("boom")
 
             BunkerRequestUtils.sendRejection(

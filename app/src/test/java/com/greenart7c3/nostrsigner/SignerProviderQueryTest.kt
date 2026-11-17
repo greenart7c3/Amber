@@ -92,7 +92,7 @@ class SignerProviderQueryTest {
         return uri
     }
 
-    private fun queryRelayAuth(relayUrl: String) = SignerProviderQuery.query(
+    private fun queryRelayAuth(relayUrl: String) = SignerProviderQuery(amber, amber, amber.applicationIOScope).query(
         context = context,
         requesterId = REQUESTER,
         callerPackageName = null,
@@ -190,7 +190,7 @@ class SignerProviderQueryTest {
         return uri
     }
 
-    private fun queryDecrypt() = SignerProviderQuery.query(
+    private fun queryDecrypt() = SignerProviderQuery(amber, amber, amber.applicationIOScope).query(
         context = context,
         requesterId = REQUESTER,
         callerPackageName = null,
@@ -244,7 +244,7 @@ class SignerProviderQueryTest {
         }
     }
 
-    private fun queryV3Decrypt(kind: Int) = SignerProviderQuery.query(
+    private fun queryV3Decrypt(kind: Int) = SignerProviderQuery(amber, amber, amber.applicationIOScope).query(
         context = context,
         requesterId = REQUESTER,
         callerPackageName = null,

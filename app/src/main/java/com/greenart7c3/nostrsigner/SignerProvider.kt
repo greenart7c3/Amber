@@ -41,7 +41,8 @@ class SignerProvider : ContentProvider() {
             AmberLog.d(Amber.TAG, "No calling package")
             return null
         }
-        return SignerProviderQuery.query(
+        val amber = ctx.amber
+        return SignerProviderQuery(amber, amber, amber.applicationIOScope).query(
             context = ctx,
             requesterId = caller,
             callerPackageName = caller,

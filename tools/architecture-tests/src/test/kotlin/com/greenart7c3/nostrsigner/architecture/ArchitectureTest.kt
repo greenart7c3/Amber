@@ -180,16 +180,13 @@ class ArchitectureTest {
         )
 
         val amberInstanceUsers = setOf(
-            "DataStoreAccess.kt",
             "LocalPreferences.kt",
             "SecureCryptoHelper.kt",
-            "SignerProviderQuery.kt",
             "database/LogRetentionManager.kt",
             "models/Account.kt",
             "relays/AmberRelayStat.kt",
             "relays/NostrClientLoggerListener.kt",
             "service/AccountExportService.kt",
-            "service/AmberUtils.kt",
             "service/ApplicationBackup.kt",
             "service/BunkerRequestUtils.kt",
             "service/EventNotificationConsumer.kt",

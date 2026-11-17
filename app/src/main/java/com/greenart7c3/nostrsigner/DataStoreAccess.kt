@@ -17,7 +17,6 @@ object DataStoreAccess {
         AmberLog.d(Amber.TAG, "Creating new DataStore for $npub on ${Thread.currentThread().name}")
 
         PreferenceDataStoreFactory.create(
-            scope = Amber.instance.applicationIOScope,
             produceFile = {
                 context.applicationContext
                     .preferencesDataStoreFile("secure_datastore_$npub")
@@ -30,7 +29,6 @@ object DataStoreAccess {
 
     private fun getAppDataStore(context: Context): DataStore<Preferences> = appDataStore ?: synchronized(this) {
         appDataStore ?: PreferenceDataStoreFactory.create(
-            scope = Amber.instance.applicationIOScope,
             produceFile = {
                 context.applicationContext.preferencesDataStoreFile("app_datastore")
             },

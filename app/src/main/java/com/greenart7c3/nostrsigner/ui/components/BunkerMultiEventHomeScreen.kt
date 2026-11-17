@@ -161,7 +161,7 @@ fun BunkerMultiEventHomeScreen(
         // checkedStates holds the per-request decision: true = Approve, false = Deny.
         // It is shared by every open Amber screen, so set only this batch's keys
         // instead of clearing an intent batch's choices on another screen.
-        batchRequests.forEach { MultiEventScreenIntents.checkedStates[it.queueKey] = !isBlockedByAuthWhitelist(it.signedEvent) }
+        batchRequests.forEach { MultiEventScreenIntents.checkedStates[it.queueKey] = !isBlockedByAuthWhitelist(it.signedEvent, settingsStore.settings.authWhitelist) }
     }
 
     // Skipped in previews: encrypted storage and the Amber singleton don't
@@ -243,7 +243,7 @@ fun BunkerMultiEventHomeScreen(
                                 approved = groupApproved,
                                 expanded = expanded,
                                 onApproveChanged = { approve ->
-                                    MultiEventScreenIntents.checkedStates.putAll(groupItems.associate { it.queueKey to (approve && !isBlockedByAuthWhitelist(it.signedEvent)) })
+                                    MultiEventScreenIntents.checkedStates.putAll(groupItems.associate { it.queueKey to (approve && !isBlockedByAuthWhitelist(it.signedEvent, settingsStore.settings.authWhitelist)) })
                                 },
                                 onExpandToggle = {
                                     expandedGroups[groupKey] = !(expandedGroups[groupKey] ?: false)
@@ -332,7 +332,7 @@ fun BunkerMultiEventHomeScreen(
 
                             // A relay outside the auth whitelist is rejected without
                             // remembering it, as on the single screen.
-                            val blockedByWhitelist = isBlockedByAuthWhitelist(request.signedEvent)
+                            val blockedByWhitelist = isBlockedByAuthWhitelist(request.signedEvent, settingsStore.settings.authWhitelist)
                             val isApproved = !blockedByWhitelist && (MultiEventScreenIntents.checkedStates[request.queueKey] ?: true)
                             val requestType = nip46SignerType(request.request.method)
                             val groupKey = AppRequestGroupKey(request.appKey, request.requestGroupKey())
@@ -370,6 +370,7 @@ fun BunkerMultiEventHomeScreen(
                                         account = thisAccount,
                                         relay = signRelay,
                                         encryptedData = request.encryptedData,
+                                        dao = accountRepository.dao(thisAccount.npub),
                                     )
                                 }
 
@@ -428,6 +429,7 @@ fun BunkerMultiEventHomeScreen(
                                         thisAccount,
                                         encryptedData = request.encryptedData,
                                         decryptTypeScope = decryptTypeScope,
+                                        dao = accountRepository.dao(thisAccount.npub),
                                     )
                                 }
 
@@ -520,6 +522,7 @@ private fun BunkerRequestCard(
     approved: Boolean,
     onApproveChanged: (Boolean) -> Unit,
 ) {
+    val settingsStore = LocalSettingsStore.current
     val type = nip46SignerType(bunkerRequest.request.method)
     var showDetails by remember { mutableStateOf(false) }
     val hasDetails = (type == SignerType.SIGN_EVENT && bunkerRequest.signedEvent != null) ||
@@ -629,7 +632,7 @@ private fun BunkerRequestCard(
 
             signingAs?.let { SigningAs(it) }
 
-            if (isBlockedByAuthWhitelist(bunkerRequest.signedEvent)) {
+            if (isBlockedByAuthWhitelist(bunkerRequest.signedEvent, settingsStore.settings.authWhitelist)) {
                 // Always rejected on confirm, as on the single screen.
                 Text(
                     text = stringResource(Res.string.relay_not_in_auth_whitelist),

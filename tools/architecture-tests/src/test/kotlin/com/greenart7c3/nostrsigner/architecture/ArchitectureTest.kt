@@ -91,10 +91,13 @@ class ArchitectureTest {
     fun `Context amber usage can only shrink`() {
         // Root-package files use the extension without an import (and often without a receiver).
         val rootUse = Regex("""\bamber\b""")
+        // The same container without the extension: (context.applicationContext as Amber).
+        val castToAmber = Regex("""\bas\??\s+(com\.greenart7c3\.nostrsigner\.)?Amber\b""")
         val actual = appMain
             .filter { it.relativePath() != "Amber.kt" }
             .filter { file ->
                 file.imports.any { it.name == "com.greenart7c3.nostrsigner.amber" } ||
+                    castToAmber.containsMatchIn(file.text) ||
                     (
                         file.packagee?.name == "com.greenart7c3.nostrsigner" &&
                             rootUse.containsMatchIn(file.text.lines().filterNot { it.startsWith("import ") }.joinToString("\n"))
@@ -104,7 +107,7 @@ class ArchitectureTest {
             .toSet()
 
         assertRatchet(
-            "Context.amber hands out the whole container: take SettingsStore, AccountRepository or RelayClient " +
+            "Context.amber (or a cast to Amber) hands out the whole container: take SettingsStore, AccountRepository or RelayClient " +
                 "(LocalSettingsStore etc. in composables) instead. Entry points the system constructs are the exception.",
             actual,
             contextAmberUsers,

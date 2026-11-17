@@ -88,20 +88,6 @@ class ArchitectureTest {
     }
 
     @Test
-    fun `Amber instance usage can only shrink`() {
-        val actual = appMain
-            .filter { it.text.contains("Amber.instance") }
-            .map { it.relativePath() }
-            .toSet()
-
-        assertRatchet(
-            "Amber.instance is the service locator this project is replacing: take the dependency as a parameter instead.",
-            actual,
-            amberInstanceUsers,
-        )
-    }
-
-    @Test
     fun `service and database do not render UI`() {
         val actual = appMain
             .filter { file -> file.relativePath().startsWith("service/") || file.relativePath().startsWith("database/") }
@@ -177,10 +163,6 @@ class ArchitectureTest {
             "ui/EditConfigurationScreen.kt",
             "ui/EditPermission.kt",
             "ui/NewNsecBunkerScreen.kt",
-        )
-
-        val amberInstanceUsers = setOf(
-            "service/IntentUtils.kt",
         )
 
         val composeUiInService = setOf(

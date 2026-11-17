@@ -98,6 +98,8 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
+// Constructor injection: one parameter per dependency.
+@Suppress("LongParameterList")
 class EventNotificationConsumer(
     private val applicationContext: Context,
     private val settingsStore: SettingsStore,

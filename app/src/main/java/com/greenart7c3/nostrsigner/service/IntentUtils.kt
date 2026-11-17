@@ -17,6 +17,7 @@ import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.FailedMigrationException
 import com.greenart7c3.nostrsigner.LocalPreferences
+import com.greenart7c3.nostrsigner.amber
 import com.greenart7c3.nostrsigner.common.SignerType
 import com.greenart7c3.nostrsigner.common.hasAmbiguousRelayTags
 import com.greenart7c3.nostrsigner.common.rememberedDecision
@@ -90,7 +91,7 @@ object IntentUtils {
         packageName: String?,
     ) {
         if (packageName.isNullOrBlank()) return
-        val dao = Amber.instance.dao(account.npub)
+        val dao = context.amber.dao(account.npub)
         val saved = dao.getByKey(packageName)?.application ?: return
         if (saved.name.isNotBlank() && saved.icon.isNotBlank()) return
 
@@ -177,6 +178,7 @@ object IntentUtils {
     fun isUrlEncoded(input: String): Boolean = URL_ENCODED_REGEX.containsMatchIn(input)
 
     private suspend fun getIntentDataWithoutExtras(
+        context: Context,
         data: String,
         intent: Intent,
         packageName: String?,
@@ -184,22 +186,24 @@ object IntentUtils {
         account: Account,
     ): IntentData? {
         val request = NostrSignerRequestParser.fromUri(data)
-            ?: return getIntentDataFromIntent(intent, packageName, route, account)
-        return buildIntentData(request, intent, packageName, route, account)
+            ?: return getIntentDataFromIntent(context, intent, packageName, route, account)
+        return buildIntentData(context, request, intent, packageName, route, account)
     }
 
     private suspend fun getIntentDataFromIntent(
+        context: Context,
         intent: Intent,
         packageName: String?,
         route: String?,
         account: Account,
     ): IntentData? {
         val request = NostrSignerRequestParser.fromExtras(intent.data?.toString() ?: "", packageName) { intent.extras?.getString(it) }
-        return buildIntentData(request, intent, packageName, route, account)
+        return buildIntentData(context, request, intent, packageName, route, account)
     }
 
     /** Runs the key operation [request] asks for with [account] and wraps the result for the approval screen. */
     private suspend fun buildIntentData(
+        context: Context,
         request: NostrSignerRequest,
         intent: Intent,
         packageName: String?,
@@ -227,7 +231,7 @@ object IntentUtils {
         )
         return when (request.type) {
             SignerType.SIGN_EVENT -> signedIntentData(base, request, intent, packageName, account)
-            in encryptDecryptSignerTypes -> encryptOrDecrypt(request, intent, packageName, account)?.let { result ->
+            in encryptDecryptSignerTypes -> encryptOrDecrypt(context, request, intent, packageName, account)?.let { result ->
                 base.copy(
                     // The peer (pubKey) is not a local account; the request runs with `account`.
                     currentAccount = request.currentUser ?: account.npub,
@@ -284,6 +288,7 @@ object IntentUtils {
 
     /** The encrypted or decrypted text, or null when the request was rejected as invalid. */
     private suspend fun encryptOrDecrypt(
+        context: Context,
         request: NostrSignerRequest,
         intent: Intent,
         packageName: String?,
@@ -306,8 +311,8 @@ object IntentUtils {
             emitInvalid(intent, packageName, "Invalid NIP-44 v3 request: ${e.message}", e)
             null
         } else {
-            Amber.instance.applicationIOScope.launch {
-                Amber.instance.getLogDatabase(account.npub).dao().insertLogIfEnabled(
+            context.amber.applicationIOScope.launch {
+                context.amber.getLogDatabase(account.npub).dao().insertLogIfEnabled(
                     LogEntity(
                         0,
                         packageName ?: "",
@@ -479,7 +484,7 @@ object IntentUtils {
             val account = requestAccount(context, intent) ?: currentLoggedInAccount
             when {
                 intent.dataString?.startsWith("nostrconnect:") == true -> {
-                    NostrConnectUtils.getIntentFromNostrConnect(intent, account, Amber.instance, Amber.instance.applicationIOScope)
+                    NostrConnectUtils.getIntentFromNostrConnect(intent, account, context.amber, context.amber.applicationIOScope)
                     null
                 }
                 isWebRequest(
@@ -488,12 +493,12 @@ object IntentUtils {
                     referrerIsBrowser = isBrowserReferrer(context, referrer),
                     typeExtra = intent.extras?.getString("type"),
                     dataString = intent.dataString,
-                ) -> getIntentDataWithoutExtras(intent.data?.toString() ?: "", intent, packageName, route, account)
-                else -> getIntentDataFromIntent(intent, packageName, route, account)
+                ) -> getIntentDataWithoutExtras(context, intent.data?.toString() ?: "", intent, packageName, route, account)
+                else -> getIntentDataFromIntent(context, intent, packageName, route, account)
             }
         }
     } catch (e: Exception) {
-        reportParseError(intent, packageName, e)
+        reportParseError(context, intent, packageName, e)
         null
     }
 
@@ -518,22 +523,10 @@ object IntentUtils {
         return LocalPreferences.loadAccount(context, parsePubKey(currentUser))
     }
 
-    private fun reportParseError(intent: Intent, packageName: String?, e: Exception) {
+    private fun reportParseError(context: Context, intent: Intent, packageName: String?, e: Exception) {
         AmberLog.e(Amber.TAG, "Error parsing intent: ${e.message}", e)
         emitInvalid(intent, packageName, "Error parsing intent: ${e.message}", e)
-        Amber.instance.applicationIOScope.launch {
-            LocalPreferences.allSavedAccounts(Amber.instance).forEach {
-                Amber.instance.getLogDatabase(it.npub).dao().insertLogIfEnabled(
-                    LogEntity(
-                        id = 0,
-                        url = "IntentUtils",
-                        type = "Error",
-                        message = e.stackTraceToString(),
-                        time = System.currentTimeMillis(),
-                    ),
-                )
-            }
-        }
+        logParseError(context, e)
     }
 
     fun getUnsignedEvent(
@@ -580,9 +573,9 @@ object IntentUtils {
         decryptTypeScope: DecryptTypeScope = DecryptTypeScope.ALL,
     ) {
         onLoading(true)
-        Amber.instance.applicationIOScope.launch {
+        context.amber.applicationIOScope.launch {
             try {
-                val dao = Amber.instance.dao(account.npub)
+                val dao = context.amber.dao(account.npub)
                 val application = dao.getByKey(key) ?: IntentResponse.newApplication(
                     key = key,
                     name = appName ?: packageName?.let { installedAppName(context, it) } ?: "",
@@ -597,7 +590,7 @@ object IntentUtils {
                 }
 
                 if (rememberType != RememberType.NEVER) {
-                    Amber.instance.applicationIOScope.launch {
+                    context.amber.applicationIOScope.launch {
                         AmberUtils.acceptPermission(
                             application = application,
                             key = key,
@@ -623,13 +616,13 @@ object IntentUtils {
                     persistNativeAppMetadata(context, account, packageName)
                     val content = IntentResponse.historyContent(intentData, accepted = true, event = event, value = value)
                     val entry = IntentResponse.historyEntry(intentData, key, kind, accepted = true, content = content)
-                    Amber.instance.applicationIOScope.launch {
-                        Amber.instance.getHistoryDatabase(account.npub).dao().addHistory(listOf(entry), account.npub)
+                    context.amber.applicationIOScope.launch {
+                        context.amber.getHistoryDatabase(account.npub).dao().addHistory(listOf(entry), account.npub)
                     }
                 }
                 deliverResult(context, packageName, clipboardManager, intentData, event, value)
                 onRemoveIntentData(listOf(intentData), IntentResultType.REMOVE)
-                Amber.instance.getMainActivity()?.let {
+                context.amber.getMainActivity()?.let {
                     it.intent = null
                     it.finishAndRemoveTask()
                 }
@@ -683,7 +676,7 @@ object IntentUtils {
             if (intentData.type == SignerType.GET_PUBLIC_KEY) {
                 intent.putExtra("package", BuildConfig.APPLICATION_ID)
             }
-            Amber.instance.getMainActivity()?.setResult(RESULT_OK, intent)
+            context.amber.getMainActivity()?.setResult(RESULT_OK, intent)
         } else if (!intentData.callBackUrl.isNullOrBlank()) {
             val intent = Intent(Intent.ACTION_VIEW)
             intent.data = (intentData.callBackUrl + Uri.encode(IntentResponse.callbackPayload(intentData, event, value))).toUri()
@@ -706,24 +699,25 @@ object IntentUtils {
     }
 
     fun sendRejection(
+        context: Context,
         key: String,
         account: Account,
         intentData: IntentData,
         appName: String,
         rememberType: RememberType,
-        kind: Int?,
         onLoading: (Boolean) -> Unit,
         onRemoveIntentData: (List<IntentData>, IntentResultType) -> Unit,
+        kind: Int? = null,
         relay: String = "",
         decryptTypeScope: DecryptTypeScope = DecryptTypeScope.ALL,
     ) {
-        Amber.instance.applicationIOScope.launch(Dispatchers.IO) {
+        context.amber.applicationIOScope.launch(Dispatchers.IO) {
             if (key == "null") {
                 onLoading(false)
                 return@launch
             }
 
-            val application = Amber.instance.getDatabase(account.npub).dao().getByKey(key)
+            val application = context.amber.getDatabase(account.npub).dao().getByKey(key)
                 ?: IntentResponse.newApplication(key, appName, account, closeApplication = true, deleteAfter = 0L)
             if (rememberType != RememberType.NEVER) {
                 AmberUtils.acceptOrRejectPermission(
@@ -733,22 +727,21 @@ object IntentUtils {
                     kind,
                     false,
                     rememberType,
-                    account,
                     relay,
                     intentData.encryptedData,
                     decryptTypeScope,
-                    dao = Amber.instance.dao(account.npub),
+                    dao = context.amber.dao(account.npub),
                 )
             }
 
-            Amber.instance.dao(account.npub).insertApplicationWithPermissions(application)
+            context.amber.dao(account.npub).insertApplicationWithPermissions(application)
             val content = IntentResponse.historyContent(intentData, accepted = false, event = "", value = "")
-            Amber.instance.getHistoryDatabase(account.npub).dao().addHistory(
+            context.amber.getHistoryDatabase(account.npub).dao().addHistory(
                 listOf(IntentResponse.historyEntry(intentData, key, kind, accepted = false, content = content)),
                 account.npub,
             )
 
-            val activity = Amber.instance.getMainActivity()
+            val activity = context.amber.getMainActivity()
             activity?.intent = null
             activity?.setResult(
                 RESULT_OK,
@@ -778,4 +771,21 @@ fun Activity.safeReferrer(): Uri? = try {
     referrer
 } catch (_: Exception) {
     null
+}
+
+// Records a failed intent parse in every account's log.
+private fun logParseError(context: Context, e: Exception) {
+    context.amber.applicationIOScope.launch {
+        LocalPreferences.allSavedAccounts(context).forEach {
+            context.amber.getLogDatabase(it.npub).dao().insertLogIfEnabled(
+                LogEntity(
+                    id = 0,
+                    url = "IntentUtils",
+                    type = "Error",
+                    message = e.stackTraceToString(),
+                    time = System.currentTimeMillis(),
+                ),
+            )
+        }
+    }
 }

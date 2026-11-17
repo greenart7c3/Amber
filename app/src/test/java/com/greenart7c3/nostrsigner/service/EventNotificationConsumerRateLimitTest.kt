@@ -77,7 +77,6 @@ class EventNotificationConsumerRateLimitTest {
         every { amber.applicationIOScope } returns scope
         every { amber.getDatabase(any()) } returns db
         every { amber.dao(any()) } returns CachingApplicationDao(appDao)
-        installAmberInstance(amber)
 
         val account = newTestAccount(scope)
         accountHex = account.hexKey

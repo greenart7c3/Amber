@@ -46,6 +46,7 @@ import com.greenart7c3.nostrsigner.commonsui.subject
 import com.greenart7c3.nostrsigner.commonsui.warning
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.FeedbackType
+import com.greenart7c3.nostrsigner.service.FeedbackSender
 import com.greenart7c3.nostrsigner.ui.components.AmberButton
 import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.launch
@@ -162,7 +163,7 @@ fun FeedbackScreen(
                     amber.applicationIOScope.launch {
                         try {
                             onLoading(true)
-                            val result = amber.sendFeedBack(
+                            val result = FeedbackSender(amber, amber).send(
                                 header.text,
                                 body.text,
                                 feedbackType,

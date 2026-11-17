@@ -61,7 +61,6 @@ fun DefaultProfileRelaysScreen(
     modifier: Modifier,
     account: Account,
 ) {
-    val accountRepository = LocalAccountRepository.current
     val settingsStore = LocalSettingsStore.current
     val relayClient = LocalRelayClient.current
     val scope = rememberCoroutineScope()

@@ -274,7 +274,7 @@ class ConnectivityService : Service() {
             )
         } catch (e: Exception) {
             // Android 12+ can refuse a background FGS start with ForegroundServiceStartNotAllowedException;
-            // swallow it and let the next foreground start (startServiceFromUi) retry.
+            // swallow it and let the next foreground start (startService) retry.
             AmberLog.e(Amber.TAG, "Failed to start ConnectivityService in foreground", e)
             stopSelf(startId)
             return START_NOT_STICKY

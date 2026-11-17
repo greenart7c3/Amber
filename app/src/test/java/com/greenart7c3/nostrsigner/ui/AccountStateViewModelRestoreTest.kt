@@ -8,7 +8,6 @@ import com.greenart7c3.nostrsigner.service.ApplicationBackup
 import com.greenart7c3.nostrsigner.service.BackupApplication
 import com.greenart7c3.nostrsigner.service.BackupPayload
 import com.greenart7c3.nostrsigner.service.RestoreResult
-import com.greenart7c3.nostrsigner.service.installAmberInstance
 import com.greenart7c3.nostrsigner.service.newTestAccount
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -57,7 +56,6 @@ class AccountStateViewModelRestoreTest {
         coEvery { dao.getAll(any()) } returns emptyList()
         every { amber.applicationIOScope } returns scope
         every { amber.dao(any()) } returns dao
-        installAmberInstance(amber)
 
         mockkObject(ApplicationBackup)
         coEvery { ApplicationBackup.resolveReadRelays(any(), any(), any()) } returns setOf(mockk())

@@ -178,7 +178,7 @@ class MainActivity : AppCompatActivity() {
         AmberLog.d(Amber.TAG, "onResume MainActivity")
         Amber.isAppInForeground = true
         amber.setMainActivity(this)
-        amber.startServiceFromUi()
+        amber.startService()
         mainViewModel.showBunkerRequests()
         if (!BuildFlavorChecker.isOfflineFlavor()) {
             val connectivityManager =

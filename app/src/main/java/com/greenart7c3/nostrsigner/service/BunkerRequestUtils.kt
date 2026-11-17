@@ -146,6 +146,8 @@ object BunkerRequestUtils {
  * logs, and publishes the reply. Built from the app dependencies; the request queue
  * itself stays in [BunkerRequestUtils].
  */
+// Constructor injection: one parameter per dependency.
+@Suppress("LongParameterList")
 class BunkerResponder(
     // The Application context: notifications and the error notification.
     private val appContext: Context,
@@ -696,7 +698,6 @@ class BunkerResponder(
                         kind,
                         false,
                         rememberType,
-                        account,
                         relay,
                         bunkerRequest.encryptedData,
                         decryptTypeScope,

@@ -337,7 +337,7 @@ class BunkerRequestUtilsTest {
         every { appContext.getSystemService(android.content.Context.NOTIFICATION_SERVICE) } returns nm
         every { appContext.getSystemService(android.app.NotificationManager::class.java) } returns nm
         val amber = mockk<Amber>(relaxed = true)
-        // finishRequest() wraps Amber.instance itself in the consumer.
+        // The responder built from this Application cancels notifications through it.
         every { amber.getSystemService(android.content.Context.NOTIFICATION_SERVICE) } returns nm
         every { amber.getSystemService(android.app.NotificationManager::class.java) } returns nm
         every { amber.dao(any()) } returns dao
@@ -349,7 +349,6 @@ class BunkerRequestUtilsTest {
     @Test
     fun `rejecting a queued request for a deleted app does not recreate it`() = runBlocking {
         val (amber, dao) = amberWithDao(getByKeyReturnsNull = true)
-        installAmberInstance(amber)
 
         mockkObject(AmberUtils)
         try {
@@ -379,7 +378,7 @@ class BunkerRequestUtilsTest {
             coVerify(exactly = 0) { dao.insertPermissions(any()) }
             coVerify(exactly = 0) { dao.insertPermissions2(any()) }
             coVerify(exactly = 0) {
-                AmberUtils.acceptOrRejectPermission(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any())
+                AmberUtils.acceptOrRejectPermission(any(), any(), any(), any(), any(), any(), any(), any(), any(), any())
             }
             assertEquals(1, errors.size)
         } finally {
@@ -390,7 +389,6 @@ class BunkerRequestUtilsTest {
     @Test
     fun `approving a queued request for a deleted app sends an error and inserts nothing`() = runBlocking {
         val (amber, dao) = amberWithDao(getByKeyReturnsNull = true)
-        installAmberInstance(amber)
 
         mockkObject(AmberUtils)
         try {
@@ -429,14 +427,13 @@ class BunkerRequestUtilsTest {
     fun `a rejection is answered even when recording it fails`() = runBlocking {
         val (amber, dao) = amberWithDao(getByKeyReturnsNull = false)
         coEvery { dao.getByKey(any()) } returns mockk<com.greenart7c3.nostrsigner.database.ApplicationWithPermissions>(relaxed = true)
-        installAmberInstance(amber)
 
         mockkObject(AmberUtils, com.greenart7c3.nostrsigner.AmberLog)
         try {
             every { com.greenart7c3.nostrsigner.AmberLog.e(any(), any(), any()) } returns Unit
             coEvery { AmberUtils.sendBunkerError(any(), any(), any(), any(), any(), any()) } returns Unit
             coEvery {
-                AmberUtils.acceptOrRejectPermission(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any())
+                AmberUtils.acceptOrRejectPermission(any(), any(), any(), any(), any(), any(), any(), any(), any(), any())
             } throws IllegalStateException("boom")
 
             responder(amber).sendRejection(
@@ -468,7 +465,6 @@ class BunkerRequestUtilsTest {
         val (amber, dao) = amberWithDao(getByKeyReturnsNull = false)
         val liveApp = mockk<com.greenart7c3.nostrsigner.database.ApplicationWithPermissions>(relaxed = true)
         coEvery { dao.getByKey(any()) } returns liveApp
-        installAmberInstance(amber)
 
         mockkObject(AmberUtils)
         try {

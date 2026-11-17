@@ -45,14 +45,16 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
+// Constructor injection: one parameter per dependency.
+@Suppress("LongParameterList")
 class NotificationSubscription(
     val client: NostrClient,
     val appContext: Context,
-    private val settingsStore: SettingsStore,
+    settingsStore: SettingsStore,
     private val accountRepository: AccountRepository,
     private val scope: CoroutineScope,
     private val notificationCache: LruCache<String, Long>,
-    private val bunkerResponder: BunkerResponder,
+    bunkerResponder: BunkerResponder,
 ) : RelayConnectionListener {
     private val eventNotificationConsumer =
         EventNotificationConsumer(appContext, settingsStore, accountRepository, scope, notificationCache, bunkerResponder) { updateFilter() }

@@ -36,13 +36,17 @@ Authorization is the permission database (`ApplicationEntity` +
 `ApplicationPermissionsEntity`), queried by all three paths before the UI shows
 anything. The biometric/PIN prompt is a UI gate only.
 
-### The service locator
+### The dependency container
 
 `Amber` is the Application class and the dependency container: `client`,
 `notificationSubscription`, `profileSubscription`, the per-account databases and
-`settings`. `Amber.instance` is called 581 times in 86 production files, so
-almost every class is coupled to the Android Application class and cannot be
-constructed in a test without the framework. There are two ViewModels.
+`settings`. It implements three narrow interfaces in `data/` — `SettingsStore`,
+`AccountRepository` and `RelayClient` — and code takes those (or the app scope)
+through its constructor or parameters. There is no static accessor: Android
+entry points (activities, services, receivers, workers, the provider) read the
+container from their own context with `Context.amber`, and composables read the
+interfaces from the CompositionLocals the two activities provide
+(`ui/AppDependencies.kt`). There are two ViewModels.
 
 ### Where the pain is
 
@@ -53,7 +57,7 @@ constructed in a test without the framework. There are two ViewModels.
 - The Android bunker flow (`BunkerRequestUtils` + `EventNotificationConsumer`)
   and the desktop one (`BunkerEngine`) implement the same permission and
   response logic twice.
-- `ui/` reaches Room DAOs directly in 9 files and `Amber.instance` in dozens.
+- `ui/` reaches Room DAOs directly in 9 files.
 
 ## Target layering
 
@@ -66,7 +70,7 @@ domain/        use cases and the permission/request policy (pure; in :common
 data/          Room, SharedPreferences, relays, files — behind narrow interfaces
 ```
 
-The UI never touches a database, a relay client or `Amber.instance`: it talks to
+The UI never touches a database, a relay client or the `Amber` container: it talks to
 a ViewModel, which talks to an interface (`AccountRepository`, `RelayClient`,
 `SettingsStore`) implemented in `data/`. Manual constructor injection is enough;
 there is no Hilt, which keeps the reproducible-build and dependency-verification
@@ -84,8 +88,7 @@ footprint small.
   rewrites the files from the current findings, so fixed code disappears from
   them. Never add an entry by hand.
 - **Architecture tests** (`tools/architecture-tests`, Konsist) — `:common` and
-  `:commonsui` stay platform free, `ui/` does not import Room, `Amber.instance`
-  cannot spread to a new file, `service/` and `database/` do not depend on
+  `:commonsui` stay platform free, `ui/` does not import Room, `service/` and `database/` do not depend on
   Compose UI, the desktop `core/` does not import `ui/`, ViewModels are named
   `ViewModel`. The allow-lists at the bottom of `ArchitectureTest.kt` are
   ratchets too: they fail when an entry no longer violates the rule, so they
@@ -108,7 +111,7 @@ Move the platform-free core of the desktop `core/BunkerEngine.kt` and the Androi
 with the apps keeping only storage, transport and approval UI around it. This
 removes duplicated security logic. Shrinks `app/detekt-baseline.xml`
 (`LongMethod`, `CyclomaticComplexMethod` in `EventNotificationConsumer`),
-`desktop/detekt-baseline.xml` (`BunkerEngine`) and the `amberInstanceUsers` set.
+`desktop/detekt-baseline.xml` (`BunkerEngine`).
 
 Done so far: `common/Nip46Requests.kt` holds the method → `SignerType` mapping,
 the NIP-44 v3 kind/scope params, the repeated-connect check and the
@@ -138,12 +141,19 @@ plaintext) and what a callback URL receives, and `sendResult` only saves and
 delivers. Left: `IntentUtils` as a whole (`LargeClass`, `TooManyFunctions`)
 and `sendResult`'s parameter list, which every approval screen passes.
 
-### 3. Replace `Amber.instance` with constructor injection
+### 3. Replace `Amber.instance` with constructor injection (done)
 
-Introduce narrow interfaces (`AccountRepository`, `RelayClient`, `SettingsStore`)
-implemented next to the current singletons, and pass them in. One class per
-change; every class converted stops using `Amber.instance` and its line leaves
-`amberInstanceUsers`, which the architecture test then requires you to delete.
+`Amber.instance` is gone. `SettingsStore`, `AccountRepository` and `RelayClient`
+(`data/`) are implemented by `Amber` and passed in: through constructors
+(`AccountStateViewModel`, the relay services, `SignerProviderQuery`,
+`BunkerResponder`, `EventNotificationConsumer`, `WebDavService`, ...), as
+parameters of the `object` helpers, or as CompositionLocals for composables.
+What only the Application has (activity tracking, crash reports, relay stats)
+is read through a context the code is already given (`Context.amber`). The
+Room DAOs that need settings take their database, which carries them, and
+`SecureCryptoHelper`, which Room converters call without a context, gets the
+application context installed by `Amber.onCreate`. Moving these dependencies
+behind ViewModels is step 4.
 
 ### 4. Give the big screens ViewModels
 

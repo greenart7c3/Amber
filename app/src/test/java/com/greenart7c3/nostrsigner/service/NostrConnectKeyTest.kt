@@ -29,7 +29,6 @@ class NostrConnectKeyTest {
     fun setUp() {
         val amber = mockk<Amber>(relaxed = true)
         every { amber.applicationIOScope } returns scope
-        installAmberInstance(amber)
         mockkObject(AmberLog)
         every { AmberLog.e(any(), any(), any()) } returns Unit
         mockkObject(BunkerRequestUtils)

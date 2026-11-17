@@ -127,7 +127,6 @@ fun DefaultRelaysScreen(
     account: Account,
 ) {
     val context = LocalContext.current
-    val accountRepository = LocalAccountRepository.current
     val settingsStore = LocalSettingsStore.current
     val relayClient = LocalRelayClient.current
     val scope = rememberCoroutineScope()

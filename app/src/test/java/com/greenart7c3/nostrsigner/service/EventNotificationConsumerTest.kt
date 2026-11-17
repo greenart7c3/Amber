@@ -80,7 +80,6 @@ class EventNotificationConsumerTest {
         every { amber.applicationIOScope } returns scope
         every { amber.getDatabase(any()) } returns database
         every { amber.dao(any()) } returns dao
-        installAmberInstance(amber)
 
         mockkObject(AmberLog)
         every { AmberLog.d(any(), any()) } returns Unit

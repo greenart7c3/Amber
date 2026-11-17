@@ -167,7 +167,6 @@ object AmberUtils {
         kind: Int?,
         value: Boolean,
         rememberType: RememberType,
-        account: Account,
         relay: String = "",
         encryptedData: EncryptedDataKind?,
         decryptTypeScope: DecryptTypeScope = DecryptTypeScope.ALL,

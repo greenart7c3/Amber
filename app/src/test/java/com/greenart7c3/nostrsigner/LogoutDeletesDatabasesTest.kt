@@ -1,7 +1,6 @@
 package com.greenart7c3.nostrsigner
 
 import android.content.Context
-import com.greenart7c3.nostrsigner.service.installAmberInstance
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.just
@@ -28,7 +27,6 @@ class LogoutDeletesDatabasesTest {
 
     @Before
     fun setUp() {
-        installAmberInstance(amber)
         every { context.applicationContext } returns amber
         mockkObject(LocalPreferences, AmberLog)
         every { AmberLog.d(any(), any<String>()) } returns Unit

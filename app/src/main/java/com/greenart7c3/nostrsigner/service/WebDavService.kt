@@ -25,12 +25,12 @@ import okhttp3.RequestBody.Companion.toRequestBody
  */
 internal fun webDavUsesProxy(isPrivateAddress: Boolean, torMode: TorMode): Boolean = !isPrivateAddress && torMode != TorMode.DISABLED
 
+private val MEDIA_TYPE = "application/octet-stream".toMediaType()
+
 class WebDavService(
     private val settingsStore: SettingsStore,
     private val relayClient: RelayClient,
 ) {
-    private val MEDIA_TYPE = "application/octet-stream".toMediaType()
-
     internal fun createClient(serverUrl: String): OkHttpClient {
         // Single entry point: the HTTPS policy runs before any client exists,
         // so a new WebDAV method cannot skip it and send Basic auth cleartext.

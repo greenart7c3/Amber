@@ -27,7 +27,6 @@ class ApplicationBackupFetchTest {
     @Before
     fun setUp() {
         every { amber.dao(any()) } returns dao
-        installAmberInstance(amber)
 
         mockkObject(ApplicationBackup)
         coEvery { ApplicationBackup.resolveReadRelays(any(), any(), any()) } returns setOf(mockk())

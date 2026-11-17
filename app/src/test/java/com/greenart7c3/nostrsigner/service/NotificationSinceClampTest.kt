@@ -56,7 +56,6 @@ class NotificationSinceClampTest {
         every { amber.dao(any()) } answers { CachingApplicationDao(dao) }
         val cache = LruCache<String, Long>(512)
         every { amber.notificationCache } returns cache
-        installAmberInstance(amber)
         mockkObject(LocalPreferences)
         val account = newTestAccount(scope)
         coEvery { LocalPreferences.allAccounts(any()) } returns listOf(account)

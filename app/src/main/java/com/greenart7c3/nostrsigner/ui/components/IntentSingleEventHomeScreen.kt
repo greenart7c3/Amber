@@ -177,6 +177,7 @@ fun IntentSingleEventHomeScreen(
                 },
                 onReject = { rememberType ->
                     IntentUtils.sendRejection(
+                        context = context,
                         key = key,
                         account = account,
                         intentData = intentData,
@@ -237,6 +238,7 @@ fun IntentSingleEventHomeScreen(
                 onReject = { rememberType, scope ->
                     val v3Kind = if (scope == DecryptTypeScope.SPECIFIC) intentData.nip44v3Kind else null
                     IntentUtils.sendRejection(
+                        context = context,
                         key = key,
                         account = account,
                         intentData = intentData,
@@ -311,6 +313,7 @@ fun IntentSingleEventHomeScreen(
                 },
                 onReject = { rememberType, scope ->
                     IntentUtils.sendRejection(
+                        context = context,
                         key = key,
                         account = account,
                         intentData = intentData,
@@ -418,6 +421,7 @@ fun IntentSingleEventHomeScreen(
                             rememberType = rememberType,
                         )
                         IntentUtils.sendRejection(
+                            context = context,
                             key = key,
                             account = account,
                             intentData = intentData,
@@ -482,6 +486,7 @@ fun IntentSingleEventHomeScreen(
                     },
                     onReject = {
                         IntentUtils.sendRejection(
+                            context = context,
                             key = key,
                             account = account,
                             intentData = intentData,

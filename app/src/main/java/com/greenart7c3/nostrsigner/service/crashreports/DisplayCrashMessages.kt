@@ -22,9 +22,7 @@ package com.greenart7c3.nostrsigner.service.crashreports
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.ui.platform.LocalContext
 import com.greenart7c3.nostrsigner.Amber
-import com.greenart7c3.nostrsigner.amber
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.ui.NavHostControllerWrapper
 import com.greenart7c3.nostrsigner.ui.navigation.Route
@@ -39,10 +37,10 @@ fun Amber.clearPendingCrashReport() {
 
 @Composable
 fun DisplayCrashMessages(
+    amber: Amber,
     account: Account,
     navController: NavHostControllerWrapper,
 ) {
-    val amber = LocalContext.current.amber
     LaunchedEffect(account) {
         withContext(Dispatchers.IO) {
             val exceptions = amber.crashReportCache.loadAndDelete()

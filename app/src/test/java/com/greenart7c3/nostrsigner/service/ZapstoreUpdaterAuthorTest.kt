@@ -40,7 +40,6 @@ class ZapstoreUpdaterAuthorTest {
         every { android.util.Log.w(any<String>(), any<String>(), any()) } returns 0
         every { android.util.Log.e(any(), any()) } returns 0
         every { android.util.Log.e(any(), any(), any()) } returns 0
-        installAmberInstance(mockk<Amber>(relaxed = true))
         mockkObject(LocalPreferences)
         every { LocalPreferences.loadSettingsFromEncryptedStorage(any()) } returns AmberSettings()
     }

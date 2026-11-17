@@ -46,8 +46,8 @@
     <ID>CyclomaticComplexMethod:BunkerConnectRequestScreen.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun BunkerConnectRequestScreen</ID>
     <ID>CyclomaticComplexMethod:BunkerMultiEventHomeScreen.kt:@Composable fun BunkerMultiEventHomeScreen</ID>
     <ID>CyclomaticComplexMethod:BunkerMultiEventHomeScreen.kt:@Composable private fun BunkerRequestCard</ID>
-    <ID>CyclomaticComplexMethod:BunkerRequestUtils.kt:BunkerRequestUtils$fun sendRejection</ID>
-    <ID>CyclomaticComplexMethod:BunkerRequestUtils.kt:BunkerRequestUtils$fun sendResult</ID>
+    <ID>CyclomaticComplexMethod:BunkerRequestUtils.kt:BunkerResponder$fun sendRejection</ID>
+    <ID>CyclomaticComplexMethod:BunkerRequestUtils.kt:BunkerResponder$fun sendResult</ID>
     <ID>CyclomaticComplexMethod:BunkerSingleEventHomeScreen.kt:@Composable fun BunkerSingleEventHomeScreen</ID>
     <ID>CyclomaticComplexMethod:CloudBackupScreen.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun CloudBackupScreen</ID>
     <ID>CyclomaticComplexMethod:EditPermission.kt:@Composable fun PermissionRow</ID>
@@ -130,9 +130,9 @@
     <ID>LongMethod:BunkerMultiEventHomeScreen.kt:@Composable fun BunkerMultiEventHomeScreen</ID>
     <ID>LongMethod:BunkerMultiEventHomeScreen.kt:@Composable private fun BunkerRequestCard</ID>
     <ID>LongMethod:BunkerRelayAuthScreen.kt:@Composable fun BunkerRelayAuthScreen</ID>
-    <ID>LongMethod:BunkerRequestUtils.kt:BunkerRequestUtils$fun sendRejection</ID>
-    <ID>LongMethod:BunkerRequestUtils.kt:BunkerRequestUtils$fun sendResult</ID>
-    <ID>LongMethod:BunkerRequestUtils.kt:BunkerRequestUtils$private suspend fun sendBunkerResponse</ID>
+    <ID>LongMethod:BunkerRequestUtils.kt:BunkerResponder$fun sendRejection</ID>
+    <ID>LongMethod:BunkerRequestUtils.kt:BunkerResponder$fun sendResult</ID>
+    <ID>LongMethod:BunkerRequestUtils.kt:BunkerResponder$private suspend fun sendBunkerResponse</ID>
     <ID>LongMethod:BunkerSingleEventHomeScreen.kt:@Composable fun BunkerSingleEventHomeScreen</ID>
     <ID>LongMethod:ChooseSignPolicy.kt:@Composable fun ChooseSignPolicy</ID>
     <ID>LongMethod:CloudBackupScreen.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun CloudBackupScreen</ID>

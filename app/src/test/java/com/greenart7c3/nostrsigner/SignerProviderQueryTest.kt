@@ -10,7 +10,6 @@ import com.greenart7c3.nostrsigner.database.HistoryDatabase
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.AmberSettings
 import com.greenart7c3.nostrsigner.service.AmberUtils
-import com.greenart7c3.nostrsigner.service.installAmberInstance
 import com.vitorpamplona.quartz.nip01Core.core.Event
 import com.vitorpamplona.quartz.utils.TimeUtils
 import io.mockk.coEvery
@@ -69,7 +68,6 @@ class SignerProviderQueryTest {
         every { amber.applicationIOScope } returns CoroutineScope(Dispatchers.Unconfined)
         every { amber.getHistoryDatabase(any()) } returns historyDatabase
         every { amber.dao(any()) } returns dao
-        installAmberInstance(amber)
 
         account = mockk()
         every { account.npub } returns NPUB

@@ -68,7 +68,6 @@ class EventNotificationConsumerSealResultTest {
     @Before
     fun setUp() {
         every { amber.applicationIOScope } returns scope
-        installAmberInstance(amber)
     }
 
     @After

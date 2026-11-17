@@ -80,7 +80,6 @@ class ProfileSubscriptionTest {
         val amber = mockk<Amber>(relaxed = true)
         every { amber.settings } returns AmberSettings(profileFetchInterval = interval)
         settingsStore.settings = AmberSettings(profileFetchInterval = interval)
-        installAmberInstance(amber)
     }
 
     @Test

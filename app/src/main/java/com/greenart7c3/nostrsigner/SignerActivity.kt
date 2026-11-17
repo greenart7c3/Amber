@@ -223,7 +223,7 @@ class SignerActivity : AppCompatActivity() {
         AmberLog.d(Amber.TAG, "onResume SignerActivity")
         Amber.isAppInForeground = true
         amber.setMainActivity(this)
-        amber.startServiceFromUi()
+        amber.startService()
         if (::mainViewModel.isInitialized) {
             mainViewModel.showBunkerRequests()
         }

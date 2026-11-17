@@ -49,7 +49,6 @@ import com.greenart7c3.nostrsigner.database.LogDatabase
 import com.greenart7c3.nostrsigner.database.LogRetentionManager
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.AmberSettings
-import com.greenart7c3.nostrsigner.models.FeedbackType
 import com.greenart7c3.nostrsigner.models.TimeUtils as AmberTimeUtils
 import com.greenart7c3.nostrsigner.models.TorMode
 import com.greenart7c3.nostrsigner.models.UpdateCheckFrequency
@@ -75,21 +74,10 @@ import com.greenart7c3.nostrsigner.service.ZapstoreUpdater
 import com.greenart7c3.nostrsigner.service.crashreports.CrashReportCache
 import com.greenart7c3.nostrsigner.service.crashreports.UnexpectedCrashSaver
 import com.greenart7c3.nostrsigner.ui.ToastManager
-import com.vitorpamplona.quartz.nip01Core.crypto.verify
-import com.vitorpamplona.quartz.nip01Core.hints.EventHintBundle
 import com.vitorpamplona.quartz.nip01Core.relay.client.NostrClient
-import com.vitorpamplona.quartz.nip01Core.relay.client.accessories.fetchFirst
-import com.vitorpamplona.quartz.nip01Core.relay.client.accessories.publishAndConfirm
 import com.vitorpamplona.quartz.nip01Core.relay.client.auth.RelayAuthenticator
 import com.vitorpamplona.quartz.nip01Core.relay.client.stats.RelayStats
-import com.vitorpamplona.quartz.nip01Core.relay.filters.Filter
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
-import com.vitorpamplona.quartz.nip01Core.relay.normalizer.RelayUrlNormalizer
-import com.vitorpamplona.quartz.nip01Core.tags.people.PTag
-import com.vitorpamplona.quartz.nip34Git.issue.GitIssueEvent
-import com.vitorpamplona.quartz.nip34Git.repository.GitRepositoryEvent
-import com.vitorpamplona.quartz.nip65RelayList.AdvertisedRelayListEvent
-import com.vitorpamplona.quartz.utils.TimeUtils
 import java.lang.ref.WeakReference
 import java.net.InetSocketAddress
 import java.net.Socket
@@ -160,7 +148,7 @@ class Amber :
     @Volatile var isSettingsLoaded = false
 
     override val factory = OkHttpWebSocket.Builder { url ->
-        if (isPrivateIp(url.url)) return@Builder HttpClientManager.getLocalHttpClient()
+        if (PrivateAddress.isPrivate(url.url)) return@Builder HttpClientManager.getLocalHttpClient()
         val useProxy = when {
             // Settings load asynchronously; until they land, torMode's default (DISABLED)
             // is a guess, not a decision. Route through the proxy client — preset from
@@ -422,7 +410,6 @@ class Amber :
             enableStrictMode()
         }
 
-        instance = this
         SecureCryptoHelper.install(this)
         // Before anything reads the account list or the settings: an install that
         // comes from 3.3.0 or older still keeps them in the EncryptedSharedPreferences
@@ -611,10 +598,6 @@ class Amber :
         }
     }
 
-    fun startServiceFromUi() {
-        startService()
-    }
-
     fun startService() {
         if (BuildFlavorChecker.isOfflineFlavor()) return
         try {
@@ -715,18 +698,11 @@ class Amber :
     }
 
     override fun getLogDatabase(npub: String): LogDatabase = logDatabases.computeIfAbsent(npub) {
-        LogDatabase.getDatabase(applicationContext, npub).also {
-            it.settingsStore = this
-            LogRetentionManager.watch(this, applicationIOScope, npub, it)
-        }
+        LogDatabase.getDatabase(applicationContext, npub, this).also { LogRetentionManager.watch(this, applicationIOScope, npub, it) }
     }
 
     override fun getHistoryDatabase(npub: String): HistoryDatabase = historyDatabases.computeIfAbsent(npub) {
-        HistoryDatabase.getDatabase(applicationContext, npub).also {
-            it.settingsStore = this
-            it.accountRepository = this
-            LogRetentionManager.watch(this, applicationIOScope, npub, it)
-        }
+        HistoryDatabase.getDatabase(applicationContext, npub, this, this).also { LogRetentionManager.watch(this, applicationIOScope, npub, it) }
     }
 
     /**
@@ -779,8 +755,6 @@ class Amber :
         }
     }
 
-    fun isPrivateIp(url: String): Boolean = PrivateAddress.isPrivate(url)
-
     override fun newImageLoader(context: PlatformContext): ImageLoader {
         val memCache = MemoryCache.Builder()
             .maxSizeBytes(32 * 1024 * 1024) // 32 MB cap to prevent DMA-BUF OOM
@@ -791,7 +765,7 @@ class Amber :
             .build()
         val coilCallFactory = okhttp3.Call.Factory { request ->
             val url = request.url.toString()
-            if (isPrivateIp(url)) return@Factory HttpClientManager.getLocalHttpClient().newCall(request)
+            if (PrivateAddress.isPrivate(url)) return@Factory HttpClientManager.getLocalHttpClient().newCall(request)
             val useProxy = when {
                 !isSettingsLoaded -> true
                 else -> settings.torMode != TorMode.DISABLED
@@ -890,136 +864,12 @@ class Amber :
         }
     }
 
-    suspend fun sendFeedBack(
-        subject: String,
-        body: String,
-        type: FeedbackType,
-        account: Account,
-    ): Boolean {
-        val usingTor = settings.torMode != TorMode.DISABLED
-        // Tor round trips are slow; give the relays time to answer OK before
-        // declaring the publish failed.
-        val publishTimeoutSeconds =
-            if (usingTor) FEEDBACK_TOR_PUBLISH_TIMEOUT_SECONDS else FEEDBACK_PUBLISH_TIMEOUT_SECONDS
-
-        val repositoryEvent = fetchAmberRepositoryEvent(usingTor) ?: fallbackRepositoryEvent()
-        val relays = repositoryEvent.relays()
-            .mapNotNull { RelayUrlNormalizer.normalizeOrNull(it) }
-            .toSet()
-            .takeIf { it.isNotEmpty() }
-            ?: setOfNotNull(RelayUrlNormalizer.normalizeOrNull(FEEDBACK_FALLBACK_RELAY))
-
-        val template = GitIssueEvent.build(
-            subject,
-            body,
-            EventHintBundle(repositoryEvent),
-            listOf(PTag(DEVELOPER_HEX_KEY, null)),
-            listOf(if (type == FeedbackType.BUG_REPORT) "bug" else "enhancement"),
-        )
-
-        val event = account.sign(
-            template,
-        )
-
-        // This will automatically connect to these relays even if they are not in the list
-        // once the events have been saved, it will disconnect from them unless there are other
-        // filters with them
-        return client.publishAndConfirm(event, relays, publishTimeoutSeconds, untilFirstAccept = true)
-    }
-
-    /**
-     * NIP-34: a repository announcement's `relays` tag lists the relays its
-     * issues live on. The announcement itself is published on the author's own
-     * relays, so resolve those from their NIP-65 relay list first, then ask
-     * for the announcement. Returns null when either step finds nothing.
-     */
-    private suspend fun fetchAmberRepositoryEvent(usingTor: Boolean): GitRepositoryEvent? {
-        val fetchTimeoutMs = if (usingTor) FEEDBACK_TOR_FETCH_TIMEOUT_MS else FEEDBACK_FETCH_TIMEOUT_MS
-
-        val authorRelays = fetchAuthorRelays(fetchTimeoutMs)
-        val discoveryRelays = (authorRelays + settings.defaultRelays)
-            .takeIf { it.isNotEmpty() }
-            ?: setOfNotNull(RelayUrlNormalizer.normalizeOrNull(FEEDBACK_FALLBACK_RELAY))
-
-        val event = client.fetchFirst(
-            filters = discoveryRelays.associateWith {
-                listOf(
-                    Filter(
-                        kinds = listOf(GitRepositoryEvent.KIND),
-                        authors = listOf(DEVELOPER_HEX_KEY),
-                        tags = mapOf("d" to listOf(AMBER_REPO_IDENTIFIER)),
-                        limit = 1,
-                    ),
-                )
-            },
-            idleTimeoutMs = fetchTimeoutMs,
-        ) ?: return null
-        if (!event.verify()) return null
-
-        return GitRepositoryEvent(
-            event.id,
-            event.pubKey,
-            event.createdAt,
-            event.tags,
-            event.content,
-            event.sig,
-        )
-    }
-
-    private suspend fun fetchAuthorRelays(fetchTimeoutMs: Long): Set<NormalizedRelayUrl> {
-        val discoveryRelays = (settings.defaultProfileRelays + settings.defaultRelays)
-            .toSet()
-            .takeIf { it.isNotEmpty() }
-            ?: setOfNotNull(RelayUrlNormalizer.normalizeOrNull(FEEDBACK_FALLBACK_RELAY))
-
-        val event = client.fetchFirst(
-            filters = discoveryRelays.associateWith {
-                listOf(
-                    Filter(
-                        kinds = listOf(AdvertisedRelayListEvent.KIND),
-                        authors = listOf(DEVELOPER_HEX_KEY),
-                        limit = 1,
-                    ),
-                )
-            },
-            idleTimeoutMs = fetchTimeoutMs,
-        ) ?: return emptySet()
-        if (!event.verify()) return emptySet()
-
-        return AdvertisedRelayListEvent(
-            event.id,
-            event.pubKey,
-            event.createdAt,
-            event.tags,
-            event.content,
-            event.sig,
-        ).relaysNorm().toSet()
-    }
-
-    /** Stand-in used for the issue's `a` tag hint when no announcement was found. */
-    private fun fallbackRepositoryEvent(): GitRepositoryEvent = GitRepositoryEvent(
-        "",
-        DEVELOPER_HEX_KEY,
-        TimeUtils.now(),
-        tags = arrayOf(arrayOf("d", AMBER_REPO_IDENTIFIER)),
-        "",
-        "",
-    )
-
     companion object {
         var isAppInForeground = false
         const val TAG = "Amber"
         private const val MAX_TOR_START_ATTEMPTS = 5
-        lateinit var instance: Amber
-            private set
 
         const val DEVELOPER_HEX_KEY = "7579076d9aff0a4cfdefa7e2045f2486c7e5d8bc63bfc6b45397233e1bbfcb19"
-        private const val AMBER_REPO_IDENTIFIER = "Amber"
-        private const val FEEDBACK_FALLBACK_RELAY = "wss://nos.lol/"
-        private const val FEEDBACK_PUBLISH_TIMEOUT_SECONDS = 15L
-        private const val FEEDBACK_TOR_PUBLISH_TIMEOUT_SECONDS = 60L
-        private const val FEEDBACK_FETCH_TIMEOUT_MS = 30_000L
-        private const val FEEDBACK_TOR_FETCH_TIMEOUT_MS = 60_000L
     }
 }
 

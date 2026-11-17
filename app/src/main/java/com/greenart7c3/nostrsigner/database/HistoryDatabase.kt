@@ -40,7 +40,7 @@ val migration_3_4 = object : Migration(3, 4) {
 abstract class HistoryDatabase : RoomDatabase() {
     abstract fun dao(): HistoryDao
 
-    // Set by the AccountRepository that opens the database: HistoryDao.addHistory honors
+    // Set by getDatabase: HistoryDao.addHistory honors
     // the privacy mode and refreshes the cached permission DAO.
     lateinit var settingsStore: SettingsStore
     lateinit var accountRepository: AccountRepository
@@ -52,6 +52,8 @@ abstract class HistoryDatabase : RoomDatabase() {
         fun getDatabase(
             context: Context,
             npub: String,
+            settingsStore: SettingsStore,
+            accountRepository: AccountRepository,
         ): HistoryDatabase = synchronized(this) {
             val executor = Executors.newCachedThreadPool()
             val transactionExecutor = Executors.newCachedThreadPool()
@@ -67,7 +69,10 @@ abstract class HistoryDatabase : RoomDatabase() {
                     .addMigrations(migration_1_2, migration_2_3, migration_3_4)
                     .build()
 
-            instance
+            instance.also {
+                it.settingsStore = settingsStore
+                it.accountRepository = accountRepository
+            }
         }
     }
 }

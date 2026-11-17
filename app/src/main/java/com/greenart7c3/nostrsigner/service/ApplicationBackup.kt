@@ -137,7 +137,7 @@ object ApplicationBackup {
     private val mapper = jacksonObjectMapper()
         .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
 
-    suspend fun buildPayload(npub: String, account: Account, dao: ApplicationDao): BackupPayload {
+    suspend fun buildPayload(account: Account, dao: ApplicationDao): BackupPayload {
         val apps = dao.getAll(account.hexKey)
         val backupApps = apps.map { app ->
             val perms = dao.getAllByKey(app.key)
@@ -261,7 +261,7 @@ object ApplicationBackup {
     suspend fun publishBackup(npub: String, account: Account, accountRepository: AccountRepository, relayClient: RelayClient, settingsStore: SettingsStore): Boolean {
         if (BuildFlavorChecker.isOfflineFlavor()) return false
         try {
-            val payload = buildPayload(npub, account, accountRepository.dao(npub))
+            val payload = buildPayload(account, accountRepository.dao(npub))
             if (payload.applications.isEmpty()) {
                 AmberLog.d(Amber.TAG, "ApplicationBackup: no applications to backup for $npub, skipping")
                 return true

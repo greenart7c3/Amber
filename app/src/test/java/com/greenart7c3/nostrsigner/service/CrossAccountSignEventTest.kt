@@ -1,5 +1,6 @@
 package com.greenart7c3.nostrsigner.service
 
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -42,6 +43,9 @@ import org.junit.Test
  * anonymous zap requests (kind 9734 with an "anon" tag).
  */
 class CrossAccountSignEventTest {
+    // A context whose Application is a relaxed mock: parsing logs failures through it.
+    private fun appContext(): Context = mockk(relaxed = true) { every { applicationContext } returns mockk<Amber>(relaxed = true) }
+
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     private val kpA = KeyPair()
@@ -78,7 +82,6 @@ class CrossAccountSignEventTest {
         mockkObject(AmberLog)
         every { AmberLog.e(any(), any(), any()) } returns Unit
         every { AmberLog.e(any(), any()) } returns Unit
-        installAmberInstance(mockk<Amber>(relaxed = true))
         // accountB is stored on this device; the old code loaded it here and
         // switched the signing key to it.
         mockkObject(LocalPreferences)
@@ -117,6 +120,7 @@ class CrossAccountSignEventTest {
         method.isAccessible = true
         return method.callSuspend(
             IntentUtils,
+            appContext(),
             intent,
             "com.attacker.app",
             null,

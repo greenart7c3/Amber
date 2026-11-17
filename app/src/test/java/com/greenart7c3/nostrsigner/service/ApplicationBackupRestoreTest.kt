@@ -22,7 +22,6 @@ class ApplicationBackupRestoreTest {
     @Before
     fun setUp() {
         every { amber.dao(any()) } returns dao
-        installAmberInstance(amber)
     }
 
     private fun app(key: String, deleteAfter: Long = 0) = BackupApplication(

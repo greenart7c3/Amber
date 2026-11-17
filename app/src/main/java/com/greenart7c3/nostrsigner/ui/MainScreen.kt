@@ -1094,7 +1094,7 @@ fun MainScreen(
 
             RestoreBackupDialog(accountStateViewModel)
 
-            DisplayCrashMessages(account, navController)
+            DisplayCrashMessages(amber, account, navController)
 
             LaunchedEffect(account) {
                 amber.pendingTranslationReport.collect { message ->

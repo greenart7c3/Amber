@@ -29,7 +29,6 @@ class BootReceiverTest {
     fun setUp() {
         amber = mockk(relaxed = true)
         context = mockk { every { applicationContext } returns amber }
-        installAmberInstance(amber)
         mockkObject(AmberLog)
         every { AmberLog.d(any(), any<String>()) } returns Unit
         mockkObject(BuildFlavorChecker)

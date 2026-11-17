@@ -454,7 +454,6 @@ fun MainScreen(
                                     .verticalScroll(scrollState)
                                     .padding(horizontal = verticalPadding)
                                     .padding(top = verticalPadding * 1.5f),
-                                accountStateViewModel = accountStateViewModel,
                                 account = account,
                                 onNav = {
                                     navController.navController.navigate(it)

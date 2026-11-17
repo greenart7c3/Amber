@@ -31,7 +31,6 @@
     <ID>ComposableParamOrder:RelaysScreen.kt:@Composable fun RelaysScreen</ID>
     <ID>ComposableParamOrder:RememberMyChoice.kt:@Composable fun RememberMyChoice</ID>
     <ID>ComposableParamOrder:SecurityScreen.kt:@Composable fun SecurityScreen</ID>
-    <ID>ComposableParamOrder:SettingsScreen.kt:@Composable private fun SettingsItem</ID>
     <ID>ComposableParamOrder:SetupPinScreen.kt:@Composable fun ConfirmPinScreen</ID>
     <ID>ComposableParamOrder:SetupPinScreen.kt:@Composable fun SetupPinScreen</ID>
     <ID>ComposableParamOrder:SignPolicySettingsScreen.kt:@Composable fun SignPolicySettingsScreen</ID>
@@ -67,7 +66,6 @@
     <ID>CyclomaticComplexMethod:NostrConnectUtils.kt:NostrConnectUtils$fun getIntentFromNostrConnect</ID>
     <ID>CyclomaticComplexMethod:ProfileSubscription.kt:ProfileSubscription$override suspend fun onIncomingMessage</ID>
     <ID>CyclomaticComplexMethod:SeeDetailsScreen.kt:@Composable fun SeeDetailsScreen</ID>
-    <ID>CyclomaticComplexMethod:SettingsScreen.kt:@Composable fun SettingsScreen</ID>
     <ID>CyclomaticComplexMethod:SignerProviderQuery.kt:SignerProviderQuery$@Suppress("RunBlocking") fun query: Cursor?</ID>
     <ID>CyclomaticComplexMethod:TrustScoreUrlPolicy.kt:TrustScoreUrlPolicy$fun publicRelayUrl: String?</ID>
     <ID>CyclomaticComplexMethod:UpdateSettingsScreen.kt:@Composable fun UpdateSettingsScreen</ID>
@@ -88,7 +86,6 @@
     <ID>LambdaParameterEventTrailing:LoginWithPubKey.kt:onReject: (RememberType) -&gt; Unit</ID>
     <ID>LambdaParameterEventTrailing:MultiEventHomeScreen.kt:onLoading: (Boolean) -&gt; Unit</ID>
     <ID>LambdaParameterEventTrailing:SeeDetailsScreen.kt:onBack: () -&gt; Unit</ID>
-    <ID>LambdaParameterEventTrailing:SettingsScreen.kt:onNav: (String) -&gt; Unit</ID>
     <ID>LambdaParameterEventTrailing:SignPsbt.kt:onReject: (RememberType) -&gt; Unit</ID>
     <ID>LambdaParameterEventTrailing:ToogleOption.kt:onClick: () -&gt; Unit</ID>
     <ID>LambdaParameterInRestartableEffect:BiometricAuthScreen.kt:onAuth: (Boolean) -&gt; Unit</ID>
@@ -180,7 +177,6 @@
     <ID>LongMethod:SecurityScreen.kt:@Composable fun SecurityScreen</ID>
     <ID>LongMethod:SeeDetailsScreen.kt:@Composable fun SeeDetailsScreen</ID>
     <ID>LongMethod:SeedWordsPage.kt:@Composable fun SeedWordsPage</ID>
-    <ID>LongMethod:SettingsScreen.kt:@Composable fun SettingsScreen</ID>
     <ID>LongMethod:SignPolicySettingsScreen.kt:@Composable fun SignPolicySettingsScreen</ID>
     <ID>LongMethod:SignerActivity.kt:SignerActivity$override fun onCreate</ID>
     <ID>LongMethod:SignerProviderQuery.kt:SignerProviderQuery$@Suppress("RunBlocking") fun query: Cursor?</ID>
@@ -268,7 +264,6 @@
     <ID>ModifierWithoutDefault:MultiEventHomeScreen.kt:modifier: Modifier</ID>
     <ID>ModifierWithoutDefault:NewApplicationScreen.kt:modifier: Modifier</ID>
     <ID>ModifierWithoutDefault:Nip44v3ApprovalData.kt:modifier: Modifier</ID>
-    <ID>ModifierWithoutDefault:SettingsScreen.kt:modifier: Modifier</ID>
     <ID>ModifierWithoutDefault:SignPsbt.kt:modifier: Modifier</ID>
     <ID>MultipleEmitters:ActivityStatsCard.kt:@Composable private fun ActivityStatsBar</ID>
     <ID>MultipleEmitters:RelaysScreen.kt:@Composable private fun LocalBunkerServerSettings</ID>
@@ -374,7 +369,6 @@
     <ID>ViewModelForwarding:MainScreen.kt:LoginPage( accountViewModel = accountStateViewModel, navHostControllerWrapper = navController, onFinish = { navController.navController.navigate(Route.Applications.route) { popUpTo(0) } }, )</ID>
     <ID>ViewModelForwarding:MainScreen.kt:MainPage( navHostControllerWrapper = navController, accountViewModel = accountStateViewModel, )</ID>
     <ID>ViewModelForwarding:MainScreen.kt:RestoreBackupDialog(accountStateViewModel)</ID>
-    <ID>ViewModelForwarding:MainScreen.kt:SettingsScreen( modifier = Modifier .fillMaxSize() .padding(padding) .verticalScrollbar(scrollState) .verticalScroll(scrollState) .padding(horizontal = verticalPadding) .padding(top = verticalPadding * 1.5f), accountStateViewModel = accountStateViewModel, account = account, onNav = { navController.navController.navigate(it) }, )</ID>
     <ID>ViewModelForwarding:MainScreen.kt:SignUpPage( accountViewModel = accountStateViewModel, navHostControllerWrapper = navController, onFinish = { appScope.launch { amber.notificationSubscription.updateFilter() } navController.navController.navigate(Route.Applications.route) { popUpTo(0) } }, )</ID>
   </CurrentIssues>
 </SmellBaseline>

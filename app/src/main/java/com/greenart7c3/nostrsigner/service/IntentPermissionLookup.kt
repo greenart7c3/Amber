@@ -5,6 +5,7 @@ import com.greenart7c3.nostrsigner.commonsui.kindToNip
 import com.greenart7c3.nostrsigner.database.ApplicationPermissionsEntity
 import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
 import com.greenart7c3.nostrsigner.database.isAllRelaysGrant
+import com.greenart7c3.nostrsigner.models.EncryptedDataKind
 import com.greenart7c3.nostrsigner.models.IntentData
 import com.greenart7c3.nostrsigner.models.toPermissionType
 
@@ -25,7 +26,7 @@ fun intentPermission(
         SignerType.GET_PUBLIC_KEY -> null
         SignerType.SIGN_PSBT -> grants.firstOrNull { it.type == type }
         SignerType.NIP44_V3_ENCRYPT, SignerType.NIP44_V3_DECRYPT -> nip44v3Grant(grants, type, intentData.nip44v3Kind)
-        SignerType.NIP04_DECRYPT, SignerType.NIP04_ENCRYPT, SignerType.NIP44_ENCRYPT, SignerType.NIP44_DECRYPT, SignerType.DECRYPT_ZAP_EVENT -> encryptionGrant(grants, intentData)
+        SignerType.NIP04_DECRYPT, SignerType.NIP04_ENCRYPT, SignerType.NIP44_ENCRYPT, SignerType.NIP44_DECRYPT, SignerType.DECRYPT_ZAP_EVENT -> encryptionGrant(grants, intentData.type, intentData.encryptedData)
         else -> intentData.event?.let { event ->
             if (event.kind == RELAY_AUTH_KIND) relayAuthGrant(grants, type, relayUrl) else eventGrant(grants, type, event.kind)
         }
@@ -34,29 +35,29 @@ fun intentPermission(
 
 // V3 grants are scoped by (app, type, kind), with a kind-less "all kinds" fallback.
 // They never satisfy v2/v4 requests.
-private fun nip44v3Grant(grants: List<ApplicationPermissionsEntity>, type: String, kind: Int?) = grants.firstOrNull { it.type == type && it.kind == kind } ?: grants.firstOrNull { it.type == type && it.kind == null }
+internal fun nip44v3Grant(grants: List<ApplicationPermissionsEntity>, type: String, kind: Int?) = grants.firstOrNull { it.type == type && it.kind == kind } ?: grants.firstOrNull { it.type == type && it.kind == null }
 
 // The encryption-specific type first, then the request type, then a whole-NIP grant.
-private fun encryptionGrant(grants: List<ApplicationPermissionsEntity>, intentData: IntentData): ApplicationPermissionsEntity? {
-    val nip = when (intentData.type) {
+internal fun encryptionGrant(grants: List<ApplicationPermissionsEntity>, type: SignerType, encryptedData: EncryptedDataKind?): ApplicationPermissionsEntity? {
+    val nip = when (type) {
         SignerType.NIP04_DECRYPT, SignerType.NIP04_ENCRYPT -> 4
         SignerType.NIP44_ENCRYPT, SignerType.NIP44_DECRYPT -> 44
         else -> null
     }
-    val isEncrypt = intentData.type == SignerType.NIP04_ENCRYPT || intentData.type == SignerType.NIP44_ENCRYPT
-    val permType = intentData.encryptedData.toPermissionType(isEncrypt = isEncrypt)
+    val isEncrypt = type == SignerType.NIP04_ENCRYPT || type == SignerType.NIP44_ENCRYPT
+    val permType = encryptedData.toPermissionType(isEncrypt = isEncrypt)
     return grants.firstOrNull { it.type == permType }
-        ?: grants.firstOrNull { it.type == intentData.type.toString() }
+        ?: grants.firstOrNull { it.type == type.toString() }
         ?: nip?.let { n -> grants.firstOrNull { it.type == "NIP" && it.kind == n } }
 }
 
 // Per relay host first, then an all-relays grant ("*" or blank).
-private fun relayAuthGrant(grants: List<ApplicationPermissionsEntity>, type: String, relayUrl: String?) = grants.firstOrNull { it.type == type && it.kind == RELAY_AUTH_KIND && it.relay == relayUrl }
+internal fun relayAuthGrant(grants: List<ApplicationPermissionsEntity>, type: String, relayUrl: String?) = grants.firstOrNull { it.type == type && it.kind == RELAY_AUTH_KIND && it.relay == relayUrl }
     ?: grants.firstOrNull { it.type == type && it.kind == RELAY_AUTH_KIND && isAllRelaysGrant(it.relay) }
 
-private fun eventGrant(grants: List<ApplicationPermissionsEntity>, type: String, kind: Int): ApplicationPermissionsEntity? {
+internal fun eventGrant(grants: List<ApplicationPermissionsEntity>, type: String, kind: Int): ApplicationPermissionsEntity? {
     val nip = kind.kindToNip()?.toIntOrNull()
     return grants.firstOrNull { (it.type == type && it.kind == kind) || (nip != null && it.type == "NIP" && it.kind == nip) }
 }
 
-private const val RELAY_AUTH_KIND = 22242
+internal const val RELAY_AUTH_KIND = 22242

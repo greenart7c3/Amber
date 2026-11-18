@@ -11,6 +11,7 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.LocalPreferences
+import com.greenart7c3.nostrsigner.SavedAccounts
 import com.greenart7c3.nostrsigner.commonsui.Res
 import com.greenart7c3.nostrsigner.commonsui.deleting_old_log_entries_from
 import com.greenart7c3.nostrsigner.commonsui.getStringBlocking
@@ -112,7 +113,7 @@ class SettingsViewModel(
     fun clearOldEntries() {
         appScope.launch {
             _state.update { it.copy(isLoading = true) }
-            LocalPreferences.allSavedAccounts(appContext).forEach {
+            SavedAccounts.all(appContext).forEach {
                 try {
                     _state.update { state -> state.copy(status = getStringBlocking(Res.string.deleting_old_log_entries_from, it.npub)) }
                     val deletedHistory = accountRepository.getHistoryDatabase(it.npub).dao().deleteOldHistory(TimeUtils.oneWeekAgo())

@@ -5,7 +5,7 @@ import android.content.Context
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
-import com.greenart7c3.nostrsigner.LocalPreferences
+import com.greenart7c3.nostrsigner.SavedAccounts
 import com.greenart7c3.nostrsigner.common.relays.RelayHealthTracker
 import com.greenart7c3.nostrsigner.data.AccountRepository
 import com.greenart7c3.nostrsigner.data.RelayClient
@@ -113,7 +113,7 @@ class NostrClientLoggerListener(
         message: String,
     ) {
         scope.launch {
-            val account = LocalPreferences.currentAccount(context)
+            val account = SavedAccounts.current(context)
             if (account != null) {
                 accountRepository.getLogDatabase(account).dao().insertLogIfEnabled(
                     LogEntity(
@@ -125,7 +125,7 @@ class NostrClientLoggerListener(
                     ),
                 )
             } else {
-                LocalPreferences.allSavedAccounts(context).forEach {
+                SavedAccounts.all(context).forEach {
                     accountRepository.getLogDatabase(it.npub).dao().insertLogIfEnabled(
                         LogEntity(
                             id = 0,

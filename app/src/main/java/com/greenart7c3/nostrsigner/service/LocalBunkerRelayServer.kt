@@ -6,6 +6,7 @@ import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.LocalPreferences
+import com.greenart7c3.nostrsigner.SavedAccounts
 import com.greenart7c3.nostrsigner.common.relays.LocalRelayServer
 import com.greenart7c3.nostrsigner.data.AccountRepository
 import com.greenart7c3.nostrsigner.data.RelayClient
@@ -93,7 +94,7 @@ class LocalBunkerRelayServer(
         if (!isAvailable) return false
         val current = RelayUrlNormalizer.normalizeOrNull("ws://127.0.0.1:${port()}/")
         val inUse = current != null &&
-            LocalPreferences.allSavedAccounts(appContext).any { account ->
+            SavedAccounts.all(appContext).any { account ->
                 accountRepository.getDatabase(account.npub).dao().getAllRelayLists().any { current in it.relays }
             }
         if (inUse) return false
@@ -126,7 +127,7 @@ class LocalBunkerRelayServer(
  * key and the account keys (what the signer answers with).
  */
 private fun approvedRelaySenders(context: Context, accountRepository: AccountRepository): Set<String> = buildSet {
-    LocalPreferences.allSavedAccounts(context).forEach { account ->
+    SavedAccounts.all(context).forEach { account ->
         runCatching { add(account.npub.bechToBytes().toHexKey()) }
         addAll(accountRepository.getDatabase(account.npub).dao().getAllKeys())
     }

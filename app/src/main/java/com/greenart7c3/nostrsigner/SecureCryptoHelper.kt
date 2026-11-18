@@ -452,7 +452,7 @@ object SecureCryptoHelper {
             }
         }
 
-        val accounts = LocalPreferences.allSavedAccounts(context)
+        val accounts = SavedAccounts.all(context)
         for ((npub) in accounts) {
             for (key in listOf(DataStoreAccess.NOSTR_PRIVKEY, DataStoreAccess.SEED_WORDS)) {
                 move(DataStoreAccess.getEncryptedRaw(context, npub, key)) { expected, ciphertext ->

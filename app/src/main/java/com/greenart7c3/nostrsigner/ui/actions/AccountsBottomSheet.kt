@@ -51,6 +51,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.SubcomposeAsyncImage
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.LocalPreferences
+import com.greenart7c3.nostrsigner.SavedAccounts
 import com.greenart7c3.nostrsigner.commonsui.Res
 import com.greenart7c3.nostrsigner.commonsui.account_picture
 import com.greenart7c3.nostrsigner.commonsui.add_new_account
@@ -117,8 +118,8 @@ fun AccountsBottomSheet(
             ),
         ) {
             val context = LocalContext.current
-            val favorites by LocalPreferences.favoriteAccounts(context).collectAsStateWithLifecycle()
-            val savedAccounts = remember { LocalPreferences.allSavedAccounts(context) }
+            val favorites by SavedAccounts.favorites(context).collectAsStateWithLifecycle()
+            val savedAccounts = remember { SavedAccounts.all(context) }
             // Load the cached Accounts off the main thread (each decrypts once, then is cached) so we
             // can search and observe their name/picture StateFlows and refresh their metadata while
             // the sheet is open.

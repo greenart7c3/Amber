@@ -25,7 +25,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.greenart7c3.nostrsigner.AccountInfo
-import com.greenart7c3.nostrsigner.LocalPreferences
+import com.greenart7c3.nostrsigner.SavedAccounts
 import com.greenart7c3.nostrsigner.common.SignerType
 import com.greenart7c3.nostrsigner.common.psbt.PsbtDecoder
 import com.greenart7c3.nostrsigner.common.sanitizeAppName
@@ -342,7 +342,7 @@ private fun SignEventRequest(
 ) {
     val context = LocalContext.current
     val event = request.intentData.event!!
-    val accounts = LocalPreferences.allSavedAccounts(context).filter { it.npub.bechToBytes().toHexKey() == event.pubKey }
+    val accounts = SavedAccounts.all(context).filter { it.npub.bechToBytes().toHexKey() == event.pubKey }
 
     when {
         accounts.isEmpty() && !isPrivateEvent(event.kind, event.tags) -> NotLoggedIn(event.pubKey, modifier)
@@ -494,7 +494,7 @@ private fun refuseCrossAccount(context: Context, request: IntentRequest): Boolea
         request.account.hexKey,
         event.kind,
         event.tags,
-        LocalPreferences.allSavedAccounts(context).map(AccountInfo::npub),
+        SavedAccounts.all(context).map(AccountInfo::npub),
     )
     if (crossAccount) {
         ToastManager.toast(

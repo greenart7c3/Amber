@@ -41,17 +41,17 @@ class MainViewModel(val context: Context) : ViewModel() {
     fun ownIntents(): List<IntentData> = IntentUtils.intents.value.filter { it.owner == ownerId }
 
     fun getAccount(userFromIntent: String?): String? {
-        val currentAccount = LocalPreferences.currentAccount(context)
+        val currentAccount = SavedAccounts.current(context)
         try {
             if (!userFromIntent.isNullOrBlank()) {
                 if (userFromIntent.startsWith("npub")) {
-                    if (LocalPreferences.containsAccount(context, userFromIntent)) {
+                    if (SavedAccounts.contains(context, userFromIntent)) {
                         AmberLog.d(Amber.TAG, "getAccount: $userFromIntent")
                         return userFromIntent
                     }
                 } else {
                     val localNpub = Hex.decode(userFromIntent).toNpub()
-                    if (LocalPreferences.containsAccount(context, localNpub)) {
+                    if (SavedAccounts.contains(context, localNpub)) {
                         AmberLog.d(Amber.TAG, "getAccount: $localNpub")
                         return localNpub
                     }
@@ -69,12 +69,12 @@ class MainViewModel(val context: Context) : ViewModel() {
                 }
 
             if (pubKeys.isEmpty()) {
-                if (currentAccount != null && LocalPreferences.containsAccount(context, currentAccount)) {
+                if (currentAccount != null && SavedAccounts.contains(context, currentAccount)) {
                     AmberLog.d(Amber.TAG, "getAccount: $currentAccount")
                     return currentAccount
                 }
 
-                val acc = LocalPreferences.allSavedAccounts(context).firstOrNull()
+                val acc = SavedAccounts.all(context).firstOrNull()
                 if (acc != null) {
                     AmberLog.d(Amber.TAG, "getAccount: ${acc.npub}")
                     return acc.npub
@@ -89,12 +89,12 @@ class MainViewModel(val context: Context) : ViewModel() {
             return npub
         } catch (e: Exception) {
             AmberLog.e(Amber.TAG, "Error getting account", e)
-            if (currentAccount != null && LocalPreferences.containsAccount(context, currentAccount)) {
+            if (currentAccount != null && SavedAccounts.contains(context, currentAccount)) {
                 AmberLog.d(Amber.TAG, "getAccount: $currentAccount")
                 return currentAccount
             }
 
-            val acc = LocalPreferences.allSavedAccounts(context).firstOrNull()
+            val acc = SavedAccounts.all(context).firstOrNull()
             if (acc != null) {
                 AmberLog.d(Amber.TAG, "getAccount: ${acc.npub}")
                 return acc.npub
@@ -114,17 +114,17 @@ class MainViewModel(val context: Context) : ViewModel() {
         viewModelScope.launch(Dispatchers.IO) {
             if (requests.isNotEmpty()) {
                 val npub = getAccount(null)
-                val currentAccount = LocalPreferences.currentAccount(context)
+                val currentAccount = SavedAccounts.current(context)
                 if (currentAccount != null && npub != null && currentAccount != npub && npub.isNotBlank()) {
                     if (npub.startsWith("npub")) {
                         AmberLog.d(Amber.TAG, "Switching account to $npub")
-                        if (LocalPreferences.containsAccount(context, npub)) {
+                        if (SavedAccounts.contains(context, npub)) {
                             accountStateViewModel?.switchUser(npub, Route.IncomingRequest.route)
                         }
                     } else {
                         val localNpub = Hex.decode(npub).toNpub()
                         AmberLog.d(Amber.TAG, "Switching account to $localNpub")
-                        if (LocalPreferences.containsAccount(context, localNpub)) {
+                        if (SavedAccounts.contains(context, localNpub)) {
                             accountStateViewModel?.switchUser(localNpub, Route.IncomingRequest.route)
                         }
                     }

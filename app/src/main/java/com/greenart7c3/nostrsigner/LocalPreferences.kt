@@ -4,7 +4,6 @@ import android.annotation.SuppressLint
 import android.app.KeyguardManager
 import android.content.Context
 import android.content.SharedPreferences
-import androidx.compose.runtime.Immutable
 import androidx.core.content.edit
 import com.greenart7c3.nostrsigner.database.AppDatabase
 import com.greenart7c3.nostrsigner.database.HistoryDatabase
@@ -25,7 +24,6 @@ import com.greenart7c3.nostrsigner.service.TorManager
 import com.greenart7c3.nostrsigner.ui.parseBiometricsTimeType
 import com.vitorpamplona.quartz.nip01Core.core.hexToByteArray
 import com.vitorpamplona.quartz.nip01Core.crypto.KeyPair
-import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.RelayUrlNormalizer
 import com.vitorpamplona.quartz.nip01Core.signers.NostrSignerInternal
 import com.vitorpamplona.quartz.nip19Bech32.toNpub
@@ -35,22 +33,7 @@ import java.security.InvalidKeyException
 import java.security.KeyStoreException
 import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.runBlocking
-
-private enum class PrefKeys(val key: String) {
-    NOSTR_PUBKEY("nostr_pubkey"),
-    ACCOUNT_NAME("account_name"),
-    SIGN_POLICY("default_sign_policy"),
-    PROFILE_URL("profile_url"),
-    LAST_METADATA_UPDATE("last_metadata_update"),
-    METADATA_CREATED_AT("metadata_created_at"),
-    LAST_CHECK("last_check"),
-    USER_RELAYS("user_relays"),
-    USER_RELAYS_CREATED_AT("user_relays_created_at"),
-    DID_BACKUP("did_backup"),
-    BACKUP_APPLICATIONS("backup_applications"),
-}
 
 private enum class SettingsKeys(val key: String) {
     DEFAULT_RELAYS("default_relays"),
@@ -60,10 +43,7 @@ private enum class SettingsKeys(val key: String) {
     BIOMETRICS_TYPE("biometrics_type"),
     USE_PIN("use_pin"),
     RATIONALE("rationale"),
-    CURRENT_ACCOUNT("currently_logged_in_account"),
     PIN("pin"),
-    SAVED_ACCOUNTS("all_saved_accounts"),
-    FAVORITE_ACCOUNTS("favorite_accounts"),
     USE_PROXY("use_proxy"),
     PROXY_PORT("proxy_port"),
     TOR_MODE("tor_mode"),
@@ -96,51 +76,11 @@ private enum class SettingsKeys(val key: String) {
     LOCAL_BUNKER_PORT("local_bunker_port"),
 }
 
-@Immutable
-data class AccountInfo(
-    val npub: String,
-    val hasPrivKey: Boolean,
-)
-
 object LocalPreferences {
-    private const val COMMA = ","
-
     // Pre-rename consent key, kept only so loadSettingsFromEncryptedStorage can
     // scrub it. Never read.
     private const val LEGACY_TRUST_SCORE_ENABLED_KEY = "trust_score_enabled"
-    private var currentAccount: String? = null
     private var accountCache = LargeCache<String, Account>()
-
-    fun allSavedAccounts(context: Context): List<AccountInfo> = savedAccounts(context).map { npub ->
-        AccountInfo(
-            npub,
-            true,
-        )
-    }.toSet().toList()
-
-    fun currentAccount(context: Context): String? {
-        if (currentAccount == null) {
-            AmberLog.d(Amber.TAG, "currentAccount is null fetching from shared preferences")
-            currentAccount = sharedPrefs(context).getString(SettingsKeys.CURRENT_ACCOUNT.key, null)
-            if (currentAccount == null) {
-                AmberLog.d(Amber.TAG, "currentAccount is null fetching from all saved accounts")
-                currentAccount = allSavedAccounts(context).firstOrNull()?.npub
-            }
-        }
-        return currentAccount
-    }
-
-    private fun updateCurrentAccount(context: Context, npub: String) {
-        if (currentAccount != npub) {
-            currentAccount = npub
-
-            sharedPrefs(context).edit {
-                apply {
-                    putString(SettingsKeys.CURRENT_ACCOUNT.key, npub)
-                }
-            }
-        }
-    }
 
     fun shouldShowRationale(context: Context): Boolean? {
         if (!sharedPrefs(context).contains(SettingsKeys.RATIONALE.key)) {
@@ -232,64 +172,6 @@ object LocalPreferences {
         sharedPrefs(context).edit {
             apply {
                 putBoolean(SettingsKeys.BATERRY_OPTIMIZATION.key, value)
-            }
-        }
-    }
-
-    fun getBackupApplications(context: Context, npub: String): Boolean = sharedPrefs(context, npub).getBoolean(PrefKeys.BACKUP_APPLICATIONS.key, false)
-
-    fun setBackupApplications(context: Context, npub: String, enabled: Boolean) {
-        sharedPrefs(context, npub).edit {
-            apply {
-                putBoolean(PrefKeys.BACKUP_APPLICATIONS.key, enabled)
-            }
-        }
-    }
-
-    fun anyAccountBackupEnabled(context: Context): Boolean = allSavedAccounts(context).any { getBackupApplications(context, it.npub) }
-
-    fun getLastCheck(context: Context, npub: String): Long = sharedPrefs(context, npub).getLong(PrefKeys.LAST_CHECK.key, 0)
-
-    fun setLastCheck(context: Context, npub: String, time: Long) {
-        sharedPrefs(context, npub).edit {
-            apply {
-                putLong(PrefKeys.LAST_CHECK.key, time)
-            }
-        }
-    }
-
-    fun getUserRelays(context: Context, npub: String): List<NormalizedRelayUrl> = sharedPrefs(context, npub).getStringSet(PrefKeys.USER_RELAYS.key, null)?.mapNotNull {
-        RelayUrlNormalizer.normalizeOrNull(it)
-    } ?: emptyList()
-
-    fun getUserRelaysCreatedAt(context: Context, npub: String): Long = sharedPrefs(context, npub).getLong(PrefKeys.USER_RELAYS_CREATED_AT.key, 0)
-
-    fun setUserRelays(context: Context, npub: String, relays: List<NormalizedRelayUrl>, createdAt: Long) {
-        sharedPrefs(context, npub).edit {
-            apply {
-                putStringSet(PrefKeys.USER_RELAYS.key, relays.map { it.url }.toSet())
-                putLong(PrefKeys.USER_RELAYS_CREATED_AT.key, createdAt)
-            }
-        }
-    }
-
-    fun getLastMetadataUpdate(context: Context, npub: String): Long = sharedPrefs(context, npub).getLong(PrefKeys.LAST_METADATA_UPDATE.key, 0)
-
-    fun setLastMetadataUpdate(context: Context, npub: String, time: Long) {
-        sharedPrefs(context, npub).edit {
-            apply {
-                putLong(PrefKeys.LAST_METADATA_UPDATE.key, time)
-            }
-        }
-    }
-
-    /** created_at of the kind-0 event the account's name/picture were last taken from. */
-    fun getMetadataCreatedAt(context: Context, npub: String): Long = sharedPrefs(context, npub).getLong(PrefKeys.METADATA_CREATED_AT.key, 0)
-
-    fun setMetadataCreatedAt(context: Context, npub: String, createdAt: Long) {
-        sharedPrefs(context, npub).edit {
-            apply {
-                putLong(PrefKeys.METADATA_CREATED_AT.key, createdAt)
             }
         }
     }
@@ -447,101 +329,11 @@ object LocalPreferences {
      * one reloads the settings, which is only allowed off the main thread.
      */
     internal fun invalidateAccountCaches() {
-        currentAccount = null
-        savedAccounts = null
+        SavedAccounts.invalidate()
         accountCache.clear()
     }
 
-    /** The app-wide preference file (`prefs`), for [LegacyStorageMigration]. */
-    internal fun appPreferences(context: Context): SharedPreferences = sharedPrefs(context)
-
-    /** The npub-specific preference file (`prefs_<npub>`), for [LegacyStorageMigration]. */
-    internal fun accountPreferences(context: Context, npub: String): SharedPreferences = sharedPrefs(context, npub)
-
-    internal fun savedAccountList(context: Context): List<String> = savedAccounts(context)
-
-    internal fun replaceSavedAccounts(context: Context, accounts: List<String>) = updateSavedAccounts(context, accounts)
-
-    private var savedAccounts: List<String>? = null
-
-    private fun savedAccounts(context: Context): List<String> {
-        if (savedAccounts == null) {
-            savedAccounts = sharedPrefs(context)
-                .getString(SettingsKeys.SAVED_ACCOUNTS.key, null)?.split(COMMA) ?: listOf()
-        }
-        return savedAccounts!!
-    }
-
-    private fun updateSavedAccounts(context: Context, accounts: List<String>) {
-        if (savedAccounts != accounts) {
-            savedAccounts = accounts
-
-            sharedPrefs(context).edit {
-                apply {
-                    putString(SettingsKeys.SAVED_ACCOUNTS.key, accounts.joinToString(COMMA).ifBlank { null })
-                }
-            }
-        }
-    }
-
-    private var favoriteAccounts: MutableStateFlow<Set<String>>? = null
-
-    /**
-     * The npubs the user marked as favorites, which the account pickers list first. Keyed by
-     * npub, so renaming an account keeps it and logging it out clears it.
-     */
-    fun favoriteAccounts(context: Context): StateFlow<Set<String>> = favoriteAccountsFlow(context)
-
-    @Synchronized
-    private fun favoriteAccountsFlow(context: Context): MutableStateFlow<Set<String>> = favoriteAccounts ?: MutableStateFlow(
-        sharedPrefs(context).getStringSet(SettingsKeys.FAVORITE_ACCOUNTS.key, null)?.toSet() ?: emptySet(),
-    ).also { favoriteAccounts = it }
-
-    @Synchronized
-    fun setFavoriteAccount(context: Context, npub: String, favorite: Boolean) {
-        val flow = favoriteAccountsFlow(context)
-        val favorites = if (favorite) flow.value + npub else flow.value - npub
-        if (favorites == flow.value) return
-        flow.value = favorites
-        sharedPrefs(context).edit {
-            if (favorites.isEmpty()) {
-                remove(SettingsKeys.FAVORITE_ACCOUNTS.key)
-            } else {
-                putStringSet(SettingsKeys.FAVORITE_ACCOUNTS.key, favorites)
-            }
-        }
-    }
-
     private fun getDirPath(context: Context): String = "${context.filesDir.parent}/shared_prefs/"
-
-    private fun addAccount(context: Context, npub: String) {
-        val accounts = savedAccounts(context).toMutableList()
-        if (npub !in accounts) {
-            accounts.add(npub)
-            updateSavedAccounts(context, accounts)
-        }
-    }
-
-    private fun setCurrentAccount(context: Context, account: Account) {
-        updateCurrentAccount(context, account.npub)
-        addAccount(context, account.npub)
-    }
-
-    fun switchToAccount(context: Context, npub: String) {
-        updateCurrentAccount(context, npub)
-    }
-
-    fun containsAccount(context: Context, npub: String): Boolean = savedAccounts(context).contains(npub)
-
-    /**
-     * Removes the account from the app level shared preferences
-     */
-    private fun removeAccount(context: Context, npub: String) {
-        val accounts = savedAccounts(context).toMutableList()
-        if (accounts.remove(npub)) {
-            updateSavedAccounts(context, accounts)
-        }
-    }
 
     /**
      * Deletes the npub-specific shared preference file
@@ -563,10 +355,7 @@ object LocalPreferences {
     private fun sharedPrefs(
         context: Context,
         npub: String? = null,
-    ): SharedPreferences {
-        val preferenceFile = if (npub == null) "prefs" else "prefs_$npub"
-        return context.getSharedPreferences(preferenceFile, Context.MODE_PRIVATE)
-    }
+    ): SharedPreferences = if (npub == null) appPreferences(context) else accountPreferences(context, npub)
 
     private suspend fun deleteUserDataStoreFile(context: Context, npub: String) {
         DataStoreAccess.clearCacheForNpub(context, npub)
@@ -600,18 +389,18 @@ object LocalPreferences {
         deleteAccountDatabases(context, npub)
         val userPrefs = sharedPrefs(context, npub)
         userPrefs.edit(commit = true) { clear() }
-        removeAccount(context, npub)
-        setFavoriteAccount(context, npub, false)
+        SavedAccounts.remove(context, npub)
+        SavedAccounts.setFavorite(context, npub, false)
         deleteUserPreferenceFile(context, npub)
 
         deleteUserDataStoreFile(context, npub)
 
-        if (savedAccounts(context).isEmpty()) {
+        if (SavedAccounts.list(context).isEmpty()) {
             val appPrefs = sharedPrefs(context)
             appPrefs.edit(commit = true) { clear() }
             return true
-        } else if (currentAccount(context) == npub) {
-            updateCurrentAccount(context, savedAccounts(context).elementAt(0))
+        } else if (SavedAccounts.current(context) == npub) {
+            SavedAccounts.switchTo(context, SavedAccounts.list(context).elementAt(0))
             return false
         }
         return false
@@ -633,7 +422,7 @@ object LocalPreferences {
         seedWords: String?,
     ) {
         saveToEncryptedStorage(context, account, pubKey, privKey, seedWords)
-        setCurrentAccount(context, account)
+        SavedAccounts.select(context, account.npub)
     }
 
     suspend fun saveToEncryptedStorage(
@@ -659,11 +448,11 @@ object LocalPreferences {
         val prefs = sharedPrefs(context = context, account.npub)
         prefs.edit {
             apply {
-                pubKey?.let { putString(PrefKeys.NOSTR_PUBKEY.key, it) }
-                putString(PrefKeys.ACCOUNT_NAME.key, account.name.value)
-                putString(PrefKeys.PROFILE_URL.key, account.picture.value)
-                putInt(PrefKeys.SIGN_POLICY.key, account.signPolicy)
-                putBoolean(PrefKeys.DID_BACKUP.key, account.didBackup)
+                pubKey?.let { putString(AccountPrefKeys.NOSTR_PUBKEY.key, it) }
+                putString(AccountPrefKeys.ACCOUNT_NAME.key, account.name.value)
+                putString(AccountPrefKeys.PROFILE_URL.key, account.picture.value)
+                putInt(AccountPrefKeys.SIGN_POLICY.key, account.signPolicy)
+                putBoolean(AccountPrefKeys.DID_BACKUP.key, account.didBackup)
             }
         }
 
@@ -671,7 +460,7 @@ object LocalPreferences {
     }
 
     suspend fun loadFromEncryptedStorage(context: Context): Account? {
-        currentAccount(context)?.let {
+        SavedAccounts.current(context)?.let {
             return loadFromEncryptedStorage(context, it)
         }
         return null
@@ -693,13 +482,13 @@ object LocalPreferences {
      * known npub (GHSA-8844-q5vh-9j8f, I3).
      */
     suspend fun warmAccountCache(context: Context) {
-        allSavedAccounts(context).forEach {
+        SavedAccounts.all(context).forEach {
             loadFromEncryptedStorage(context, it.npub)
         }
     }
 
     suspend fun allAccounts(context: Context): List<Account> {
-        val accountInfos = allSavedAccounts(context)
+        val accountInfos = SavedAccounts.all(context)
         return accountInfos.mapNotNull {
             loadFromEncryptedStorage(context, it.npub)
         }
@@ -717,14 +506,14 @@ object LocalPreferences {
         // handles at app start (called from AccountStateViewModel); this
         // path is for direct lookups (SignerProvider / NIP-46)
         // that always know which npub they want.
-        val targetNpub = npub ?: currentAccount(context) ?: return null
+        val targetNpub = npub ?: SavedAccounts.current(context) ?: return null
         accountCache.get(targetNpub)?.let { return it }
-        if (!containsAccount(context, targetNpub)) return null
+        if (!SavedAccounts.contains(context, targetNpub)) return null
         return runBlocking { loadFromEncryptedStorage(context, targetNpub) }
     }
 
     /** [loadFromEncryptedStorageSync] for callers in a coroutine: [npub], or the current account when null. */
-    suspend fun loadAccount(context: Context, npub: String?): Account? = loadFromEncryptedStorage(context, npub ?: currentAccount(context) ?: return null)
+    suspend fun loadAccount(context: Context, npub: String?): Account? = loadFromEncryptedStorage(context, npub ?: SavedAccounts.current(context) ?: return null)
 
     fun setAccountName(
         context: Context,
@@ -733,7 +522,7 @@ object LocalPreferences {
     ) {
         sharedPrefs(context, npub).edit {
             apply {
-                putString(PrefKeys.ACCOUNT_NAME.key, value)
+                putString(AccountPrefKeys.ACCOUNT_NAME.key, value)
             }
         }
         accountCache.get(npub)?.name?.tryEmit(value)
@@ -741,7 +530,7 @@ object LocalPreferences {
 
     fun getAccountName(context: Context, npub: String): String {
         sharedPrefs(context, npub).apply {
-            return getString(PrefKeys.ACCOUNT_NAME.key, "") ?: ""
+            return getString(AccountPrefKeys.ACCOUNT_NAME.key, "") ?: ""
         }
     }
 
@@ -805,7 +594,7 @@ object LocalPreferences {
         }
         context.amber.settings = loadSettingsFromEncryptedStorage(context)
         if (enabled) {
-            allSavedAccounts(context).forEach {
+            SavedAccounts.all(context).forEach {
                 try {
                     context.amber.getLogDatabase(it.npub).dao().clearLogs()
                     context.amber.getHistoryDatabase(it.npub).dao().clearHistory()
@@ -883,7 +672,7 @@ object LocalPreferences {
 
     // Applies a shortened retention period right away instead of at the next cleanup.
     private suspend fun pruneAllAccounts(context: Context) {
-        allSavedAccounts(context).forEach {
+        SavedAccounts.all(context).forEach {
             try {
                 LogRetentionManager.prune(context, context.amber, it.npub)
             } catch (e: Exception) {
@@ -979,7 +768,7 @@ object LocalPreferences {
         if (accountCache.get(npub) != null) {
             return accountCache.get(npub)
         }
-        if (!containsAccount(context, npub)) {
+        if (!SavedAccounts.contains(context, npub)) {
             return null
         }
         val privKey = try {
@@ -1006,11 +795,11 @@ object LocalPreferences {
             return null
         }
         sharedPrefs(context, npub).apply {
-            val pubKey = getString(PrefKeys.NOSTR_PUBKEY.key, null) ?: return null
-            val name = getString(PrefKeys.ACCOUNT_NAME.key, "") ?: ""
-            val picture = getString(PrefKeys.PROFILE_URL.key, "") ?: ""
-            val signPolicy = getInt(PrefKeys.SIGN_POLICY.key, 1)
-            val didBackup = getBoolean(PrefKeys.DID_BACKUP.key, true)
+            val pubKey = getString(AccountPrefKeys.NOSTR_PUBKEY.key, null) ?: return null
+            val name = getString(AccountPrefKeys.ACCOUNT_NAME.key, "") ?: ""
+            val picture = getString(AccountPrefKeys.PROFILE_URL.key, "") ?: ""
+            val signPolicy = getInt(AccountPrefKeys.SIGN_POLICY.key, 1)
+            val didBackup = getBoolean(AccountPrefKeys.DID_BACKUP.key, true)
 
             val account =
                 Account(

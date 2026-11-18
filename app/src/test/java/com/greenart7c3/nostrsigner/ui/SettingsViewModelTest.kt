@@ -2,9 +2,11 @@ package com.greenart7c3.nostrsigner.ui
 
 import android.content.Context
 import com.greenart7c3.nostrsigner.AccountInfo
+import com.greenart7c3.nostrsigner.AccountPreferences
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.LocalPreferences
+import com.greenart7c3.nostrsigner.SavedAccounts
 import com.greenart7c3.nostrsigner.commonsui.getStringBlocking
 import com.greenart7c3.nostrsigner.data.AccountRepository
 import com.greenart7c3.nostrsigner.data.RelayClient
@@ -59,11 +61,11 @@ class SettingsViewModelTest {
     @Before
     fun setUp() {
         Dispatchers.setMain(Dispatchers.Unconfined)
-        mockkObject(LocalPreferences, AmberLog)
+        mockkObject(LocalPreferences, SavedAccounts, AccountPreferences, AmberLog)
         mockkStatic("com.greenart7c3.nostrsigner.commonsui.StringsKt")
         every { getStringBlocking(any(), *anyVararg()) } returns ""
         every { AmberLog.d(any(), any<String>()) } returns Unit
-        every { LocalPreferences.allSavedAccounts(any()) } returns listOf(AccountInfo("npub-a", true), AccountInfo("npub-b", true))
+        every { SavedAccounts.all(any()) } returns listOf(AccountInfo("npub-a", true), AccountInfo("npub-b", true))
         // Like the real one: it stores the mode and reloads the settings.
         every { LocalPreferences.updateTorMode(any(), any(), any()) } answers { settingsStore.settings = settingsStore.settings.copy(torMode = secondArg()) }
         coEvery { historyDao.deleteOldHistory(any()) } returns 1

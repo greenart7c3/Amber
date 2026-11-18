@@ -378,7 +378,7 @@ class Amber :
 
     fun startBackupApplicationsAlarm() {
         if (BuildFlavorChecker.isOfflineFlavor()) return
-        if (!LocalPreferences.anyAccountBackupEnabled(this)) return
+        if (!anyAccountBackupEnabled(this)) return
 
         val workManager = WorkManager.getInstance(this)
 
@@ -469,9 +469,9 @@ class Amber :
         applicationIOScope.launch {
             runCatching { SharedFiles.cleanUp(this@Amber) }
             try {
-                val currentAccount = LocalPreferences.currentAccount(this@Amber)
-                if (currentAccount.isNullOrBlank() && LocalPreferences.allSavedAccounts(this@Amber).isNotEmpty()) {
-                    LocalPreferences.switchToAccount(this@Amber, LocalPreferences.allSavedAccounts(this@Amber).first().npub)
+                val currentAccount = SavedAccounts.current(this@Amber)
+                if (currentAccount.isNullOrBlank() && SavedAccounts.all(this@Amber).isNotEmpty()) {
+                    SavedAccounts.switchTo(this@Amber, SavedAccounts.all(this@Amber).first().npub)
                 }
                 LocalPreferences.reloadApp(this@Amber)
 

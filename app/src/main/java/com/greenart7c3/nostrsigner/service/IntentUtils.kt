@@ -17,6 +17,7 @@ import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.FailedMigrationException
 import com.greenart7c3.nostrsigner.LocalPreferences
+import com.greenart7c3.nostrsigner.SavedAccounts
 import com.greenart7c3.nostrsigner.amber
 import com.greenart7c3.nostrsigner.common.SignerType
 import com.greenart7c3.nostrsigner.common.hasAmbiguousRelayTags
@@ -779,7 +780,7 @@ fun Activity.safeReferrer(): Uri? = try {
 // Records a failed intent parse in every account's log.
 private fun logParseError(context: Context, e: Exception) {
     context.amber.applicationIOScope.launch {
-        LocalPreferences.allSavedAccounts(context).forEach {
+        SavedAccounts.all(context).forEach {
             context.amber.getLogDatabase(it.npub).dao().insertLogIfEnabled(
                 LogEntity(
                     id = 0,

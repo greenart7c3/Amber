@@ -133,17 +133,17 @@ class MainActivity : AppCompatActivity() {
                             LaunchedEffect(Unit, bunkerRequests.value) {
                                 launch(Dispatchers.IO) {
                                     val localNpub = mainViewModel.getAccount(intent?.getStringExtra("current_user"))
-                                    val currentAccount = LocalPreferences.currentAccount(context)
+                                    val currentAccount = SavedAccounts.current(context)
                                     if (currentAccount != null && localNpub != null && currentAccount != localNpub && localNpub.isNotBlank()) {
                                         if (localNpub.startsWith("npub")) {
                                             AmberLog.d(Amber.TAG, "Switching account to $localNpub")
-                                            if (LocalPreferences.containsAccount(context, localNpub)) {
+                                            if (SavedAccounts.contains(context, localNpub)) {
                                                 accountStateViewModel.switchUser(localNpub, Route.IncomingRequest.route)
                                             }
                                         } else {
                                             val localNpub2 = Hex.decode(localNpub).toNpub()
                                             AmberLog.d(Amber.TAG, "Switching account to $localNpub2")
-                                            if (LocalPreferences.containsAccount(context, localNpub2)) {
+                                            if (SavedAccounts.contains(context, localNpub2)) {
                                                 accountStateViewModel.switchUser(localNpub2, Route.IncomingRequest.route)
                                             }
                                         }

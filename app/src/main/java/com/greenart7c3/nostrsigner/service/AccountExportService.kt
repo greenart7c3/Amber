@@ -7,6 +7,7 @@ import com.anggrayudi.storage.extension.toDocumentFile
 import com.anggrayudi.storage.file.openInputStream
 import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.LocalPreferences
+import com.greenart7c3.nostrsigner.SavedAccounts
 import com.greenart7c3.nostrsigner.commonsui.Res
 import com.greenart7c3.nostrsigner.commonsui.getStringBlocking
 import com.greenart7c3.nostrsigner.commonsui.importing_account
@@ -83,7 +84,7 @@ object AccountExportService {
                                     )
                                 }
                                 val seedWords = decryptExportedSeedWords(account, accountData.seedWords, privKey)
-                                LocalPreferences.switchToAccount(context, account.npub)
+                                SavedAccounts.switchTo(context, account.npub)
                                 LocalPreferences.updatePrefsForLogin(context, account, hexKey.toHexKey(), privKey, seedWords)
                                 importedCount++
                             } catch (e: Exception) {
@@ -148,7 +149,7 @@ object AccountExportService {
         onProgress: (current: Int, total: Int) -> Unit = { _, _ -> },
     ): Result<List<Pair<String, String>>> = withContext(Dispatchers.IO) {
         try {
-            val accountInfos = LocalPreferences.allSavedAccounts(context)
+            val accountInfos = SavedAccounts.all(context)
             val total = accountInfos.size
             if (total == 0) return@withContext Result.failure(Exception("No accounts to export"))
 
@@ -194,7 +195,7 @@ object AccountExportService {
                         scope = scope,
                         appContext = context,
                     )
-                    LocalPreferences.switchToAccount(context, hexKey.toNpub())
+                    SavedAccounts.switchTo(context, hexKey.toNpub())
                     LocalPreferences.updatePrefsForLogin(context, account, hexKey.toHexKey(), privKey, null)
                 } catch (e: Exception) {
                     if (e is CancellationException) throw e
@@ -222,7 +223,7 @@ object AccountExportService {
         onProgress: (current: Int, total: Int) -> Unit = { _, _ -> },
     ): Result<String> = withContext(Dispatchers.IO) {
         try {
-            val accountInfos = LocalPreferences.allSavedAccounts(context)
+            val accountInfos = SavedAccounts.all(context)
             val totalAccounts = accountInfos.size
 
             if (totalAccounts == 0) {

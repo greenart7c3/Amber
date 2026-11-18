@@ -44,6 +44,7 @@ import androidx.paging.PagingConfig
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.LocalPreferences
+import com.greenart7c3.nostrsigner.SavedAccounts
 import com.greenart7c3.nostrsigner.amber
 import com.greenart7c3.nostrsigner.commonsui.Res
 import com.greenart7c3.nostrsigner.commonsui.activity
@@ -133,7 +134,7 @@ fun ApplicationsScreen(
                     onClick = {
                         val killSwitchIntent = Intent(amber, KillSwitchReceiver::class.java)
                         amber.sendBroadcast(killSwitchIntent)
-                        LocalPreferences.switchToAccount(amber, account.npub)
+                        SavedAccounts.switchTo(amber, account.npub)
                     },
                 )
             }

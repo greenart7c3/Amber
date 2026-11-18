@@ -48,6 +48,7 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import com.greenart7c3.nostrsigner.LocalPreferences
+import com.greenart7c3.nostrsigner.SavedAccounts
 import com.greenart7c3.nostrsigner.commonsui.Res
 import com.greenart7c3.nostrsigner.commonsui.accounts_to_export
 import com.greenart7c3.nostrsigner.commonsui.cancel
@@ -99,7 +100,7 @@ fun ExportAllAccountsScreen(
 
     LaunchedEffect(Unit) {
         launch(Dispatchers.IO) {
-            accountCount = LocalPreferences.allSavedAccounts(context).size
+            accountCount = SavedAccounts.all(context).size
         }
     }
 
@@ -138,7 +139,7 @@ fun ExportAllAccountsScreen(
                         }
 
                         // Mark all accounts as backed up
-                        LocalPreferences.allSavedAccounts(context).forEach { accountInfo ->
+                        SavedAccounts.all(context).forEach { accountInfo ->
                             LocalPreferences.loadFromEncryptedStorage(context, accountInfo.npub)?.let { account ->
                                 account.didBackup = true
                             }

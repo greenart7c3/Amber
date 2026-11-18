@@ -27,7 +27,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.AmberLog
-import com.greenart7c3.nostrsigner.LocalPreferences
+import com.greenart7c3.nostrsigner.SavedAccounts
 import com.greenart7c3.nostrsigner.amber
 import com.greenart7c3.nostrsigner.common.SignerType
 import com.greenart7c3.nostrsigner.common.nip44v3Kind
@@ -268,7 +268,7 @@ private fun SignEventRequest(
 ) {
     val context = LocalContext.current
     val event = request.bunkerRequest.signedEvent!!
-    val signedInAsAuthor = LocalPreferences.allSavedAccounts(context).any { it.npub.bechToBytes().toHexKey() == event.pubKey }
+    val signedInAsAuthor = SavedAccounts.all(context).any { it.npub.bechToBytes().toHexKey() == event.pubKey }
 
     when {
         !signedInAsAuthor && !isPrivateEvent(event.kind, event.tags) -> NotLoggedIn(event.pubKey)

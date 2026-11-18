@@ -28,24 +28,24 @@ class LogoutDeletesDatabasesTest {
     @Before
     fun setUp() {
         every { context.applicationContext } returns amber
-        mockkObject(LocalPreferences, AmberLog)
+        mockkObject(LocalPreferences, SavedAccounts, AccountPreferences, AmberLog)
         every { AmberLog.d(any(), any<String>()) } returns Unit
         every { AmberLog.d(any(), any(), any()) } returns Unit
         every { AmberLog.e(any(), any<String>()) } returns Unit
         every { AmberLog.e(any(), any(), any()) } returns Unit
         // File and DataStore cleanup is out of scope here.
-        every { LocalPreferences["removeAccount"](any<Context>(), any<String>()) } returns Unit
+        every { SavedAccounts.remove(any(), any()) } returns Unit
         every { LocalPreferences["deleteUserPreferenceFile"](any<Context>(), any<String>()) } returns Unit
         coEvery { LocalPreferences["deleteUserDataStoreFile"](any<Context>(), any<String>()) } returns Unit
-        every { LocalPreferences["savedAccounts"](any<Context>()) } returns listOf("npub1other")
-        every { LocalPreferences.currentAccount(any()) } returns "npub1other"
+        every { SavedAccounts.list(any()) } returns listOf("npub1other")
+        every { SavedAccounts.current(any()) } returns "npub1other"
         every { context.deleteDatabase(any()) } returns true
         every { amber.closeDatabasesFor(any()) } just runs
     }
 
     @After
     fun tearDown() {
-        unmockkObject(LocalPreferences, AmberLog)
+        unmockkObject(LocalPreferences, SavedAccounts, AccountPreferences, AmberLog)
     }
 
     @Test

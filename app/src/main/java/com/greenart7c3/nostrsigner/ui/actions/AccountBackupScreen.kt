@@ -94,6 +94,7 @@ import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.LocalPreferences
+import com.greenart7c3.nostrsigner.SavedAccounts
 import com.greenart7c3.nostrsigner.amber
 import com.greenart7c3.nostrsigner.commonsui.Res
 import com.greenart7c3.nostrsigner.commonsui.account_backup
@@ -194,7 +195,7 @@ fun AccountBackupScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                LocalPreferences.allSavedAccounts(amber).forEach { accountInfo ->
+                SavedAccounts.all(amber).forEach { accountInfo ->
                     var localAccount by remember { mutableStateOf<Account?>(null) }
                     var seedWords by remember { mutableStateOf("") }
                     LaunchedEffect(Unit) {

@@ -45,7 +45,7 @@ class LegacyStorageMigrationDeviceTest {
 
     @Before
     fun setUp() = runBlocking {
-        val settings = LocalPreferences.appPreferences(context)
+        val settings = appPreferences(context)
         savedAccounts = settings.getString(SAVED_ACCOUNTS, null)
         currentAccount = settings.getString(CURRENT_ACCOUNT, null)
         settings.edit {
@@ -60,11 +60,11 @@ class LegacyStorageMigrationDeviceTest {
     @After
     fun tearDown() = runBlocking {
         npubs.forEach { npub ->
-            LocalPreferences.accountPreferences(context, npub).edit(commit = true) { clear() }
+            accountPreferences(context, npub).edit(commit = true) { clear() }
             File(prefsDirectory(), "prefs_$npub.xml").delete()
             DataStoreAccess.clearCacheForNpub(context, npub)
         }
-        LocalPreferences.appPreferences(context).edit {
+        appPreferences(context).edit {
             remove("use_proxy")
             remove("proxy_port")
             putString(SAVED_ACCOUNTS, savedAccounts)
@@ -88,8 +88,8 @@ class LegacyStorageMigrationDeviceTest {
         LegacyStorageMigration.run(context)
 
         LocalPreferences.invalidateAccountCaches()
-        assertEquals(npubs.toSet(), LocalPreferences.allSavedAccounts(context).map { it.npub }.toSet())
-        assertEquals(npubs[0], LocalPreferences.currentAccount(context))
+        assertEquals(npubs.toSet(), SavedAccounts.all(context).map { it.npub }.toSet())
+        assertEquals(npubs[0], SavedAccounts.current(context))
 
         val account = LocalPreferences.loadFromEncryptedStorage(context, npubs[0])
         assertNotNull(account)
@@ -97,14 +97,14 @@ class LegacyStorageMigrationDeviceTest {
         assertEquals(privateKeys[0].toHexKey(), DataStoreAccess.getEncryptedKey(context, npubs[0], DataStoreAccess.NOSTR_PRIVKEY))
         assertEquals(seedWords, DataStoreAccess.getEncryptedKey(context, npubs[0], DataStoreAccess.SEED_WORDS))
 
-        val userPrefs = LocalPreferences.accountPreferences(context, npubs[0])
+        val userPrefs = accountPreferences(context, npubs[0])
         assertEquals(keyPairs[0].pubKey.toHexKey(), userPrefs.getString("nostr_pubkey", null))
         assertEquals("Synthetic", userPrefs.getString("account_name", null))
         assertFalse(userPrefs.contains("nostr_privkey"))
         assertFalse(userPrefs.contains("seed_words"))
 
         assertEquals("synthetic-pin-1234", DataStoreAccess.loadPin(context))
-        assertFalse("the PIN never reaches the plain preference file", LocalPreferences.appPreferences(context).contains("pin"))
+        assertFalse("the PIN never reaches the plain preference file", appPreferences(context).contains("pin"))
         assertFalse("the legacy files are gone once the accounts open", LegacyStorageMigration.needed(context))
     }
 

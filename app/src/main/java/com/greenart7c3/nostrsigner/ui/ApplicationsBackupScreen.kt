@@ -46,9 +46,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import coil3.compose.SubcomposeAsyncImage
+import com.greenart7c3.nostrsigner.AccountPreferences
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.amber
+import com.greenart7c3.nostrsigner.anyAccountBackupEnabled
 import com.greenart7c3.nostrsigner.commonsui.Res
 import com.greenart7c3.nostrsigner.commonsui.applications_backup_explainer
 import com.greenart7c3.nostrsigner.commonsui.backup_failed
@@ -209,7 +211,7 @@ private fun AccountBackupRow(
     val name by account.name.collectAsState()
     val picture by account.picture.collectAsState()
     var backupEnabled by remember(account.npub) {
-        mutableStateOf(LocalPreferences.getBackupApplications(context, account.npub))
+        mutableStateOf(AccountPreferences.getBackupApplications(context, account.npub))
     }
 
     Column(modifier = Modifier.fillMaxWidth()) {
@@ -237,8 +239,8 @@ private fun AccountBackupRow(
                 onCheckedChange = { enabled ->
                     backupEnabled = enabled
                     scope.launch(Dispatchers.IO) {
-                        LocalPreferences.setBackupApplications(context, account.npub, enabled)
-                        if (LocalPreferences.anyAccountBackupEnabled(context)) {
+                        AccountPreferences.setBackupApplications(context, account.npub, enabled)
+                        if (anyAccountBackupEnabled(context)) {
                             amber.startBackupApplicationsAlarm()
                         } else {
                             amber.cancelBackupApplicationsAlarm()

@@ -31,6 +31,7 @@ import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.LocalPreferences
+import com.greenart7c3.nostrsigner.SavedAccounts
 import com.greenart7c3.nostrsigner.SignerProviderQuery
 import com.greenart7c3.nostrsigner.common.EncryptionType
 import com.greenart7c3.nostrsigner.common.SignerType
@@ -129,7 +130,7 @@ class EventNotificationConsumer(
                     ),
                 )
             } else {
-                val accounts = LocalPreferences.allSavedAccounts(applicationContext)
+                val accounts = SavedAccounts.all(applicationContext)
                 accounts.forEach {
                     LocalPreferences.loadFromEncryptedStorage(applicationContext, it.npub)?.let { acc ->
                         val dao = accountRepository.getLogDatabase(acc.npub).dao()

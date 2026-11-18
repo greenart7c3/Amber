@@ -1,7 +1,6 @@
 package com.greenart7c3.nostrsigner
 
 import android.annotation.SuppressLint
-import android.app.KeyguardManager
 import android.content.Context
 import android.content.SharedPreferences
 import androidx.core.content.edit
@@ -68,8 +67,6 @@ private enum class SettingsKeys(val key: String) {
     LOG_RETENTION("log_retention"),
     HISTORY_RETENTION("history_retention"),
     TRUST_SCORE_ENABLED("trust_score_enabled_v2"),
-    REQUIRE_UNLOCKED_DEVICE("require_unlocked_device"),
-    ACTIVE_KEYSTORE_ALIAS("active_keystore_alias"),
     THEME_MODE("theme_mode"),
     SORT_APPLICATIONS_ALPHABETICALLY("sort_applications_alphabetically"),
     LOCAL_BUNKER_SERVER("local_bunker_server"),
@@ -157,16 +154,6 @@ object LocalPreferences {
     }
 
     fun getBatteryOptimization(context: Context): Boolean = sharedPrefs(context).getBoolean(SettingsKeys.BATERRY_OPTIMIZATION.key, false)
-
-    /**
-     * The only source of the device-lock flag. It is written together with the
-     * active Keystore alias ([commitActiveKeystoreAlias]) so it always matches
-     * the key actually in use, and it is read synchronously, so it is correct
-     * before the async settings load (offline flavor, WorkManager or
-     * ContentProvider cold start) and can't be overwritten by a stale settings
-     * copy saved while a key rotation is running.
-     */
-    fun getRequireUnlockedDevice(context: Context): Boolean = sharedPrefs(context).getBoolean(SettingsKeys.REQUIRE_UNLOCKED_DEVICE.key, false)
 
     fun updateBatteryOptimization(context: Context, value: Boolean) {
         sharedPrefs(context).edit {
@@ -616,22 +603,6 @@ object LocalPreferences {
         context.amber.settings = loadSettingsFromEncryptedStorage(context)
     }
 
-    /** Keystore alias currently used to encrypt new secrets, or null if never recorded. */
-    fun getActiveKeystoreAlias(context: Context): String? = sharedPrefs(context).getString(SettingsKeys.ACTIVE_KEYSTORE_ALIAS.key, null)
-
-    /**
-     * Durably (synchronous `commit`) records the active Keystore alias and,
-     * when given, the matching key policy in one atomic write, so the
-     * setting can never disagree with the key that is actually in use.
-     * Returns false if the write did not reach disk. Not the KTX `edit {}`:
-     * it discards `commit()`'s result, which key rotation depends on.
-     */
-    @SuppressLint("UseKtx")
-    fun commitActiveKeystoreAlias(context: Context, alias: String, requireUnlockedDevice: Boolean? = null): Boolean = sharedPrefs(context).edit()
-        .putString(SettingsKeys.ACTIVE_KEYSTORE_ALIAS.key, alias)
-        .apply { requireUnlockedDevice?.let { putBoolean(SettingsKeys.REQUIRE_UNLOCKED_DEVICE.key, it) } }
-        .commit()
-
     fun updateUpdateCheckFrequency(context: Context, frequency: UpdateCheckFrequency) {
         sharedPrefs(context).edit {
             apply {
@@ -731,7 +702,7 @@ object LocalPreferences {
      * only if it still equals [expected]. Used by [SecureCryptoHelper.rotateKey].
      */
     @Synchronized
-    @SuppressLint("UseKtx") // needs commit()'s result, see commitActiveKeystoreAlias
+    @SuppressLint("UseKtx") // needs commit()'s result, see KeystorePolicy.commitActiveAlias
     fun replaceWebDavPasswordEncrypted(context: Context, expected: String, encryptedPassword: String): Boolean = getWebDavPasswordEncrypted(context) == expected &&
         sharedPrefs(context).edit()
             .putString(SettingsKeys.WEBDAV_PASSWORD_ENCRYPTED.key, encryptedPassword)
@@ -755,15 +726,6 @@ object LocalPreferences {
         }
     }
 
-    /**
-     * With requireUnlockedDevice on, the wrapping key refuses every operation
-     * while the device is locked. That is the setting working, not a broken
-     * key, so it must not be reported as one (the report tells the user to log
-     * out and back in).
-     */
-    private fun isKeystoreLockedOut(context: Context): Boolean = getRequireUnlockedDevice(context) &&
-        context.getSystemService(KeyguardManager::class.java)?.isDeviceLocked == true
-
     suspend fun loadFromEncryptedStorage(context: Context, npub: String): Account? {
         if (accountCache.get(npub) != null) {
             return accountCache.get(npub)
@@ -778,7 +740,7 @@ object LocalPreferences {
                 DataStoreAccess.NOSTR_PRIVKEY,
             )
         } catch (e: InvalidKeyException) {
-            if (isKeystoreLockedOut(context)) {
+            if (KeystorePolicy.isLockedOut(context)) {
                 AmberLog.d(Amber.TAG, "Device locked: account $npub loads after unlock")
                 return null
             }
@@ -786,7 +748,7 @@ object LocalPreferences {
             context.amber.keystoreFailedAccounts.value = (context.amber.keystoreFailedAccounts.value + npub).distinct()
             return null
         } catch (e: KeyStoreException) {
-            if (isKeystoreLockedOut(context)) {
+            if (KeystorePolicy.isLockedOut(context)) {
                 AmberLog.d(Amber.TAG, "Device locked: account $npub loads after unlock")
                 return null
             }

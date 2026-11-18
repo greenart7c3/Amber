@@ -32,7 +32,7 @@ class KeyRotationTest {
 
     @Test
     fun rotationKeepsSecretsReadableAndLeavesOneKey() = runBlocking {
-        val originalPolicy = LocalPreferences.getRequireUnlockedDevice(context)
+        val originalPolicy = KeystorePolicy.requireUnlockedDevice(context)
         DataStoreAccess.savePin(context, "synthetic-pin-1234")
         val startAliases = presentAliases()
         assertEquals(1, startAliases.size)
@@ -40,7 +40,7 @@ class KeyRotationTest {
         LocalPreferences.updateRequireUnlockedDevice(context, !originalPolicy)
 
         assertEquals("synthetic-pin-1234", DataStoreAccess.loadPin(context))
-        assertEquals(!originalPolicy, LocalPreferences.getRequireUnlockedDevice(context))
+        assertEquals(!originalPolicy, KeystorePolicy.requireUnlockedDevice(context))
         val rotatedAliases = presentAliases()
         assertEquals(1, rotatedAliases.size)
         assertNotEquals(startAliases, rotatedAliases)
@@ -49,7 +49,7 @@ class KeyRotationTest {
         LocalPreferences.updateRequireUnlockedDevice(context, originalPolicy)
 
         assertEquals("synthetic-pin-1234", DataStoreAccess.loadPin(context))
-        assertEquals(originalPolicy, LocalPreferences.getRequireUnlockedDevice(context))
+        assertEquals(originalPolicy, KeystorePolicy.requireUnlockedDevice(context))
         assertEquals(startAliases, presentAliases())
     }
 

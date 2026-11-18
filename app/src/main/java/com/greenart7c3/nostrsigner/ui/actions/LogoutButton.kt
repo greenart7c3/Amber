@@ -13,7 +13,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import com.greenart7c3.nostrsigner.AccountInfo
-import com.greenart7c3.nostrsigner.LocalPreferences
+import com.greenart7c3.nostrsigner.AccountStorage
 import com.greenart7c3.nostrsigner.commonsui.Res
 import com.greenart7c3.nostrsigner.commonsui.logout
 import com.greenart7c3.nostrsigner.ui.LocalAccountRepository
@@ -37,7 +37,7 @@ fun LogoutButton(
             },
             onConfirm = {
                 scope.launch(Dispatchers.IO) {
-                    val account = LocalPreferences.loadFromEncryptedStorage(context, acc.npub)
+                    val account = AccountStorage.load(context, acc.npub)
                     account?.let {
                         val dao = accountRepository.dao(it.npub)
                         val permissions = dao.getAll(it.hexKey)

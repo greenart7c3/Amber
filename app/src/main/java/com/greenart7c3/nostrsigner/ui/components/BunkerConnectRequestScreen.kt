@@ -52,7 +52,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.greenart7c3.nostrsigner.LocalPreferences
+import com.greenart7c3.nostrsigner.AccountStorage
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.common.sanitizeAppName
 import com.greenart7c3.nostrsigner.commonsui.Permission
@@ -113,7 +113,7 @@ fun BunkerConnectRequestScreen(
     val accounts = remember {
         val snapshot = mutableStateListOf<Account>()
         if (bunkerRequest.isNostrConnectUri) {
-            LocalPreferences.allCachedAccounts().forEach {
+            AccountStorage.cached().forEach {
                 snapshot.add(it)
             }
             if (snapshot.none { it.hexKey == account.hexKey }) {

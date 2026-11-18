@@ -9,7 +9,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
-import com.greenart7c3.nostrsigner.LocalPreferences
+import com.greenart7c3.nostrsigner.AccountStorage
 import com.greenart7c3.nostrsigner.common.SignerType
 import com.greenart7c3.nostrsigner.commonsui.Permission
 import com.greenart7c3.nostrsigner.data.AccountRepository
@@ -80,7 +80,7 @@ class IntentMultiEventViewModel(
                 var closeApp = true
                 // Each request is signed under its own account.
                 for ((npub, accountIntents) in intents.groupBy { batchAccountNpub(it.currentAccount, account.npub) }) {
-                    val thisAccount = if (npub == account.npub) account else LocalPreferences.loadFromEncryptedStorage(appContext, npub)
+                    val thisAccount = if (npub == account.npub) account else AccountStorage.load(appContext, npub)
                     if (thisAccount != null && !confirmForAccount(thisAccount, localKey, accountIntents, results)) {
                         closeApp = false
                     }

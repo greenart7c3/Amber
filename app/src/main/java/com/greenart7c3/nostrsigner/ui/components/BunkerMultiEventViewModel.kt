@@ -9,7 +9,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
-import com.greenart7c3.nostrsigner.LocalPreferences
+import com.greenart7c3.nostrsigner.AccountStorage
 import com.greenart7c3.nostrsigner.common.SignerType
 import com.greenart7c3.nostrsigner.common.nip44v3Kind
 import com.greenart7c3.nostrsigner.common.nip46SignerType
@@ -140,7 +140,7 @@ class BunkerMultiEventViewModel(
 
     private suspend fun confirmOne(request: AmberBunkerRequest) {
         val thisAccount = if (request.currentAccount.isNotBlank()) {
-            LocalPreferences.loadFromEncryptedStorage(appContext, request.currentAccount)
+            AccountStorage.load(appContext, request.currentAccount)
         } else {
             account
         } ?: return

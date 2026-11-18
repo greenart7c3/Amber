@@ -90,10 +90,10 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.navigation.NavController
 import coil3.compose.SubcomposeAsyncImage
+import com.greenart7c3.nostrsigner.AccountStorage
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
-import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.SavedAccounts
 import com.greenart7c3.nostrsigner.amber
 import com.greenart7c3.nostrsigner.commonsui.Res
@@ -200,7 +200,7 @@ fun AccountBackupScreen(
                     var seedWords by remember { mutableStateOf("") }
                     LaunchedEffect(Unit) {
                         launch(Dispatchers.IO) {
-                            localAccount = LocalPreferences.loadFromEncryptedStorage(amber, accountInfo.npub)
+                            localAccount = AccountStorage.load(amber, accountInfo.npub)
                             localAccount?.let { acc ->
                                 seedWords = acc.seedWords()
                             }

@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import com.greenart7c3.nostrsigner.AccountStorage
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.LocalPreferences
@@ -84,17 +85,17 @@ class CrossAccountSignEventTest {
         every { AmberLog.e(any(), any()) } returns Unit
         // accountB is stored on this device; the old code loaded it here and
         // switched the signing key to it.
-        mockkObject(LocalPreferences)
-        every { LocalPreferences.loadFromEncryptedStorageSync(any(), any()) } returns null
-        coEvery { LocalPreferences.loadAccount(any(), any()) } returns null
-        every { LocalPreferences.loadFromEncryptedStorageSync(any(), eq(accountB.npub)) } returns accountB
-        coEvery { LocalPreferences.loadAccount(any(), eq(accountB.npub)) } returns accountB
+        mockkObject(LocalPreferences, AccountStorage)
+        every { AccountStorage.loadSync(any(), any()) } returns null
+        coEvery { AccountStorage.load(any(), any()) } returns null
+        every { AccountStorage.loadSync(any(), eq(accountB.npub)) } returns accountB
+        coEvery { AccountStorage.load(any(), eq(accountB.npub)) } returns accountB
     }
 
     @After
     fun tearDown() {
         unmockkObject(AmberLog)
-        unmockkObject(LocalPreferences)
+        unmockkObject(LocalPreferences, AccountStorage)
     }
 
     private fun anonZapJson(pubKey: String) = """{"id":"","pubkey":"$pubKey","created_at":1,"kind":9734,"tags":[["anon",""],["p","3bf0c63fcb93463407af97a5e5ee64fa883d107ef9e558472c4eb9aaaefa459d"]],"content":"{}","sig":""}"""

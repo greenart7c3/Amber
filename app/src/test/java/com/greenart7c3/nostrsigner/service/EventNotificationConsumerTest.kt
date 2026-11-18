@@ -1,5 +1,6 @@
 package com.greenart7c3.nostrsigner.service
 
+import com.greenart7c3.nostrsigner.AccountStorage
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.LocalPreferences
@@ -85,7 +86,7 @@ class EventNotificationConsumerTest {
         every { AmberLog.d(any(), any()) } returns Unit
         every { AmberLog.d(any(), any(), any()) } returns Unit
 
-        mockkObject(LocalPreferences)
+        mockkObject(LocalPreferences, AccountStorage)
         account = newTestAccount(scope)
 
         consumer = spyk(
@@ -115,7 +116,7 @@ class EventNotificationConsumerTest {
     fun tearDown() {
         unmockkObject(NotificationUtils)
         unmockkObject(AmberLog)
-        unmockkObject(LocalPreferences)
+        unmockkObject(LocalPreferences, AccountStorage)
         unmockkStatic("com.vitorpamplona.quartz.nip01Core.crypto.EventExtKt")
         unmockkStatic("com.vitorpamplona.quartz.nip01Core.tags.people.EventExtKt")
         unmockkStatic("com.vitorpamplona.quartz.nip40Expiration.EventExtKt")
@@ -130,8 +131,8 @@ class EventNotificationConsumerTest {
         every { event.createdAt } returns createdAt
         every { event.tags } returns tags
         every { event.taggedUsers() } returns listOf(PTag(account.hexKey))
-        coEvery { LocalPreferences.loadFromEncryptedStorageSync(any(), any()) } returns account
-        coEvery { LocalPreferences.loadAccount(any(), any()) } returns account
+        coEvery { AccountStorage.loadSync(any(), any()) } returns account
+        coEvery { AccountStorage.load(any(), any()) } returns account
         return event
     }
 
@@ -173,8 +174,8 @@ class EventNotificationConsumerTest {
         every { event.tags } returns arrayOf(arrayOf("p", account.hexKey))
         every { event.taggedUsers() } returns listOf(PTag(account.hexKey))
 
-        coEvery { LocalPreferences.loadFromEncryptedStorageSync(any(), any()) } returns account
-        coEvery { LocalPreferences.loadAccount(any(), any()) } returns account
+        coEvery { AccountStorage.loadSync(any(), any()) } returns account
+        coEvery { AccountStorage.load(any(), any()) } returns account
         coEvery { bunkerEventDao.exists("event1") } returns true
 
         consumer.consume(event, NormalizedRelayUrl("wss://relay.com"))
@@ -196,8 +197,8 @@ class EventNotificationConsumerTest {
 
         val locked = spyk(account)
         every { locked.requirePrivateKeyAccess() } throws SecurityException("locked")
-        coEvery { LocalPreferences.loadFromEncryptedStorageSync(any(), any()) } returns locked
-        coEvery { LocalPreferences.loadAccount(any(), any()) } returns locked
+        coEvery { AccountStorage.loadSync(any(), any()) } returns locked
+        coEvery { AccountStorage.load(any(), any()) } returns locked
         coEvery { bunkerEventDao.exists("event2") } returns false
 
         consumer.consume(event, NormalizedRelayUrl("wss://relay.com"))
@@ -239,8 +240,8 @@ class EventNotificationConsumerTest {
         every { event.pubKey } returns sender
         every { event.tags } returns arrayOf(arrayOf("p", acc.hexKey))
         every { event.taggedUsers() } returns listOf(PTag(acc.hexKey))
-        coEvery { LocalPreferences.loadFromEncryptedStorageSync(any(), any()) } returns acc
-        coEvery { LocalPreferences.loadAccount(any(), any()) } returns acc
+        coEvery { AccountStorage.loadSync(any(), any()) } returns acc
+        coEvery { AccountStorage.load(any(), any()) } returns acc
         coEvery { bunkerEventDao.exists(any()) } returns false
         coEvery { dao.getByKey(any()) } returns null
 
@@ -335,8 +336,8 @@ class EventNotificationConsumerTest {
         every { event.tags } returns arrayOf(arrayOf("p", expiredAccount.hexKey))
         every { event.taggedUsers() } returns listOf(PTag(expiredAccount.hexKey))
 
-        coEvery { LocalPreferences.loadFromEncryptedStorageSync(any(), any()) } returns expiredAccount
-        coEvery { LocalPreferences.loadAccount(any(), any()) } returns expiredAccount
+        coEvery { AccountStorage.loadSync(any(), any()) } returns expiredAccount
+        coEvery { AccountStorage.load(any(), any()) } returns expiredAccount
         coEvery { bunkerEventDao.exists("event3") } returns false
 
         val expiredRow = ApplicationEntity(

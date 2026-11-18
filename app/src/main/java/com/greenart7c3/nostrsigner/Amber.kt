@@ -128,6 +128,11 @@ class Amber :
 
     val applicationIOScope = CoroutineScope(Dispatchers.IO + SupervisorJob() + exceptionHandler)
 
+    // At construction, not onCreate: ContentProviders are created before onCreate runs.
+    init {
+        AccountStorage.install(accountRepository = this, appScope = applicationIOScope)
+    }
+
     override var settings: AmberSettings = AmberSettings()
 
     val intentRateLimiter = IntentRateLimiter(
@@ -182,7 +187,7 @@ class Amber :
         RelayAuthenticator(client, applicationIOScope) { _, event, _ ->
             // One account failing to sign (device locked under requireUnlockedDevice,
             // or a transient key error) must not abort AUTH for every other account.
-            LocalPreferences.allAccounts(this).mapNotNull { account ->
+            AccountStorage.all(this).mapNotNull { account ->
                 runCatching { account.sign(event) }.onFailure { e ->
                     AmberLog.e(TAG, "NIP-42 auth signing failed for ${account.npub}", e)
                 }.getOrNull()

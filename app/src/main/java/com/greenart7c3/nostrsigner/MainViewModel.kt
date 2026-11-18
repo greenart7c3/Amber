@@ -139,7 +139,7 @@ class MainViewModel(val context: Context) : ViewModel() {
         referrer: Uri? = null,
     ) {
         viewModelScope.launch(Dispatchers.IO) {
-            val account = LocalPreferences.loadFromEncryptedStorage(context)
+            val account = AccountStorage.load(context)
             account?.let { acc ->
                 val route = externalRoute(intent.getStringExtra("route"))
                 val intentData = IntentUtils.getIntentData(context, intent, callingPackage, route, acc, referrer)

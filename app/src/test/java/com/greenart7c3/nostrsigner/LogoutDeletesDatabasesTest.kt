@@ -10,6 +10,8 @@ import io.mockk.runs
 import io.mockk.unmockkObject
 import io.mockk.verify
 import io.mockk.verifyOrder
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Before
@@ -28,15 +30,16 @@ class LogoutDeletesDatabasesTest {
     @Before
     fun setUp() {
         every { context.applicationContext } returns amber
-        mockkObject(LocalPreferences, SavedAccounts, AccountPreferences, AmberLog)
+        AccountStorage.install(accountRepository = amber, appScope = CoroutineScope(Dispatchers.Unconfined))
+        mockkObject(LocalPreferences, AccountStorage, SavedAccounts, AccountPreferences, AmberLog)
         every { AmberLog.d(any(), any<String>()) } returns Unit
         every { AmberLog.d(any(), any(), any()) } returns Unit
         every { AmberLog.e(any(), any<String>()) } returns Unit
         every { AmberLog.e(any(), any(), any()) } returns Unit
         // File and DataStore cleanup is out of scope here.
         every { SavedAccounts.remove(any(), any()) } returns Unit
-        every { LocalPreferences["deleteUserPreferenceFile"](any<Context>(), any<String>()) } returns Unit
-        coEvery { LocalPreferences["deleteUserDataStoreFile"](any<Context>(), any<String>()) } returns Unit
+        every { AccountStorage["deleteUserPreferenceFile"](any<Context>(), any<String>()) } returns Unit
+        coEvery { AccountStorage["deleteUserDataStoreFile"](any<Context>(), any<String>()) } returns Unit
         every { SavedAccounts.list(any()) } returns listOf("npub1other")
         every { SavedAccounts.current(any()) } returns "npub1other"
         every { context.deleteDatabase(any()) } returns true
@@ -45,12 +48,12 @@ class LogoutDeletesDatabasesTest {
 
     @After
     fun tearDown() {
-        unmockkObject(LocalPreferences, SavedAccounts, AccountPreferences, AmberLog)
+        unmockkObject(LocalPreferences, AccountStorage, SavedAccounts, AccountPreferences, AmberLog)
     }
 
     @Test
     fun logoutDeletesTheAccountDatabasesAfterClosingThem() {
-        runBlocking { LocalPreferences.updatePrefsForLogout(npub, context) }
+        runBlocking { AccountStorage.logout(npub, context) }
 
         verifyOrder {
             amber.closeDatabasesFor(npub)

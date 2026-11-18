@@ -104,7 +104,7 @@ Every `npub` gets its own:
 - `LogDatabase` — operation logs
 - `HistoryDatabase` — request history
 
-All databases are lazy-loaded and cached in `ConcurrentHashMap`s in `Amber`. Account data (including decrypted keys) is loaded via `LocalPreferences.loadFromEncryptedStorage()` and cached in `LargeCache`.
+All databases are lazy-loaded and cached in `ConcurrentHashMap`s in `Amber`. Account data (including decrypted keys) is loaded via `AccountStorage.load()` and cached in `LargeCache`.
 
 ### Permission system
 

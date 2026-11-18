@@ -42,6 +42,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.compose.collectAsLazyPagingItems
+import com.greenart7c3.nostrsigner.AccountStorage
 import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.SavedAccounts
@@ -117,7 +118,7 @@ fun ApplicationsScreen(
 
     LaunchedEffect(Unit) {
         launch(Dispatchers.IO) {
-            hasAccountsWithoutBackup = LocalPreferences.allAccounts(amber).any { !it.didBackup }
+            hasAccountsWithoutBackup = AccountStorage.all(amber).any { !it.didBackup }
         }
     }
 

@@ -1,6 +1,7 @@
 package com.greenart7c3.nostrsigner.service
 
 import androidx.collection.LruCache
+import com.greenart7c3.nostrsigner.AccountStorage
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.LocalPreferences
@@ -38,7 +39,7 @@ class NotificationSinceClampTest {
     @After
     fun tearDown() {
         scope.cancel()
-        unmockkObject(LocalPreferences)
+        unmockkObject(LocalPreferences, AccountStorage)
     }
 
     @Test
@@ -56,9 +57,9 @@ class NotificationSinceClampTest {
         every { amber.dao(any()) } answers { CachingApplicationDao(dao) }
         val cache = LruCache<String, Long>(512)
         every { amber.notificationCache } returns cache
-        mockkObject(LocalPreferences)
+        mockkObject(LocalPreferences, AccountStorage)
         val account = newTestAccount(scope)
-        coEvery { LocalPreferences.allAccounts(any()) } returns listOf(account)
+        coEvery { AccountStorage.all(any()) } returns listOf(account)
         coEvery { dao.getAll(account.hexKey) } returns listOf(
             ApplicationEntity.empty().copy(key = "c1", relays = listOf(NormalizedRelayUrl("wss://r1.example.com/")), localKey = "ab".repeat(32)),
         )

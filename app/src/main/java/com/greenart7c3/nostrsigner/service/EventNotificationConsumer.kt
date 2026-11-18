@@ -27,10 +27,10 @@ import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.toLowerCase
 import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
+import com.greenart7c3.nostrsigner.AccountStorage
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.BuildConfig
-import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.SavedAccounts
 import com.greenart7c3.nostrsigner.SignerProviderQuery
 import com.greenart7c3.nostrsigner.common.EncryptionType
@@ -132,7 +132,7 @@ class EventNotificationConsumer(
             } else {
                 val accounts = SavedAccounts.all(applicationContext)
                 accounts.forEach {
-                    LocalPreferences.loadFromEncryptedStorage(applicationContext, it.npub)?.let { acc ->
+                    AccountStorage.load(applicationContext, it.npub)?.let { acc ->
                         val dao = accountRepository.getLogDatabase(acc.npub).dao()
                         dao.insertLogIfEnabled(
                             LogEntity(
@@ -173,7 +173,7 @@ class EventNotificationConsumer(
         }
 
         // First try to match the tagged key to a logged-in account (real pubkey)
-        var acc = LocalPreferences.loadAccount(applicationContext, taggedKey.toNPub())
+        var acc = AccountStorage.load(applicationContext, taggedKey.toNPub())
         var connectionPrivKey = ""
 
         if (acc != null) {
@@ -187,7 +187,7 @@ class EventNotificationConsumer(
             val taggedHex = taggedKey.pubKey
             val match = LocalKeyAccountIndex.lookup(taggedHex)
             if (match != null) {
-                val resolved = LocalPreferences.loadAccount(applicationContext, match.npub)
+                val resolved = AccountStorage.load(applicationContext, match.npub)
                 if (resolved != null) {
                     acc = resolved
                     connectionPrivKey = match.localPrivKey

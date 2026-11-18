@@ -22,9 +22,9 @@ package com.greenart7c3.nostrsigner.service
 
 import android.content.Context
 import androidx.collection.LruCache
+import com.greenart7c3.nostrsigner.AccountStorage
 import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
-import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.common.relays.RelayHealthTracker
 import com.greenart7c3.nostrsigner.data.AccountRepository
 import com.greenart7c3.nostrsigner.data.SettingsStore
@@ -104,7 +104,7 @@ class NotificationSubscription(
             val activeSubKeys = mutableSetOf<String>()
             val indexEntries = mutableMapOf<String, LocalKeyAccountIndex.Match>()
 
-            LocalPreferences.allAccounts(appContext).forEach { account ->
+            AccountStorage.all(appContext).forEach { account ->
                 val since = computeSince()
 
                 // Cached dao: getAll() is served from CachingApplicationDao's per-account

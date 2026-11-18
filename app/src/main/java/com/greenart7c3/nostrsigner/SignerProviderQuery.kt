@@ -106,7 +106,7 @@ class SignerProviderQuery(
                         AmberLog.d(Amber.TAG, "No npub")
                         return null
                     }
-                    val account = LocalPreferences.loadFromEncryptedStorageSync(context, npub)
+                    val account = AccountStorage.loadSync(context, npub)
                     if (account == null) {
                         AmberLog.d(Amber.TAG, "No account from storage")
                         return null
@@ -263,7 +263,7 @@ class SignerProviderQuery(
                     val npub = IntentUtils.parsePubKey(arguments[2]) ?: return null
                     val stringType = uriString.replace("content://$appId.", "")
                     val pubkey = arguments[1]
-                    val account = LocalPreferences.loadFromEncryptedStorageSync(context, npub) ?: return null
+                    val account = AccountStorage.loadSync(context, npub) ?: return null
                     captureCallerMetadata(context, callerPackageName, account)
                     val logDatabase = accountRepository.getLogDatabase(account.npub)
                     val historyDatabase = accountRepository.getHistoryDatabase(account.npub)
@@ -481,7 +481,7 @@ class SignerProviderQuery(
                         AmberLog.d(Amber.TAG, "No npub")
                         return null
                     }
-                    val account = LocalPreferences.loadFromEncryptedStorageSync(context, npub)
+                    val account = AccountStorage.loadSync(context, npub)
                     if (account == null) {
                         AmberLog.d(Amber.TAG, "No account from storage")
                         return null
@@ -567,13 +567,13 @@ class SignerProviderQuery(
                 "content://$appId.PING" -> {
                     val npub = if (!arguments.isNullOrEmpty()) IntentUtils.parsePubKey(arguments[0]) else null
                     val account = if (npub != null) {
-                        LocalPreferences.loadFromEncryptedStorageSync(context, npub)
+                        AccountStorage.loadSync(context, npub)
                     } else {
                         SavedAccounts.all(context).firstNotNullOfOrNull { accountInfo ->
                             val localDatabase = accountRepository.getDatabase(accountInfo.npub)
                             val hasAccount = localDatabase.dao().getByKeySync(requesterId) != null
                             if (hasAccount) {
-                                LocalPreferences.loadFromEncryptedStorageSync(context, accountInfo.npub)
+                                AccountStorage.loadSync(context, accountInfo.npub)
                             } else {
                                 null
                             }

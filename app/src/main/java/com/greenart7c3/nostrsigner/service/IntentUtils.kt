@@ -12,11 +12,11 @@ import android.widget.Toast
 import androidx.compose.ui.platform.ClipEntry
 import androidx.compose.ui.platform.Clipboard
 import androidx.core.net.toUri
+import com.greenart7c3.nostrsigner.AccountStorage
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.FailedMigrationException
-import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.SavedAccounts
 import com.greenart7c3.nostrsigner.amber
 import com.greenart7c3.nostrsigner.common.SignerType
@@ -521,7 +521,7 @@ object IntentUtils {
     /** The stored account the `current_user` extra names, if any. */
     private suspend fun requestAccount(context: Context, intent: Intent): Account? {
         val currentUser = intent.getStringExtra("current_user") ?: return null
-        return LocalPreferences.loadAccount(context, parsePubKey(currentUser))
+        return AccountStorage.load(context, parsePubKey(currentUser))
     }
 
     private fun reportParseError(context: Context, intent: Intent, packageName: String?, e: Exception) {

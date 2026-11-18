@@ -33,7 +33,7 @@ import com.greenart7c3.nostrsigner.SecureCryptoHelper
  * will then treat the secret as a non-matching string (lookup miss) and the
  * corrupted localKey as a non-hex value, which surfaces as a connection
  * failure rather than a crash — matching the `InvalidKeyException`/log-and-skip
- * convention in `LocalPreferences.loadFromEncryptedStorage`.
+ * convention in `AccountStorage.load`.
  */
 private fun String.encryptField(): String = if (this.isEmpty()) this else SecureCryptoHelper.encryptBlocking(this)
 

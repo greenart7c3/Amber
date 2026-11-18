@@ -7,7 +7,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
-import com.greenart7c3.nostrsigner.LocalPreferences
+import com.greenart7c3.nostrsigner.AccountStorage
 import com.greenart7c3.nostrsigner.service.AccountExportService
 import com.vitorpamplona.crypto.random.RandomInstance
 import com.vitorpamplona.quartz.nip01Core.crypto.KeyPair
@@ -159,7 +159,7 @@ class AccountImportViewModel(
     /** Restores the backup at [uri]; [onImported] gets whether Amber had accounts before. */
     fun import(uri: Uri, password: String, onImported: (hadAccounts: Boolean) -> Unit) {
         appScope.launch {
-            val hadAccounts = LocalPreferences.allAccounts(appContext).isNotEmpty()
+            val hadAccounts = AccountStorage.all(appContext).isNotEmpty()
             AccountExportService.importAccounts(
                 context = appContext,
                 scope = appScope,

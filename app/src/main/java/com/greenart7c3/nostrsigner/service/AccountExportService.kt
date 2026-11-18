@@ -5,8 +5,8 @@ import android.net.Uri
 import android.widget.Toast
 import com.anggrayudi.storage.extension.toDocumentFile
 import com.anggrayudi.storage.file.openInputStream
+import com.greenart7c3.nostrsigner.AccountStorage
 import com.greenart7c3.nostrsigner.AmberLog
-import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.SavedAccounts
 import com.greenart7c3.nostrsigner.commonsui.Res
 import com.greenart7c3.nostrsigner.commonsui.getStringBlocking
@@ -85,7 +85,7 @@ object AccountExportService {
                                 }
                                 val seedWords = decryptExportedSeedWords(account, accountData.seedWords, privKey)
                                 SavedAccounts.switchTo(context, account.npub)
-                                LocalPreferences.updatePrefsForLogin(context, account, hexKey.toHexKey(), privKey, seedWords)
+                                AccountStorage.login(context, account, hexKey.toHexKey(), privKey, seedWords)
                                 importedCount++
                             } catch (e: Exception) {
                                 if (e is CancellationException) throw e
@@ -156,7 +156,7 @@ object AccountExportService {
             val result = mutableListOf<Pair<String, String>>()
             accountInfos.forEachIndexed { index, info ->
                 onProgress(index + 1, total)
-                val account = LocalPreferences.loadFromEncryptedStorage(context, info.npub)
+                val account = AccountStorage.load(context, info.npub)
                 account?.let { result.add(info.npub to it.nip49Encrypt(password)) }
             }
             Result.success(result)
@@ -196,7 +196,7 @@ object AccountExportService {
                         appContext = context,
                     )
                     SavedAccounts.switchTo(context, hexKey.toNpub())
-                    LocalPreferences.updatePrefsForLogin(context, account, hexKey.toHexKey(), privKey, null)
+                    AccountStorage.login(context, account, hexKey.toHexKey(), privKey, null)
                 } catch (e: Exception) {
                     if (e is CancellationException) throw e
                     AmberLog.e("Amber", "Error importing ncryptsec at index $index", e)
@@ -234,7 +234,7 @@ object AccountExportService {
             accountInfos.forEachIndexed { index, accountInfo ->
                 onProgress(index + 1, totalAccounts)
 
-                val account = LocalPreferences.loadFromEncryptedStorage(context, accountInfo.npub)
+                val account = AccountStorage.load(context, accountInfo.npub)
                 account?.let {
                     val exportData = accountToExportData(it, password)
                     data += "${AccountExportData.toJson(exportData)}\n"

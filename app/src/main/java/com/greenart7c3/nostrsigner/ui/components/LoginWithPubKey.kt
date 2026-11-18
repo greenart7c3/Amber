@@ -39,7 +39,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.graphics.drawable.toBitmap
-import com.greenart7c3.nostrsigner.LocalPreferences
+import com.greenart7c3.nostrsigner.AccountStorage
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.commonsui.Permission
 import com.greenart7c3.nostrsigner.commonsui.Res
@@ -83,7 +83,7 @@ fun LoginWithPubKey(
     var selectedOption by remember { mutableIntStateOf(account.signPolicy) }
     val accounts = remember {
         val snapshot = mutableStateListOf<Account>()
-        LocalPreferences.allCachedAccounts().forEach {
+        AccountStorage.cached().forEach {
             snapshot.add(it)
         }
         if (snapshot.none { it.hexKey == account.hexKey }) {

@@ -14,7 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
-import com.greenart7c3.nostrsigner.LocalPreferences
+import com.greenart7c3.nostrsigner.AccountStorage
 import com.greenart7c3.nostrsigner.commonsui.Res
 import com.greenart7c3.nostrsigner.commonsui.nickname
 import com.greenart7c3.nostrsigner.commonsui.save
@@ -28,7 +28,7 @@ fun EditProfileScreen(
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
-    val name = LocalPreferences.getAccountName(context, npub)
+    val name = AccountStorage.getName(context, npub)
     var textFieldvalue by remember {
         mutableStateOf(TextFieldValue(name))
     }
@@ -49,7 +49,7 @@ fun EditProfileScreen(
         AmberButton(
             modifier = Modifier.padding(vertical = 40.dp),
             onClick = {
-                LocalPreferences.setAccountName(context, npub, textFieldvalue.text)
+                AccountStorage.setName(context, npub, textFieldvalue.text)
                 onSave()
             },
             text = stringResource(Res.string.save),

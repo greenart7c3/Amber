@@ -52,7 +52,7 @@ class LegacyStorageMigrationDeviceTest {
             remove(SAVED_ACCOUNTS)
             remove(CURRENT_ACCOUNT)
         }
-        LocalPreferences.invalidateAccountCaches()
+        AccountStorage.invalidateCaches()
         pin = DataStoreAccess.loadPin(context)
         DataStoreAccess.savePin(context, null)
     }
@@ -72,7 +72,7 @@ class LegacyStorageMigrationDeviceTest {
         }
         legacyFiles().forEach { it.delete() }
         DataStoreAccess.savePin(context, pin)
-        LocalPreferences.invalidateAccountCaches()
+        AccountStorage.invalidateCaches()
     }
 
     @Test
@@ -87,11 +87,11 @@ class LegacyStorageMigrationDeviceTest {
 
         LegacyStorageMigration.run(context)
 
-        LocalPreferences.invalidateAccountCaches()
+        AccountStorage.invalidateCaches()
         assertEquals(npubs.toSet(), SavedAccounts.all(context).map { it.npub }.toSet())
         assertEquals(npubs[0], SavedAccounts.current(context))
 
-        val account = LocalPreferences.loadFromEncryptedStorage(context, npubs[0])
+        val account = AccountStorage.load(context, npubs[0])
         assertNotNull(account)
         assertEquals(keyPairs[0].pubKey.toHexKey(), account?.hexKey)
         assertEquals(privateKeys[0].toHexKey(), DataStoreAccess.getEncryptedKey(context, npubs[0], DataStoreAccess.NOSTR_PRIVKEY))

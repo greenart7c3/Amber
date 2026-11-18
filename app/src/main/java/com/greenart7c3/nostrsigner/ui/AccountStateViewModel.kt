@@ -3,6 +3,7 @@ package com.greenart7c3.nostrsigner.ui
 import android.content.Context
 import androidx.compose.runtime.Stable
 import androidx.lifecycle.ViewModel
+import com.greenart7c3.nostrsigner.AccountStorage
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
@@ -74,14 +75,14 @@ class AccountStateViewModel(
                 currentUser = null
             }
             // Warm the full account cache BEFORE any UI state is emitted: the
-            // account switcher in approval screens reads allCachedAccounts()
+            // account switcher in approval screens reads AccountStorage.cached()
             // synchronously in remember {}, and it used to be populated by the
-            // eager load in loadFromEncryptedStorageSync. ConnectivityService's
+            // eager load in AccountStorage.loadSync. ConnectivityService's
             // reloadApp() cannot be relied on — it starts via an AlarmManager
             // PendingIntent (a race with composition) and doesn't exist in the
             // offline flavor — so warm here, at the deterministic app start.
-            LocalPreferences.warmAccountCache(appContext)
-            LocalPreferences.loadAccount(appContext, currentUser)?.let {
+            AccountStorage.all(appContext)
+            AccountStorage.load(appContext, currentUser)?.let {
                 startUI(it, route)
             }
             if (currentUser == null) {
@@ -100,7 +101,7 @@ class AccountStateViewModel(
     fun logOff(npub: String) {
         prepareLogoutOrSwitch()
         appScope.launch {
-            val shouldLogout = LocalPreferences.updatePrefsForLogout(npub, appContext)
+            val shouldLogout = AccountStorage.logout(npub, appContext)
             // The logged-out account's NIP-46 subscriptions, connection keys and
             // relay sockets must go with it: rebuild the filters from the
             // remaining accounts, or Amber keeps listening for a deleted key.
@@ -120,8 +121,8 @@ class AccountStateViewModel(
 
     /** After a backup was restored into an Amber with no accounts: logs in to the first restored one. */
     suspend fun openFirstImportedAccount() {
-        val first = LocalPreferences.allAccounts(appContext).firstOrNull() ?: return
-        val account = LocalPreferences.loadFromEncryptedStorage(appContext, first.npub) ?: return
+        val first = AccountStorage.all(appContext).firstOrNull() ?: return
+        val account = AccountStorage.load(appContext, first.npub) ?: return
         startUI(account, null)
         maybeOfferRestore(account)
     }
@@ -158,7 +159,7 @@ class AccountStateViewModel(
                 TorManager.start(appContext, appScope)
             }
         }
-        LocalPreferences.updatePrefsForLogin(appContext, account, keyPair.pubKey.toHexKey(), keyPair.privKey!!.toHexKey(), null)
+        AccountStorage.login(appContext, account, keyPair.pubKey.toHexKey(), keyPair.privKey!!.toHexKey(), null)
         startUI(account, route)
         maybeOfferRestore(account)
     }
@@ -202,7 +203,7 @@ class AccountStateViewModel(
                 relayClient.reconnect()
             }
         }
-        LocalPreferences.updatePrefsForLogin(appContext, account, hexKey, privKey, key)
+        AccountStorage.login(appContext, account, hexKey, privKey, key)
         startUI(account, null)
     }
 
@@ -216,7 +217,7 @@ class AccountStateViewModel(
         observerJob = appScope.launch(Dispatchers.IO) {
             account.saveable.collect {
                 AmberLog.d(Amber.TAG, "Account saved")
-                LocalPreferences.saveToEncryptedStorage(appContext, it.account, null, null, null)
+                AccountStorage.save(appContext, it.account, null, null, null)
             }
         }
     }

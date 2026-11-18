@@ -29,7 +29,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.greenart7c3.nostrsigner.LocalPreferences
+import com.greenart7c3.nostrsigner.AccountStorage
 import com.greenart7c3.nostrsigner.amber
 import com.greenart7c3.nostrsigner.common.EncryptionType
 import com.greenart7c3.nostrsigner.common.SignerType
@@ -209,7 +209,7 @@ private fun rememberAppInfos(
             launch(Dispatchers.IO) {
                 batchRequests.map { it.appKey }.distinct().forEach { appKey ->
                     val account = if (appKey.account.isNotBlank()) {
-                        LocalPreferences.loadFromEncryptedStorage(context, appKey.account)
+                        AccountStorage.load(context, appKey.account)
                     } else {
                         accountParam
                     } ?: return@forEach

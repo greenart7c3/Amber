@@ -47,8 +47,8 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import coil3.compose.SubcomposeAsyncImage
 import com.greenart7c3.nostrsigner.AccountPreferences
+import com.greenart7c3.nostrsigner.AccountStorage
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
-import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.amber
 import com.greenart7c3.nostrsigner.anyAccountBackupEnabled
 import com.greenart7c3.nostrsigner.commonsui.Res
@@ -101,7 +101,7 @@ fun ApplicationsBackupScreen(
     val context = LocalContext.current
 
     val accounts by produceState<List<Account>?>(initialValue = null) {
-        value = withContext(Dispatchers.IO) { LocalPreferences.allAccounts(context) }
+        value = withContext(Dispatchers.IO) { AccountStorage.all(context) }
     }
 
     val loadedAccounts = accounts

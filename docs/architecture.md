@@ -219,9 +219,15 @@ Done so far: the saved-account list, current account and favorites are
 `SavedAccounts`, the per-account preferences (backup consent, user relays, fetch
 times) `AccountPreferences`, and both read the preference files through
 `appPreferences`/`accountPreferences` (`PreferenceFiles.kt`). Neither touches the
-container; `SavedAccountsTest` pins the stored format. Left: the encrypted
-account and key storage (load, login, logout and the decrypted-account cache) and
-the app settings. The key policy is `KeystorePolicy`: the synchronous
-`requireUnlockedDevice` read, the active Keystore alias committed with it, the
-signing gate (`requireAccess`, fail-closed) and the locked-device check that keeps a
-locked device from being reported as a broken key; `KeystorePolicyTest` covers them.
+container; `SavedAccountsTest` pins the stored format. The key policy is
+`KeystorePolicy`: the synchronous `requireUnlockedDevice` read, the active
+Keystore alias committed with it, the signing gate (`requireAccess`, fail-closed)
+and the locked-device check that keeps a locked device from being reported as a
+broken key; `KeystorePolicyTest` covers them. The accounts with their keys are
+`AccountStorage`: load (one `load(context, npub = null)` for the current or a
+given account, `loadSync` for the ContentProvider), login, logout, the
+decrypted-account cache and the account names. It gets the `AccountRepository`
+and the app scope from Amber at construction (`install`, before any
+ContentProvider runs) instead of reaching the container through a context;
+`AccountStorageTest` covers the broken-key report, the locked-device case, the
+cache and the key zeroing at logout. Left: the app settings.

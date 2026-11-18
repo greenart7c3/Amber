@@ -4,11 +4,7 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.content.SharedPreferences
 import androidx.core.content.edit
-import com.greenart7c3.nostrsigner.database.AppDatabase
-import com.greenart7c3.nostrsigner.database.HistoryDatabase
-import com.greenart7c3.nostrsigner.database.LogDatabase
 import com.greenart7c3.nostrsigner.database.LogRetentionManager
-import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.AmberSettings
 import com.greenart7c3.nostrsigner.models.ProfileFetchInterval
 import com.greenart7c3.nostrsigner.models.RetentionPeriod
@@ -21,18 +17,9 @@ import com.greenart7c3.nostrsigner.models.defaultIndexerRelays
 import com.greenart7c3.nostrsigner.okhttp.HttpClientManager
 import com.greenart7c3.nostrsigner.service.TorManager
 import com.greenart7c3.nostrsigner.ui.parseBiometricsTimeType
-import com.vitorpamplona.quartz.nip01Core.core.hexToByteArray
-import com.vitorpamplona.quartz.nip01Core.crypto.KeyPair
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.RelayUrlNormalizer
-import com.vitorpamplona.quartz.nip01Core.signers.NostrSignerInternal
-import com.vitorpamplona.quartz.nip19Bech32.toNpub
-import com.vitorpamplona.quartz.utils.cache.LargeCache
-import java.io.File
-import java.security.InvalidKeyException
-import java.security.KeyStoreException
 import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.runBlocking
 
 private enum class SettingsKeys(val key: String) {
     DEFAULT_RELAYS("default_relays"),
@@ -77,7 +64,6 @@ object LocalPreferences {
     // Pre-rename consent key, kept only so loadSettingsFromEncryptedStorage can
     // scrub it. Never read.
     private const val LEGACY_TRUST_SCORE_ENABLED_KEY = "trust_score_enabled"
-    private var accountCache = LargeCache<String, Account>()
 
     fun shouldShowRationale(context: Context): Boolean? {
         if (!sharedPrefs(context).contains(SettingsKeys.RATIONALE.key)) {
@@ -178,8 +164,8 @@ object LocalPreferences {
     }
 
     suspend fun reloadApp(context: Context) {
-        invalidateAccountCaches()
-        warmAccountCache(context)
+        AccountStorage.invalidateCaches()
+        AccountStorage.all(context)
         context.amber.settings = loadSettingsFromEncryptedStorage(context)
         context.amber.isSettingsLoaded = true
         context.amber.settings.language?.let { AppLanguage.apply(it) }
@@ -309,217 +295,10 @@ object LocalPreferences {
         }
     }
 
-    /**
-     * Forgets the cached account list, current account and decrypted accounts,
-     * so the next read sees what was written straight to the preference files.
-     * [LegacyStorageMigration] runs it because it cannot use [reloadApp]: that
-     * one reloads the settings, which is only allowed off the main thread.
-     */
-    internal fun invalidateAccountCaches() {
-        SavedAccounts.invalidate()
-        accountCache.clear()
-    }
-
-    private fun getDirPath(context: Context): String = "${context.filesDir.parent}/shared_prefs/"
-
-    /**
-     * Deletes the npub-specific shared preference file
-     */
-    private fun deleteUserPreferenceFile(context: Context, npub: String) {
-        val prefsDir = File(getDirPath(context))
-        prefsDir.list()?.forEach {
-            if (it.contains(npub)) {
-                try {
-                    val result = File(prefsDir, it).delete()
-                    AmberLog.d(Amber.TAG, "deleted $it: $result")
-                } catch (e: Exception) {
-                    AmberLog.d(Amber.TAG, "failed to delete $it", e)
-                }
-            }
-        }
-    }
-
     private fun sharedPrefs(
         context: Context,
         npub: String? = null,
     ): SharedPreferences = if (npub == null) appPreferences(context) else accountPreferences(context, npub)
-
-    private suspend fun deleteUserDataStoreFile(context: Context, npub: String) {
-        DataStoreAccess.clearCacheForNpub(context, npub)
-    }
-
-    /**
-     * Clears the preferences for a given npub, deletes the preferences XML file,
-     * and switches the user to the first account in the list if it exists
-     *
-     * We need to use `commit()` to write changes to disk and release the file
-     * lock so that it can be deleted. If we use `apply()` there is a race
-     * condition and the file will probably not be deleted
-     */
-    @SuppressLint("ApplySharedPref")
-    suspend fun updatePrefsForLogout(npub: String, context: Context): Boolean {
-        // Defense-in-depth (GHSA-8844-q5vh-9j8f, I3): best-effort zeroize the
-        // private-key byte array of the logging-out account before dropping
-        // the reference from the cache, so the key material does not linger
-        // in heap until GC. KeyPair.privKey is a `val` referencing a mutable
-        // ByteArray, so we overwrite its contents in place.
-        accountCache.get(npub)?.signer?.keyPair?.privKey?.fill(0)
-        accountCache.remove(npub)
-        // Close Room handles BEFORE deleting on-disk preference/data files so
-        // we release file locks and worker-pool threads instead of leaking
-        // them for the lifetime of the process.
-        context.amber.closeDatabasesFor(npub)
-        // Logout deletes all local information for the account, as the logout
-        // dialog says: dropping the databases (with their -wal/-shm/-journal
-        // files) means re-importing the key starts with no connections, grants,
-        // history or logs instead of silently restoring them.
-        deleteAccountDatabases(context, npub)
-        val userPrefs = sharedPrefs(context, npub)
-        userPrefs.edit(commit = true) { clear() }
-        SavedAccounts.remove(context, npub)
-        SavedAccounts.setFavorite(context, npub, false)
-        deleteUserPreferenceFile(context, npub)
-
-        deleteUserDataStoreFile(context, npub)
-
-        if (SavedAccounts.list(context).isEmpty()) {
-            val appPrefs = sharedPrefs(context)
-            appPrefs.edit(commit = true) { clear() }
-            return true
-        } else if (SavedAccounts.current(context) == npub) {
-            SavedAccounts.switchTo(context, SavedAccounts.list(context).elementAt(0))
-            return false
-        }
-        return false
-    }
-
-    internal fun deleteAccountDatabases(context: Context, npub: String) {
-        listOf(AppDatabase.fileName(npub), LogDatabase.fileName(npub), HistoryDatabase.fileName(npub)).forEach { name ->
-            if (!context.deleteDatabase(name) && context.getDatabasePath(name).exists()) {
-                AmberLog.e(Amber.TAG, "Could not delete database $name at logout")
-            }
-        }
-    }
-
-    suspend fun updatePrefsForLogin(
-        context: Context,
-        account: Account,
-        pubKey: String?,
-        privKey: String?,
-        seedWords: String?,
-    ) {
-        saveToEncryptedStorage(context, account, pubKey, privKey, seedWords)
-        SavedAccounts.select(context, account.npub)
-    }
-
-    suspend fun saveToEncryptedStorage(
-        context: Context,
-        account: Account,
-        pubKey: String?,
-        privKey: String?,
-        seedWords: String?,
-    ) {
-        privKey?.let {
-            DataStoreAccess.saveEncryptedKey(context, account.npub, DataStoreAccess.NOSTR_PRIVKEY, it)
-        }
-
-        seedWords?.let {
-            DataStoreAccess.saveEncryptedKey(
-                context,
-                account.npub,
-                DataStoreAccess.SEED_WORDS,
-                seedWords,
-            )
-        }
-
-        val prefs = sharedPrefs(context = context, account.npub)
-        prefs.edit {
-            apply {
-                pubKey?.let { putString(AccountPrefKeys.NOSTR_PUBKEY.key, it) }
-                putString(AccountPrefKeys.ACCOUNT_NAME.key, account.name.value)
-                putString(AccountPrefKeys.PROFILE_URL.key, account.picture.value)
-                putInt(AccountPrefKeys.SIGN_POLICY.key, account.signPolicy)
-                putBoolean(AccountPrefKeys.DID_BACKUP.key, account.didBackup)
-            }
-        }
-
-        accountCache.put(account.npub, account)
-    }
-
-    suspend fun loadFromEncryptedStorage(context: Context): Account? {
-        SavedAccounts.current(context)?.let {
-            return loadFromEncryptedStorage(context, it)
-        }
-        return null
-    }
-
-    fun allCachedAccounts(): List<Account> = accountCache.values().toList()
-
-    /**
-     * Eagerly decrypts and caches every saved account.
-     *
-     * The account switcher in the approval screens (LoginWithPubKey,
-     * BunkerConnectRequestScreen) reads allCachedAccounts() synchronously
-     * inside remember {}, so the cache must be fully populated before the
-     * first approval screen composes. AccountStateViewModel calls this at
-     * app start — the only deterministic startup point that covers both
-     * flavors (ConnectivityService runs reloadApp() asynchronously and does
-     * not exist in the offline flavor). loadFromEncryptedStorageSync stays
-     * lazy for the SignerProvider / NIP-46 paths that only ever need one
-     * known npub (GHSA-8844-q5vh-9j8f, I3).
-     */
-    suspend fun warmAccountCache(context: Context) {
-        SavedAccounts.all(context).forEach {
-            loadFromEncryptedStorage(context, it.npub)
-        }
-    }
-
-    suspend fun allAccounts(context: Context): List<Account> {
-        val accountInfos = SavedAccounts.all(context)
-        return accountInfos.mapNotNull {
-            loadFromEncryptedStorage(context, it.npub)
-        }
-    }
-
-    // For synchronous callers (the ContentProvider); coroutines use loadAccount.
-    @Suppress("RunBlocking")
-    fun loadFromEncryptedStorageSync(context: Context, npub: String? = null): Account? {
-        // Defense-in-depth (GHSA-8844-q5vh-9j8f, I3): previously this warmed
-        // the entire cache (runBlocking over all saved accounts) on any cold
-        // cache / size mismatch, decrypting every account's private key
-        // process-wide on the first IPC/relay lookup. Lazy-load only the
-        // requested account. The UI account switcher relies on
-        // allCachedAccounts() being populated, which warmAccountCache()
-        // handles at app start (called from AccountStateViewModel); this
-        // path is for direct lookups (SignerProvider / NIP-46)
-        // that always know which npub they want.
-        val targetNpub = npub ?: SavedAccounts.current(context) ?: return null
-        accountCache.get(targetNpub)?.let { return it }
-        if (!SavedAccounts.contains(context, targetNpub)) return null
-        return runBlocking { loadFromEncryptedStorage(context, targetNpub) }
-    }
-
-    /** [loadFromEncryptedStorageSync] for callers in a coroutine: [npub], or the current account when null. */
-    suspend fun loadAccount(context: Context, npub: String?): Account? = loadFromEncryptedStorage(context, npub ?: SavedAccounts.current(context) ?: return null)
-
-    fun setAccountName(
-        context: Context,
-        npub: String,
-        value: String,
-    ) {
-        sharedPrefs(context, npub).edit {
-            apply {
-                putString(AccountPrefKeys.ACCOUNT_NAME.key, value)
-            }
-        }
-        accountCache.get(npub)?.name?.tryEmit(value)
-    }
-
-    fun getAccountName(context: Context, npub: String): String {
-        sharedPrefs(context, npub).apply {
-            return getString(AccountPrefKeys.ACCOUNT_NAME.key, "") ?: ""
-        }
-    }
 
     fun updateProxy(
         context: Context,
@@ -723,63 +502,6 @@ object LocalPreferences {
                 putString(SettingsKeys.WEBDAV_PASSWORD_ENCRYPTED.key, encryptedPassword)
                 putString(SettingsKeys.WEBDAV_FILENAME.key, fileName)
             }
-        }
-    }
-
-    suspend fun loadFromEncryptedStorage(context: Context, npub: String): Account? {
-        if (accountCache.get(npub) != null) {
-            return accountCache.get(npub)
-        }
-        if (!SavedAccounts.contains(context, npub)) {
-            return null
-        }
-        val privKey = try {
-            DataStoreAccess.getEncryptedKey(
-                context,
-                npub,
-                DataStoreAccess.NOSTR_PRIVKEY,
-            )
-        } catch (e: InvalidKeyException) {
-            if (KeystorePolicy.isLockedOut(context)) {
-                AmberLog.d(Amber.TAG, "Device locked: account $npub loads after unlock")
-                return null
-            }
-            AmberLog.e(Amber.TAG, "AndroidKeyStore key for $npub is broken (device KeyMint may not support key upgrade). Account skipped.", e)
-            context.amber.keystoreFailedAccounts.value = (context.amber.keystoreFailedAccounts.value + npub).distinct()
-            return null
-        } catch (e: KeyStoreException) {
-            if (KeystorePolicy.isLockedOut(context)) {
-                AmberLog.d(Amber.TAG, "Device locked: account $npub loads after unlock")
-                return null
-            }
-            AmberLog.e(Amber.TAG, "KeyStore operation failed for $npub. Account skipped.", e)
-            context.amber.keystoreFailedAccounts.value = (context.amber.keystoreFailedAccounts.value + npub).distinct()
-            return null
-        }
-        sharedPrefs(context, npub).apply {
-            val pubKey = getString(AccountPrefKeys.NOSTR_PUBKEY.key, null) ?: return null
-            val name = getString(AccountPrefKeys.ACCOUNT_NAME.key, "") ?: ""
-            val picture = getString(AccountPrefKeys.PROFILE_URL.key, "") ?: ""
-            val signPolicy = getInt(AccountPrefKeys.SIGN_POLICY.key, 1)
-            val didBackup = getBoolean(AccountPrefKeys.DID_BACKUP.key, true)
-
-            val account =
-                Account(
-                    signer = NostrSignerInternal(KeyPair(privKey.hexToByteArray())),
-                    hexKey = pubKey,
-                    npub = pubKey.hexToByteArray().toNpub(),
-                    name = MutableStateFlow(name),
-                    picture = MutableStateFlow(picture),
-                    signPolicy = signPolicy,
-                    didBackup = didBackup,
-                    scope = context.amber.applicationIOScope,
-                    appContext = context.applicationContext,
-                )
-            accountCache.put(npub, account)
-            if (npub in context.amber.keystoreFailedAccounts.value) {
-                context.amber.keystoreFailedAccounts.value -= npub
-            }
-            return account
         }
     }
 }

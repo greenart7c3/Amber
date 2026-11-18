@@ -2,6 +2,7 @@ package com.greenart7c3.nostrsigner.service
 
 import android.app.NotificationManager
 import com.greenart7c3.nostrsigner.AccountPreferences
+import com.greenart7c3.nostrsigner.AccountStorage
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.LocalPreferences
@@ -82,11 +83,11 @@ class EventNotificationConsumerRateLimitTest {
 
         val account = newTestAccount(scope)
         accountHex = account.hexKey
-        mockkObject(LocalPreferences, SavedAccounts, AccountPreferences, NotificationUtils, AmberLog)
+        mockkObject(LocalPreferences, AccountStorage, SavedAccounts, AccountPreferences, NotificationUtils, AmberLog)
         every { AmberLog.d(any(), any<String>()) } returns Unit
         every { AmberLog.d(any(), any(), any()) } returns Unit
-        every { LocalPreferences.loadFromEncryptedStorageSync(any(), any()) } returns account
-        coEvery { LocalPreferences.loadAccount(any(), any()) } returns account
+        every { AccountStorage.loadSync(any(), any()) } returns account
+        coEvery { AccountStorage.load(any(), any()) } returns account
         every { SavedAccounts.all(any()) } returns emptyList()
         every { NotificationUtils.getOrCreateBunkerChannel(any()) } returns mockk(relaxed = true)
         every { NotificationUtils.getOrCreateErrorsChannel(any()) } returns mockk(relaxed = true)
@@ -108,7 +109,7 @@ class EventNotificationConsumerRateLimitTest {
 
     @After
     fun tearDown() {
-        unmockkObject(LocalPreferences, SavedAccounts, AccountPreferences, NotificationUtils, AmberLog)
+        unmockkObject(LocalPreferences, AccountStorage, SavedAccounts, AccountPreferences, NotificationUtils, AmberLog)
         EventNotificationConsumer.senderRateLimiter.resetForTest()
         scope.cancel()
     }

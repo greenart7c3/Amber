@@ -5,7 +5,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
-import com.greenart7c3.nostrsigner.LocalPreferences
+import com.greenart7c3.nostrsigner.AccountStorage
 import com.greenart7c3.nostrsigner.models.Account
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -44,7 +44,7 @@ fun rememberBatchAccounts(currentAccounts: List<String>, active: Account): Batch
     val npubs = remember(currentAccounts, active) { batchAccountNpubs(currentAccounts, active.npub) }
     val accounts by produceState(mapOf(active.npub to active), npubs) {
         value = npubs.mapNotNull { npub ->
-            val account = if (npub == active.npub) active else withContext(Dispatchers.IO) { LocalPreferences.loadFromEncryptedStorage(context, npub) }
+            val account = if (npub == active.npub) active else withContext(Dispatchers.IO) { AccountStorage.load(context, npub) }
             account?.let { npub to it }
         }.toMap()
     }

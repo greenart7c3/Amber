@@ -47,7 +47,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
-import com.greenart7c3.nostrsigner.LocalPreferences
+import com.greenart7c3.nostrsigner.AccountStorage
 import com.greenart7c3.nostrsigner.SavedAccounts
 import com.greenart7c3.nostrsigner.commonsui.Res
 import com.greenart7c3.nostrsigner.commonsui.accounts_to_export
@@ -140,7 +140,7 @@ fun ExportAllAccountsScreen(
 
                         // Mark all accounts as backed up
                         SavedAccounts.all(context).forEach { accountInfo ->
-                            LocalPreferences.loadFromEncryptedStorage(context, accountInfo.npub)?.let { account ->
+                            AccountStorage.load(context, accountInfo.npub)?.let { account ->
                                 account.didBackup = true
                             }
                         }

@@ -1,6 +1,7 @@
 package com.greenart7c3.nostrsigner.ui
 
 import com.greenart7c3.nostrsigner.AccountPreferences
+import com.greenart7c3.nostrsigner.AccountStorage
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.LocalPreferences
@@ -44,13 +45,13 @@ class AccountStateViewModelRestoreTest {
         mockkObject(BuildFlavorChecker)
         every { BuildFlavorChecker.isOfflineFlavor() } returns false
 
-        mockkObject(LocalPreferences, SavedAccounts, AccountPreferences)
+        mockkObject(LocalPreferences, AccountStorage, SavedAccounts, AccountPreferences)
         every { SavedAccounts.current(any()) } returns null
         every { SavedAccounts.all(any()) } returns emptyList()
-        coEvery { LocalPreferences.warmAccountCache(any()) } returns Unit
-        every { LocalPreferences.loadFromEncryptedStorageSync(any(), any()) } returns null
-        coEvery { LocalPreferences.loadAccount(any(), any()) } returns null
-        // Post-logout state: updatePrefsForLogout wipes prefs_<npub>, so the
+        coEvery { AccountStorage.all(any()) } returns emptyList()
+        every { AccountStorage.loadSync(any(), any()) } returns null
+        coEvery { AccountStorage.load(any(), any()) } returns null
+        // Post-logout state: AccountStorage.logout wipes prefs_<npub>, so the
         // publish-consent flag reads false on relogin.
         every { AccountPreferences.getBackupApplications(any(), any()) } returns false
 
@@ -68,7 +69,7 @@ class AccountStateViewModelRestoreTest {
     fun tearDown() {
         Dispatchers.resetMain()
         unmockkObject(BuildFlavorChecker)
-        unmockkObject(LocalPreferences, SavedAccounts, AccountPreferences)
+        unmockkObject(LocalPreferences, AccountStorage, SavedAccounts, AccountPreferences)
         unmockkObject(ApplicationBackup)
     }
 

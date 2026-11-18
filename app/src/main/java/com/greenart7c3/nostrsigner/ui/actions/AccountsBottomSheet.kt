@@ -49,8 +49,8 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.SubcomposeAsyncImage
+import com.greenart7c3.nostrsigner.AccountStorage
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
-import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.SavedAccounts
 import com.greenart7c3.nostrsigner.commonsui.Res
 import com.greenart7c3.nostrsigner.commonsui.account_picture
@@ -125,7 +125,7 @@ fun AccountsBottomSheet(
             // the sheet is open.
             val loadedAccounts by produceState(emptyList<Account>(), savedAccounts) {
                 value = withContext(Dispatchers.IO) {
-                    savedAccounts.mapNotNull { LocalPreferences.loadFromEncryptedStorage(context, it.npub) }
+                    savedAccounts.mapNotNull { AccountStorage.load(context, it.npub) }
                 }
             }
             val loadedByNpub = remember(loadedAccounts) { loadedAccounts.associateBy { it.npub } }

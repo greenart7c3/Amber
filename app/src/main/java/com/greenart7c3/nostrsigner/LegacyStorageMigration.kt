@@ -82,7 +82,7 @@ object LegacyStorageMigration {
         }
 
         // The caches may hold the empty list that sent the user to onboarding.
-        LocalPreferences.invalidateAccountCaches()
+        AccountStorage.invalidateCaches()
         val hadCurrentAccount = !SavedAccounts.current(context).isNullOrBlank()
 
         val restored = candidates.filter { npub ->
@@ -124,7 +124,7 @@ object LegacyStorageMigration {
         // keeps its file (and the settings file) for another attempt.
         val verified = restored.filter { npub ->
             try {
-                LocalPreferences.loadFromEncryptedStorage(context, npub) != null
+                AccountStorage.load(context, npub) != null
             } catch (e: Exception) {
                 if (e is CancellationException) throw e
                 AmberLog.e(TAG, "The migrated account $npub does not open yet", e)

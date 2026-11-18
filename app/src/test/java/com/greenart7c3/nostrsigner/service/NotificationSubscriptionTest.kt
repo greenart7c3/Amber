@@ -1,6 +1,7 @@
 package com.greenart7c3.nostrsigner.service
 
 import androidx.collection.LruCache
+import com.greenart7c3.nostrsigner.AccountStorage
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.LocalPreferences
@@ -61,16 +62,16 @@ class NotificationSubscriptionTest {
         every { amber.dao(any()) } answers { CachingApplicationDao(dao) }
         every { amber.notificationCache } returns LruCache(512)
 
-        mockkObject(LocalPreferences)
+        mockkObject(LocalPreferences, AccountStorage)
         account = newTestAccount(scope)
-        coEvery { LocalPreferences.allAccounts(any()) } returns listOf(account)
+        coEvery { AccountStorage.all(any()) } returns listOf(account)
 
         subscription = NotificationSubscription(client, mockk(relaxed = true), settingsStore = amber, accountRepository = amber, bunkerResponder = mockk(relaxed = true), scope = amber.applicationIOScope, notificationCache = amber.notificationCache)
     }
 
     @After
     fun tearDown() {
-        unmockkObject(LocalPreferences)
+        unmockkObject(LocalPreferences, AccountStorage)
         LocalKeyAccountIndex.replaceAll(emptyMap())
         scope.cancel()
     }

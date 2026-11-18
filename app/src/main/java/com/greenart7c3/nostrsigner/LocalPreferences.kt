@@ -16,6 +16,7 @@ import com.greenart7c3.nostrsigner.models.defaultIndexerRelays
 import com.greenart7c3.nostrsigner.okhttp.HttpClientManager
 import com.greenart7c3.nostrsigner.service.TorManager
 import com.greenart7c3.nostrsigner.ui.parseBiometricsTimeType
+import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.RelayUrlNormalizer
 import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -112,18 +113,10 @@ object LocalPreferences {
 
     fun getHistoryRetention(context: Context): RetentionPeriod = getRetention(context, SettingsKeys.HISTORY_RETENTION, RetentionPeriod.THIRTY_DAYS)
 
-    private fun getRetention(context: Context, key: SettingsKeys, default: RetentionPeriod): RetentionPeriod = try {
-        RetentionPeriod.valueOf(sharedPrefs(context).getString(key.key, default.name)!!)
-    } catch (_: IllegalArgumentException) {
-        default
-    }
+    private fun getRetention(context: Context, key: SettingsKeys, default: RetentionPeriod): RetentionPeriod = sharedPrefs(context).enumOr(key, default)
 
     /** Read synchronously so the first frame of each activity already uses the chosen theme. */
-    fun getThemeMode(context: Context): ThemeMode = try {
-        ThemeMode.valueOf(sharedPrefs(context).getString(SettingsKeys.THEME_MODE.key, ThemeMode.SYSTEM.name)!!)
-    } catch (_: IllegalArgumentException) {
-        ThemeMode.SYSTEM
-    }
+    fun getThemeMode(context: Context): ThemeMode = sharedPrefs(context).enumOr(SettingsKeys.THEME_MODE, ThemeMode.SYSTEM)
 
     fun updateThemeMode(context: Context, mode: ThemeMode) {
         sharedPrefs(context).edit {
@@ -175,18 +168,7 @@ object LocalPreferences {
      */
     fun presetProxyFromPrefs(context: Context) {
         val prefs = sharedPrefs(context)
-        val torMode = try {
-            TorMode.valueOf(prefs.getString(SettingsKeys.TOR_MODE.key, TorMode.DISABLED.name)!!)
-        } catch (_: IllegalArgumentException) {
-            TorMode.DISABLED
-        }
-        when (torMode) {
-            TorMode.ORBOT -> HttpClientManager.setDefaultProxyOnPort(
-                prefs.getInt(SettingsKeys.PROXY_PORT.key, 9050),
-            )
-            TorMode.BUILTIN -> HttpClientManager.setDefaultProxyOnPort(TorManager.socksPort.value)
-            TorMode.DISABLED -> {}
-        }
+        applyProxy(prefs.enumOr(SettingsKeys.TOR_MODE, TorMode.DISABLED), prefs.getInt(SettingsKeys.PROXY_PORT.key, 9050))
     }
 
     fun getStartServiceOnBoot(context: Context): Boolean = sharedPrefs(context).getBoolean(SettingsKeys.START_SERVICE_ON_BOOT.key, true)
@@ -210,40 +192,17 @@ object LocalPreferences {
         sharedPrefs(context).apply {
             // One-time cleanup: the pre-rename legacy key is never read again, so
             // remove it instead of leaving a stale opt-in bit in every prefs file.
-            // It must run before the return below.
             if (contains(LEGACY_TRUST_SCORE_ENABLED_KEY)) {
                 edit { remove(LEGACY_TRUST_SCORE_ENABLED_KEY) }
             }
 
-            // Migrate old use_proxy boolean to TorMode enum
-            val torMode = if (contains(SettingsKeys.TOR_MODE.key)) {
-                try {
-                    TorMode.valueOf(getString(SettingsKeys.TOR_MODE.key, TorMode.DISABLED.name)!!)
-                } catch (_: IllegalArgumentException) {
-                    TorMode.DISABLED
-                }
-            } else if (getBoolean(SettingsKeys.USE_PROXY.key, false)) {
-                TorMode.ORBOT
-            } else {
-                TorMode.DISABLED
-            }
-
+            val torMode = torMode()
             val proxyPort = getInt(SettingsKeys.PROXY_PORT.key, 9050)
-            when (torMode) {
-                TorMode.ORBOT -> HttpClientManager.setDefaultProxyOnPort(proxyPort)
-                // For built-in Tor, set a fail-closed placeholder proxy so no clearnet
-                // traffic can leak before TorManager configures the real SOCKS port.
-                TorMode.BUILTIN -> HttpClientManager.setDefaultProxyOnPort(TorManager.socksPort.value)
-                TorMode.DISABLED -> {}
-            }
+            applyProxy(torMode, proxyPort)
 
             return AmberSettings(
-                defaultRelays = getStringSet(SettingsKeys.DEFAULT_RELAYS.key, null)?.mapNotNull {
-                    RelayUrlNormalizer.normalizeOrNull(it)
-                } ?: defaultAppRelays,
-                defaultProfileRelays = getStringSet(SettingsKeys.DEFAULT_PROFILE_RELAYS.key, null)?.mapNotNull {
-                    RelayUrlNormalizer.normalizeOrNull(it)
-                } ?: defaultIndexerRelays,
+                defaultRelays = relays(SettingsKeys.DEFAULT_RELAYS, defaultAppRelays),
+                defaultProfileRelays = relays(SettingsKeys.DEFAULT_PROFILE_RELAYS, defaultIndexerRelays),
                 lastBiometricsTime = getLong(SettingsKeys.LAST_BIOMETRICS_TIME.key, 0),
                 useAuth = getBoolean(SettingsKeys.USE_AUTH.key, false),
                 biometricsTimeType = parseBiometricsTimeType(getInt(SettingsKeys.BIOMETRICS_TYPE.key, 0)),
@@ -254,32 +213,14 @@ object LocalPreferences {
                 language = getString(SettingsKeys.LANGUAGE_PREFS.key, null),
                 authWhitelist = getStringSet(SettingsKeys.AUTH_WHITELIST.key, null)?.toList() ?: emptyList(),
                 autoCheckUpdates = getBoolean(SettingsKeys.AUTO_CHECK_UPDATES.key, true),
-                updateCheckFrequency = try {
-                    UpdateCheckFrequency.valueOf(
-                        getString(SettingsKeys.UPDATE_CHECK_FREQUENCY.key, UpdateCheckFrequency.DAILY.name)!!,
-                    )
-                } catch (_: IllegalArgumentException) {
-                    UpdateCheckFrequency.DAILY
-                },
-                updateChannel = try {
-                    UpdateChannel.valueOf(
-                        getString(SettingsKeys.UPDATE_CHANNEL.key, UpdateChannel.STABLE.name)!!,
-                    )
-                } catch (_: IllegalArgumentException) {
-                    UpdateChannel.STABLE
-                },
+                updateCheckFrequency = enumOr(SettingsKeys.UPDATE_CHECK_FREQUENCY, UpdateCheckFrequency.DAILY),
+                updateChannel = enumOr(SettingsKeys.UPDATE_CHANNEL, UpdateChannel.STABLE),
                 startServiceOnBoot = getBoolean(SettingsKeys.START_SERVICE_ON_BOOT.key, true),
                 privacyMode = getBoolean(SettingsKeys.PRIVACY_MODE.key, false),
                 rateLimitEnabled = getBoolean(SettingsKeys.RATE_LIMIT_ENABLED.key, true),
                 rateLimitMaxPerWindow = getInt(SettingsKeys.RATE_LIMIT_MAX_PER_WINDOW.key, 5),
                 rateLimitWindowSeconds = getInt(SettingsKeys.RATE_LIMIT_WINDOW_SECONDS.key, 30),
-                profileFetchInterval = try {
-                    ProfileFetchInterval.valueOf(
-                        getString(SettingsKeys.PROFILE_FETCH_INTERVAL.key, ProfileFetchInterval.FIFTEEN_MINUTES.name)!!,
-                    )
-                } catch (_: IllegalArgumentException) {
-                    ProfileFetchInterval.FIFTEEN_MINUTES
-                },
+                profileFetchInterval = enumOr(SettingsKeys.PROFILE_FETCH_INTERVAL, ProfileFetchInterval.FIFTEEN_MINUTES),
                 trustScoreEnabled = getBoolean(SettingsKeys.TRUST_SCORE_ENABLED.key, false),
                 logRetention = getLogRetention(context),
                 historyRetention = getHistoryRetention(context),
@@ -287,6 +228,32 @@ object LocalPreferences {
                 localBunkerServer = getBoolean(SettingsKeys.LOCAL_BUNKER_SERVER.key, false),
                 localBunkerPort = if (contains(SettingsKeys.LOCAL_BUNKER_PORT.key)) getInt(SettingsKeys.LOCAL_BUNKER_PORT.key, 0) else null,
             )
+        }
+    }
+
+    // A stored enum by name; a missing or unknown name (an older or newer build) reads as [default].
+    private inline fun <reified T : Enum<T>> SharedPreferences.enumOr(key: SettingsKeys, default: T): T = try {
+        enumValueOf<T>(getString(key.key, default.name)!!)
+    } catch (_: IllegalArgumentException) {
+        default
+    }
+
+    // The old use_proxy boolean predates TorMode: true meant Orbot.
+    private fun SharedPreferences.torMode(): TorMode = when {
+        contains(SettingsKeys.TOR_MODE.key) -> enumOr(SettingsKeys.TOR_MODE, TorMode.DISABLED)
+        getBoolean(SettingsKeys.USE_PROXY.key, false) -> TorMode.ORBOT
+        else -> TorMode.DISABLED
+    }
+
+    private fun SharedPreferences.relays(key: SettingsKeys, default: List<NormalizedRelayUrl>): List<NormalizedRelayUrl> = getStringSet(key.key, null)?.mapNotNull { RelayUrlNormalizer.normalizeOrNull(it) } ?: default
+
+    // Points OkHttp at the proxy before any dial: Orbot's port, or for built-in Tor a
+    // fail-closed placeholder so no clearnet traffic leaks before TorManager sets the real port.
+    private fun applyProxy(torMode: TorMode, proxyPort: Int) {
+        when (torMode) {
+            TorMode.ORBOT -> HttpClientManager.setDefaultProxyOnPort(proxyPort)
+            TorMode.BUILTIN -> HttpClientManager.setDefaultProxyOnPort(TorManager.socksPort.value)
+            TorMode.DISABLED -> {}
         }
     }
 

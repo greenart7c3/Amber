@@ -140,6 +140,12 @@ or plain text) is `service/EncryptedDataPreview.kt`'s `previewOf`, shared by the
 intent and bunker paths on Android (the desktop shows no such preview);
 `EncryptedDataPreviewTest` covers it.
 
+`BunkerResponder.sendResult` / `sendRejection` are split by job: attaching a
+bunker:// connection to the client key, the new-connection row, what a connect
+sets (its own key, the URI's relays, the client metadata, the default grants),
+the history entry, publishing the reply and undoing the grants when it fails;
+`sendBunkerResponse` builds the reply once (`replyEvent`) instead of twice.
+
 ### 2. Split `IntentUtils.kt`
 
 Separate parsing (`nostrsigner://` / `nostrconnect://` → a data object),

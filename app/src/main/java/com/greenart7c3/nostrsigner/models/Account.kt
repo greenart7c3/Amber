@@ -1,6 +1,5 @@
 package com.greenart7c3.nostrsigner.models
 
-import android.app.KeyguardManager
 import android.content.Context
 import android.widget.Toast
 import androidx.compose.runtime.Immutable
@@ -9,13 +8,12 @@ import androidx.compose.ui.platform.Clipboard
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.DataStoreAccess
-import com.greenart7c3.nostrsigner.LocalPreferences
+import com.greenart7c3.nostrsigner.KeystorePolicy
 import com.greenart7c3.nostrsigner.common.nip44v3.Nip44v3
 import com.greenart7c3.nostrsigner.common.psbt.PsbtSighashPolicy
 import com.greenart7c3.nostrsigner.commonsui.Res
 import com.greenart7c3.nostrsigner.commonsui.getStringBlocking
 import com.greenart7c3.nostrsigner.commonsui.secret_key_copied_to_clipboard
-import com.greenart7c3.nostrsigner.service.DeviceUnlockPolicy
 import com.greenart7c3.nostrsigner.ui.setSensitiveClip
 import com.vitorpamplona.quartz.nip01Core.core.Event
 import com.vitorpamplona.quartz.nip01Core.core.HexKey
@@ -53,17 +51,10 @@ class Account(
     // The application context: key storage, the keyguard and toasts. Previews pass
     // none, so anything that needs it fails there instead of guessing.
     private val appContext: Context? = null,
+    // Reads the policy synchronously: the DataStore-backed settings may not be loaded
+    // yet, and this gate must see the user's actual decision, not a default.
     private val keyAccessCheck: () -> Unit = {
-        val context = checkNotNull(appContext) { "No context to check the device lock with" }
-        // REQUIRE_UNLOCKED_DEVICE is a plain SharedPreferences boolean, so read it
-        // synchronously: the DataStore-backed settings object may not be loaded yet
-        // (offline flavor, WorkManager/ContentProvider cold start), and this gate
-        // must see the user's actual decision, not a default-valued guess.
-        val required = LocalPreferences.getRequireUnlockedDevice(context)
-        DeviceUnlockPolicy.requireAccess(required) {
-            val keyguard = context.getSystemService(KeyguardManager::class.java)
-            keyguard?.isDeviceLocked ?: true
-        }
+        KeystorePolicy.requireAccess(checkNotNull(appContext) { "No context to check the device lock with" })
     },
 ) {
     private fun requireContext(): Context = checkNotNull(appContext) { "Account has no application context" }

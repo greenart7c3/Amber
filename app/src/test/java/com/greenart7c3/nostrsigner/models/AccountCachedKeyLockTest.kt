@@ -3,7 +3,7 @@ package com.greenart7c3.nostrsigner.models
 import android.app.KeyguardManager
 import android.content.Context
 import com.greenart7c3.nostrsigner.Amber
-import com.greenart7c3.nostrsigner.LocalPreferences
+import com.greenart7c3.nostrsigner.KeystorePolicy
 import com.greenart7c3.nostrsigner.service.DeviceUnlockPolicy
 import com.vitorpamplona.quartz.nip01Core.core.Event
 import com.vitorpamplona.quartz.nip01Core.signers.NostrSignerInternal
@@ -87,15 +87,15 @@ class AccountCachedKeyLockTest {
         val amber = mockk<Amber>()
         val keyguard = mockk<KeyguardManager>()
         every { amber.getSystemService(KeyguardManager::class.java) } returns keyguard
-        mockkObject(LocalPreferences)
+        mockkObject(KeystorePolicy)
         try {
             // Opt-in off: allowed regardless of lock state, keyguard untouched.
-            every { LocalPreferences.getRequireUnlockedDevice(any()) } returns false
+            every { KeystorePolicy.requireUnlockedDevice(any()) } returns false
             every { keyguard.isDeviceLocked } returns true
             newAccount(mockk<NostrSignerInternal>(), scope, amber).requirePrivateKeyAccess()
 
             // Opt-in on, device unlocked: allowed.
-            every { LocalPreferences.getRequireUnlockedDevice(any()) } returns true
+            every { KeystorePolicy.requireUnlockedDevice(any()) } returns true
             every { keyguard.isDeviceLocked } returns false
             newAccount(mockk<NostrSignerInternal>(), scope, amber).requirePrivateKeyAccess()
 

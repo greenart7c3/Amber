@@ -17,7 +17,7 @@ import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
-import com.greenart7c3.nostrsigner.LocalPreferences
+import com.greenart7c3.nostrsigner.KeystorePolicy
 import com.greenart7c3.nostrsigner.SavedAccounts
 import com.greenart7c3.nostrsigner.amber
 import com.greenart7c3.nostrsigner.models.TorMode
@@ -50,7 +50,7 @@ class ConnectivityService : Service() {
     private val unlockReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
             if (intent.action != Intent.ACTION_USER_PRESENT) return
-            if (!LocalPreferences.getRequireUnlockedDevice(context)) return
+            if (!KeystorePolicy.requireUnlockedDevice(context)) return
             if (amber.settings.killSwitch.value) return
             AmberLog.d(Amber.TAG, "Device unlocked, refreshing relay subscriptions")
             amber.applicationIOScope.launch {

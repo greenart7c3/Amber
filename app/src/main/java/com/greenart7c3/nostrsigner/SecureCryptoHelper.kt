@@ -38,7 +38,7 @@ object SecureCryptoHelper {
     // new key under whichever alias is free, so the key that protects the
     // existing ciphertext is never deleted until every secret has been
     // durably re-encrypted (GHSA-wv7c-hq2j-ppc5). The alias in use is
-    // recorded by LocalPreferences.commitActiveKeystoreAlias; installs that
+    // recorded by KeystorePolicy.commitActiveAlias; installs that
     // predate it have never rotated and use KEY_ALIAS.
     private const val KEY_ALIAS = "AMBER_AES_KEY"
     private const val ALT_KEY_ALIAS = "AMBER_AES_KEY_B"
@@ -216,7 +216,7 @@ object SecureCryptoHelper {
         val context = appContext
         val keyStore = getKeyStore()
         val alias = resolveActiveAlias(context, keyStore)
-        val key = keyStore.secretKey(alias) ?: generateSecretKey(context, alias, LocalPreferences.getRequireUnlockedDevice(context))
+        val key = keyStore.secretKey(alias) ?: generateSecretKey(context, alias, KeystorePolicy.requireUnlockedDevice(context))
         return KeyHandle(alias, key, keyStore.secretKey(otherAlias(alias)))
     }
 
@@ -227,11 +227,11 @@ object SecureCryptoHelper {
      * would strand everything encrypted under the survivor.
      */
     private fun resolveActiveAlias(context: Context, keyStore: KeyStore): String {
-        val recorded = if (LocalPreferences.getActiveKeystoreAlias(context) == ALT_KEY_ALIAS) ALT_KEY_ALIAS else KEY_ALIAS
+        val recorded = if (KeystorePolicy.activeAlias(context) == ALT_KEY_ALIAS) ALT_KEY_ALIAS else KEY_ALIAS
         val other = otherAlias(recorded)
         if (!keyStore.containsAlias(recorded) && keyStore.containsAlias(other)) {
             AmberLog.w(TAG, "Active Keystore alias $recorded is missing, adopting $other")
-            if (!LocalPreferences.commitActiveKeystoreAlias(context, other)) {
+            if (!KeystorePolicy.commitActiveAlias(context, other)) {
                 AmberLog.w(TAG, "Failed to persist adopted Keystore alias $other")
             }
             return other
@@ -317,7 +317,7 @@ object SecureCryptoHelper {
         if (oldKey == null) {
             // No key under either alias, so nothing is encrypted yet.
             val key = generateSecretKey(context, oldAlias, requireUnlockedDevice)
-            if (!LocalPreferences.commitActiveKeystoreAlias(context, oldAlias, requireUnlockedDevice)) {
+            if (!KeystorePolicy.commitActiveAlias(context, oldAlias, requireUnlockedDevice)) {
                 throw IOException("Failed to persist the key policy")
             }
             cachedHandle = KeyHandle(oldAlias, key, null)
@@ -344,9 +344,9 @@ object SecureCryptoHelper {
 
         // 2. Switch. commit() updates the in-memory values even when the disk
         // write fails, so restore them before discarding the new key.
-        val previousPolicy = LocalPreferences.getRequireUnlockedDevice(context)
-        if (!LocalPreferences.commitActiveKeystoreAlias(context, newAlias, requireUnlockedDevice)) {
-            LocalPreferences.commitActiveKeystoreAlias(context, oldAlias, previousPolicy)
+        val previousPolicy = KeystorePolicy.requireUnlockedDevice(context)
+        if (!KeystorePolicy.commitActiveAlias(context, newAlias, requireUnlockedDevice)) {
+            KeystorePolicy.commitActiveAlias(context, oldAlias, previousPolicy)
             discardAlias(keyStore, newAlias)
             throw IOException("Failed to persist the new active key alias")
         }

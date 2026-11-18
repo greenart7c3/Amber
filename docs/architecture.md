@@ -220,5 +220,8 @@ Done so far: the saved-account list, current account and favorites are
 times) `AccountPreferences`, and both read the preference files through
 `appPreferences`/`accountPreferences` (`PreferenceFiles.kt`). Neither touches the
 container; `SavedAccountsTest` pins the stored format. Left: the encrypted
-account and key storage (load, login, logout, the decrypted-account cache and the
-keystore lock check) and the app settings.
+account and key storage (load, login, logout and the decrypted-account cache) and
+the app settings. The key policy is `KeystorePolicy`: the synchronous
+`requireUnlockedDevice` read, the active Keystore alias committed with it, the
+signing gate (`requireAccess`, fail-closed) and the locked-device check that keeps a
+locked device from being reported as a broken key; `KeystorePolicyTest` covers them.

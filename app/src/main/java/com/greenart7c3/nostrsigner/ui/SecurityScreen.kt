@@ -37,6 +37,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.AmberLog
+import com.greenart7c3.nostrsigner.KeystorePolicy
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.commonsui.Res
 import com.greenart7c3.nostrsigner.commonsui.authenticate
@@ -90,7 +91,7 @@ fun SecurityScreen(
         TitleExplainer(stringResource(it.resourceId))
     }.toImmutableList()
     val context = LocalContext.current
-    var requireUnlockedDevice by remember { mutableStateOf(LocalPreferences.getRequireUnlockedDevice(context)) }
+    var requireUnlockedDevice by remember { mutableStateOf(KeystorePolicy.requireUnlockedDevice(context)) }
     var requireUnlockedDeviceUpdating by remember { mutableStateOf(false) }
     var biometricsIndex by remember {
         mutableIntStateOf(settingsStore.settings.biometricsTimeType.screenCode)
@@ -137,7 +138,7 @@ fun SecurityScreen(
                 AmberLog.e(Amber.TAG, "Error toggling require unlocked device", e)
             } finally {
                 // Re-sync the toggle with the persisted setting (reverts on failure)
-                requireUnlockedDevice = LocalPreferences.getRequireUnlockedDevice(context)
+                requireUnlockedDevice = KeystorePolicy.requireUnlockedDevice(context)
                 requireUnlockedDeviceUpdating = false
             }
         }

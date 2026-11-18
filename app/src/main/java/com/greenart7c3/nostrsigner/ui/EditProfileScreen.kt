@@ -18,17 +18,14 @@ import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.commonsui.Res
 import com.greenart7c3.nostrsigner.commonsui.nickname
 import com.greenart7c3.nostrsigner.commonsui.save
-import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.ui.components.AmberButton
-import com.greenart7c3.nostrsigner.ui.navigation.Route
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun EditProfileScreen(
-    modifier: Modifier,
-    account: Account,
-    accountStateViewModel: AccountStateViewModel,
     npub: String,
+    onSave: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
     val name = LocalPreferences.getAccountName(context, npub)
@@ -53,7 +50,7 @@ fun EditProfileScreen(
             modifier = Modifier.padding(vertical = 40.dp),
             onClick = {
                 LocalPreferences.setAccountName(context, npub, textFieldvalue.text)
-                accountStateViewModel.switchUser(account.npub, Route.Settings.route)
+                onSave()
             },
             text = stringResource(Res.string.save),
         )

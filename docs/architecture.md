@@ -156,7 +156,7 @@ Room DAOs that need settings take their database, which carries them, and
 application context installed by `Amber.onCreate`. Moving these dependencies
 behind ViewModels is step 4.
 
-### 4. Give the big screens ViewModels
+### 4. Give the big screens ViewModels (done)
 
 `LoginScreen`, `MainScreen`, the `Bunker*`/`Intent*` home screens and
 `SettingsScreen`: hoist state into a `…ViewModel` and keep a stateless content
@@ -200,6 +200,13 @@ or recovery phrase with `parseLoginKey` (unit-tested), `SignUpViewModel` draws
 the new key; the pages take callbacks into `AccountStateViewModel` instead of the
 ViewModel itself, and the sign policy / Tor step both flows end on is one
 `ConnectionSetupPage`).
+
+`MainScreen` (`MainScreenViewModel` switches Tor/Orbot off the composition scope;
+where navigation starts is the tested `startRoute`; the destinations are grouped
+`NavGraphBuilder` functions in `MainNavGraph.kt` laid out by a `MainLayout`; the
+accounts sheet, profile editor and restore prompt take callbacks instead of
+`AccountStateViewModel`). What is left of `AccountStateViewModel` forwarding is
+`AccountScreen` handing it to `MainScreen`, which calls its account operations.
 
 ### 5. Break up `LocalPreferences.kt`
 

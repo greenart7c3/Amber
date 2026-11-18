@@ -316,8 +316,11 @@ private fun AccountAvatar(
 }
 
 @Composable
-fun RestoreBackupDialog(accountStateViewModel: AccountStateViewModel) {
-    val state by accountStateViewModel.restorePrompt.collectAsState()
+fun RestoreBackupDialog(
+    state: RestorePromptState?,
+    onAccept: (List<BackupApplication>, (RestoreResult) -> Unit) -> Unit,
+    onDismiss: () -> Unit,
+) {
     val found = state as? RestorePromptState.Found ?: return
     val context = LocalContext.current
     val apps = found.payload.applications.size
@@ -327,7 +330,7 @@ fun RestoreBackupDialog(accountStateViewModel: AccountStateViewModel) {
     AlertDialog(
 
         modifier = Modifier.outlineIfAny(amoledBorder(), AlertDialogDefaults.shape),
-        onDismissRequest = { accountStateViewModel.dismissRestore() },
+        onDismissRequest = { onDismiss() },
         title = { Text(stringResource(Res.string.signin_restore_title)) },
         text = {
             BackupContents(selection) {
@@ -336,7 +339,7 @@ fun RestoreBackupDialog(accountStateViewModel: AccountStateViewModel) {
         },
         confirmButton = {
             TextButton(enabled = selection.hasSelection, onClick = {
-                accountStateViewModel.acceptRestore(selection.selected()) { result ->
+                onAccept(selection.selected()) { result ->
                     val msg = when (result) {
                         is RestoreResult.Success -> getStringBlocking(Res.string.restore_success, result.apps, result.permissions)
                         is RestoreResult.NoBackupFound -> getStringBlocking(Res.string.restore_no_backup_found)
@@ -347,7 +350,7 @@ fun RestoreBackupDialog(accountStateViewModel: AccountStateViewModel) {
             }) { Text(stringResource(Res.string.signin_restore_accept)) }
         },
         dismissButton = {
-            TextButton(onClick = { accountStateViewModel.dismissRestore() }) {
+            TextButton(onClick = { onDismiss() }) {
                 Text(stringResource(Res.string.signin_restore_skip))
             }
         },

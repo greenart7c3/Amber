@@ -125,7 +125,8 @@ fun AccountScreen(
                         bunkerRequests = bunkerRequests,
                         packageName = packageName,
                         appName = appName,
-                        route = localRoute,
+                        route = { localRoute.value },
+                        onConsumeRoute = { localRoute.value = null },
                         navController = navController,
                         isExternalRequest = isExternalRequest || (intents.isEmpty() && bunkerRequests.isNotEmpty() && (packageName != null || intent.intent?.getStringExtra("route") == Route.IncomingRequest.route)),
                         onRemoveIntentData = { results, type ->

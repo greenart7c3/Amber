@@ -126,6 +126,15 @@ both apps. Encrypting and signing the reply stays in each app: on Android it
 goes through `Account`, whose `requireUnlockedDevice` gate a shared helper
 handed the raw key would bypass.
 
+The admission gate is `common/Nip46Admission.kt`: `admitNip46Request` decides, from
+the connection saved under the sender's key, the key the request arrived on and,
+for a `connect`, its secret and the connection that secret names, whether the
+request is dropped (another connection's key), acked (a repeated connect),
+refused before the account key is used (a refused secret, or "no permission")
+or admitted. `EventNotificationConsumer.notify` and `BunkerEngine.routeRequest`
+both call it and keep only their storage lookups, logs and replies;
+`Nip46AdmissionTest` covers each outcome.
+
 ### 2. Split `IntentUtils.kt`
 
 Separate parsing (`nostrsigner://` / `nostrconnect://` → a data object),

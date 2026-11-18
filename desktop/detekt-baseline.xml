@@ -83,7 +83,6 @@
     <ID>MutableStateAutoboxing:LoginScreen.kt:mutableStateOf(0)</ID>
     <ID>NestedBlockDepth:AccountAvatar.kt:ProfileImages$private fun download: ByteArray?</ID>
     <ID>ReturnCount:App.kt:@Composable fun App</ID>
-    <ID>ReturnCount:BunkerEngine.kt:BunkerEngine$private suspend fun handleRequest</ID>
     <ID>ReturnCount:DesktopKeyStore.kt:DesktopKeyStore$private fun loadOrCreateFromKeystore: SecretKey</ID>
     <ID>ReturnCount:KeystorePassword.kt:KeystorePassword$fun resolve: Resolved</ID>
     <ID>ReturnCount:Notifier.kt:Notifier$private fun linux: Notification?</ID>

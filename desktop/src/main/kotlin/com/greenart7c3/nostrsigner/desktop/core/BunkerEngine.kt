@@ -2,17 +2,17 @@ package com.greenart7c3.nostrsigner.desktop.core
 
 import com.greenart7c3.nostrsigner.common.BUNKER_REPLY_ATTEMPTS
 import com.greenart7c3.nostrsigner.common.EncryptionType
+import com.greenart7c3.nostrsigner.common.Nip46Admission
+import com.greenart7c3.nostrsigner.common.Nip46Connection
 import com.greenart7c3.nostrsigner.common.RELAY_AUTH_KIND
 import com.greenart7c3.nostrsigner.common.SignerType
 import com.greenart7c3.nostrsigner.common.UNVERIFIED_REPLY_ATTEMPTS
+import com.greenart7c3.nostrsigner.common.admitNip46Request
 import com.greenart7c3.nostrsigner.common.canRememberRelayAuth
-import com.greenart7c3.nostrsigner.common.connectSecretRejection
-import com.greenart7c3.nostrsigner.common.connectsThroughOtherKey
 import com.greenart7c3.nostrsigner.common.decodeQueryParamValue
 import com.greenart7c3.nostrsigner.common.generateBunkerPrivKey
 import com.greenart7c3.nostrsigner.common.hasAmbiguousRelayTags
 import com.greenart7c3.nostrsigner.common.isBlockedByAuthWhitelist
-import com.greenart7c3.nostrsigner.common.isRepeatedConnect
 import com.greenart7c3.nostrsigner.common.localPubKeyFromPrivKey
 import com.greenart7c3.nostrsigner.common.nip44v3.Nip44v3
 import com.greenart7c3.nostrsigner.common.nip44v3Kind
@@ -486,10 +486,10 @@ class BunkerEngine(
         }
         store.addLog(relay.url, "bunker", "Request ${bunkerRequest.id} method ${bunkerRequest.method}")
 
-        handleRequest(bunkerRequest, event, acc, relay, encryptionType, connectionPrivKey)
+        routeRequest(bunkerRequest, event, acc, relay, encryptionType, connectionPrivKey)
     }
 
-    private suspend fun handleRequest(
+    private suspend fun routeRequest(
         bunkerRequest: BunkerRequest,
         event: Event,
         acc: DesktopAccount,
@@ -516,79 +516,84 @@ class BunkerEngine(
             return
         }
 
-        var permission = store.getByKey(event.pubKey)
-        if (permission != null && permission.app.isExpired()) {
+        val stored = store.getByKey(event.pubKey)
+        if (stored != null && stored.app.isExpired()) {
             // Mirrors EventNotificationConsumer: the user set a finite lifetime
             // on this connection, so answer as an unknown app even before the
             // prune loop deletes it.
             store.addLog(relay.url, "bunker", "Connection expired for ${event.pubKey}")
-            permission = null
         }
-        if (permission != null && connectsThroughOtherKey(permission.app.localKey, connectionPrivKey, type)) {
+        val connectSecret = (bunkerRequest as? BunkerRequestConnect)?.let { it.secret ?: UUID.randomUUID().toString() }
+        val withSecret = connectSecret?.let { store.getBySecret(it) }
+        val reply = UnadmittedReply(acc, connectionPrivKey, event.pubKey, encryptionType, bunkerRequest.id)
+        when (val admission = admitNip46Request(type, stored?.toNip46Connection(), connectionPrivKey, connectSecret, withSecret?.toNip46Connection())) {
+            is Nip46Admission.Admit -> handleRequest(
+                bunkerRequest,
+                event,
+                acc,
+                relay,
+                encryptionType,
+                connectionPrivKey,
+                stored.takeIf { admission.stored != null },
+                withSecret.takeIf { admission.bySecret != null },
+            )
+            is Nip46Admission.AckRepeatedConnect -> {
+                // Already-connected client re-sending `connect`: ack silently.
+                store.addHistory(HistoryRecord(admission.connection.key, type.toString().lowercase(), null, TimeUtils.now(), true))
+                val relays = stored?.app?.normalizedRelays().orEmpty().ifEmpty { responseRelay }
+                sendResponse(acc, connectionPrivKey.ifEmpty { admission.connection.localKey }, event.pubKey, encryptionType, BunkerResponse(bunkerRequest.id, "ack", null), relays)
+            }
+            is Nip46Admission.RefuseConnect -> {
+                store.addLog(relay.url, "bunker", "Connection rejected: ${admission.message}")
+                refuse(reply, admission.message, withSecret?.app?.normalizedRelays() ?: responseRelay)
+            }
+            Nip46Admission.Unknown -> {
+                store.addLog(relay.url, "bunker", "No permission found for ${event.pubKey}")
+                refuse(reply, "no permission", responseRelay)
+            }
             // Mirrors EventNotificationConsumer: a stored app may only use its
             // own connection key; a request to another connection's key is
             // dropped. A connect is exempt (that is how a client attaches).
-            store.addLog(relay.url, "bunker", "Request ${bunkerRequest.id} from ${event.pubKey} reached another connection's key")
-            return
+            Nip46Admission.Ignore -> store.addLog(relay.url, "bunker", "Request ${bunkerRequest.id} from ${event.pubKey} reached another connection's key")
         }
+    }
 
-        // Already-connected client re-sending `connect`: ack silently.
-        if (permission != null &&
-            isRepeatedConnect(type, permission.app.key, permission.app.secret, permission.app.useSecret, permission.app.isConnected)
-        ) {
-            store.addHistory(HistoryRecord(permission.app.key, type.toString().lowercase(), null, TimeUtils.now(), true))
-            sendResponse(
-                acc,
-                connectionPrivKey.ifEmpty { permission.app.localKey },
-                event.pubKey,
-                encryptionType,
-                BunkerResponse(bunkerRequest.id, "ack", null),
-                permission.app.normalizedRelays().ifEmpty { responseRelay },
-            )
-            return
-        }
+    // Who an error reply to a not-admitted sender goes to, and under which key.
+    private class UnadmittedReply(
+        val acc: DesktopAccount,
+        val connectionPrivKey: String,
+        val clientPubKey: String,
+        val encryptionType: EncryptionType,
+        val requestId: String,
+    )
 
-        var applicationWithSecret: AppWithPermissions? = null
-        if (bunkerRequest is BunkerRequestConnect) {
-            val secret = bunkerRequest.secret ?: UUID.randomUUID().toString()
-            applicationWithSecret = store.getBySecret(secret)
-            val message = connectSecretRejection(
-                secret,
-                appFound = applicationWithSecret != null,
-                appConnected = applicationWithSecret?.app?.isConnected == true,
-                appUsesSecret = applicationWithSecret?.app?.useSecret == true,
-            )
-            if (message != null) {
-                store.addLog(relay.url, "bunker", "Connection rejected: $message")
-                // Unauthenticated error reply: publish once, no retries.
-                sendResponse(
-                    acc,
-                    connectionPrivKey,
-                    event.pubKey,
-                    encryptionType,
-                    BunkerResponse(bunkerRequest.id, "", message),
-                    applicationWithSecret?.app?.normalizedRelays() ?: responseRelay,
-                    attempts = UNVERIFIED_REPLY_ATTEMPTS,
-                )
-                return
-            }
-        }
+    // Unauthenticated error reply: publish once, no retry/backoff.
+    private suspend fun refuse(reply: UnadmittedReply, message: String, relays: List<NormalizedRelayUrl>) {
+        sendResponse(
+            reply.acc,
+            reply.connectionPrivKey,
+            reply.clientPubKey,
+            reply.encryptionType,
+            BunkerResponse(reply.requestId, "", message),
+            relays,
+            attempts = UNVERIFIED_REPLY_ATTEMPTS,
+        )
+    }
 
+    private suspend fun handleRequest(
+        bunkerRequest: BunkerRequest,
+        event: Event,
+        acc: DesktopAccount,
+        relay: NormalizedRelayUrl,
+        encryptionType: EncryptionType,
+        connectionPrivKey: String,
+        permission: AppWithPermissions?,
+        applicationWithSecret: AppWithPermissions?,
+    ) {
+        val store = AmberDesktop.store(acc.npub)
+        val responseRelay = listOf(relay)
+        val type = nip46SignerType(bunkerRequest.method)
         val relays = permission?.app?.normalizedRelays() ?: applicationWithSecret?.app?.normalizedRelays() ?: responseRelay
-        if (permission == null && applicationWithSecret == null) {
-            store.addLog(relay.url, "bunker", "No permission found for ${event.pubKey}")
-            // Unauthenticated error reply: publish once, no retries.
-            sendResponse(
-                acc,
-                connectionPrivKey,
-                event.pubKey,
-                encryptionType,
-                BunkerResponse(bunkerRequest.id, "", "no permission"),
-                relays,
-                attempts = UNVERIFIED_REPLY_ATTEMPTS,
-            )
-            return
-        }
 
         val app = permission ?: applicationWithSecret
         val effectivePrivKey = connectionPrivKey.ifEmpty { app?.app?.localKey ?: "" }
@@ -1462,3 +1467,12 @@ class BunkerEngine(
 
 /** Convenience accessor mirroring `ApplicationEntity.localPubKey`. */
 fun AppRecord.localPubKey(): String = if (localKey.isNotEmpty()) localPubKeyFromPrivKey(localKey) else ""
+
+private fun AppWithPermissions.toNip46Connection() = Nip46Connection(
+    key = app.key,
+    localKey = app.localKey,
+    secret = app.secret,
+    useSecret = app.useSecret,
+    isConnected = app.isConnected,
+    isExpired = app.isExpired(),
+)

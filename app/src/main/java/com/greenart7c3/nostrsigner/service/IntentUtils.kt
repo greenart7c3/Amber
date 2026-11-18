@@ -35,12 +35,10 @@ import com.greenart7c3.nostrsigner.database.LogEntity
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.ClearTextEncryptedDataKind
 import com.greenart7c3.nostrsigner.models.EncryptedDataKind
-import com.greenart7c3.nostrsigner.models.EventEncryptedDataKind
 import com.greenart7c3.nostrsigner.models.IntentData
 import com.greenart7c3.nostrsigner.models.IntentResultType
 import com.greenart7c3.nostrsigner.models.PrivateZapEncryptedDataKind
 import com.greenart7c3.nostrsigner.models.ReturnType
-import com.greenart7c3.nostrsigner.models.TagArrayEncryptedDataKind
 import com.greenart7c3.nostrsigner.models.decryptSignerTypes
 import com.greenart7c3.nostrsigner.models.encryptDecryptSignerTypes
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
@@ -49,9 +47,7 @@ import com.greenart7c3.nostrsigner.ui.components.DecryptTypeScope
 import com.greenart7c3.nostrsigner.ui.setSensitiveClip
 import com.vitorpamplona.quartz.nip01Core.core.Event
 import com.vitorpamplona.quartz.nip01Core.crypto.EventHasher
-import com.vitorpamplona.quartz.nip01Core.jackson.JacksonMapper
 import com.vitorpamplona.quartz.nip19Bech32.toNpub
-import com.vitorpamplona.quartz.nip59Giftwrap.seals.SealEvent
 import com.vitorpamplona.quartz.utils.Hex
 import com.vitorpamplona.quartz.utils.TimeUtils
 import java.net.URLDecoder
@@ -357,50 +353,7 @@ object IntentUtils {
         }
 
         // The plaintext side is what the user reads: the data for an encrypt, the result for a decrypt.
-        else -> previewOf(if (type.name.contains("ENCRYPT")) data else result, data, result, account)
-    }
-
-    /** Shows [text] as an event (opening a seal for the preview only), a tag array or plain text. */
-    private suspend fun previewOf(
-        text: String,
-        data: String,
-        result: String,
-        account: Account,
-    ): EncryptedDataKind = try {
-        when {
-            text.startsWith("{") -> {
-                val event = AmberEvent.fromJson(text)
-                if (event.kind == SealEvent.KIND) {
-                    EventEncryptedDataKind(event, sealPreview(event, account), result)
-                } else {
-                    EventEncryptedDataKind(event, null, result)
-                }
-            }
-            text.startsWith("[") -> TagArrayEncryptedDataKind(JacksonMapper.fromJsonToTagArray(text), result)
-            else -> ClearTextEncryptedDataKind(data, result)
-        }
-    } catch (e: Exception) {
-        AmberLog.e("IntentUtils", "Error parsing ${if (text.startsWith("{")) "JSON" else "TagArray"}: ${e.message}")
-        ClearTextEncryptedDataKind(data, result)
-    }
-
-    /** The decrypted content of [seal]; the caller still gets the seal itself. */
-    private suspend fun sealPreview(seal: AmberEvent, account: Account): EncryptedDataKind {
-        val decrypted = try {
-            account.decrypt(seal.content, account.hexKey)
-        } catch (_: Exception) {
-            seal.content
-        }
-        return try {
-            when {
-                decrypted.startsWith("{") -> EventEncryptedDataKind(AmberEvent.fromJson(decrypted), null, decrypted)
-                decrypted.startsWith("[") -> TagArrayEncryptedDataKind(JacksonMapper.fromJsonToTagArray(decrypted), decrypted)
-                else -> ClearTextEncryptedDataKind(seal.content, decrypted)
-            }
-        } catch (e: Exception) {
-            AmberLog.e("IntentUtils", "Error parsing TagArray: ${e.message}")
-            ClearTextEncryptedDataKind(seal.content, decrypted)
-        }
+        else -> previewOf(if (type.name.contains("ENCRYPT")) data else result, data, result, account) { AmberLog.e("IntentUtils", it) }
     }
 
     fun parsePubKey(key: String): String? {

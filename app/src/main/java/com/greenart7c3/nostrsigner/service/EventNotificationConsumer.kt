@@ -34,12 +34,12 @@ import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.SavedAccounts
 import com.greenart7c3.nostrsigner.SignerProviderQuery
 import com.greenart7c3.nostrsigner.common.EncryptionType
+import com.greenart7c3.nostrsigner.common.Nip46Admission
+import com.greenart7c3.nostrsigner.common.Nip46Connection
 import com.greenart7c3.nostrsigner.common.SignerType
 import com.greenart7c3.nostrsigner.common.UNVERIFIED_REPLY_ATTEMPTS
-import com.greenart7c3.nostrsigner.common.connectSecretRejection
-import com.greenart7c3.nostrsigner.common.connectsThroughOtherKey
+import com.greenart7c3.nostrsigner.common.admitNip46Request
 import com.greenart7c3.nostrsigner.common.hasAmbiguousRelayTags
-import com.greenart7c3.nostrsigner.common.isRepeatedConnect
 import com.greenart7c3.nostrsigner.common.nip44v3Kind
 import com.greenart7c3.nostrsigner.common.nip44v3Scope
 import com.greenart7c3.nostrsigner.common.nip46SignerType
@@ -486,92 +486,26 @@ class EventNotificationConsumer(
             return
         }
 
-        var permission = dao.getByKey(event.pubKey)
-        if (permission != null && permission.application.isExpired()) {
+        val stored = dao.getByKey(event.pubKey)
+        if (stored != null && stored.application.isExpired()) {
             // The user set a finite lifetime on this connection: answer as an
             // unknown app even before the periodic cleanup deletes the row.
             saveLog("Connection expired for ${event.pubKey}", relay.url, acc.npub)
-            permission = null
         }
-        if (permission != null && connectsThroughOtherKey(permission.application.localKey, connectionPrivKey, type)) {
-            // A stored app may only use its own connection key: a request it
-            // sends to another connection's key is dropped rather than answered
-            // under that connection's identity. A connect is exempt, as that is
-            // how a client attaches to a new key.
-            saveLog("Request ${bunkerRequest.id} from ${event.pubKey} reached another connection's key", relay.url, acc.npub)
+        val connectSecret = (bunkerRequest as? BunkerRequestConnect)?.let { it.secret ?: UUID.randomUUID().toString() }
+        val withSecret = connectSecret?.let { dao.getBySecret(it) }
+        val admission = admitNip46Request(type, stored?.toNip46Connection(), connectionPrivKey, connectSecret, withSecret?.toNip46Connection())
+        if (admission is Nip46Admission.AckRepeatedConnect) {
+            ackRepeatedConnect(acc, request, admission.connection.key, type, amberEvent, stored?.application?.relays ?: responseRelay)
             return
         }
-        if (permission != null &&
-            isRepeatedConnect(type, permission.application.key, permission.application.secret, permission.application.useSecret, permission.application.isConnected)
-        ) {
-            scope.launch {
-                historyDao
-                    .addHistory(
-                        listOf(
-                            HistoryEntity(
-                                0,
-                                permission.application.key,
-                                type.toString().toLowerCase(Locale.current),
-                                amberEvent?.kind,
-                                TimeUtils.now(),
-                                true,
-                                content = amberEvent?.content ?: "",
-                            ),
-                        ),
-                        acc.npub,
-                    )
-            }
-            bunkerResponder.sendBunkerResponse(
-                account = acc,
-                bunkerRequest = request,
-                bunkerResponse = BunkerResponse(bunkerRequest.id, request.nostrConnectSecret.ifBlank { "ack" }, null),
-                relays = permission.application.relays,
-                onLoading = {},
-                onDone = {},
-            )
+        if (admission !is Nip46Admission.Admit) {
+            refuseUnadmitted(admission, acc, request, withSecret?.application?.relays ?: responseRelay, relay.url)
             return
         }
-
-        var applicationWithSecret: ApplicationWithPermissions? = null
-        if (bunkerRequest is BunkerRequestConnect) {
-            val secret = bunkerRequest.secret ?: UUID.randomUUID().toString()
-
-            applicationWithSecret = dao.getBySecret(secret)
-            val message = connectSecretRejection(
-                secret,
-                appFound = applicationWithSecret != null,
-                appConnected = applicationWithSecret?.application?.isConnected == true,
-                appUsesSecret = applicationWithSecret?.application?.useSecret == true,
-            )
-            if (message != null) {
-                saveLog("Connection rejected: $message", relay.url, acc.npub)
-                bunkerResponder.sendBunkerResponse(
-                    account = acc,
-                    bunkerRequest = request,
-                    bunkerResponse = BunkerResponse(bunkerRequest.id, "", message),
-                    relays = applicationWithSecret?.application?.relays ?: responseRelay,
-                    onLoading = { },
-                    onDone = { },
-                    attempts = UNVERIFIED_REPLY_ATTEMPTS,
-                )
-                return
-            }
-        }
-
+        val permission = stored.takeIf { admission.stored != null }
+        val applicationWithSecret = withSecret.takeIf { admission.bySecret != null }
         val relays = permission?.application?.relays ?: applicationWithSecret?.application?.relays ?: responseRelay
-        if (permission == null && applicationWithSecret == null) {
-            saveLog("No permission found for ${event.pubKey}", relay.url, acc.npub)
-            bunkerResponder.sendBunkerResponse(
-                account = acc,
-                bunkerRequest = request,
-                bunkerResponse = BunkerResponse(bunkerRequest.id, "", "no permission"),
-                relays = relays,
-                onLoading = { },
-                onDone = { },
-                attempts = UNVERIFIED_REPLY_ATTEMPTS,
-            )
-            return
-        }
 
         // Authorized sender from here on: a stored connection or a valid
         // connect secret. Only now sign or decrypt with the account key.
@@ -808,6 +742,72 @@ class EventNotificationConsumer(
                 }
             }
         }
+    }
+
+    // An already connected client re-sent connect: acknowledged without asking, and recorded.
+    private suspend fun ackRepeatedConnect(
+        acc: Account,
+        request: AmberBunkerRequest,
+        appKey: String,
+        type: SignerType,
+        amberEvent: AmberEvent?,
+        relays: List<NormalizedRelayUrl>,
+    ) {
+        scope.launch {
+            accountRepository.getHistoryDatabase(acc.npub).dao().addHistory(
+                listOf(
+                    HistoryEntity(
+                        0,
+                        appKey,
+                        type.toString().toLowerCase(Locale.current),
+                        amberEvent?.kind,
+                        TimeUtils.now(),
+                        true,
+                        content = amberEvent?.content ?: "",
+                    ),
+                ),
+                acc.npub,
+            )
+        }
+        bunkerResponder.sendBunkerResponse(
+            account = acc,
+            bunkerRequest = request,
+            bunkerResponse = BunkerResponse(request.request.id, request.nostrConnectSecret.ifBlank { "ack" }, null),
+            relays = relays,
+            onLoading = {},
+            onDone = {},
+        )
+    }
+
+    // Answers (or drops) a request admitNip46Request refused; the account key is not used.
+    private suspend fun refuseUnadmitted(
+        admission: Nip46Admission,
+        acc: Account,
+        request: AmberBunkerRequest,
+        relays: List<NormalizedRelayUrl>,
+        relayUrl: String,
+    ) {
+        val message = when (admission) {
+            is Nip46Admission.RefuseConnect -> admission.message.also { saveLog("Connection rejected: $it", relayUrl, acc.npub) }
+            Nip46Admission.Unknown -> "no permission".also { saveLog("No permission found for ${request.localKey}", relayUrl, acc.npub) }
+            else -> {
+                // A stored app may only use its own connection key: a request it
+                // sends to another connection's key is dropped rather than answered
+                // under that connection's identity. A connect is exempt, as that is
+                // how a client attaches to a new key.
+                saveLog("Request ${request.request.id} from ${request.localKey} reached another connection's key", relayUrl, acc.npub)
+                return
+            }
+        }
+        bunkerResponder.sendBunkerResponse(
+            account = acc,
+            bunkerRequest = request,
+            bunkerResponse = BunkerResponse(request.request.id, "", message),
+            relays = relays,
+            onLoading = { },
+            onDone = { },
+            attempts = UNVERIFIED_REPLY_ATTEMPTS,
+        )
     }
 
     private fun generateMessage(
@@ -1110,3 +1110,12 @@ class EventNotificationConsumer(
         internal val senderRateLimiter = SenderRateLimiter()
     }
 }
+
+private fun ApplicationWithPermissions.toNip46Connection() = Nip46Connection(
+    key = application.key,
+    localKey = application.localKey,
+    secret = application.secret,
+    useSecret = application.useSecret,
+    isConnected = application.isConnected,
+    isExpired = application.isExpired(),
+)

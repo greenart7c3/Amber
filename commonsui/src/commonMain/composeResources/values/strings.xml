@@ -729,7 +729,6 @@ Discover all Nostr apps for android at</string>
     <string name="profile_fetch_interval_1_day">Every day</string>
     <string name="profile_fetch_interval_never">Never (disabled)</string>
     <string name="update_check_frequency">Check frequency</string>
-    <string name="update_frequency_on_startup">Every app start</string>
     <string name="update_frequency_daily">Daily</string>
     <string name="update_frequency_weekly">Weekly</string>
     <string name="update_channel">Update channel</string>

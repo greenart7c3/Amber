@@ -703,7 +703,6 @@ Entdecke alle Nostr-Apps für Android unter</string>
     <string name="profile_fetch_interval_1_day">Jeden Tag</string>
     <string name="profile_fetch_interval_never">Nie (deaktiviert)</string>
     <string name="update_check_frequency">Prüfhäufigkeit</string>
-    <string name="update_frequency_on_startup">Bei jedem App-Start</string>
     <string name="update_frequency_daily">Täglich</string>
     <string name="update_frequency_weekly">Wöchentlich</string>
     <string name="update_channel">Update-Kanal</string>

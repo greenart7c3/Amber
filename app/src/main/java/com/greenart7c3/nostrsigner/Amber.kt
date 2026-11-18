@@ -859,7 +859,6 @@ class Amber :
         val lastCheck = LocalPreferences.getLastUpdateCheckTime(this)
         val now = System.currentTimeMillis()
         val shouldCheck = when (settings.updateCheckFrequency) {
-            UpdateCheckFrequency.ON_STARTUP -> true
             UpdateCheckFrequency.DAILY -> now - lastCheck > 24 * 60 * 60 * 1000L
             UpdateCheckFrequency.WEEKLY -> now - lastCheck > 7 * 24 * 60 * 60 * 1000L
         }

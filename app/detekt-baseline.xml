@@ -56,7 +56,6 @@
     <ID>CyclomaticComplexMethod:ExportAllAccountsScreen.kt:@Composable fun ExportAllAccountsScreen</ID>
     <ID>CyclomaticComplexMethod:IntentMultiEventHomeScreen.kt:@Composable private fun IntentRequestCard</ID>
     <ID>CyclomaticComplexMethod:IntentUtilsBeforeAfterTest.kt:IntentUtilsBeforeAfterTest$@Test fun `before-after parameter dispatch - all six keys`</ID>
-    <ID>CyclomaticComplexMethod:LocalPreferences.kt:LocalPreferences$private fun readSettings: AmberSettings</ID>
     <ID>CyclomaticComplexMethod:NostrConnectUtils.kt:NostrConnectUtils$fun getIntentFromNostrConnect</ID>
     <ID>CyclomaticComplexMethod:ProfileSubscription.kt:ProfileSubscription$override suspend fun onIncomingMessage</ID>
     <ID>CyclomaticComplexMethod:SeeDetailsScreen.kt:@Composable fun SeeDetailsScreen</ID>
@@ -142,7 +141,6 @@
     <ID>LongMethod:FeedbackScreen.kt:@Composable fun FeedbackScreen</ID>
     <ID>LongMethod:IncomingRequestScreen.kt:@Composable fun IncomingRequestScreen</ID>
     <ID>LongMethod:IntentMultiEventHomeScreen.kt:@Composable private fun IntentRequestCard</ID>
-    <ID>LongMethod:LocalPreferences.kt:LocalPreferences$private fun readSettings: AmberSettings</ID>
     <ID>LongMethod:LoginWithPubKey.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun LoginWithPubKey</ID>
     <ID>LongMethod:LogsScreen.kt:@Composable fun LogsScreen</ID>
     <ID>LongMethod:MainActivity.kt:MainActivity$override fun onCreate</ID>

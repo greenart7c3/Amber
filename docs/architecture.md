@@ -209,7 +209,7 @@ accounts sheet, profile editor and restore prompt take callbacks instead of
 `AccountStateViewModel`). What is left of `AccountStateViewModel` forwarding is
 `AccountScreen` handing it to `MainScreen`, which calls its account operations.
 
-### 5. Break up `LocalPreferences.kt`
+### 5. Break up `LocalPreferences.kt` (done)
 
 Split settings, account storage and key storage by concern; the key part is
 where the `requireUnlockedDevice` gate lives, so it deserves its own tested
@@ -231,4 +231,7 @@ and the app scope from Amber at construction (`install`, before any
 ContentProvider runs) instead of reaching the container through a context;
 `AccountStorageTest` covers the broken-key report, the locked-device case, the
 cache and the key zeroing at logout. The WebDAV server for cloud backups is
-`WebDavSettings`. Left: splitting how the app settings are read.
+`WebDavSettings`. What stays in `LocalPreferences` is the app settings; reading
+them is split into small helpers (`enumOr`, the `use_proxy` → `TorMode`
+migration, `applyProxy`) and `SettingsReadTest` pins how stored values are read.
+Its `TooManyFunctions` entry stays: one updater per setting.

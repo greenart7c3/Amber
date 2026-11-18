@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -88,10 +89,13 @@ fun IntentSingleEventHomeScreen(
     modifier: Modifier = Modifier,
     viewModel: IntentSingleEventViewModel = viewModel(
         key = "intent-single-${account.npub}-$packageName-${intentData.id}",
-        factory = IntentSingleEventViewModel.factory(LocalAccountRepository.current, account.npub, packageName),
+        factory = IntentSingleEventViewModel.factory(LocalAccountRepository.current),
     ),
 ) {
-    val application by viewModel.application.collectAsStateWithLifecycle()
+    LaunchedEffect(intentData, account.npub, packageName) { viewModel.load(intentData, account.npub, packageName) }
+    val loaded by viewModel.loaded.collectAsStateWithLifecycle()
+    // Only what was loaded for this very request: another one under the same key may have other grants.
+    val application = loaded?.takeIf { it.intentData === intentData }?.application
     val appName = sanitizeAppName(application?.application?.name ?: packageName ?: intentData.name).ifBlank { "$packageName".toShortenHex() }
     val request = IntentRequest(intentData, account, packageName, appName, applicationName ?: appName, application)
 

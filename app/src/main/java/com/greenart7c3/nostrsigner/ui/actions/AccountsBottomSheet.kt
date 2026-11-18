@@ -59,7 +59,6 @@ import com.greenart7c3.nostrsigner.commonsui.edit_name
 import com.greenart7c3.nostrsigner.commonsui.select_account
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.service.toShortenHex
-import com.greenart7c3.nostrsigner.ui.AccountStateViewModel
 import com.greenart7c3.nostrsigner.ui.NavHostControllerWrapper
 import com.greenart7c3.nostrsigner.ui.components.AccountSearchField
 import com.greenart7c3.nostrsigner.ui.components.ActiveMarker
@@ -86,7 +85,8 @@ import org.jetbrains.compose.resources.stringResource
 fun AccountsBottomSheet(
     sheetState: SheetState,
     account: Account,
-    accountStateViewModel: AccountStateViewModel,
+    onSwitchAccount: (npub: String) -> Unit,
+    onLogOff: (npub: String) -> Unit,
     navController: NavHostControllerWrapper,
     onClose: () -> Unit,
 ) {
@@ -164,7 +164,7 @@ fun AccountsBottomSheet(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clickable {
-                                    accountStateViewModel.switchUser(acc.npub, null)
+                                    onSwitchAccount(acc.npub)
                                 }
                                 .padding(16.dp, 16.dp),
                             verticalAlignment = Alignment.CenterVertically,
@@ -255,7 +255,7 @@ fun AccountsBottomSheet(
                                     tint = MaterialTheme.colorScheme.onSurface,
                                 )
                             }
-                            LogoutButton(acc, accountStateViewModel)
+                            LogoutButton(acc, onLogOff)
                         }
                     }
                 }

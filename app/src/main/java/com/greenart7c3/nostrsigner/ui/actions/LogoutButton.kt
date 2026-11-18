@@ -16,7 +16,6 @@ import com.greenart7c3.nostrsigner.AccountInfo
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.commonsui.Res
 import com.greenart7c3.nostrsigner.commonsui.logout
-import com.greenart7c3.nostrsigner.ui.AccountStateViewModel
 import com.greenart7c3.nostrsigner.ui.LocalAccountRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -25,7 +24,7 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 fun LogoutButton(
     acc: AccountInfo,
-    accountStateViewModel: AccountStateViewModel,
+    onLogOff: (npub: String) -> Unit,
 ) {
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
@@ -48,7 +47,7 @@ fun LogoutButton(
                     }
 
                     logoutDialog = false
-                    accountStateViewModel.logOff(acc.npub)
+                    onLogOff(acc.npub)
                 }
             },
         )

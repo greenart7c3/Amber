@@ -463,8 +463,8 @@ object SecureCryptoHelper {
         move(DataStoreAccess.getPinRaw(context)) { expected, ciphertext ->
             DataStoreAccess.replacePinRaw(context, expected, ciphertext)
         }
-        move(LocalPreferences.getWebDavPasswordEncrypted(context)) { expected, ciphertext ->
-            LocalPreferences.replaceWebDavPasswordEncrypted(context, expected, ciphertext)
+        move(WebDavSettings.encryptedPassword(context)) { expected, ciphertext ->
+            WebDavSettings.replaceEncryptedPassword(context, expected, ciphertext)
         }
         // Per-account Room `application` tables (GHSA-5fjp-ghh8-wch8).
         for ((npub) in accounts) {

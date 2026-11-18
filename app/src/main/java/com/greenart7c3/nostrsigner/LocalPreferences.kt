@@ -1,6 +1,5 @@
 package com.greenart7c3.nostrsigner
 
-import android.annotation.SuppressLint
 import android.content.Context
 import android.content.SharedPreferences
 import androidx.core.content.edit
@@ -43,10 +42,6 @@ private enum class SettingsKeys(val key: String) {
     LAST_UPDATE_CHECK_TIME("last_update_check_time"),
     START_SERVICE_ON_BOOT("start_service_on_boot"),
     PRIVACY_MODE("privacy_mode"),
-    WEBDAV_URL("webdav_url"),
-    WEBDAV_USERNAME("webdav_username"),
-    WEBDAV_PASSWORD_ENCRYPTED("webdav_password_encrypted"),
-    WEBDAV_FILENAME("webdav_filename"),
     RATE_LIMIT_ENABLED("rate_limit_enabled"),
     RATE_LIMIT_MAX_PER_WINDOW("rate_limit_max_per_window"),
     RATE_LIMIT_WINDOW_SECONDS("rate_limit_window_seconds"),
@@ -447,60 +442,6 @@ object LocalPreferences {
         sharedPrefs(context).edit {
             apply {
                 putLong(SettingsKeys.LAST_UPDATE_CHECK_TIME.key, time)
-            }
-        }
-    }
-
-    // WebDAV settings
-    fun getWebDavUrl(context: Context): String = sharedPrefs(context).getString(SettingsKeys.WEBDAV_URL.key, "") ?: ""
-
-    fun getWebDavUsername(context: Context): String = sharedPrefs(context).getString(SettingsKeys.WEBDAV_USERNAME.key, "") ?: ""
-
-    suspend fun getWebDavPassword(context: Context): String {
-        val encrypted = getWebDavPasswordEncrypted(context)
-        return if (encrypted.isBlank()) {
-            ""
-        } else {
-            try {
-                SecureCryptoHelper.decrypt(encrypted)
-            } catch (_: Exception) {
-                ""
-            }
-        }
-    }
-
-    /**
-     * Returns the still-encrypted WebDAV password (raw SharedPreferences
-     * value). Used by [SecureCryptoHelper.rotateKey] to avoid mutex
-     * reentrancy.
-     */
-    fun getWebDavPasswordEncrypted(context: Context): String = sharedPrefs(context).getString(SettingsKeys.WEBDAV_PASSWORD_ENCRYPTED.key, "") ?: ""
-
-    /**
-     * Durably replaces the encrypted WebDAV password with [encryptedPassword]
-     * only if it still equals [expected]. Used by [SecureCryptoHelper.rotateKey].
-     */
-    @Synchronized
-    @SuppressLint("UseKtx") // needs commit()'s result, see KeystorePolicy.commitActiveAlias
-    fun replaceWebDavPasswordEncrypted(context: Context, expected: String, encryptedPassword: String): Boolean = getWebDavPasswordEncrypted(context) == expected &&
-        sharedPrefs(context).edit()
-            .putString(SettingsKeys.WEBDAV_PASSWORD_ENCRYPTED.key, encryptedPassword)
-            .commit()
-
-    suspend fun saveWebDavSettings(
-        context: Context,
-        url: String,
-        username: String,
-        password: String,
-        fileName: String,
-    ) {
-        val encryptedPassword = if (password.isBlank()) "" else SecureCryptoHelper.encrypt(password)
-        sharedPrefs(context).edit {
-            apply {
-                putString(SettingsKeys.WEBDAV_URL.key, url)
-                putString(SettingsKeys.WEBDAV_USERNAME.key, username)
-                putString(SettingsKeys.WEBDAV_PASSWORD_ENCRYPTED.key, encryptedPassword)
-                putString(SettingsKeys.WEBDAV_FILENAME.key, fileName)
             }
         }
     }

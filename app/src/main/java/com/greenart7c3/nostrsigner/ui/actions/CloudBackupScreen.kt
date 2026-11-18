@@ -47,7 +47,7 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
-import com.greenart7c3.nostrsigner.LocalPreferences
+import com.greenart7c3.nostrsigner.WebDavSettings
 import com.greenart7c3.nostrsigner.commonsui.Res
 import com.greenart7c3.nostrsigner.commonsui.cloud_backup_downloading
 import com.greenart7c3.nostrsigner.commonsui.cloud_backup_encryption_description
@@ -136,9 +136,9 @@ fun CloudBackupScreen(modifier: Modifier) {
 
     LaunchedEffect(Unit) {
         launch(Dispatchers.IO) {
-            webDavUrl = TextFieldValue(LocalPreferences.getWebDavUrl(context))
-            webDavUsername = TextFieldValue(LocalPreferences.getWebDavUsername(context))
-            webDavPassword = TextFieldValue(LocalPreferences.getWebDavPassword(context))
+            webDavUrl = TextFieldValue(WebDavSettings.url(context))
+            webDavUsername = TextFieldValue(WebDavSettings.username(context))
+            webDavPassword = TextFieldValue(WebDavSettings.password(context))
         }
     }
 
@@ -386,7 +386,7 @@ fun CloudBackupScreen(modifier: Modifier) {
                             }
                             return@launch
                         }
-                        LocalPreferences.saveWebDavSettings(
+                        WebDavSettings.save(
                             context = context,
                             url = webDavUrl.text,
                             username = webDavUsername.text,
@@ -460,7 +460,7 @@ fun CloudBackupScreen(modifier: Modifier) {
                                         return@launch
                                     }
 
-                                    LocalPreferences.saveWebDavSettings(
+                                    WebDavSettings.save(
                                         context = context,
                                         url = webDavUrl.text,
                                         username = webDavUsername.text,

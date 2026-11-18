@@ -18,9 +18,13 @@ import io.mockk.mockk
 import io.mockk.mockkConstructor
 import io.mockk.unmockkAll
 import io.mockk.verify
+import java.util.concurrent.CopyOnWriteArrayList
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Before
@@ -65,7 +69,8 @@ class IntentRejectionTest {
     fun tearDown() = unmockkAll()
 
     private fun reject(key: String): List<IntentResultType> {
-        val removed = mutableListOf<IntentResultType>()
+        // Filled on the rejection's coroutine, read by the test thread.
+        val removed = CopyOnWriteArrayList<IntentResultType>()
         IntentUtils.sendRejection(
             context = context,
             key = key,
@@ -79,13 +84,19 @@ class IntentRejectionTest {
         return removed
     }
 
+    // onRemoveIntentData runs after finishAndRemoveTask, so waiting for the finish is not enough.
+    private fun awaitRemoved(removed: List<IntentResultType>): List<IntentResultType> = runBlocking {
+        withTimeout(5_000) { while (removed.isEmpty()) delay(10) }
+        removed.toList()
+    }
+
     // A web request (no calling package) could not be rejected: Reject left the sheet open.
     @Test
     fun `rejecting a web request closes it without saving anything for the shared null key`() {
         val removed = reject("null")
 
         verify(timeout = 5_000) { activity.finishAndRemoveTask() }
-        assertEquals(listOf(IntentResultType.REMOVE), removed)
+        assertEquals(listOf(IntentResultType.REMOVE), awaitRemoved(removed))
         verify(exactly = 0) { amber.getDatabase(any()) }
         coVerify(exactly = 0) { dao.insertApplicationWithPermissions(any()) }
     }
@@ -96,6 +107,6 @@ class IntentRejectionTest {
 
         coVerify(timeout = 5_000) { dao.insertApplicationWithPermissions(any()) }
         verify(timeout = 5_000) { activity.finishAndRemoveTask() }
-        assertEquals(listOf(IntentResultType.REMOVE), removed)
+        assertEquals(listOf(IntentResultType.REMOVE), awaitRemoved(removed))
     }
 }

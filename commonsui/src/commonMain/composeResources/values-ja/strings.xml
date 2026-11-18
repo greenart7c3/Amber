@@ -726,7 +726,6 @@ Android 向け Nostr アプリをすべて見つけるには</string>
     <string name="profile_fetch_interval_1_day">1日ごと</string>
     <string name="profile_fetch_interval_never">しない(無効)</string>
     <string name="update_check_frequency">確認頻度</string>
-    <string name="update_frequency_on_startup">アプリ起動のたびに</string>
     <string name="update_frequency_daily">毎日</string>
     <string name="update_frequency_weekly">毎週</string>
     <string name="update_channel">アップデートチャンネル</string>

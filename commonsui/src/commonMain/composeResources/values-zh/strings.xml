@@ -720,7 +720,6 @@
     <string name="profile_fetch_interval_1_day">每天</string>
     <string name="profile_fetch_interval_never">从不(已禁用)</string>
     <string name="update_check_frequency">检查频率</string>
-    <string name="update_frequency_on_startup">每次应用启动时</string>
     <string name="update_frequency_daily">每天</string>
     <string name="update_frequency_weekly">每周</string>
     <string name="update_channel">更新频道</string>

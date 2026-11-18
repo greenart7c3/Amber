@@ -702,7 +702,6 @@ Temukan semua aplikasi Nostr untuk android di</string>
     <string name="profile_fetch_interval_1_day">Setiap hari</string>
     <string name="profile_fetch_interval_never">Tidak pernah (dinonaktifkan)</string>
     <string name="update_check_frequency">Frekuensi pemeriksaan</string>
-    <string name="update_frequency_on_startup">Setiap kali aplikasi dibuka</string>
     <string name="update_frequency_daily">Harian</string>
     <string name="update_frequency_weekly">Mingguan</string>
     <string name="update_channel">Saluran pembaruan</string>

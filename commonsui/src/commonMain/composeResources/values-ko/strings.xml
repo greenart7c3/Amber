@@ -702,7 +702,6 @@ Android용 모든 Nostr 앱 보기:</string>
     <string name="profile_fetch_interval_1_day">매일</string>
     <string name="profile_fetch_interval_never">안 함(비활성화)</string>
     <string name="update_check_frequency">확인 빈도</string>
-    <string name="update_frequency_on_startup">앱 시작 시마다</string>
     <string name="update_frequency_daily">매일</string>
     <string name="update_frequency_weekly">매주</string>
     <string name="update_channel">업데이트 채널</string>

@@ -703,7 +703,6 @@ Android için tüm Nostr uygulamalarını şurada keşfedin:</string>
     <string name="profile_fetch_interval_1_day">Her gün</string>
     <string name="profile_fetch_interval_never">Asla (devre dışı)</string>
     <string name="update_check_frequency">Denetleme sıklığı</string>
-    <string name="update_frequency_on_startup">Her uygulama başlangıcında</string>
     <string name="update_frequency_daily">Günlük</string>
     <string name="update_frequency_weekly">Haftalık</string>
     <string name="update_channel">Güncelleme kanalı</string>

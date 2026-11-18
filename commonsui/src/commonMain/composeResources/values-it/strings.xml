@@ -704,7 +704,6 @@ Scopri tutte le app Nostr per Android su</string>
     <string name="profile_fetch_interval_1_day">Ogni giorno</string>
     <string name="profile_fetch_interval_never">Mai (disabilitato)</string>
     <string name="update_check_frequency">Frequenza di controllo</string>
-    <string name="update_frequency_on_startup">Ad ogni avvio dell'app</string>
     <string name="update_frequency_daily">Giornalmente</string>
     <string name="update_frequency_weekly">Settimanalmente</string>
     <string name="update_channel">Canale di aggiornamento</string>

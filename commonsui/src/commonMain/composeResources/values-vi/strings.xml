@@ -726,7 +726,6 @@ Khám phá tất cả ứng dụng Nostr cho Android tại</string>
     <string name="profile_fetch_interval_1_day">Mỗi ngày</string>
     <string name="profile_fetch_interval_never">Không bao giờ (đã tắt)</string>
     <string name="update_check_frequency">Tần suất kiểm tra</string>
-    <string name="update_frequency_on_startup">Mỗi lần khởi động ứng dụng</string>
     <string name="update_frequency_daily">Hàng ngày</string>
     <string name="update_frequency_weekly">Hàng tuần</string>
     <string name="update_channel">Kênh cập nhật</string>

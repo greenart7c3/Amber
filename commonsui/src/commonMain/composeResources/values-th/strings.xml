@@ -726,7 +726,6 @@
     <string name="profile_fetch_interval_1_day">ทุกวัน</string>
     <string name="profile_fetch_interval_never">ไม่ทำ (ปิดใช้งาน)</string>
     <string name="update_check_frequency">ความถี่การตรวจสอบ</string>
-    <string name="update_frequency_on_startup">ทุกครั้งที่เปิดแอป</string>
     <string name="update_frequency_daily">ทุกวัน</string>
     <string name="update_frequency_weekly">ทุกสัปดาห์</string>
     <string name="update_channel">ช่องทางการอัปเดต</string>

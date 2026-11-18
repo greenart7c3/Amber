@@ -73,14 +73,14 @@ class SignerProviderQueryTest {
         every { account.npub } returns NPUB
         every { account.hexKey } returns HEX
 
-        mockkObject(LocalPreferences)
+        mockkObject(LocalPreferences, SavedAccounts, AccountPreferences)
         every { LocalPreferences.loadFromEncryptedStorageSync(any(), any()) } returns account
-        every { LocalPreferences.allSavedAccounts(any()) } returns emptyList()
+        every { SavedAccounts.all(any()) } returns emptyList()
     }
 
     @After
     fun tearDown() {
-        unmockkObject(LocalPreferences)
+        unmockkObject(LocalPreferences, SavedAccounts, AccountPreferences)
         unmockkObject(AmberLog)
     }
 

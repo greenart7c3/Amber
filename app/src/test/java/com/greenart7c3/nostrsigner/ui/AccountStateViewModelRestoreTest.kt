@@ -1,8 +1,10 @@
 package com.greenart7c3.nostrsigner.ui
 
+import com.greenart7c3.nostrsigner.AccountPreferences
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.LocalPreferences
+import com.greenart7c3.nostrsigner.SavedAccounts
 import com.greenart7c3.nostrsigner.database.ApplicationDao
 import com.greenart7c3.nostrsigner.service.ApplicationBackup
 import com.greenart7c3.nostrsigner.service.BackupApplication
@@ -42,15 +44,15 @@ class AccountStateViewModelRestoreTest {
         mockkObject(BuildFlavorChecker)
         every { BuildFlavorChecker.isOfflineFlavor() } returns false
 
-        mockkObject(LocalPreferences)
-        every { LocalPreferences.currentAccount(any()) } returns null
-        every { LocalPreferences.allSavedAccounts(any()) } returns emptyList()
+        mockkObject(LocalPreferences, SavedAccounts, AccountPreferences)
+        every { SavedAccounts.current(any()) } returns null
+        every { SavedAccounts.all(any()) } returns emptyList()
         coEvery { LocalPreferences.warmAccountCache(any()) } returns Unit
         every { LocalPreferences.loadFromEncryptedStorageSync(any(), any()) } returns null
         coEvery { LocalPreferences.loadAccount(any(), any()) } returns null
         // Post-logout state: updatePrefsForLogout wipes prefs_<npub>, so the
         // publish-consent flag reads false on relogin.
-        every { LocalPreferences.getBackupApplications(any(), any()) } returns false
+        every { AccountPreferences.getBackupApplications(any(), any()) } returns false
 
         val dao = mockk<ApplicationDao>(relaxed = true)
         coEvery { dao.getAll(any()) } returns emptyList()
@@ -66,7 +68,7 @@ class AccountStateViewModelRestoreTest {
     fun tearDown() {
         Dispatchers.resetMain()
         unmockkObject(BuildFlavorChecker)
-        unmockkObject(LocalPreferences)
+        unmockkObject(LocalPreferences, SavedAccounts, AccountPreferences)
         unmockkObject(ApplicationBackup)
     }
 

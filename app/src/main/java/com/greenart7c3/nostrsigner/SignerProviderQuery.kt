@@ -569,7 +569,7 @@ class SignerProviderQuery(
                     val account = if (npub != null) {
                         LocalPreferences.loadFromEncryptedStorageSync(context, npub)
                     } else {
-                        LocalPreferences.allSavedAccounts(context).firstNotNullOfOrNull { accountInfo ->
+                        SavedAccounts.all(context).firstNotNullOfOrNull { accountInfo ->
                             val localDatabase = accountRepository.getDatabase(accountInfo.npub)
                             val hasAccount = localDatabase.dao().getByKeySync(requesterId) != null
                             if (hasAccount) {
@@ -643,7 +643,7 @@ class SignerProviderQuery(
             }
         } catch (e: Exception) {
             scope.launch {
-                LocalPreferences.allSavedAccounts(context).forEach { accInfo ->
+                SavedAccounts.all(context).forEach { accInfo ->
                     val database = accountRepository.getLogDatabase(accInfo.npub)
                     database.dao().insertLogIfEnabled(
                         LogEntity(

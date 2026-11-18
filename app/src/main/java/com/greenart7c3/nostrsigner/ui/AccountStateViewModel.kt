@@ -7,6 +7,7 @@ import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.LocalPreferences
+import com.greenart7c3.nostrsigner.SavedAccounts
 import com.greenart7c3.nostrsigner.data.AccountRepository
 import com.greenart7c3.nostrsigner.data.RelayClient
 import com.greenart7c3.nostrsigner.data.SettingsStore
@@ -64,10 +65,10 @@ class AccountStateViewModel(
         // Loading the account decrypts keys via the Android KeyStore, which is a slow
         // blocking call. Run it off the main thread to avoid StrictMode violations and jank.
         appScope.launch {
-            var currentUser = npub ?: LocalPreferences.currentAccount(appContext)
-            val allAccounts = LocalPreferences.allSavedAccounts(appContext)
-            if (currentUser != null && !LocalPreferences.containsAccount(appContext, currentUser) && allAccounts.any { it.npub == currentUser }) {
-                currentUser = LocalPreferences.currentAccount(appContext)
+            var currentUser = npub ?: SavedAccounts.current(appContext)
+            val allAccounts = SavedAccounts.all(appContext)
+            if (currentUser != null && !SavedAccounts.contains(appContext, currentUser) && allAccounts.any { it.npub == currentUser }) {
+                currentUser = SavedAccounts.current(appContext)
             }
             if (forceLogout) {
                 currentUser = null
@@ -113,7 +114,7 @@ class AccountStateViewModel(
         route: String?,
     ) {
         prepareLogoutOrSwitch()
-        LocalPreferences.switchToAccount(appContext, npub)
+        SavedAccounts.switchTo(appContext, npub)
         tryLoginExistingAccount(route, npub)
     }
 
@@ -144,7 +145,7 @@ class AccountStateViewModel(
             appContext = appContext,
         )
 
-        if (LocalPreferences.allSavedAccounts(appContext).isEmpty()) {
+        if (SavedAccounts.all(appContext).isEmpty()) {
             settingsStore.settings = settingsStore.settings.copy(
                 torMode = torMode,
                 proxyPort = proxyPort,
@@ -185,7 +186,7 @@ class AccountStateViewModel(
             scope = appScope,
             appContext = appContext,
         )
-        if (LocalPreferences.allSavedAccounts(appContext).isEmpty()) {
+        if (SavedAccounts.all(appContext).isEmpty()) {
             settingsStore.settings = settingsStore.settings.copy(
                 torMode = torMode,
                 proxyPort = proxyPort,

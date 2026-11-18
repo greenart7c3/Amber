@@ -18,6 +18,7 @@ import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.LocalPreferences
+import com.greenart7c3.nostrsigner.SavedAccounts
 import com.greenart7c3.nostrsigner.amber
 import com.greenart7c3.nostrsigner.models.TorMode
 import com.greenart7c3.nostrsigner.okhttp.HttpClientManager
@@ -163,7 +164,7 @@ class ConnectivityService : Service() {
 
         HttpClientManager.setDefaultUserAgent("Amber/${BuildConfig.VERSION_NAME}")
 
-        LocalPreferences.allSavedAccounts(this).forEach {
+        SavedAccounts.all(this).forEach {
             amber.databases[it.npub] = amber.getDatabase(it.npub)
             amber.applicationIOScope.launch {
                 // Cached dao so the write invalidates CachingApplicationDao's getAll

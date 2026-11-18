@@ -1,8 +1,10 @@
 package com.greenart7c3.nostrsigner.service
 
+import com.greenart7c3.nostrsigner.AccountPreferences
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.LocalPreferences
+import com.greenart7c3.nostrsigner.SavedAccounts
 import com.greenart7c3.nostrsigner.data.SettingsStore
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.AmberSettings
@@ -55,24 +57,24 @@ class ProfileSubscriptionTest {
 
         installAmber(ProfileFetchInterval.ALWAYS)
 
-        mockkObject(LocalPreferences)
+        mockkObject(LocalPreferences, SavedAccounts, AccountPreferences)
         every { LocalPreferences.loadSettingsFromEncryptedStorage(any()) } returns AmberSettings()
-        every { LocalPreferences.getUserRelays(any(), any()) } returns emptyList()
-        every { LocalPreferences.getLastMetadataUpdate(any(), any()) } returns 0L
-        every { LocalPreferences.getLastCheck(any(), any()) } returns 0L
-        every { LocalPreferences.setLastCheck(any(), any(), any()) } just Runs
-        every { LocalPreferences.setLastMetadataUpdate(any(), any(), any()) } just Runs
+        every { AccountPreferences.getUserRelays(any(), any()) } returns emptyList()
+        every { AccountPreferences.getLastMetadataUpdate(any(), any()) } returns 0L
+        every { AccountPreferences.getLastCheck(any(), any()) } returns 0L
+        every { AccountPreferences.setLastCheck(any(), any(), any()) } just Runs
+        every { AccountPreferences.setLastMetadataUpdate(any(), any(), any()) } just Runs
         // In-memory stand-in for the per-account metadata created_at preference.
         val metadataCreatedAt = mutableMapOf<String, Long>()
-        every { LocalPreferences.getMetadataCreatedAt(any(), any()) } answers { metadataCreatedAt[secondArg()] ?: 0L }
-        every { LocalPreferences.setMetadataCreatedAt(any(), any(), any()) } answers { metadataCreatedAt[secondArg()] = thirdArg() }
+        every { AccountPreferences.getMetadataCreatedAt(any(), any()) } answers { metadataCreatedAt[secondArg()] ?: 0L }
+        every { AccountPreferences.setMetadataCreatedAt(any(), any(), any()) } answers { metadataCreatedAt[secondArg()] = thirdArg() }
 
         subscription = ProfileSubscription(client, mockk(relaxed = true), scope, settingsStore = settingsStore, relayClient = mockk(relaxed = true))
     }
 
     @After
     fun tearDown() {
-        unmockkObject(LocalPreferences)
+        unmockkObject(LocalPreferences, SavedAccounts, AccountPreferences)
         scope.cancel()
     }
 
@@ -116,7 +118,7 @@ class ProfileSubscriptionTest {
     @Test
     fun `updateFilters does not throw when accounts are added and removed concurrently`() {
         installAmber(ProfileFetchInterval.ONE_HOUR)
-        every { LocalPreferences.getLastCheck(any(), any()) } returns TimeUtils.now()
+        every { AccountPreferences.getLastCheck(any(), any()) } returns TimeUtils.now()
 
         val tracked = Collections.synchronizedList(mutableListOf<Account>())
         runBlocking {

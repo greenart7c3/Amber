@@ -39,7 +39,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.greenart7c3.nostrsigner.LocalPreferences
+import com.greenart7c3.nostrsigner.SavedAccounts
 import com.greenart7c3.nostrsigner.commonsui.Res
 import com.greenart7c3.nostrsigner.commonsui.select_account
 import com.greenart7c3.nostrsigner.commonsui.switch_account
@@ -165,7 +165,7 @@ fun AccountPickerRow(
             ) {
                 // Sorted and filtered for display only: each row keeps its index into [accounts],
                 // which is what the caller selects by, so neither changes the signing account.
-                val favorites by LocalPreferences.favoriteAccounts(LocalContext.current).collectAsStateWithLifecycle()
+                val favorites by SavedAccounts.favorites(LocalContext.current).collectAsStateWithLifecycle()
                 val shown = accounts.withIndex().toList()
                     .filter { (_, acc) -> accountMatchesSearch(query, acc.npub, names[acc.npub].orEmpty()) }
                     .favoritesFirst(favorites) { it.value.npub }

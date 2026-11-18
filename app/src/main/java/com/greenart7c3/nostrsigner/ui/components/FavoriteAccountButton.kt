@@ -8,7 +8,7 @@ import androidx.compose.material3.IconToggleButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
-import com.greenart7c3.nostrsigner.LocalPreferences
+import com.greenart7c3.nostrsigner.SavedAccounts
 import com.greenart7c3.nostrsigner.commonsui.Res
 import com.greenart7c3.nostrsigner.commonsui.favorite_account
 import org.jetbrains.compose.resources.stringResource
@@ -31,7 +31,7 @@ fun FavoriteAccountButton(
     val context = LocalContext.current
     IconToggleButton(
         checked = isFavorite,
-        onCheckedChange = { LocalPreferences.setFavoriteAccount(context, npub, it) },
+        onCheckedChange = { SavedAccounts.setFavorite(context, npub, it) },
     ) {
         Icon(
             imageVector = if (isFavorite) Icons.Filled.Star else Icons.Filled.StarBorder,

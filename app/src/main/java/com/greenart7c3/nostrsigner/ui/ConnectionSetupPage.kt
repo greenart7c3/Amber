@@ -42,7 +42,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.greenart7c3.nostrsigner.LocalPreferences
+import com.greenart7c3.nostrsigner.SavedAccounts
 import com.greenart7c3.nostrsigner.commonsui.Res
 import com.greenart7c3.nostrsigner.commonsui.builtin_tor_active
 import com.greenart7c3.nostrsigner.commonsui.builtin_tor_description
@@ -101,7 +101,7 @@ fun ConnectionSetupPage(
     ) {
         Text(text = stringResource(Res.string.sign_policy_explainer))
         SignPolicyOptions(signPolicy, onSelect = { signPolicy = it }, modifier = Modifier.padding(vertical = 10.dp))
-        if (LocalPreferences.allSavedAccounts(context).isEmpty()) {
+        if (SavedAccounts.all(context).isEmpty()) {
             TorSetup(torMode, onTorMode = { torMode = it }, proxyPort, onProxyPort = { proxyPort = it })
         }
         AmberButton(

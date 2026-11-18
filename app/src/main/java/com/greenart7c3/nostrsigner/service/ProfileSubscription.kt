@@ -21,6 +21,7 @@
 package com.greenart7c3.nostrsigner.service
 
 import android.content.Context
+import com.greenart7c3.nostrsigner.AccountPreferences
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.data.RelayClient
@@ -98,7 +99,7 @@ class ProfileSubscription(
             val account = hexKey?.let { accounts[it] }
             if (account != null) {
                 scope.launch {
-                    LocalPreferences.setLastCheck(appContext, account.npub, TimeUtils.now())
+                    AccountPreferences.setLastCheck(appContext, account.npub, TimeUtils.now())
                 }
             }
         }
@@ -127,8 +128,8 @@ class ProfileSubscription(
      */
     internal fun applyMetadata(account: Account, event: MetadataEvent) {
         synchronized(account) {
-            if (event.createdAt <= LocalPreferences.getMetadataCreatedAt(appContext, account.npub)) return
-            LocalPreferences.setMetadataCreatedAt(appContext, account.npub, event.createdAt)
+            if (event.createdAt <= AccountPreferences.getMetadataCreatedAt(appContext, account.npub)) return
+            AccountPreferences.setMetadataCreatedAt(appContext, account.npub, event.createdAt)
 
             val metadata = event.contactMetaData() ?: return
             var atLeastOne = false
@@ -149,7 +150,7 @@ class ProfileSubscription(
 
             if (atLeastOne) {
                 scope.launch {
-                    LocalPreferences.setLastMetadataUpdate(appContext, account.npub, TimeUtils.now())
+                    AccountPreferences.setLastMetadataUpdate(appContext, account.npub, TimeUtils.now())
                 }
             }
         }
@@ -173,8 +174,8 @@ class ProfileSubscription(
         val shouldFetch = if (interval == ProfileFetchInterval.ALWAYS) {
             true
         } else {
-            val lastMetaData = LocalPreferences.getLastMetadataUpdate(appContext, account.npub)
-            val lastCheck = LocalPreferences.getLastCheck(appContext, account.npub)
+            val lastMetaData = AccountPreferences.getLastMetadataUpdate(appContext, account.npub)
+            val lastCheck = AccountPreferences.getLastCheck(appContext, account.npub)
             val oneDayAgo = TimeUtils.oneDayAgo()
             val fetchIntervalAgo = TimeUtils.now() - (interval.minutes * 60)
             (lastMetaData == 0L || oneDayAgo > lastMetaData) && (lastCheck == 0L || fetchIntervalAgo > lastCheck)
@@ -233,8 +234,8 @@ class ProfileSubscription(
         val account = accounts[event.pubKey] ?: return
         val relays = event.writeRelaysNorm() ?: event.relaysNorm()
         if (relays.isEmpty()) return
-        if (event.createdAt <= LocalPreferences.getUserRelaysCreatedAt(appContext, account.npub)) return
-        LocalPreferences.setUserRelays(appContext, account.npub, relays, event.createdAt)
+        if (event.createdAt <= AccountPreferences.getUserRelaysCreatedAt(appContext, account.npub)) return
+        AccountPreferences.setUserRelays(appContext, account.npub, relays, event.createdAt)
     }
 
     private fun unsubscribe(subId: String) {
@@ -279,7 +280,7 @@ class ProfileSubscription(
     /** Default profile relays from the settings plus the user's own saved relay list. */
     private fun profileRelays(account: Account): Set<NormalizedRelayUrl> {
         val defaultRelays = LocalPreferences.loadSettingsFromEncryptedStorage(appContext).defaultProfileRelays
-        val userRelays = LocalPreferences.getUserRelays(appContext, account.npub)
+        val userRelays = AccountPreferences.getUserRelays(appContext, account.npub)
         return (defaultRelays + userRelays).toSet()
     }
 

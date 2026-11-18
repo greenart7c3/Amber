@@ -214,3 +214,11 @@ accounts sheet, profile editor and restore prompt take callbacks instead of
 Split settings, account storage and key storage by concern; the key part is
 where the `requireUnlockedDevice` gate lives, so it deserves its own tested
 class.
+
+Done so far: the saved-account list, current account and favorites are
+`SavedAccounts`, the per-account preferences (backup consent, user relays, fetch
+times) `AccountPreferences`, and both read the preference files through
+`appPreferences`/`accountPreferences` (`PreferenceFiles.kt`). Neither touches the
+container; `SavedAccountsTest` pins the stored format. Left: the encrypted
+account and key storage (load, login, logout, the decrypted-account cache and the
+keystore lock check) and the app settings.

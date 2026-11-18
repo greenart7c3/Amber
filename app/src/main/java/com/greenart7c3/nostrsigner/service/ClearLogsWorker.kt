@@ -5,7 +5,7 @@ import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.AmberLog
-import com.greenart7c3.nostrsigner.LocalPreferences
+import com.greenart7c3.nostrsigner.SavedAccounts
 import com.greenart7c3.nostrsigner.amber
 import com.greenart7c3.nostrsigner.database.LogEntity
 import com.greenart7c3.nostrsigner.database.LogRetentionManager
@@ -18,7 +18,7 @@ class ClearLogsWorker(appContext: Context, workerParams: WorkerParameters) : Cor
 
     val amber = applicationContext.amber
     override suspend fun doWork(): Result {
-        LocalPreferences.allSavedAccounts(amber).forEach {
+        SavedAccounts.all(amber).forEach {
             try {
                 val now = System.currentTimeMillis()
                 val threeDaysAgo = now - THREE_DAYS_MILLIS

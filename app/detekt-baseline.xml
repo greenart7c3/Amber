@@ -87,7 +87,6 @@
     <ID>LambdaParameterInRestartableEffect:RememberMyChoice.kt:onReject: (RememberType) -&gt; Unit</ID>
     <ID>LambdaParameterInRestartableEffect:SimpleSearchBar.kt:onSearch: (String) -&gt; Unit</ID>
     <ID>LargeClass:EventNotificationConsumer.kt:EventNotificationConsumer</ID>
-    <ID>LargeClass:LocalPreferences.kt:LocalPreferences</ID>
     <ID>LongMethod:AccountBackupScreen.kt:@Composable fun AccountBackupScreen</ID>
     <ID>LongMethod:AccountBackupScreen.kt:@Composable private fun AccountBackupCard</ID>
     <ID>LongMethod:AccountBackupScreen.kt:@Composable private fun NSecQrButton</ID>

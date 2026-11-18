@@ -83,7 +83,7 @@ object LegacyStorageMigration {
 
         // The caches may hold the empty list that sent the user to onboarding.
         LocalPreferences.invalidateAccountCaches()
-        val hadCurrentAccount = !LocalPreferences.currentAccount(context).isNullOrBlank()
+        val hadCurrentAccount = !SavedAccounts.current(context).isNullOrBlank()
 
         val restored = candidates.filter { npub ->
             try {
@@ -98,22 +98,22 @@ object LegacyStorageMigration {
         if (restored.isNotEmpty()) {
             // Union, never replace: the user may have created or imported an
             // account in this build after landing on the onboarding screen.
-            LocalPreferences.replaceSavedAccounts(
+            SavedAccounts.replace(
                 context,
-                mergeAccountLists(LocalPreferences.savedAccountList(context), restored),
+                mergeAccountLists(SavedAccounts.list(context), restored),
             )
 
             if (!hadCurrentAccount) {
                 val legacyCurrent = legacySettings.getString(CURRENT_ACCOUNT, null)
                 (legacyCurrent?.takeIf { it in restored } ?: restored.firstOrNull())
-                    ?.let { LocalPreferences.switchToAccount(context, it) }
+                    ?.let { SavedAccounts.switchTo(context, it) }
             }
         }
 
         // Only where this install has no value: the user's choices here win.
         copyPreferences(
             from = legacySettings,
-            to = LocalPreferences.appPreferences(context),
+            to = appPreferences(context),
             skipped = HANDLED_SETTINGS_KEYS,
             onlyMissing = true,
         )
@@ -194,7 +194,7 @@ object LegacyStorageMigration {
 
         copyPreferences(
             from = legacy,
-            to = LocalPreferences.accountPreferences(context, npub),
+            to = accountPreferences(context, npub),
             skipped = SECRET_KEYS,
             onlyMissing = true,
         )
@@ -220,13 +220,13 @@ object LegacyStorageMigration {
      * user who routed every connection through their Orbot off the clearnet.
      */
     private fun restoreTorSettings(context: Context) {
-        val settings = LocalPreferences.appPreferences(context)
+        val settings = appPreferences(context)
         if (settings.contains(USE_PROXY)) return
 
-        val accounts = LocalPreferences.allSavedAccounts(context)
-        val useProxy = accounts.any { LocalPreferences.accountPreferences(context, it.npub).getBoolean(USE_PROXY, false) }
+        val accounts = SavedAccounts.all(context)
+        val useProxy = accounts.any { accountPreferences(context, it.npub).getBoolean(USE_PROXY, false) }
         val proxyPort = accounts.firstNotNullOfOrNull {
-            val accountPrefs = LocalPreferences.accountPreferences(context, it.npub)
+            val accountPrefs = accountPreferences(context, it.npub)
             if (accountPrefs.getBoolean(USE_PROXY, false)) accountPrefs.getInt(PROXY_PORT, 9050) else null
         } ?: 9050
 

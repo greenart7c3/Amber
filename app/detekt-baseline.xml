@@ -50,7 +50,6 @@
     <ID>CyclomaticComplexMethod:EditRelaysDialog.kt:fun onAddRelay</ID>
     <ID>CyclomaticComplexMethod:EncryptDecryptData.kt:@Composable fun BunkerEncryptDecryptData</ID>
     <ID>CyclomaticComplexMethod:EncryptDecryptData.kt:@Composable fun EncryptDecryptData</ID>
-    <ID>CyclomaticComplexMethod:EventNotificationConsumer.kt:EventNotificationConsumer$private suspend fun getEncryptedDataKind: EncryptedDataKind?</ID>
     <ID>CyclomaticComplexMethod:EventNotificationConsumer.kt:EventNotificationConsumer$private suspend fun notify</ID>
     <ID>CyclomaticComplexMethod:EventNotificationConsumer.kt:EventNotificationConsumer$suspend fun consume</ID>
     <ID>CyclomaticComplexMethod:ExportAllAccountsScreen.kt:@Composable fun ExportAllAccountsScreen</ID>
@@ -133,7 +132,6 @@
     <ID>LongMethod:EventData.kt:@Composable fun BunkerEventData</ID>
     <ID>LongMethod:EventData.kt:@Composable fun EventData</ID>
     <ID>LongMethod:EventDetailModal.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun EventDetailModal</ID>
-    <ID>LongMethod:EventNotificationConsumer.kt:EventNotificationConsumer$private suspend fun getEncryptedDataKind: EncryptedDataKind?</ID>
     <ID>LongMethod:EventNotificationConsumer.kt:EventNotificationConsumer$private suspend fun notify</ID>
     <ID>LongMethod:EventNotificationConsumer.kt:EventNotificationConsumer$suspend fun consume</ID>
     <ID>LongMethod:EventNotificationConsumerTest.kt:EventNotificationConsumerTest$@Test fun `an expired connection is answered as an unknown app`</ID>
@@ -243,7 +241,6 @@
     <ID>MultipleEmitters:ActivityStatsCard.kt:@Composable private fun ActivityStatsBar</ID>
     <ID>MultipleEmitters:RelaysScreen.kt:@Composable private fun LocalBunkerServerSettings</ID>
     <ID>MultipleEmitters:SignPsbt.kt:@Composable private fun PsbtBody</ID>
-    <ID>NestedBlockDepth:EventNotificationConsumer.kt:EventNotificationConsumer$private suspend fun getEncryptedDataKind: EncryptedDataKind?</ID>
     <ID>NestedBlockDepth:EventNotificationConsumer.kt:EventNotificationConsumer$private suspend fun notify</ID>
     <ID>NestedBlockDepth:NostrConnectUtils.kt:NostrConnectUtils$fun getIntentFromNostrConnect</ID>
     <ID>NestedBlockDepth:SignerProviderQuery.kt:SignerProviderQuery$@Suppress("RunBlocking") fun query: Cursor?</ID>

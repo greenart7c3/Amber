@@ -91,7 +91,6 @@ import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequestNip44Encrypt
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequestSign
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerResponse
 import com.vitorpamplona.quartz.nip46RemoteSigner.NostrConnectEvent
-import com.vitorpamplona.quartz.nip59Giftwrap.seals.SealEvent
 import com.vitorpamplona.quartz.utils.TimeUtils
 import java.util.UUID
 import kotlin.io.encoding.Base64
@@ -866,178 +865,24 @@ class EventNotificationConsumer(
         bunkerRequest: BunkerRequest?,
         acc: Account,
         url: String,
-    ): EncryptedDataKind? = if (bunkerRequest != null && (bunkerRequest.method == "nip44v3_encrypt" || bunkerRequest.method == "nip44v3_decrypt")) {
+    ): EncryptedDataKind? {
+        if (bunkerRequest == null) return null
         // V3 arrives as a generic BunkerRequest; build the preview the dedicated
         // approval screen renders (plaintext, like the v2 path).
-        nip44v3EncryptedDataKind(bunkerRequest, acc)
-    } else if (bunkerRequest is BunkerRequestNip44Decrypt) {
-        val result = acc.nip44Decrypt(bunkerRequest.ciphertext, bunkerRequest.pubKey)
-
-        if (result.startsWith("{")) {
-            try {
-                val event = AmberEvent.fromJson(result)
-                if (event.kind == SealEvent.KIND) {
-                    val decryptedSealData = try {
-                        acc.decrypt(event.content, acc.hexKey)
-                    } catch (_: Exception) {
-                        event.content
-                    }
-                    if (decryptedSealData.startsWith("{")) {
-                        val sealEvent = AmberEvent.fromJson(decryptedSealData)
-                        EventEncryptedDataKind(event, EventEncryptedDataKind(sealEvent, null, decryptedSealData), result)
-                    } else if (decryptedSealData.startsWith("[")) {
-                        try {
-                            val tagArray = JacksonMapper.fromJsonToTagArray(decryptedSealData)
-                            EventEncryptedDataKind(event, TagArrayEncryptedDataKind(tagArray, decryptedSealData), result)
-                        } catch (_: Exception) {
-                            EventEncryptedDataKind(event, ClearTextEncryptedDataKind(event.content, decryptedSealData), result)
-                        }
-                    } else {
-                        EventEncryptedDataKind(event, ClearTextEncryptedDataKind(event.content, decryptedSealData), result)
-                    }
-                } else {
-                    EventEncryptedDataKind(event, null, result)
-                }
-            } catch (e: Exception) {
-                saveLog("Error parsing JSON: ${e.message}", url, acc.npub)
-                ClearTextEncryptedDataKind(bunkerRequest.ciphertext, result)
+        if (bunkerRequest.method == "nip44v3_encrypt" || bunkerRequest.method == "nip44v3_decrypt") return nip44v3EncryptedDataKind(bunkerRequest, acc)
+        val onParseError: (String) -> Unit = { saveLog(it, url, acc.npub) }
+        // The plaintext side is what the user reads: the message of an encrypt, the result of a decrypt.
+        return when (bunkerRequest) {
+            is BunkerRequestNip44Decrypt -> acc.nip44Decrypt(bunkerRequest.ciphertext, bunkerRequest.pubKey).let {
+                previewOf(it, bunkerRequest.ciphertext, it, acc, onParseError)
             }
-        } else if (result.startsWith("[")) {
-            try {
-                val tagArray = JacksonMapper.fromJsonToTagArray(result)
-                TagArrayEncryptedDataKind(tagArray, result)
-            } catch (_: Exception) {
-                ClearTextEncryptedDataKind(bunkerRequest.ciphertext, result)
+            is BunkerRequestNip44Encrypt -> previewOf(bunkerRequest.message, bunkerRequest.message, acc.nip44Encrypt(bunkerRequest.message, bunkerRequest.pubKey), acc, onParseError)
+            is BunkerRequestNip04Decrypt -> acc.nip04Decrypt(bunkerRequest.ciphertext, bunkerRequest.pubKey).let {
+                previewOf(it, bunkerRequest.ciphertext, it, acc, onParseError)
             }
-        } else {
-            ClearTextEncryptedDataKind(bunkerRequest.ciphertext, result)
+            is BunkerRequestNip04Encrypt -> previewOf(bunkerRequest.message, bunkerRequest.message, acc.nip04Encrypt(bunkerRequest.message, bunkerRequest.pubKey), acc, onParseError)
+            else -> null
         }
-    } else if (bunkerRequest is BunkerRequestNip44Encrypt) {
-        val result = acc.nip44Encrypt(bunkerRequest.message, bunkerRequest.pubKey)
-        if (bunkerRequest.message.startsWith("{")) {
-            try {
-                val event = AmberEvent.fromJson(bunkerRequest.message)
-                if (event.kind == SealEvent.KIND) {
-                    val decryptedSealData = try {
-                        acc.decrypt(event.content, acc.hexKey)
-                    } catch (_: Exception) {
-                        event.content
-                    }
-                    if (decryptedSealData.startsWith("{")) {
-                        val sealEvent = AmberEvent.fromJson(decryptedSealData)
-                        EventEncryptedDataKind(event, EventEncryptedDataKind(sealEvent, null, decryptedSealData), result)
-                    } else if (decryptedSealData.startsWith("[")) {
-                        try {
-                            val tagArray = JacksonMapper.fromJsonToTagArray(decryptedSealData)
-                            EventEncryptedDataKind(event, TagArrayEncryptedDataKind(tagArray, decryptedSealData), result)
-                        } catch (_: Exception) {
-                            EventEncryptedDataKind(event, ClearTextEncryptedDataKind(event.content, decryptedSealData), result)
-                        }
-                    } else {
-                        EventEncryptedDataKind(event, ClearTextEncryptedDataKind(event.content, decryptedSealData), result)
-                    }
-                } else {
-                    EventEncryptedDataKind(event, null, result)
-                }
-            } catch (e: Exception) {
-                saveLog("Error parsing JSON: ${e.message}", url, acc.npub)
-                ClearTextEncryptedDataKind(bunkerRequest.message, result)
-            }
-        } else if (bunkerRequest.message.startsWith("[")) {
-            try {
-                val tagArray = JacksonMapper.fromJsonToTagArray(bunkerRequest.message)
-                TagArrayEncryptedDataKind(tagArray, result)
-            } catch (_: Exception) {
-                ClearTextEncryptedDataKind(bunkerRequest.message, result)
-            }
-        } else {
-            ClearTextEncryptedDataKind(bunkerRequest.message, result)
-        }
-    } else if (bunkerRequest is BunkerRequestNip04Decrypt) {
-        val result = acc.nip04Decrypt(bunkerRequest.ciphertext, bunkerRequest.pubKey)
-
-        if (result.startsWith("{")) {
-            try {
-                val event = AmberEvent.fromJson(result)
-                if (event.kind == SealEvent.KIND) {
-                    val decryptedSealData = try {
-                        acc.decrypt(event.content, acc.hexKey)
-                    } catch (_: Exception) {
-                        event.content
-                    }
-                    if (decryptedSealData.startsWith("{")) {
-                        val sealEvent = AmberEvent.fromJson(decryptedSealData)
-                        EventEncryptedDataKind(event, EventEncryptedDataKind(sealEvent, null, decryptedSealData), result)
-                    } else if (decryptedSealData.startsWith("[")) {
-                        try {
-                            val tagArray = JacksonMapper.fromJsonToTagArray(decryptedSealData)
-                            EventEncryptedDataKind(event, TagArrayEncryptedDataKind(tagArray, decryptedSealData), result)
-                        } catch (_: Exception) {
-                            EventEncryptedDataKind(event, ClearTextEncryptedDataKind(event.content, decryptedSealData), result)
-                        }
-                    } else {
-                        EventEncryptedDataKind(event, ClearTextEncryptedDataKind(event.content, decryptedSealData), result)
-                    }
-                } else {
-                    EventEncryptedDataKind(event, null, result)
-                }
-            } catch (e: Exception) {
-                saveLog("Error parsing JSON: ${e.message}", url, acc.npub)
-                ClearTextEncryptedDataKind(bunkerRequest.ciphertext, result)
-            }
-        } else if (result.startsWith("[")) {
-            try {
-                val tagArray = JacksonMapper.fromJsonToTagArray(result)
-                TagArrayEncryptedDataKind(tagArray, result)
-            } catch (_: Exception) {
-                ClearTextEncryptedDataKind(bunkerRequest.ciphertext, result)
-            }
-        } else {
-            ClearTextEncryptedDataKind(bunkerRequest.ciphertext, result)
-        }
-    } else if (bunkerRequest is BunkerRequestNip04Encrypt) {
-        val result = acc.nip04Encrypt(bunkerRequest.message, bunkerRequest.pubKey)
-        if (bunkerRequest.message.startsWith("{")) {
-            try {
-                val event = AmberEvent.fromJson(bunkerRequest.message)
-                if (event.kind == SealEvent.KIND) {
-                    val decryptedSealData = try {
-                        acc.decrypt(event.content, acc.hexKey)
-                    } catch (_: Exception) {
-                        event.content
-                    }
-                    if (decryptedSealData.startsWith("{")) {
-                        val sealEvent = AmberEvent.fromJson(decryptedSealData)
-                        EventEncryptedDataKind(event, EventEncryptedDataKind(sealEvent, null, decryptedSealData), result)
-                    } else if (decryptedSealData.startsWith("[")) {
-                        try {
-                            val tagArray = JacksonMapper.fromJsonToTagArray(decryptedSealData)
-                            EventEncryptedDataKind(event, TagArrayEncryptedDataKind(tagArray, decryptedSealData), result)
-                        } catch (_: Exception) {
-                            EventEncryptedDataKind(event, ClearTextEncryptedDataKind(event.content, decryptedSealData), result)
-                        }
-                    } else {
-                        EventEncryptedDataKind(event, ClearTextEncryptedDataKind(event.content, decryptedSealData), result)
-                    }
-                } else {
-                    EventEncryptedDataKind(event, null, result)
-                }
-            } catch (e: Exception) {
-                saveLog("Error parsing JSON: ${e.message}", url, acc.npub)
-                ClearTextEncryptedDataKind(bunkerRequest.message, result)
-            }
-        } else if (bunkerRequest.message.startsWith("[")) {
-            try {
-                val tagArray = JacksonMapper.fromJsonToTagArray(bunkerRequest.message)
-                TagArrayEncryptedDataKind(tagArray, result)
-            } catch (_: Exception) {
-                ClearTextEncryptedDataKind(bunkerRequest.message, result)
-            }
-        } else {
-            ClearTextEncryptedDataKind(bunkerRequest.message, result)
-        }
-    } else {
-        null
     }
 
     /**

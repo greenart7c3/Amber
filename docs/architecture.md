@@ -135,6 +135,11 @@ or admitted. `EventNotificationConsumer.notify` and `BunkerEngine.routeRequest`
 both call it and keep only their storage lookups, logs and replies;
 `Nip46AdmissionTest` covers each outcome.
 
+What an encrypt/decrypt approval previews (an event, an opened seal, a tag array
+or plain text) is `service/EncryptedDataPreview.kt`'s `previewOf`, shared by the
+intent and bunker paths on Android (the desktop shows no such preview);
+`EncryptedDataPreviewTest` covers it.
+
 ### 2. Split `IntentUtils.kt`
 
 Separate parsing (`nostrsigner://` / `nostrconnect://` → a data object),

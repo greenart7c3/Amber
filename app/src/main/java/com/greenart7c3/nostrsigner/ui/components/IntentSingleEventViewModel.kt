@@ -7,37 +7,43 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.greenart7c3.nostrsigner.data.AccountRepository
 import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
+import com.greenart7c3.nostrsigner.models.IntentData
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-/** Loads the saved application (and its grants) that a single NIP-55 request comes from. */
-class IntentSingleEventViewModel(
-    accountRepository: AccountRepository,
-    npub: String,
-    packageName: String?,
-) : ViewModel() {
-    private val _application = MutableStateFlow<ApplicationWithPermissions?>(null)
-    val application: StateFlow<ApplicationWithPermissions?> = _application.asStateFlow()
+/** The saved app of [intentData]'s caller (null when it has none), as loaded for that request. */
+data class LoadedIntentApplication(val intentData: IntentData, val application: ApplicationWithPermissions?)
 
-    init {
+/**
+ * Loads the saved application (and its grants) that a single NIP-55 request comes from.
+ * It is loaded for each request and kept with it: the calling app chooses the request id,
+ * so a later request can reuse this ViewModel's key, and must be answered from its own
+ * load (a grant revoked in between must not still apply).
+ */
+class IntentSingleEventViewModel(
+    private val accountRepository: AccountRepository,
+) : ViewModel() {
+    private val _loaded = MutableStateFlow<LoadedIntentApplication?>(null)
+    val loaded: StateFlow<LoadedIntentApplication?> = _loaded.asStateFlow()
+
+    fun load(intentData: IntentData, npub: String, packageName: String?) {
         // Browser deep-links (nostrsigner://) arrive with no calling package, so
         // every web caller would otherwise share the single "null" key. Honoring a
         // remembered grant for that shared identity would let a grant given to one
         // website auto-approve any other website. Never load (and thus never honor)
         // the shared "null" application: force always-ask for null-package callers.
-        if (packageName != null) {
-            viewModelScope.launch(Dispatchers.IO) {
-                _application.value = accountRepository.getDatabase(npub).dao().getByKey(packageName)
-            }
+        if (packageName == null) return
+        viewModelScope.launch(Dispatchers.IO) {
+            _loaded.value = LoadedIntentApplication(intentData, accountRepository.getDatabase(npub).dao().getByKey(packageName))
         }
     }
 
     companion object {
-        fun factory(accountRepository: AccountRepository, npub: String, packageName: String?): ViewModelProvider.Factory = viewModelFactory {
-            initializer { IntentSingleEventViewModel(accountRepository, npub, packageName) }
+        fun factory(accountRepository: AccountRepository): ViewModelProvider.Factory = viewModelFactory {
+            initializer { IntentSingleEventViewModel(accountRepository) }
         }
     }
 }

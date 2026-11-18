@@ -170,7 +170,8 @@ the screen's default `viewModel(...)` argument, as the Compose
 `ViewModelInjection` rule requires.
 
 Done so far: `IntentSingleEventHomeScreen` (`IntentSingleEventViewModel` loads
-the saved app; one composable per request type; the grant lookup is
+the saved app for each request and the screen uses it only for that request,
+since the calling app chooses the request id; one composable per request type; the grant lookup is
 `service/intentPermission`, unit-tested). ViewModels may import `database/`
 types (the `databaseInUi` rule exempts `*ViewModel.kt`), since loading data is
 their job.

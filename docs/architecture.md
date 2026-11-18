@@ -230,4 +230,5 @@ decrypted-account cache and the account names. It gets the `AccountRepository`
 and the app scope from Amber at construction (`install`, before any
 ContentProvider runs) instead of reaching the container through a context;
 `AccountStorageTest` covers the broken-key report, the locked-device case, the
-cache and the key zeroing at logout. Left: the app settings.
+cache and the key zeroing at logout. The WebDAV server for cloud backups is
+`WebDavSettings`. Left: splitting how the app settings are read.

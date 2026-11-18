@@ -4,16 +4,14 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.pm.PackageManager
-import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -23,9 +21,9 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -40,16 +38,14 @@ import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.RadioButton
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SheetValue
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextFieldDefaults
@@ -57,22 +53,23 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.listSaver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.autofill.ContentType
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalConfiguration
@@ -104,12 +101,14 @@ import androidx.compose.ui.text.toUpperCase
 import androidx.compose.ui.text.withLink
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
-import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.amber
 import com.greenart7c3.nostrsigner.commonsui.Res
@@ -117,18 +116,12 @@ import com.greenart7c3.nostrsigner.commonsui.a_nostr_secure_signer
 import com.greenart7c3.nostrsigner.commonsui.add_a_key
 import com.greenart7c3.nostrsigner.commonsui.amber_github_uri
 import com.greenart7c3.nostrsigner.commonsui.amber_is_a_free_and_open_source_project
-import com.greenart7c3.nostrsigner.commonsui.builtin_tor_active
-import com.greenart7c3.nostrsigner.commonsui.builtin_tor_description
-import com.greenart7c3.nostrsigner.commonsui.builtin_tor_title
 import com.greenart7c3.nostrsigner.commonsui.check_the_code
-import com.greenart7c3.nostrsigner.commonsui.connect_through_your_orbot_setup_markdown2
-import com.greenart7c3.nostrsigner.commonsui.connect_via_tor_short
 import com.greenart7c3.nostrsigner.commonsui.continue_button
 import com.greenart7c3.nostrsigner.commonsui.do_not_leave_the_app_until_the_key_is_generated
 import com.greenart7c3.nostrsigner.commonsui.encryption_password
 import com.greenart7c3.nostrsigner.commonsui.enter_recovery_phrase_description
 import com.greenart7c3.nostrsigner.commonsui.enter_strong_password
-import com.greenart7c3.nostrsigner.commonsui.finish
 import com.greenart7c3.nostrsigner.commonsui.generate_a_new_key
 import com.greenart7c3.nostrsigner.commonsui.go_back
 import com.greenart7c3.nostrsigner.commonsui.hide_password
@@ -146,317 +139,170 @@ import com.greenart7c3.nostrsigner.commonsui.offline_previous_install_body
 import com.greenart7c3.nostrsigner.commonsui.offline_previous_install_open
 import com.greenart7c3.nostrsigner.commonsui.offline_previous_install_title
 import com.greenart7c3.nostrsigner.commonsui.ok
-import com.greenart7c3.nostrsigner.commonsui.orbot_socks_port
-import com.greenart7c3.nostrsigner.commonsui.orbot_title
 import com.greenart7c3.nostrsigner.commonsui.password_is_required
 import com.greenart7c3.nostrsigner.commonsui.permissions_and_connection
 import com.greenart7c3.nostrsigner.commonsui.please_add_a_nickname_later_you_will_able_to_personalise_your_full_profile_bio_pic_etc_using_your_preferred_nostr_client
 import com.greenart7c3.nostrsigner.commonsui.recover_from_backup
 import com.greenart7c3.nostrsigner.commonsui.setup_amber_with_your_nostr_private_key_you_can_enter_different_versions_nsec_ncryptsec_or_hex_you_can_also_scan_it_from_a_qr_code
 import com.greenart7c3.nostrsigner.commonsui.show_password
-import com.greenart7c3.nostrsigner.commonsui.sign_policy_basic
-import com.greenart7c3.nostrsigner.commonsui.sign_policy_basic_explainer
-import com.greenart7c3.nostrsigner.commonsui.sign_policy_explainer
-import com.greenart7c3.nostrsigner.commonsui.sign_policy_manual
-import com.greenart7c3.nostrsigner.commonsui.sign_policy_manual_explainer
-import com.greenart7c3.nostrsigner.commonsui.use_builtin_tor
-import com.greenart7c3.nostrsigner.commonsui.use_orbot
 import com.greenart7c3.nostrsigner.commonsui.you_will_find_it_in_your_account_section_so_you_don_t_need_to_copy_it_right_now
 import com.greenart7c3.nostrsigner.commonsui.your_nostr_account_explainer
 import com.greenart7c3.nostrsigner.commonsui.your_nostr_account_is_ready
-import com.greenart7c3.nostrsigner.models.TorMode
-import com.greenart7c3.nostrsigner.service.AccountExportService
 import com.greenart7c3.nostrsigner.ui.components.AmberButton
 import com.greenart7c3.nostrsigner.ui.components.AmberElevatedButton
 import com.greenart7c3.nostrsigner.ui.components.IconRow
-import com.greenart7c3.nostrsigner.ui.components.MarkdownText
 import com.greenart7c3.nostrsigner.ui.components.MnemonicLoginInput
-import com.greenart7c3.nostrsigner.ui.components.TitleExplainer
 import com.greenart7c3.nostrsigner.ui.navigation.Route
 import com.greenart7c3.nostrsigner.ui.theme.amoledBorder
 import com.greenart7c3.nostrsigner.ui.theme.outlineIfAny
-import com.vitorpamplona.crypto.random.RandomInstance
 import com.vitorpamplona.quartz.nip01Core.crypto.KeyPair
-import com.vitorpamplona.quartz.nip06KeyDerivation.Bip39Mnemonics
-import com.vitorpamplona.quartz.nip06KeyDerivation.Nip06
 import com.vitorpamplona.quartz.nip19Bech32.toNpub
 import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.compose.resources.stringResource
 
-@OptIn(ExperimentalMaterial3Api::class)
+// The side margin of the login pages: 7% of the screen width.
 @SuppressLint("ConfigurationScreenWidthHeight")
+@Composable
+private fun loginPadding(): Dp = LocalConfiguration.current.screenWidthDp.dp * 0.07f
+
 @Composable
 fun MainPage(
     navHostControllerWrapper: NavHostControllerWrapper,
-    accountViewModel: AccountStateViewModel,
+    onOpenFirstAccount: suspend () -> Unit,
+    modifier: Modifier = Modifier,
+    viewModel: AccountImportViewModel = viewModel(factory = AccountImportViewModel.factory(LocalContext.current.applicationContext, LocalAppScope.current)),
 ) {
     val appScope = LocalAppScope.current
     val amber = LocalContext.current.amber
-    var isLoading by remember { mutableStateOf(false) }
-    var text by remember { mutableStateOf("") }
+    val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
+    val progress by viewModel.progress.collectAsStateWithLifecycle()
+    val failedLines by viewModel.failedLines.collectAsStateWithLifecycle()
     var password by remember { mutableStateOf(TextFieldValue()) }
-    val configuration = LocalConfiguration.current
-    val screenWidthDp = configuration.screenWidthDp.dp
-    val percentage = (screenWidthDp * 0.93f)
-    val verticalPadding = (screenWidthDp - percentage)
-    val shouldShowBottomSheet = remember { mutableStateOf(false) }
-    var failedImportLines by remember { mutableStateOf<List<Int>>(emptyList()) }
-    // Set when an import restored some accounts but not all: they are opened
-    // once the error dialog is dismissed.
-    var finishAfterImportError by remember { mutableStateOf<(() -> Unit)?>(null) }
+    var showImportSheet by remember { mutableStateOf(false) }
+    val padding = loginPadding()
 
-    fun finishImport(hadAccounts: Boolean) {
+    val finishImport: (Boolean) -> Unit = { hadAccounts ->
         appScope.launch {
             if (hadAccounts) {
-                appScope.launch(Dispatchers.Main) {
-                    navHostControllerWrapper.navController.navigate(Route.Applications.route) {
-                        popUpTo(0)
-                    }
-                }
+                withContext(Dispatchers.Main) { navHostControllerWrapper.navController.navigate(Route.Applications.route) { popUpTo(0) } }
             } else {
-                val accounts = LocalPreferences.allAccounts(amber)
-                if (accounts.isNotEmpty()) {
-                    val account = LocalPreferences.loadFromEncryptedStorage(amber, accounts.first().npub)
-                    account?.let {
-                        accountViewModel.startUI(account, null)
-                        accountViewModel.maybeOfferRestore(account)
-                    }
-                }
+                onOpenFirstAccount()
             }
             amber.notificationSubscription.updateFilter()
         }
     }
-
     val selectFileLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
-        shouldShowBottomSheet.value = false
-        appScope.launch {
-            uri?.let {
-                val hasAccounts = LocalPreferences.allAccounts(amber).isNotEmpty()
-                AccountExportService.importAccounts(
-                    context = amber,
-                    scope = appScope,
-                    uri = uri,
-                    password = password.text,
-                    onText = {
-                        text = it
-                    },
-                    onLoading = {
-                        isLoading = it
-                    },
-                    onFinish = { importedCount, failedLines ->
-                        if (failedLines.isEmpty()) {
-                            finishImport(hasAccounts)
-                        } else {
-                            // When nothing was imported, stay here so the user can
-                            // retry instead of landing on a "your account is ready"
-                            // screen.
-                            finishAfterImportError = if (importedCount > 0) {
-                                { finishImport(hasAccounts) }
-                            } else {
-                                null
-                            }
-                            failedImportLines = failedLines
-                        }
-                    },
-                )
-            }
-        }
+        showImportSheet = false
+        uri?.let { viewModel.import(it, password.text, finishImport) }
     }
 
-    if (failedImportLines.isNotEmpty()) {
-        val dismissImportError = {
-            failedImportLines = emptyList()
-            finishAfterImportError?.invoke()
-            finishAfterImportError = null
-        }
-        AlertDialog(
-            modifier = Modifier.outlineIfAny(amoledBorder(), AlertDialogDefaults.shape),
-            onDismissRequest = dismissImportError,
-            title = { Text(stringResource(Res.string.recover_from_backup)) },
-            text = { Text(stringResource(Res.string.import_failed_for_accounts, failedImportLines.joinToString(", "))) },
-            confirmButton = {
-                TextButton(onClick = dismissImportError) { Text(stringResource(Res.string.ok)) }
-            },
-        )
+    if (failedLines.isNotEmpty()) ImportErrorDialog(failedLines, onDismiss = viewModel::dismissImportError)
+    if (showImportSheet) {
+        ImportSheet(password, onPassword = { password = it }, onPickFile = { selectFileLauncher.launch("*/*") }, onDismiss = { showImportSheet = false })
     }
 
-    val sheetState =
-        rememberModalBottomSheetState(
-            confirmValueChange = { it != SheetValue.PartiallyExpanded },
-            skipPartiallyExpanded = true,
-        )
-
-    if (shouldShowBottomSheet.value) {
-        var showCharsPassword by remember { mutableStateOf(false) }
-        ModalBottomSheet(
-            modifier = Modifier.outlineIfAny(amoledBorder(), BottomSheetDefaults.ExpandedShape),
-            sheetState = sheetState,
-            onDismissRequest = {
-                shouldShowBottomSheet.value = false
-            },
-        ) {
-            CompositionLocalProvider(
-                LocalDensity provides Density(
-                    LocalDensity.current.density,
-                    1f,
-                ),
-            ) {
-                Column(
-                    Modifier.padding(8.dp),
-                ) {
-                    OutlinedTextField(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .semantics {
-                                contentType = ContentType.Password
-                            },
-                        value = password,
-                        onValueChange = {
-                            password = it
-                        },
-                        keyboardOptions = KeyboardOptions(
-                            autoCorrectEnabled = false,
-                            keyboardType = KeyboardType.Password,
-                            imeAction = ImeAction.Next,
-                        ),
-                        label = {
-                            Text(text = stringResource(Res.string.encryption_password))
-                        },
-                        placeholder = {
-                            Text(text = stringResource(Res.string.enter_strong_password))
-                        },
-                        trailingIcon = {
-                            IconButton(onClick = { showCharsPassword = !showCharsPassword }) {
-                                Icon(
-                                    imageVector = if (showCharsPassword) Icons.Outlined.VisibilityOff else Icons.Outlined.Visibility,
-                                    contentDescription = if (showCharsPassword) {
-                                        stringResource(Res.string.hide_password)
-                                    } else {
-                                        stringResource(Res.string.show_password)
-                                    },
-                                )
-                            }
-                        },
-                        visualTransformation = if (showCharsPassword) VisualTransformation.None else PasswordVisualTransformation(),
-                    )
-                    AmberButton(
-                        onClick = {
-                            selectFileLauncher.launch("*/*")
-                        },
-                        text = stringResource(Res.string.recover_from_backup),
-                    )
-                }
-            }
-        }
-    }
-
-    Scaffold {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(it)
-                .padding(horizontal = verticalPadding)
-                .padding(top = verticalPadding * 1.5f),
-        ) {
+    Scaffold(modifier) {
+        Column(Modifier.fillMaxSize().padding(it).padding(horizontal = padding).padding(top = padding * 1.5f)) {
             if (isLoading) {
-                CenterCircularProgressIndicator(
-                    modifier = Modifier.fillMaxSize(),
-                    text = text,
-                )
+                CenterCircularProgressIndicator(modifier = Modifier.fillMaxSize(), text = progress)
             } else {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize(),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                ) {
-                    Text(
-                        text = androidStringResource(R.string.app_name_release).toUpperCase(Locale.current),
-                        fontSize = 36.sp,
-                    )
-                    Text(
-                        text = stringResource(Res.string.a_nostr_secure_signer),
-                        fontSize = 16.sp,
-                        color = Color(0xFFC98500),
-                    )
-
-                    PreviousOfflineInstallNotice(Modifier.padding(top = 12.dp))
-
-                    Image(
-                        modifier = Modifier.padding(top = 20.dp, bottom = 20.dp),
-                        imageVector = ImageVector.vectorResource(R.drawable.frame),
-                        contentDescription = "Logo",
-                    )
-
-                    Column(
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                    ) {
-                        AmberElevatedButton(
-                            contentColor = Color(0xFF4C4C4C),
-                            textColor = MaterialTheme.colorScheme.primary,
-                            onClick = {
-                                appScope.launch(Dispatchers.Main) {
-                                    navHostControllerWrapper.navController.navigate("loginPage")
-                                }
-                            },
-                            text = stringResource(Res.string.add_a_key),
-                        )
-
-                        AmberButton(
-                            onClick = {
-                                appScope.launch(Dispatchers.Main) {
-                                    navHostControllerWrapper.navController.navigate("create")
-                                }
-                            },
-                            text = stringResource(Res.string.generate_a_new_key),
-                        )
-
-                        AmberButton(
-                            onClick = {
-                                shouldShowBottomSheet.value = true
-                            },
-                            text = stringResource(Res.string.recover_from_backup),
-                        )
-                    }
-
-                    Spacer(Modifier.weight(1f))
-
-                    val message = stringResource(Res.string.amber_is_a_free_and_open_source_project)
-                    val githubUri = stringResource(Res.string.amber_github_uri)
-                    val checkTheCodeMessage = stringResource(Res.string.check_the_code)
-
-                    Text(
-                        modifier = Modifier.padding(bottom = 20.dp),
-                        color = Color(0xFF8C8C8C),
-                        text = buildAnnotatedString {
-                            withStyle(
-                                style = ParagraphStyle(
-                                    textAlign = TextAlign.Center,
-                                ),
-                            ) {
-                                append(message)
-                                withLink(
-                                    LinkAnnotation.Url(
-                                        githubUri,
-                                        styles = TextLinkStyles(
-                                            style = SpanStyle(
-                                                textDecoration = TextDecoration.Underline,
-                                            ),
-                                        ),
-                                    ),
-                                ) {
-                                    append(checkTheCodeMessage)
-                                }
-                            }
-                        },
-                    )
-                }
+                MainPageContent(
+                    onAddKey = { navHostControllerWrapper.navController.navigate("loginPage") },
+                    onGenerateKey = { navHostControllerWrapper.navController.navigate("create") },
+                    onRecover = { showImportSheet = true },
+                )
             }
         }
     }
+}
+
+@Composable
+private fun ImportErrorDialog(failedLines: List<Int>, onDismiss: () -> Unit) {
+    AlertDialog(
+        modifier = Modifier.outlineIfAny(amoledBorder(), AlertDialogDefaults.shape),
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(Res.string.recover_from_backup)) },
+        text = { Text(stringResource(Res.string.import_failed_for_accounts, failedLines.joinToString(", "))) },
+        confirmButton = { TextButton(onClick = onDismiss) { Text(stringResource(Res.string.ok)) } },
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ImportSheet(
+    password: TextFieldValue,
+    onPassword: (TextFieldValue) -> Unit,
+    onPickFile: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    ModalBottomSheet(
+        modifier = Modifier.outlineIfAny(amoledBorder(), BottomSheetDefaults.ExpandedShape),
+        sheetState = rememberModalBottomSheetState(confirmValueChange = { it != SheetValue.PartiallyExpanded }, skipPartiallyExpanded = true),
+        onDismissRequest = onDismiss,
+    ) {
+        CompositionLocalProvider(LocalDensity provides Density(LocalDensity.current.density, 1f)) {
+            Column(Modifier.padding(8.dp)) {
+                SecretField(
+                    value = password,
+                    onValueChange = onPassword,
+                    modifier = Modifier.fillMaxWidth(),
+                    label = stringResource(Res.string.encryption_password),
+                    placeholder = stringResource(Res.string.enter_strong_password),
+                    imeAction = ImeAction.Next,
+                )
+                AmberButton(onClick = onPickFile, text = stringResource(Res.string.recover_from_backup))
+            }
+        }
+    }
+}
+
+@Composable
+private fun MainPageContent(onAddKey: () -> Unit, onGenerateKey: () -> Unit, onRecover: () -> Unit) {
+    Column(modifier = Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(text = androidStringResource(R.string.app_name_release).toUpperCase(Locale.current), fontSize = 36.sp)
+        Text(text = stringResource(Res.string.a_nostr_secure_signer), fontSize = 16.sp, color = Color(0xFFC98500))
+        PreviousOfflineInstallNotice(Modifier.padding(top = 12.dp))
+        Image(
+            modifier = Modifier.padding(top = 20.dp, bottom = 20.dp),
+            imageVector = ImageVector.vectorResource(R.drawable.frame),
+            contentDescription = "Logo",
+        )
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+            AmberElevatedButton(
+                contentColor = Color(0xFF4C4C4C),
+                textColor = MaterialTheme.colorScheme.primary,
+                onClick = onAddKey,
+                text = stringResource(Res.string.add_a_key),
+            )
+            AmberButton(onClick = onGenerateKey, text = stringResource(Res.string.generate_a_new_key))
+            AmberButton(onClick = onRecover, text = stringResource(Res.string.recover_from_backup))
+        }
+        Spacer(Modifier.weight(1f))
+        SourceCodeFooter()
+    }
+}
+
+@Composable
+private fun SourceCodeFooter() {
+    val message = stringResource(Res.string.amber_is_a_free_and_open_source_project)
+    val githubUri = stringResource(Res.string.amber_github_uri)
+    val checkTheCodeMessage = stringResource(Res.string.check_the_code)
+    Text(
+        modifier = Modifier.padding(bottom = 20.dp),
+        color = Color(0xFF8C8C8C),
+        text = buildAnnotatedString {
+            withStyle(style = ParagraphStyle(textAlign = TextAlign.Center)) {
+                append(message)
+                withLink(LinkAnnotation.Url(githubUri, styles = TextLinkStyles(style = SpanStyle(textDecoration = TextDecoration.Underline)))) {
+                    append(checkTheCodeMessage)
+                }
+            }
+        },
+    )
 }
 
 // The application ids an offline Amber can carry: the one shared with the online
@@ -547,1100 +393,392 @@ fun MainLoginPage(
 ) {
     val appScope = LocalAppScope.current
     val amber = LocalContext.current.amber
-    NavHost(
-        navHostControllerWrapper.navController,
-        startDestination = "login",
-    ) {
-        composable(
-            "login",
-            content = {
-                MainPage(
-                    navHostControllerWrapper = navHostControllerWrapper,
-                    accountViewModel = accountViewModel,
-                )
-            },
-        )
+    NavHost(navHostControllerWrapper.navController, startDestination = "login") {
+        composable("login") {
+            MainPage(navHostControllerWrapper, onOpenFirstAccount = accountViewModel::openFirstImportedAccount)
+        }
+        composable("create") {
+            SignUpPage(
+                navHostControllerWrapper = navHostControllerWrapper,
+                onCreate = { setup, seedWords, name -> accountViewModel.newKey(setup.torMode, setup.proxyPort, setup.signPolicy, seedWords, name) },
+                onFinish = { appScope.launch { amber.notificationSubscription.updateFilter() } },
+            )
+        }
+        composable("loginPage") {
+            LoginPage(
+                navHostControllerWrapper = navHostControllerWrapper,
+                onLogin = { keyPair, setup -> accountViewModel.startUI(keyPair, null, setup.torMode, setup.proxyPort, setup.signPolicy) },
+                onFinish = {},
+            )
+        }
+    }
+}
 
-        composable(
-            "create",
-            content = {
-                SignUpPage(
-                    accountViewModel = accountViewModel,
-                    navHostControllerWrapper = navHostControllerWrapper,
-                    onFinish = {
-                        appScope.launch {
-                            amber.notificationSubscription.updateFilter()
-                        }
-                    },
-                )
-            },
-        )
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun LoginTopBar(title: String) {
+    CenterAlignedTopAppBar(title = { Text(text = title) })
+}
 
-        composable(
-            "loginPage",
-            content = {
-                LoginPage(
-                    accountViewModel = accountViewModel,
-                    navHostControllerWrapper = navHostControllerWrapper,
-                    onFinish = {},
-                )
+// Back steps through the pager first, then leaves the page.
+@Composable
+private fun LoginBottomBar(pagerState: PagerState, navHostControllerWrapper: NavHostControllerWrapper) {
+    val scope = rememberCoroutineScope()
+    BottomAppBar {
+        IconRow(
+            center = true,
+            title = stringResource(Res.string.go_back),
+            icon = ImageVector.vectorResource(R.drawable.back),
+            onClick = {
+                if (pagerState.currentPage > 0) {
+                    scope.launch { pagerState.animateScrollToPage(pagerState.currentPage - 1) }
+                } else {
+                    navHostControllerWrapper.navController.navigateUp()
+                }
             },
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }
 }
 
-@SuppressLint("ConfigurationScreenWidthHeight")
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SignUpPage(
-    accountViewModel: AccountStateViewModel,
     navHostControllerWrapper: NavHostControllerWrapper,
+    onCreate: suspend (ConnectionSetup, Set<String>, String) -> Unit,
     onFinish: () -> Unit,
+    modifier: Modifier = Modifier,
+    viewModel: SignUpViewModel = viewModel(factory = SignUpViewModel.factory(LocalAppScope.current)),
 ) {
-    val appScope = LocalAppScope.current
-    val scope = rememberCoroutineScope()
-    var loading by remember { mutableStateOf(false) }
-    val configuration = LocalConfiguration.current
-    val screenWidthDp = configuration.screenWidthDp.dp
-    val percentage = (screenWidthDp * 0.93f)
-    val verticalPadding = (screenWidthDp - percentage)
+    val newKey by viewModel.newKey.collectAsStateWithLifecycle()
     var nickname by remember { mutableStateOf(TextFieldValue()) }
-    var keyPair by remember { mutableStateOf<KeyPair?>(null) }
-    val state = rememberPagerState {
-        2
-    }
-    val context = LocalContext.current
-    var seedWords by remember { mutableStateOf(setOf<String>()) }
-
-    LaunchedEffect(Unit) {
-        launch(Dispatchers.IO) {
-            loading = true
-            while (seedWords.size < 12) {
-                val entropy = RandomInstance.bytes(16)
-                seedWords = Bip39Mnemonics.toMnemonics(entropy).toSet()
-                keyPair = KeyPair(privKey = Nip06().privateKeyFromMnemonic(seedWords.joinToString(" ")))
-            }
-            loading = false
-        }
-    }
+    val pagerState = rememberPagerState { 2 }
+    val scope = rememberCoroutineScope()
+    val padding = loginPadding()
 
     Scaffold(
-        topBar = {
-            CenterAlignedTopAppBar(
-                title = {
-                    when (state.currentPage) {
-                        0 -> {
-                            Text(text = stringResource(Res.string.generate_a_new_key))
-                        }
-                        else -> {
-                            Text(text = stringResource(Res.string.permissions_and_connection))
-                        }
-                    }
-                },
-            )
-        },
-        bottomBar = {
-            BottomAppBar {
-                IconRow(
-                    center = true,
-                    title = stringResource(Res.string.go_back),
-                    icon = ImageVector.vectorResource(R.drawable.back),
-                    onClick = {
-                        if (state.currentPage > 0) {
-                            scope.launch {
-                                state.animateScrollToPage(state.currentPage - 1)
-                            }
-                        } else {
-                            appScope.launch(Dispatchers.Main) {
-                                navHostControllerWrapper.navController.navigateUp()
-                            }
-                        }
-                    },
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-        },
-    ) {
-        if (loading) {
-            CenterCircularProgressIndicator(
-                Modifier.fillMaxSize(),
-                stringResource(Res.string.do_not_leave_the_app_until_the_key_is_generated),
-            )
+        modifier = modifier,
+        topBar = { LoginTopBar(stringResource(if (pagerState.currentPage == 0) Res.string.generate_a_new_key else Res.string.permissions_and_connection)) },
+        bottomBar = { LoginBottomBar(pagerState, navHostControllerWrapper) },
+    ) { contentPadding ->
+        val key = newKey
+        if (key == null) {
+            CenterCircularProgressIndicator(Modifier.fillMaxSize(), stringResource(Res.string.do_not_leave_the_app_until_the_key_is_generated))
         } else {
-            HorizontalPager(
-                modifier = Modifier
-                    .fillMaxSize(),
-                state = state,
-                userScrollEnabled = false,
-            ) { page ->
-                val scope = rememberCoroutineScope()
+            HorizontalPager(modifier = Modifier.fillMaxSize(), state = pagerState, userScrollEnabled = false) { page ->
                 when (page) {
-                    0 -> {
-                        val scrollState = rememberScrollState()
-                        val keyboardController = LocalSoftwareKeyboardController.current
-                        Column(
-                            Modifier
-                                .fillMaxSize()
-                                .verticalScrollbar(scrollState)
-                                .verticalScroll(scrollState)
-                                .padding(it)
-                                .padding(horizontal = verticalPadding)
-                                .padding(top = verticalPadding * 1.5f)
-                                .imePadding(),
-                        ) {
-                            Text(
-                                text = stringResource(Res.string.your_nostr_account_is_ready),
-                                fontWeight = FontWeight.Bold,
-                                modifier = Modifier.padding(bottom = 8.dp),
-                            )
-                            Text(
-                                text = stringResource(Res.string.your_nostr_account_explainer),
-                                modifier = Modifier.padding(bottom = 8.dp),
-                            )
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .background(Color(0xFFFFDE9E)),
-                            ) {
-                                Text(
-                                    text = keyPair?.pubKey?.toNpub() ?: "",
-                                    modifier = Modifier.padding(10.dp),
-                                    color = Color.Black,
-                                )
-                            }
-                            Spacer(Modifier.height(8.dp))
-                            Text(stringResource(Res.string.you_will_find_it_in_your_account_section_so_you_don_t_need_to_copy_it_right_now))
-
-                            Text(
-                                text = stringResource(Res.string.please_add_a_nickname_later_you_will_able_to_personalise_your_full_profile_bio_pic_etc_using_your_preferred_nostr_client),
-                                modifier = Modifier.padding(top = 20.dp, bottom = 8.dp),
-                            )
-                            OutlinedTextField(
-                                value = nickname,
-                                onValueChange = { value ->
-                                    nickname = value
-                                },
-                                placeholder = {
-                                    Text(
-                                        stringResource(Res.string.nickname),
-                                        color = TextFieldDefaults.colors().unfocusedPlaceholderColor,
-                                    )
-                                },
-                                keyboardOptions = KeyboardOptions(
-                                    capitalization = KeyboardCapitalization.None,
-                                    autoCorrectEnabled = false,
-                                    imeAction = ImeAction.Done,
-                                ),
-                                keyboardActions = KeyboardActions(
-                                    onDone = {
-                                        keyboardController?.hide()
-                                    },
-                                ),
-                                modifier = Modifier.fillMaxWidth(),
-                            )
-
-                            AmberButton(
-                                enabled = nickname.text.isNotBlank(),
-                                modifier = Modifier.padding(vertical = 40.dp),
-                                onClick = {
-                                    if (nickname.text.isBlank()) {
-                                        Toast.makeText(
-                                            context,
-                                            "Nickname is required",
-                                            Toast.LENGTH_SHORT,
-                                        ).show()
-                                        return@AmberButton
-                                    }
-                                    keyboardController?.hide()
-                                    scope.launch {
-                                        state.animateScrollToPage(1)
-                                    }
-                                },
-                                text = stringResource(Res.string.continue_button),
-                            )
-                        }
-                    }
-
-                    1 -> {
-                        val scrollState = rememberScrollState()
-                        val radioOptions = listOf(
-                            TitleExplainer(
-                                title = stringResource(Res.string.sign_policy_basic),
-                                explainer = stringResource(Res.string.sign_policy_basic_explainer),
-                            ),
-                            TitleExplainer(
-                                title = stringResource(Res.string.sign_policy_manual),
-                                explainer = stringResource(Res.string.sign_policy_manual_explainer),
-                            ),
-                        )
-                        var selectedOption by remember { mutableIntStateOf(0) }
-                        var torMode by remember { mutableStateOf(TorMode.DISABLED) }
-                        var proxyPort by remember { mutableStateOf(TextFieldValue("9050")) }
-                        Column(
-                            Modifier
-                                .fillMaxSize()
-                                .verticalScrollbar(scrollState)
-                                .verticalScroll(scrollState)
-                                .padding(it)
-                                .padding(horizontal = verticalPadding)
-                                .padding(top = verticalPadding * 1.5f),
-                        ) {
-                            Text(
-                                text = stringResource(Res.string.sign_policy_explainer),
-                            )
-                            Column(
-                                Modifier.padding(vertical = 10.dp),
-                            ) {
-                                radioOptions.forEachIndexed { index, option ->
-                                    Row(
-                                        Modifier
-                                            .fillMaxWidth()
-                                            .selectable(
-                                                selected = selectedOption == index,
-                                                onClick = {
-                                                    selectedOption = index
-                                                },
-                                            )
-                                            .border(
-                                                width = 1.dp,
-                                                color = if (selectedOption == index) {
-                                                    MaterialTheme.colorScheme.primary
-                                                } else {
-                                                    Color.Transparent
-                                                },
-                                                shape = RoundedCornerShape(8.dp),
-                                            )
-                                            .padding(16.dp),
-                                        verticalAlignment = Alignment.CenterVertically,
-                                    ) {
-                                        RadioButton(
-                                            selected = selectedOption == index,
-                                            onClick = {
-                                                selectedOption = index
-                                            },
-                                        )
-                                        Column(
-                                            verticalArrangement = Arrangement.spacedBy(4.dp),
-                                        ) {
-                                            Text(
-                                                text = option.title,
-                                                modifier = Modifier.padding(start = 16.dp),
-                                                style = MaterialTheme.typography.titleLarge,
-                                            )
-                                            option.explainer?.let { explainer ->
-                                                Text(
-                                                    text = explainer,
-                                                    modifier = Modifier.padding(start = 16.dp),
-                                                )
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-
-                            if (LocalPreferences.allSavedAccounts(context).isEmpty()) {
-                                Row(
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    modifier = Modifier
-                                        .padding(vertical = 20.dp)
-                                        .clickable {
-                                            torMode = if (torMode == TorMode.DISABLED) TorMode.BUILTIN else TorMode.DISABLED
-                                        },
-                                ) {
-                                    Switch(
-                                        modifier = Modifier.scale(0.85f),
-                                        checked = torMode != TorMode.DISABLED,
-                                        onCheckedChange = { value ->
-                                            torMode = if (value) TorMode.BUILTIN else TorMode.DISABLED
-                                        },
-                                    )
-                                    Text(
-                                        modifier = Modifier
-                                            .weight(1f)
-                                            .padding(start = 8.dp),
-                                        text = stringResource(Res.string.connect_via_tor_short),
-                                    )
-                                }
-
-                                if (torMode != TorMode.DISABLED) {
-                                    Text(
-                                        text = stringResource(Res.string.builtin_tor_title),
-                                        style = MaterialTheme.typography.titleMedium,
-                                        fontWeight = FontWeight.Bold,
-                                    )
-                                    Spacer(modifier = Modifier.height(8.dp))
-                                    Text(
-                                        text = stringResource(Res.string.builtin_tor_description),
-                                        style = MaterialTheme.typography.bodyMedium,
-                                    )
-                                    Spacer(modifier = Modifier.height(8.dp))
-                                    AmberButton(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        onClick = { torMode = TorMode.BUILTIN },
-                                        text = if (torMode == TorMode.BUILTIN) {
-                                            stringResource(Res.string.builtin_tor_active)
-                                        } else {
-                                            stringResource(Res.string.use_builtin_tor)
-                                        },
-                                        enabled = torMode != TorMode.BUILTIN,
-                                    )
-
-                                    Spacer(modifier = Modifier.height(24.dp))
-                                    HorizontalDivider()
-                                    Spacer(modifier = Modifier.height(24.dp))
-
-                                    Text(
-                                        text = stringResource(Res.string.orbot_title),
-                                        style = MaterialTheme.typography.titleMedium,
-                                        fontWeight = FontWeight.Bold,
-                                    )
-                                    Spacer(modifier = Modifier.height(8.dp))
-
-                                    val content1 = stringResource(Res.string.connect_through_your_orbot_setup_markdown2)
-                                    MarkdownText(
-                                        markdown = content1,
-                                        modifier = Modifier.padding(vertical = 8.dp),
-                                    )
-
-                                    OutlinedTextField(
-                                        value = proxyPort,
-                                        onValueChange = { value ->
-                                            proxyPort = value
-                                        },
-                                        label = {
-                                            Text(
-                                                text = stringResource(Res.string.orbot_socks_port),
-                                                color = TextFieldDefaults.colors().unfocusedPlaceholderColor,
-                                            )
-                                        },
-                                        placeholder = {
-                                            Text(
-                                                stringResource(Res.string.orbot_socks_port),
-                                                color = TextFieldDefaults.colors().unfocusedPlaceholderColor,
-                                            )
-                                        },
-                                        keyboardOptions = KeyboardOptions(
-                                            capitalization = KeyboardCapitalization.None,
-                                            autoCorrectEnabled = false,
-                                            imeAction = ImeAction.Next,
-                                            keyboardType = KeyboardType.Number,
-                                        ),
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(bottom = 8.dp),
-                                    )
-                                    AmberButton(
-                                        modifier = Modifier.fillMaxWidth().padding(bottom = 20.dp),
-                                        onClick = { torMode = TorMode.ORBOT },
-                                        text = if (torMode == TorMode.ORBOT) {
-                                            stringResource(Res.string.use_orbot) + " ✓"
-                                        } else {
-                                            stringResource(Res.string.use_orbot)
-                                        },
-                                        enabled = torMode != TorMode.ORBOT,
-                                    )
-                                }
-                            }
-                            AmberButton(
-                                modifier = Modifier
-                                    .padding(vertical = 20.dp),
-                                onClick = {
-                                    if (torMode == TorMode.ORBOT && proxyPort.text.toIntOrNull() == null) {
-                                        Toast.makeText(
-                                            context,
-                                            "Invalid port number",
-                                            Toast.LENGTH_SHORT,
-                                        ).show()
-                                        return@AmberButton
-                                    }
-
-                                    appScope.launch {
-                                        loading = true
-                                        accountViewModel.newKey(
-                                            torMode = torMode,
-                                            signPolicy = selectedOption,
-                                            proxyPort = if (torMode == TorMode.ORBOT) proxyPort.text.toInt() else 9050,
-                                            seedWords = seedWords,
-                                            name = nickname.text,
-                                        )
-                                        loading = false
-                                        appScope.launch(Dispatchers.Main) {
-                                            onFinish()
-                                        }
-                                    }
-                                },
-                                text = stringResource(Res.string.finish),
-                            )
-                        }
-                    }
+                    0 -> NewAccountForm(
+                        npub = key.keyPair.pubKey.toNpub(),
+                        nickname = nickname,
+                        onNickname = { nickname = it },
+                        onContinue = { scope.launch { pagerState.animateScrollToPage(1) } },
+                        contentPadding = contentPadding,
+                        horizontalPadding = padding,
+                    )
+                    else -> ConnectionSetupPage(contentPadding, padding, onFinish = { viewModel.create(it, nickname.text, onCreate, onFinish) })
                 }
             }
         }
     }
 }
 
-@SuppressLint("ConfigurationScreenWidthHeight")
-@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun NewAccountForm(
+    npub: String,
+    nickname: TextFieldValue,
+    onNickname: (TextFieldValue) -> Unit,
+    onContinue: () -> Unit,
+    contentPadding: PaddingValues,
+    horizontalPadding: Dp,
+) {
+    val scrollState = rememberScrollState()
+    val keyboardController = LocalSoftwareKeyboardController.current
+    Column(
+        Modifier
+            .fillMaxSize()
+            .verticalScrollbar(scrollState)
+            .verticalScroll(scrollState)
+            .padding(contentPadding)
+            .padding(horizontal = horizontalPadding)
+            .padding(top = horizontalPadding * 1.5f)
+            .imePadding(),
+    ) {
+        Text(text = stringResource(Res.string.your_nostr_account_is_ready), fontWeight = FontWeight.Bold, modifier = Modifier.padding(bottom = 8.dp))
+        Text(text = stringResource(Res.string.your_nostr_account_explainer), modifier = Modifier.padding(bottom = 8.dp))
+        Box(modifier = Modifier.fillMaxWidth().background(Color(0xFFFFDE9E))) {
+            Text(text = npub, modifier = Modifier.padding(10.dp), color = Color.Black)
+        }
+        Spacer(Modifier.height(8.dp))
+        Text(stringResource(Res.string.you_will_find_it_in_your_account_section_so_you_don_t_need_to_copy_it_right_now))
+        Text(
+            text = stringResource(Res.string.please_add_a_nickname_later_you_will_able_to_personalise_your_full_profile_bio_pic_etc_using_your_preferred_nostr_client),
+            modifier = Modifier.padding(top = 20.dp, bottom = 8.dp),
+        )
+        OutlinedTextField(
+            value = nickname,
+            onValueChange = onNickname,
+            placeholder = { Text(stringResource(Res.string.nickname), color = TextFieldDefaults.colors().unfocusedPlaceholderColor) },
+            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.None, autoCorrectEnabled = false, imeAction = ImeAction.Done),
+            keyboardActions = KeyboardActions(onDone = { keyboardController?.hide() }),
+            modifier = Modifier.fillMaxWidth(),
+        )
+        AmberButton(
+            enabled = nickname.text.isNotBlank(),
+            modifier = Modifier.padding(vertical = 40.dp),
+            onClick = {
+                keyboardController?.hide()
+                onContinue()
+            },
+            text = stringResource(Res.string.continue_button),
+        )
+    }
+}
+
+/** What the user typed on the "add a key" page; saved across process death except the phrase words. */
+@Stable
+private class AddKeyInput(key: String = "", password: String = "", isMnemonicMode: Boolean = false, wordCount: Int = 12, accountIndex: Int = 0) {
+    var key by mutableStateOf(TextFieldValue(key))
+    var password by mutableStateOf(TextFieldValue(password))
+    var isMnemonicMode by mutableStateOf(isMnemonicMode)
+    var wordCount by mutableIntStateOf(wordCount)
+    var words by mutableStateOf(List(wordCount) { "" })
+    var accountIndex by mutableIntStateOf(accountIndex)
+
+    val needsPassword: Boolean get() = key.text.startsWith("ncryptsec1")
+
+    val canSubmit: Boolean
+        get() = if (isMnemonicMode) words.all { it.isNotBlank() } else key.text.isNotBlank() && !(needsPassword && password.text.isBlank())
+
+    companion object {
+        val Saver = listSaver<AddKeyInput, Any>(
+            save = { listOf(it.key.text, it.password.text, it.isMnemonicMode, it.wordCount, it.accountIndex) },
+            restore = { AddKeyInput(it[0] as String, it[1] as String, it[2] as Boolean, it[3] as Int, it[4] as Int) },
+        )
+    }
+}
+
 @Composable
 fun LoginPage(
-    accountViewModel: AccountStateViewModel,
     navHostControllerWrapper: NavHostControllerWrapper,
+    onLogin: suspend (KeyPair, ConnectionSetup) -> Unit,
     onFinish: () -> Unit,
+    modifier: Modifier = Modifier,
+    viewModel: AddKeyViewModel = viewModel(factory = AddKeyViewModel.factory(LocalAppScope.current)),
 ) {
-    val appScope = LocalAppScope.current
-    var isLoading by remember { mutableStateOf(false) }
-    val configuration = LocalConfiguration.current
-    val screenWidthDp = configuration.screenWidthDp.dp
-    val percentage = (screenWidthDp * 0.93f)
-    val verticalPadding = (screenWidthDp - percentage)
-    val key = rememberSaveable(stateSaver = TextFieldValue.Saver) {
-        mutableStateOf(TextFieldValue(""))
-    }
-    var dialogOpen by rememberSaveable { mutableStateOf(false) }
-    var errorMessage by rememberSaveable { mutableStateOf("") }
-    val needsPassword =
-        remember {
-            derivedStateOf {
-                key.value.text.startsWith("ncryptsec1")
-            }
-        }
-    val password = rememberSaveable(stateSaver = TextFieldValue.Saver) {
-        mutableStateOf(TextFieldValue(""))
-    }
-    val context = LocalContext.current
-    val pageState = rememberPagerState {
-        2
-    }
+    val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
+    val error by viewModel.error.collectAsStateWithLifecycle()
+    val input = rememberSaveable(saver = AddKeyInput.Saver) { AddKeyInput() }
+    val pagerState = rememberPagerState { 2 }
     val scope = rememberCoroutineScope()
-    val focusRequester = remember { FocusRequester() }
-    var keyPair by remember { mutableStateOf<KeyPair?>(null) }
-    var isMnemonicMode by rememberSaveable { mutableStateOf(false) }
-    var mnemonicWordCount by rememberSaveable { mutableIntStateOf(12) }
-    var mnemonicWords by remember { mutableStateOf(List(12) { "" }) }
-    var mnemonicAccountIndex by rememberSaveable { mutableIntStateOf(0) }
-    val clipboardManager = LocalClipboard.current
+    val keyboardController = LocalSoftwareKeyboardController.current
+    val padding = loginPadding()
+    val keyRequired = stringResource(Res.string.key_is_required)
+    val passwordRequired = stringResource(Res.string.password_is_required)
+
+    val goToSetup = {
+        keyboardController?.hide()
+        scope.launch {
+            delay(200.milliseconds)
+            pagerState.animateScrollToPage(1)
+        }
+        Unit
+    }
+    val submit = {
+        when {
+            input.isMnemonicMode -> viewModel.submitMnemonic(input.words, input.accountIndex, goToSetup)
+            input.needsPassword && input.password.text.isBlank() -> viewModel.showError(passwordRequired)
+            input.key.text.isBlank() -> viewModel.showError(keyRequired)
+            else -> viewModel.submitKey(input.key.text, input.password.text, goToSetup)
+        }
+    }
 
     Scaffold(
-        topBar = {
-            CenterAlignedTopAppBar(
-                title = {
-                    if (pageState.currentPage == 0) {
-                        Text(text = stringResource(Res.string.add_a_key))
-                    } else {
-                        Text(text = stringResource(Res.string.permissions_and_connection))
-                    }
-                },
-            )
-        },
-        bottomBar = {
-            BottomAppBar {
-                IconRow(
-                    center = true,
-                    title = stringResource(Res.string.go_back),
-                    icon = ImageVector.vectorResource(R.drawable.back),
-                    onClick = {
-                        if (pageState.currentPage > 0) {
-                            scope.launch {
-                                pageState.animateScrollToPage(pageState.currentPage - 1)
-                            }
-                        } else {
-                            scope.launch {
-                                navHostControllerWrapper.navController.navigateUp()
-                            }
-                        }
-                    },
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-        },
-    ) {
-        HorizontalPager(
-            pageState,
-            userScrollEnabled = false,
-        ) { page ->
-            if (isLoading) {
-                CenterCircularProgressIndicator(
-                    Modifier,
-                    stringResource(Res.string.do_not_leave_the_app_until_the_key_is_generated),
-                )
-            } else {
-                when (page) {
-                    0 -> {
-                        val scrollState = rememberScrollState()
-                        val keyboardController = LocalSoftwareKeyboardController.current
-
-                        Column(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .verticalScrollbar(scrollState)
-                                .verticalScroll(scrollState)
-                                .padding(it)
-                                .padding(horizontal = verticalPadding)
-                                .padding(top = verticalPadding * 1.5f)
-                                .imePadding(),
-                        ) {
-                            var showPassword by remember { mutableStateOf(false) }
-                            var showCharsPassword by remember { mutableStateOf(false) }
-
-                            val keyRequiredMessage = stringResource(Res.string.key_is_required)
-                            val passwordRequiredMessage = stringResource(Res.string.password_is_required)
-
-                            // Input mode selector
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            ) {
-                                FilterChip(
-                                    selected = !isMnemonicMode,
-                                    onClick = {
-                                        isMnemonicMode = false
-                                        errorMessage = ""
-                                    },
-                                    label = { Text(stringResource(Res.string.login_mode_private_key)) },
-                                )
-                                FilterChip(
-                                    selected = isMnemonicMode,
-                                    onClick = {
-                                        isMnemonicMode = true
-                                        errorMessage = ""
-                                    },
-                                    label = { Text(stringResource(Res.string.login_mode_recovery_phrase)) },
-                                )
-                            }
-
-                            Spacer(modifier = Modifier.height(12.dp))
-
-                            if (isMnemonicMode) {
-                                Text(stringResource(Res.string.enter_recovery_phrase_description))
-
-                                Spacer(modifier = Modifier.height(12.dp))
-
-                                MnemonicLoginInput(
-                                    wordCount = mnemonicWordCount,
-                                    words = mnemonicWords,
-                                    onWordChange = { index, word ->
-                                        mnemonicWords = mnemonicWords.toMutableList().also { list -> list[index] = word }
-                                    },
-                                    onWordCountChange = { count ->
-                                        mnemonicWordCount = count
-                                        mnemonicWords = List(count) { "" }
-                                        errorMessage = ""
-                                    },
-                                    onPaste = {
-                                        scope.launch {
-                                            val clipEntry = clipboardManager.getClipEntry()
-                                            val text = clipEntry?.clipData?.getItemAt(0)?.text?.toString() ?: ""
-                                            if (text.isNotBlank()) {
-                                                val pastedWords = text.trim().split(Regex("\\s+"))
-                                                val count = if (pastedWords.size > 12) 24 else 12
-                                                mnemonicWordCount = count
-                                                mnemonicWords = List(count) { i ->
-                                                    pastedWords.getOrElse(i) { "" }.toLowerCase(Locale.current)
-                                                }
-                                                errorMessage = ""
-                                            }
-                                        }
-                                    },
-                                )
-
-                                Spacer(modifier = Modifier.height(16.dp))
-
-                                OutlinedTextField(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    shape = RoundedCornerShape(18.dp),
-                                    value = if (mnemonicAccountIndex == 0) "" else mnemonicAccountIndex.toString(),
-                                    onValueChange = { value ->
-                                        mnemonicAccountIndex = value.filter(Char::isDigit).toIntOrNull() ?: 0
-                                        if (errorMessage.isNotEmpty()) errorMessage = ""
-                                    },
-                                    label = { Text(stringResource(Res.string.mnemonic_account_index)) },
-                                    placeholder = { Text("0") },
-                                    supportingText = {
-                                        Text(stringResource(Res.string.mnemonic_account_index_description, mnemonicAccountIndex))
-                                    },
-                                    keyboardOptions = KeyboardOptions(
-                                        keyboardType = KeyboardType.Number,
-                                        imeAction = ImeAction.Done,
-                                    ),
-                                    singleLine = true,
-                                )
-                            } else {
-                                Text(
-                                    stringResource(Res.string.setup_amber_with_your_nostr_private_key_you_can_enter_different_versions_nsec_ncryptsec_or_hex_you_can_also_scan_it_from_a_qr_code),
-                                )
-
-                                OutlinedTextField(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .semantics {
-                                            contentType = ContentType.Password
-                                        }
-                                        .focusRequester(focusRequester)
-                                        .padding(vertical = 20.dp),
-                                    shape = RoundedCornerShape(18.dp),
-                                    value = key.value,
-                                    onValueChange = { value ->
-                                        key.value = value
-                                        if (errorMessage.isNotEmpty()) {
-                                            errorMessage = ""
-                                        }
-                                    },
-                                    keyboardOptions = KeyboardOptions(
-                                        autoCorrectEnabled = false,
-                                        keyboardType = KeyboardType.Password,
-                                        imeAction = ImeAction.Go,
-                                    ),
-                                    placeholder = {
-                                        Text(
-                                            text = stringResource(Res.string.nsec),
-                                        )
-                                    },
-                                    trailingIcon = {
-                                        Row {
-                                            IconButton(onClick = { showPassword = !showPassword }) {
-                                                Icon(
-                                                    imageVector = if (showPassword) Icons.Outlined.VisibilityOff else Icons.Outlined.Visibility,
-                                                    contentDescription = if (showPassword) {
-                                                        stringResource(Res.string.show_password)
-                                                    } else {
-                                                        stringResource(Res.string.hide_password)
-                                                    },
-                                                )
-                                            }
-                                        }
-                                    },
-                                    leadingIcon = {
-                                        if (dialogOpen) {
-                                            SimpleQrCodeScanner(onDismiss = { dialogOpen = false }) { content ->
-                                                dialogOpen = false
-                                                if (!content.isNullOrEmpty()) {
-                                                    key.value = TextFieldValue(content.toLowerCase(Locale.current))
-                                                }
-                                            }
-                                        }
-                                        IconButton(onClick = { dialogOpen = true }) {
-                                            Icon(
-                                                painter = painterResource(R.drawable.ic_qrcode),
-                                                null,
-                                                modifier = Modifier.size(24.dp),
-                                                tint = MaterialTheme.colorScheme.primary,
-                                            )
-                                        }
-                                    },
-                                    visualTransformation = if (showPassword) VisualTransformation.None else PasswordVisualTransformation(),
-                                    keyboardActions = KeyboardActions(
-                                        onGo = {
-                                            if (key.value.text.isBlank()) {
-                                                errorMessage = keyRequiredMessage
-                                            }
-
-                                            if (needsPassword.value && password.value.text.isBlank()) {
-                                                errorMessage = passwordRequiredMessage
-                                            }
-
-                                            if (key.value.text.isNotBlank() && !(needsPassword.value && password.value.text.isBlank())) {
-                                                appScope.launch {
-                                                    isLoading = true
-                                                    try {
-                                                        val isValid = accountViewModel.isValidKey(key.value.text.filter { value -> value.code in 33..126 || value.code == 32 }.toLowerCase(Locale.current).trim(), password.value.text)
-                                                        isLoading = false
-                                                        if (isValid.first != null) {
-                                                            keyPair = isValid.first!!
-                                                            scope.launch {
-                                                                delay(200.milliseconds)
-                                                                pageState.animateScrollToPage(1)
-                                                            }
-                                                        } else {
-                                                            errorMessage = isValid.second
-                                                        }
-                                                    } catch (e: Exception) {
-                                                        errorMessage = e.message.toString()
-                                                        isLoading = false
-                                                    }
-                                                }
-                                            }
-                                        },
-                                    ),
-                                )
-
-                                LaunchedEffect(Unit) {
-                                    withFrameNanos { }
-                                    withFrameNanos { }
-                                    focusRequester.requestFocus()
-                                }
-
-                                if (needsPassword.value) {
-                                    OutlinedTextField(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .semantics {
-                                                contentType = ContentType.Password
-                                            }
-                                            .padding(bottom = 20.dp),
-                                        shape = RoundedCornerShape(18.dp),
-                                        value = password.value,
-                                        onValueChange = { value ->
-                                            password.value = value
-                                            if (errorMessage.isNotEmpty()) {
-                                                errorMessage = ""
-                                            }
-                                        },
-                                        keyboardOptions = KeyboardOptions(
-                                            autoCorrectEnabled = false,
-                                            keyboardType = KeyboardType.Password,
-                                            imeAction = ImeAction.Go,
-                                        ),
-                                        placeholder = {
-                                            Text(
-                                                text = stringResource(Res.string.ncryptsec_password),
-                                            )
-                                        },
-                                        trailingIcon = {
-                                            Row {
-                                                IconButton(onClick = { showCharsPassword = !showCharsPassword }) {
-                                                    Icon(
-                                                        imageVector = if (showCharsPassword) Icons.Outlined.VisibilityOff else Icons.Outlined.Visibility,
-                                                        contentDescription = if (showCharsPassword) {
-                                                            stringResource(Res.string.show_password)
-                                                        } else {
-                                                            stringResource(
-                                                                Res.string.hide_password,
-                                                            )
-                                                        },
-                                                    )
-                                                }
-                                            }
-                                        },
-                                        visualTransformation = if (showCharsPassword) VisualTransformation.None else PasswordVisualTransformation(),
-                                        keyboardActions = KeyboardActions(
-                                            onGo = {
-                                                if (key.value.text.isBlank()) {
-                                                    errorMessage = keyRequiredMessage
-                                                }
-
-                                                if (needsPassword.value && password.value.text.isBlank()) {
-                                                    errorMessage = passwordRequiredMessage
-                                                }
-
-                                                if (key.value.text.isNotBlank() && !(needsPassword.value && password.value.text.isBlank())) {
-                                                    appScope.launch {
-                                                        isLoading = true
-                                                        try {
-                                                            val isValid = accountViewModel.isValidKey(key.value.text.filter { value -> value.code in 33..126 || value.code == 32 }.toLowerCase(Locale.current).trim(), password.value.text)
-                                                            isLoading = false
-                                                            if (isValid.first != null) {
-                                                                keyPair = isValid.first!!
-                                                                scope.launch {
-                                                                    delay(200.milliseconds)
-                                                                    pageState.animateScrollToPage(1)
-                                                                }
-                                                            } else {
-                                                                errorMessage = isValid.second
-                                                            }
-                                                        } catch (e: Exception) {
-                                                            errorMessage = e.message.toString()
-                                                            isLoading = false
-                                                        }
-                                                    }
-                                                }
-                                            },
-                                        ),
-                                    )
-                                }
-                            }
-
-                            if (errorMessage.isNotBlank()) {
-                                Text(
-                                    text = errorMessage,
-                                    color = MaterialTheme.colorScheme.error,
-                                )
-                            }
-
-                            AmberButton(
-                                enabled = if (isMnemonicMode) {
-                                    mnemonicWords.all { word -> word.isNotBlank() }
-                                } else {
-                                    key.value.text.isNotBlank() && !(needsPassword.value && password.value.text.isBlank())
-                                },
-                                onClick = {
-                                    if (isMnemonicMode) {
-                                        val mnemonicStr = mnemonicWords.joinToString(" ")
-                                        appScope.launch {
-                                            isLoading = true
-                                            try {
-                                                val isValid = accountViewModel.isValidKey(mnemonicStr, "", mnemonicAccountIndex.toLong())
-                                                isLoading = false
-                                                if (isValid.first != null) {
-                                                    keyPair = isValid.first!!
-                                                    keyboardController?.hide()
-                                                    scope.launch {
-                                                        delay(200.milliseconds)
-                                                        pageState.animateScrollToPage(1)
-                                                    }
-                                                } else {
-                                                    errorMessage = isValid.second
-                                                }
-                                            } catch (e: Exception) {
-                                                errorMessage = e.message.toString()
-                                                isLoading = false
-                                            }
-                                        }
-                                    } else {
-                                        if (key.value.text.isBlank()) {
-                                            errorMessage = keyRequiredMessage
-                                        }
-
-                                        if (needsPassword.value && password.value.text.isBlank()) {
-                                            errorMessage = passwordRequiredMessage
-                                        }
-
-                                        if (key.value.text.isNotBlank() && !(needsPassword.value && password.value.text.isBlank())) {
-                                            appScope.launch {
-                                                isLoading = true
-                                                try {
-                                                    val isValid = accountViewModel.isValidKey(key.value.text.filter { value -> value.code in 33..126 || value.code == 32 }.toLowerCase(Locale.current).trim(), password.value.text)
-                                                    isLoading = false
-                                                    if (isValid.first != null) {
-                                                        keyPair = isValid.first!!
-                                                        keyboardController?.hide()
-                                                        scope.launch {
-                                                            delay(200.milliseconds)
-                                                            pageState.animateScrollToPage(1)
-                                                        }
-                                                    } else {
-                                                        errorMessage = isValid.second
-                                                    }
-                                                } catch (e: Exception) {
-                                                    errorMessage = e.message.toString()
-                                                    isLoading = false
-                                                }
-                                            }
-                                        }
-                                    }
-                                },
-                                text = stringResource(Res.string.next),
-                            )
-                        }
-                    }
-
-                    1 -> {
-                        val radioOptions = listOf(
-                            TitleExplainer(
-                                title = stringResource(Res.string.sign_policy_basic),
-                                explainer = stringResource(Res.string.sign_policy_basic_explainer),
-                            ),
-                            TitleExplainer(
-                                title = stringResource(Res.string.sign_policy_manual),
-                                explainer = stringResource(Res.string.sign_policy_manual_explainer),
-                            ),
-                        )
-                        var selectedOption by remember { mutableIntStateOf(0) }
-                        var torMode by remember { mutableStateOf(TorMode.DISABLED) }
-                        var proxyPort by remember { mutableStateOf(TextFieldValue("9050")) }
-                        val scrollState = rememberScrollState()
-
-                        Column(
-                            Modifier
-                                .fillMaxSize()
-                                .verticalScrollbar(scrollState)
-                                .verticalScroll(scrollState)
-                                .padding(it)
-                                .padding(horizontal = verticalPadding)
-                                .padding(top = verticalPadding * 1.5f),
-                        ) {
-                            Text(
-                                text = stringResource(Res.string.sign_policy_explainer),
-                            )
-                            Column(
-                                Modifier.padding(vertical = 10.dp),
-                            ) {
-                                radioOptions.forEachIndexed { index, option ->
-                                    Row(
-                                        Modifier
-                                            .fillMaxWidth()
-                                            .selectable(
-                                                selected = selectedOption == index,
-                                                onClick = {
-                                                    selectedOption = index
-                                                },
-                                            )
-                                            .border(
-                                                width = 1.dp,
-                                                color = if (selectedOption == index) {
-                                                    MaterialTheme.colorScheme.primary
-                                                } else {
-                                                    Color.Transparent
-                                                },
-                                                shape = RoundedCornerShape(8.dp),
-                                            )
-                                            .padding(16.dp),
-                                        verticalAlignment = Alignment.CenterVertically,
-                                    ) {
-                                        RadioButton(
-                                            selected = selectedOption == index,
-                                            onClick = {
-                                                selectedOption = index
-                                            },
-                                        )
-                                        Column(
-                                            verticalArrangement = Arrangement.spacedBy(4.dp),
-                                        ) {
-                                            Text(
-                                                text = option.title,
-                                                modifier = Modifier.padding(start = 16.dp),
-                                                style = MaterialTheme.typography.titleLarge,
-                                            )
-                                            option.explainer?.let { explainer ->
-                                                Text(
-                                                    text = explainer,
-                                                    modifier = Modifier.padding(start = 16.dp),
-                                                )
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                            if (LocalPreferences.allSavedAccounts(context).isEmpty()) {
-                                Row(
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    modifier = Modifier
-                                        .padding(vertical = 20.dp)
-                                        .clickable {
-                                            torMode = if (torMode == TorMode.DISABLED) TorMode.BUILTIN else TorMode.DISABLED
-                                        },
-                                ) {
-                                    Switch(
-                                        modifier = Modifier.scale(0.85f),
-                                        checked = torMode != TorMode.DISABLED,
-                                        onCheckedChange = { value ->
-                                            torMode = if (value) TorMode.BUILTIN else TorMode.DISABLED
-                                        },
-                                    )
-                                    Text(
-                                        modifier = Modifier
-                                            .weight(1f)
-                                            .padding(start = 8.dp),
-                                        text = stringResource(Res.string.connect_via_tor_short),
-                                    )
-                                }
-
-                                if (torMode != TorMode.DISABLED) {
-                                    Text(
-                                        text = stringResource(Res.string.builtin_tor_title),
-                                        style = MaterialTheme.typography.titleMedium,
-                                        fontWeight = FontWeight.Bold,
-                                    )
-                                    Spacer(modifier = Modifier.height(8.dp))
-                                    Text(
-                                        text = stringResource(Res.string.builtin_tor_description),
-                                        style = MaterialTheme.typography.bodyMedium,
-                                    )
-                                    Spacer(modifier = Modifier.height(8.dp))
-                                    AmberButton(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        onClick = { torMode = TorMode.BUILTIN },
-                                        text = if (torMode == TorMode.BUILTIN) {
-                                            stringResource(Res.string.builtin_tor_active)
-                                        } else {
-                                            stringResource(Res.string.use_builtin_tor)
-                                        },
-                                        enabled = torMode != TorMode.BUILTIN,
-                                    )
-
-                                    Spacer(modifier = Modifier.height(24.dp))
-                                    HorizontalDivider()
-                                    Spacer(modifier = Modifier.height(24.dp))
-
-                                    Text(
-                                        text = stringResource(Res.string.orbot_title),
-                                        style = MaterialTheme.typography.titleMedium,
-                                        fontWeight = FontWeight.Bold,
-                                    )
-                                    Spacer(modifier = Modifier.height(8.dp))
-
-                                    val content1 = stringResource(Res.string.connect_through_your_orbot_setup_markdown2)
-                                    MarkdownText(
-                                        markdown = content1,
-                                        modifier = Modifier.padding(vertical = 8.dp),
-                                    )
-
-                                    OutlinedTextField(
-                                        value = proxyPort,
-                                        onValueChange = { value ->
-                                            proxyPort = value
-                                        },
-                                        label = {
-                                            Text(
-                                                text = stringResource(Res.string.orbot_socks_port),
-                                                color = TextFieldDefaults.colors().unfocusedPlaceholderColor,
-                                            )
-                                        },
-                                        placeholder = {
-                                            Text(
-                                                stringResource(Res.string.orbot_socks_port),
-                                                color = TextFieldDefaults.colors().unfocusedPlaceholderColor,
-                                            )
-                                        },
-                                        keyboardOptions = KeyboardOptions(
-                                            capitalization = KeyboardCapitalization.None,
-                                            autoCorrectEnabled = false,
-                                            imeAction = ImeAction.Next,
-                                            keyboardType = KeyboardType.Number,
-                                        ),
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(bottom = 8.dp),
-                                    )
-                                    AmberButton(
-                                        modifier = Modifier.fillMaxWidth().padding(bottom = 20.dp),
-                                        onClick = { torMode = TorMode.ORBOT },
-                                        text = if (torMode == TorMode.ORBOT) {
-                                            stringResource(Res.string.use_orbot) + " ✓"
-                                        } else {
-                                            stringResource(Res.string.use_orbot)
-                                        },
-                                        enabled = torMode != TorMode.ORBOT,
-                                    )
-                                }
-                            }
-                            AmberButton(
-                                modifier = Modifier
-                                    .padding(vertical = 20.dp),
-                                onClick = {
-                                    if (torMode == TorMode.ORBOT && proxyPort.text.toIntOrNull() == null) {
-                                        Toast.makeText(
-                                            context,
-                                            "Invalid port number",
-                                            Toast.LENGTH_SHORT,
-                                        ).show()
-                                        return@AmberButton
-                                    }
-
-                                    val currentKeyPair = keyPair ?: return@AmberButton
-
-                                    appScope.launch {
-                                        isLoading = true
-                                        accountViewModel.startUI(
-                                            keyPair = currentKeyPair,
-                                            route = null,
-                                            torMode = torMode,
-                                            signPolicy = selectedOption,
-                                            proxyPort = if (torMode == TorMode.ORBOT) proxyPort.text.toInt() else 9050,
-                                        )
-                                        isLoading = false
-                                        appScope.launch(Dispatchers.Main) {
-                                            onFinish()
-                                        }
-                                    }
-                                },
-                                text = stringResource(Res.string.finish),
-                            )
-                        }
-                    }
-                }
+        modifier = modifier,
+        topBar = { LoginTopBar(stringResource(if (pagerState.currentPage == 0) Res.string.add_a_key else Res.string.permissions_and_connection)) },
+        bottomBar = { LoginBottomBar(pagerState, navHostControllerWrapper) },
+    ) { contentPadding ->
+        HorizontalPager(pagerState, userScrollEnabled = false) { page ->
+            when {
+                isLoading -> CenterCircularProgressIndicator(Modifier, stringResource(Res.string.do_not_leave_the_app_until_the_key_is_generated))
+                page == 0 -> AddKeyForm(input, error, onClearError = { viewModel.showError("") }, onSubmit = submit, contentPadding, padding)
+                else -> ConnectionSetupPage(contentPadding, padding, onFinish = { viewModel.login(it, onLogin, onFinish) })
             }
         }
     }
+}
+
+@Composable
+private fun AddKeyForm(
+    input: AddKeyInput,
+    error: String,
+    onClearError: () -> Unit,
+    onSubmit: () -> Unit,
+    contentPadding: PaddingValues,
+    horizontalPadding: Dp,
+) {
+    val scrollState = rememberScrollState()
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScrollbar(scrollState)
+            .verticalScroll(scrollState)
+            .padding(contentPadding)
+            .padding(horizontal = horizontalPadding)
+            .padding(top = horizontalPadding * 1.5f)
+            .imePadding(),
+    ) {
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            FilterChip(
+                selected = !input.isMnemonicMode,
+                onClick = {
+                    input.isMnemonicMode = false
+                    onClearError()
+                },
+                label = { Text(stringResource(Res.string.login_mode_private_key)) },
+            )
+            FilterChip(
+                selected = input.isMnemonicMode,
+                onClick = {
+                    input.isMnemonicMode = true
+                    onClearError()
+                },
+                label = { Text(stringResource(Res.string.login_mode_recovery_phrase)) },
+            )
+        }
+        Spacer(modifier = Modifier.height(12.dp))
+        if (input.isMnemonicMode) MnemonicSection(input, onClearError) else PrivateKeySection(input, onClearError, onSubmit)
+        if (error.isNotBlank()) Text(text = error, color = MaterialTheme.colorScheme.error)
+        AmberButton(enabled = input.canSubmit, onClick = onSubmit, text = stringResource(Res.string.next))
+    }
+}
+
+@Composable
+private fun MnemonicSection(input: AddKeyInput, onClearError: () -> Unit) {
+    Column {
+        val scope = rememberCoroutineScope()
+        val clipboardManager = LocalClipboard.current
+        Text(stringResource(Res.string.enter_recovery_phrase_description))
+        Spacer(modifier = Modifier.height(12.dp))
+        MnemonicLoginInput(
+            wordCount = input.wordCount,
+            words = input.words,
+            onWordChange = { index, word -> input.words = input.words.toMutableList().also { it[index] = word } },
+            onWordCountChange = { count ->
+                input.wordCount = count
+                input.words = List(count) { "" }
+                onClearError()
+            },
+            onPaste = {
+                scope.launch {
+                    val text = clipboardManager.getClipEntry()?.clipData?.getItemAt(0)?.text?.toString() ?: ""
+                    if (text.isNotBlank()) {
+                        val pastedWords = text.trim().split(Regex("\\s+"))
+                        val count = if (pastedWords.size > 12) 24 else 12
+                        input.wordCount = count
+                        input.words = List(count) { i -> pastedWords.getOrElse(i) { "" }.toLowerCase(Locale.current) }
+                        onClearError()
+                    }
+                }
+            },
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        OutlinedTextField(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(18.dp),
+            value = if (input.accountIndex == 0) "" else input.accountIndex.toString(),
+            onValueChange = { value ->
+                input.accountIndex = value.filter(Char::isDigit).toIntOrNull() ?: 0
+                onClearError()
+            },
+            label = { Text(stringResource(Res.string.mnemonic_account_index)) },
+            placeholder = { Text("0") },
+            supportingText = { Text(stringResource(Res.string.mnemonic_account_index_description, input.accountIndex)) },
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done),
+            singleLine = true,
+        )
+    }
+}
+
+@Composable
+private fun PrivateKeySection(input: AddKeyInput, onClearError: () -> Unit, onSubmit: () -> Unit) {
+    Column {
+        val focusRequester = remember { FocusRequester() }
+        var scannerOpen by rememberSaveable { mutableStateOf(false) }
+        Text(stringResource(Res.string.setup_amber_with_your_nostr_private_key_you_can_enter_different_versions_nsec_ncryptsec_or_hex_you_can_also_scan_it_from_a_qr_code))
+        SecretField(
+            value = input.key,
+            onValueChange = {
+                input.key = it
+                onClearError()
+            },
+            modifier = Modifier.fillMaxWidth().focusRequester(focusRequester).padding(vertical = 20.dp),
+            placeholder = stringResource(Res.string.nsec),
+            shape = RoundedCornerShape(18.dp),
+            onGo = onSubmit,
+            leadingIcon = {
+                if (scannerOpen) {
+                    SimpleQrCodeScanner(onDismiss = { scannerOpen = false }) { content ->
+                        scannerOpen = false
+                        if (!content.isNullOrEmpty()) input.key = TextFieldValue(content.toLowerCase(Locale.current))
+                    }
+                }
+                IconButton(onClick = { scannerOpen = true }) {
+                    Icon(painter = painterResource(R.drawable.ic_qrcode), null, modifier = Modifier.size(24.dp), tint = MaterialTheme.colorScheme.primary)
+                }
+            },
+        )
+        LaunchedEffect(Unit) {
+            withFrameNanos { }
+            withFrameNanos { }
+            focusRequester.requestFocus()
+        }
+        if (input.needsPassword) {
+            SecretField(
+                value = input.password,
+                onValueChange = {
+                    input.password = it
+                    onClearError()
+                },
+                modifier = Modifier.fillMaxWidth().padding(bottom = 20.dp),
+                placeholder = stringResource(Res.string.ncryptsec_password),
+                shape = RoundedCornerShape(18.dp),
+                onGo = onSubmit,
+            )
+        }
+    }
+}
+
+/** A password-style field with a show/hide toggle. */
+@Composable
+private fun SecretField(
+    value: TextFieldValue,
+    onValueChange: (TextFieldValue) -> Unit,
+    placeholder: String,
+    modifier: Modifier = Modifier,
+    label: String? = null,
+    imeAction: ImeAction = ImeAction.Go,
+    onGo: () -> Unit = {},
+    shape: Shape = OutlinedTextFieldDefaults.shape,
+    leadingIcon: @Composable (() -> Unit)? = null,
+) {
+    var visible by remember { mutableStateOf(false) }
+    OutlinedTextField(
+        modifier = modifier.semantics { contentType = ContentType.Password },
+        shape = shape,
+        value = value,
+        onValueChange = onValueChange,
+        keyboardOptions = KeyboardOptions(autoCorrectEnabled = false, keyboardType = KeyboardType.Password, imeAction = imeAction),
+        keyboardActions = KeyboardActions(onGo = { onGo() }),
+        label = label?.let { { Text(text = it) } },
+        placeholder = { Text(text = placeholder) },
+        leadingIcon = leadingIcon,
+        trailingIcon = {
+            IconButton(onClick = { visible = !visible }) {
+                Icon(
+                    imageVector = if (visible) Icons.Outlined.VisibilityOff else Icons.Outlined.Visibility,
+                    contentDescription = stringResource(if (visible) Res.string.hide_password else Res.string.show_password),
+                )
+            }
+        },
+        visualTransformation = if (visible) VisualTransformation.None else PasswordVisualTransformation(),
+    )
 }

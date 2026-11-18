@@ -344,7 +344,7 @@ fun MainScreen(
                         content = {
                             MainPage(
                                 navHostControllerWrapper = navController,
-                                accountViewModel = accountStateViewModel,
+                                onOpenFirstAccount = accountStateViewModel::openFirstImportedAccount,
                             )
                         },
                     )
@@ -353,8 +353,8 @@ fun MainScreen(
                         "create",
                         content = {
                             SignUpPage(
-                                accountViewModel = accountStateViewModel,
                                 navHostControllerWrapper = navController,
+                                onCreate = { setup, seedWords, name -> accountStateViewModel.newKey(setup.torMode, setup.proxyPort, setup.signPolicy, seedWords, name) },
                                 onFinish = {
                                     appScope.launch {
                                         amber.notificationSubscription.updateFilter()
@@ -371,8 +371,8 @@ fun MainScreen(
                         "loginPage",
                         content = {
                             LoginPage(
-                                accountViewModel = accountStateViewModel,
                                 navHostControllerWrapper = navController,
+                                onLogin = { keyPair, setup -> accountStateViewModel.startUI(keyPair, null, setup.torMode, setup.proxyPort, setup.signPolicy) },
                                 onFinish = {
                                     navController.navController.navigate(Route.Applications.route) {
                                         popUpTo(0)

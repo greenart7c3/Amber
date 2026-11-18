@@ -21,10 +21,7 @@ import com.vitorpamplona.quartz.nip01Core.core.toHexKey
 import com.vitorpamplona.quartz.nip01Core.crypto.KeyPair
 import com.vitorpamplona.quartz.nip01Core.signers.NostrSignerInternal
 import com.vitorpamplona.quartz.nip06KeyDerivation.Nip06
-import com.vitorpamplona.quartz.nip19Bech32.bech32.bechToBytes
 import com.vitorpamplona.quartz.nip19Bech32.toNpub
-import com.vitorpamplona.quartz.nip49PrivKeyEnc.Nip49
-import com.vitorpamplona.quartz.utils.Hex
 import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -120,24 +117,12 @@ class AccountStateViewModel(
         tryLoginExistingAccount(route, npub)
     }
 
-    fun isValidKey(key: String, password: String, accountIndex: Long = 0): Pair<KeyPair?, String> {
-        try {
-            val signer =
-                if (key.startsWith("ncryptsec")) {
-                    val newKey = Nip49().decrypt(key, password)
-                    NostrSignerInternal(KeyPair(Hex.decode(newKey)))
-                } else if (key.startsWith("nsec")) {
-                    NostrSignerInternal(KeyPair(privKey = key.bechToBytes()))
-                } else if (key.contains(" ") && Nip06().isValidMnemonic(key)) {
-                    val keyPair = KeyPair(privKey = Nip06().privateKeyFromMnemonic(key, accountIndex))
-                    NostrSignerInternal(keyPair)
-                } else {
-                    NostrSignerInternal(KeyPair(Hex.decode(key)))
-                }
-            return Pair(signer.keyPair, "")
-        } catch (e: Exception) {
-            return Pair(null, e.message ?: "Unknown error")
-        }
+    /** After a backup was restored into an Amber with no accounts: logs in to the first restored one. */
+    suspend fun openFirstImportedAccount() {
+        val first = LocalPreferences.allAccounts(appContext).firstOrNull() ?: return
+        val account = LocalPreferences.loadFromEncryptedStorage(appContext, first.npub) ?: return
+        startUI(account, null)
+        maybeOfferRestore(account)
     }
 
     suspend fun startUI(

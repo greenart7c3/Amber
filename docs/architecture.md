@@ -194,6 +194,13 @@ loaded app and the replace prompt; the app is loaded for each request and used
 only for that request, since a client chooses the JSON-RPC id and a later
 request can reuse the key (a grant revoked in between must not still apply).
 
+`LoginScreen` (one ViewModel per page in `LoginViewModels.kt`:
+`AccountImportViewModel` restores a backup, `AddKeyViewModel` checks a typed key
+or recovery phrase with `parseLoginKey` (unit-tested), `SignUpViewModel` draws
+the new key; the pages take callbacks into `AccountStateViewModel` instead of the
+ViewModel itself, and the sign policy / Tor step both flows end on is one
+`ConnectionSetupPage`).
+
 ### 5. Break up `LocalPreferences.kt`
 
 Split settings, account storage and key storage by concern; the key part is

@@ -7,6 +7,9 @@ import com.greenart7c3.nostrsigner.desktop.core.EncryptionScope
 import com.greenart7c3.nostrsigner.desktop.core.OkHttpWebSocket
 import com.greenart7c3.nostrsigner.desktop.core.RememberType
 import com.greenart7c3.nostrsigner.desktop.core.SettingsStore
+import com.greenart7c3.nostrsigner.desktop.core.addNostrConnect
+import com.greenart7c3.nostrsigner.desktop.core.approve
+import com.greenart7c3.nostrsigner.desktop.core.createBunkerConnection
 import com.vitorpamplona.quartz.nip01Core.core.Event
 import com.vitorpamplona.quartz.nip01Core.core.toHexKey
 import com.vitorpamplona.quartz.nip01Core.crypto.KeyPair

@@ -7,16 +7,48 @@ import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequestConnect
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerResponse
 import com.vitorpamplona.quartz.utils.TimeUtils
-// What approving or rejecting a queued request does: BunkerEngine.approve / reject run these.
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
 
-internal suspend fun BunkerEngine.doApprove(
+// What approving or rejecting a queued request does.
+
+/**
+ * Mirrors `BunkerRequestUtils.sendResult`. Runs on the engine's
+ * application scope (a SupervisorJob), never the caller's — approving
+ * removes the request card from the UI, so a caller-scoped coroutine would
+ * be canceled mid-flight (during the publish retry/backoff) before the
+ * relay response is ever sent. Returns the [Job] so callers/tests can
+ * await completion if they need to.
+ */
+fun BunkerEngine.approve(
     req: PendingBunkerRequest,
     rememberType: RememberType,
     grantedPermissions: List<Permission> = emptyList(),
     signPolicy: Int? = null,
     deleteAfter: Long = 0L,
     accountNpub: String? = null,
-    encryptionScope: EncryptionScope = EncryptionScope.ALL,
+    encryptionScope: EncryptionScope = req.defaultScope,
+): Job = scope.launch { doApprove(req, rememberType, grantedPermissions, signPolicy, deleteAfter, accountNpub, encryptionScope) }
+
+/**
+ * Mirrors `BunkerRequestUtils.sendRejection`. Runs on the application
+ * scope for the same reason as [approve] — the rejection response must be
+ * published even though the request card is gone.
+ */
+fun BunkerEngine.reject(
+    req: PendingBunkerRequest,
+    rememberType: RememberType,
+    encryptionScope: EncryptionScope = req.defaultScope,
+): Job = scope.launch { doReject(req, rememberType, encryptionScope) }
+
+private suspend fun BunkerEngine.doApprove(
+    req: PendingBunkerRequest,
+    rememberType: RememberType,
+    grantedPermissions: List<Permission>,
+    signPolicy: Int?,
+    deleteAfter: Long,
+    accountNpub: String?,
+    encryptionScope: EncryptionScope,
 ) {
     PassphraseLock.touch()
     removePending(req)
@@ -210,10 +242,10 @@ private suspend fun BunkerEngine.answer(
     respond(response)
     return true
 }
-internal suspend fun BunkerEngine.doReject(
+private suspend fun BunkerEngine.doReject(
     req: PendingBunkerRequest,
     rememberType: RememberType,
-    encryptionScope: EncryptionScope = EncryptionScope.ALL,
+    encryptionScope: EncryptionScope,
 ) {
     PassphraseLock.touch()
     removePending(req)

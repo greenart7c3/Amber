@@ -81,6 +81,7 @@ import com.greenart7c3.nostrsigner.desktop.core.CrashReporter
 import com.greenart7c3.nostrsigner.desktop.core.DesktopAccount
 import com.greenart7c3.nostrsigner.desktop.core.PassphraseLock
 import com.greenart7c3.nostrsigner.desktop.core.UriLaunch
+import com.greenart7c3.nostrsigner.desktop.core.addNostrConnect
 import com.greenart7c3.nostrsigner.desktop.core.toShortenHex
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.StringResource

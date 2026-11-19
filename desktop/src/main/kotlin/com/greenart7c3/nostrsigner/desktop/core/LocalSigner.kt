@@ -392,7 +392,6 @@ object LocalSigner {
         acc: DesktopAccount,
         app: AppWithPermissions,
     ): com.fasterxml.jackson.databind.JsonNode {
-        val engine = AmberDesktop.engine
         val store = AmberDesktop.store(acc.npub)
         val type = call.type
         val request = LocalSignerProtocol.bunkerRequest(session.internalId(clientId), call)
@@ -423,7 +422,7 @@ object LocalSigner {
         }
 
         val encryptedContent = if (type in contentScopedSignerTypes) EncryptedContent.classify(computed.preview) else null
-        val permission = engine.lookupPermission(store, app.app.key, type, kind, encryptedContent, relayHost)
+        val permission = lookupPermission(store, app.app.key, type, kind, encryptedContent, relayHost)
 
         when (isRemembered(app.app.signPolicy, permission)) {
             true -> {

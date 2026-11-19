@@ -91,6 +91,7 @@ import com.greenart7c3.nostrsigner.desktop.core.AppWithPermissions
 import com.greenart7c3.nostrsigner.desktop.core.DateTimes
 import com.greenart7c3.nostrsigner.desktop.core.DesktopAccount
 import com.greenart7c3.nostrsigner.desktop.core.RememberType
+import com.greenart7c3.nostrsigner.desktop.core.dropPending
 import com.greenart7c3.nostrsigner.desktop.core.isLocalSocket
 import com.greenart7c3.nostrsigner.desktop.core.toShortenHex
 import java.util.UUID

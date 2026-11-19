@@ -76,6 +76,8 @@ import com.greenart7c3.nostrsigner.desktop.core.DateTimes
 import com.greenart7c3.nostrsigner.desktop.core.DeleteAfterType
 import com.greenart7c3.nostrsigner.desktop.core.DesktopAccount
 import com.greenart7c3.nostrsigner.desktop.core.SettingsStore
+import com.greenart7c3.nostrsigner.desktop.core.addNostrConnect
+import com.greenart7c3.nostrsigner.desktop.core.createBunkerConnection
 import com.greenart7c3.nostrsigner.desktop.core.isLocalSocket
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.RelayUrlNormalizer
 import kotlinx.coroutines.launch

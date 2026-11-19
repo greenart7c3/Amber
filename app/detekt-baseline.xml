@@ -298,7 +298,6 @@
     <ID>ReturnCount:AmberRelayStat.kt:AmberRelayStats$fun createNotification: Notification?</ID>
     <ID>ReturnCount:ApplicationBackup.kt:ApplicationBackup$suspend fun publishBackup: Boolean</ID>
     <ID>ReturnCount:EditRelaysDialog.kt:fun onAddRelay</ID>
-    <ID>ReturnCount:EventNotificationConsumer.kt:EventNotificationConsumer$suspend fun consume</ID>
     <ID>ReturnCount:MainViewModel.kt:MainViewModel$fun getAccount: String?</ID>
     <ID>ReturnCount:SecureCryptoHelper.kt:SecureCryptoHelper$internal fun migrateCiphertext: CiphertextMigration</ID>
     <ID>ReturnCount:SecureCryptoHelper.kt:SecureCryptoHelper$private suspend fun finishRotation: Boolean</ID>

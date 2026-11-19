@@ -149,7 +149,10 @@ the history entry, publishing the reply and undoing the grants when it fails;
 `common/Nip46Freshness.kt` holds the request freshness rule both apps apply
 (`nip46StaleReason`: five minutes either way, and the NIP-40 expiration) and the
 `switch_relays` answer (`switchRelaysResult`, null when there is nothing to move
-to). On Android, `consume` finds the request's account in `addressee`, and `notify`
+to). On Android, `consume` finds the request's account (`recipient`: a verified
+kind-24133 event tagged to a logged-in account or one of its connections,
+`addressee`), drops what is rate-limited, stale or already seen (`isNewRequest`),
+then answers a locked device or hands the request on, and `notify`
 refuses a malformed request before any key is used (`readParams`), admits the
 sender (`admit`, which only then signs or reads with the account key) and hands
 an admitted request to one handler per method (`switchRelays`, `logout`,

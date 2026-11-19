@@ -22,6 +22,20 @@ private val nip46Methods = mapOf(
 /** The operation a NIP-46 [method] asks for; [SignerType.INVALID] for one Amber does not know. */
 fun nip46SignerType(method: String): SignerType = nip46Methods[method] ?: SignerType.INVALID
 
+/**
+ * The stored permission type(s) a requested permission (a connect's `perms`, a
+ * nostrconnect URI's, the "basic actions" list) is granted under: the types the
+ * request path looks up. A NIP-46 method is stored as its type (`nip44v3_encrypt`
+ * as NIP44_V3_ENCRYPT), a generic `encrypt`/`decrypt` as both NIPs, and anything
+ * else, Amber's content types (`encrypt_clear_text`, …) included, as-is,
+ * upper-cased the same in every locale.
+ */
+fun expandPermissionTypes(type: String): List<String> = when (val method = type.lowercase()) {
+    "encrypt" -> listOf(SignerType.NIP04_ENCRYPT.toString(), SignerType.NIP44_ENCRYPT.toString())
+    "decrypt" -> listOf(SignerType.NIP04_DECRYPT.toString(), SignerType.NIP44_DECRYPT.toString())
+    else -> listOf(nip46SignerType(method).takeUnless { it == SignerType.INVALID }?.toString() ?: type.uppercase())
+}
+
 /** The `kind` of a NIP-44 v3 request (`[pubkey, kind, scope, payload]`); null when missing or not a number. */
 fun BunkerRequest.nip44v3Kind(): Int? = params.getOrNull(1)?.toIntOrNull()
 

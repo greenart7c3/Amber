@@ -745,22 +745,6 @@ class BunkerEngine(
     companion object {
         /** How long a relay request waits for a decision before it is dropped. */
         const val PENDING_TTL_SECONDS = 10 * 60L
-
-        /**
-         * Maps a requested permission string to the stored permission type(s)
-         * the request path queries. Amber's content-type perms
-         * (`encrypt_clear_text`, `decrypt_event`, `encrypt_tag_array`, …) are
-         * stored as-is (ENCRYPT_CLEAR_TEXT, …) and checked first, like Android;
-         * standard NIP-46 `nip04_encrypt`/`nip44_decrypt` are whole-NIP grants,
-         * and a generic `encrypt`/`decrypt` grants both NIPs.
-         */
-        fun expandPermissionTypes(type: String): List<String> = when (val method = type.lowercase()) {
-            "encrypt" -> listOf(SignerType.NIP04_ENCRYPT.toString(), SignerType.NIP44_ENCRYPT.toString())
-            "decrypt" -> listOf(SignerType.NIP04_DECRYPT.toString(), SignerType.NIP44_DECRYPT.toString())
-            // A NIP-46 method is stored as its type (nip44v3_encrypt as NIP44_V3_ENCRYPT);
-            // a content-type perm (encrypt_clear_text, …) or anything else as-is, upper-cased.
-            else -> listOf(nip46SignerType(method).takeUnless { it == SignerType.INVALID }?.toString() ?: type.uppercase())
-        }
     }
 }
 

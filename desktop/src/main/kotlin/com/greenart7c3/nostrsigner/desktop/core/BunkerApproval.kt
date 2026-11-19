@@ -1,9 +1,11 @@
 package com.greenart7c3.nostrsigner.desktop.core
 
 import com.greenart7c3.nostrsigner.common.SignerType
+import com.greenart7c3.nostrsigner.common.expandPermissionTypes
 import com.greenart7c3.nostrsigner.common.generateBunkerPrivKey
 import com.greenart7c3.nostrsigner.common.replacesGrant
 import com.greenart7c3.nostrsigner.commonsui.Permission
+import com.greenart7c3.nostrsigner.commonsui.basicPermissions
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequestConnect
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerResponse
@@ -323,7 +325,7 @@ private fun addAcceptedPermission(application: AppWithPermissions, perm: Permiss
     // NIP-agnostic, so it must grant both NIP variants — otherwise the grant
     // is stored under a key the request path never queries and the client is
     // re-prompted on every request.
-    BunkerEngine.expandPermissionTypes(perm.type).forEach { type ->
+    expandPermissionTypes(perm.type).forEach { type ->
         if (application.permissions.any { it.type == type && it.kind == perm.kind }) return@forEach
         application.permissions.add(
             AppPermissionRecord(type, perm.kind, true, RememberType.ALWAYS.screenCode, Long.MAX_VALUE / 1000, 0),

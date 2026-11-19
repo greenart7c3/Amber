@@ -6,7 +6,7 @@ Amber is a Nostr event signer (NIP-46 / NIP-55), package `com.greenart7c3.nostrs
 
 ## Toolchain
 
-- JDK 21 required (source/target compat 21). CI and `.codex/setup.sh` use Temurin 21.
+- JDK 21 required (source/target compat 21). CI uses Temurin 21.
 - `compileSdk = 37`, `minSdk = 26`, R8 full mode enabled, Gradle parallel + configuration-cache.
 - Room schemas are exported to `app/schemas` via KSP (`room.schemaLocation`).
 - Dependency verification is on: `gradle/verification-metadata.xml` pins the SHA-256 of every dependency and plugin artifact, and the build fails on any artifact that is missing or doesn't match. After adding or bumping a dependency or plugin, regenerate it with `./gradlew --write-verification-metadata sha256 help <the tasks that use it>` (e.g. `assembleDebug test lint` or `:desktop:test :desktop:createDistributable`) and review the diff. The per-OS Compose Desktop runtimes (`desktop-jvm-*` / `skiko-awt-runtime-*` for windows-x64, macos-arm64, macos-x64) and `aapt2` `osx`/`windows` builds only resolve on their own OS, so bump their entries too, or desktop CI on Windows/macOS breaks.
@@ -160,12 +160,6 @@ Consequences to keep in mind when touching these paths:
 - **Strings must be translated in the same change.** Whenever you add or change a string in `commonsui/src/commonMain/composeResources/values/strings.xml` — including `event_kind_*` labels for new Nostr kinds — add the real translation to **every** `commonsui/src/commonMain/composeResources/values-*/strings.xml` locale file (`ls commonsui/src/commonMain/composeResources`) before reporting the work as done. Never stop at English and never copy English into a locale file — write the actual translation, matching the existing tone/register of that file. A passing build does **not** mean the translations are present.
 - Git hooks (`git-hooks/pre-commit`, `pre-push`) are auto-installed by the root `build.gradle.kts` `installGitHook` task wired into `:app` `preBuild` — no manual setup needed, but do not rely on them as a substitute for running checks directly.
 
-## Codex Web / cloud setup
-
-Use the committed scripts for cloud environments:
-- Setup: `bash .codex/setup.sh` — installs/verifies Java 21, bootstraps Android cmdline SDK, installs API 36 / build-tools 36.0.0, accepts licenses, and prewarms Gradle for `free` debug unit-test sources.
-- Maintenance: `bash .codex/maintenance.sh` — refreshes Gradle metadata in cached containers.
-
 ## Reproducibility
 
 `Dockerfile` + `apkdiff.py` verify reproducible builds: `docker build -t amber-repro --build-arg VERSION=vX.Y.Z --build-arg APK_TYPE=free-arm64-v8a .` then `docker run --rm amber-repro` (expect `APKs match!`).
@@ -175,3 +169,7 @@ Desktop: every download is reproducible by content, checked with `desktopdiff.py
 ## Collaboration
 
 For repository collaboration, use ngit and follow `.agents/skills/ngit/SKILL.md` (mirrored at `.claude/skills/ngit/SKILL.md`).
+
+## Android CLI
+
+For building, installing and driving the app on a device or emulator, screenshots, UI inspection, Compose preview renders and Android docs, follow `.agents/skills/android-cli/SKILL.md` (mirrored at `.claude/skills/android-cli/SKILL.md`).

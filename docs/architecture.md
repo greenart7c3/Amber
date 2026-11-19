@@ -149,8 +149,10 @@ the history entry, publishing the reply and undoing the grants when it fails;
 `common/Nip46Freshness.kt` holds the request freshness rule both apps apply
 (`nip46StaleReason`: five minutes either way, and the NIP-40 expiration) and the
 `switch_relays` answer (`switchRelaysResult`, null when there is nothing to move
-to). On Android, `consume` finds the request's account in `addressee` and `notify`
-hands an admitted request to one handler per method (`switchRelays`, `logout`,
+to). On Android, `consume` finds the request's account in `addressee`, and `notify`
+refuses a malformed request before any key is used (`readParams`), admits the
+sender (`admit`, which only then signs or reads with the account key) and hands
+an admitted request to one handler per method (`switchRelays`, `logout`,
 `getPublicKey`, `answerFromGrants`). The desktop `BunkerEngine` uses the same two
 rules and splits `handleRequest` the same way (`switchRelays`, `logout`,
 `refusedUpFront`, `answerOrQueue`).

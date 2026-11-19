@@ -161,6 +161,13 @@ metadata JSON overriding what it sets) for both apps, which had drifted apart;
 `NostrConnectUriTest` pins it. Android's `NostrConnectUtils` keeps only the
 intent extras and the queueing, and the desktop's `addNostrConnect` only the queueing.
 
+The desktop's `doApprove` is split like Android's `sendResult`: the chosen account
+(`approvingAccount`), the connection it is approved on (`savedConnection`, which
+attaches a bunker:// placeholder), where the reply goes (`approvalRelays`), a new
+connection's record (`newApplication`, with its own key), what a connect sets
+(`applyConnect`) and the reply over the socket or the relays (`answer`). Unlike
+Android, it still keeps the grant when the reply fails to publish.
+
 ### 2. Split `IntentUtils.kt`
 
 Separate parsing (`nostrsigner://` / `nostrconnect://` → a data object),

@@ -3,7 +3,6 @@
   <ManuallySuppressedIssues/>
   <CurrentIssues>
     <ID>ComplexCondition:AutoStart.kt:AutoStart$value.none { it == ' ' || it == '\t' || it == '"' || it == '\\' || it == '$' }</ID>
-    <ID>ComplexCondition:BunkerEngine.kt:BunkerEngine$application.app.localKey.isBlank() &amp;&amp; req.request is BunkerRequestConnect &amp;&amp; savedApplication == null &amp;&amp; !req.isLocalSocket</ID>
     <ID>ComplexCondition:MdnsResolver.kt:MdnsResolver$(type == TYPE_A &amp;&amp; length == 4) || (type == TYPE_AAAA &amp;&amp; length == 16)</ID>
     <ID>ComplexCondition:Models.kt:EncryptedContent.Companion$node != null &amp;&amp; node.isArray &amp;&amp; node.all { tag -&gt; tag.isArray &amp;&amp; tag.all { it.isTextual } }</ID>
     <ID>ComplexCondition:Models.kt:EncryptedContent.Companion$node != null &amp;&amp; node.isObject &amp;&amp; kind != null &amp;&amp; kind.canConvertToInt()</ID>
@@ -17,7 +16,6 @@
     <ID>CyclomaticComplexMethod:ApplicationDetailScreen.kt:@Composable private fun PermissionCard</ID>
     <ID>CyclomaticComplexMethod:BunkerEngine.kt:BunkerEngine$internal suspend fun computeResult: ComputedResult</ID>
     <ID>CyclomaticComplexMethod:BunkerEngine.kt:BunkerEngine$private fun acceptOrRejectPermission</ID>
-    <ID>CyclomaticComplexMethod:BunkerEngine.kt:BunkerEngine$private suspend fun doApprove</ID>
     <ID>CyclomaticComplexMethod:BunkerEngine.kt:BunkerEngine$suspend fun consume</ID>
     <ID>CyclomaticComplexMethod:BunkerEngine.kt:BunkerEngine.Companion$fun expandPermissionTypes: List&lt;String&gt;</ID>
     <ID>CyclomaticComplexMethod:IncomingRequestsScreen.kt:@Composable private fun RequestCard</ID>
@@ -37,7 +35,6 @@
     <ID>LongMethod:ApplicationDetailScreen.kt:@Composable private fun PermissionCard</ID>
     <ID>LongMethod:ApplicationsScreen.kt:@Composable fun ApplicationsScreen</ID>
     <ID>LongMethod:ApplicationsScreen.kt:@Composable private fun NewBunkerDialog</ID>
-    <ID>LongMethod:BunkerEngine.kt:BunkerEngine$private suspend fun doApprove</ID>
     <ID>LongMethod:CrashReportDialog.kt:@Composable fun CrashReportDialog</ID>
     <ID>LongMethod:IncomingRequestsScreen.kt:@Composable private fun RequestCard</ID>
     <ID>LongMethod:LocalSigner.kt:LocalSigner$private suspend fun evaluate: com.fasterxml.jackson.databind.JsonNode</ID>

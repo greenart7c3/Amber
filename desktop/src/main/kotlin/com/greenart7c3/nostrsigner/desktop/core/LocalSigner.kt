@@ -414,7 +414,7 @@ object LocalSigner {
         }
 
         val computed = try {
-            engine.computeResult(request, type, acc)
+            computeResult(request, type, acc)
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {

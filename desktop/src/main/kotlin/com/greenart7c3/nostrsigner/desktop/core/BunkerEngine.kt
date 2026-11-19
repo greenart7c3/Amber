@@ -1152,21 +1152,13 @@ class BunkerEngine(
         val typeStr = if (contentScoped && scope == EncryptionScope.SPECIFIC) type.contentPermissionType(content) else type.toString()
 
         if (kind != null) {
-            // Relay auth grants: "*" replaces every relay's grant for this
-            // kind, a specific relay only its own entry (Android's insertPermissions).
-            when {
-                relay == "*" -> application.permissions.removeIf { it.kind == kind && it.type == typeStr }
-                relay.isNotEmpty() -> application.permissions.removeIf { it.kind == kind && it.type == typeStr && it.relay == relay }
-                else -> application.permissions.removeIf { it.kind == kind && it.type == typeStr && it.relay.isEmpty() }
-            }
+            application.removeKindGrants(typeStr, kind, relay)
         } else {
             application.permissions.removeIf { it.type == typeStr && it.type != "SIGN_EVENT" }
+            // A whole-NIP grant replaces the narrower content-type one, and the other way round.
             if (contentScoped) {
-                if (scope == EncryptionScope.ALL) {
-                    application.permissions.removeIf { it.type == type.contentPermissionType(content) }
-                } else {
-                    application.permissions.removeIf { it.type == type.toString() }
-                }
+                val replaced = if (scope == EncryptionScope.ALL) type.contentPermissionType(content) else type.toString()
+                application.permissions.removeIf { it.type == replaced }
             }
         }
 
@@ -1341,25 +1333,12 @@ class BunkerEngine(
          * standard NIP-46 `nip04_encrypt`/`nip44_decrypt` are whole-NIP grants,
          * and a generic `encrypt`/`decrypt` grants both NIPs.
          */
-        fun expandPermissionTypes(type: String): List<String> = when (type.lowercase()) {
-            "connect" -> listOf(SignerType.CONNECT.toString())
-            "sign_event" -> listOf(SignerType.SIGN_EVENT.toString())
-            "get_public_key" -> listOf(SignerType.GET_PUBLIC_KEY.toString())
-            "nip04_encrypt" -> listOf(SignerType.NIP04_ENCRYPT.toString())
-            "nip04_decrypt" -> listOf(SignerType.NIP04_DECRYPT.toString())
-            "nip44_encrypt" -> listOf(SignerType.NIP44_ENCRYPT.toString())
-            "nip44_decrypt" -> listOf(SignerType.NIP44_DECRYPT.toString())
-            "nip44v3_encrypt" -> listOf(SignerType.NIP44_V3_ENCRYPT.toString())
-            "nip44v3_decrypt" -> listOf(SignerType.NIP44_V3_DECRYPT.toString())
-            "encrypt_clear_text", "encrypt_event", "encrypt_tag_array",
-            "decrypt_clear_text", "decrypt_event", "decrypt_tag_array",
-            -> listOf(type.uppercase())
+        fun expandPermissionTypes(type: String): List<String> = when (val method = type.lowercase()) {
             "encrypt" -> listOf(SignerType.NIP04_ENCRYPT.toString(), SignerType.NIP44_ENCRYPT.toString())
             "decrypt" -> listOf(SignerType.NIP04_DECRYPT.toString(), SignerType.NIP44_DECRYPT.toString())
-            "decrypt_zap_event" -> listOf(SignerType.DECRYPT_ZAP_EVENT.toString())
-            "ping" -> listOf(SignerType.PING.toString())
-            "sign_psbt" -> listOf(SignerType.SIGN_PSBT.toString())
-            else -> listOf(type.uppercase())
+            // A NIP-46 method is stored as its type (nip44v3_encrypt as NIP44_V3_ENCRYPT);
+            // a content-type perm (encrypt_clear_text, …) or anything else as-is, upper-cased.
+            else -> listOf(nip46SignerType(method).takeUnless { it == SignerType.INVALID }?.toString() ?: type.uppercase())
         }
     }
 }
@@ -1375,3 +1354,18 @@ private fun AppWithPermissions.toNip46Connection() = Nip46Connection(
     isConnected = app.isConnected,
     isExpired = app.isExpired(),
 )
+
+// Relay auth grants: "*" replaces every relay's grant for this kind, a specific relay
+// only its own entry, and any other kind grant only the one without a relay
+// (Android's insertPermissions).
+private fun AppWithPermissions.removeKindGrants(type: String, kind: Int, relay: String) {
+    permissions.removeIf {
+        it.kind == kind &&
+            it.type == type &&
+            when (relay) {
+                "*" -> true
+                "" -> it.relay.isEmpty()
+                else -> it.relay == relay
+            }
+    }
+}

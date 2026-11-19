@@ -14,8 +14,6 @@
     <ID>CompositionLocalAllowlist:WindowGeometry.kt:/** The width bucket of the current window, provided by [App]. */ val LocalLayoutWidth = staticCompositionLocalOf { LayoutWidth.EXPANDED }</ID>
     <ID>CyclomaticComplexMethod:ApplicationDetailScreen.kt:@Composable fun ApplicationDetailScreen</ID>
     <ID>CyclomaticComplexMethod:ApplicationDetailScreen.kt:@Composable private fun PermissionCard</ID>
-    <ID>CyclomaticComplexMethod:BunkerEngine.kt:BunkerEngine$private fun acceptOrRejectPermission</ID>
-    <ID>CyclomaticComplexMethod:BunkerEngine.kt:BunkerEngine.Companion$fun expandPermissionTypes: List&lt;String&gt;</ID>
     <ID>CyclomaticComplexMethod:IncomingRequestsScreen.kt:@Composable private fun RequestCard</ID>
     <ID>CyclomaticComplexMethod:LocalSigner.kt:LocalSigner$private suspend fun evaluate: com.fasterxml.jackson.databind.JsonNode</ID>
     <ID>CyclomaticComplexMethod:Main.kt:fun main</ID>

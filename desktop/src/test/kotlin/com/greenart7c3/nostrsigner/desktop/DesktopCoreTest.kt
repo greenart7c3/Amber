@@ -139,6 +139,11 @@ class DesktopCoreTest {
         assertEquals(listOf("NIP44_ENCRYPT"), BunkerEngine.expandPermissionTypes("nip44_encrypt"))
         assertEquals(listOf("SIGN_EVENT"), BunkerEngine.expandPermissionTypes("sign_event"))
         assertEquals(listOf("GET_PUBLIC_KEY"), BunkerEngine.expandPermissionTypes("get_public_key"))
+        assertEquals(listOf("NIP44_V3_ENCRYPT"), BunkerEngine.expandPermissionTypes("nip44v3_encrypt"))
+        assertEquals(listOf("NIP44_V3_DECRYPT"), BunkerEngine.expandPermissionTypes("NIP44v3_Decrypt"))
+        assertEquals(listOf("SIGN_PSBT"), BunkerEngine.expandPermissionTypes("sign_psbt"))
+        // Anything else is kept, upper-cased.
+        assertEquals(listOf("SOMETHING_NEW"), BunkerEngine.expandPermissionTypes("something_new"))
 
         // Amber's content-type perms are stored as-is, like Android, and the
         // request path checks them before the whole-NIP grant.

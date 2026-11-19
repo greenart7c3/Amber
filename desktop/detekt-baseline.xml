@@ -15,7 +15,6 @@
     <ID>CompositionLocalAllowlist:WindowGeometry.kt:/** The width bucket of the current window, provided by [App]. */ val LocalLayoutWidth = staticCompositionLocalOf { LayoutWidth.EXPANDED }</ID>
     <ID>CyclomaticComplexMethod:ApplicationDetailScreen.kt:@Composable fun ApplicationDetailScreen</ID>
     <ID>CyclomaticComplexMethod:ApplicationDetailScreen.kt:@Composable private fun PermissionCard</ID>
-    <ID>CyclomaticComplexMethod:BunkerEngine.kt:BunkerEngine$fun addNostrConnect: String?</ID>
     <ID>CyclomaticComplexMethod:BunkerEngine.kt:BunkerEngine$internal suspend fun computeResult: ComputedResult</ID>
     <ID>CyclomaticComplexMethod:BunkerEngine.kt:BunkerEngine$private fun acceptOrRejectPermission</ID>
     <ID>CyclomaticComplexMethod:BunkerEngine.kt:BunkerEngine$private suspend fun doApprove</ID>
@@ -38,7 +37,6 @@
     <ID>LongMethod:ApplicationDetailScreen.kt:@Composable private fun PermissionCard</ID>
     <ID>LongMethod:ApplicationsScreen.kt:@Composable fun ApplicationsScreen</ID>
     <ID>LongMethod:ApplicationsScreen.kt:@Composable private fun NewBunkerDialog</ID>
-    <ID>LongMethod:BunkerEngine.kt:BunkerEngine$fun addNostrConnect: String?</ID>
     <ID>LongMethod:BunkerEngine.kt:BunkerEngine$private suspend fun doApprove</ID>
     <ID>LongMethod:CrashReportDialog.kt:@Composable fun CrashReportDialog</ID>
     <ID>LongMethod:IncomingRequestsScreen.kt:@Composable private fun RequestCard</ID>

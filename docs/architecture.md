@@ -159,7 +159,7 @@ rules and splits `handleRequest` the same way (`switchRelays`, `logout`,
 name, URL, image, secret and the requested permissions, with the NIP-46
 metadata JSON overriding what it sets) for both apps, which had drifted apart;
 `NostrConnectUriTest` pins it. Android's `NostrConnectUtils` keeps only the
-intent extras and the queueing.
+intent extras and the queueing, and the desktop's `addNostrConnect` only the queueing.
 
 ### 2. Split `IntentUtils.kt`
 

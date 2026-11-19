@@ -4,12 +4,12 @@ import com.greenart7c3.nostrsigner.common.BUNKER_REPLY_ATTEMPTS
 import com.greenart7c3.nostrsigner.common.EncryptionType
 import com.greenart7c3.nostrsigner.common.Nip46Admission
 import com.greenart7c3.nostrsigner.common.Nip46Connection
+import com.greenart7c3.nostrsigner.common.NostrConnectUri
 import com.greenart7c3.nostrsigner.common.RELAY_AUTH_KIND
 import com.greenart7c3.nostrsigner.common.SignerType
 import com.greenart7c3.nostrsigner.common.UNVERIFIED_REPLY_ATTEMPTS
 import com.greenart7c3.nostrsigner.common.admitNip46Request
 import com.greenart7c3.nostrsigner.common.canRememberRelayAuth
-import com.greenart7c3.nostrsigner.common.decodeQueryParamValue
 import com.greenart7c3.nostrsigner.common.generateBunkerPrivKey
 import com.greenart7c3.nostrsigner.common.hasAmbiguousRelayTags
 import com.greenart7c3.nostrsigner.common.isBlockedByAuthWhitelist
@@ -28,6 +28,7 @@ import com.greenart7c3.nostrsigner.common.retryWithBackoff
 import com.greenart7c3.nostrsigner.common.sanitizeAppName
 import com.greenart7c3.nostrsigner.common.switchRelaysResult
 import com.greenart7c3.nostrsigner.commonsui.Permission
+import com.greenart7c3.nostrsigner.commonsui.containsNip
 import com.greenart7c3.nostrsigner.commonsui.kindToNip
 import com.vitorpamplona.quartz.nip01Core.core.Event
 import com.vitorpamplona.quartz.nip01Core.core.hexToByteArray
@@ -42,7 +43,6 @@ import com.vitorpamplona.quartz.nip01Core.relay.commands.toClient.EventMessage
 import com.vitorpamplona.quartz.nip01Core.relay.commands.toClient.Message
 import com.vitorpamplona.quartz.nip01Core.relay.filters.Filter
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
-import com.vitorpamplona.quartz.nip01Core.relay.normalizer.RelayUrlNormalizer
 import com.vitorpamplona.quartz.nip01Core.signers.NostrSignerInternal
 import com.vitorpamplona.quartz.nip01Core.tags.people.taggedUsers
 import com.vitorpamplona.quartz.nip04Dm.crypto.EncryptedInfo
@@ -66,9 +66,6 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-
-/** A lowercase hex 32-byte public key, as NIP-01 writes them. */
-private val HEX_PUBKEY = Regex("[0-9a-f]{64}")
 
 /**
  * The saved connection that approving [req] for [accountNpub] would replace:
@@ -1281,43 +1278,15 @@ class BunkerEngine(
     /** Parses a `nostrconnect://` URI and queues it for approval. */
     fun addNostrConnect(uriString: String, account: DesktopAccount): String? {
         try {
-            val data = uriString.trim().removePrefix("nostrconnect://")
-            val split = data.split("?")
-            val pubKey = split.first()
             // The client's key becomes the connection's identity and a p tag
-            // on every reply: accept only a well-formed one.
-            if (!pubKey.matches(HEX_PUBKEY)) return "Invalid public key in URI"
-
-            val relays = mutableListOf<NormalizedRelayUrl>()
-            var name = ""
-            var url = ""
-            var image = ""
-            var nostrConnectSecret = ""
-            val permissions = mutableListOf<Permission>()
-
-            split.drop(1).joinToString("?").split("&").forEach { param ->
-                val parts = param.split("=")
-                if (parts.size < 2) return@forEach
-                val paramName = parts.first()
-                val value = decodeQueryParamValue(parts.drop(1).joinToString("="))
-                when (paramName) {
-                    "relay" -> RelayUrlNormalizer.normalizeOrNull(value)?.let { relays.add(it) }
-                    "name" -> name = value
-                    "url" -> url = value
-                    "image" -> image = value
-                    "secret" -> nostrConnectSecret = value
-                    "perms" -> permissions.addAll(parsePermissionsParam(value))
-                    "metadata" -> runCatching {
-                        val node = JacksonMapper.mapper.readTree(value)
-                        node.get("name")?.asText()?.let { if (it.isNotBlank()) name = it }
-                        node.get("url")?.asText()?.let { if (it.isNotBlank()) url = it }
-                        node.get("image")?.asText()?.let { if (it.isNotBlank()) image = it }
-                        node.get("perms")?.asText()?.let { permissions.addAll(parsePermissionsParam(it)) }
-                    }
-                }
+            // on every reply: the shared parser accepts only a well-formed one.
+            val uri = try {
+                NostrConnectUri.parse(uriString) { it.containsNip() }
+            } catch (e: IllegalArgumentException) {
+                return e.message ?: "Invalid public key in URI"
             }
-            // Match Android: drop sign_event / nip perms that carry no valid kind.
-            permissions.removeIf { it.kind == null && (it.type == "sign_event" || it.type == "nip") }
+            val pubKey = uri.clientPubKey
+            val permissions = uri.permissions.map { Permission(it.type, it.kind) }
 
             addPending(
                 PendingBunkerRequest(
@@ -1330,12 +1299,12 @@ class BunkerEngine(
                     type = SignerType.CONNECT,
                     account = account,
                     localKey = pubKey,
-                    relays = relays,
-                    nostrConnectSecret = nostrConnectSecret,
-                    // Client-chosen: the card, the saved record and every notification show it.
-                    appName = sanitizeAppName(name).ifBlank { pubKey.toShortenHex() },
-                    appUrl = url,
-                    appIcon = image,
+                    relays = uri.relays,
+                    nostrConnectSecret = uri.secret,
+                    // Client-chosen (sanitized by the parser): the card, the saved record and every notification show it.
+                    appName = uri.name.ifBlank { pubKey.toShortenHex() },
+                    appUrl = uri.url,
+                    appIcon = uri.image,
                     requestedPermissions = permissions,
                     result = "ack",
                     encryptionType = EncryptionType.NIP44,

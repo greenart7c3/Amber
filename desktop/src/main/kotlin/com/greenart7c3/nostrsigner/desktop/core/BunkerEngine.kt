@@ -14,13 +14,11 @@ import com.greenart7c3.nostrsigner.common.generateBunkerPrivKey
 import com.greenart7c3.nostrsigner.common.hasAmbiguousRelayTags
 import com.greenart7c3.nostrsigner.common.isBlockedByAuthWhitelist
 import com.greenart7c3.nostrsigner.common.localPubKeyFromPrivKey
-import com.greenart7c3.nostrsigner.common.nip44v3.Nip44v3
 import com.greenart7c3.nostrsigner.common.nip44v3Kind
 import com.greenart7c3.nostrsigner.common.nip44v3Scope
 import com.greenart7c3.nostrsigner.common.nip46SignerType
 import com.greenart7c3.nostrsigner.common.nip46StaleReason
 import com.greenart7c3.nostrsigner.common.permissionLookupOrder
-import com.greenart7c3.nostrsigner.common.psbt.PsbtSighashPolicy
 import com.greenart7c3.nostrsigner.common.relayAuthHost
 import com.greenart7c3.nostrsigner.common.relays.RelayHealthTracker
 import com.greenart7c3.nostrsigner.common.relays.SenderRateLimiter
@@ -52,12 +50,9 @@ import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequestConnect
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequestSign
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerResponse
 import com.vitorpamplona.quartz.nip46RemoteSigner.NostrConnectEvent
-import com.vitorpamplona.quartz.nip57Zaps.PrivateZapRequestBuilder
-import com.vitorpamplona.quartz.nip57Zaps.ZapRequestEvent
 import com.vitorpamplona.quartz.utils.TimeUtils
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
-import kotlin.io.encoding.Base64
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -763,84 +758,6 @@ class BunkerEngine(
             contentType = if (type in contentScopedSignerTypes) type.contentPermissionType(encryptedContent) else null,
             signNip = if (type == SignerType.SIGN_EVENT) kind?.kindToNip()?.toIntOrNull() else null,
         ).firstNotNullOfOrNull { store.getPermission(appKey, it.type, it.kind) }
-    }
-
-    // [sealPreview]: a seal in an encrypt/decrypt payload, opened for the preview (openSealForPreview).
-    internal data class ComputedResult(val result: String, val preview: String, val sealPreview: String = "")
-
-    internal suspend fun computeResult(
-        request: BunkerRequest,
-        type: SignerType,
-        acc: DesktopAccount,
-    ): ComputedResult = when (type) {
-        SignerType.CONNECT -> ComputedResult("ack", "")
-        SignerType.GET_PUBLIC_KEY -> ComputedResult(acc.hexKey, acc.npub)
-        SignerType.PING -> ComputedResult("pong", "")
-        SignerType.SIGN_EVENT -> {
-            val template = (request as BunkerRequestSign).event
-            check(!hasAmbiguousRelayTags(template.kind, template.tags)) { "refusing a multi-relay auth event" }
-            val signed = acc.signer.sign(template)
-            ComputedResult(signed.toJson(), template.toJson())
-        }
-
-        SignerType.NIP04_ENCRYPT -> {
-            val pubKey = request.params.first()
-            val message = request.params.getOrElse(1) { "" }
-            ComputedResult(acc.nip04Encrypt(message, pubKey), message, openSealForPreview(message, acc))
-        }
-
-        SignerType.NIP44_ENCRYPT -> {
-            val pubKey = request.params.first()
-            val message = request.params.getOrElse(1) { "" }
-            ComputedResult(acc.nip44Encrypt(message, pubKey), message, openSealForPreview(message, acc))
-        }
-
-        SignerType.NIP04_DECRYPT -> {
-            val pubKey = request.params.first()
-            val ciphertext = request.params.getOrElse(1) { "" }
-            val plain = acc.nip04Decrypt(ciphertext, pubKey)
-            ComputedResult(plain, plain, openSealForPreview(plain, acc))
-        }
-
-        SignerType.NIP44_DECRYPT -> {
-            val pubKey = request.params.first()
-            val ciphertext = request.params.getOrElse(1) { "" }
-            val plain = acc.nip44Decrypt(ciphertext, pubKey)
-            ComputedResult(plain, plain, openSealForPreview(plain, acc))
-        }
-
-        SignerType.NIP44_V3_ENCRYPT -> {
-            // NIP-46 layout: [pubkey, kind, scope, base64 plaintext]
-            val pubKey = request.params.first()
-            val kind = request.params.getOrNull(1)?.toIntOrNull() ?: throw IllegalArgumentException("kind is required for nip44v3")
-            val scope = request.params.getOrElse(2) { "" }
-            val plainBytes = Base64.decode(request.params.getOrElse(3) { "" })
-            val cipher = Nip44v3.encrypt(plainBytes, acc.signer.keyPair.privKey!!, pubKey.hexToByteArray(), kind, scope)
-            ComputedResult(cipher, plainBytes.toString(Charsets.UTF_8))
-        }
-
-        SignerType.NIP44_V3_DECRYPT -> {
-            val pubKey = request.params.first()
-            val kind = request.params.getOrNull(1)?.toIntOrNull() ?: throw IllegalArgumentException("kind is required for nip44v3")
-            val scope = request.params.getOrElse(2) { "" }
-            val plainBytes = Nip44v3.decrypt(request.params.getOrElse(3) { "" }, acc.signer.keyPair.privKey!!, pubKey.hexToByteArray(), kind, scope)
-            ComputedResult(Base64.encode(plainBytes), plainBytes.toString(Charsets.UTF_8))
-        }
-
-        SignerType.DECRYPT_ZAP_EVENT -> {
-            val eventJson = request.params.first()
-            val zapEvent = Event.fromJson(eventJson) as ZapRequestEvent
-            val decrypted = PrivateZapRequestBuilder().decryptZapEvent(zapEvent, acc.signer.signerSync).toJson()
-            ComputedResult(decrypted, decrypted)
-        }
-
-        SignerType.SIGN_PSBT -> {
-            val psbt = request.params.first()
-            PsbtSighashPolicy.requireCommitsToAllOutputs(psbt, acc.signer.keyPair.pubKey)
-            ComputedResult(acc.signer.signPsbt(psbt), psbt)
-        }
-
-        else -> throw IllegalArgumentException("Unsupported request type $type")
     }
 
     // Atomic updates: socket clients queue from several threads at once, and a

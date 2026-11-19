@@ -923,25 +923,65 @@ class BunkerEngine(
     ) {
         PassphraseLock.touch()
         removePending(req)
-        // Mirrors the Android connect screen's account picker: the connection
-        // is saved under (and signs for) the chosen account.
-        val acc = accountNpub
-            ?.takeIf { it != req.account.npub && req.canSwitchAccount }
-            ?.let { AmberDesktop.account(it) }
-            ?: req.account
+        val acc = approvingAccount(req, accountNpub)
         val store = AmberDesktop.store(acc.npub)
         val key = req.localKey
+        val savedApplication = savedConnection(req, acc, store)
+        val relays = approvalRelays(req, savedApplication)
 
-        if (acc.npub != req.account.npub && req.request is BunkerRequestConnect && !req.request.secret.isNullOrBlank()) {
-            // Move the bunker:// placeholder into the chosen account; the
-            // migration below then re-keys it to the client's pubkey.
+        // Only a connect may create an application. A non-connect request whose
+        // app is gone (deleted, expired or logged out while the card was queued)
+        // must not resurrect the revoked connection: answer it like an unknown client.
+        if (savedApplication == null && req.request !is BunkerRequestConnect && req.type != SignerType.CONNECT) {
+            answer(req, acc, req.signerPrivKey, BunkerResponse(req.request.id, "", "no permission"), relays)
+            return
+        }
+
+        var application = savedApplication ?: newApplication(req, acc, relays, signPolicy ?: acc.signPolicy, deleteAfter)
+        application = application.copy(app = application.app.copy(isConnected = true, lastUsed = TimeUtils.now()))
+
+        if (req.type == SignerType.CONNECT) {
+            application = applyConnect(application, signPolicy ?: acc.signPolicy, deleteAfter, grantedPermissions)
+        } else if (rememberType != RememberType.NEVER && req.canRemember(encryptionScope)) {
+            acceptOrRejectPermission(application, req.type, req.permissionKind(encryptionScope), true, rememberType, req.encryptedContent, encryptionScope, req.permissionRelay(encryptionScope))
+        }
+
+        store.upsert(application)
+        store.addHistory(HistoryRecord(key, req.type.toString(), req.kind, TimeUtils.now(), true))
+
+        val response = if (req.type == SignerType.CONNECT) req.nostrConnectSecret.ifBlank { req.result } else req.result
+        if (req.responder == null) checkForNewRelaysAndUpdateAllFilters()
+        answer(
+            req,
+            acc,
+            application.app.localKey.ifEmpty { req.signerPrivKey },
+            BunkerResponse(req.request.id, response, null),
+            application.app.normalizedRelays().ifEmpty { relays },
+        )
+    }
+
+    // Mirrors the Android connect screen's account picker: the connection is
+    // saved under (and signs for) the chosen account.
+    private suspend fun approvingAccount(req: PendingBunkerRequest, accountNpub: String?): DesktopAccount = accountNpub
+        ?.takeIf { it != req.account.npub && req.canSwitchAccount }
+        ?.let { AmberDesktop.account(it) }
+        ?: req.account
+
+    /**
+     * The connection [req] is approved on in [acc]'s store, or null for a new one. A
+     * bunker:// connection is saved under its secret until a client connects with it:
+     * that placeholder is moved to the chosen account and re-keyed to the client.
+     */
+    private fun savedConnection(req: PendingBunkerRequest, acc: DesktopAccount, store: AccountStore): AppWithPermissions? {
+        val key = req.localKey
+        val secret = (req.request as? BunkerRequestConnect)?.secret?.takeIf { it.isNotBlank() }
+        if (secret != null && acc.npub != req.account.npub) {
             val sourceStore = AmberDesktop.store(req.account.npub)
-            sourceStore.getByKey(req.request.secret!!)?.let { placeholder ->
+            sourceStore.getByKey(secret)?.let { placeholder ->
                 sourceStore.delete(placeholder.app.key)
                 store.upsert(placeholder.copy(app = placeholder.app.copy(pubKey = acc.hexKey)))
             }
         }
-        val defaultRelays = AmberDesktop.defaultRelays()
 
         // An expired connection counts as gone: approving a card queued before
         // it expired must not sign for it (a new connect replaces it below).
@@ -954,48 +994,38 @@ class BunkerEngine(
             store.delete(key)
             savedApplication = null
         }
-        if (savedApplication == null && req.request is BunkerRequestConnect && !req.request.secret.isNullOrBlank()) {
-            // The bunker:// placeholder is stored under its secret; migrate it
-            // to the client's real pubkey on first connect.
-            store.getByKey(req.request.secret!!)?.let { placeholder ->
+        if (savedApplication == null && secret != null) {
+            store.getByKey(secret)?.let { placeholder ->
                 store.delete(placeholder.app.key)
                 savedApplication = placeholder.copy(app = placeholder.app.copy(key = key))
                 store.upsert(savedApplication)
             }
         }
+        return savedApplication
+    }
 
-        // A brand-new connection (bunker:// or a nostrconnect:// that named no
-        // relays) gets the local WebSocket relay beside the default relays, so
-        // clients on this machine work without any public relay.
-        val newConnectionRelays = if (req.isNostrConnectUri) {
-            req.relays.ifEmpty { AmberDesktop.newBunkerRelays() }
-        } else {
-            AmberDesktop.newBunkerRelays()
-        }
-        // A local socket client never talks to relays.
-        val relays = if (req.isLocalSocket) {
-            emptyList()
-        } else {
-            savedApplication?.app?.normalizedRelays()?.ifEmpty { defaultRelays } ?: newConnectionRelays
-        }
-        val secret = if (req.request is BunkerRequestConnect) req.request.secret ?: "" else ""
+    // Where the approval is answered. A brand-new connection (bunker:// or a
+    // nostrconnect:// that named no relays) gets the local WebSocket relay beside the
+    // default relays, so clients on this machine work without any public relay; a
+    // local socket client never talks to relays.
+    private fun approvalRelays(req: PendingBunkerRequest, savedApplication: AppWithPermissions?): List<NormalizedRelayUrl> {
+        if (req.isLocalSocket) return emptyList()
+        val newConnectionRelays = if (req.isNostrConnectUri) req.relays.ifEmpty { AmberDesktop.newBunkerRelays() } else AmberDesktop.newBunkerRelays()
+        return savedApplication?.app?.normalizedRelays()?.ifEmpty { AmberDesktop.defaultRelays() } ?: newConnectionRelays
+    }
 
-        // Only a connect may create an application. A non-connect request whose
-        // app is gone (deleted, expired or logged out while the card was queued)
-        // must not resurrect the revoked connection: answer it like an unknown client.
-        if (savedApplication == null && req.request !is BunkerRequestConnect && req.type != SignerType.CONNECT) {
-            val noPermission = BunkerResponse(req.request.id, "", "no permission")
-            req.responder?.let { respond ->
-                respond(noPermission)
-                return
-            }
-            sendResponse(acc, req.signerPrivKey, key, req.encryptionType, noPermission, relays)
-            return
-        }
-
-        var application = savedApplication ?: AppWithPermissions(
+    // The record of a connection seen for the first time.
+    private fun newApplication(
+        req: PendingBunkerRequest,
+        acc: DesktopAccount,
+        relays: List<NormalizedRelayUrl>,
+        signPolicy: Int,
+        deleteAfter: Long,
+    ): AppWithPermissions {
+        val secret = (req.request as? BunkerRequestConnect)?.secret ?: ""
+        return AppWithPermissions(
             app = AppRecord(
-                key = key,
+                key = req.localKey,
                 name = req.appName,
                 relays = relays.map { it.url },
                 url = req.appUrl,
@@ -1004,66 +1034,53 @@ class BunkerEngine(
                 isConnected = true,
                 secret = secret,
                 useSecret = secret.isNotBlank(),
-                signPolicy = signPolicy ?: acc.signPolicy,
+                signPolicy = signPolicy,
                 deleteAfter = deleteAfter,
                 lastUsed = TimeUtils.now(),
                 transport = if (req.isLocalSocket) TRANSPORT_SOCKET else TRANSPORT_NIP46,
                 socketSecretHash = req.socketSecretHash,
+                // Each connection gets its own signing key.
+                localKey = if (req.request is BunkerRequestConnect && !req.isLocalSocket) generateBunkerPrivKey() else "",
             ),
         )
+    }
 
-        application = application.copy(app = application.app.copy(isConnected = true, lastUsed = TimeUtils.now()))
-
-        // Ensure each connection has its own unique signing key.
-        if (application.app.localKey.isBlank() && req.request is BunkerRequestConnect && savedApplication == null && !req.isLocalSocket) {
-            application = application.copy(app = application.app.copy(localKey = generateBunkerPrivKey()))
-        }
-
-        if (req.type == SignerType.CONNECT) {
-            val effectivePolicy = signPolicy ?: acc.signPolicy
-            // Like Android, the connect approval's "delete after" choice also
-            // applies to an existing (e.g. bunker:// placeholder) connection.
-            application = application.copy(app = application.app.copy(signPolicy = effectivePolicy, deleteAfter = deleteAfter))
-            applySignPolicy(application, effectivePolicy, grantedPermissions)
-            if (application.permissions.none { it.type == SignerType.GET_PUBLIC_KEY.toString() }) {
-                application.permissions.add(
-                    AppPermissionRecord(SignerType.GET_PUBLIC_KEY.toString(), null, true, RememberType.ALWAYS.screenCode, Long.MAX_VALUE / 1000, 0),
-                )
+    /**
+     * What approving a connect sets: the chosen sign policy and its grants, and the
+     * "delete after" choice, which like Android's also applies to an existing (e.g.
+     * bunker:// placeholder) connection. A connection may always ask for the public
+     * key and ping.
+     */
+    private fun applyConnect(
+        application: AppWithPermissions,
+        signPolicy: Int,
+        deleteAfter: Long,
+        grantedPermissions: List<Permission>,
+    ): AppWithPermissions {
+        val result = application.copy(app = application.app.copy(signPolicy = signPolicy, deleteAfter = deleteAfter))
+        applySignPolicy(result, signPolicy, grantedPermissions)
+        listOf(SignerType.GET_PUBLIC_KEY, SignerType.PING).forEach { type ->
+            if (result.permissions.none { it.type == type.toString() }) {
+                result.permissions.add(AppPermissionRecord(type.toString(), null, true, RememberType.ALWAYS.screenCode, Long.MAX_VALUE / 1000, 0))
             }
-            if (application.permissions.none { it.type == SignerType.PING.toString() }) {
-                application.permissions.add(
-                    AppPermissionRecord(SignerType.PING.toString(), null, true, RememberType.ALWAYS.screenCode, Long.MAX_VALUE / 1000, 0),
-                )
-            }
-        } else if (rememberType != RememberType.NEVER && req.canRemember(encryptionScope)) {
-            acceptOrRejectPermission(application, req.type, req.permissionKind(encryptionScope), true, rememberType, req.encryptedContent, encryptionScope, req.permissionRelay(encryptionScope))
         }
+        return result
+    }
 
-        store.upsert(application)
-        store.addHistory(HistoryRecord(key, req.type.toString(), req.kind, TimeUtils.now(), true))
-
-        val response = if (req.type == SignerType.CONNECT) {
-            req.nostrConnectSecret.ifBlank { req.result }
+    // Answers [req] over its local socket, or else as a kind-24133 event on [relays].
+    private suspend fun answer(
+        req: PendingBunkerRequest,
+        acc: DesktopAccount,
+        signerPrivKey: String,
+        response: BunkerResponse,
+        relays: List<NormalizedRelayUrl>,
+    ) {
+        val respond = req.responder
+        if (respond != null) {
+            respond(response)
         } else {
-            req.result
+            sendResponse(acc, signerPrivKey, req.localKey, req.encryptionType, response, relays)
         }
-
-        req.responder?.let { respond ->
-            respond(BunkerResponse(req.request.id, response, null))
-            return
-        }
-
-        checkForNewRelaysAndUpdateAllFilters()
-        val signerPrivKey = application.app.localKey.ifEmpty { req.signerPrivKey }
-
-        sendResponse(
-            acc,
-            signerPrivKey,
-            key,
-            req.encryptionType,
-            BunkerResponse(req.request.id, response, null),
-            application.app.normalizedRelays().ifEmpty { relays },
-        )
     }
 
     /**

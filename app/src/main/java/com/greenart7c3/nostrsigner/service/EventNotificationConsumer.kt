@@ -155,30 +155,58 @@ class EventNotificationConsumer(
         event: Event,
         relay: NormalizedRelayUrl,
     ) {
+        val (acc, connectionPrivKey) = recipient(event, relay) ?: return
+        if (!isNewRequest(event, acc, relay)) return
+
+        NotificationUtils.getOrCreateBunkerChannel(applicationContext)
+        NotificationUtils.getOrCreateErrorsChannel(applicationContext)
+
+        val bunkerEventDao = accountRepository.getDatabase(acc.npub).bunkerEventDao()
+        // With requireUnlockedDevice on, nothing may use the account key while
+        // the device is locked, and that includes opening the request.
+        if (!isAccountKeyLocked(acc)) {
+            bunkerEventDao.insert(BunkerEventEntity(0, event.id, event.createdAt))
+            notify(event, acc, relay, connectionPrivKey)
+        } else if (connectionPrivKey.isEmpty()) {
+            // Legacy client: the request and any reply are encrypted with the
+            // account key, so it can't even be answered. Leave the event
+            // unrecorded so a re-delivery after unlock is processed.
+            saveLog("Device locked: request ${event.id} from a legacy client can't be opened until unlock", relay.url, acc.npub)
+        } else {
+            bunkerEventDao.insert(BunkerEventEntity(0, event.id, event.createdAt))
+            replyDeviceLocked(event, acc, relay, connectionPrivKey)
+        }
+    }
+
+    /**
+     * The account a verified kind-24133 [event] is for, with the private key of the
+     * connection it came through ("" when tagged to the account key), or null when
+     * it is not a bunker request for a logged-in account.
+     */
+    private suspend fun recipient(event: Event, relay: NormalizedRelayUrl): Pair<Account, String>? {
         if (!notificationManager().areNotificationsEnabled()) {
             saveLog("notifications disabled", relay.url)
-            return
+            return null
         }
         if (event.kind != NostrConnectEvent.KIND) {
             saveLog("Not a bunker request: kind ${event.kind}", relay.url)
-            return
+            return null
         }
         if (!event.verify()) {
             saveLog("Invalid id hash or signature", relay.url)
-            return
+            return null
         }
-
         val taggedKey = event.taggedUsers().firstOrNull()
         if (taggedKey == null) {
             saveLog("No tagged users found in event ${event.id}", relay.url)
-            return
+            return null
         }
+        return addressee(taggedKey.toNPub(), taggedKey.pubKey, relay)
+            ?: null.also { saveLog("Tagged account ${taggedKey.toNPub()} not logged in", relay.url) }
+    }
 
-        val (acc, connectionPrivKey) = addressee(taggedKey.toNPub(), taggedKey.pubKey, relay) ?: run {
-            saveLog("Tagged account ${taggedKey.toNPub()} not logged in", relay.url)
-            return
-        }
-
+    /** Whether [event] is within the sender's rate limit, fresh and not seen before. */
+    private suspend fun isNewRequest(event: Event, acc: Account, relay: NormalizedRelayUrl): Boolean {
         // Senders that are not a stored connection are rate-limited before any
         // per-event write, decrypt or signed reply, so a flood costs them
         // silence instead of the user's battery. Stored connections bypass the
@@ -190,44 +218,20 @@ class EventNotificationConsumer(
             !senderRateLimiter.allow("${relay.url}|${event.pubKey}", System.currentTimeMillis())
         ) {
             AmberLog.d(Amber.TAG, "${relay.url}: rate-limited event ${event.id} from unknown sender ${event.pubKey}")
-            return
+            return false
         }
         saveLog("New event ${event.id} from ${event.pubKey}", relay.url, acc.npub)
 
         // Freshness is checked after the limiter: these rejections log the
         // event id, so a flood of signed stale events must be budgeted too.
-        nip46StaleReason(event.id, event.createdAt, event.expiration(), TimeUtils.now())?.let {
-            saveLog(it, relay.url, acc.npub)
-            return
+        val staleReason = nip46StaleReason(event.id, event.createdAt, event.expiration(), TimeUtils.now())
+        if (staleReason != null) {
+            saveLog(staleReason, relay.url, acc.npub)
+            return false
         }
-
-        NotificationUtils.getOrCreateBunkerChannel(applicationContext)
-        NotificationUtils.getOrCreateErrorsChannel(applicationContext)
-
-        val bunkerEventDao = accountRepository.getDatabase(acc.npub).bunkerEventDao()
-        if (bunkerEventDao.exists(event.id)) {
-            saveLog("Event ${event.id} already processed (persistent cache)", relay.url)
-            return
-        }
-
-        // With requireUnlockedDevice on, nothing may use the account key while
-        // the device is locked, and that includes opening the request.
-        if (isAccountKeyLocked(acc)) {
-            if (connectionPrivKey.isEmpty()) {
-                // Legacy client: the request and any reply are encrypted with the
-                // account key, so it can't even be answered. Leave the event
-                // unrecorded so a re-delivery after unlock is processed.
-                saveLog("Device locked: request ${event.id} from a legacy client can't be opened until unlock", relay.url, acc.npub)
-                return
-            }
-            bunkerEventDao.insert(BunkerEventEntity(0, event.id, event.createdAt))
-            replyDeviceLocked(event, acc, relay, connectionPrivKey)
-            return
-        }
-
-        bunkerEventDao.insert(BunkerEventEntity(0, event.id, event.createdAt))
-
-        notify(event, acc, relay, connectionPrivKey)
+        val seen = accountRepository.getDatabase(acc.npub).bunkerEventDao().exists(event.id)
+        if (seen) saveLog("Event ${event.id} already processed (persistent cache)", relay.url)
+        return !seen
     }
 
     /**

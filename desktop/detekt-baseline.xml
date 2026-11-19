@@ -15,7 +15,6 @@
     <ID>CyclomaticComplexMethod:ApplicationDetailScreen.kt:@Composable fun ApplicationDetailScreen</ID>
     <ID>CyclomaticComplexMethod:ApplicationDetailScreen.kt:@Composable private fun PermissionCard</ID>
     <ID>CyclomaticComplexMethod:IncomingRequestsScreen.kt:@Composable private fun RequestCard</ID>
-    <ID>CyclomaticComplexMethod:LocalSigner.kt:LocalSigner$private suspend fun evaluate: com.fasterxml.jackson.databind.JsonNode</ID>
     <ID>CyclomaticComplexMethod:Main.kt:fun main</ID>
     <ID>CyclomaticComplexMethod:RelayListEditor.kt:@Composable fun RelayListEditor</ID>
     <ID>CyclomaticComplexMethod:SettingsScreen.kt:@Composable fun SettingsScreen</ID>
@@ -32,7 +31,6 @@
     <ID>LongMethod:ApplicationsScreen.kt:@Composable private fun NewBunkerDialog</ID>
     <ID>LongMethod:CrashReportDialog.kt:@Composable fun CrashReportDialog</ID>
     <ID>LongMethod:IncomingRequestsScreen.kt:@Composable private fun RequestCard</ID>
-    <ID>LongMethod:LocalSigner.kt:LocalSigner$private suspend fun evaluate: com.fasterxml.jackson.databind.JsonNode</ID>
     <ID>LongMethod:LoginScreen.kt:@Composable private fun NewKeyPane</ID>
     <ID>LongMethod:Main.kt:fun main</ID>
     <ID>LongMethod:PassphraseLockTest.kt:PassphraseLockTest$@Test fun fullLifecycle</ID>
@@ -76,7 +74,6 @@
     <ID>ReturnCount:Notifier.kt:Notifier$private fun linux: Notification?</ID>
     <ID>ReturnCount:UiState.kt:fun handleShortcut: Boolean</ID>
     <ID>ReturnCount:UriLaunch.kt:UriLaunch$private fun readUri</ID>
-    <ID>ThrowsCount:LocalSigner.kt:LocalSigner$private suspend fun resolveOrConnect: Triple&lt;DesktopAccount, AppWithPermissions, String?&gt;</ID>
     <ID>ThrowsCount:Storage.kt:private inline fun &lt;reified T&gt; readSecure: T?</ID>
     <ID>TooManyFunctions:AmberDesktop.kt:AmberDesktop</ID>
     <ID>TooManyFunctions:DesktopKeyStore.kt:DesktopKeyStore</ID>

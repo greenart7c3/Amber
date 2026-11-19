@@ -152,16 +152,26 @@ object UriLaunch {
      * file itself is created with the umask) and every connection is checked
      * against the socket owner, so another OS user can neither talk to it nor
      * connect during the window before the permissions land.
+     *
+     * The socket is bound before this returns, so a link forwarded right after
+     * startup never finds the stale file deleted and the new one not yet bound.
      */
     fun startIpcServer() {
         if (!isLinux) return
+        val server = runCatching { ServerSocketChannel.open(StandardProtocolFamily.UNIX) }.getOrNull() ?: return
+        val bound = runCatching {
+            val path = socketPath()
+            Files.deleteIfExists(path)
+            server.bind(UnixDomainSocketAddress.of(path))
+            runCatching { Files.setPosixFilePermissions(path, PosixFilePermissions.fromString("rw-------")) }
+        }.isSuccess
+        if (!bound) {
+            runCatching { server.close() }
+            return
+        }
         Thread {
             runCatching {
-                val path = socketPath()
-                Files.deleteIfExists(path)
-                ServerSocketChannel.open(StandardProtocolFamily.UNIX).use { server ->
-                    server.bind(UnixDomainSocketAddress.of(path))
-                    runCatching { Files.setPosixFilePermissions(path, PosixFilePermissions.fromString("rw-------")) }
+                server.use {
                     while (true) {
                         val client = server.accept() ?: continue
                         if (!isSameUser(client)) {

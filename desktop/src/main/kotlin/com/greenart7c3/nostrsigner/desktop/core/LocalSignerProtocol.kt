@@ -35,7 +35,7 @@ object LocalSignerProtocol {
     /** Longest line accepted from a client. */
     const val MAX_LINE_BYTES = 1 shl 20
 
-    /** Error text the engine answers a rejection with (see BunkerEngine.doReject). */
+    /** Error text the engine answers a rejection with (see doReject in BunkerApproval.kt). */
     const val USER_REJECTED = "user rejected"
 
     /** Method -> (type, number of params before the optional account). */

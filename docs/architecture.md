@@ -172,7 +172,11 @@ attaches a bunker:// placeholder), where the reply goes (`approvalRelays`), a ne
 connection's record (`newApplication`, with its own key), what a connect sets
 (`applyConnect`) and the reply over the socket or the relays (`answer`). Like
 Android, a remembered approval whose reply fails to publish is taken back
-(`revertApproval`, pinned by `ApprovalRevertTest`).
+(`revertApproval`, pinned by `ApprovalRevertTest`). What approving and rejecting do
+lives in `core/BunkerApproval.kt` (`doApprove`, `doReject` and the grant updates);
+`BunkerEngine.approve` / `reject` only launch them on the engine's scope. Left in
+`BunkerEngine`: `TooManyFunctions` (relay listener, filters, queue, nostrconnect
+pairing in one class).
 
 ### 2. Split `IntentUtils.kt`
 

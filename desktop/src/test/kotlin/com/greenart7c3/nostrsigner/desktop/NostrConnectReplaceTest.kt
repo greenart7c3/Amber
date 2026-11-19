@@ -92,4 +92,25 @@ class NostrConnectReplaceTest {
         }
         assertNull(AmberDesktop.engine.addNostrConnect("nostrconnect://$valid?relay=wss%3A%2F%2Fnew.invalid", account))
     }
+
+    // The shared parser: relays, the secret byte for byte, metadata, and only grantable permissions.
+    @Test
+    fun aNostrConnectUriIsQueuedAsItsClientAskedFor() = runBlocking {
+        val account = AccountManager.addAccount(KeyPair(), name = "nc-parse", signPolicy = 1)
+        val clientHex = KeyPair().pubKey.toHexKey()
+        val metadata = java.net.URLEncoder.encode("""{"url":"https://example.org"}""", "utf-8")
+        val uri = "nostrconnect://$clientHex?relay=wss%3A%2F%2Fa.invalid&relay=wss%3A%2F%2Fb.invalid&name=My+App" +
+            "&secret=XQUdha4rjh_gjAgHN8X5yg==&metadata=$metadata&perms=sign_event%3A1,nip%3A9999,nip%3A44"
+        assertNull(AmberDesktop.engine.addNostrConnect(uri, account))
+        val card = withTimeout(20.seconds) {
+            while (AmberDesktop.engine.pending.value.none { it.localKey == clientHex }) delay(50.milliseconds)
+            AmberDesktop.engine.pending.value.first { it.localKey == clientHex }
+        }
+
+        assertEquals("My App", card.appName)
+        assertEquals("https://example.org", card.appUrl)
+        assertEquals(listOf("wss://a.invalid/", "wss://b.invalid/"), card.relays.map { it.url })
+        assertEquals("XQUdha4rjh_gjAgHN8X5yg==", card.nostrConnectSecret)
+        assertEquals(listOf("sign_event" to 1, "nip" to 44), card.requestedPermissions.map { it.type to it.kind })
+    }
 }

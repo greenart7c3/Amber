@@ -155,6 +155,12 @@ hands an admitted request to one handler per method (`switchRelays`, `logout`,
 rules and splits `handleRequest` the same way (`switchRelays`, `logout`,
 `refusedUpFront`, `answerOrQueue`).
 
+`common/NostrConnectUri.kt` parses a `nostrconnect://` URI (client key, relays,
+name, URL, image, secret and the requested permissions, with the NIP-46
+metadata JSON overriding what it sets) for both apps, which had drifted apart;
+`NostrConnectUriTest` pins it. Android's `NostrConnectUtils` keeps only the
+intent extras and the queueing.
+
 ### 2. Split `IntentUtils.kt`
 
 Separate parsing (`nostrsigner://` / `nostrconnect://` → a data object),

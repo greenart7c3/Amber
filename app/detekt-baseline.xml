@@ -52,7 +52,6 @@
     <ID>CyclomaticComplexMethod:ExportAllAccountsScreen.kt:@Composable fun ExportAllAccountsScreen</ID>
     <ID>CyclomaticComplexMethod:IntentMultiEventHomeScreen.kt:@Composable private fun IntentRequestCard</ID>
     <ID>CyclomaticComplexMethod:IntentUtilsBeforeAfterTest.kt:IntentUtilsBeforeAfterTest$@Test fun `before-after parameter dispatch - all six keys`</ID>
-    <ID>CyclomaticComplexMethod:NostrConnectUtils.kt:NostrConnectUtils$fun getIntentFromNostrConnect</ID>
     <ID>CyclomaticComplexMethod:ProfileSubscription.kt:ProfileSubscription$override suspend fun onIncomingMessage</ID>
     <ID>CyclomaticComplexMethod:SeeDetailsScreen.kt:@Composable fun SeeDetailsScreen</ID>
     <ID>CyclomaticComplexMethod:SignerProviderQuery.kt:SignerProviderQuery$@Suppress("RunBlocking") fun query: Cursor?</ID>
@@ -142,7 +141,6 @@
     <ID>LongMethod:NewNsecBunkerScreen.kt:@Composable fun NewNsecBunkerCreatedScreen</ID>
     <ID>LongMethod:NewNsecBunkerScreen.kt:@Composable fun NewNsecBunkerScreen</ID>
     <ID>LongMethod:Nip44v3ApprovalData.kt:@Composable fun Nip44v3ApprovalData</ID>
-    <ID>LongMethod:NostrConnectUtils.kt:NostrConnectUtils$fun getIntentFromNostrConnect</ID>
     <ID>LongMethod:NotificationSubscription.kt:NotificationSubscription$suspend fun updateFilter</ID>
     <ID>LongMethod:QrCodeScanner.kt:@Composable fun SimpleQrCodeScanner</ID>
     <ID>LongMethod:RandomPinInput.kt:@Composable fun RandomPinInput</ID>
@@ -234,7 +232,6 @@
     <ID>MultipleEmitters:ActivityStatsCard.kt:@Composable private fun ActivityStatsBar</ID>
     <ID>MultipleEmitters:RelaysScreen.kt:@Composable private fun LocalBunkerServerSettings</ID>
     <ID>MultipleEmitters:SignPsbt.kt:@Composable private fun PsbtBody</ID>
-    <ID>NestedBlockDepth:NostrConnectUtils.kt:NostrConnectUtils$fun getIntentFromNostrConnect</ID>
     <ID>NestedBlockDepth:SignerProviderQuery.kt:SignerProviderQuery$@Suppress("RunBlocking") fun query: Cursor?</ID>
     <ID>ParameterNaming:AccountBackupScreen.kt:onBackupDone: () -&gt; Unit</ID>
     <ID>ParameterNaming:AmberToggles.kt:onSelected: (T) -&gt; Unit</ID>

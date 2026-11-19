@@ -104,7 +104,7 @@ footprint small.
 Each step is a small, separately mergeable change, and each one should delete
 the baseline or allow-list lines it makes obsolete. Do not add to them.
 
-### 1. Share the bunker request logic (highest value)
+### 1. Share the bunker request logic (done)
 
 Move the platform-free core of the desktop `core/BunkerEngine.kt` and the Android
 `BunkerRequestUtils`/`EventNotificationConsumer` request handling into `:common`
@@ -188,6 +188,22 @@ auth whitelist, computes the answer (`computeOrRefuse`) and answers from the
 remembered decision or asks the user (`ask`). With that, the bunker request code
 of both apps has no baseline entries left (only one long test in
 `EventNotificationConsumerTest`).
+
+What a remembered decision stores is shared too. `common/PermissionDecision.kt`
+holds how long each "remember" choice lasts (`rememberUntil`, keyed on the
+`RememberType` screen code both apps store; Android had kept "10 minutes" for 15)
+and which stored grants a new one replaces (`replacesGrant`), used by Android's
+`AmberUtils.updatePermission` and the desktop's `acceptOrRejectPermission`.
+`expandPermissionTypes` (`common/Nip46Requests.kt`) maps a connect's requested
+permissions to the types requests look up, and `basicPermissions` (in
+`:commonsui`, next to `Permission`) is what "approve basic actions" grants; Android
+had stored some of those under names nothing looked up.
+
+Step 1 is done. What stays in each app on purpose: decrypting a request and
+encrypting and signing the reply (on Android through `Account`, so the
+`requireUnlockedDevice` gate applies), storage (Room on Android, JSON files on the
+desktop, so `ApplicationDao.insertPermissions` keeps its own delete queries), the
+relay subscriptions, and the approval screens with their scope choices.
 
 ### 2. Split `IntentUtils.kt`
 

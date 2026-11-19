@@ -61,7 +61,9 @@ import kotlin.io.encoding.Base64
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -199,6 +201,9 @@ class BunkerEngine(
     val scope: CoroutineScope,
 ) : RelayConnectionListener {
     val pending = kotlinx.coroutines.flow.MutableStateFlow<List<PendingBunkerRequest>>(emptyList())
+
+    // An approval whose reply never reached the client, and was taken back; the UI says so.
+    val failedReplies = MutableSharedFlow<Unit>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
     // Per-sender token bucket: bounds the work (decrypt, log writes, signed
     // replies) one relay sender can force per window.
@@ -927,6 +932,8 @@ class BunkerEngine(
         val store = AmberDesktop.store(acc.npub)
         val key = req.localKey
         val savedApplication = savedConnection(req, acc, store)
+        // Approving changes this list in place; kept to take the approval back.
+        val grantsBefore = savedApplication?.permissions?.toList().orEmpty()
         val relays = approvalRelays(req, savedApplication)
 
         // Only a connect may create an application. A non-connect request whose
@@ -947,17 +954,45 @@ class BunkerEngine(
         }
 
         store.upsert(application)
+        val grantsAfter = application.permissions.toList()
         store.addHistory(HistoryRecord(key, req.type.toString(), req.kind, TimeUtils.now(), true))
 
         val response = if (req.type == SignerType.CONNECT) req.nostrConnectSecret.ifBlank { req.result } else req.result
         if (req.responder == null) checkForNewRelaysAndUpdateAllFilters()
-        answer(
+        val delivered = answer(
             req,
             acc,
             application.app.localKey.ifEmpty { req.signerPrivKey },
             BunkerResponse(req.request.id, response, null),
             application.app.normalizedRelays().ifEmpty { relays },
         )
+        // Like Android: what the client never heard of must not stay granted.
+        if (!delivered && rememberType != RememberType.NEVER) revertApproval(req, store, application.app, grantsBefore, grantsAfter)
+    }
+
+    /**
+     * Takes back what approving [req] remembered when its reply did not reach the
+     * client, like Android's `revertApproval`: a connect drops the connection (a
+     * bunker:// one goes back to waiting under its secret), any other request restores
+     * the grants it replaced. The grants are re-read, so a change made while the reply
+     * was retried survives.
+     */
+    private fun revertApproval(req: PendingBunkerRequest, store: AccountStore, approved: AppRecord, grantsBefore: List<AppPermissionRecord>, grantsAfter: List<AppPermissionRecord>) {
+        val key = approved.key
+        store.addLog(key, "bunker response", "The reply did not reach the client, so its approval was taken back")
+        failedReplies.tryEmit(Unit)
+        if (req.type == SignerType.CONNECT) {
+            store.delete(key)
+            if (!req.isNostrConnectUri && approved.secret.isNotBlank()) {
+                store.upsert(AppWithPermissions(approved.copy(key = approved.secret, isConnected = false), grantsAfter.toMutableList()))
+            }
+            return
+        }
+        val current = store.getByKey(key) ?: return
+        val added = (grantsAfter - grantsBefore.toSet()).toSet()
+        val replaced = grantsBefore - grantsAfter.toSet()
+        val restored = current.permissions.filterNot { it in added }
+        store.upsert(current.copy(permissions = (restored + replaced.filterNot { it in restored }).toMutableList()))
     }
 
     // Mirrors the Android connect screen's account picker: the connection is
@@ -1067,20 +1102,21 @@ class BunkerEngine(
         return result
     }
 
-    // Answers [req] over its local socket, or else as a kind-24133 event on [relays].
+    /**
+     * Answers [req] over its local socket, or else as a kind-24133 event on [relays].
+     * False only when a relay reply failed to publish; with no relay to send to there
+     * is nothing to fail, as on Android.
+     */
     private suspend fun answer(
         req: PendingBunkerRequest,
         acc: DesktopAccount,
         signerPrivKey: String,
         response: BunkerResponse,
         relays: List<NormalizedRelayUrl>,
-    ) {
-        val respond = req.responder
-        if (respond != null) {
-            respond(response)
-        } else {
-            sendResponse(acc, signerPrivKey, req.localKey, req.encryptionType, response, relays)
-        }
+    ): Boolean {
+        val respond = req.responder ?: return sendResponse(acc, signerPrivKey, req.localKey, req.encryptionType, response, relays) || relays.isEmpty()
+        respond(response)
+        return true
     }
 
     /**

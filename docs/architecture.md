@@ -165,8 +165,9 @@ The desktop's `doApprove` is split like Android's `sendResult`: the chosen accou
 (`approvingAccount`), the connection it is approved on (`savedConnection`, which
 attaches a bunker:// placeholder), where the reply goes (`approvalRelays`), a new
 connection's record (`newApplication`, with its own key), what a connect sets
-(`applyConnect`) and the reply over the socket or the relays (`answer`). Unlike
-Android, it still keeps the grant when the reply fails to publish.
+(`applyConnect`) and the reply over the socket or the relays (`answer`). Like
+Android, a remembered approval whose reply fails to publish is taken back
+(`revertApproval`, pinned by `ApprovalRevertTest`).
 
 ### 2. Split `IntentUtils.kt`
 

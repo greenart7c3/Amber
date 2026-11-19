@@ -70,6 +70,7 @@ import com.greenart7c3.nostrsigner.commonsui.d_route_relays_sub
 import com.greenart7c3.nostrsigner.commonsui.d_route_settings_sub
 import com.greenart7c3.nostrsigner.commonsui.d_switch_account
 import com.greenart7c3.nostrsigner.commonsui.d_tagline
+import com.greenart7c3.nostrsigner.commonsui.failed_to_send_event
 import com.greenart7c3.nostrsigner.commonsui.relays
 import com.greenart7c3.nostrsigner.commonsui.settings
 import com.greenart7c3.nostrsigner.desktop.Session
@@ -83,6 +84,7 @@ import com.greenart7c3.nostrsigner.desktop.core.UriLaunch
 import com.greenart7c3.nostrsigner.desktop.core.toShortenHex
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
 
 sealed class Route(val title: StringResource, val subtitle: StringResource, val icon: ImageVector) {
@@ -107,6 +109,9 @@ fun App() {
 
     LaunchedEffect(Unit) {
         Toaster.messages.collect { snackbarHostState.showSnackbar(it) }
+    }
+    LaunchedEffect(Unit) {
+        AmberDesktop.engine.failedReplies.collect { Toaster.toast(getString(Res.string.failed_to_send_event)) }
     }
 
     // Jump to the approval screen whenever a new request arrives.

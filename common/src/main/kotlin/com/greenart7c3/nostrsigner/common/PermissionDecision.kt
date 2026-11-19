@@ -12,6 +12,24 @@ fun activeDecision(acceptable: Boolean, acceptUntil: Long, rejectUntil: Long, no
     else -> null
 }
 
+/** The `acceptUntil` / `rejectUntil` of a decision remembered for good. */
+const val REMEMBER_FOREVER = Long.MAX_VALUE / 1000
+
+/**
+ * Until when (seconds) a decision remembered with [screenCode], the `RememberType`
+ * code both apps store, stays in effect from [now]: 0 for "never" or an unknown code.
+ */
+fun rememberUntil(screenCode: Int, now: Long): Long = when (screenCode) {
+    1 -> now + 60
+    2 -> now + 5 * 60
+    3 -> now + 10 * 60
+    4 -> REMEMBER_FOREVER
+    5 -> now + 60 * 60
+    6 -> now + 24 * 60 * 60
+    7 -> now + 7 * 24 * 60 * 60
+    else -> 0L
+}
+
 /** The app sign policy that trusts every request ("fully trust"). */
 const val SIGN_POLICY_FULLY_TRUST = 2
 

@@ -4,6 +4,7 @@ import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.toUpperCase
 import com.greenart7c3.nostrsigner.common.SignerType
 import com.greenart7c3.nostrsigner.common.canRememberRelayAuth
+import com.greenart7c3.nostrsigner.common.rememberUntil
 import com.greenart7c3.nostrsigner.commonsui.Permission
 import com.greenart7c3.nostrsigner.database.ApplicationDao
 import com.greenart7c3.nostrsigner.database.ApplicationPermissionsEntity
@@ -103,16 +104,7 @@ object AmberUtils {
         encryptedData: EncryptedDataKind?,
         decryptTypeScope: DecryptTypeScope = DecryptTypeScope.ALL,
     ) {
-        val until = when (rememberType) {
-            RememberType.ALWAYS -> Long.MAX_VALUE / 1000
-            RememberType.ONE_MINUTE -> TimeUtils.oneMinuteFromNow()
-            RememberType.FIVE_MINUTES -> TimeUtils.now() + TimeUtils.FIVE_MINUTES
-            RememberType.TEN_MINUTES -> TimeUtils.now() + TimeUtils.FIFTEEN_MINUTES
-            RememberType.ONE_HOUR -> TimeUtils.now() + 3600
-            RememberType.ONE_DAY -> TimeUtils.now() + 86400
-            RememberType.ONE_WEEK -> TimeUtils.now() + 604800
-            RememberType.NEVER -> 0L
-        }
+        val until = rememberUntil(rememberType.screenCode, TimeUtils.now())
 
         // ALL = entire NIP (NIP04_DECRYPT / NIP44_DECRYPT), covers every content type for that NIP
         // SPECIFIC = only this content type (DECRYPT_CLEAR_TEXT, DECRYPT_TAG_ARRAY, etc.)
@@ -251,16 +243,7 @@ object AmberUtils {
         encryptedData: EncryptedDataKind? = null,
         decryptTypeScope: DecryptTypeScope = DecryptTypeScope.ALL,
     ) {
-        val until = when (rememberType) {
-            RememberType.ALWAYS -> Long.MAX_VALUE / 1000
-            RememberType.ONE_MINUTE -> TimeUtils.oneMinuteFromNow()
-            RememberType.FIVE_MINUTES -> TimeUtils.now() + TimeUtils.FIVE_MINUTES
-            RememberType.TEN_MINUTES -> TimeUtils.now() + TimeUtils.FIFTEEN_MINUTES
-            RememberType.ONE_HOUR -> TimeUtils.now() + 3600
-            RememberType.ONE_DAY -> TimeUtils.now() + 86400
-            RememberType.ONE_WEEK -> TimeUtils.now() + 604800
-            else -> 0L
-        }
+        val until = rememberUntil(rememberType.screenCode, TimeUtils.now())
 
         // ALL = entire NIP (NIP04_DECRYPT / NIP44_DECRYPT), covers every content type for that NIP
         // SPECIFIC = only this content type (DECRYPT_CLEAR_TEXT, DECRYPT_TAG_ARRAY, etc.)

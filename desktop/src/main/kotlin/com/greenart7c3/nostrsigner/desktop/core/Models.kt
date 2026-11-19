@@ -2,6 +2,7 @@ package com.greenart7c3.nostrsigner.desktop.core
 
 import com.greenart7c3.nostrsigner.common.SignerType
 import com.greenart7c3.nostrsigner.common.activeDecision
+import com.greenart7c3.nostrsigner.common.rememberUntil
 import com.greenart7c3.nostrsigner.common.rememberedDecision
 import com.greenart7c3.nostrsigner.commonsui.Permission
 import com.greenart7c3.nostrsigner.commonsui.Res
@@ -75,16 +76,7 @@ enum class RememberType(val screenCode: Int, val labelRes: StringResource) {
         ONE_WEEK -> getStringBlocking(Res.string.one_week_short)
     }
 
-    fun acceptUntil(): Long = when (this) {
-        ALWAYS -> Long.MAX_VALUE / 1000
-        ONE_MINUTE -> TimeUtils.now() + 60
-        FIVE_MINUTES -> TimeUtils.now() + 300
-        TEN_MINUTES -> TimeUtils.now() + 600
-        ONE_HOUR -> TimeUtils.now() + 3600
-        ONE_DAY -> TimeUtils.now() + 86400
-        ONE_WEEK -> TimeUtils.now() + 604800
-        NEVER -> 0L
-    }
+    fun acceptUntil(): Long = rememberUntil(screenCode, TimeUtils.now())
 }
 
 /**

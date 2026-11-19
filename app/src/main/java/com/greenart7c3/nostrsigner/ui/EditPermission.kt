@@ -43,6 +43,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.common.SignerType
+import com.greenart7c3.nostrsigner.common.rememberUntil
 import com.greenart7c3.nostrsigner.commonsui.Permission
 import com.greenart7c3.nostrsigner.commonsui.Res
 import com.greenart7c3.nostrsigner.commonsui.action
@@ -288,16 +289,7 @@ fun EditPermission(
 }
 
 fun onSetPermission(optionIndex: Int, rememberType: RememberType, permission: ApplicationPermissionsEntity, onToggle: (ApplicationPermissionsEntity) -> Unit) {
-    val time = when (rememberType) {
-        RememberType.ALWAYS -> Long.MAX_VALUE / 1000
-        RememberType.ONE_MINUTE -> TimeUtils.oneMinuteFromNow()
-        RememberType.FIVE_MINUTES -> TimeUtils.now() + TimeUtils.FIVE_MINUTES
-        RememberType.TEN_MINUTES -> TimeUtils.now() + TimeUtils.FIFTEEN_MINUTES
-        RememberType.ONE_HOUR -> TimeUtils.now() + 3600
-        RememberType.ONE_DAY -> TimeUtils.now() + 86400
-        RememberType.ONE_WEEK -> TimeUtils.now() + 604800
-        RememberType.NEVER -> 0L
-    }
+    val time = rememberUntil(rememberType.screenCode, TimeUtils.now())
     val isAcceptable = optionIndex == 0 || optionIndex == 2
 
     onToggle(

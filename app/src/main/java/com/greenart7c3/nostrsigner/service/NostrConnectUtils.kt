@@ -4,33 +4,20 @@ import android.content.Intent
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.common.EncryptionType
-import com.greenart7c3.nostrsigner.common.decodeQueryParamValue
-import com.greenart7c3.nostrsigner.common.sanitizeAppName
-import com.greenart7c3.nostrsigner.commonsui.Permission
+import com.greenart7c3.nostrsigner.common.NostrConnectUri
 import com.greenart7c3.nostrsigner.commonsui.containsNip
 import com.greenart7c3.nostrsigner.data.AccountRepository
 import com.greenart7c3.nostrsigner.database.LogEntity
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.AmberBunkerRequest
 import com.greenart7c3.nostrsigner.models.BunkerClientMetadata
-import com.greenart7c3.nostrsigner.models.BunkerMetadata
-import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
-import com.vitorpamplona.quartz.nip01Core.relay.normalizer.RelayUrlNormalizer
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequestConnect
 import java.util.UUID
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
 object NostrConnectUtils {
-    private val HEX_PUBKEY = Regex("[0-9a-f]{64}")
-
-    /**
-     * Splits a query parameter into its name and value on the first `=` only,
-     * so values that contain `=` (e.g. base64 padding like "XQUdha4rjh_gjAgHN8X5yg==") are preserved.
-     */
-    fun splitParam(param: String): Pair<String, String> = param.substringBefore("=") to param.substringAfter("=", "")
-    private fun metaDataFromJson(json: String): BunkerMetadata = BunkerMetadata.mapper.readValue(json, BunkerMetadata::class.java)
-
+    /** Queues the connect a `nostrconnect://` intent asks for (parsed by the shared [NostrConnectUri]). */
     fun getIntentFromNostrConnect(
         intent: Intent,
         account: Account,
@@ -42,128 +29,28 @@ object NostrConnectUtils {
         }
 
         try {
-            val data = intent.dataString.toString().replace("nostrconnect://", "")
-            val split = data.split("?")
-            val relays: MutableList<NormalizedRelayUrl> = mutableListOf()
-            var name = ""
-            var url = ""
-            var image = ""
-            val pubKey = split.first()
-            // The client's key becomes the connection's identity: refuse
-            // anything but a lowercase hex public key (caught and logged below).
-            require(pubKey.matches(HEX_PUBKEY)) { "Invalid public key in nostrconnect URI" }
-            val permissions = mutableListOf<Permission>()
-            var nostrConnectSecret = ""
-            // Split the RAW query and form-decode each value exactly once
-            // (decodeQueryParamValue): a client that encodes with
-            // '+' for spaces (URLSearchParams) then shows "My App", not
-            // "My+App", while a literal '+' still arrives as '%2B'.
-            split.drop(1).joinToString("?").split("&").forEach {
-                val (paramName, rawValue) = splitParam(it)
-                val json = decodeQueryParamValue(rawValue)
-                if (paramName == "relay") {
-                    val relayUrl = RelayUrlNormalizer.normalizeOrNull(json)
-                    if (relayUrl != null) {
-                        relays.add(relayUrl)
-                    }
-                }
-                if (paramName == "name") {
-                    name = sanitizeAppName(json)
-                }
-
-                if (paramName == "url") {
-                    url = json
-                }
-
-                if (paramName == "image") {
-                    image = json
-                }
-
-                if (paramName == "secret") {
-                    nostrConnectSecret = json
-                }
-
-                if (paramName == "perms") {
-                    if (json.isNotEmpty()) {
-                        val splitPerms = json.split(",")
-                        splitPerms.forEach { perm ->
-                            val split2 = perm.split(":")
-                            val permissionType = split2.first()
-                            val kind =
-                                try {
-                                    split2[1].toInt()
-                                } catch (_: Exception) {
-                                    null
-                                }
-
-                            permissions.add(
-                                Permission(
-                                    permissionType.trim(),
-                                    kind,
-                                ),
-                            )
-                        }
-                    }
-                }
-
-                if (paramName == "metadata") {
-                    val bunkerMetada = metaDataFromJson(json)
-                    name = bunkerMetada.name
-                    if (bunkerMetada.url.isNotEmpty()) {
-                        url = bunkerMetada.url
-                    }
-                    BunkerClientMetadata.parseOrNull(json)?.let { clientMetadata ->
-                        if (clientMetadata.image.isNotEmpty()) {
-                            image = clientMetadata.image
-                        }
-                    }
-                    if (bunkerMetada.perms.isNotEmpty()) {
-                        val splitPerms = bunkerMetada.perms.split(",")
-                        splitPerms.forEach { perm ->
-                            val split2 = perm.split(":")
-                            val permissionType = split2.first()
-                            val kind =
-                                try {
-                                    split2[1].toInt()
-                                } catch (_: Exception) {
-                                    null
-                                }
-
-                            permissions.add(
-                                Permission(
-                                    permissionType.trim(),
-                                    kind,
-                                ),
-                            )
-                        }
-                    }
-                }
-            }
-
-            permissions.removeIf { it.kind == null && (it.type == "sign_event" || it.type == "nip") }
-            permissions.removeIf { it.type == "nip" && it.kind?.containsNip() != true }
-
-            val clientMetadata = BunkerClientMetadata(name = name, url = url, image = image)
+            val uri = NostrConnectUri.parse(intent.dataString.toString()) { it.containsNip() }
+            val clientMetadata = BunkerClientMetadata(name = uri.name, url = uri.url, image = uri.image)
                 .takeUnless { it.isEmpty() }
 
             BunkerRequestUtils.addRequest(
                 AmberBunkerRequest(
                     BunkerRequestConnect(
                         id = intent.extras?.getString("id") ?: UUID.randomUUID().toString().substring(0, 6),
-                        remoteKey = pubKey,
+                        remoteKey = uri.clientPubKey,
                         secret = "",
-                        permissions = if (permissions.isNotEmpty()) {
-                            permissions.joinToString { if (it.kind != null) "${it.type}:${it.kind}" else it.type }
+                        permissions = if (uri.permissions.isNotEmpty()) {
+                            uri.permissions.joinToString { if (it.kind != null) "${it.type}:${it.kind}" else it.type }
                         } else {
                             null
                         },
                     ),
-                    localKey = pubKey,
-                    relays = relays,
+                    localKey = uri.clientPubKey,
+                    relays = uri.relays,
                     currentAccount = account.npub,
-                    nostrConnectSecret = nostrConnectSecret,
+                    nostrConnectSecret = uri.secret,
                     closeApplication = intent.getBooleanExtra("closeApplication", true),
-                    name = name,
+                    name = uri.name,
                     signedEvent = null,
                     encryptedData = null,
                     encryptionType = EncryptionType.NIP44,

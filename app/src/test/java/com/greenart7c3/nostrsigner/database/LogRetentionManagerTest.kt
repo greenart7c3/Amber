@@ -1,7 +1,11 @@
 package com.greenart7c3.nostrsigner.database
 
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withTimeout
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class LogRetentionManagerTest {
@@ -37,5 +41,17 @@ class LogRetentionManagerTest {
         }
         assertEquals(0, deleted)
         assertEquals(1, deleteCalls)
+    }
+
+    @Test
+    fun `throttled prune that takes the lock finishes and releases it`() = runBlocking {
+        val key = "test_reentrant"
+        var ran = false
+        val job = LogRetentionManager.launchThrottled(this, key) {
+            LogRetentionManager.lock(key).withLock { ran = true }
+        }
+        withTimeout(5_000) { job!!.join() }
+        assertTrue(ran)
+        assertFalse(LogRetentionManager.lock(key).isLocked)
     }
 }

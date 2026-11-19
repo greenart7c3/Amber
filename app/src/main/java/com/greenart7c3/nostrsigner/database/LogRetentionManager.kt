@@ -13,6 +13,7 @@ import java.util.concurrent.ConcurrentHashMap
 import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -69,7 +70,7 @@ object LogRetentionManager {
 
     private fun historyKey(npub: String) = "history_$npub"
 
-    private fun launchThrottled(scope: CoroutineScope, key: String, block: suspend () -> Unit) {
+    internal fun launchThrottled(scope: CoroutineScope, key: String, block: suspend () -> Unit): Job? {
         val now = System.currentTimeMillis()
         var claimed = false
         lastPruneTimes.compute(key) { _, last ->
@@ -80,24 +81,24 @@ object LogRetentionManager {
                 last
             }
         }
-        if (!claimed) return
-        scope.launch {
-            val lock = locks.computeIfAbsent(key) { Mutex() }
-            if (!lock.tryLock()) return@launch
+        if (!claimed) return null
+        return scope.launch {
+            // Only skip a busy prune: the block takes the lock itself, and Mutex is not reentrant.
+            if (lock(key).isLocked) return@launch
             try {
                 block()
             } catch (e: Exception) {
                 if (e is CancellationException) throw e
                 AmberLog.e(Amber.TAG, "Error pruning $key", e)
-            } finally {
-                lock.unlock()
             }
         }
     }
 
+    internal fun lock(key: String): Mutex = locks.computeIfAbsent(key) { Mutex() }
+
     private suspend fun pruneLogs(context: Context, npub: String, db: LogDatabase) {
         val key = logKey(npub)
-        locks.computeIfAbsent(key) { Mutex() }.withLock {
+        lock(key).withLock {
             lastPruneTimes[key] = System.currentTimeMillis()
             val dao = db.dao()
             val expired = dao.deleteOldLog(System.currentTimeMillis() - LocalPreferences.getLogRetention(context).millis)
@@ -111,7 +112,7 @@ object LogRetentionManager {
 
     private suspend fun pruneHistory(context: Context, npub: String, db: HistoryDatabase) {
         val key = historyKey(npub)
-        locks.computeIfAbsent(key) { Mutex() }.withLock {
+        lock(key).withLock {
             lastPruneTimes[key] = System.currentTimeMillis()
             val dao = db.dao()
             // History times are in seconds.

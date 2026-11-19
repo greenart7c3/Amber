@@ -1,16 +1,13 @@
 package com.greenart7c3.nostrsigner.desktop.core
 
-import com.greenart7c3.nostrsigner.common.BUNKER_REPLY_ATTEMPTS
 import com.greenart7c3.nostrsigner.common.EncryptionType
 import com.greenart7c3.nostrsigner.common.Nip46Admission
 import com.greenart7c3.nostrsigner.common.Nip46Connection
-import com.greenart7c3.nostrsigner.common.NostrConnectUri
 import com.greenart7c3.nostrsigner.common.RELAY_AUTH_KIND
 import com.greenart7c3.nostrsigner.common.SignerType
 import com.greenart7c3.nostrsigner.common.UNVERIFIED_REPLY_ATTEMPTS
 import com.greenart7c3.nostrsigner.common.admitNip46Request
 import com.greenart7c3.nostrsigner.common.canRememberRelayAuth
-import com.greenart7c3.nostrsigner.common.generateBunkerPrivKey
 import com.greenart7c3.nostrsigner.common.hasAmbiguousRelayTags
 import com.greenart7c3.nostrsigner.common.isBlockedByAuthWhitelist
 import com.greenart7c3.nostrsigner.common.localPubKeyFromPrivKey
@@ -22,11 +19,9 @@ import com.greenart7c3.nostrsigner.common.permissionLookupOrder
 import com.greenart7c3.nostrsigner.common.relayAuthHost
 import com.greenart7c3.nostrsigner.common.relays.RelayHealthTracker
 import com.greenart7c3.nostrsigner.common.relays.SenderRateLimiter
-import com.greenart7c3.nostrsigner.common.retryWithBackoff
 import com.greenart7c3.nostrsigner.common.sanitizeAppName
 import com.greenart7c3.nostrsigner.common.switchRelaysResult
 import com.greenart7c3.nostrsigner.commonsui.Permission
-import com.greenart7c3.nostrsigner.commonsui.containsNip
 import com.greenart7c3.nostrsigner.commonsui.kindToNip
 import com.vitorpamplona.quartz.nip01Core.core.Event
 import com.vitorpamplona.quartz.nip01Core.core.hexToByteArray
@@ -34,7 +29,6 @@ import com.vitorpamplona.quartz.nip01Core.crypto.KeyPair
 import com.vitorpamplona.quartz.nip01Core.crypto.verify
 import com.vitorpamplona.quartz.nip01Core.jackson.JacksonMapper
 import com.vitorpamplona.quartz.nip01Core.relay.client.NostrClient
-import com.vitorpamplona.quartz.nip01Core.relay.client.accessories.publishAndConfirm
 import com.vitorpamplona.quartz.nip01Core.relay.client.listeners.RelayConnectionListener
 import com.vitorpamplona.quartz.nip01Core.relay.client.single.IRelayClient
 import com.vitorpamplona.quartz.nip01Core.relay.commands.toClient.EventMessage
@@ -59,7 +53,6 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -740,244 +733,6 @@ class BunkerEngine(
         )
     }
 
-    /** The stored grant that decides [type] for [appKey], with Android's fallbacks. */
-    internal fun lookupPermission(
-        store: AccountStore,
-        appKey: String,
-        type: SignerType,
-        kind: Int?,
-        encryptedContent: EncryptedContent?,
-        relayHost: String,
-    ): AppPermissionRecord? = when (type) {
-        // Relay auth is granted per relay or for all relays, like Android.
-        SignerType.SIGN_EVENT if kind == RELAY_AUTH_KIND -> store.getRelayAuthPermission(appKey, relayHost)
-
-        else -> permissionLookupOrder(
-            type,
-            kind,
-            contentType = if (type in contentScopedSignerTypes) type.contentPermissionType(encryptedContent) else null,
-            signNip = if (type == SignerType.SIGN_EVENT) kind?.kindToNip()?.toIntOrNull() else null,
-        ).firstNotNullOfOrNull { store.getPermission(appKey, it.type, it.kind) }
-    }
-
-    // Atomic updates: socket clients queue from several threads at once, and a
-    // plain read-then-write of `pending.value` loses one of two racing requests.
-    internal fun addPending(request: PendingBunkerRequest) {
-        pending.update { list -> if (list.any { it.isSameEntry(request) }) list else list + request }
-    }
-
-    /** Removes the entry queued under [req]'s (account, connection, id) key. */
-    fun removePending(req: PendingBunkerRequest) {
-        pending.update { list -> list.filterNot { it.isSameEntry(req) } }
-    }
-
-    /**
-     * Drops connections whose "delete after" time has passed, in every
-     * account, and refreshes the relay filter if any were removed. Mirrors
-     * the Android `ClearLogsWorker` cleanup.
-     */
-    suspend fun pruneExpiredApplications(now: Long = TimeUtils.now()) {
-        // While locked the per-account databases can't be read (or would be
-        // cached empty); the next tick after unlocking catches up.
-        if (PassphraseLock.isLocked()) return
-        var removed = 0
-        AccountsStore.accounts.value.forEach { record ->
-            val count = AmberDesktop.store(record.npub).deleteExpiredApps(now)
-            if (count > 0) {
-                AmberDesktop.store(record.npub).addLog("", "deleteApplications", "Deleted $count expired applications")
-                removed += count
-            }
-        }
-        if (removed > 0) checkForNewRelaysAndUpdateAllFilters()
-    }
-
-    /** Drops requests whose [PendingBunkerRequest.expiresAt] has passed; the UI calls this periodically. */
-    fun pruneExpired(now: Long = TimeUtils.now()) {
-        dropPending("request expired") { it.expiresAt != null && it.expiresAt <= now }
-    }
-
-    /**
-     * Removes the matching requests from the queue. Relay clients simply time
-     * out, but a local socket client is still waiting on its connection, so it
-     * gets [error] as the answer.
-     */
-    fun dropPending(error: String, predicate: (PendingBunkerRequest) -> Boolean) {
-        var dropped = emptyList<PendingBunkerRequest>()
-        pending.update { list ->
-            dropped = list.filter(predicate)
-            list.filterNot(predicate)
-        }
-        dropped.forEach { req ->
-            req.responder?.let { respond -> scope.launch { respond(BunkerResponse(req.request.id, "", error)) } }
-        }
-    }
-
-    /**
-     * Mirrors `BunkerRequestUtils.sendResult`. Runs on the engine's
-     * application scope (a SupervisorJob), never the caller's — approving
-     * removes the request card from the UI, so a caller-scoped coroutine would
-     * be canceled mid-flight (during the publish retry/backoff) before the
-     * relay response is ever sent. Returns the [Job] so callers/tests can
-     * await completion if they need to.
-     */
-    fun approve(
-        req: PendingBunkerRequest,
-        rememberType: RememberType,
-        grantedPermissions: List<Permission> = emptyList(),
-        signPolicy: Int? = null,
-        deleteAfter: Long = 0L,
-        accountNpub: String? = null,
-        encryptionScope: EncryptionScope = req.defaultScope,
-    ): Job = scope.launch { doApprove(req, rememberType, grantedPermissions, signPolicy, deleteAfter, accountNpub, encryptionScope) }
-
-    /**
-     * Mirrors `BunkerRequestUtils.sendRejection`. Runs on the application
-     * scope for the same reason as [approve] — the rejection response must be
-     * published even though the request card is gone.
-     */
-    fun reject(
-        req: PendingBunkerRequest,
-        rememberType: RememberType,
-        encryptionScope: EncryptionScope = req.defaultScope,
-    ): Job = scope.launch { doReject(req, rememberType, encryptionScope) }
-
-    internal suspend fun sendResponse(
-        account: DesktopAccount,
-        signerPrivKey: String,
-        localKey: String,
-        encryptionType: EncryptionType,
-        bunkerResponse: BunkerResponse,
-        relays: List<NormalizedRelayUrl>,
-        attempts: Int = BUNKER_REPLY_ATTEMPTS,
-    ): Boolean {
-        val store = AmberDesktop.store(account.npub)
-        if (relays.isEmpty()) {
-            store.addLog(localKey, "bunker response", "No relays to send the response to")
-            return false
-        }
-
-        val connSigner = if (signerPrivKey.isNotEmpty()) {
-            NostrSignerInternal(KeyPair(privKey = signerPrivKey.hexToByteArray()))
-        } else {
-            null
-        }
-
-        val plainText = JacksonMapper.mapper.writeValueAsString(bunkerResponse)
-
-        suspend fun buildEvent(): Event {
-            val encryptedContent = if (encryptionType == EncryptionType.NIP44) {
-                connSigner?.nip44Encrypt(plainText, localKey) ?: account.nip44Encrypt(plainText, localKey)
-            } else {
-                connSigner?.nip04Encrypt(plainText, localKey) ?: account.nip04Encrypt(plainText, localKey)
-            }
-            return connSigner?.signerSync?.sign(
-                TimeUtils.now(),
-                NostrConnectEvent.KIND,
-                arrayOf(arrayOf("p", localKey)),
-                encryptedContent,
-            ) ?: account.signSync(
-                TimeUtils.now(),
-                NostrConnectEvent.KIND,
-                arrayOf(arrayOf("p", localKey)),
-                encryptedContent,
-            )
-        }
-
-        val publish: suspend () -> Boolean = {
-            client.publishAndConfirm(
-                event = buildEvent(),
-                relayList = relays.toSet(),
-                timeoutInSeconds = 5,
-                untilFirstAccept = true,
-            )
-        }
-
-        val success = retryWithBackoff(maxRetries = attempts, block = publish)
-
-        val sanitized = "id=${bunkerResponse.id} ${bunkerResponse.error?.let { "error=$it" } ?: "ok"} sent=$success"
-        relays.forEach { store.addLog(it.url, "bunker response", sanitized) }
-        return success
-    }
-
-    /** Parses a `nostrconnect://` URI and queues it for approval. */
-    fun addNostrConnect(uriString: String, account: DesktopAccount): String? {
-        try {
-            // The client's key becomes the connection's identity and a p tag
-            // on every reply: the shared parser accepts only a well-formed one.
-            val uri = try {
-                NostrConnectUri.parse(uriString) { it.containsNip() }
-            } catch (e: IllegalArgumentException) {
-                return e.message ?: "Invalid public key in URI"
-            }
-            val pubKey = uri.clientPubKey
-            val permissions = uri.permissions.map { Permission(it.type, it.kind) }
-
-            addPending(
-                PendingBunkerRequest(
-                    request = BunkerRequestConnect(
-                        id = UUID.randomUUID().toString(),
-                        remoteKey = pubKey,
-                        secret = "",
-                        permissions = permissions.joinToString(",") { if (it.kind != null) "${it.type}:${it.kind}" else it.type }.ifBlank { null },
-                    ),
-                    type = SignerType.CONNECT,
-                    account = account,
-                    localKey = pubKey,
-                    relays = uri.relays,
-                    nostrConnectSecret = uri.secret,
-                    // Client-chosen (sanitized by the parser): the card, the saved record and every notification show it.
-                    appName = uri.name.ifBlank { pubKey.toShortenHex() },
-                    appUrl = uri.url,
-                    appIcon = uri.image,
-                    requestedPermissions = permissions,
-                    result = "ack",
-                    encryptionType = EncryptionType.NIP44,
-                    isNostrConnectUri = true,
-                ),
-            )
-            return null
-        } catch (e: Exception) {
-            AmberLogger.e(AmberDesktop.TAG, "Failed to parse nostrconnect uri", e)
-            return e.message ?: "Failed to parse the URI"
-        }
-    }
-
-    /**
-     * Creates a bunker:// connection placeholder (key == secret until the
-     * client connects) and returns the URI to hand to the client app.
-     */
-    suspend fun createBunkerConnection(
-        account: DesktopAccount,
-        name: String,
-        relays: List<NormalizedRelayUrl>,
-        deleteAfter: Long = 0L,
-    ): String {
-        val secret = UUID.randomUUID().toString()
-        val connPrivKey = generateBunkerPrivKey()
-        // Exactly the relays the caller picked: the dialog seeds them with
-        // AmberDesktop.newBunkerRelays() (the local relay plus the defaults),
-        // and any the user removed there must stay out of the URI.
-        val uriRelays = relays.distinct()
-        val app = AppWithPermissions(
-            app = AppRecord(
-                key = secret,
-                name = name,
-                relays = uriRelays.map { it.url },
-                pubKey = account.hexKey,
-                isConnected = false,
-                secret = secret,
-                useSecret = true,
-                signPolicy = account.signPolicy,
-                deleteAfter = deleteAfter,
-                localKey = connPrivKey,
-            ),
-        )
-        AmberDesktop.store(account.npub).upsert(app)
-        checkForNewRelaysAndUpdateAllFilters()
-        val relayParams = uriRelays.joinToString(separator = "&") { "relay=${it.url}" }
-        return "bunker://${localPubKeyFromPrivKey(connPrivKey)}?$relayParams&secret=$secret"
-    }
-
     private fun parsePermissionsParam(permissions: String?): List<Permission> {
         if (permissions.isNullOrBlank()) return emptyList()
         return permissions.split(",").mapNotNull { perm ->
@@ -1020,3 +775,23 @@ private fun AppWithPermissions.toNip46Connection() = Nip46Connection(
     isConnected = app.isConnected,
     isExpired = app.isExpired(),
 )
+
+/** The stored grant that decides [type] for [appKey], with Android's fallbacks. */
+internal fun lookupPermission(
+    store: AccountStore,
+    appKey: String,
+    type: SignerType,
+    kind: Int?,
+    encryptedContent: EncryptedContent?,
+    relayHost: String,
+): AppPermissionRecord? = when (type) {
+    // Relay auth is granted per relay or for all relays, like Android.
+    SignerType.SIGN_EVENT if kind == RELAY_AUTH_KIND -> store.getRelayAuthPermission(appKey, relayHost)
+
+    else -> permissionLookupOrder(
+        type,
+        kind,
+        contentType = if (type in contentScopedSignerTypes) type.contentPermissionType(encryptedContent) else null,
+        signNip = if (type == SignerType.SIGN_EVENT) kind?.kindToNip()?.toIntOrNull() else null,
+    ).firstNotNullOfOrNull { store.getPermission(appKey, it.type, it.kind) }
+}

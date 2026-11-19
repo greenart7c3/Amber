@@ -53,8 +53,11 @@ import com.greenart7c3.nostrsigner.desktop.core.Strings
 import com.greenart7c3.nostrsigner.desktop.core.UriLaunch
 import com.greenart7c3.nostrsigner.desktop.core.allowsQuickApprove
 import com.greenart7c3.nostrsigner.desktop.core.describe
+import com.greenart7c3.nostrsigner.desktop.core.dropPending
 import com.greenart7c3.nostrsigner.desktop.core.notificationAccountLine
 import com.greenart7c3.nostrsigner.desktop.core.notificationTitle
+import com.greenart7c3.nostrsigner.desktop.core.pruneExpired
+import com.greenart7c3.nostrsigner.desktop.core.pruneExpiredApplications
 import com.greenart7c3.nostrsigner.desktop.ui.App
 import com.greenart7c3.nostrsigner.desktop.ui.MIN_WINDOW_SIZE
 import com.greenart7c3.nostrsigner.desktop.ui.NostrSignerTheme

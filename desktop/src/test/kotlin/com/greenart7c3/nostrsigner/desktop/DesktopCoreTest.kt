@@ -15,8 +15,10 @@ import com.greenart7c3.nostrsigner.desktop.core.DesktopSettings
 import com.greenart7c3.nostrsigner.desktop.core.HistoryRecord
 import com.greenart7c3.nostrsigner.desktop.core.PendingBunkerRequest
 import com.greenart7c3.nostrsigner.desktop.core.RememberType
+import com.greenart7c3.nostrsigner.desktop.core.addPending
 import com.greenart7c3.nostrsigner.desktop.core.constantTimeEquals
 import com.greenart7c3.nostrsigner.desktop.core.isRemembered
+import com.greenart7c3.nostrsigner.desktop.core.removePending
 import com.vitorpamplona.quartz.nip01Core.core.toHexKey
 import com.vitorpamplona.quartz.nip01Core.crypto.KeyPair
 import com.vitorpamplona.quartz.nip19Bech32.toNsec

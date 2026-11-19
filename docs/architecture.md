@@ -118,7 +118,7 @@ Done so far: `common/Nip46Requests.kt` holds the method → `SignerType` mapping
 the NIP-44 v3 kind/scope params, the repeated-connect check and the
 connect-secret refusal, used by both apps. `permissionLookupOrder` (in
 `common/PermissionDecision.kt`) is the order in which stored grants decide a
-request, resolved by `BunkerEngine.lookupPermission` and `SignerProviderQuery`
+request, resolved by the desktop `lookupPermission` and `SignerProviderQuery`
 against their own storage. `common/Retry.kt` holds the reply retry
 (`retryWithBackoff`) and how often a reply is published: an error reply to a
 sender Amber has not verified goes out once (`UNVERIFIED_REPLY_ATTEMPTS`) on
@@ -172,11 +172,14 @@ attaches a bunker:// placeholder), where the reply goes (`approvalRelays`), a ne
 connection's record (`newApplication`, with its own key), what a connect sets
 (`applyConnect`) and the reply over the socket or the relays (`answer`). Like
 Android, a remembered approval whose reply fails to publish is taken back
-(`revertApproval`, pinned by `ApprovalRevertTest`). What approving and rejecting do
-lives in `core/BunkerApproval.kt` (`doApprove`, `doReject` and the grant updates);
-`BunkerEngine.approve` / `reject` only launch them on the engine's scope. Left in
-`BunkerEngine`: `TooManyFunctions` (relay listener, filters, queue, nostrconnect
-pairing in one class).
+(`revertApproval`, pinned by `ApprovalRevertTest`).
+
+`BunkerEngine` itself is now only the relay listener, the subscription filters and
+request intake; the rest lives beside it in `core/`, one file per job: approving
+and rejecting with the grant updates they make (`BunkerApproval.kt`), the approval
+queue (`PendingQueue.kt`), connections made from this side, a nostrconnect://
+URI, a new bunker:// URI and their expiry (`BunkerConnections.kt`), and publishing
+a reply (`BunkerReplies.kt`). Its desktop baseline entries are gone.
 
 ### 2. Split `IntentUtils.kt`
 

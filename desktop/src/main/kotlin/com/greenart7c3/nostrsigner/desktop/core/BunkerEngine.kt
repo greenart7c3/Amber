@@ -426,28 +426,7 @@ class BunkerEngine(
 
     /** Mirrors `EventNotificationConsumer.consume` + `notify`. */
     suspend fun consume(event: Event, relay: NormalizedRelayUrl) {
-        if (PassphraseLock.isLocked()) return
-        if (event.kind != NostrConnectEvent.KIND) return
-        if (!event.verify()) return
-        if (event.content.isEmpty()) return
-        // The freshness window and NIP-40 expiration shared with Android, checked before
-        // the event is recorded: stale replays and future-dated events are dropped.
-        val stale = nip46StaleReason(event.id, event.createdAt, event.expiration(), TimeUtils.now())
-        if (stale != null) {
-            AmberLogger.d("BunkerEngine", stale)
-            return
-        }
-
-        val alreadySeen = synchronized(seenEvents) {
-            if (seenEvents.containsKey(event.id)) {
-                true
-            } else {
-                seenEvents[event.id] = event.createdAt
-                false
-            }
-        }
-        if (alreadySeen) return
-
+        if (!isNewRequest(event)) return
         val taggedKey = event.taggedUsers().firstOrNull() ?: return
 
         // Only a connection's own key routes a request; one tagged to an
@@ -455,38 +434,55 @@ class BunkerEngine(
         val (npub, connectionPrivKey) = localKeyIndex[taggedKey.pubKey] ?: return
         val acc = AmberDesktop.account(npub) ?: return
         val store = AmberDesktop.store(acc.npub)
-        // Unknown senders are rate-limited: their events force decrypt/log
-        // work and signed error replies, so a flood must cost them silence.
-        // Stored connections bypass the limiter entirely — an approved app
-        // legitimately bursts (bulk NIP-44 decrypt batches, rapid signing)
-        // and must never be silently dropped. Checked after verify() and
-        // keyed on the proven signer pubkey, so forged events cannot drain a
-        // legitimate sender's budget.
-        if (store.getByKey(event.pubKey)?.takeUnless { it.app.isExpired() } == null &&
-            !rateLimiter.allow("${relay.url}|${event.pubKey}", System.currentTimeMillis())
-        ) {
-            return
-        }
+        if (isRateLimited(store, event, relay)) return
         store.addLog(relay.url, "bunker", "New event ${event.id} from ${event.pubKey}")
 
+        val bunkerRequest = openRequest(store, event, relay, connectionPrivKey) ?: return
+        store.addLog(relay.url, "bunker", "Request ${bunkerRequest.id} method ${bunkerRequest.method}")
         val encryptionType = if (EncryptedInfo.isNIP04(event.content)) EncryptionType.NIP04 else EncryptionType.NIP44
+        routeRequest(bunkerRequest, event, acc, relay, encryptionType, connectionPrivKey)
+    }
 
+    /**
+     * Whether [event] is a request to process now: unlocked, a verified non-empty
+     * kind-24133 event within the freshness window and NIP-40 expiration shared with
+     * Android, and not seen before (it is recorded here, so stale replays and
+     * future-dated events are dropped before they are).
+     */
+    private fun isNewRequest(event: Event): Boolean {
+        if (PassphraseLock.isLocked() || event.kind != NostrConnectEvent.KIND) return false
+        if (event.content.isEmpty() || !event.verify()) return false
+        val stale = nip46StaleReason(event.id, event.createdAt, event.expiration(), TimeUtils.now())
+        if (stale != null) {
+            AmberLogger.d("BunkerEngine", stale)
+            return false
+        }
+        return synchronized(seenEvents) { seenEvents.putIfAbsent(event.id, event.createdAt) == null }
+    }
+
+    // Unknown senders are rate-limited: their events force decrypt/log work and
+    // signed error replies, so a flood must cost them silence. Stored connections
+    // bypass the limiter entirely — an approved app legitimately bursts (bulk
+    // NIP-44 decrypt batches, rapid signing) and must never be silently dropped.
+    // Checked after verify() and keyed on the proven signer pubkey, so forged
+    // events cannot drain a legitimate sender's budget.
+    private fun isRateLimited(store: AccountStore, event: Event, relay: NormalizedRelayUrl): Boolean = store.getByKey(event.pubKey)?.takeUnless { it.app.isExpired() } == null &&
+        !rateLimiter.allow("${relay.url}|${event.pubKey}", System.currentTimeMillis())
+
+    // The request [event] carries, decrypted with the connection key, or null (logged) when it cannot be read.
+    private suspend fun openRequest(store: AccountStore, event: Event, relay: NormalizedRelayUrl, connectionPrivKey: String): BunkerRequest? {
         val decrypted = try {
             NostrSignerInternal(KeyPair(privKey = connectionPrivKey.hexToByteArray())).decrypt(event.content, event.pubKey)
         } catch (e: Exception) {
             store.addLog(relay.url, "bunker", "Decryption failed for event ${event.id}: ${e.message}")
-            return
+            return null
         }
-
-        val bunkerRequest = try {
+        return try {
             JacksonMapper.mapper.readValue(decrypted, BunkerRequest::class.java)
         } catch (e: Exception) {
             store.addLog(relay.url, "bunker", "Failed to parse request: ${e.message}")
-            return
+            null
         }
-        store.addLog(relay.url, "bunker", "Request ${bunkerRequest.id} method ${bunkerRequest.method}")
-
-        routeRequest(bunkerRequest, event, acc, relay, encryptionType, connectionPrivKey)
     }
 
     private suspend fun routeRequest(

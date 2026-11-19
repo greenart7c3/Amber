@@ -24,7 +24,6 @@
     <ID>CyclomaticComplexMethod:UiState.kt:fun handleShortcut: Boolean</ID>
     <ID>LambdaParameterEventTrailing:Components.kt:onClick: () -&gt; Unit</ID>
     <ID>LambdaParameterInRestartableEffect:RequestNotificationPopup.kt:onDismiss: () -&gt; Unit</ID>
-    <ID>LargeClass:BunkerEngine.kt:BunkerEngine : RelayConnectionListener</ID>
     <ID>LongMethod:App.kt:@Composable fun App</ID>
     <ID>LongMethod:App.kt:@Composable private fun AccountSwitcher</ID>
     <ID>LongMethod:ApplicationDetailScreen.kt:@Composable fun ApplicationDetailScreen</ID>

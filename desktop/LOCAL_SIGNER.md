@@ -396,7 +396,7 @@ socat - UNIX-CONNECT:$HOME/.local/share/nostr/signer.sock
    - **Ask:** queue a `PendingBunkerRequest` (with kind and scope for v3)
      whose `responder` writes the answer back to this connection.
 
-When you approve or reject in the UI, `BunkerEngine.doApprove`/`doReject`
+When you approve or reject in the UI, `doApprove`/`doReject` (`core/BunkerApproval.kt`)
 update permissions and history as for any connection. They then call the
 request's `responder` instead of publishing a kind-24133 event. They never set
 relays or per-connection keys on socket apps, and they store the secret hash

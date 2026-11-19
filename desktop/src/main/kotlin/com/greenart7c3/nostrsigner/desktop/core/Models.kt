@@ -108,35 +108,6 @@ val rememberTypeDisplayOrder = listOf(
     RememberType.ALWAYS,
 )
 
-val basicPermissions = listOf(
-    Permission("get_public_key", null),
-    Permission("encrypt_clear_text", null),
-    Permission("decrypt_clear_text", null),
-    Permission("encrypt_event", null),
-    Permission("decrypt_event", null),
-    Permission("encrypt_tag_array", null),
-    Permission("decrypt_tag_array", null),
-    Permission("decrypt_zap_event", null),
-    Permission("sign_event", 0),
-    Permission("sign_event", 1),
-    Permission("sign_event", 3),
-    Permission("sign_event", 4),
-    Permission("sign_event", 5),
-    Permission("sign_event", 6),
-    Permission("sign_event", 7),
-    Permission("sign_event", 9734),
-    Permission("sign_event", 9735),
-    Permission("sign_event", 10000),
-    Permission("sign_event", 10002),
-    Permission("sign_event", 10003),
-    Permission("sign_event", 10013),
-    Permission("sign_event", 31234),
-    Permission("sign_event", 30078),
-    Permission("sign_event", 22242),
-    Permission("sign_event", 27235),
-    Permission("sign_event", 30023),
-)
-
 /**
  * What an encrypt/decrypt payload holds, mirroring the Android
  * `EncryptedDataKind` (clear text, a tag array, or an event of some kind).

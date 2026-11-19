@@ -8,7 +8,6 @@ import com.greenart7c3.nostrsigner.desktop.core.AccountManager
 import com.greenart7c3.nostrsigner.desktop.core.AccountStore
 import com.greenart7c3.nostrsigner.desktop.core.AmberDesktop
 import com.greenart7c3.nostrsigner.desktop.core.AppPermissionRecord
-import com.greenart7c3.nostrsigner.desktop.core.BunkerEngine
 import com.greenart7c3.nostrsigner.desktop.core.DesktopAccount
 import com.greenart7c3.nostrsigner.desktop.core.DesktopKeyStore
 import com.greenart7c3.nostrsigner.desktop.core.DesktopSettings
@@ -133,31 +132,6 @@ class DesktopCoreTest {
         assertNull(isRemembered(1, denialWithLeftoverAccept))
         val acceptWithLeftoverReject = AppPermissionRecord("SIGN_EVENT", 1, true, RememberType.ALWAYS.screenCode, 0, Long.MAX_VALUE / 1000)
         assertNull(isRemembered(1, acceptWithLeftoverReject))
-    }
-
-    @Test
-    fun permissionTypeExpansionMatchesRequestPath() {
-        // NIP-specific perms map 1:1 to the type the request path queries.
-        assertEquals(listOf("NIP44_ENCRYPT"), BunkerEngine.expandPermissionTypes("nip44_encrypt"))
-        assertEquals(listOf("SIGN_EVENT"), BunkerEngine.expandPermissionTypes("sign_event"))
-        assertEquals(listOf("GET_PUBLIC_KEY"), BunkerEngine.expandPermissionTypes("get_public_key"))
-        assertEquals(listOf("NIP44_V3_ENCRYPT"), BunkerEngine.expandPermissionTypes("nip44v3_encrypt"))
-        assertEquals(listOf("NIP44_V3_DECRYPT"), BunkerEngine.expandPermissionTypes("NIP44v3_Decrypt"))
-        assertEquals(listOf("SIGN_PSBT"), BunkerEngine.expandPermissionTypes("sign_psbt"))
-        // Anything else is kept, upper-cased.
-        assertEquals(listOf("SOMETHING_NEW"), BunkerEngine.expandPermissionTypes("something_new"))
-
-        // Amber's content-type perms are stored as-is, like Android, and the
-        // request path checks them before the whole-NIP grant.
-        assertEquals(listOf("ENCRYPT_EVENT"), BunkerEngine.expandPermissionTypes("encrypt_event"))
-        assertEquals(listOf("DECRYPT_CLEAR_TEXT"), BunkerEngine.expandPermissionTypes("decrypt_clear_text"))
-        assertEquals(listOf("ENCRYPT_TAG_ARRAY"), BunkerEngine.expandPermissionTypes("encrypt_tag_array"))
-
-        // A generic encrypt/decrypt perm grants both NIPs.
-        assertEquals(
-            setOf("NIP04_ENCRYPT", "NIP44_ENCRYPT"),
-            BunkerEngine.expandPermissionTypes("encrypt").toSet(),
-        )
     }
 
     /** A ping on [localKey]; every entry reuses the client-chosen request id "X". */

@@ -972,3 +972,33 @@ val supportedKindNumbers = listOf(
     Permission("decrypt_tag_array", null),
     Permission("get_public_key", null),
 )
+
+/** What "approve basic actions" (sign policy 0) grants a new connection, in both apps. */
+val basicPermissions = listOf(
+    Permission("get_public_key", null),
+    Permission("encrypt_clear_text", null),
+    Permission("decrypt_clear_text", null),
+    Permission("encrypt_event", null),
+    Permission("decrypt_event", null),
+    Permission("encrypt_tag_array", null),
+    Permission("decrypt_tag_array", null),
+    Permission("decrypt_zap_event", null),
+    Permission("sign_event", 0),
+    Permission("sign_event", 1),
+    Permission("sign_event", 3),
+    Permission("sign_event", 4),
+    Permission("sign_event", 5),
+    Permission("sign_event", 6),
+    Permission("sign_event", 7),
+    Permission("sign_event", 9734),
+    Permission("sign_event", 9735),
+    Permission("sign_event", 10000),
+    Permission("sign_event", 10002),
+    Permission("sign_event", 10003),
+    Permission("sign_event", 10013),
+    Permission("sign_event", 31234),
+    Permission("sign_event", 30078),
+    Permission("sign_event", 22242),
+    Permission("sign_event", 27235),
+    Permission("sign_event", 30023),
+)

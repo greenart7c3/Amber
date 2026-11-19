@@ -1,19 +1,19 @@
 package com.greenart7c3.nostrsigner.service
 
-import androidx.compose.ui.text.intl.Locale
-import androidx.compose.ui.text.toUpperCase
+import com.greenart7c3.nostrsigner.common.REMEMBER_FOREVER
 import com.greenart7c3.nostrsigner.common.SignerType
 import com.greenart7c3.nostrsigner.common.canRememberRelayAuth
+import com.greenart7c3.nostrsigner.common.expandPermissionTypes
 import com.greenart7c3.nostrsigner.common.rememberUntil
 import com.greenart7c3.nostrsigner.common.replacesGrant
 import com.greenart7c3.nostrsigner.commonsui.Permission
+import com.greenart7c3.nostrsigner.commonsui.basicPermissions
 import com.greenart7c3.nostrsigner.database.ApplicationDao
 import com.greenart7c3.nostrsigner.database.ApplicationPermissionsEntity
 import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.AmberBunkerRequest
 import com.greenart7c3.nostrsigner.models.EncryptedDataKind
-import com.greenart7c3.nostrsigner.models.basicPermissions
 import com.greenart7c3.nostrsigner.models.encryptDecryptSignerTypes
 import com.greenart7c3.nostrsigner.models.toPermissionTypeString
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
@@ -172,49 +172,22 @@ object AmberUtils {
         key: String,
         permissions: List<Permission>?,
     ) {
-        when (signPolicy) {
-            0 -> {
-                application.application.signPolicy = 0
-                basicPermissions.forEach {
-                    if (application.permissions.any { permission -> permission.type == it.type.toUpperCase(Locale.current) && permission.kind == it.kind }) {
-                        return@forEach
-                    }
+        val granted = when (signPolicy) {
+            0 -> basicPermissions
+            1 -> permissions?.filter { it.checked }.orEmpty()
+            2 -> emptyList()
+            else -> return
+        }
+        application.application.signPolicy = signPolicy
+        // Under the types the request path looks up: a generic encrypt/decrypt grants
+        // both NIPs, and the upper-casing does not depend on the phone's language.
+        granted.forEach { perm ->
+            expandPermissionTypes(perm.type).forEach { type ->
+                if (application.permissions.none { it.type == type && it.kind == perm.kind }) {
                     application.permissions.add(
-                        ApplicationPermissionsEntity(
-                            null,
-                            key,
-                            it.type.toUpperCase(Locale.current),
-                            it.kind,
-                            true,
-                            RememberType.ALWAYS.screenCode,
-                            Long.MAX_VALUE / 1000,
-                            0,
-                        ),
+                        ApplicationPermissionsEntity(null, key, type, perm.kind, true, RememberType.ALWAYS.screenCode, REMEMBER_FOREVER, 0),
                     )
                 }
-            }
-            1 -> {
-                application.application.signPolicy = 1
-                permissions?.filter { it.checked }?.forEach {
-                    if (application.permissions.any { permission -> permission.type == it.type.toUpperCase(Locale.current) && permission.kind == it.kind }) {
-                        return@forEach
-                    }
-                    application.permissions.add(
-                        ApplicationPermissionsEntity(
-                            null,
-                            key,
-                            it.type.toUpperCase(Locale.current),
-                            it.kind,
-                            true,
-                            RememberType.ALWAYS.screenCode,
-                            Long.MAX_VALUE / 1000,
-                            0,
-                        ),
-                    )
-                }
-            }
-            2 -> {
-                application.application.signPolicy = 2
             }
         }
     }

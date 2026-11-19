@@ -33,6 +33,7 @@ import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.SavedAccounts
 import com.greenart7c3.nostrsigner.SignerProviderQuery
+import com.greenart7c3.nostrsigner.common.BUNKER_REPLY_ATTEMPTS
 import com.greenart7c3.nostrsigner.common.EncryptionType
 import com.greenart7c3.nostrsigner.common.Nip46Admission
 import com.greenart7c3.nostrsigner.common.Nip46Connection
@@ -350,11 +351,7 @@ class EventNotificationConsumer(
         encryptionType: EncryptionType,
         connectionPrivKey: String = "",
     ) {
-        val responseRelay = listOf(relay)
-        val dao = accountRepository.dao(acc.npub)
-
-        val notification = notificationCache[event.id]
-        if (notification != null) return
+        if (notificationCache[event.id] != null) return
         notificationCache.put(event.id, event.createdAt)
 
         val bunkerRequest = JacksonMapper.mapper.readValue(requestStr, BunkerRequest::class.java)
@@ -364,54 +361,20 @@ class EventNotificationConsumer(
         // is already logged above; here we record only non-sensitive metadata.
         saveLog("Decrypted request ${bunkerRequest.id} method ${bunkerRequest.method}", relay.url, acc.npub)
 
-        // Authorization and the consent screen decide on the first relay tag
-        // alone; a second relay tag would be signed without ever being
-        // granted. Answer the client with an error instead of signing.
-        if (bunkerRequest is BunkerRequestSign && hasAmbiguousRelayTags(bunkerRequest.event.kind, bunkerRequest.event.tags)) {
-            saveLog("Refusing a multi-relay auth event ${bunkerRequest.id}", relay.url, acc.npub)
-            val rejection = AmberBunkerRequest(
-                request = bunkerRequest,
-                localKey = event.pubKey,
-                relays = listOf(relay),
-                currentAccount = acc.npub,
-                nostrConnectSecret = "",
-                closeApplication = true,
-                name = "",
-                signedEvent = null,
-                encryptedData = null,
-                encryptionType = if (EncryptedInfo.isNIP04(event.content)) EncryptionType.NIP04 else EncryptionType.NIP44,
-                isNostrConnectUri = false,
-                signerPrivKey = connectionPrivKey,
-            )
-            bunkerResponder.sendBunkerResponse(
-                acc,
-                rejection,
-                BunkerResponse(bunkerRequest.id, "", "refusing a multi-relay auth event"),
-                listOf(relay),
-                onLoading = {},
-                onDone = {},
-            )
-            return
-        }
-
         // NIP-46 connect requests may carry optional client metadata as the 4th
         // param (nostr-protocol/nips#2381) so the signer can show who is
         // connecting over the bunker:// flow. It must be read from the raw request
         // JSON: Quartz's BunkerRequestConnect only keeps params[0..2] and drops the
         // metadata element when it rebuilds its params array.
-        val clientMetadata = if (bunkerRequest is BunkerRequestConnect) {
-            BunkerClientMetadata.fromConnectRequest(requestStr)
-        } else {
-            null
-        }
+        val clientMetadata = if (bunkerRequest is BunkerRequestConnect) BunkerClientMetadata.fromConnectRequest(requestStr) else null
 
-        // Only addresses the replies sent before authorization below, so it
-        // carries no signed event or decrypted data: the account key is not
-        // used for a sender until it is known to have a connection.
-        var request = AmberBunkerRequest(
+        // Only addresses the replies sent before authorization, so it carries no
+        // signed event or decrypted data: the account key is not used for a
+        // sender until it is known to have a connection.
+        val unverified = AmberBunkerRequest(
             request = bunkerRequest,
             localKey = event.pubKey,
-            relays = responseRelay,
+            relays = listOf(relay),
             currentAccount = acc.npub,
             nostrConnectSecret = "",
             closeApplication = true,
@@ -425,53 +388,87 @@ class EventNotificationConsumer(
         )
 
         val type = nip46SignerType(bunkerRequest.method)
+        val params = readParams(acc, unverified, type, relay) ?: return
+        val admitted = admit(event, acc, unverified, type, params, relay) ?: return
+        when (type) {
+            SignerType.SWITCH_RELAYS -> switchRelays(admitted)
+            SignerType.LOGOUT -> logout(admitted)
+            SignerType.GET_PUBLIC_KEY -> getPublicKey(admitted)
+            else -> answerFromGrants(admitted, params.pubKey, relay.url)
+        }
+    }
+
+    // The key a request acts on (empty when none) and, for sign_event, its event.
+    private class RequestParams(val pubKey: String, val amberEvent: AmberEvent?)
+
+    /**
+     * The params of [request], or null when it was refused before any key is used:
+     * an auth event with more than one relay tag, an unknown method, or a missing or
+     * unparsable param. The client gets an error instead of waiting for an answer.
+     */
+    private suspend fun readParams(acc: Account, request: AmberBunkerRequest, type: SignerType, relay: NormalizedRelayUrl): RequestParams? {
+        val bunkerRequest = request.request
+        // Authorization and the consent screen decide on the first relay tag
+        // alone; a second relay tag would be signed without ever being granted.
+        if (bunkerRequest is BunkerRequestSign && hasAmbiguousRelayTags(bunkerRequest.event.kind, bunkerRequest.event.tags)) {
+            saveLog("Refusing a multi-relay auth event ${bunkerRequest.id}", relay.url, acc.npub)
+            refuse(acc, request, "refusing a multi-relay auth event", attempts = BUNKER_REPLY_ATTEMPTS)
+            return null
+        }
         if (type == SignerType.INVALID) {
             saveLog("Invalid request method ${bunkerRequest.method}", relay.url, acc.npub)
-            // Don't fail silently: reply to the client with an error so it
-            // stops waiting for a response it will never otherwise receive.
-            val errorRelays = responseRelay.ifEmpty { settingsStore.settings.defaultRelays }
-            bunkerResponder.sendBunkerResponse(
-                acc,
-                request,
-                BunkerResponse(bunkerRequest.id, "", "Unrecognized method: ${bunkerRequest.method}"),
-                errorRelays,
-                onLoading = {},
-                onDone = {},
-                attempts = UNVERIFIED_REPLY_ATTEMPTS,
-            )
-            return
+            refuse(acc, request, "Unrecognized method: ${bunkerRequest.method}")
+            return null
         }
-
-        var amberEvent: AmberEvent? = null
-
-        // Params come straight from the client. A missing one or an unparsable
-        // event used to throw inside the coroutine, so the client never got an
-        // answer; reply with an error instead.
-        val pubKey =
-            if (bunkerRequest.method.endsWith("encrypt") || bunkerRequest.method.endsWith("decrypt")) {
-                bunkerRequest.params.firstOrNull()
-            } else if (bunkerRequest.method == "decrypt_zap_event") {
-                bunkerRequest.params.getOrNull(1)
-            } else if (bunkerRequest.method == "sign_event") {
-                amberEvent = bunkerRequest.params.firstOrNull()?.let { runCatching { AmberEvent.fromJson(it) }.getOrNull() }
-                amberEvent?.pubKey
-            } else {
-                ""
-            }
-        if (pubKey == null) {
+        val params = requestParams(bunkerRequest)
+        if (params == null) {
             saveLog("Invalid params for request ${bunkerRequest.id} method ${bunkerRequest.method}", relay.url, acc.npub)
-            bunkerResponder.sendBunkerResponse(
-                acc,
-                request,
-                BunkerResponse(bunkerRequest.id, "", "invalid params"),
-                responseRelay.ifEmpty { settingsStore.settings.defaultRelays },
-                onLoading = {},
-                onDone = {},
-                attempts = UNVERIFIED_REPLY_ATTEMPTS,
-            )
-            return
+            refuse(acc, request, "invalid params")
         }
+        return params
+    }
 
+    // Params come straight from the client: a missing one or an unparsable event is null.
+    private fun requestParams(bunkerRequest: BunkerRequest): RequestParams? {
+        val method = bunkerRequest.method
+        val amberEvent = if (method == "sign_event") bunkerRequest.params.firstOrNull()?.let { runCatching { AmberEvent.fromJson(it) }.getOrNull() } else null
+        val pubKey = when {
+            method.endsWith("encrypt") || method.endsWith("decrypt") -> bunkerRequest.params.firstOrNull()
+            method == "decrypt_zap_event" -> bunkerRequest.params.getOrNull(1)
+            method == "sign_event" -> amberEvent?.pubKey
+            else -> ""
+        }
+        return pubKey?.let { RequestParams(it, amberEvent) }
+    }
+
+    private suspend fun refuse(acc: Account, request: AmberBunkerRequest, error: String, attempts: Int = UNVERIFIED_REPLY_ATTEMPTS) {
+        bunkerResponder.sendBunkerResponse(
+            acc,
+            request,
+            BunkerResponse(request.request.id, "", error),
+            request.relays.ifEmpty { settingsStore.settings.defaultRelays },
+            onLoading = {},
+            onDone = {},
+            attempts = attempts,
+        )
+    }
+
+    /**
+     * Admits [request] (see the common `admitNip46Request`): a repeated connect is
+     * acknowledged and anything not admitted refused, both returning null. Only for an
+     * authorized sender — a stored connection or a valid connect secret — is the
+     * account key used, to sign the event or read the data the request carries.
+     */
+    private suspend fun admit(
+        event: Event,
+        acc: Account,
+        request: AmberBunkerRequest,
+        type: SignerType,
+        params: RequestParams,
+        relay: NormalizedRelayUrl,
+    ): Admitted? {
+        val dao = accountRepository.dao(acc.npub)
+        val bunkerRequest = request.request
         val stored = dao.getByKey(event.pubKey)
         if (stored != null && stored.application.isExpired()) {
             // The user set a finite lifetime on this connection: answer as an
@@ -480,52 +477,24 @@ class EventNotificationConsumer(
         }
         val connectSecret = (bunkerRequest as? BunkerRequestConnect)?.let { it.secret ?: UUID.randomUUID().toString() }
         val withSecret = connectSecret?.let { dao.getBySecret(it) }
-        val admission = admitNip46Request(type, stored?.toNip46Connection(), connectionPrivKey, connectSecret, withSecret?.toNip46Connection())
+        val admission = admitNip46Request(type, stored?.toNip46Connection(), request.signerPrivKey, connectSecret, withSecret?.toNip46Connection())
         if (admission is Nip46Admission.AckRepeatedConnect) {
-            ackRepeatedConnect(acc, request, admission.connection.key, type, amberEvent, stored?.application?.relays ?: responseRelay)
-            return
+            ackRepeatedConnect(acc, request, admission.connection.key, type, params.amberEvent, stored?.application?.relays ?: request.relays)
+            return null
         }
         if (admission !is Nip46Admission.Admit) {
-            refuseUnadmitted(admission, acc, request, withSecret?.application?.relays ?: responseRelay, relay.url)
-            return
+            refuseUnadmitted(admission, acc, request, withSecret?.application?.relays ?: request.relays, relay.url)
+            return null
         }
         val permission = stored.takeIf { admission.stored != null }
         val applicationWithSecret = withSecret.takeIf { admission.bySecret != null }
-        val relays = permission?.application?.relays ?: applicationWithSecret?.application?.relays ?: responseRelay
-
-        // Authorized sender from here on: a stored connection or a valid
-        // connect secret. Only now sign or decrypt with the account key.
-        val signedEvent = if (bunkerRequest is BunkerRequestSign) {
-            acc.sign(bunkerRequest.event)
-        } else {
-            null
-        }
-
-        val encryptedDataKind = getEncryptedDataKind(bunkerRequest, acc, relay.url)
-
-        request = AmberBunkerRequest(
-            request = bunkerRequest,
-            localKey = event.pubKey,
+        val relays = permission?.application?.relays ?: applicationWithSecret?.application?.relays ?: request.relays
+        val authorized = request.copy(
             relays = relays,
-            currentAccount = acc.npub,
-            nostrConnectSecret = "",
-            closeApplication = true,
-            name = clientMetadata?.name ?: "",
-            signedEvent = signedEvent,
-            encryptedData = encryptedDataKind,
-            encryptionType = encryptionType,
-            isNostrConnectUri = false,
-            signerPrivKey = connectionPrivKey,
-            clientMetadata = clientMetadata,
+            signedEvent = (bunkerRequest as? BunkerRequestSign)?.let { acc.sign(it.event) },
+            encryptedData = getEncryptedDataKind(bunkerRequest, acc, relay.url),
         )
-
-        val admitted = Admitted(acc, request, relays, event, type, amberEvent, permission, applicationWithSecret)
-        when (type) {
-            SignerType.SWITCH_RELAYS -> switchRelays(admitted)
-            SignerType.LOGOUT -> logout(admitted)
-            SignerType.GET_PUBLIC_KEY -> getPublicKey(admitted)
-            else -> answerFromGrants(admitted, pubKey, relay.url)
-        }
+        return Admitted(acc, authorized, relays, event, type, params.amberEvent, permission, applicationWithSecret)
     }
 
     // What every handler of an admitted request needs.

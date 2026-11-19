@@ -18,6 +18,7 @@ import com.greenart7c3.nostrsigner.common.nip44v3.Nip44v3
 import com.greenart7c3.nostrsigner.common.nip44v3Kind
 import com.greenart7c3.nostrsigner.common.nip44v3Scope
 import com.greenart7c3.nostrsigner.common.nip46SignerType
+import com.greenart7c3.nostrsigner.common.nip46StaleReason
 import com.greenart7c3.nostrsigner.common.permissionLookupOrder
 import com.greenart7c3.nostrsigner.common.psbt.PsbtSighashPolicy
 import com.greenart7c3.nostrsigner.common.relayAuthHost
@@ -25,6 +26,7 @@ import com.greenart7c3.nostrsigner.common.relays.RelayHealthTracker
 import com.greenart7c3.nostrsigner.common.relays.SenderRateLimiter
 import com.greenart7c3.nostrsigner.common.retryWithBackoff
 import com.greenart7c3.nostrsigner.common.sanitizeAppName
+import com.greenart7c3.nostrsigner.common.switchRelaysResult
 import com.greenart7c3.nostrsigner.commonsui.Permission
 import com.greenart7c3.nostrsigner.commonsui.kindToNip
 import com.vitorpamplona.quartz.nip01Core.core.Event
@@ -426,17 +428,11 @@ class BunkerEngine(
         if (event.kind != NostrConnectEvent.KIND) return
         if (!event.verify()) return
         if (event.content.isEmpty()) return
-        // Mirrors EventNotificationConsumer: drop NIP-40-expired requests.
-        // Mirrors EventNotificationConsumer's freshness window, checked before the
-        // event is recorded: stale replays and future-dated events are dropped.
-        val now = TimeUtils.now()
-        if (event.createdAt < now - TimeUtils.FIVE_MINUTES || event.createdAt > now + TimeUtils.FIVE_MINUTES) {
-            AmberLogger.d("BunkerEngine", "Event ${event.id} is outside the freshness window")
-            return
-        }
-        val expiration = event.expiration()
-        if (expiration != null && expiration < now) {
-            AmberLogger.d("BunkerEngine", "Event ${event.id} has expired")
+        // The freshness window and NIP-40 expiration shared with Android, checked before
+        // the event is recorded: stale replays and future-dated events are dropped.
+        val stale = nip46StaleReason(event.id, event.createdAt, event.expiration(), TimeUtils.now())
+        if (stale != null) {
+            AmberLogger.d("BunkerEngine", stale)
             return
         }
 
@@ -534,7 +530,6 @@ class BunkerEngine(
                 event,
                 acc,
                 relay,
-                encryptionType,
                 connectionPrivKey,
                 stored.takeIf { admission.stored != null },
                 withSecret.takeIf { admission.bySecret != null },
@@ -587,56 +582,37 @@ class BunkerEngine(
         event: Event,
         acc: DesktopAccount,
         relay: NormalizedRelayUrl,
-        encryptionType: EncryptionType,
         connectionPrivKey: String,
         permission: AppWithPermissions?,
         applicationWithSecret: AppWithPermissions?,
     ) {
-        val store = AmberDesktop.store(acc.npub)
-        val responseRelay = listOf(relay)
+        val a = AdmittedRequest(bunkerRequest, event, acc, relay, connectionPrivKey, permission, app = permission ?: applicationWithSecret)
+        when (a.type) {
+            SignerType.SWITCH_RELAYS -> switchRelays(a)
+            SignerType.LOGOUT -> logout(a)
+            else -> if (!refusedUpFront(a)) answerOrQueue(a)
+        }
+    }
+
+    // What every handler of an admitted request needs.
+    @Suppress("LongParameterList") // Bundles the request's context so the handlers take one argument.
+    private class AdmittedRequest(
+        val bunkerRequest: BunkerRequest,
+        val event: Event,
+        val acc: DesktopAccount,
+        val relay: NormalizedRelayUrl,
+        connectionPrivKey: String,
+        // The sender's own stored connection; [app] is it, or the one a connect secret names.
+        val permission: AppWithPermissions?,
+        val app: AppWithPermissions?,
+    ) {
         val type = nip46SignerType(bunkerRequest.method)
-        val relays = permission?.app?.normalizedRelays() ?: applicationWithSecret?.app?.normalizedRelays() ?: responseRelay
+        val encryptionType = if (EncryptedInfo.isNIP04(event.content)) EncryptionType.NIP04 else EncryptionType.NIP44
 
-        val app = permission ?: applicationWithSecret
-        val effectivePrivKey = connectionPrivKey.ifEmpty { app?.app?.localKey ?: "" }
-
-        if (type == SignerType.SWITCH_RELAYS) {
-            permission?.let { current ->
-                val defaultRelays = AmberDesktop.defaultRelays()
-                val result = if (defaultRelays.isEmpty()) null else "[${defaultRelays.joinToString(separator = ",") { "\"${it.url}\"" }}]"
-                val ok = sendResponse(
-                    acc,
-                    effectivePrivKey,
-                    event.pubKey,
-                    encryptionType,
-                    BunkerResponse(bunkerRequest.id, result ?: "", null),
-                    relays,
-                )
-                if (ok) {
-                    store.upsert(current.copy(app = current.app.copy(relays = defaultRelays.map { it.url })))
-                    checkForNewRelaysAndUpdateAllFilters(shouldReconnect = true)
-                }
-            }
-            return
-        }
-
-        if (type == SignerType.LOGOUT) {
-            permission?.let { current ->
-                val ok = sendResponse(
-                    acc,
-                    effectivePrivKey,
-                    event.pubKey,
-                    encryptionType,
-                    BunkerResponse(bunkerRequest.id, "ack", null),
-                    relays,
-                )
-                if (ok) {
-                    store.delete(current.app.key)
-                    checkForNewRelaysAndUpdateAllFilters()
-                }
-            }
-            return
-        }
+        // The key the reply is encrypted and signed with: the connection's own.
+        val signerPrivKey = connectionPrivKey.ifEmpty { app?.app?.localKey ?: "" }
+        val relays = app?.app?.normalizedRelays() ?: listOf(relay)
+        val store get() = AmberDesktop.store(acc.npub)
 
         // NIP-44 v3 carries its context kind/scope at params[1..2].
         val kind = when {
@@ -644,147 +620,131 @@ class BunkerEngine(
             type in nip44v3SignerTypes -> bunkerRequest.nip44v3Kind()
             else -> null
         }
-        val signPolicy = app?.app?.signPolicy
+        val relayHost = if (bunkerRequest is BunkerRequestSign && kind == RELAY_AUTH_KIND) relayAuthHost(bunkerRequest.event.tags) else ""
+    }
 
+    private suspend fun reply(a: AdmittedRequest, result: String?, error: String? = null): Boolean = sendResponse(a.acc, a.signerPrivKey, a.event.pubKey, a.encryptionType, BunkerResponse(a.bunkerRequest.id, result, error), a.relays)
+
+    // A stored connection moves to the default relays once the client has the answer.
+    private suspend fun switchRelays(a: AdmittedRequest) {
+        val current = a.permission ?: return
+        val defaultRelays = AmberDesktop.defaultRelays()
+        if (reply(a, switchRelaysResult(defaultRelays.map { it.url }))) {
+            a.store.upsert(current.copy(app = current.app.copy(relays = defaultRelays.map { it.url })))
+            checkForNewRelaysAndUpdateAllFilters(shouldReconnect = true)
+        }
+    }
+
+    // A stored connection is deleted once the client has the ack.
+    private suspend fun logout(a: AdmittedRequest) {
+        val current = a.permission ?: return
+        if (reply(a, "ack")) {
+            a.store.delete(current.app.key)
+            checkForNewRelaysAndUpdateAllFilters()
+        }
+    }
+
+    /** Refuses, without computing anything, what may never be signed; true when it did. */
+    private suspend fun refusedUpFront(a: AdmittedRequest): Boolean {
+        val request = a.bunkerRequest
         // Mirrors EventNotificationConsumer: authorization and the approval
         // card decide on the first relay tag alone, so a second one would be
         // signed without ever being granted.
-        if (bunkerRequest is BunkerRequestSign && hasAmbiguousRelayTags(bunkerRequest.event.kind, bunkerRequest.event.tags)) {
-            store.addLog(relay.url, "bunker", "Refusing a multi-relay auth event ${bunkerRequest.id}")
-            sendResponse(
-                acc,
-                effectivePrivKey,
-                event.pubKey,
-                encryptionType,
-                BunkerResponse(bunkerRequest.id, "", "refusing a multi-relay auth event"),
-                relays,
-            )
-            return
+        if (request is BunkerRequestSign && hasAmbiguousRelayTags(request.event.kind, request.event.tags)) {
+            a.store.addLog(a.relay.url, "bunker", "Refusing a multi-relay auth event ${request.id}")
+            reply(a, "", "refusing a multi-relay auth event")
+            return true
         }
-
         // Relay auth is granted per relay; a relay outside a non-empty auth
         // whitelist is rejected without asking, like Android.
-        val relayHost = if (bunkerRequest is BunkerRequestSign && kind == RELAY_AUTH_KIND) relayAuthHost(bunkerRequest.event.tags) else ""
-        if (isBlockedByAuthWhitelist(kind, relayHost, AmberDesktop.settings.authWhitelist)) {
-            store.addLog(relay.url, "bunker", "Relay auth for $relayHost is not in the auth whitelist")
-            store.addHistory(HistoryRecord(event.pubKey, type.toString(), kind, TimeUtils.now(), false))
-            sendResponse(
-                acc,
-                effectivePrivKey,
-                event.pubKey,
-                encryptionType,
-                BunkerResponse(bunkerRequest.id, "", "user rejected"),
-                relays,
-            )
-            return
+        if (isBlockedByAuthWhitelist(a.kind, a.relayHost, AmberDesktop.settings.authWhitelist)) {
+            a.store.addLog(a.relay.url, "bunker", "Relay auth for ${a.relayHost} is not in the auth whitelist")
+            a.store.addHistory(HistoryRecord(a.event.pubKey, a.type.toString(), a.kind, TimeUtils.now(), false))
+            reply(a, "", "user rejected")
+            return true
         }
+        return false
+    }
 
+    // Answers from the stored grants, else queues the request for the user's decision.
+    private suspend fun answerOrQueue(a: AdmittedRequest) {
         // consume() checked the lock on arrival; re-check before any signing
         // work, since the passphrase lock may have come down in between.
         if (PassphraseLock.isLocked()) {
-            deferUntilUnlock(event)
+            deferUntilUnlock(a.event)
             return
         }
-
-        // Compute the response payload (also serves as the approval preview).
-        val computed = try {
-            computeResult(bunkerRequest, type, acc)
-        } catch (e: kotlinx.coroutines.CancellationException) {
-            throw e
-        } catch (e: Exception) {
-            store.addLog(relay.url, "bunker", "Rejecting request that cannot be fulfilled: ${e.message}")
-            // Mirrors Android's validateNip44v3Request errors; kept generic so
-            // a failed decrypt doesn't leak the ciphertext's embedded context.
-            val error = when (type) {
-                in nip44v3SignerTypes if kind == null -> "kind is required for nip44v3"
-                SignerType.NIP44_V3_DECRYPT -> "could not decrypt the message"
-                else -> "could not process the request"
-            }
-            sendResponse(
-                acc,
-                effectivePrivKey,
-                event.pubKey,
-                encryptionType,
-                BunkerResponse(bunkerRequest.id, "", error),
-                relays,
-            )
-            return
-        }
+        val computed = computeOrRefuse(a) ?: return
 
         // NIP-04/NIP-44 encrypt/decrypt grants are per content type, like
         // Android: classify the plaintext (the encrypt input, or the decrypt
         // result) and try that grant, then the whole-NIP grant, then `nip:N`.
-        val encryptedContent = if (type in contentScopedSignerTypes) EncryptedContent.classify(computed.preview) else null
-        val permissionType = lookupPermission(store, event.pubKey, type, kind, encryptedContent, relayHost)
+        val encryptedContent = if (a.type in contentScopedSignerTypes) EncryptedContent.classify(computed.preview) else null
+        val permissionType = lookupPermission(a.store, a.event.pubKey, a.type, a.kind, encryptedContent, a.relayHost)
         // A first-time `connect` always goes through the approval UI: approving
         // is what migrates the bunker placeholder to the client key and grants
         // the default permissions. Reconnects were already acked above.
-        val remembered = if (type == SignerType.CONNECT) null else isRemembered(signPolicy, permissionType)
-
-        when (remembered) {
+        when (if (a.type == SignerType.CONNECT) null else isRemembered(a.app?.app?.signPolicy, permissionType)) {
             true -> {
                 // Auto-accept publishes a signed result: re-check the lock so
                 // a signer locked mid-request never publishes.
                 if (PassphraseLock.isLocked()) {
-                    deferUntilUnlock(event)
+                    deferUntilUnlock(a.event)
                     return
                 }
-                store.addHistory(HistoryRecord(event.pubKey, type.toString(), kind, TimeUtils.now(), true))
-                app?.let {
-                    store.upsert(it.copy(app = it.app.copy(lastUsed = TimeUtils.now())))
-                }
-                sendResponse(
-                    acc,
-                    effectivePrivKey,
-                    event.pubKey,
-                    encryptionType,
-                    BunkerResponse(bunkerRequest.id, computed.result, null),
-                    relays,
-                )
+                a.store.addHistory(HistoryRecord(a.event.pubKey, a.type.toString(), a.kind, TimeUtils.now(), true))
+                a.app?.let { a.store.upsert(it.copy(app = it.app.copy(lastUsed = TimeUtils.now()))) }
+                reply(a, computed.result)
             }
-
             false -> {
-                store.addHistory(HistoryRecord(event.pubKey, type.toString(), kind, TimeUtils.now(), false))
-                sendResponse(
-                    acc,
-                    effectivePrivKey,
-                    event.pubKey,
-                    encryptionType,
-                    BunkerResponse(bunkerRequest.id, "", "user rejected"),
-                    relays,
-                )
+                a.store.addHistory(HistoryRecord(a.event.pubKey, a.type.toString(), a.kind, TimeUtils.now(), false))
+                reply(a, "", "user rejected")
             }
-
-            null -> {
-                // Saved names came from a client; older records were stored unsanitized.
-                val name = app?.app?.name?.let(::sanitizeAppName)?.ifBlank { null } ?: event.pubKey.toShortenHex()
-                addPending(
-                    PendingBunkerRequest(
-                        request = bunkerRequest,
-                        type = type,
-                        account = acc,
-                        localKey = event.pubKey,
-                        relays = relays,
-                        appName = name,
-                        requestedPermissions = if (bunkerRequest is BunkerRequestConnect) {
-                            parsePermissionsParam(bunkerRequest.permissions)
-                        } else {
-                            emptyList()
-                        },
-                        kind = kind,
-                        preview = computed.preview,
-                        sealPreview = computed.sealPreview,
-                        result = computed.result,
-                        encryptionType = encryptionType,
-                        signerPrivKey = effectivePrivKey,
-                        encryptedContent = encryptedContent,
-                        nip44v3Scope = if (type in nip44v3SignerTypes) bunkerRequest.nip44v3Scope() else "",
-                        relayHost = relayHost,
-                        expiresAt = minOf(TimeUtils.now() + PENDING_TTL_SECONDS, event.expiration() ?: Long.MAX_VALUE),
-                    ),
-                )
-            }
+            null -> addPending(pendingRequest(a, computed, encryptedContent))
         }
+    }
+
+    // The response payload (also the approval preview), or null after answering that it can't be made.
+    private suspend fun computeOrRefuse(a: AdmittedRequest): ComputedResult? = try {
+        computeResult(a.bunkerRequest, a.type, a.acc)
+    } catch (e: kotlinx.coroutines.CancellationException) {
+        throw e
+    } catch (e: Exception) {
+        a.store.addLog(a.relay.url, "bunker", "Rejecting request that cannot be fulfilled: ${e.message}")
+        // Mirrors Android's validateNip44v3Request errors; kept generic so
+        // a failed decrypt doesn't leak the ciphertext's embedded context.
+        val error = when (a.type) {
+            in nip44v3SignerTypes if a.kind == null -> "kind is required for nip44v3"
+            SignerType.NIP44_V3_DECRYPT -> "could not decrypt the message"
+            else -> "could not process the request"
+        }
+        reply(a, "", error)
+        null
+    }
+
+    private fun pendingRequest(a: AdmittedRequest, computed: ComputedResult, encryptedContent: EncryptedContent?): PendingBunkerRequest {
+        val request = a.bunkerRequest
+        // Saved names came from a client; older records were stored unsanitized.
+        val name = a.app?.app?.name?.let(::sanitizeAppName)?.ifBlank { null } ?: a.event.pubKey.toShortenHex()
+        return PendingBunkerRequest(
+            request = request,
+            type = a.type,
+            account = a.acc,
+            localKey = a.event.pubKey,
+            relays = a.relays,
+            appName = name,
+            requestedPermissions = if (request is BunkerRequestConnect) parsePermissionsParam(request.permissions) else emptyList(),
+            kind = a.kind,
+            preview = computed.preview,
+            sealPreview = computed.sealPreview,
+            result = computed.result,
+            encryptionType = a.encryptionType,
+            signerPrivKey = a.signerPrivKey,
+            encryptedContent = encryptedContent,
+            nip44v3Scope = if (a.type in nip44v3SignerTypes) request.nip44v3Scope() else "",
+            relayHost = a.relayHost,
+            expiresAt = minOf(TimeUtils.now() + PENDING_TTL_SECONDS, a.event.expiration() ?: Long.MAX_VALUE),
+        )
     }
 
     /** The stored grant that decides [type] for [appKey], with Android's fallbacks. */

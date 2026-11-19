@@ -19,7 +19,6 @@
     <ID>CyclomaticComplexMethod:BunkerEngine.kt:BunkerEngine$internal suspend fun computeResult: ComputedResult</ID>
     <ID>CyclomaticComplexMethod:BunkerEngine.kt:BunkerEngine$private fun acceptOrRejectPermission</ID>
     <ID>CyclomaticComplexMethod:BunkerEngine.kt:BunkerEngine$private suspend fun doApprove</ID>
-    <ID>CyclomaticComplexMethod:BunkerEngine.kt:BunkerEngine$private suspend fun handleRequest</ID>
     <ID>CyclomaticComplexMethod:BunkerEngine.kt:BunkerEngine$suspend fun consume</ID>
     <ID>CyclomaticComplexMethod:BunkerEngine.kt:BunkerEngine.Companion$fun expandPermissionTypes: List&lt;String&gt;</ID>
     <ID>CyclomaticComplexMethod:IncomingRequestsScreen.kt:@Composable private fun RequestCard</ID>
@@ -41,7 +40,6 @@
     <ID>LongMethod:ApplicationsScreen.kt:@Composable private fun NewBunkerDialog</ID>
     <ID>LongMethod:BunkerEngine.kt:BunkerEngine$fun addNostrConnect: String?</ID>
     <ID>LongMethod:BunkerEngine.kt:BunkerEngine$private suspend fun doApprove</ID>
-    <ID>LongMethod:BunkerEngine.kt:BunkerEngine$private suspend fun handleRequest</ID>
     <ID>LongMethod:CrashReportDialog.kt:@Composable fun CrashReportDialog</ID>
     <ID>LongMethod:IncomingRequestsScreen.kt:@Composable private fun RequestCard</ID>
     <ID>LongMethod:LocalSigner.kt:LocalSigner$private suspend fun evaluate: com.fasterxml.jackson.databind.JsonNode</ID>

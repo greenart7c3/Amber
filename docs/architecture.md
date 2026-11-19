@@ -151,7 +151,9 @@ the history entry, publishing the reply and undoing the grants when it fails;
 `switch_relays` answer (`switchRelaysResult`, null when there is nothing to move
 to). On Android, `consume` finds the request's account in `addressee` and `notify`
 hands an admitted request to one handler per method (`switchRelays`, `logout`,
-`getPublicKey`, `answerFromGrants`).
+`getPublicKey`, `answerFromGrants`). The desktop `BunkerEngine` uses the same two
+rules and splits `handleRequest` the same way (`switchRelays`, `logout`,
+`refusedUpFront`, `answerOrQueue`).
 
 ### 2. Split `IntentUtils.kt`
 

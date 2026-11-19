@@ -43,8 +43,10 @@ import com.greenart7c3.nostrsigner.common.hasAmbiguousRelayTags
 import com.greenart7c3.nostrsigner.common.nip44v3Kind
 import com.greenart7c3.nostrsigner.common.nip44v3Scope
 import com.greenart7c3.nostrsigner.common.nip46SignerType
+import com.greenart7c3.nostrsigner.common.nip46StaleReason
 import com.greenart7c3.nostrsigner.common.relays.SenderRateLimiter
 import com.greenart7c3.nostrsigner.common.sanitizeAppName
+import com.greenart7c3.nostrsigner.common.switchRelaysResult
 import com.greenart7c3.nostrsigner.commonsui.Permission
 import com.greenart7c3.nostrsigner.commonsui.Res
 import com.greenart7c3.nostrsigner.commonsui.getStringBlocking
@@ -171,31 +173,7 @@ class EventNotificationConsumer(
             return
         }
 
-        // First try to match the tagged key to a logged-in account (real pubkey)
-        var acc = AccountStorage.load(applicationContext, taggedKey.toNPub())
-        var connectionPrivKey = ""
-
-        if (acc != null) {
-            saveLog("Direct account match for ${acc.npub}", relay.url)
-        }
-
-        // Connection-based match via the in-memory index populated by
-        // NotificationSubscription.updateFilter. This replaces an O(accounts × connections)
-        // synchronous scan that previously ran inside runBlocking on the relay event thread.
-        if (acc == null) {
-            val taggedHex = taggedKey.pubKey
-            val match = LocalKeyAccountIndex.lookup(taggedHex)
-            if (match != null) {
-                val resolved = AccountStorage.load(applicationContext, match.npub)
-                if (resolved != null) {
-                    acc = resolved
-                    connectionPrivKey = match.localPrivKey
-                    saveLog("Found connection for ${acc.npub} with local pubkey $taggedHex", relay.url)
-                }
-            }
-        }
-
-        if (acc == null) {
+        val (acc, connectionPrivKey) = addressee(taggedKey.toNPub(), taggedKey.pubKey, relay) ?: run {
             saveLog("Tagged account ${taggedKey.toNPub()} not logged in", relay.url)
             return
         }
@@ -217,19 +195,8 @@ class EventNotificationConsumer(
 
         // Freshness is checked after the limiter: these rejections log the
         // event id, so a flood of signed stale events must be budgeted too.
-        val now = TimeUtils.now()
-        if (event.createdAt < now - TimeUtils.FIVE_MINUTES) {
-            saveLog("Event ${event.id} is too old: ${now - event.createdAt}s ago", relay.url, acc.npub)
-            return
-        }
-        if (event.createdAt > now + TimeUtils.FIVE_MINUTES) {
-            saveLog("Event ${event.id} is in the future: ${event.createdAt - now}s ahead", relay.url, acc.npub)
-            return
-        }
-
-        val expiration = event.expiration()
-        if (expiration != null && expiration < now) {
-            saveLog("Event ${event.id} has expired", relay.url, acc.npub)
+        nip46StaleReason(event.id, event.createdAt, event.expiration(), TimeUtils.now())?.let {
+            saveLog(it, relay.url, acc.npub)
             return
         }
 
@@ -260,6 +227,27 @@ class EventNotificationConsumer(
         bunkerEventDao.insert(BunkerEventEntity(0, event.id, event.createdAt))
 
         notify(event, acc, relay, connectionPrivKey)
+    }
+
+    /**
+     * The account a request tagged to [taggedHex] is for, with the private key of the
+     * connection it came through ("" when tagged to the account key itself), or null.
+     */
+    private suspend fun addressee(taggedNpub: String, taggedHex: String, relay: NormalizedRelayUrl): Pair<Account, String>? {
+        // First try to match the tagged key to a logged-in account (real pubkey)
+        AccountStorage.load(applicationContext, taggedNpub)?.let {
+            saveLog("Direct account match for ${it.npub}", relay.url)
+            return it to ""
+        }
+        // Connection-based match via the in-memory index populated by
+        // NotificationSubscription.updateFilter. This replaces an O(accounts × connections)
+        // synchronous scan that previously ran inside runBlocking on the relay event thread.
+        val match = LocalKeyAccountIndex.lookup(taggedHex)
+        val acc = match?.let { AccountStorage.load(applicationContext, it.npub) }
+        return acc?.let {
+            saveLog("Found connection for ${it.npub} with local pubkey $taggedHex", relay.url)
+            it to match.localPrivKey
+        }
     }
 
     private fun isAccountKeyLocked(acc: Account): Boolean = try {
@@ -364,7 +352,6 @@ class EventNotificationConsumer(
     ) {
         val responseRelay = listOf(relay)
         val dao = accountRepository.dao(acc.npub)
-        val historyDao = accountRepository.getHistoryDatabase(acc.npub).dao()
 
         val notification = notificationCache[event.id]
         if (notification != null) return
@@ -532,128 +519,99 @@ class EventNotificationConsumer(
             clientMetadata = clientMetadata,
         )
 
-        if (type == SignerType.SWITCH_RELAYS) {
-            permission?.let {
-                val defaultRelays = settingsStore.settings.defaultRelays
-                bunkerResponder.sendBunkerResponse(
-                    account = acc,
-                    bunkerRequest = request,
-                    bunkerResponse = BunkerResponse(bunkerRequest.id, if (defaultRelays.isEmpty()) null else "[${defaultRelays.joinToString(separator = ",") { "\"${it.url}\"" }}]", null),
-                    relays = relays,
-                    onLoading = { },
-                    onDone = {
-                        if (it) {
-                            scope.launch {
-                                dao.delete(permission.application.key)
-                                dao.insertApplicationWithPermissions(
-                                    permission.copy(
-                                        application = permission.application.copy(
-                                            relays = defaultRelays,
-                                        ),
-                                    ),
-                                )
-                                onConnectionsChanged()
-                            }
-                        }
-                    },
-                )
-            }
-            return
+        val admitted = Admitted(acc, request, relays, event, type, amberEvent, permission, applicationWithSecret)
+        when (type) {
+            SignerType.SWITCH_RELAYS -> switchRelays(admitted)
+            SignerType.LOGOUT -> logout(admitted)
+            SignerType.GET_PUBLIC_KEY -> getPublicKey(admitted)
+            else -> answerFromGrants(admitted, pubKey, relay.url)
         }
+    }
 
-        if (type == SignerType.LOGOUT) {
-            permission?.let {
-                bunkerResponder.sendBunkerResponse(
-                    account = acc,
-                    bunkerRequest = request,
-                    bunkerResponse = BunkerResponse(bunkerRequest.id, "ack", null),
-                    relays = relays,
-                    onLoading = { },
-                    onDone = { success ->
-                        if (success) {
-                            scope.launch {
-                                dao.delete(permission.application.key)
-                                historyDao.deleteHistory(permission.application.key)
-                                BunkerRequestUtils.removeAllForClient(applicationContext, permission.application.key)
-                                onConnectionsChanged()
-                            }
-                        }
-                    },
-                )
-            }
-            return
-        }
+    // What every handler of an admitted request needs.
+    private class Admitted(
+        val acc: Account,
+        val request: AmberBunkerRequest,
+        val relays: List<NormalizedRelayUrl>,
+        val event: Event,
+        val type: SignerType,
+        val amberEvent: AmberEvent?,
+        val permission: ApplicationWithPermissions?,
+        val applicationWithSecret: ApplicationWithPermissions?,
+    ) {
+        val id: String get() = request.request.id
+    }
 
-        if (type == SignerType.GET_PUBLIC_KEY) {
-            val gpkPermission = dao.getPermission(event.pubKey, "GET_PUBLIC_KEY")
-            val signPolicy = dao.getSignPolicy(event.pubKey)
-            val isRemembered = IntentUtils.isRemembered(signPolicy, gpkPermission)
-            if (isRemembered == null) {
-                val message = generateMessage(type, amberEvent, request, event, permission, applicationWithSecret)
-                notificationManager().sendNotification(
-                    message,
-                    "Bunker",
-                    "BunkerID",
-                    applicationContext,
-                    request,
-                )
-                return
-            }
-            if (!isRemembered) {
+    private suspend fun reply(a: Admitted, result: String?, error: String? = null, onDone: (Boolean) -> Unit = { }) {
+        bunkerResponder.sendBunkerResponse(
+            account = a.acc,
+            bunkerRequest = a.request,
+            bunkerResponse = BunkerResponse(a.id, result, error),
+            relays = a.relays,
+            onLoading = { },
+            onDone = onDone,
+        )
+    }
+
+    // Leaves the decision to the user: the request notification opens the approval screen.
+    private fun askUser(a: Admitted) {
+        val message = generateMessage(a.type, a.amberEvent, a.request, a.event, a.permission, a.applicationWithSecret)
+        notificationManager().sendNotification(message, "Bunker", "BunkerID", applicationContext, a.request)
+    }
+
+    // A stored connection moves to the default relays once the client has the answer.
+    private suspend fun switchRelays(a: Admitted) {
+        val permission = a.permission ?: return
+        val defaultRelays = settingsStore.settings.defaultRelays
+        reply(a, switchRelaysResult(defaultRelays.map { it.url })) { published ->
+            if (published) {
                 scope.launch {
-                    historyDao.addHistory(
-                        listOf(
-                            HistoryEntity(
-                                0,
-                                event.pubKey,
-                                "GET_PUBLIC_KEY",
-                                null,
-                                TimeUtils.now(),
-                                false,
-                            ),
-                        ),
-                        acc.npub,
-                    )
+                    val dao = accountRepository.dao(a.acc.npub)
+                    dao.delete(permission.application.key)
+                    dao.insertApplicationWithPermissions(permission.copy(application = permission.application.copy(relays = defaultRelays)))
+                    onConnectionsChanged()
                 }
-                bunkerResponder.sendBunkerResponse(
-                    account = acc,
-                    bunkerRequest = request,
-                    bunkerResponse = BunkerResponse(bunkerRequest.id, "", "user rejected"),
-                    relays = relays,
-                    onLoading = { },
-                    onDone = { },
-                )
-                return
             }
-            scope.launch {
-                historyDao.addHistory(
-                    listOf(
-                        HistoryEntity(
-                            0,
-                            event.pubKey,
-                            "GET_PUBLIC_KEY",
-                            null,
-                            TimeUtils.now(),
-                            true,
-                        ),
-                    ),
-                    acc.npub,
-                )
+        }
+    }
+
+    // A stored connection is deleted, with its history and queued requests, once the client has the ack.
+    private suspend fun logout(a: Admitted) {
+        val permission = a.permission ?: return
+        reply(a, "ack") { published ->
+            if (published) {
+                scope.launch {
+                    accountRepository.dao(a.acc.npub).delete(permission.application.key)
+                    accountRepository.getHistoryDatabase(a.acc.npub).dao().deleteHistory(permission.application.key)
+                    BunkerRequestUtils.removeAllForClient(applicationContext, permission.application.key)
+                    onConnectionsChanged()
+                }
             }
-            bunkerResponder.sendBunkerResponse(
-                account = acc,
-                bunkerRequest = request,
-                bunkerResponse = BunkerResponse(bunkerRequest.id, acc.hexKey, null),
-                relays = relays,
-                onLoading = { },
-                onDone = { },
-            )
+        }
+    }
+
+    private suspend fun getPublicKey(a: Admitted) {
+        val dao = accountRepository.dao(a.acc.npub)
+        val accepted = IntentUtils.isRemembered(dao.getSignPolicy(a.event.pubKey), dao.getPermission(a.event.pubKey, "GET_PUBLIC_KEY"))
+        if (accepted == null) {
+            askUser(a)
             return
         }
+        scope.launch {
+            accountRepository.getHistoryDatabase(a.acc.npub).dao().addHistory(
+                listOf(HistoryEntity(0, a.event.pubKey, "GET_PUBLIC_KEY", null, TimeUtils.now(), accepted)),
+                a.acc.npub,
+            )
+        }
+        if (accepted) reply(a, a.acc.hexKey) else reply(a, "", "user rejected")
+    }
 
+    // Answers from the stored grants (through SignerProviderQuery, like an intent), else asks.
+    private suspend fun answerFromGrants(a: Admitted, pubKey: String, relayUrl: String) {
+        val bunkerRequest = a.request.request
         val data = BunkerRequestUtils.getDataFromBunker(bunkerRequest)
-        val projection = when (type) {
-            SignerType.PING -> arrayOf(acc.npub)
+        val projection = when (a.type) {
+            SignerType.PING -> arrayOf(a.acc.npub)
             SignerType.NIP44_V3_ENCRYPT, SignerType.NIP44_V3_DECRYPT -> {
                 val kind = bunkerRequest.nip44v3Kind()
                 val scope = bunkerRequest.nip44v3Scope()
@@ -661,83 +619,34 @@ class EventNotificationConsumer(
                 // decrypt whose context (kind/scope) does not match the
                 // ciphertext, a bad MAC/padding, or a non-base64 encrypt payload
                 // — is rejected here, before any approval screen is shown.
-                val validationError = validateNip44v3Request(type, kind, scope, data, pubKey, acc)
-                if (validationError != null) {
-                    saveLog("Rejecting invalid NIP-44 v3 request: $validationError", relay.url, acc.npub)
-                    bunkerResponder.sendBunkerResponse(
-                        account = acc,
-                        bunkerRequest = request,
-                        bunkerResponse = BunkerResponse(bunkerRequest.id, "", validationError),
-                        relays = relays,
-                        onLoading = { },
-                        onDone = { },
-                    )
+                validateNip44v3Request(a.type, kind, scope, data, pubKey, a.acc)?.let {
+                    saveLog("Rejecting invalid NIP-44 v3 request: $it", relayUrl, a.acc.npub)
+                    reply(a, "", it)
                     return
                 }
-                arrayOf(data, pubKey, acc.npub, kind.toString(), scope)
+                arrayOf(data, pubKey, a.acc.npub, kind.toString(), scope)
             }
-            else -> arrayOf(data, pubKey, acc.npub)
+            else -> arrayOf(data, pubKey, a.acc.npub)
         }
-        val cursor =
-            SignerProviderQuery(settingsStore, accountRepository, scope).query(
-                context = applicationContext,
-                // NIP-46 requests are attributed to the client's pubkey, not an
-                // installed app. There is no installed caller, so nothing to capture.
-                requesterId = event.pubKey,
-                callerPackageName = null,
-                operationUri = "content://${BuildConfig.APPLICATION_ID}.$type".toUri(),
-                arguments = projection,
-            )
-
+        val cursor = SignerProviderQuery(settingsStore, accountRepository, scope).query(
+            context = applicationContext,
+            // NIP-46 requests are attributed to the client's pubkey, not an
+            // installed app. There is no installed caller, so nothing to capture.
+            requesterId = a.event.pubKey,
+            callerPackageName = null,
+            operationUri = "content://${BuildConfig.APPLICATION_ID}.${a.type}".toUri(),
+            arguments = projection,
+        )
         cursor.use { localCursor ->
-            if (localCursor == null) {
-                val message = generateMessage(type, amberEvent, request, event, permission, applicationWithSecret)
-                notificationManager()
-                    .sendNotification(
-                        message,
-                        "Bunker",
-                        "BunkerID",
-                        applicationContext,
-                        request,
-                    )
-            } else {
-                if (localCursor.moveToFirst()) {
-                    if (localCursor.getColumnIndex("rejected") > -1) {
-                        saveLog("User rejected request ${bunkerRequest.id}", relay.url, acc.npub)
-                        bunkerResponder.sendBunkerResponse(
-                            account = acc,
-                            bunkerRequest = request,
-                            bunkerResponse = BunkerResponse(bunkerRequest.id, "", "user rejected"),
-                            relays = relays,
-                            onLoading = { },
-                            onDone = { },
-                        )
-                    } else {
-                        var index = localCursor.getColumnIndex("event")
-                        if (index == -1) {
-                            index = localCursor.getColumnIndex("result")
-                        }
-                        val result = localCursor.getString(index)
-
-                        bunkerResponder.sendBunkerResponse(
-                            account = acc,
-                            bunkerRequest = request,
-                            bunkerResponse = BunkerResponse(bunkerRequest.id, result, null),
-                            relays = relays,
-                            onLoading = { },
-                            onDone = { },
-                        )
-                    }
-                } else {
-                    val message = generateMessage(type, amberEvent, request, event, permission, applicationWithSecret)
-                    notificationManager()
-                        .sendNotification(
-                            message,
-                            "Bunker",
-                            "BunkerID",
-                            applicationContext,
-                            request,
-                        )
+            when {
+                localCursor == null || !localCursor.moveToFirst() -> askUser(a)
+                localCursor.getColumnIndex("rejected") > -1 -> {
+                    saveLog("User rejected request ${a.id}", relayUrl, a.acc.npub)
+                    reply(a, "", "user rejected")
+                }
+                else -> {
+                    val index = localCursor.getColumnIndex("event").takeIf { it != -1 } ?: localCursor.getColumnIndex("result")
+                    reply(a, localCursor.getString(index))
                 }
             }
         }

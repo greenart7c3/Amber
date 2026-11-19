@@ -146,6 +146,13 @@ sets (its own key, the URI's relays, the client metadata, the default grants),
 the history entry, publishing the reply and undoing the grants when it fails;
 `sendBunkerResponse` builds the reply once (`replyEvent`) instead of twice.
 
+`common/Nip46Freshness.kt` holds the request freshness rule both apps apply
+(`nip46StaleReason`: five minutes either way, and the NIP-40 expiration) and the
+`switch_relays` answer (`switchRelaysResult`, null when there is nothing to move
+to). On Android, `consume` finds the request's account in `addressee` and `notify`
+hands an admitted request to one handler per method (`switchRelays`, `logout`,
+`getPublicKey`, `answerFromGrants`).
+
 ### 2. Split `IntentUtils.kt`
 
 Separate parsing (`nostrsigner://` / `nostrconnect://` → a data object),

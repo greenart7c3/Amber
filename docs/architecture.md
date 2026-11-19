@@ -181,6 +181,14 @@ queue (`PendingQueue.kt`), connections made from this side, a nostrconnect://
 URI, a new bunker:// URI and their expiry (`BunkerConnections.kt`), and publishing
 a reply (`BunkerReplies.kt`). Its desktop baseline entries are gone.
 
+The local socket signer follows the same steps: `LocalSigner.resolveOrConnect`
+finds the tool's approved connection and otherwise asks the user (`connect`), and
+`evaluate` reads the grant's kind (`permissionKind`), refuses a relay outside the
+auth whitelist, computes the answer (`computeOrRefuse`) and answers from the
+remembered decision or asks the user (`ask`). With that, the bunker request code
+of both apps has no baseline entries left (only one long test in
+`EventNotificationConsumerTest`).
+
 ### 2. Split `IntentUtils.kt`
 
 Separate parsing (`nostrsigner://` / `nostrconnect://` → a data object),

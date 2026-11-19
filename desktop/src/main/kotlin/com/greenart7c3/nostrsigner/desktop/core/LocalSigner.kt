@@ -349,9 +349,20 @@ object LocalSigner {
         for (acc in candidates) {
             findApp(AmberDesktop.store(acc.npub), session)?.let { return Triple(acc, it, null) }
         }
-
-        val acc = target ?: candidates.first()
         if (!canConnect) throw RpcException(LocalSignerProtocol.USER_DECLINED, "not approved: call get_public_key first")
+        return connect(session, target ?: candidates.first(), allowAccountSwitch = target == null)
+    }
+
+    /**
+     * Asks the user to approve the tool behind [session] on [acc] (or, with
+     * [allowAccountSwitch], an account they pick), and returns where the new
+     * connection was saved, with the secret when this approval issued one.
+     */
+    private suspend fun connect(
+        session: ClientSession,
+        acc: DesktopAccount,
+        allowAccountSwitch: Boolean,
+    ): Triple<DesktopAccount, AppWithPermissions, String?> {
         val appKey = "socket:${UUID.randomUUID()}"
         // One secret per tool: a tool already holding one keeps it for further accounts.
         val issued = if (session.secret == null) newSecret() else null
@@ -370,7 +381,7 @@ object LocalSigner {
                 expiresAt = TimeUtils.now() + BunkerEngine.PENDING_TTL_SECONDS,
                 responder = { response -> decided.complete(response) },
                 socketSecretHash = hashSecret(secret),
-                allowAccountSwitch = target == null,
+                allowAccountSwitch = allowAccountSwitch,
             ),
         )
         decided.await().error?.let { throw RpcException(LocalSignerProtocol.codeFor(it), it) }
@@ -395,13 +406,7 @@ object LocalSigner {
         val store = AmberDesktop.store(acc.npub)
         val type = call.type
         val request = LocalSignerProtocol.bunkerRequest(session.internalId(clientId), call)
-        // NIP-44 v3 grants are per context kind, carried at params[1].
-        val kind = when {
-            request is BunkerRequestSign -> request.event.kind
-            type in nip44v3SignerTypes -> call.params.getOrNull(1)?.toIntOrNull()
-                ?: throw RpcException(LocalSignerProtocol.INVALID_PARAMS, "kind is required for nip44v3")
-            else -> null
-        }
+        val kind = permissionKind(request, call)
 
         // Relay auth is granted per relay; a relay outside a non-empty auth
         // whitelist is rejected without asking (see BunkerEngine.handleRequest).
@@ -412,57 +417,61 @@ object LocalSigner {
             throw RpcException(LocalSignerProtocol.USER_DECLINED, LocalSignerProtocol.USER_REJECTED)
         }
 
-        val computed = try {
-            computeResult(request, type, acc)
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: Exception) {
-            store.addLog("socket", "local-signer", "Rejecting request that cannot be fulfilled: ${e.message}")
-            throw RpcException(LocalSignerProtocol.INVALID_PARAMS, "could not process the request")
-        }
-
+        val computed = computeOrRefuse(store, request, type, acc)
         val encryptedContent = if (type in contentScopedSignerTypes) EncryptedContent.classify(computed.preview) else null
         val permission = lookupPermission(store, app.app.key, type, kind, encryptedContent, relayHost)
 
-        when (isRemembered(app.app.signPolicy, permission)) {
-            true -> {
-                store.addHistory(HistoryRecord(app.app.key, type.toString(), kind, TimeUtils.now(), true))
-                store.upsert(app.copy(app = app.app.copy(lastUsed = TimeUtils.now())))
-                return LocalSignerProtocol.resultNode(type, computed.result)
-            }
+        val accepted = isRemembered(app.app.signPolicy, permission)
+            ?: return ask(
+                session,
+                PendingBunkerRequest(
+                    request = request,
+                    type = type,
+                    account = acc,
+                    localKey = app.app.key,
+                    relays = emptyList(),
+                    appName = app.app.displayName(),
+                    kind = kind,
+                    preview = computed.preview,
+                    sealPreview = computed.sealPreview,
+                    result = computed.result,
+                    encryptedContent = encryptedContent,
+                    nip44v3Scope = if (type in nip44v3SignerTypes) call.params.getOrElse(2) { "" } else "",
+                    relayHost = relayHost,
+                    expiresAt = TimeUtils.now() + BunkerEngine.PENDING_TTL_SECONDS,
+                ),
+            )
+        store.addHistory(HistoryRecord(app.app.key, type.toString(), kind, TimeUtils.now(), accepted))
+        if (!accepted) throw RpcException(LocalSignerProtocol.USER_DECLINED, LocalSignerProtocol.USER_REJECTED)
+        store.upsert(app.copy(app = app.app.copy(lastUsed = TimeUtils.now())))
+        return LocalSignerProtocol.resultNode(type, computed.result)
+    }
 
-            false -> {
-                store.addHistory(HistoryRecord(app.app.key, type.toString(), kind, TimeUtils.now(), false))
-                throw RpcException(LocalSignerProtocol.USER_DECLINED, LocalSignerProtocol.USER_REJECTED)
-            }
+    // The kind a grant is keyed by: the event's for sign_event; NIP-44 v3 grants
+    // are per context kind, carried at params[1].
+    private fun permissionKind(request: BunkerRequest, call: LocalSignerProtocol.Call): Int? = when {
+        request is BunkerRequestSign -> request.event.kind
+        call.type in nip44v3SignerTypes -> call.params.getOrNull(1)?.toIntOrNull()
+            ?: throw RpcException(LocalSignerProtocol.INVALID_PARAMS, "kind is required for nip44v3")
+        else -> null
+    }
 
-            null -> {
-                val answer = CompletableDeferred<BunkerResponse>()
-                queuePrompt(
-                    session,
-                    PendingBunkerRequest(
-                        request = request,
-                        type = type,
-                        account = acc,
-                        localKey = app.app.key,
-                        relays = emptyList(),
-                        appName = app.app.displayName(),
-                        kind = kind,
-                        preview = computed.preview,
-                        sealPreview = computed.sealPreview,
-                        result = computed.result,
-                        encryptedContent = encryptedContent,
-                        nip44v3Scope = if (type in nip44v3SignerTypes) call.params.getOrElse(2) { "" } else "",
-                        relayHost = relayHost,
-                        expiresAt = TimeUtils.now() + BunkerEngine.PENDING_TTL_SECONDS,
-                        responder = { response -> answer.complete(response) },
-                    ),
-                )
-                val response = answer.await()
-                response.error?.let { throw RpcException(LocalSignerProtocol.codeFor(it), it) }
-                return LocalSignerProtocol.resultNode(type, response.result ?: "")
-            }
-        }
+    private suspend fun computeOrRefuse(store: AccountStore, request: BunkerRequest, type: SignerType, acc: DesktopAccount): ComputedResult = try {
+        computeResult(request, type, acc)
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: Exception) {
+        store.addLog("socket", "local-signer", "Rejecting request that cannot be fulfilled: ${e.message}")
+        throw RpcException(LocalSignerProtocol.INVALID_PARAMS, "could not process the request")
+    }
+
+    /** Queues [req] for the user and answers with their decision. */
+    private suspend fun ask(session: ClientSession, req: PendingBunkerRequest): com.fasterxml.jackson.databind.JsonNode {
+        val answer = CompletableDeferred<BunkerResponse>()
+        queuePrompt(session, req.copy(responder = { response -> answer.complete(response) }))
+        val response = answer.await()
+        response.error?.let { throw RpcException(LocalSignerProtocol.codeFor(it), it) }
+        return LocalSignerProtocol.resultNode(req.type, response.result ?: "")
     }
 
     /** Queues an approval; a client whose input already closed gets the error at once. */

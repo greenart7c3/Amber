@@ -6,6 +6,7 @@ import com.greenart7c3.nostrsigner.desktop.core.AmberDesktop
 import com.greenart7c3.nostrsigner.desktop.core.DesktopAccount
 import com.greenart7c3.nostrsigner.desktop.core.EncryptedContent
 import com.greenart7c3.nostrsigner.desktop.core.PendingBunkerRequest
+import com.greenart7c3.nostrsigner.desktop.core.openSealForPreview
 import com.vitorpamplona.quartz.nip01Core.crypto.KeyPair
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequest
 import com.vitorpamplona.quartz.nipBCOnchainZaps.psbt.BitcoinTransaction
@@ -55,6 +56,7 @@ class RequestDetailsTest {
         type: SignerType,
         preview: String = "",
         result: String = "",
+        sealPreview: String = "",
         id: String = type.name,
     ) = PendingBunkerRequest(
         request = BunkerRequest(id, type.name.lowercase(), arrayOf()),
@@ -64,6 +66,7 @@ class RequestDetailsTest {
         relays = emptyList(),
         preview = preview,
         result = result,
+        sealPreview = sealPreview,
         encryptedContent = EncryptedContent.classify(preview),
     )
 
@@ -153,5 +156,45 @@ class RequestDetailsTest {
         val details = RequestDetails.of(req(SignerType.SIGN_PSBT, preview = "not a psbt"))
 
         assertTrue(details!!.summary().startsWith("Could not decode PSBT"))
+    }
+
+    // Android opens a seal for the preview and shows the event inside it, not the seal.
+    @Test
+    fun aSealShowsTheEventItHolds() {
+        val rumor = """{"kind":14,"content":"secret dm","tags":[["p","abc"]],"created_at":1700000001}"""
+        val seal = runBlocking {
+            """{"kind":13,"content":"${account.nip44Encrypt(rumor, account.hexKey)}","tags":[],"created_at":1700000000}"""
+        }
+        val opened = runBlocking { openSealForPreview(seal, account) }
+        assertEquals(rumor, opened)
+
+        val details = RequestDetails.of(req(SignerType.NIP44_ENCRYPT, preview = seal, sealPreview = opened))
+        assertEquals(14, (details as RequestDetails.OfEvent).event.kind)
+        assertEquals("secret dm", details.summary())
+    }
+
+    @Test
+    fun aSealThatDoesNotOpenShowsTheSealItself() {
+        val seal = """{"kind":13,"content":"not a ciphertext","tags":[],"created_at":1700000000}"""
+        val opened = runBlocking { openSealForPreview(seal, account) }
+        assertEquals("not a ciphertext", opened)
+
+        val details = RequestDetails.of(req(SignerType.NIP04_DECRYPT, preview = seal, sealPreview = opened))
+        assertEquals(13, (details as RequestDetails.OfEvent).event.kind)
+    }
+
+    @Test
+    fun onlyASealIsOpened() {
+        assertEquals("", runBlocking { openSealForPreview(note, account) })
+        assertEquals("", runBlocking { openSealForPreview("plain text", account) })
+    }
+
+    // NIP-31: a kind Amber has no name for is named by the event's alt tag, as on Android.
+    @Test
+    fun anUnnamedKindUsesItsAltTag() {
+        val unnamed = DetailEvent(kind = 39999, pubKey = "", createdAt = 0, content = "", tags = listOf(listOf("alt", "A custom thing")))
+        assertEquals("A custom thing", unnamed.kindName())
+        val named = DetailEvent(kind = 1, pubKey = "", createdAt = 0, content = "", tags = listOf(listOf("alt", "ignored")))
+        assertFalse(named.kindName() == "ignored")
     }
 }

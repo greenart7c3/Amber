@@ -39,6 +39,7 @@ import com.greenart7c3.nostrsigner.commonsui.copy
 import com.greenart7c3.nostrsigner.commonsui.d_close
 import com.greenart7c3.nostrsigner.commonsui.d_copied_clipboard
 import com.greenart7c3.nostrsigner.commonsui.date
+import com.greenart7c3.nostrsigner.commonsui.event_kind
 import com.greenart7c3.nostrsigner.commonsui.getStringBlocking
 import com.greenart7c3.nostrsigner.commonsui.kind
 import com.greenart7c3.nostrsigner.commonsui.localizedBlocking
@@ -87,6 +88,16 @@ internal data class DetailEvent(
     }
 }
 
+/**
+ * The kind's name; for a kind Amber has no name for, the event's NIP-31 `alt` tag when it
+ * has one, as the Android `EventDetailModal` shows.
+ */
+internal fun DetailEvent.kindName(): String {
+    val name = Permission("sign_event", kind).localizedBlocking()
+    val alt = tags.firstOrNull { it.size > 1 && it[0] == "alt" }?.getOrNull(1)
+    return if (alt != null && name == getStringBlocking(Res.string.event_kind, kind.toString())) alt else name
+}
+
 private fun JsonNode?.toTags(): List<List<String>> = this?.takeIf { it.isArray }?.map { tag -> tag.map { it.asText() } }.orEmpty()
 
 private fun List<List<String>>.format(): String = joinToString(", ") { tag -> tag.joinToString(", ", "[", "]") { "\"$it\"" } }
@@ -133,7 +144,8 @@ internal sealed interface RequestDetails {
             in contentScopedSignerTypes, in nip44v3SignerTypes -> {
                 val content = req.encryptedContent ?: EncryptedContent.classify(req.preview)
                 when (content.type) {
-                    EncryptedContentType.EVENT -> DetailEvent.parse(req.preview)?.let(::OfEvent)
+                    // A seal shows the event it holds, as on Android; else the event itself.
+                    EncryptedContentType.EVENT -> (DetailEvent.parse(req.sealPreview) ?: DetailEvent.parse(req.preview))?.let(::OfEvent)
                     EncryptedContentType.TAG_ARRAY -> runCatching { JacksonMapper.mapper.readTree(req.preview).toTags() }.getOrNull()?.let(::OfTags)
                     EncryptedContentType.CLEAR_TEXT -> null
                 } ?: OfText(req.preview)
@@ -166,8 +178,7 @@ internal fun RequestDetailsDialog(
                 when (details) {
                     is RequestDetails.OfEvent -> {
                         val event = details.event
-                        val kindLabel = "${event.kind} - ${Permission("sign_event", event.kind).localizedBlocking()}"
-                        DetailSection(stringResource(Res.string.kind), kindLabel)
+                        DetailSection(stringResource(Res.string.kind), "${event.kind} - ${event.kindName()}")
                         if (event.pubKey.isNotBlank()) {
                             DetailSection(stringResource(Res.string.pubkey), event.pubKey.toShortenHex(), copyValue = event.pubKey)
                         }

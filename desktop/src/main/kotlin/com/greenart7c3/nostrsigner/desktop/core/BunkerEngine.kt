@@ -96,6 +96,8 @@ data class PendingBunkerRequest(
     val requestedPermissions: List<Permission> = emptyList(),
     val kind: Int? = null,
     val preview: String = "",
+    /** A seal in [preview], opened for the approval preview only; "" when there is none. */
+    val sealPreview: String = "",
     val result: String = "",
     val encryptionType: EncryptionType = EncryptionType.NIP44,
     val isNostrConnectUri: Boolean = false,
@@ -771,6 +773,7 @@ class BunkerEngine(
                         },
                         kind = kind,
                         preview = computed.preview,
+                        sealPreview = computed.sealPreview,
                         result = computed.result,
                         encryptionType = encryptionType,
                         signerPrivKey = effectivePrivKey,
@@ -804,7 +807,8 @@ class BunkerEngine(
         ).firstNotNullOfOrNull { store.getPermission(appKey, it.type, it.kind) }
     }
 
-    internal data class ComputedResult(val result: String, val preview: String)
+    // [sealPreview]: a seal in an encrypt/decrypt payload, opened for the preview (openSealForPreview).
+    internal data class ComputedResult(val result: String, val preview: String, val sealPreview: String = "")
 
     internal suspend fun computeResult(
         request: BunkerRequest,
@@ -824,27 +828,27 @@ class BunkerEngine(
         SignerType.NIP04_ENCRYPT -> {
             val pubKey = request.params.first()
             val message = request.params.getOrElse(1) { "" }
-            ComputedResult(acc.nip04Encrypt(message, pubKey), message)
+            ComputedResult(acc.nip04Encrypt(message, pubKey), message, openSealForPreview(message, acc))
         }
 
         SignerType.NIP44_ENCRYPT -> {
             val pubKey = request.params.first()
             val message = request.params.getOrElse(1) { "" }
-            ComputedResult(acc.nip44Encrypt(message, pubKey), message)
+            ComputedResult(acc.nip44Encrypt(message, pubKey), message, openSealForPreview(message, acc))
         }
 
         SignerType.NIP04_DECRYPT -> {
             val pubKey = request.params.first()
             val ciphertext = request.params.getOrElse(1) { "" }
             val plain = acc.nip04Decrypt(ciphertext, pubKey)
-            ComputedResult(plain, plain)
+            ComputedResult(plain, plain, openSealForPreview(plain, acc))
         }
 
         SignerType.NIP44_DECRYPT -> {
             val pubKey = request.params.first()
             val ciphertext = request.params.getOrElse(1) { "" }
             val plain = acc.nip44Decrypt(ciphertext, pubKey)
-            ComputedResult(plain, plain)
+            ComputedResult(plain, plain, openSealForPreview(plain, acc))
         }
 
         SignerType.NIP44_V3_ENCRYPT -> {

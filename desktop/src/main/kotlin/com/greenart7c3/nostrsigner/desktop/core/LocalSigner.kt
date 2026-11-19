@@ -450,6 +450,7 @@ object LocalSigner {
                         appName = app.app.displayName(),
                         kind = kind,
                         preview = computed.preview,
+                        sealPreview = computed.sealPreview,
                         result = computed.result,
                         encryptedContent = encryptedContent,
                         nip44v3Scope = if (type in nip44v3SignerTypes) call.params.getOrElse(2) { "" } else "",

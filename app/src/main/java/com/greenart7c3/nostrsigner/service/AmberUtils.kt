@@ -5,6 +5,7 @@ import androidx.compose.ui.text.toUpperCase
 import com.greenart7c3.nostrsigner.common.SignerType
 import com.greenart7c3.nostrsigner.common.canRememberRelayAuth
 import com.greenart7c3.nostrsigner.common.rememberUntil
+import com.greenart7c3.nostrsigner.common.replacesGrant
 import com.greenart7c3.nostrsigner.commonsui.Permission
 import com.greenart7c3.nostrsigner.database.ApplicationDao
 import com.greenart7c3.nostrsigner.database.ApplicationPermissionsEntity
@@ -114,28 +115,13 @@ object AmberUtils {
             signerType.toPermissionTypeString(encryptedData)
         }
 
-        if (kind != null) {
-            if (relay.isNotEmpty()) {
-                if (relay == "*") {
-                    application.permissions.removeIf { it.kind == kind && it.type == permissionTypeStr }
-                } else {
-                    application.permissions.removeIf { it.kind == kind && it.type == permissionTypeStr && it.relay == relay }
-                }
-            } else {
-                application.permissions.removeIf { it.kind == kind && it.type == permissionTypeStr && it.relay.isEmpty() }
-            }
-        } else {
-            application.permissions.removeIf { it.type == permissionTypeStr && it.type != "SIGN_EVENT" }
-            if (signerType in encryptDecryptSignerTypes) {
-                if (decryptTypeScope == DecryptTypeScope.ALL) {
-                    // Remove any narrower content-classified permission so ALL wins
-                    application.permissions.removeIf { it.type == signerType.toPermissionTypeString(encryptedData) }
-                } else {
-                    // Remove any broader NIP-level permission so SPECIFIC wins
-                    application.permissions.removeIf { it.type == signerType.toString() }
-                }
-            }
+        // ALL replaces the narrower content-classified grant, SPECIFIC the broader NIP-level one.
+        val otherScopeType = when {
+            signerType !in encryptDecryptSignerTypes -> null
+            decryptTypeScope == DecryptTypeScope.ALL -> signerType.toPermissionTypeString(encryptedData)
+            else -> signerType.toString()
         }
+        application.permissions.removeIf { replacesGrant(permissionTypeStr, kind, relay, otherScopeType, it.type, it.kind, it.relay) }
 
         application.permissions.add(
             ApplicationPermissionsEntity(
@@ -242,54 +228,7 @@ object AmberUtils {
         relay: String = "",
         encryptedData: EncryptedDataKind? = null,
         decryptTypeScope: DecryptTypeScope = DecryptTypeScope.ALL,
-    ) {
-        val until = rememberUntil(rememberType.screenCode, TimeUtils.now())
-
-        // ALL = entire NIP (NIP04_DECRYPT / NIP44_DECRYPT), covers every content type for that NIP
-        // SPECIFIC = only this content type (DECRYPT_CLEAR_TEXT, DECRYPT_TAG_ARRAY, etc.)
-        val permissionTypeStr = if (decryptTypeScope == DecryptTypeScope.ALL && type in encryptDecryptSignerTypes) {
-            type.toString()
-        } else {
-            type.toPermissionTypeString(encryptedData)
-        }
-
-        if (kind != null) {
-            if (relay.isNotEmpty()) {
-                if (relay == "*") {
-                    application.permissions.removeIf { it.kind == kind && it.type == permissionTypeStr }
-                } else {
-                    application.permissions.removeIf { it.kind == kind && it.type == permissionTypeStr && it.relay == relay }
-                }
-            } else {
-                application.permissions.removeIf { it.kind == kind && it.type == permissionTypeStr && it.relay.isEmpty() }
-            }
-        } else {
-            application.permissions.removeIf { it.type == permissionTypeStr && it.type != "SIGN_EVENT" }
-            if (type in encryptDecryptSignerTypes) {
-                if (decryptTypeScope == DecryptTypeScope.ALL) {
-                    // Remove any narrower content-classified permission so ALL wins
-                    application.permissions.removeIf { it.type == type.toPermissionTypeString(encryptedData) }
-                } else {
-                    // Remove any broader NIP-level permission so SPECIFIC wins
-                    application.permissions.removeIf { it.type == type.toString() }
-                }
-            }
-        }
-
-        application.permissions.add(
-            ApplicationPermissionsEntity(
-                null,
-                key,
-                permissionTypeStr,
-                kind,
-                true,
-                rememberType.screenCode,
-                until,
-                0,
-                relay,
-            ),
-        )
-    }
+    ) = updatePermission(application, key, type, kind, true, rememberType, relay, encryptedData, decryptTypeScope)
 }
 
 fun String.toShortenHex(): String {

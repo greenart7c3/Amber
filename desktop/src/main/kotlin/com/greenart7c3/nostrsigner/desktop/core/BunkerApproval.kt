@@ -2,6 +2,7 @@ package com.greenart7c3.nostrsigner.desktop.core
 
 import com.greenart7c3.nostrsigner.common.SignerType
 import com.greenart7c3.nostrsigner.common.generateBunkerPrivKey
+import com.greenart7c3.nostrsigner.common.replacesGrant
 import com.greenart7c3.nostrsigner.commonsui.Permission
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequestConnect
@@ -350,16 +351,12 @@ private fun acceptOrRejectPermission(
     val contentScoped = type in contentScopedSignerTypes
     val typeStr = if (contentScoped && scope == EncryptionScope.SPECIFIC) type.contentPermissionType(content) else type.toString()
 
-    if (kind != null) {
-        application.removeKindGrants(typeStr, kind, relay)
-    } else {
-        application.permissions.removeIf { it.type == typeStr && it.type != "SIGN_EVENT" }
-        // A whole-NIP grant replaces the narrower content-type one, and the other way round.
-        if (contentScoped) {
-            val replaced = if (scope == EncryptionScope.ALL) type.contentPermissionType(content) else type.toString()
-            application.permissions.removeIf { it.type == replaced }
-        }
+    val otherScopeType = when {
+        !contentScoped -> null
+        scope == EncryptionScope.ALL -> type.contentPermissionType(content)
+        else -> type.toString()
     }
+    application.permissions.removeIf { replacesGrant(typeStr, kind, relay, otherScopeType, it.type, it.kind, it.relay) }
 
     application.permissions.add(
         AppPermissionRecord(
@@ -372,19 +369,4 @@ private fun acceptOrRejectPermission(
             relay = relay,
         ),
     )
-}
-
-// Relay auth grants: "*" replaces every relay's grant for this kind, a specific relay
-// only its own entry, and any other kind grant only the one without a relay
-// (Android's insertPermissions).
-private fun AppWithPermissions.removeKindGrants(type: String, kind: Int, relay: String) {
-    permissions.removeIf {
-        it.kind == kind &&
-            it.type == type &&
-            when (relay) {
-                "*" -> true
-                "" -> it.relay.isEmpty()
-                else -> it.relay == relay
-            }
-    }
 }

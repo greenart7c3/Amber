@@ -30,6 +30,37 @@ fun rememberUntil(screenCode: Int, now: Long): Long = when (screenCode) {
     else -> 0L
 }
 
+/**
+ * Whether remembering a decision as [type], [kind] and [relay] replaces a stored grant
+ * ([existingType], [existingKind], [existingRelay]), so the two never decide together.
+ *
+ * A kind grant replaces the same type and kind; for relay auth "*" replaces every
+ * relay's grant, a relay only its own, and no relay only the grant without one. A
+ * kind-less grant replaces every grant of its type, except SIGN_EVENT, which is kept
+ * per kind, and also [otherScopeType]: for NIP-04/NIP-44 the whole-NIP type replaces
+ * the content type (DECRYPT_CLEAR_TEXT, …) and the other way round.
+ */
+fun replacesGrant(
+    type: String,
+    kind: Int?,
+    relay: String,
+    otherScopeType: String?,
+    existingType: String,
+    existingKind: Int?,
+    existingRelay: String,
+): Boolean = when {
+    kind != null ->
+        existingType == type &&
+            existingKind == kind &&
+            when (relay) {
+                "*" -> true
+                "" -> existingRelay.isEmpty()
+                else -> existingRelay == relay
+            }
+    existingType == type -> type != "SIGN_EVENT"
+    else -> existingType == otherScopeType
+}
+
 /** The app sign policy that trusts every request ("fully trust"). */
 const val SIGN_POLICY_FULLY_TRUST = 2
 

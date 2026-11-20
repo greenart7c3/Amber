@@ -155,7 +155,6 @@
     <ID>LongParameterList:AmberEvent.kt:AmberEvent</ID>
     <ID>LongParameterList:AmberTopAppBar.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun AmberTopAppBar</ID>
     <ID>LongParameterList:IncomingRequestScreen.kt:@Composable fun IncomingRequestScreen</ID>
-    <ID>LongParameterList:IntentUtils.kt:IntentUtils$fun sendResult</ID>
     <ID>LongParameterList:MainScreen.kt:@SuppressLint("ConfigurationScreenWidthHeight") @OptIn(ExperimentalMaterial3Api::class) @Composable fun MainScreen</ID>
     <ID>LongParameterList:Nip44v3ApprovalData.kt:@Composable fun Nip44v3ApprovalData</ID>
     <ID>ModifierClickableOrder:AccountPickerRow.kt:clickable { onSelect(index) sheetOpen = false }</ID>

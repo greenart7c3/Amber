@@ -37,6 +37,8 @@ import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.IntentData
 import com.greenart7c3.nostrsigner.models.IntentResultType
+import com.greenart7c3.nostrsigner.service.IntentApproval
+import com.greenart7c3.nostrsigner.service.IntentReply
 import com.greenart7c3.nostrsigner.service.IntentUtils
 import com.greenart7c3.nostrsigner.service.RelayUrlUtils
 import com.greenart7c3.nostrsigner.service.intentPermission
@@ -76,6 +78,8 @@ private data class IntentRequest(
     val key: String get() = "$packageName"
 
     fun remembered(relayUrl: String? = null): Boolean? = isRemembered(application?.application?.signPolicy, intentPermission(application, key, intentData, relayUrl))
+
+    fun reply(event: String, value: String = event) = IntentReply(intentData, packageName, event, value)
 }
 
 @Composable
@@ -128,24 +132,20 @@ private fun GetPublicKeyRequest(
         account = request.account,
         permissions = request.intentData.permissions?.toImmutableList(),
         onAccept = { permissions, signPolicy, closeApplication, rememberType, acc ->
-            val result = acc.hexKey
             IntentUtils.sendResult(
                 context,
-                request.packageName,
                 acc,
-                request.key,
+                request.reply(acc.hexKey),
+                IntentApproval(
+                    rememberType = rememberType,
+                    signPolicy = signPolicy,
+                    permissions = permissions,
+                    appName = request.resultAppName,
+                    shouldCloseApplication = closeApplication,
+                ),
                 clipboardManager,
-                result,
-                result,
-                request.intentData,
-                null,
-                permissions = permissions,
-                appName = request.resultAppName,
-                onLoading = onLoading,
-                signPolicy = signPolicy,
-                onRemoveIntentData = onRemoveIntentData,
-                shouldCloseApplication = closeApplication,
-                rememberType = rememberType,
+                onLoading,
+                onRemoveIntentData,
             )
         },
         onReject = {
@@ -181,17 +181,12 @@ private fun SignPsbtRequest(
                     val result = request.account.signPsbt(intentData.data)
                     IntentUtils.sendResult(
                         context,
-                        request.packageName,
                         request.account,
-                        request.key,
+                        request.reply(result),
+                        IntentApproval(rememberType),
                         clipboardManager,
-                        result,
-                        result,
-                        intentData,
-                        null,
                         onLoading,
-                        onRemoveIntentData = onRemoveIntentData,
-                        rememberType = rememberType,
+                        onRemoveIntentData,
                     )
                 } catch (e: Exception) {
                     ToastManager.toast(
@@ -245,18 +240,12 @@ private fun Nip44v3Request(
             val v3Kind = if (scope == DecryptTypeScope.SPECIFIC) intentData.nip44v3Kind else null
             IntentUtils.sendResult(
                 context,
-                request.packageName,
                 request.account,
-                request.key,
+                request.reply(result),
+                IntentApproval(rememberType, kind = v3Kind, decryptTypeScope = scope),
                 clipboardManager,
-                result,
-                result,
-                intentData,
-                v3Kind,
-                onRemoveIntentData = onRemoveIntentData,
-                onLoading = onLoading,
-                rememberType = rememberType,
-                decryptTypeScope = scope,
+                onLoading,
+                onRemoveIntentData,
             )
         },
         onReject = { rememberType, scope ->
@@ -303,18 +292,12 @@ private fun EncryptDecryptRequest(
                 }
             IntentUtils.sendResult(
                 context,
-                request.packageName,
                 request.account,
-                request.key,
+                request.reply(result),
+                IntentApproval(rememberType, decryptTypeScope = scope),
                 clipboardManager,
-                result,
-                result,
-                intentData,
-                null,
-                onRemoveIntentData = onRemoveIntentData,
-                onLoading = onLoading,
-                rememberType = rememberType,
-                decryptTypeScope = scope,
+                onLoading,
+                onRemoveIntentData,
             )
         },
         onReject = { rememberType, scope ->
@@ -397,22 +380,13 @@ private fun RelayAuthRequest(
             if (refuseCrossAccount(context, request)) return@BunkerRelayAuthScreen
             val (relayPermission, relayRemember) = relayGrant(scope, relayUrl, rememberType)
             IntentUtils.sendResult(
-                context = context,
-                packageName = request.packageName,
-                account = request.account,
-                key = request.key,
-                clipboardManager = clipboardManager,
-                event = event.toJson(),
-                value = event.sig,
-                intentData = intentData,
-                kind = event.kind,
-                onLoading = onLoading,
-                onRemoveIntentData = onRemoveIntentData,
-                signPolicy = null,
-                appName = request.resultAppName,
-                permissions = null,
-                rememberType = relayRemember,
-                relay = relayPermission,
+                context,
+                request.account,
+                request.reply(event.toJson(), event.sig),
+                IntentApproval(relayRemember, kind = event.kind, appName = request.resultAppName, relay = relayPermission),
+                clipboardManager,
+                onLoading,
+                onRemoveIntentData,
             )
         },
         onReject = { rememberType, scope ->
@@ -453,22 +427,16 @@ private fun EventRequest(
         onAccept = {
             if (refuseCrossAccount(context, request)) return@EventData
 
+            // An anonymous zap request answers with the whole event instead of a signature.
+            val isAnonZap = event is ZapRequestEvent && event.tags.any { tag -> tag.any { t -> t == "anon" } }
             IntentUtils.sendResult(
-                context = context,
-                packageName = request.packageName,
-                account = request.account,
-                key = request.key,
-                clipboardManager = clipboardManager,
-                event = event.toJson(),
-                value = if (event is ZapRequestEvent && event.tags.any { tag -> tag.any { t -> t == "anon" } }) event.toJson() else event.sig,
-                intentData = intentData,
-                kind = event.kind,
-                onLoading = onLoading,
-                onRemoveIntentData = onRemoveIntentData,
-                signPolicy = null,
-                appName = request.resultAppName,
-                permissions = null,
-                rememberType = it,
+                context,
+                request.account,
+                request.reply(event.toJson(), if (isAnonZap) event.toJson() else event.sig),
+                IntentApproval(it, kind = event.kind, appName = request.resultAppName),
+                clipboardManager,
+                onLoading,
+                onRemoveIntentData,
             )
         },
         onReject = {

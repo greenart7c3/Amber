@@ -14,8 +14,8 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
 import org.junit.After
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
-import org.junit.Assert.assertSame
 import org.junit.Before
 import org.junit.Test
 
@@ -55,8 +55,7 @@ class IntentSingleEventViewModelTest {
         // The load runs on Dispatchers.IO.
         coVerify(timeout = 5_000) { dao.getByKey("com.example.app") }
         Thread.sleep(100)
-        assertSame(request, viewModel.loaded.value?.intentData)
-        assertSame(saved, viewModel.loaded.value?.application)
+        assertEquals(LoadedIntentApplication(request, saved), viewModel.loaded.value)
     }
 
     // The calling app picks the request id: a later request reusing it gets this ViewModel
@@ -74,7 +73,6 @@ class IntentSingleEventViewModelTest {
 
         coVerify(timeout = 5_000, exactly = 2) { dao.getByKey("com.example.app") }
         Thread.sleep(100)
-        assertSame(second, viewModel.loaded.value?.intentData)
-        assertNull(viewModel.loaded.value?.application)
+        assertEquals(LoadedIntentApplication(second, null), viewModel.loaded.value)
     }
 }

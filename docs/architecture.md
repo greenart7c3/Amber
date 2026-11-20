@@ -57,7 +57,7 @@ interfaces from the CompositionLocals the two activities provide
 - The Android bunker flow (`BunkerRequestUtils` + `EventNotificationConsumer`)
   and the desktop one (`BunkerEngine`) implement the same permission and
   response logic twice.
-- `ui/` reaches Room DAOs directly in 9 files.
+- `ui/` reaches Room DAOs directly in 9 files (5 left: step 6).
 
 ## Target layering
 
@@ -319,3 +319,16 @@ cache and the key zeroing at logout. The WebDAV server for cloud backups is
 them is split into small helpers (`enumOr`, the `use_proxy` → `TorMode`
 migration, `applyProxy`) and `SettingsReadTest` pins how stored values are read.
 Its `TooManyFunctions` entry stays: one updater per setting.
+
+### 6. Keep `ui/` off the database
+
+The target layering has the UI talk only to ViewModels, but six screens still
+used Room types or DAOs directly (the `databaseInUi` allow-list in
+`ArchitectureTest.kt`). Move each one's loading and writing into its ViewModel,
+which may use `database/` (the rule exempts `*ViewModel.kt`), hand the screen only
+what it shows, and delete the screen from the allow-list.
+
+Done so far: `IntentSingleEventHomeScreen`. `LoadedIntentApplication` keeps the
+saved app private and gives the screen its `name` and `remembered(key, relayUrl)`.
+Left: `ActivitiesScreen`, `ActivityStatsCard`, `EditConfigurationScreen`,
+`EditPermission`, `NewNsecBunkerScreen`.

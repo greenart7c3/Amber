@@ -45,7 +45,6 @@ import com.greenart7c3.nostrsigner.AccountStorage
 import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.SavedAccounts
-import com.greenart7c3.nostrsigner.amber
 import com.greenart7c3.nostrsigner.commonsui.Res
 import com.greenart7c3.nostrsigner.commonsui.activity
 import com.greenart7c3.nostrsigner.commonsui.backup
@@ -82,7 +81,7 @@ fun ApplicationsScreen(
 ) {
     val context = LocalContext.current
     val settingsStore = LocalSettingsStore.current
-    val amber = LocalContext.current.amber
+    val appContext = LocalContext.current.applicationContext
     // remember: without it every recomposition (killSwitch / backup-warning
     // state flips) builds a new Pager + cold flow and re-runs the initial
     // load from scratch. Keyed on the account and on the sort toggle so
@@ -98,7 +97,7 @@ fun ApplicationsScreen(
 
     LaunchedEffect(Unit) {
         launch(Dispatchers.IO) {
-            hasAccountsWithoutBackup = AccountStorage.all(amber).any { !it.didBackup }
+            hasAccountsWithoutBackup = AccountStorage.all(appContext).any { !it.didBackup }
         }
     }
 
@@ -113,9 +112,9 @@ fun ApplicationsScreen(
                     message = stringResource(Res.string.kill_switch_message),
                     buttonText = stringResource(Res.string.disable_kill_switch),
                     onClick = {
-                        val killSwitchIntent = Intent(amber, KillSwitchReceiver::class.java)
-                        amber.sendBroadcast(killSwitchIntent)
-                        SavedAccounts.switchTo(amber, account.npub)
+                        val killSwitchIntent = Intent(appContext, KillSwitchReceiver::class.java)
+                        appContext.sendBroadcast(killSwitchIntent)
+                        SavedAccounts.switchTo(appContext, account.npub)
                     },
                 )
             }
@@ -166,7 +165,7 @@ fun ApplicationsScreen(
                         append(" or ")
                         withLink(
                             LinkAnnotation.Url(
-                                if (amber.isZapstoreInstalled()) "zapstore://" else stringResource(Res.string.zapstore_website),
+                                if (appContext.isZapstoreInstalled()) "zapstore://" else stringResource(Res.string.zapstore_website),
                                 styles = TextLinkStyles(
                                     style = SpanStyle(
                                         textDecoration = TextDecoration.Underline,

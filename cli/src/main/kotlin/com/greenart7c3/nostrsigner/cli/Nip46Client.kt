@@ -104,8 +104,9 @@ class Nip46Client(
      *
      * NIP-46 events are ephemeral, so relays do not replay an answer that
      * arrived before the subscription: [onListening] is where the URI may
-     * leave the process, and it runs only once every relay has answered the
-     * subscription with EOSE (or could not be reached), never before.
+     * leave the process, and it runs only once a relay has answered the
+     * subscription with EOSE and every other relay has too, failed, or had a
+     * few seconds more to (see [RelaysListening]), never before.
      */
     fun awaitNostrConnectApproval(
         secret: String,
@@ -160,7 +161,9 @@ class Nip46Client(
     /**
      * Which relays have registered the approval subscription. A relay is
      * settled once it sent EOSE or failed to connect; [await] waits for all of
-     * them and is true when at least one is listening.
+     * them, but once one is listening, the rest only get [LATE_RELAY_GRACE_MILLIS]:
+     * a relay that never answers (one behind a firewall waits out the connect
+     * timeout) must not hold the URI back. True when at least one is listening.
      */
     private class RelaysListening(
         private val relays: Set<NormalizedRelayUrl>,
@@ -182,12 +185,25 @@ class Nip46Client(
         }
 
         fun await(timeoutMillis: Long): Boolean = lock.withLock {
-            var remaining = TimeUnit.MILLISECONDS.toNanos(timeoutMillis)
-            while (remaining > 0 && !relays.all { it in listening || it in failed }) {
-                remaining = changed.awaitNanos(remaining)
+            var deadline = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(timeoutMillis)
+            var graceStarted = false
+            while (!relays.all { it in listening || it in failed }) {
+                if (!graceStarted && listening.isNotEmpty()) {
+                    graceStarted = true
+                    deadline = minOf(deadline, System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(LATE_RELAY_GRACE_MILLIS))
+                }
+                val remaining = deadline - System.nanoTime()
+                if (remaining <= 0) break
+                changed.awaitNanos(remaining)
             }
             listening.isNotEmpty()
         }
+    }
+
+    private companion object {
+        // Healthy relays subscribe within a second or two of the first; a human then
+        // still takes longer than that to paste the URI and approve it.
+        const val LATE_RELAY_GRACE_MILLIS = 3_000L
     }
 
     /** Continues a saved connection. */

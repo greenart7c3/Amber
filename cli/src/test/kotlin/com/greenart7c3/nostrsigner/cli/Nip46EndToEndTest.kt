@@ -180,6 +180,31 @@ class Nip46EndToEndTest {
     }
 
     @Test
+    fun aRelayThatNeverAnswersDoesNotHoldBackTheUri() {
+        // Accepts the TCP connection (the kernel does, without accept()) but never
+        // answers the WebSocket upgrade, like a dead public relay behind a firewall.
+        ServerSocket(0).use { silent ->
+            val startedAt = System.nanoTime()
+            var shownAfterMillis = Long.MAX_VALUE
+            val connect = amber(
+                "connect",
+                "--relay",
+                relayUrl,
+                "--relay",
+                "ws://127.0.0.1:${silent.localPort}/",
+                "--timeout",
+                TIMEOUT,
+                onPairingUri = { uri ->
+                    shownAfterMillis = (System.nanoTime() - startedAt) / 1_000_000
+                    signer.approve(uri)
+                },
+            )
+            assertEquals(connect.err, Exit.OK, connect.exit)
+            assertTrue("the URI took ${shownAfterMillis}ms", shownAfterMillis < 10_000)
+        }
+    }
+
+    @Test
     fun wrongSecretIsRefused() {
         val login = amber("login", bunkerUri(secret = "not-the-secret"), "--timeout", TIMEOUT)
         assertEquals(Exit.REJECTED, login.exit)

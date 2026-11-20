@@ -15,17 +15,7 @@ import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ProcessLifecycleOwner
-import coil3.EventListener
-import coil3.ImageLoader
-import coil3.PlatformContext
 import coil3.SingletonImageLoader
-import coil3.disk.DiskCache
-import coil3.memory.MemoryCache
-import coil3.network.okhttp.OkHttpNetworkFetcherFactory
-import coil3.request.ErrorResult
-import coil3.request.ImageRequest
-import coil3.request.SuccessResult
-import coil3.request.crossfade
 import com.greenart7c3.nostrsigner.common.relays.RelayHealthTracker
 import com.greenart7c3.nostrsigner.commonsui.Res
 import com.greenart7c3.nostrsigner.commonsui.getStringBlocking
@@ -44,6 +34,7 @@ import com.greenart7c3.nostrsigner.relays.AmberRelayStats
 import com.greenart7c3.nostrsigner.relays.NostrClientLoggerListener
 import com.greenart7c3.nostrsigner.service.BunkerResponder
 import com.greenart7c3.nostrsigner.service.ConnectivityService
+import com.greenart7c3.nostrsigner.service.ImageLoaderFactory
 import com.greenart7c3.nostrsigner.service.IntentRateLimiter
 import com.greenart7c3.nostrsigner.service.IntentUtils
 import com.greenart7c3.nostrsigner.service.LocalBunkerRelayServer
@@ -77,12 +68,10 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeoutOrNull
-import okio.Path.Companion.toOkioPath
 
 class Amber :
     Application(),
     LifecycleObserver,
-    SingletonImageLoader.Factory,
     SettingsStore,
     RelayClient {
     private var mainActivityRef: WeakReference<AppCompatActivity?>? = null
@@ -136,6 +125,8 @@ class Amber :
      * trusting the default and going to the clearnet.
      */
     @Volatile var isSettingsLoaded = false
+
+    private val imageLoaderFactory = ImageLoaderFactory(settingsStore = this, isSettingsLoaded = { isSettingsLoaded }, scope = applicationIOScope)
 
     override val factory = OkHttpWebSocket.Builder { url ->
         if (PrivateAddress.isPrivate(url.url)) return@Builder HttpClientManager.getLocalHttpClient()
@@ -311,6 +302,7 @@ class Amber :
 
     override fun onCreate() {
         super.onCreate()
+        SingletonImageLoader.setSafe(imageLoaderFactory)
 
         if (BuildConfig.DEBUG) {
             enableStrictMode()
@@ -341,7 +333,7 @@ class Amber :
         UnexpectedCrashSaver.install(this, crashReportCache, applicationIOScope)
 
         // Build Coil's singleton ImageLoader off the main thread. Its factory
-        // (newImageLoader) touches cacheDir, so letting the first AsyncImage
+        // (ImageLoaderFactory) touches cacheDir, so letting the first AsyncImage
         // build it lazily during composition trips StrictMode's DiskReadViolation.
         applicationIOScope.launch {
             SingletonImageLoader.get(this@Amber)
@@ -608,57 +600,6 @@ class Amber :
         }
     }
 
-    override fun newImageLoader(context: PlatformContext): ImageLoader {
-        val memCache = MemoryCache.Builder()
-            .maxSizeBytes(32 * 1024 * 1024) // 32 MB cap to prevent DMA-BUF OOM
-            .build()
-        val diskCache = DiskCache.Builder()
-            .directory(context.cacheDir.resolve("coil_image_cache").toOkioPath())
-            .maxSizeBytes(10 * 1024 * 1024) // 10 MB
-            .build()
-        val coilCallFactory = okhttp3.Call.Factory { request ->
-            val url = request.url.toString()
-            if (PrivateAddress.isPrivate(url)) return@Factory HttpClientManager.getLocalHttpClient().newCall(request)
-            val useProxy = when {
-                !isSettingsLoaded -> true
-                else -> settings.torMode != TorMode.DISABLED
-            }
-            HttpClientManager.getHttpClient(useProxy).newCall(request)
-        }
-        return ImageLoader.Builder(context)
-            .memoryCache { memCache }
-            .diskCache { diskCache }
-            .crossfade(true)
-            .components { add(OkHttpNetworkFetcherFactory(callFactory = { coilCallFactory })) }
-            .eventListener(
-                object : EventListener() {
-                    override fun onStart(request: ImageRequest) {
-                        AmberLog.d(TAG, "Coil: loading ${request.data}")
-                    }
-
-                    override fun onSuccess(request: ImageRequest, result: SuccessResult) {
-                        applicationIOScope.launch {
-                            AmberLog.d(
-                                TAG,
-                                "Coil: loaded ${request.data} from ${result.dataSource}" +
-                                    " | mem=${memCache.size / 1024}/${memCache.maxSize / 1024} KB" +
-                                    " | disk=${diskCache.size / 1024}/${diskCache.maxSize / 1024} KB",
-                            )
-                        }
-                    }
-
-                    override fun onError(request: ImageRequest, result: ErrorResult) {
-                        AmberLog.w(TAG, "Coil: error loading ${request.data}", result.throwable)
-                    }
-
-                    override fun onCancel(request: ImageRequest) {
-                        AmberLog.d(TAG, "Coil: cancelled ${request.data}")
-                    }
-                },
-            )
-            .build()
-    }
-
     override fun onTrimMemory(level: Int) {
         super.onTrimMemory(level)
 
@@ -667,9 +608,9 @@ class Amber :
         // UI_HIDDEN (20) is not pressure, but a long-lived signer process has no
         // reason to keep UI-only caches while its UI is invisible either.
         if (level == TRIM_MEMORY_UI_HIDDEN) {
-            trimImageMemoryCache()
+            imageLoaderFactory.trimMemoryCache(this)
         } else if (level >= TRIM_MEMORY_BACKGROUND) {
-            trimImageMemoryCache()
+            imageLoaderFactory.trimMemoryCache(this)
             TrustScoreService.clearCache()
         }
     }
@@ -682,19 +623,8 @@ class Amber :
      */
     override fun onLowMemory() {
         super.onLowMemory()
-        trimImageMemoryCache()
+        imageLoaderFactory.trimMemoryCache(this)
         TrustScoreService.clearCache()
-    }
-
-    private fun trimImageMemoryCache() {
-        // Coil 3 registers no ComponentCallbacks of its own, so its bitmap
-        // memory cache (32 MB cap) would otherwise stay fully resident in
-        // this long-lived signer process even while its UI is not visible.
-        // The cache rebuilds lazily on the next image load.
-        applicationIOScope.launch {
-            runCatching { SingletonImageLoader.get(this@Amber).memoryCache?.clear() }
-                .onFailure { AmberLog.w(TAG, "Failed to trim Coil memory cache", it) }
-        }
     }
 
     override fun onTerminate() {

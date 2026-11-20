@@ -57,8 +57,7 @@ interfaces from the CompositionLocals the two activities provide
 - The Android bunker flow (`BunkerRequestUtils` + `EventNotificationConsumer`)
   and the desktop one (`BunkerEngine`) implement the same permission and
   response logic twice.
-- `ui/` reaches Room DAOs directly (step 6: 1 file left, see the `databaseInUi`
-  allow-list).
+- `ui/` reached Room DAOs directly in 10 files; since step 6 it does not.
 
 ## Target layering
 
@@ -321,7 +320,7 @@ them is split into small helpers (`enumOr`, the `use_proxy` → `TorMode`
 migration, `applyProxy`) and `SettingsReadTest` pins how stored values are read.
 Its `TooManyFunctions` entry stays: one updater per setting.
 
-### 6. Keep `ui/` off the database
+### 6. Keep `ui/` off the database (done)
 
 The target layering has the UI talk only to ViewModels, but six screens still
 used Room types or DAOs directly (the `databaseInUi` allow-list in
@@ -346,8 +345,10 @@ finds a bunker:// connection's saved name by its secret, in the chosen account.
 `EditConfigurationScreen`: `EditConfigurationViewModel` loads the app as an `AppConfiguration`
 and updates, resets or deletes it. `EditPermission`: `EditPermissionViewModel` loads the app's
 grants as `PermissionGrant`s (and the app as a `PermissionsApp`) and saves the changes.
+`NewNsecBunkerScreen` and `NewNsecBunkerCreatedScreen`: `NewBunkerViewModel` creates the
+bunker:// connection and prepares its URI.
 The rule also counts DAO calls (`.dao(`, `getDatabase(` and the like), since Kotlin
 needs no import for the types it infers: `actions/ActivityScreen` slipped past the
 import check that way, and seven more files went on the allow-list when the rule
-started counting calls. Left:
-`NewNsecBunkerScreen`.
+started counting calls. None is left: the `databaseInUi` allow-list is empty, so the
+rule now fails on any `ui/` file outside a ViewModel that touches the database.

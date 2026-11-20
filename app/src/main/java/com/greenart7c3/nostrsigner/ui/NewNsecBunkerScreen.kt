@@ -46,9 +46,9 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.greenart7c3.nostrsigner.amber
-import com.greenart7c3.nostrsigner.common.generateBunkerPrivKey
 import com.greenart7c3.nostrsigner.commonsui.Res
 import com.greenart7c3.nostrsigner.commonsui.copy_to_clipboard
 import com.greenart7c3.nostrsigner.commonsui.create
@@ -65,9 +65,7 @@ import com.greenart7c3.nostrsigner.commonsui.testing_relay
 import com.greenart7c3.nostrsigner.commonsui.use_this_url_in_your_app
 import com.greenart7c3.nostrsigner.commonsui.wss
 import com.greenart7c3.nostrsigner.commonsui.your_nsec_bunker_has_been_created
-import com.greenart7c3.nostrsigner.database.ApplicationEntity
 import com.greenart7c3.nostrsigner.models.Account
-import com.greenart7c3.nostrsigner.service.LocalKeyAccountIndex
 import com.greenart7c3.nostrsigner.ui.actions.onAddRelay
 import com.greenart7c3.nostrsigner.ui.components.AmberButton
 import com.greenart7c3.nostrsigner.ui.components.TitleExplainer
@@ -78,7 +76,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -86,11 +83,11 @@ fun NewNsecBunkerScreen(
     modifier: Modifier = Modifier,
     account: Account,
     navController: NavController,
+    viewModel: NewBunkerViewModel = viewModel(factory = NewBunkerViewModel.factory(LocalAccountRepository.current, LocalRelayClient.current)),
 ) {
     val localBunkerRelay = LocalContext.current.amber.localBunkerRelay
     val context = LocalContext.current
     val relayClient = LocalRelayClient.current
-    val accountRepository = LocalAccountRepository.current
     val secret = remember { mutableStateOf(UUID.randomUUID().toString()) }
     var name by remember { mutableStateOf(TextFieldValue(AnnotatedString(""))) }
     val clipboardManager = LocalClipboard.current
@@ -287,35 +284,9 @@ fun NewNsecBunkerScreen(
                         return@AmberButton
                     }
 
-                    scope.launch(Dispatchers.IO) {
-                        val deleteAfter = deleteAfterToSeconds(parseDeleteAfterType(deleteAfterIndex))
-                        val connPrivKey = generateBunkerPrivKey()
-
-                        val application =
-                            ApplicationEntity(
-                                key = secret.value,
-                                name = name.text,
-                                relays = relays,
-                                url = "",
-                                icon = "",
-                                description = "",
-                                pubKey = account.hexKey,
-                                isConnected = false,
-                                secret = secret.value,
-                                useSecret = true,
-                                signPolicy = account.signPolicy,
-                                closeApplication = true,
-                                deleteAfter = deleteAfter,
-                                lastUsed = 0L,
-                                localKey = connPrivKey,
-                            )
-
-                        accountRepository.dao(account.npub).insertApplication(
-                            application,
-                        )
-                        scope.launch(Dispatchers.Main) {
-                            navController.navigate("NewNsecBunkerCreated/${secret.value}")
-                        }
+                    val deleteAfter = deleteAfterToSeconds(parseDeleteAfterType(deleteAfterIndex))
+                    viewModel.create(account, name.text, relays.toList(), secret.value, deleteAfter) {
+                        navController.navigate("NewNsecBunkerCreated/${secret.value}")
                     }
                 },
             )
@@ -328,15 +299,14 @@ fun NewNsecBunkerCreatedScreen(
     modifier: Modifier = Modifier,
     account: Account,
     key: String,
+    viewModel: NewBunkerViewModel = viewModel(factory = NewBunkerViewModel.factory(LocalAccountRepository.current, LocalRelayClient.current)),
 ) {
-    val accountRepository = LocalAccountRepository.current
     val settingsStore = LocalSettingsStore.current
-    val relayClient = LocalRelayClient.current
     val isLoading = remember(account.npub, key) { mutableStateOf(true) }
     var preparationFailed by remember(account.npub, key) { mutableStateOf(false) }
     var refreshAttempt by remember(account.npub, key) { mutableIntStateOf(0) }
     val killSwitch by settingsStore.settings.killSwitch.collectAsStateWithLifecycle()
-    var application by remember(account.npub, key) { mutableStateOf(ApplicationEntity.empty()) }
+    var bunkerUri by remember(account.npub, key) { mutableStateOf("") }
     val clipboardManager = LocalClipboard.current
     val scope = rememberCoroutineScope()
 
@@ -348,15 +318,7 @@ fun NewNsecBunkerCreatedScreen(
                 preparationFailed = true
                 return@LaunchedEffect
             }
-            application = withContext(Dispatchers.IO) {
-                val saved = checkNotNull(accountRepository.dao(account.npub).getByKey(key)?.application)
-                // Prepare local endpoint routing before exposing the ephemeral-request URI.
-                relayClient.checkForNewRelaysAndUpdateAllFilters(shouldReconnect = true)
-                if (saved.localPubKey.isNotEmpty()) {
-                    check(LocalKeyAccountIndex.lookup(saved.localPubKey)?.npub == account.npub)
-                }
-                saved
-            }
+            bunkerUri = viewModel.prepareUri(account, key)
         } catch (cancelled: CancellationException) {
             throw cancelled
         } catch (_: Exception) {
@@ -380,11 +342,6 @@ fun NewNsecBunkerCreatedScreen(
             )
         }
     } else {
-        val relays = application.relays.joinToString(separator = "&") { "relay=${it.url}" }
-        val localSecret = "&secret=${application.secret}"
-        val signerPubKey = application.localPubKey.ifEmpty { account.hexKey }
-        val bunkerUri = "bunker://$signerPubKey?$relays$localSecret"
-
         Column(
             modifier = modifier
                 .fillMaxSize(),

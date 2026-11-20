@@ -185,11 +185,8 @@ class ArchitectureTest {
         // Opening a Room database or DAO: AccountRepository.dao/getDatabase/getHistoryDatabase/getLogDatabase.
         val daoCall = Regex("""\.dao\(|\bget(History|Log)?Database\(""")
 
-        // May only shrink: see the class comment. The entries without a database import
-        // were added when the rule started counting DAO calls; they were there before.
-        val databaseInUi = setOf(
-            "ui/NewNsecBunkerScreen.kt",
-        )
+        // Empty since step 6: no ui/ file outside a ViewModel may use the database.
+        val databaseInUi = emptySet<String>()
 
         val contextAmberUsers = setOf(
             "LocalPreferences.kt",

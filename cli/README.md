@@ -114,7 +114,9 @@ That choice is made when the key is first saved and recorded in a `key-store`
 file beside it, so a Secret Service that starts later (a desktop login, another
 D-Bus environment under cron or systemd) does not lock the saved connections
 out. `AMBER_CLI_KEY_STORE=file` or `=keyring` picks the backend explicitly, over
-the recorded one.
+the recorded one. A locked credential store (a GNOME login keyring waiting for
+its unlock prompt) is waited on for `--timeout` seconds, then the command exits
+with code 5 instead of hanging; it never switches to the key file on its own.
 
 Relays for `connect` default to the same list Amber itself uses
 (`wss://auth.nostr1.com/`, `wss://bucket.coracle.social/`,

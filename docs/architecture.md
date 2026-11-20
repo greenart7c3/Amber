@@ -383,3 +383,17 @@ is part of `RelayClient`, and `onAddRelay` takes the saved relays as a lookup.
 `MainScreen`: the existing and new locals; `DisplayCrashMessages` takes the application context and
 the `PendingReports`. No `ui/` file is left on the allow-list: what remains there is the entry
 points and the three non-UI files above.
+
+### 8. Finish the service layer's ratchets
+
+Two allow-lists in `ArchitectureTest.kt` still name files the system does not
+construct: `contextAmberUsers` (`LocalPreferences`, `SecureCryptoHelper`,
+`service/IntentUtils`) and `composeUiInService` (`service/IntentUtils`,
+`service/ReportSender`). Once they are gone, both lists hold only the entry points
+(activities, workers, receivers, the ContentProvider). The `object`s that are called
+with a `Context` from everywhere get their narrow dependencies once at startup
+(`install`, as `AccountStorage` does since step 5), and a Compose `Clipboard` becomes
+a plain copy function the composable passes in.
+
+Done so far: `ReportSender` takes a `copyToClipboard` function instead of a Compose
+`Clipboard`. Left: `SecureCryptoHelper`, `LocalPreferences`, `IntentUtils`.

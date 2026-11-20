@@ -20,6 +20,7 @@
  */
 package com.greenart7c3.nostrsigner.ui
 
+import android.content.ClipData
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -44,6 +45,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.ClipEntry
 import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
@@ -112,7 +114,7 @@ fun CrashReportScreen(
                 ReportSender(appContext, relayClient, appScope).send(
                     account = account,
                     report = editedStack,
-                    clipboard = clipboardManager,
+                    copyToClipboard = { clipboardManager.setClipEntry(ClipEntry(ClipData.newPlainText("", it))) },
                     anonymous = anonymous,
                     onDone = {
                         pendingReports.clearPendingCrashReport()

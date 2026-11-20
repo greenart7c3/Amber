@@ -354,7 +354,7 @@ import check that way, and seven more files went on the allow-list when the rule
 started counting calls. None is left: the `databaseInUi` allow-list is empty, so the
 rule now fails on any `ui/` file outside a ViewModel that touches the database.
 
-### 7. Keep `Context.amber` out of `ui/`
+### 7. Keep `Context.amber` out of `ui/` (done)
 
 `Context.amber` hands a composable the whole container. The `contextAmberUsers`
 allow-list in `ArchitectureTest.kt` lists every file that still reaches it; step 7
@@ -379,5 +379,7 @@ is part of `RelayClient`, and `onAddRelay` takes the saved relays as a lookup.
 `EventData`, `CrashReportScreen` and `TranslationReportScreen`: `LocalPendingReports`, a `PendingReports`
 (`data/`) that `Amber` holds as `AppPendingReports` instead of two fields of its own.
 `SettingsScreen`, `UpdateSettingsScreen` and `ApplicationsBackupScreen`: `SettingsStore.themeMode`,
-`LocalZapstoreUpdater`, and `BackupApplicationsWorker.schedule`/`cancel` (moved off `Amber`). Left:
-`MainScreen`.
+`LocalZapstoreUpdater`, and `BackupApplicationsWorker.schedule`/`cancel` (moved off `Amber`).
+`MainScreen`: the existing and new locals; `DisplayCrashMessages` takes the application context and
+the `PendingReports`. No `ui/` file is left on the allow-list: what remains there is the entry
+points and the three non-UI files above.

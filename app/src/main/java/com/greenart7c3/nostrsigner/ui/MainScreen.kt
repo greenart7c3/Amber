@@ -50,12 +50,12 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.LocalPreferences
-import com.greenart7c3.nostrsigner.amber
 import com.greenart7c3.nostrsigner.commonsui.Res
 import com.greenart7c3.nostrsigner.commonsui.allow
 import com.greenart7c3.nostrsigner.commonsui.deny
 import com.greenart7c3.nostrsigner.commonsui.notifications_are_needed_to_use_amber_as_a_nsec_bunker
 import com.greenart7c3.nostrsigner.commonsui.permission_needed
+import com.greenart7c3.nostrsigner.data.RelayClient
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.AmberBunkerRequest
 import com.greenart7c3.nostrsigner.models.IntentData
@@ -84,11 +84,12 @@ private fun ManagedActivityResultLauncher<String, Boolean>.tryLaunchPostNotifica
 
 private fun askNotificationPermission(
     context: Context,
+    relayClient: RelayClient,
     requestPermissionLauncher: ManagedActivityResultLauncher<String, Boolean>,
     onShouldShowRequestPermissionRationale: () -> Unit,
 ) {
     if (ContextCompat.checkSelfPermission(context, "android.permission.POST_NOTIFICATIONS") == PackageManager.PERMISSION_GRANTED) {
-        requestIgnoreBatteryOptimizations(context)
+        requestIgnoreBatteryOptimizations(context, relayClient)
         return
     }
 
@@ -110,9 +111,9 @@ private fun askNotificationPermission(
 }
 
 @SuppressLint("BatteryLife")
-fun requestIgnoreBatteryOptimizations(context: Context) {
+fun requestIgnoreBatteryOptimizations(context: Context, relayClient: RelayClient) {
     if (BuildFlavorChecker.isOfflineFlavor()) return
-    if (context.amber.client.connectedRelaysFlow().value.isEmpty()) return
+    if (relayClient.client.connectedRelaysFlow().value.isEmpty()) return
     val packageName = context.packageName
     val pm = context.getSystemService(PowerManager::class.java)
     if (!pm.isIgnoringBatteryOptimizations(packageName) && !LocalPreferences.getBatteryOptimization(context)) {
@@ -127,7 +128,7 @@ fun requestIgnoreBatteryOptimizations(context: Context) {
 @Composable
 private fun NotificationPermissionPrompt() {
     val context = LocalContext.current
-    val amber = context.amber
+    val relayClient = LocalRelayClient.current
     var showRationale by remember { mutableStateOf(false) }
     val requestPermissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
         if (!isGranted) {
@@ -135,14 +136,14 @@ private fun NotificationPermissionPrompt() {
                 LocalPreferences.updateShouldShowRationale(context, true)
             }
         } else {
-            amber.stats.updateNotification()
-            requestIgnoreBatteryOptimizations(context)
+            relayClient.stats.updateNotification()
+            requestIgnoreBatteryOptimizations(context, relayClient)
         }
     }
 
     if (!BuildFlavorChecker.isOfflineFlavor()) {
         LaunchedEffect(Unit) {
-            askNotificationPermission(context, requestPermissionLauncher, onShouldShowRequestPermissionRationale = { showRationale = true })
+            askNotificationPermission(context, relayClient, requestPermissionLauncher, onShouldShowRequestPermissionRationale = { showRationale = true })
         }
     }
 
@@ -194,7 +195,9 @@ fun MainScreen(
     ),
 ) {
     val appScope = LocalAppScope.current
-    val amber = LocalContext.current.amber
+    val appContext = LocalContext.current.applicationContext
+    val notificationSubscription = LocalNotificationSubscription.current
+    val pendingReports = LocalPendingReports.current
     val screenWidthDp = LocalConfiguration.current.screenWidthDp.dp
     val margin = screenWidthDp - screenWidthDp * 0.93f
     NotificationPermissionPrompt()
@@ -225,7 +228,7 @@ fun MainScreen(
                         onOpenFirstAccount = accountStateViewModel::openFirstImportedAccount,
                         onCreate = { setup, seedWords, name -> accountStateViewModel.newKey(setup.torMode, setup.proxyPort, setup.signPolicy, seedWords, name) },
                         onLogin = { keyPair, setup -> accountStateViewModel.startUI(keyPair, null, setup.torMode, setup.proxyPort, setup.signPolicy) },
-                        onSignedUp = { appScope.launch { amber.notificationSubscription.updateFilter() } },
+                        onSignedUp = { appScope.launch { notificationSubscription.updateFilter() } },
                     )
                     requestDestination(layout, account, requests, onRemoveIntentData, onLoading = { isLoading = it })
                     accountDestinations(layout, account, navController)
@@ -239,10 +242,10 @@ fun MainScreen(
                 val restorePrompt by accountStateViewModel.restorePrompt.collectAsState()
                 RestoreBackupDialog(restorePrompt, onAccept = accountStateViewModel::acceptRestore, onDismiss = accountStateViewModel::dismissRestore)
 
-                DisplayCrashMessages(amber, account, navController)
+                DisplayCrashMessages(appContext, pendingReports, account, navController)
 
                 LaunchedEffect(account) {
-                    amber.pendingReports.pendingTranslationReport.collect { message ->
+                    pendingReports.pendingTranslationReport.collect { message ->
                         if (message != null && navController.navController.currentDestination?.route != Route.TranslationReport.route) {
                             navController.navController.navigate(Route.TranslationReport.route)
                         }

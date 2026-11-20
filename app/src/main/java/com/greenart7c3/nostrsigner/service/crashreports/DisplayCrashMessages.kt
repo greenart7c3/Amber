@@ -20,9 +20,10 @@
  */
 package com.greenart7c3.nostrsigner.service.crashreports
 
+import android.content.Context
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import com.greenart7c3.nostrsigner.Amber
+import com.greenart7c3.nostrsigner.data.PendingReports
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.ui.NavHostControllerWrapper
 import com.greenart7c3.nostrsigner.ui.navigation.Route
@@ -31,24 +32,26 @@ import kotlinx.coroutines.withContext
 
 @Composable
 fun DisplayCrashMessages(
-    amber: Amber,
+    // The Application context: the crash report file and the exit records live under it.
+    appContext: Context,
+    pendingReports: PendingReports,
     account: Account,
     navController: NavHostControllerWrapper,
 ) {
     LaunchedEffect(account) {
         withContext(Dispatchers.IO) {
-            val exceptions = amber.crashReportCache.loadAndDelete()
+            val exceptions = CrashReportCache(appContext).loadAndDelete()
             // ANRs, low-memory kills and native crashes only appear in the exit records.
             // The startup detection may still be running: finish it first, or a dismiss
             // would clear records written after this read, unseen.
-            ExitReasons.detect(amber)
-            val exits = ExitReasons.pending(amber)
+            ExitReasons.detect(appContext)
+            val exits = ExitReasons.pending(appContext)
             val stack = listOfNotNull(exceptions, exits)
                 .filter { it.isNotBlank() }
                 .joinToString("\n\n")
                 .ifBlank { null }
             if (stack != null) {
-                amber.pendingReports.pendingCrashReport = stack
+                pendingReports.pendingCrashReport = stack
                 withContext(Dispatchers.Main) {
                     navController.navController.navigate(Route.CrashReport.route)
                 }

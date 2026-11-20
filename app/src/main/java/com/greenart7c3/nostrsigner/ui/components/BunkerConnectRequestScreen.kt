@@ -39,6 +39,7 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -72,7 +73,6 @@ import com.greenart7c3.nostrsigner.models.AmberBunkerRequest
 import com.greenart7c3.nostrsigner.service.TrustScoreService
 import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.DeleteAfterType
-import com.greenart7c3.nostrsigner.ui.LocalAccountRepository
 import com.greenart7c3.nostrsigner.ui.LocalSettingsStore
 import com.greenart7c3.nostrsigner.ui.RememberType
 import com.greenart7c3.nostrsigner.ui.SettingsRow
@@ -100,6 +100,8 @@ fun BunkerConnectRequestScreen(
     permissions: ImmutableList<Permission>?,
     onAccept: (List<Permission>?, Int, Boolean?, RememberType, Long, Account) -> Unit,
     onReject: (RememberType) -> Unit,
+    // The saved name of the connection a bunker:// secret belongs to, in the chosen account.
+    loadConnectionName: suspend (npub: String, secret: String) -> String? = { _, _ -> null },
 ) {
     val settingsStore = LocalSettingsStore.current
     val localPermissions = remember {
@@ -135,12 +137,13 @@ fun BunkerConnectRequestScreen(
     val trustScores = remember { mutableStateMapOf<String, Int?>() }
     val loadingScores = remember { mutableStateMapOf<String, Boolean>() }
     val appName = remember { mutableStateOf(bunkerRequest.name) }
-    val accountRepository = LocalAccountRepository.current
+    val loadName by rememberUpdatedState(loadConnectionName)
 
     LaunchedEffect(selectedAccountIndex) {
         val selectedAccount = accounts[selectedAccountIndex]
-        val name = withContext(Dispatchers.IO) {
-            bunkerRequest.name.ifBlank { sanitizeAppName(accountRepository.getDatabase(selectedAccount.npub).dao().getBySecret((bunkerRequest.request as BunkerRequestConnect).secret ?: "")?.application?.name ?: "").ifBlank { bunkerRequest.localKey.toShortenHex() } }
+        val secret = (bunkerRequest.request as BunkerRequestConnect).secret ?: ""
+        val name = bunkerRequest.name.ifBlank {
+            sanitizeAppName(loadName(selectedAccount.npub, secret) ?: "").ifBlank { bunkerRequest.localKey.toShortenHex() }
         }
         appName.value = name
     }

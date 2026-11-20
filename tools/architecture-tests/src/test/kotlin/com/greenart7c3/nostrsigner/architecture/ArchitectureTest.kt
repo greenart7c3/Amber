@@ -189,7 +189,6 @@ class ArchitectureTest {
         // were added when the rule started counting DAO calls; they were there before.
         val databaseInUi = setOf(
             "ui/components/AmberTopAppBar.kt",
-            "ui/components/BunkerConnectRequestScreen.kt",
             "ui/EditConfigurationScreen.kt",
             "ui/EditPermission.kt",
             "ui/NewNsecBunkerScreen.kt",

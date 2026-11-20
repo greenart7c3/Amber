@@ -68,7 +68,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.R
-import com.greenart7c3.nostrsigner.amber
 import com.greenart7c3.nostrsigner.commonsui.Res
 import com.greenart7c3.nostrsigner.commonsui.always
 import com.greenart7c3.nostrsigner.commonsui.amber_github_uri
@@ -156,18 +155,16 @@ fun SettingsScreen(
     modifier: Modifier = Modifier,
     settingsViewModel: SettingsViewModel = viewModel(
         key = "settings-${account.npub}",
-        factory = LocalContext.current.amber.let { amber ->
-            SettingsViewModel.factory(
-                appContext = amber,
-                settingsStore = LocalSettingsStore.current,
-                accountRepository = LocalAccountRepository.current,
-                relayClient = LocalRelayClient.current,
-                appScope = LocalAppScope.current,
-                npub = account.npub,
-                themeMode = amber.themeMode,
-                updater = amber.zapstoreUpdater,
-            )
-        },
+        factory = SettingsViewModel.factory(
+            appContext = LocalContext.current.applicationContext,
+            settingsStore = LocalSettingsStore.current,
+            accountRepository = LocalAccountRepository.current,
+            relayClient = LocalRelayClient.current,
+            appScope = LocalAppScope.current,
+            npub = account.npub,
+            themeMode = LocalSettingsStore.current.themeMode,
+            updater = LocalZapstoreUpdater.current,
+        ),
     ),
 ) {
     // Each visit: another screen may have changed Tor or reloaded the settings meanwhile.

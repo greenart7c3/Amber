@@ -377,6 +377,7 @@ Done so far: `FeedbackScreen` (the existing locals), `AccountBackupScreen` and
 is part of `RelayClient`, and `onAddRelay` takes the saved relays as a lookup.
 `ProfileSubscriptionEffect` and `LoginScreen`: `LocalProfileSubscription`, `LocalNotificationSubscription`.
 `EventData`, `CrashReportScreen` and `TranslationReportScreen`: `LocalPendingReports`, a `PendingReports`
-(`data/`) that `Amber` holds as `AppPendingReports` instead of two fields of its own. Left:
-the updater, theme and backup alarm (`SettingsScreen`,
-`UpdateSettingsScreen`, `ApplicationsBackupScreen`), then `MainScreen`.
+(`data/`) that `Amber` holds as `AppPendingReports` instead of two fields of its own.
+`SettingsScreen`, `UpdateSettingsScreen` and `ApplicationsBackupScreen`: `SettingsStore.themeMode`,
+`LocalZapstoreUpdater`, and `BackupApplicationsWorker.schedule`/`cancel` (moved off `Amber`). Left:
+`MainScreen`.

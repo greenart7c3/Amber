@@ -204,10 +204,7 @@ class ArchitectureTest {
             "service/UpdateCheckWorker.kt",
             "SignerActivity.kt",
             "SignerProvider.kt",
-            "ui/ApplicationsBackupScreen.kt",
             "ui/MainScreen.kt",
-            "ui/SettingsScreen.kt",
-            "ui/UpdateSettingsScreen.kt",
         )
 
         val composeUiInService = setOf(

@@ -9,6 +9,7 @@ import com.greenart7c3.nostrsigner.data.SettingsStore
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.AmberSettings
 import com.greenart7c3.nostrsigner.models.ProfileFetchInterval
+import com.greenart7c3.nostrsigner.models.ThemeMode
 import com.vitorpamplona.quartz.nip01Core.core.Event
 import com.vitorpamplona.quartz.nip01Core.core.toHexKey
 import com.vitorpamplona.quartz.nip01Core.crypto.KeyPair
@@ -43,6 +44,7 @@ import org.junit.Test
 class ProfileSubscriptionTest {
     private val settingsStore = object : SettingsStore {
         override var settings = AmberSettings()
+        override val themeMode = MutableStateFlow(ThemeMode.SYSTEM)
     }
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)

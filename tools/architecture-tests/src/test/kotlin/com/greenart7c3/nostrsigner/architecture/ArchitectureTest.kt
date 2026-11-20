@@ -183,7 +183,6 @@ class ArchitectureTest {
     private companion object {
         // May only shrink: see the class comment.
         val databaseInUi = setOf(
-            "ui/ActivitiesScreen.kt",
             "ui/EditConfigurationScreen.kt",
             "ui/EditPermission.kt",
             "ui/NewNsecBunkerScreen.kt",

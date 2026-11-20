@@ -57,7 +57,8 @@ interfaces from the CompositionLocals the two activities provide
 - The Android bunker flow (`BunkerRequestUtils` + `EventNotificationConsumer`)
   and the desktop one (`BunkerEngine`) implement the same permission and
   response logic twice.
-- `ui/` reaches Room DAOs directly in 9 files (4 left: step 6).
+- `ui/` reaches Room DAOs directly in 9 files (step 6: 3 that import Room types and
+  7 that only call DAOs are left).
 
 ## Target layering
 
@@ -331,6 +332,12 @@ what it shows, and delete the screen from the allow-list.
 Done so far: `IntentSingleEventHomeScreen`. `LoadedIntentApplication` keeps the
 saved app private and gives the screen its `name` and `remembered(key, relayUrl)`.
 `ActivityStatsCard`: `ActivityStatsViewModel` loads the counts once, when the card
-is first opened (`ActivityStatsViewModelTest`).
-Left: `ActivitiesScreen`, `EditConfigurationScreen`,
-`EditPermission`, `NewNsecBunkerScreen`.
+is first opened (`ActivityStatsViewModelTest`). `ActivitiesScreen` and the per-app
+`actions/ActivityScreen`: `ActivityViewModel` pages the history as `ActivityEntry` rows
+and looks up app names.
+Left: `EditConfigurationScreen`,
+`EditPermission`, `NewNsecBunkerScreen`. The import check misses DAO calls whose types
+Kotlin infers (`actions/ActivityScreen` was one): `EditRelaysDialog`, `LogoutButton`,
+`ApplicationsScreen`, `AmberTopAppBar`, `BunkerConnectRequestScreen`,
+`BunkerMultiEventHomeScreen` and `LogsScreen` call them too, so the rule should check
+those calls as well.

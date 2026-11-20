@@ -19,9 +19,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.paging.LoadState
-import androidx.paging.Pager
-import androidx.paging.PagingConfig
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.commonsui.localizedBlocking
@@ -30,6 +29,7 @@ import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.ui.ActivityFilter
 import com.greenart7c3.nostrsigner.ui.ActivityFilterRow
 import com.greenart7c3.nostrsigner.ui.ActivityRow
+import com.greenart7c3.nostrsigner.ui.ActivityViewModel
 import com.greenart7c3.nostrsigner.ui.LocalAccountRepository
 import com.greenart7c3.nostrsigner.ui.components.ActivityStatsCard
 import com.greenart7c3.nostrsigner.ui.components.SimpleSearchBar
@@ -41,29 +41,14 @@ fun ActivityScreen(
     topPadding: Dp,
     account: Account,
     key: String,
+    viewModel: ActivityViewModel = viewModel(factory = ActivityViewModel.factory(LocalAccountRepository.current)),
 ) {
-    val database = LocalAccountRepository.current.getHistoryDatabase(account.npub)
-
     val context = LocalContext.current
     var searchQuery by remember { mutableStateOf("") }
     var filter by rememberSaveable(account.npub, key) { mutableStateOf(ActivityFilter.ALL) }
 
-    val pager = remember(searchQuery, filter) {
-        Pager(
-            PagingConfig(
-                pageSize = 20,
-                enablePlaceholders = false,
-            ),
-        ) {
-            if (searchQuery.isEmpty()) {
-                database.dao().getAllHistoryPaging(key, filter.accepted)
-            } else {
-                database.dao().searchAllHistoryPaging(key, searchQuery.lowercase(), filter.accepted)
-            }
-        }
-    }
-
-    val lazyPagingItems = pager.flow.collectAsLazyPagingItems()
+    val history = remember(searchQuery, filter) { viewModel.history(account.npub, key, searchQuery, filter) }
+    val lazyPagingItems = history.collectAsLazyPagingItems()
 
     val textFieldState by remember { mutableStateOf(TextFieldState(initialText = searchQuery)) }
     val searchResults = remember(context) { supportedKindNumbers.map { it.localizedBlocking(true) } }

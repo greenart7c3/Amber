@@ -87,7 +87,7 @@ All three paths converge on `Account.sign()` / encrypt/decrypt methods backed by
 
 ### Global state — `Amber.kt`
 
-`Amber` is the Application class and acts as the DI container. There is no static accessor: it implements `SettingsStore`, `AccountRepository` and `RelayClient` (`data/`), which code takes through constructors or parameters; Android entry points read the container from their context (`Context.amber`) and composables from the CompositionLocals in `ui/AppDependencies.kt`. Key singletons it owns:
+`Amber` is the Application class and acts as the DI container. There is no static accessor: it implements `SettingsStore` and `RelayClient` and holds `accountDatabases`, the `AccountRepository` (`data/`), which code takes through constructors or parameters; Android entry points read the container from their context (`Context.amber`) and composables from the CompositionLocals in `ui/AppDependencies.kt`. Key singletons it owns:
 
 - `applicationIOScope` — `CoroutineScope(Dispatchers.IO + SupervisorJob() + exceptionHandler)`, used for all background work
 - `client: NostrClient` — the Quartz Nostr relay client

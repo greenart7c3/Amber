@@ -36,7 +36,7 @@ class EventNotificationConsumerSealResultTest {
             BunkerResponder(
                 amber,
                 amber,
-                amber,
+                amber.accountDatabases,
                 amber,
                 object : CoroutineScope {
                     override val coroutineContext get() = amber.applicationIOScope.coroutineContext
@@ -88,7 +88,7 @@ class EventNotificationConsumerSealResultTest {
         val consumer = EventNotificationConsumer(
             mockk(relaxed = true),
             settingsStore = amber,
-            accountRepository = amber,
+            accountRepository = amber.accountDatabases,
             scope = amber.applicationIOScope,
             notificationCache = amber.notificationCache,
             bunkerResponder = bunkerResponder,

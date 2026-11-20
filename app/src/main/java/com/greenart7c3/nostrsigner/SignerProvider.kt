@@ -42,7 +42,7 @@ class SignerProvider : ContentProvider() {
             return null
         }
         val amber = ctx.amber
-        return SignerProviderQuery(amber, amber, amber.applicationIOScope).query(
+        return SignerProviderQuery(amber, amber.accountDatabases, amber.applicationIOScope).query(
             context = ctx,
             requesterId = caller,
             callerPackageName = caller,

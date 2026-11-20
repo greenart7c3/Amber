@@ -30,7 +30,7 @@ class LogoutDeletesDatabasesTest {
     @Before
     fun setUp() {
         every { context.applicationContext } returns amber
-        AccountStorage.install(accountRepository = amber, appScope = CoroutineScope(Dispatchers.Unconfined))
+        AccountStorage.install(accountRepository = amber.accountDatabases, appScope = CoroutineScope(Dispatchers.Unconfined))
         mockkObject(LocalPreferences, AccountStorage, SavedAccounts, AccountPreferences, AmberLog)
         every { AmberLog.d(any(), any<String>()) } returns Unit
         every { AmberLog.d(any(), any(), any()) } returns Unit
@@ -43,7 +43,7 @@ class LogoutDeletesDatabasesTest {
         every { SavedAccounts.list(any()) } returns listOf("npub1other")
         every { SavedAccounts.current(any()) } returns "npub1other"
         every { context.deleteDatabase(any()) } returns true
-        every { amber.closeDatabasesFor(any()) } just runs
+        every { amber.accountDatabases.closeDatabasesFor(any()) } just runs
     }
 
     @After
@@ -56,7 +56,7 @@ class LogoutDeletesDatabasesTest {
         runBlocking { AccountStorage.logout(npub, context) }
 
         verifyOrder {
-            amber.closeDatabasesFor(npub)
+            amber.accountDatabases.closeDatabasesFor(npub)
             context.deleteDatabase("amber_db_$npub")
         }
         verify { context.deleteDatabase("log_db_$npub") }

@@ -53,8 +53,8 @@ class NotificationSinceClampTest {
         val db = mockk<AppDatabase>()
         every { db.dao() } returns dao
         val amber = mockk<Amber>(relaxed = true)
-        every { amber.getDatabase(any()) } returns db
-        every { amber.dao(any()) } answers { CachingApplicationDao(dao) }
+        every { amber.accountDatabases.getDatabase(any()) } returns db
+        every { amber.accountDatabases.dao(any()) } answers { CachingApplicationDao(dao) }
         val cache = LruCache<String, Long>(512)
         every { amber.notificationCache } returns cache
         mockkObject(LocalPreferences, AccountStorage)
@@ -68,7 +68,7 @@ class NotificationSinceClampTest {
         val before = TimeUtils.now()
         cache.put("legit", before - 30)
         cache.put("attacker", before + 300)
-        NotificationSubscription(client, mockk(relaxed = true), settingsStore = amber, accountRepository = amber, bunkerResponder = mockk(relaxed = true), scope = amber.applicationIOScope, notificationCache = cache).updateFilter()
+        NotificationSubscription(client, mockk(relaxed = true), settingsStore = amber, accountRepository = amber.accountDatabases, bunkerResponder = mockk(relaxed = true), scope = amber.applicationIOScope, notificationCache = cache).updateFilter()
         val after = TimeUtils.now()
 
         val sinces = captured.flatMap { subs -> subs.values.flatten().mapNotNull { it.since } }

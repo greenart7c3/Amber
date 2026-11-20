@@ -165,11 +165,11 @@ class ConnectivityService : Service() {
         HttpClientManager.setDefaultUserAgent("Amber/${BuildConfig.VERSION_NAME}")
 
         SavedAccounts.all(this).forEach {
-            amber.databases[it.npub] = amber.getDatabase(it.npub)
+            amber.accountDatabases.getDatabase(it.npub)
             amber.applicationIOScope.launch {
                 // Cached dao so the write invalidates CachingApplicationDao's getAll
                 // entry for this account (the service can restart in a live process).
-                val dao = amber.dao(it.npub)
+                val dao = amber.accountDatabases.dao(it.npub)
                 dao.getAllNotConnected().forEach { app ->
                     if (app.application.secret.isNotEmpty() && app.application.secret != app.application.key) {
                         app.application.isConnected = true

@@ -38,16 +38,9 @@ import com.greenart7c3.nostrsigner.commonsui.Res
 import com.greenart7c3.nostrsigner.commonsui.getStringBlocking
 import com.greenart7c3.nostrsigner.commonsui.network_permission_message
 import com.greenart7c3.nostrsigner.commonsui.warning
-import com.greenart7c3.nostrsigner.data.AccountRepository
 import com.greenart7c3.nostrsigner.data.RelayClient
 import com.greenart7c3.nostrsigner.data.SettingsStore
-import com.greenart7c3.nostrsigner.database.AppDatabase
-import com.greenart7c3.nostrsigner.database.ApplicationDao
-import com.greenart7c3.nostrsigner.database.CachingApplicationDao
-import com.greenart7c3.nostrsigner.database.HistoryDatabase
-import com.greenart7c3.nostrsigner.database.LogDatabase
-import com.greenart7c3.nostrsigner.database.LogRetentionManager
-import com.greenart7c3.nostrsigner.models.Account
+import com.greenart7c3.nostrsigner.database.AccountDatabases
 import com.greenart7c3.nostrsigner.models.AmberSettings
 import com.greenart7c3.nostrsigner.models.TimeUtils as AmberTimeUtils
 import com.greenart7c3.nostrsigner.models.TorMode
@@ -56,7 +49,6 @@ import com.greenart7c3.nostrsigner.okhttp.HttpClientManager
 import com.greenart7c3.nostrsigner.okhttp.OkHttpWebSocket
 import com.greenart7c3.nostrsigner.relays.AmberRelayStats
 import com.greenart7c3.nostrsigner.relays.NostrClientLoggerListener
-import com.greenart7c3.nostrsigner.service.ApplicationNameCache
 import com.greenart7c3.nostrsigner.service.BunkerResponder
 import com.greenart7c3.nostrsigner.service.ClearLogsWorker
 import com.greenart7c3.nostrsigner.service.ConnectivityService
@@ -78,11 +70,9 @@ import com.greenart7c3.nostrsigner.ui.ToastManager
 import com.vitorpamplona.quartz.nip01Core.relay.client.NostrClient
 import com.vitorpamplona.quartz.nip01Core.relay.client.auth.RelayAuthenticator
 import com.vitorpamplona.quartz.nip01Core.relay.client.stats.RelayStats
-import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
 import java.lang.ref.WeakReference
 import java.net.InetSocketAddress
 import java.net.Socket
-import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Duration.Companion.seconds
@@ -104,7 +94,6 @@ class Amber :
     LifecycleObserver,
     SingletonImageLoader.Factory,
     SettingsStore,
-    AccountRepository,
     RelayClient {
     private var mainActivityRef: WeakReference<AppCompatActivity?>? = null
     val crashReportCache: CrashReportCache by lazy { CrashReportCache(this.applicationContext) }
@@ -128,12 +117,15 @@ class Amber :
 
     val applicationIOScope = CoroutineScope(Dispatchers.IO + SupervisorJob() + exceptionHandler)
 
+    // Above the init blocks below: they hand it on as the AccountRepository.
+    val accountDatabases = AccountDatabases(this, this, applicationIOScope)
+
     // At construction, not onCreate: ContentProviders are created before onCreate runs.
     init {
-        AccountStorage.install(accountRepository = this, appScope = applicationIOScope)
-        SecureCryptoHelper.install(this, this)
-        LocalPreferences.install(this, this)
-        IntentUtils.install(this, applicationIOScope) { getMainActivity() }
+        AccountStorage.install(accountRepository = accountDatabases, appScope = applicationIOScope)
+        SecureCryptoHelper.install(this, accountDatabases)
+        LocalPreferences.install(this, accountDatabases)
+        IntentUtils.install(accountDatabases, applicationIOScope) { getMainActivity() }
     }
 
     override var settings: AmberSettings = AmberSettings()
@@ -182,7 +174,7 @@ class Amber :
 
     // logs and stat counts.
     init {
-        client.addConnectionListener(NostrClientLoggerListener(this, stats, applicationIOScope, settingsStore = this, relayClient = this, accountRepository = this))
+        client.addConnectionListener(NostrClientLoggerListener(this, stats, applicationIOScope, settingsStore = this, relayClient = this, accountRepository = accountDatabases))
     }
 
     // Authenticates with relays; it registers itself with the client.
@@ -199,12 +191,12 @@ class Amber :
     }
 
     // The local WebSocket relay for bunker connections (opt in under Settings -> Relays).
-    val localBunkerRelay by lazy { LocalBunkerRelayServer(this, this, this, this) }
+    val localBunkerRelay by lazy { LocalBunkerRelayServer(this, this, accountDatabases, this) }
 
     // Answers bunker requests; stateless, shared by the NIP-46 consumer and the approval screens.
-    val bunkerResponder by lazy { BunkerResponder(this, this, this, this, applicationIOScope, localBunkerRelay) { getMainActivity() } }
+    val bunkerResponder by lazy { BunkerResponder(this, this, accountDatabases, this, applicationIOScope, localBunkerRelay) { getMainActivity() } }
 
-    val notificationSubscription = NotificationSubscription(client, this, settingsStore = this, accountRepository = this, bunkerResponder = bunkerResponder, scope = applicationIOScope, notificationCache = notificationCache)
+    val notificationSubscription = NotificationSubscription(client, this, settingsStore = this, accountRepository = accountDatabases, bunkerResponder = bunkerResponder, scope = applicationIOScope, notificationCache = notificationCache)
 
     // Per-account profile metadata fetch, started/stopped by the composables that display
     // each account (see ProfileSubscriptionEffect) rather than app-wide.
@@ -215,11 +207,6 @@ class Amber :
     } else {
         null
     }
-
-    var databases = ConcurrentHashMap<String, AppDatabase>()
-    private var logDatabases = ConcurrentHashMap<String, LogDatabase>()
-    private var historyDatabases = ConcurrentHashMap<String, HistoryDatabase>()
-    private val cachingDaos = ConcurrentHashMap<String, CachingApplicationDao>()
 
     // Hoisted out of runMigrations() so re-entry (e.g. test re-init) can't
     // double-register and double-fire foreground/background callbacks.
@@ -251,8 +238,6 @@ class Amber :
     val isOnWifiDataState = mutableStateOf(false)
     val isOnVpnState = mutableStateOf(false)
     val isOnOfflineState = mutableStateOf(false)
-
-    override val keystoreFailedAccounts = MutableStateFlow<List<String>>(emptyList())
 
     @Volatile override var intentionalDisconnectTime = 0L
 
@@ -655,58 +640,6 @@ class Amber :
         // Re-adds relays the dead list had dropped from the subscriptions.
         checkForNewRelaysAndUpdateAllFilters()
         stats.updateNotification()
-    }
-
-    // computeIfAbsent (not check-then-put): AppDatabase.getDatabase builds a
-    // fresh RoomDatabase every call, so a racing second caller would build a
-    // duplicate that loses the put() and leaks its SQLiteConnection (caught by
-    // StrictMode's CloseGuard on finalize).
-    override fun getDatabase(npub: String): AppDatabase = databases.computeIfAbsent(npub) {
-        AppDatabase.getDatabase(applicationContext, npub)
-    }
-
-    /**
-     * Returns the per-account permission DAO with read-through caching. All hot-path
-     * permission lookups should go through this; writes routed through it also
-     * invalidate the cache.
-     */
-    override fun dao(npub: String): ApplicationDao {
-        cachingDaos[npub]?.let { return it }
-        return cachingDaos.computeIfAbsent(npub) {
-            CachingApplicationDao(getDatabase(npub).dao())
-        }
-    }
-
-    override fun getLogDatabase(npub: String): LogDatabase = logDatabases.computeIfAbsent(npub) {
-        LogDatabase.getDatabase(applicationContext, npub, this).also { LogRetentionManager.watch(this, applicationIOScope, npub, it) }
-    }
-
-    override fun getHistoryDatabase(npub: String): HistoryDatabase = historyDatabases.computeIfAbsent(npub) {
-        HistoryDatabase.getDatabase(applicationContext, npub, this, this).also { LogRetentionManager.watch(this, applicationIOScope, npub, it) }
-    }
-
-    /**
-     * Closes and evicts every cached Room handle for [npub] so file locks and
-     * worker threads are released. Called from the logout path; without it each
-     * removed account leaks 3 open Room connections forever.
-     */
-    override fun closeDatabasesFor(npub: String) {
-        databases.remove(npub)?.runCatching { close() }
-        logDatabases.remove(npub)?.runCatching { close() }
-        historyDatabases.remove(npub)?.runCatching { close() }
-        cachingDaos.remove(npub)
-        ApplicationNameCache.clearForAccount(npub)
-    }
-
-    override fun getSavedRelays(account: Account): Set<NormalizedRelayUrl> {
-        val database = getDatabase(account.npub)
-        val savedRelays = buildSet {
-            database.dao().getAllRelayLists().forEach {
-                addAll(it.relays)
-            }
-        }
-
-        return savedRelays
     }
 
     override suspend fun checkForNewRelaysAndUpdateAllFilters(shouldReconnect: Boolean) {

@@ -2,8 +2,8 @@ package com.greenart7c3.nostrsigner.service
 
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
-import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.common.SignerType
+import com.greenart7c3.nostrsigner.data.AccountRepository
 import com.greenart7c3.nostrsigner.database.ApplicationDao
 import com.greenart7c3.nostrsigner.models.CompressionType
 import com.greenart7c3.nostrsigner.models.IntentData
@@ -32,7 +32,7 @@ import org.junit.Test
 class IntentRejectionTest {
     private val activity = mockk<AppCompatActivity>(relaxed = true)
     private val dao = mockk<ApplicationDao>(relaxed = true) { coEvery { getByKey(any()) } returns null }
-    private val amber = mockk<Amber>(relaxed = true) {
+    private val accounts = mockk<AccountRepository>(relaxed = true) {
         every { dao(any()) } returns dao
         every { getDatabase(any()).dao() } returns dao
     }
@@ -55,7 +55,7 @@ class IntentRejectionTest {
 
     @Before
     fun setUp() {
-        IntentUtils.install(amber, CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)) { activity }
+        IntentUtils.install(accounts, CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)) { activity }
         // The rejection result is an Intent; the JVM test stubs do not implement putExtra.
         mockkConstructor(Intent::class)
         every { anyConstructed<Intent>().putExtra(any<String>(), any<Boolean>()) } answers { self as Intent }
@@ -93,7 +93,7 @@ class IntentRejectionTest {
 
         verify(timeout = 5_000) { activity.finishAndRemoveTask() }
         assertEquals(listOf(IntentResultType.REMOVE), awaitRemoved(removed))
-        verify(exactly = 0) { amber.getDatabase(any()) }
+        verify(exactly = 0) { accounts.getDatabase(any()) }
         coVerify(exactly = 0) { dao.insertApplicationWithPermissions(any()) }
     }
 

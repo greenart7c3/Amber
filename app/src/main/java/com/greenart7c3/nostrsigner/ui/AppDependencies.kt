@@ -43,7 +43,7 @@ val LocalAppScope = staticCompositionLocalOf<CoroutineScope> { error("No app sco
 
 fun appDependencies(amber: Amber): Array<ProvidedValue<*>> = arrayOf(
     LocalSettingsStore provides amber,
-    LocalAccountRepository provides amber,
+    LocalAccountRepository provides amber.accountDatabases,
     LocalRelayClient provides amber,
     LocalAppScope provides amber.applicationIOScope,
     LocalBunkerResponder provides amber.bunkerResponder,

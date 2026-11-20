@@ -565,7 +565,7 @@ class EventNotificationConsumer(
 
     private suspend fun getPublicKey(a: Admitted) {
         val dao = accountRepository.dao(a.acc.npub)
-        val accepted = IntentUtils.isRemembered(dao.getSignPolicy(a.event.pubKey), dao.getPermission(a.event.pubKey, "GET_PUBLIC_KEY"))
+        val accepted = isRemembered(dao.getSignPolicy(a.event.pubKey), dao.getPermission(a.event.pubKey, "GET_PUBLIC_KEY"))
         if (accepted == null) {
             askUser(a)
             return

@@ -40,8 +40,6 @@
     <ID>CompositionLocalAllowlist:Theme.kt:private val LocalAmoledTheme = staticCompositionLocalOf { false }</ID>
     <ID>CompositionLocalAllowlist:Theme.kt:private val LocalDarkTheme = staticCompositionLocalOf { false }</ID>
     <ID>CyclomaticComplexMethod:AmberTopAppBar.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun AmberTopAppBar</ID>
-    <ID>CyclomaticComplexMethod:AmberUtils.kt:AmberUtils$fun acceptPermission</ID>
-    <ID>CyclomaticComplexMethod:AmberUtils.kt:AmberUtils$fun updatePermission</ID>
     <ID>CyclomaticComplexMethod:BunkerConnectRequestScreen.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun BunkerConnectRequestScreen</ID>
     <ID>CyclomaticComplexMethod:CloudBackupScreen.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun CloudBackupScreen</ID>
     <ID>CyclomaticComplexMethod:EditPermission.kt:@Composable fun PermissionRow</ID>
@@ -310,7 +308,6 @@
     <ID>TooManyFunctions:ApplicationDao.kt:ApplicationDao</ID>
     <ID>TooManyFunctions:CachingApplicationDao.kt:CachingApplicationDao : ApplicationDao</ID>
     <ID>TooManyFunctions:HistoryDao.kt:HistoryDao</ID>
-    <ID>TooManyFunctions:IntentUtils.kt:IntentUtils</ID>
     <ID>TooManyFunctions:LocalPreferences.kt:LocalPreferences</ID>
     <ID>TooManyFunctions:LogDao.kt:LogDao</ID>
     <ID>ViewModelForwarding:AccountScreen.kt:MainLoginPage(accountStateViewModel, NavHostControllerWrapper(newNavController))</ID>

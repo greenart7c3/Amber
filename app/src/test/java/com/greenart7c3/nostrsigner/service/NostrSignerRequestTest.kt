@@ -90,7 +90,7 @@ class NostrSignerRequestTest {
         assertEquals(CompressionType.GZIP, request.compression)
         assertEquals(ReturnType.EVENT, request.returnType)
         assertEquals("App", request.appName)
-        assertEquals(IntentUtils.parsePubKey(pubKey), request.currentUser)
+        assertEquals(parsePubKey(pubKey), request.currentUser)
         assertEquals(7, request.nip44v3Kind)
         assertEquals("s", request.nip44v3Scope)
         assertNull(request.permissions)

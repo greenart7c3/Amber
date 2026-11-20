@@ -1,6 +1,7 @@
 package com.greenart7c3.nostrsigner.service
 
 import com.greenart7c3.nostrsigner.common.SignerType
+import com.greenart7c3.nostrsigner.common.rememberedDecision
 import com.greenart7c3.nostrsigner.commonsui.kindToNip
 import com.greenart7c3.nostrsigner.database.ApplicationPermissionsEntity
 import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
@@ -8,6 +9,7 @@ import com.greenart7c3.nostrsigner.database.isAllRelaysGrant
 import com.greenart7c3.nostrsigner.models.EncryptedDataKind
 import com.greenart7c3.nostrsigner.models.IntentData
 import com.greenart7c3.nostrsigner.models.toPermissionType
+import com.vitorpamplona.quartz.utils.TimeUtils
 
 /**
  * The saved grant of the app [key] that answers [intentData] on the single-request
@@ -61,3 +63,6 @@ internal fun eventGrant(grants: List<ApplicationPermissionsEntity>, type: String
 }
 
 internal const val RELAY_AUTH_KIND = 22242
+
+/** Whether [permission] decides a request without asking under [signPolicy]: true accept, false reject, null ask. */
+fun isRemembered(signPolicy: Int?, permission: ApplicationPermissionsEntity?): Boolean? = rememberedDecision(signPolicy, permission?.activeDecision(TimeUtils.now()))

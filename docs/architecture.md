@@ -218,8 +218,10 @@ validation; `IntentUtils.buildIntentData` is the one place that signs or
 encrypts and builds the `IntentData`. On the response side,
 `service/IntentResponse.kt` decides what the history stores (never a
 plaintext) and what a callback URL receives, and `sendResult` only saves and
-delivers. Left: `IntentUtils` as a whole (`LargeClass`, `TooManyFunctions`)
-and `sendResult`'s parameter list, which every approval screen passes.
+delivers. How a request is read (`decodeData`, `isUrlEncoded`, `parsePubKey`,
+`isWebRequest`, `isBrowserReferrer`) is `service/IntentParsing.kt`, and `isRemembered` sits
+with the grant lookups in `IntentPermissionLookup.kt`, so `IntentUtils` keeps the
+queue, the request building and the replies. Left: `sendResult`'s parameter list.
 
 ### 3. Replace `Amber.instance` with constructor injection (done)
 

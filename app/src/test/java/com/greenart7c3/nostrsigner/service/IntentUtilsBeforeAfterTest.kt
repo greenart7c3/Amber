@@ -31,7 +31,7 @@ class IntentUtilsBeforeAfterTest {
         repeat(5_000) {
             @Suppress("RegExpRedundantEscape")
             Regex("%[0-9a-fA-F]{2}").containsMatchIn(input)
-            IntentUtils.isUrlEncoded(input)
+            isUrlEncoded(input)
         }
 
         val beforeNs = measureNanoTime {
@@ -45,7 +45,7 @@ class IntentUtilsBeforeAfterTest {
         val afterNs = measureNanoTime {
             repeat(iterations) {
                 // NEW: uses the cached URL_ENCODED_REGEX compiled at object init
-                IntentUtils.isUrlEncoded(input)
+                isUrlEncoded(input)
             }
         }
 
@@ -60,7 +60,7 @@ class IntentUtilsBeforeAfterTest {
         repeat(5_000) {
             @Suppress("RegExpRedundantEscape")
             Regex("%[0-9a-fA-F]{2}").containsMatchIn(input)
-            IntentUtils.isUrlEncoded(input)
+            isUrlEncoded(input)
         }
 
         val beforeNs = measureNanoTime {
@@ -72,7 +72,7 @@ class IntentUtilsBeforeAfterTest {
 
         val afterNs = measureNanoTime {
             repeat(iterations) {
-                IntentUtils.isUrlEncoded(input)
+                isUrlEncoded(input)
             }
         }
 
@@ -87,7 +87,7 @@ class IntentUtilsBeforeAfterTest {
         repeat(2_000) {
             @Suppress("RegExpRedundantEscape")
             Regex("%[0-9a-fA-F]{2}").containsMatchIn(input)
-            IntentUtils.isUrlEncoded(input)
+            isUrlEncoded(input)
         }
 
         val beforeNs = measureNanoTime {
@@ -99,7 +99,7 @@ class IntentUtilsBeforeAfterTest {
 
         val afterNs = measureNanoTime {
             repeat(iterations) {
-                IntentUtils.isUrlEncoded(input)
+                isUrlEncoded(input)
             }
         }
 
@@ -310,12 +310,12 @@ class IntentUtilsBeforeAfterTest {
         val iterations = 500_000
 
         repeat(10_000) {
-            IntentUtils.isRemembered(2, null)
+            isRemembered(2, null)
         }
 
         // Both before and after are identical; just confirm timing didn't regress
-        val run1 = measureNanoTime { repeat(iterations) { IntentUtils.isRemembered(2, null) } }
-        val run2 = measureNanoTime { repeat(iterations) { IntentUtils.isRemembered(2, null) } }
+        val run1 = measureNanoTime { repeat(iterations) { isRemembered(2, null) } }
+        val run2 = measureNanoTime { repeat(iterations) { isRemembered(2, null) } }
 
         printComparison("isRemembered signPolicy=2 (regression check, run1 vs run2)", iterations, run1, run2)
     }
@@ -334,10 +334,10 @@ class IntentUtilsBeforeAfterTest {
         )
         val iterations = 500_000
 
-        repeat(10_000) { IntentUtils.isRemembered(null, permission) }
+        repeat(10_000) { isRemembered(null, permission) }
 
-        val run1 = measureNanoTime { repeat(iterations) { IntentUtils.isRemembered(null, permission) } }
-        val run2 = measureNanoTime { repeat(iterations) { IntentUtils.isRemembered(null, permission) } }
+        val run1 = measureNanoTime { repeat(iterations) { isRemembered(null, permission) } }
+        val run2 = measureNanoTime { repeat(iterations) { isRemembered(null, permission) } }
 
         printComparison("isRemembered future acceptUntil (regression check)", iterations, run1, run2)
     }

@@ -371,8 +371,9 @@ receivers, the ContentProvider), which keep `Context.amber`, and the non-UI
 `LocalPreferences`, `SecureCryptoHelper` and `service/IntentUtils`.
 
 Done so far: `FeedbackScreen` (the existing locals), `AccountBackupScreen` and
-`ApplicationsScreen` (the application context). Left: the bunker responder
-(`BunkerSingleEventHomeScreen`, `BunkerMultiEventHomeScreen`), the local bunker
+`ApplicationsScreen` (the application context). `BunkerSingleEventHomeScreen` and
+`BunkerMultiEventHomeScreen`: `LocalBunkerResponder`. Left:
+the local bunker
 relay (`NewNsecBunkerScreen`, `RelaysScreen`), relay status (`AmberTopAppBar`,
 `EditRelaysDialog`), the subscriptions (`ProfileSubscriptionEffect`, `LoginScreen`),
 the pending crash and translation reports (`EventData`, `CrashReportScreen`,

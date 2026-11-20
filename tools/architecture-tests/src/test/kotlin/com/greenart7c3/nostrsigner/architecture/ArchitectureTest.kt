@@ -207,8 +207,6 @@ class ArchitectureTest {
             "ui/actions/EditRelaysDialog.kt",
             "ui/ApplicationsBackupScreen.kt",
             "ui/components/AmberTopAppBar.kt",
-            "ui/components/BunkerMultiEventHomeScreen.kt",
-            "ui/components/BunkerSingleEventHomeScreen.kt",
             "ui/components/EventData.kt",
             "ui/components/ProfileSubscriptionEffect.kt",
             "ui/CrashReportScreen.kt",

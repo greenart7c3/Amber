@@ -28,7 +28,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.SavedAccounts
-import com.greenart7c3.nostrsigner.amber
 import com.greenart7c3.nostrsigner.common.SignerType
 import com.greenart7c3.nostrsigner.common.nip44v3Kind
 import com.greenart7c3.nostrsigner.common.nip44v3Scope
@@ -53,6 +52,7 @@ import com.greenart7c3.nostrsigner.service.relayAuthRememberType
 import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.LocalAccountRepository
 import com.greenart7c3.nostrsigner.ui.LocalAppScope
+import com.greenart7c3.nostrsigner.ui.LocalBunkerResponder
 import com.greenart7c3.nostrsigner.ui.LocalSettingsStore
 import com.greenart7c3.nostrsigner.ui.RememberType
 import com.greenart7c3.nostrsigner.ui.theme.amoledBorder
@@ -91,7 +91,7 @@ fun BunkerSingleEventHomeScreen(
         key = "bunker-single-${account.npub}-${bunkerRequest.queueKey}",
         factory = BunkerSingleEventViewModel.factory(
             accountRepository = LocalAccountRepository.current,
-            bunkerResponder = LocalContext.current.amber.bunkerResponder,
+            bunkerResponder = LocalBunkerResponder.current,
             appScope = LocalAppScope.current,
         ),
     ),
@@ -99,7 +99,7 @@ fun BunkerSingleEventHomeScreen(
     LaunchedEffect(bunkerRequest, account.npub) { viewModel.load(bunkerRequest, account.npub) }
     val loaded by viewModel.loaded.collectAsStateWithLifecycle()
     val replacePrompt by viewModel.replacePrompt.collectAsStateWithLifecycle()
-    val responder = LocalContext.current.amber.bunkerResponder
+    val responder = LocalBunkerResponder.current
     // Only what was loaded for this very request: another one under the same key may have other grants.
     val request = BunkerSingleRequest(bunkerRequest, account, loaded?.takeIf { it.request === bunkerRequest }?.application)
 

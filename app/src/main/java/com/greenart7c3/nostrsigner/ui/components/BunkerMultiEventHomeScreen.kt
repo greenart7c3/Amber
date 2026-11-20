@@ -30,7 +30,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.greenart7c3.nostrsigner.amber
 import com.greenart7c3.nostrsigner.common.EncryptionType
 import com.greenart7c3.nostrsigner.common.SignerType
 import com.greenart7c3.nostrsigner.common.nip46SignerType
@@ -67,6 +66,7 @@ import com.greenart7c3.nostrsigner.service.model.AmberEvent
 import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.LocalAccountRepository
 import com.greenart7c3.nostrsigner.ui.LocalAppScope
+import com.greenart7c3.nostrsigner.ui.LocalBunkerResponder
 import com.greenart7c3.nostrsigner.ui.LocalRelayClient
 import com.greenart7c3.nostrsigner.ui.LocalSettingsStore
 import com.greenart7c3.nostrsigner.ui.theme.AmberPreview
@@ -105,7 +105,7 @@ fun BunkerMultiEventHomeScreen(
             settingsStore = LocalSettingsStore.current,
             accountRepository = LocalAccountRepository.current,
             relayClient = LocalRelayClient.current,
-            bunkerResponder = LocalContext.current.amber.bunkerResponder,
+            bunkerResponder = LocalBunkerResponder.current,
             appScope = LocalAppScope.current,
             account = accountParam,
         ),

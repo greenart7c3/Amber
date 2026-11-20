@@ -2,6 +2,11 @@ package com.greenart7c3.nostrsigner.service
 
 import android.content.Context
 import androidx.work.CoroutineWorker
+import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.ExistingWorkPolicy
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.AmberLog
@@ -10,6 +15,7 @@ import com.greenart7c3.nostrsigner.amber
 import com.greenart7c3.nostrsigner.database.LogEntity
 import com.greenart7c3.nostrsigner.database.LogRetentionManager
 import com.vitorpamplona.quartz.utils.TimeUtils
+import java.util.concurrent.TimeUnit
 import kotlin.coroutines.cancellation.CancellationException
 
 private const val THREE_DAYS_MILLIS = 3 * 24 * 60 * 60 * 1000L
@@ -51,5 +57,22 @@ class ClearLogsWorker(appContext: Context, workerParams: WorkerParameters) : Cor
             }
         }
         return Result.success()
+    }
+
+    companion object {
+        /** Cleans up once now and then every day; KEEP leaves a run or schedule that already exists alone. */
+        fun schedule(context: Context) {
+            val workManager = WorkManager.getInstance(context)
+            workManager.enqueueUniqueWork(
+                "ClearLogsWorkerOneTime",
+                ExistingWorkPolicy.KEEP,
+                OneTimeWorkRequestBuilder<ClearLogsWorker>().addTag("clearLogsWorkOneTime").build(),
+            )
+            workManager.enqueueUniquePeriodicWork(
+                "ClearLogsWorker",
+                ExistingPeriodicWorkPolicy.KEEP,
+                PeriodicWorkRequestBuilder<ClearLogsWorker>(24, TimeUnit.HOURS).addTag("clearLogsWork").build(),
+            )
+        }
     }
 }

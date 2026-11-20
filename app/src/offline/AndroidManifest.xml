@@ -30,7 +30,7 @@
             android:exported="true" />
 
         <!-- WorkManager is dead code in the offline flavor: every WorkManager enqueue is
-             flavor-guarded and ConnectivityService (the only startCleanLogsAlarm caller)
+             flavor-guarded and ConnectivityService (the only ClearLogsWorker.schedule caller)
              never runs here. Its auto-initialization must not run either: for any persisted
              network-constrained work (e.g. state left by an installed free flavor), WorkManager
              tracks it via ConnectivityManager.registerDefaultNetworkCallback, which throws

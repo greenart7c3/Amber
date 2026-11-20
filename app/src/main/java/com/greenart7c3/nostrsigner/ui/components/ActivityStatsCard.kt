@@ -23,10 +23,10 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -37,52 +37,37 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.greenart7c3.nostrsigner.commonsui.Res
 import com.greenart7c3.nostrsigner.commonsui.filter_accepted
 import com.greenart7c3.nostrsigner.commonsui.filter_rejected
-import com.greenart7c3.nostrsigner.commonsui.last_24_hours
-import com.greenart7c3.nostrsigner.commonsui.last_30_days
-import com.greenart7c3.nostrsigner.commonsui.last_7_days
 import com.greenart7c3.nostrsigner.commonsui.statistics
-import com.greenart7c3.nostrsigner.database.HistoryDao
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.ui.LocalAccountRepository
 import com.greenart7c3.nostrsigner.ui.theme.amoledBorder
-import com.vitorpamplona.quartz.utils.TimeUtils
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
-import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 
 private val AcceptedColor = Color(0xFF1D8802)
 private val RejectedColor = Color(0xFFFF6B00)
-
-private data class WindowStats(
-    val labelRes: StringResource,
-    val accepted: Long,
-    val rejected: Long,
-) {
-    val total: Long get() = accepted + rejected
-}
 
 @Composable
 fun ActivityStatsCard(
     account: Account,
     modifier: Modifier = Modifier,
     pkKey: String? = null,
+    viewModel: ActivityStatsViewModel = viewModel(
+        key = "activity-stats-${account.npub}-$pkKey",
+        factory = ActivityStatsViewModel.factory(LocalAccountRepository.current),
+    ),
 ) {
-    val accountRepository = LocalAccountRepository.current
-    val dao = remember(account.npub) {
-        accountRepository.getHistoryDatabase(account.npub).dao()
-    }
     var expanded by rememberSaveable(account.npub, pkKey) { mutableStateOf(false) }
-    var stats by remember(account.npub, pkKey) { mutableStateOf<List<WindowStats>?>(null) }
+    val stats by viewModel.stats.collectAsStateWithLifecycle()
 
     LaunchedEffect(account.npub, pkKey, expanded) {
-        if (expanded && stats == null) {
-            stats = withContext(Dispatchers.IO) { loadStats(dao, pkKey) }
-        }
+        if (expanded) viewModel.load(account.npub, pkKey)
     }
+    DisposableEffect(viewModel) { onDispose { viewModel.forget() } }
 
     val chevronRotation by animateFloatAsState(
         targetValue = if (expanded) 180f else 0f,
@@ -235,23 +220,5 @@ private fun ActivityStatsBar(stats: WindowStats, maxTotal: Long) {
                 fontWeight = FontWeight.Medium,
             )
         }
-    }
-}
-
-private suspend fun loadStats(dao: HistoryDao, pkKey: String?): List<WindowStats> {
-    val now = TimeUtils.now()
-    val day = 24L * 60 * 60
-    val windows = listOf(
-        Res.string.last_24_hours to day,
-        Res.string.last_7_days to 7 * day,
-        Res.string.last_30_days to 30 * day,
-    )
-    return windows.map { (labelRes, windowSeconds) ->
-        val since = now - windowSeconds
-        WindowStats(
-            labelRes = labelRes,
-            accepted = if (pkKey == null) dao.countAcceptedSince(since) else dao.countAcceptedSince(pkKey, since),
-            rejected = if (pkKey == null) dao.countRejectedSince(since) else dao.countRejectedSince(pkKey, since),
-        )
     }
 }

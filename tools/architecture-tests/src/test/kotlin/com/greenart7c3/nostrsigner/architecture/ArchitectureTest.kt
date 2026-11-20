@@ -184,7 +184,6 @@ class ArchitectureTest {
         // May only shrink: see the class comment.
         val databaseInUi = setOf(
             "ui/ActivitiesScreen.kt",
-            "ui/components/ActivityStatsCard.kt",
             "ui/EditConfigurationScreen.kt",
             "ui/EditPermission.kt",
             "ui/NewNsecBunkerScreen.kt",

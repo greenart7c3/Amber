@@ -107,7 +107,6 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.R
-import com.greenart7c3.nostrsigner.amber
 import com.greenart7c3.nostrsigner.commonsui.Res
 import com.greenart7c3.nostrsigner.commonsui.a_nostr_secure_signer
 import com.greenart7c3.nostrsigner.commonsui.add_a_key
@@ -174,7 +173,7 @@ fun MainPage(
     viewModel: AccountImportViewModel = viewModel(factory = AccountImportViewModel.factory(LocalContext.current.applicationContext, LocalAppScope.current)),
 ) {
     val appScope = LocalAppScope.current
-    val amber = LocalContext.current.amber
+    val notificationSubscription = LocalNotificationSubscription.current
     val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
     val progress by viewModel.progress.collectAsStateWithLifecycle()
     val failedLines by viewModel.failedLines.collectAsStateWithLifecycle()
@@ -189,7 +188,7 @@ fun MainPage(
             } else {
                 onOpenFirstAccount()
             }
-            amber.notificationSubscription.updateFilter()
+            notificationSubscription.updateFilter()
         }
     }
     val selectFileLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
@@ -389,7 +388,7 @@ fun MainLoginPage(
     navHostControllerWrapper: NavHostControllerWrapper,
 ) {
     val appScope = LocalAppScope.current
-    val amber = LocalContext.current.amber
+    val notificationSubscription = LocalNotificationSubscription.current
     NavHost(navHostControllerWrapper.navController, startDestination = "login") {
         composable("login") {
             MainPage(navHostControllerWrapper, onOpenFirstAccount = accountViewModel::openFirstImportedAccount)
@@ -398,7 +397,7 @@ fun MainLoginPage(
             SignUpPage(
                 navHostControllerWrapper = navHostControllerWrapper,
                 onCreate = { setup, seedWords, name -> accountViewModel.newKey(setup.torMode, setup.proxyPort, setup.signPolicy, seedWords, name) },
-                onFinish = { appScope.launch { amber.notificationSubscription.updateFilter() } },
+                onFinish = { appScope.launch { notificationSubscription.updateFilter() } },
             )
         }
         composable("loginPage") {

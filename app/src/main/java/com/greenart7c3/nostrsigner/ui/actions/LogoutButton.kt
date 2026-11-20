@@ -9,16 +9,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.platform.LocalContext
 import com.greenart7c3.nostrsigner.AccountInfo
-import com.greenart7c3.nostrsigner.AccountStorage
 import com.greenart7c3.nostrsigner.commonsui.Res
 import com.greenart7c3.nostrsigner.commonsui.logout
-import com.greenart7c3.nostrsigner.ui.LocalAccountRepository
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -26,9 +20,6 @@ fun LogoutButton(
     acc: AccountInfo,
     onLogOff: (npub: String) -> Unit,
 ) {
-    val scope = rememberCoroutineScope()
-    val context = LocalContext.current
-    val accountRepository = LocalAccountRepository.current
     var logoutDialog by remember { mutableStateOf(false) }
     if (logoutDialog) {
         LogoutDialog(
@@ -36,19 +27,9 @@ fun LogoutButton(
                 logoutDialog = false
             },
             onConfirm = {
-                scope.launch(Dispatchers.IO) {
-                    val account = AccountStorage.load(context, acc.npub)
-                    account?.let {
-                        val dao = accountRepository.dao(it.npub)
-                        val permissions = dao.getAll(it.hexKey)
-                        permissions.forEach { app ->
-                            dao.delete(app)
-                        }
-                    }
-
-                    logoutDialog = false
-                    onLogOff(acc.npub)
-                }
+                // The logout deletes the account's databases, its saved apps included.
+                logoutDialog = false
+                onLogOff(acc.npub)
             },
         )
     }

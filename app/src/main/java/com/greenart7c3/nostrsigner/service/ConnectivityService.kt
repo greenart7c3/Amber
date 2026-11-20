@@ -158,8 +158,8 @@ class ConnectivityService : Service() {
             TorManager.init(this)
         }
 
-        amber.startCleanLogsAlarm()
-        amber.startUpdateCheckAlarm()
+        ClearLogsWorker.schedule(this)
+        UpdateCheckWorker.schedule(this)
         BackupApplicationsWorker.schedule(amber)
 
         HttpClientManager.setDefaultUserAgent("Amber/${BuildConfig.VERSION_NAME}")

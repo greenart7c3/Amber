@@ -15,13 +15,6 @@ import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ProcessLifecycleOwner
-import androidx.work.Constraints
-import androidx.work.ExistingPeriodicWorkPolicy
-import androidx.work.ExistingWorkPolicy
-import androidx.work.NetworkType
-import androidx.work.OneTimeWorkRequestBuilder
-import androidx.work.PeriodicWorkRequestBuilder
-import androidx.work.WorkManager
 import coil3.EventListener
 import coil3.ImageLoader
 import coil3.PlatformContext
@@ -50,7 +43,6 @@ import com.greenart7c3.nostrsigner.okhttp.OkHttpWebSocket
 import com.greenart7c3.nostrsigner.relays.AmberRelayStats
 import com.greenart7c3.nostrsigner.relays.NostrClientLoggerListener
 import com.greenart7c3.nostrsigner.service.BunkerResponder
-import com.greenart7c3.nostrsigner.service.ClearLogsWorker
 import com.greenart7c3.nostrsigner.service.ConnectivityService
 import com.greenart7c3.nostrsigner.service.IntentRateLimiter
 import com.greenart7c3.nostrsigner.service.IntentUtils
@@ -61,7 +53,6 @@ import com.greenart7c3.nostrsigner.service.ProfileSubscription
 import com.greenart7c3.nostrsigner.service.SharedFiles
 import com.greenart7c3.nostrsigner.service.TorManager
 import com.greenart7c3.nostrsigner.service.TrustScoreService
-import com.greenart7c3.nostrsigner.service.UpdateCheckWorker
 import com.greenart7c3.nostrsigner.service.ZapstoreUpdater
 import com.greenart7c3.nostrsigner.service.crashreports.AppPendingReports
 import com.greenart7c3.nostrsigner.service.crashreports.CrashReportCache
@@ -73,7 +64,6 @@ import com.vitorpamplona.quartz.nip01Core.relay.client.stats.RelayStats
 import java.lang.ref.WeakReference
 import java.net.InetSocketAddress
 import java.net.Socket
-import java.util.concurrent.TimeUnit
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CoroutineExceptionHandler
@@ -317,56 +307,6 @@ class Amber :
         }
 
         return changedNetwork
-    }
-
-    fun startCleanLogsAlarm() {
-        val workManager = WorkManager.getInstance(this)
-
-        // Run an immediate one-time cleanup on every startup to handle accumulated data.
-        // KEEP policy ensures only one instance runs at a time if the app is restarted quickly.
-        val immediateRequest = OneTimeWorkRequestBuilder<ClearLogsWorker>()
-            .addTag("clearLogsWorkOneTime")
-            .build()
-        workManager.enqueueUniqueWork(
-            "ClearLogsWorkerOneTime",
-            ExistingWorkPolicy.KEEP,
-            immediateRequest,
-        )
-
-        // Also schedule a daily periodic run.
-        // KEEP policy preserves the existing schedule so app restarts don't reset the timer.
-        val periodicRequest = PeriodicWorkRequestBuilder<ClearLogsWorker>(
-            24,
-            TimeUnit.HOURS,
-        )
-            .addTag("clearLogsWork")
-            .build()
-        workManager.enqueueUniquePeriodicWork(
-            "ClearLogsWorker",
-            ExistingPeriodicWorkPolicy.KEEP,
-            periodicRequest,
-        )
-    }
-
-    fun startUpdateCheckAlarm() {
-        if (BuildFlavorChecker.isOfflineFlavor() || BuildFlavorChecker.isFdroidBuild()) return
-
-        val workManager = WorkManager.getInstance(this)
-
-        val periodicRequest = PeriodicWorkRequestBuilder<UpdateCheckWorker>(1, TimeUnit.DAYS)
-            .addTag("updateCheckWork")
-            .setConstraints(
-                Constraints.Builder()
-                    .setRequiredNetworkType(NetworkType.CONNECTED)
-                    .build(),
-            )
-            .build()
-
-        workManager.enqueueUniquePeriodicWork(
-            "UpdateCheckWorker",
-            ExistingPeriodicWorkPolicy.KEEP,
-            periodicRequest,
-        )
     }
 
     override fun onCreate() {

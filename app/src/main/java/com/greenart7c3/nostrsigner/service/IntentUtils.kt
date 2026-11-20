@@ -423,25 +423,17 @@ object IntentUtils {
 
     fun sendResult(
         context: Context,
-        packageName: String?,
         account: Account,
-        key: String,
+        reply: IntentReply,
+        approval: IntentApproval,
         clipboardManager: Clipboard,
-        event: String,
-        value: String,
-        intentData: IntentData,
-        kind: Int?,
         onLoading: (Boolean) -> Unit,
-        permissions: List<Permission>? = null,
-        appName: String? = null,
-        signPolicy: Int? = null,
         onRemoveIntentData: (List<IntentData>, IntentResultType) -> Unit,
-        shouldCloseApplication: Boolean? = null,
-        rememberType: RememberType,
-        deleteAfter: Long = 0L,
-        relay: String = "",
-        decryptTypeScope: DecryptTypeScope = DecryptTypeScope.ALL,
     ) {
+        val (intentData, packageName, event, value) = reply
+        val (rememberType, kind, signPolicy, permissions, appName, shouldCloseApplication, deleteAfter, relay, decryptTypeScope) = approval
+        // A native app's grants and history are kept under its package name.
+        val key = "$packageName"
         onLoading(true)
         context.amber.applicationIOScope.launch {
             try {
@@ -630,6 +622,33 @@ object IntentUtils {
         }
     }
 }
+
+/** What [IntentUtils.sendResult] answers: the request, the app that sent it, and the result. */
+data class IntentReply(
+    val intentData: IntentData,
+    val packageName: String?,
+    // The signed event (or result) for the history and the `event` extra.
+    val event: String,
+    // The `result` extra: a signature, a public key, a ciphertext or plaintext.
+    val value: String,
+)
+
+/**
+ * What the user chose on the approval screen: how long to remember it, and for a
+ * first request, the app's name, sign policy and permissions.
+ */
+data class IntentApproval(
+    val rememberType: RememberType,
+    // The event kind a remembered sign grant covers.
+    val kind: Int? = null,
+    val signPolicy: Int? = null,
+    val permissions: List<Permission>? = null,
+    val appName: String? = null,
+    val shouldCloseApplication: Boolean? = null,
+    val deleteAfter: Long = 0L,
+    val relay: String = "",
+    val decryptTypeScope: DecryptTypeScope = DecryptTypeScope.ALL,
+)
 
 /**
  * Safe read of the launch referrer. `Activity.getReferrer()` dereferences a null launch

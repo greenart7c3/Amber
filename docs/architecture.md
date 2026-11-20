@@ -205,7 +205,7 @@ encrypting and signing the reply (on Android through `Account`, so the
 desktop, so `ApplicationDao.insertPermissions` keeps its own delete queries), the
 relay subscriptions, and the approval screens with their scope choices.
 
-### 2. Split `IntentUtils.kt`
+### 2. Split `IntentUtils.kt` (done)
 
 Separate parsing (`nostrsigner://` / `nostrconnect://` → a data object),
 validation and `IntentData` construction, with unit tests for each. Removes its
@@ -221,7 +221,10 @@ plaintext) and what a callback URL receives, and `sendResult` only saves and
 delivers. How a request is read (`decodeData`, `isUrlEncoded`, `parsePubKey`,
 `isWebRequest`, `isBrowserReferrer`) is `service/IntentParsing.kt`, and `isRemembered` sits
 with the grant lookups in `IntentPermissionLookup.kt`, so `IntentUtils` keeps the
-queue, the request building and the replies. Left: `sendResult`'s parameter list.
+queue, the request building and the replies. `sendResult` takes what to answer
+(`IntentReply`) and what the user chose (`IntentApproval`) instead of nineteen
+parameters, and derives the grant key from the package name. Step 2 has no
+production baseline entries left.
 
 ### 3. Replace `Amber.instance` with constructor injection (done)
 

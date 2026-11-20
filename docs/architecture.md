@@ -373,9 +373,9 @@ receivers, the ContentProvider), which keep `Context.amber`, and the non-UI
 Done so far: `FeedbackScreen` (the existing locals), `AccountBackupScreen` and
 `ApplicationsScreen` (the application context). `BunkerSingleEventHomeScreen` and
 `BunkerMultiEventHomeScreen`: `LocalBunkerResponder`. `NewNsecBunkerScreen` and `RelaysScreen`:
-`LocalBunkerRelay`. Left:
-relay status (`AmberTopAppBar`,
-`EditRelaysDialog`), the subscriptions (`ProfileSubscriptionEffect`, `LoginScreen`),
+`LocalBunkerRelay`. `AmberTopAppBar` and `EditRelaysDialog`: the relay status (`stats`, `relayStats`)
+is part of `RelayClient`, and `onAddRelay` takes the saved relays as a lookup. Left:
+the subscriptions (`ProfileSubscriptionEffect`, `LoginScreen`),
 the pending crash and translation reports (`EventData`, `CrashReportScreen`,
 `TranslationReportScreen`), the updater, theme and backup alarm (`SettingsScreen`,
 `UpdateSettingsScreen`, `ApplicationsBackupScreen`), then `MainScreen`.

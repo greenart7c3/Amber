@@ -88,6 +88,7 @@ fun EditConfigurationScreen(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val relayClient = LocalRelayClient.current
+    val accountRepository = LocalAccountRepository.current
     val application by viewModel.configuration.collectAsStateWithLifecycle()
     var name by remember { mutableStateOf(TextFieldValue(AnnotatedString(""))) }
     val relays = remember { mutableStateListOf<NormalizedRelayUrl>() }
@@ -202,7 +203,7 @@ fun EditConfigurationScreen(
                                     isLoading,
                                     relays,
                                     scope,
-                                    account,
+                                    savedRelays = { accountRepository.getSavedRelays(account) },
                                     factory = relayClient.factory,
                                     context = context,
                                     onDone = {},
@@ -226,7 +227,7 @@ fun EditConfigurationScreen(
                                         isLoading,
                                         relays,
                                         scope,
-                                        account,
+                                        savedRelays = { accountRepository.getSavedRelays(account) },
                                         factory = relayClient.factory,
                                         context = context,
                                         onDone = {},

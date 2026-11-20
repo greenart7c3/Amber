@@ -63,6 +63,7 @@ fun DefaultProfileRelaysScreen(
 ) {
     val settingsStore = LocalSettingsStore.current
     val relayClient = LocalRelayClient.current
+    val accountRepository = LocalAccountRepository.current
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
     val clipboardManager = LocalClipboard.current
@@ -158,7 +159,7 @@ fun DefaultProfileRelaysScreen(
                                     isLoading,
                                     relays2,
                                     scope,
-                                    account,
+                                    savedRelays = { accountRepository.getSavedRelays(account) },
                                     factory = relayClient.factory,
                                     context = context,
                                     shouldCheckForBunker = false,
@@ -213,7 +214,7 @@ fun DefaultProfileRelaysScreen(
                                         isLoading,
                                         relays2,
                                         scope,
-                                        account,
+                                        savedRelays = { accountRepository.getSavedRelays(account) },
                                         factory = relayClient.factory,
                                         context = context,
                                         shouldCheckForBunker = false,

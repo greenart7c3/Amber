@@ -55,7 +55,6 @@ import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.LocalPreferences
-import com.greenart7c3.nostrsigner.amber
 import com.greenart7c3.nostrsigner.checkNotInMainThread
 import com.greenart7c3.nostrsigner.commonsui.Res
 import com.greenart7c3.nostrsigner.commonsui.active_relays_connections_description
@@ -129,6 +128,7 @@ fun DefaultRelaysScreen(
     val context = LocalContext.current
     val settingsStore = LocalSettingsStore.current
     val relayClient = LocalRelayClient.current
+    val accountRepository = LocalAccountRepository.current
     val scope = rememberCoroutineScope()
     val clipboardManager = LocalClipboard.current
     val textFieldRelay = remember { mutableStateOf(TextFieldValue("")) }
@@ -221,7 +221,7 @@ fun DefaultRelaysScreen(
                                     isLoading,
                                     relays2,
                                     scope,
-                                    account,
+                                    savedRelays = { accountRepository.getSavedRelays(account) },
                                     factory = relayClient.factory,
                                     context = context,
                                     onDone = {
@@ -275,7 +275,7 @@ fun DefaultRelaysScreen(
                                         isLoading,
                                         relays2,
                                         scope,
-                                        account,
+                                        savedRelays = { accountRepository.getSavedRelays(account) },
                                         factory = relayClient.factory,
                                         context = context,
                                         onDone = {
@@ -366,7 +366,8 @@ fun onAddRelay(
     isLoading: MutableState<Boolean>,
     relays2: SnapshotStateList<NormalizedRelayUrl>,
     scope: CoroutineScope,
-    account: Account,
+    // The account's saved relays: an added relay already among them needs no bunker check.
+    savedRelays: suspend () -> Set<NormalizedRelayUrl>,
     factory: OkHttpWebSocket.Builder,
     context: Context,
     shouldCheckForBunker: Boolean = true,
@@ -398,7 +399,7 @@ fun onAddRelay(
 
         scope.launch(Dispatchers.IO) secondLaunch@{
             if (shouldCheckForBunker) {
-                val relays = context.amber.getSavedRelays(account)
+                val relays = savedRelays()
                 if (addedWSS in relays) {
                     relays2.add(addedWSS)
                     onDone()
@@ -712,7 +713,7 @@ private fun ActiveRelayRow(
     navController: NavController,
 ) {
     val relayClient = LocalRelayClient.current
-    val amber = LocalContext.current.amber
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -765,7 +766,7 @@ private fun ActiveRelayRow(
             ) {
                 Text(
                     modifier = Modifier.padding(top = 4.dp, bottom = 16.dp),
-                    text = if (isConnected) "${amber.relayStats.get(relay).pingInMs}ms ping" else "Unavailable",
+                    text = if (isConnected) "${relayClient.relayStats.get(relay).pingInMs}ms ping" else "Unavailable",
                     fontSize = 16.sp,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,

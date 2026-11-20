@@ -87,6 +87,7 @@ fun NewNsecBunkerScreen(
     val localBunkerRelay = LocalBunkerRelay.current
     val context = LocalContext.current
     val relayClient = LocalRelayClient.current
+    val accountRepository = LocalAccountRepository.current
     val secret = remember { mutableStateOf(UUID.randomUUID().toString()) }
     var name by remember { mutableStateOf(TextFieldValue(AnnotatedString(""))) }
     val clipboardManager = LocalClipboard.current
@@ -186,7 +187,7 @@ fun NewNsecBunkerScreen(
                                     isLoading,
                                     relays,
                                     scope,
-                                    account = account,
+                                    savedRelays = { accountRepository.getSavedRelays(account) },
                                     factory = relayClient.factory,
                                     context = context,
                                     onDone = {
@@ -228,7 +229,7 @@ fun NewNsecBunkerScreen(
                                         isLoading,
                                         relays,
                                         scope,
-                                        account = account,
+                                        savedRelays = { accountRepository.getSavedRelays(account) },
                                         factory = relayClient.factory,
                                         context = context,
                                         onDone = {

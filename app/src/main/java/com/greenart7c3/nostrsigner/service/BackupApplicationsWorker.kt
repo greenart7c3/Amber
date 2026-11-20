@@ -29,7 +29,7 @@ class BackupApplicationsWorker(appContext: Context, workerParams: WorkerParamete
             if (!AccountPreferences.getBackupApplications(applicationContext, info.npub)) return@forEach
             try {
                 val account = AccountStorage.load(applicationContext, info.npub) ?: return@forEach
-                ApplicationBackup.publishBackup(info.npub, account, amber.accountDatabases, amber, amber)
+                ApplicationBackup.publishBackup(info.npub, account, amber.accountDatabases, amber.relayClient, amber)
             } catch (e: Exception) {
                 if (e is CancellationException) throw e
                 // With requireUnlockedDevice enabled the gate refuses signing

@@ -87,10 +87,10 @@ All three paths converge on `Account.sign()` / encrypt/decrypt methods backed by
 
 ### Global state — `Amber.kt`
 
-`Amber` is the Application class and acts as the DI container. There is no static accessor: it implements `SettingsStore` and `RelayClient` and holds `accountDatabases`, the `AccountRepository` (`data/`), which code takes through constructors or parameters; Android entry points read the container from their context (`Context.amber`) and composables from the CompositionLocals in `ui/AppDependencies.kt`. Key singletons it owns:
+`Amber` is the Application class and acts as the DI container. There is no static accessor: it implements `SettingsStore` and holds `accountDatabases` (the `AccountRepository`) and `relayClient` (the `RelayClient`, `data/`), which code takes through constructors or parameters; Android entry points read the container from their context (`Context.amber`) and composables from the CompositionLocals in `ui/AppDependencies.kt`. Key singletons it owns:
 
 - `applicationIOScope` — `CoroutineScope(Dispatchers.IO + SupervisorJob() + exceptionHandler)`, used for all background work
-- `client: NostrClient` — the Quartz Nostr relay client
+- `relayClient: AppRelayClient` — the `RelayClient`: the Quartz Nostr relay client (`relayClient.client`), its WebSocket factory, the relay stats and the reconnect logic
 - `notificationSubscription` — keeps the NIP-46 filter alive in the background
 - `profileSubscription` — per-account, throttled one-shot metadata fetch; first fetches the user's NIP-65 relay list (kind 10002) and saves it locally, then fetches the metadata (kind 0) from the default profile relays plus the saved user relays; started/stopped by the composables that display each account via `ProfileSubscriptionEffect` (not app-wide)
 - `isStartingAppState: MutableStateFlow<Boolean>` — set to `true` during `runMigrations()`; code that must wait for startup calls `isStartingAppState.first { !it }`

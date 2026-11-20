@@ -16,7 +16,7 @@ class StopServiceReceiver : BroadcastReceiver() {
         AmberLog.d(Amber.TAG, "StopServiceReceiver: stopping service and killing process")
 
         try {
-            amber.client.disconnect()
+            amber.relayClient.client.disconnect()
         } catch (e: Exception) {
             AmberLog.e(Amber.TAG, "Failed to disconnect client on stop", e)
         }

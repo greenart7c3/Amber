@@ -5,7 +5,6 @@ import android.app.Application
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
-import android.net.TrafficStats
 import android.os.StrictMode
 import androidx.appcompat.app.AppCompatActivity
 import androidx.collection.LruCache
@@ -14,12 +13,6 @@ import androidx.lifecycle.LifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ProcessLifecycleOwner
 import coil3.SingletonImageLoader
-import com.greenart7c3.nostrsigner.common.relays.RelayHealthTracker
-import com.greenart7c3.nostrsigner.commonsui.Res
-import com.greenart7c3.nostrsigner.commonsui.getStringBlocking
-import com.greenart7c3.nostrsigner.commonsui.network_permission_message
-import com.greenart7c3.nostrsigner.commonsui.warning
-import com.greenart7c3.nostrsigner.data.RelayClient
 import com.greenart7c3.nostrsigner.data.SettingsStore
 import com.greenart7c3.nostrsigner.database.AccountDatabases
 import com.greenart7c3.nostrsigner.models.AmberSettings
@@ -27,8 +20,7 @@ import com.greenart7c3.nostrsigner.models.TimeUtils as AmberTimeUtils
 import com.greenart7c3.nostrsigner.models.TorMode
 import com.greenart7c3.nostrsigner.models.UpdateCheckFrequency
 import com.greenart7c3.nostrsigner.okhttp.HttpClientManager
-import com.greenart7c3.nostrsigner.okhttp.OkHttpWebSocket
-import com.greenart7c3.nostrsigner.relays.AmberRelayStats
+import com.greenart7c3.nostrsigner.relays.AppRelayClient
 import com.greenart7c3.nostrsigner.relays.NostrClientLoggerListener
 import com.greenart7c3.nostrsigner.service.BunkerResponder
 import com.greenart7c3.nostrsigner.service.ConnectivityService
@@ -38,7 +30,6 @@ import com.greenart7c3.nostrsigner.service.IntentUtils
 import com.greenart7c3.nostrsigner.service.LocalBunkerRelayServer
 import com.greenart7c3.nostrsigner.service.NetworkState
 import com.greenart7c3.nostrsigner.service.NotificationSubscription
-import com.greenart7c3.nostrsigner.service.PrivateAddress
 import com.greenart7c3.nostrsigner.service.ProfileSubscription
 import com.greenart7c3.nostrsigner.service.SharedFiles
 import com.greenart7c3.nostrsigner.service.TorManager
@@ -47,13 +38,8 @@ import com.greenart7c3.nostrsigner.service.ZapstoreUpdater
 import com.greenart7c3.nostrsigner.service.crashreports.AppPendingReports
 import com.greenart7c3.nostrsigner.service.crashreports.CrashReportCache
 import com.greenart7c3.nostrsigner.service.crashreports.UnexpectedCrashSaver
-import com.greenart7c3.nostrsigner.ui.ToastManager
-import com.vitorpamplona.quartz.nip01Core.relay.client.NostrClient
 import com.vitorpamplona.quartz.nip01Core.relay.client.auth.RelayAuthenticator
-import com.vitorpamplona.quartz.nip01Core.relay.client.stats.RelayStats
 import java.lang.ref.WeakReference
-import java.net.InetSocketAddress
-import java.net.Socket
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CoroutineExceptionHandler
@@ -71,8 +57,7 @@ import kotlinx.coroutines.withTimeoutOrNull
 class Amber :
     Application(),
     LifecycleObserver,
-    SettingsStore,
-    RelayClient {
+    SettingsStore {
     private var mainActivityRef: WeakReference<AppCompatActivity?>? = null
     val crashReportCache: CrashReportCache by lazy { CrashReportCache(this.applicationContext) }
     val pendingReports = AppPendingReports(this)
@@ -127,39 +112,34 @@ class Amber :
 
     private val imageLoaderFactory = ImageLoaderFactory(settingsStore = this, isSettingsLoaded = { isSettingsLoaded }, scope = applicationIOScope)
 
-    override val factory = OkHttpWebSocket.Builder { url ->
-        if (PrivateAddress.isPrivate(url.url)) return@Builder HttpClientManager.getLocalHttpClient()
-        val useProxy = when {
-            // Settings load asynchronously; until they land, torMode's default (DISABLED)
-            // is a guess, not a decision. Route through the proxy client — preset from
-            // plain prefs in onCreate — so a BUILTIN/ORBOT user's pre-Tor dials (network
-            // callbacks, profile fetches) hit the fail-closed placeholder instead of the
-            // clearnet.
-            !isSettingsLoaded -> true
-            else -> settings.torMode != TorMode.DISABLED
-        }
-        HttpClientManager.getHttpClient(useProxy)
-    }
-
-    override val client: NostrClient = NostrClient(factory, applicationIOScope)
+    val relayClient: AppRelayClient = AppRelayClient(
+        appContext = this,
+        settingsStore = this,
+        isSettingsLoaded = { isSettingsLoaded },
+        scope = applicationIOScope,
+        updateSubscriptions = {
+            if (isAppInForeground) profileSubscription.updateFilters()
+            notificationSubscription.updateFilter()
+        },
+        closeSubscriptions = {
+            profileSubscription.closeSub()
+            notificationSubscription.closeAllSubs()
+        },
+    )
 
     // Capacity 10 was too small under bursty NIP-46 traffic — duplicate-detection
     // started missing recent events. 512 covers high-volume relays without being
     // a meaningful memory cost (event-id hex strings + Long).
     val notificationCache = LruCache<String, Long>(512)
 
-    override val relayStats = RelayStats(client)
-
-    override val stats = AmberRelayStats(client, this, settingsStore = this, relayStats = relayStats, scope = applicationIOScope)
-
     // logs and stat counts.
     init {
-        client.addConnectionListener(NostrClientLoggerListener(this, stats, applicationIOScope, settingsStore = this, relayClient = this, accountRepository = accountDatabases))
+        relayClient.client.addConnectionListener(NostrClientLoggerListener(this, relayClient.stats, applicationIOScope, settingsStore = this, relayClient = relayClient, accountRepository = accountDatabases))
     }
 
     // Authenticates with relays; it registers itself with the client.
     init {
-        RelayAuthenticator(client, applicationIOScope) { _, event, _ ->
+        RelayAuthenticator(relayClient.client, applicationIOScope) { _, event, _ ->
             // One account failing to sign (device locked under requireUnlockedDevice,
             // or a transient key error) must not abort AUTH for every other account.
             AccountStorage.all(this).mapNotNull { account ->
@@ -171,19 +151,19 @@ class Amber :
     }
 
     // The local WebSocket relay for bunker connections (opt in under Settings -> Relays).
-    val localBunkerRelay by lazy { LocalBunkerRelayServer(this, this, accountDatabases, this) }
+    val localBunkerRelay by lazy { LocalBunkerRelayServer(this, this, accountDatabases, relayClient) }
 
     // Answers bunker requests; stateless, shared by the NIP-46 consumer and the approval screens.
-    val bunkerResponder by lazy { BunkerResponder(this, this, accountDatabases, this, applicationIOScope, localBunkerRelay) { getMainActivity() } }
+    val bunkerResponder by lazy { BunkerResponder(this, this, accountDatabases, relayClient, applicationIOScope, localBunkerRelay) { getMainActivity() } }
 
-    val notificationSubscription = NotificationSubscription(client, this, settingsStore = this, accountRepository = accountDatabases, bunkerResponder = bunkerResponder, scope = applicationIOScope, notificationCache = notificationCache)
+    val notificationSubscription: NotificationSubscription = NotificationSubscription(relayClient.client, this, settingsStore = this, accountRepository = accountDatabases, bunkerResponder = bunkerResponder, scope = applicationIOScope, notificationCache = notificationCache)
 
     // Per-account profile metadata fetch, started/stopped by the composables that display
     // each account (see ProfileSubscriptionEffect) rather than app-wide.
-    val profileSubscription = ProfileSubscription(client, this, applicationIOScope, settingsStore = this, relayClient = this)
+    val profileSubscription: ProfileSubscription = ProfileSubscription(relayClient.client, this, applicationIOScope, settingsStore = this, relayClient = relayClient)
 
     val zapstoreUpdater: ZapstoreUpdater? = if (!BuildFlavorChecker.isOfflineFlavor() && !BuildFlavorChecker.isFdroidBuild()) {
-        ZapstoreUpdater(client, applicationIOScope, relayClient = this, appContext = this)
+        ZapstoreUpdater(relayClient.client, applicationIOScope, relayClient = relayClient, appContext = this)
     } else {
         null
     }
@@ -216,45 +196,6 @@ class Amber :
 
     val networkState = NetworkState()
 
-    @Volatile override var intentionalDisconnectTime = 0L
-
-    override fun isSocksProxyAlive(proxyHost: String, proxyPort: Int): Boolean {
-        if (settings.torMode == TorMode.BUILTIN) {
-            val port = TorManager.socksPort.value
-            return port != 0 &&
-                try {
-                    if (TrafficStats.getThreadStatsTag() == -1) {
-                        TrafficStats.setThreadStatsTag(0x0001)
-                    }
-                    val socket = Socket()
-                    socket.connect(InetSocketAddress(proxyHost, port), 5000)
-                    TrafficStats.tagSocket(socket)
-                    socket.close()
-                    true
-                } catch (_: Exception) {
-                    false
-                }
-        }
-        try {
-            if (TrafficStats.getThreadStatsTag() == -1) {
-                TrafficStats.setThreadStatsTag(0x0001)
-            }
-            val socket = Socket()
-            socket.connect(InetSocketAddress(proxyHost, proxyPort), 5000) // 3-second timeout
-            TrafficStats.tagSocket(socket)
-            socket.close()
-            return true
-        } catch (e: Exception) {
-            if (e.message?.contains("EACCES (Permission denied)") == true) {
-                ToastManager.toast(getStringBlocking(Res.string.warning), getStringBlocking(Res.string.network_permission_message))
-            } else if (e.message?.contains("socket failed: EPERM (Operation not permitted)") == true) {
-                ToastManager.toast(getStringBlocking(Res.string.warning), getStringBlocking(Res.string.network_permission_message))
-            }
-            AmberLog.e(TAG, "Failed to connect to proxy", e)
-            return false
-        }
-    }
-
     override fun onCreate() {
         super.onCreate()
         SingletonImageLoader.setSafe(imageLoaderFactory)
@@ -284,7 +225,7 @@ class Amber :
         // Before any string is read: notification channels below, and background work
         // that builds notifications before an activity has applied the language.
         settings.language?.let { AppLanguage.apply(it) }
-        stats.createNotificationChannel()
+        relayClient.stats.createNotificationChannel()
         UnexpectedCrashSaver.install(this, crashReportCache, applicationIOScope)
 
         // Build Coil's singleton ImageLoader off the main thread. Its factory
@@ -381,9 +322,9 @@ class Amber :
                 // connect would fail and the retry churn would waste battery.
                 // Relays connect via the recovery observer once Tor is up.
                 if (torReady) {
-                    checkForNewRelaysAndUpdateAllFilters(true)
+                    relayClient.checkForNewRelaysAndUpdateAllFilters(true)
                     if (settings.killSwitch.value) {
-                        disconnectIntentionally()
+                        relayClient.disconnectIntentionally()
                     }
                 }
             } catch (e: Exception) {
@@ -437,7 +378,7 @@ class Amber :
             TorManager.isRunning.collect { running ->
                 if (running && !wasRunning) {
                     AmberLog.d(TAG, "Built-in Tor is up; refreshing relay connections")
-                    checkForNewRelaysAndUpdateAllFilters(true)
+                    relayClient.checkForNewRelaysAndUpdateAllFilters(true)
                 }
                 wasRunning = running
             }
@@ -465,93 +406,6 @@ class Amber :
         } catch (e: Exception) {
             AmberLog.e(TAG, "Failed to start ConnectivityService", e)
             if (e is CancellationException) throw e
-        }
-    }
-
-    override suspend fun resubscribeAll() {
-        profileSubscription.closeSub()
-        notificationSubscription.closeAllSubs()
-        disconnectIntentionally()
-        checkForNewRelaysAndUpdateAllFilters(shouldReconnect = true)
-    }
-
-    override fun disconnectIntentionally() {
-        intentionalDisconnectTime = System.currentTimeMillis()
-        client.disconnect()
-    }
-
-    override fun reconnect() {
-        if (settings.killSwitch.value) {
-            return
-        }
-        AmberLog.d(TAG, "reconnecting relays")
-        val wasActive = client.isActive()
-        // Always call connect() so that failed relays (socket == null) are retried
-        // directly, bypassing BasicRelayClient's internal backoff delay. For relays
-        // that are already connected (socket != null), connect() is a safe no-op.
-        client.connect()
-        client.reconnect(wasActive)
-        if (!BuildFlavorChecker.isOfflineFlavor()) {
-            stats.updateNotification()
-        }
-    }
-
-    /**
-     * Drops every relay socket and dials again from scratch. Called when the device's
-     * network identity changes (Wi-Fi <-> mobile, a VPN coming up or going down, the
-     * network regaining internet access).
-     *
-     * Sockets opened on the previous network are bound to routes that may no longer
-     * exist: they keep reporting "connected" and only fail once OkHttp's ping times out,
-     * minutes later. Relays that failed while the device was offline also carry state
-     * that would keep them down on the new network: Quartz's per-relay backoff (up to
-     * five minutes, set at once on an unresolved host) and RelayHealthTracker's dead
-     * list, which removes them from the subscriptions entirely. All of it is about the
-     * old network, so it is cleared here.
-     */
-    override suspend fun resetRelayConnections(reason: String) {
-        if (BuildFlavorChecker.isOfflineFlavor()) return
-        if (settings.killSwitch.value) return
-
-        AmberLog.d(TAG, "Resetting relay connections: $reason")
-        RelayHealthTracker.reset()
-
-        // The teardown reports onDisconnected for every relay; mark it intentional so
-        // NostrClientLoggerListener does not count it as failures or schedule retries.
-        intentionalDisconnectTime = System.currentTimeMillis()
-        client.disconnect()
-        // disconnect() also clears each relay's backoff; this covers relays without a socket.
-        client.resetBackoff()
-        client.connect()
-
-        // Re-adds relays the dead list had dropped from the subscriptions.
-        checkForNewRelaysAndUpdateAllFilters()
-        stats.updateNotification()
-    }
-
-    override suspend fun checkForNewRelaysAndUpdateAllFilters(shouldReconnect: Boolean) {
-        if (settings.killSwitch.value) {
-            disconnectIntentionally()
-            return
-        }
-
-        val wasActive = client.isActive()
-        if (!BuildFlavorChecker.isOfflineFlavor()) {
-            // these update the relay list in the filters and send them to the
-            // relay, reconnecting if needed
-            if (isAppInForeground) {
-                profileSubscription.updateFilters()
-            }
-            notificationSubscription.updateFilter()
-        }
-        AmberLog.d(TAG, "checkForNewRelaysAndUpdateAllFilters wasActive: $wasActive")
-        if (!wasActive) {
-            delay(3.seconds)
-            client.connect()
-        }
-
-        if (shouldReconnect) {
-            client.reconnect(wasActive)
         }
     }
 

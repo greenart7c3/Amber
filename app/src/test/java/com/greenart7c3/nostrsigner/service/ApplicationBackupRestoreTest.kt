@@ -58,7 +58,7 @@ class ApplicationBackupRestoreTest {
         val written = mutableListOf<ApplicationWithPermissions>()
         coEvery { dao.insertApplicationWithPermissions(capture(written)) } returns Unit
 
-        val result = ApplicationBackup.restoreFromPayload("npub1test", payload, amber.accountDatabases, amber)
+        val result = ApplicationBackup.restoreFromPayload("npub1test", payload, amber.accountDatabases, amber.relayClient)
 
         assertEquals(RestoreResult.Success(2, 0), result)
         assertEquals(listOf("pending", "forever"), written.map { it.application.key })

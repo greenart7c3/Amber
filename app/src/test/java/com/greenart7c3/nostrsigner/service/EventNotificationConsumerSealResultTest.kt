@@ -37,7 +37,7 @@ class EventNotificationConsumerSealResultTest {
                 amber,
                 amber,
                 amber.accountDatabases,
-                amber,
+                amber.relayClient,
                 object : CoroutineScope {
                     override val coroutineContext get() = amber.applicationIOScope.coroutineContext
                 },

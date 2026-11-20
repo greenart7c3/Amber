@@ -324,7 +324,7 @@ class BunkerRequestUtilsTest {
 
     // ===== stale queued requests for a deleted app (F-14) =====
 
-    private fun responder(amber: Amber) = BunkerResponder(amber, amber, amber.accountDatabases, amber, amber.applicationIOScope, mockk(relaxed = true)) { null }
+    private fun responder(amber: Amber) = BunkerResponder(amber, amber, amber.accountDatabases, amber.relayClient, amber.applicationIOScope, mockk(relaxed = true)) { null }
 
     private fun amberWithDao(getByKeyReturnsNull: Boolean): Pair<Amber, ApplicationDao> {
         val dao = mockk<ApplicationDao>(relaxed = true)

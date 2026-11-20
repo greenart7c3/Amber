@@ -28,6 +28,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /** What every request type's composable needs about a single bunker request and its saved app. */
 @Immutable
@@ -104,6 +105,11 @@ class BunkerSingleEventViewModel(
             val application = if (!secret.isNullOrBlank()) dao.getBySecret(secret) else dao.getByKey(bunkerRequest.localKey)
             _loaded.value = LoadedApplication(bunkerRequest, application)
         }
+    }
+
+    /** The saved name of the bunker:// connection that [secret] belongs to among [npub]'s apps, or null. */
+    suspend fun connectionName(npub: String, secret: String): String? = withContext(Dispatchers.IO) {
+        accountRepository.getDatabase(npub).dao().getBySecret(secret)?.application?.name
     }
 
     fun approveConnect(request: BunkerSingleRequest, approval: ConnectApproval, onLoading: (Boolean) -> Unit) {

@@ -116,7 +116,7 @@ fun BunkerSingleEventHomeScreen(
                 )
             }
             KillSwitchConnectPrompt(hasConnectRequest = true)
-            ConnectRequest(request, horizontalPadding, scaffoldPadding, responder, onApprove = { viewModel.approveConnect(request, it, onLoading) }, onLoading = onLoading)
+            ConnectRequest(request, horizontalPadding, scaffoldPadding, responder, onApprove = { viewModel.approveConnect(request, it, onLoading) }, onLoading = onLoading, loadConnectionName = viewModel::connectionName)
         }
         is BunkerRequestGetPublicKey -> GetPublicKeyRequest(request, responder, onLoading, modifier)
         is BunkerRequestNip04Encrypt, is BunkerRequestNip04Decrypt, is BunkerRequestNip44Encrypt, is BunkerRequestNip44Decrypt ->
@@ -180,6 +180,7 @@ private fun ConnectRequest(
     responder: BunkerResponder,
     onApprove: (ConnectApproval) -> Unit,
     onLoading: (Boolean) -> Unit,
+    loadConnectionName: suspend (npub: String, secret: String) -> String?,
 ) {
     val connect = request.bunkerRequest.request as BunkerRequestConnect
     BunkerConnectRequestScreen(
@@ -193,6 +194,7 @@ private fun ConnectRequest(
             onApprove(ConnectApproval(permissions, signPolicy, closeApplication, rememberType, deleteAfter, acc))
         },
         onReject = { responder.reject(request, it, onLoading) },
+        loadConnectionName = loadConnectionName,
     )
 }
 

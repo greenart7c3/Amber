@@ -191,7 +191,7 @@ class ConnectivityService : Service() {
     fun startFunctions() {
         amber.applicationIOScope.launch {
             // Wait for Tor to be ready before connecting (if using built-in Tor)
-            amber.waitForTorIfNeeded()
+            amber.torStartup.waitIfNeeded()
             if (!BuildFlavorChecker.isOfflineFlavor() && !amber.settings.killSwitch.value) {
                 amber.relayClient.client.connect()
                 amber.applicationIOScope.launch {

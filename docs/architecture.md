@@ -403,7 +403,7 @@ app scope, the main activity) from `Amber`'s constructor, which runs before the
 ContentProvider can take a query. `composeUiInService` is empty, and
 `contextAmberUsers` lists only the entry points.
 
-### 9. Split `Amber`
+### 9. Split `Amber` (done)
 
 `Amber` is the Application, the container and most of the app's plumbing at once:
 the per-account databases, the relay client and its reconnect logic, the network
@@ -414,7 +414,7 @@ as one of the `data/` interfaces takes the new object instead (the field is crea
 before the `init` blocks that hand it on, and anything that reads the Application's
 context waits until it is attached).
 
-Done so far: the per-account databases are `database/AccountDatabases`, the
+Done: the per-account databases are `database/AccountDatabases`, the
 `AccountRepository` that `Amber` holds as `accountDatabases` instead of implementing
 it. The cleanup and update-check schedules are `ClearLogsWorker.schedule` and
 `UpdateCheckWorker.schedule`, like `BackupApplicationsWorker.schedule`. Coil's loader
@@ -423,5 +423,7 @@ is built by `service/ImageLoaderFactory`, which `Amber` registers with
 network the device is on is `service/NetworkState` (plain fields: only a log reads
 them) instead of four Compose states. The relay client is `relays/AppRelayClient`, the
 `RelayClient` that `Amber` holds as `relayClient`; the subscriptions it refreshes are
-passed in as two functions, since they take the `RelayClient` themselves. Left: the
-Tor startup wait.
+passed in as two functions, since they take the `RelayClient` themselves. The built-in
+Tor start (bounded attempts, the recovery observer, the wait) is `service/TorStartup`.
+`Amber` is left with wiring, migrations and the Application callbacks, and is under
+detekt's function limit.

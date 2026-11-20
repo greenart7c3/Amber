@@ -57,7 +57,7 @@ interfaces from the CompositionLocals the two activities provide
 - The Android bunker flow (`BunkerRequestUtils` + `EventNotificationConsumer`)
   and the desktop one (`BunkerEngine`) implement the same permission and
   response logic twice.
-- `ui/` reaches Room DAOs directly in 9 files (5 left: step 6).
+- `ui/` reaches Room DAOs directly in 9 files (4 left: step 6).
 
 ## Target layering
 
@@ -330,5 +330,7 @@ what it shows, and delete the screen from the allow-list.
 
 Done so far: `IntentSingleEventHomeScreen`. `LoadedIntentApplication` keeps the
 saved app private and gives the screen its `name` and `remembered(key, relayUrl)`.
-Left: `ActivitiesScreen`, `ActivityStatsCard`, `EditConfigurationScreen`,
+`ActivityStatsCard`: `ActivityStatsViewModel` loads the counts once, when the card
+is first opened (`ActivityStatsViewModelTest`).
+Left: `ActivitiesScreen`, `EditConfigurationScreen`,
 `EditPermission`, `NewNsecBunkerScreen`.

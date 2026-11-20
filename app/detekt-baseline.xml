@@ -87,7 +87,6 @@
     <ID>LongMethod:ActivitiesScreen.kt:@Composable fun ActivitiesScreen</ID>
     <ID>LongMethod:ActivitiesScreen.kt:@Composable fun ActivityRow</ID>
     <ID>LongMethod:ActivityScreen.kt:@Composable fun ActivityScreen</ID>
-    <ID>LongMethod:ActivityStatsCard.kt:@Composable fun ActivityStatsCard</ID>
     <ID>LongMethod:ActivityStatsCard.kt:@Composable private fun ActivityStatsBar</ID>
     <ID>LongMethod:AddPermissionsSheet.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun AddPermissionsSheet</ID>
     <ID>LongMethod:AmberNavigationBar.kt:@Composable fun AmberNavigationBar</ID>

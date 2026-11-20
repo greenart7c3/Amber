@@ -15,7 +15,7 @@ Compose:
     active: true
     # The app dependencies (ui/AppDependencies.kt), provided once per activity
     # root instead of passed through every screen.
-    allowedCompositionLocals: LocalSettingsStore,LocalAccountRepository,LocalRelayClient,LocalAppScope,LocalBunkerResponder,LocalBunkerRelay
+    allowedCompositionLocals: LocalSettingsStore,LocalAccountRepository,LocalRelayClient,LocalAppScope,LocalBunkerResponder,LocalBunkerRelay,LocalNotificationSubscription,LocalProfileSubscription
   CompositionLocalNaming:
     active: true
   ContentEmitterReturningValues:

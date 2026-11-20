@@ -20,6 +20,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateMap
 import androidx.compose.ui.Alignment
@@ -29,12 +30,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.greenart7c3.nostrsigner.AccountStorage
 import com.greenart7c3.nostrsigner.amber
 import com.greenart7c3.nostrsigner.common.EncryptionType
 import com.greenart7c3.nostrsigner.common.SignerType
 import com.greenart7c3.nostrsigner.common.nip46SignerType
-import com.greenart7c3.nostrsigner.common.sanitizeAppName
 import com.greenart7c3.nostrsigner.commonsui.Permission
 import com.greenart7c3.nostrsigner.commonsui.Res
 import com.greenart7c3.nostrsigner.commonsui.approve
@@ -61,7 +60,6 @@ import com.greenart7c3.nostrsigner.models.ClearTextEncryptedDataKind
 import com.greenart7c3.nostrsigner.models.EventEncryptedDataKind
 import com.greenart7c3.nostrsigner.models.PrivateZapEncryptedDataKind
 import com.greenart7c3.nostrsigner.models.TagArrayEncryptedDataKind
-import com.greenart7c3.nostrsigner.service.ApplicationNameCache
 import com.greenart7c3.nostrsigner.service.BunkerRequestUtils
 import com.greenart7c3.nostrsigner.service.MultiEventScreenIntents
 import com.greenart7c3.nostrsigner.service.isBlockedByAuthWhitelist
@@ -81,8 +79,6 @@ import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequestConnect
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequestNip44Decrypt
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequestSign
 import kotlinx.collections.immutable.ImmutableList
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 
@@ -125,6 +121,7 @@ fun BunkerMultiEventHomeScreen(
         choices = viewModel.choices,
         onGroupApprove = viewModel::setGroupApproved,
         onConfirm = { viewModel.confirm(batchRequests, activity, onLoading) },
+        loadSavedApp = viewModel::savedApp,
         modifier = modifier,
     )
 }
@@ -136,6 +133,7 @@ private fun BunkerMultiEventContent(
     choices: BunkerGroupChoices,
     onGroupApprove: (List<AmberBunkerRequest>, Boolean) -> Unit,
     onConfirm: () -> Unit,
+    loadSavedApp: suspend (RequestAppKey) -> SavedAppInfo?,
     modifier: Modifier = Modifier,
 ) {
     // Requests are grouped by the app that sent them (in arrival order), then by request type.
@@ -144,7 +142,7 @@ private fun BunkerMultiEventContent(
             appKey to groupRequests(requests) { it.requestGroupKey() }
         }
     }
-    val appInfos = rememberAppInfos(batchRequests, accountParam)
+    val appInfos = rememberAppInfos(batchRequests, loadSavedApp)
 
     Column(
         modifier,
@@ -196,34 +194,22 @@ private fun BunkerMultiEventContent(
 @Composable
 private fun rememberAppInfos(
     batchRequests: List<AmberBunkerRequest>,
-    accountParam: Account,
+    loadSavedApp: suspend (RequestAppKey) -> SavedAppInfo?,
 ): SnapshotStateMap<RequestAppKey, RequestAppInfo> {
-    val context = LocalContext.current
-    val accountRepository = LocalAccountRepository.current
     val appInfos = remember { mutableStateMapOf<RequestAppKey, RequestAppInfo>() }
+    val load by rememberUpdatedState(loadSavedApp)
 
     // Skipped in previews: encrypted storage and the Amber singleton don't
     // exist in the preview renderer.
     if (!LocalInspectionMode.current) {
         LaunchedEffect(batchRequests) {
-            launch(Dispatchers.IO) {
-                batchRequests.map { it.appKey }.distinct().forEach { appKey ->
-                    val account = if (appKey.account.isNotBlank()) {
-                        AccountStorage.load(context, appKey.account)
-                    } else {
-                        accountParam
-                    } ?: return@forEach
-
-                    val cacheKey = "${account.npub.toShortenHex()}-${appKey.key}"
-                    val app = accountRepository.getDatabase(account.npub).dao().getByKey(appKey.key)
-                    val name = ApplicationNameCache[cacheKey]
-                        ?: app?.application?.name?.let(::sanitizeAppName)?.ifBlank { null }?.also { ApplicationNameCache[cacheKey] = it }
-                    val default = appInfoOf(appInfos, batchRequests, appKey)
-                    appInfos[appKey] = RequestAppInfo(
-                        name = name ?: default.name,
-                        icon = app?.application?.icon?.ifBlank { null } ?: default.icon,
-                    )
-                }
+            batchRequests.map { it.appKey }.distinct().forEach { appKey ->
+                val saved = load(appKey) ?: return@forEach
+                val default = appInfoOf(appInfos, batchRequests, appKey)
+                appInfos[appKey] = RequestAppInfo(
+                    name = saved.name ?: default.name,
+                    icon = saved.icon ?: default.icon,
+                )
             }
         }
     }
@@ -583,6 +569,7 @@ fun BunkerMultiEventHomeScreenPreview() {
             choices = BunkerGroupChoices(),
             onGroupApprove = { _, _ -> },
             onConfirm = {},
+            loadSavedApp = { null },
             modifier = Modifier
                 .fillMaxWidth()
                 .height(700.dp)
@@ -614,6 +601,7 @@ fun BunkerMultiEventHomeScreenMultipleAppsPreview() {
             choices = BunkerGroupChoices(),
             onGroupApprove = { _, _ -> },
             onConfirm = {},
+            loadSavedApp = { null },
             modifier = Modifier
                 .fillMaxWidth()
                 .height(700.dp)

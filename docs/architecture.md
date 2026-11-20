@@ -38,7 +38,7 @@ anything. The biometric/PIN prompt is a UI gate only.
 
 ### The dependency container
 
-`Amber` is the Application class and the dependency container: `client`,
+`Amber` is the Application class and the dependency container: `relayClient`,
 `notificationSubscription`, `profileSubscription`, the per-account databases and
 `settings`. It implements one of the narrow interfaces in `data/`, `SettingsStore`, and
 holds the other two: `AccountRepository` (`accountDatabases`) and `RelayClient` (`relayClient`); code

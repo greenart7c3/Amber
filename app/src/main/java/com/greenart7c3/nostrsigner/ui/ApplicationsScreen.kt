@@ -39,8 +39,7 @@ import androidx.compose.ui.text.withLink
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.paging.Pager
-import androidx.paging.PagingConfig
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.greenart7c3.nostrsigner.AccountStorage
 import com.greenart7c3.nostrsigner.AmberLog
@@ -79,10 +78,10 @@ fun ApplicationsScreen(
     modifier: Modifier,
     account: Account,
     navControllerWrapper: NavHostControllerWrapper,
+    viewModel: ApplicationsViewModel = viewModel(factory = ApplicationsViewModel.factory(LocalAccountRepository.current)),
 ) {
     val context = LocalContext.current
     val settingsStore = LocalSettingsStore.current
-    val accountRepository = LocalAccountRepository.current
     val amber = LocalContext.current.amber
     // remember: without it every recomposition (killSwitch / backup-warning
     // state flips) builds a new Pager + cold flow and re-runs the initial
@@ -92,27 +91,8 @@ fun ApplicationsScreen(
         mutableStateOf(settingsStore.settings.sortApplicationsAlphabetically)
     }
 
-    val pager =
-        remember(account.hexKey, sortAlphabetically) {
-            Pager(
-                PagingConfig(
-                    pageSize = 20,
-                    enablePlaceholders = false,
-                ),
-            ) {
-                // Projection excludes the envelope-encrypted secret/localKey
-                // columns: the list renders neither, and each Keystore decrypt
-                // is a binder + TEE round trip (2 x rows per page).
-                val dao = accountRepository.getDatabase(account.npub).dao()
-                if (sortAlphabetically) {
-                    dao.getApplicationListItemsPagingByName(account.hexKey)
-                } else {
-                    dao.getApplicationListItemsPaging(account.hexKey)
-                }
-            }
-        }
-
-    val lazyPagingItems = pager.flow.collectAsLazyPagingItems()
+    val applications = remember(account.hexKey, sortAlphabetically) { viewModel.applications(account.npub, account.hexKey, sortAlphabetically) }
+    val lazyPagingItems = applications.collectAsLazyPagingItems()
 
     var hasAccountsWithoutBackup by remember { mutableStateOf(false) }
 

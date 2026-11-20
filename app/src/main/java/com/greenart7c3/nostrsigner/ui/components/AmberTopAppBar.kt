@@ -39,6 +39,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.amber
 import com.greenart7c3.nostrsigner.common.sanitizeAppName
@@ -84,9 +85,9 @@ fun AmberTopAppBar(
     intents: ImmutableList<IntentData>,
     bunkerRequests: ImmutableList<AmberBunkerRequest>,
     packageName: String?,
+    viewModel: TopAppBarViewModel = viewModel(factory = TopAppBarViewModel.factory(LocalAccountRepository.current)),
 ) {
     val settingsStore = LocalSettingsStore.current
-    val accountRepository = LocalAccountRepository.current
     val relayClient = LocalRelayClient.current
     val appScope = LocalAppScope.current
     val amber = LocalContext.current.amber
@@ -206,19 +207,19 @@ fun AmberTopAppBar(
                                     title = Route.QrCode.title()
                                 }
                                 navBackStackEntry.navBackStackEntry?.arguments?.getString("packageName")?.let { packageName ->
-                                    val application = accountRepository.getDatabase(account.npub).dao().getByKey(packageName)?.application
+                                    val application = viewModel.savedApp(account.npub, packageName)
                                     title = if (destinationRoute.startsWith("Activity/")) {
-                                        "${application?.name?.let(::sanitizeAppName)?.ifBlank { application.key.toShortenHex() } ?: packageName} - ${routes.find { it.route.startsWith(destinationRoute) }?.title()}"
+                                        "${application?.name?.ifBlank { application.key.toShortenHex() } ?: packageName} - ${routes.find { it.route.startsWith(destinationRoute) }?.title()}"
                                     } else {
-                                        application?.name?.let(::sanitizeAppName)?.ifBlank { application.key.toShortenHex() } ?: packageName
+                                        application?.name?.ifBlank { application.key.toShortenHex() } ?: packageName
                                     }
                                 }
                                 navBackStackEntry.navBackStackEntry?.arguments?.getString("key")?.let { packageName ->
-                                    val application = accountRepository.getDatabase(account.npub).dao().getByKey(packageName)?.application
+                                    val application = viewModel.savedApp(account.npub, packageName)
                                     title = if (destinationRoute.startsWith("Activity/")) {
-                                        "${application?.name?.let(::sanitizeAppName)?.ifBlank { application.key.toShortenHex() } ?: packageName} - ${routes.find { it.route.startsWith(destinationRoute) }?.title()}"
+                                        "${application?.name?.ifBlank { application.key.toShortenHex() } ?: packageName} - ${routes.find { it.route.startsWith(destinationRoute) }?.title()}"
                                     } else {
-                                        application?.name?.let(::sanitizeAppName)?.ifBlank { application.key.toShortenHex() } ?: packageName
+                                        application?.name?.ifBlank { application.key.toShortenHex() } ?: packageName
                                     }
                                 }
                                 navBackStackEntry.navBackStackEntry?.arguments?.getString("url")?.let { url ->
@@ -232,14 +233,14 @@ fun AmberTopAppBar(
                                     val request = bunkerRequests.first()
                                     val key = bunkerRequests.first().localKey
 
-                                    var application = accountRepository.getDatabase(account.npub).dao().getByKey(key)?.application
+                                    var application = viewModel.savedApp(account.npub, key)
                                     if (application == null && request.request is BunkerRequestConnect) {
                                         val secret = request.request.secret
                                         if (secret != null) {
-                                            application = accountRepository.getDatabase(account.npub).dao().getByKey(secret)?.application
+                                            application = viewModel.savedApp(account.npub, secret)
                                         }
                                     }
-                                    val titleTemp = application?.name?.let(::sanitizeAppName)?.ifBlank { request.name.ifBlank { application.key.toShortenHex() } } ?: request.name
+                                    val titleTemp = application?.name?.ifBlank { request.name.ifBlank { application.key.toShortenHex() } } ?: request.name
                                     title = titleTemp.ifBlank {
                                         routes.find { it.route == destinationRoute }?.title() ?: ""
                                     }

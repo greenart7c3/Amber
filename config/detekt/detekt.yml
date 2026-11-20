@@ -42,6 +42,16 @@ complexity:
 
 style:
   active: true
+  # Compose's String.toLowerCase(Locale)/toUpperCase(Locale) follow the phone's language:
+  # on a Turkish phone SIGN_EVENT lower-cases to "sıgn_event", which no permission or
+  # BIP-39 word matches. Protocol names and keys use Kotlin's locale-free lowercase().
+  ForbiddenMethodCall:
+    active: true
+    methods:
+      - value: 'androidx.compose.ui.text.toLowerCase'
+        reason: 'follows the phone language (Turkish i); use lowercase()'
+      - value: 'androidx.compose.ui.text.toUpperCase'
+        reason: 'follows the phone language (Turkish i); use uppercase()'
   ReturnCount:
     active: true
     max: 3

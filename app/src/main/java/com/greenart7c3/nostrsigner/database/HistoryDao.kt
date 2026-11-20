@@ -1,7 +1,5 @@
 package com.greenart7c3.nostrsigner.database
 
-import androidx.compose.ui.text.intl.Locale
-import androidx.compose.ui.text.toLowerCase
 import androidx.paging.PagingSource
 import androidx.room.Dao
 import androidx.room.Delete
@@ -104,7 +102,7 @@ abstract class HistoryDao(private val database: HistoryDatabase) {
         if (database.settingsStore.settings.privacyMode) return
         try {
             val localEntities = entities.map { entity ->
-                val permission = Permission(entity.type.toLowerCase(Locale.current), entity.kind)
+                val permission = Permission(entity.type.lowercase(), entity.kind)
                 // Ciphertext stored for encrypt/decrypt rows must be kept whole so it
                 // can still be decrypted on demand; only truncate plaintext content.
                 val isEncryptedContent = entity.type in encryptDecryptHistoryTypeNames

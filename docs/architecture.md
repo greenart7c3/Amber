@@ -57,7 +57,7 @@ interfaces from the CompositionLocals the two activities provide
 - The Android bunker flow (`BunkerRequestUtils` + `EventNotificationConsumer`)
   and the desktop one (`BunkerEngine`) implement the same permission and
   response logic twice.
-- `ui/` reaches Room DAOs directly (step 6: 3 files left, see the `databaseInUi`
+- `ui/` reaches Room DAOs directly (step 6: 2 files left, see the `databaseInUi`
   allow-list).
 
 ## Target layering
@@ -343,8 +343,10 @@ pages the app list (its `ApplicationListItem` projection is already the list's s
 app's saved name and icon. `BunkerConnectRequestScreen`: `BunkerSingleEventViewModel.connectionName`
 finds a bunker:// connection's saved name by its secret, in the chosen account.
 `AmberTopAppBar`: `TopAppBarViewModel.savedApp` looks up the app the title names.
+`EditConfigurationScreen`: `EditConfigurationViewModel` loads the app as an `AppConfiguration`
+and updates, resets or deletes it.
 The rule also counts DAO calls (`.dao(`, `getDatabase(` and the like), since Kotlin
 needs no import for the types it infers: `actions/ActivityScreen` slipped past the
 import check that way, and seven more files went on the allow-list when the rule
-started counting calls. Left: `EditConfigurationScreen`, `EditPermission`,
+started counting calls. Left: `EditPermission`,
 `NewNsecBunkerScreen`.

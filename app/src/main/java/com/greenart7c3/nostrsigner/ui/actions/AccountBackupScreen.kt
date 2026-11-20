@@ -95,7 +95,6 @@ import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.SavedAccounts
-import com.greenart7c3.nostrsigner.amber
 import com.greenart7c3.nostrsigner.commonsui.Res
 import com.greenart7c3.nostrsigner.commonsui.account_backup
 import com.greenart7c3.nostrsigner.commonsui.account_backup_tips3_md
@@ -150,7 +149,7 @@ fun AccountBackupScreen(
     navController: NavController,
     onShowQrCode: (String) -> Unit,
 ) {
-    val amber = LocalContext.current.amber
+    val appContext = LocalContext.current.applicationContext
     var isLoading by remember { mutableStateOf(false) }
 
     Surface(
@@ -195,12 +194,12 @@ fun AccountBackupScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                SavedAccounts.all(amber).forEach { accountInfo ->
+                SavedAccounts.all(appContext).forEach { accountInfo ->
                     var localAccount by remember { mutableStateOf<Account?>(null) }
                     var seedWords by remember { mutableStateOf("") }
                     LaunchedEffect(Unit) {
                         launch(Dispatchers.IO) {
-                            localAccount = AccountStorage.load(amber, accountInfo.npub)
+                            localAccount = AccountStorage.load(appContext, accountInfo.npub)
                             localAccount?.let { acc ->
                                 seedWords = acc.seedWords()
                             }
@@ -776,7 +775,7 @@ private fun NSecCopyButton(
     onBackupDone: () -> Unit,
 ) {
     val appScope = LocalAppScope.current
-    val amber = LocalContext.current.amber
+    val appContext = LocalContext.current.applicationContext
     val clipboardManager = LocalClipboard.current
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -784,7 +783,7 @@ private fun NSecCopyButton(
     val keyguardLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
         if (result.resultCode == Activity.RESULT_OK) {
             if (password.isNotBlank()) {
-                encryptCopyNSec(password, amber, account, clipboardManager, appScope, onLoading, onBackupDone)
+                encryptCopyNSec(password, appContext, account, clipboardManager, appScope, onLoading, onBackupDone)
             } else {
                 copyNSec(account, clipboardManager, onBackupDone)
             }
@@ -807,7 +806,7 @@ private fun NSecCopyButton(
                         account.didBackup = true
                         onBackupDone()
                         if (password.isNotBlank()) {
-                            encryptCopyNSec(password, amber, account, clipboardManager, appScope, onLoading, onBackupDone)
+                            encryptCopyNSec(password, appContext, account, clipboardManager, appScope, onLoading, onBackupDone)
                         } else {
                             copyNSec(account, clipboardManager, onBackupDone)
                         }

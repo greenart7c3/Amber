@@ -234,7 +234,8 @@ production baseline entries left.
 `BunkerResponder`, `EventNotificationConsumer`, `WebDavService`, ...), as
 parameters of the `object` helpers, or as CompositionLocals for composables.
 What only the Application has (activity tracking, crash reports, relay stats)
-is read through a context the code is already given (`Context.amber`). The
+is read through a context the code is already given (`Context.amber`); step 7
+takes that out of `ui/`. The
 Room DAOs that need settings take their database, which carries them, and
 `SecureCryptoHelper`, which Room converters call without a context, gets the
 application context installed by `Amber.onCreate`. Moving these dependencies
@@ -352,3 +353,28 @@ needs no import for the types it infers: `actions/ActivityScreen` slipped past t
 import check that way, and seven more files went on the allow-list when the rule
 started counting calls. None is left: the `databaseInUi` allow-list is empty, so the
 rule now fails on any `ui/` file outside a ViewModel that touches the database.
+
+### 7. Keep `Context.amber` out of `ui/`
+
+`Context.amber` hands a composable the whole container. The `contextAmberUsers`
+allow-list in `ArchitectureTest.kt` lists every file that still reaches it; step 7
+removes the `ui/` ones, one kind of dependency per change. The rule has no ViewModel
+exemption, so everything arrives through `appDependencies(amber)` in
+`ui/AppDependencies.kt`: an existing local (`LocalSettingsStore`,
+`LocalAccountRepository`, `LocalRelayClient`, `LocalAppScope`), a plain `Context`
+where that is all the code needs, or a new local of a narrow type (never `Amber` or
+`Context`), which also goes on `allowedCompositionLocals` in
+`config/detekt/compose.yml` and must be provided wherever the others are.
+
+Out of scope: the entry points the system constructs (activities, workers,
+receivers, the ContentProvider), which keep `Context.amber`, and the non-UI
+`LocalPreferences`, `SecureCryptoHelper` and `service/IntentUtils`.
+
+Done so far: `FeedbackScreen` (the existing locals), `AccountBackupScreen` and
+`ApplicationsScreen` (the application context). Left: the bunker responder
+(`BunkerSingleEventHomeScreen`, `BunkerMultiEventHomeScreen`), the local bunker
+relay (`NewNsecBunkerScreen`, `RelaysScreen`), relay status (`AmberTopAppBar`,
+`EditRelaysDialog`), the subscriptions (`ProfileSubscriptionEffect`, `LoginScreen`),
+the pending crash and translation reports (`EventData`, `CrashReportScreen`,
+`TranslationReportScreen`), the updater, theme and backup alarm (`SettingsScreen`,
+`UpdateSettingsScreen`, `ApplicationsBackupScreen`), then `MainScreen`.

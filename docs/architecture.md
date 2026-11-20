@@ -419,5 +419,6 @@ Done so far: the per-account databases are `database/AccountDatabases`, the
 it. The cleanup and update-check schedules are `ClearLogsWorker.schedule` and
 `UpdateCheckWorker.schedule`, like `BackupApplicationsWorker.schedule`. Coil's loader
 is built by `service/ImageLoaderFactory`, which `Amber` registers with
-`SingletonImageLoader.setSafe` instead of implementing the factory itself. Left: the
-relay client, the network state, the Tor startup wait.
+`SingletonImageLoader.setSafe` instead of implementing the factory itself. The
+network the device is on is `service/NetworkState` (plain fields: only a log reads
+them) instead of four Compose states. Left: the relay client, the Tor startup wait.

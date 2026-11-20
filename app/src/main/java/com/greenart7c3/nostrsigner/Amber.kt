@@ -5,12 +5,10 @@ import android.app.Application
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
-import android.net.NetworkCapabilities
 import android.net.TrafficStats
 import android.os.StrictMode
 import androidx.appcompat.app.AppCompatActivity
 import androidx.collection.LruCache
-import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleObserver
 import androidx.lifecycle.LifecycleOwner
@@ -38,6 +36,7 @@ import com.greenart7c3.nostrsigner.service.ImageLoaderFactory
 import com.greenart7c3.nostrsigner.service.IntentRateLimiter
 import com.greenart7c3.nostrsigner.service.IntentUtils
 import com.greenart7c3.nostrsigner.service.LocalBunkerRelayServer
+import com.greenart7c3.nostrsigner.service.NetworkState
 import com.greenart7c3.nostrsigner.service.NotificationSubscription
 import com.greenart7c3.nostrsigner.service.PrivateAddress
 import com.greenart7c3.nostrsigner.service.ProfileSubscription
@@ -215,10 +214,7 @@ class Amber :
         }
     }
 
-    val isOnMobileDataState = mutableStateOf(false)
-    val isOnWifiDataState = mutableStateOf(false)
-    val isOnVpnState = mutableStateOf(false)
-    val isOnOfflineState = mutableStateOf(false)
+    val networkState = NetworkState()
 
     @Volatile override var intentionalDisconnectTime = 0L
 
@@ -257,47 +253,6 @@ class Amber :
             AmberLog.e(TAG, "Failed to connect to proxy", e)
             return false
         }
-    }
-
-    fun updateNetworkCapabilities(networkCapabilities: NetworkCapabilities?): Boolean {
-        val isOnMobileData = networkCapabilities?.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) == true
-        val isOnWifi = networkCapabilities?.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) == true
-        val isOnVpn = networkCapabilities?.hasTransport(NetworkCapabilities.TRANSPORT_VPN) == true
-        val isOffline = networkCapabilities?.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) != true
-
-        var changedNetwork = false
-
-        if (isOnMobileDataState.value != isOnMobileData) {
-            isOnMobileDataState.value = isOnMobileData
-
-            changedNetwork = true
-        }
-
-        if (isOnWifiDataState.value != isOnWifi) {
-            isOnWifiDataState.value = isOnWifi
-
-            changedNetwork = true
-        }
-
-        if (isOnVpnState.value != isOnVpn) {
-            isOnVpnState.value = isOnVpn
-            changedNetwork = true
-        }
-
-        if (isOnOfflineState.value != isOffline) {
-            isOnOfflineState.value = isOffline
-            changedNetwork = true
-        }
-
-        if (changedNetwork) {
-            if (isOnMobileData) {
-                HttpClientManager.setDefaultTimeout(HttpClientManager.DEFAULT_TIMEOUT_ON_MOBILE)
-            } else {
-                HttpClientManager.setDefaultTimeout(HttpClientManager.DEFAULT_TIMEOUT_ON_WIFI)
-            }
-        }
-
-        return changedNetwork
     }
 
     override fun onCreate() {

@@ -96,7 +96,7 @@ class ConnectivityService : Service() {
                 val connectivityManager =
                     (getSystemService(ConnectivityManager::class.java) as ConnectivityManager)
                 val capabilities = connectivityManager.getNetworkCapabilities(connectivityManager.activeNetwork)
-                amber.updateNetworkCapabilities(capabilities)
+                amber.networkState.update(capabilities)
                 amber.disconnectIntentionally()
             }
         }
@@ -104,14 +104,14 @@ class ConnectivityService : Service() {
     private fun onNetworkState(network: Network, capabilities: NetworkCapabilities) {
         // Always tracked (also under the kill switch) so the detector's baseline is
         // current when relays come back.
-        amber.updateNetworkCapabilities(capabilities)
+        amber.networkState.update(capabilities)
         val reason = networkChangeDetector.onNetwork(capabilities.toSnapshot(network))
 
         if (amber.settings.killSwitch.value) return
 
         AmberLog.d(
             "ServiceManager NetworkCallback",
-            "network ${network.networkHandle} mobile ${amber.isOnMobileDataState.value} wifi ${amber.isOnWifiDataState.value} vpn ${amber.isOnVpnState.value} change: $reason",
+            "network ${network.networkHandle} mobile ${amber.networkState.isOnMobileData} wifi ${amber.networkState.isOnWifi} vpn ${amber.networkState.isOnVpn} change: $reason",
         )
 
         if (reason != null) {
@@ -204,7 +204,7 @@ class ConnectivityService : Service() {
                     (getSystemService(ConnectivityManager::class.java) as ConnectivityManager)
                 connectivityManager.registerDefaultNetworkCallback(networkCallback)
                 connectivityManager.getNetworkCapabilities(connectivityManager.activeNetwork)?.let {
-                    amber.updateNetworkCapabilities(it)
+                    amber.networkState.update(it)
                 }
 
                 // USER_PRESENT comes from SystemUI, not the system process, so a

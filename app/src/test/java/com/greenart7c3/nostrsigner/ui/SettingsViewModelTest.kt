@@ -51,6 +51,7 @@ class SettingsViewModelTest {
     }
     private val settingsStore = object : SettingsStore {
         override var settings = AmberSettings(torMode = TorMode.ORBOT)
+        override val themeMode = MutableStateFlow(ThemeMode.SYSTEM)
     }
     private val appContext = mockk<Context>(relaxed = true) {
         every { getDatabasePath(any()) } returns File("/nonexistent/db")

@@ -10,6 +10,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import com.greenart7c3.nostrsigner.data.SettingsStore
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.AmberSettings
+import com.greenart7c3.nostrsigner.models.ThemeMode
 import com.greenart7c3.nostrsigner.ui.LocalSettingsStore
 import com.vitorpamplona.quartz.nip01Core.core.hexToByteArray
 import com.vitorpamplona.quartz.nip01Core.crypto.KeyPair
@@ -43,6 +44,7 @@ fun AmberPreview(content: @Composable () -> Unit) {
     val settingsStore = remember {
         object : SettingsStore {
             override var settings = AmberSettings()
+            override val themeMode = MutableStateFlow(ThemeMode.SYSTEM)
         }
     }
     CompositionLocalProvider(LocalSettingsStore provides settingsStore) {

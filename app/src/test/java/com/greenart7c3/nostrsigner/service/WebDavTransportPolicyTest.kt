@@ -2,8 +2,10 @@ package com.greenart7c3.nostrsigner.service
 
 import com.greenart7c3.nostrsigner.data.SettingsStore
 import com.greenart7c3.nostrsigner.models.AmberSettings
+import com.greenart7c3.nostrsigner.models.ThemeMode
 import com.greenart7c3.nostrsigner.models.TorMode
 import io.mockk.mockk
+import kotlinx.coroutines.flow.MutableStateFlow
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -76,6 +78,7 @@ class WebDavTransportPolicyTest {
         // Tor off: the client is direct, so no proxy has to be reachable.
         val settingsStore = object : SettingsStore {
             override var settings = AmberSettings(torMode = TorMode.DISABLED)
+            override val themeMode = MutableStateFlow(ThemeMode.SYSTEM)
         }
         val client = WebDavService(settingsStore, mockk(relaxed = true)).createClient("https://backup.example/dav")
 

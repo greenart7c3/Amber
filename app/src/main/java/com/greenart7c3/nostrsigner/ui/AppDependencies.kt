@@ -11,6 +11,7 @@ import com.greenart7c3.nostrsigner.service.BunkerResponder
 import com.greenart7c3.nostrsigner.service.LocalBunkerRelayServer
 import com.greenart7c3.nostrsigner.service.NotificationSubscription
 import com.greenart7c3.nostrsigner.service.ProfileSubscription
+import com.greenart7c3.nostrsigner.service.ZapstoreUpdater
 import kotlinx.coroutines.CoroutineScope
 
 // The app's dependencies for composables, provided once at each activity root
@@ -34,6 +35,9 @@ val LocalProfileSubscription = staticCompositionLocalOf<ProfileSubscription> { e
 /** The crash and untranslated-text reports waiting for the user. */
 val LocalPendingReports = staticCompositionLocalOf<PendingReports> { error("No PendingReports provided") }
 
+/** The Zapstore self-updater; null in the offline and F-Droid builds, which have none. */
+val LocalZapstoreUpdater = staticCompositionLocalOf<ZapstoreUpdater?> { null }
+
 /** For work that must outlive the screen that starts it (saving settings, relay updates). */
 val LocalAppScope = staticCompositionLocalOf<CoroutineScope> { error("No app scope provided") }
 
@@ -47,4 +51,5 @@ fun appDependencies(amber: Amber): Array<ProvidedValue<*>> = arrayOf(
     LocalNotificationSubscription provides amber.notificationSubscription,
     LocalProfileSubscription provides amber.profileSubscription,
     LocalPendingReports provides amber.pendingReports,
+    LocalZapstoreUpdater provides amber.zapstoreUpdater,
 )

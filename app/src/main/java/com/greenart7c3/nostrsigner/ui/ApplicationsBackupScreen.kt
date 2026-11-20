@@ -49,7 +49,6 @@ import coil3.compose.SubcomposeAsyncImage
 import com.greenart7c3.nostrsigner.AccountPreferences
 import com.greenart7c3.nostrsigner.AccountStorage
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
-import com.greenart7c3.nostrsigner.amber
 import com.greenart7c3.nostrsigner.anyAccountBackupEnabled
 import com.greenart7c3.nostrsigner.commonsui.Res
 import com.greenart7c3.nostrsigner.commonsui.applications_backup_explainer
@@ -75,6 +74,7 @@ import com.greenart7c3.nostrsigner.commonsui.yes
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.service.ApplicationBackup
 import com.greenart7c3.nostrsigner.service.BackupApplication
+import com.greenart7c3.nostrsigner.service.BackupApplicationsWorker
 import com.greenart7c3.nostrsigner.service.BackupFetchResult
 import com.greenart7c3.nostrsigner.service.BackupPayload
 import com.greenart7c3.nostrsigner.service.RestoreResult
@@ -204,7 +204,6 @@ private fun AccountBackupRow(
     val accountRepository = LocalAccountRepository.current
     val relayClient = LocalRelayClient.current
     val settingsStore = LocalSettingsStore.current
-    val amber = LocalContext.current.amber
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     ProfileSubscriptionEffect(account)
@@ -241,9 +240,9 @@ private fun AccountBackupRow(
                     scope.launch(Dispatchers.IO) {
                         AccountPreferences.setBackupApplications(context, account.npub, enabled)
                         if (anyAccountBackupEnabled(context)) {
-                            amber.startBackupApplicationsAlarm()
+                            BackupApplicationsWorker.schedule(context.applicationContext)
                         } else {
-                            amber.cancelBackupApplicationsAlarm()
+                            BackupApplicationsWorker.cancel(context.applicationContext)
                         }
                     }
                 },

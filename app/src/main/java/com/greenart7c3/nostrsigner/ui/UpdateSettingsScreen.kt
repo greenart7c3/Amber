@@ -27,7 +27,6 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.LocalPreferences
-import com.greenart7c3.nostrsigner.amber
 import com.greenart7c3.nostrsigner.commonsui.Res
 import com.greenart7c3.nostrsigner.commonsui.auto_check_updates
 import com.greenart7c3.nostrsigner.commonsui.check_for_updates_now
@@ -55,7 +54,9 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 fun UpdateSettingsScreen(modifier: Modifier = Modifier) {
     val context = LocalContext.current
-    val amber = context.amber
+    val settingsStore = LocalSettingsStore.current
+    val appScope = LocalAppScope.current
+    val zapstoreUpdater = LocalZapstoreUpdater.current
     val scope = rememberCoroutineScope()
 
     Column(modifier = modifier) {
@@ -69,7 +70,7 @@ fun UpdateSettingsScreen(modifier: Modifier = Modifier) {
 
         HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
-        val updater = amber.zapstoreUpdater
+        val updater = zapstoreUpdater
         if (updater == null) {
             Text(
                 text = stringResource(Res.string.updates_not_available),
@@ -82,9 +83,9 @@ fun UpdateSettingsScreen(modifier: Modifier = Modifier) {
         val isChecking by updater.isChecking.collectAsStateWithLifecycle()
         val dlState by updater.downloadState.collectAsStateWithLifecycle()
         val dlProgress by updater.downloadProgress.collectAsStateWithLifecycle()
-        var autoCheck by remember { mutableStateOf(amber.settings.autoCheckUpdates) }
-        var frequency by remember { mutableStateOf(amber.settings.updateCheckFrequency) }
-        var channel by remember { mutableStateOf(amber.settings.updateChannel) }
+        var autoCheck by remember { mutableStateOf(settingsStore.settings.autoCheckUpdates) }
+        var frequency by remember { mutableStateOf(settingsStore.settings.updateCheckFrequency) }
+        var channel by remember { mutableStateOf(settingsStore.settings.updateChannel) }
 
         // Status row
         val statusText = when {
@@ -119,7 +120,7 @@ fun UpdateSettingsScreen(modifier: Modifier = Modifier) {
         // Action button
         Button(
             onClick = {
-                amber.applicationIOScope.launch {
+                appScope.launch {
                     if (latestRelease != null && dlState == DownloadState.IDLE) {
                         updater.downloadAndInstall(context, latestRelease!!)
                     } else if (!isChecking && dlState != DownloadState.DOWNLOADING) {

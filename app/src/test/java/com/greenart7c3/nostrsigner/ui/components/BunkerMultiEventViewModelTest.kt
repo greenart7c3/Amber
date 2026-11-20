@@ -14,6 +14,7 @@ import com.greenart7c3.nostrsigner.database.HistoryDao
 import com.greenart7c3.nostrsigner.database.HistoryEntity
 import com.greenart7c3.nostrsigner.models.AmberBunkerRequest
 import com.greenart7c3.nostrsigner.models.AmberSettings
+import com.greenart7c3.nostrsigner.models.ThemeMode
 import com.greenart7c3.nostrsigner.service.BunkerResponder
 import com.greenart7c3.nostrsigner.service.MultiEventScreenIntents
 import com.greenart7c3.nostrsigner.service.newTestAccount
@@ -33,6 +34,7 @@ import io.mockk.verify
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.MutableStateFlow
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -51,6 +53,7 @@ class BunkerMultiEventViewModelTest {
     }
     private val settingsStore = object : SettingsStore {
         override var settings = AmberSettings()
+        override val themeMode = MutableStateFlow(ThemeMode.SYSTEM)
     }
     private val bunkerResponder = mockk<BunkerResponder>(relaxed = true)
     private val relayClient = mockk<RelayClient>(relaxed = true)

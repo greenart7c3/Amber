@@ -1,7 +1,12 @@
 package com.greenart7c3.nostrsigner.service
 
 import android.content.Context
+import androidx.work.Constraints
 import androidx.work.CoroutineWorker
+import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.NetworkType
+import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import com.greenart7c3.nostrsigner.AccountPreferences
 import com.greenart7c3.nostrsigner.AccountStorage
@@ -10,6 +15,8 @@ import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.SavedAccounts
 import com.greenart7c3.nostrsigner.amber
+import com.greenart7c3.nostrsigner.anyAccountBackupEnabled
+import java.util.concurrent.TimeUnit
 import kotlin.coroutines.cancellation.CancellationException
 
 class BackupApplicationsWorker(appContext: Context, workerParams: WorkerParameters) : CoroutineWorker(appContext, workerParams) {
@@ -38,5 +45,33 @@ class BackupApplicationsWorker(appContext: Context, workerParams: WorkerParamete
         }
 
         return Result.success()
+    }
+
+    companion object {
+        /** Schedules the daily applications backup, when any account has it on (never in the offline flavor). */
+        fun schedule(context: Context) {
+            if (BuildFlavorChecker.isOfflineFlavor()) return
+            if (!anyAccountBackupEnabled(context)) return
+
+            val periodicRequest = PeriodicWorkRequestBuilder<BackupApplicationsWorker>(1, TimeUnit.DAYS)
+                .addTag("backupApplicationsWork")
+                .setConstraints(
+                    Constraints.Builder()
+                        .setRequiredNetworkType(NetworkType.CONNECTED)
+                        .build(),
+                )
+                .build()
+
+            WorkManager.getInstance(context).enqueueUniquePeriodicWork(
+                "BackupApplicationsWorker",
+                ExistingPeriodicWorkPolicy.KEEP,
+                periodicRequest,
+            )
+        }
+
+        fun cancel(context: Context) {
+            if (BuildFlavorChecker.isOfflineFlavor()) return
+            WorkManager.getInstance(context).cancelUniqueWork("BackupApplicationsWorker")
+        }
     }
 }

@@ -160,7 +160,7 @@ class ConnectivityService : Service() {
 
         amber.startCleanLogsAlarm()
         amber.startUpdateCheckAlarm()
-        amber.startBackupApplicationsAlarm()
+        BackupApplicationsWorker.schedule(amber)
 
         HttpClientManager.setDefaultUserAgent("Amber/${BuildConfig.VERSION_NAME}")
 

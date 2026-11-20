@@ -16,6 +16,7 @@ import com.greenart7c3.nostrsigner.models.CompressionType
 import com.greenart7c3.nostrsigner.models.IntentData
 import com.greenart7c3.nostrsigner.models.IntentResultType
 import com.greenart7c3.nostrsigner.models.ReturnType
+import com.greenart7c3.nostrsigner.models.ThemeMode
 import com.greenart7c3.nostrsigner.service.MultiEventScreenIntents
 import com.greenart7c3.nostrsigner.service.newTestAccount
 import com.greenart7c3.nostrsigner.ui.RememberType
@@ -32,6 +33,7 @@ import io.mockk.verify
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.MutableStateFlow
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -50,6 +52,7 @@ class IntentMultiEventViewModelTest {
     }
     private val settingsStore = object : SettingsStore {
         override var settings = AmberSettings()
+        override val themeMode = MutableStateFlow(ThemeMode.SYSTEM)
     }
     private val activity = mockk<Activity>(relaxed = true)
 

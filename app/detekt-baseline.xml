@@ -60,7 +60,6 @@
     <ID>LambdaParameterEventTrailing:AccountBackupScreen.kt:onClick: () -&gt; Unit</ID>
     <ID>LambdaParameterEventTrailing:AccountBackupScreen.kt:onShowQrCode: (String) -&gt; Unit</ID>
     <ID>LambdaParameterEventTrailing:ConnectOrbotDialog.kt:onError: (String) -&gt; Unit</ID>
-    <ID>LambdaParameterEventTrailing:EditConfigurationScreen.kt:onNav: (String) -&gt; Unit</ID>
     <ID>LambdaParameterEventTrailing:EditPermission.kt:onClick: () -&gt; Unit</ID>
     <ID>LambdaParameterEventTrailing:EncryptDecryptData.kt:onReject: (RememberType, DecryptTypeScope) -&gt; Unit</ID>
     <ID>LambdaParameterEventTrailing:EventData.kt:onReject: (RememberType) -&gt; Unit</ID>

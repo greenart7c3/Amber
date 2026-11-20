@@ -4,6 +4,7 @@ import androidx.compose.runtime.ProvidedValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.data.AccountRepository
+import com.greenart7c3.nostrsigner.data.PendingReports
 import com.greenart7c3.nostrsigner.data.RelayClient
 import com.greenart7c3.nostrsigner.data.SettingsStore
 import com.greenart7c3.nostrsigner.service.BunkerResponder
@@ -30,6 +31,9 @@ val LocalNotificationSubscription = staticCompositionLocalOf<NotificationSubscri
 /** The per-account profile metadata fetch, driven by the composables that show an account. */
 val LocalProfileSubscription = staticCompositionLocalOf<ProfileSubscription> { error("No ProfileSubscription provided") }
 
+/** The crash and untranslated-text reports waiting for the user. */
+val LocalPendingReports = staticCompositionLocalOf<PendingReports> { error("No PendingReports provided") }
+
 /** For work that must outlive the screen that starts it (saving settings, relay updates). */
 val LocalAppScope = staticCompositionLocalOf<CoroutineScope> { error("No app scope provided") }
 
@@ -42,4 +46,5 @@ fun appDependencies(amber: Amber): Array<ProvidedValue<*>> = arrayOf(
     LocalBunkerRelay provides amber.localBunkerRelay,
     LocalNotificationSubscription provides amber.notificationSubscription,
     LocalProfileSubscription provides amber.profileSubscription,
+    LocalPendingReports provides amber.pendingReports,
 )

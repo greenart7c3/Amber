@@ -71,6 +71,7 @@ import com.greenart7c3.nostrsigner.service.TorManager
 import com.greenart7c3.nostrsigner.service.TrustScoreService
 import com.greenart7c3.nostrsigner.service.UpdateCheckWorker
 import com.greenart7c3.nostrsigner.service.ZapstoreUpdater
+import com.greenart7c3.nostrsigner.service.crashreports.AppPendingReports
 import com.greenart7c3.nostrsigner.service.crashreports.CrashReportCache
 import com.greenart7c3.nostrsigner.service.crashreports.UnexpectedCrashSaver
 import com.greenart7c3.nostrsigner.ui.ToastManager
@@ -107,8 +108,7 @@ class Amber :
     RelayClient {
     private var mainActivityRef: WeakReference<AppCompatActivity?>? = null
     val crashReportCache: CrashReportCache by lazy { CrashReportCache(this.applicationContext) }
-    var pendingCrashReport: String? = null
-    val pendingTranslationReport = MutableStateFlow<String?>(null)
+    val pendingReports = AppPendingReports(this)
 
     fun setMainActivity(activity: AppCompatActivity?) {
         AmberLog.d(TAG, "Setting main activity ref to $activity")

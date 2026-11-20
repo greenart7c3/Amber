@@ -242,7 +242,7 @@ fun MainScreen(
                 DisplayCrashMessages(amber, account, navController)
 
                 LaunchedEffect(account) {
-                    amber.pendingTranslationReport.collect { message ->
+                    amber.pendingReports.pendingTranslationReport.collect { message ->
                         if (message != null && navController.navController.currentDestination?.route != Route.TranslationReport.route) {
                             navController.navController.navigate(Route.TranslationReport.route)
                         }

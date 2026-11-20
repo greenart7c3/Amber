@@ -205,11 +205,8 @@ class ArchitectureTest {
             "SignerActivity.kt",
             "SignerProvider.kt",
             "ui/ApplicationsBackupScreen.kt",
-            "ui/components/EventData.kt",
-            "ui/CrashReportScreen.kt",
             "ui/MainScreen.kt",
             "ui/SettingsScreen.kt",
-            "ui/TranslationReportScreen.kt",
             "ui/UpdateSettingsScreen.kt",
         )
 

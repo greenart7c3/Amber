@@ -43,6 +43,7 @@ import com.greenart7c3.nostrsigner.service.intentPermission
 import com.greenart7c3.nostrsigner.service.isBlockedByAuthWhitelist
 import com.greenart7c3.nostrsigner.service.isCrossAccountSignEvent
 import com.greenart7c3.nostrsigner.service.isPrivateEvent
+import com.greenart7c3.nostrsigner.service.isRemembered
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
 import com.greenart7c3.nostrsigner.service.relayAuthRememberType
 import com.greenart7c3.nostrsigner.service.toShortenHex
@@ -74,7 +75,7 @@ private data class IntentRequest(
 ) {
     val key: String get() = "$packageName"
 
-    fun remembered(relayUrl: String? = null): Boolean? = IntentUtils.isRemembered(application?.application?.signPolicy, intentPermission(application, key, intentData, relayUrl))
+    fun remembered(relayUrl: String? = null): Boolean? = isRemembered(application?.application?.signPolicy, intentPermission(application, key, intentData, relayUrl))
 }
 
 @Composable

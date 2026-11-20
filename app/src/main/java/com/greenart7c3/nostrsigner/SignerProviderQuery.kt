@@ -22,7 +22,9 @@ import com.greenart7c3.nostrsigner.service.AmberUtils
 import com.greenart7c3.nostrsigner.service.IntentUtils
 import com.greenart7c3.nostrsigner.service.RelayUrlUtils
 import com.greenart7c3.nostrsigner.service.isBlockedByAuthWhitelist
+import com.greenart7c3.nostrsigner.service.isRemembered
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
+import com.greenart7c3.nostrsigner.service.parsePubKey
 import com.vitorpamplona.quartz.nip01Core.core.Event
 import com.vitorpamplona.quartz.nip57Zaps.ZapRequestEvent
 import com.vitorpamplona.quartz.utils.TimeUtils
@@ -101,7 +103,7 @@ class SignerProviderQuery(
                         AmberLog.d(Amber.TAG, "No json")
                         return null
                     }
-                    val npub = IntentUtils.parsePubKey(arguments[2])
+                    val npub = parsePubKey(arguments[2])
                     if (npub == null) {
                         AmberLog.d(Amber.TAG, "No npub")
                         return null
@@ -188,7 +190,7 @@ class SignerProviderQuery(
                         permDao.firstGrant(requesterId, permissionLookupOrder(SignerType.SIGN_EVENT, event.kind, signNip = event.kind.kindToNip()?.toIntOrNull()))
                     }
                     val signPolicy = permDao.getSignPolicy(requesterId)
-                    val isRemembered = IntentUtils.isRemembered(signPolicy, permission) ?: return null
+                    val isRemembered = isRemembered(signPolicy, permission) ?: return null
                     if (!isRemembered) {
                         scope.launch {
                             historyDatabase.dao().addHistory(
@@ -260,7 +262,7 @@ class SignerProviderQuery(
                 "content://$appId.DECRYPT_ZAP_EVENT",
                 -> {
                     val content = arguments?.first() ?: return null
-                    val npub = IntentUtils.parsePubKey(arguments[2]) ?: return null
+                    val npub = parsePubKey(arguments[2]) ?: return null
                     val stringType = uriString.replace("content://$appId.", "")
                     val pubkey = arguments[1]
                     val account = AccountStorage.loadSync(context, npub) ?: return null
@@ -379,7 +381,7 @@ class SignerProviderQuery(
                     val contentType = if (isV3) null else permissionTypeFromContent(classifyContent, isEncrypt, type)
                     val permission = permDao.firstGrant(requesterId, permissionLookupOrder(type, v3Kind, contentType))
                     val signPolicy = permDao.getSignPolicy(requesterId)
-                    val isRemembered = IntentUtils.isRemembered(signPolicy, permission) ?: return null
+                    val isRemembered = isRemembered(signPolicy, permission) ?: return null
                     if (!isRemembered) {
                         // A rejected encrypt request was never performed, so no
                         // ciphertext exists — store nothing rather than leaking the
@@ -476,7 +478,7 @@ class SignerProviderQuery(
                         AmberLog.d(Amber.TAG, "No psbt")
                         return null
                     }
-                    val npub = IntentUtils.parsePubKey(arguments[2])
+                    val npub = parsePubKey(arguments[2])
                     if (npub == null) {
                         AmberLog.d(Amber.TAG, "No npub")
                         return null
@@ -496,7 +498,7 @@ class SignerProviderQuery(
                                 "SIGN_PSBT",
                             )
                     val signPolicy = permDao.getSignPolicy(requesterId)
-                    val isRemembered = IntentUtils.isRemembered(signPolicy, permission) ?: return null
+                    val isRemembered = isRemembered(signPolicy, permission) ?: return null
                     if (!isRemembered) {
                         scope.launch {
                             historyDatabase.dao().addHistory(
@@ -565,7 +567,7 @@ class SignerProviderQuery(
                     return localCursor
                 }
                 "content://$appId.PING" -> {
-                    val npub = if (!arguments.isNullOrEmpty()) IntentUtils.parsePubKey(arguments[0]) else null
+                    val npub = if (!arguments.isNullOrEmpty()) parsePubKey(arguments[0]) else null
                     val account = if (npub != null) {
                         AccountStorage.loadSync(context, npub)
                     } else {
@@ -593,7 +595,7 @@ class SignerProviderQuery(
                             )
 
                     val signPolicy = permDao.getSignPolicy(requesterId)
-                    val isRemembered = IntentUtils.isRemembered(signPolicy, permission) ?: return null
+                    val isRemembered = isRemembered(signPolicy, permission) ?: return null
                     if (!isRemembered) {
                         scope.launch {
                             historyDatabase.dao().addHistory(

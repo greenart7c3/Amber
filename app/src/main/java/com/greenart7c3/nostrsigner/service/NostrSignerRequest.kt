@@ -66,7 +66,7 @@ object NostrSignerRequestParser {
         val stripped = uri.replace("nostrsigner:", "")
         // NIP-04 ciphertexts carry their own "?iv=", which is part of the data.
         val content = if (uri.contains("?iv")) stripped.split("?").let { it[0] + "?" + it[1] } else ""
-        val data = content.ifEmpty { IntentUtils.decodeData(uri).split("?").first() }
+        val data = content.ifEmpty { decodeData(uri).split("?").first() }
         val parameters = if (content.isEmpty()) {
             // Split the RAW query and decode each value once (see
             // decodeQueryParamValue): a form-encoded appName "My+App" shows its
@@ -74,7 +74,7 @@ object NostrSignerRequestParser {
             // splitting the param in two.
             stripped.split("?").drop(1)
         } else {
-            IntentUtils.decodeData(content, false).split("?").drop(1)
+            decodeData(content, false).split("?").drop(1)
         }.filter { it.isNotBlank() }
         if (parameters.isEmpty()) return null
 
@@ -109,7 +109,7 @@ object NostrSignerRequestParser {
      */
     fun fromExtras(uri: String, packageName: String?, extra: (String) -> String?): NostrSignerRequest {
         val data = try {
-            IntentUtils.decodeData(uri, packageName == null, IntentUtils.isUrlEncoded(uri))
+            decodeData(uri, packageName == null, isUrlEncoded(uri))
         } catch (_: Exception) {
             uri.replace("nostrsigner:", "")
         }
@@ -124,7 +124,7 @@ object NostrSignerRequestParser {
             compression = if (extra("compression") == "gzip") CompressionType.GZIP else CompressionType.NONE,
             returnType = if (extra("returnType") == "event") ReturnType.EVENT else ReturnType.SIGNATURE,
             permissions = extra("permissions")?.let(::parsePermissions),
-            currentUser = extra("current_user")?.let(IntentUtils::parsePubKey),
+            currentUser = extra("current_user")?.let(::parsePubKey),
             nip44v3Kind = extra("kind")?.toIntOrNull(),
             nip44v3Scope = extra("scope") ?: "",
             fromUri = false,

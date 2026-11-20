@@ -26,7 +26,7 @@ class IntentUtilsBenchmarkTest {
         val iterations = 200_000
         val elapsed = measureNanoTime {
             repeat(iterations) {
-                IntentUtils.isUrlEncoded(input)
+                isUrlEncoded(input)
             }
         }
         printResult("isUrlEncoded (encoded)", iterations, elapsed)
@@ -38,7 +38,7 @@ class IntentUtilsBenchmarkTest {
         val iterations = 200_000
         val elapsed = measureNanoTime {
             repeat(iterations) {
-                IntentUtils.isUrlEncoded(input)
+                isUrlEncoded(input)
             }
         }
         printResult("isUrlEncoded (plain)", iterations, elapsed)
@@ -50,7 +50,7 @@ class IntentUtilsBenchmarkTest {
         val iterations = 50_000
         val elapsed = measureNanoTime {
             repeat(iterations) {
-                IntentUtils.isUrlEncoded(input)
+                isUrlEncoded(input)
             }
         }
         printResult("isUrlEncoded (long plain, 1000 chars)", iterations, elapsed)
@@ -62,7 +62,7 @@ class IntentUtilsBenchmarkTest {
         val iterations = 50_000
         val elapsed = measureNanoTime {
             repeat(iterations) {
-                IntentUtils.isUrlEncoded(input)
+                isUrlEncoded(input)
             }
         }
         printResult("isUrlEncoded (long encoded, 1003 chars)", iterations, elapsed)
@@ -78,7 +78,7 @@ class IntentUtilsBenchmarkTest {
         val iterations = 200_000
         val elapsed = measureNanoTime {
             repeat(iterations) {
-                IntentUtils.decodeData(input)
+                decodeData(input)
             }
         }
         printResult("decodeData (replace=true, encoded)", iterations, elapsed)
@@ -90,7 +90,7 @@ class IntentUtilsBenchmarkTest {
         val iterations = 200_000
         val elapsed = measureNanoTime {
             repeat(iterations) {
-                IntentUtils.decodeData(input, replace = true, decodeData = false)
+                decodeData(input, replace = true, decodeData = false)
             }
         }
         printResult("decodeData (no decode, replace=true)", iterations, elapsed)
@@ -102,7 +102,7 @@ class IntentUtilsBenchmarkTest {
         val iterations = 200_000
         val elapsed = measureNanoTime {
             repeat(iterations) {
-                IntentUtils.decodeData(input, replace = false)
+                decodeData(input, replace = false)
             }
         }
         printResult("decodeData (replace=false, encoded)", iterations, elapsed)
@@ -116,7 +116,7 @@ class IntentUtilsBenchmarkTest {
         val iterations = 100_000
         val elapsed = measureNanoTime {
             repeat(iterations) {
-                IntentUtils.decodeData(input)
+                decodeData(input)
             }
         }
         printResult("decodeData (long encoded JSON fragment)", iterations, elapsed)
@@ -132,7 +132,7 @@ class IntentUtilsBenchmarkTest {
         val iterations = 200_000
         val elapsed = measureNanoTime {
             repeat(iterations) {
-                IntentUtils.parsePubKey(npub)
+                parsePubKey(npub)
             }
         }
         printResult("parsePubKey (npub passthrough)", iterations, elapsed)
@@ -144,7 +144,7 @@ class IntentUtilsBenchmarkTest {
         val iterations = 50_000
         val elapsed = measureNanoTime {
             repeat(iterations) {
-                IntentUtils.parsePubKey(hex)
+                parsePubKey(hex)
             }
         }
         printResult("parsePubKey (hex to npub)", iterations, elapsed)
@@ -156,7 +156,7 @@ class IntentUtilsBenchmarkTest {
         val iterations = 200_000
         val elapsed = measureNanoTime {
             repeat(iterations) {
-                IntentUtils.parsePubKey(invalid)
+                parsePubKey(invalid)
             }
         }
         printResult("parsePubKey (invalid, returns null)", iterations, elapsed)
@@ -171,7 +171,7 @@ class IntentUtilsBenchmarkTest {
         val iterations = 500_000
         val elapsed = measureNanoTime {
             repeat(iterations) {
-                IntentUtils.isRemembered(signPolicy = 2, permission = null)
+                isRemembered(signPolicy = 2, permission = null)
             }
         }
         printResult("isRemembered (signPolicy=2, null permission)", iterations, elapsed)
@@ -183,7 +183,7 @@ class IntentUtilsBenchmarkTest {
         val iterations = 500_000
         val elapsed = measureNanoTime {
             repeat(iterations) {
-                IntentUtils.isRemembered(signPolicy = null, permission = permission)
+                isRemembered(signPolicy = null, permission = permission)
             }
         }
         printResult("isRemembered (future acceptUntil, returns true)", iterations, elapsed)
@@ -195,7 +195,7 @@ class IntentUtilsBenchmarkTest {
         val iterations = 500_000
         val elapsed = measureNanoTime {
             repeat(iterations) {
-                IntentUtils.isRemembered(signPolicy = null, permission = permission)
+                isRemembered(signPolicy = null, permission = permission)
             }
         }
         printResult("isRemembered (future rejectUntil, returns false)", iterations, elapsed)
@@ -207,7 +207,7 @@ class IntentUtilsBenchmarkTest {
         val iterations = 500_000
         val elapsed = measureNanoTime {
             repeat(iterations) {
-                IntentUtils.isRemembered(signPolicy = null, permission = permission)
+                isRemembered(signPolicy = null, permission = permission)
             }
         }
         printResult("isRemembered (expired, returns null)", iterations, elapsed)
@@ -218,7 +218,7 @@ class IntentUtilsBenchmarkTest {
         val iterations = 500_000
         val elapsed = measureNanoTime {
             repeat(iterations) {
-                IntentUtils.isRemembered(signPolicy = null, permission = null)
+                isRemembered(signPolicy = null, permission = null)
             }
         }
         printResult("isRemembered (null permission, null policy)", iterations, elapsed)

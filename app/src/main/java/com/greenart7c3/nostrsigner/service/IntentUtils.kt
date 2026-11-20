@@ -5,7 +5,6 @@ import android.app.Activity.RESULT_OK
 import android.content.ClipData
 import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.net.Uri
 import android.provider.Browser
 import android.widget.Toast
@@ -21,7 +20,6 @@ import com.greenart7c3.nostrsigner.SavedAccounts
 import com.greenart7c3.nostrsigner.amber
 import com.greenart7c3.nostrsigner.common.SignerType
 import com.greenart7c3.nostrsigner.common.hasAmbiguousRelayTags
-import com.greenart7c3.nostrsigner.common.rememberedDecision
 import com.greenart7c3.nostrsigner.common.sanitizeAppName
 import com.greenart7c3.nostrsigner.commonsui.Permission
 import com.greenart7c3.nostrsigner.commonsui.Res
@@ -49,8 +47,6 @@ import com.vitorpamplona.quartz.nip01Core.core.Event
 import com.vitorpamplona.quartz.nip01Core.crypto.EventHasher
 import com.vitorpamplona.quartz.nip19Bech32.toNpub
 import com.vitorpamplona.quartz.utils.Hex
-import com.vitorpamplona.quartz.utils.TimeUtils
-import java.net.URLDecoder
 import java.util.UUID
 import kotlin.io.encoding.Base64
 import kotlinx.collections.immutable.ImmutableList
@@ -161,18 +157,6 @@ object IntentUtils {
     fun clear() {
         _intents.value = persistentListOf()
     }
-
-    // Compiled once at class load time; avoids recompiling the pattern on every isUrlEncoded() call.
-    private val URL_ENCODED_REGEX = Regex("%[0-9a-fA-F]{2}")
-
-    fun decodeData(data: String, replace: Boolean = true, decodeData: Boolean = true): String {
-        val stripped = data.replace("nostrsigner:", "")
-        // replace keeps a literal '+' instead of letting URLDecoder turn it into a space.
-        val raw = if (replace) stripped.replace("+", "%2b") else stripped
-        return if (decodeData) URLDecoder.decode(raw, "utf-8") else raw
-    }
-
-    fun isUrlEncoded(input: String): Boolean = URL_ENCODED_REGEX.containsMatchIn(input)
 
     private suspend fun getIntentDataWithoutExtras(
         context: Context,
@@ -354,74 +338,6 @@ object IntentUtils {
 
         // The plaintext side is what the user reads: the data for an encrypt, the result for a decrypt.
         else -> previewOf(if (type.name.contains("ENCRYPT")) data else result, data, result, account) { AmberLog.e("IntentUtils", it) }
-    }
-
-    fun parsePubKey(key: String): String? {
-        if (key.startsWith("npub1")) {
-            return key
-        }
-        return try {
-            Hex.decode(key).toNpub()
-        } catch (_: Exception) {
-            null
-        }
-    }
-
-    /**
-     * Returns true when the launching app is a web browser. [referrer] is the value of
-     * `Activity.getReferrer()`: an `http(s)` referrer is the web page itself, an
-     * `android-app://<package>` referrer is the launching app.
-     */
-    fun isBrowserReferrer(context: Context, referrer: Uri?): Boolean = when (referrer?.scheme) {
-        "http", "https" -> true
-        "android-app" -> isBrowserPackage(context, referrer.host)
-        else -> false
-    }
-
-    fun isBrowserPackage(context: Context, packageName: String?): Boolean {
-        if (packageName.isNullOrBlank()) return false
-        val browserIntent = Intent(Intent.ACTION_VIEW, "https://example.com".toUri())
-            .addCategory(Intent.CATEGORY_BROWSABLE)
-            .setPackage(packageName)
-        return try {
-            context.packageManager.queryIntentActivities(browserIntent, PackageManager.MATCH_ALL).isNotEmpty()
-        } catch (_: Exception) {
-            false
-        }
-    }
-
-    /**
-     * Decides whether a `nostrsigner:` request carries its parameters in the URI query
-     * (web apps) instead of intent extras (native NIP-55 apps). Browsers don't agree on
-     * how they mark external intents: Chrome adds [Browser.EXTRA_APPLICATION_ID], others
-     * (e.g. DuckDuckGo) only add [Intent.CATEGORY_BROWSABLE] or nothing at all. A `type`
-     * extra means the caller used the native extras API, so only then do we ignore the
-     * weaker signals (BROWSABLE category, browser referrer, `type=` query parameter).
-     */
-    internal fun isWebRequest(
-        hasApplicationIdExtra: Boolean,
-        hasBrowsableCategory: Boolean,
-        referrerIsBrowser: Boolean,
-        typeExtra: String?,
-        dataString: String?,
-    ): Boolean {
-        if (hasApplicationIdExtra) return true
-        if (!typeExtra.isNullOrBlank()) return false
-        return hasBrowsableCategory || referrerIsBrowser || hasTypeQueryParameter(dataString)
-    }
-
-    private fun hasTypeQueryParameter(dataString: String?): Boolean {
-        if (dataString.isNullOrBlank()) return false
-        val decoded = try {
-            URLDecoder.decode(dataString.replace("+", "%2b"), "utf-8")
-        } catch (_: Exception) {
-            dataString
-        }
-        return listOf(dataString, decoded).any { data ->
-            data.substringAfter('?', "")
-                .split('?', '&')
-                .any { it.startsWith("type=") }
-        }
     }
 
     suspend fun getIntentData(
@@ -713,15 +629,13 @@ object IntentUtils {
             onLoading(false)
         }
     }
-
-    fun isRemembered(signPolicy: Int?, permission: ApplicationPermissionsEntity?): Boolean? = rememberedDecision(signPolicy, permission?.activeDecision(TimeUtils.now()))
 }
 
 /**
  * Safe read of the launch referrer. `Activity.getReferrer()` dereferences a null launch
  * intent on some OEM framework builds (e.g. Samsung, Android 12) and crashes when the
  * activity was delivered or left without an intent (see `sendRejection`, which nulls it).
- * Null is also the correct "unknown referrer" answer, which [IntentUtils.isBrowserReferrer] already
+ * Null is also the correct "unknown referrer" answer, which [isBrowserReferrer] already
  * treats as not-a-browser.
  */
 fun Activity.safeReferrer(): Uri? = try {

@@ -16,8 +16,8 @@ import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.AmberBunkerRequest
 import com.greenart7c3.nostrsigner.service.BunkerResponder
-import com.greenart7c3.nostrsigner.service.IntentUtils
 import com.greenart7c3.nostrsigner.service.bunkerPermission
+import com.greenart7c3.nostrsigner.service.isRemembered
 import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.RememberType
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequestConnect
@@ -51,7 +51,7 @@ data class BunkerSingleRequest(
     fun decision(relayUrl: String? = null): Boolean? = bunkerPermission(application, key, bunkerRequest, relayUrl)?.activeDecision(TimeUtils.now())
 
     /** NIP-44 v3 also honours the app's sign policy. */
-    fun nip44v3Decision(): Boolean? = IntentUtils.isRemembered(application?.application?.signPolicy, bunkerPermission(application, key, bunkerRequest))
+    fun nip44v3Decision(): Boolean? = isRemembered(application?.application?.signPolicy, bunkerPermission(application, key, bunkerRequest))
 }
 
 /** The saved app of [request] (null when it has none), as loaded for that request. */

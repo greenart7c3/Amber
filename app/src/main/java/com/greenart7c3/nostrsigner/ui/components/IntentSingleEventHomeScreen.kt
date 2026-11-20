@@ -33,7 +33,6 @@ import com.greenart7c3.nostrsigner.commonsui.Res
 import com.greenart7c3.nostrsigner.commonsui.event_pubkey_is_not_equal_to_current_logged_in_user
 import com.greenart7c3.nostrsigner.commonsui.getStringBlocking
 import com.greenart7c3.nostrsigner.commonsui.warning
-import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.IntentData
 import com.greenart7c3.nostrsigner.models.IntentResultType
@@ -41,11 +40,9 @@ import com.greenart7c3.nostrsigner.service.IntentApproval
 import com.greenart7c3.nostrsigner.service.IntentReply
 import com.greenart7c3.nostrsigner.service.IntentUtils
 import com.greenart7c3.nostrsigner.service.RelayUrlUtils
-import com.greenart7c3.nostrsigner.service.intentPermission
 import com.greenart7c3.nostrsigner.service.isBlockedByAuthWhitelist
 import com.greenart7c3.nostrsigner.service.isCrossAccountSignEvent
 import com.greenart7c3.nostrsigner.service.isPrivateEvent
-import com.greenart7c3.nostrsigner.service.isRemembered
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
 import com.greenart7c3.nostrsigner.service.relayAuthRememberType
 import com.greenart7c3.nostrsigner.service.toShortenHex
@@ -73,11 +70,12 @@ private data class IntentRequest(
     val appName: String,
     // The name stored with an approval: the caller's own label when it has one.
     val resultAppName: String,
-    val application: ApplicationWithPermissions?,
+    // The caller's saved app as loaded for this request, or null (none, or not loaded yet).
+    val saved: LoadedIntentApplication?,
 ) {
     val key: String get() = "$packageName"
 
-    fun remembered(relayUrl: String? = null): Boolean? = isRemembered(application?.application?.signPolicy, intentPermission(application, key, intentData, relayUrl))
+    fun remembered(relayUrl: String? = null): Boolean? = saved?.remembered(key, relayUrl)
 
     fun reply(event: String, value: String = event) = IntentReply(intentData, packageName, event, value)
 }
@@ -100,9 +98,9 @@ fun IntentSingleEventHomeScreen(
     LaunchedEffect(intentData, account.npub, packageName) { viewModel.load(intentData, account.npub, packageName) }
     val loaded by viewModel.loaded.collectAsStateWithLifecycle()
     // Only what was loaded for this very request: another one under the same key may have other grants.
-    val application = loaded?.takeIf { it.intentData === intentData }?.application
-    val appName = sanitizeAppName(application?.application?.name ?: packageName ?: intentData.name).ifBlank { "$packageName".toShortenHex() }
-    val request = IntentRequest(intentData, account, packageName, appName, applicationName ?: appName, application)
+    val saved = loaded?.takeIf { it.intentData === intentData }
+    val appName = sanitizeAppName(saved?.name ?: packageName ?: intentData.name).ifBlank { "$packageName".toShortenHex() }
+    val request = IntentRequest(intentData, account, packageName, appName, applicationName ?: appName, saved)
 
     when (intentData.type) {
         SignerType.GET_PUBLIC_KEY -> GetPublicKeyRequest(request, horizontalPadding, onRemoveIntentData, onLoading, modifier)

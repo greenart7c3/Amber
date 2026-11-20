@@ -185,7 +185,6 @@ class ArchitectureTest {
         val databaseInUi = setOf(
             "ui/ActivitiesScreen.kt",
             "ui/components/ActivityStatsCard.kt",
-            "ui/components/IntentSingleEventHomeScreen.kt",
             "ui/EditConfigurationScreen.kt",
             "ui/EditPermission.kt",
             "ui/NewNsecBunkerScreen.kt",

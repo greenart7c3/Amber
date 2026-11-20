@@ -8,14 +8,24 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import com.greenart7c3.nostrsigner.data.AccountRepository
 import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
 import com.greenart7c3.nostrsigner.models.IntentData
+import com.greenart7c3.nostrsigner.service.intentPermission
+import com.greenart7c3.nostrsigner.service.isRemembered
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-/** The saved app of [intentData]'s caller (null when it has none), as loaded for that request. */
-data class LoadedIntentApplication(val intentData: IntentData, val application: ApplicationWithPermissions?)
+/**
+ * The saved app of [intentData]'s caller (null when it has none), as loaded for that
+ * request. The screen gets only its name and remembered decisions, never the entity.
+ */
+data class LoadedIntentApplication(val intentData: IntentData, private val application: ApplicationWithPermissions?) {
+    val name: String? get() = application?.application?.name
+
+    /** The remembered decision for this request under [key] (relay auth: for [relayUrl]): true, false, or null to ask. */
+    fun remembered(key: String, relayUrl: String? = null): Boolean? = isRemembered(application?.application?.signPolicy, intentPermission(application, key, intentData, relayUrl))
+}
 
 /**
  * Loads the saved application (and its grants) that a single NIP-55 request comes from.

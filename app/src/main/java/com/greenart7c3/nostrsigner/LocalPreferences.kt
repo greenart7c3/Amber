@@ -3,6 +3,8 @@ package com.greenart7c3.nostrsigner
 import android.content.Context
 import android.content.SharedPreferences
 import androidx.core.content.edit
+import com.greenart7c3.nostrsigner.data.AccountRepository
+import com.greenart7c3.nostrsigner.data.SettingsStore
 import com.greenart7c3.nostrsigner.database.LogRetentionManager
 import com.greenart7c3.nostrsigner.models.AmberSettings
 import com.greenart7c3.nostrsigner.models.ProfileFetchInterval
@@ -57,6 +59,16 @@ private enum class SettingsKeys(val key: String) {
 }
 
 object LocalPreferences {
+    // The settings in effect (updated after every write) and the per-account databases;
+    // Amber's constructor installs them before anything reads the settings.
+    private lateinit var settingsStore: SettingsStore
+    private lateinit var accountRepository: AccountRepository
+
+    fun install(settings: SettingsStore, accounts: AccountRepository) {
+        settingsStore = settings
+        accountRepository = accounts
+    }
+
     // Pre-rename consent key, kept only so loadSettingsFromEncryptedStorage can
     // scrub it. Never read.
     private const val LEGACY_TRUST_SCORE_ENABLED_KEY = "trust_score_enabled"
@@ -124,7 +136,7 @@ object LocalPreferences {
                 putString(SettingsKeys.THEME_MODE.key, mode.name)
             }
         }
-        context.amber.themeMode.value = mode
+        settingsStore.themeMode.value = mode
     }
 
     fun getBatteryOptimization(context: Context): Boolean = sharedPrefs(context).getBoolean(SettingsKeys.BATERRY_OPTIMIZATION.key, false)
@@ -154,9 +166,8 @@ object LocalPreferences {
     suspend fun reloadApp(context: Context) {
         AccountStorage.invalidateCaches()
         AccountStorage.all(context)
-        context.amber.settings = loadSettingsFromEncryptedStorage(context)
-        context.amber.isSettingsLoaded = true
-        context.amber.settings.language?.let { AppLanguage.apply(it) }
+        settingsStore.settings = loadSettingsFromEncryptedStorage(context)
+        settingsStore.settings.language?.let { AppLanguage.apply(it) }
     }
 
     /**
@@ -274,7 +285,7 @@ object LocalPreferences {
     fun updateTorMode(
         context: Context,
         torMode: TorMode,
-        port: Int = context.amber.settings.proxyPort,
+        port: Int = settingsStore.settings.proxyPort,
     ) {
         sharedPrefs(context).edit {
             apply {
@@ -282,7 +293,7 @@ object LocalPreferences {
                 putInt(SettingsKeys.PROXY_PORT.key, port)
             }
         }
-        context.amber.settings = loadSettingsFromEncryptedStorage(context)
+        settingsStore.settings = loadSettingsFromEncryptedStorage(context)
         when (torMode) {
             TorMode.ORBOT -> HttpClientManager.setDefaultProxyOnPort(port)
             TorMode.DISABLED -> HttpClientManager.clearProxy()
@@ -297,7 +308,7 @@ object LocalPreferences {
                 putBoolean(SettingsKeys.AUTO_CHECK_UPDATES.key, enabled)
             }
         }
-        context.amber.settings = loadSettingsFromEncryptedStorage(context)
+        settingsStore.settings = loadSettingsFromEncryptedStorage(context)
     }
 
     fun updateStartServiceOnBoot(context: Context, enabled: Boolean) {
@@ -306,7 +317,7 @@ object LocalPreferences {
                 putBoolean(SettingsKeys.START_SERVICE_ON_BOOT.key, enabled)
             }
         }
-        context.amber.settings = loadSettingsFromEncryptedStorage(context)
+        settingsStore.settings = loadSettingsFromEncryptedStorage(context)
     }
 
     /**
@@ -320,12 +331,12 @@ object LocalPreferences {
                 putBoolean(SettingsKeys.PRIVACY_MODE.key, enabled)
             }
         }
-        context.amber.settings = loadSettingsFromEncryptedStorage(context)
+        settingsStore.settings = loadSettingsFromEncryptedStorage(context)
         if (enabled) {
             SavedAccounts.all(context).forEach {
                 try {
-                    context.amber.getLogDatabase(it.npub).dao().clearLogs()
-                    context.amber.getHistoryDatabase(it.npub).dao().clearHistory()
+                    accountRepository.getLogDatabase(it.npub).dao().clearLogs()
+                    accountRepository.getHistoryDatabase(it.npub).dao().clearHistory()
                 } catch (e: Exception) {
                     AmberLog.e(Amber.TAG, "Error wiping data for privacy mode", e)
                 }
@@ -341,7 +352,7 @@ object LocalPreferences {
      */
     suspend fun updateRequireUnlockedDevice(context: Context, enabled: Boolean) {
         SecureCryptoHelper.rotateKey(context, requireUnlockedDevice = enabled)
-        context.amber.settings = loadSettingsFromEncryptedStorage(context)
+        settingsStore.settings = loadSettingsFromEncryptedStorage(context)
     }
 
     fun updateUpdateCheckFrequency(context: Context, frequency: UpdateCheckFrequency) {
@@ -350,7 +361,7 @@ object LocalPreferences {
                 putString(SettingsKeys.UPDATE_CHECK_FREQUENCY.key, frequency.name)
             }
         }
-        context.amber.settings = loadSettingsFromEncryptedStorage(context)
+        settingsStore.settings = loadSettingsFromEncryptedStorage(context)
     }
 
     fun updateProfileFetchInterval(context: Context, interval: ProfileFetchInterval) {
@@ -359,7 +370,7 @@ object LocalPreferences {
                 putString(SettingsKeys.PROFILE_FETCH_INTERVAL.key, interval.name)
             }
         }
-        context.amber.settings = loadSettingsFromEncryptedStorage(context)
+        settingsStore.settings = loadSettingsFromEncryptedStorage(context)
     }
 
     suspend fun updateLogRetention(context: Context, retention: RetentionPeriod) {
@@ -368,7 +379,7 @@ object LocalPreferences {
                 putString(SettingsKeys.LOG_RETENTION.key, retention.name)
             }
         }
-        context.amber.settings = loadSettingsFromEncryptedStorage(context)
+        settingsStore.settings = loadSettingsFromEncryptedStorage(context)
         pruneAllAccounts(context)
     }
 
@@ -378,7 +389,7 @@ object LocalPreferences {
                 putString(SettingsKeys.HISTORY_RETENTION.key, retention.name)
             }
         }
-        context.amber.settings = loadSettingsFromEncryptedStorage(context)
+        settingsStore.settings = loadSettingsFromEncryptedStorage(context)
         pruneAllAccounts(context)
     }
 
@@ -386,7 +397,7 @@ object LocalPreferences {
     private suspend fun pruneAllAccounts(context: Context) {
         SavedAccounts.all(context).forEach {
             try {
-                LogRetentionManager.prune(context, context.amber, it.npub)
+                LogRetentionManager.prune(context, accountRepository, it.npub)
             } catch (e: Exception) {
                 if (e is CancellationException) throw e
                 AmberLog.e(Amber.TAG, "Error pruning logs for ${it.npub}", e)
@@ -400,7 +411,7 @@ object LocalPreferences {
                 putString(SettingsKeys.UPDATE_CHANNEL.key, channel.name)
             }
         }
-        context.amber.settings = loadSettingsFromEncryptedStorage(context)
+        settingsStore.settings = loadSettingsFromEncryptedStorage(context)
     }
 
     fun getLastUpdateCheckTime(context: Context): Long = sharedPrefs(context).getLong(SettingsKeys.LAST_UPDATE_CHECK_TIME.key, 0L)

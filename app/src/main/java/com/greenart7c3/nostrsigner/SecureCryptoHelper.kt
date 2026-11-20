@@ -6,6 +6,7 @@ import android.os.Build
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import android.util.Base64
+import com.greenart7c3.nostrsigner.data.AccountRepository
 import java.io.IOException
 import java.nio.BufferUnderflowException
 import java.nio.ByteBuffer
@@ -26,12 +27,17 @@ import kotlinx.coroutines.sync.withLock
 object SecureCryptoHelper {
     private const val ANDROID_KEYSTORE = "AndroidKeyStore"
 
-    // Room converters and DAOs encrypt without a context at hand, so Amber.onCreate
+    // Room converters and DAOs encrypt without a context at hand, so Amber's constructor
     // installs the application context before anything can reach the key.
     private lateinit var appContext: Context
 
-    fun install(context: Context) {
-        appContext = context.applicationContext
+    // The per-account databases, for re-encrypting the application rows when the key rotates.
+    private lateinit var accountRepository: AccountRepository
+
+    // The Application itself: install runs in its constructor, before its base context (and applicationContext) is attached.
+    fun install(application: Context, accounts: AccountRepository) {
+        appContext = application
+        accountRepository = accounts
     }
 
     // The wrapping key alternates between two aliases. Rotation creates the
@@ -468,7 +474,7 @@ object SecureCryptoHelper {
         }
         // Per-account Room `application` tables (GHSA-5fjp-ghh8-wch8).
         for ((npub) in accounts) {
-            val dao = context.amber.dao(npub)
+            val dao = accountRepository.dao(npub)
             for (row in dao.getAllApplicationsRaw()) {
                 move(row.secret) { expected, ciphertext -> dao.replaceSecretRaw(row.key, expected, ciphertext) > 0 }
                 move(row.localKey) { expected, ciphertext -> dao.replaceLocalKeyRaw(row.key, expected, ciphertext) > 0 }

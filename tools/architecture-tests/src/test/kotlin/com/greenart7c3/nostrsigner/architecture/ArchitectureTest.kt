@@ -93,7 +93,8 @@ class ArchitectureTest {
     @Test
     fun `Context amber usage can only shrink`() {
         // Root-package files use the extension without an import (and often without a receiver).
-        val rootUse = Regex("""\bamber\b""")
+        // Hyphens excluded: "amber-key-check" is a string, not the extension.
+        val rootUse = Regex("""(?<![\w-])amber(?![\w-])""")
         // The same container without the extension: (context.applicationContext as Amber).
         val castToAmber = Regex("""\bas\??\s+(com\.greenart7c3\.nostrsigner\.)?Amber\b""")
         val actual = appMain
@@ -189,9 +190,7 @@ class ArchitectureTest {
         val databaseInUi = emptySet<String>()
 
         val contextAmberUsers = setOf(
-            "LocalPreferences.kt",
             "MainActivity.kt",
-            "SecureCryptoHelper.kt",
             "service/BackupApplicationsWorker.kt",
             "service/BootReceiver.kt",
             "service/ClearLogsWorker.kt",

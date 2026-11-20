@@ -3,7 +3,6 @@ package com.greenart7c3.nostrsigner.ui
 import android.content.Context
 import com.greenart7c3.nostrsigner.AccountInfo
 import com.greenart7c3.nostrsigner.AccountPreferences
-import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.SavedAccounts
@@ -55,14 +54,14 @@ class SettingsViewModelTest {
     }
     private val appContext = mockk<Context>(relaxed = true) {
         every { getDatabasePath(any()) } returns File("/nonexistent/db")
-        // updateTorMode's default port reads the settings through the Application.
-        every { applicationContext } returns mockk<Amber>(relaxed = true)
     }
 
     @Before
     fun setUp() {
         Dispatchers.setMain(Dispatchers.Unconfined)
         mockkObject(LocalPreferences, SavedAccounts, AccountPreferences, AmberLog)
+        // updateTorMode's default port reads the installed settings.
+        LocalPreferences.install(settingsStore, accountRepository)
         mockkStatic("com.greenart7c3.nostrsigner.commonsui.StringsKt")
         every { getStringBlocking(any(), *anyVararg()) } returns ""
         every { AmberLog.d(any(), any<String>()) } returns Unit

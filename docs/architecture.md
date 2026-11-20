@@ -396,4 +396,6 @@ with a `Context` from everywhere get their narrow dependencies once at startup
 a plain copy function the composable passes in.
 
 Done so far: `ReportSender` takes a `copyToClipboard` function instead of a Compose
-`Clipboard`. Left: `SecureCryptoHelper`, `LocalPreferences`, `IntentUtils`.
+`Clipboard`; `SecureCryptoHelper` and `LocalPreferences` get the `AccountRepository`
+(and `LocalPreferences` the `SettingsStore`) from `Amber`'s constructor, which runs
+before the ContentProvider can take a query. Left: `IntentUtils`.

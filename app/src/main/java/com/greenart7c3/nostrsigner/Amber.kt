@@ -130,6 +130,8 @@ class Amber :
     // At construction, not onCreate: ContentProviders are created before onCreate runs.
     init {
         AccountStorage.install(accountRepository = this, appScope = applicationIOScope)
+        SecureCryptoHelper.install(this, this)
+        LocalPreferences.install(this, this)
     }
 
     override var settings: AmberSettings = AmberSettings()
@@ -387,7 +389,6 @@ class Amber :
             enableStrictMode()
         }
 
-        SecureCryptoHelper.install(this)
         // Before anything reads the account list or the settings: an install that
         // comes from 3.3.0 or older still keeps them in the EncryptedSharedPreferences
         // files this version no longer reads, so it would look like a first run.

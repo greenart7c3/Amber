@@ -15,6 +15,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -23,8 +24,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.FileProvider
-import androidx.paging.Pager
-import androidx.paging.PagingConfig
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.greenart7c3.nostrsigner.commonsui.Res
 import com.greenart7c3.nostrsigner.commonsui.clear_logs
@@ -37,7 +37,6 @@ import com.greenart7c3.nostrsigner.service.SharedFiles
 import com.greenart7c3.nostrsigner.ui.components.AmberButton
 import java.io.File
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.compose.resources.stringResource
@@ -46,21 +45,12 @@ import org.jetbrains.compose.resources.stringResource
 fun LogsScreen(
     paddingValues: PaddingValues,
     account: Account,
+    viewModel: LogsViewModel = viewModel(factory = LogsViewModel.factory(LocalAccountRepository.current)),
 ) {
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
-    val accountRepository = LocalAccountRepository.current
-    val pager =
-        Pager(
-            PagingConfig(
-                pageSize = 20,
-                enablePlaceholders = false,
-            ),
-        ) {
-            accountRepository.getLogDatabase(account.npub).dao().getLogsPaging()
-        }
-
-    val lazyPagingItems = pager.flow.collectAsLazyPagingItems()
+    val logs = remember(account.npub) { viewModel.logs(account.npub) }
+    val lazyPagingItems = logs.collectAsLazyPagingItems()
     val state = rememberLazyListState()
 
     LazyColumn(
@@ -80,14 +70,8 @@ fun LogsScreen(
                     modifier = Modifier.weight(1f),
                     onClick = {
                         scope.launch(Dispatchers.IO) {
-                            val logs =
-                                accountRepository
-                                    .getLogDatabase(account.npub)
-                                    .dao()
-                                    .getLogs()
-                                    .first()
                             val logsText =
-                                logs.joinToString("\n") { log ->
+                                viewModel.allLogs(account.npub).joinToString("\n") { log ->
                                     val time =
                                         TimeUtils.formatDateTime(context, log.time, withSeconds = true)
                                     val repeats = if (log.repeatCount > 1) " (x${log.repeatCount})" else ""
@@ -123,11 +107,7 @@ fun LogsScreen(
                 )
                 AmberButton(
                     modifier = Modifier.weight(1f),
-                    onClick = {
-                        scope.launch(Dispatchers.IO) {
-                            accountRepository.getLogDatabase(account.npub).dao().clearLogs()
-                        }
-                    },
+                    onClick = { viewModel.clear(account.npub) },
                     text = stringResource(Res.string.clear_logs),
                 )
             }

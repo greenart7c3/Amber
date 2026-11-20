@@ -57,7 +57,7 @@ interfaces from the CompositionLocals the two activities provide
 - The Android bunker flow (`BunkerRequestUtils` + `EventNotificationConsumer`)
   and the desktop one (`BunkerEngine`) implement the same permission and
   response logic twice.
-- `ui/` reaches Room DAOs directly (step 6: 10 files left, see the `databaseInUi`
+- `ui/` reaches Room DAOs directly (step 6: 8 files left, see the `databaseInUi`
   allow-list).
 
 ## Target layering
@@ -334,11 +334,11 @@ saved app private and gives the screen its `name` and `remembered(key, relayUrl)
 `ActivityStatsCard`: `ActivityStatsViewModel` loads the counts once, when the card
 is first opened (`ActivityStatsViewModelTest`). `ActivitiesScreen` and the per-app
 `actions/ActivityScreen`: `ActivityViewModel` pages the history as `ActivityEntry` rows
-and looks up app names.
+and looks up app names. `LogsScreen` and the relay log in `EditRelaysDialog`: `LogsViewModel`
+pages the log as `LogEntry` lines, reads it for the export and clears it.
 The rule also counts DAO calls (`.dao(`, `getDatabase(` and the like), since Kotlin
 needs no import for the types it infers: `actions/ActivityScreen` slipped past the
 import check that way, and seven more files went on the allow-list when the rule
 started counting calls. Left: `EditConfigurationScreen`, `EditPermission`,
-`NewNsecBunkerScreen`, `EditRelaysDialog`, `LogoutButton`, `ApplicationsScreen`,
-`AmberTopAppBar`, `BunkerConnectRequestScreen`, `BunkerMultiEventHomeScreen`,
-`LogsScreen`.
+`NewNsecBunkerScreen`, `LogoutButton`, `ApplicationsScreen`,
+`AmberTopAppBar`, `BunkerConnectRequestScreen`, `BunkerMultiEventHomeScreen`.

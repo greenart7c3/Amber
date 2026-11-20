@@ -45,8 +45,9 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.greenart7c3.nostrsigner.R
-import com.greenart7c3.nostrsigner.common.generateBunkerPrivKey
 import com.greenart7c3.nostrsigner.commonsui.Res
 import com.greenart7c3.nostrsigner.commonsui.add
 import com.greenart7c3.nostrsigner.commonsui.close_application
@@ -58,9 +59,7 @@ import com.greenart7c3.nostrsigner.commonsui.reset_bunker
 import com.greenart7c3.nostrsigner.commonsui.testing_relay
 import com.greenart7c3.nostrsigner.commonsui.update
 import com.greenart7c3.nostrsigner.commonsui.wss
-import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
 import com.greenart7c3.nostrsigner.models.Account
-import com.greenart7c3.nostrsigner.service.BunkerRequestUtils
 import com.greenart7c3.nostrsigner.service.TrustScoreService
 import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.actions.onAddRelay
@@ -69,7 +68,6 @@ import com.greenart7c3.nostrsigner.ui.components.TrustScoreBadge
 import com.greenart7c3.nostrsigner.ui.navigation.Route
 import com.greenart7c3.nostrsigner.ui.theme.orange
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
-import java.util.UUID
 import kotlin.collections.set
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -82,13 +80,15 @@ fun EditConfigurationScreen(
     key: String,
     account: Account,
     onNav: (String) -> Unit,
+    viewModel: EditConfigurationViewModel = viewModel(
+        factory = EditConfigurationViewModel.factory(LocalContext.current.applicationContext, LocalAccountRepository.current, LocalRelayClient.current),
+    ),
 ) {
     val settingsStore = LocalSettingsStore.current
     val context = LocalContext.current
-    val accountRepository = LocalAccountRepository.current
-    val relayClient = LocalRelayClient.current
     val scope = rememberCoroutineScope()
-    var application by remember { mutableStateOf<ApplicationWithPermissions?>(null) }
+    val relayClient = LocalRelayClient.current
+    val application by viewModel.configuration.collectAsStateWithLifecycle()
     var name by remember { mutableStateOf(TextFieldValue(AnnotatedString(""))) }
     val relays = remember { mutableStateListOf<NormalizedRelayUrl>() }
     val textFieldRelay = remember { mutableStateOf(TextFieldValue(AnnotatedString(""))) }
@@ -98,15 +98,11 @@ fun EditConfigurationScreen(
     val loadingScores = remember { mutableStateMapOf<String, Boolean>() }
 
     LaunchedEffect(Unit) {
-        val applicationWithPermissions = withContext(Dispatchers.IO) {
-            accountRepository.getDatabase(account.npub).dao().getByKey(key)
-        }
+        val loaded = viewModel.load(account.npub, key)
+        name = TextFieldValue(AnnotatedString(loaded?.name?.ifBlank { loaded.key.toShortenHex() } ?: ""))
+        closeApp = loaded?.closeApplication != false
 
-        application = applicationWithPermissions
-        name = TextFieldValue(AnnotatedString(application?.application?.name?.ifBlank { application?.application?.key?.toShortenHex() } ?: ""))
-        closeApp = application?.application?.closeApplication != false
-
-        application?.application?.relays?.forEach {
+        loaded?.relays?.forEach {
             relays.add(
                 it.copy(),
             )
@@ -185,7 +181,7 @@ fun EditConfigurationScreen(
             }
 
             Spacer(modifier = Modifier.height(16.dp))
-            if (application?.application?.shouldShowRelays() == true) {
+            if (application?.showRelays == true) {
                 OutlinedTextField(
                     modifier = Modifier
                         .fillMaxWidth(),
@@ -329,30 +325,7 @@ fun EditConfigurationScreen(
             AmberButton(
                 modifier = Modifier
                     .padding(vertical = 20.dp),
-                onClick = {
-                    scope.launch(Dispatchers.IO) {
-                        application?.let {
-                            val localApplicationData =
-                                it.application.copy(
-                                    name = name.text,
-                                    relays = relays,
-                                    closeApplication = closeApp,
-                                )
-                            accountRepository.dao(account.npub).delete(it.application)
-                            accountRepository.dao(account.npub).insertApplicationWithPermissions(
-                                ApplicationWithPermissions(
-                                    localApplicationData,
-                                    it.permissions,
-                                ),
-                            )
-                            relayClient.checkForNewRelaysAndUpdateAllFilters()
-
-                            scope.launch(Dispatchers.Main) {
-                                onNav(Route.Applications.route)
-                            }
-                        }
-                    }
-                },
+                onClick = { viewModel.update(account.npub, name.text, relays.toList(), closeApp) { onNav(Route.Applications.route) } },
                 text = stringResource(Res.string.update),
             )
 
@@ -362,39 +335,7 @@ fun EditConfigurationScreen(
                 colors = ButtonDefaults.buttonColors().copy(
                     containerColor = orange,
                 ),
-                onClick = {
-                    application?.let {
-                        scope.launch(Dispatchers.IO) {
-                            val newSecret = UUID.randomUUID().toString()
-                            val newLocalKey = generateBunkerPrivKey()
-                            val resetApp = it.application.copy(
-                                key = newSecret,
-                                isConnected = false,
-                                secret = newSecret,
-                                useSecret = true,
-                                localKey = newLocalKey,
-                            )
-                            val dao = accountRepository.dao(account.npub)
-                            // The reset retires the old connection key: drop its
-                            // queued requests so a stale card cannot resurrect it.
-                            BunkerRequestUtils.removeAllForClient(context, it.application.key)
-                            dao.deletePermissions(it.application.key)
-                            dao.delete(it.application)
-                            accountRepository.getHistoryDatabase(account.npub).dao().deleteHistory(it.application.key)
-                            dao.insertApplicationWithPermissions(
-                                ApplicationWithPermissions(
-                                    resetApp,
-                                    it.permissions,
-                                ),
-                            )
-                            relayClient.checkForNewRelaysAndUpdateAllFilters()
-
-                            scope.launch(Dispatchers.Main) {
-                                onNav(Route.Applications.route)
-                            }
-                        }
-                    }
-                },
+                onClick = { viewModel.resetBunker(account.npub) { onNav(Route.Applications.route) } },
                 text = stringResource(Res.string.reset_bunker),
                 textColor = Color.White,
             )
@@ -405,23 +346,7 @@ fun EditConfigurationScreen(
                 colors = ButtonDefaults.buttonColors().copy(
                     containerColor = orange,
                 ),
-                onClick = {
-                    application?.let {
-                        scope.launch(Dispatchers.IO) {
-                            // Drop queued requests first: answering a stale card
-                            // would otherwise resurrect the deleted connection.
-                            BunkerRequestUtils.removeAllForClient(context, it.application.key)
-                            accountRepository.dao(account.npub).delete(it.application)
-                            accountRepository.getHistoryDatabase(account.npub).dao().deleteHistory(it.application.key)
-
-                            scope.launch(Dispatchers.Main) {
-                                onNav(Route.Applications.route)
-                            }
-
-                            relayClient.checkForNewRelaysAndUpdateAllFilters()
-                        }
-                    }
-                },
+                onClick = { viewModel.delete(account.npub) { onNav(Route.Applications.route) } },
                 text = stringResource(Res.string.delete_application),
                 textColor = Color.White,
             )

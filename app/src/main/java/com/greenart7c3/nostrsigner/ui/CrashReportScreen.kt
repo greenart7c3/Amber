@@ -49,7 +49,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
-import com.greenart7c3.nostrsigner.amber
 import com.greenart7c3.nostrsigner.commonsui.Res
 import com.greenart7c3.nostrsigner.commonsui.cancel
 import com.greenart7c3.nostrsigner.commonsui.copy_crash_report_to_clipboard
@@ -58,7 +57,6 @@ import com.greenart7c3.nostrsigner.commonsui.crash_report_send_prompt
 import com.greenart7c3.nostrsigner.commonsui.crashreport_found_send
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.service.ReportSender
-import com.greenart7c3.nostrsigner.service.crashreports.clearPendingCrashReport
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -68,8 +66,11 @@ fun CrashReportScreen(
     onDismiss: () -> Unit,
     onLoading: (Boolean) -> Unit = {},
 ) {
-    val amber = LocalContext.current.amber
-    val initialStack = remember { amber.pendingCrashReport ?: "" }
+    val pendingReports = LocalPendingReports.current
+    val appContext = LocalContext.current.applicationContext
+    val relayClient = LocalRelayClient.current
+    val appScope = LocalAppScope.current
+    val initialStack = remember { pendingReports.pendingCrashReport ?: "" }
     var editedStack by remember { mutableStateOf(initialStack) }
     val clipboardManager = LocalClipboard.current
 
@@ -108,13 +109,13 @@ fun CrashReportScreen(
         val send = { anonymous: Boolean ->
             if (editedStack.isNotBlank()) {
                 onLoading(true)
-                ReportSender(amber, amber, amber.applicationIOScope).send(
+                ReportSender(appContext, relayClient, appScope).send(
                     account = account,
                     report = editedStack,
                     clipboard = clipboardManager,
                     anonymous = anonymous,
                     onDone = {
-                        amber.clearPendingCrashReport()
+                        pendingReports.clearPendingCrashReport()
                         onLoading(false)
                         onDismiss()
                     },
@@ -143,7 +144,7 @@ fun CrashReportScreen(
             OutlinedButton(
                 modifier = Modifier.weight(1f),
                 onClick = {
-                    amber.clearPendingCrashReport()
+                    pendingReports.clearPendingCrashReport()
                     onDismiss()
                 },
             ) {

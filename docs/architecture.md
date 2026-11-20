@@ -375,7 +375,8 @@ Done so far: `FeedbackScreen` (the existing locals), `AccountBackupScreen` and
 `BunkerMultiEventHomeScreen`: `LocalBunkerResponder`. `NewNsecBunkerScreen` and `RelaysScreen`:
 `LocalBunkerRelay`. `AmberTopAppBar` and `EditRelaysDialog`: the relay status (`stats`, `relayStats`)
 is part of `RelayClient`, and `onAddRelay` takes the saved relays as a lookup.
-`ProfileSubscriptionEffect` and `LoginScreen`: `LocalProfileSubscription`, `LocalNotificationSubscription`. Left:
-the pending crash and translation reports (`EventData`, `CrashReportScreen`,
-`TranslationReportScreen`), the updater, theme and backup alarm (`SettingsScreen`,
+`ProfileSubscriptionEffect` and `LoginScreen`: `LocalProfileSubscription`, `LocalNotificationSubscription`.
+`EventData`, `CrashReportScreen` and `TranslationReportScreen`: `LocalPendingReports`, a `PendingReports`
+(`data/`) that `Amber` holds as `AppPendingReports` instead of two fields of its own. Left:
+the updater, theme and backup alarm (`SettingsScreen`,
 `UpdateSettingsScreen`, `ApplicationsBackupScreen`), then `MainScreen`.

@@ -29,12 +29,6 @@ import com.greenart7c3.nostrsigner.ui.navigation.Route
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-/** The user sent or dismissed the report: drop it and the exit records it included. */
-fun Amber.clearPendingCrashReport() {
-    pendingCrashReport = null
-    ExitReasons.clearPending(this)
-}
-
 @Composable
 fun DisplayCrashMessages(
     amber: Amber,
@@ -54,7 +48,7 @@ fun DisplayCrashMessages(
                 .joinToString("\n\n")
                 .ifBlank { null }
             if (stack != null) {
-                amber.pendingCrashReport = stack
+                amber.pendingReports.pendingCrashReport = stack
                 withContext(Dispatchers.Main) {
                     navController.navController.navigate(Route.CrashReport.route)
                 }

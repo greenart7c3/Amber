@@ -16,7 +16,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.capitalize
@@ -26,7 +25,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.greenart7c3.nostrsigner.amber
 import com.greenart7c3.nostrsigner.commonsui.Permission
 import com.greenart7c3.nostrsigner.commonsui.Res
 import com.greenart7c3.nostrsigner.commonsui.event_kind
@@ -35,6 +33,7 @@ import com.greenart7c3.nostrsigner.commonsui.report_missing_event_kind_translati
 import com.greenart7c3.nostrsigner.commonsui.show_details
 import com.greenart7c3.nostrsigner.commonsui.wants_you_to_sign_a
 import com.greenart7c3.nostrsigner.models.Account
+import com.greenart7c3.nostrsigner.ui.LocalPendingReports
 import com.greenart7c3.nostrsigner.ui.RememberType
 import com.greenart7c3.nostrsigner.ui.theme.AmberPreview
 import com.greenart7c3.nostrsigner.ui.theme.ThemePreviews
@@ -232,7 +231,7 @@ fun ContactListDetail(title: String, text: String) {
 
 @Composable
 fun ReportMissingEventKindButton(kind: Int, appName: String? = null) {
-    val amber = LocalContext.current.amber
+    val pendingReports = LocalPendingReports.current
     AmberButton(
         onClick = {
             val text = if (!appName.isNullOrBlank()) {
@@ -240,7 +239,7 @@ fun ReportMissingEventKindButton(kind: Int, appName: String? = null) {
             } else {
                 "Missing event kind translation: $kind"
             }
-            amber.pendingTranslationReport.value = text
+            pendingReports.pendingTranslationReport.value = text
         },
         text = stringResource(Res.string.report_missing_event_kind_translation),
     )

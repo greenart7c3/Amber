@@ -1,10 +1,8 @@
 package com.greenart7c3.nostrsigner.service
 
-import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
-import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.IntentData
@@ -36,7 +34,6 @@ import org.junit.Test
  */
 class EncryptIntentAccountTest {
     // A context whose Application is a relaxed mock: parsing logs failures through it.
-    private fun appContext(): Context = mockk(relaxed = true) { every { applicationContext } returns mockk<Amber>(relaxed = true) }
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private val kp = KeyPair()
@@ -82,7 +79,7 @@ class EncryptIntentAccountTest {
     private suspend fun parse(intent: Intent): IntentData? {
         val method = IntentUtils::class.declaredMemberFunctions.first { it.name == "getIntentDataFromIntent" }
         method.isAccessible = true
-        return method.callSuspend(IntentUtils, appContext(), intent, "com.example.app", null, account) as IntentData?
+        return method.callSuspend(IntentUtils, intent, "com.example.app", null, account) as IntentData?
     }
 
     @Test

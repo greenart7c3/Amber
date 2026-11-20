@@ -16,7 +16,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
@@ -51,6 +50,7 @@ import com.greenart7c3.nostrsigner.ui.LocalAppScope
 import com.greenart7c3.nostrsigner.ui.LocalSettingsStore
 import com.greenart7c3.nostrsigner.ui.RememberType
 import com.greenart7c3.nostrsigner.ui.ToastManager
+import com.greenart7c3.nostrsigner.ui.rememberResultCopier
 import com.vitorpamplona.quartz.nip01Core.core.toHexKey
 import com.vitorpamplona.quartz.nip19Bech32.bech32.bechToBytes
 import com.vitorpamplona.quartz.nip19Bech32.toNpub
@@ -121,7 +121,7 @@ private fun GetPublicKeyRequest(
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
-    val clipboardManager = LocalClipboard.current
+    val copyToClipboard = rememberResultCopier()
     val activity = LocalActivity.current
     LoginWithPubKey(
         horizontalPadding = horizontalPadding,
@@ -141,7 +141,7 @@ private fun GetPublicKeyRequest(
                     appName = request.resultAppName,
                     shouldCloseApplication = closeApplication,
                 ),
-                clipboardManager,
+                copyToClipboard,
                 onLoading,
                 onRemoveIntentData,
             )
@@ -163,7 +163,7 @@ private fun SignPsbtRequest(
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
-    val clipboardManager = LocalClipboard.current
+    val copyToClipboard = rememberResultCopier()
     val appScope = LocalAppScope.current
     val intentData = request.intentData
     val decoded = remember(intentData.data) { PsbtDecoder.decode(intentData.data, request.account.signer.keyPair.pubKey) }
@@ -182,7 +182,7 @@ private fun SignPsbtRequest(
                         request.account,
                         request.reply(result),
                         IntentApproval(rememberType),
-                        clipboardManager,
+                        copyToClipboard,
                         onLoading,
                         onRemoveIntentData,
                     )
@@ -197,7 +197,6 @@ private fun SignPsbtRequest(
         },
         onReject = { rememberType ->
             IntentUtils.sendRejection(
-                context = context,
                 key = request.key,
                 account = request.account,
                 intentData = intentData,
@@ -219,7 +218,7 @@ private fun Nip44v3Request(
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
-    val clipboardManager = LocalClipboard.current
+    val copyToClipboard = rememberResultCopier()
     val intentData = request.intentData
     Nip44v3ApprovalData(
         modifier = modifier,
@@ -241,7 +240,7 @@ private fun Nip44v3Request(
                 request.account,
                 request.reply(result),
                 IntentApproval(rememberType, kind = v3Kind, decryptTypeScope = scope),
-                clipboardManager,
+                copyToClipboard,
                 onLoading,
                 onRemoveIntentData,
             )
@@ -249,7 +248,6 @@ private fun Nip44v3Request(
         onReject = { rememberType, scope ->
             val v3Kind = if (scope == DecryptTypeScope.SPECIFIC) intentData.nip44v3Kind else null
             IntentUtils.sendRejection(
-                context = context,
                 key = request.key,
                 account = request.account,
                 intentData = intentData,
@@ -272,7 +270,7 @@ private fun EncryptDecryptRequest(
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
-    val clipboardManager = LocalClipboard.current
+    val copyToClipboard = rememberResultCopier()
     val intentData = request.intentData
     EncryptDecryptData(
         modifier = modifier,
@@ -293,14 +291,13 @@ private fun EncryptDecryptRequest(
                 request.account,
                 request.reply(result),
                 IntentApproval(rememberType, decryptTypeScope = scope),
-                clipboardManager,
+                copyToClipboard,
                 onLoading,
                 onRemoveIntentData,
             )
         },
         onReject = { rememberType, scope ->
             IntentUtils.sendRejection(
-                context = context,
                 key = request.key,
                 account = request.account,
                 intentData = intentData,
@@ -359,7 +356,7 @@ private fun RelayAuthRequest(
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
-    val clipboardManager = LocalClipboard.current
+    val copyToClipboard = rememberResultCopier()
     val settingsStore = LocalSettingsStore.current
     val intentData = request.intentData
     val event = intentData.event!!
@@ -382,7 +379,7 @@ private fun RelayAuthRequest(
                 request.account,
                 request.reply(event.toJson(), event.sig),
                 IntentApproval(relayRemember, kind = event.kind, appName = request.resultAppName, relay = relayPermission),
-                clipboardManager,
+                copyToClipboard,
                 onLoading,
                 onRemoveIntentData,
             )
@@ -390,7 +387,6 @@ private fun RelayAuthRequest(
         onReject = { rememberType, scope ->
             val (relayPermission, relayRemember) = relayGrant(scope, relayUrl, rememberType)
             IntentUtils.sendRejection(
-                context = context,
                 key = request.key,
                 account = request.account,
                 intentData = intentData,
@@ -413,7 +409,7 @@ private fun EventRequest(
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
-    val clipboardManager = LocalClipboard.current
+    val copyToClipboard = rememberResultCopier()
     val intentData = request.intentData
     val event = intentData.event!!
     EventData(
@@ -432,14 +428,13 @@ private fun EventRequest(
                 request.account,
                 request.reply(event.toJson(), if (isAnonZap) event.toJson() else event.sig),
                 IntentApproval(it, kind = event.kind, appName = request.resultAppName),
-                clipboardManager,
+                copyToClipboard,
                 onLoading,
                 onRemoveIntentData,
             )
         },
         onReject = {
             IntentUtils.sendRejection(
-                context = context,
                 key = request.key,
                 account = request.account,
                 intentData = intentData,

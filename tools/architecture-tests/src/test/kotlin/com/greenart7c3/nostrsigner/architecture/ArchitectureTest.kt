@@ -195,7 +195,6 @@ class ArchitectureTest {
             "service/BootReceiver.kt",
             "service/ClearLogsWorker.kt",
             "service/ConnectivityService.kt",
-            "service/IntentUtils.kt",
             "service/KillSwitchReceiver.kt",
             "service/ReconnectReceiver.kt",
             "service/StopServiceReceiver.kt",
@@ -205,8 +204,7 @@ class ArchitectureTest {
             "SignerProvider.kt",
         )
 
-        val composeUiInService = setOf(
-            "service/IntentUtils.kt",
-        )
+        // Empty since step 8: service/ and database/ take what needs the UI as a function the composable passes in.
+        val composeUiInService = emptySet<String>()
     }
 }

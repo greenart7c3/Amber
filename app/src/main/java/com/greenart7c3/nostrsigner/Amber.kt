@@ -61,6 +61,7 @@ import com.greenart7c3.nostrsigner.service.BunkerResponder
 import com.greenart7c3.nostrsigner.service.ClearLogsWorker
 import com.greenart7c3.nostrsigner.service.ConnectivityService
 import com.greenart7c3.nostrsigner.service.IntentRateLimiter
+import com.greenart7c3.nostrsigner.service.IntentUtils
 import com.greenart7c3.nostrsigner.service.LocalBunkerRelayServer
 import com.greenart7c3.nostrsigner.service.NotificationSubscription
 import com.greenart7c3.nostrsigner.service.PrivateAddress
@@ -132,6 +133,7 @@ class Amber :
         AccountStorage.install(accountRepository = this, appScope = applicationIOScope)
         SecureCryptoHelper.install(this, this)
         LocalPreferences.install(this, this)
+        IntentUtils.install(this, applicationIOScope) { getMainActivity() }
     }
 
     override var settings: AmberSettings = AmberSettings()

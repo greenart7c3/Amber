@@ -14,6 +14,7 @@ import com.vitorpamplona.quartz.nip01Core.core.Event
 import com.vitorpamplona.quartz.nip01Core.relay.client.NostrClient
 import com.vitorpamplona.quartz.nip01Core.relay.client.single.IRelayClient
 import com.vitorpamplona.quartz.nip01Core.relay.commands.toClient.EventMessage
+import com.vitorpamplona.quartz.nip01Core.relay.filters.Filter
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
 import io.mockk.coEvery
 import io.mockk.every
@@ -41,6 +42,7 @@ import org.junit.Test
 class NotificationSubscriptionTest {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private val sentSubIds = Collections.synchronizedList(mutableListOf<String>())
+    private val sentFilters = Collections.synchronizedList(mutableListOf<Map<NormalizedRelayUrl, List<Filter>>>())
     private lateinit var client: NostrClient
     private lateinit var dao: ApplicationDao
     private lateinit var account: Account
@@ -49,7 +51,7 @@ class NotificationSubscriptionTest {
     @Before
     fun setUp() {
         client = mockk(relaxed = true)
-        every { client.subscribe(capture(sentSubIds), any()) } returns Unit
+        every { client.subscribe(capture(sentSubIds), capture(sentFilters)) } returns Unit
 
         dao = mockk()
         val database = mockk<AppDatabase>()
@@ -83,7 +85,7 @@ class NotificationSubscriptionTest {
     )
 
     @Test
-    fun `updateFilter subscribes once per connection with a local key`() = runBlocking {
+    fun `updateFilter subscribes a connection with a local key`() = runBlocking {
         // updateFilter is a no-op on the offline flavor by design
         assumeFalse(BuildFlavorChecker.isOfflineFlavor())
         coEvery { dao.getAll(account.hexKey) } returns listOf(connection())
@@ -92,6 +94,25 @@ class NotificationSubscriptionTest {
         subscription.updateFilter()
 
         assertEquals(1, sentSubIds.size)
+    }
+
+    /** #644: strfry relays refuse a socket's 21st REQ, so connections must share one. */
+    @Test
+    fun `connections sharing a relay share one subscription on it`() = runBlocking {
+        assumeFalse(BuildFlavorChecker.isOfflineFlavor())
+        val relay = NormalizedRelayUrl("wss://relay1.example.com")
+        val connections = (1..25).map { i ->
+            connection().copy(key = "conn$i", localKey = "%064x".format(i))
+        }
+        coEvery { dao.getAll(account.hexKey) } returns connections
+        every { dao.getAllRelayLists() } returns emptyList()
+
+        subscription.updateFilter()
+
+        val subIdsOnRelay = sentSubIds.zip(sentFilters).filter { (_, filters) -> relay in filters }.map { it.first }.toSet()
+        assertEquals(1, subIdsOnRelay.size)
+        val listenedKeys = sentFilters.flatMap { it[relay].orEmpty() }.flatMap { it.tags.orEmpty()["p"].orEmpty() }.toSet()
+        assertEquals(connections.map { it.localPubKey }.toSet(), listenedKeys)
     }
 
     @Test
@@ -189,7 +210,7 @@ class NotificationSubscriptionTest {
             assertEquals(account.npub, LocalKeyAccountIndex.lookup(second.localPubKey)?.npub)
         }
         subscription.updateFilter()
-        verify(exactly = 2) { client.subscribe(any(), any()) }
+        verify(exactly = 1) { client.subscribe(any(), any()) }
     }
 
     @Test

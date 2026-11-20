@@ -7,6 +7,7 @@ import com.greenart7c3.nostrsigner.common.RELAY_AUTH_KIND
 import com.greenart7c3.nostrsigner.common.SignerType
 import com.greenart7c3.nostrsigner.common.UNVERIFIED_REPLY_ATTEMPTS
 import com.greenart7c3.nostrsigner.common.admitNip46Request
+import com.greenart7c3.nostrsigner.common.bunkerFilters
 import com.greenart7c3.nostrsigner.common.canRememberRelayAuth
 import com.greenart7c3.nostrsigner.common.hasAmbiguousRelayTags
 import com.greenart7c3.nostrsigner.common.isBlockedByAuthWhitelist
@@ -33,7 +34,6 @@ import com.vitorpamplona.quartz.nip01Core.relay.client.listeners.RelayConnection
 import com.vitorpamplona.quartz.nip01Core.relay.client.single.IRelayClient
 import com.vitorpamplona.quartz.nip01Core.relay.commands.toClient.EventMessage
 import com.vitorpamplona.quartz.nip01Core.relay.commands.toClient.Message
-import com.vitorpamplona.quartz.nip01Core.relay.filters.Filter
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
 import com.vitorpamplona.quartz.nip01Core.signers.NostrSignerInternal
 import com.vitorpamplona.quartz.nip01Core.tags.people.taggedUsers
@@ -177,6 +177,9 @@ data class PendingBunkerRequest(
      */
     val queueKey: String get() = "${account.npub}|$localKey|${request.id}"
 }
+
+// The one subscription every bunker endpoint shares, keyed in subIds.
+private const val BUNKER_SUB_KEY = "bunker"
 
 /**
  * Desktop port of `NotificationSubscription` + `EventNotificationConsumer` +
@@ -336,7 +339,8 @@ class BunkerEngine(
     }
 
     private suspend fun updateFilterLocked() = filterMutex.withLock {
-        val pendingSubscriptions = linkedMapOf<String, Map<NormalizedRelayUrl, List<Filter>>>()
+        // Mirrors NotificationSubscription: one REQ per relay for every endpoint (#644).
+        val keysByRelay = linkedMapOf<NormalizedRelayUrl, MutableSet<String>>()
         val indexEntries = mutableMapOf<String, Pair<String, String>>()
         // Once per update: it also hands over (and clears) a lock-deferred `since`.
         val since = computeSince()
@@ -351,22 +355,10 @@ class BunkerEngine(
             for (conn in connectionsWithLocalKey) {
                 val connPubKey = conn.localPubKey()
                 indexEntries[connPubKey] = account.npub to conn.localKey
-                val subKey = "${account.hexKey}_$connPubKey"
 
-                val connRelays = conn.normalizedRelays().ifEmpty { AmberDesktop.savedRelays(account.npub).toList() }
+                conn.normalizedRelays().ifEmpty { AmberDesktop.savedRelays(account.npub).toList() }
                     .filterNot { RelayHealthTracker.isDead(it) }
-                if (connRelays.isEmpty()) continue
-
-                pendingSubscriptions[subKey] = connRelays.associateWith {
-                    listOf(
-                        Filter(
-                            kinds = listOf(NostrConnectEvent.KIND),
-                            tags = mapOf("p" to listOf(connPubKey)),
-                            limit = 1,
-                            since = since,
-                        ),
-                    )
-                }
+                    .forEach { keysByRelay.getOrPut(it) { linkedSetOf() }.add(connPubKey) }
             }
         }
 
@@ -375,11 +367,11 @@ class BunkerEngine(
         // of a new connection can arrive while its key is still unknown and is
         // dropped. One reference swap, so consume() never sees a half-filled index.
         localKeyIndex = indexEntries.toMap()
-        pendingSubscriptions.forEach { (key, filters) ->
-            client.subscribe(subIds.getOrPut(key) { UUID.randomUUID().toString() }, filters)
+        if (keysByRelay.isNotEmpty()) {
+            client.subscribe(subIds.getOrPut(BUNKER_SUB_KEY) { UUID.randomUUID().toString() }, bunkerFilters(keysByRelay, since))
         }
 
-        val staleSubKeys = subIds.keys.filter { it !in pendingSubscriptions }
+        val staleSubKeys = subIds.keys.filter { it != BUNKER_SUB_KEY || keysByRelay.isEmpty() }
         for (subKey in staleSubKeys) {
             subIds.remove(subKey)?.let { subId ->
                 client.unsubscribe(subId)

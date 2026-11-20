@@ -125,7 +125,7 @@ class MainActivity : AppCompatActivity() {
                                         appContext = amber,
                                         settingsStore = amber,
                                         accountRepository = amber.accountDatabases,
-                                        relayClient = amber,
+                                        relayClient = amber.relayClient,
                                         appScope = amber.applicationIOScope,
                                     )
                                 }

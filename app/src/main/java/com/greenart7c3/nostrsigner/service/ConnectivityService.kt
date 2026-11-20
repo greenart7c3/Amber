@@ -54,7 +54,7 @@ class ConnectivityService : Service() {
             if (amber.settings.killSwitch.value) return
             AmberLog.d(Amber.TAG, "Device unlocked, refreshing relay subscriptions")
             amber.applicationIOScope.launch {
-                amber.checkForNewRelaysAndUpdateAllFilters()
+                amber.relayClient.checkForNewRelaysAndUpdateAllFilters()
             }
         }
     }
@@ -97,7 +97,7 @@ class ConnectivityService : Service() {
                     (getSystemService(ConnectivityManager::class.java) as ConnectivityManager)
                 val capabilities = connectivityManager.getNetworkCapabilities(connectivityManager.activeNetwork)
                 amber.networkState.update(capabilities)
-                amber.disconnectIntentionally()
+                amber.relayClient.disconnectIntentionally()
             }
         }
 
@@ -122,9 +122,9 @@ class ConnectivityService : Service() {
                 TorManager.restart(this, amber.applicationIOScope)
             }
             scheduleRelayReset(reason)
-        } else if (!amber.client.isActive()) {
+        } else if (!amber.relayClient.client.isActive()) {
             scope.launch {
-                amber.client.connect()
+                amber.relayClient.client.connect()
             }
         }
     }
@@ -139,7 +139,7 @@ class ConnectivityService : Service() {
         pendingRelayReset?.cancel()
         pendingRelayReset = scope.launch {
             delay(NETWORK_SETTLE_MS.milliseconds)
-            amber.resetRelayConnections(reason)
+            amber.relayClient.resetRelayConnections(reason)
         }
     }
 
@@ -193,9 +193,9 @@ class ConnectivityService : Service() {
             // Wait for Tor to be ready before connecting (if using built-in Tor)
             amber.waitForTorIfNeeded()
             if (!BuildFlavorChecker.isOfflineFlavor() && !amber.settings.killSwitch.value) {
-                amber.client.connect()
+                amber.relayClient.client.connect()
                 amber.applicationIOScope.launch {
-                    amber.checkForNewRelaysAndUpdateAllFilters()
+                    amber.relayClient.checkForNewRelaysAndUpdateAllFilters()
                 }
             }
 
@@ -270,7 +270,7 @@ class ConnectivityService : Service() {
             ServiceCompat.startForeground(
                 this,
                 1,
-                amber.stats.createForegroundNotification(),
+                amber.relayClient.stats.createForegroundNotification(),
                 foregroundServiceType,
             )
         } catch (e: Exception) {

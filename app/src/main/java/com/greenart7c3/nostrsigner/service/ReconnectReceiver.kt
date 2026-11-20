@@ -12,7 +12,7 @@ class ReconnectReceiver : BroadcastReceiver() {
         amber.applicationIOScope.launch {
             // Manual reconnect: redial every relay now, ignoring dead-relay state and
             // reconnect backoff, and re-add any relay previously dropped from the pool.
-            amber.resetRelayConnections("manual reconnect")
+            amber.relayClient.resetRelayConnections("manual reconnect")
         }
     }
 }

@@ -300,7 +300,6 @@
     <ID>ReturnCount:SignerProviderQuery.kt:SignerProviderQuery$private fun hasAnyAcceptingDecryptPermission: Boolean</ID>
     <ID>ThrowsCount:AccountBackupScreen.kt:@Composable private fun NSecQrButton</ID>
     <ID>TooManyFunctions:Account.kt:Account</ID>
-    <ID>TooManyFunctions:Amber.kt:Amber : ApplicationLifecycleObserverSettingsStoreRelayClient</ID>
     <ID>TooManyFunctions:ApplicationBackup.kt:ApplicationBackup</ID>
     <ID>TooManyFunctions:ApplicationDao.kt:ApplicationDao</ID>
     <ID>TooManyFunctions:CachingApplicationDao.kt:CachingApplicationDao : ApplicationDao</ID>

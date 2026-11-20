@@ -38,10 +38,10 @@ anything. The biometric/PIN prompt is a UI gate only.
 
 ### The dependency container
 
-`Amber` is the Application class and the dependency container: `client`,
+`Amber` is the Application class and the dependency container: `relayClient`,
 `notificationSubscription`, `profileSubscription`, the per-account databases and
-`settings`. It implements two narrow interfaces in `data/` — `SettingsStore` and
-`RelayClient` — and holds the third, `AccountRepository` (`accountDatabases`); code
+`settings`. It implements one of the narrow interfaces in `data/`, `SettingsStore`, and
+holds the other two: `AccountRepository` (`accountDatabases`) and `RelayClient` (`relayClient`); code
 takes those (or the app scope) through its constructor or parameters. There is no static accessor: Android
 entry points (activities, services, receivers, workers, the provider) read the
 container from their own context with `Context.amber`, and composables read the
@@ -421,4 +421,7 @@ it. The cleanup and update-check schedules are `ClearLogsWorker.schedule` and
 is built by `service/ImageLoaderFactory`, which `Amber` registers with
 `SingletonImageLoader.setSafe` instead of implementing the factory itself. The
 network the device is on is `service/NetworkState` (plain fields: only a log reads
-them) instead of four Compose states. Left: the relay client, the Tor startup wait.
+them) instead of four Compose states. The relay client is `relays/AppRelayClient`, the
+`RelayClient` that `Amber` holds as `relayClient`; the subscriptions it refreshes are
+passed in as two functions, since they take the `RelayClient` themselves. Left: the
+Tor startup wait.

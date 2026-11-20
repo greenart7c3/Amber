@@ -14,9 +14,9 @@ class KillSwitchReceiver : BroadcastReceiver() {
             amber.settings.killSwitch.emit(!amber.settings.killSwitch.value)
             LocalPreferences.saveSettingsToEncryptedStorage(context, amber.settings)
             if (amber.settings.killSwitch.value) {
-                amber.client.disconnect()
+                amber.relayClient.client.disconnect()
             } else {
-                amber.checkForNewRelaysAndUpdateAllFilters(shouldReconnect = true)
+                amber.relayClient.checkForNewRelaysAndUpdateAllFilters(shouldReconnect = true)
             }
         }
     }

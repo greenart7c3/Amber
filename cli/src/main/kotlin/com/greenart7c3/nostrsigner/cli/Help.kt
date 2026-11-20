@@ -62,7 +62,8 @@ object Help {
 
         FLAGS (before or after the command)
           --profile NAME     saved connection to use (default: "default")
-          --timeout SECONDS  how long to wait for Amber (default: 120)
+          --timeout SECONDS  how long to wait for Amber, and for a locked OS
+                             credential store to be unlocked (default: 120)
           --json             print one {"ok":true,"result":...} or
                              {"ok":false,"error":...,"code":...} object
           --verbose          relay traffic notes on stderr

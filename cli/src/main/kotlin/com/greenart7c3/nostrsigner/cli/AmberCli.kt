@@ -83,6 +83,8 @@ internal class Session(
 
     fun run(args: Args): Int {
         QuartzLogs.install(err, args.has("verbose"))
+        // The OS credential store (a locked keyring waits for its unlock prompt) gets the same bound.
+        args.value("timeout")?.toLongOrNull()?.takeIf { it in 1..86_400 }?.let { keyringTimeoutSeconds = it }
         if (args.has("version")) {
             out.println("amber ${BuildInfo.version}")
             return Exit.OK

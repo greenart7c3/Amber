@@ -6,6 +6,10 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.attribute.PosixFilePermissions
 import java.util.Base64
+import java.util.concurrent.ExecutionException
+import java.util.concurrent.FutureTask
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
 
 /**
  * Where the key that encrypts the connections file lives. The point is that it
@@ -119,9 +123,44 @@ class PinnedSecretStore(
 }
 
 /**
+ * How long a call to the OS credential store may take: the command's `--timeout`
+ * (set once the arguments are parsed), 120 s before that, like `--timeout` itself.
+ */
+@Volatile
+internal var keyringTimeoutSeconds: Long = 120
+
+/**
+ * Runs [block] (a call into the OS credential store) for at most [seconds]. A
+ * locked GNOME keyring answers only once the user unlocks it in a prompt, which
+ * an unattended script would wait on forever; this fails with [Exit.TIMEOUT]
+ * instead. It never falls back to a key file: a locked store still holds the key.
+ */
+internal fun <T> withKeyringTimeout(
+    seconds: Long,
+    what: String,
+    block: () -> T,
+): T {
+    val task = FutureTask(block)
+    // A daemon: a call that never returns must not keep the process alive.
+    Thread(task, "amber-cli-keyring").apply { isDaemon = true }.start()
+    return try {
+        task.get(seconds, TimeUnit.SECONDS)
+    } catch (_: TimeoutException) {
+        throw CliError(
+            "the OS credential store did not answer within ${seconds}s while $what. It may be locked: " +
+                "unlock it (your login keyring) and run the command again, or set ${SecretStore.KEY_STORE_ENV}=file " +
+                "to keep the key in a file instead (and pair again).",
+            Exit.TIMEOUT,
+        )
+    } catch (e: ExecutionException) {
+        throw e.cause ?: e
+    }
+}
+
+/**
  * macOS Keychain, Windows Credential Manager or a freedesktop Secret Service
  * (GNOME Keyring, KWallet), the same store the desktop app keeps its keystore
- * password in.
+ * password in. Every call is bounded by [keyringTimeoutSeconds].
  */
 class KeyringSecretStore(
     private val service: String = "amber-cli",
@@ -129,45 +168,58 @@ class KeyringSecretStore(
 ) : SecretStore {
     override val description: String = "the OS credential store"
 
-    private val keyring: Keyring? = runCatching { Keyring.create() }.getOrNull()
+    // Opening the freedesktop backend already unlocks the collection, which is where a locked keyring prompts.
+    private val keyring: Keyring? by lazy {
+        withKeyringTimeout(keyringTimeoutSeconds, "opening it") { runCatching { Keyring.create() }.getOrNull() }
+    }
 
-    /** Whether this backend can actually serve requests (a session without a Secret Service cannot). */
+    /**
+     * Whether this backend can actually serve requests (a session without a Secret
+     * Service cannot). One that does not answer in time is there but locked: that
+     * fails, so a new store is not quietly put in a key file.
+     */
     fun works(): Boolean {
         val ring = keyring ?: return false
-        return try {
-            ring.getPassword(service, account)
-            true
-        } catch (_: PasswordAccessException) {
-            // The backend answered: there is simply no key saved yet.
-            true
-        } catch (_: Exception) {
-            false
+        return withKeyringTimeout(keyringTimeoutSeconds, "checking it") {
+            try {
+                ring.getPassword(service, account)
+                true
+            } catch (_: PasswordAccessException) {
+                // The backend answered: there is simply no key saved yet.
+                true
+            } catch (_: Exception) {
+                false
+            }
         }
     }
 
     override fun read(): ByteArray? {
         val ring = keyring ?: throw CliError("the OS credential store is not available")
-        val stored = try {
-            ring.getPassword(service, account)
-        } catch (_: PasswordAccessException) {
-            return null
-        } catch (e: Exception) {
-            throw CliError("could not read the connection key from the OS credential store: ${e.message}")
-        }
+        val stored = withKeyringTimeout(keyringTimeoutSeconds, "reading the connection key") {
+            try {
+                ring.getPassword(service, account)
+            } catch (_: PasswordAccessException) {
+                null
+            } catch (e: Exception) {
+                throw CliError("could not read the connection key from the OS credential store: ${e.message}")
+            }
+        } ?: return null
         return Base64.getDecoder().decode(stored)
     }
 
     override fun write(key: ByteArray) {
         val ring = keyring ?: throw CliError("the OS credential store is not available")
-        try {
-            ring.setPassword(service, account, Base64.getEncoder().encodeToString(key))
-        } catch (e: Exception) {
-            throw CliError("could not save the connection key to the OS credential store: ${e.message}")
+        withKeyringTimeout(keyringTimeoutSeconds, "saving the connection key") {
+            try {
+                ring.setPassword(service, account, Base64.getEncoder().encodeToString(key))
+            } catch (e: Exception) {
+                throw CliError("could not save the connection key to the OS credential store: ${e.message}")
+            }
         }
     }
 
     override fun delete() {
-        runCatching { keyring?.deletePassword(service, account) }
+        runCatching { withKeyringTimeout(keyringTimeoutSeconds, "deleting the connection key") { keyring?.deletePassword(service, account) } }
     }
 }
 

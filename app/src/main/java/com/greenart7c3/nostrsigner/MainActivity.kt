@@ -184,7 +184,7 @@ class MainActivity : AppCompatActivity() {
             val connectivityManager =
                 (getSystemService(ConnectivityManager::class.java) as ConnectivityManager)
             connectivityManager.getNetworkCapabilities(connectivityManager.activeNetwork)?.let {
-                amber.updateNetworkCapabilities(it)
+                amber.networkState.update(it)
             }
         }
         super.onResume()

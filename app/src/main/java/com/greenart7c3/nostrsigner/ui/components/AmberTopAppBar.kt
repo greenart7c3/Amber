@@ -41,7 +41,6 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.greenart7c3.nostrsigner.R
-import com.greenart7c3.nostrsigner.amber
 import com.greenart7c3.nostrsigner.common.sanitizeAppName
 import com.greenart7c3.nostrsigner.commonsui.Res
 import com.greenart7c3.nostrsigner.commonsui.getStringBlocking
@@ -90,13 +89,12 @@ fun AmberTopAppBar(
     val settingsStore = LocalSettingsStore.current
     val relayClient = LocalRelayClient.current
     val appScope = LocalAppScope.current
-    val amber = LocalContext.current.amber
     if (intents.isEmpty() || packageName == null || destinationRoute != Route.IncomingRequest.route) {
         if (destinationRoute != "login" && destinationRoute != "create" && destinationRoute != "loginPage") {
             CenterAlignedTopAppBar(
                 actions = {
                     if (intents.isEmpty() || packageName == null || destinationRoute != Route.IncomingRequest.route) {
-                        val relayStats = amber.stats.relayStatus.collectAsStateWithLifecycle(Pair(emptySet(), emptySet()))
+                        val relayStats = relayClient.stats.relayStatus.collectAsStateWithLifecycle(Pair(emptySet(), emptySet()))
                         if (relayStats.value.first.isNotEmpty() || relayStats.value.second.isNotEmpty()) {
                             Row(
                                 horizontalArrangement = Arrangement.spacedBy(4.dp),
@@ -123,7 +121,7 @@ fun AmberTopAppBar(
                                         horizontalArrangement = Arrangement.spacedBy(4.dp),
                                         verticalAlignment = Alignment.CenterVertically,
                                     ) {
-                                        val relayStats = amber.stats.relayStatus.collectAsStateWithLifecycle(Pair(emptySet(), emptySet()))
+                                        val relayStats = relayClient.stats.relayStatus.collectAsStateWithLifecycle(Pair(emptySet(), emptySet()))
                                         Text("${relayStats.value.second.size}/${relayStats.value.first.size}")
                                         Icon(
                                             imageVector = ImageVector.vectorResource(R.drawable.relays),
@@ -144,7 +142,7 @@ fun AmberTopAppBar(
                                                 -> {
                                                     if (settingsStore.settings.torMode != TorMode.BUILTIN) {
                                                         appScope.launch {
-                                                            orbotProxyEnabled = amber.isSocksProxyAlive("127.0.0.1", settingsStore.settings.proxyPort)
+                                                            orbotProxyEnabled = relayClient.isSocksProxyAlive("127.0.0.1", settingsStore.settings.proxyPort)
                                                         }
                                                     }
                                                 }

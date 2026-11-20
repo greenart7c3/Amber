@@ -173,9 +173,9 @@ class Amber :
     // a meaningful memory cost (event-id hex strings + Long).
     val notificationCache = LruCache<String, Long>(512)
 
-    val relayStats = RelayStats(client)
+    override val relayStats = RelayStats(client)
 
-    val stats = AmberRelayStats(client, this, settingsStore = this, relayStats = relayStats, scope = applicationIOScope)
+    override val stats = AmberRelayStats(client, this, settingsStore = this, relayStats = relayStats, scope = applicationIOScope)
 
     // logs and stat counts.
     init {

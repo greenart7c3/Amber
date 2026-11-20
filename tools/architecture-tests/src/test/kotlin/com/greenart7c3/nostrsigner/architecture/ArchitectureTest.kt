@@ -208,7 +208,6 @@ class ArchitectureTest {
 
         val composeUiInService = setOf(
             "service/IntentUtils.kt",
-            "service/ReportSender.kt",
         )
     }
 }

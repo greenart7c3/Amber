@@ -20,11 +20,8 @@
  */
 package com.greenart7c3.nostrsigner.service
 
-import android.content.ClipData
 import android.content.Context
 import android.content.Intent
-import androidx.compose.ui.platform.ClipEntry
-import androidx.compose.ui.platform.Clipboard
 import androidx.core.net.toUri
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
@@ -62,7 +59,8 @@ class ReportSender(
     fun send(
         account: Account?,
         report: String,
-        clipboard: Clipboard,
+        // Puts the report on the clipboard, for the offline flavor (and no account) to paste it into a DM.
+        copyToClipboard: suspend (String) -> Unit,
         anonymous: Boolean = false,
         onDone: () -> Unit,
     ) {
@@ -71,26 +69,24 @@ class ReportSender(
             return
         }
         when {
-            BuildFlavorChecker.isOfflineFlavor() -> sendOffline(report, clipboard, onDone)
+            BuildFlavorChecker.isOfflineFlavor() -> sendOffline(report, copyToClipboard, onDone)
             // The sender's own copy would be wrapped to the throwaway key, which nobody keeps.
             anonymous -> sendOnline(report, onlyToDeveloper = true, onDone) {
                 NIP17Factory().createMessageNIP17(it, NostrSignerInternal(KeyPair()))
             }
             account != null -> sendOnline(report, onlyToDeveloper = false, onDone, account::createMessageNIP17)
-            else -> sendOffline(report, clipboard, onDone)
+            else -> sendOffline(report, copyToClipboard, onDone)
         }
     }
 
     private fun sendOffline(
         report: String,
-        clipboard: Clipboard,
+        copyToClipboard: suspend (String) -> Unit,
         onDone: () -> Unit,
     ) {
         scope.launch(Dispatchers.Main) {
             try {
-                clipboard.setClipEntry(
-                    ClipEntry(ClipData.newPlainText("", report)),
-                )
+                copyToClipboard(report)
                 val intent = Intent(Intent.ACTION_VIEW)
                 val npub = Hex.decode(Amber.DEVELOPER_HEX_KEY).toNpub()
                 intent.data = "nostr:$npub".toUri()

@@ -212,8 +212,6 @@ class ArchitectureTest {
             "ui/CrashReportScreen.kt",
             "ui/LoginScreen.kt",
             "ui/MainScreen.kt",
-            "ui/NewNsecBunkerScreen.kt",
-            "ui/RelaysScreen.kt",
             "ui/SettingsScreen.kt",
             "ui/TranslationReportScreen.kt",
             "ui/UpdateSettingsScreen.kt",

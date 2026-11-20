@@ -48,7 +48,6 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import com.greenart7c3.nostrsigner.amber
 import com.greenart7c3.nostrsigner.commonsui.Res
 import com.greenart7c3.nostrsigner.commonsui.copy_to_clipboard
 import com.greenart7c3.nostrsigner.commonsui.create
@@ -85,7 +84,7 @@ fun NewNsecBunkerScreen(
     navController: NavController,
     viewModel: NewBunkerViewModel = viewModel(factory = NewBunkerViewModel.factory(LocalAccountRepository.current, LocalRelayClient.current)),
 ) {
-    val localBunkerRelay = LocalContext.current.amber.localBunkerRelay
+    val localBunkerRelay = LocalBunkerRelay.current
     val context = LocalContext.current
     val relayClient = LocalRelayClient.current
     val secret = remember { mutableStateOf(UUID.randomUUID().toString()) }

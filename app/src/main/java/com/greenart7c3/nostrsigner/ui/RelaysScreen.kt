@@ -29,7 +29,6 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.LocalPreferences
-import com.greenart7c3.nostrsigner.amber
 import com.greenart7c3.nostrsigner.commonsui.Res
 import com.greenart7c3.nostrsigner.commonsui.active_relays
 import com.greenart7c3.nostrsigner.commonsui.d_local_bunker_port
@@ -124,7 +123,7 @@ fun RelaysScreen(
 /** The local bunker relay switch and its port (mirrors desktop Settings -> Desktop). */
 @Composable
 private fun LocalBunkerServerSettings() {
-    val localBunkerRelay = LocalContext.current.amber.localBunkerRelay
+    val localBunkerRelay = LocalBunkerRelay.current
     val settingsStore = LocalSettingsStore.current
     val context = LocalContext.current
     val scope = rememberCoroutineScope()

@@ -39,13 +39,11 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.paging.LoadState
-import androidx.paging.Pager
-import androidx.paging.PagingConfig
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.common.SignerType
-import com.greenart7c3.nostrsigner.common.sanitizeAppName
 import com.greenart7c3.nostrsigner.commonsui.Res
 import com.greenart7c3.nostrsigner.commonsui.content
 import com.greenart7c3.nostrsigner.commonsui.filter_accepted
@@ -55,7 +53,6 @@ import com.greenart7c3.nostrsigner.commonsui.localizedBlocking
 import com.greenart7c3.nostrsigner.commonsui.no_activities_found
 import com.greenart7c3.nostrsigner.commonsui.supportedKindNumbers
 import com.greenart7c3.nostrsigner.commonsui.tags
-import com.greenart7c3.nostrsigner.database.HistoryEntity
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.TimeUtils
 import com.greenart7c3.nostrsigner.service.ApplicationNameCache
@@ -82,29 +79,14 @@ fun ActivitiesScreen(
     paddingValues: PaddingValues,
     topPadding: Dp,
     account: Account,
+    viewModel: ActivityViewModel = viewModel(factory = ActivityViewModel.factory(LocalAccountRepository.current)),
 ) {
-    val database = LocalAccountRepository.current.getHistoryDatabase(account.npub)
-
     val context = LocalContext.current
     var searchQuery by remember { mutableStateOf("") }
     var filter by rememberSaveable(account.npub) { mutableStateOf(ActivityFilter.ALL) }
 
-    val pager = remember(searchQuery, filter) {
-        Pager(
-            PagingConfig(
-                pageSize = 20,
-                enablePlaceholders = false,
-            ),
-        ) {
-            if (searchQuery.isEmpty()) {
-                database.dao().getAllHistoryPaging(filter.accepted)
-            } else {
-                database.dao().searchAllHistoryPaging(searchQuery.lowercase(), filter.accepted)
-            }
-        }
-    }
-
-    val lazyPagingItems = pager.flow.collectAsLazyPagingItems()
+    val history = remember(searchQuery, filter) { viewModel.history(account.npub, pkKey = null, searchQuery, filter) }
+    val lazyPagingItems = history.collectAsLazyPagingItems()
 
     val textFieldState by remember { mutableStateOf(TextFieldState(initialText = searchQuery)) }
     val searchResults = remember(context) { supportedKindNumbers.map { it.localizedBlocking(true) } }
@@ -203,7 +185,7 @@ fun ActivitiesScreen(
  * the stored content if the row is not encrypted or decryption fails (e.g. old
  * rows created before ciphertext-at-rest, or a missing counterparty key).
  */
-suspend fun decryptHistoryContent(activity: HistoryEntity, account: Account): String {
+suspend fun decryptHistoryContent(activity: ActivityEntry, account: Account): String {
     if (activity.content.isBlank()) return ""
     return try {
         when (activity.type) {
@@ -232,7 +214,7 @@ suspend fun decryptHistoryContent(activity: HistoryEntity, account: Account): St
 }
 
 @Composable
-fun ActivityRow(activity: HistoryEntity, account: Account) {
+fun ActivityRow(activity: ActivityEntry, account: Account) {
     val copyToClipboard = rememberCopyToClipboard()
     val context = LocalContext.current
     val displayContent by produceState(initialValue = "", activity.id, activity.content) {
@@ -368,9 +350,9 @@ fun ApplicationName(
     key: String,
     accepted: Boolean,
     account: Account,
+    viewModel: ActivityViewModel = viewModel(factory = ActivityViewModel.factory(LocalAccountRepository.current)),
 ) {
     var name by remember { mutableStateOf("") }
-    val accountRepository = LocalAccountRepository.current
 
     LaunchedEffect(key) {
         val cacheKey = "${account.npub.toShortenHex()}-$key"
@@ -378,9 +360,7 @@ fun ApplicationName(
         if (cached != null) {
             name = cached
         } else {
-            val appName = withContext(Dispatchers.IO) {
-                accountRepository.getDatabase(account.npub).dao().getAppName(key)?.let(::sanitizeAppName)?.ifBlank { null }
-            }
+            val appName = viewModel.appName(account.npub, key)
             if (appName != null) {
                 name = appName
                 ApplicationNameCache[cacheKey] = appName

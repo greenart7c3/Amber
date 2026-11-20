@@ -34,10 +34,8 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.ClipEntry
 import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.res.vectorResource
-import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.text.toLowerCase
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -292,7 +290,7 @@ fun PermissionRow(
 ) {
     val message = remember(permission.type, permission.kind, permission.acceptable, permission.relay) {
         val localPermission = Permission(
-            permission.type.toLowerCase(Locale.current),
+            permission.type.lowercase(),
             permission.kind,
         )
 

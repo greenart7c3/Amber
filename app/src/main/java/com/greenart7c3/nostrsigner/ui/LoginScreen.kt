@@ -93,11 +93,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
-import androidx.compose.ui.text.toLowerCase
-import androidx.compose.ui.text.toUpperCase
 import androidx.compose.ui.text.withLink
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.Density
@@ -263,7 +260,7 @@ private fun ImportSheet(
 @Composable
 private fun MainPageContent(onAddKey: () -> Unit, onGenerateKey: () -> Unit, onRecover: () -> Unit) {
     Column(modifier = Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(text = androidStringResource(R.string.app_name_release).toUpperCase(Locale.current), fontSize = 36.sp)
+        Text(text = androidStringResource(R.string.app_name_release).uppercase(), fontSize = 36.sp)
         Text(text = stringResource(Res.string.a_nostr_secure_signer), fontSize = 16.sp, color = Color(0xFFC98500))
         PreviousOfflineInstallNotice(Modifier.padding(top = 12.dp))
         Image(
@@ -674,7 +671,7 @@ private fun MnemonicSection(input: AddKeyInput, onClearError: () -> Unit) {
                         val pastedWords = text.trim().split(Regex("\\s+"))
                         val count = if (pastedWords.size > 12) 24 else 12
                         input.wordCount = count
-                        input.words = List(count) { i -> pastedWords.getOrElse(i) { "" }.toLowerCase(Locale.current) }
+                        input.words = List(count) { i -> pastedWords.getOrElse(i) { "" }.lowercase() }
                         onClearError()
                     }
                 }
@@ -718,7 +715,7 @@ private fun PrivateKeySection(input: AddKeyInput, onClearError: () -> Unit, onSu
                 if (scannerOpen) {
                     SimpleQrCodeScanner(onDismiss = { scannerOpen = false }) { content ->
                         scannerOpen = false
-                        if (!content.isNullOrEmpty()) input.key = TextFieldValue(content.toLowerCase(Locale.current))
+                        if (!content.isNullOrEmpty()) input.key = TextFieldValue(content.lowercase())
                     }
                 }
                 IconButton(onClick = { scannerOpen = true }) {

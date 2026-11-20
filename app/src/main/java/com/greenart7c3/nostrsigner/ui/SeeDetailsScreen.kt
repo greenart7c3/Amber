@@ -23,8 +23,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.intl.Locale
-import androidx.compose.ui.text.toLowerCase
 import androidx.compose.ui.unit.dp
 import com.greenart7c3.nostrsigner.common.SignerType
 import com.greenart7c3.nostrsigner.common.nip46SignerType
@@ -75,7 +73,7 @@ fun SeeDetailsScreen(
 
                 Permission("sign_event", event.kind)
             } else {
-                Permission(type.toString().toLowerCase(Locale.current), null)
+                Permission(type.toString().lowercase(), null)
             }
 
             val message = if (type == SignerType.CONNECT) {

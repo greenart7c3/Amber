@@ -36,8 +36,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.intl.Locale
-import androidx.compose.ui.text.toLowerCase
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.PopupProperties
@@ -177,7 +175,7 @@ private fun WordField(
         OutlinedTextField(
             value = word,
             onValueChange = { raw ->
-                val cleaned = raw.trimStart().toLowerCase(Locale.current)
+                val cleaned = raw.trimStart().lowercase()
                 if (cleaned.contains(" ")) {
                     val firstWord = cleaned.substringBefore(" ").trim()
                     if (firstWord.isNotEmpty()) {

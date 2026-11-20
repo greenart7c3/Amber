@@ -26,7 +26,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.capitalize
 import androidx.compose.ui.text.intl.Locale
-import androidx.compose.ui.text.toLowerCase
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.greenart7c3.nostrsigner.common.SignerType
@@ -198,7 +197,7 @@ private fun IntentRequestCard(
     val permission = if (type == SignerType.SIGN_EVENT) {
         Permission("sign_event", intent.event!!.kind)
     } else {
-        Permission(type.toString().toLowerCase(Locale.current), null)
+        Permission(type.toString().lowercase(), null)
     }
 
     var label = if (type == SignerType.CONNECT) {

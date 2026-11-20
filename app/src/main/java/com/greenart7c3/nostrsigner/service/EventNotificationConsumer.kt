@@ -23,8 +23,6 @@ package com.greenart7c3.nostrsigner.service
 import android.app.NotificationManager
 import android.content.Context
 import androidx.collection.LruCache
-import androidx.compose.ui.text.intl.Locale
-import androidx.compose.ui.text.toLowerCase
 import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
 import com.greenart7c3.nostrsigner.AccountStorage
@@ -640,7 +638,7 @@ class EventNotificationConsumer(
                     HistoryEntity(
                         0,
                         appKey,
-                        type.toString().toLowerCase(Locale.current),
+                        type.toString().lowercase(),
                         amberEvent?.kind,
                         TimeUtils.now(),
                         true,
@@ -704,7 +702,7 @@ class EventNotificationConsumer(
             .map { sanitizeAppName(it?.application?.name ?: "") }
             .firstOrNull { it.isNotBlank() } ?: event.pubKey.toShortenHex()
 
-        val bunkerPermission = Permission(type.toString().toLowerCase(Locale.current), amberEvent?.kind)
+        val bunkerPermission = Permission(type.toString().lowercase(), amberEvent?.kind)
         var message = "$name  ${getStringBlocking(Res.string.requests)} ${bunkerPermission.localizedBlocking()}"
         if (type == SignerType.SIGN_EVENT) {
             message = "$name ${getStringBlocking(Res.string.wants_you_to_sign_a, bunkerPermission.localizedBlocking())}"

@@ -13,6 +13,7 @@ import com.greenart7c3.nostrsigner.data.AccountRepository
 import com.greenart7c3.nostrsigner.database.HistoryDao
 import com.vitorpamplona.quartz.utils.TimeUtils
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -30,7 +31,8 @@ data class WindowStats(
 
 /**
  * The accepted/rejected counts the statistics card shows, for one account and,
- * with a `pkKey`, one app. Loaded once, the first time the card is opened.
+ * with a `pkKey`, one app. Loaded once, the first time the card is opened, and
+ * forgotten when it leaves the screen, as the card's own state was.
  */
 class ActivityStatsViewModel(
     private val accountRepository: AccountRepository,
@@ -38,14 +40,20 @@ class ActivityStatsViewModel(
     private val _stats = MutableStateFlow<List<WindowStats>?>(null)
     val stats: StateFlow<List<WindowStats>?> = _stats.asStateFlow()
 
-    private var loading = false
+    private var job: Job? = null
 
     fun load(npub: String, pkKey: String?) {
-        if (loading || _stats.value != null) return
-        loading = true
-        viewModelScope.launch(Dispatchers.IO) {
+        if (job != null) return
+        job = viewModelScope.launch(Dispatchers.IO) {
             _stats.value = loadStats(accountRepository.getHistoryDatabase(npub).dao(), pkKey)
         }
+    }
+
+    /** Drops the counts when the card leaves the screen, so coming back shows fresh ones. */
+    fun forget() {
+        job?.cancel()
+        job = null
+        _stats.value = null
     }
 
     companion object {

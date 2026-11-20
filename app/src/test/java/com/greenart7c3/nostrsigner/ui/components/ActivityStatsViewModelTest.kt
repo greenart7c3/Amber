@@ -71,4 +71,18 @@ class ActivityStatsViewModelTest {
 
         coVerify(exactly = 3) { dao.countAcceptedSince(any()) }
     }
+
+    @Test
+    fun `coming back to the screen loads fresh counts`() {
+        val viewModel = ActivityStatsViewModel(accountRepository)
+        viewModel.load("npub1", pkKey = null)
+        viewModel.awaitStats()
+
+        viewModel.forget()
+        assertEquals(null, viewModel.stats.value)
+        coEvery { dao.countAcceptedSince(any()) } returns 11
+        viewModel.load("npub1", pkKey = null)
+
+        assertEquals(listOf(13L, 13L, 13L), viewModel.awaitStats().map { it.total })
+    }
 }

@@ -23,6 +23,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -66,6 +67,7 @@ fun ActivityStatsCard(
     LaunchedEffect(account.npub, pkKey, expanded) {
         if (expanded) viewModel.load(account.npub, pkKey)
     }
+    DisposableEffect(viewModel) { onDispose { viewModel.forget() } }
 
     val chevronRotation by animateFloatAsState(
         targetValue = if (expanded) 180f else 0f,

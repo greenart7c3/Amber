@@ -48,9 +48,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import androidx.paging.Pager
-import androidx.paging.PagingConfig
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.AmberLog
@@ -86,6 +85,7 @@ import com.greenart7c3.nostrsigner.ui.CenterCircularProgressIndicator
 import com.greenart7c3.nostrsigner.ui.LocalAccountRepository
 import com.greenart7c3.nostrsigner.ui.LocalRelayClient
 import com.greenart7c3.nostrsigner.ui.LocalSettingsStore
+import com.greenart7c3.nostrsigner.ui.LogsViewModel
 import com.greenart7c3.nostrsigner.ui.RelayCard
 import com.greenart7c3.nostrsigner.ui.ToastManager
 import com.greenart7c3.nostrsigner.ui.components.AmberButton
@@ -577,19 +577,11 @@ fun RelayLogScreen(
     paddingValues: PaddingValues,
     account: Account,
     url: String,
+    viewModel: LogsViewModel = viewModel(factory = LogsViewModel.factory(LocalAccountRepository.current)),
 ) {
-    val accountRepository = LocalAccountRepository.current
     val context = LocalContext.current
-    val pager =
-        Pager(
-            PagingConfig(
-                pageSize = 20,
-                enablePlaceholders = false,
-            ),
-        ) {
-            accountRepository.getLogDatabase(account.npub).dao().getLogsByUrlPaging(url)
-        }
-    val lazyPagingItems = pager.flow.collectAsLazyPagingItems()
+    val logs = remember(account.npub, url) { viewModel.logs(account.npub, url) }
+    val lazyPagingItems = logs.collectAsLazyPagingItems()
 
     LazyColumn(
         Modifier.fillMaxSize(),

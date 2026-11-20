@@ -168,7 +168,10 @@ class KeyringSecretStore(
 ) : SecretStore {
     override val description: String = "the OS credential store"
 
-    private val keyring: Keyring? = runCatching { Keyring.create() }.getOrNull()
+    // Opening the freedesktop backend already unlocks the collection, which is where a locked keyring prompts.
+    private val keyring: Keyring? by lazy {
+        withKeyringTimeout(keyringTimeoutSeconds, "opening it") { runCatching { Keyring.create() }.getOrNull() }
+    }
 
     /**
      * Whether this backend can actually serve requests (a session without a Secret

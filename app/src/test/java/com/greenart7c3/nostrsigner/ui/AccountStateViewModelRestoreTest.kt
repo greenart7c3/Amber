@@ -58,7 +58,7 @@ class AccountStateViewModelRestoreTest {
         val dao = mockk<ApplicationDao>(relaxed = true)
         coEvery { dao.getAll(any()) } returns emptyList()
         every { amber.applicationIOScope } returns scope
-        every { amber.dao(any()) } returns dao
+        every { amber.accountDatabases.dao(any()) } returns dao
 
         mockkObject(ApplicationBackup)
         coEvery { ApplicationBackup.resolveReadRelays(any(), any(), any()) } returns setOf(mockk())
@@ -107,7 +107,7 @@ class AccountStateViewModelRestoreTest {
         npub = null,
         appContext = amber,
         settingsStore = amber,
-        accountRepository = amber,
+        accountRepository = amber.accountDatabases,
         relayClient = amber,
         appScope = scope,
     )

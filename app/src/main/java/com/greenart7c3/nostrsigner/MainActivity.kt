@@ -124,7 +124,7 @@ class MainActivity : AppCompatActivity() {
                                         npub = npub,
                                         appContext = amber,
                                         settingsStore = amber,
-                                        accountRepository = amber,
+                                        accountRepository = amber.accountDatabases,
                                         relayClient = amber,
                                         appScope = amber.applicationIOScope,
                                     )

@@ -56,17 +56,17 @@ class NotificationSubscriptionTest {
         every { database.dao() } returns dao
 
         val amber = mockk<Amber>(relaxed = true)
-        every { amber.getDatabase(any()) } returns database
+        every { amber.accountDatabases.getDatabase(any()) } returns database
         // updateFilter reads through the caching wrapper; a fresh wrapper per call
         // mirrors per-test dao state without cross-test cache leakage.
-        every { amber.dao(any()) } answers { CachingApplicationDao(dao) }
+        every { amber.accountDatabases.dao(any()) } answers { CachingApplicationDao(dao) }
         every { amber.notificationCache } returns LruCache(512)
 
         mockkObject(LocalPreferences, AccountStorage)
         account = newTestAccount(scope)
         coEvery { AccountStorage.all(any()) } returns listOf(account)
 
-        subscription = NotificationSubscription(client, mockk(relaxed = true), settingsStore = amber, accountRepository = amber, bunkerResponder = mockk(relaxed = true), scope = amber.applicationIOScope, notificationCache = amber.notificationCache)
+        subscription = NotificationSubscription(client, mockk(relaxed = true), settingsStore = amber, accountRepository = amber.accountDatabases, bunkerResponder = mockk(relaxed = true), scope = amber.applicationIOScope, notificationCache = amber.notificationCache)
     }
 
     @After

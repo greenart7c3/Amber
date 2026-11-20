@@ -23,19 +23,19 @@ class ClearLogsWorker(appContext: Context, workerParams: WorkerParameters) : Cor
                 val now = System.currentTimeMillis()
                 val threeDaysAgo = now - THREE_DAYS_MILLIS
 
-                LogRetentionManager.prune(amber, amber, it.npub)
+                LogRetentionManager.prune(amber, amber.accountDatabases, it.npub)
 
-                val bunkerEventDao = amber.getDatabase(it.npub).bunkerEventDao()
+                val bunkerEventDao = amber.accountDatabases.getDatabase(it.npub).bunkerEventDao()
                 val deletedBunkerEvents = bunkerEventDao.deleteOld(threeDaysAgo / 1000)
                 if (deletedBunkerEvents > 0) {
                     AmberLog.d(Amber.TAG, "Deleted $deletedBunkerEvents old bunker event entries")
                 }
 
-                val dao = amber.dao(it.npub)
+                val dao = amber.accountDatabases.dao(it.npub)
                 dao.updateExpiredPermissions(TimeUtils.now())
                 val deleted = dao.deleteOldApplications(now / 1000)
                 if (deleted > 0) {
-                    amber.getLogDatabase(it.npub).dao().insertLogIfEnabled(
+                    amber.accountDatabases.getLogDatabase(it.npub).dao().insertLogIfEnabled(
                         LogEntity(
                             id = 0,
                             url = "",

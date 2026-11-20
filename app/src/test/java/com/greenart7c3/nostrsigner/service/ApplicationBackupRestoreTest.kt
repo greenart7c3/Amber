@@ -21,7 +21,7 @@ class ApplicationBackupRestoreTest {
 
     @Before
     fun setUp() {
-        every { amber.dao(any()) } returns dao
+        every { amber.accountDatabases.dao(any()) } returns dao
     }
 
     private fun app(key: String, deleteAfter: Long = 0) = BackupApplication(
@@ -58,7 +58,7 @@ class ApplicationBackupRestoreTest {
         val written = mutableListOf<ApplicationWithPermissions>()
         coEvery { dao.insertApplicationWithPermissions(capture(written)) } returns Unit
 
-        val result = ApplicationBackup.restoreFromPayload("npub1test", payload, amber, amber)
+        val result = ApplicationBackup.restoreFromPayload("npub1test", payload, amber.accountDatabases, amber)
 
         assertEquals(RestoreResult.Success(2, 0), result)
         assertEquals(listOf("pending", "forever"), written.map { it.application.key })

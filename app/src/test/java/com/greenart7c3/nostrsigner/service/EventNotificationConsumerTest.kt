@@ -48,7 +48,7 @@ class EventNotificationConsumerTest {
             BunkerResponder(
                 amber,
                 amber,
-                amber,
+                amber.accountDatabases,
                 amber,
                 object : CoroutineScope {
                     override val coroutineContext get() = amber.applicationIOScope.coroutineContext
@@ -79,8 +79,8 @@ class EventNotificationConsumerTest {
 
         amber = mockk(relaxed = true)
         every { amber.applicationIOScope } returns scope
-        every { amber.getDatabase(any()) } returns database
-        every { amber.dao(any()) } returns dao
+        every { amber.accountDatabases.getDatabase(any()) } returns database
+        every { amber.accountDatabases.dao(any()) } returns dao
 
         mockkObject(AmberLog)
         every { AmberLog.d(any(), any()) } returns Unit
@@ -93,7 +93,7 @@ class EventNotificationConsumerTest {
             EventNotificationConsumer(
                 mockk(relaxed = true),
                 settingsStore = amber,
-                accountRepository = amber,
+                accountRepository = amber.accountDatabases,
                 // Read on use: tests swap the stubbed scope after setUp.
                 scope = object : CoroutineScope {
                     override val coroutineContext get() = amber.applicationIOScope.coroutineContext

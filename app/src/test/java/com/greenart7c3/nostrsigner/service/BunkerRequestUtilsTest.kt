@@ -324,7 +324,7 @@ class BunkerRequestUtilsTest {
 
     // ===== stale queued requests for a deleted app (F-14) =====
 
-    private fun responder(amber: Amber) = BunkerResponder(amber, amber, amber, amber, amber.applicationIOScope, mockk(relaxed = true)) { null }
+    private fun responder(amber: Amber) = BunkerResponder(amber, amber, amber.accountDatabases, amber, amber.applicationIOScope, mockk(relaxed = true)) { null }
 
     private fun amberWithDao(getByKeyReturnsNull: Boolean): Pair<Amber, ApplicationDao> {
         val dao = mockk<ApplicationDao>(relaxed = true)
@@ -340,7 +340,7 @@ class BunkerRequestUtilsTest {
         // The responder built from this Application cancels notifications through it.
         every { amber.getSystemService(android.content.Context.NOTIFICATION_SERVICE) } returns nm
         every { amber.getSystemService(android.app.NotificationManager::class.java) } returns nm
-        every { amber.dao(any()) } returns dao
+        every { amber.accountDatabases.dao(any()) } returns dao
         every { amber.applicationContext } returns appContext
         every { amber.applicationIOScope } returns CoroutineScope(Dispatchers.Unconfined + SupervisorJob())
         return amber to dao

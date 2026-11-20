@@ -52,7 +52,7 @@ class EventNotificationConsumerRateLimitTest {
             BunkerResponder(
                 amber,
                 amber,
-                amber,
+                amber.accountDatabases,
                 amber,
                 object : CoroutineScope {
                     override val coroutineContext get() = amber.applicationIOScope.coroutineContext
@@ -78,8 +78,8 @@ class EventNotificationConsumerRateLimitTest {
         coEvery { appDao.getByKeyRaw(any()) } returns null
 
         every { amber.applicationIOScope } returns scope
-        every { amber.getDatabase(any()) } returns db
-        every { amber.dao(any()) } returns CachingApplicationDao(appDao)
+        every { amber.accountDatabases.getDatabase(any()) } returns db
+        every { amber.accountDatabases.dao(any()) } returns CachingApplicationDao(appDao)
 
         val account = newTestAccount(scope)
         accountHex = account.hexKey
@@ -98,7 +98,7 @@ class EventNotificationConsumerRateLimitTest {
             EventNotificationConsumer(
                 mockk(relaxed = true),
                 settingsStore = amber,
-                accountRepository = amber,
+                accountRepository = amber.accountDatabases,
                 scope = amber.applicationIOScope,
                 notificationCache = amber.notificationCache,
                 bunkerResponder = bunkerResponder,

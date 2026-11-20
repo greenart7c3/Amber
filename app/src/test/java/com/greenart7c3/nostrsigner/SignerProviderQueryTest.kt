@@ -66,8 +66,8 @@ class SignerProviderQueryTest {
         dao = mockk()
         amber = mockk()
         every { amber.applicationIOScope } returns CoroutineScope(Dispatchers.Unconfined)
-        every { amber.getHistoryDatabase(any()) } returns historyDatabase
-        every { amber.dao(any()) } returns dao
+        every { amber.accountDatabases.getHistoryDatabase(any()) } returns historyDatabase
+        every { amber.accountDatabases.dao(any()) } returns dao
 
         account = mockk()
         every { account.npub } returns NPUB
@@ -90,7 +90,7 @@ class SignerProviderQueryTest {
         return uri
     }
 
-    private fun queryRelayAuth(relayUrl: String) = SignerProviderQuery(amber, amber, amber.applicationIOScope).query(
+    private fun queryRelayAuth(relayUrl: String) = SignerProviderQuery(amber, amber.accountDatabases, amber.applicationIOScope).query(
         context = context,
         requesterId = REQUESTER,
         callerPackageName = null,
@@ -188,7 +188,7 @@ class SignerProviderQueryTest {
         return uri
     }
 
-    private fun queryDecrypt() = SignerProviderQuery(amber, amber, amber.applicationIOScope).query(
+    private fun queryDecrypt() = SignerProviderQuery(amber, amber.accountDatabases, amber.applicationIOScope).query(
         context = context,
         requesterId = REQUESTER,
         callerPackageName = null,
@@ -209,7 +209,7 @@ class SignerProviderQueryTest {
 
     /** Only [rows] exist for the requester; every other decrypt lookup is empty. */
     private fun stubDecryptGrants(vararg rows: ApplicationPermissionsEntity) {
-        every { amber.getLogDatabase(any()) } returns mockk(relaxed = true)
+        every { amber.accountDatabases.getLogDatabase(any()) } returns mockk(relaxed = true)
         every { dao.getSignPolicy(REQUESTER) } returns null
         every { dao.getPermission(REQUESTER, any<String>()) } answers { rows.firstOrNull { it.type == secondArg<String>() } }
         every { dao.getPermission(REQUESTER, any<String>(), any<Int>()) } returns null
@@ -242,7 +242,7 @@ class SignerProviderQueryTest {
         }
     }
 
-    private fun queryV3Decrypt(kind: Int) = SignerProviderQuery(amber, amber, amber.applicationIOScope).query(
+    private fun queryV3Decrypt(kind: Int) = SignerProviderQuery(amber, amber.accountDatabases, amber.applicationIOScope).query(
         context = context,
         requesterId = REQUESTER,
         callerPackageName = null,
@@ -253,7 +253,7 @@ class SignerProviderQueryTest {
     /** A remembered NIP-44 v3 decrypt grant for kind 30000. */
     private fun stubV3Grant() {
         val grant = decryptRow("NIP44_V3_DECRYPT", accept = true).copy(kind = 30_000)
-        every { amber.getLogDatabase(any()) } returns mockk(relaxed = true)
+        every { amber.accountDatabases.getLogDatabase(any()) } returns mockk(relaxed = true)
         every { dao.getSignPolicy(REQUESTER) } returns null
         // The kind-agnostic lookup has no kind filter, so it finds the grant for any kind.
         every { dao.getPermission(REQUESTER, any<String>()) } answers { grant.takeIf { it.type == secondArg<String>() } }

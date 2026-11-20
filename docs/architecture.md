@@ -40,9 +40,9 @@ anything. The biometric/PIN prompt is a UI gate only.
 
 `Amber` is the Application class and the dependency container: `client`,
 `notificationSubscription`, `profileSubscription`, the per-account databases and
-`settings`. It implements three narrow interfaces in `data/` — `SettingsStore`,
-`AccountRepository` and `RelayClient` — and code takes those (or the app scope)
-through its constructor or parameters. There is no static accessor: Android
+`settings`. It implements two narrow interfaces in `data/` — `SettingsStore` and
+`RelayClient` — and holds the third, `AccountRepository` (`accountDatabases`); code
+takes those (or the app scope) through its constructor or parameters. There is no static accessor: Android
 entry points (activities, services, receivers, workers, the provider) read the
 container from their own context with `Context.amber`, and composables read the
 interfaces from the CompositionLocals the two activities provide
@@ -402,3 +402,19 @@ and `IntentUtils` get their dependencies (`AccountRepository`, `SettingsStore`, 
 app scope, the main activity) from `Amber`'s constructor, which runs before the
 ContentProvider can take a query. `composeUiInService` is empty, and
 `contextAmberUsers` lists only the entry points.
+
+### 9. Split `Amber`
+
+`Amber` is the Application, the container and most of the app's plumbing at once:
+the per-account databases, the relay client and its reconnect logic, the network
+state, the cleanup and update-check alarms, the image loader and the Tor startup
+wait. Each of these moves into a class of its own that `Amber` constructs and holds,
+so `Amber` is left with wiring and the Application callbacks. Code that took `Amber`
+as one of the `data/` interfaces takes the new object instead (the field is created
+before the `init` blocks that hand it on, and anything that reads the Application's
+context waits until it is attached).
+
+Done so far: the per-account databases are `database/AccountDatabases`, the
+`AccountRepository` that `Amber` holds as `accountDatabases` instead of implementing
+it. Left: the relay client, the network state, the alarms, the image loader, the
+Tor startup wait.

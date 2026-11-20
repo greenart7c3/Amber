@@ -82,7 +82,8 @@ class ArchitectureTest {
             .filter { it.relativePath().startsWith("ui/") }
             // The layer the rule sends data loading to: a ViewModel may expose what it loaded.
             .filterNot { it.relativePath().endsWith("ViewModel.kt") }
-            .filter { file -> file.imports.any { it.name.startsWith("com.greenart7c3.nostrsigner.database") } }
+            // A DAO call needs no import when Kotlin infers its types, so the calls count too.
+            .filter { file -> file.imports.any { it.name.startsWith("com.greenart7c3.nostrsigner.database") } || daoCall.containsMatchIn(file.text) }
             .map { it.relativePath() }
             .toSet()
 
@@ -181,10 +182,21 @@ class ArchitectureTest {
     }
 
     private companion object {
-        // May only shrink: see the class comment.
+        // Opening a Room database or DAO: AccountRepository.dao/getDatabase/getHistoryDatabase/getLogDatabase.
+        val daoCall = Regex("""\.dao\(|\bget(History|Log)?Database\(""")
+
+        // May only shrink: see the class comment. The entries without a database import
+        // were added when the rule started counting DAO calls; they were there before.
         val databaseInUi = setOf(
+            "ui/actions/EditRelaysDialog.kt",
+            "ui/actions/LogoutButton.kt",
+            "ui/ApplicationsScreen.kt",
+            "ui/components/AmberTopAppBar.kt",
+            "ui/components/BunkerConnectRequestScreen.kt",
+            "ui/components/BunkerMultiEventHomeScreen.kt",
             "ui/EditConfigurationScreen.kt",
             "ui/EditPermission.kt",
+            "ui/LogsScreen.kt",
             "ui/NewNsecBunkerScreen.kt",
         )
 

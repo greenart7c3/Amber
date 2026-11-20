@@ -40,6 +40,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.toLowerCase
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.common.SignerType
@@ -63,8 +64,6 @@ import com.greenart7c3.nostrsigner.commonsui.getStringBlocking
 import com.greenart7c3.nostrsigner.commonsui.localizedBlocking
 import com.greenart7c3.nostrsigner.commonsui.remove_all_permissions
 import com.greenart7c3.nostrsigner.commonsui.sign
-import com.greenart7c3.nostrsigner.database.ApplicationEntity
-import com.greenart7c3.nostrsigner.database.ApplicationPermissionsEntity
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.ui.actions.RemoveAllPermissionsDialog
 import com.greenart7c3.nostrsigner.ui.components.AddPermissionsSheet
@@ -74,9 +73,7 @@ import com.greenart7c3.nostrsigner.ui.components.LabeledBorderBox
 import com.greenart7c3.nostrsigner.ui.components.TrustScoreBadge
 import com.greenart7c3.nostrsigner.ui.theme.orange
 import com.vitorpamplona.quartz.utils.TimeUtils
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -85,15 +82,15 @@ fun EditPermission(
     account: Account,
     selectedPackage: String,
     navController: NavController,
+    viewModel: EditPermissionViewModel = viewModel(factory = EditPermissionViewModel.factory(LocalAccountRepository.current)),
 ) {
-    val accountRepository = LocalAccountRepository.current
     val settingsStore = LocalSettingsStore.current
     val clipboardManager = LocalClipboard.current
     val permissions = remember {
-        mutableStateListOf<ApplicationPermissionsEntity>()
+        mutableStateListOf<PermissionGrant>()
     }
     var applicationData by remember {
-        mutableStateOf(ApplicationEntity.empty())
+        mutableStateOf(PermissionsApp())
     }
 
     var wantsToRemovePermissions by remember { mutableStateOf(false) }
@@ -111,19 +108,7 @@ fun EditPermission(
     var connectionPubKey by remember { mutableStateOf(account.hexKey) }
 
     LaunchedEffect(selectedPackage) {
-        val result = withContext(Dispatchers.IO) {
-            val dao = accountRepository.dao(account.npub)
-            dao.updateExpiredPermissions(TimeUtils.now())
-            val perms = dao.getAllByKey(selectedPackage)
-                .sortedBy { "${it.type}-${it.kind}" }
-
-            val app = dao.getByKey(selectedPackage)?.application
-
-            perms to app
-        }
-
-        val (perms, app) = result
-        if (app == null) return@LaunchedEffect
+        val (perms, app) = viewModel.load(account.npub, selectedPackage) ?: return@LaunchedEffect
 
         permissions.clear()
         permissions.addAll(perms)
@@ -143,14 +128,9 @@ fun EditPermission(
                 wantsToRemovePermissions = false
             },
         ) {
-            scope.launch(Dispatchers.IO) {
-                accountRepository.dao(account.npub)
-                    .deletePermissions(applicationData.key)
-
-                withContext(Dispatchers.Main) {
-                    permissions.clear()
-                    wantsToRemovePermissions = false
-                }
+            viewModel.removeAll(account.npub, applicationData.key) {
+                permissions.clear()
+                wantsToRemovePermissions = false
             }
         }
     }
@@ -221,9 +201,8 @@ fun EditPermission(
                     existingPermissions = permissions.map { Permission(it.type, it.kind) },
                     onAdd = { addedPermissions ->
                         val newPermissions = addedPermissions.map {
-                            ApplicationPermissionsEntity(
+                            PermissionGrant(
                                 null,
-                                applicationData.key,
                                 it.type.uppercase(),
                                 it.kind,
                                 true,
@@ -233,11 +212,7 @@ fun EditPermission(
                             )
                         }
                         permissions.addAll(newPermissions)
-                        scope.launch(Dispatchers.IO) {
-                            accountRepository
-                                .dao(account.npub)
-                                .insertPermissions(newPermissions)
-                        }
+                        viewModel.save(account.npub, applicationData.key, newPermissions)
                     },
                     onDismiss = {
                         showAddPermissions = false
@@ -263,11 +238,7 @@ fun EditPermission(
                         permissions[index] = updated
                     }
 
-                    scope.launch(Dispatchers.IO) {
-                        accountRepository
-                            .dao(account.npub)
-                            .insertPermissions(listOf(updated))
-                    }
+                    viewModel.save(account.npub, applicationData.key, listOf(updated))
                 },
             )
         }
@@ -288,7 +259,7 @@ fun EditPermission(
     }
 }
 
-fun onSetPermission(optionIndex: Int, rememberType: RememberType, permission: ApplicationPermissionsEntity, onToggle: (ApplicationPermissionsEntity) -> Unit) {
+fun onSetPermission(optionIndex: Int, rememberType: RememberType, permission: PermissionGrant, onToggle: (PermissionGrant) -> Unit) {
     val time = rememberUntil(rememberType.screenCode, TimeUtils.now())
     val isAcceptable = optionIndex == 0 || optionIndex == 2
 
@@ -316,8 +287,8 @@ fun onSetPermission(optionIndex: Int, rememberType: RememberType, permission: Ap
 
 @Composable
 fun PermissionRow(
-    permission: ApplicationPermissionsEntity,
-    onToggle: (ApplicationPermissionsEntity) -> Unit,
+    permission: PermissionGrant,
+    onToggle: (PermissionGrant) -> Unit,
 ) {
     val message = remember(permission.type, permission.kind, permission.acceptable, permission.relay) {
         val localPermission = Permission(

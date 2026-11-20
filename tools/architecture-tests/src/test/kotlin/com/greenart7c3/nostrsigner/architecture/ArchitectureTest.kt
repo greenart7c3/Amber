@@ -188,7 +188,6 @@ class ArchitectureTest {
         // May only shrink: see the class comment. The entries without a database import
         // were added when the rule started counting DAO calls; they were there before.
         val databaseInUi = setOf(
-            "ui/EditPermission.kt",
             "ui/NewNsecBunkerScreen.kt",
         )
 

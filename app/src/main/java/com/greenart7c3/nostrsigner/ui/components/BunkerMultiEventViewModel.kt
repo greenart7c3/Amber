@@ -13,6 +13,7 @@ import com.greenart7c3.nostrsigner.AccountStorage
 import com.greenart7c3.nostrsigner.common.SignerType
 import com.greenart7c3.nostrsigner.common.nip44v3Kind
 import com.greenart7c3.nostrsigner.common.nip46SignerType
+import com.greenart7c3.nostrsigner.common.sanitizeAppName
 import com.greenart7c3.nostrsigner.data.AccountRepository
 import com.greenart7c3.nostrsigner.data.RelayClient
 import com.greenart7c3.nostrsigner.data.SettingsStore
@@ -21,6 +22,7 @@ import com.greenart7c3.nostrsigner.database.HistoryEntity
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.AmberBunkerRequest
 import com.greenart7c3.nostrsigner.service.AmberUtils
+import com.greenart7c3.nostrsigner.service.ApplicationNameCache
 import com.greenart7c3.nostrsigner.service.BunkerRequestUtils
 import com.greenart7c3.nostrsigner.service.BunkerResponder
 import com.greenart7c3.nostrsigner.service.MultiEventScreenIntents
@@ -28,6 +30,7 @@ import com.greenart7c3.nostrsigner.service.RelayUrlUtils
 import com.greenart7c3.nostrsigner.service.isBlockedByAuthWhitelist
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
 import com.greenart7c3.nostrsigner.service.signRememberType
+import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.RememberType
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequestSign
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerResponse
@@ -35,6 +38,7 @@ import com.vitorpamplona.quartz.utils.TimeUtils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /** The app a bunker request comes from: the client key, per signing account. */
 data class RequestAppKey(val account: String, val key: String)
@@ -83,6 +87,9 @@ class BunkerGroupChoices {
     }
 }
 
+/** What [BunkerMultiEventViewModel.savedApp] found for a requesting app: null fields fall back to its request. */
+data class SavedAppInfo(val name: String?, val icon: String?)
+
 /**
  * The batch bunker screen: the per-app, per-group choices (how long to remember,
  * relay and decryption scope) and confirming every request at once, each under its
@@ -113,6 +120,20 @@ class BunkerMultiEventViewModel(
 
     fun setGroupApproved(groupItems: List<AmberBunkerRequest>, approve: Boolean) {
         MultiEventScreenIntents.checkedStates.putAll(groupItems.associate { it.queueKey to (approve && !isBlocked(it)) })
+    }
+
+    /**
+     * The saved name (sanitized, cached) and icon of the app behind [appKey], under its
+     * own account or this screen's; null when that account cannot be loaded.
+     */
+    suspend fun savedApp(appKey: RequestAppKey): SavedAppInfo? = withContext(Dispatchers.IO) {
+        val owner = if (appKey.account.isNotBlank()) AccountStorage.load(appContext, appKey.account) else account
+        owner ?: return@withContext null
+        val cacheKey = "${owner.npub.toShortenHex()}-${appKey.key}"
+        val app = accountRepository.getDatabase(owner.npub).dao().getByKey(appKey.key)?.application
+        val name = ApplicationNameCache[cacheKey]
+            ?: app?.name?.let(::sanitizeAppName)?.ifBlank { null }?.also { ApplicationNameCache[cacheKey] = it }
+        SavedAppInfo(name, app?.icon?.ifBlank { null })
     }
 
     fun confirm(batchRequests: List<AmberBunkerRequest>, activity: Activity?, onLoading: (Boolean) -> Unit) {

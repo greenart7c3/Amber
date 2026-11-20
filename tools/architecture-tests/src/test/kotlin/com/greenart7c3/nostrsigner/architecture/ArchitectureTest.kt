@@ -190,7 +190,6 @@ class ArchitectureTest {
         val databaseInUi = setOf(
             "ui/components/AmberTopAppBar.kt",
             "ui/components/BunkerConnectRequestScreen.kt",
-            "ui/components/BunkerMultiEventHomeScreen.kt",
             "ui/EditConfigurationScreen.kt",
             "ui/EditPermission.kt",
             "ui/NewNsecBunkerScreen.kt",

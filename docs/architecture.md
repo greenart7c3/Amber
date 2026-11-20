@@ -384,7 +384,7 @@ is part of `RelayClient`, and `onAddRelay` takes the saved relays as a lookup.
 the `PendingReports`. No `ui/` file is left on the allow-list: what remains there is the entry
 points and the three non-UI files above.
 
-### 8. Finish the service layer's ratchets
+### 8. Finish the service layer's ratchets (done)
 
 Two allow-lists in `ArchitectureTest.kt` still name files the system does not
 construct: `contextAmberUsers` (`LocalPreferences`, `SecureCryptoHelper`,
@@ -395,7 +395,10 @@ with a `Context` from everywhere get their narrow dependencies once at startup
 (`install`, as `AccountStorage` does since step 5), and a Compose `Clipboard` becomes
 a plain copy function the composable passes in.
 
-Done so far: `ReportSender` takes a `copyToClipboard` function instead of a Compose
-`Clipboard`; `SecureCryptoHelper` and `LocalPreferences` get the `AccountRepository`
-(and `LocalPreferences` the `SettingsStore`) from `Amber`'s constructor, which runs
-before the ContentProvider can take a query. Left: `IntentUtils`.
+Done: `ReportSender` takes a `copyToClipboard` function instead of a Compose
+`Clipboard`, and `IntentUtils` one that `rememberResultCopier` builds (a decrypted
+plaintext goes through `setSensitiveClip`). `SecureCryptoHelper`, `LocalPreferences`
+and `IntentUtils` get their dependencies (`AccountRepository`, `SettingsStore`, the
+app scope, the main activity) from `Amber`'s constructor, which runs before the
+ContentProvider can take a query. `composeUiInService` is empty, and
+`contextAmberUsers` lists only the entry points.

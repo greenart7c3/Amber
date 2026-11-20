@@ -11,8 +11,12 @@ import android.content.Intent
 import android.os.Build
 import android.os.PersistableBundle
 import android.os.SystemClock
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.ClipEntry
 import androidx.compose.ui.platform.Clipboard
+import androidx.compose.ui.platform.LocalClipboard
+import androidx.compose.ui.platform.LocalContext
 import java.security.MessageDigest
 import java.security.SecureRandom
 import kotlin.time.Duration
@@ -125,5 +129,17 @@ class SensitiveClipboardClearReceiver : BroadcastReceiver() {
     companion object {
         const val EXTRA_SALT = "salt"
         const val EXTRA_HASH = "hash"
+    }
+}
+
+/** Copies a result to the clipboard; a [sensitive] one (a decrypted plaintext) as [setSensitiveClip] does. */
+@Composable
+fun rememberResultCopier(): suspend (text: String, sensitive: Boolean) -> Unit {
+    val clipboard = LocalClipboard.current
+    val context = LocalContext.current
+    return remember(clipboard, context) {
+        { text, sensitive ->
+            if (sensitive) clipboard.setSensitiveClip(context, text) else clipboard.setClipEntry(ClipEntry(ClipData.newPlainText("", text)))
+        }
     }
 }

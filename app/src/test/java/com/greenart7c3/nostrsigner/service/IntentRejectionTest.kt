@@ -1,6 +1,5 @@
 package com.greenart7c3.nostrsigner.service
 
-import android.content.Context
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import com.greenart7c3.nostrsigner.Amber
@@ -34,12 +33,9 @@ class IntentRejectionTest {
     private val activity = mockk<AppCompatActivity>(relaxed = true)
     private val dao = mockk<ApplicationDao>(relaxed = true) { coEvery { getByKey(any()) } returns null }
     private val amber = mockk<Amber>(relaxed = true) {
-        every { applicationIOScope } returns CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
-        every { getMainActivity() } returns activity
         every { dao(any()) } returns dao
         every { getDatabase(any()).dao() } returns dao
     }
-    private val context = mockk<Context> { every { applicationContext } returns amber }
 
     private val intentData = IntentData(
         data = "",
@@ -59,6 +55,7 @@ class IntentRejectionTest {
 
     @Before
     fun setUp() {
+        IntentUtils.install(amber, CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)) { activity }
         // The rejection result is an Intent; the JVM test stubs do not implement putExtra.
         mockkConstructor(Intent::class)
         every { anyConstructed<Intent>().putExtra(any<String>(), any<Boolean>()) } answers { self as Intent }
@@ -72,7 +69,6 @@ class IntentRejectionTest {
         // Filled on the rejection's coroutine, read by the test thread.
         val removed = CopyOnWriteArrayList<IntentResultType>()
         IntentUtils.sendRejection(
-            context = context,
             key = key,
             account = newTestAccount(CoroutineScope(Dispatchers.Unconfined)),
             intentData = intentData,

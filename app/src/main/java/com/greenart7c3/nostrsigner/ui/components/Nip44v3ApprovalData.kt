@@ -135,7 +135,7 @@ fun Nip44v3ApprovalData(
             AmberToggles(
                 selected = grantScope,
                 options = listOf(DecryptTypeScope.SPECIFIC, DecryptTypeScope.ALL),
-                onSelected = { grantScope = it },
+                onSelect = { grantScope = it },
                 label = {
                     stringResource(
                         when (it) {

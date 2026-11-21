@@ -58,7 +58,7 @@ fun BunkerGetPubKeyScreen(
             shouldRunAcceptOrReject = null,
             onAccept = {},
             onReject = onReject,
-            onChanged = {
+            onChange = {
                 rememberType = it
             },
             packageName = null,

@@ -45,7 +45,7 @@ import kotlin.math.roundToInt
 fun <T> AmberToggles(
     selected: T,
     options: List<T>,
-    onSelected: (T) -> Unit,
+    onSelect: (T) -> Unit,
     modifier: Modifier = Modifier,
     label: @Composable (T) -> String,
     indicatorColor: @Composable (T) -> Color = { MaterialTheme.colorScheme.primary },
@@ -113,7 +113,7 @@ fun <T> AmberToggles(
                                 text = label(option),
                                 isSelected = option == selected,
                                 selectedTextColor = selectedTextColor(option),
-                                onClick = { onSelected(option) },
+                                onClick = { onSelect(option) },
                             )
                         }
                     }
@@ -159,7 +159,7 @@ private fun AmberTogglesPreview() {
         AmberToggles(
             selected = "10 min",
             options = listOf("Never", "10 min", "1 hour", "Always"),
-            onSelected = {},
+            onSelect = {},
             label = { it },
         )
     }

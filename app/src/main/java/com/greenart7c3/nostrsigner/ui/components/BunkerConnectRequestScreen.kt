@@ -302,7 +302,7 @@ fun BunkerConnectRequestScreen(
             SectionLabel(stringResource(Res.string.permissions))
             ChooseSignPolicy(
                 selectedOption = selectedOption,
-                onSelected = {
+                onSelect = {
                     selectedOption = it
                 },
             )

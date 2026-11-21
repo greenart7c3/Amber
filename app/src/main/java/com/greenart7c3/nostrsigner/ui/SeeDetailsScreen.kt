@@ -108,7 +108,7 @@ fun SeeDetailsScreen(
                     shouldRunAcceptOrReject = null,
                     onAccept = {},
                     onReject = {},
-                    onChanged = {
+                    onChange = {
                         rememberType = it
                         MultiEventScreenIntents.rememberType = it
                     },

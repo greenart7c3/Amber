@@ -56,7 +56,7 @@
     <ID>CyclomaticComplexMethod:UpdateSettingsScreen.kt:@Composable fun UpdateSettingsScreen</ID>
     <ID>CyclomaticComplexMethod:ZapstoreUpdater.kt:ZapstoreUpdater$private fun processFileEvent</ID>
     <ID>CyclomaticComplexMethod:ZapstoreUpdater.kt:ZapstoreUpdater$private suspend fun processReleaseEvent</ID>
-    <ID>LambdaParameterEventTrailing:AccountBackupScreen.kt:onBackupDone: () -&gt; Unit</ID>
+    <ID>LambdaParameterEventTrailing:AccountBackupScreen.kt:onBackupFinish: () -&gt; Unit</ID>
     <ID>LambdaParameterEventTrailing:AccountBackupScreen.kt:onClick: () -&gt; Unit</ID>
     <ID>LambdaParameterEventTrailing:AccountBackupScreen.kt:onShowQrCode: (String) -&gt; Unit</ID>
     <ID>LambdaParameterEventTrailing:ConnectOrbotDialog.kt:onError: (String) -&gt; Unit</ID>
@@ -155,7 +155,7 @@
     <ID>LongParameterList:MainScreen.kt:@SuppressLint("ConfigurationScreenWidthHeight") @OptIn(ExperimentalMaterial3Api::class) @Composable fun MainScreen</ID>
     <ID>LongParameterList:Nip44v3ApprovalData.kt:@Composable fun Nip44v3ApprovalData</ID>
     <ID>ModifierClickableOrder:AccountPickerRow.kt:clickable { onSelect(index) sheetOpen = false }</ID>
-    <ID>ModifierClickableOrder:ChooseSignPolicy.kt:selectable( selected = selected, onClick = { onSelected(index) }, )</ID>
+    <ID>ModifierClickableOrder:ChooseSignPolicy.kt:selectable( selected = selected, onClick = { onSelect(index) }, )</ID>
     <ID>ModifierClickableOrder:SignPolicySettingsScreen.kt:selectable( selected = selectedOption == index, onClick = { selectedOption = index }, )</ID>
     <ID>ModifierMissing:AcceptRejectButtons.kt:@Composable fun AcceptRejectButtons</ID>
     <ID>ModifierMissing:AccountPickerRow.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun AccountPickerRow</ID>
@@ -224,19 +224,6 @@
     <ID>MultipleEmitters:RelaysScreen.kt:@Composable private fun LocalBunkerServerSettings</ID>
     <ID>MultipleEmitters:SignPsbt.kt:@Composable private fun PsbtBody</ID>
     <ID>NestedBlockDepth:SignerProviderQuery.kt:SignerProviderQuery$@Suppress("RunBlocking") fun query: Cursor?</ID>
-    <ID>ParameterNaming:AccountBackupScreen.kt:onBackupDone: () -&gt; Unit</ID>
-    <ID>ParameterNaming:AmberToggles.kt:onSelected: (T) -&gt; Unit</ID>
-    <ID>ParameterNaming:BackButtonBottomBar.kt:onPressed: () -&gt; Unit</ID>
-    <ID>ParameterNaming:BunkerMultiEventHomeScreen.kt:onApproveChanged: (Boolean) -&gt; Unit</ID>
-    <ID>ParameterNaming:ChooseSignPolicy.kt:onSelected: (Int) -&gt; Unit</ID>
-    <ID>ParameterNaming:IntentMultiEventHomeScreen.kt:onApproveChanged: (Boolean) -&gt; Unit</ID>
-    <ID>ParameterNaming:RandomPinInput.kt:onPinEntered: (String) -&gt; Unit</ID>
-    <ID>ParameterNaming:RememberMyChoice.kt:onChanged: (RememberType) -&gt; Unit</ID>
-    <ID>ParameterNaming:RememberMyChoice.kt:onSelected: (RememberType) -&gt; Unit</ID>
-    <ID>ParameterNaming:RequestGroupUtils.kt:onApproveChanged: (Boolean) -&gt; Unit</ID>
-    <ID>ParameterNaming:RequestGroupUtils.kt:onDecryptTypeScopeChanged: (DecryptTypeScope) -&gt; Unit</ID>
-    <ID>ParameterNaming:RequestGroupUtils.kt:onRelayAuthScopeChanged: (RelayAuthScope) -&gt; Unit</ID>
-    <ID>ParameterNaming:RequestGroupUtils.kt:onRememberTypeChanged: (RememberType) -&gt; Unit</ID>
     <ID>PreviewAnnotationNaming:Previews.kt:ThemePreviews</ID>
     <ID>RememberMissing:AccountScreen.kt:mutableStateOf( intents.firstNotNullOfOrNull { it.route } ?: if (bunkerRequests.isNotEmpty()) { Route.IncomingRequest.route } else { null } ?: state.route, )</ID>
     <ID>ReturnCount:AmberRelayStat.kt:AmberRelayStats$fun createNotification: Notification?</ID>

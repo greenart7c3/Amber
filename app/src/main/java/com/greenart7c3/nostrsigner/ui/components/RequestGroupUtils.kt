@@ -160,11 +160,11 @@ fun RequestGroupKey.hasGroupOptions(): Boolean = type != SignerType.CONNECT && t
 fun RequestGroupOptions(
     groupKey: RequestGroupKey,
     rememberType: RememberType,
-    onRememberTypeChanged: (RememberType) -> Unit,
+    onRememberTypeChange: (RememberType) -> Unit,
     relayAuthScope: RelayAuthScope,
-    onRelayAuthScopeChanged: (RelayAuthScope) -> Unit,
+    onRelayAuthScopeChange: (RelayAuthScope) -> Unit,
     decryptTypeScope: DecryptTypeScope,
-    onDecryptTypeScopeChanged: (DecryptTypeScope) -> Unit,
+    onDecryptTypeScopeChange: (DecryptTypeScope) -> Unit,
 ) {
     Column(
         Modifier
@@ -182,7 +182,7 @@ fun RequestGroupOptions(
                     AmberToggles(
                         selected = relayAuthScope,
                         options = listOf(RelayAuthScope.SPECIFIC, RelayAuthScope.ALL),
-                        onSelected = onRelayAuthScopeChanged,
+                        onSelect = onRelayAuthScopeChange,
                         label = {
                             stringResource(
                                 when (it) {
@@ -204,7 +204,7 @@ fun RequestGroupOptions(
                     AmberToggles(
                         selected = decryptTypeScope,
                         options = listOf(DecryptTypeScope.SPECIFIC, DecryptTypeScope.ALL),
-                        onSelected = onDecryptTypeScopeChanged,
+                        onSelect = onDecryptTypeScopeChange,
                         label = {
                             stringResource(
                                 when (it) {
@@ -227,7 +227,7 @@ fun RequestGroupOptions(
                         AmberToggles(
                             selected = decryptTypeScope,
                             options = listOf(DecryptTypeScope.SPECIFIC, DecryptTypeScope.ALL),
-                            onSelected = onDecryptTypeScopeChanged,
+                            onSelect = onDecryptTypeScopeChange,
                             label = {
                                 stringResource(
                                     when (it) {
@@ -245,7 +245,7 @@ fun RequestGroupOptions(
 
         RememberMyChoiceToggles(
             selected = rememberType,
-            onSelected = onRememberTypeChanged,
+            onSelect = onRememberTypeChange,
             label = stringResource(Res.string.remember_my_choice_for),
         )
     }
@@ -257,7 +257,7 @@ fun RequestGroupHeader(
     count: Int,
     approved: Boolean,
     expanded: Boolean,
-    onApproveChanged: (Boolean) -> Unit,
+    onApproveChange: (Boolean) -> Unit,
     onExpandToggle: () -> Unit,
 ) {
     val rotation by animateFloatAsState(
@@ -290,7 +290,7 @@ fun RequestGroupHeader(
         AmberToggles(
             selected = approved,
             options = listOf(true, false),
-            onSelected = onApproveChanged,
+            onSelect = onApproveChange,
             label = {
                 if (it) stringResource(Res.string.approve) else stringResource(Res.string.deny)
             },

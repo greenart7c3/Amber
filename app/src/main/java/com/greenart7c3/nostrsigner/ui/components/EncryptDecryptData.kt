@@ -211,7 +211,7 @@ fun EncryptDecryptData(
                 AmberToggles(
                     selected = scope,
                     options = listOf(DecryptTypeScope.SPECIFIC, DecryptTypeScope.ALL),
-                    onSelected = { scope = it },
+                    onSelect = { scope = it },
                     label = {
                         stringResource(
                             when (it) {
@@ -412,7 +412,7 @@ fun BunkerEncryptDecryptData(
                 AmberToggles(
                     selected = scope,
                     options = listOf(DecryptTypeScope.SPECIFIC, DecryptTypeScope.ALL),
-                    onSelected = { scope = it },
+                    onSelect = { scope = it },
                     label = {
                         stringResource(
                             when (it) {

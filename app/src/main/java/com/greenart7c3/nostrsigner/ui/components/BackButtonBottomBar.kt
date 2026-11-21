@@ -18,7 +18,7 @@ import org.jetbrains.compose.resources.stringResource
 fun BackButtonAppBar(
     destinationRoute: String,
     localBackButtonTitle: String,
-    onPressed: () -> Unit,
+    onPress: () -> Unit,
 ) {
     BottomAppBar {
         IconRow(
@@ -35,7 +35,7 @@ fun BackButtonAppBar(
                 }
             },
             icon = ImageVector.vectorResource(R.drawable.back),
-            onClick = onPressed,
+            onClick = onPress,
             tint = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }
@@ -48,7 +48,7 @@ private fun BackButtonAppBarPreview() {
         BackButtonAppBar(
             destinationRoute = "Settings",
             localBackButtonTitle = "Applications",
-            onPressed = {},
+            onPress = {},
         )
     }
 }

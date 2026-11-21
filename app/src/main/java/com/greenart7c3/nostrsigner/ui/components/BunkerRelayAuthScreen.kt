@@ -120,7 +120,7 @@ fun BunkerRelayAuthScreen(
             AmberToggles(
                 selected = scope,
                 options = listOf(RelayAuthScope.SPECIFIC, RelayAuthScope.ALL),
-                onSelected = { scope = it },
+                onSelect = { scope = it },
                 label = {
                     stringResource(
                         when (it) {

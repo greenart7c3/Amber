@@ -63,7 +63,7 @@ fun LabeledBorderBox(
 @Composable
 fun RememberMyChoiceToggles(
     selected: RememberType,
-    onSelected: (RememberType) -> Unit,
+    onSelect: (RememberType) -> Unit,
     label: String = stringResource(Res.string.automatically_sign_this_for),
 ) {
     LabeledBorderBox(
@@ -72,7 +72,7 @@ fun RememberMyChoiceToggles(
         AmberToggles(
             selected = selected,
             options = rememberTypeDisplayOrder,
-            onSelected = onSelected,
+            onSelect = onSelect,
             label = { stringResource(it.shortResourceId) },
         )
     }
@@ -85,7 +85,7 @@ fun RememberMyChoice(
     alwaysShow: Boolean = false,
     onAccept: (RememberType) -> Unit,
     onReject: (RememberType) -> Unit,
-    onChanged: (RememberType) -> Unit,
+    onChange: (RememberType) -> Unit,
 ) {
     var selected by remember { mutableStateOf(RememberType.NEVER) }
     if (shouldRunAcceptOrReject != null) {
@@ -100,9 +100,9 @@ fun RememberMyChoice(
     if (packageName != null || alwaysShow) {
         RememberMyChoiceToggles(
             selected = selected,
-            onSelected = {
+            onSelect = {
                 selected = it
-                onChanged(it)
+                onChange(it)
             },
         )
     }
@@ -134,7 +134,7 @@ private fun RememberMyChoicePreview() {
             alwaysShow = true,
             onAccept = {},
             onReject = {},
-            onChanged = {},
+            onChange = {},
         )
     }
 }

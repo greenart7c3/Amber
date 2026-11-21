@@ -17,7 +17,6 @@ import com.greenart7c3.nostrsigner.data.SettingsStore
 import com.greenart7c3.nostrsigner.database.AccountDatabases
 import com.greenart7c3.nostrsigner.models.AmberSettings
 import com.greenart7c3.nostrsigner.models.TimeUtils as AmberTimeUtils
-import com.greenart7c3.nostrsigner.models.TorMode
 import com.greenart7c3.nostrsigner.models.UpdateCheckFrequency
 import com.greenart7c3.nostrsigner.okhttp.HttpClientManager
 import com.greenart7c3.nostrsigner.relays.AppRelayClient
@@ -32,7 +31,7 @@ import com.greenart7c3.nostrsigner.service.NetworkState
 import com.greenart7c3.nostrsigner.service.NotificationSubscription
 import com.greenart7c3.nostrsigner.service.ProfileSubscription
 import com.greenart7c3.nostrsigner.service.SharedFiles
-import com.greenart7c3.nostrsigner.service.TorManager
+import com.greenart7c3.nostrsigner.service.TorStartup
 import com.greenart7c3.nostrsigner.service.TrustScoreService
 import com.greenart7c3.nostrsigner.service.ZapstoreUpdater
 import com.greenart7c3.nostrsigner.service.crashreports.AppPendingReports
@@ -41,18 +40,14 @@ import com.greenart7c3.nostrsigner.service.crashreports.UnexpectedCrashSaver
 import com.vitorpamplona.quartz.nip01Core.relay.client.auth.RelayAuthenticator
 import java.lang.ref.WeakReference
 import kotlin.coroutines.cancellation.CancellationException
-import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withTimeoutOrNull
 
 class Amber :
     Application(),
@@ -127,6 +122,9 @@ class Amber :
         },
     )
 
+    // Starts the built-in Tor for the relays and reconnects them when it recovers.
+    val torStartup = TorStartup(this, this, relayClient, applicationIOScope)
+
     // Capacity 10 was too small under bursty NIP-46 traffic — duplicate-detection
     // started missing recent events. 512 covers high-volume relays without being
     // a meaningful memory cost (event-id hex strings + Long).
@@ -172,10 +170,6 @@ class Amber :
     // double-register and double-fire foreground/background callbacks.
     private var processLifecycleObserverRegistered = false
 
-    // Guard for startTorRecoveryObserver(): runMigrations' only caller
-    // (ConnectivityService.onCreate) can run again after the service is
-    // recreated, and the observer must be registered once per process.
-    private var torRecoveryObserverStarted = false
     private val processLifecycleObserver = object : DefaultLifecycleObserver {
         override fun onStart(owner: LifecycleOwner) {
             AmberLog.d("ProcessLifecycleOwner", "App in foreground")
@@ -292,31 +286,7 @@ class Amber :
                     }
                 }
 
-                // Start Tor immediately in the background without blocking app startup
-                var torReady = true
-                if (settings.torMode == TorMode.BUILTIN && !BuildFlavorChecker.isOfflineFlavor()) {
-                    TorManager.start(this@Amber, applicationIOScope)
-
-                    startTorRecoveryObserver()
-
-                    // Wait for Tor to be ready before establishing relay connections.
-                    // Bounded: when Tor cannot bootstrap (airplane mode, censored
-                    // network) an unbounded stop/start cycle restarts the whole
-                    // daemon forever, burning battery and data for as long as the
-                    // device stays offline. After the last attempt the daemon is
-                    // stopped and the Failed notification (Restart action) takes
-                    // over; startFunctions() parks on waitForTorIfNeeded() until
-                    // Tor actually comes back.
-                    torReady = waitForTorStartup()
-                    if (!torReady) {
-                        TorManager.stop()
-                        TorManager.showFailed()
-                        AmberLog.e(
-                            TAG,
-                            "Built-in Tor failed to start after $MAX_TOR_START_ATTEMPTS attempts; relays stay disconnected until it recovers",
-                        )
-                    }
-                }
+                val torReady = torStartup.start()
 
                 // Do not open relay sockets through a dead SOCKS proxy: every
                 // connect would fail and the retry churn would waste battery.
@@ -338,56 +308,6 @@ class Amber :
             // a locked device under requireUnlockedDevice). startFunctions()
             // waits for Tor on its own.
             onDone()
-        }
-    }
-
-    /**
-     * Bounded Tor startup: at most [MAX_TOR_START_ATTEMPTS] full daemon starts,
-     * each allowed 120s to bootstrap, with a growing pause (3s, 6s, 12s, 24s)
-     * between attempts. Returns true as soon as the SOCKS port is up.
-     */
-    private suspend fun waitForTorStartup(): Boolean {
-        var attempt = 0
-        while (!TorManager.isRunning.value) {
-            if (attempt >= MAX_TOR_START_ATTEMPTS) return false
-            if (attempt > 0) {
-                TorManager.showRetrying()
-                TorManager.stop()
-                delay((3L shl (attempt - 1)).seconds)
-                TorManager.start(this@Amber, applicationIOScope)
-            }
-            attempt++
-            withTimeoutOrNull(120.seconds) {
-                TorManager.isRunning.first { it }
-            }
-        }
-        return true
-    }
-
-    /**
-     * Reconnects relays whenever built-in Tor transitions into a running state.
-     * Covers recovery after the bounded startup retries gave up (manual Restart
-     * action or a network change retried Tor) and mid-session restarts, neither
-     * of which runs through [runMigrations] again.
-     */
-    private fun startTorRecoveryObserver() {
-        if (torRecoveryObserverStarted) return
-        torRecoveryObserverStarted = true
-        applicationIOScope.launch {
-            var wasRunning = TorManager.isRunning.value
-            TorManager.isRunning.collect { running ->
-                if (running && !wasRunning) {
-                    AmberLog.d(TAG, "Built-in Tor is up; refreshing relay connections")
-                    relayClient.checkForNewRelaysAndUpdateAllFilters(true)
-                }
-                wasRunning = running
-            }
-        }
-    }
-
-    suspend fun waitForTorIfNeeded() {
-        if (settings.torMode == TorMode.BUILTIN && !BuildFlavorChecker.isOfflineFlavor()) {
-            TorManager.isRunning.first { it }
         }
     }
 
@@ -458,7 +378,6 @@ class Amber :
     companion object {
         var isAppInForeground = false
         const val TAG = "Amber"
-        private const val MAX_TOR_START_ATTEMPTS = 5
 
         const val DEVELOPER_HEX_KEY = "7579076d9aff0a4cfdefa7e2045f2486c7e5d8bc63bfc6b45397233e1bbfcb19"
     }

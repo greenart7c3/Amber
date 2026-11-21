@@ -17,7 +17,7 @@ import com.greenart7c3.nostrsigner.ui.theme.ThemePreviews
 
 @Composable
 fun CenterCircularProgressIndicator(
-    modifier: Modifier,
+    modifier: Modifier = Modifier,
     text: String? = null,
 ) {
     Box(

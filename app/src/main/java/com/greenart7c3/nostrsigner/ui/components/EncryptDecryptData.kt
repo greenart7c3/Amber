@@ -57,12 +57,12 @@ import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun EncryptDecryptData(
-    modifier: Modifier,
     encryptedData: EncryptedDataKind?,
     shouldRunOnAccept: Boolean?,
     packageName: String?,
     type: SignerType,
     account: Account,
+    modifier: Modifier = Modifier,
     defaultScope: DecryptTypeScope = DecryptTypeScope.ALL,
     onAccept: (RememberType, DecryptTypeScope) -> Unit,
     onReject: (RememberType, DecryptTypeScope) -> Unit,
@@ -175,7 +175,7 @@ fun EncryptDecryptData(
                                 .fillMaxWidth()
                                 .weight(1f)
                                 .padding(top = 8.dp),
-                            encryptedData.tagArray,
+                            tags = encryptedData.tagArray,
                         )
                     } else {
                         val content = if (type.name.contains("ENCRYPT") && encryptedData is ClearTextEncryptedDataKind) {
@@ -258,12 +258,12 @@ enum class DecryptTypeScope {
 
 @Composable
 fun BunkerEncryptDecryptData(
-    modifier: Modifier,
     encryptedData: EncryptedDataKind?,
     shouldRunOnAccept: Boolean?,
     appName: String,
     type: SignerType,
     account: Account,
+    modifier: Modifier = Modifier,
     defaultScope: DecryptTypeScope = DecryptTypeScope.ALL,
     onAccept: (RememberType, DecryptTypeScope) -> Unit,
     onReject: (RememberType, DecryptTypeScope) -> Unit,
@@ -376,7 +376,7 @@ fun BunkerEncryptDecryptData(
                                 .fillMaxWidth()
                                 .weight(1f)
                                 .padding(top = 8.dp),
-                            encryptedData.tagArray,
+                            tags = encryptedData.tagArray,
                         )
                     } else {
                         val content = if (type.name.contains("ENCRYPT") && encryptedData is ClearTextEncryptedDataKind) {

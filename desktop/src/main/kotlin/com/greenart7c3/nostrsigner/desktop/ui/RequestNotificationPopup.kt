@@ -240,7 +240,7 @@ private fun WindowsToast(
                 Image(amberIconPainter(), contentDescription = null, modifier = Modifier.size(16.dp))
                 Spacer(Modifier.width(8.dp))
                 Text(BuildVariant.appName, color = secondary, fontSize = 12.sp, modifier = Modifier.weight(1f))
-                CloseGlyph(secondary, stringResource(Res.string.d_close), Modifier.size(32.dp), onDismiss)
+                CloseGlyph(secondary, stringResource(Res.string.d_close), onDismiss, Modifier.size(32.dp))
             }
             Column(Modifier.padding(horizontal = 16.dp)) {
                 Text(title, color = primary, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
@@ -329,14 +329,14 @@ private fun MacNotification(
             CloseGlyph(
                 secondary,
                 stringResource(Res.string.d_close),
-                Modifier
+                modifier = Modifier
                     .offset((-6).dp, (-6).dp)
                     .size(20.dp)
                     .shadow(2.dp, CircleShape)
                     .clip(CircleShape)
                     .background(background)
                     .border(BorderStroke(1.dp, outline), CircleShape),
-                onDismiss,
+                onClick = onDismiss,
                 fontSize = 11,
             )
         }
@@ -344,7 +344,7 @@ private fun MacNotification(
 }
 
 @Composable
-private fun CloseGlyph(color: Color, label: String, modifier: Modifier, onClick: () -> Unit, fontSize: Int = 14) {
+private fun CloseGlyph(color: Color, label: String, onClick: () -> Unit, modifier: Modifier = Modifier, fontSize: Int = 14) {
     Box(
         modifier.clickable(onClick = onClick).semantics { contentDescription = label },
         contentAlignment = Alignment.Center,

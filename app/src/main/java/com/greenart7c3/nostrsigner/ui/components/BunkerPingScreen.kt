@@ -33,11 +33,11 @@ import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun BunkerPingScreen(
-    modifier: Modifier,
     shouldRunOnAccept: Boolean?,
     appName: String,
     onAccept: (RememberType) -> Unit,
     onReject: (RememberType) -> Unit,
+    modifier: Modifier = Modifier,
     iconUrl: String = "",
 ) {
     var rememberType by remember {

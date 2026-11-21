@@ -109,7 +109,7 @@ import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CloudBackupScreen(modifier: Modifier) {
+fun CloudBackupScreen(modifier: Modifier = Modifier) {
     val webDavService = WebDavService(LocalSettingsStore.current, LocalRelayClient.current)
     val appScope = LocalAppScope.current
     val context = LocalContext.current

@@ -59,10 +59,10 @@ import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun ConnectOrbotScreen(
-    modifier: Modifier,
     onPost: (Int) -> Unit,
     onBuiltinTor: () -> Unit,
     onError: (String) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val settingsStore = LocalSettingsStore.current
     val portNumber = remember { mutableStateOf(settingsStore.settings.proxyPort.toString()) }

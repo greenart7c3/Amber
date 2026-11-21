@@ -63,9 +63,9 @@ import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun CrashReportScreen(
-    modifier: Modifier = Modifier,
     account: Account,
     onDismiss: () -> Unit,
+    modifier: Modifier = Modifier,
     onLoading: (Boolean) -> Unit = {},
 ) {
     val pendingReports = LocalPendingReports.current

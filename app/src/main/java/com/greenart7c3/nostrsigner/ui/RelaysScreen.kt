@@ -51,8 +51,8 @@ import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun RelaysScreen(
-    modifier: Modifier = Modifier,
     navController: NavController,
+    modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
     val settingsStore = LocalSettingsStore.current

@@ -43,13 +43,13 @@ import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun EventData(
-    modifier: Modifier,
     shouldAcceptOrReject: Boolean?,
     packageName: String?,
     event: Event,
     account: Account,
     onAccept: (RememberType) -> Unit,
     onReject: (RememberType) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     var showMore by androidx.compose.runtime.remember {
         mutableStateOf(false)
@@ -127,13 +127,13 @@ fun EventData(
 
 @Composable
 fun BunkerEventData(
-    modifier: Modifier,
     shouldAcceptOrReject: Boolean?,
     appName: String,
     event: Event,
     account: Account,
     onAccept: (RememberType) -> Unit,
     onReject: (RememberType) -> Unit,
+    modifier: Modifier = Modifier,
     iconUrl: String = "",
 ) {
     var showMore by androidx.compose.runtime.remember {

@@ -76,10 +76,10 @@ import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun EditConfigurationScreen(
-    modifier: Modifier = Modifier,
     key: String,
     account: Account,
     onNav: (String) -> Unit,
+    modifier: Modifier = Modifier,
     viewModel: EditConfigurationViewModel = viewModel(
         factory = EditConfigurationViewModel.factory(LocalContext.current.applicationContext, LocalAccountRepository.current, LocalRelayClient.current),
     ),

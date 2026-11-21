@@ -159,7 +159,7 @@ internal fun NavGraphBuilder.accountDestinations(layout: MainLayout, account: Ac
     composable(Route.AccountBackup.route) {
         val appScope = LocalAppScope.current
         AccountBackupScreen(
-            Modifier.scrollingScreenAboveKeyboard(layout, rememberScrollState()),
+            modifier = Modifier.scrollingScreenAboveKeyboard(layout, rememberScrollState()),
             navController = navController.navController,
             onShowQrCode = {
                 appScope.launch(Dispatchers.Main) { navController.navController.navigate(Route.QrCode.route.replace("{content}", it)) }

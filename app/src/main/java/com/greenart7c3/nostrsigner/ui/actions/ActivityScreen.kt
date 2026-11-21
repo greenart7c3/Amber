@@ -36,11 +36,11 @@ import com.greenart7c3.nostrsigner.ui.components.SimpleSearchBar
 
 @Composable
 fun ActivityScreen(
-    modifier: Modifier,
     paddingValues: PaddingValues,
     topPadding: Dp,
     account: Account,
     key: String,
+    modifier: Modifier = Modifier,
     viewModel: ActivityViewModel = viewModel(factory = ActivityViewModel.factory(LocalAccountRepository.current)),
 ) {
     val context = LocalContext.current

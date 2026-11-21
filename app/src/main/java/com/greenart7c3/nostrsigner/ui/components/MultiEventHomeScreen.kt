@@ -10,13 +10,13 @@ import kotlinx.collections.immutable.ImmutableList
 
 @Composable
 fun MultiEventHomeScreen(
-    modifier: Modifier,
     intents: ImmutableList<IntentData>,
     bunkerRequests: ImmutableList<AmberBunkerRequest>,
     packageName: String?,
     accountParam: Account,
     onRemoveIntentData: (List<IntentData>, IntentResultType) -> Unit,
     onLoading: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     if (bunkerRequests.isNotEmpty()) {
         BunkerMultiEventHomeScreen(

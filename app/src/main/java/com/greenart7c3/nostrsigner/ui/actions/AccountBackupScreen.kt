@@ -145,9 +145,9 @@ import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun AccountBackupScreen(
-    modifier: Modifier,
     navController: NavController,
     onShowQrCode: (String) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val appContext = LocalContext.current.applicationContext
     var isLoading by remember { mutableStateOf(false) }
@@ -489,10 +489,10 @@ private fun AccountBackupCard(
 private fun NSecQrButton(
     account: Account,
     password: String,
-    modifier: Modifier = Modifier,
     onLoading: (Boolean) -> Unit,
     onBackupFinish: () -> Unit,
     onShowQrCode: (String) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val appScope = LocalAppScope.current
     val context = LocalContext.current
@@ -601,8 +601,8 @@ private fun NSecQrButton(
 
 @Composable
 fun QrCodeScreen(
-    modifier: Modifier,
     content: String,
+    modifier: Modifier = Modifier,
 ) {
     // Defense-in-depth (GHSA-8844-q5vh-9j8f, L4): this screen renders the
     // raw nsec/ncryptsec as a QR code (via Route.QrCode). Prevent
@@ -770,9 +770,9 @@ private fun SeedWordsButton(
 private fun NSecCopyButton(
     account: Account,
     password: String,
-    modifier: Modifier = Modifier,
     onLoading: (Boolean) -> Unit,
     onBackupFinish: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val appScope = LocalAppScope.current
     val appContext = LocalContext.current.applicationContext
@@ -824,9 +824,9 @@ private fun NSecCopyButton(
 
 @Composable
 private fun BackupIconButton(
-    modifier: Modifier = Modifier,
     icon: @Composable () -> Unit,
     text: String,
+    modifier: Modifier = Modifier,
     colors: ButtonColors = ButtonDefaults.buttonColors().copy(contentColor = Color.Black),
     onClick: () -> Unit,
 ) {

@@ -70,8 +70,8 @@ import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun SecurityScreen(
-    modifier: Modifier = Modifier,
     navController: NavController,
+    modifier: Modifier = Modifier,
 ) {
     val settingsStore = LocalSettingsStore.current
     val appScope = LocalAppScope.current

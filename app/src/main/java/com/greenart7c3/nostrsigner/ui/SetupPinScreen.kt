@@ -18,8 +18,8 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun SetupPinScreen(
-    modifier: Modifier = Modifier,
     navController: NavController,
+    modifier: Modifier = Modifier,
 ) {
     Column(
         modifier,
@@ -32,9 +32,9 @@ fun SetupPinScreen(
 
 @Composable
 fun ConfirmPinScreen(
-    modifier: Modifier = Modifier,
     pin: String,
     navController: NavController,
+    modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
     val settingsStore = LocalSettingsStore.current

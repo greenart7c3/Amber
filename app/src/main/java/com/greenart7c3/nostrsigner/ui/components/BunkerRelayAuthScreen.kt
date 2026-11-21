@@ -47,7 +47,6 @@ enum class RelayAuthScope {
 
 @Composable
 fun BunkerRelayAuthScreen(
-    modifier: Modifier,
     appName: String,
     relayUrl: String,
     shouldAcceptOrReject: Boolean?,
@@ -55,6 +54,7 @@ fun BunkerRelayAuthScreen(
     account: Account,
     onAccept: (RememberType, RelayAuthScope) -> Unit,
     onReject: (RememberType, RelayAuthScope) -> Unit,
+    modifier: Modifier = Modifier,
     iconUrl: String = "",
 ) {
     var rememberType by remember { mutableStateOf(RememberType.NEVER) }

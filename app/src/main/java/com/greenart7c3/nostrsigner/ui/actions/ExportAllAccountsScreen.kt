@@ -89,7 +89,7 @@ import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun ExportAllAccountsScreen(
-    modifier: Modifier,
+    modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
     val appScope = LocalAppScope.current

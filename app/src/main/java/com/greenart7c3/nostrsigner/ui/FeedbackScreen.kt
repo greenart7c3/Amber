@@ -52,10 +52,10 @@ import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun FeedbackScreen(
-    modifier: Modifier = Modifier,
     account: Account,
     onDismiss: () -> Unit,
     onLoading: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val relayClient = LocalRelayClient.current
     val settingsStore = LocalSettingsStore.current

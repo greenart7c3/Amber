@@ -25,8 +25,8 @@ import com.greenart7c3.nostrsigner.ui.theme.ThemePreviews
 
 @Composable
 fun AmberButton(
-    modifier: Modifier = Modifier,
     onClick: () -> Unit,
+    modifier: Modifier = Modifier,
     enabled: Boolean = true,
     colors: ButtonColors = ButtonDefaults.buttonColors().copy(
         contentColor = Color.Black,
@@ -70,8 +70,8 @@ fun AmberButton(
 
 @Composable
 fun AmberElevatedButton(
-    modifier: Modifier = Modifier,
     onClick: () -> Unit,
+    modifier: Modifier = Modifier,
     enabled: Boolean = true,
     textColor: Color = Color.Unspecified,
     text: String,

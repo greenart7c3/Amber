@@ -38,9 +38,9 @@ import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun SignPolicySettingsScreen(
-    modifier: Modifier = Modifier,
     account: Account,
     navController: NavController,
+    modifier: Modifier = Modifier,
 ) {
     val radioOptions = listOf(
         TitleExplainer(

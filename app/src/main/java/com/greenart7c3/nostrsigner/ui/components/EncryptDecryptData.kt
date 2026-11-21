@@ -62,10 +62,10 @@ fun EncryptDecryptData(
     packageName: String?,
     type: SignerType,
     account: Account,
-    modifier: Modifier = Modifier,
-    defaultScope: DecryptTypeScope = DecryptTypeScope.ALL,
     onAccept: (RememberType, DecryptTypeScope) -> Unit,
     onReject: (RememberType, DecryptTypeScope) -> Unit,
+    modifier: Modifier = Modifier,
+    defaultScope: DecryptTypeScope = DecryptTypeScope.ALL,
 ) {
     var rememberType by remember {
         mutableStateOf(RememberType.NEVER)
@@ -228,12 +228,11 @@ fun EncryptDecryptData(
         RememberMyChoice(
             shouldRunOnAccept,
             packageName,
-            false,
             onAccept = { onAccept(it, scope) },
             onReject = { onReject(it, scope) },
-        ) {
-            rememberType = it
-        }
+            onChange = { rememberType = it },
+            alwaysShow = false,
+        )
 
         AcceptRejectButtons(
             onAccept = {
@@ -263,10 +262,10 @@ fun BunkerEncryptDecryptData(
     appName: String,
     type: SignerType,
     account: Account,
-    modifier: Modifier = Modifier,
-    defaultScope: DecryptTypeScope = DecryptTypeScope.ALL,
     onAccept: (RememberType, DecryptTypeScope) -> Unit,
     onReject: (RememberType, DecryptTypeScope) -> Unit,
+    modifier: Modifier = Modifier,
+    defaultScope: DecryptTypeScope = DecryptTypeScope.ALL,
     iconUrl: String = "",
 ) {
     var rememberType by remember {
@@ -429,12 +428,11 @@ fun BunkerEncryptDecryptData(
         RememberMyChoice(
             shouldRunOnAccept,
             null,
-            true,
             onAccept = { onAccept(it, scope) },
             onReject = { onReject(it, scope) },
-        ) {
-            rememberType = it
-        }
+            onChange = { rememberType = it },
+            alwaysShow = true,
+        )
 
         AcceptRejectButtons(
             onAccept = {

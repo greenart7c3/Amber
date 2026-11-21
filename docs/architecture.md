@@ -452,9 +452,11 @@ present tense: `onSelect`, `onPress`, `onApproveChange`, `onPinEnter`, `onChange
 `onBackupFinish`, ...). `ModifierWithoutDefault` and `ComposableParamOrder` go together:
 giving `modifier` its default makes it an optional parameter ahead of required ones, so
 it also moves after them (positional callers name the argument instead); 24 + 18
-entries, and 8 `LambdaParameterEventTrailing` ones the move fixed too. Left:
-`ModifierMissing`, 12 `ComposableParamOrder` (a required parameter after an optional
-one) and 6 `LambdaParameterEventTrailing`.
+entries, and 8 `LambdaParameterEventTrailing` ones the move fixed too.
+The remaining `ComposableParamOrder` (12) and `LambdaParameterEventTrailing` (7) go
+the same way: required parameters (an event callback among them) move ahead of the
+optional ones, and callers that passed the callback as a trailing lambda name it
+(`onDismiss = { ... }`, `onChange = { ... }`). Left: `ModifierMissing`.
 
 ### 11. Share the rest of the bunker flow
 

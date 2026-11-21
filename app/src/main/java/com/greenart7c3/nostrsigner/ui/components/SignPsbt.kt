@@ -71,14 +71,13 @@ fun SignPsbt(
         Spacer(Modifier.weight(1f))
 
         RememberMyChoice(
-            shouldRunOnAccept,
-            packageName,
-            false,
-            onAccept,
-            onReject,
-        ) {
-            rememberType = it
-        }
+            shouldRunAcceptOrReject = shouldRunOnAccept,
+            packageName = packageName,
+            alwaysShow = false,
+            onAccept = onAccept,
+            onReject = onReject,
+            onChange = { rememberType = it },
+        )
 
         AcceptRejectButtons(
             onAccept = { onAccept(rememberType) },
@@ -121,14 +120,13 @@ fun BunkerSignPsbt(
         Spacer(Modifier.weight(1f))
 
         RememberMyChoice(
-            shouldRunOnAccept,
-            null,
-            true,
-            onAccept,
-            onReject,
-        ) {
-            rememberType = it
-        }
+            shouldRunAcceptOrReject = shouldRunOnAccept,
+            packageName = null,
+            alwaysShow = true,
+            onAccept = onAccept,
+            onReject = onReject,
+            onChange = { rememberType = it },
+        )
 
         AcceptRejectButtons(
             onAccept = { onAccept(rememberType) },

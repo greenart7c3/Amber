@@ -199,10 +199,11 @@ private fun SettingsContent(
             title = stringResource(Res.string.theme),
             options = ThemeMode.entries.map { TitleExplainer(stringResource(it.resourceId)) }.toImmutableList(),
             onDismiss = { themeDialog = false },
-        ) { index ->
-            themeDialog = false
-            onThemeMode(ThemeMode.entries[index])
-        }
+            onSelect = { index ->
+                themeDialog = false
+                onThemeMode(ThemeMode.entries[index])
+            },
+        )
     }
 
     if (disconnectTorDialog) {

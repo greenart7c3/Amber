@@ -46,8 +46,8 @@ fun <T> AmberToggles(
     selected: T,
     options: List<T>,
     onSelect: (T) -> Unit,
-    modifier: Modifier = Modifier,
     label: @Composable (T) -> String,
+    modifier: Modifier = Modifier,
     indicatorColor: @Composable (T) -> Color = { MaterialTheme.colorScheme.primary },
     selectedTextColor: @Composable (T) -> Color = { Color.Black },
 ) {

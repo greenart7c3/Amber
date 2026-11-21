@@ -26,8 +26,8 @@ fun ToggleOption(
     text: String,
     isSelected: Boolean,
     selectedTextColor: Color,
-    modifier: Modifier = Modifier,
     onClick: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val textColor by animateColorAsState(
         targetValue = if (isSelected) selectedTextColor else MaterialTheme.colorScheme.onSurfaceVariant,

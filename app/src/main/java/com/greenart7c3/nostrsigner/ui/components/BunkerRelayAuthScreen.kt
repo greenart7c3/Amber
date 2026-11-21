@@ -140,9 +140,8 @@ fun BunkerRelayAuthScreen(
             alwaysShow = true,
             onAccept = { onAccept(it, scope) },
             onReject = { onReject(it, scope) },
-        ) {
-            rememberType = it
-        }
+            onChange = { rememberType = it },
+        )
 
         AcceptRejectButtons(
             onAccept = { onAccept(rememberType, scope) },

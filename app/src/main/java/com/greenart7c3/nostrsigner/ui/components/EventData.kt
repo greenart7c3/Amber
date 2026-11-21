@@ -105,14 +105,13 @@ fun EventData(
         }
 
         RememberMyChoice(
-            shouldAcceptOrReject,
-            packageName,
-            false,
-            onAccept,
-            onReject,
-        ) {
-            rememberType = it
-        }
+            shouldRunAcceptOrReject = shouldAcceptOrReject,
+            packageName = packageName,
+            alwaysShow = false,
+            onAccept = onAccept,
+            onReject = onReject,
+            onChange = { rememberType = it },
+        )
 
         AcceptRejectButtons(
             onAccept = {
@@ -194,14 +193,13 @@ fun BunkerEventData(
         }
 
         RememberMyChoice(
-            shouldAcceptOrReject,
-            null,
-            true,
-            onAccept,
-            onReject,
-        ) {
-            rememberType = it
-        }
+            shouldRunAcceptOrReject = shouldAcceptOrReject,
+            packageName = null,
+            alwaysShow = true,
+            onAccept = onAccept,
+            onReject = onReject,
+            onChange = { rememberType = it },
+        )
 
         AcceptRejectButtons(
             onAccept = {

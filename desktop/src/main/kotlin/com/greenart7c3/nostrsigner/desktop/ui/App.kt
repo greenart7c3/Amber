@@ -98,7 +98,7 @@ sealed class Route(val title: StringResource, val subtitle: StringResource, val 
 val sidebarRoutes = listOf(Route.IncomingRequest, Route.Applications, Route.Relays, Route.Settings)
 
 @Composable
-fun App() {
+fun App(modifier: Modifier = Modifier) {
     val loading by Session.loading.collectAsState()
     val account by Session.account.collectAsState()
     val addingAccount by Session.addingAccount.collectAsState()
@@ -124,7 +124,7 @@ fun App() {
 
     val acc = account
     if (loading) {
-        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             CircularProgressIndicator()
         }
         return

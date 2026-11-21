@@ -103,6 +103,7 @@ fun ApplicationDetailScreen(
     account: DesktopAccount,
     appKey: String,
     onBack: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val store = AmberDesktop.store(account.npub)
     val apps by store.apps.collectAsState()
@@ -118,7 +119,7 @@ fun ApplicationDetailScreen(
 
     var name by remember { mutableStateOf(app.app.name) }
 
-    Column(Modifier.fillMaxSize()) {
+    Column(modifier.fillMaxSize()) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             IconButton(onClick = onBack) {
                 Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(Res.string.d_back))

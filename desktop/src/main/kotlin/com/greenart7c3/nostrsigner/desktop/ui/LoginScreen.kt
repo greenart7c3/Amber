@@ -72,6 +72,7 @@ import org.jetbrains.compose.resources.stringResource
 fun LoginScreen(
     hasAccounts: Boolean,
     snackbarHostState: SnackbarHostState,
+    modifier: Modifier = Modifier,
 ) {
     val scope = rememberCoroutineScope()
     var tab by remember { mutableStateOf(0) }
@@ -82,6 +83,7 @@ fun LoginScreen(
 
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
+        modifier = modifier,
     ) { padding ->
         val scrollState = rememberScrollState()
         Box(

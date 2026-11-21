@@ -78,7 +78,7 @@ import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
-fun RelaysScreen() {
+fun RelaysScreen(modifier: Modifier = Modifier) {
     val settings by SettingsStore.settings.collectAsState()
     val available by AmberDesktop.client.availableRelaysFlow().collectAsState()
     val connected by AmberDesktop.client.connectedRelaysFlow().collectAsState()
@@ -129,7 +129,7 @@ fun RelaysScreen() {
         )
     }
 
-    Column(Modifier.fillMaxSize()) {
+    Column(modifier.fillMaxSize()) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             OutlinedTextField(
                 value = newRelay,

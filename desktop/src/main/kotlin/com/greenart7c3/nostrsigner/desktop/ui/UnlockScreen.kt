@@ -56,7 +56,7 @@ import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
-fun UnlockScreen() {
+fun UnlockScreen(modifier: Modifier = Modifier) {
     val scope = rememberCoroutineScope()
     var passphrase by remember { mutableStateOf("") }
     var error by remember { mutableStateOf<String?>(null) }
@@ -86,6 +86,7 @@ fun UnlockScreen() {
     LockScreenScaffold(
         subtitle = stringResource(Res.string.d_locked),
         onEnter = { submit() },
+        modifier = modifier,
     ) {
         OutlinedTextField(
             value = passphrase,
@@ -115,7 +116,7 @@ fun UnlockScreen() {
  * no way past this screen and no way back to unprotected key storage.
  */
 @Composable
-fun PassphraseSetupScreen() {
+fun PassphraseSetupScreen(modifier: Modifier = Modifier) {
     val scope = rememberCoroutineScope()
     var passphrase by remember { mutableStateOf("") }
     var confirm by remember { mutableStateOf("") }
@@ -152,6 +153,7 @@ fun PassphraseSetupScreen() {
     LockScreenScaffold(
         subtitle = stringResource(Res.string.d_passphrase_desc),
         onEnter = { submit() },
+        modifier = modifier,
     ) {
         OutlinedTextField(
             value = passphrase,
@@ -197,10 +199,11 @@ fun PassphraseSetupScreen() {
 private fun LockScreenScaffold(
     subtitle: String,
     onEnter: (() -> Unit)?,
+    modifier: Modifier = Modifier,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     Box(
-        Modifier
+        modifier
             .fillMaxSize()
             .onPreviewKeyEvent { event ->
                 // Enter (or numpad enter) runs the primary action, the way

@@ -87,6 +87,7 @@ import org.jetbrains.compose.resources.stringResource
 fun ApplicationsScreen(
     account: DesktopAccount,
     onOpenApplication: (String) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val store = AmberDesktop.store(account.npub)
     val apps by store.apps.collectAsState()
@@ -94,7 +95,7 @@ fun ApplicationsScreen(
     var showNostrConnectDialog by remember { mutableStateOf(false) }
     var showBunkerDialog by remember { mutableStateOf(false) }
 
-    Column(Modifier.fillMaxSize()) {
+    Column(modifier.fillMaxSize()) {
         FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             AmberButton(text = stringResource(Res.string.d_connect_nostrconnect), onClick = { showNostrConnectDialog = true })
             AmberOutlinedButton(text = stringResource(Res.string.d_create_bunker), onClick = { showBunkerDialog = true })
@@ -279,7 +280,7 @@ private fun NewBunkerDialog(
                     LaunchedEffect(Unit) { nameFocus.requestFocus() }
                     Spacer(Modifier.height(12.dp))
                     Box(Modifier.fillMaxWidth()) {
-                        DeleteAfterSelector(deleteAfter) { deleteAfter = it }
+                        DeleteAfterSelector(deleteAfter, onSelect = { deleteAfter = it })
                     }
                     Spacer(Modifier.height(12.dp))
                     Text(

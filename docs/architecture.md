@@ -433,7 +433,7 @@ Tor start (bounded attempts, the recovery observer, the wait) is `service/TorSta
 `Amber` is left with wiring, migrations and the Application callbacks, and is under
 detekt's function limit.
 
-### 10. Clear the mechanical Compose findings
+### 10. Clear the mechanical Compose findings (done)
 
 About half of the app's `detekt-baseline.xml` is Compose rules whose fix does not
 change what a screen does: `PreviewPublic` (a preview is private), `ModifierMissing`
@@ -445,7 +445,7 @@ regenerated each time so the fixed entries drop out. `LongMethod` and
 `CyclomaticComplexMethod` are not part of this step: splitting a function is a
 refactor of its own.
 
-Done so far: `PreviewPublic` (50 previews made private; detekt's
+Done: `PreviewPublic` (50 previews made private; detekt's
 `UnusedPrivateFunction` ignores `@Preview` and `@ThemePreviews` functions, which only
 the IDE calls, as `unusedCode` already did) and `ParameterNaming` (13 callbacks in the
 present tense: `onSelect`, `onPress`, `onApproveChange`, `onPinEnter`, `onChange`,
@@ -459,7 +459,10 @@ optional ones, and callers that passed the callback as a trailing lambda name it
 (`onDismiss = { ... }`, `onChange = { ... }`).
 `ModifierMissing` in the app (35): each composable takes `modifier: Modifier = Modifier`
 and hands it to its root layout (`ChooseSignPolicy`, which emitted one row per option,
-gets a `Column` around them). Left: `ModifierMissing` in the desktop app (14).
+gets a `Column` around them), and the same in the desktop app (14). The app baseline
+went from 306 entries to 142 and the desktop one from 78 to 60: what is left is mostly
+the long-function and complexity rules (`LongMethod`,
+`CyclomaticComplexMethod`, ...).
 
 ### 11. Share the rest of the bunker flow
 

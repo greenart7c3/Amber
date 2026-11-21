@@ -121,6 +121,7 @@ fun AmberTabRow(
     selectedTabIndex: Int,
     titles: List<String>,
     onSelect: (Int) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     SecondaryTabRow(
         selectedTabIndex = selectedTabIndex,
@@ -134,6 +135,7 @@ fun AmberTabRow(
                 )
             }
         },
+        modifier = modifier,
     ) {
         titles.forEachIndexed { index, title ->
             Tab(
@@ -217,11 +219,13 @@ fun AmberOutlinedButton(
 fun RememberTypeSelector(
     value: RememberType,
     onValueChange: (RememberType) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     var expanded by remember { mutableStateOf(false) }
     OutlinedButton(
         onClick = { expanded = true },
         shape = ButtonBorder,
+        modifier = modifier,
     ) {
         Text(stringResource(Res.string.d_remember_prefix, value.label()), style = MaterialTheme.typography.bodySmall)
     }
@@ -298,8 +302,9 @@ fun ScrollbarBox(
 fun SignPolicySelector(
     selected: Int,
     onSelect: (Int) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
-    Column(Modifier.selectableGroup()) {
+    Column(modifier.selectableGroup()) {
         listOf(
             Triple(0, Res.string.sign_policy_basic, Res.string.sign_policy_basic_explainer),
             Triple(1, Res.string.sign_policy_manual_new_app, Res.string.sign_policy_manual_new_app_explainer),
@@ -332,8 +337,9 @@ fun SignPolicySelector(
 fun DeleteAfterSelector(
     selected: DeleteAfterType,
     onSelect: (DeleteAfterType) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
-    Column {
+    Column(modifier) {
         Text(
             stringResource(Res.string.delete_after),
             style = MaterialTheme.typography.titleSmall,

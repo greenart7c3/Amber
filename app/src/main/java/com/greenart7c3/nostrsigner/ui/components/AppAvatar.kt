@@ -108,7 +108,7 @@ internal fun isRemoteIconUrl(iconUrl: String): Boolean = iconUrl.startsWith("htt
 
 @ThemePreviews
 @Composable
-fun AppAvatarPlaceholderPreview() {
+private fun AppAvatarPlaceholderPreview() {
     AmberPreview {
         Box(Modifier.padding(8.dp)) {
             AppAvatar(name = "Amethyst")
@@ -118,7 +118,7 @@ fun AppAvatarPlaceholderPreview() {
 
 @Preview(showBackground = true)
 @Composable
-fun AppAvatarNoNamePreview() {
+private fun AppAvatarNoNamePreview() {
     AmberPreview {
         Box(Modifier.padding(8.dp)) {
             AppAvatar()

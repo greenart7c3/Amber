@@ -275,7 +275,7 @@ fun LoginWithPubKey(
 
 @ThemePreviews
 @Composable
-fun LoginWithPubKeyPreview() {
+private fun LoginWithPubKeyPreview() {
     AmberPreview {
         LoginWithPubKey(
             horizontalPadding = 16.dp,

@@ -121,7 +121,7 @@ fun SigningAs(account: Account, modifier: Modifier = Modifier) {
 
 @ThemePreviews
 @Composable
-fun SigningAsPreview() {
+private fun SigningAsPreview() {
     AmberPreview {
         SigningAs(previewAccount())
     }

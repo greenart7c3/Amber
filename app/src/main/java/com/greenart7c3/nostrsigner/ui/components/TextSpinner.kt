@@ -220,7 +220,7 @@ fun <T> SpinnerSelectionDialog(
 
 @ThemePreviews
 @Composable
-fun TextSpinnerPreview() {
+private fun TextSpinnerPreview() {
     AmberPreview {
         TextSpinner(
             label = "Language",

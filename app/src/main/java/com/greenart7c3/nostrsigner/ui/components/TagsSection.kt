@@ -103,7 +103,7 @@ fun TagsSection(
 
 @ThemePreviews
 @Composable
-fun TagsSectionPreview() {
+private fun TagsSectionPreview() {
     AmberPreview {
         TagsSection(
             label = "Tags",

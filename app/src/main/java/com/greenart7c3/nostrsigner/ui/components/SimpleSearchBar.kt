@@ -112,7 +112,7 @@ fun SimpleSearchBar(
 
 @ThemePreviews
 @Composable
-fun SimpleSearchBarPreview() {
+private fun SimpleSearchBarPreview() {
     AmberPreview {
         SimpleSearchBar(
             textFieldState = TextFieldState("amber"),

@@ -72,6 +72,8 @@ style:
   UnusedPrivateFunction:
     active: true
     aliases: ['unused']
+    # Previews are private (PreviewPublic) and only the IDE's preview tooling calls them.
+    ignoreAnnotated: ['Preview', 'ThemePreviews']
   UnusedPrivateProperty:
     active: true
     aliases: ['unused']

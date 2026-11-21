@@ -109,7 +109,7 @@ fun BunkerPingScreen(
 
 @ThemePreviews
 @Composable
-fun BunkerPingScreenPreview() {
+private fun BunkerPingScreenPreview() {
     AmberPreview {
         BunkerPingScreen(
             modifier = Modifier

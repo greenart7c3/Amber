@@ -449,7 +449,7 @@ fun BunkerEncryptDecryptData(
 
 @ThemePreviews
 @Composable
-fun EncryptDecryptDataPreview() {
+private fun EncryptDecryptDataPreview() {
     AmberPreview {
         EncryptDecryptData(
             modifier = Modifier
@@ -469,7 +469,7 @@ fun EncryptDecryptDataPreview() {
 
 @ThemePreviews
 @Composable
-fun BunkerEncryptDecryptDataPreview() {
+private fun BunkerEncryptDecryptDataPreview() {
     AmberPreview {
         BunkerEncryptDecryptData(
             modifier = Modifier

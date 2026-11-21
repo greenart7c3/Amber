@@ -46,7 +46,7 @@ fun AcceptRejectButtons(
 
 @ThemePreviews
 @Composable
-fun AcceptRejectButtonsPreview() {
+private fun AcceptRejectButtonsPreview() {
     AmberPreview {
         AcceptRejectButtons(
             onAccept = {},

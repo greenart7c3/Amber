@@ -154,7 +154,7 @@ fun <T> AmberToggles(
 
 @ThemePreviews
 @Composable
-fun AmberTogglesPreview() {
+private fun AmberTogglesPreview() {
     AmberPreview {
         AmberToggles(
             selected = "10 min",

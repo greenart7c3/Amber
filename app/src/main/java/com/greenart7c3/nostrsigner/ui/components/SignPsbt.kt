@@ -277,7 +277,7 @@ private fun previewDecodedPsbt() = DecodedPsbt(
 
 @ThemePreviews
 @Composable
-fun SignPsbtPreview() {
+private fun SignPsbtPreview() {
     AmberPreview {
         SignPsbt(
             modifier = Modifier
@@ -296,7 +296,7 @@ fun SignPsbtPreview() {
 
 @ThemePreviews
 @Composable
-fun BunkerSignPsbtPreview() {
+private fun BunkerSignPsbtPreview() {
     AmberPreview {
         BunkerSignPsbt(
             modifier = Modifier

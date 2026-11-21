@@ -47,7 +47,7 @@ fun NewBunkerFloatingButton(
 
 @ThemePreviews
 @Composable
-fun NewBunkerFloatingButtonPreview() {
+private fun NewBunkerFloatingButtonPreview() {
     AmberPreview {
         NewBunkerFloatingButton(onClick = {})
     }

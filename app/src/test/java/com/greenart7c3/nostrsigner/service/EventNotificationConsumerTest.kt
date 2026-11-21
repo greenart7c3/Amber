@@ -102,7 +102,6 @@ class EventNotificationConsumerTest {
                 scope = object : CoroutineScope {
                     override val coroutineContext get() = amber.applicationIOScope.coroutineContext
                 },
-                notificationCache = amber.notificationCache,
                 bunkerResponder = bunkerResponder,
             ) { amber.notificationSubscription.updateFilter() },
         )
@@ -252,7 +251,6 @@ class EventNotificationConsumerTest {
         mockkObject(BunkerRequestUtils)
         try {
             every { amber.applicationIOScope } returns CoroutineScope(Dispatchers.Unconfined + SupervisorJob())
-            every { amber.notificationCache[any()] } returns null
             val responses = mutableListOf<BunkerResponse>()
             val attempts = mutableListOf<Int>()
             coEvery {
@@ -371,7 +369,6 @@ class EventNotificationConsumerTest {
             every { amber.applicationIOScope } returns CoroutineScope(Dispatchers.Unconfined + SupervisorJob())
             // The relaxed mock returns 0L (non-null) from the dedup cache, which
             // makes notify() treat the request as already processed.
-            every { amber.notificationCache[any()] } returns null
             val responses = mutableListOf<BunkerResponse>()
             coEvery {
                 bunkerResponder.sendBunkerResponse(any(), any(), any(), any(), any(), any(), any())

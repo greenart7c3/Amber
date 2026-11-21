@@ -22,7 +22,6 @@ package com.greenart7c3.nostrsigner.service
 
 import android.app.NotificationManager
 import android.content.Context
-import androidx.collection.LruCache
 import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
 import com.greenart7c3.nostrsigner.AccountStorage
@@ -106,7 +105,6 @@ class EventNotificationConsumer(
     private val settingsStore: SettingsStore,
     private val accountRepository: AccountRepository,
     private val scope: CoroutineScope,
-    private val notificationCache: LruCache<String, Long>,
     private val bunkerResponder: BunkerResponder,
     // Refreshes the NIP-46 subscription after a connection is added or removed.
     private val onConnectionsChanged: suspend () -> Unit,

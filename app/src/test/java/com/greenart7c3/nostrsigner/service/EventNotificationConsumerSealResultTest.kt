@@ -90,7 +90,6 @@ class EventNotificationConsumerSealResultTest {
             settingsStore = amber,
             accountRepository = amber.accountDatabases,
             scope = amber.applicationIOScope,
-            notificationCache = amber.notificationCache,
             bunkerResponder = bunkerResponder,
         ) { amber.notificationSubscription.updateFilter() }
         return suspendCoroutineUninterceptedOrReturn<Any?> { c -> fn.invoke(consumer, request, account, "wss://relay.invalid", c) } as EncryptedDataKind

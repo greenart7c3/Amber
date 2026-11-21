@@ -26,10 +26,10 @@ import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun BunkerGetPubKeyScreen(
-    modifier: Modifier,
     applicationName: String,
     onAccept: (List<Permission>?, Int, Boolean?, RememberType) -> Unit,
     onReject: (RememberType) -> Unit,
+    modifier: Modifier = Modifier,
     iconUrl: String = "",
 ) {
     var rememberType by remember { mutableStateOf(RememberType.NEVER) }

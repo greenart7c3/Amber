@@ -9,34 +9,18 @@
     <ID>ComplexCondition:MainViewModel.kt:MainViewModel$currentAccount != null &amp;&amp; npub != null &amp;&amp; currentAccount != npub &amp;&amp; npub.isNotBlank()</ID>
     <ID>ComplexCondition:SignerActivity.kt:SignerActivity$currentAccount != null &amp;&amp; localNpub != null &amp;&amp; currentAccount != localNpub &amp;&amp; localNpub.isNotBlank()</ID>
     <ID>ComplexCondition:TrustScoreUrlPolicy.kt:TrustScoreUrlPolicy$!host.contains('.') || host.contains(':') || host.all { it.isDigit() || it == '.' }</ID>
-    <ID>ComposableParamOrder:AccountBackupScreen.kt:@Composable private fun BackupIconButton</ID>
-    <ID>ComposableParamOrder:AccountBackupScreen.kt:@Composable private fun NSecCopyButton</ID>
-    <ID>ComposableParamOrder:AccountBackupScreen.kt:@Composable private fun NSecQrButton</ID>
     <ID>ComposableParamOrder:AccountScreen.kt:@Composable fun InformationDialog</ID>
     <ID>ComposableParamOrder:AccountScreen.kt:@SuppressLint("StateFlowValueCalledInComposition", "UnrememberedMutableState") @Composable fun AccountScreen</ID>
     <ID>ComposableParamOrder:AmberButton.kt:@Composable fun AmberButton</ID>
     <ID>ComposableParamOrder:AmberButton.kt:@Composable fun AmberElevatedButton</ID>
     <ID>ComposableParamOrder:AmberToggles.kt:@Composable fun &lt;T&gt; AmberToggles</ID>
-    <ID>ComposableParamOrder:CrashReportScreen.kt:@Composable fun CrashReportScreen</ID>
-    <ID>ComposableParamOrder:EditConfigurationScreen.kt:@Composable fun EditConfigurationScreen</ID>
-    <ID>ComposableParamOrder:EditPermission.kt:@Composable fun RelayCard</ID>
-    <ID>ComposableParamOrder:EnabledPermissions.kt:@Composable fun EnabledPermissions</ID>
     <ID>ComposableParamOrder:EncryptDecryptData.kt:@Composable fun BunkerEncryptDecryptData</ID>
     <ID>ComposableParamOrder:EncryptDecryptData.kt:@Composable fun EncryptDecryptData</ID>
-    <ID>ComposableParamOrder:FeedbackScreen.kt:@Composable fun FeedbackScreen</ID>
     <ID>ComposableParamOrder:IconRow.kt:@Composable fun IconRow</ID>
-    <ID>ComposableParamOrder:NewNsecBunkerScreen.kt:@Composable fun NewNsecBunkerCreatedScreen</ID>
-    <ID>ComposableParamOrder:NewNsecBunkerScreen.kt:@Composable fun NewNsecBunkerScreen</ID>
     <ID>ComposableParamOrder:Nip44v3ApprovalData.kt:@Composable fun Nip44v3ApprovalData</ID>
-    <ID>ComposableParamOrder:RelaysScreen.kt:@Composable fun RelaysScreen</ID>
     <ID>ComposableParamOrder:RememberMyChoice.kt:@Composable fun RememberMyChoice</ID>
-    <ID>ComposableParamOrder:SecurityScreen.kt:@Composable fun SecurityScreen</ID>
-    <ID>ComposableParamOrder:SetupPinScreen.kt:@Composable fun ConfirmPinScreen</ID>
-    <ID>ComposableParamOrder:SetupPinScreen.kt:@Composable fun SetupPinScreen</ID>
-    <ID>ComposableParamOrder:SignPolicySettingsScreen.kt:@Composable fun SignPolicySettingsScreen</ID>
     <ID>ComposableParamOrder:TextSpinner.kt:@Composable fun &lt;T&gt; SpinnerSelectionDialog</ID>
     <ID>ComposableParamOrder:TextSpinner.kt:@Composable fun SpinnerSelectionDialog</ID>
-    <ID>ComposableParamOrder:TranslationReportScreen.kt:@Composable fun TranslationReportScreen</ID>
     <ID>CompositionLocalAllowlist:Theme.kt:private val LocalAmoledTheme = staticCompositionLocalOf { false }</ID>
     <ID>CompositionLocalAllowlist:Theme.kt:private val LocalDarkTheme = staticCompositionLocalOf { false }</ID>
     <ID>CyclomaticComplexMethod:AmberTopAppBar.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun AmberTopAppBar</ID>
@@ -56,19 +40,11 @@
     <ID>CyclomaticComplexMethod:UpdateSettingsScreen.kt:@Composable fun UpdateSettingsScreen</ID>
     <ID>CyclomaticComplexMethod:ZapstoreUpdater.kt:ZapstoreUpdater$private fun processFileEvent</ID>
     <ID>CyclomaticComplexMethod:ZapstoreUpdater.kt:ZapstoreUpdater$private suspend fun processReleaseEvent</ID>
-    <ID>LambdaParameterEventTrailing:AccountBackupScreen.kt:onBackupFinish: () -&gt; Unit</ID>
     <ID>LambdaParameterEventTrailing:AccountBackupScreen.kt:onClick: () -&gt; Unit</ID>
-    <ID>LambdaParameterEventTrailing:AccountBackupScreen.kt:onShowQrCode: (String) -&gt; Unit</ID>
-    <ID>LambdaParameterEventTrailing:ConnectOrbotDialog.kt:onError: (String) -&gt; Unit</ID>
     <ID>LambdaParameterEventTrailing:EditPermission.kt:onClick: () -&gt; Unit</ID>
     <ID>LambdaParameterEventTrailing:EncryptDecryptData.kt:onReject: (RememberType, DecryptTypeScope) -&gt; Unit</ID>
-    <ID>LambdaParameterEventTrailing:EventData.kt:onReject: (RememberType) -&gt; Unit</ID>
-    <ID>LambdaParameterEventTrailing:FeedbackScreen.kt:onLoading: (Boolean) -&gt; Unit</ID>
     <ID>LambdaParameterEventTrailing:InvalidIntentScreen.kt:onClose: () -&gt; Unit</ID>
-    <ID>LambdaParameterEventTrailing:LoginWithPubKey.kt:onReject: (RememberType) -&gt; Unit</ID>
-    <ID>LambdaParameterEventTrailing:MultiEventHomeScreen.kt:onLoading: (Boolean) -&gt; Unit</ID>
     <ID>LambdaParameterEventTrailing:SeeDetailsScreen.kt:onBack: () -&gt; Unit</ID>
-    <ID>LambdaParameterEventTrailing:SignPsbt.kt:onReject: (RememberType) -&gt; Unit</ID>
     <ID>LambdaParameterEventTrailing:ToogleOption.kt:onClick: () -&gt; Unit</ID>
     <ID>LambdaParameterInRestartableEffect:BiometricAuthScreen.kt:onAuth: (Boolean) -&gt; Unit</ID>
     <ID>LambdaParameterInRestartableEffect:BunkerRelayAuthScreen.kt:onAccept: (RememberType, RelayAuthScope) -&gt; Unit</ID>
@@ -197,29 +173,6 @@
     <ID>ModifierNotUsedAtRoot:SimpleSearchBar.kt:modifier = modifier .fillMaxWidth()</ID>
     <ID>ModifierReused:SimpleSearchBar.kt:Box( modifier .semantics { isTraversalGroup = true }, ) { SearchBar( windowInsets = WindowInsets(0), inputField = { SearchBarDefaults.InputField( modifier = modifier .fillMaxWidth(), query = textFieldState.text.toString(), onQueryChange = { textFieldState.edit { replace(0, length, it) } localSearchResults = searchResults.filter { result -&gt; result.contains(textFieldState.text.toString(), ignoreCase = true) } }, onSearch = { onSearch(textFieldState.text.toString()) expanded = false }, expanded = expanded, onExpandedChange = { expanded = it }, placeholder = { Text("Search") }, ) }, expanded = expanded, onExpandedChange = { expanded = it }, ) { // Display search results in a scrollable column LazyColumn { items(localSearchResults) { result -&gt; ListItem( headlineContent = { Text(result) }, modifier = Modifier .clickable { textFieldState.edit { replace(0, length, result) } onSearch(textFieldState.text.toString()) expanded = false } .background(Color.Red) .fillMaxWidth(), ) } } } }</ID>
     <ID>ModifierReused:SimpleSearchBar.kt:InputField( modifier = modifier .fillMaxWidth(), query = textFieldState.text.toString(), onQueryChange = { textFieldState.edit { replace(0, length, it) } localSearchResults = searchResults.filter { result -&gt; result.contains(textFieldState.text.toString(), ignoreCase = true) } }, onSearch = { onSearch(textFieldState.text.toString()) expanded = false }, expanded = expanded, onExpandedChange = { expanded = it }, placeholder = { Text("Search") }, )</ID>
-    <ID>ModifierWithoutDefault:AccountBackupScreen.kt:modifier: Modifier</ID>
-    <ID>ModifierWithoutDefault:ActivitiesScreen.kt:modifier: Modifier</ID>
-    <ID>ModifierWithoutDefault:ActivityScreen.kt:modifier: Modifier</ID>
-    <ID>ModifierWithoutDefault:ApplicationsScreen.kt:modifier: Modifier</ID>
-    <ID>ModifierWithoutDefault:BunkerGetPubKeyScreen.kt:modifier: Modifier</ID>
-    <ID>ModifierWithoutDefault:BunkerPingScreen.kt:modifier: Modifier</ID>
-    <ID>ModifierWithoutDefault:BunkerRelayAuthScreen.kt:modifier: Modifier</ID>
-    <ID>ModifierWithoutDefault:CenterCircularProgressIndicator.kt:modifier: Modifier</ID>
-    <ID>ModifierWithoutDefault:CloudBackupScreen.kt:modifier: Modifier</ID>
-    <ID>ModifierWithoutDefault:ConnectOrbotDialog.kt:modifier: Modifier</ID>
-    <ID>ModifierWithoutDefault:DefaultProfileRelaysScreen.kt:modifier: Modifier</ID>
-    <ID>ModifierWithoutDefault:EditPermission.kt:modifier: Modifier</ID>
-    <ID>ModifierWithoutDefault:EditRelaysDialog.kt:modifier: Modifier</ID>
-    <ID>ModifierWithoutDefault:EncryptDecryptData.kt:modifier: Modifier</ID>
-    <ID>ModifierWithoutDefault:EncryptedTagArraySection.kt:modifier: Modifier</ID>
-    <ID>ModifierWithoutDefault:EventData.kt:modifier: Modifier</ID>
-    <ID>ModifierWithoutDefault:ExportAllAccountsScreen.kt:modifier: Modifier</ID>
-    <ID>ModifierWithoutDefault:IncomingRequestScreen.kt:modifier: Modifier</ID>
-    <ID>ModifierWithoutDefault:LoginWithPubKey.kt:modifier: Modifier</ID>
-    <ID>ModifierWithoutDefault:MultiEventHomeScreen.kt:modifier: Modifier</ID>
-    <ID>ModifierWithoutDefault:NewApplicationScreen.kt:modifier: Modifier</ID>
-    <ID>ModifierWithoutDefault:Nip44v3ApprovalData.kt:modifier: Modifier</ID>
-    <ID>ModifierWithoutDefault:SignPsbt.kt:modifier: Modifier</ID>
     <ID>MultipleEmitters:ActivityStatsCard.kt:@Composable private fun ActivityStatsBar</ID>
     <ID>MultipleEmitters:RelaysScreen.kt:@Composable private fun LocalBunkerServerSettings</ID>
     <ID>MultipleEmitters:SignPsbt.kt:@Composable private fun PsbtBody</ID>

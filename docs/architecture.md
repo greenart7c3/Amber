@@ -449,8 +449,12 @@ Done so far: `PreviewPublic` (50 previews made private; detekt's
 `UnusedPrivateFunction` ignores `@Preview` and `@ThemePreviews` functions, which only
 the IDE calls, as `unusedCode` already did) and `ParameterNaming` (13 callbacks in the
 present tense: `onSelect`, `onPress`, `onApproveChange`, `onPinEnter`, `onChange`,
-`onBackupFinish`, ...). Left: `ModifierMissing`, `ModifierWithoutDefault`,
-`ComposableParamOrder`, `LambdaParameterEventTrailing`.
+`onBackupFinish`, ...). `ModifierWithoutDefault` and `ComposableParamOrder` go together:
+giving `modifier` its default makes it an optional parameter ahead of required ones, so
+it also moves after them (positional callers name the argument instead); 24 + 18
+entries, and 8 `LambdaParameterEventTrailing` ones the move fixed too. Left:
+`ModifierMissing`, 12 `ComposableParamOrder` (a required parameter after an optional
+one) and 6 `LambdaParameterEventTrailing`.
 
 ### 11. Share the rest of the bunker flow
 

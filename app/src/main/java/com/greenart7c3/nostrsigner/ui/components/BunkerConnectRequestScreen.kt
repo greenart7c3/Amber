@@ -352,8 +352,8 @@ fun BunkerConnectRequestScreen(
                                 },
                             ) {
                                 EnabledPermissions(
-                                    Modifier.padding(it),
-                                    localPermissions,
+                                    modifier = Modifier.padding(it),
+                                    localPermissions = localPermissions,
                                 )
                             }
                         }

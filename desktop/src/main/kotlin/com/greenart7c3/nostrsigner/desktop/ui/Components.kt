@@ -154,8 +154,8 @@ fun AmberTabRow(
  */
 @Composable
 fun AmberButton(
-    modifier: Modifier = Modifier,
     text: String,
+    modifier: Modifier = Modifier,
     enabled: Boolean = true,
     fillWidth: Boolean = false,
     onClick: () -> Unit,
@@ -196,8 +196,8 @@ fun AmberTextButton(
 
 @Composable
 fun AmberOutlinedButton(
-    modifier: Modifier = Modifier,
     text: String,
+    modifier: Modifier = Modifier,
     enabled: Boolean = true,
     fillWidth: Boolean = false,
     onClick: () -> Unit,

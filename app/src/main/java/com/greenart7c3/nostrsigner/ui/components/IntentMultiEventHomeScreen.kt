@@ -116,7 +116,7 @@ fun IntentMultiEventHomeScreen(
         )
 
         AmberButton(
-            Modifier
+            modifier = Modifier
                 .fillMaxWidth()
                 .padding(vertical = 16.dp),
             text = stringResource(Res.string.confirm),

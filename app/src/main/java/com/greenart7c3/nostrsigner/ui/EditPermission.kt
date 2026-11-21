@@ -76,10 +76,10 @@ import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun EditPermission(
-    modifier: Modifier,
     account: Account,
     selectedPackage: String,
     navController: NavController,
+    modifier: Modifier = Modifier,
     viewModel: EditPermissionViewModel = viewModel(factory = EditPermissionViewModel.factory(LocalAccountRepository.current)),
 ) {
     val settingsStore = LocalSettingsStore.current
@@ -415,8 +415,8 @@ fun PermissionRow(
 
 @Composable
 fun RelayCard(
-    modifier: Modifier = Modifier,
     relay: String,
+    modifier: Modifier = Modifier,
     trustScore: Int? = null,
     isLoadingScore: Boolean = false,
     showTrustScore: Boolean = true,

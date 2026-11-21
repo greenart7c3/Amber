@@ -58,8 +58,8 @@ import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun DefaultProfileRelaysScreen(
-    modifier: Modifier,
     account: Account,
+    modifier: Modifier = Modifier,
 ) {
     val settingsStore = LocalSettingsStore.current
     val relayClient = LocalRelayClient.current

@@ -33,8 +33,8 @@ import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun EnabledPermissions(
-    modifier: Modifier = Modifier,
     localPermissions: List<Permission>,
+    modifier: Modifier = Modifier,
 ) {
     val enabledPermissions = localPermissions.map {
         remember { mutableStateOf(it.checked) }

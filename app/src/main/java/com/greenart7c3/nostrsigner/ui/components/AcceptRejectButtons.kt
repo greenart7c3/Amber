@@ -28,7 +28,7 @@ fun AcceptRejectButtons(
         Arrangement.spacedBy(8.dp),
     ) {
         AmberButton(
-            Modifier.weight(1f),
+            modifier = Modifier.weight(1f),
             onClick = onReject,
             colors = ButtonDefaults.buttonColors(
                 containerColor = Color(0xFFFF6B00),
@@ -37,7 +37,7 @@ fun AcceptRejectButtons(
         )
 
         AmberButton(
-            Modifier.weight(1f),
+            modifier = Modifier.weight(1f),
             onClick = onAccept,
             text = stringResource(Res.string.accept),
         )

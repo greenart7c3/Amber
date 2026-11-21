@@ -43,13 +43,13 @@ import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun SignPsbt(
-    modifier: Modifier,
     psbtHex: String,
     decoded: DecodedPsbt,
     shouldRunOnAccept: Boolean?,
     packageName: String?,
     onAccept: (RememberType) -> Unit,
     onReject: (RememberType) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     var rememberType by remember { mutableStateOf(RememberType.NEVER) }
 
@@ -89,13 +89,13 @@ fun SignPsbt(
 
 @Composable
 fun BunkerSignPsbt(
-    modifier: Modifier,
     psbtHex: String,
     decoded: DecodedPsbt,
     shouldRunOnAccept: Boolean?,
     appName: String,
     onAccept: (RememberType) -> Unit,
     onReject: (RememberType) -> Unit,
+    modifier: Modifier = Modifier,
     iconUrl: String = "",
 ) {
     var rememberType by remember { mutableStateOf(RememberType.NEVER) }

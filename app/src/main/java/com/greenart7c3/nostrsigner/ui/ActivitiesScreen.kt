@@ -75,10 +75,10 @@ enum class ActivityFilter(val accepted: Boolean?) {
 
 @Composable
 fun ActivitiesScreen(
-    modifier: Modifier,
     paddingValues: PaddingValues,
     topPadding: Dp,
     account: Account,
+    modifier: Modifier = Modifier,
     viewModel: ActivityViewModel = viewModel(factory = ActivityViewModel.factory(LocalAccountRepository.current)),
 ) {
     val context = LocalContext.current

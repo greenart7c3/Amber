@@ -74,9 +74,9 @@ import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun ApplicationsScreen(
-    modifier: Modifier,
     account: Account,
     navControllerWrapper: NavHostControllerWrapper,
+    modifier: Modifier = Modifier,
     viewModel: ApplicationsViewModel = viewModel(factory = ApplicationsViewModel.factory(LocalAccountRepository.current)),
 ) {
     val context = LocalContext.current

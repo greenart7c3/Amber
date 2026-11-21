@@ -45,9 +45,9 @@ import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun NewApplicationScreen(
-    modifier: Modifier,
     account: Account,
     navController: NavController,
+    modifier: Modifier = Modifier,
 ) {
     val dialogOpen = remember { mutableStateOf(false) }
     val clipboardManager = LocalClipboard.current

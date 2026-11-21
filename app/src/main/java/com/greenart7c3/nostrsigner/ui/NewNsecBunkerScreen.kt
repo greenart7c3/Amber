@@ -79,9 +79,9 @@ import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun NewNsecBunkerScreen(
-    modifier: Modifier = Modifier,
     account: Account,
     navController: NavController,
+    modifier: Modifier = Modifier,
     viewModel: NewBunkerViewModel = viewModel(factory = NewBunkerViewModel.factory(LocalAccountRepository.current, LocalRelayClient.current)),
 ) {
     val localBunkerRelay = LocalBunkerRelay.current
@@ -263,7 +263,7 @@ fun NewNsecBunkerScreen(
             val noNameMessage = stringResource(Res.string.name_cannot_be_empty)
 
             AmberButton(
-                Modifier.padding(top = 20.dp),
+                modifier = Modifier.padding(top = 20.dp),
                 text = stringResource(Res.string.create),
                 onClick = {
                     if (relays.isEmpty()) {
@@ -296,9 +296,9 @@ fun NewNsecBunkerScreen(
 
 @Composable
 fun NewNsecBunkerCreatedScreen(
-    modifier: Modifier = Modifier,
     account: Account,
     key: String,
+    modifier: Modifier = Modifier,
     viewModel: NewBunkerViewModel = viewModel(factory = NewBunkerViewModel.factory(LocalAccountRepository.current, LocalRelayClient.current)),
 ) {
     val settingsStore = LocalSettingsStore.current

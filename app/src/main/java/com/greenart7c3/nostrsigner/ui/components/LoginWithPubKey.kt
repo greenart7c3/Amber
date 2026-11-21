@@ -64,12 +64,12 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 fun LoginWithPubKey(
     horizontalPadding: Dp,
-    modifier: Modifier,
     account: Account,
     packageName: String?,
     permissions: ImmutableList<Permission>?,
     onAccept: (List<Permission>?, Int, Boolean?, RememberType, Account) -> Unit,
     onReject: (RememberType) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val localPermissions = remember {
         val snapshot = mutableStateListOf<Permission>()
@@ -202,8 +202,8 @@ fun LoginWithPubKey(
                                 },
                             ) {
                                 EnabledPermissions(
-                                    Modifier.padding(it),
-                                    localPermissions,
+                                    modifier = Modifier.padding(it),
+                                    localPermissions = localPermissions,
                                 )
                             }
                         }

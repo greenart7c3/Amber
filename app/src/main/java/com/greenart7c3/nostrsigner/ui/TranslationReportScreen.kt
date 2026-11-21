@@ -75,9 +75,9 @@ import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun TranslationReportScreen(
-    modifier: Modifier = Modifier,
     account: Account,
     onDismiss: () -> Unit,
+    modifier: Modifier = Modifier,
     onLoading: (Boolean) -> Unit = {},
 ) {
     val pendingReports = LocalPendingReports.current

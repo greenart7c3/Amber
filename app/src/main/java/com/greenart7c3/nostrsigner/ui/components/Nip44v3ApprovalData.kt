@@ -57,7 +57,6 @@ import org.jetbrains.compose.resources.stringResource
  */
 @Composable
 fun Nip44v3ApprovalData(
-    modifier: Modifier,
     isBunker: Boolean,
     appName: String,
     packageName: String?,
@@ -67,6 +66,7 @@ fun Nip44v3ApprovalData(
     scope: String,
     encryptedData: EncryptedDataKind?,
     shouldRunOnAccept: Boolean?,
+    modifier: Modifier = Modifier,
     defaultScope: DecryptTypeScope = DecryptTypeScope.SPECIFIC,
     onAccept: (RememberType, DecryptTypeScope) -> Unit,
     onReject: (RememberType, DecryptTypeScope) -> Unit,

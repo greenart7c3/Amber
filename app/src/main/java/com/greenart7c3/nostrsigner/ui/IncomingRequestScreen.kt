@@ -40,7 +40,6 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 fun IncomingRequestScreen(
     horizontalPadding: Dp,
-    modifier: Modifier,
     scaffoldPadding: PaddingValues,
     intents: ImmutableList<IntentData>,
     bunkerRequests: ImmutableList<AmberBunkerRequest>,
@@ -49,6 +48,7 @@ fun IncomingRequestScreen(
     account: Account,
     onRemoveIntentData: (List<IntentData>, IntentResultType) -> Unit,
     onLoading: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
     isExternalRequest: Boolean = false,
 ) {
     var loading by remember { mutableStateOf(false) }

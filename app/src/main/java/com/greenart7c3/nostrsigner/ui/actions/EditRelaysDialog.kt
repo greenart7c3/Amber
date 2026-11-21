@@ -122,8 +122,8 @@ import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun DefaultRelaysScreen(
-    modifier: Modifier,
     account: Account,
+    modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
     val settingsStore = LocalSettingsStore.current
@@ -632,9 +632,9 @@ fun RelayLogScreen(
 @SuppressLint("StateFlowValueCalledInComposition")
 @Composable
 fun ActiveRelaysScreen(
-    modifier: Modifier,
     navController: NavController,
     account: Account,
+    modifier: Modifier = Modifier,
 ) {
     val settingsStore = LocalSettingsStore.current
     val accountRepository = LocalAccountRepository.current

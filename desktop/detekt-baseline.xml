@@ -8,8 +8,6 @@
     <ID>ComplexCondition:Models.kt:EncryptedContent.Companion$node != null &amp;&amp; node.isObject &amp;&amp; kind != null &amp;&amp; kind.canConvertToInt()</ID>
     <ID>ComplexCondition:RelayNetwork.kt:LocalRelays$address.isLoopbackAddress || address.isSiteLocalAddress || address.isLinkLocalAddress || address.isAnyLocalAddress</ID>
     <ID>ComplexCondition:UnlockScreen.kt:onEnter != null &amp;&amp; event.type == KeyEventType.KeyUp &amp;&amp; (event.key == Key.Enter || event.key == Key.NumPadEnter)</ID>
-    <ID>ComposableParamOrder:Components.kt:@Composable fun AmberButton</ID>
-    <ID>ComposableParamOrder:Components.kt:@Composable fun AmberOutlinedButton</ID>
     <ID>CompositionLocalAllowlist:WindowGeometry.kt:/** The current window's content size, provided by [App]. */ val LocalWindowContentSize = staticCompositionLocalOf { DEFAULT_WINDOW_SIZE }</ID>
     <ID>CompositionLocalAllowlist:WindowGeometry.kt:/** The width bucket of the current window, provided by [App]. */ val LocalLayoutWidth = staticCompositionLocalOf { LayoutWidth.EXPANDED }</ID>
     <ID>CyclomaticComplexMethod:ApplicationDetailScreen.kt:@Composable fun ApplicationDetailScreen</ID>
@@ -56,7 +54,6 @@
     <ID>ModifierMissing:SettingsScreen.kt:@Composable fun SettingsScreen</ID>
     <ID>ModifierMissing:UnlockScreen.kt:@Composable fun PassphraseSetupScreen</ID>
     <ID>ModifierMissing:UnlockScreen.kt:@Composable fun UnlockScreen</ID>
-    <ID>ModifierWithoutDefault:RequestNotificationPopup.kt:modifier: Modifier</ID>
     <ID>MultipleEmitters:App.kt:@Composable fun App</ID>
     <ID>MultipleEmitters:LoginScreen.kt:@Composable private fun ImportKeyPane</ID>
     <ID>MultipleEmitters:LoginScreen.kt:@Composable private fun NewKeyPane</ID>

@@ -35,7 +35,7 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 fun ChooseSignPolicy(
     selectedOption: Int,
-    onSelected: (Int) -> Unit,
+    onSelect: (Int) -> Unit,
 ) {
     val radioOptions = listOf(
         TitleExplainer(
@@ -60,7 +60,7 @@ fun ChooseSignPolicy(
                 .selectable(
                     selected = selected,
                     onClick = {
-                        onSelected(index)
+                        onSelect(index)
                     },
                 )
                 .background(
@@ -93,7 +93,7 @@ fun ChooseSignPolicy(
                 RadioButton(
                     selected = false,
                     onClick = {
-                        onSelected(index)
+                        onSelect(index)
                     },
                 )
             }
@@ -123,7 +123,7 @@ private fun ChooseSignPolicyPreview() {
         Column(Modifier.padding(8.dp)) {
             ChooseSignPolicy(
                 selectedOption = 1,
-                onSelected = {},
+                onSelect = {},
             )
         }
     }

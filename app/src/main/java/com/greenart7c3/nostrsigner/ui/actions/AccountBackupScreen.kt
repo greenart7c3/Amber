@@ -460,14 +460,14 @@ private fun AccountBackupCard(
                     password = password,
                     modifier = Modifier.weight(1f),
                     onLoading = onLoading,
-                    onBackupDone = { didBackup = true },
+                    onBackupFinish = { didBackup = true },
                 )
                 NSecQrButton(
                     account = account,
                     password = password,
                     modifier = Modifier.weight(1f),
                     onLoading = onLoading,
-                    onBackupDone = { didBackup = true },
+                    onBackupFinish = { didBackup = true },
                     onShowQrCode = onShowQrCode,
                 )
             }
@@ -478,7 +478,7 @@ private fun AccountBackupCard(
                 SeedWordsButton(
                     account = account,
                     seedWords = seedWords,
-                    onBackupDone = { didBackup = true },
+                    onBackupFinish = { didBackup = true },
                 )
             }
         }
@@ -491,7 +491,7 @@ private fun NSecQrButton(
     password: String,
     modifier: Modifier = Modifier,
     onLoading: (Boolean) -> Unit,
-    onBackupDone: () -> Unit,
+    onBackupFinish: () -> Unit,
     onShowQrCode: (String) -> Unit,
 ) {
     val appScope = LocalAppScope.current
@@ -522,7 +522,7 @@ private fun NSecQrButton(
             QrCodeDialog(content = nsec) {
                 appScope.launch {
                     account.didBackup = true
-                    onBackupDone()
+                    onBackupFinish()
                     showDialog.value = false
                 }
             }
@@ -537,7 +537,7 @@ private fun NSecQrButton(
                     try {
                         val ncryptsec = account.nip49Encrypt(password)
                         account.didBackup = true
-                        onBackupDone()
+                        onBackupFinish()
                         onShowQrCode(ncryptsec)
                     } catch (e: Exception) {
                         if (e is CancellationException) throw e
@@ -573,7 +573,7 @@ private fun NSecQrButton(
                             try {
                                 val ncryptsec = account.nip49Encrypt(password)
                                 account.didBackup = true
-                                onBackupDone()
+                                onBackupFinish()
                                 onShowQrCode(ncryptsec)
                             } catch (e: Exception) {
                                 if (e is CancellationException) throw e
@@ -703,7 +703,7 @@ fun QrCodeDialog(
 private fun SeedWordsButton(
     account: Account,
     seedWords: String,
-    onBackupDone: () -> Unit,
+    onBackupFinish: () -> Unit,
 ) {
     val appScope = LocalAppScope.current
     val showSeedWords = remember { mutableStateOf(false) }
@@ -752,7 +752,7 @@ private fun SeedWordsButton(
                 onApproved = {
                     appScope.launch {
                         account.didBackup = true
-                        onBackupDone()
+                        onBackupFinish()
                         showSeedWords.value = true
                     }
                 },
@@ -772,7 +772,7 @@ private fun NSecCopyButton(
     password: String,
     modifier: Modifier = Modifier,
     onLoading: (Boolean) -> Unit,
-    onBackupDone: () -> Unit,
+    onBackupFinish: () -> Unit,
 ) {
     val appScope = LocalAppScope.current
     val appContext = LocalContext.current.applicationContext
@@ -783,9 +783,9 @@ private fun NSecCopyButton(
     val keyguardLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
         if (result.resultCode == Activity.RESULT_OK) {
             if (password.isNotBlank()) {
-                encryptCopyNSec(password, appContext, account, clipboardManager, appScope, onLoading, onBackupDone)
+                encryptCopyNSec(password, appContext, account, clipboardManager, appScope, onLoading, onBackupFinish)
             } else {
-                copyNSec(account, clipboardManager, onBackupDone)
+                copyNSec(account, clipboardManager, onBackupFinish)
             }
         }
     }
@@ -804,11 +804,11 @@ private fun NSecCopyButton(
                 onApproved = {
                     scope.launch(Dispatchers.IO) {
                         account.didBackup = true
-                        onBackupDone()
+                        onBackupFinish()
                         if (password.isNotBlank()) {
-                            encryptCopyNSec(password, appContext, account, clipboardManager, appScope, onLoading, onBackupDone)
+                            encryptCopyNSec(password, appContext, account, clipboardManager, appScope, onLoading, onBackupFinish)
                         } else {
-                            copyNSec(account, clipboardManager, onBackupDone)
+                            copyNSec(account, clipboardManager, onBackupFinish)
                         }
                     }
                 },
@@ -857,10 +857,10 @@ private fun BackupIconButton(
 private fun copyNSec(
     account: Account,
     clipboardManager: Clipboard,
-    onBackupDone: () -> Unit,
+    onBackupFinish: () -> Unit,
 ) {
     account.copyToClipboard(clipboardManager)
-    onBackupDone()
+    onBackupFinish()
 }
 
 private fun encryptCopyNSec(
@@ -870,7 +870,7 @@ private fun encryptCopyNSec(
     clipboardManager: Clipboard,
     appScope: CoroutineScope,
     onLoading: (Boolean) -> Unit,
-    onBackupDone: () -> Unit,
+    onBackupFinish: () -> Unit,
 ) {
     if (password.isBlank()) {
         appScope.launch(Dispatchers.Main) {
@@ -882,7 +882,7 @@ private fun encryptCopyNSec(
             try {
                 val key = account.nip49Encrypt(password)
                 account.didBackup = true
-                onBackupDone()
+                onBackupFinish()
                 appScope.launch(Dispatchers.Main) {
                     clipboardManager.setSensitiveClip(context, key)
                     Toast.makeText(context, getStringBlocking(Res.string.secret_key_copied_to_clipboard), Toast.LENGTH_SHORT).show()

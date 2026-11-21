@@ -150,7 +150,7 @@ private fun IntentRequestGroups(
                         count = groupIntents.size,
                         approved = groupIntents.all { MultiEventScreenIntents.checkedStates[it.queueKey] ?: true },
                         expanded = expanded,
-                        onApproveChanged = { approve -> onGroupApprove(groupIntents, approve) },
+                        onApproveChange = { approve -> onGroupApprove(groupIntents, approve) },
                         onExpandToggle = { expandedGroups[groupKey] = !(expandedGroups[groupKey] ?: false) },
                     )
                 }
@@ -160,11 +160,11 @@ private fun IntentRequestGroups(
                     RequestGroupOptions(
                         groupKey = groupKey,
                         rememberType = choices.rememberType(groupKey),
-                        onRememberTypeChanged = { choices.setRememberType(groupKey, it) },
+                        onRememberTypeChange = { choices.setRememberType(groupKey, it) },
                         relayAuthScope = choices.relayAuthScope(groupKey),
-                        onRelayAuthScopeChanged = { choices.setRelayAuthScope(groupKey, it) },
+                        onRelayAuthScopeChange = { choices.setRelayAuthScope(groupKey, it) },
                         decryptTypeScope = choices.decryptScope(groupKey),
-                        onDecryptTypeScopeChanged = { choices.setDecryptScope(groupKey, it) },
+                        onDecryptTypeScopeChange = { choices.setDecryptScope(groupKey, it) },
                     )
                 }
             }
@@ -174,7 +174,7 @@ private fun IntentRequestGroups(
                         intent = intent,
                         signingAs = batchAccounts.forCard(intent.currentAccount),
                         approved = MultiEventScreenIntents.checkedStates[intent.queueKey] ?: true,
-                        onApproveChanged = { MultiEventScreenIntents.checkedStates[intent.queueKey] = it },
+                        onApproveChange = { MultiEventScreenIntents.checkedStates[intent.queueKey] = it },
                     )
                 }
             }
@@ -187,7 +187,7 @@ private fun IntentRequestCard(
     intent: IntentData,
     signingAs: Account?,
     approved: Boolean,
-    onApproveChanged: (Boolean) -> Unit,
+    onApproveChange: (Boolean) -> Unit,
 ) {
     val settingsStore = LocalSettingsStore.current
     val type = intent.type
@@ -314,7 +314,7 @@ private fun IntentRequestCard(
                 AmberToggles(
                     selected = approved,
                     options = listOf(true, false),
-                    onSelected = onApproveChanged,
+                    onSelect = onApproveChange,
                     label = {
                         if (it) stringResource(Res.string.approve) else stringResource(Res.string.deny)
                     },

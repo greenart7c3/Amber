@@ -45,7 +45,7 @@ import com.greenart7c3.nostrsigner.ui.theme.ThemePreviews
 @Composable
 fun RandomPinInput(
     text: String? = null,
-    onPinEntered: (String) -> Unit,
+    onPinEnter: (String) -> Unit,
 ) {
     val randomNumbers = remember { (0..9).shuffled() }
     var selectedPin by remember { mutableStateOf("") }
@@ -190,7 +190,7 @@ fun RandomPinInput(
                     enabled = selectedPin.length >= 4,
                     onClick = {
                         if (selectedPin.length >= 4) {
-                            onPinEntered(selectedPin) // Confirm the PIN
+                            onPinEnter(selectedPin) // Confirm the PIN
                         }
                     },
                     modifier = Modifier
@@ -215,7 +215,7 @@ private fun RandomPinInputPreview() {
         Box(Modifier.height(600.dp)) {
             RandomPinInput(
                 text = "Enter your PIN",
-                onPinEntered = {},
+                onPinEnter = {},
             )
         }
     }

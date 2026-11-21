@@ -43,7 +43,7 @@ fun ConfirmPinScreen(
         modifier,
     ) {
         RandomPinInput(
-            onPinEntered = { enteredPin ->
+            onPinEnter = { enteredPin ->
                 if (enteredPin != pin) {
                     ToastManager.toast(getStringBlocking(Res.string.pin), getStringBlocking(Res.string.pin_does_not_match))
                 } else {

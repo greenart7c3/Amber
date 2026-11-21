@@ -447,9 +447,10 @@ refactor of its own.
 
 Done so far: `PreviewPublic` (50 previews made private; detekt's
 `UnusedPrivateFunction` ignores `@Preview` and `@ThemePreviews` functions, which only
-the IDE calls, as `unusedCode` already did). Left: `ModifierMissing`,
-`ModifierWithoutDefault`, `ComposableParamOrder`, `LambdaParameterEventTrailing`,
-`ParameterNaming`.
+the IDE calls, as `unusedCode` already did) and `ParameterNaming` (13 callbacks in the
+present tense: `onSelect`, `onPress`, `onApproveChange`, `onPinEnter`, `onChange`,
+`onBackupFinish`, ...). Left: `ModifierMissing`, `ModifierWithoutDefault`,
+`ComposableParamOrder`, `LambdaParameterEventTrailing`.
 
 ### 11. Share the rest of the bunker flow
 

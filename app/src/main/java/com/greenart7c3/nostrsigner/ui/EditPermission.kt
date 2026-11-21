@@ -361,7 +361,7 @@ fun PermissionRow(
             AmberToggles(
                 selected = optionIndex,
                 options = listOf(0, 1, 2),
-                onSelected = { newIndex ->
+                onSelect = { newIndex ->
                     optionIndex = newIndex
                     onSetPermission(
                         optionIndex,
@@ -397,7 +397,7 @@ fun PermissionRow(
                         RememberType.ONE_WEEK,
                         RememberType.ALWAYS,
                     ),
-                    onSelected = { newType ->
+                    onSelect = { newType ->
                         rememberType = newType
                         onSetPermission(
                             optionIndex,

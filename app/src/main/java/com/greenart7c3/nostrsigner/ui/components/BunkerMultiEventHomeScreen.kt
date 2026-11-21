@@ -272,7 +272,7 @@ private fun LazyListScope.bunkerGroupItems(
                     count = groupItems.size,
                     approved = groupApproved,
                     expanded = expanded,
-                    onApproveChanged = { approve -> onGroupApprove(groupItems, approve) },
+                    onApproveChange = { approve -> onGroupApprove(groupItems, approve) },
                     onExpandToggle = {
                         expandedGroups[groupKey] = !(expandedGroups[groupKey] ?: false)
                     },
@@ -284,11 +284,11 @@ private fun LazyListScope.bunkerGroupItems(
                 RequestGroupOptions(
                     groupKey = requestGroupKey,
                     rememberType = choices.rememberType(groupKey),
-                    onRememberTypeChanged = { choices.setRememberType(groupKey, it) },
+                    onRememberTypeChange = { choices.setRememberType(groupKey, it) },
                     relayAuthScope = choices.relayAuthScope(groupKey),
-                    onRelayAuthScopeChanged = { choices.setRelayAuthScope(groupKey, it) },
+                    onRelayAuthScopeChange = { choices.setRelayAuthScope(groupKey, it) },
                     decryptTypeScope = choices.decryptScope(groupKey),
-                    onDecryptTypeScopeChanged = { choices.setDecryptScope(groupKey, it) },
+                    onDecryptTypeScopeChange = { choices.setDecryptScope(groupKey, it) },
                 )
             }
         }
@@ -298,7 +298,7 @@ private fun LazyListScope.bunkerGroupItems(
                     bunkerRequest = bunkerRequest,
                     signingAs = batchAccounts.forCard(bunkerRequest.currentAccount),
                     approved = MultiEventScreenIntents.checkedStates[bunkerRequest.queueKey] ?: true,
-                    onApproveChanged = {
+                    onApproveChange = {
                         MultiEventScreenIntents.checkedStates[bunkerRequest.queueKey] = it
                     },
                 )
@@ -339,7 +339,7 @@ private fun BunkerRequestCard(
     bunkerRequest: AmberBunkerRequest,
     signingAs: Account?,
     approved: Boolean,
-    onApproveChanged: (Boolean) -> Unit,
+    onApproveChange: (Boolean) -> Unit,
 ) {
     val settingsStore = LocalSettingsStore.current
     val type = nip46SignerType(bunkerRequest.request.method)
@@ -397,7 +397,7 @@ private fun BunkerRequestCard(
                 AmberToggles(
                     selected = approved,
                     options = listOf(true, false),
-                    onSelected = onApproveChanged,
+                    onSelect = onApproveChange,
                     label = {
                         if (it) stringResource(Res.string.approve) else stringResource(Res.string.deny)
                     },

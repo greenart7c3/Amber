@@ -48,7 +48,7 @@ fun AmberBottomBar(
             BackButtonAppBar(
                 destinationRoute = destinationRoute,
                 localBackButtonTitle = localBackButtonTitle,
-                onPressed = {
+                onPress = {
                     if (destinationRoute.startsWith("NewNsecBunkerCreated/")) {
                         navController.navController.navigate(Route.Applications.route) {
                             popUpTo(0)

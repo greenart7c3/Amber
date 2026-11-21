@@ -128,7 +128,7 @@ fun BiometricAuthScreen(
                 ) {
                     RandomPinInput(
                         text = stringResource(Res.string.enter_pin),
-                        onPinEntered = { enteredPin ->
+                        onPinEnter = { enteredPin ->
                             scope.launch(Dispatchers.IO) {
                                 val pin = LocalPreferences.loadPinFromEncryptedStorage(context)
                                 scope.launch(Dispatchers.Main) {

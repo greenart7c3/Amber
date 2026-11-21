@@ -134,7 +134,6 @@
     <ID>LongMethod:NewNsecBunkerScreen.kt:@Composable fun NewNsecBunkerCreatedScreen</ID>
     <ID>LongMethod:NewNsecBunkerScreen.kt:@Composable fun NewNsecBunkerScreen</ID>
     <ID>LongMethod:Nip44v3ApprovalData.kt:@Composable fun Nip44v3ApprovalData</ID>
-    <ID>LongMethod:NotificationSubscription.kt:NotificationSubscription$suspend fun updateFilter</ID>
     <ID>LongMethod:QrCodeScanner.kt:@Composable fun SimpleQrCodeScanner</ID>
     <ID>LongMethod:RandomPinInput.kt:@Composable fun RandomPinInput</ID>
     <ID>LongMethod:RelaysScreen.kt:@Composable private fun LocalBunkerServerSettings</ID>
@@ -239,56 +238,6 @@
     <ID>ParameterNaming:RequestGroupUtils.kt:onRelayAuthScopeChanged: (RelayAuthScope) -&gt; Unit</ID>
     <ID>ParameterNaming:RequestGroupUtils.kt:onRememberTypeChanged: (RememberType) -&gt; Unit</ID>
     <ID>PreviewAnnotationNaming:Previews.kt:ThemePreviews</ID>
-    <ID>PreviewPublic:AcceptRejectButtons.kt:@ThemePreviews @Composable fun AcceptRejectButtonsPreview</ID>
-    <ID>PreviewPublic:AddPermissionsSheet.kt:@ThemePreviews @Composable fun AddPermissionsSheetPreview</ID>
-    <ID>PreviewPublic:AmberButton.kt:@ThemePreviews @Composable fun AmberButtonDisabledPreview</ID>
-    <ID>PreviewPublic:AmberButton.kt:@ThemePreviews @Composable fun AmberButtonPreview</ID>
-    <ID>PreviewPublic:AmberButton.kt:@ThemePreviews @Composable fun AmberElevatedButtonPreview</ID>
-    <ID>PreviewPublic:AmberToggles.kt:@ThemePreviews @Composable fun AmberTogglesPreview</ID>
-    <ID>PreviewPublic:AmberWarningCard.kt:@ThemePreviews @Composable fun AmberWarningCardPreview</ID>
-    <ID>PreviewPublic:AppAvatar.kt:@Preview(showBackground = true) @Composable fun AppAvatarNoNamePreview</ID>
-    <ID>PreviewPublic:AppAvatar.kt:@ThemePreviews @Composable fun AppAvatarPlaceholderPreview</ID>
-    <ID>PreviewPublic:BackButtonBottomBar.kt:@ThemePreviews @Composable fun BackButtonAppBarPreview</ID>
-    <ID>PreviewPublic:BunkerGetPubKeyScreen.kt:@ThemePreviews @Composable fun BunkerGetPubKeyScreenPreview</ID>
-    <ID>PreviewPublic:BunkerMultiEventHomeScreen.kt:@ThemePreviews @Composable fun BunkerMultiEventHomeScreenMultipleAppsPreview</ID>
-    <ID>PreviewPublic:BunkerMultiEventHomeScreen.kt:@ThemePreviews @Composable fun BunkerMultiEventHomeScreenPreview</ID>
-    <ID>PreviewPublic:BunkerPingScreen.kt:@ThemePreviews @Composable fun BunkerPingScreenPreview</ID>
-    <ID>PreviewPublic:BunkerRelayAuthScreen.kt:@ThemePreviews @Composable fun BunkerRelayAuthScreenPreview</ID>
-    <ID>PreviewPublic:CenterCircularProgressIndicator.kt:@ThemePreviews @Composable fun CenterCircularProgressIndicatorPreview</ID>
-    <ID>PreviewPublic:ChooseSignPolicy.kt:@ThemePreviews @Composable fun ChooseSignPolicyPreview</ID>
-    <ID>PreviewPublic:CloseButton.kt:@ThemePreviews @Composable fun CloseButtonPreview</ID>
-    <ID>PreviewPublic:CloseIcon.kt:@ThemePreviews @Composable fun CloseIconPreview</ID>
-    <ID>PreviewPublic:EnabledPermissions.kt:@ThemePreviews @Composable fun EnabledPermissionsPreview</ID>
-    <ID>PreviewPublic:EncryptDecryptData.kt:@ThemePreviews @Composable fun BunkerEncryptDecryptDataPreview</ID>
-    <ID>PreviewPublic:EncryptDecryptData.kt:@ThemePreviews @Composable fun EncryptDecryptDataPreview</ID>
-    <ID>PreviewPublic:EncryptedTagArraySection.kt:@ThemePreviews @Composable fun EncryptedTagArraySectionPreview</ID>
-    <ID>PreviewPublic:EventData.kt:@ThemePreviews @Composable fun BunkerEventDataPreview</ID>
-    <ID>PreviewPublic:EventData.kt:@ThemePreviews @Composable fun EventDataPreview</ID>
-    <ID>PreviewPublic:EventSection.kt:@Preview(showBackground = true) @Composable fun EventSectionExpandedPreview</ID>
-    <ID>PreviewPublic:EventSection.kt:@ThemePreviews @Composable fun EventSectionPreview</ID>
-    <ID>PreviewPublic:IconRow.kt:@ThemePreviews @Composable fun IconRowVectorPreview</ID>
-    <ID>PreviewPublic:IntentMultiEventHomeScreen.kt:@ThemePreviews @Composable fun IntentMultiEventHomeScreenPreview</ID>
-    <ID>PreviewPublic:InvalidIntentScreen.kt:@ThemePreviews @Composable fun InvalidIntentScreenPreview</ID>
-    <ID>PreviewPublic:LoginWithPubKey.kt:@ThemePreviews @Composable fun LoginWithPubKeyPreview</ID>
-    <ID>PreviewPublic:MarkdownText.kt:@ThemePreviews @Composable fun MarkdownTextPreview</ID>
-    <ID>PreviewPublic:MnemonicLoginInput.kt:@ThemePreviews @Composable fun MnemonicLoginInputPreview</ID>
-    <ID>PreviewPublic:NewBunkerFloatingButton.kt:@ThemePreviews @Composable fun NewBunkerFloatingButtonPreview</ID>
-    <ID>PreviewPublic:Nip44v3ApprovalData.kt:@ThemePreviews @Composable fun Nip44v3ApprovalDataPreview</ID>
-    <ID>PreviewPublic:QrCodeDrawer.kt:@ThemePreviews @Composable fun QrCodeDrawerPreview</ID>
-    <ID>PreviewPublic:RandomPinInput.kt:@ThemePreviews @Composable fun RandomPinInputPreview</ID>
-    <ID>PreviewPublic:RawJsonButton.kt:@ThemePreviews @Composable fun RawJsonButtonPreview</ID>
-    <ID>PreviewPublic:RememberMyChoice.kt:@ThemePreviews @Composable fun LabeledBorderBoxPreview</ID>
-    <ID>PreviewPublic:RememberMyChoice.kt:@ThemePreviews @Composable fun RememberMyChoicePreview</ID>
-    <ID>PreviewPublic:RemoteAppIcon.kt:@ThemePreviews @Composable fun RemoteAppIconPreview</ID>
-    <ID>PreviewPublic:SeedWordsPage.kt:@ThemePreviews @Composable fun SeedWordsPagePreview</ID>
-    <ID>PreviewPublic:SignPsbt.kt:@ThemePreviews @Composable fun BunkerSignPsbtPreview</ID>
-    <ID>PreviewPublic:SignPsbt.kt:@ThemePreviews @Composable fun SignPsbtPreview</ID>
-    <ID>PreviewPublic:SignerConnectAppTab.kt:@ThemePreviews @Composable fun SignerConnectAppTabPreview</ID>
-    <ID>PreviewPublic:SigningAs.kt:@ThemePreviews @Composable fun SigningAsPreview</ID>
-    <ID>PreviewPublic:SimpleSearchBar.kt:@ThemePreviews @Composable fun SimpleSearchBarPreview</ID>
-    <ID>PreviewPublic:TagsSection.kt:@ThemePreviews @Composable fun TagsSectionPreview</ID>
-    <ID>PreviewPublic:TextSpinner.kt:@ThemePreviews @Composable fun TextSpinnerPreview</ID>
-    <ID>PreviewPublic:ToogleOption.kt:@ThemePreviews @Composable fun ToggleOptionPreview</ID>
     <ID>RememberMissing:AccountScreen.kt:mutableStateOf( intents.firstNotNullOfOrNull { it.route } ?: if (bunkerRequests.isNotEmpty()) { Route.IncomingRequest.route } else { null } ?: state.route, )</ID>
     <ID>ReturnCount:AmberRelayStat.kt:AmberRelayStats$fun createNotification: Notification?</ID>
     <ID>ReturnCount:ApplicationBackup.kt:ApplicationBackup$suspend fun publishBackup: Boolean</ID>

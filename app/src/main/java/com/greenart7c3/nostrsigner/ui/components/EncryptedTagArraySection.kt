@@ -39,7 +39,7 @@ fun EncryptedTagArraySection(
 
 @ThemePreviews
 @Composable
-fun EncryptedTagArraySectionPreview() {
+private fun EncryptedTagArraySectionPreview() {
     AmberPreview {
         EncryptedTagArraySection(
             modifier = Modifier,

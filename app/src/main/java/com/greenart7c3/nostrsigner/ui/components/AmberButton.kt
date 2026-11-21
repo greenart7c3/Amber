@@ -115,7 +115,7 @@ fun AmberElevatedButton(
 
 @ThemePreviews
 @Composable
-fun AmberButtonPreview() {
+private fun AmberButtonPreview() {
     AmberPreview {
         AmberButton(
             onClick = {},
@@ -126,7 +126,7 @@ fun AmberButtonPreview() {
 
 @ThemePreviews
 @Composable
-fun AmberButtonDisabledPreview() {
+private fun AmberButtonDisabledPreview() {
     AmberPreview {
         AmberButton(
             onClick = {},
@@ -138,7 +138,7 @@ fun AmberButtonDisabledPreview() {
 
 @ThemePreviews
 @Composable
-fun AmberElevatedButtonPreview() {
+private fun AmberElevatedButtonPreview() {
     AmberPreview {
         AmberElevatedButton(
             onClick = {},

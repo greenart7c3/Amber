@@ -181,7 +181,7 @@ fun SeedWordsPage(
 
 @ThemePreviews
 @Composable
-fun SeedWordsPagePreview() {
+private fun SeedWordsPagePreview() {
     AmberPreview {
         SeedWordsPage(
             seedWords = setOf(

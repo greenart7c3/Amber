@@ -54,7 +54,7 @@ fun ToggleOption(
 
 @ThemePreviews
 @Composable
-fun ToggleOptionPreview() {
+private fun ToggleOptionPreview() {
     AmberPreview {
         Row(Modifier.height(32.dp)) {
             ToggleOption(

@@ -263,7 +263,7 @@ fun AddPermissionsSheet(
 
 @ThemePreviews
 @Composable
-fun AddPermissionsSheetPreview() {
+private fun AddPermissionsSheetPreview() {
     AmberPreview {
         AddPermissionsSheet(
             existingPermissions = listOf(

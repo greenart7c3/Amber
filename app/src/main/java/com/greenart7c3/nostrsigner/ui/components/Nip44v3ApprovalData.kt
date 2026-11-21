@@ -201,7 +201,7 @@ fun Nip44v3ContextBox(
 
 @ThemePreviews
 @Composable
-fun Nip44v3ApprovalDataPreview() {
+private fun Nip44v3ApprovalDataPreview() {
     AmberPreview {
         Nip44v3ApprovalData(
             modifier = Modifier

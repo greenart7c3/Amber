@@ -114,7 +114,7 @@ fun EnabledPermissions(
 
 @ThemePreviews
 @Composable
-fun EnabledPermissionsPreview() {
+private fun EnabledPermissionsPreview() {
     AmberPreview {
         EnabledPermissions(
             localPermissions = listOf(

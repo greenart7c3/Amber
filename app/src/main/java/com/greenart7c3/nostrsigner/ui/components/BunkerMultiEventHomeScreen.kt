@@ -544,7 +544,7 @@ private fun previewSignRequest(id: String, content: String) = previewBunkerReque
 
 @ThemePreviews
 @Composable
-fun BunkerMultiEventHomeScreenPreview() {
+private fun BunkerMultiEventHomeScreenPreview() {
     AmberPreview {
         BunkerMultiEventContent(
             batchRequests = listOf(
@@ -580,7 +580,7 @@ fun BunkerMultiEventHomeScreenPreview() {
 
 @ThemePreviews
 @Composable
-fun BunkerMultiEventHomeScreenMultipleAppsPreview() {
+private fun BunkerMultiEventHomeScreenMultipleAppsPreview() {
     AmberPreview {
         BunkerMultiEventContent(
             batchRequests = listOf(

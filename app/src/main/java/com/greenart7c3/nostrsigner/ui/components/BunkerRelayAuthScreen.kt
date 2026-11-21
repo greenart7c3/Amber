@@ -153,7 +153,7 @@ fun BunkerRelayAuthScreen(
 
 @ThemePreviews
 @Composable
-fun BunkerRelayAuthScreenPreview() {
+private fun BunkerRelayAuthScreenPreview() {
     AmberPreview {
         BunkerRelayAuthScreen(
             modifier = Modifier

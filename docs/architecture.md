@@ -50,14 +50,19 @@ interfaces from the CompositionLocals the two activities provide
 
 ### Where the pain is
 
-- Six files over 950 lines: `ui/LoginScreen.kt` 1548, the desktop
+- Six files were over 950 lines (`ui/LoginScreen.kt` 1548, the desktop
   `core/BunkerEngine.kt` 1502, `service/IntentUtils.kt` 1222,
   `service/EventNotificationConsumer.kt` 1087, `LocalPreferences.kt` 1016,
-  `Amber.kt` 982.
+  `Amber.kt` 982). After steps 1–9 none is: the largest are the desktop
+  `ui/SettingsScreen.kt` 948, `ui/actions/AccountBackupScreen.kt` 899 and
+  `service/EventNotificationConsumer.kt` 846; `Amber.kt` is 393.
 - The Android bunker flow (`BunkerRequestUtils` + `EventNotificationConsumer`)
-  and the desktop one (`BunkerEngine`) implement the same permission and
-  response logic twice.
+  and the desktop one (`BunkerEngine`) implemented the same permission and
+  response logic twice; step 1 moved the policy to `:common`, and what is left
+  of the copy is step 11.
 - `ui/` reached Room DAOs directly in 10 files; since step 6 it does not.
+- The detekt baselines held 306 (app) and 78 (desktop) grandfathered findings
+  after step 9, about half of the app's from mechanical Compose rules (step 10).
 
 ## Target layering
 
@@ -427,3 +432,27 @@ passed in as two functions, since they take the `RelayClient` themselves. The bu
 Tor start (bounded attempts, the recovery observer, the wait) is `service/TorStartup`.
 `Amber` is left with wiring, migrations and the Application callbacks, and is under
 detekt's function limit.
+
+### 10. Clear the mechanical Compose findings
+
+About half of the app's `detekt-baseline.xml` is Compose rules whose fix does not
+change what a screen does: `PreviewPublic` (a preview is private), `ModifierMissing`
+and `ModifierWithoutDefault` (a composable that emits UI takes `modifier: Modifier =
+Modifier`), `ComposableParamOrder` and `LambdaParameterEventTrailing` (required
+parameters first, the event lambda last) and `ParameterNaming` (`onXChange`, not
+`onXChanged`). They go one rule (or one screen group) per change, and the baseline is
+regenerated each time so the fixed entries drop out. `LongMethod` and
+`CyclomaticComplexMethod` are not part of this step: splitting a function is a
+refactor of its own.
+
+Done so far: `PreviewPublic` (50 previews made private; detekt's
+`UnusedPrivateFunction` ignores `@Preview` and `@ThemePreviews` functions, which only
+the IDE calls, as `unusedCode` already did). Left: `ModifierMissing`,
+`ModifierWithoutDefault`, `ComposableParamOrder`, `LambdaParameterEventTrailing`,
+`ParameterNaming`.
+
+### 11. Share the rest of the bunker flow
+
+What `EventNotificationConsumer`/`BunkerRequestUtils` and the desktop `BunkerEngine`
+still do twice moves to `:common`, as step 1 did with the policy. Planned after
+step 10, since it changes signing code and needs its own tests on both apps.

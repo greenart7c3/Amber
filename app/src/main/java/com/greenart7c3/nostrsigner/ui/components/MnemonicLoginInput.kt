@@ -235,7 +235,7 @@ private fun WordField(
 
 @ThemePreviews
 @Composable
-fun MnemonicLoginInputPreview() {
+private fun MnemonicLoginInputPreview() {
     AmberPreview {
         MnemonicLoginInput(
             wordCount = 12,

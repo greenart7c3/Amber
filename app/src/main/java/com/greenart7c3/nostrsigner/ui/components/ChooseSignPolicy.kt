@@ -118,7 +118,7 @@ fun ChooseSignPolicy(
 
 @ThemePreviews
 @Composable
-fun ChooseSignPolicyPreview() {
+private fun ChooseSignPolicyPreview() {
     AmberPreview {
         Column(Modifier.padding(8.dp)) {
             ChooseSignPolicy(

@@ -385,7 +385,7 @@ private fun previewSignIntent(id: String, content: String) = previewIntent(
 
 @ThemePreviews
 @Composable
-fun IntentMultiEventHomeScreenPreview() {
+private fun IntentMultiEventHomeScreenPreview() {
     AmberPreview {
         IntentRequestGroups(
             modifier = Modifier

@@ -256,7 +256,7 @@ private fun previewEvent() = Event(
 
 @ThemePreviews
 @Composable
-fun EventDataPreview() {
+private fun EventDataPreview() {
     AmberPreview {
         EventData(
             modifier = Modifier
@@ -275,7 +275,7 @@ fun EventDataPreview() {
 
 @ThemePreviews
 @Composable
-fun BunkerEventDataPreview() {
+private fun BunkerEventDataPreview() {
     AmberPreview {
         BunkerEventData(
             modifier = Modifier

@@ -20,9 +20,10 @@ import org.jetbrains.compose.resources.stringResource
 fun AcceptRejectButtons(
     onAccept: () -> Unit,
     onReject: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     Row(
-        Modifier
+        modifier
             .fillMaxWidth()
             .padding(vertical = 16.dp),
         Arrangement.spacedBy(8.dp),

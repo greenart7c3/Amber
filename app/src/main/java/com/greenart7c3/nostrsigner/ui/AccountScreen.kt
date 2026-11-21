@@ -64,6 +64,7 @@ fun AccountScreen(
     bunkerRequests: ImmutableList<AmberBunkerRequest>,
     navController: NavHostControllerWrapper,
     intentOwner: String,
+    modifier: Modifier = Modifier,
     isExternalRequest: Boolean = false,
     referrer: Uri? = null,
     // The owner tag of this activity's MainViewModel: only its requests show.
@@ -73,7 +74,7 @@ fun AccountScreen(
 
     KeystoreFailureWarning()
 
-    Column {
+    Column(modifier) {
         Crossfade(
             targetState = accountState,
             animationSpec = tween(durationMillis = 100),

@@ -12,10 +12,10 @@ import androidx.compose.ui.unit.sp
 
 /** Small uppercase muted section heading — matches the screenshot mock style. */
 @Composable
-fun SectionLabel(text: String) {
+fun SectionLabel(text: String, modifier: Modifier = Modifier) {
     Text(
         text = text.uppercase(),
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .padding(top = 22.dp, bottom = 8.dp),
         fontSize = 11.sp,

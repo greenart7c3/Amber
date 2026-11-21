@@ -21,9 +21,11 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 fun NewBunkerFloatingButton(
     onClick: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     Column(
         horizontalAlignment = Alignment.End,
+        modifier = modifier,
     ) {
         FloatingActionButton(
             modifier = Modifier

@@ -157,9 +157,10 @@ fun NewNsecBunkerScreen(
                     null,
                     deleteAfterItems,
                     deleteAfterIndex,
-                ) {
-                    deleteAfterIndex = it
-                }
+                    onSelect = {
+                        deleteAfterIndex = it
+                    },
+                )
             }
 
             Row(

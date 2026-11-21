@@ -217,13 +217,14 @@ fun SecurityScreen(
                             description = Res.string.log_retention_description,
                             selectedItems = retentionItems,
                             selectedIndex = RetentionPeriod.entries.indexOf(logRetention),
-                        ) { index ->
-                            val selected = RetentionPeriod.entries[index]
-                            logRetention = selected
-                            appScope.launch {
-                                LocalPreferences.updateLogRetention(context, selected)
-                            }
-                        }
+                            onSelect = { index ->
+                                val selected = RetentionPeriod.entries[index]
+                                logRetention = selected
+                                appScope.launch {
+                                    LocalPreferences.updateLogRetention(context, selected)
+                                }
+                            },
+                        )
                     }
                     Box(Modifier.padding(horizontal = 8.dp, vertical = 4.dp)) {
                         SettingsRow(
@@ -231,13 +232,14 @@ fun SecurityScreen(
                             description = Res.string.history_retention_description,
                             selectedItems = retentionItems,
                             selectedIndex = RetentionPeriod.entries.indexOf(historyRetention),
-                        ) { index ->
-                            val selected = RetentionPeriod.entries[index]
-                            historyRetention = selected
-                            appScope.launch {
-                                LocalPreferences.updateHistoryRetention(context, selected)
-                            }
-                        }
+                            onSelect = { index ->
+                                val selected = RetentionPeriod.entries[index]
+                                historyRetention = selected
+                                appScope.launch {
+                                    LocalPreferences.updateHistoryRetention(context, selected)
+                                }
+                            },
+                        )
                     }
                 }
 
@@ -346,9 +348,10 @@ fun SecurityScreen(
                         Res.string.when_to_ask,
                         biometricItems,
                         biometricsIndex,
-                    ) {
-                        biometricsIndex = it
-                    }
+                        onSelect = {
+                            biometricsIndex = it
+                        },
+                    )
                 }
             }
 

@@ -214,7 +214,7 @@ suspend fun decryptHistoryContent(activity: ActivityEntry, account: Account): St
 }
 
 @Composable
-fun ActivityRow(activity: ActivityEntry, account: Account) {
+fun ActivityRow(activity: ActivityEntry, account: Account, modifier: Modifier = Modifier) {
     val copyToClipboard = rememberCopyToClipboard()
     val context = LocalContext.current
     val displayContent by produceState(initialValue = "", activity.id, activity.content) {
@@ -228,7 +228,7 @@ fun ActivityRow(activity: ActivityEntry, account: Account) {
         }
     }
 
-    Column {
+    Column(modifier) {
         Row(
             modifier = Modifier
                 .fillMaxSize()
@@ -350,6 +350,7 @@ fun ApplicationName(
     key: String,
     accepted: Boolean,
     account: Account,
+    modifier: Modifier = Modifier,
     viewModel: ActivityViewModel = viewModel(factory = ActivityViewModel.factory(LocalAccountRepository.current)),
 ) {
     var name by remember { mutableStateOf("") }
@@ -369,7 +370,7 @@ fun ApplicationName(
     }
 
     Text(
-        modifier = Modifier.padding(top = 16.dp),
+        modifier = modifier.padding(top = 16.dp),
         text = name.ifBlank { key.toShortenHex() },
         maxLines = 1,
         overflow = TextOverflow.Ellipsis,

@@ -36,6 +36,7 @@ import org.jetbrains.compose.resources.stringResource
 fun ChooseSignPolicy(
     selectedOption: Int,
     onSelect: (Int) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val radioOptions = listOf(
         TitleExplainer(
@@ -51,65 +52,67 @@ fun ChooseSignPolicy(
             explainer = stringResource(Res.string.sign_policy_fully_explainer),
         ),
     )
-    radioOptions.forEachIndexed { index, option ->
-        val selected = selectedOption == index
-        Row(
-            Modifier
-                .fillMaxWidth()
-                .padding(vertical = 2.dp)
-                .selectable(
-                    selected = selected,
-                    onClick = {
-                        onSelect(index)
-                    },
-                )
-                .background(
-                    color = if (selected) {
-                        MaterialTheme.colorScheme.primary.copy(alpha = 0.18f)
-                    } else {
-                        Color.Transparent
-                    },
-                    shape = RoundedCornerShape(10.dp),
-                )
-                .border(
-                    width = 1.dp,
-                    color = if (selected) {
-                        MaterialTheme.colorScheme.primary.copy(alpha = 0.45f)
-                    } else {
-                        Color.Transparent
-                    },
-                    shape = RoundedCornerShape(10.dp),
-                )
-                .padding(14.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            if (selected) {
-                Icon(
-                    Icons.Default.Check,
-                    contentDescription = null,
-                    tint = Color(0xFF1D8802),
-                )
-            } else {
-                RadioButton(
-                    selected = false,
-                    onClick = {
-                        onSelect(index)
-                    },
-                )
-            }
-            Column(
-                verticalArrangement = Arrangement.spacedBy(4.dp),
-            ) {
-                Text(
-                    text = option.title,
-                    modifier = Modifier.padding(start = 16.dp),
-                    fontWeight = FontWeight.Medium,
-                )
-                option.explainer?.let {
-                    Text(
-                        text = it,
-                        modifier = Modifier.padding(start = 16.dp),
+    Column(modifier) {
+        radioOptions.forEachIndexed { index, option ->
+            val selected = selectedOption == index
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 2.dp)
+                    .selectable(
+                        selected = selected,
+                        onClick = {
+                            onSelect(index)
+                        },
                     )
+                    .background(
+                        color = if (selected) {
+                            MaterialTheme.colorScheme.primary.copy(alpha = 0.18f)
+                        } else {
+                            Color.Transparent
+                        },
+                        shape = RoundedCornerShape(10.dp),
+                    )
+                    .border(
+                        width = 1.dp,
+                        color = if (selected) {
+                            MaterialTheme.colorScheme.primary.copy(alpha = 0.45f)
+                        } else {
+                            Color.Transparent
+                        },
+                        shape = RoundedCornerShape(10.dp),
+                    )
+                    .padding(14.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                if (selected) {
+                    Icon(
+                        Icons.Default.Check,
+                        contentDescription = null,
+                        tint = Color(0xFF1D8802),
+                    )
+                } else {
+                    RadioButton(
+                        selected = false,
+                        onClick = {
+                            onSelect(index)
+                        },
+                    )
+                }
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                ) {
+                    Text(
+                        text = option.title,
+                        modifier = Modifier.padding(start = 16.dp),
+                        fontWeight = FontWeight.Medium,
+                    )
+                    option.explainer?.let {
+                        Text(
+                            text = it,
+                            modifier = Modifier.padding(start = 16.dp),
+                        )
+                    }
                 }
             }
         }

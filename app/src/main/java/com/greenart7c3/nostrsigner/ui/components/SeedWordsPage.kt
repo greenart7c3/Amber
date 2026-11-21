@@ -44,6 +44,7 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 fun SeedWordsPage(
     seedWords: Set<String>,
+    modifier: Modifier = Modifier,
     showNextButton: Boolean = true,
     onNextPage: () -> Unit = {},
 ) {
@@ -52,7 +53,7 @@ fun SeedWordsPage(
     val scope = rememberCoroutineScope()
     val scrollState = rememberScrollState()
 
-    Scaffold { innerPadding ->
+    Scaffold(modifier = modifier) { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()

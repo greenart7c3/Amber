@@ -456,7 +456,10 @@ entries, and 8 `LambdaParameterEventTrailing` ones the move fixed too.
 The remaining `ComposableParamOrder` (12) and `LambdaParameterEventTrailing` (7) go
 the same way: required parameters (an event callback among them) move ahead of the
 optional ones, and callers that passed the callback as a trailing lambda name it
-(`onDismiss = { ... }`, `onChange = { ... }`). Left: `ModifierMissing`.
+(`onDismiss = { ... }`, `onChange = { ... }`).
+`ModifierMissing` in the app (35): each composable takes `modifier: Modifier = Modifier`
+and hands it to its root layout (`ChooseSignPolicy`, which emitted one row per option,
+gets a `Column` around them). Left: `ModifierMissing` in the desktop app (14).
 
 ### 11. Share the rest of the bunker flow
 

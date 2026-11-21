@@ -165,9 +165,10 @@ fun RequestGroupOptions(
     onRelayAuthScopeChange: (RelayAuthScope) -> Unit,
     decryptTypeScope: DecryptTypeScope,
     onDecryptTypeScopeChange: (DecryptTypeScope) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     Column(
-        Modifier
+        modifier
             .fillMaxWidth()
             .padding(horizontal = 4.dp, vertical = 4.dp),
     ) {
@@ -259,13 +260,14 @@ fun RequestGroupHeader(
     expanded: Boolean,
     onApproveChange: (Boolean) -> Unit,
     onExpandToggle: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val rotation by animateFloatAsState(
         targetValue = if (expanded) 180f else 0f,
         label = "group header chevron rotation",
     )
     Column(
-        Modifier.fillMaxWidth(),
+        modifier.fillMaxWidth(),
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,

@@ -8,6 +8,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Modifier
 import com.greenart7c3.nostrsigner.AccountInfo
 import com.greenart7c3.nostrsigner.commonsui.Res
 import com.greenart7c3.nostrsigner.commonsui.active_account
@@ -18,6 +19,7 @@ import org.jetbrains.compose.resources.stringResource
 fun ActiveMarker(
     acc: AccountInfo,
     account: Account,
+    modifier: Modifier = Modifier,
 ) {
     val isCurrentUser by remember(account) {
         derivedStateOf {
@@ -30,6 +32,7 @@ fun ActiveMarker(
             imageVector = Icons.Default.RadioButtonChecked,
             contentDescription = stringResource(Res.string.active_account),
             tint = MaterialTheme.colorScheme.primary,
+            modifier = modifier,
         )
     }
 }

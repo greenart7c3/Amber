@@ -26,12 +26,14 @@ import org.jetbrains.compose.resources.stringResource
 fun AmberFloatingButton(
     navController: NavHostControllerWrapper,
     navBackStackEntry: NavBackStackEntryWrapper,
+    modifier: Modifier = Modifier,
 ) {
     if (navBackStackEntry.navBackStackEntry?.destination?.route == Route.Applications.route && !BuildFlavorChecker.isOfflineFlavor()) {
         NewBunkerFloatingButton(
             onClick = {
                 navController.navController.navigate(Route.NewApplication.route)
             },
+            modifier = modifier,
         )
     } else if (navBackStackEntry.navBackStackEntry?.destination?.route == Route.ActiveRelays.route) {
         Column(

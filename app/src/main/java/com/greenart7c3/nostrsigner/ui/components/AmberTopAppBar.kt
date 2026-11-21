@@ -84,6 +84,7 @@ fun AmberTopAppBar(
     intents: ImmutableList<IntentData>,
     bunkerRequests: ImmutableList<AmberBunkerRequest>,
     packageName: String?,
+    modifier: Modifier = Modifier,
     viewModel: TopAppBarViewModel = viewModel(factory = TopAppBarViewModel.factory(LocalAccountRepository.current)),
 ) {
     val settingsStore = LocalSettingsStore.current
@@ -251,6 +252,7 @@ fun AmberTopAppBar(
 
                     Text(title)
                 },
+                modifier = modifier,
             )
         }
     }

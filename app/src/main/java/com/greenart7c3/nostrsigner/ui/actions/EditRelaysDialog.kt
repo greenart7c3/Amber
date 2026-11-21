@@ -578,6 +578,7 @@ fun RelayLogScreen(
     paddingValues: PaddingValues,
     account: Account,
     url: String,
+    modifier: Modifier = Modifier,
     viewModel: LogsViewModel = viewModel(factory = LogsViewModel.factory(LocalAccountRepository.current)),
 ) {
     val context = LocalContext.current
@@ -585,7 +586,7 @@ fun RelayLogScreen(
     val lazyPagingItems = logs.collectAsLazyPagingItems()
 
     LazyColumn(
-        Modifier.fillMaxSize(),
+        modifier.fillMaxSize(),
         contentPadding = paddingValues,
     ) {
         items(lazyPagingItems.itemCount) { index ->

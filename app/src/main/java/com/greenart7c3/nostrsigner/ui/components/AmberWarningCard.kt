@@ -24,9 +24,10 @@ fun AmberWarningCard(
     message: String,
     buttonText: String,
     onClick: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     Box(
-        Modifier
+        modifier
             .fillMaxWidth()
             .background(
                 color = MaterialTheme.colorScheme.primary,

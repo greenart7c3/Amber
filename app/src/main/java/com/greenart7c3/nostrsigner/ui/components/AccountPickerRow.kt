@@ -63,6 +63,7 @@ fun AccountPickerRow(
     accounts: List<Account>,
     selectedAccountIndex: Int,
     onSelect: (Int) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     var sheetOpen by remember { mutableStateOf(false) }
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -70,7 +71,7 @@ fun AccountPickerRow(
     val selected = accounts.getOrNull(selectedAccountIndex) ?: accounts.first()
 
     Row(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .border(
                 width = 1.5.dp,

@@ -36,12 +36,13 @@ fun EventSection(
     label: String,
     displayValue: String,
     onCopy: () -> Unit,
+    modifier: Modifier = Modifier,
     padding: Dp = 16.dp,
     showFullContent: Boolean = false,
 ) {
     var expanded by remember { mutableStateOf(showFullContent) }
     Row(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .padding(padding),
         horizontalArrangement = Arrangement.SpaceBetween,

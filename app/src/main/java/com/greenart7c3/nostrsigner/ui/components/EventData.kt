@@ -213,9 +213,9 @@ fun BunkerEventData(
 }
 
 @Composable
-fun ContactListDetail(title: String, text: String) {
+fun ContactListDetail(title: String, text: String, modifier: Modifier = Modifier) {
     Row(
-        modifier = Modifier.padding(horizontal = 6.dp),
+        modifier = modifier.padding(horizontal = 6.dp),
     ) {
         Text(
             title,

@@ -72,6 +72,10 @@ class EventNotificationConsumerTest {
         mockkStatic("com.vitorpamplona.quartz.nip40Expiration.EventExtKt")
 
         bunkerEventDao = mockk(relaxed = true)
+        // Room returns the new rowId on success and null only on a unique-index
+        // conflict; production reads null as "already claimed by another
+        // delivery", and a relaxed mock would answer null for Long?.
+        coEvery { bunkerEventDao.insert(any()) } returns 1L
         dao = mockk(relaxed = true)
         val database = mockk<AppDatabase>(relaxed = true)
         every { database.bunkerEventDao() } returns bunkerEventDao

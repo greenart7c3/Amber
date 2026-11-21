@@ -45,7 +45,9 @@ fun DisplayCrashMessages(
             // The startup detection may still be running: finish it first, or a dismiss
             // would clear records written after this read, unseen.
             ExitReasons.detect(appContext)
-            val exits = ExitReasons.pending(appContext)
+            // The exception report already starts with the version and device table.
+            val exits = ExitReasons.pending(appContext)?.takeIf { it.isNotBlank() }
+                ?.let { if (exceptions.isNullOrBlank()) ReportAssembler().buildExitReport(it) else it }
             val stack = listOfNotNull(exceptions, exits)
                 .filter { it.isNotBlank() }
                 .joinToString("\n\n")

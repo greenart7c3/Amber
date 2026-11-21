@@ -27,7 +27,20 @@ import com.greenart7c3.nostrsigner.common.CrashReports
 
 class ReportAssembler {
     fun buildReport(e: Throwable): String = buildString {
-        append(e.javaClass.simpleName)
+        appendHeader(e.javaClass.simpleName)
+        appendTrace(e)
+        appendMemory()
+    }
+
+    /** Report for exit records (ANR, low-memory kill, native crash), which carry no exception. */
+    fun buildExitReport(exits: String): String = buildString {
+        appendHeader("Abnormal exit")
+        appendLine(exits)
+    }
+
+    /** Title with the app version and flavor, then the device table. */
+    private fun StringBuilder.appendHeader(title: String) {
+        append(title)
         append(": ")
         appendLine(BuildConfig.VERSION_NAME + "-" + BuildConfig.FLAVOR.uppercase())
         appendLine()
@@ -72,7 +85,9 @@ class ReportAssembler {
         append(Build.USER)
         appendLine(" |")
         appendLine()
+    }
 
+    private fun StringBuilder.appendTrace(e: Throwable) {
         // Defense-in-depth (GHSA-8844-q5vh-9j8f, L3): exception messages and
         // stack traces can embed attacker-controlled request data (parser/
         // crypto exceptions quoting bad input). Redact Nostr key material
@@ -95,8 +110,6 @@ class ReportAssembler {
             }
         }
         appendLine("```")
-
-        appendMemory()
     }
 
     /**

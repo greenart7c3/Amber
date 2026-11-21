@@ -67,4 +67,13 @@ class ReportAssemblerTest {
         assertTrue(report.contains("| Thread | ${Thread.currentThread().name} |"))
         assertTrue(report.contains("| Java heap | max="))
     }
+
+    @Test
+    fun `exit report carries the version and device table`() {
+        val report = ReportAssembler().buildExitReport("Previous exit: ANR at 2026-11-21 10:00:00")
+
+        assertTrue(report.startsWith("Abnormal exit: "))
+        assertTrue(report.contains("| SDK Int |"))
+        assertTrue(report.contains("Previous exit: ANR"))
+    }
 }

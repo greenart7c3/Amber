@@ -49,13 +49,14 @@ fun LanguageScreen(
                     Res.string.language_description,
                     languageList,
                     languageIndex,
-                ) {
-                    appScope.launch {
-                        settingsStore.settings.language = languageEntries[languageList[it].title]
-                        LocalPreferences.saveSettingsToEncryptedStorage(context, settingsStore.settings)
-                        AppLanguage.apply(settingsStore.settings.language)
-                    }
-                }
+                    onSelect = {
+                        appScope.launch {
+                            settingsStore.settings.language = languageEntries[languageList[it].title]
+                            LocalPreferences.saveSettingsToEncryptedStorage(context, settingsStore.settings)
+                            AppLanguage.apply(settingsStore.settings.language)
+                        }
+                    },
+                )
             }
         }
     }

@@ -112,6 +112,7 @@ fun RequestNotificationPopup(
     onReject: () -> Unit,
     onOpen: () -> Unit,
     onDismiss: () -> Unit,
+    modifier: Modifier = Modifier,
     hover: MutableInteractionSource = remember { MutableInteractionSource() },
 ) {
     val cardSize = if (isMac) DpSize(344.dp, 86.dp) else DpSize(364.dp, 160.dp)
@@ -147,7 +148,7 @@ fun RequestNotificationPopup(
     val content: @Composable (Dp) -> Unit = { margin ->
         val dark = isSystemInDarkTheme()
         val appear = remember { MutableTransitionState(false).apply { targetState = true } }
-        Box(Modifier.fillMaxSize().padding(margin)) {
+        Box(modifier.fillMaxSize().padding(margin)) {
             AnimatedVisibility(
                 visibleState = appear,
                 enter = fadeIn() + slideInHorizontally { it / 3 },

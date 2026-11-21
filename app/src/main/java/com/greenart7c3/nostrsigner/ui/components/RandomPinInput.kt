@@ -44,8 +44,9 @@ import com.greenart7c3.nostrsigner.ui.theme.ThemePreviews
 
 @Composable
 fun RandomPinInput(
-    text: String? = null,
     onPinEnter: (String) -> Unit,
+    modifier: Modifier = Modifier,
+    text: String? = null,
 ) {
     val randomNumbers = remember { (0..9).shuffled() }
     var selectedPin by remember { mutableStateOf("") }
@@ -80,7 +81,7 @@ fun RandomPinInput(
     }
 
     Column(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,

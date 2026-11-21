@@ -167,7 +167,7 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
-fun SettingsScreen(account: DesktopAccount) {
+fun SettingsScreen(account: DesktopAccount, modifier: Modifier = Modifier) {
     val scope = rememberCoroutineScope()
     val settings by SettingsStore.settings.collectAsState()
     val accounts by AccountsStore.accounts.collectAsState()
@@ -179,7 +179,7 @@ fun SettingsScreen(account: DesktopAccount) {
     var name by remember(accountName) { mutableStateOf(accountName) }
 
     val scrollState = rememberScrollState()
-    ScrollbarBox(rememberScrollbarAdapter(scrollState), Modifier.fillMaxSize()) {
+    ScrollbarBox(rememberScrollbarAdapter(scrollState), modifier.fillMaxSize()) {
         Column(Modifier.fillMaxSize().verticalScroll(scrollState)) {
             SettingsSection(stringResource(Res.string.account)) {
                 Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {

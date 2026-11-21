@@ -6,6 +6,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.greenart7c3.nostrsigner.data.SettingsStore
 import com.greenart7c3.nostrsigner.models.Account
@@ -38,7 +39,7 @@ annotation class ThemePreviews
  * an [com.greenart7c3.nostrsigner.models.Account]'s keys during composition.
  */
 @Composable
-fun AmberPreview(content: @Composable () -> Unit) {
+fun AmberPreview(modifier: Modifier = Modifier, content: @Composable () -> Unit) {
     // Settings live in memory, so components that read them render; the databases
     // and relays stay unavailable.
     val settingsStore = remember {
@@ -49,7 +50,7 @@ fun AmberPreview(content: @Composable () -> Unit) {
     }
     CompositionLocalProvider(LocalSettingsStore provides settingsStore) {
         NostrSignerTheme {
-            Surface(color = MaterialTheme.colorScheme.background) {
+            Surface(modifier = modifier, color = MaterialTheme.colorScheme.background) {
                 content()
             }
         }

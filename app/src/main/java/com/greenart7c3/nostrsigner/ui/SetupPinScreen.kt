@@ -24,9 +24,11 @@ fun SetupPinScreen(
     Column(
         modifier,
     ) {
-        RandomPinInput { pin ->
-            navController.navigate("${Route.ConfirmPin.route.split("/")[0]}/$pin")
-        }
+        RandomPinInput(
+            onPinEnter = { pin ->
+                navController.navigate("${Route.ConfirmPin.route.split("/")[0]}/$pin")
+            },
+        )
     }
 }
 

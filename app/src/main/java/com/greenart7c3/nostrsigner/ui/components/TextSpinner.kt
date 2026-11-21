@@ -136,6 +136,7 @@ fun SpinnerSelectionDialog(
     options: ImmutableList<TitleExplainer>,
     onDismiss: () -> Unit,
     onSelect: (Int) -> Unit,
+    modifier: Modifier = Modifier,
     title: String? = null,
 ) {
     SpinnerSelectionDialog(
@@ -143,6 +144,7 @@ fun SpinnerSelectionDialog(
         options = options,
         onSelect = onSelect,
         onDismiss = onDismiss,
+        modifier = modifier,
     ) { item ->
         Text(text = item.title, color = MaterialTheme.colorScheme.onSurface)
         item.explainer?.let {
@@ -157,6 +159,7 @@ fun <T> SpinnerSelectionDialog(
     options: ImmutableList<T>,
     onSelect: (Int) -> Unit,
     onDismiss: () -> Unit,
+    modifier: Modifier = Modifier,
     title: String? = null,
     onRenderItem: @Composable (T) -> Unit,
 ) {
@@ -165,7 +168,7 @@ fun <T> SpinnerSelectionDialog(
         properties = DialogProperties(usePlatformDefaultWidth = false),
     ) {
         Surface(
-            modifier = Modifier
+            modifier = modifier
                 .fillMaxWidth()
                 .padding(horizontal = 20.dp),
             color = MaterialTheme.colorScheme.background,

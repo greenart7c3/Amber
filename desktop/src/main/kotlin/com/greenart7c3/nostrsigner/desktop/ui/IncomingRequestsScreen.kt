@@ -97,11 +97,11 @@ import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
-fun IncomingRequestsScreen() {
+fun IncomingRequestsScreen(modifier: Modifier = Modifier) {
     val pending by AmberDesktop.engine.pending.collectAsState()
 
     if (pending.isEmpty()) {
-        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(stringResource(Res.string.d_no_requests_title), style = MaterialTheme.typography.titleMedium)
                 Spacer(Modifier.height(8.dp))
@@ -249,7 +249,7 @@ private fun BatchGroupCard(
             if (first.hasScopeChoice) {
                 ScopeChips(first, scopeChoices[first.queueKey] ?: first.defaultScope) { UiState.setGroupScope(group.requests, it) }
             }
-            RememberTypeSelector(rememberChoices[first.queueKey] ?: RememberType.NEVER) { UiState.setGroupRemember(group.requests, it) }
+            RememberTypeSelector(rememberChoices[first.queueKey] ?: RememberType.NEVER, onValueChange = { UiState.setGroupRemember(group.requests, it) })
             if (expanded) {
                 group.requests.forEach { req ->
                     BatchRequestRow(
@@ -469,9 +469,9 @@ private fun RequestCard(
                 // under the manual policy) and when to delete the connection.
                 Spacer(Modifier.height(8.dp))
                 Text(stringResource(Res.string.permissions), style = MaterialTheme.typography.titleSmall)
-                SignPolicySelector(connectChoice.signPolicy) {
+                SignPolicySelector(connectChoice.signPolicy, onSelect = {
                     UiState.setConnectChoice(req.queueKey, connectChoice.copy(signPolicy = it))
-                }
+                })
                 if (connectChoice.signPolicy == 1 && connectChoice.granted.isNotEmpty()) {
                     Column(Modifier.padding(start = 24.dp)) {
                         connectChoice.granted.forEachIndexed { index, perm ->
@@ -493,9 +493,9 @@ private fun RequestCard(
                     }
                 }
                 Spacer(Modifier.height(8.dp))
-                DeleteAfterSelector(connectChoice.deleteAfter) {
+                DeleteAfterSelector(connectChoice.deleteAfter, onSelect = {
                     UiState.setConnectChoice(req.queueKey, connectChoice.copy(deleteAfter = it))
-                }
+                })
             }
 
             Spacer(Modifier.height(12.dp))
@@ -521,7 +521,7 @@ private fun RequestCard(
                 Spacer(Modifier.height(4.dp))
             }
             if (req.type != SignerType.CONNECT) {
-                RememberTypeSelector(rememberType) { UiState.setRememberChoice(req.queueKey, it) }
+                RememberTypeSelector(rememberType, onValueChange = { UiState.setRememberChoice(req.queueKey, it) })
                 Spacer(Modifier.height(8.dp))
             }
 

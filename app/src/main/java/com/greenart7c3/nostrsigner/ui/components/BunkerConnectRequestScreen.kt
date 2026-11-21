@@ -101,6 +101,7 @@ fun BunkerConnectRequestScreen(
     onAccept: (List<Permission>?, Int, Boolean?, RememberType, Long, Account) -> Unit,
     onReject: (RememberType) -> Unit,
     // The saved name of the connection a bunker:// secret belongs to, in the chosen account.
+    modifier: Modifier = Modifier,
     loadConnectionName: suspend (npub: String, secret: String) -> String? = { _, _ -> null },
 ) {
     val settingsStore = LocalSettingsStore.current
@@ -185,7 +186,7 @@ fun BunkerConnectRequestScreen(
     val scrollState = rememberScrollState()
 
     Scaffold(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .padding(scaffoldPadding),
         bottomBar = {
@@ -449,9 +450,10 @@ fun BunkerConnectRequestScreen(
                             null,
                             deleteAfterItems,
                             deleteAfterIndex,
-                        ) {
-                            deleteAfterIndex = it
-                        }
+                            onSelect = {
+                                deleteAfterIndex = it
+                            },
+                        )
                     }
                 }
             }

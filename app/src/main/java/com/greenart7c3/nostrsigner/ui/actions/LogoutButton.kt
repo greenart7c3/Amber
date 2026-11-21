@@ -10,6 +10,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
 import com.greenart7c3.nostrsigner.AccountInfo
 import com.greenart7c3.nostrsigner.commonsui.Res
 import com.greenart7c3.nostrsigner.commonsui.logout
@@ -19,6 +20,7 @@ import org.jetbrains.compose.resources.stringResource
 fun LogoutButton(
     acc: AccountInfo,
     onLogOff: (npub: String) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     var logoutDialog by remember { mutableStateOf(false) }
     if (logoutDialog) {
@@ -36,6 +38,7 @@ fun LogoutButton(
 
     IconButton(
         onClick = { logoutDialog = true },
+        modifier = modifier,
     ) {
         Icon(
             imageVector = Icons.AutoMirrored.Default.Logout,

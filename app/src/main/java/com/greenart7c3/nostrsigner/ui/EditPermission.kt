@@ -287,6 +287,7 @@ fun onSetPermission(optionIndex: Int, rememberType: RememberType, permission: Pe
 fun PermissionRow(
     permission: PermissionGrant,
     onToggle: (PermissionGrant) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val message = remember(permission.type, permission.kind, permission.acceptable, permission.relay) {
         val localPermission = Permission(
@@ -321,7 +322,7 @@ fun PermissionRow(
     }
 
     Column(
-        modifier = Modifier
+        modifier = modifier
             .padding(4.dp)
             .fillMaxWidth()
             .border(

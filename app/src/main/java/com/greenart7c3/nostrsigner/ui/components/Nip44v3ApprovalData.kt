@@ -172,10 +172,11 @@ fun Nip44v3ApprovalData(
 fun Nip44v3ContextBox(
     kind: Int?,
     scope: String,
+    modifier: Modifier = Modifier,
 ) {
     LabeledBorderBox(
         label = stringResource(Res.string.nip44_v3_context),
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
     ) {
         Column {
             val kindLabel = if (kind != null) {

@@ -35,6 +35,7 @@ fun TagsSection(
     label: String,
     tags: Array<Array<String>>,
     onCopy: () -> Unit,
+    modifier: Modifier = Modifier,
     horizontalPadding: Int = 16,
     verticalPadding: Int = 12,
     showFullContent: Boolean = false,
@@ -44,7 +45,7 @@ fun TagsSection(
     val moreCount = if (expanded) 0 else tags.size - 10
 
     Row(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = horizontalPadding.dp, vertical = verticalPadding.dp),
         horizontalArrangement = Arrangement.SpaceBetween,

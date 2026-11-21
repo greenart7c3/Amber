@@ -34,9 +34,11 @@ fun AmberNavigationBar(
     onClick: (Route) -> Unit,
     profileUrl: String?,
     account: Account,
+    modifier: Modifier = Modifier,
 ) {
     NavigationBar(
         tonalElevation = 0.dp,
+        modifier = modifier,
     ) {
         Row(
             Modifier

@@ -15,11 +15,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 @Composable
-fun LocalAppIcon(packageName: String?) {
+fun LocalAppIcon(packageName: String?, modifier: Modifier = Modifier) {
     packageName?.let {
         val appDisplayInfo = rememberAppDisplayInfo(packageName)
         Column(
-            modifier = Modifier.padding(vertical = 16.dp),
+            modifier = modifier.padding(vertical = 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {

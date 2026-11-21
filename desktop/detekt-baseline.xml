@@ -39,20 +39,6 @@
     <ID>LongMethod:SettingsScreen.kt:@Composable private fun ChangePassphraseDialog</ID>
     <ID>LongMethod:SettingsScreen.kt:@Composable private fun TorSection</ID>
     <ID>LongMethod:UiState.kt:fun handleShortcut: Boolean</ID>
-    <ID>ModifierMissing:App.kt:@Composable fun App</ID>
-    <ID>ModifierMissing:ApplicationDetailScreen.kt:@Composable fun ApplicationDetailScreen</ID>
-    <ID>ModifierMissing:ApplicationsScreen.kt:@Composable fun ApplicationsScreen</ID>
-    <ID>ModifierMissing:Components.kt:@Composable fun AmberTabRow</ID>
-    <ID>ModifierMissing:Components.kt:@Composable fun DeleteAfterSelector</ID>
-    <ID>ModifierMissing:Components.kt:@Composable fun RememberTypeSelector</ID>
-    <ID>ModifierMissing:Components.kt:@Composable fun SignPolicySelector</ID>
-    <ID>ModifierMissing:IncomingRequestsScreen.kt:@Composable fun IncomingRequestsScreen</ID>
-    <ID>ModifierMissing:LoginScreen.kt:@Composable fun LoginScreen</ID>
-    <ID>ModifierMissing:RelaysScreen.kt:@Composable fun RelaysScreen</ID>
-    <ID>ModifierMissing:RequestNotificationPopup.kt:@Composable fun RequestNotificationPopup</ID>
-    <ID>ModifierMissing:SettingsScreen.kt:@Composable fun SettingsScreen</ID>
-    <ID>ModifierMissing:UnlockScreen.kt:@Composable fun PassphraseSetupScreen</ID>
-    <ID>ModifierMissing:UnlockScreen.kt:@Composable fun UnlockScreen</ID>
     <ID>MultipleEmitters:App.kt:@Composable fun App</ID>
     <ID>MultipleEmitters:LoginScreen.kt:@Composable private fun ImportKeyPane</ID>
     <ID>MultipleEmitters:LoginScreen.kt:@Composable private fun NewKeyPane</ID>

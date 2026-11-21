@@ -45,6 +45,7 @@ import org.jetbrains.compose.resources.stringResource
 fun LogsScreen(
     paddingValues: PaddingValues,
     account: Account,
+    modifier: Modifier = Modifier,
     viewModel: LogsViewModel = viewModel(factory = LogsViewModel.factory(LocalAccountRepository.current)),
 ) {
     val scope = rememberCoroutineScope()
@@ -55,7 +56,7 @@ fun LogsScreen(
 
     LazyColumn(
         state = state,
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize(),
         contentPadding = paddingValues,
     ) {

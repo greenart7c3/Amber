@@ -472,13 +472,14 @@ fun SettingsRow(
     description: StringResource?,
     selectedItems: ImmutableList<TitleExplainer>,
     selectedIndex: Int,
+    onSelect: (Int) -> Unit,
+    modifier: Modifier = Modifier,
     maxLines: Int = 1,
     overflow: TextOverflow = TextOverflow.Ellipsis,
-    onSelect: (Int) -> Unit,
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
     ) {
         Column(
             modifier = Modifier.weight(2.0f),

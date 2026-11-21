@@ -22,7 +22,6 @@ package com.greenart7c3.nostrsigner.service
 
 import android.app.NotificationManager
 import android.content.Context
-import androidx.collection.LruCache
 import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
 import com.greenart7c3.nostrsigner.AccountStorage
@@ -106,7 +105,6 @@ class EventNotificationConsumer(
     private val settingsStore: SettingsStore,
     private val accountRepository: AccountRepository,
     private val scope: CoroutineScope,
-    private val notificationCache: LruCache<String, Long>,
     private val bunkerResponder: BunkerResponder,
     // Refreshes the NIP-46 subscription after a connection is added or removed.
     private val onConnectionsChanged: suspend () -> Unit,
@@ -163,7 +161,14 @@ class EventNotificationConsumer(
         // With requireUnlockedDevice on, nothing may use the account key while
         // the device is locked, and that includes opening the request.
         if (!isAccountKeyLocked(acc)) {
-            bunkerEventDao.insert(BunkerEventEntity(0, event.id, event.createdAt))
+            // The unique index makes this insert an atomic claim on the event
+            // id: when another relay's delivery won the race, this one must
+            // neither process nor answer the request again.
+            val claimed = bunkerEventDao.insert(BunkerEventEntity(0, event.id, event.createdAt)) != null
+            if (!claimed) {
+                saveLog("Event ${event.id} was already claimed by another delivery", relay.url, acc.npub)
+                return
+            }
             notify(event, acc, relay, connectionPrivKey)
         } else if (connectionPrivKey.isEmpty()) {
             // Legacy client: the request and any reply are encrypted with the
@@ -171,7 +176,8 @@ class EventNotificationConsumer(
             // unrecorded so a re-delivery after unlock is processed.
             saveLog("Device locked: request ${event.id} from a legacy client can't be opened until unlock", relay.url, acc.npub)
         } else {
-            bunkerEventDao.insert(BunkerEventEntity(0, event.id, event.createdAt))
+            val claimed = bunkerEventDao.insert(BunkerEventEntity(0, event.id, event.createdAt)) != null
+            if (!claimed) return
             replyDeviceLocked(event, acc, relay, connectionPrivKey)
         }
     }
@@ -272,9 +278,8 @@ class EventNotificationConsumer(
     ) {
         if (event.content.isEmpty()) return
         // The same event usually arrives from several relays; answer it once,
-        // like notify() does.
-        if (notificationCache[event.id] != null) return
-        notificationCache.put(event.id, event.createdAt)
+        // like notify() does. Check-then-put under one lock so concurrent
+        // deliveries cannot both pass the check.
         scope.launch {
             try {
                 val connSigner = NostrSignerInternal(KeyPair(privKey = connectionPrivKey.hexToByteArray()))
@@ -353,9 +358,6 @@ class EventNotificationConsumer(
         encryptionType: EncryptionType,
         connectionPrivKey: String = "",
     ) {
-        if (notificationCache[event.id] != null) return
-        notificationCache.put(event.id, event.createdAt)
-
         val bunkerRequest = JacksonMapper.mapper.readValue(requestStr, BunkerRequest::class.java)
 
         // Never persist the decrypted request body — it can contain plaintext

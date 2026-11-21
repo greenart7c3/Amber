@@ -282,10 +282,6 @@ class EventNotificationConsumer(
         // The same event usually arrives from several relays; answer it once,
         // like notify() does. Check-then-put under one lock so concurrent
         // deliveries cannot both pass the check.
-        synchronized(notificationCache) {
-            if (notificationCache[event.id] != null) return
-            notificationCache.put(event.id, event.createdAt)
-        }
         scope.launch {
             try {
                 val connSigner = NostrSignerInternal(KeyPair(privKey = connectionPrivKey.hexToByteArray()))
@@ -364,11 +360,6 @@ class EventNotificationConsumer(
         encryptionType: EncryptionType,
         connectionPrivKey: String = "",
     ) {
-        synchronized(notificationCache) {
-            if (notificationCache[event.id] != null) return
-            notificationCache.put(event.id, event.createdAt)
-        }
-
         val bunkerRequest = JacksonMapper.mapper.readValue(requestStr, BunkerRequest::class.java)
 
         // Never persist the decrypted request body — it can contain plaintext

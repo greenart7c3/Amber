@@ -63,10 +63,10 @@ fun AccountScreen(
     appName: String?,
     bunkerRequests: ImmutableList<AmberBunkerRequest>,
     navController: NavHostControllerWrapper,
+    intentOwner: String,
     isExternalRequest: Boolean = false,
     referrer: Uri? = null,
     // The owner tag of this activity's MainViewModel: only its requests show.
-    intentOwner: String,
 ) {
     val accountState by accountStateViewModel.accountContent.collectAsState()
     val context = LocalContext.current
@@ -157,9 +157,8 @@ private fun KeystoreFailureWarning() {
         InformationDialog(
             title = stringResource(Res.string.keystore_error_title),
             textContent = stringResource(Res.string.keystore_error_message, accountList),
-        ) {
-            dismissed = true
-        }
+            onDismiss = { dismissed = true },
+        )
     }
 }
 
@@ -176,27 +175,24 @@ private fun DisplayErrorMessages() {
                     InformationDialog(
                         title,
                         content,
-                    ) {
-                        ToastManager.clearToasts()
-                    }
+                        onDismiss = { ToastManager.clearToasts() },
+                    )
                 } else {
                     val title = stringResource(obj.titleResId)
                     val content = stringResource(obj.resourceId)
                     InformationDialog(
                         title,
                         content,
-                    ) {
-                        ToastManager.clearToasts()
-                    }
+                        onDismiss = { ToastManager.clearToasts() },
+                    )
                 }
 
             is StringToastMsg ->
                 InformationDialog(
                     obj.title,
                     obj.msg,
-                ) {
-                    ToastManager.clearToasts()
-                }
+                    onDismiss = { ToastManager.clearToasts() },
+                )
             is AcceptRejectToastMsg ->
                 InformationDialog(
                     obj.title,
@@ -218,9 +214,9 @@ private fun DisplayErrorMessages() {
 fun InformationDialog(
     title: String,
     textContent: String,
-    buttonColors: ButtonColors = ButtonDefaults.buttonColors(),
     onAccept: () -> Unit,
     onReject: () -> Unit,
+    buttonColors: ButtonColors = ButtonDefaults.buttonColors(),
 ) {
     AlertDialog(
         modifier = Modifier.outlineIfAny(amoledBorder(), AlertDialogDefaults.shape),
@@ -278,8 +274,8 @@ fun InformationDialog(
 fun InformationDialog(
     title: String,
     textContent: String,
-    buttonColors: ButtonColors = ButtonDefaults.buttonColors(),
     onDismiss: () -> Unit,
+    buttonColors: ButtonColors = ButtonDefaults.buttonColors(),
 ) {
     AlertDialog(
         modifier = Modifier.outlineIfAny(amoledBorder(), AlertDialogDefaults.shape),

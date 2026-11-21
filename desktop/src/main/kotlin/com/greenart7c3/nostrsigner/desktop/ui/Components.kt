@@ -155,10 +155,10 @@ fun AmberTabRow(
 @Composable
 fun AmberButton(
     text: String,
+    onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     fillWidth: Boolean = false,
-    onClick: () -> Unit,
 ) {
     Button(
         onClick = onClick,
@@ -179,9 +179,9 @@ fun AmberButton(
 @Composable
 fun AmberTextButton(
     text: String,
+    onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
-    onClick: () -> Unit,
 ) {
     val darkTheme = MaterialTheme.colorScheme.background.luminance() < 0.5f
     TextButton(
@@ -197,10 +197,10 @@ fun AmberTextButton(
 @Composable
 fun AmberOutlinedButton(
     text: String,
+    onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     fillWidth: Boolean = false,
-    onClick: () -> Unit,
 ) {
     OutlinedButton(
         onClick = onClick,

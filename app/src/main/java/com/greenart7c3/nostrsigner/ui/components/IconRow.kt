@@ -24,13 +24,13 @@ import com.greenart7c3.nostrsigner.ui.theme.ThemePreviews
 
 @Composable
 fun IconRow(
-    modifier: Modifier = Modifier,
-    center: Boolean = false,
     title: String,
     icon: ImageVector,
     tint: Color,
-    fontColor: Color = Color.Unspecified,
     onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    center: Boolean = false,
+    fontColor: Color = Color.Unspecified,
     onLongClick: (() -> Unit)? = null,
 ) {
     Row(

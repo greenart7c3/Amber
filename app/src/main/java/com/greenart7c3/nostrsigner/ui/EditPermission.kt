@@ -416,11 +416,11 @@ fun PermissionRow(
 @Composable
 fun RelayCard(
     relay: String,
+    onClick: () -> Unit,
     modifier: Modifier = Modifier,
     trustScore: Int? = null,
     isLoadingScore: Boolean = false,
     showTrustScore: Boolean = true,
-    onClick: () -> Unit,
 ) {
     Card(
         Modifier

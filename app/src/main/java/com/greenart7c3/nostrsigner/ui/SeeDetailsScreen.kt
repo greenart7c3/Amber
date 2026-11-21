@@ -46,8 +46,8 @@ import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun SeeDetailsScreen(
-    modifier: Modifier = Modifier,
     onBack: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     Column(
         modifier = modifier

@@ -41,8 +41,8 @@ import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun InvalidIntentScreen(
-    modifier: Modifier = Modifier,
     onClose: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     Column(
         modifier = modifier

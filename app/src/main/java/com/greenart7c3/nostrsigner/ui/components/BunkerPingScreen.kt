@@ -87,14 +87,13 @@ fun BunkerPingScreen(
         Spacer(modifier = Modifier.weight(1f))
 
         RememberMyChoice(
-            shouldRunOnAccept,
-            null,
-            true,
-            onAccept,
-            onReject,
-        ) {
-            rememberType = it
-        }
+            shouldRunAcceptOrReject = shouldRunOnAccept,
+            packageName = null,
+            alwaysShow = true,
+            onAccept = onAccept,
+            onReject = onReject,
+            onChange = { rememberType = it },
+        )
 
         AcceptRejectButtons(
             onAccept = {

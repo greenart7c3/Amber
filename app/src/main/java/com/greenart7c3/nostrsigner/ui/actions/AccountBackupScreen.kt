@@ -826,9 +826,9 @@ private fun NSecCopyButton(
 private fun BackupIconButton(
     icon: @Composable () -> Unit,
     text: String,
+    onClick: () -> Unit,
     modifier: Modifier = Modifier,
     colors: ButtonColors = ButtonDefaults.buttonColors().copy(contentColor = Color.Black),
-    onClick: () -> Unit,
 ) {
     Button(
         onClick = onClick,

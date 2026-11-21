@@ -82,10 +82,10 @@ fun RememberMyChoiceToggles(
 fun RememberMyChoice(
     shouldRunAcceptOrReject: Boolean?,
     packageName: String?,
-    alwaysShow: Boolean = false,
     onAccept: (RememberType) -> Unit,
     onReject: (RememberType) -> Unit,
     onChange: (RememberType) -> Unit,
+    alwaysShow: Boolean = false,
 ) {
     var selected by remember { mutableStateOf(RememberType.NEVER) }
     if (shouldRunAcceptOrReject != null) {

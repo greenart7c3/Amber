@@ -26,13 +26,13 @@ import com.greenart7c3.nostrsigner.ui.theme.ThemePreviews
 @Composable
 fun AmberButton(
     onClick: () -> Unit,
+    text: String,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     colors: ButtonColors = ButtonDefaults.buttonColors().copy(
         contentColor = Color.Black,
     ),
     textColor: Color = Color.Unspecified,
-    text: String,
     textAlign: TextAlign? = null,
     maxLines: Int = Int.MAX_VALUE,
 ) {
@@ -71,10 +71,10 @@ fun AmberButton(
 @Composable
 fun AmberElevatedButton(
     onClick: () -> Unit,
+    text: String,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     textColor: Color = Color.Unspecified,
-    text: String,
     textAlign: TextAlign? = null,
     maxLines: Int = Int.MAX_VALUE,
     contentColor: Color = Color.Unspecified,

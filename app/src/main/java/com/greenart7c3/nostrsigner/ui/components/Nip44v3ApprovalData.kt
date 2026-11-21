@@ -66,10 +66,10 @@ fun Nip44v3ApprovalData(
     scope: String,
     encryptedData: EncryptedDataKind?,
     shouldRunOnAccept: Boolean?,
-    modifier: Modifier = Modifier,
-    defaultScope: DecryptTypeScope = DecryptTypeScope.SPECIFIC,
     onAccept: (RememberType, DecryptTypeScope) -> Unit,
     onReject: (RememberType, DecryptTypeScope) -> Unit,
+    modifier: Modifier = Modifier,
+    defaultScope: DecryptTypeScope = DecryptTypeScope.SPECIFIC,
     iconUrl: String = "",
 ) {
     var rememberType by remember { mutableStateOf(RememberType.NEVER) }
@@ -151,12 +151,11 @@ fun Nip44v3ApprovalData(
         RememberMyChoice(
             shouldRunOnAccept,
             if (isBunker) null else packageName,
-            isBunker,
             onAccept = { onAccept(it, grantScope) },
             onReject = { onReject(it, grantScope) },
-        ) {
-            rememberType = it
-        }
+            onChange = { rememberType = it },
+            alwaysShow = isBunker,
+        )
 
         AcceptRejectButtons(
             onAccept = { onAccept(rememberType, grantScope) },

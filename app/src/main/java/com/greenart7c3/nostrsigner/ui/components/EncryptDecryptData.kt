@@ -316,6 +316,12 @@ fun BunkerEncryptDecryptData(
                             append(stringResource(Res.string.wants_to_read_this_list_of_tags_from_encrypted_content, type.name.split("_").first()))
                         }
 
+                        // Like the intent screen; this string has no leading space.
+                        is PrivateZapEncryptedDataKind -> {
+                            append(" ")
+                            append(stringResource(Res.string.wants_you_to, stringResource(Res.string.decrypt_zap_event)))
+                        }
+
                         else -> append(stringResource(Res.string.wants_to_read_this_text_from_encrypted_content, type.name.split("_").first()))
                     }
                 }

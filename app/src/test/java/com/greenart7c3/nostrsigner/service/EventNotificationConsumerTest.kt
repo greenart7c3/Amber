@@ -4,6 +4,7 @@ import com.greenart7c3.nostrsigner.AccountStorage
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.LocalPreferences
+import com.greenart7c3.nostrsigner.common.BUNKER_REPLY_ATTEMPTS
 import com.greenart7c3.nostrsigner.common.UNVERIFIED_REPLY_ATTEMPTS
 import com.greenart7c3.nostrsigner.database.AppDatabase
 import com.greenart7c3.nostrsigner.database.ApplicationDao
@@ -209,9 +210,9 @@ class EventNotificationConsumerTest {
     }
 
     /**
+     * Consumes [requestJson] from a sender with no stored connection and returns
      * the replies; the account is a spy so key use can be verified. Each reply to
      * this unverified sender must be published once ([UNVERIFIED_REPLY_ATTEMPTS]).
-     * the replies; the account is a spy so key use can be verified.
      */
     private suspend fun consumeFromUnknownSender(requestJson: String, onAccount: (Account) -> Unit): List<BunkerResponse> {
         val signer = mockk<NostrSignerInternal>(relaxed = true)
@@ -273,6 +274,19 @@ class EventNotificationConsumerTest {
         val unsigned = """{"id":"","pubkey":"","created_at":1,"kind":1,"tags":[],"content":"hi","sig":""}"""
         val responses = consumeFromUnknownSender(
             """{"id":"s1","method":"sign_event","params":[${com.vitorpamplona.quartz.nip01Core.jackson.JacksonMapper.mapper.writeValueAsString(unsigned)}]}""",
+        ) { acc ->
+            coVerify(exactly = 0) { acc.sign<Event>(any()) }
+        }
+        assertEquals("no permission", responses.single().error)
+    }
+
+    // The multi-relay check used to run before admission and answer any sender
+    // with the retried refusal; now an unknown one gets the single "no permission".
+    @Test
+    fun `an unknown sender's multi-relay auth event is refused as unknown, once`() = runBlocking {
+        val unsigned = """{"id":"","pubkey":"","created_at":1,"kind":22242,"tags":[["relay","wss://a.com"],["relay","wss://b.com"]],"content":"","sig":""}"""
+        val responses = consumeFromUnknownSender(
+            """{"id":"a1","method":"sign_event","params":[${com.vitorpamplona.quartz.nip01Core.jackson.JacksonMapper.mapper.writeValueAsString(unsigned)}]}""",
         ) { acc ->
             coVerify(exactly = 0) { acc.sign<Event>(any()) }
         }
@@ -383,4 +397,89 @@ class EventNotificationConsumerTest {
             unmockkObject(BunkerRequestUtils)
         }
     }
+
+    @Test
+    fun `a connected app's multi-relay auth event is refused, with retries, without signing`() = runBlocking {
+        val kp = KeyPair()
+        val acc = spyk(
+            Account(
+                signer = mockk<NostrSignerInternal>(relaxed = true),
+                hexKey = kp.pubKey.toHexKey(),
+                npub = "npub-multi-relay-test",
+                name = MutableStateFlow(""),
+                picture = MutableStateFlow(""),
+                signPolicy = 2,
+                didBackup = false,
+                scope = scope,
+                keyAccessCheck = {},
+            ),
+        )
+        val unsigned = """{"id":"","pubkey":"","created_at":1,"kind":22242,"tags":[["relay","wss://a.com"],["relay","wss://b.com"]],"content":"","sig":""}"""
+        val requestJson = """{"id":"a2","method":"sign_event","params":[${com.vitorpamplona.quartz.nip01Core.jackson.JacksonMapper.mapper.writeValueAsString(unsigned)}]}"""
+        coEvery { acc.decrypt(any(), any()) } returns requestJson
+        val client = KeyPair().pubKey.toHexKey()
+        val event = requestEvent("multi-relay", from = client, to = acc.hexKey)
+        coEvery { AccountStorage.loadSync(any(), any()) } returns acc
+        coEvery { AccountStorage.load(any(), any()) } returns acc
+        coEvery { bunkerEventDao.exists(any()) } returns false
+        val row = legacyConnection(client, acc.hexKey)
+        coEvery { dao.getByKey(client) } returns mockk(relaxed = true) {
+            every { application } returns row
+        }
+
+        mockkObject(BunkerRequestUtils)
+        try {
+            every { amber.applicationIOScope } returns CoroutineScope(Dispatchers.Unconfined + SupervisorJob())
+            every { amber.notificationCache[any()] } returns null
+            val responses = mutableListOf<BunkerResponse>()
+            val attempts = mutableListOf<Int>()
+            coEvery {
+                bunkerResponder.sendBunkerResponse(any(), any(), any(), any(), any(), any(), any())
+            } answers {
+                responses += arg<BunkerResponse>(2)
+                attempts += arg<Int>(6)
+            }
+
+            consumer.consume(event, NormalizedRelayUrl("wss://relay.com"))
+
+            assertEquals("refusing a multi-relay auth event", responses.single().error)
+            assertEquals(listOf(BUNKER_REPLY_ATTEMPTS), attempts)
+            coVerify(exactly = 0) { acc.sign<Event>(any()) }
+        } finally {
+            unmockkObject(BunkerRequestUtils)
+        }
+    }
+
+    // A verified, fresh bunker event [from] a client, tagged [to] a key.
+    private fun requestEvent(id: String, from: String, to: String): Event {
+        val event = mockk<Event>(relaxed = true)
+        every { event.id } returns id
+        every { event.verify() } returns true
+        every { event.kind } returns NostrConnectEvent.KIND
+        every { event.createdAt } returns TimeUtils.now()
+        every { event.content } returns "ciphertext"
+        every { event.pubKey } returns from
+        every { event.tags } returns arrayOf(arrayOf("p", to))
+        every { event.taggedUsers() } returns listOf(PTag(to))
+        return event
+    }
+
+    // A connection from before per-connection keys: its requests reach the account key.
+    private fun legacyConnection(client: String, accountHex: String) = ApplicationEntity(
+        key = client,
+        name = "client",
+        relays = emptyList(),
+        url = "",
+        icon = "",
+        description = "",
+        pubKey = accountHex,
+        isConnected = true,
+        secret = "",
+        useSecret = false,
+        signPolicy = 2,
+        closeApplication = true,
+        deleteAfter = 0L,
+        lastUsed = 1L,
+        localKey = "",
+    )
 }

@@ -407,18 +407,11 @@ class EventNotificationConsumer(
 
     /**
      * The params of [request], or null when it was refused before any key is used:
-     * an auth event with more than one relay tag, an unknown method, or a missing or
-     * unparsable param. The client gets an error instead of waiting for an answer.
+     * an unknown method, or a missing or unparsable param. The client gets an error
+     * instead of waiting for an answer.
      */
     private suspend fun readParams(acc: Account, request: AmberBunkerRequest, type: SignerType, relay: NormalizedRelayUrl): RequestParams? {
         val bunkerRequest = request.request
-        // Authorization and the consent screen decide on the first relay tag
-        // alone; a second relay tag would be signed without ever being granted.
-        if (bunkerRequest is BunkerRequestSign && hasAmbiguousRelayTags(bunkerRequest.event.kind, bunkerRequest.event.tags)) {
-            saveLog("Refusing a multi-relay auth event ${bunkerRequest.id}", relay.url, acc.npub)
-            refuse(acc, request, "refusing a multi-relay auth event", attempts = BUNKER_REPLY_ATTEMPTS)
-            return null
-        }
         if (type == SignerType.INVALID) {
             saveLog("Invalid request method ${bunkerRequest.method}", relay.url, acc.npub)
             refuse(acc, request, "Unrecognized method: ${bunkerRequest.method}")
@@ -482,17 +475,26 @@ class EventNotificationConsumer(
         val connectSecret = (bunkerRequest as? BunkerRequestConnect)?.let { it.secret ?: UUID.randomUUID().toString() }
         val withSecret = connectSecret?.let { dao.getBySecret(it) }
         val admission = admitNip46Request(type, stored?.toNip46Connection(), request.signerPrivKey, connectSecret, withSecret?.toNip46Connection())
-        if (admission is Nip46Admission.AckRepeatedConnect) {
-            ackRepeatedConnect(acc, request, admission.connection.key, type, params.amberEvent, stored?.application?.relays ?: request.relays)
-            return null
-        }
         if (admission !is Nip46Admission.Admit) {
-            refuseUnadmitted(admission, acc, request, withSecret?.application?.relays ?: request.relays, relay.url)
+            if (admission is Nip46Admission.AckRepeatedConnect) {
+                ackRepeatedConnect(acc, request, admission.connection.key, type, params.amberEvent, stored?.application?.relays ?: request.relays)
+            } else {
+                refuseUnadmitted(admission, acc, request, withSecret?.application?.relays ?: request.relays, relay.url)
+            }
             return null
         }
         val permission = stored.takeIf { admission.stored != null }
         val applicationWithSecret = withSecret.takeIf { admission.bySecret != null }
         val relays = permission?.application?.relays ?: applicationWithSecret?.application?.relays ?: request.relays
+        // Authorization and the consent screen decide on the first relay tag
+        // alone; a second relay tag would be signed without ever being granted.
+        // Checked once the sender is admitted, as on the desktop: an unknown one
+        // gets the single "no permission" reply instead of a retried refusal.
+        if (bunkerRequest is BunkerRequestSign && hasAmbiguousRelayTags(bunkerRequest.event.kind, bunkerRequest.event.tags)) {
+            saveLog("Refusing a multi-relay auth event ${bunkerRequest.id}", relay.url, acc.npub)
+            refuse(acc, request.copy(relays = relays), "refusing a multi-relay auth event", attempts = BUNKER_REPLY_ATTEMPTS)
+            return null
+        }
         val authorized = request.copy(
             relays = relays,
             signedEvent = (bunkerRequest as? BunkerRequestSign)?.let { acc.sign(it.event) },

@@ -1,6 +1,9 @@
 package com.greenart7c3.nostrsigner.common
 
+import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
+import com.vitorpamplona.quartz.nip01Core.relay.normalizer.RelayUrlNormalizer
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Test
 
 class Nip46AdmissionTest {
@@ -58,5 +61,46 @@ class Nip46AdmissionTest {
             Nip46Admission.Admit(null, bunker),
             admitNip46Request(SignerType.CONNECT, null, "k", connectSecret = "secret-1", bySecret = bunker),
         )
+    }
+
+    private val delivered = listOf(RelayUrlNormalizer.normalize("wss://delivered.example/"))
+    private val saved = listOf(RelayUrlNormalizer.normalize("wss://saved.example/"))
+
+    private fun Nip46Admission.replyFor(storedRelays: List<NormalizedRelayUrl>? = null, bySecretRelays: List<NormalizedRelayUrl>? = null) = reply("sender", "req-1", storedRelays, bySecretRelays, delivered)
+
+    @Test
+    fun `a repeated connect is acknowledged on its connection's relays, with retries`() {
+        val ack = Nip46Admission.AckRepeatedConnect(connection).replyFor(storedRelays = saved) as Nip46AdmissionReply.Ack
+        assertEquals(connection, ack.connection)
+        assertEquals(saved, ack.relays)
+        assertEquals("ack", ack.result)
+        assertEquals(BUNKER_REPLY_ATTEMPTS, ack.attempts)
+    }
+
+    // The app used to send the ack nowhere when the stored connection had no relays.
+    @Test
+    fun `a repeated connect from a connection without relays is acknowledged where it arrived`() {
+        assertEquals(delivered, (Nip46Admission.AckRepeatedConnect(connection).replyFor(storedRelays = emptyList()) as Nip46AdmissionReply.Ack).relays)
+        assertEquals(delivered, (Nip46Admission.AckRepeatedConnect(connection).replyFor() as Nip46AdmissionReply.Ack).relays)
+    }
+
+    @Test
+    fun `a refused connect is answered once on the relays of the connection its secret names`() {
+        assertEquals(
+            Nip46AdmissionReply.Refuse("already connected", saved, "Connection rejected: already connected"),
+            Nip46Admission.RefuseConnect("already connected").replyFor(bySecretRelays = saved),
+        )
+        assertEquals(delivered, (Nip46Admission.RefuseConnect("invalid secret").replyFor() as Nip46AdmissionReply.Refuse).relays)
+        assertEquals(UNVERIFIED_REPLY_ATTEMPTS, (Nip46Admission.RefuseConnect("x").replyFor() as Nip46AdmissionReply.Refuse).attempts)
+    }
+
+    @Test
+    fun `an unknown sender gets no permission where it arrived, and a request to another key nothing`() {
+        assertEquals(
+            Nip46AdmissionReply.Refuse(NIP46_NO_PERMISSION, delivered, "No permission found for sender"),
+            Nip46Admission.Unknown.replyFor(storedRelays = saved),
+        )
+        assertEquals(Nip46AdmissionReply.Drop("Request req-1 from sender reached another connection's key"), Nip46Admission.Ignore.replyFor())
+        assertNull(Nip46Admission.Admit(connection, null).replyFor())
     }
 }

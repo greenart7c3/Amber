@@ -1,5 +1,7 @@
 package com.greenart7c3.nostrsigner.common
 
+import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
+
 /** A saved NIP-46 connection, as the admission check needs it. */
 data class Nip46Connection(
     // The client's public key, the connection's identity.
@@ -31,6 +33,53 @@ sealed interface Nip46Admission {
      * a valid connect secret names; at least one is set.
      */
     data class Admit(val stored: Nip46Connection?, val bySecret: Nip46Connection?) : Nip46Admission
+}
+
+/** The error an unknown sender gets: no connection and no valid connect secret. */
+const val NIP46_NO_PERMISSION = "no permission"
+
+/**
+ * The reply a request gets from its [Nip46Admission] alone, the same on Android and
+ * desktop. Each app sends it under its own connection key and records its history.
+ */
+sealed interface Nip46AdmissionReply {
+    /** Acknowledge a repeated connect from [connection] on [relays], with the retried reply. */
+    data class Ack(val connection: Nip46Connection, val relays: List<NormalizedRelayUrl>) : Nip46AdmissionReply {
+        val result: String get() = "ack"
+        val attempts: Int get() = BUNKER_REPLY_ATTEMPTS
+    }
+
+    /** Refuse with [error] on [relays], published once (the sender is unverified); [log] says why. */
+    data class Refuse(val error: String, val relays: List<NormalizedRelayUrl>, val log: String) : Nip46AdmissionReply {
+        val attempts: Int get() = UNVERIFIED_REPLY_ATTEMPTS
+    }
+
+    /** Send nothing; [log] says why. */
+    data class Drop(val log: String) : Nip46AdmissionReply
+}
+
+/**
+ * The reply this admission decides, or null for [Nip46Admission.Admit], whose request is
+ * decided on its grants. [storedRelays] are the relays of the sender's stored connection,
+ * [bySecretRelays] those of the connection a connect secret names, and [deliveredOn] the
+ * relay the request arrived on: a repeated connect is acknowledged on its connection's
+ * relays (on [deliveredOn] when it has none), a refused connect answered on the relays of
+ * the connection its secret names, and an unknown sender on [deliveredOn].
+ */
+fun Nip46Admission.reply(
+    senderKey: String,
+    requestId: String,
+    storedRelays: List<NormalizedRelayUrl>?,
+    bySecretRelays: List<NormalizedRelayUrl>?,
+    deliveredOn: List<NormalizedRelayUrl>,
+): Nip46AdmissionReply? = when (this) {
+    is Nip46Admission.AckRepeatedConnect -> Nip46AdmissionReply.Ack(connection, storedRelays.orEmpty().ifEmpty { deliveredOn })
+    is Nip46Admission.RefuseConnect -> Nip46AdmissionReply.Refuse(message, bySecretRelays ?: deliveredOn, "Connection rejected: $message")
+    Nip46Admission.Unknown -> Nip46AdmissionReply.Refuse(NIP46_NO_PERMISSION, deliveredOn, "No permission found for $senderKey")
+    // A stored app may only use its own connection key: a request it sends to another
+    // connection's key is dropped rather than answered under that connection's identity.
+    Nip46Admission.Ignore -> Nip46AdmissionReply.Drop("Request $requestId from $senderKey reached another connection's key")
+    is Nip46Admission.Admit -> null
 }
 
 /**

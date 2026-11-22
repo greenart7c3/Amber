@@ -37,6 +37,7 @@ import com.greenart7c3.nostrsigner.common.NIP44V3_DECRYPT_FAILED
 import com.greenart7c3.nostrsigner.common.NIP44V3_KIND_REQUIRED
 import com.greenart7c3.nostrsigner.common.NIP46_INVALID_PARAMS
 import com.greenart7c3.nostrsigner.common.Nip46Admission
+import com.greenart7c3.nostrsigner.common.Nip46AdmissionReply
 import com.greenart7c3.nostrsigner.common.Nip46Connection
 import com.greenart7c3.nostrsigner.common.SignerType
 import com.greenart7c3.nostrsigner.common.UNVERIFIED_REPLY_ATTEMPTS
@@ -50,6 +51,7 @@ import com.greenart7c3.nostrsigner.common.nip46SignerType
 import com.greenart7c3.nostrsigner.common.nip46StaleReason
 import com.greenart7c3.nostrsigner.common.peerPubKeyParam
 import com.greenart7c3.nostrsigner.common.relays.SenderRateLimiter
+import com.greenart7c3.nostrsigner.common.reply
 import com.greenart7c3.nostrsigner.common.sanitizeAppName
 import com.greenart7c3.nostrsigner.common.switchRelaysResult
 import com.greenart7c3.nostrsigner.common.zapRequestParam
@@ -482,11 +484,8 @@ class EventNotificationConsumer(
         val withSecret = connectSecret?.let { dao.getBySecret(it) }
         val admission = admitNip46Request(type, stored?.toNip46Connection(), request.signerPrivKey, connectSecret, withSecret?.toNip46Connection())
         if (admission !is Nip46Admission.Admit) {
-            if (admission is Nip46Admission.AckRepeatedConnect) {
-                ackRepeatedConnect(acc, request, admission.connection.key, type, params.amberEvent, stored?.application?.relays ?: request.relays)
-            } else {
-                refuseUnadmitted(admission, acc, request, withSecret?.application?.relays ?: request.relays, relay.url)
-            }
+            admission.reply(event.pubKey, bunkerRequest.id, stored?.application?.relays, withSecret?.application?.relays, request.relays)
+                ?.let { sendAdmissionReply(it, acc, request, type, params.amberEvent, relay.url) }
             return null
         }
         val permission = stored.takeIf { admission.stored != null }
@@ -633,70 +632,41 @@ class EventNotificationConsumer(
         }
     }
 
-    // An already connected client re-sent connect: acknowledged without asking, and recorded.
-    private suspend fun ackRepeatedConnect(
+    /**
+     * Sends what the admission alone decided (the common `Nip46Admission.reply`): an
+     * already connected client's repeated connect is acknowledged without asking and
+     * recorded; a refusal is published once; a dropped request only logged. The account
+     * key is not used to read anything.
+     */
+    private suspend fun sendAdmissionReply(
+        reply: Nip46AdmissionReply,
         acc: Account,
         request: AmberBunkerRequest,
-        appKey: String,
         type: SignerType,
         amberEvent: AmberEvent?,
-        relays: List<NormalizedRelayUrl>,
-    ) {
-        scope.launch {
-            accountRepository.getHistoryDatabase(acc.npub).dao().addHistory(
-                listOf(
-                    HistoryEntity(
-                        0,
-                        appKey,
-                        type.toString().lowercase(),
-                        amberEvent?.kind,
-                        TimeUtils.now(),
-                        true,
-                        content = amberEvent?.content ?: "",
-                    ),
-                ),
-                acc.npub,
-            )
-        }
-        bunkerResponder.sendBunkerResponse(
-            account = acc,
-            bunkerRequest = request,
-            bunkerResponse = BunkerResponse(request.request.id, request.nostrConnectSecret.ifBlank { "ack" }, null),
-            relays = relays,
-            onLoading = {},
-            onDone = {},
-        )
-    }
-
-    // Answers (or drops) a request admitNip46Request refused; the account key is not used.
-    private suspend fun refuseUnadmitted(
-        admission: Nip46Admission,
-        acc: Account,
-        request: AmberBunkerRequest,
-        relays: List<NormalizedRelayUrl>,
         relayUrl: String,
     ) {
-        val message = when (admission) {
-            is Nip46Admission.RefuseConnect -> admission.message.also { saveLog("Connection rejected: $it", relayUrl, acc.npub) }
-            Nip46Admission.Unknown -> "no permission".also { saveLog("No permission found for ${request.localKey}", relayUrl, acc.npub) }
-            else -> {
-                // A stored app may only use its own connection key: a request it
-                // sends to another connection's key is dropped rather than answered
-                // under that connection's identity. A connect is exempt, as that is
-                // how a client attaches to a new key.
-                saveLog("Request ${request.request.id} from ${request.localKey} reached another connection's key", relayUrl, acc.npub)
+        val response = when (reply) {
+            is Nip46AdmissionReply.Ack -> {
+                scope.launch {
+                    accountRepository.getHistoryDatabase(acc.npub).dao().addHistory(
+                        listOf(HistoryEntity(0, reply.connection.key, type.toString().lowercase(), amberEvent?.kind, TimeUtils.now(), true, content = amberEvent?.content ?: "")),
+                        acc.npub,
+                    )
+                }
+                Triple(BunkerResponse(request.request.id, reply.result, null), reply.relays, reply.attempts)
+            }
+            is Nip46AdmissionReply.Refuse -> {
+                saveLog(reply.log, relayUrl, acc.npub)
+                Triple(BunkerResponse(request.request.id, "", reply.error), reply.relays, reply.attempts)
+            }
+            is Nip46AdmissionReply.Drop -> {
+                saveLog(reply.log, relayUrl, acc.npub)
                 return
             }
         }
-        bunkerResponder.sendBunkerResponse(
-            account = acc,
-            bunkerRequest = request,
-            bunkerResponse = BunkerResponse(request.request.id, "", message),
-            relays = relays,
-            onLoading = { },
-            onDone = { },
-            attempts = UNVERIFIED_REPLY_ATTEMPTS,
-        )
+        val (bunkerResponse, relays, attempts) = response
+        bunkerResponder.sendBunkerResponse(acc, request, bunkerResponse, relays, onLoading = {}, onDone = {}, attempts = attempts)
     }
 
     private fun generateMessage(

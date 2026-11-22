@@ -56,6 +56,43 @@ class GrantsTest {
         assertFalse(remembered.replaces("DECRYPT_CLEAR_TEXT", null, ""))
     }
 
+    // The app used to delete every grant of the request's type (NIP44_DECRYPT here),
+    // removing the grant from before and keeping the one the approval had added.
+    @Test
+    fun `taking back a content-type approval restores the whole-NIP grant it replaced`() {
+        val wholeNip = forever("NIP44_DECRYPT", null)
+        val ping = forever("PING", null)
+        val before = listOf(ping, wholeNip)
+        val remembered = rememberedGrant(SignerType.NIP44_DECRYPT, "DECRYPT_CLEAR_TEXT", wholeNip = false, kind = null, accepted = true, rememberType = REMEMBER_ALWAYS, relay = "", now = 0)
+        val after = before.filterNot { remembered.replaces(it.type, it.kind, it.relay) } + remembered.grant
+
+        assertEquals(listOf(ping, wholeNip), revertedGrants(after, before, after))
+    }
+
+    @Test
+    fun `taking back a first approval leaves the grants from before untouched`() {
+        val ping = forever("PING", null)
+        val added = forever("SIGN_EVENT", 30024)
+
+        assertEquals(listOf(ping), revertedGrants(listOf(ping, added), listOf(ping), listOf(ping, added)))
+    }
+
+    @Test
+    fun `a grant changed while the reply was retried survives taking the approval back`() {
+        val ping = forever("PING", null)
+        val added = forever("SIGN_EVENT", 30024)
+        val editedMeanwhile = forever("SIGN_EVENT", 1)
+
+        assertEquals(listOf(ping, editedMeanwhile), revertedGrants(listOf(ping, added, editedMeanwhile), listOf(ping), listOf(ping, added)))
+    }
+
+    @Test
+    fun `a taken-back bunker connect waits again under its secret, a nostrconnect one is dropped`() {
+        assertEquals("secret-1", revertedConnectKey(isNostrConnectUri = false, secret = "secret-1"))
+        assertNull(revertedConnectKey(isNostrConnectUri = true, secret = "secret-1"))
+        assertNull(revertedConnectKey(isNostrConnectUri = false, secret = " "))
+    }
+
     @Test
     fun `other types are stored under their own name, narrowed by kind and relay`() {
         val sign = rememberedGrant(SignerType.SIGN_EVENT, "SIGN_EVENT", wholeNip = false, kind = 22242, accepted = true, rememberType = REMEMBER_ALWAYS, relay = "relay.example", now = 0)

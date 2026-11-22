@@ -5,6 +5,8 @@ import com.greenart7c3.nostrsigner.common.RequestedPermission
 import com.greenart7c3.nostrsigner.common.SignerType
 import com.greenart7c3.nostrsigner.common.generateBunkerPrivKey
 import com.greenart7c3.nostrsigner.common.rememberedGrant
+import com.greenart7c3.nostrsigner.common.revertedConnectKey
+import com.greenart7c3.nostrsigner.common.revertedGrants
 import com.greenart7c3.nostrsigner.common.signPolicyGrants
 import com.greenart7c3.nostrsigner.commonsui.Permission
 import com.greenart7c3.nostrsigner.commonsui.basicPermissions
@@ -110,18 +112,16 @@ private fun BunkerEngine.revertApproval(req: PendingBunkerRequest, store: Accoun
     val key = approved.key
     store.addLog(key, "bunker response", "The reply did not reach the client, so its approval was taken back")
     failedReplies.tryEmit(Unit)
+    // The common revertedConnectKey / revertedGrants, as on Android.
     if (req.type == SignerType.CONNECT) {
         store.delete(key)
-        if (!req.isNostrConnectUri && approved.secret.isNotBlank()) {
-            store.upsert(AppWithPermissions(approved.copy(key = approved.secret, isConnected = false), grantsAfter.toMutableList()))
+        revertedConnectKey(req.isNostrConnectUri, approved.secret)?.let { secret ->
+            store.upsert(AppWithPermissions(approved.copy(key = secret, isConnected = false), grantsAfter.toMutableList()))
         }
         return
     }
     val current = store.getByKey(key) ?: return
-    val added = (grantsAfter - grantsBefore.toSet()).toSet()
-    val replaced = grantsBefore - grantsAfter.toSet()
-    val restored = current.permissions.filterNot { it in added }
-    store.upsert(current.copy(permissions = (restored + replaced.filterNot { it in restored }).toMutableList()))
+    store.upsert(current.copy(permissions = revertedGrants(current.permissions, grantsBefore, grantsAfter).toMutableList()))
 }
 
 // Mirrors the Android connect screen's account picker: the connection is

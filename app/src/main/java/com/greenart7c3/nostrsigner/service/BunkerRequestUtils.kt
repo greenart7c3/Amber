@@ -8,6 +8,7 @@ import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.SignerActivity
 import com.greenart7c3.nostrsigner.common.BUNKER_REPLY_ATTEMPTS
 import com.greenart7c3.nostrsigner.common.ConnectionReplyKey
+import com.greenart7c3.nostrsigner.common.Grant
 import com.greenart7c3.nostrsigner.common.Nip46ReplyKey
 import com.greenart7c3.nostrsigner.common.SignerType
 import com.greenart7c3.nostrsigner.common.encryptionTextParam
@@ -22,6 +23,8 @@ import com.greenart7c3.nostrsigner.common.nip46SignerType
 import com.greenart7c3.nostrsigner.common.peerPubKeyParam
 import com.greenart7c3.nostrsigner.common.psbtParam
 import com.greenart7c3.nostrsigner.common.publishNip46Reply
+import com.greenart7c3.nostrsigner.common.revertedConnectKey
+import com.greenart7c3.nostrsigner.common.revertedGrants
 import com.greenart7c3.nostrsigner.common.zapRequestParam
 import com.greenart7c3.nostrsigner.commonsui.Permission
 import com.greenart7c3.nostrsigner.commonsui.Res
@@ -281,6 +284,8 @@ class BunkerResponder(
             val dao = accountRepository.dao(account.npub)
             val savedApplication = savedConnection(account, key, bunkerRequest, oldKey, deleteAfter)
             val relays = replyRelays(savedApplication, bunkerRequest)
+            // Approving changes the grants in place; kept to take the approval back.
+            val grantsBefore = savedApplication?.permissions?.map { it.toGrant() }.orEmpty()
 
             if (savedApplication == null && bunkerRequest.request !is BunkerRequestConnect) {
                 // A queued request whose app row is gone was revoked while it
@@ -328,12 +333,13 @@ class BunkerResponder(
             val didChangeRelays = type == SignerType.CONNECT && applyConnect(account, application, key, shouldCloseApplication, relays)
 
             // assume that everything worked and try to revert it if it fails
+            val grantsAfter = application.permissions.map { it.toGrant() }
             dao.insertApplicationWithPermissions(application)
             recordApproval(account, key, type, kind, response, bunkerRequest)
             publishApproval(account, application, bunkerRequest, BunkerResponse(bunkerRequest.request.id, response, null), relays, didChangeRelays, onLoading) { published ->
                 if (!published) {
                     scope.launch {
-                        if (rememberType != RememberType.NEVER) revertApproval(account, application, key, type, kind, bunkerRequest)
+                        if (rememberType != RememberType.NEVER) revertApproval(account, application, bunkerRequest, grantsBefore, grantsAfter)
                         onLoading(false)
                     }
                 }
@@ -573,28 +579,34 @@ class BunkerResponder(
         )
     }
 
-    // The reply did not reach the client: take back what approving it remembered.
+    /**
+     * The reply did not reach the client: take back what approving it remembered (the
+     * common `revertedConnectKey` / `revertedGrants`, as on the desktop). A connect drops
+     * the connection (a bunker:// one waits again under its secret); any other request
+     * removes exactly the grants it added and restores the ones it replaced, re-reading
+     * them so a change made while the reply was retried survives. It used to delete every
+     * grant of the request's type, which could remove a grant from before the approval
+     * and keep the content-type one it had just added.
+     */
     private suspend fun revertApproval(
         account: Account,
         application: ApplicationWithPermissions,
-        key: String,
-        type: SignerType,
-        kind: Int?,
         bunkerRequest: AmberBunkerRequest,
+        grantsBefore: List<Grant>,
+        grantsAfter: List<Grant>,
     ) {
         val dao = accountRepository.dao(account.npub)
-        when (type) {
-            SignerType.SIGN_EVENT -> kind?.let { dao.deletePermissions(key, type.toString(), it) }
-            SignerType.CONNECT -> {
-                dao.delete(application.application)
-                if (!bunkerRequest.isNostrConnectUri) {
-                    dao.insertApplicationWithPermissions(
-                        application.copy(application = application.application.copy(isConnected = false, key = application.application.secret)),
-                    )
-                }
+        val key = application.application.key
+        if (nip46SignerType(bunkerRequest.request.method) == SignerType.CONNECT) {
+            dao.delete(application.application)
+            revertedConnectKey(bunkerRequest.isNostrConnectUri, application.application.secret)?.let { secret ->
+                dao.insertApplicationWithPermissions(application.copy(application = application.application.copy(isConnected = false, key = secret)))
             }
-            else -> dao.deletePermissions(key, type.toString())
+            return
         }
+        val current = dao.getByKey(key) ?: return
+        val grants = revertedGrants(current.permissions.map { it.toGrant() }, grantsBefore, grantsAfter)
+        dao.insertApplicationWithPermissions(current.copy(permissions = grants.map { it.toEntity(key) }.toMutableList()))
     }
 
     fun sendRejection(

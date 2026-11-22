@@ -510,8 +510,15 @@ of the connection its secret names, an unknown sender "no permission" once where
 arrived, and a request to another connection's key dropped. Each app sends it under
 its own key and records its history.
 
-Left in step 11, in this order: the reply builder and sender (encrypt, sign, retry with
-a fresh timestamp, the no-relays outcome), what each admitted method does
+A reply is built and published by the same code too (`Nip46Replies.kt`):
+`nip46ReplyEvent` encrypts the response the way the request came in and signs the
+kind-24133 event with the connection's key (`ConnectionReplyKey`) or the account's (each
+app adapts its account to `Nip46ReplyKey`), `publishNip46Reply` retries with a freshly
+built event, and `nip46ReplyLog` is the log line, without the result. Each app keeps
+its relay client, the no-relays outcome, its logs, and on Android the Tor check and the
+error toast.
+
+Left in step 11, in this order: what each admitted method does
 (`switch_relays`/`logout` saving after the reply is published, the up-front refusals),
 and what approving or rejecting writes (sign-policy grants, the per-request grant and
 its scope, the revert when the reply fails).

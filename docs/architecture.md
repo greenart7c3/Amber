@@ -490,3 +490,10 @@ request]`, the layout of the other decrypts (`zapRequestParam()`). The desktop u
 read the zap request from `params[0]`. Its local socket signer keeps its documented
 `[zap request, account?]` call and moves the zap request to the NIP-46 slot when it
 builds the request.
+
+Whether a request carries the params its method needs is one check,
+`hasRequiredParams()`: the peer pubkey of an encrypt/decrypt, the zap request, the
+PSBT, and an event that parses for `sign_event`. Both apps refuse a request without
+them with "invalid params" before admission, before any key is used. The desktop used
+to admit it and fail computing the answer ("could not process the request"), and the
+app did not check a `sign_psbt`'s PSBT.

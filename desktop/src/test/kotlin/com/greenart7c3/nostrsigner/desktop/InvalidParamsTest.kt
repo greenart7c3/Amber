@@ -1,5 +1,6 @@
 package com.greenart7c3.nostrsigner.desktop
 
+import com.greenart7c3.nostrsigner.common.NIP46_INVALID_PARAMS
 import com.greenart7c3.nostrsigner.common.generateBunkerPrivKey
 import com.greenart7c3.nostrsigner.common.localPubKeyFromPrivKey
 import com.greenart7c3.nostrsigner.desktop.core.AccountManager
@@ -16,6 +17,7 @@ import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Test
 
@@ -52,9 +54,15 @@ class InvalidParamsTest {
             AmberDesktop.engine.consume(client.signerSync.sign(TimeUtils.now(), 24133, arrayOf(arrayOf("p", connectionHex)), content), relay)
         }
 
+        // Missing params are refused before admission (hasRequiredParams); a v3 request
+        // with its pubkey but no kind passes that check and is refused computing it.
+        fun refusedUpFront() = store.logs.value.count { it.message.endsWith(": $NIP46_INVALID_PARAMS") }
+        fun refusedComputing() = store.logs.value.count { it.message.startsWith("Rejecting request that cannot be fulfilled") }
         withTimeout(20.seconds) {
-            while (store.logs.value.count { it.message.startsWith("Rejecting request that cannot be fulfilled") } < requests.size) delay(50.milliseconds)
+            while (refusedUpFront() < 3 || refusedComputing() < 1) delay(50.milliseconds)
         }
+        assertEquals(3, refusedUpFront())
+        assertEquals(1, refusedComputing())
         assertFalse(store.history.value.any { it.appKey == clientHex && it.accepted })
         assertFalse(AmberDesktop.engine.pending.value.any { it.account.npub == account.npub })
     }

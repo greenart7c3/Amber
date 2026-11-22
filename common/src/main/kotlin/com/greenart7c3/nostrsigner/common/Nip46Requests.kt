@@ -53,7 +53,10 @@ const val NIP44V3_KIND_REQUIRED = "kind is required for nip44v3"
  */
 const val NIP44V3_DECRYPT_FAILED = "could not decrypt the message"
 
-/** The `kind` of a NIP-44 v3 request (`[pubkey, kind, scope, payload]`); null when missing or not a number. */
+/**
+ * The `kind` of a NIP-44 v3 request (`[pubkey, kind, scope, payload]`, the pubkey read by
+ * [peerPubKeyParam]); null when missing or not a number.
+ */
 fun BunkerRequest.nip44v3Kind(): Int? = params.getOrNull(1)?.toIntOrNull()
 
 /** The `scope` of a NIP-44 v3 request; empty when missing, per the spec. */
@@ -72,6 +75,24 @@ fun BunkerRequest.nip44v3Payload(): String = params.getOrElse(3) { "" }
  */
 fun BunkerRequest.zapRequestParam(): String? = params.getOrNull(1)
 
+/**
+ * The peer pubkey of an encrypt or decrypt, NIP-04, NIP-44 and NIP-44 v3 alike: the
+ * first param (`[pubkey, …]`); null when missing.
+ */
+fun BunkerRequest.peerPubKeyParam(): String? = params.firstOrNull()
+
+/**
+ * The text a NIP-04 or NIP-44 encrypt/decrypt works on (`[pubkey, text]`): the
+ * plaintext of an encrypt, the ciphertext of a decrypt; empty when missing.
+ */
+fun BunkerRequest.encryptionTextParam(): String = params.getOrElse(1) { "" }
+
+/** The event (JSON) a `sign_event` asks to sign (`[event]`); null when missing. */
+fun BunkerRequest.eventParam(): String? = params.firstOrNull()
+
+/** The PSBT a `sign_psbt` asks to sign (`[psbt]`); null when missing. */
+fun BunkerRequest.psbtParam(): String? = params.firstOrNull()
+
 /** The error a request whose params are missing or unreadable is refused with. */
 const val NIP46_INVALID_PARAMS = "invalid params"
 
@@ -85,8 +106,9 @@ const val NIP46_INVALID_PARAMS = "invalid params"
 fun BunkerRequest.hasRequiredParams(): Boolean = when (nip46SignerType(method)) {
     SignerType.SIGN_EVENT -> this is BunkerRequestSign
     SignerType.NIP04_ENCRYPT, SignerType.NIP04_DECRYPT, SignerType.NIP44_ENCRYPT, SignerType.NIP44_DECRYPT,
-    SignerType.NIP44_V3_ENCRYPT, SignerType.NIP44_V3_DECRYPT, SignerType.SIGN_PSBT,
-    -> params.isNotEmpty()
+    SignerType.NIP44_V3_ENCRYPT, SignerType.NIP44_V3_DECRYPT,
+    -> peerPubKeyParam() != null
+    SignerType.SIGN_PSBT -> psbtParam() != null
     SignerType.DECRYPT_ZAP_EVENT -> zapRequestParam() != null
     else -> true
 }

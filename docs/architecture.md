@@ -478,3 +478,9 @@ nostrconnect:// URI's `perms`. Before, the desktop read a non-numeric kind as no
 dropped in both apps and in the URI. The NIP-44 v3 request basics are shared too:
 `nip44v3SignerTypes`, `nip44v3Payload()` next to `nip44v3Kind()`/`nip44v3Scope()`,
 and the two refusal messages (`NIP44V3_KIND_REQUIRED`, `NIP44V3_DECRYPT_FAILED`).
+
+A relay auth event with more than one relay tag is refused at the same point in both
+apps: once the sender is admitted, before anything is signed. The app used to refuse
+it before admission, so any sender got the retried refusal, against the rule that an
+error reply to an unverified sender is published once; now an unknown one gets the
+single "no permission".

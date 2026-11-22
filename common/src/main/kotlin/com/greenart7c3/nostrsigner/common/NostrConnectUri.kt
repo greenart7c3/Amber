@@ -67,7 +67,7 @@ data class NostrConnectUri(
                 when (val name = param.substringBefore("=")) {
                     "relay" -> RelayUrlNormalizer.normalizeOrNull(value)?.let { relays.add(it) }
                     "name", "url", "image", "secret" -> fields[name] = value
-                    "perms" -> permissions.addAll(parsePermissions(value))
+                    "perms" -> permissions.addAll(parsePermissionEntries(value))
                     "metadata" -> metadata = value
                 }
             }
@@ -78,20 +78,31 @@ data class NostrConnectUri(
             listOf("name", "url", "image").forEach { key ->
                 node.get(key)?.asText()?.trim()?.takeIf { it.isNotEmpty() }?.let { query.fields[key] = it }
             }
-            node.get("perms")?.asText()?.let { query.permissions.addAll(parsePermissions(it)) }
-        }
-
-        // A sign_event or nip permission needs a kind, and a nip one a NIP Amber knows.
-        private fun RequestedPermission.grantsSomething(isKnownNip: (Int) -> Boolean): Boolean = when (type) {
-            "sign_event" -> kind != null
-            "nip" -> kind?.let(isKnownNip) == true
-            else -> true
-        }
-
-        // "type:kind,type,…"; an empty entry is skipped and a non-numeric kind reads as none.
-        private fun parsePermissions(value: String): List<RequestedPermission> = value.split(",").mapNotNull { entry ->
-            val type = entry.substringBefore(":").trim()
-            type.takeIf { it.isNotEmpty() }?.let { RequestedPermission(it, entry.split(":").getOrNull(1)?.toIntOrNull()) }
+            node.get("perms")?.asText()?.let { query.permissions.addAll(parsePermissionEntries(it)) }
         }
     }
+}
+
+/**
+ * Parses a list of requested permissions ("type:kind,type,…"), as a nostrconnect:// URI's
+ * `perms` and a bunker `connect`'s third parameter carry it. Drops what grants nothing: an
+ * empty entry, a `sign_event` or `nip` without a kind, a `nip` Amber does not know
+ * ([isKnownNip]), and an entry whose kind is not a number (read as kind-less it would ask for
+ * every kind of a NIP-44 v3 type).
+ */
+fun parseRequestedPermissions(value: String, isKnownNip: (Int) -> Boolean): List<RequestedPermission> = parsePermissionEntries(value).filter { it.grantsSomething(isKnownNip) }
+
+// "type:kind,type,…"; an empty entry and one with a non-numeric kind are skipped.
+private fun parsePermissionEntries(value: String): List<RequestedPermission> = value.split(",").mapNotNull { entry ->
+    val type = entry.substringBefore(":").trim()
+    val kindText = entry.substringAfter(":", "").trim()
+    val kind = kindText.toIntOrNull()
+    if (type.isEmpty() || (kindText.isNotEmpty() && kind == null)) null else RequestedPermission(type, kind)
+}
+
+// A sign_event or nip permission needs a kind, and a nip one a NIP Amber knows.
+private fun RequestedPermission.grantsSomething(isKnownNip: (Int) -> Boolean): Boolean = when (type) {
+    "sign_event" -> kind != null
+    "nip" -> kind?.let(isKnownNip) == true
+    else -> true
 }

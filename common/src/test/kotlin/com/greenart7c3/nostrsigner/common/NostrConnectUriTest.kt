@@ -81,6 +81,23 @@ class NostrConnectUriTest {
         )
     }
 
+    // The bunker connect's third parameter is read the same way (it used to differ per app).
+    @Test
+    fun `a requested-permissions list drops what grants nothing, and a malformed kind drops its entry`() {
+        assertEquals(
+            listOf(
+                RequestedPermission("sign_event", 1),
+                RequestedPermission("nip44_encrypt", null),
+                RequestedPermission("nip", 4),
+                RequestedPermission("nip44v3_encrypt", 7),
+            ),
+            parseRequestedPermissions(" sign_event : 1 ,sign_event, ,nip44_encrypt,nip:4,nip:99999,nip44v3_encrypt:abc,nip44v3_encrypt:7,sign_event:,") { it in knownNips },
+        )
+        assertEquals(emptyList<RequestedPermission>(), parseRequestedPermissions("") { true })
+        // In a URI too: "abc" is not "every kind".
+        assertEquals(emptyList<RequestedPermission>(), parse("perms=${enc("nip44v3_decrypt:abc")}").permissions)
+    }
+
     @Test
     fun `parameters without a value or unknown ones are ignored`() {
         val uri = parse("flag&&foo=bar&secret=s")

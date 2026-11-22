@@ -42,6 +42,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.greenart7c3.nostrsigner.common.SignerType
+import com.greenart7c3.nostrsigner.common.nip44v3SignerTypes
 import com.greenart7c3.nostrsigner.commonsui.Permission
 import com.greenart7c3.nostrsigner.commonsui.Res
 import com.greenart7c3.nostrsigner.commonsui.account
@@ -91,7 +92,6 @@ import com.greenart7c3.nostrsigner.desktop.core.PendingBunkerRequest
 import com.greenart7c3.nostrsigner.desktop.core.RememberType
 import com.greenart7c3.nostrsigner.desktop.core.connectionToReplace
 import com.greenart7c3.nostrsigner.desktop.core.describe
-import com.greenart7c3.nostrsigner.desktop.core.nip44v3SignerTypes
 import com.greenart7c3.nostrsigner.desktop.core.toShortenHex
 import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource

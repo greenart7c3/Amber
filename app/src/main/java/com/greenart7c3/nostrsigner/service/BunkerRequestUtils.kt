@@ -11,7 +11,9 @@ import com.greenart7c3.nostrsigner.common.EncryptionType
 import com.greenart7c3.nostrsigner.common.SignerType
 import com.greenart7c3.nostrsigner.common.generateBunkerPrivKey
 import com.greenart7c3.nostrsigner.common.nip44v3Kind
+import com.greenart7c3.nostrsigner.common.nip44v3Payload
 import com.greenart7c3.nostrsigner.common.nip44v3Scope
+import com.greenart7c3.nostrsigner.common.nip44v3SignerTypes
 import com.greenart7c3.nostrsigner.common.nip46SignerType
 import com.greenart7c3.nostrsigner.common.retryWithBackoff
 import com.greenart7c3.nostrsigner.commonsui.Permission
@@ -133,7 +135,7 @@ object BunkerRequestUtils {
         // NIP-44 v3 NIP-46 layout: [pubkey, kind, scope, payload]. For
         // `nip44v3_encrypt` the payload is base64-encoded plaintext; for
         // `nip44v3_decrypt` it is the v3 ciphertext.
-        "nip44v3_encrypt", "nip44v3_decrypt" -> bunkerRequest.params.getOrElse(3) { "" }
+        "nip44v3_encrypt", "nip44v3_decrypt" -> bunkerRequest.nip44v3Payload()
         "ping" -> "pong"
         "sign_psbt" -> bunkerRequest.params.firstOrNull() ?: ""
         "logout" -> "ack"
@@ -588,7 +590,7 @@ class BunkerResponder(
         response: String,
         bunkerRequest: AmberBunkerRequest,
     ) {
-        val isV3 = type == SignerType.NIP44_V3_ENCRYPT || type == SignerType.NIP44_V3_DECRYPT
+        val isV3 = type in nip44v3SignerTypes
         // Persist the encrypted form (ciphertext), never the plaintext: encrypt
         // requests store their ciphertext output (`response`), decrypt requests
         // store the ciphertext input that arrived in the request. The plaintext
@@ -735,7 +737,7 @@ class BunkerResponder(
         if (bunkerRequest.request is BunkerRequestConnect) return
 
         accountRepository.dao(account.npub).insertApplicationWithPermissions(application)
-        val isV3 = signerType == SignerType.NIP44_V3_ENCRYPT || signerType == SignerType.NIP44_V3_DECRYPT
+        val isV3 = signerType in nip44v3SignerTypes
         // A rejected encrypt request was never performed, so no ciphertext
         // exists — store nothing rather than leaking the plaintext input.
         // Decrypt requests carry their ciphertext in the request, so it is

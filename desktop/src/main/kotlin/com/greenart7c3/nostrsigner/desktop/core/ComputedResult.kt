@@ -1,8 +1,12 @@
 package com.greenart7c3.nostrsigner.desktop.core
 
+import com.greenart7c3.nostrsigner.common.NIP44V3_KIND_REQUIRED
 import com.greenart7c3.nostrsigner.common.SignerType
 import com.greenart7c3.nostrsigner.common.hasAmbiguousRelayTags
 import com.greenart7c3.nostrsigner.common.nip44v3.Nip44v3
+import com.greenart7c3.nostrsigner.common.nip44v3Kind
+import com.greenart7c3.nostrsigner.common.nip44v3Payload
+import com.greenart7c3.nostrsigner.common.nip44v3Scope
 import com.greenart7c3.nostrsigner.common.psbt.PsbtSighashPolicy
 import com.vitorpamplona.quartz.nip01Core.core.Event
 import com.vitorpamplona.quartz.nip01Core.core.hexToByteArray
@@ -69,9 +73,9 @@ private suspend fun decryptResult(request: BunkerRequest, type: SignerType, acc:
 // NIP-46 layout: [pubkey, kind, scope, base64 plaintext or the v3 payload]
 private fun nip44v3Result(request: BunkerRequest, type: SignerType, acc: DesktopAccount): ComputedResult {
     val pubKey = request.params.first().hexToByteArray()
-    val kind = request.params.getOrNull(1)?.toIntOrNull() ?: throw IllegalArgumentException("kind is required for nip44v3")
-    val scope = request.params.getOrElse(2) { "" }
-    val payload = request.params.getOrElse(3) { "" }
+    val kind = request.nip44v3Kind() ?: throw IllegalArgumentException(NIP44V3_KIND_REQUIRED)
+    val scope = request.nip44v3Scope()
+    val payload = request.nip44v3Payload()
     val privKey = acc.signer.keyPair.privKey!!
     return if (type == SignerType.NIP44_V3_ENCRYPT) {
         val plainBytes = Base64.decode(payload)

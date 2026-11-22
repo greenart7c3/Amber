@@ -164,13 +164,6 @@ val contentScopedSignerTypes = setOf(
 )
 
 /**
- * NIP-44 v3 encrypt/decrypt: granted per event kind (the v3 context), not per
- * content type. As on Android, the context scope string is shown in the prompt
- * but is not part of a grant, so a remembered kind-K grant covers every scope.
- */
-val nip44v3SignerTypes = setOf(SignerType.NIP44_V3_ENCRYPT, SignerType.NIP44_V3_DECRYPT)
-
-/**
  * The content-type permission for a request, mirroring the Android
  * `toPermissionTypeString`: e.g. NIP44_DECRYPT of a tag array ->
  * `DECRYPT_TAG_ARRAY`. Other types keep their own name.

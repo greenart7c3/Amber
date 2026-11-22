@@ -475,4 +475,6 @@ read by `parseRequestedPermissions` (`NostrConnectUri.kt`), the same reader as a
 nostrconnect:// URI's `perms`. Before, the desktop read a non-numeric kind as none, so
 `nip44v3_encrypt:abc` asked for every kind, and the app kept blank entries and
 `sign_event`/`nip` entries without a kind; now an entry that grants nothing is
-dropped in both apps and in the URI.
+dropped in both apps and in the URI. The NIP-44 v3 request basics are shared too:
+`nip44v3SignerTypes`, `nip44v3Payload()` next to `nip44v3Kind()`/`nip44v3Scope()`,
+and the two refusal messages (`NIP44V3_KIND_REQUIRED`, `NIP44V3_DECRYPT_FAILED`).

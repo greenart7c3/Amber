@@ -1,6 +1,8 @@
 package com.greenart7c3.nostrsigner.desktop.core
 
 import com.greenart7c3.nostrsigner.common.EncryptionType
+import com.greenart7c3.nostrsigner.common.NIP44V3_DECRYPT_FAILED
+import com.greenart7c3.nostrsigner.common.NIP44V3_KIND_REQUIRED
 import com.greenart7c3.nostrsigner.common.Nip46Admission
 import com.greenart7c3.nostrsigner.common.Nip46Connection
 import com.greenart7c3.nostrsigner.common.RELAY_AUTH_KIND
@@ -14,6 +16,7 @@ import com.greenart7c3.nostrsigner.common.isBlockedByAuthWhitelist
 import com.greenart7c3.nostrsigner.common.localPubKeyFromPrivKey
 import com.greenart7c3.nostrsigner.common.nip44v3Kind
 import com.greenart7c3.nostrsigner.common.nip44v3Scope
+import com.greenart7c3.nostrsigner.common.nip44v3SignerTypes
 import com.greenart7c3.nostrsigner.common.nip46SignerType
 import com.greenart7c3.nostrsigner.common.nip46StaleReason
 import com.greenart7c3.nostrsigner.common.parseRequestedPermissions
@@ -694,8 +697,8 @@ class BunkerEngine(
         // Mirrors Android's validateNip44v3Request errors; kept generic so
         // a failed decrypt doesn't leak the ciphertext's embedded context.
         val error = when (a.type) {
-            in nip44v3SignerTypes if a.kind == null -> "kind is required for nip44v3"
-            SignerType.NIP44_V3_DECRYPT -> "could not decrypt the message"
+            in nip44v3SignerTypes if a.kind == null -> NIP44V3_KIND_REQUIRED
+            SignerType.NIP44_V3_DECRYPT -> NIP44V3_DECRYPT_FAILED
             else -> "could not process the request"
         }
         reply(a, "", error)

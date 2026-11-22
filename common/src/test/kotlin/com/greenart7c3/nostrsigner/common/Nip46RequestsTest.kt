@@ -37,17 +37,24 @@ class Nip46RequestsTest {
     }
 
     @Test
-    fun `NIP-44 v3 kind and scope come from params 1 and 2`() {
+    fun `NIP-44 v3 kind, scope and payload come from params 1 to 3`() {
         val request = BunkerRequest("id", "nip44v3_encrypt", arrayOf("pk", "42", "dm", "data"))
         assertEquals(42, request.nip44v3Kind())
         assertEquals("dm", request.nip44v3Scope())
+        assertEquals("data", request.nip44v3Payload())
     }
 
     @Test
-    fun `a missing or non-numeric NIP-44 v3 kind is null and a missing scope is empty`() {
+    fun `a missing or non-numeric NIP-44 v3 kind is null and a missing scope or payload is empty`() {
         assertNull(BunkerRequest("id", "nip44v3_encrypt", arrayOf("pk")).nip44v3Kind())
         assertNull(BunkerRequest("id", "nip44v3_encrypt", arrayOf("pk", "not-a-number", "s", "d")).nip44v3Kind())
         assertEquals("", BunkerRequest("id", "nip44v3_encrypt", arrayOf("pk", "4")).nip44v3Scope())
+        assertEquals("", BunkerRequest("id", "nip44v3_decrypt", arrayOf("pk", "4", "s")).nip44v3Payload())
+    }
+
+    @Test
+    fun `the NIP-44 v3 types are what the two NIP-44 v3 methods map to`() {
+        assertEquals(nip44v3SignerTypes, setOf("nip44v3_encrypt", "nip44v3_decrypt").map(::nip46SignerType).toSet())
     }
 
     @Test

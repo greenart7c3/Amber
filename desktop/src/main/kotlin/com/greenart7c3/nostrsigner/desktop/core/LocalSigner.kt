@@ -1,8 +1,10 @@
 package com.greenart7c3.nostrsigner.desktop.core
 
+import com.greenart7c3.nostrsigner.common.NIP44V3_KIND_REQUIRED
 import com.greenart7c3.nostrsigner.common.RELAY_AUTH_KIND
 import com.greenart7c3.nostrsigner.common.SignerType
 import com.greenart7c3.nostrsigner.common.isBlockedByAuthWhitelist
+import com.greenart7c3.nostrsigner.common.nip44v3SignerTypes
 import com.greenart7c3.nostrsigner.common.relayAuthHost
 import com.greenart7c3.nostrsigner.common.sanitizeAppName
 import com.greenart7c3.nostrsigner.desktop.core.LocalSignerProtocol.RpcException
@@ -452,7 +454,7 @@ object LocalSigner {
     private fun permissionKind(request: BunkerRequest, call: LocalSignerProtocol.Call): Int? = when {
         request is BunkerRequestSign -> request.event.kind
         call.type in nip44v3SignerTypes -> call.params.getOrNull(1)?.toIntOrNull()
-            ?: throw RpcException(LocalSignerProtocol.INVALID_PARAMS, "kind is required for nip44v3")
+            ?: throw RpcException(LocalSignerProtocol.INVALID_PARAMS, NIP44V3_KIND_REQUIRED)
         else -> null
     }
 

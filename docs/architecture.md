@@ -518,7 +518,14 @@ built event, and `nip46ReplyLog` is the log line, without the result. Each app k
 its relay client, the no-relays outcome, its logs, and on Android the Tor check and the
 error toast.
 
-Left in step 11, in this order: what each admitted method does
-(`switch_relays`/`logout` saving after the reply is published, the up-front refusals),
-and what approving or rejecting writes (sign-policy grants, the per-request grant and
+What an admitted request does first is one decision too, `nip46Step()`
+(`Nip46Steps.kt`): `switch_relays` replies with the default relays and `logout` with an
+ack, each saving its change only once the client has the reply; a relay auth event
+naming more than one relay, or one outside a non-empty auth whitelist (kept in the
+history as rejected), and a NIP-44 v3 request without a kind are refused before
+anything is signed or decrypted; anything else is decided on the grants. On Android the
+whitelist check used to happen inside `SignerProviderQuery`, which keeps it for the
+intent path.
+
+Left in step 11: what approving or rejecting writes (sign-policy grants, the per-request grant and
 its scope, the revert when the reply fails).

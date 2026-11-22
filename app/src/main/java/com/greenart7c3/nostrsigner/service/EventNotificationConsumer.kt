@@ -39,21 +39,21 @@ import com.greenart7c3.nostrsigner.common.NIP46_INVALID_PARAMS
 import com.greenart7c3.nostrsigner.common.Nip46Admission
 import com.greenart7c3.nostrsigner.common.Nip46AdmissionReply
 import com.greenart7c3.nostrsigner.common.Nip46Connection
+import com.greenart7c3.nostrsigner.common.Nip46Step
 import com.greenart7c3.nostrsigner.common.SignerType
 import com.greenart7c3.nostrsigner.common.UNVERIFIED_REPLY_ATTEMPTS
 import com.greenart7c3.nostrsigner.common.admitNip46Request
 import com.greenart7c3.nostrsigner.common.eventParam
-import com.greenart7c3.nostrsigner.common.hasAmbiguousRelayTags
 import com.greenart7c3.nostrsigner.common.hasRequiredParams
 import com.greenart7c3.nostrsigner.common.nip44v3Kind
 import com.greenart7c3.nostrsigner.common.nip44v3Scope
 import com.greenart7c3.nostrsigner.common.nip46SignerType
 import com.greenart7c3.nostrsigner.common.nip46StaleReason
+import com.greenart7c3.nostrsigner.common.nip46Step
 import com.greenart7c3.nostrsigner.common.peerPubKeyParam
 import com.greenart7c3.nostrsigner.common.relays.SenderRateLimiter
 import com.greenart7c3.nostrsigner.common.reply
 import com.greenart7c3.nostrsigner.common.sanitizeAppName
-import com.greenart7c3.nostrsigner.common.switchRelaysResult
 import com.greenart7c3.nostrsigner.common.zapRequestParam
 import com.greenart7c3.nostrsigner.commonsui.Permission
 import com.greenart7c3.nostrsigner.commonsui.Res
@@ -401,11 +401,10 @@ class EventNotificationConsumer(
         val type = nip46SignerType(bunkerRequest.method)
         val params = readParams(acc, unverified, type, relay) ?: return
         val admitted = admit(event, acc, unverified, type, params, relay) ?: return
-        when (type) {
-            SignerType.SWITCH_RELAYS -> switchRelays(admitted)
-            SignerType.LOGOUT -> logout(admitted)
-            SignerType.GET_PUBLIC_KEY -> getPublicKey(admitted)
-            else -> answerFromGrants(admitted, params.pubKey, relay.url)
+        when (val step = admitted.step) {
+            is Nip46Step.SwitchRelays -> switchRelays(admitted, step.result)
+            Nip46Step.Logout -> logout(admitted)
+            else -> if (type == SignerType.GET_PUBLIC_KEY) getPublicKey(admitted) else answerFromGrants(admitted, params.pubKey, relay.url)
         }
     }
 
@@ -491,13 +490,11 @@ class EventNotificationConsumer(
         val permission = stored.takeIf { admission.stored != null }
         val applicationWithSecret = withSecret.takeIf { admission.bySecret != null }
         val relays = permission?.application?.relays ?: applicationWithSecret?.application?.relays ?: request.relays
-        // Authorization and the consent screen decide on the first relay tag
-        // alone; a second relay tag would be signed without ever being granted.
-        // Checked once the sender is admitted, as on the desktop: an unknown one
-        // gets the single "no permission" reply instead of a retried refusal.
-        if (bunkerRequest is BunkerRequestSign && hasAmbiguousRelayTags(bunkerRequest.event.kind, bunkerRequest.event.tags)) {
-            saveLog("Refusing a multi-relay auth event ${bunkerRequest.id}", relay.url, acc.npub)
-            refuse(acc, request.copy(relays = relays), "refusing a multi-relay auth event", attempts = BUNKER_REPLY_ATTEMPTS)
+        // The common first step, as on the desktop: once the sender is admitted (an
+        // unknown one got the single "no permission"), and before anything is signed.
+        val step = nip46Step(bunkerRequest, type, settingsStore.settings.authWhitelist, settingsStore.settings.defaultRelays.map { it.url })
+        if (step is Nip46Step.Refuse) {
+            refuseUpFront(acc, request.copy(relays = relays), step, type, params.amberEvent, relay.url)
             return null
         }
         val authorized = request.copy(
@@ -505,10 +502,11 @@ class EventNotificationConsumer(
             signedEvent = (bunkerRequest as? BunkerRequestSign)?.let { acc.sign(it.event) },
             encryptedData = getEncryptedDataKind(bunkerRequest, acc, relay.url),
         )
-        return Admitted(acc, authorized, relays, event, type, params.amberEvent, permission, applicationWithSecret)
+        return Admitted(acc, authorized, relays, event, type, params.amberEvent, permission, applicationWithSecret, step)
     }
 
     // What every handler of an admitted request needs.
+    @Suppress("LongParameterList") // Bundles the request's context so the handlers take one argument.
     private class Admitted(
         val acc: Account,
         val request: AmberBunkerRequest,
@@ -518,6 +516,8 @@ class EventNotificationConsumer(
         val amberEvent: AmberEvent?,
         val permission: ApplicationWithPermissions?,
         val applicationWithSecret: ApplicationWithPermissions?,
+        // What it does first (the common nip46Step); never a refusal, those are answered in admit.
+        val step: Nip46Step,
     ) {
         val id: String get() = request.request.id
     }
@@ -540,10 +540,10 @@ class EventNotificationConsumer(
     }
 
     // A stored connection moves to the default relays once the client has the answer.
-    private suspend fun switchRelays(a: Admitted) {
+    private suspend fun switchRelays(a: Admitted, result: String?) {
         val permission = a.permission ?: return
         val defaultRelays = settingsStore.settings.defaultRelays
-        reply(a, switchRelaysResult(defaultRelays.map { it.url })) { published ->
+        reply(a, result) { published ->
             if (published) {
                 scope.launch {
                     val dao = accountRepository.dao(a.acc.npub)
@@ -558,7 +558,7 @@ class EventNotificationConsumer(
     // A stored connection is deleted, with its history and queued requests, once the client has the ack.
     private suspend fun logout(a: Admitted) {
         val permission = a.permission ?: return
-        reply(a, "ack") { published ->
+        reply(a, Nip46Step.Logout.RESULT) { published ->
             if (published) {
                 scope.launch {
                     accountRepository.dao(a.acc.npub).delete(permission.application.key)
@@ -630,6 +630,31 @@ class EventNotificationConsumer(
                 }
             }
         }
+    }
+
+    /**
+     * Refuses an admitted request before anything is signed or decrypted (the common
+     * `nip46Step`): a multi-relay auth event, a relay outside the auth whitelist (kept in
+     * the history as rejected) or a NIP-44 v3 request without a kind.
+     */
+    private suspend fun refuseUpFront(
+        acc: Account,
+        request: AmberBunkerRequest,
+        step: Nip46Step.Refuse,
+        type: SignerType,
+        amberEvent: AmberEvent?,
+        relayUrl: String,
+    ) {
+        saveLog(step.log, relayUrl, acc.npub)
+        if (step.recordRejected) {
+            scope.launch {
+                accountRepository.getHistoryDatabase(acc.npub).dao().addHistory(
+                    listOf(HistoryEntity(0, request.localKey, type.toString(), amberEvent?.kind, TimeUtils.now(), false, content = amberEvent?.toEvent()?.toJson() ?: "")),
+                    acc.npub,
+                )
+            }
+        }
+        refuse(acc, request, step.error, attempts = BUNKER_REPLY_ATTEMPTS)
     }
 
     /**

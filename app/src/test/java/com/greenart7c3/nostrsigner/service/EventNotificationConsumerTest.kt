@@ -11,6 +11,7 @@ import com.greenart7c3.nostrsigner.database.ApplicationDao
 import com.greenart7c3.nostrsigner.database.ApplicationEntity
 import com.greenart7c3.nostrsigner.database.BunkerEventDao
 import com.greenart7c3.nostrsigner.models.Account
+import com.greenart7c3.nostrsigner.models.AmberSettings
 import com.vitorpamplona.quartz.nip01Core.core.Event
 import com.vitorpamplona.quartz.nip01Core.core.toHexKey
 import com.vitorpamplona.quartz.nip01Core.crypto.KeyPair
@@ -461,6 +462,20 @@ class EventNotificationConsumerTest {
         }
 
         assertEquals("refusing a multi-relay auth event", sent.single().response.error)
+        assertEquals(BUNKER_REPLY_ATTEMPTS, sent.single().attempts)
+    }
+
+    // Refused by the common nip46Step, where SignerProviderQuery used to refuse it.
+    @Test
+    fun `a connected app's auth event for a relay outside the whitelist is refused without signing`() = runBlocking {
+        every { amber.settings } returns AmberSettings(authWhitelist = listOf("good.example"))
+        val unsigned = """{"id":"","pubkey":"","created_at":1,"kind":22242,"tags":[["relay","wss://other.example"]],"content":"","sig":""}"""
+        val requestJson = """{"id":"w1","method":"sign_event","params":[${com.vitorpamplona.quartz.nip01Core.jackson.JacksonMapper.mapper.writeValueAsString(unsigned)}]}"""
+        val sent = consumeFromConnectedApp(requestJson) { acc ->
+            coVerify(exactly = 0) { acc.sign<Event>(any()) }
+        }
+
+        assertEquals("user rejected", sent.single().response.error)
         assertEquals(BUNKER_REPLY_ATTEMPTS, sent.single().attempts)
     }
 

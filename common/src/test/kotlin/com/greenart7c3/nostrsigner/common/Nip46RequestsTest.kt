@@ -1,5 +1,6 @@
 package com.greenart7c3.nostrsigner.common
 
+import com.vitorpamplona.quartz.nip01Core.jackson.JacksonMapper
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -85,5 +86,33 @@ class Nip46RequestsTest {
         assertEquals("already connected", connectSecretRejection("s", appFound = true, appConnected = true, appUsesSecret = true))
         assertEquals("secret not in use", connectSecretRejection("s", appFound = true, appConnected = false, appUsesSecret = false))
         assertNull(connectSecretRejection("s", appFound = true, appConnected = false, appUsesSecret = true))
+    }
+
+    // Parsed the way both apps read a decrypted request.
+    private fun request(method: String, params: String) = JacksonMapper.mapper.readValue("""{"id":"1","method":"$method","params":$params}""", BunkerRequest::class.java)
+
+    private val event = JacksonMapper.mapper.writeValueAsString("""{"kind":1,"content":"hi","tags":[],"created_at":1}""")
+
+    @Test
+    fun `a request with the params its method needs is well formed`() {
+        assertTrue(request("sign_event", "[$event]").hasRequiredParams())
+        assertTrue(request("nip44_encrypt", """["pk","hi"]""").hasRequiredParams())
+        assertTrue(request("nip44v3_decrypt", """["pk","1","","payload"]""").hasRequiredParams())
+        assertTrue(request("decrypt_zap_event", """["pk","{}"]""").hasRequiredParams())
+        assertTrue(request("sign_psbt", """["psbt"]""").hasRequiredParams())
+        // Methods without params, and connect, whose checks are its own.
+        assertTrue(request("get_public_key", "[]").hasRequiredParams())
+        assertTrue(request("ping", "[]").hasRequiredParams())
+    }
+
+    // The desktop used to admit these and fail computing them ("could not process the request").
+    @Test
+    fun `a request missing a param its method needs is not`() {
+        assertFalse(request("sign_event", "[]").hasRequiredParams())
+        assertFalse(request("sign_event", """["not json"]""").hasRequiredParams())
+        assertFalse(request("nip04_decrypt", "[]").hasRequiredParams())
+        assertFalse(request("nip44v3_encrypt", "[]").hasRequiredParams())
+        assertFalse(request("decrypt_zap_event", """["{}"]""").hasRequiredParams())
+        assertFalse(request("sign_psbt", "[]").hasRequiredParams())
     }
 }

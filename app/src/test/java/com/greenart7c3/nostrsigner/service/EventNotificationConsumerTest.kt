@@ -314,6 +314,9 @@ class EventNotificationConsumerTest {
             """{"id":"z1","method":"decrypt_zap_event","params":["only-one"]}""",
             """{"id":"s2","method":"sign_event","params":["not json"]}""",
             """{"id":"s3","method":"sign_event","params":[]}""",
+            // The shared check (hasRequiredParams) also refuses these up front.
+            """{"id":"p1","method":"sign_psbt","params":[]}""",
+            """{"id":"n1","method":"nip44_decrypt","params":[]}""",
         )) {
             val responses = consumeFromUnknownSender(request) {}
             assertEquals(request, "invalid params", responses.single().error)

@@ -3,6 +3,7 @@ package com.greenart7c3.nostrsigner.desktop.core
 import com.greenart7c3.nostrsigner.common.EncryptionType
 import com.greenart7c3.nostrsigner.common.NIP44V3_DECRYPT_FAILED
 import com.greenart7c3.nostrsigner.common.NIP44V3_KIND_REQUIRED
+import com.greenart7c3.nostrsigner.common.NIP46_INVALID_PARAMS
 import com.greenart7c3.nostrsigner.common.Nip46Admission
 import com.greenart7c3.nostrsigner.common.Nip46Connection
 import com.greenart7c3.nostrsigner.common.RELAY_AUTH_KIND
@@ -12,6 +13,7 @@ import com.greenart7c3.nostrsigner.common.admitNip46Request
 import com.greenart7c3.nostrsigner.common.bunkerFilters
 import com.greenart7c3.nostrsigner.common.canRememberRelayAuth
 import com.greenart7c3.nostrsigner.common.hasAmbiguousRelayTags
+import com.greenart7c3.nostrsigner.common.hasRequiredParams
 import com.greenart7c3.nostrsigner.common.isBlockedByAuthWhitelist
 import com.greenart7c3.nostrsigner.common.localPubKeyFromPrivKey
 import com.greenart7c3.nostrsigner.common.nip44v3Kind
@@ -481,21 +483,8 @@ class BunkerEngine(
         val store = AmberDesktop.store(acc.npub)
         val responseRelay = listOf(relay)
         val type = nip46SignerType(bunkerRequest.method)
-
-        if (type == SignerType.INVALID) {
-            // Unauthenticated error reply: publish once, no retry/backoff —
-            // the sender is unverified, so it must not buy amplification.
-            sendResponse(
-                acc,
-                connectionPrivKey,
-                event.pubKey,
-                encryptionType,
-                BunkerResponse(bunkerRequest.id, "", "Unrecognized method: ${bunkerRequest.method}"),
-                responseRelay.ifEmpty { AmberDesktop.defaultRelays() },
-                attempts = UNVERIFIED_REPLY_ATTEMPTS,
-            )
-            return
-        }
+        val reply = UnadmittedReply(acc, connectionPrivKey, event.pubKey, encryptionType, bunkerRequest.id)
+        if (refusedBeforeAdmission(bunkerRequest, type, reply, store, relay)) return
 
         val stored = store.getByKey(event.pubKey)
         if (stored != null && stored.app.isExpired()) {
@@ -506,7 +495,6 @@ class BunkerEngine(
         }
         val connectSecret = (bunkerRequest as? BunkerRequestConnect)?.let { it.secret ?: UUID.randomUUID().toString() }
         val withSecret = connectSecret?.let { store.getBySecret(it) }
-        val reply = UnadmittedReply(acc, connectionPrivKey, event.pubKey, encryptionType, bunkerRequest.id)
         when (val admission = admitNip46Request(type, stored?.toNip46Connection(), connectionPrivKey, connectSecret, withSecret?.toNip46Connection())) {
             is Nip46Admission.Admit -> handleRequest(
                 bunkerRequest,
@@ -558,6 +546,28 @@ class BunkerEngine(
             relays,
             attempts = UNVERIFIED_REPLY_ATTEMPTS,
         )
+    }
+
+    /**
+     * Refuses, before admission and before any key is used, a request that can never be
+     * answered: an unknown method, or one missing the params its method needs (the common
+     * `hasRequiredParams`, as on Android). True when it did.
+     */
+    private suspend fun refusedBeforeAdmission(
+        bunkerRequest: BunkerRequest,
+        type: SignerType,
+        reply: UnadmittedReply,
+        store: AccountStore,
+        relay: NormalizedRelayUrl,
+    ): Boolean {
+        val error = when {
+            type == SignerType.INVALID -> "Unrecognized method: ${bunkerRequest.method}"
+            !bunkerRequest.hasRequiredParams() -> NIP46_INVALID_PARAMS
+            else -> return false
+        }
+        store.addLog(relay.url, "bunker", "Refusing request ${bunkerRequest.id} method ${bunkerRequest.method}: $error")
+        refuse(reply, error, listOf(relay))
+        return true
     }
 
     private suspend fun handleRequest(

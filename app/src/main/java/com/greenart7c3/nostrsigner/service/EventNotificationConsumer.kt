@@ -35,12 +35,14 @@ import com.greenart7c3.nostrsigner.common.BUNKER_REPLY_ATTEMPTS
 import com.greenart7c3.nostrsigner.common.EncryptionType
 import com.greenart7c3.nostrsigner.common.NIP44V3_DECRYPT_FAILED
 import com.greenart7c3.nostrsigner.common.NIP44V3_KIND_REQUIRED
+import com.greenart7c3.nostrsigner.common.NIP46_INVALID_PARAMS
 import com.greenart7c3.nostrsigner.common.Nip46Admission
 import com.greenart7c3.nostrsigner.common.Nip46Connection
 import com.greenart7c3.nostrsigner.common.SignerType
 import com.greenart7c3.nostrsigner.common.UNVERIFIED_REPLY_ATTEMPTS
 import com.greenart7c3.nostrsigner.common.admitNip46Request
 import com.greenart7c3.nostrsigner.common.hasAmbiguousRelayTags
+import com.greenart7c3.nostrsigner.common.hasRequiredParams
 import com.greenart7c3.nostrsigner.common.nip44v3Kind
 import com.greenart7c3.nostrsigner.common.nip44v3Scope
 import com.greenart7c3.nostrsigner.common.nip46SignerType
@@ -418,10 +420,11 @@ class EventNotificationConsumer(
             refuse(acc, request, "Unrecognized method: ${bunkerRequest.method}")
             return null
         }
-        val params = requestParams(bunkerRequest)
+        // The shared check decides, as on the desktop; requestParams reads the values.
+        val params = requestParams(bunkerRequest)?.takeIf { bunkerRequest.hasRequiredParams() }
         if (params == null) {
             saveLog("Invalid params for request ${bunkerRequest.id} method ${bunkerRequest.method}", relay.url, acc.npub)
-            refuse(acc, request, "invalid params")
+            refuse(acc, request, NIP46_INVALID_PARAMS)
         }
         return params
     }

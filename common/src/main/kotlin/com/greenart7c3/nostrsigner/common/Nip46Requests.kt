@@ -1,6 +1,7 @@
 package com.greenart7c3.nostrsigner.common
 
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequest
+import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequestSign
 
 private val nip46Methods = mapOf(
     "connect" to SignerType.CONNECT,
@@ -70,6 +71,25 @@ fun BunkerRequest.nip44v3Payload(): String = params.getOrElse(3) { "" }
  * always read them.
  */
 fun BunkerRequest.zapRequestParam(): String? = params.getOrNull(1)
+
+/** The error a request whose params are missing or unreadable is refused with. */
+const val NIP46_INVALID_PARAMS = "invalid params"
+
+/**
+ * Whether the request carries the params its method needs: the peer pubkey of an
+ * encrypt or decrypt, the zap request of `decrypt_zap_event`, the PSBT of `sign_psbt`,
+ * and an event that parses for `sign_event`. Without them it can never be answered, so
+ * both apps refuse it with [NIP46_INVALID_PARAMS] before admission, before any key is
+ * used, instead of failing after it.
+ */
+fun BunkerRequest.hasRequiredParams(): Boolean = when (nip46SignerType(method)) {
+    SignerType.SIGN_EVENT -> this is BunkerRequestSign
+    SignerType.NIP04_ENCRYPT, SignerType.NIP04_DECRYPT, SignerType.NIP44_ENCRYPT, SignerType.NIP44_DECRYPT,
+    SignerType.NIP44_V3_ENCRYPT, SignerType.NIP44_V3_DECRYPT, SignerType.SIGN_PSBT,
+    -> params.isNotEmpty()
+    SignerType.DECRYPT_ZAP_EVENT -> zapRequestParam() != null
+    else -> true
+}
 
 /**
  * Whether a `connect` from an app already stored is a repeat that is acked

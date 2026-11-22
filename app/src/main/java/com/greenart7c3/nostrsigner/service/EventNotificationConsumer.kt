@@ -48,6 +48,7 @@ import com.greenart7c3.nostrsigner.common.nip46StaleReason
 import com.greenart7c3.nostrsigner.common.relays.SenderRateLimiter
 import com.greenart7c3.nostrsigner.common.sanitizeAppName
 import com.greenart7c3.nostrsigner.common.switchRelaysResult
+import com.greenart7c3.nostrsigner.common.zapRequestParam
 import com.greenart7c3.nostrsigner.commonsui.Permission
 import com.greenart7c3.nostrsigner.commonsui.Res
 import com.greenart7c3.nostrsigner.commonsui.getStringBlocking
@@ -431,7 +432,7 @@ class EventNotificationConsumer(
         val amberEvent = if (method == "sign_event") bunkerRequest.params.firstOrNull()?.let { runCatching { AmberEvent.fromJson(it) }.getOrNull() } else null
         val pubKey = when {
             method.endsWith("encrypt") || method.endsWith("decrypt") -> bunkerRequest.params.firstOrNull()
-            method == "decrypt_zap_event" -> bunkerRequest.params.getOrNull(1)
+            method == "decrypt_zap_event" -> bunkerRequest.zapRequestParam()
             method == "sign_event" -> amberEvent?.pubKey
             else -> ""
         }

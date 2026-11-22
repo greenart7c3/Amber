@@ -53,6 +53,13 @@ class Nip46RequestsTest {
     }
 
     @Test
+    fun `a decrypt_zap_event carries its zap request second, after the pubkey`() {
+        assertEquals("{zap}", BunkerRequest("id", "decrypt_zap_event", arrayOf("pk", "{zap}")).zapRequestParam())
+        // A request with only the zap request is missing it.
+        assertNull(BunkerRequest("id", "decrypt_zap_event", arrayOf("{zap}")).zapRequestParam())
+    }
+
+    @Test
     fun `the NIP-44 v3 types are what the two NIP-44 v3 methods map to`() {
         assertEquals(nip44v3SignerTypes, setOf("nip44v3_encrypt", "nip44v3_decrypt").map(::nip46SignerType).toSet())
     }

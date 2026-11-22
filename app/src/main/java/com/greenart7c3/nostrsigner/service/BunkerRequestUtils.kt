@@ -16,6 +16,7 @@ import com.greenart7c3.nostrsigner.common.nip44v3Scope
 import com.greenart7c3.nostrsigner.common.nip44v3SignerTypes
 import com.greenart7c3.nostrsigner.common.nip46SignerType
 import com.greenart7c3.nostrsigner.common.retryWithBackoff
+import com.greenart7c3.nostrsigner.common.zapRequestParam
 import com.greenart7c3.nostrsigner.commonsui.Permission
 import com.greenart7c3.nostrsigner.commonsui.Res
 import com.greenart7c3.nostrsigner.commonsui.failed_to_connect_to_tor_orbot
@@ -131,7 +132,8 @@ object BunkerRequestUtils {
         "connect" -> "ack"
         // Client-supplied: a missing or unparsable param yields "" rather than throwing.
         "sign_event" -> bunkerRequest.params.firstOrNull()?.let { runCatching { AmberEvent.fromJson(it).toEvent().toJson() }.getOrNull() } ?: ""
-        "nip04_encrypt", "nip04_decrypt", "nip44_encrypt", "nip44_decrypt", "decrypt_zap_event" -> bunkerRequest.params.getOrElse(1) { "" }
+        "nip04_encrypt", "nip04_decrypt", "nip44_encrypt", "nip44_decrypt" -> bunkerRequest.params.getOrElse(1) { "" }
+        "decrypt_zap_event" -> bunkerRequest.zapRequestParam() ?: ""
         // NIP-44 v3 NIP-46 layout: [pubkey, kind, scope, payload]. For
         // `nip44v3_encrypt` the payload is base64-encoded plaintext; for
         // `nip44v3_decrypt` it is the v3 ciphertext.

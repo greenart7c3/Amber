@@ -1,6 +1,7 @@
 package com.greenart7c3.nostrsigner.desktop
 
 import com.greenart7c3.nostrsigner.common.SignerType
+import com.greenart7c3.nostrsigner.common.zapRequestParam
 import com.greenart7c3.nostrsigner.desktop.core.LocalSignerProtocol
 import com.greenart7c3.nostrsigner.desktop.core.LocalSignerProtocol.RpcException
 import com.vitorpamplona.quartz.nip01Core.core.hexToByteArray
@@ -88,6 +89,20 @@ class LocalSignerProtocolTest {
         assertTrue(request is BunkerRequestSign)
         assertEquals(1, (request as BunkerRequestSign).event.kind)
         assertEquals("internal-1", request.id)
+    }
+
+    // The socket takes just the zap request; the NIP-46 request it becomes carries it
+    // second, as the Android app reads it.
+    @Test
+    fun decryptZapEventMovesTheZapRequestToTheNip46Slot() {
+        val call = LocalSignerProtocol.toCall(
+            LocalSignerProtocol.parseRequest(
+                """{"id":"1","method":"decrypt_zap_event","params":[{"kind":9734,"content":"","tags":[],"created_at":1700000000}]}""",
+            ),
+        )
+        val request = LocalSignerProtocol.bunkerRequest("internal-1", call)
+        assertEquals(2, request.params.size)
+        assertEquals(9734, JacksonMapper.mapper.readTree(request.zapRequestParam()).get("kind").asInt())
     }
 
     @Test

@@ -8,6 +8,7 @@ import com.greenart7c3.nostrsigner.common.nip44v3Kind
 import com.greenart7c3.nostrsigner.common.nip44v3Payload
 import com.greenart7c3.nostrsigner.common.nip44v3Scope
 import com.greenart7c3.nostrsigner.common.psbt.PsbtSighashPolicy
+import com.greenart7c3.nostrsigner.common.zapRequestParam
 import com.vitorpamplona.quartz.nip01Core.core.Event
 import com.vitorpamplona.quartz.nip01Core.core.hexToByteArray
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequest
@@ -36,7 +37,7 @@ internal suspend fun computeResult(
     SignerType.NIP04_DECRYPT, SignerType.NIP44_DECRYPT -> decryptResult(request, type, acc)
     SignerType.NIP44_V3_ENCRYPT, SignerType.NIP44_V3_DECRYPT -> nip44v3Result(request, type, acc)
     SignerType.DECRYPT_ZAP_EVENT -> {
-        val zapEvent = Event.fromJson(request.params.first()) as ZapRequestEvent
+        val zapEvent = Event.fromJson(requireNotNull(request.zapRequestParam()) { "missing zap request" }) as ZapRequestEvent
         val decrypted = PrivateZapRequestBuilder().decryptZapEvent(zapEvent, acc.signer.signerSync).toJson()
         ComputedResult(decrypted, decrypted)
     }

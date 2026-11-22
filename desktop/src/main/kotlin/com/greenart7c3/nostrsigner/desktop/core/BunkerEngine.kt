@@ -2,26 +2,25 @@ package com.greenart7c3.nostrsigner.desktop.core
 
 import com.greenart7c3.nostrsigner.common.EncryptionType
 import com.greenart7c3.nostrsigner.common.NIP44V3_DECRYPT_FAILED
-import com.greenart7c3.nostrsigner.common.NIP44V3_KIND_REQUIRED
 import com.greenart7c3.nostrsigner.common.NIP46_INVALID_PARAMS
 import com.greenart7c3.nostrsigner.common.Nip46Admission
 import com.greenart7c3.nostrsigner.common.Nip46AdmissionReply
 import com.greenart7c3.nostrsigner.common.Nip46Connection
+import com.greenart7c3.nostrsigner.common.Nip46Step
 import com.greenart7c3.nostrsigner.common.RELAY_AUTH_KIND
 import com.greenart7c3.nostrsigner.common.SignerType
 import com.greenart7c3.nostrsigner.common.UNVERIFIED_REPLY_ATTEMPTS
 import com.greenart7c3.nostrsigner.common.admitNip46Request
 import com.greenart7c3.nostrsigner.common.bunkerFilters
 import com.greenart7c3.nostrsigner.common.canRememberRelayAuth
-import com.greenart7c3.nostrsigner.common.hasAmbiguousRelayTags
 import com.greenart7c3.nostrsigner.common.hasRequiredParams
-import com.greenart7c3.nostrsigner.common.isBlockedByAuthWhitelist
 import com.greenart7c3.nostrsigner.common.localPubKeyFromPrivKey
 import com.greenart7c3.nostrsigner.common.nip44v3Kind
 import com.greenart7c3.nostrsigner.common.nip44v3Scope
 import com.greenart7c3.nostrsigner.common.nip44v3SignerTypes
 import com.greenart7c3.nostrsigner.common.nip46SignerType
 import com.greenart7c3.nostrsigner.common.nip46StaleReason
+import com.greenart7c3.nostrsigner.common.nip46Step
 import com.greenart7c3.nostrsigner.common.parseRequestedPermissions
 import com.greenart7c3.nostrsigner.common.permissionLookupOrder
 import com.greenart7c3.nostrsigner.common.relayAuthHost
@@ -29,7 +28,6 @@ import com.greenart7c3.nostrsigner.common.relays.RelayHealthTracker
 import com.greenart7c3.nostrsigner.common.relays.SenderRateLimiter
 import com.greenart7c3.nostrsigner.common.reply
 import com.greenart7c3.nostrsigner.common.sanitizeAppName
-import com.greenart7c3.nostrsigner.common.switchRelaysResult
 import com.greenart7c3.nostrsigner.commonsui.Permission
 import com.greenart7c3.nostrsigner.commonsui.containsNip
 import com.greenart7c3.nostrsigner.commonsui.kindToNip
@@ -573,10 +571,12 @@ class BunkerEngine(
         applicationWithSecret: AppWithPermissions?,
     ) {
         val a = AdmittedRequest(bunkerRequest, event, acc, relay, connectionPrivKey, permission, app = permission ?: applicationWithSecret)
-        when (a.type) {
-            SignerType.SWITCH_RELAYS -> switchRelays(a)
-            SignerType.LOGOUT -> logout(a)
-            else -> if (!refusedUpFront(a)) answerOrQueue(a)
+        // The common first step, as on Android.
+        when (val step = nip46Step(bunkerRequest, a.type, AmberDesktop.settings.authWhitelist, AmberDesktop.defaultRelays().map { it.url })) {
+            is Nip46Step.SwitchRelays -> switchRelays(a, step.result)
+            Nip46Step.Logout -> logout(a)
+            is Nip46Step.Refuse -> refuseUpFront(a, step)
+            Nip46Step.Decide -> answerOrQueue(a)
         }
     }
 
@@ -612,11 +612,10 @@ class BunkerEngine(
     private suspend fun reply(a: AdmittedRequest, result: String?, error: String? = null): Boolean = sendResponse(a.acc, a.signerPrivKey, a.event.pubKey, a.encryptionType, BunkerResponse(a.bunkerRequest.id, result, error), a.relays)
 
     // A stored connection moves to the default relays once the client has the answer.
-    private suspend fun switchRelays(a: AdmittedRequest) {
+    private suspend fun switchRelays(a: AdmittedRequest, result: String?) {
         val current = a.permission ?: return
-        val defaultRelays = AmberDesktop.defaultRelays()
-        if (reply(a, switchRelaysResult(defaultRelays.map { it.url }))) {
-            a.store.upsert(current.copy(app = current.app.copy(relays = defaultRelays.map { it.url })))
+        if (reply(a, result)) {
+            a.store.upsert(current.copy(app = current.app.copy(relays = AmberDesktop.defaultRelays().map { it.url })))
             checkForNewRelaysAndUpdateAllFilters(shouldReconnect = true)
         }
     }
@@ -624,32 +623,17 @@ class BunkerEngine(
     // A stored connection is deleted once the client has the ack.
     private suspend fun logout(a: AdmittedRequest) {
         val current = a.permission ?: return
-        if (reply(a, "ack")) {
+        if (reply(a, Nip46Step.Logout.RESULT)) {
             a.store.delete(current.app.key)
             checkForNewRelaysAndUpdateAllFilters()
         }
     }
 
-    /** Refuses, without computing anything, what may never be signed; true when it did. */
-    private suspend fun refusedUpFront(a: AdmittedRequest): Boolean {
-        val request = a.bunkerRequest
-        // Mirrors EventNotificationConsumer: authorization and the approval
-        // card decide on the first relay tag alone, so a second one would be
-        // signed without ever being granted.
-        if (request is BunkerRequestSign && hasAmbiguousRelayTags(request.event.kind, request.event.tags)) {
-            a.store.addLog(a.relay.url, "bunker", "Refusing a multi-relay auth event ${request.id}")
-            reply(a, "", "refusing a multi-relay auth event")
-            return true
-        }
-        // Relay auth is granted per relay; a relay outside a non-empty auth
-        // whitelist is rejected without asking, like Android.
-        if (isBlockedByAuthWhitelist(a.kind, a.relayHost, AmberDesktop.settings.authWhitelist)) {
-            a.store.addLog(a.relay.url, "bunker", "Relay auth for ${a.relayHost} is not in the auth whitelist")
-            a.store.addHistory(HistoryRecord(a.event.pubKey, a.type.toString(), a.kind, TimeUtils.now(), false))
-            reply(a, "", "user rejected")
-            return true
-        }
-        return false
+    // Refuses, without computing anything, what may never be signed (the common nip46Step).
+    private suspend fun refuseUpFront(a: AdmittedRequest, step: Nip46Step.Refuse) {
+        a.store.addLog(a.relay.url, "bunker", step.log)
+        if (step.recordRejected) a.store.addHistory(HistoryRecord(a.event.pubKey, a.type.toString(), a.kind, TimeUtils.now(), false))
+        reply(a, "", step.error)
     }
 
     // Answers from the stored grants, else queues the request for the user's decision.
@@ -699,11 +683,8 @@ class BunkerEngine(
         a.store.addLog(a.relay.url, "bunker", "Rejecting request that cannot be fulfilled: ${e.message}")
         // Mirrors Android's validateNip44v3Request errors; kept generic so
         // a failed decrypt doesn't leak the ciphertext's embedded context.
-        val error = when (a.type) {
-            in nip44v3SignerTypes if a.kind == null -> NIP44V3_KIND_REQUIRED
-            SignerType.NIP44_V3_DECRYPT -> NIP44V3_DECRYPT_FAILED
-            else -> "could not process the request"
-        }
+        // A v3 request without a kind was refused up front (nip46Step).
+        val error = if (a.type == SignerType.NIP44_V3_DECRYPT) NIP44V3_DECRYPT_FAILED else "could not process the request"
         reply(a, "", error)
         null
     }

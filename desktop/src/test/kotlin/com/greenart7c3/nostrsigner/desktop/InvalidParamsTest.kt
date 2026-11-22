@@ -1,5 +1,6 @@
 package com.greenart7c3.nostrsigner.desktop
 
+import com.greenart7c3.nostrsigner.common.NIP44V3_KIND_REQUIRED
 import com.greenart7c3.nostrsigner.common.NIP46_INVALID_PARAMS
 import com.greenart7c3.nostrsigner.common.generateBunkerPrivKey
 import com.greenart7c3.nostrsigner.common.localPubKeyFromPrivKey
@@ -55,14 +56,16 @@ class InvalidParamsTest {
         }
 
         // Missing params are refused before admission (hasRequiredParams); a v3 request
-        // with its pubkey but no kind passes that check and is refused computing it.
-        fun refusedUpFront() = store.logs.value.count { it.message.endsWith(": $NIP46_INVALID_PARAMS") }
-        fun refusedComputing() = store.logs.value.count { it.message.startsWith("Rejecting request that cannot be fulfilled") }
+        // with its pubkey but no kind passes that check and is refused after it, before
+        // anything is computed (nip46Step).
+        fun refusedBeforeAdmission() = store.logs.value.count { it.message.endsWith(": $NIP46_INVALID_PARAMS") }
+        fun refusedUpFront() = store.logs.value.count { it.message == "Rejecting invalid NIP-44 v3 request: $NIP44V3_KIND_REQUIRED" }
         withTimeout(20.seconds) {
-            while (refusedUpFront() < 3 || refusedComputing() < 1) delay(50.milliseconds)
+            while (refusedBeforeAdmission() < 3 || refusedUpFront() < 1) delay(50.milliseconds)
         }
-        assertEquals(3, refusedUpFront())
-        assertEquals(1, refusedComputing())
+        assertEquals(3, refusedBeforeAdmission())
+        assertEquals(1, refusedUpFront())
+        assertEquals(0, store.logs.value.count { it.message.startsWith("Rejecting request that cannot be fulfilled") })
         assertFalse(store.history.value.any { it.appKey == clientHex && it.accepted })
         assertFalse(AmberDesktop.engine.pending.value.any { it.account.npub == account.npub })
     }

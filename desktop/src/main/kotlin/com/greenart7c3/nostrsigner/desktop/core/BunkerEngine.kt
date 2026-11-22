@@ -5,6 +5,7 @@ import com.greenart7c3.nostrsigner.common.NIP44V3_DECRYPT_FAILED
 import com.greenart7c3.nostrsigner.common.NIP44V3_KIND_REQUIRED
 import com.greenart7c3.nostrsigner.common.NIP46_INVALID_PARAMS
 import com.greenart7c3.nostrsigner.common.Nip46Admission
+import com.greenart7c3.nostrsigner.common.Nip46AdmissionReply
 import com.greenart7c3.nostrsigner.common.Nip46Connection
 import com.greenart7c3.nostrsigner.common.RELAY_AUTH_KIND
 import com.greenart7c3.nostrsigner.common.SignerType
@@ -26,6 +27,7 @@ import com.greenart7c3.nostrsigner.common.permissionLookupOrder
 import com.greenart7c3.nostrsigner.common.relayAuthHost
 import com.greenart7c3.nostrsigner.common.relays.RelayHealthTracker
 import com.greenart7c3.nostrsigner.common.relays.SenderRateLimiter
+import com.greenart7c3.nostrsigner.common.reply
 import com.greenart7c3.nostrsigner.common.sanitizeAppName
 import com.greenart7c3.nostrsigner.common.switchRelaysResult
 import com.greenart7c3.nostrsigner.commonsui.Permission
@@ -495,34 +497,25 @@ class BunkerEngine(
         }
         val connectSecret = (bunkerRequest as? BunkerRequestConnect)?.let { it.secret ?: UUID.randomUUID().toString() }
         val withSecret = connectSecret?.let { store.getBySecret(it) }
-        when (val admission = admitNip46Request(type, stored?.toNip46Connection(), connectionPrivKey, connectSecret, withSecret?.toNip46Connection())) {
-            is Nip46Admission.Admit -> handleRequest(
-                bunkerRequest,
-                event,
-                acc,
-                relay,
-                connectionPrivKey,
-                stored.takeIf { admission.stored != null },
-                withSecret.takeIf { admission.bySecret != null },
-            )
-            is Nip46Admission.AckRepeatedConnect -> {
+        val admission = admitNip46Request(type, stored?.toNip46Connection(), connectionPrivKey, connectSecret, withSecret?.toNip46Connection())
+        if (admission is Nip46Admission.Admit) {
+            handleRequest(bunkerRequest, event, acc, relay, connectionPrivKey, stored.takeIf { admission.stored != null }, withSecret.takeIf { admission.bySecret != null })
+            return
+        }
+        // Decided by the admission alone (the common Nip46Admission.reply), as on Android.
+        when (val decided = admission.reply(event.pubKey, bunkerRequest.id, stored?.app?.normalizedRelays(), withSecret?.app?.normalizedRelays(), responseRelay)) {
+            is Nip46AdmissionReply.Ack -> {
                 // Already-connected client re-sending `connect`: ack silently.
-                store.addHistory(HistoryRecord(admission.connection.key, type.toString().lowercase(), null, TimeUtils.now(), true))
-                val relays = stored?.app?.normalizedRelays().orEmpty().ifEmpty { responseRelay }
-                sendResponse(acc, connectionPrivKey.ifEmpty { admission.connection.localKey }, event.pubKey, encryptionType, BunkerResponse(bunkerRequest.id, "ack", null), relays)
+                store.addHistory(HistoryRecord(decided.connection.key, type.toString().lowercase(), null, TimeUtils.now(), true))
+                val signerKey = connectionPrivKey.ifEmpty { decided.connection.localKey }
+                sendResponse(acc, signerKey, event.pubKey, encryptionType, BunkerResponse(bunkerRequest.id, decided.result, null), decided.relays, decided.attempts)
             }
-            is Nip46Admission.RefuseConnect -> {
-                store.addLog(relay.url, "bunker", "Connection rejected: ${admission.message}")
-                refuse(reply, admission.message, withSecret?.app?.normalizedRelays() ?: responseRelay)
+            is Nip46AdmissionReply.Refuse -> {
+                store.addLog(relay.url, "bunker", decided.log)
+                refuse(reply, decided.error, decided.relays)
             }
-            Nip46Admission.Unknown -> {
-                store.addLog(relay.url, "bunker", "No permission found for ${event.pubKey}")
-                refuse(reply, "no permission", responseRelay)
-            }
-            // Mirrors EventNotificationConsumer: a stored app may only use its
-            // own connection key; a request to another connection's key is
-            // dropped. A connect is exempt (that is how a client attaches).
-            Nip46Admission.Ignore -> store.addLog(relay.url, "bunker", "Request ${bunkerRequest.id} from ${event.pubKey} reached another connection's key")
+            is Nip46AdmissionReply.Drop -> store.addLog(relay.url, "bunker", decided.log)
+            null -> Unit
         }
     }
 

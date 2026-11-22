@@ -503,6 +503,15 @@ Where each method keeps its params is read in one place too: `peerPubKeyParam()`
 and zap readers, and the app's `getDataFromBunker`/`requestParams` and the desktop's
 `computeResult` read through them instead of by index.
 
-Left in step 11: what happens after admission (the replies to a refused,
-acknowledged or answered request: error, relays, attempts and key) is still built by
-each app.
+What the admission alone decides is one mapping, `Nip46Admission.reply()`: a repeated
+connect is acknowledged on its connection's relays (where it arrived when it has none;
+the app used to send that ack nowhere), a refused connect answered once on the relays
+of the connection its secret names, an unknown sender "no permission" once where it
+arrived, and a request to another connection's key dropped. Each app sends it under
+its own key and records its history.
+
+Left in step 11, in this order: the reply builder and sender (encrypt, sign, retry with
+a fresh timestamp, the no-relays outcome), what each admitted method does
+(`switch_relays`/`logout` saving after the reply is published, the up-front refusals),
+and what approving or rejecting writes (sign-policy grants, the per-request grant and
+its scope, the revert when the reply fails).

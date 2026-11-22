@@ -401,14 +401,20 @@ class EventNotificationConsumerTest {
         }
     }
 
-    @Test
-    fun `a connected app's multi-relay auth event is refused, with retries, without signing`() = runBlocking {
-        val kp = KeyPair()
+    // A reply the consumer sent: the response, the relays it went to and its attempts.
+    private data class SentReply(val response: BunkerResponse, val relays: List<NormalizedRelayUrl>, val attempts: Int)
+
+    /**
+     * Consumes [requestJson] from a client with a stored connection without relays (one
+     * from before per-connection keys) and returns the replies; [onAccount] can verify
+     * how the account key was used.
+     */
+    private suspend fun consumeFromConnectedApp(requestJson: String, onAccount: (Account) -> Unit = {}): List<SentReply> {
         val acc = spyk(
             Account(
                 signer = mockk<NostrSignerInternal>(relaxed = true),
-                hexKey = kp.pubKey.toHexKey(),
-                npub = "npub-multi-relay-test",
+                hexKey = KeyPair().pubKey.toHexKey(),
+                npub = "npub-connected-test",
                 name = MutableStateFlow(""),
                 picture = MutableStateFlow(""),
                 signPolicy = 2,
@@ -417,11 +423,9 @@ class EventNotificationConsumerTest {
                 keyAccessCheck = {},
             ),
         )
-        val unsigned = """{"id":"","pubkey":"","created_at":1,"kind":22242,"tags":[["relay","wss://a.com"],["relay","wss://b.com"]],"content":"","sig":""}"""
-        val requestJson = """{"id":"a2","method":"sign_event","params":[${com.vitorpamplona.quartz.nip01Core.jackson.JacksonMapper.mapper.writeValueAsString(unsigned)}]}"""
         coEvery { acc.decrypt(any(), any()) } returns requestJson
         val client = KeyPair().pubKey.toHexKey()
-        val event = requestEvent("multi-relay", from = client, to = acc.hexKey)
+        val event = requestEvent("connected-${requestJson.hashCode()}", from = client, to = acc.hexKey)
         coEvery { AccountStorage.loadSync(any(), any()) } returns acc
         coEvery { AccountStorage.load(any(), any()) } returns acc
         coEvery { bunkerEventDao.exists(any()) } returns false
@@ -434,23 +438,41 @@ class EventNotificationConsumerTest {
         try {
             every { amber.applicationIOScope } returns CoroutineScope(Dispatchers.Unconfined + SupervisorJob())
             every { amber.notificationCache[any()] } returns null
-            val responses = mutableListOf<BunkerResponse>()
-            val attempts = mutableListOf<Int>()
+            val sent = mutableListOf<SentReply>()
             coEvery {
                 bunkerResponder.sendBunkerResponse(any(), any(), any(), any(), any(), any(), any())
             } answers {
-                responses += arg<BunkerResponse>(2)
-                attempts += arg<Int>(6)
+                sent += SentReply(arg(2), arg(3), arg(6))
             }
-
             consumer.consume(event, NormalizedRelayUrl("wss://relay.com"))
-
-            assertEquals("refusing a multi-relay auth event", responses.single().error)
-            assertEquals(listOf(BUNKER_REPLY_ATTEMPTS), attempts)
-            coVerify(exactly = 0) { acc.sign<Event>(any()) }
+            onAccount(acc)
+            return sent
         } finally {
             unmockkObject(BunkerRequestUtils)
         }
+    }
+
+    @Test
+    fun `a connected app's multi-relay auth event is refused, with retries, without signing`() = runBlocking {
+        val unsigned = """{"id":"","pubkey":"","created_at":1,"kind":22242,"tags":[["relay","wss://a.com"],["relay","wss://b.com"]],"content":"","sig":""}"""
+        val requestJson = """{"id":"a2","method":"sign_event","params":[${com.vitorpamplona.quartz.nip01Core.jackson.JacksonMapper.mapper.writeValueAsString(unsigned)}]}"""
+        val sent = consumeFromConnectedApp(requestJson) { acc ->
+            coVerify(exactly = 0) { acc.sign<Event>(any()) }
+        }
+
+        assertEquals("refusing a multi-relay auth event", sent.single().response.error)
+        assertEquals(BUNKER_REPLY_ATTEMPTS, sent.single().attempts)
+    }
+
+    // The ack used to go to the connection's saved relays even when there were none, so
+    // nothing was sent; it now goes where the connect arrived, as on the desktop.
+    @Test
+    fun `a repeated connect from a connection without relays is acknowledged where it arrived`() = runBlocking {
+        val sent = consumeFromConnectedApp("""{"id":"c2","method":"connect","params":["signer","secret"]}""").single()
+
+        assertEquals("ack", sent.response.result)
+        assertEquals(listOf(NormalizedRelayUrl("wss://relay.com")), sent.relays)
+        assertEquals(BUNKER_REPLY_ATTEMPTS, sent.attempts)
     }
 
     // A verified, fresh bunker event [from] a client, tagged [to] a key.

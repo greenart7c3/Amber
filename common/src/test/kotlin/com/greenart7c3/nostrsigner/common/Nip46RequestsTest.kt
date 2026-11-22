@@ -105,6 +105,25 @@ class Nip46RequestsTest {
         assertTrue(request("ping", "[]").hasRequiredParams())
     }
 
+    @Test
+    fun `each method's params are read from their place in the layout`() {
+        val nip44 = request("nip44_encrypt", """["peer","hello"]""")
+        assertEquals("peer", nip44.peerPubKeyParam())
+        assertEquals("hello", nip44.encryptionTextParam())
+        assertEquals("peer", request("nip44v3_decrypt", """["peer","1","s","payload"]""").peerPubKeyParam())
+        assertEquals("psbt", request("sign_psbt", """["psbt"]""").psbtParam())
+        assertTrue(request("sign_event", "[$event]").eventParam()!!.contains("\"kind\""))
+    }
+
+    @Test
+    fun `a missing param reads as null, or empty for the encryption text`() {
+        val empty = request("nip04_decrypt", "[]")
+        assertNull(empty.peerPubKeyParam())
+        assertEquals("", empty.encryptionTextParam())
+        assertNull(request("sign_psbt", "[]").psbtParam())
+        assertNull(request("sign_event", "[]").eventParam())
+    }
+
     // The desktop used to admit these and fail computing them ("could not process the request").
     @Test
     fun `a request missing a param its method needs is not`() {

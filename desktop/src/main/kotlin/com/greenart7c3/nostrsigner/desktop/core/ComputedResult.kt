@@ -2,12 +2,15 @@ package com.greenart7c3.nostrsigner.desktop.core
 
 import com.greenart7c3.nostrsigner.common.NIP44V3_KIND_REQUIRED
 import com.greenart7c3.nostrsigner.common.SignerType
+import com.greenart7c3.nostrsigner.common.encryptionTextParam
 import com.greenart7c3.nostrsigner.common.hasAmbiguousRelayTags
 import com.greenart7c3.nostrsigner.common.nip44v3.Nip44v3
 import com.greenart7c3.nostrsigner.common.nip44v3Kind
 import com.greenart7c3.nostrsigner.common.nip44v3Payload
 import com.greenart7c3.nostrsigner.common.nip44v3Scope
+import com.greenart7c3.nostrsigner.common.peerPubKeyParam
 import com.greenart7c3.nostrsigner.common.psbt.PsbtSighashPolicy
+import com.greenart7c3.nostrsigner.common.psbtParam
 import com.greenart7c3.nostrsigner.common.zapRequestParam
 import com.vitorpamplona.quartz.nip01Core.core.Event
 import com.vitorpamplona.quartz.nip01Core.core.hexToByteArray
@@ -42,7 +45,7 @@ internal suspend fun computeResult(
         ComputedResult(decrypted, decrypted)
     }
     SignerType.SIGN_PSBT -> {
-        val psbt = request.params.first()
+        val psbt = requireNotNull(request.psbtParam()) { "missing psbt" }
         PsbtSighashPolicy.requireCommitsToAllOutputs(psbt, acc.signer.keyPair.pubKey)
         ComputedResult(acc.signer.signPsbt(psbt), psbt)
     }
@@ -55,25 +58,27 @@ private suspend fun signEventResult(request: BunkerRequestSign, acc: DesktopAcco
     return ComputedResult(acc.signer.sign(template).toJson(), template.toJson())
 }
 
+private fun BunkerRequest.requirePeerPubKey(): String = requireNotNull(peerPubKeyParam()) { "missing pubkey" }
+
 // params: [pubkey, plaintext]
 private suspend fun encryptResult(request: BunkerRequest, type: SignerType, acc: DesktopAccount): ComputedResult {
-    val pubKey = request.params.first()
-    val message = request.params.getOrElse(1) { "" }
+    val pubKey = request.requirePeerPubKey()
+    val message = request.encryptionTextParam()
     val cipher = if (type == SignerType.NIP04_ENCRYPT) acc.nip04Encrypt(message, pubKey) else acc.nip44Encrypt(message, pubKey)
     return ComputedResult(cipher, message, openSealForPreview(message, acc))
 }
 
 // params: [pubkey, ciphertext]
 private suspend fun decryptResult(request: BunkerRequest, type: SignerType, acc: DesktopAccount): ComputedResult {
-    val pubKey = request.params.first()
-    val ciphertext = request.params.getOrElse(1) { "" }
+    val pubKey = request.requirePeerPubKey()
+    val ciphertext = request.encryptionTextParam()
     val plain = if (type == SignerType.NIP04_DECRYPT) acc.nip04Decrypt(ciphertext, pubKey) else acc.nip44Decrypt(ciphertext, pubKey)
     return ComputedResult(plain, plain, openSealForPreview(plain, acc))
 }
 
 // NIP-46 layout: [pubkey, kind, scope, base64 plaintext or the v3 payload]
 private fun nip44v3Result(request: BunkerRequest, type: SignerType, acc: DesktopAccount): ComputedResult {
-    val pubKey = request.params.first().hexToByteArray()
+    val pubKey = request.requirePeerPubKey().hexToByteArray()
     val kind = request.nip44v3Kind() ?: throw IllegalArgumentException(NIP44V3_KIND_REQUIRED)
     val scope = request.nip44v3Scope()
     val payload = request.nip44v3Payload()

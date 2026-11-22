@@ -497,3 +497,12 @@ PSBT, and an event that parses for `sign_event`. Both apps refuse a request with
 them with "invalid params" before admission, before any key is used. The desktop used
 to admit it and fail computing the answer ("could not process the request"), and the
 app did not check a `sign_psbt`'s PSBT.
+
+Where each method keeps its params is read in one place too: `peerPubKeyParam()`,
+`encryptionTextParam()`, `eventParam()` and `psbtParam()` sit next to the NIP-44 v3
+and zap readers, and the app's `getDataFromBunker`/`requestParams` and the desktop's
+`computeResult` read through them instead of by index.
+
+Left in step 11: what happens after admission (the replies to a refused,
+acknowledged or answered request: error, relays, attempts and key) is still built by
+each app.

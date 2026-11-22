@@ -9,12 +9,16 @@ import com.greenart7c3.nostrsigner.SignerActivity
 import com.greenart7c3.nostrsigner.common.BUNKER_REPLY_ATTEMPTS
 import com.greenart7c3.nostrsigner.common.EncryptionType
 import com.greenart7c3.nostrsigner.common.SignerType
+import com.greenart7c3.nostrsigner.common.encryptionTextParam
+import com.greenart7c3.nostrsigner.common.eventParam
 import com.greenart7c3.nostrsigner.common.generateBunkerPrivKey
 import com.greenart7c3.nostrsigner.common.nip44v3Kind
 import com.greenart7c3.nostrsigner.common.nip44v3Payload
 import com.greenart7c3.nostrsigner.common.nip44v3Scope
 import com.greenart7c3.nostrsigner.common.nip44v3SignerTypes
 import com.greenart7c3.nostrsigner.common.nip46SignerType
+import com.greenart7c3.nostrsigner.common.peerPubKeyParam
+import com.greenart7c3.nostrsigner.common.psbtParam
 import com.greenart7c3.nostrsigner.common.retryWithBackoff
 import com.greenart7c3.nostrsigner.common.zapRequestParam
 import com.greenart7c3.nostrsigner.commonsui.Permission
@@ -131,15 +135,15 @@ object BunkerRequestUtils {
     fun getDataFromBunker(bunkerRequest: BunkerRequest): String = when (bunkerRequest.method) {
         "connect" -> "ack"
         // Client-supplied: a missing or unparsable param yields "" rather than throwing.
-        "sign_event" -> bunkerRequest.params.firstOrNull()?.let { runCatching { AmberEvent.fromJson(it).toEvent().toJson() }.getOrNull() } ?: ""
-        "nip04_encrypt", "nip04_decrypt", "nip44_encrypt", "nip44_decrypt" -> bunkerRequest.params.getOrElse(1) { "" }
+        "sign_event" -> bunkerRequest.eventParam()?.let { runCatching { AmberEvent.fromJson(it).toEvent().toJson() }.getOrNull() } ?: ""
+        "nip04_encrypt", "nip04_decrypt", "nip44_encrypt", "nip44_decrypt" -> bunkerRequest.encryptionTextParam()
         "decrypt_zap_event" -> bunkerRequest.zapRequestParam() ?: ""
         // NIP-44 v3 NIP-46 layout: [pubkey, kind, scope, payload]. For
         // `nip44v3_encrypt` the payload is base64-encoded plaintext; for
         // `nip44v3_decrypt` it is the v3 ciphertext.
         "nip44v3_encrypt", "nip44v3_decrypt" -> bunkerRequest.nip44v3Payload()
         "ping" -> "pong"
-        "sign_psbt" -> bunkerRequest.params.firstOrNull() ?: ""
+        "sign_psbt" -> bunkerRequest.psbtParam() ?: ""
         "logout" -> "ack"
         else -> ""
     }
@@ -616,7 +620,7 @@ class BunkerResponder(
                     true,
                     content = historyContent,
                     encryptionPubKey = if (type in encryptDecryptSignerTypes && type != SignerType.DECRYPT_ZAP_EVENT) {
-                        bunkerRequest.request.params.firstOrNull() ?: ""
+                        bunkerRequest.request.peerPubKeyParam() ?: ""
                     } else {
                         ""
                     },
@@ -756,7 +760,7 @@ class BunkerResponder(
                     false,
                     content = historyContent,
                     encryptionPubKey = if (historyContent.isNotEmpty() && signerType in encryptDecryptSignerTypes && signerType != SignerType.DECRYPT_ZAP_EVENT) {
-                        bunkerRequest.request.params.firstOrNull() ?: ""
+                        bunkerRequest.request.peerPubKeyParam() ?: ""
                     } else {
                         ""
                     },

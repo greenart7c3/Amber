@@ -41,12 +41,14 @@ import com.greenart7c3.nostrsigner.common.Nip46Connection
 import com.greenart7c3.nostrsigner.common.SignerType
 import com.greenart7c3.nostrsigner.common.UNVERIFIED_REPLY_ATTEMPTS
 import com.greenart7c3.nostrsigner.common.admitNip46Request
+import com.greenart7c3.nostrsigner.common.eventParam
 import com.greenart7c3.nostrsigner.common.hasAmbiguousRelayTags
 import com.greenart7c3.nostrsigner.common.hasRequiredParams
 import com.greenart7c3.nostrsigner.common.nip44v3Kind
 import com.greenart7c3.nostrsigner.common.nip44v3Scope
 import com.greenart7c3.nostrsigner.common.nip46SignerType
 import com.greenart7c3.nostrsigner.common.nip46StaleReason
+import com.greenart7c3.nostrsigner.common.peerPubKeyParam
 import com.greenart7c3.nostrsigner.common.relays.SenderRateLimiter
 import com.greenart7c3.nostrsigner.common.sanitizeAppName
 import com.greenart7c3.nostrsigner.common.switchRelaysResult
@@ -432,9 +434,9 @@ class EventNotificationConsumer(
     // Params come straight from the client: a missing one or an unparsable event is null.
     private fun requestParams(bunkerRequest: BunkerRequest): RequestParams? {
         val method = bunkerRequest.method
-        val amberEvent = if (method == "sign_event") bunkerRequest.params.firstOrNull()?.let { runCatching { AmberEvent.fromJson(it) }.getOrNull() } else null
+        val amberEvent = if (method == "sign_event") bunkerRequest.eventParam()?.let { runCatching { AmberEvent.fromJson(it) }.getOrNull() } else null
         val pubKey = when {
-            method.endsWith("encrypt") || method.endsWith("decrypt") -> bunkerRequest.params.firstOrNull()
+            method.endsWith("encrypt") || method.endsWith("decrypt") -> bunkerRequest.peerPubKeyParam()
             method == "decrypt_zap_event" -> bunkerRequest.zapRequestParam()
             method == "sign_event" -> amberEvent?.pubKey
             else -> ""
@@ -790,7 +792,7 @@ class EventNotificationConsumer(
         val kind = bunkerRequest.nip44v3Kind() ?: return null
         val scope = bunkerRequest.nip44v3Scope()
         val data = BunkerRequestUtils.getDataFromBunker(bunkerRequest)
-        val pubKey = bunkerRequest.params.firstOrNull() ?: return null
+        val pubKey = bunkerRequest.peerPubKeyParam() ?: return null
         return try {
             // text = readable plaintext (for display/history); result = wire value.
             if (bunkerRequest.method == "nip44v3_encrypt") {

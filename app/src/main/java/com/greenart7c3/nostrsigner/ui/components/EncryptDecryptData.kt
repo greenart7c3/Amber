@@ -178,13 +178,8 @@ fun EncryptDecryptData(
                             tags = encryptedData.tagArray,
                         )
                     } else {
-                        val content = if (type.name.contains("ENCRYPT") && encryptedData is ClearTextEncryptedDataKind) {
-                            encryptedData.text
-                        } else {
-                            encryptedData?.result ?: ""
-                        }
                         Text(
-                            content,
+                            plainCardText(type, encryptedData),
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(top = 8.dp),
@@ -384,13 +379,8 @@ fun BunkerEncryptDecryptData(
                             tags = encryptedData.tagArray,
                         )
                     } else {
-                        val content = if (type.name.contains("ENCRYPT") && encryptedData is ClearTextEncryptedDataKind) {
-                            encryptedData.text
-                        } else {
-                            encryptedData?.result ?: ""
-                        }
                         Text(
-                            content,
+                            plainCardText(type, encryptedData),
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(top = 8.dp),
@@ -449,6 +439,16 @@ fun BunkerEncryptDecryptData(
             },
         )
     }
+}
+
+/**
+ * The text an approval card shows for a request that is neither an event nor a tag
+ * array: the plaintext of an encrypt, a private zap's message, else the decrypted result.
+ */
+internal fun plainCardText(type: SignerType, encryptedData: EncryptedDataKind?): String = when {
+    type.name.contains("ENCRYPT") && encryptedData is ClearTextEncryptedDataKind -> encryptedData.text
+    encryptedData is PrivateZapEncryptedDataKind -> encryptedData.message
+    else -> encryptedData?.result ?: ""
 }
 
 @ThemePreviews

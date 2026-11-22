@@ -65,6 +65,13 @@ fun BunkerRequest.nip44v3Scope(): String = params.getOrElse(2) { "" }
 fun BunkerRequest.nip44v3Payload(): String = params.getOrElse(3) { "" }
 
 /**
+ * The zap request event (JSON) a `decrypt_zap_event` carries; null when missing. The
+ * params follow the other decrypts, `[pubkey, zap request]`, as the Android app has
+ * always read them.
+ */
+fun BunkerRequest.zapRequestParam(): String? = params.getOrNull(1)
+
+/**
  * Whether a `connect` from an app already stored is a repeat that is acked
  * without asking again: the app connected before, or it is a bunker connection
  * a client already attached to (its [appKey] is no longer the placeholder

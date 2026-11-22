@@ -148,12 +148,17 @@ object LocalSignerProtocol {
         }
     }.getOrNull()
 
-    /** The call as a NIP-46 request (`sign_event` gets its typed subclass), under [internalId]. */
+    /**
+     * The call as a NIP-46 request (`sign_event` gets its typed subclass), under [internalId].
+     * A socket `decrypt_zap_event` takes just the zap request; over NIP-46 it comes second,
+     * after a pubkey slot (`zapRequestParam`), so it moves there.
+     */
     fun bunkerRequest(internalId: String, call: Call): BunkerRequest {
+        val params = if (call.type == SignerType.DECRYPT_ZAP_EVENT) listOf("") + call.params else call.params
         val json = nodes.objectNode().apply {
             put("id", internalId)
             put("method", call.method)
-            set<JsonNode>("params", nodes.arrayNode().apply { call.params.forEach { add(it) } })
+            set<JsonNode>("params", nodes.arrayNode().apply { params.forEach { add(it) } })
         }
         return try {
             mapper.readValue(mapper.writeValueAsString(json), BunkerRequest::class.java)

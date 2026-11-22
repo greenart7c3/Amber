@@ -484,3 +484,9 @@ apps: once the sender is admitted, before anything is signed. The app used to re
 it before admission, so any sender got the retried refusal, against the rule that an
 error reply to an unverified sender is published once; now an unknown one gets the
 single "no permission".
+
+A NIP-46 `decrypt_zap_event` is read the Android way in both apps: `[pubkey, zap
+request]`, the layout of the other decrypts (`zapRequestParam()`). The desktop used to
+read the zap request from `params[0]`. Its local socket signer keeps its documented
+`[zap request, account?]` call and moves the zap request to the NIP-46 slot when it
+builds the request.

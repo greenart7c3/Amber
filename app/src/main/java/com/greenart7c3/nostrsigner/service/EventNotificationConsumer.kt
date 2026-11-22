@@ -33,6 +33,8 @@ import com.greenart7c3.nostrsigner.SavedAccounts
 import com.greenart7c3.nostrsigner.SignerProviderQuery
 import com.greenart7c3.nostrsigner.common.BUNKER_REPLY_ATTEMPTS
 import com.greenart7c3.nostrsigner.common.EncryptionType
+import com.greenart7c3.nostrsigner.common.NIP44V3_DECRYPT_FAILED
+import com.greenart7c3.nostrsigner.common.NIP44V3_KIND_REQUIRED
 import com.greenart7c3.nostrsigner.common.Nip46Admission
 import com.greenart7c3.nostrsigner.common.Nip46Connection
 import com.greenart7c3.nostrsigner.common.SignerType
@@ -811,7 +813,7 @@ class EventNotificationConsumer(
         pubKey: String,
         acc: Account,
     ): String? {
-        if (kind == null) return "kind is required for nip44v3"
+        if (kind == null) return NIP44V3_KIND_REQUIRED
         if (type != SignerType.NIP44_V3_DECRYPT) return null
         return try {
             acc.nip44v3Decrypt(data, pubKey, kind, scope)
@@ -822,9 +824,7 @@ class EventNotificationConsumer(
             // let it through so the client gets the real condition instead of
             // being told the payload was corrupt.
             if (e is SecurityException || e is IllegalStateException) throw e
-            // Keep the response generic so we don't leak the ciphertext's
-            // embedded context back to the requester.
-            "could not decrypt the message"
+            NIP44V3_DECRYPT_FAILED
         }
     }
 

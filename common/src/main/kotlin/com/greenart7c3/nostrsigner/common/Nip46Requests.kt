@@ -36,11 +36,33 @@ fun expandPermissionTypes(type: String): List<String> = when (val method = type.
     else -> listOf(nip46SignerType(method).takeUnless { it == SignerType.INVALID }?.toString() ?: type.uppercase())
 }
 
+/**
+ * NIP-44 v3 encrypt/decrypt: granted per event kind (the v3 context), not per
+ * content type. The context scope string is shown in the prompt but is not part
+ * of a grant, so a remembered kind-K grant covers every scope.
+ */
+val nip44v3SignerTypes = setOf(SignerType.NIP44_V3_ENCRYPT, SignerType.NIP44_V3_DECRYPT)
+
+/** The error a NIP-44 v3 request without a context kind is refused with. */
+const val NIP44V3_KIND_REQUIRED = "kind is required for nip44v3"
+
+/**
+ * The error a NIP-44 v3 decrypt whose payload does not open is refused with: kept
+ * generic, so the reply never tells the requester the ciphertext's embedded context.
+ */
+const val NIP44V3_DECRYPT_FAILED = "could not decrypt the message"
+
 /** The `kind` of a NIP-44 v3 request (`[pubkey, kind, scope, payload]`); null when missing or not a number. */
 fun BunkerRequest.nip44v3Kind(): Int? = params.getOrNull(1)?.toIntOrNull()
 
 /** The `scope` of a NIP-44 v3 request; empty when missing, per the spec. */
 fun BunkerRequest.nip44v3Scope(): String = params.getOrElse(2) { "" }
+
+/**
+ * The `payload` of a NIP-44 v3 request: the base64 plaintext of an encrypt, the v3
+ * ciphertext of a decrypt; empty when missing.
+ */
+fun BunkerRequest.nip44v3Payload(): String = params.getOrElse(3) { "" }
 
 /**
  * Whether a `connect` from an app already stored is a repeat that is acked

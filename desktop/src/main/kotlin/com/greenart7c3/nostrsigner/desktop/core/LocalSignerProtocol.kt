@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.greenart7c3.nostrsigner.common.SignerType
+import com.greenart7c3.nostrsigner.common.nip44v3SignerTypes
 import com.vitorpamplona.quartz.nip01Core.core.hexToByteArray
 import com.vitorpamplona.quartz.nip01Core.jackson.JacksonMapper
 import com.vitorpamplona.quartz.nip19Bech32.bech32.bechToBytes

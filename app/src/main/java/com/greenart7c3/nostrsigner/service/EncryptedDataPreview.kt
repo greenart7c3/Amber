@@ -4,10 +4,29 @@ import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.ClearTextEncryptedDataKind
 import com.greenart7c3.nostrsigner.models.EncryptedDataKind
 import com.greenart7c3.nostrsigner.models.EventEncryptedDataKind
+import com.greenart7c3.nostrsigner.models.PrivateZapEncryptedDataKind
 import com.greenart7c3.nostrsigner.models.TagArrayEncryptedDataKind
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
 import com.vitorpamplona.quartz.nip01Core.jackson.JacksonMapper
 import com.vitorpamplona.quartz.nip59Giftwrap.seals.SealEvent
+
+/**
+ * The preview of a `decrypt_zap_event`: the decrypted [zapRequest], whose result the
+ * approval answers with, as the intent path builds it. Null when the zap request is
+ * missing or does not open; a device-lock refusal is rethrown so the client sees the
+ * real condition.
+ */
+internal fun privateZapPreview(zapRequest: String?, account: Account): EncryptedDataKind? {
+    if (zapRequest == null) return null
+    val decrypted = try {
+        account.decryptZapEvent(zapRequest)
+    } catch (e: SecurityException) {
+        throw e
+    } catch (_: Exception) {
+        null
+    }
+    return decrypted?.let(::PrivateZapEncryptedDataKind)
+}
 
 /**
  * What an encrypt/decrypt approval shows, the same for intents and bunker requests:

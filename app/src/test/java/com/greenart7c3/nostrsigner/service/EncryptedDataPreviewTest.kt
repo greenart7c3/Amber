@@ -3,6 +3,7 @@ package com.greenart7c3.nostrsigner.service
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.ClearTextEncryptedDataKind
 import com.greenart7c3.nostrsigner.models.EventEncryptedDataKind
+import com.greenart7c3.nostrsigner.models.PrivateZapEncryptedDataKind
 import com.greenart7c3.nostrsigner.models.TagArrayEncryptedDataKind
 import io.mockk.coEvery
 import io.mockk.every
@@ -59,5 +60,32 @@ class EncryptedDataPreviewTest {
 
         assertTrue(preview is ClearTextEncryptedDataKind)
         assertEquals(1, errors.size)
+    }
+
+    // A bunker decrypt_zap_event approved on screen used to answer "": it had no preview.
+    @Test
+    fun `a private zap preview carries the decrypted zap request as its result`() {
+        every { account.decryptZapEvent("zap-request") } returns event(9733, "secret")
+
+        val preview = privateZapPreview("zap-request", account) as PrivateZapEncryptedDataKind
+
+        assertEquals(event(9733, "secret"), preview.result)
+    }
+
+    @Test
+    fun `a private zap that is missing or does not open has no preview`() {
+        every { account.decryptZapEvent("not-json") } throws IllegalArgumentException("bad")
+        every { account.decryptZapEvent("not-mine") } returns null
+
+        assertNull(privateZapPreview(null, account))
+        assertNull(privateZapPreview("not-json", account))
+        assertNull(privateZapPreview("not-mine", account))
+    }
+
+    @Test(expected = SecurityException::class)
+    fun `a device-lock refusal is not swallowed by the private zap preview`() {
+        every { account.decryptZapEvent("zap-request") } throws SecurityException("locked")
+
+        privateZapPreview("zap-request", account)
     }
 }

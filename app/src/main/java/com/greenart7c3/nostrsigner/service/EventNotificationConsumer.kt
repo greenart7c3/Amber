@@ -755,6 +755,8 @@ class EventNotificationConsumer(
         // V3 arrives as a generic BunkerRequest; build the preview the dedicated
         // approval screen renders (plaintext, like the v2 path).
         if (bunkerRequest.method == "nip44v3_encrypt" || bunkerRequest.method == "nip44v3_decrypt") return nip44v3EncryptedDataKind(bunkerRequest, acc)
+        // The approval screen answers with the preview's result, as on the intent path.
+        if (bunkerRequest.method == "decrypt_zap_event") return privateZapPreview(bunkerRequest.zapRequestParam(), acc)
         val onParseError: (String) -> Unit = { saveLog(it, url, acc.npub) }
         // The plaintext side is what the user reads: the message of an encrypt, the result of a decrypt.
         return when (bunkerRequest) {

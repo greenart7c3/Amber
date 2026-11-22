@@ -58,8 +58,8 @@ interfaces from the CompositionLocals the two activities provide
   `service/EventNotificationConsumer.kt` 846; `Amber.kt` is 393.
 - The Android bunker flow (`BunkerRequestUtils` + `EventNotificationConsumer`)
   and the desktop one (`BunkerEngine`) implemented the same permission and
-  response logic twice; step 1 moved the policy to `:common`, and what is left
-  of the copy is step 11.
+  response logic twice; step 1 moved the policy to `:common` and step 11 the rest
+  of the decisions (params, admission, replies, first steps, grants and their revert).
 - `ui/` reached Room DAOs directly in 10 files; since step 6 it does not.
 - The detekt baselines held 306 (app) and 78 (desktop) grandfathered findings
   after step 9, about half of the app's from mechanical Compose rules (step 10).
@@ -464,7 +464,7 @@ went from 306 entries to 142 and the desktop one from 78 to 60: what is left is 
 the long-function and complexity rules (`LongMethod`,
 `CyclomaticComplexMethod`, ...).
 
-### 11. Share the rest of the bunker flow
+### 11. Share the rest of the bunker flow (done)
 
 What `EventNotificationConsumer`/`BunkerRequestUtils` and the desktop `BunkerEngine`
 still do twice moves to `:common`, as step 1 did with the policy. Planned after
@@ -535,6 +535,12 @@ replaces (for NIP-04/NIP-44 the whole NIP and the content type replace each othe
 Each app stores the result in its own records (`ApplicationPermissionsEntity`,
 `AppPermissionRecord`).
 
-Left in step 11: taking an approval back when its reply never reaches the client (the
-desktop restores exactly the grants it replaced; the app deletes every grant of the
-request's type, which can remove the wrong one).
+Taking an approval back when its reply never reaches the client is one rule too:
+`revertedGrants` removes exactly what approving added and restores what it replaced,
+over grants re-read so a change made meanwhile survives, and `revertedConnectKey` puts a
+bunker:// connection back under its secret. The desktop already did this; the app used
+to delete every grant of the request's type, which could delete a grant from before
+the approval and keep the content-type grant it had just added.
+
+With that, what both bunker paths still do separately is their storage, UI and
+platform glue: the decisions are in `:common`.

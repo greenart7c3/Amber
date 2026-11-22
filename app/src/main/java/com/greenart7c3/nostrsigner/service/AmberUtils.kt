@@ -164,8 +164,6 @@ object AmberUtils {
         grants.forEach { application.permissions.add(it.toEntity(key)) }
     }
 
-    private fun Grant.toEntity(key: String) = ApplicationPermissionsEntity(null, key, type, kind, acceptable, rememberType, acceptUntil, rejectUntil, relay)
-
     fun acceptPermission(
         application: ApplicationWithPermissions,
         key: String,
@@ -177,6 +175,12 @@ object AmberUtils {
         decryptTypeScope: DecryptTypeScope = DecryptTypeScope.ALL,
     ) = updatePermission(application, key, type, kind, true, rememberType, relay, encryptedData, decryptTypeScope)
 }
+
+// A shared Grant as the app stores it, under the connection [key].
+internal fun Grant.toEntity(key: String) = ApplicationPermissionsEntity(null, key, type, kind, acceptable, rememberType, acceptUntil, rejectUntil, relay)
+
+// A stored permission as a shared Grant, without its row id, so two reads compare equal.
+internal fun ApplicationPermissionsEntity.toGrant() = Grant(type, kind, acceptable, rememberType, acceptUntil, rejectUntil, relay)
 
 fun String.toShortenHex(): String {
     if (length <= 16) return this

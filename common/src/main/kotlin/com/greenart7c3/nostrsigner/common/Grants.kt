@@ -69,6 +69,27 @@ data class RememberedGrant(val grant: Grant, private val otherScopeType: String?
 }
 
 /**
+ * A connection's grants once an approval whose reply never reached the client is taken
+ * back: [current] (re-read, so a change made while the reply was retried survives)
+ * without what approving added ([after] but not [before]), plus what it replaced
+ * ([before] but not [after]) that is not there already. Only what the approval changed
+ * is undone; grants from before it stay.
+ */
+fun <G> revertedGrants(current: List<G>, before: List<G>, after: List<G>): List<G> {
+    val added = (after - before.toSet()).toSet()
+    val replaced = before - after.toSet()
+    val restored = current.filterNot { it in added }
+    return restored + replaced.filterNot { it in restored }
+}
+
+/**
+ * The key a connect's connection goes back to when the approval of the connect is taken
+ * back: a bunker:// connection waits again under its [secret]; a nostrconnect:// one
+ * ([isNostrConnectUri]), or one without a secret, is only deleted (null).
+ */
+fun revertedConnectKey(isNostrConnectUri: Boolean, secret: String): String? = secret.takeIf { !isNostrConnectUri && it.isNotBlank() }
+
+/**
  * The grant remembering the decision ([accepted]) on a request of [type] with
  * [rememberType] (the `RememberType` screen code), from [now]. For NIP-04/NIP-44
  * encrypt/decrypt ([contentScopedSignerTypes]) it is the whole-NIP type when

@@ -7,7 +7,8 @@ import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.SignerActivity
 import com.greenart7c3.nostrsigner.common.BUNKER_REPLY_ATTEMPTS
-import com.greenart7c3.nostrsigner.common.EncryptionType
+import com.greenart7c3.nostrsigner.common.ConnectionReplyKey
+import com.greenart7c3.nostrsigner.common.Nip46ReplyKey
 import com.greenart7c3.nostrsigner.common.SignerType
 import com.greenart7c3.nostrsigner.common.encryptionTextParam
 import com.greenart7c3.nostrsigner.common.eventParam
@@ -16,10 +17,11 @@ import com.greenart7c3.nostrsigner.common.nip44v3Kind
 import com.greenart7c3.nostrsigner.common.nip44v3Payload
 import com.greenart7c3.nostrsigner.common.nip44v3Scope
 import com.greenart7c3.nostrsigner.common.nip44v3SignerTypes
+import com.greenart7c3.nostrsigner.common.nip46ReplyLog
 import com.greenart7c3.nostrsigner.common.nip46SignerType
 import com.greenart7c3.nostrsigner.common.peerPubKeyParam
 import com.greenart7c3.nostrsigner.common.psbtParam
-import com.greenart7c3.nostrsigner.common.retryWithBackoff
+import com.greenart7c3.nostrsigner.common.publishNip46Reply
 import com.greenart7c3.nostrsigner.common.zapRequestParam
 import com.greenart7c3.nostrsigner.commonsui.Permission
 import com.greenart7c3.nostrsigner.commonsui.Res
@@ -45,16 +47,11 @@ import com.greenart7c3.nostrsigner.ui.RememberType
 import com.greenart7c3.nostrsigner.ui.ToastManager
 import com.greenart7c3.nostrsigner.ui.components.DecryptTypeScope
 import com.vitorpamplona.quartz.nip01Core.core.Event
-import com.vitorpamplona.quartz.nip01Core.core.hexToByteArray
-import com.vitorpamplona.quartz.nip01Core.crypto.KeyPair
-import com.vitorpamplona.quartz.nip01Core.jackson.JacksonMapper
 import com.vitorpamplona.quartz.nip01Core.relay.client.accessories.publishAndConfirm
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
-import com.vitorpamplona.quartz.nip01Core.signers.NostrSignerInternal
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequest
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequestConnect
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerResponse
-import com.vitorpamplona.quartz.nip46RemoteSigner.NostrConnectEvent
 import com.vitorpamplona.quartz.utils.TimeUtils
 import kotlin.collections.toSet
 import kotlin.time.Duration.Companion.milliseconds
@@ -219,9 +216,8 @@ class BunkerResponder(
         }
 
         scope.launch {
-            // Never persist the response result — for a decrypt request it is the
-            // plaintext. Record only non-sensitive metadata (id + error status).
-            val sanitizedResponse = "id=${bunkerResponse.id} ${bunkerResponse.error?.let { "error=$it" } ?: "ok"}"
+            // Never the result: for a decrypt request it is the plaintext.
+            val sanitizedResponse = nip46ReplyLog(bunkerResponse)
             relays.forEach { relay ->
                 accountRepository.getLogDatabase(account.npub).dao().insertLogIfEnabled(
                     LogEntity(
@@ -235,53 +231,11 @@ class BunkerResponder(
             }
         }
 
-        sendBunkerResponse(
-            bunkerResponse = bunkerResponse,
-            bunkerRequest = bunkerRequest,
-            account = account,
-            localKey = bunkerRequest.localKey,
-            relays = relays,
-            onLoading = onLoading,
-            onDone = onDone,
-            attempts = attempts,
-        )
-    }
-
-    private suspend fun sendBunkerResponse(
-        bunkerResponse: BunkerResponse,
-        bunkerRequest: AmberBunkerRequest,
-        account: Account,
-        localKey: String,
-        relays: List<NormalizedRelayUrl>,
-        onLoading: (Boolean) -> Unit,
-        onDone: (Boolean) -> Unit,
-        attempts: Int,
-    ) {
-        val connSigner = if (bunkerRequest.signerPrivKey.isNotEmpty()) {
-            try {
-                NostrSignerInternal(KeyPair(privKey = bunkerRequest.signerPrivKey.hexToByteArray()))
-            } catch (_: Exception) {
-                null
-            }
-        } else {
-            null
-        }
-
-        val plainText = JacksonMapper.mapper.writeValueAsString(bunkerResponse)
-        var signedEvent = replyEvent(connSigner, account, bunkerRequest, plainText, localKey)
-
         AmberLog.d(Amber.TAG, "Sending response to relays ${relays.map { relay -> relay.url }} type ${bunkerRequest.request.method}")
-
-        val success = retryWithBackoff(maxRetries = attempts) {
-            val result = relayClient.client.publishAndConfirm(
-                event = signedEvent,
-                relayList = relays.toSet(),
-                timeoutInSeconds = 5,
-                untilFirstAccept = true,
-            )
-            // A fresh created_at for the next attempt, so a relay that refused a stale one may take it.
-            if (!result) signedEvent = replyEvent(connSigner, account, bunkerRequest, plainText, localKey)
-            result
+        // The connection's own key when the request has one, else the account key.
+        val key = bunkerRequest.signerPrivKey.takeIf { it.isNotEmpty() }?.let { runCatching { ConnectionReplyKey(it) }.getOrNull() } ?: account.replyKey()
+        val success = publishNip46Reply(bunkerResponse, bunkerRequest.localKey, bunkerRequest.encryptionType, key, attempts) { event ->
+            relayClient.client.publishAndConfirm(event = event, relayList = relays.toSet(), timeoutInSeconds = 5, untilFirstAccept = true)
         }
 
         if (success) {
@@ -295,25 +249,13 @@ class BunkerResponder(
         onLoading(false)
     }
 
-    // The kind-24133 reply carrying [plainText], encrypted and signed with the connection
-    // key when the request has one, else with the account key.
-    private suspend fun replyEvent(
-        connSigner: NostrSignerInternal?,
-        account: Account,
-        bunkerRequest: AmberBunkerRequest,
-        plainText: String,
-        localKey: String,
-    ): Event {
-        val encryptedContent = if (bunkerRequest.encryptionType == EncryptionType.NIP44) {
-            connSigner?.nip44Encrypt(plainText, bunkerRequest.localKey)
-                ?: account.nip44Encrypt(plainText, bunkerRequest.localKey)
-        } else {
-            connSigner?.nip04Encrypt(plainText, bunkerRequest.localKey)
-                ?: account.nip04Encrypt(plainText, bunkerRequest.localKey)
-        }
-        val tags = arrayOf(arrayOf("p", localKey))
-        return connSigner?.signerSync?.sign(TimeUtils.now(), NostrConnectEvent.KIND, tags, encryptedContent)
-            ?: account.signSync(TimeUtils.now(), NostrConnectEvent.KIND, tags, encryptedContent)
+    // The account key, for a connection from before per-connection keys; it checks key access first.
+    private fun Account.replyKey(): Nip46ReplyKey = object : Nip46ReplyKey {
+        override suspend fun nip04Encrypt(plainText: String, toPubKey: String): String = this@replyKey.nip04Encrypt(plainText, toPubKey)
+
+        override suspend fun nip44Encrypt(plainText: String, toPubKey: String): String = this@replyKey.nip44Encrypt(plainText, toPubKey)
+
+        override fun sign(createdAt: Long, kind: Int, tags: Array<Array<String>>, content: String): Event = signSync(createdAt, kind, tags, content)
     }
 
     fun sendResult(

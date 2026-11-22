@@ -1,20 +1,17 @@
 package com.greenart7c3.nostrsigner.desktop.core
 
 import com.greenart7c3.nostrsigner.common.BUNKER_REPLY_ATTEMPTS
+import com.greenart7c3.nostrsigner.common.ConnectionReplyKey
 import com.greenart7c3.nostrsigner.common.EncryptionType
-import com.greenart7c3.nostrsigner.common.retryWithBackoff
+import com.greenart7c3.nostrsigner.common.Nip46ReplyKey
+import com.greenart7c3.nostrsigner.common.nip46ReplyLog
+import com.greenart7c3.nostrsigner.common.publishNip46Reply
 import com.vitorpamplona.quartz.nip01Core.core.Event
-import com.vitorpamplona.quartz.nip01Core.core.hexToByteArray
-import com.vitorpamplona.quartz.nip01Core.crypto.KeyPair
-import com.vitorpamplona.quartz.nip01Core.jackson.JacksonMapper
 import com.vitorpamplona.quartz.nip01Core.relay.client.accessories.publishAndConfirm
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
-import com.vitorpamplona.quartz.nip01Core.signers.NostrSignerInternal
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerResponse
-import com.vitorpamplona.quartz.nip46RemoteSigner.NostrConnectEvent
-import com.vitorpamplona.quartz.utils.TimeUtils
 
-// Publishing a reply to a NIP-46 client.
+// Publishing a reply to a NIP-46 client; building and retrying it is the common publishNip46Reply.
 
 internal suspend fun BunkerEngine.sendResponse(
     account: DesktopAccount,
@@ -31,45 +28,21 @@ internal suspend fun BunkerEngine.sendResponse(
         return false
     }
 
-    val connSigner = if (signerPrivKey.isNotEmpty()) {
-        NostrSignerInternal(KeyPair(privKey = signerPrivKey.hexToByteArray()))
-    } else {
-        null
+    val key = if (signerPrivKey.isNotEmpty()) ConnectionReplyKey(signerPrivKey) else account.replyKey()
+    val success = publishNip46Reply(bunkerResponse, localKey, encryptionType, key, attempts) { event ->
+        client.publishAndConfirm(event = event, relayList = relays.toSet(), timeoutInSeconds = 5, untilFirstAccept = true)
     }
 
-    val plainText = JacksonMapper.mapper.writeValueAsString(bunkerResponse)
-
-    suspend fun buildEvent(): Event {
-        val encryptedContent = if (encryptionType == EncryptionType.NIP44) {
-            connSigner?.nip44Encrypt(plainText, localKey) ?: account.nip44Encrypt(plainText, localKey)
-        } else {
-            connSigner?.nip04Encrypt(plainText, localKey) ?: account.nip04Encrypt(plainText, localKey)
-        }
-        return connSigner?.signerSync?.sign(
-            TimeUtils.now(),
-            NostrConnectEvent.KIND,
-            arrayOf(arrayOf("p", localKey)),
-            encryptedContent,
-        ) ?: account.signSync(
-            TimeUtils.now(),
-            NostrConnectEvent.KIND,
-            arrayOf(arrayOf("p", localKey)),
-            encryptedContent,
-        )
-    }
-
-    val publish: suspend () -> Boolean = {
-        client.publishAndConfirm(
-            event = buildEvent(),
-            relayList = relays.toSet(),
-            timeoutInSeconds = 5,
-            untilFirstAccept = true,
-        )
-    }
-
-    val success = retryWithBackoff(maxRetries = attempts, block = publish)
-
-    val sanitized = "id=${bunkerResponse.id} ${bunkerResponse.error?.let { "error=$it" } ?: "ok"} sent=$success"
-    relays.forEach { store.addLog(it.url, "bunker response", sanitized) }
+    val logLine = "${nip46ReplyLog(bunkerResponse)} sent=$success"
+    relays.forEach { store.addLog(it.url, "bunker response", logLine) }
     return success
+}
+
+// The account key, for a connection from before per-connection keys.
+private fun DesktopAccount.replyKey(): Nip46ReplyKey = object : Nip46ReplyKey {
+    override suspend fun nip04Encrypt(plainText: String, toPubKey: String): String = this@replyKey.nip04Encrypt(plainText, toPubKey)
+
+    override suspend fun nip44Encrypt(plainText: String, toPubKey: String): String = this@replyKey.nip44Encrypt(plainText, toPubKey)
+
+    override fun sign(createdAt: Long, kind: Int, tags: Array<Array<String>>, content: String): Event = signSync(createdAt, kind, tags, content)
 }

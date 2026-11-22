@@ -29,6 +29,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import com.fasterxml.jackson.databind.JsonNode
 import com.greenart7c3.nostrsigner.common.SignerType
+import com.greenart7c3.nostrsigner.common.contentScopedSignerTypes
 import com.greenart7c3.nostrsigner.common.nip44v3SignerTypes
 import com.greenart7c3.nostrsigner.common.psbt.DecodedPsbt
 import com.greenart7c3.nostrsigner.common.psbt.DecodedPsbtOutput
@@ -56,7 +57,6 @@ import com.greenart7c3.nostrsigner.desktop.core.DateTimes
 import com.greenart7c3.nostrsigner.desktop.core.EncryptedContent
 import com.greenart7c3.nostrsigner.desktop.core.EncryptedContentType
 import com.greenart7c3.nostrsigner.desktop.core.PendingBunkerRequest
-import com.greenart7c3.nostrsigner.desktop.core.contentScopedSignerTypes
 import com.greenart7c3.nostrsigner.desktop.core.describe
 import com.greenart7c3.nostrsigner.desktop.core.toShortenHex
 import com.vitorpamplona.quartz.nip01Core.jackson.JacksonMapper

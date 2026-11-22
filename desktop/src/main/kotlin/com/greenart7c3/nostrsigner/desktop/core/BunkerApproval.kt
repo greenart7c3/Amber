@@ -1,9 +1,11 @@
 package com.greenart7c3.nostrsigner.desktop.core
 
+import com.greenart7c3.nostrsigner.common.Grant
+import com.greenart7c3.nostrsigner.common.RequestedPermission
 import com.greenart7c3.nostrsigner.common.SignerType
-import com.greenart7c3.nostrsigner.common.expandPermissionTypes
 import com.greenart7c3.nostrsigner.common.generateBunkerPrivKey
-import com.greenart7c3.nostrsigner.common.replacesGrant
+import com.greenart7c3.nostrsigner.common.rememberedGrant
+import com.greenart7c3.nostrsigner.common.signPolicyGrants
 import com.greenart7c3.nostrsigner.commonsui.Permission
 import com.greenart7c3.nostrsigner.commonsui.basicPermissions
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
@@ -297,47 +299,26 @@ private suspend fun BunkerEngine.doReject(
     )
 }
 
-/** Mirrors `AmberUtils.configureSignPolicy`. */
+/** The grants of [signPolicy] (the common `signPolicyGrants`, as on Android). */
 private fun applySignPolicy(
     application: AppWithPermissions,
     signPolicy: Int,
     permissions: List<Permission>,
 ) {
-    when (signPolicy) {
-        0 -> {
-            basicPermissions.forEach { perm ->
-                addAcceptedPermission(application, perm)
-            }
-        }
-
-        1 -> {
-            permissions.filter { it.checked }.forEach { perm ->
-                addAcceptedPermission(application, perm)
-            }
-        }
+    val grants = signPolicyGrants(signPolicy, basicPermissions.map { it.requested() }, permissions.filter { it.checked }.map { it.requested() }) { type, kind ->
+        application.permissions.any { it.type == type && it.kind == kind }
     }
+    grants?.forEach { application.permissions.add(it.toRecord()) }
 }
 
-private fun addAcceptedPermission(application: AppWithPermissions, perm: Permission) {
-    // A requested perm can map to more than one stored permission type: the
-    // request path keys encrypt/decrypt by NIP (NIP04_ENCRYPT/NIP44_ENCRYPT),
-    // but a content-scoped or generic perm (encrypt_event, encrypt) is
-    // NIP-agnostic, so it must grant both NIP variants — otherwise the grant
-    // is stored under a key the request path never queries and the client is
-    // re-prompted on every request.
-    expandPermissionTypes(perm.type).forEach { type ->
-        if (application.permissions.any { it.type == type && it.kind == perm.kind }) return@forEach
-        application.permissions.add(
-            AppPermissionRecord(type, perm.kind, true, RememberType.ALWAYS.screenCode, Long.MAX_VALUE / 1000, 0),
-        )
-    }
-}
+private fun Permission.requested() = RequestedPermission(type, kind)
+
+private fun Grant.toRecord() = AppPermissionRecord(type, kind, acceptable, rememberType, acceptUntil, rejectUntil, relay)
 
 /**
- * Mirrors `AmberUtils.updatePermission`. For NIP-04/NIP-44 encrypt and
- * decrypt, [scope] ALL stores the whole-NIP type (NIP44_DECRYPT) and drops
- * the narrower content-type grant; SPECIFIC stores the content type
- * (DECRYPT_CLEAR_TEXT) and drops the broader NIP grant.
+ * Remembers the decision ([accepted]) on a request (the common `rememberedGrant`, as on
+ * Android): for NIP-04/NIP-44 encrypt and decrypt, [scope] ALL stores the whole-NIP type
+ * (NIP44_DECRYPT), SPECIFIC the content type (DECRYPT_CLEAR_TEXT), each replacing the other.
  */
 private fun acceptOrRejectPermission(
     application: AppWithPermissions,
@@ -349,26 +330,7 @@ private fun acceptOrRejectPermission(
     scope: EncryptionScope = EncryptionScope.ALL,
     relay: String = "",
 ) {
-    val until = rememberType.acceptUntil()
-    val contentScoped = type in contentScopedSignerTypes
-    val typeStr = if (contentScoped && scope == EncryptionScope.SPECIFIC) type.contentPermissionType(content) else type.toString()
-
-    val otherScopeType = when {
-        !contentScoped -> null
-        scope == EncryptionScope.ALL -> type.contentPermissionType(content)
-        else -> type.toString()
-    }
-    application.permissions.removeIf { replacesGrant(typeStr, kind, relay, otherScopeType, it.type, it.kind, it.relay) }
-
-    application.permissions.add(
-        AppPermissionRecord(
-            type = typeStr,
-            kind = kind,
-            acceptable = accepted,
-            rememberType = rememberType.screenCode,
-            acceptUntil = if (accepted) until else 0,
-            rejectUntil = if (accepted) 0 else until,
-            relay = relay,
-        ),
-    )
+    val remembered = rememberedGrant(type, type.contentPermissionType(content), scope == EncryptionScope.ALL, kind, accepted, rememberType.screenCode, relay, TimeUtils.now())
+    application.permissions.removeIf { remembered.replaces(it.type, it.kind, it.relay) }
+    application.permissions.add(remembered.grant.toRecord())
 }

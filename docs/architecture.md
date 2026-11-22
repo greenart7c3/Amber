@@ -527,5 +527,14 @@ anything is signed or decrypted; anything else is decided on the grants. On Andr
 whitelist check used to happen inside `SignerProviderQuery`, which keeps it for the
 intent path.
 
-Left in step 11: what approving or rejecting writes (sign-policy grants, the per-request grant and
-its scope, the revert when the reply fails).
+The grants approving writes are computed by shared code too (`Grants.kt`):
+`signPolicyGrants` gives a connection's sign policy its grants (each requested
+permission under every type it is looked up by, accepted for good), and
+`rememberedGrant` the grant remembering one decision, with the stored grants it
+replaces (for NIP-04/NIP-44 the whole NIP and the content type replace each other).
+Each app stores the result in its own records (`ApplicationPermissionsEntity`,
+`AppPermissionRecord`).
+
+Left in step 11: taking an approval back when its reply never reaches the client (the
+desktop restores exactly the grants it replaced; the app deletes every grant of the
+request's type, which can remove the wrong one).

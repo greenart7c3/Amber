@@ -2,6 +2,7 @@ package com.greenart7c3.nostrsigner.desktop.core
 
 import com.greenart7c3.nostrsigner.common.SignerType
 import com.greenart7c3.nostrsigner.common.activeDecision
+import com.greenart7c3.nostrsigner.common.contentScopedSignerTypes
 import com.greenart7c3.nostrsigner.common.rememberUntil
 import com.greenart7c3.nostrsigner.common.rememberedDecision
 import com.greenart7c3.nostrsigner.commonsui.Permission
@@ -154,14 +155,6 @@ enum class EncryptionScope {
     SPECIFIC,
     ALL,
 }
-
-/** NIP-04/NIP-44 encrypt and decrypt: the request types granted per content type. */
-val contentScopedSignerTypes = setOf(
-    SignerType.NIP04_ENCRYPT,
-    SignerType.NIP44_ENCRYPT,
-    SignerType.NIP04_DECRYPT,
-    SignerType.NIP44_DECRYPT,
-)
 
 /**
  * The content-type permission for a request, mirroring the Android

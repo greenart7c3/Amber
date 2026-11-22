@@ -13,6 +13,7 @@ import com.greenart7c3.nostrsigner.common.UNVERIFIED_REPLY_ATTEMPTS
 import com.greenart7c3.nostrsigner.common.admitNip46Request
 import com.greenart7c3.nostrsigner.common.bunkerFilters
 import com.greenart7c3.nostrsigner.common.canRememberRelayAuth
+import com.greenart7c3.nostrsigner.common.contentScopedSignerTypes
 import com.greenart7c3.nostrsigner.common.hasRequiredParams
 import com.greenart7c3.nostrsigner.common.localPubKeyFromPrivKey
 import com.greenart7c3.nostrsigner.common.nip44v3Kind

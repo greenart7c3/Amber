@@ -3,6 +3,7 @@ package com.greenart7c3.nostrsigner.desktop.core
 import com.greenart7c3.nostrsigner.common.NIP44V3_KIND_REQUIRED
 import com.greenart7c3.nostrsigner.common.RELAY_AUTH_KIND
 import com.greenart7c3.nostrsigner.common.SignerType
+import com.greenart7c3.nostrsigner.common.contentScopedSignerTypes
 import com.greenart7c3.nostrsigner.common.isBlockedByAuthWhitelist
 import com.greenart7c3.nostrsigner.common.nip44v3SignerTypes
 import com.greenart7c3.nostrsigner.common.relayAuthHost

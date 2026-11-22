@@ -1,11 +1,11 @@
 package com.greenart7c3.nostrsigner.service
 
-import com.greenart7c3.nostrsigner.common.REMEMBER_FOREVER
+import com.greenart7c3.nostrsigner.common.Grant
+import com.greenart7c3.nostrsigner.common.RequestedPermission
 import com.greenart7c3.nostrsigner.common.SignerType
 import com.greenart7c3.nostrsigner.common.canRememberRelayAuth
-import com.greenart7c3.nostrsigner.common.expandPermissionTypes
-import com.greenart7c3.nostrsigner.common.rememberUntil
-import com.greenart7c3.nostrsigner.common.replacesGrant
+import com.greenart7c3.nostrsigner.common.rememberedGrant
+import com.greenart7c3.nostrsigner.common.signPolicyGrants
 import com.greenart7c3.nostrsigner.commonsui.Permission
 import com.greenart7c3.nostrsigner.commonsui.basicPermissions
 import com.greenart7c3.nostrsigner.database.ApplicationDao
@@ -14,7 +14,6 @@ import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.AmberBunkerRequest
 import com.greenart7c3.nostrsigner.models.EncryptedDataKind
-import com.greenart7c3.nostrsigner.models.encryptDecryptSignerTypes
 import com.greenart7c3.nostrsigner.models.toPermissionTypeString
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
 import com.greenart7c3.nostrsigner.ui.RememberType
@@ -105,37 +104,21 @@ object AmberUtils {
         encryptedData: EncryptedDataKind?,
         decryptTypeScope: DecryptTypeScope = DecryptTypeScope.ALL,
     ) {
-        val until = rememberUntil(rememberType.screenCode, TimeUtils.now())
-
-        // ALL = entire NIP (NIP04_DECRYPT / NIP44_DECRYPT), covers every content type for that NIP
-        // SPECIFIC = only this content type (DECRYPT_CLEAR_TEXT, DECRYPT_TAG_ARRAY, etc.)
-        val permissionTypeStr = if (decryptTypeScope == DecryptTypeScope.ALL && signerType in encryptDecryptSignerTypes) {
-            signerType.toString()
-        } else {
-            signerType.toPermissionTypeString(encryptedData)
-        }
-
-        // ALL replaces the narrower content-classified grant, SPECIFIC the broader NIP-level one.
-        val otherScopeType = when {
-            signerType !in encryptDecryptSignerTypes -> null
-            decryptTypeScope == DecryptTypeScope.ALL -> signerType.toPermissionTypeString(encryptedData)
-            else -> signerType.toString()
-        }
-        application.permissions.removeIf { replacesGrant(permissionTypeStr, kind, relay, otherScopeType, it.type, it.kind, it.relay) }
-
-        application.permissions.add(
-            ApplicationPermissionsEntity(
-                null,
-                key,
-                permissionTypeStr,
-                kind,
-                value,
-                rememberType.screenCode,
-                if (value) until else 0L,
-                if (!value) until else 0L,
-                relay,
-            ),
+        // The common rememberedGrant, as on the desktop: for NIP-04/NIP-44 ALL stores the
+        // whole NIP (NIP44_DECRYPT), SPECIFIC the content type (DECRYPT_CLEAR_TEXT), each
+        // replacing the other.
+        val remembered = rememberedGrant(
+            signerType,
+            signerType.toPermissionTypeString(encryptedData),
+            wholeNip = decryptTypeScope == DecryptTypeScope.ALL,
+            kind = kind,
+            accepted = value,
+            rememberType = rememberType.screenCode,
+            relay = relay,
+            now = TimeUtils.now(),
         )
+        application.permissions.removeIf { remembered.replaces(it.type, it.kind, it.relay) }
+        application.permissions.add(remembered.grant.toEntity(key))
     }
 
     suspend fun acceptOrRejectPermission(
@@ -172,25 +155,16 @@ object AmberUtils {
         key: String,
         permissions: List<Permission>?,
     ) {
-        val granted = when (signPolicy) {
-            0 -> basicPermissions
-            1 -> permissions?.filter { it.checked }.orEmpty()
-            2 -> emptyList()
-            else -> return
-        }
+        // The common signPolicyGrants, as on the desktop; an unknown policy changes nothing.
+        val checked = permissions?.filter { it.checked }.orEmpty().map { RequestedPermission(it.type, it.kind) }
+        val grants = signPolicyGrants(signPolicy, basicPermissions.map { RequestedPermission(it.type, it.kind) }, checked) { type, kind ->
+            application.permissions.any { it.type == type && it.kind == kind }
+        } ?: return
         application.application.signPolicy = signPolicy
-        // Under the types the request path looks up: a generic encrypt/decrypt grants
-        // both NIPs, and the upper-casing does not depend on the phone's language.
-        granted.forEach { perm ->
-            expandPermissionTypes(perm.type).forEach { type ->
-                if (application.permissions.none { it.type == type && it.kind == perm.kind }) {
-                    application.permissions.add(
-                        ApplicationPermissionsEntity(null, key, type, perm.kind, true, RememberType.ALWAYS.screenCode, REMEMBER_FOREVER, 0),
-                    )
-                }
-            }
-        }
+        grants.forEach { application.permissions.add(it.toEntity(key)) }
     }
+
+    private fun Grant.toEntity(key: String) = ApplicationPermissionsEntity(null, key, type, kind, acceptable, rememberType, acceptUntil, rejectUntil, relay)
 
     fun acceptPermission(
         application: ApplicationWithPermissions,

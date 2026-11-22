@@ -16,6 +16,7 @@ import com.greenart7c3.nostrsigner.common.nip44v3Kind
 import com.greenart7c3.nostrsigner.common.nip44v3Scope
 import com.greenart7c3.nostrsigner.common.nip46SignerType
 import com.greenart7c3.nostrsigner.common.nip46StaleReason
+import com.greenart7c3.nostrsigner.common.parseRequestedPermissions
 import com.greenart7c3.nostrsigner.common.permissionLookupOrder
 import com.greenart7c3.nostrsigner.common.relayAuthHost
 import com.greenart7c3.nostrsigner.common.relays.RelayHealthTracker
@@ -23,6 +24,7 @@ import com.greenart7c3.nostrsigner.common.relays.SenderRateLimiter
 import com.greenart7c3.nostrsigner.common.sanitizeAppName
 import com.greenart7c3.nostrsigner.common.switchRelaysResult
 import com.greenart7c3.nostrsigner.commonsui.Permission
+import com.greenart7c3.nostrsigner.commonsui.containsNip
 import com.greenart7c3.nostrsigner.commonsui.kindToNip
 import com.vitorpamplona.quartz.nip01Core.core.Event
 import com.vitorpamplona.quartz.nip01Core.core.hexToByteArray
@@ -725,14 +727,8 @@ class BunkerEngine(
         )
     }
 
-    private fun parsePermissionsParam(permissions: String?): List<Permission> {
-        if (permissions.isNullOrBlank()) return emptyList()
-        return permissions.split(",").mapNotNull { perm ->
-            if (perm.isBlank()) return@mapNotNull null
-            val parts = perm.split(":")
-            Permission(parts.first().trim(), parts.getOrNull(1)?.toIntOrNull())
-        }
-    }
+    // Read like a nostrconnect:// URI's perms, so both ways of connecting ask for the same grants.
+    private fun parsePermissionsParam(permissions: String?): List<Permission> = parseRequestedPermissions(permissions.orEmpty()) { it.containsNip() }.map { Permission(it.type, it.kind) }
 
     companion object {
         /** How long a relay request waits for a decision before it is dropped. */

@@ -469,3 +469,10 @@ the long-function and complexity rules (`LongMethod`,
 What `EventNotificationConsumer`/`BunkerRequestUtils` and the desktop `BunkerEngine`
 still do twice moves to `:common`, as step 1 did with the policy. Planned after
 step 10, since it changes signing code and needs its own tests on both apps.
+
+Done so far: the permissions a bunker `connect` asks for (its third parameter) are
+read by `parseRequestedPermissions` (`NostrConnectUri.kt`), the same reader as a
+nostrconnect:// URI's `perms`. Before, the desktop read a non-numeric kind as none, so
+`nip44v3_encrypt:abc` asked for every kind, and the app kept blank entries and
+`sign_event`/`nip` entries without a kind; now an entry that grants nothing is
+dropped in both apps and in the URI.

@@ -25,16 +25,16 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.greenart7c3.nostrsigner.Amber
-import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.SavedAccounts
 import com.greenart7c3.nostrsigner.common.SignerType
 import com.greenart7c3.nostrsigner.common.nip44v3Kind
 import com.greenart7c3.nostrsigner.common.nip44v3Scope
+import com.greenart7c3.nostrsigner.common.parseRequestedPermissions
 import com.greenart7c3.nostrsigner.common.psbt.PsbtDecoder
 import com.greenart7c3.nostrsigner.commonsui.Permission
 import com.greenart7c3.nostrsigner.commonsui.Res
 import com.greenart7c3.nostrsigner.commonsui.cancel
+import com.greenart7c3.nostrsigner.commonsui.containsNip
 import com.greenart7c3.nostrsigner.commonsui.create_a_new_connection
 import com.greenart7c3.nostrsigner.commonsui.event_pubkey_is_not_equal_to_current_logged_in_user
 import com.greenart7c3.nostrsigner.commonsui.getStringBlocking
@@ -198,16 +198,10 @@ private fun ConnectRequest(
     )
 }
 
-// The `perm1:kind,perm2` list a connect request asks for; an entry that fails to parse is skipped.
-private fun parseConnectPermissions(permissions: String?): ImmutableList<Permission>? = permissions?.split(",")?.mapNotNull {
-    try {
-        val split = it.split(":")
-        if (split.size > 1) Permission(split[0].trim(), split[1].toInt()) else Permission(split[0].trim(), null)
-    } catch (e: Exception) {
-        AmberLog.e(Amber.TAG, "Error parsing permission", e)
-        null
-    }
-}?.toImmutableList()
+// The `perm1:kind,perm2` list a connect request asks for, read like a nostrconnect:// URI's perms.
+private fun parseConnectPermissions(permissions: String?): ImmutableList<Permission>? = permissions?.let { value ->
+    parseRequestedPermissions(value) { it.containsNip() }.map { Permission(it.type, it.kind) }.toImmutableList()
+}
 
 @Composable
 private fun GetPublicKeyRequest(

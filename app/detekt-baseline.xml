@@ -8,8 +8,6 @@
     <ID>CyclomaticComplexMethod:BunkerConnectRequestScreen.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun BunkerConnectRequestScreen</ID>
     <ID>CyclomaticComplexMethod:CloudBackupScreen.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun CloudBackupScreen</ID>
     <ID>CyclomaticComplexMethod:EditPermission.kt:@Composable fun PermissionRow</ID>
-    <ID>CyclomaticComplexMethod:EncryptDecryptData.kt:@Composable fun BunkerEncryptDecryptData</ID>
-    <ID>CyclomaticComplexMethod:EncryptDecryptData.kt:@Composable fun EncryptDecryptData</ID>
     <ID>CyclomaticComplexMethod:ExportAllAccountsScreen.kt:@Composable fun ExportAllAccountsScreen</ID>
     <ID>CyclomaticComplexMethod:IntentMultiEventHomeScreen.kt:@Composable private fun IntentRequestCard</ID>
     <ID>CyclomaticComplexMethod:SeeDetailsScreen.kt:@Composable fun SeeDetailsScreen</ID>
@@ -42,8 +40,6 @@
     <ID>LongMethod:EditRelaysDialog.kt:@Composable fun DefaultRelaysScreen</ID>
     <ID>LongMethod:EditRelaysDialog.kt:@SuppressLint("StateFlowValueCalledInComposition") @Composable private fun ActiveRelayRow</ID>
     <ID>LongMethod:EnabledPermissions.kt:@Composable fun EnabledPermissions</ID>
-    <ID>LongMethod:EncryptDecryptData.kt:@Composable fun BunkerEncryptDecryptData</ID>
-    <ID>LongMethod:EncryptDecryptData.kt:@Composable fun EncryptDecryptData</ID>
     <ID>LongMethod:EncryptDecryptDetailModal.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun EncryptDecryptDetailModal</ID>
     <ID>LongMethod:EventData.kt:@Composable fun BunkerEventData</ID>
     <ID>LongMethod:EventData.kt:@Composable fun EventData</ID>

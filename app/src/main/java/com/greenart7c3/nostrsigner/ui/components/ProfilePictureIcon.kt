@@ -13,6 +13,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
@@ -20,6 +21,23 @@ import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.ui.navigation.Route
 import com.greenart7c3.nostrsigner.ui.theme.fromHex
+
+/** The person icon of an account without a picture, ringed in the account's color; [modifier] comes after the ring. */
+@Composable
+fun AccountPlaceholderIcon(
+    account: Account,
+    contentDescription: String,
+    modifier: Modifier = Modifier,
+    borderWidth: Dp = 2.dp,
+) {
+    Icon(
+        Icons.Outlined.Person,
+        contentDescription,
+        modifier = Modifier
+            .border(borderWidth, Color.fromHex(account.hexKey.slice(0..5)), CircleShape)
+            .then(modifier),
+    )
+}
 
 @Composable
 fun ProfilePictureIcon(account: Account, modifier: Modifier = Modifier) {

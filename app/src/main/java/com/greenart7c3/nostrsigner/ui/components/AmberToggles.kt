@@ -2,6 +2,7 @@ package com.greenart7c3.nostrsigner.ui.components
 
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Box
@@ -25,6 +26,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.greenart7c3.nostrsigner.ui.theme.AmberPreview
@@ -105,50 +107,70 @@ fun <T> AmberToggles(
                             .clip(RoundedCornerShape(4.dp))
                             .background(indicatorColor(selected)),
                     )
-
-                    Row(modifier = Modifier.fillMaxHeight()) {
-                        options.forEach { option ->
-                            ToggleOption(
-                                modifier = Modifier.width(segmentWidth),
-                                text = label(option),
-                                isSelected = option == selected,
-                                selectedTextColor = selectedTextColor(option),
-                                onClick = { onSelect(option) },
-                            )
-                        }
-                    }
+                    ToggleSegments(selected, options, onSelect, label, selectedTextColor, segmentWidth)
                 }
 
                 if (scrollable) {
-                    val contentPx = with(density) { segmentWidth.toPx() } * count
-                    val trackPx = with(density) { available.toPx() }
-                    val thumbFraction = (trackPx / contentPx).coerceIn(0.1f, 1f)
-
                     Spacer(Modifier.height(6.dp))
-                    Box(
-                        modifier = Modifier
-                            .width(available)
-                            .height(3.dp)
-                            .clip(RoundedCornerShape(percent = 50))
-                            .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f)),
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth(thumbFraction)
-                                .fillMaxHeight()
-                                .offset {
-                                    val maxScroll = scrollState.maxValue.toFloat()
-                                    val fraction = if (maxScroll > 0f) scrollState.value / maxScroll else 0f
-                                    val travel = trackPx * (1f - thumbFraction)
-                                    IntOffset((travel * fraction).roundToInt(), 0)
-                                }
-                                .clip(RoundedCornerShape(percent = 50))
-                                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)),
-                        )
-                    }
+                    ToggleScrollbar(scrollState, trackWidth = available, contentWidth = segmentWidth * count)
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun <T> ToggleSegments(
+    selected: T,
+    options: List<T>,
+    onSelect: (T) -> Unit,
+    label: @Composable (T) -> String,
+    selectedTextColor: @Composable (T) -> Color,
+    segmentWidth: Dp,
+) {
+    Row(modifier = Modifier.fillMaxHeight()) {
+        options.forEach { option ->
+            ToggleOption(
+                modifier = Modifier.width(segmentWidth),
+                text = label(option),
+                isSelected = option == selected,
+                selectedTextColor = selectedTextColor(option),
+                onClick = { onSelect(option) },
+            )
+        }
+    }
+}
+
+/** A thin bar under a scrolling row: its thumb is the visible part of [contentWidth] and follows [scrollState]. */
+@Composable
+private fun ToggleScrollbar(
+    scrollState: ScrollState,
+    trackWidth: Dp,
+    contentWidth: Dp,
+) {
+    val density = LocalDensity.current
+    val trackPx = with(density) { trackWidth.toPx() }
+    val thumbFraction = (trackPx / with(density) { contentWidth.toPx() }).coerceIn(0.1f, 1f)
+    Box(
+        modifier = Modifier
+            .width(trackWidth)
+            .height(3.dp)
+            .clip(RoundedCornerShape(percent = 50))
+            .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f)),
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth(thumbFraction)
+                .fillMaxHeight()
+                .offset {
+                    val maxScroll = scrollState.maxValue.toFloat()
+                    val fraction = if (maxScroll > 0f) scrollState.value / maxScroll else 0f
+                    val travel = trackPx * (1f - thumbFraction)
+                    IntOffset((travel * fraction).roundToInt(), 0)
+                }
+                .clip(RoundedCornerShape(percent = 50))
+                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)),
+        )
     }
 }
 

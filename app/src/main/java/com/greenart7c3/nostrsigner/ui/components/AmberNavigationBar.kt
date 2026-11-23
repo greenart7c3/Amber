@@ -1,15 +1,11 @@
 package com.greenart7c3.nostrsigner.ui.components
 
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -24,7 +20,6 @@ import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.ui.CenterCircularProgressIndicator
 import com.greenart7c3.nostrsigner.ui.navigation.Route
-import com.greenart7c3.nostrsigner.ui.theme.fromHex
 import com.greenart7c3.nostrsigner.ui.theme.isAmberDarkTheme
 
 @Composable
@@ -54,58 +49,40 @@ fun AmberNavigationBar(
                     },
                     icon = {
                         if (it.route == Route.Accounts.route) {
-                            if (!profileUrl.isNullOrBlank() && !BuildFlavorChecker.isOfflineFlavor()) {
-                                SubcomposeAsyncImage(
-                                    profileUrl,
-                                    it.route,
-                                    Modifier
-                                        .clip(
-                                            RoundedCornerShape(50),
-                                        )
-                                        .height(28.dp)
-                                        .width(28.dp),
-                                    loading = {
-                                        CenterCircularProgressIndicator(Modifier)
-                                    },
-                                    error = { error ->
-                                        Icon(
-                                            Icons.Outlined.Person,
-                                            it.route,
-                                            modifier = Modifier.border(
-                                                2.dp,
-                                                Color.fromHex(account.hexKey.slice(0..5)),
-                                                CircleShape,
-                                            ),
-                                        )
-                                    },
-                                )
-                            } else {
-                                Icon(
-                                    Icons.Outlined.Person,
-                                    it.route,
-                                    modifier = Modifier.border(
-                                        2.dp,
-                                        Color.fromHex(account.hexKey.slice(0..5)),
-                                        CircleShape,
-                                    ),
-                                )
-                            }
+                            AccountTabIcon(account, profileUrl, it.route)
                         } else {
                             Icon(
                                 painterResource(it.icon),
                                 it.route,
-                                tint = if (selected) {
-                                    Color.Black
-                                } else if (isAmberDarkTheme()) {
-                                    Color.White
-                                } else {
-                                    Color.Black
-                                },
+                                tint = if (selected || !isAmberDarkTheme()) Color.Black else Color.White,
                             )
                         }
                     },
                 )
             }
         }
+    }
+}
+
+/** The Accounts tab shows the current account's picture, or its placeholder. */
+@Composable
+private fun AccountTabIcon(
+    account: Account,
+    profileUrl: String?,
+    route: String,
+) {
+    if (!profileUrl.isNullOrBlank() && !BuildFlavorChecker.isOfflineFlavor()) {
+        SubcomposeAsyncImage(
+            profileUrl,
+            route,
+            Modifier
+                .clip(RoundedCornerShape(50))
+                .height(28.dp)
+                .width(28.dp),
+            loading = { CenterCircularProgressIndicator(Modifier) },
+            error = { AccountPlaceholderIcon(account, route) },
+        )
+    } else {
+        AccountPlaceholderIcon(account, route)
     }
 }

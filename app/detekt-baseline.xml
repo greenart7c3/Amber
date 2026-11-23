@@ -103,10 +103,7 @@
     <ID>MultipleEmitters:SignPsbt.kt:@Composable private fun PsbtBody</ID>
     <ID>NestedBlockDepth:SignerProviderQuery.kt:SignerProviderQuery$@Suppress("RunBlocking") fun query: Cursor?</ID>
     <ID>PreviewAnnotationNaming:Previews.kt:ThemePreviews</ID>
-    <ID>ReturnCount:SecureCryptoHelper.kt:SecureCryptoHelper$internal fun migrateCiphertext: CiphertextMigration</ID>
-    <ID>ReturnCount:SecureCryptoHelper.kt:SecureCryptoHelper$private suspend fun finishRotation: Boolean</ID>
     <ID>ReturnCount:SignerProviderQuery.kt:SignerProviderQuery$@Suppress("RunBlocking") fun query: Cursor?</ID>
-    <ID>ReturnCount:SignerProviderQuery.kt:SignerProviderQuery$private fun hasAnyAcceptingDecryptPermission: Boolean</ID>
     <ID>TooManyFunctions:Account.kt:Account</ID>
     <ID>TooManyFunctions:ApplicationBackup.kt:ApplicationBackup</ID>
     <ID>TooManyFunctions:ApplicationDao.kt:ApplicationDao</ID>

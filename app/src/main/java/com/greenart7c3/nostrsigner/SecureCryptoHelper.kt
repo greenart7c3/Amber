@@ -398,26 +398,60 @@ object SecureCryptoHelper {
         previousAlias: String,
     ): Boolean {
         val previousKey = keyStore.secretKey(previousAlias)
-        if (previousKey != null) {
-            // Sweeps until a pass changes nothing, at most MAX_SWEEP_PASSES times.
-            val settled = (1..MAX_SWEEP_PASSES).any {
-                val result = try {
-                    sweep(context, activeKey, previousKey)
-                } catch (e: Exception) {
-                    AmberLog.w(TAG, "Key rotation: sweep failed", e)
-                    return false
-                }
-                if (result.failed > 0) {
-                    AmberLog.w(TAG, "Key rotation: ${result.failed} value(s) could not be moved to the new key")
-                    return false
-                }
-                result.changed == 0
-            }
-            if (!settled) return false
-        }
+        if (previousKey != null && !sweepUntilSettled(context, activeKey, previousKey)) return false
         keyStore.deleteEntry(previousAlias)
         cachedHandle = KeyHandle(activeAlias, activeKey, null)
         return true
+    }
+
+    private enum class SweepOutcome {
+        /** The pass changed nothing: every value is on the current key. */
+        SETTLED,
+
+        /** The pass moved values, so another pass must re-check them. */
+        CHANGED,
+
+        /** A value could not be checked or moved; the previous key must be kept. */
+        FAILED,
+    }
+
+    /** Sweeps until a pass changes nothing; false when a pass failed or values kept moving for [MAX_SWEEP_PASSES] passes. */
+    private suspend fun sweepUntilSettled(
+        context: Context,
+        current: SecretKey,
+        previous: SecretKey,
+    ): Boolean {
+        repeat(MAX_SWEEP_PASSES) {
+            when (sweepPass(context, current, previous)) {
+                SweepOutcome.SETTLED -> return true
+                SweepOutcome.FAILED -> return false
+                SweepOutcome.CHANGED -> Unit
+            }
+        }
+        return false
+    }
+
+    private suspend fun sweepPass(
+        context: Context,
+        current: SecretKey,
+        previous: SecretKey,
+    ): SweepOutcome {
+        val result = try {
+            sweep(context, current, previous)
+        } catch (e: Exception) {
+            AmberLog.w(TAG, "Key rotation: sweep failed", e)
+            return SweepOutcome.FAILED
+        }
+        return when {
+            result.failed > 0 -> {
+                AmberLog.w(TAG, "Key rotation: ${result.failed} value(s) could not be moved to the new key")
+                SweepOutcome.FAILED
+            }
+
+            result.changed == 0 -> SweepOutcome.SETTLED
+
+            else -> SweepOutcome.CHANGED
+        }
     }
 
     private class SweepResult {
@@ -509,12 +543,25 @@ object SecureCryptoHelper {
         decryptPrevious: (String) -> String,
         encryptCurrent: (String) -> String,
     ): CiphertextMigration {
-        try {
+        val currentKeyError = try {
             decryptCurrent(raw)
-            return CiphertextMigration.Current
+            null
         } catch (e: Exception) {
-            if (!e.isWrongKeyOrMalformed()) return CiphertextMigration.Failed(e)
+            e
         }
+        return when {
+            currentKeyError == null -> CiphertextMigration.Current
+            !currentKeyError.isWrongKeyOrMalformed() -> CiphertextMigration.Failed(currentKeyError)
+            else -> migrateFromPreviousKey(raw, decryptPrevious, encryptCurrent)
+        }
+    }
+
+    /** [raw] does not belong to the current key: decrypt it with the previous one and re-encrypt it. */
+    private fun migrateFromPreviousKey(
+        raw: String,
+        decryptPrevious: (String) -> String,
+        encryptCurrent: (String) -> String,
+    ): CiphertextMigration {
         val plainText = try {
             decryptPrevious(raw)
         } catch (e: Exception) {

@@ -42,7 +42,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
-import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavBackStackEntry
@@ -57,7 +56,6 @@ import com.greenart7c3.nostrsigner.commonsui.notifications_are_needed_to_use_amb
 import com.greenart7c3.nostrsigner.commonsui.permission_needed
 import com.greenart7c3.nostrsigner.data.RelayClient
 import com.greenart7c3.nostrsigner.models.Account
-import com.greenart7c3.nostrsigner.models.AmberBunkerRequest
 import com.greenart7c3.nostrsigner.models.IntentData
 import com.greenart7c3.nostrsigner.models.IntentResultType
 import com.greenart7c3.nostrsigner.service.crashreports.DisplayCrashMessages
@@ -69,7 +67,6 @@ import com.greenart7c3.nostrsigner.ui.components.ProfileSubscriptionEffect
 import com.greenart7c3.nostrsigner.ui.navigation.Route
 import com.greenart7c3.nostrsigner.ui.theme.amoledBorder
 import com.greenart7c3.nostrsigner.ui.theme.outlineIfAny
-import kotlinx.collections.immutable.ImmutableList
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
@@ -179,17 +176,13 @@ private fun NotificationPermissionPrompt() {
 fun MainScreen(
     account: Account,
     accountStateViewModel: AccountStateViewModel,
-    intents: ImmutableList<IntentData>,
-    bunkerRequests: ImmutableList<AmberBunkerRequest>,
-    packageName: String?,
-    appName: String?,
+    requests: IncomingRequests,
     // Read through a function so that only this screen recomposes when it is consumed.
     route: () -> String?,
     onConsumeRoute: () -> Unit,
     navController: NavHostControllerWrapper,
     onRemoveIntentData: (List<IntentData>, IntentResultType) -> Unit,
     modifier: Modifier = Modifier,
-    isExternalRequest: Boolean = false,
     viewModel: MainScreenViewModel = viewModel(
         factory = MainScreenViewModel.factory(LocalContext.current.applicationContext, LocalSettingsStore.current, LocalRelayClient.current, LocalAppScope.current),
     ),
@@ -201,7 +194,6 @@ fun MainScreen(
     val screenWidthDp = LocalConfiguration.current.screenWidthDp.dp
     val margin = screenWidthDp - screenWidthDp * 0.93f
     NotificationPermissionPrompt()
-    val requests = IncomingRequests(intents, bunkerRequests, packageName, appName, isExternalRequest)
     val startDestination = rememberStartRoute(requests, route, onConsumeRoute)
     // Keep the current account's profile metadata fresh while the main UI is shown.
     ProfileSubscriptionEffect(account)
@@ -359,13 +351,8 @@ private fun rememberStartRoute(requests: IncomingRequests, route: () -> String?,
 private fun MainTopBar(account: Account, requests: IncomingRequests, navBackStackEntry: NavBackStackEntry?, destinationRoute: String) {
     AmberTopAppBar(
         destinationRoute = destinationRoute,
-        lifecycleOwner = LocalLifecycleOwner.current,
-        scope = rememberCoroutineScope(),
-        context = LocalContext.current,
         navBackStackEntry = NavBackStackEntryWrapper(navBackStackEntry),
         account = account,
-        intents = requests.intents,
-        bunkerRequests = requests.bunkerRequests,
-        packageName = requests.packageName,
+        requests = requests,
     )
 }

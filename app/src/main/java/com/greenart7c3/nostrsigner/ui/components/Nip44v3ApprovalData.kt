@@ -13,6 +13,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -49,6 +50,18 @@ import com.greenart7c3.nostrsigner.ui.theme.previewAccount
 import org.jetbrains.compose.resources.stringResource
 
 /**
+ * What a NIP-44 v3 request asks: encrypt or decrypt ([type]), under the event [kind]
+ * and [scope] it authenticates, with the content prepared when it arrived.
+ */
+@Immutable
+class Nip44v3Prompt(
+    val type: SignerType,
+    val kind: Int?,
+    val scope: String,
+    val encryptedData: EncryptedDataKind?,
+)
+
+/**
  * Dedicated approval screen for NIP-44 v3 encrypt/decrypt requests.
  *
  * Unlike the v2/v4 [EncryptDecryptData] screen, v3 authenticates an event
@@ -60,11 +73,8 @@ fun Nip44v3ApprovalData(
     isBunker: Boolean,
     appName: String,
     packageName: String?,
-    type: SignerType,
+    prompt: Nip44v3Prompt,
     account: Account,
-    kind: Int?,
-    scope: String,
-    encryptedData: EncryptedDataKind?,
     shouldRunOnAccept: Boolean?,
     onAccept: (RememberType, DecryptTypeScope) -> Unit,
     onReject: (RememberType, DecryptTypeScope) -> Unit,
@@ -72,6 +82,10 @@ fun Nip44v3ApprovalData(
     defaultScope: DecryptTypeScope = DecryptTypeScope.SPECIFIC,
     iconUrl: String = "",
 ) {
+    val type = prompt.type
+    val kind = prompt.kind
+    val scope = prompt.scope
+    val encryptedData = prompt.encryptedData
     var rememberType by remember { mutableStateOf(RememberType.NEVER) }
     var grantScope by remember { mutableStateOf(defaultScope) }
 
@@ -211,11 +225,13 @@ private fun Nip44v3ApprovalDataPreview() {
             isBunker = false,
             appName = "Amethyst",
             packageName = null,
-            type = SignerType.NIP44_V3_ENCRYPT,
+            prompt = Nip44v3Prompt(
+                type = SignerType.NIP44_V3_ENCRYPT,
+                kind = null,
+                scope = "chat",
+                encryptedData = ClearTextEncryptedDataKind("Hello Nostr!", "Hello Nostr!"),
+            ),
             account = previewAccount(),
-            kind = null,
-            scope = "chat",
-            encryptedData = ClearTextEncryptedDataKind("Hello Nostr!", "Hello Nostr!"),
             shouldRunOnAccept = null,
             onAccept = { _, _ -> },
             onReject = { _, _ -> },

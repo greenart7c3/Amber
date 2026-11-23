@@ -27,30 +27,29 @@ import com.greenart7c3.nostrsigner.commonsui.invalid_intent_close_app
 import com.greenart7c3.nostrsigner.commonsui.nothing_to_approve_yet
 import com.greenart7c3.nostrsigner.commonsui.why_not_explore_your_favorite_nostr_app_a_bit
 import com.greenart7c3.nostrsigner.models.Account
-import com.greenart7c3.nostrsigner.models.AmberBunkerRequest
 import com.greenart7c3.nostrsigner.models.IntentData
 import com.greenart7c3.nostrsigner.models.IntentResultType
 import com.greenart7c3.nostrsigner.ui.components.BunkerSingleEventHomeScreen
 import com.greenart7c3.nostrsigner.ui.components.IntentSingleEventHomeScreen
 import com.greenart7c3.nostrsigner.ui.components.MultiEventHomeScreen
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequestConnect
-import kotlinx.collections.immutable.ImmutableList
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun IncomingRequestScreen(
     horizontalPadding: Dp,
     scaffoldPadding: PaddingValues,
-    intents: ImmutableList<IntentData>,
-    bunkerRequests: ImmutableList<AmberBunkerRequest>,
-    packageName: String?,
-    applicationName: String?,
+    requests: IncomingRequests,
     account: Account,
     onRemoveIntentData: (List<IntentData>, IntentResultType) -> Unit,
     onLoading: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
-    isExternalRequest: Boolean = false,
 ) {
+    val intents = requests.intents
+    val bunkerRequests = requests.bunkerRequests
+    val packageName = requests.packageName
+    val applicationName = requests.appName
+    val isExternalRequest = requests.isExternalRequest
     var loading by remember { mutableStateOf(false) }
     // A connect needs the account choice and the replace-or-create-new prompt that
     // only the single screen has, so it is never batched with other requests.

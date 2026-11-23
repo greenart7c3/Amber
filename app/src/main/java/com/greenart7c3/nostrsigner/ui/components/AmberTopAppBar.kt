@@ -1,6 +1,5 @@
 package com.greenart7c3.nostrsigner.ui.components
 
-import android.content.Context
 import android.graphics.drawable.Drawable
 import android.widget.Toast
 import androidx.compose.foundation.clickable
@@ -27,6 +26,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -37,7 +37,7 @@ import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
-import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.greenart7c3.nostrsigner.R
@@ -49,11 +49,10 @@ import com.greenart7c3.nostrsigner.commonsui.proxy_is_connected
 import com.greenart7c3.nostrsigner.commonsui.proxy_is_not_working
 import com.greenart7c3.nostrsigner.commonsui.reconnect
 import com.greenart7c3.nostrsigner.models.Account
-import com.greenart7c3.nostrsigner.models.AmberBunkerRequest
-import com.greenart7c3.nostrsigner.models.IntentData
 import com.greenart7c3.nostrsigner.models.TorMode
 import com.greenart7c3.nostrsigner.service.TorManager
 import com.greenart7c3.nostrsigner.service.toShortenHex
+import com.greenart7c3.nostrsigner.ui.IncomingRequests
 import com.greenart7c3.nostrsigner.ui.LocalAccountRepository
 import com.greenart7c3.nostrsigner.ui.LocalAppScope
 import com.greenart7c3.nostrsigner.ui.LocalRelayClient
@@ -67,8 +66,6 @@ import com.greenart7c3.nostrsigner.ui.theme.connectedColorLight
 import com.greenart7c3.nostrsigner.ui.theme.isAmberDarkTheme
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequestConnect
 import java.util.Base64
-import kotlinx.collections.immutable.ImmutableList
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
@@ -79,17 +76,18 @@ private val contentTitledRoutes = listOf("Permission/", "Activity/", "RelayLogSc
 @Composable
 fun AmberTopAppBar(
     destinationRoute: String,
-    lifecycleOwner: LifecycleOwner,
-    scope: CoroutineScope,
-    context: Context,
     navBackStackEntry: NavBackStackEntryWrapper,
     account: Account,
-    intents: ImmutableList<IntentData>,
-    bunkerRequests: ImmutableList<AmberBunkerRequest>,
-    packageName: String?,
+    requests: IncomingRequests,
     modifier: Modifier = Modifier,
     viewModel: TopAppBarViewModel = viewModel(factory = TopAppBarViewModel.factory(LocalAccountRepository.current)),
 ) {
+    val lifecycleOwner = LocalLifecycleOwner.current
+    val scope = rememberCoroutineScope()
+    val context = LocalContext.current
+    val intents = requests.intents
+    val bunkerRequests = requests.bunkerRequests
+    val packageName = requests.packageName
     val settingsStore = LocalSettingsStore.current
     val relayClient = LocalRelayClient.current
     val appScope = LocalAppScope.current

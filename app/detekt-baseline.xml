@@ -91,10 +91,6 @@
     <ID>LongMethod:UpdateSettingsScreen.kt:@Composable fun UpdateSettingsScreen</ID>
     <ID>LongParameterList:Account.kt:Account</ID>
     <ID>LongParameterList:AmberEvent.kt:AmberEvent</ID>
-    <ID>LongParameterList:AmberTopAppBar.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun AmberTopAppBar</ID>
-    <ID>LongParameterList:IncomingRequestScreen.kt:@Composable fun IncomingRequestScreen</ID>
-    <ID>LongParameterList:MainScreen.kt:@SuppressLint("ConfigurationScreenWidthHeight") @OptIn(ExperimentalMaterial3Api::class) @Composable fun MainScreen</ID>
-    <ID>LongParameterList:Nip44v3ApprovalData.kt:@Composable fun Nip44v3ApprovalData</ID>
     <ID>ModifierNotUsedAtRoot:LoginWithPubKey.kt:modifier = modifier .weight(1f)</ID>
     <ID>MultipleEmitters:ActivityStatsCard.kt:@Composable private fun ActivityStatsBar</ID>
     <ID>MultipleEmitters:RelaysScreen.kt:@Composable private fun LocalBunkerServerSettings</ID>
@@ -108,6 +104,6 @@
     <ID>TooManyFunctions:LocalPreferences.kt:LocalPreferences</ID>
     <ID>TooManyFunctions:LogDao.kt:LogDao</ID>
     <ID>ViewModelForwarding:AccountScreen.kt:MainLoginPage(accountStateViewModel, NavHostControllerWrapper(newNavController))</ID>
-    <ID>ViewModelForwarding:AccountScreen.kt:MainScreen( account = state.account, accountStateViewModel = accountStateViewModel, intents = intents, bunkerRequests = bunkerRequests, packageName = packageName, appName = appName, route = { localRoute.value }, onConsumeRoute = { localRoute.value = null }, navController = navController, isExternalRequest = isExternalRequest || (intents.isEmpty() &amp;&amp; bunkerRequests.isNotEmpty() &amp;&amp; (packageName != null || intent.intent?.getStringExtra("route") == Route.IncomingRequest.route)), onRemoveIntentData = { results, type -&gt; when (type) { IntentResultType.ADD -&gt; { IntentUtils.addAll(results) } IntentResultType.REMOVE -&gt; { IntentUtils.removeAll(results) } } }, )</ID>
+    <ID>ViewModelForwarding:AccountScreen.kt:MainScreen( account = state.account, accountStateViewModel = accountStateViewModel, requests = IncomingRequests( intents = intents, bunkerRequests = bunkerRequests, packageName = packageName, appName = appName, isExternalRequest = isExternalRequest || (intents.isEmpty() &amp;&amp; bunkerRequests.isNotEmpty() &amp;&amp; (packageName != null || intent.intent?.getStringExtra("route") == Route.IncomingRequest.route)), ), route = { localRoute.value }, onConsumeRoute = { localRoute.value = null }, navController = navController, onRemoveIntentData = { results, type -&gt; when (type) { IntentResultType.ADD -&gt; { IntentUtils.addAll(results) } IntentResultType.REMOVE -&gt; { IntentUtils.removeAll(results) } } }, )</ID>
   </CurrentIssues>
 </SmellBaseline>

@@ -345,11 +345,8 @@ private fun Nip44v3Request(
         appName = request.appName,
         iconUrl = request.appIcon,
         packageName = null,
-        type = request.type,
+        prompt = Nip44v3Prompt(request.type, v3Kind, request.bunkerRequest.request.nip44v3Scope(), request.bunkerRequest.encryptedData),
         account = request.account,
-        kind = v3Kind,
-        scope = request.bunkerRequest.request.nip44v3Scope(),
-        encryptedData = request.bunkerRequest.encryptedData,
         shouldRunOnAccept = request.nip44v3Decision(),
         onAccept = { rememberType, scope ->
             // encryptedData.result holds the Base64 wire value (ciphertext for encrypt,

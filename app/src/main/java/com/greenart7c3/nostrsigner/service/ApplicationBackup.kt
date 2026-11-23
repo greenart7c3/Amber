@@ -133,6 +133,9 @@ internal fun backupSigner(account: Account): NostrSignerInternal {
     return NostrSignerInternal(backupKeyPair(identityPrivKey))
 }
 
+// The event [subId] delivered, when it is of [kind] and by [pubKey] (the account's own); else null.
+private fun Message.ownEvent(subId: String, kind: Int, pubKey: String): Event? = (this as? EventMessage)?.takeIf { it.subId == subId && it.event.kind == kind }?.event?.takeIf { it.pubKey == pubKey }
+
 object ApplicationBackup {
     private val mapper = jacksonObjectMapper()
         .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
@@ -216,9 +219,9 @@ object ApplicationBackup {
 
         val listener = object : RelayConnectionListener {
             override suspend fun onIncomingMessage(relay: IRelayClient, msgStr: String, msg: Message) {
-                if (msg is EventMessage && msg.subId == subId && msg.event.kind == INBOX_KIND && msg.event.pubKey == account.hexKey) {
-                    if (msg.event.verify()) {
-                        latest[msg.event.createdAt] = msg.event
+                msg.ownEvent(subId, INBOX_KIND, account.hexKey)?.let { event ->
+                    if (event.verify()) {
+                        latest[event.createdAt] = event
                     }
                 }
                 super.onIncomingMessage(relay, msgStr, msg)
@@ -302,14 +305,10 @@ object ApplicationBackup {
 
         val listener = object : RelayConnectionListener {
             override suspend fun onIncomingMessage(relay: IRelayClient, msgStr: String, msg: Message) {
-                if (msg is EventMessage &&
-                    msg.subId == subId &&
-                    msg.event.kind == BACKUP_KIND &&
-                    msg.event.pubKey == account.hexKey
-                ) {
-                    val identifier = msg.event.tags.firstOrNull { it.size >= 2 && it[0] == "d" }?.getOrNull(1)
-                    if (identifier == BACKUP_D_TAG && msg.event.verify()) {
-                        received[msg.event.createdAt] = msg.event
+                msg.ownEvent(subId, BACKUP_KIND, account.hexKey)?.let { event ->
+                    val identifier = event.tags.firstOrNull { it.size >= 2 && it[0] == "d" }?.getOrNull(1)
+                    if (identifier == BACKUP_D_TAG && event.verify()) {
+                        received[event.createdAt] = event
                     }
                 }
                 super.onIncomingMessage(relay, msgStr, msg)

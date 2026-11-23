@@ -113,23 +113,23 @@ class MainViewModel(val context: Context) : ViewModel() {
 
         viewModelScope.launch(Dispatchers.IO) {
             if (requests.isNotEmpty()) {
-                val npub = getAccount(null)
-                val currentAccount = SavedAccounts.current(context)
-                if (currentAccount != null && npub != null && currentAccount != npub && npub.isNotBlank()) {
-                    if (npub.startsWith("npub")) {
-                        AmberLog.d(Amber.TAG, "Switching account to $npub")
-                        if (SavedAccounts.contains(context, npub)) {
-                            accountStateViewModel?.switchUser(npub, Route.IncomingRequest.route)
-                        }
-                    } else {
-                        val localNpub = Hex.decode(npub).toNpub()
-                        AmberLog.d(Amber.TAG, "Switching account to $localNpub")
-                        if (SavedAccounts.contains(context, localNpub)) {
-                            accountStateViewModel?.switchUser(localNpub, Route.IncomingRequest.route)
-                        }
-                    }
-                }
+                switchToRequestedAccount(getAccount(null), accountStateViewModel)
             }
+        }
+    }
+
+    /**
+     * Switches to the saved account [requested] (an npub or a hex key) names when it is
+     * not the current one, opening its incoming requests. A blank or unknown key changes
+     * nothing. Shared by the activities and [showBunkerRequests].
+     */
+    fun switchToRequestedAccount(requested: String?, accountStateViewModel: AccountStateViewModel?) {
+        val currentAccount = SavedAccounts.current(context) ?: return
+        if (requested.isNullOrBlank() || requested == currentAccount) return
+        val npub = if (requested.startsWith("npub")) requested else Hex.decode(requested).toNpub()
+        AmberLog.d(Amber.TAG, "Switching account to $npub")
+        if (SavedAccounts.contains(context, npub)) {
+            accountStateViewModel?.switchUser(npub, Route.IncomingRequest.route)
         }
     }
 

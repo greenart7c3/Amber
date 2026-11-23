@@ -56,7 +56,7 @@ object LocalRelays {
         if (!ipv4Literal.matches(host) && !host.contains(':')) return false
         // An IP literal: getByName parses it without a DNS lookup.
         val address = runCatching { InetAddress.getByName(host) }.getOrNull() ?: return false
-        if (address.isLoopbackAddress || address.isSiteLocalAddress || address.isLinkLocalAddress || address.isAnyLocalAddress) return true
+        if (address.isLocalAddress()) return true
         val bytes = address.address
         return when (bytes.size) {
             // 100.64.0.0/10 — carrier-grade NAT range used by Tailscale and similar overlays.
@@ -66,6 +66,9 @@ object LocalRelays {
             else -> false
         }
     }
+
+    // Loopback, private (RFC 1918), link-local or the wildcard address.
+    private fun InetAddress.isLocalAddress(): Boolean = isLoopbackAddress || isSiteLocalAddress || isLinkLocalAddress || isAnyLocalAddress
 
     fun isOnion(url: String): Boolean = hostOf(url)?.endsWith(".onion") == true
 

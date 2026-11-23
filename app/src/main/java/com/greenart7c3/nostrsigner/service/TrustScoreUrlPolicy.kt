@@ -7,6 +7,12 @@ object TrustScoreUrlPolicy {
     // ratings API.
     private val EXCLUDED_SUFFIXES = listOf(".onion", ".i2p", ".loki", ".local", ".localhost", ".internal", ".lan", ".home.arpa", ".home")
 
+    // A dotted domain name: not a single label, an IPv6 literal or an IPv4 address.
+    private fun isPublicDomainName(host: String): Boolean {
+        val isIpAddress = host.contains(':') || host.all { it.isDigit() || it == '.' }
+        return host.contains('.') && !isIpAddress
+    }
+
     fun publicRelayUrl(value: String): String? = runCatching {
         val uri = URI(value)
         val scheme = uri.scheme?.lowercase() ?: return null
@@ -17,7 +23,7 @@ object TrustScoreUrlPolicy {
         // many public relays live at non-root paths, and only the host
         // identifies the relay to the API.
         if (uri.userInfo != null || uri.query != null || uri.fragment != null) return null
-        if (!host.contains('.') || host.contains(':') || host.all { it.isDigit() || it == '.' }) return null
+        if (!isPublicDomainName(host)) return null
         if (EXCLUDED_SUFFIXES.any { host.endsWith(it) }) return null
         // Drop default ports so one relay has exactly one canonical URL —
         // otherwise wss://relay.example and wss://relay.example:443 get two

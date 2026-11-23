@@ -2,12 +2,6 @@
 <SmellBaseline>
   <ManuallySuppressedIssues/>
   <CurrentIssues>
-    <ID>ComplexCondition:AutoStart.kt:AutoStart$value.none { it == ' ' || it == '\t' || it == '"' || it == '\\' || it == '$' }</ID>
-    <ID>ComplexCondition:MdnsResolver.kt:MdnsResolver$(type == TYPE_A &amp;&amp; length == 4) || (type == TYPE_AAAA &amp;&amp; length == 16)</ID>
-    <ID>ComplexCondition:Models.kt:EncryptedContent.Companion$node != null &amp;&amp; node.isArray &amp;&amp; node.all { tag -&gt; tag.isArray &amp;&amp; tag.all { it.isTextual } }</ID>
-    <ID>ComplexCondition:Models.kt:EncryptedContent.Companion$node != null &amp;&amp; node.isObject &amp;&amp; kind != null &amp;&amp; kind.canConvertToInt()</ID>
-    <ID>ComplexCondition:RelayNetwork.kt:LocalRelays$address.isLoopbackAddress || address.isSiteLocalAddress || address.isLinkLocalAddress || address.isAnyLocalAddress</ID>
-    <ID>ComplexCondition:UnlockScreen.kt:onEnter != null &amp;&amp; event.type == KeyEventType.KeyUp &amp;&amp; (event.key == Key.Enter || event.key == Key.NumPadEnter)</ID>
     <ID>CompositionLocalAllowlist:WindowGeometry.kt:/** The current window's content size, provided by [App]. */ val LocalWindowContentSize = staticCompositionLocalOf { DEFAULT_WINDOW_SIZE }</ID>
     <ID>CompositionLocalAllowlist:WindowGeometry.kt:/** The width bucket of the current window, provided by [App]. */ val LocalLayoutWidth = staticCompositionLocalOf { LayoutWidth.EXPANDED }</ID>
     <ID>CyclomaticComplexMethod:ApplicationDetailScreen.kt:@Composable fun ApplicationDetailScreen</ID>

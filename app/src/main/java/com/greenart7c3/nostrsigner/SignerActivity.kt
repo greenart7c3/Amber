@@ -27,7 +27,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Density
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -50,10 +49,7 @@ import com.greenart7c3.nostrsigner.ui.InvalidIntentScreen
 import com.greenart7c3.nostrsigner.ui.NavHostControllerWrapper
 import com.greenart7c3.nostrsigner.ui.appDependencies
 import com.greenart7c3.nostrsigner.ui.components.BiometricAuthScreen
-import com.greenart7c3.nostrsigner.ui.navigation.Route
 import com.greenart7c3.nostrsigner.ui.theme.NostrSignerTheme
-import com.vitorpamplona.quartz.nip19Bech32.toNpub
-import com.vitorpamplona.quartz.utils.Hex
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -110,7 +106,6 @@ class SignerActivity : AppCompatActivity() {
                 ) {
                     val navController = rememberNavController()
                     mainViewModel.navController = navController
-                    val context = LocalContext.current
                     var isAuthenticated by remember { mutableStateOf(false) }
 
                     val invalidIntent by IntentUtils.invalidIntents
@@ -174,22 +169,7 @@ class SignerActivity : AppCompatActivity() {
 
                                     LaunchedEffect(Unit, bunkerRequests.value) {
                                         launch(Dispatchers.IO) {
-                                            val localNpub = mainViewModel.getAccount(intent?.getStringExtra("current_user"))
-                                            val currentAccount = SavedAccounts.current(context)
-                                            if (currentAccount != null && localNpub != null && currentAccount != localNpub && localNpub.isNotBlank()) {
-                                                if (localNpub.startsWith("npub")) {
-                                                    AmberLog.d(Amber.TAG, "Switching account to $localNpub")
-                                                    if (SavedAccounts.contains(context, localNpub)) {
-                                                        accountStateViewModel.switchUser(localNpub, Route.IncomingRequest.route)
-                                                    }
-                                                } else {
-                                                    val localNpub2 = Hex.decode(localNpub).toNpub()
-                                                    AmberLog.d(Amber.TAG, "Switching account to $localNpub2")
-                                                    if (SavedAccounts.contains(context, localNpub2)) {
-                                                        accountStateViewModel.switchUser(localNpub2, Route.IncomingRequest.route)
-                                                    }
-                                                }
-                                            }
+                                            mainViewModel.switchToRequestedAccount(mainViewModel.getAccount(intent?.getStringExtra("current_user")), accountStateViewModel)
                                         }
                                     }
 

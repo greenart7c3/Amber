@@ -194,6 +194,9 @@ fun PassphraseSetupScreen(modifier: Modifier = Modifier) {
     }
 }
 
+// The keys that run a lock screen's primary action.
+private val enterKeys = setOf(Key.Enter, Key.NumPadEnter)
+
 /** Shared centered layout for the lock and first-run passphrase screens. */
 @Composable
 private fun LockScreenScaffold(
@@ -208,10 +211,7 @@ private fun LockScreenScaffold(
             .onPreviewKeyEvent { event ->
                 // Enter (or numpad enter) runs the primary action, the way
                 // every password prompt behaves.
-                if (onEnter != null &&
-                    event.type == KeyEventType.KeyUp &&
-                    (event.key == Key.Enter || event.key == Key.NumPadEnter)
-                ) {
+                if (onEnter != null && event.type == KeyEventType.KeyUp && event.key in enterKeys) {
                     onEnter()
                     true
                 } else {

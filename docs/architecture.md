@@ -572,3 +572,10 @@ back), and the desktop tabs use `mutableIntStateOf`. `LoginWithPubKey` keeps its
 `ModifierNotUsedAtRoot` entry on purpose: the screen's modifier scrolls the content
 while the Cancel/Connect row stays pinned, so it cannot move to the root without a
 separate content modifier.
+
+`ComplexCondition` (13): conditions became named predicates or lookups (the top bar's
+content-titled routes, a backup subscription's own events, a public domain name, the
+systemd quoting characters, the mDNS address lengths, a local address, the lock
+screen's enter keys). The "switch to the requested account" block, copied in
+`MainActivity`, `SignerActivity` and `MainViewModel`, is one
+`MainViewModel.switchToRequestedAccount`.

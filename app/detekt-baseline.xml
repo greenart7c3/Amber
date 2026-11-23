@@ -14,11 +14,8 @@
     <ID>CyclomaticComplexMethod:ExportAllAccountsScreen.kt:@Composable fun ExportAllAccountsScreen</ID>
     <ID>CyclomaticComplexMethod:IntentMultiEventHomeScreen.kt:@Composable private fun IntentRequestCard</ID>
     <ID>CyclomaticComplexMethod:IntentUtilsBeforeAfterTest.kt:IntentUtilsBeforeAfterTest$@Test fun `before-after parameter dispatch - all six keys`</ID>
-    <ID>CyclomaticComplexMethod:ProfileSubscription.kt:ProfileSubscription$override suspend fun onIncomingMessage</ID>
     <ID>CyclomaticComplexMethod:SeeDetailsScreen.kt:@Composable fun SeeDetailsScreen</ID>
     <ID>CyclomaticComplexMethod:UpdateSettingsScreen.kt:@Composable fun UpdateSettingsScreen</ID>
-    <ID>CyclomaticComplexMethod:ZapstoreUpdater.kt:ZapstoreUpdater$private fun processFileEvent</ID>
-    <ID>CyclomaticComplexMethod:ZapstoreUpdater.kt:ZapstoreUpdater$private suspend fun processReleaseEvent</ID>
     <ID>LongMethod:AccountBackupScreen.kt:@Composable fun AccountBackupScreen</ID>
     <ID>LongMethod:AccountBackupScreen.kt:@Composable private fun AccountBackupCard</ID>
     <ID>LongMethod:AccountBackupScreen.kt:@Composable private fun NSecQrButton</ID>

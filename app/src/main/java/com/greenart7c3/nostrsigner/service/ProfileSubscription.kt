@@ -84,39 +84,46 @@ class ProfileSubscription(
     }
 
     override suspend fun onIncomingMessage(relay: IRelayClient, msgStr: String, msg: Message) {
-        if (msg is EoseMessage) {
-            val subId = msg.subId
-            val relays = relaysPerSubId[subId]
-            if (relays != null) {
-                relays.remove(relay.url)
-                if (relays.isEmpty()) {
-                    unsubscribe(subId)
-                    onRelayListSubFinished(subId)
-                }
-            }
-
-            val hexKey = subIds.entries.firstOrNull { it.value == subId }?.key
-            val account = hexKey?.let { accounts[it] }
-            if (account != null) {
-                scope.launch {
-                    AccountPreferences.setLastCheck(appContext, account.npub, TimeUtils.now())
-                }
-            }
-        }
-        if (msg is EventMessage) {
-            if (this.relayListSubIds.containsValue(msg.subId)) {
-                if (msg.event.kind == AdvertisedRelayListEvent.KIND && msg.event.verify()) {
-                    (msg.event as? AdvertisedRelayListEvent)?.let { saveUserRelays(it) }
-                }
-            }
-            if (this.subIds.containsValue(msg.subId)) {
-                if (msg.event.kind == MetadataEvent.KIND && msg.event.verify()) {
-                    val account = accounts[msg.event.pubKey] ?: return
-                    (msg.event as? MetadataEvent)?.let { applyMetadata(account, it) }
-                }
-            }
+        when (msg) {
+            is EoseMessage -> onEose(relay, msg.subId)
+            // A metadata event for an account no longer watched ends here, as it always did.
+            is EventMessage -> if (!onEvent(msg)) return
         }
         super.onIncomingMessage(relay, msgStr, msg)
+    }
+
+    /** One relay finished [subId]: once all have, the relay-list step moves on, and the account's last check is recorded. */
+    private fun onEose(relay: IRelayClient, subId: String) {
+        val relays = relaysPerSubId[subId]
+        if (relays != null) {
+            relays.remove(relay.url)
+            if (relays.isEmpty()) {
+                unsubscribe(subId)
+                onRelayListSubFinished(subId)
+            }
+        }
+
+        val hexKey = subIds.entries.firstOrNull { it.value == subId }?.key
+        val account = hexKey?.let { accounts[it] } ?: return
+        scope.launch {
+            AccountPreferences.setLastCheck(appContext, account.npub, TimeUtils.now())
+        }
+    }
+
+    /**
+     * Saves a verified relay list or applies a verified profile from one of our
+     * subscriptions. False when a profile arrives for an account no longer watched.
+     */
+    private fun onEvent(msg: EventMessage): Boolean {
+        val event = msg.event
+        if (relayListSubIds.containsValue(msg.subId) && event.kind == AdvertisedRelayListEvent.KIND && event.verify()) {
+            (event as? AdvertisedRelayListEvent)?.let { saveUserRelays(it) }
+        }
+        if (subIds.containsValue(msg.subId) && event.kind == MetadataEvent.KIND && event.verify()) {
+            val account = accounts[event.pubKey] ?: return false
+            (event as? MetadataEvent)?.let { applyMetadata(account, it) }
+        }
+        return true
     }
 
     /**

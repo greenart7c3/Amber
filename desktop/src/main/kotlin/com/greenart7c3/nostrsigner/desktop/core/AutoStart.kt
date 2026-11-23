@@ -43,6 +43,9 @@ object AutoStart {
     /** launchd label; also the plist file name. Matches the bundle id. */
     private const val LAUNCH_AGENT_LABEL = "com.greenart7c3.nostrsigner"
 
+    // The characters that make a systemd value need double quotes (see [quote]).
+    private val QUOTE_TRIGGERS = setOf(' ', '\t', '"', '\\', '$')
+
     /** Set by the jpackage launcher to the installed binary; absent in dev (Gradle) runs. */
     private fun packagedExecutable(): String? = System.getProperty("jpackage.app-path")?.takeIf { it.isNotBlank() }
 
@@ -195,7 +198,7 @@ object AutoStart {
             .replace("\"", "\\\"")
             .replace("$", "\\$")
             .replace("%", "%%")
-        return if (value.none { it == ' ' || it == '\t' || it == '"' || it == '\\' || it == '$' }) escaped else "\"$escaped\""
+        return if (value.none { it in QUOTE_TRIGGERS }) escaped else "\"$escaped\""
     }
 
     /** Control characters (newlines in particular) cannot be quoted away in a unit file. */

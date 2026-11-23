@@ -132,12 +132,12 @@ data class EncryptedContent(
             if (trimmed.startsWith("{")) {
                 val node = runCatching { JacksonMapper.mapper.readTree(trimmed) }.getOrNull()
                 val kind = node?.get("kind")
-                if (node != null && node.isObject && kind != null && kind.canConvertToInt()) {
+                if (node?.isObject == true && kind?.canConvertToInt() == true) {
                     return EncryptedContent(EncryptedContentType.EVENT, kind.asInt())
                 }
             } else if (trimmed.startsWith("[")) {
                 val node = runCatching { JacksonMapper.mapper.readTree(trimmed) }.getOrNull()
-                if (node != null && node.isArray && node.all { tag -> tag.isArray && tag.all { it.isTextual } }) {
+                if (node?.isArray == true && node.all { tag -> tag.isArray && tag.all { it.isTextual } }) {
                     return EncryptedContent(EncryptedContentType.TAG_ARRAY)
                 }
             }

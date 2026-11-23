@@ -72,6 +72,9 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
+// The routes whose title comes from the "content" argument of the destination.
+private val contentTitledRoutes = listOf("Permission/", "Activity/", "RelayLogScreen/", "qrcode/")
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AmberTopAppBar(
@@ -200,7 +203,7 @@ fun AmberTopAppBar(
                         mutableStateOf(routes.find { it.route.startsWith(destinationRoute) }?.title() ?: "")
                     }
                     LaunchedEffect(destinationRoute, configuration) {
-                        if (destinationRoute.startsWith("Permission/") || destinationRoute.startsWith("Activity/") || destinationRoute.startsWith("RelayLogScreen/") || destinationRoute.startsWith("qrcode/")) {
+                        if (contentTitledRoutes.any { destinationRoute.startsWith(it) }) {
                             launch(Dispatchers.IO) {
                                 navBackStackEntry.navBackStackEntry?.arguments?.getString("content")?.let {
                                     title = Route.QrCode.title()

@@ -23,6 +23,9 @@ object MdnsResolver {
     private val group = InetSocketAddress(InetAddress.getByName("224.0.0.251"), 5353)
     private const val TYPE_A = 1
     private const val TYPE_AAAA = 28
+
+    // The address length an A (IPv4) or AAAA (IPv6) record carries; a record of another length is skipped.
+    private val ADDRESS_LENGTHS = mapOf(TYPE_A to 4, TYPE_AAAA to 16)
     private const val CLASS_IN = 1
     private const val TIMEOUT_MS = 1500
 
@@ -92,7 +95,7 @@ object MdnsResolver {
             val length = buf.short.toInt() and 0xFFFF
             val data = ByteArray(length).also { buf.get(it) }
             if (recordClass == CLASS_IN && recordName.equals(name, ignoreCase = true)) {
-                if ((type == TYPE_A && length == 4) || (type == TYPE_AAAA && length == 16)) {
+                if (ADDRESS_LENGTHS[type] == length) {
                     found += InetAddress.getByAddress(name, data)
                 }
             }

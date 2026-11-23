@@ -1,17 +1,12 @@
 package com.greenart7c3.nostrsigner.ui.components
 
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Person
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -19,7 +14,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -32,7 +26,6 @@ import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.theme.AmberPreview
 import com.greenart7c3.nostrsigner.ui.theme.ThemePreviews
-import com.greenart7c3.nostrsigner.ui.theme.fromHex
 import com.greenart7c3.nostrsigner.ui.theme.previewAccount
 import org.jetbrains.compose.resources.stringResource
 
@@ -54,68 +47,59 @@ fun SigningAs(account: Account, modifier: Modifier = Modifier) {
             modifier = Modifier.padding(top = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            val profileUrl by account.picture.collectAsStateWithLifecycle()
-            if (profileUrl.isNotBlank() && !BuildFlavorChecker.isOfflineFlavor()) {
-                SubcomposeAsyncImage(
-                    model = profileUrl,
-                    contentDescription = stringResource(Res.string.account_picture),
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(50))
-                        .height(30.dp)
-                        .width(30.dp),
-                    error = {
-                        Icon(
-                            Icons.Outlined.Person,
-                            stringResource(Res.string.account_picture),
-                            modifier = Modifier
-                                .border(
-                                    1.dp,
-                                    Color.fromHex(account.hexKey.slice(0..5)),
-                                    CircleShape,
-                                )
-                                .height(30.dp)
-                                .width(30.dp),
-                        )
-                    },
-                )
-            } else {
-                Icon(
-                    Icons.Outlined.Person,
-                    stringResource(Res.string.account_picture),
-                    modifier = Modifier
-                        .border(
-                            1.dp,
-                            Color.fromHex(account.hexKey.slice(0..5)),
-                            CircleShape,
-                        )
-                        .height(30.dp)
-                        .width(30.dp),
-                )
-            }
-
-            val name by account.name.collectAsStateWithLifecycle()
-            Column(
-                modifier = Modifier.padding(start = 8.dp),
-            ) {
-                if (name.isNotBlank()) {
-                    Text(
-                        text = name,
-                        fontWeight = FontWeight.Bold,
-                        style = MaterialTheme.typography.bodyMedium,
-                    )
-                }
-                Text(
-                    text = account.npub.toShortenHex(),
-                    fontWeight = if (name.isBlank()) FontWeight.Bold else FontWeight.Normal,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = if (name.isBlank()) {
-                        MaterialTheme.colorScheme.onSurface
-                    } else {
-                        MaterialTheme.colorScheme.onSurfaceVariant
-                    },
-                )
-            }
+            SigningAsAvatar(account)
+            AccountNameLabel(account, Modifier.padding(start = 8.dp))
         }
+    }
+}
+
+/** The account's picture, or its placeholder when it has none (always in the offline flavor) or it fails to load. */
+@Composable
+private fun SigningAsAvatar(account: Account) {
+    val profileUrl by account.picture.collectAsStateWithLifecycle()
+    val description = stringResource(Res.string.account_picture)
+    val size = Modifier
+        .height(30.dp)
+        .width(30.dp)
+    if (profileUrl.isNotBlank() && !BuildFlavorChecker.isOfflineFlavor()) {
+        SubcomposeAsyncImage(
+            model = profileUrl,
+            contentDescription = description,
+            modifier = Modifier
+                .clip(RoundedCornerShape(50))
+                .then(size),
+            error = { AccountPlaceholderIcon(account, description, size, borderWidth = 1.dp) },
+        )
+    } else {
+        AccountPlaceholderIcon(account, description, size, borderWidth = 1.dp)
+    }
+}
+
+/** The account's name over its short npub; without a name, the npub alone in bold. */
+@Composable
+private fun AccountNameLabel(
+    account: Account,
+    modifier: Modifier = Modifier,
+) {
+    val name by account.name.collectAsStateWithLifecycle()
+    Column(modifier = modifier) {
+        if (name.isNotBlank()) {
+            Text(
+                text = name,
+                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.bodyMedium,
+            )
+        }
+        Text(
+            text = account.npub.toShortenHex(),
+            fontWeight = if (name.isBlank()) FontWeight.Bold else FontWeight.Normal,
+            style = MaterialTheme.typography.bodyMedium,
+            color = if (name.isBlank()) {
+                MaterialTheme.colorScheme.onSurface
+            } else {
+                MaterialTheme.colorScheme.onSurfaceVariant
+            },
+        )
     }
 }
 

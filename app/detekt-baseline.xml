@@ -27,8 +27,6 @@
     <ID>LongMethod:ActivityScreen.kt:@Composable fun ActivityScreen</ID>
     <ID>LongMethod:ActivityStatsCard.kt:@Composable private fun ActivityStatsBar</ID>
     <ID>LongMethod:AddPermissionsSheet.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun AddPermissionsSheet</ID>
-    <ID>LongMethod:AmberNavigationBar.kt:@Composable fun AmberNavigationBar</ID>
-    <ID>LongMethod:AmberToggles.kt:@Composable fun &lt;T&gt; AmberToggles</ID>
     <ID>LongMethod:AmberTopAppBar.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun AmberTopAppBar</ID>
     <ID>LongMethod:ApplicationsBackupScreen.kt:@Composable fun ApplicationsBackupScreen</ID>
     <ID>LongMethod:ApplicationsBackupScreen.kt:@Composable private fun AccountBackupRow</ID>
@@ -76,7 +74,6 @@
     <ID>LongMethod:SeeDetailsScreen.kt:@Composable fun SeeDetailsScreen</ID>
     <ID>LongMethod:SeedWordsPage.kt:@Composable fun SeedWordsPage</ID>
     <ID>LongMethod:SignPolicySettingsScreen.kt:@Composable fun SignPolicySettingsScreen</ID>
-    <ID>LongMethod:SigningAs.kt:@Composable fun SigningAs</ID>
     <ID>LongMethod:SimpleSearchBar.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun SimpleSearchBar</ID>
     <ID>LongMethod:TranslationReportScreen.kt:@Composable fun TranslationReportScreen</ID>
     <ID>LongMethod:UpdateSettingsScreen.kt:@Composable fun UpdateSettingsScreen</ID>

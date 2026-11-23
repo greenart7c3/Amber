@@ -163,15 +163,6 @@ class IntentUtilsBeforeAfterTest {
 
     @Test
     fun `before-after parameter dispatch - all six keys`() {
-        data class Params(
-            var type: String = "",
-            var pubKey: String = "",
-            var compressionType: String = "",
-            var callbackUrl: String = "",
-            var returnType: String = "",
-            var appName: String = "",
-        )
-
         val paramPairs = listOf(
             "type" to "sign_event",
             "pubKey" to "abc123",
@@ -184,51 +175,59 @@ class IntentUtilsBeforeAfterTest {
 
         // Warm up
         repeat(5_000) {
-            paramPairs.forEach { (key, value) ->
-                val p = Params()
-                // OLD: sequential ifs
-                if (key == "type") p.type = value
-                if (key.lowercase() == "pubkey") p.pubKey = value
-                if (key == "compressionType") p.compressionType = value
-                if (key == "callbackUrl") p.callbackUrl = value
-                if (key == "returnType") p.returnType = value
-                if (key == "appName") p.appName = value
-            }
+            paramPairs.forEach { (key, value) -> DispatchParams().dispatchWithIfs(key, value) }
         }
 
         val beforeNs = measureNanoTime {
             repeat(iterations) {
-                paramPairs.forEach { (key, value) ->
-                    val p = Params()
-                    // OLD: every key checks all 6 conditions regardless of match
-                    if (key == "type") p.type = value
-                    if (key.lowercase() == "pubkey") p.pubKey = value
-                    if (key == "compressionType") p.compressionType = value
-                    if (key == "callbackUrl") p.callbackUrl = value
-                    if (key == "returnType") p.returnType = value
-                    if (key == "appName") p.appName = value
-                }
+                paramPairs.forEach { (key, value) -> DispatchParams().dispatchWithIfs(key, value) }
             }
         }
 
         val afterNs = measureNanoTime {
             repeat(iterations) {
-                paramPairs.forEach { (key, value) ->
-                    val p = Params()
-                    // NEW: when short-circuits after the first matching branch
-                    when {
-                        key == "type" -> p.type = value
-                        key.lowercase() == "pubkey" -> p.pubKey = value
-                        key == "compressionType" -> p.compressionType = value
-                        key == "callbackUrl" -> p.callbackUrl = value
-                        key == "returnType" -> p.returnType = value
-                        key == "appName" -> p.appName = value
-                    }
-                }
+                paramPairs.forEach { (key, value) -> DispatchParams().dispatchWithWhen(key, value) }
             }
         }
 
         printComparison("parameter dispatch (6 keys, all branches hit)", iterations, beforeNs, afterNs)
+    }
+
+    private data class DispatchParams(
+        var type: String = "",
+        var pubKey: String = "",
+        var compressionType: String = "",
+        var callbackUrl: String = "",
+        var returnType: String = "",
+        var appName: String = "",
+    )
+
+    // OLD: every key checks all 6 conditions regardless of match
+    private fun DispatchParams.dispatchWithIfs(
+        key: String,
+        value: String,
+    ) {
+        if (key == "type") type = value
+        if (key.lowercase() == "pubkey") pubKey = value
+        if (key == "compressionType") compressionType = value
+        if (key == "callbackUrl") callbackUrl = value
+        if (key == "returnType") returnType = value
+        if (key == "appName") appName = value
+    }
+
+    // NEW: when short-circuits after the first matching branch
+    private fun DispatchParams.dispatchWithWhen(
+        key: String,
+        value: String,
+    ) {
+        when {
+            key == "type" -> type = value
+            key.lowercase() == "pubkey" -> pubKey = value
+            key == "compressionType" -> compressionType = value
+            key == "callbackUrl" -> callbackUrl = value
+            key == "returnType" -> returnType = value
+            key == "appName" -> appName = value
+        }
     }
 
     // ─────────────────────────────────────────────────────────────────────────

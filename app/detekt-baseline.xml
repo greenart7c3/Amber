@@ -13,7 +13,6 @@
     <ID>CyclomaticComplexMethod:EncryptDecryptData.kt:@Composable fun EncryptDecryptData</ID>
     <ID>CyclomaticComplexMethod:ExportAllAccountsScreen.kt:@Composable fun ExportAllAccountsScreen</ID>
     <ID>CyclomaticComplexMethod:IntentMultiEventHomeScreen.kt:@Composable private fun IntentRequestCard</ID>
-    <ID>CyclomaticComplexMethod:IntentUtilsBeforeAfterTest.kt:IntentUtilsBeforeAfterTest$@Test fun `before-after parameter dispatch - all six keys`</ID>
     <ID>CyclomaticComplexMethod:SeeDetailsScreen.kt:@Composable fun SeeDetailsScreen</ID>
     <ID>CyclomaticComplexMethod:UpdateSettingsScreen.kt:@Composable fun UpdateSettingsScreen</ID>
     <ID>LongMethod:AccountBackupScreen.kt:@Composable fun AccountBackupScreen</ID>
@@ -31,7 +30,6 @@
     <ID>LongMethod:AmberNavigationBar.kt:@Composable fun AmberNavigationBar</ID>
     <ID>LongMethod:AmberToggles.kt:@Composable fun &lt;T&gt; AmberToggles</ID>
     <ID>LongMethod:AmberTopAppBar.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun AmberTopAppBar</ID>
-    <ID>LongMethod:ApplicationEntityCryptoTest.kt:ApplicationEntityCryptoTest$@Test fun migration_18_19_encryptsPlaintextSecrets</ID>
     <ID>LongMethod:ApplicationsBackupScreen.kt:@Composable fun ApplicationsBackupScreen</ID>
     <ID>LongMethod:ApplicationsBackupScreen.kt:@Composable private fun AccountBackupRow</ID>
     <ID>LongMethod:ApplicationsScreen.kt:@Composable fun ApplicationsScreen</ID>
@@ -58,14 +56,12 @@
     <ID>LongMethod:EventData.kt:@Composable fun BunkerEventData</ID>
     <ID>LongMethod:EventData.kt:@Composable fun EventData</ID>
     <ID>LongMethod:EventDetailModal.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun EventDetailModal</ID>
-    <ID>LongMethod:EventNotificationConsumerTest.kt:EventNotificationConsumerTest$@Test fun `an expired connection is answered as an unknown app`</ID>
     <ID>LongMethod:ExportAllAccountsScreen.kt:@Composable fun ExportAllAccountsScreen</ID>
     <ID>LongMethod:FeedbackScreen.kt:@Composable fun FeedbackScreen</ID>
     <ID>LongMethod:IncomingRequestScreen.kt:@Composable fun IncomingRequestScreen</ID>
     <ID>LongMethod:IntentMultiEventHomeScreen.kt:@Composable private fun IntentRequestCard</ID>
     <ID>LongMethod:LoginWithPubKey.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun LoginWithPubKey</ID>
     <ID>LongMethod:LogsScreen.kt:@Composable fun LogsScreen</ID>
-    <ID>LongMethod:MarkdownText.kt:private fun AnnotatedString.Builder.appendMarkdownInline</ID>
     <ID>LongMethod:MnemonicLoginInput.kt:@Composable fun MnemonicLoginInput</ID>
     <ID>LongMethod:MnemonicLoginInput.kt:@Composable private fun WordField</ID>
     <ID>LongMethod:NewApplicationScreen.kt:@Composable fun NewApplicationScreen</ID>

@@ -2,6 +2,7 @@ package com.greenart7c3.nostrsigner.database
 
 import androidx.room.Room
 import androidx.room.testing.MigrationTestHelper
+import androidx.sqlite.db.SupportSQLiteDatabase
 import androidx.sqlite.db.framework.FrameworkSQLiteOpenHelperFactory
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
@@ -285,81 +286,46 @@ class ApplicationEntityCryptoTest {
         context.deleteDatabase(dbName)
 
         val v18 = migrationHelper.createDatabase(dbName, 18)
-        // v18 schema has the `application` table with `secret` and `localKey` TEXT columns.
-        v18.execSQL(
-            "INSERT INTO application " +
-                "(`key`, name, relays, url, icon, description, pubKey, isConnected, " +
-                "secret, useSecret, signPolicy, closeApplication, deleteAfter, lastUsed, localKey) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            arrayOf<Any>(
-                "migApp",
-                "Migration App",
-                "",
-                "",
-                "",
-                "",
-                pubKey,
-                0,
-                sampleSecret,
-                1,
-                1,
-                1,
-                0L,
-                0L,
-                sampleLocalKey,
-            ),
-        )
-        v18.execSQL(
-            "INSERT INTO application " +
-                "(`key`, name, relays, url, icon, description, pubKey, isConnected, " +
-                "secret, useSecret, signPolicy, closeApplication, deleteAfter, lastUsed, localKey) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            arrayOf<Any>(
-                "migAppEmpty",
-                "Empty App",
-                "",
-                "",
-                "",
-                "",
-                pubKey,
-                0,
-                "",
-                0,
-                1,
-                1,
-                0L,
-                0L,
-                "",
-            ),
-        )
+        v18.insertV18App("migApp", "Migration App", secret = sampleSecret, useSecret = 1, localKey = sampleLocalKey)
+        v18.insertV18App("migAppEmpty", "Empty App", secret = "", useSecret = 0, localKey = "")
         v18.close()
 
         val migrated = migrationHelper.runMigrationsAndValidate(dbName, 19, false, MIGRATION_18_19)
         // After migration the raw columns must be ciphertext for non-empty values
         // and "" for the empty-sentinel row.
-        val rawCursor = migrated.query(
-            "SELECT `secret`, `localKey` FROM application WHERE `key` = ?",
-            arrayOf("migApp"),
-        )
-        rawCursor.use { c ->
-            assertTrue(c.moveToFirst())
-            val rawSecret = c.getString(0)
-            val rawLocalKey = c.getString(1)
-            assertNotEquals(sampleSecret, rawSecret)
-            assertNotEquals(sampleLocalKey, rawLocalKey)
-            assertEquals(sampleSecret, SecureCryptoHelper.decryptBlocking(rawSecret))
-            assertEquals(sampleLocalKey, SecureCryptoHelper.decryptBlocking(rawLocalKey))
-        }
-        val emptyCursor = migrated.query(
-            "SELECT `secret`, `localKey` FROM application WHERE `key` = ?",
-            arrayOf("migAppEmpty"),
-        )
-        emptyCursor.use { c ->
-            assertTrue(c.moveToFirst())
-            assertEquals("", c.getString(0))
-            assertEquals("", c.getString(1))
-        }
+        val (rawSecret, rawLocalKey) = migrated.rawSecrets("migApp")
+        assertNotEquals(sampleSecret, rawSecret)
+        assertNotEquals(sampleLocalKey, rawLocalKey)
+        assertEquals(sampleSecret, SecureCryptoHelper.decryptBlocking(rawSecret))
+        assertEquals(sampleLocalKey, SecureCryptoHelper.decryptBlocking(rawLocalKey))
+        assertEquals("" to "", migrated.rawSecrets("migAppEmpty"))
         migrated.close()
         context.deleteDatabase(dbName)
+    }
+
+    /** A row in the v18 `application` table, which has the `secret` and `localKey` TEXT columns. */
+    private fun SupportSQLiteDatabase.insertV18App(
+        key: String,
+        name: String,
+        secret: String,
+        useSecret: Int,
+        localKey: String,
+    ) {
+        execSQL(
+            "INSERT INTO application " +
+                "(`key`, name, relays, url, icon, description, pubKey, isConnected, " +
+                "secret, useSecret, signPolicy, closeApplication, deleteAfter, lastUsed, localKey) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            arrayOf<Any>(key, name, "", "", "", "", pubKey, 0, secret, useSecret, 1, 1, 0L, 0L, localKey),
+        )
+    }
+
+    /** The raw `secret` and `localKey` columns of the application [key]. */
+    private fun SupportSQLiteDatabase.rawSecrets(key: String): Pair<String, String> = query(
+        "SELECT `secret`, `localKey` FROM application WHERE `key` = ?",
+        arrayOf(key),
+    ).use { c ->
+        assertTrue(c.moveToFirst())
+        c.getString(0) to c.getString(1)
     }
 }

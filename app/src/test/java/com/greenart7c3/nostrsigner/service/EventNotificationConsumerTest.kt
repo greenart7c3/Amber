@@ -336,41 +336,15 @@ class EventNotificationConsumerTest {
             keyAccessCheck = {},
         )
         val requestJson = """{"id":"req1","method":"get_public_key","params":[]}"""
-        coEvery { signer.decrypt(any(), any()) } answers {
-            println("DECRYPT-ENTERED")
-            requestJson
-        }
-        val event = mockk<Event>(relaxed = true)
-        every { event.id } returns "event3"
-        every { event.verify() } returns true
-        every { event.kind } returns NostrConnectEvent.KIND
-        every { event.createdAt } returns TimeUtils.now()
-        every { event.content } returns "ciphertext"
-        every { event.pubKey } returns expiredAccount.hexKey
-        every { event.tags } returns arrayOf(arrayOf("p", expiredAccount.hexKey))
-        every { event.taggedUsers() } returns listOf(PTag(expiredAccount.hexKey))
+        coEvery { signer.decrypt(any(), any()) } returns requestJson
+        val event = requestEvent("event3", from = expiredAccount.hexKey, to = expiredAccount.hexKey)
 
         coEvery { AccountStorage.loadSync(any(), any()) } returns expiredAccount
         coEvery { AccountStorage.load(any(), any()) } returns expiredAccount
         coEvery { bunkerEventDao.exists("event3") } returns false
 
-        val expiredRow = ApplicationEntity(
-            key = expiredAccount.hexKey,
-            name = "expired-client",
-            relays = emptyList(),
-            url = "",
-            icon = "",
-            description = "",
-            pubKey = expiredAccount.hexKey,
-            isConnected = true,
-            secret = "",
-            useSecret = false,
-            signPolicy = 2,
-            closeApplication = true,
-            deleteAfter = TimeUtils.now() - 3_600,
-            lastUsed = 1L,
-            localKey = "",
-        )
+        // Deleted an hour ago (its "delete after" has passed).
+        val expiredRow = legacyConnection(expiredAccount.hexKey, expiredAccount.hexKey).copy(name = "expired-client", deleteAfter = TimeUtils.now() - 3_600)
         coEvery { dao.getByKey(expiredAccount.hexKey) } returns mockk {
             every { application } returns expiredRow
         }

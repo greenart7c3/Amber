@@ -89,64 +89,52 @@ private fun AnnotatedString.Builder.appendMarkdownInline(
 ) {
     var remaining = text
     while (remaining.isNotEmpty()) {
-        when {
-            remaining.startsWith("**") -> {
-                val endIdx = remaining.indexOf("**", 2)
-                if (endIdx != -1) {
-                    withStyle(SpanStyle(fontWeight = FontWeight.Bold)) {
-                        append(remaining.substring(2, endIdx))
-                    }
-                    remaining = remaining.substring(endIdx + 2)
-                } else {
-                    append("**")
-                    remaining = remaining.substring(2)
-                }
-            }
-            remaining.startsWith("[") -> {
-                val textEnd = remaining.indexOf("](")
-                if (textEnd > 0) {
-                    val urlEnd = remaining.indexOf(")", textEnd + 2)
-                    if (urlEnd != -1) {
-                        val linkText = remaining.substring(1, textEnd)
-                        val url = remaining.substring(textEnd + 2, urlEnd)
-                        withLink(
-                            LinkAnnotation.Url(
-                                url,
-                                TextLinkStyles(
-                                    SpanStyle(
-                                        color = linkColor,
-                                        textDecoration = TextDecoration.Underline,
-                                    ),
-                                ),
-                            ),
-                        ) {
-                            append(linkText)
-                        }
-                        remaining = remaining.substring(urlEnd + 1)
-                    } else {
-                        append(remaining[0])
-                        remaining = remaining.substring(1)
-                    }
-                } else {
-                    append(remaining[0])
-                    remaining = remaining.substring(1)
-                }
-            }
-            else -> {
-                val boldIdx = remaining.indexOf("**")
-                val linkIdx = remaining.indexOf("[")
-                val nextSpecial = when {
-                    boldIdx == -1 && linkIdx == -1 -> remaining.length
-                    boldIdx == -1 -> linkIdx
-                    linkIdx == -1 -> boldIdx
-                    else -> minOf(boldIdx, linkIdx)
-                }
-                val count = if (nextSpecial == 0) 1 else nextSpecial
-                append(remaining.substring(0, count))
-                remaining = remaining.substring(count)
-            }
+        val consumed = when {
+            remaining.startsWith("**") -> appendBold(remaining)
+            remaining.startsWith("[") -> appendLink(remaining, linkColor)
+            else -> appendPlain(remaining)
         }
+        remaining = remaining.substring(consumed)
     }
+}
+
+/** `**bold**` at the start of [text]; a `**` without its closing pair stays as is. Returns the characters used. */
+private fun AnnotatedString.Builder.appendBold(text: String): Int {
+    val endIdx = text.indexOf("**", 2)
+    if (endIdx == -1) {
+        append("**")
+        return 2
+    }
+    withStyle(SpanStyle(fontWeight = FontWeight.Bold)) {
+        append(text.substring(2, endIdx))
+    }
+    return endIdx + 2
+}
+
+/** `[text](url)` at the start of [text]; anything else keeps its `[`. Returns the characters used. */
+private fun AnnotatedString.Builder.appendLink(
+    text: String,
+    linkColor: Color,
+): Int {
+    val textEnd = text.indexOf("](")
+    val urlEnd = if (textEnd > 0) text.indexOf(")", textEnd + 2) else -1
+    if (urlEnd == -1) {
+        append(text[0])
+        return 1
+    }
+    val linkStyle = TextLinkStyles(SpanStyle(color = linkColor, textDecoration = TextDecoration.Underline))
+    withLink(LinkAnnotation.Url(text.substring(textEnd + 2, urlEnd), linkStyle)) {
+        append(text.substring(1, textEnd))
+    }
+    return urlEnd + 1
+}
+
+/** Plain text up to the next `**` or `[` (at least one character). Returns the characters used. */
+private fun AnnotatedString.Builder.appendPlain(text: String): Int {
+    val nextSpecial = listOf(text.indexOf("**"), text.indexOf("[")).filter { it >= 0 }.minOrNull() ?: text.length
+    val count = if (nextSpecial == 0) 1 else nextSpecial
+    append(text.substring(0, count))
+    return count
 }
 
 @ThemePreviews

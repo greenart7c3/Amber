@@ -2,9 +2,5 @@
 <SmellBaseline>
   <ManuallySuppressedIssues/>
   <CurrentIssues>
-    <ID>CyclomaticComplexMethod:Permission.kt:Permission$fun description: PermissionText</ID>
-    <ID>CyclomaticComplexMethod:Permission.kt:fun nipDescription: PermissionText.Resource?</ID>
-    <ID>LongMethod:Permission.kt:Permission$fun description: PermissionText</ID>
-    <ID>LongMethod:Permission.kt:fun nipDescription: PermissionText.Resource?</ID>
   </CurrentIssues>
 </SmellBaseline>

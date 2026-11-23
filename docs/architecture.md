@@ -615,3 +615,9 @@ layout in `SignedInApp`; `handleShortcut` splits into the plain keys and the Ctr
 `fromOsStore`, then `fromFileStore`, or `storeFresh`; and the keystore, the profile
 picture download, the Linux notification and the URI forwarding each lose a branch to a
 named helper.
+
+`LongParameterList` (6, none left): the main screen, the incoming-requests screen and
+the top bar take one `IncomingRequests`, and the NIP-44 v3 approval a `Nip44v3Prompt`;
+`Account` reads `hexKey` and `npub` from its signer's key pair instead of taking copies
+that could disagree with the key that signs; `AmberEvent` keeps the seven NIP-01 fields
+under a commented `@Suppress`.

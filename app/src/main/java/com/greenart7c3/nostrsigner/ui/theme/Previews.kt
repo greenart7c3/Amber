@@ -16,7 +16,6 @@ import com.greenart7c3.nostrsigner.ui.LocalSettingsStore
 import com.vitorpamplona.quartz.nip01Core.core.hexToByteArray
 import com.vitorpamplona.quartz.nip01Core.crypto.KeyPair
 import com.vitorpamplona.quartz.nip01Core.signers.NostrSignerInternal
-import com.vitorpamplona.quartz.nip19Bech32.toNpub
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -66,8 +65,6 @@ private const val PREVIEW_PUBKEY = "460c25e682fda7832b52d1f22d3d22b3176d972f60dc
  */
 fun previewAccount(name: String = "Preview Account"): Account = Account(
     signer = NostrSignerInternal(KeyPair(pubKey = PREVIEW_PUBKEY.hexToByteArray())),
-    hexKey = PREVIEW_PUBKEY,
-    npub = PREVIEW_PUBKEY.hexToByteArray().toNpub(),
     name = MutableStateFlow(name),
     picture = MutableStateFlow(""),
     signPolicy = 1,

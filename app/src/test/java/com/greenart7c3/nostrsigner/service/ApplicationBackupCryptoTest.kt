@@ -7,7 +7,6 @@ import com.vitorpamplona.quartz.nip01Core.core.toHexKey
 import com.vitorpamplona.quartz.nip01Core.crypto.KeyPair
 import com.vitorpamplona.quartz.nip01Core.signers.NostrSignerInternal
 import com.vitorpamplona.quartz.nip01Core.signers.SignerExceptions
-import com.vitorpamplona.quartz.nip19Bech32.toNpub
 import io.mockk.every
 import io.mockk.mockkObject
 import io.mockk.unmockkObject
@@ -38,8 +37,6 @@ class ApplicationBackupCryptoTest {
         val identity = KeyPair()
         account = Account(
             signer = NostrSignerInternal(identity),
-            hexKey = identity.pubKey.toHexKey(),
-            npub = identity.pubKey.toNpub(),
             name = MutableStateFlow(""),
             picture = MutableStateFlow(""),
             signPolicy = 1,

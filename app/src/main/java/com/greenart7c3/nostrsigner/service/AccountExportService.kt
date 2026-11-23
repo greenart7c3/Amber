@@ -63,8 +63,6 @@ object AccountExportService {
                                 val privKey = Nip49().decrypt(accountData.nsec, password)
                                 val hexKey = Nip01Crypto.pubKeyCreate(Hex.decode(privKey))
                                 val account = Account(
-                                    hexKey = hexKey.toHexKey(),
-                                    npub = hexKey.toNpub(),
                                     name = MutableStateFlow(accountData.name),
                                     picture = MutableStateFlow(accountData.picture ?: ""),
                                     signPolicy = accountData.signPolicy,
@@ -185,8 +183,6 @@ object AccountExportService {
                     val privKey = Nip49().decrypt(ncryptsec, password)
                     val hexKey = Nip01Crypto.pubKeyCreate(Hex.decode(privKey))
                     val account = Account(
-                        hexKey = hexKey.toHexKey(),
-                        npub = hexKey.toNpub(),
                         name = MutableStateFlow(""),
                         picture = MutableStateFlow(""),
                         signPolicy = 1,

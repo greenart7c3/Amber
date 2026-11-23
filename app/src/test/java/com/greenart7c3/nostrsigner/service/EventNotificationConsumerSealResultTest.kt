@@ -52,8 +52,6 @@ class EventNotificationConsumerSealResultTest {
     private val signer = NostrSignerInternal(KeyPair())
     private val account = Account(
         signer = signer,
-        hexKey = signer.keyPair.pubKey.toHexKey(),
-        npub = "npub-test",
         name = MutableStateFlow(""),
         picture = MutableStateFlow(""),
         signPolicy = 0,

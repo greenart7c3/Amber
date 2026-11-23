@@ -21,6 +21,8 @@ import com.vitorpamplona.quartz.nip01Core.signers.EventTemplate
 import com.vitorpamplona.quartz.nip02FollowList.tags.ContactTag
 import com.vitorpamplona.quartz.utils.TimeUtils
 
+// The seven fields are the NIP-01 event, in its order; grouping them would hide the wire format.
+@Suppress("LongParameterList")
 @Immutable
 open class AmberEvent(
     var id: HexKey,

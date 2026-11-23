@@ -11,10 +11,10 @@ import com.greenart7c3.nostrsigner.models.IntentData
 import com.vitorpamplona.quartz.nip01Core.core.toHexKey
 import com.vitorpamplona.quartz.nip01Core.crypto.KeyPair
 import com.vitorpamplona.quartz.nip01Core.signers.NostrSignerInternal
-import com.vitorpamplona.quartz.nip19Bech32.toNpub
 import io.mockk.Called
 import io.mockk.coEvery
 import io.mockk.every
+import io.mockk.excludeRecords
 import io.mockk.mockk
 import io.mockk.mockkObject
 import io.mockk.unmockkObject
@@ -49,8 +49,6 @@ class CrossAccountSignEventTest {
     private val kpA = KeyPair()
     private val accountA = Account(
         signer = NostrSignerInternal(kpA),
-        hexKey = kpA.pubKey.toHexKey(),
-        npub = kpA.pubKey.toNpub(),
         name = MutableStateFlow(""),
         picture = MutableStateFlow(""),
         signPolicy = 0,
@@ -62,11 +60,13 @@ class CrossAccountSignEventTest {
     private val kpB = KeyPair()
 
     // Spied signer: the test must prove B's key never performs a signature.
-    private val signerB = mockk<NostrSignerInternal>(relaxed = true)
+    // Reading the public key is not key use: wasNot Called ignores it.
+    private val signerB = mockk<NostrSignerInternal>(relaxed = true) {
+        every { keyPair } returns kpB
+        excludeRecords { keyPair }
+    }
     private val accountB = Account(
         signer = signerB,
-        hexKey = kpB.pubKey.toHexKey(),
-        npub = kpB.pubKey.toNpub(),
         name = MutableStateFlow(""),
         picture = MutableStateFlow(""),
         signPolicy = 0,

@@ -9,7 +9,6 @@ import com.greenart7c3.nostrsigner.models.IntentData
 import com.vitorpamplona.quartz.nip01Core.core.toHexKey
 import com.vitorpamplona.quartz.nip01Core.crypto.KeyPair
 import com.vitorpamplona.quartz.nip01Core.signers.NostrSignerInternal
-import com.vitorpamplona.quartz.nip19Bech32.toNpub
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkObject
@@ -39,8 +38,6 @@ class EncryptIntentAccountTest {
     private val kp = KeyPair()
     private val account = Account(
         signer = NostrSignerInternal(kp),
-        hexKey = kp.pubKey.toHexKey(),
-        npub = kp.pubKey.toNpub(),
         name = MutableStateFlow(""),
         picture = MutableStateFlow(""),
         signPolicy = 0,

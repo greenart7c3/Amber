@@ -11,7 +11,6 @@ import com.greenart7c3.nostrsigner.models.AmberSettings
 import com.greenart7c3.nostrsigner.models.ProfileFetchInterval
 import com.greenart7c3.nostrsigner.models.ThemeMode
 import com.vitorpamplona.quartz.nip01Core.core.Event
-import com.vitorpamplona.quartz.nip01Core.core.toHexKey
 import com.vitorpamplona.quartz.nip01Core.crypto.KeyPair
 import com.vitorpamplona.quartz.nip01Core.metadata.MetadataEvent
 import com.vitorpamplona.quartz.nip01Core.relay.client.NostrClient
@@ -244,8 +243,6 @@ class ProfileSubscriptionTest {
 
     private fun profileAccount(signer: NostrSignerInternal) = Account(
         signer = signer,
-        hexKey = signer.keyPair.pubKey.toHexKey(),
-        npub = "npub-profile-${signer.keyPair.pubKey.toHexKey().take(8)}",
         name = MutableStateFlow(""),
         picture = MutableStateFlow(""),
         signPolicy = 0,

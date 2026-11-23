@@ -64,6 +64,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -196,51 +197,72 @@ fun AccountBackupScreen(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 SavedAccounts.all(appContext).forEach { accountInfo ->
-                    var localAccount by remember { mutableStateOf<Account?>(null) }
-                    var seedWords by remember { mutableStateOf("") }
-                    LaunchedEffect(Unit) {
-                        launch(Dispatchers.IO) {
-                            localAccount = AccountStorage.load(appContext, accountInfo.npub)
-                            localAccount?.let { acc ->
-                                seedWords = acc.seedWords()
-                            }
-                        }
-                    }
-
-                    localAccount?.let { account ->
-                        AccountBackupCard(
-                            account = account,
-                            password = password.value.text,
-                            seedWords = seedWords,
-                            onLoading = { isLoading = it },
-                            onShowQrCode = onShowQrCode,
-                        )
-                        Spacer(modifier = Modifier.height(12.dp))
-                    }
-                }
-
-                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-
-                IconRow(
-                    title = stringResource(Res.string.export_all_accounts_title),
-                    icon = Icons.Filled.SaveAlt,
-                    tint = MaterialTheme.colorScheme.onBackground,
-                    onClick = { navController.navigate(Route.ExportAllAccounts.route) },
-                )
-
-                if (!BuildFlavorChecker.isOfflineFlavor()) {
-                    Spacer(modifier = Modifier.height(4.dp))
-                    IconRow(
-                        title = stringResource(Res.string.cloud_backup_title),
-                        icon = Icons.Filled.CloudUpload,
-                        tint = MaterialTheme.colorScheme.onBackground,
-                        onClick = { navController.navigate(Route.CloudBackup.route) },
+                    SavedAccountBackupCard(
+                        npub = accountInfo.npub,
+                        password = password.value.text,
+                        onLoading = { isLoading = it },
+                        onShowQrCode = onShowQrCode,
                     )
                 }
 
+                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+                OtherBackupOptions(navController)
                 Spacer(modifier = Modifier.height(8.dp))
             }
         }
+    }
+}
+
+/** The backup card of the saved account [npub], once its key (and seed words) are loaded. */
+@Composable
+private fun SavedAccountBackupCard(
+    npub: String,
+    password: String,
+    onLoading: (Boolean) -> Unit,
+    onShowQrCode: (String) -> Unit,
+) {
+    val appContext = LocalContext.current.applicationContext
+    var localAccount by remember { mutableStateOf<Account?>(null) }
+    var seedWords by remember { mutableStateOf("") }
+    LaunchedEffect(Unit) {
+        launch(Dispatchers.IO) {
+            localAccount = AccountStorage.load(appContext, npub)
+            localAccount?.let { acc ->
+                seedWords = acc.seedWords()
+            }
+        }
+    }
+
+    localAccount?.let { account ->
+        AccountBackupCard(
+            account = account,
+            password = password,
+            seedWords = seedWords,
+            onLoading = onLoading,
+            onShowQrCode = onShowQrCode,
+        )
+        Spacer(modifier = Modifier.height(12.dp))
+    }
+}
+
+/** Exporting every account at once, and the cloud backup (online flavors only). */
+@Composable
+private fun OtherBackupOptions(navController: NavController) {
+    IconRow(
+        title = stringResource(Res.string.export_all_accounts_title),
+        icon = Icons.Filled.SaveAlt,
+        tint = MaterialTheme.colorScheme.onBackground,
+        onClick = { navController.navigate(Route.ExportAllAccounts.route) },
+    )
+
+    if (!BuildFlavorChecker.isOfflineFlavor()) {
+        Spacer(modifier = Modifier.height(4.dp))
+        IconRow(
+            title = stringResource(Res.string.cloud_backup_title),
+            icon = Icons.Filled.CloudUpload,
+            tint = MaterialTheme.colorScheme.onBackground,
+            onClick = { navController.navigate(Route.CloudBackup.route) },
+        )
     }
 }
 
@@ -325,42 +347,54 @@ private fun PasswordCard(
                 modifier = Modifier.fillMaxWidth(),
             )
             Spacer(modifier = Modifier.height(12.dp))
-            OutlinedTextField(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .semantics { contentType = ContentType.Password },
-                value = password,
-                onValueChange = onPasswordChange,
-                keyboardOptions = KeyboardOptions(
-                    autoCorrectEnabled = false,
-                    keyboardType = KeyboardType.Password,
-                    imeAction = ImeAction.Done,
-                ),
-                keyboardActions = KeyboardActions(onDone = { onDone() }),
-                placeholder = { Text(text = stringResource(Res.string.encryption_password)) },
-                trailingIcon = {
-                    IconButton(onClick = onToggleVisibility) {
-                        Icon(
-                            imageVector = if (showCharsPassword) Icons.Outlined.VisibilityOff else Icons.Outlined.Visibility,
-                            contentDescription = if (showCharsPassword) {
-                                stringResource(Res.string.show_password)
-                            } else {
-                                stringResource(Res.string.hide_password)
-                            },
-                        )
-                    }
-                },
-                visualTransformation = if (showCharsPassword) VisualTransformation.None else PasswordVisualTransformation(),
-                isError = errorMessage.isNotBlank(),
-                supportingText = if (errorMessage.isNotBlank()) {
-                    { Text(text = errorMessage, color = MaterialTheme.colorScheme.error) }
-                } else {
-                    null
-                },
-                singleLine = true,
-            )
+            BackupPasswordField(password, errorMessage, showCharsPassword, onPasswordChange, onToggleVisibility, onDone)
         }
     }
+}
+
+@Composable
+private fun BackupPasswordField(
+    password: TextFieldValue,
+    errorMessage: String,
+    showCharsPassword: Boolean,
+    onPasswordChange: (TextFieldValue) -> Unit,
+    onToggleVisibility: () -> Unit,
+    onDone: () -> Unit,
+) {
+    OutlinedTextField(
+        modifier = Modifier
+            .fillMaxWidth()
+            .semantics { contentType = ContentType.Password },
+        value = password,
+        onValueChange = onPasswordChange,
+        keyboardOptions = KeyboardOptions(
+            autoCorrectEnabled = false,
+            keyboardType = KeyboardType.Password,
+            imeAction = ImeAction.Done,
+        ),
+        keyboardActions = KeyboardActions(onDone = { onDone() }),
+        placeholder = { Text(text = stringResource(Res.string.encryption_password)) },
+        trailingIcon = {
+            IconButton(onClick = onToggleVisibility) {
+                Icon(
+                    imageVector = if (showCharsPassword) Icons.Outlined.VisibilityOff else Icons.Outlined.Visibility,
+                    contentDescription = if (showCharsPassword) {
+                        stringResource(Res.string.show_password)
+                    } else {
+                        stringResource(Res.string.hide_password)
+                    },
+                )
+            }
+        },
+        visualTransformation = if (showCharsPassword) VisualTransformation.None else PasswordVisualTransformation(),
+        isError = errorMessage.isNotBlank(),
+        supportingText = if (errorMessage.isNotBlank()) {
+            { Text(text = errorMessage, color = MaterialTheme.colorScheme.error) }
+        } else {
+            null
+        },
+        singleLine = true,
+    )
 }
 
 @Composable
@@ -372,73 +406,11 @@ private fun AccountBackupCard(
     onShowQrCode: (String) -> Unit,
 ) {
     ProfileSubscriptionEffect(account)
-    val profileUrl = account.picture.collectAsState()
-    val name = account.name.collectAsState()
     var didBackup by remember { mutableStateOf(account.didBackup) }
 
     ElevatedCard(modifier = Modifier.fillMaxWidth().outlineIfAny(amoledBorder(), CardDefaults.elevatedShape)) {
         Column(modifier = Modifier.padding(16.dp)) {
-            // Account header row
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                if (profileUrl.value.isNotBlank() && !BuildFlavorChecker.isOfflineFlavor()) {
-                    SubcomposeAsyncImage(
-                        model = profileUrl.value,
-                        contentDescription = "profile picture",
-                        modifier = Modifier
-                            .size(48.dp)
-                            .clip(CircleShape),
-                        loading = { CenterCircularProgressIndicator(Modifier) },
-                        error = {
-                            Icon(
-                                Icons.Outlined.Person,
-                                contentDescription = "profile picture",
-                                modifier = Modifier
-                                    .size(48.dp)
-                                    .border(2.dp, Color.fromHex(account.hexKey.slice(0..5)), CircleShape),
-                            )
-                        },
-                    )
-                } else {
-                    Icon(
-                        Icons.Outlined.Person,
-                        contentDescription = "profile picture",
-                        modifier = Modifier
-                            .size(48.dp)
-                            .border(2.dp, Color.fromHex(account.hexKey.slice(0..5)), CircleShape)
-                            .clip(CircleShape),
-                    )
-                }
-
-                Spacer(modifier = Modifier.width(12.dp))
-
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = name.value.ifBlank { account.hexKey.toShortenHex() },
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                    )
-                }
-
-                // Backup status badge
-                if (didBackup) {
-                    Icon(
-                        imageVector = Icons.Outlined.CheckCircle,
-                        contentDescription = "Backed up",
-                        tint = Color(0xFF4CAF50),
-                        modifier = Modifier.size(24.dp),
-                    )
-                } else {
-                    Icon(
-                        imageVector = Icons.Outlined.Warning,
-                        contentDescription = "Not backed up",
-                        tint = MaterialTheme.colorScheme.error,
-                        modifier = Modifier.size(24.dp),
-                    )
-                }
-            }
+            AccountBackupHeader(account, didBackup)
 
             if (!didBackup) {
                 Spacer(modifier = Modifier.height(8.dp))
@@ -482,6 +454,75 @@ private fun AccountBackupCard(
                     onBackupFinish = { didBackup = true },
                 )
             }
+        }
+    }
+}
+
+/** The account's picture, its name (or short key) and whether it is backed up. */
+@Composable
+private fun AccountBackupHeader(
+    account: Account,
+    didBackup: Boolean,
+) {
+    val profileUrl = account.picture.collectAsState()
+    val name = account.name.collectAsState()
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        if (profileUrl.value.isNotBlank() && !BuildFlavorChecker.isOfflineFlavor()) {
+            SubcomposeAsyncImage(
+                model = profileUrl.value,
+                contentDescription = "profile picture",
+                modifier = Modifier
+                    .size(48.dp)
+                    .clip(CircleShape),
+                loading = { CenterCircularProgressIndicator(Modifier) },
+                error = {
+                    Icon(
+                        Icons.Outlined.Person,
+                        contentDescription = "profile picture",
+                        modifier = Modifier
+                            .size(48.dp)
+                            .border(2.dp, Color.fromHex(account.hexKey.slice(0..5)), CircleShape),
+                    )
+                },
+            )
+        } else {
+            Icon(
+                Icons.Outlined.Person,
+                contentDescription = "profile picture",
+                modifier = Modifier
+                    .size(48.dp)
+                    .border(2.dp, Color.fromHex(account.hexKey.slice(0..5)), CircleShape)
+                    .clip(CircleShape),
+            )
+        }
+
+        Spacer(modifier = Modifier.width(12.dp))
+
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = name.value.ifBlank { account.hexKey.toShortenHex() },
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+            )
+        }
+
+        if (didBackup) {
+            Icon(
+                imageVector = Icons.Outlined.CheckCircle,
+                contentDescription = "Backed up",
+                tint = Color(0xFF4CAF50),
+                modifier = Modifier.size(24.dp),
+            )
+        } else {
+            Icon(
+                imageVector = Icons.Outlined.Warning,
+                contentDescription = "Not backed up",
+                tint = MaterialTheme.colorScheme.error,
+                modifier = Modifier.size(24.dp),
+            )
         }
     }
 }
@@ -536,43 +577,35 @@ private fun NSecQrButton(
     val showDialog = remember { mutableStateOf(false) }
 
     if (showDialog.value) {
-        var nsec by remember { mutableStateOf("") }
-        LaunchedEffect(Unit) {
-            launch(Dispatchers.IO) {
-                val exported = exportNsec(account, context)
-                if (exported == null) showDialog.value = false else nsec = exported
-            }
-        }
-        if (nsec.isNotBlank()) {
-            QrCodeDialog(content = nsec) {
-                appScope.launch {
-                    account.didBackup = true
-                    onBackupFinish()
-                    showDialog.value = false
+        NsecQrDialog(
+            account = account,
+            onBackupFinish = onBackupFinish,
+            onClose = { showDialog.value = false },
+        )
+    }
+
+    // Once the user is authenticated: the ncryptsec under the password, or the plain nsec without one.
+    val showQr: () -> Unit = {
+        if (password.isNotBlank()) {
+            appScope.launch {
+                onLoading(true)
+                try {
+                    encryptForQr(account, password, context)?.let { ncryptsec ->
+                        account.didBackup = true
+                        onBackupFinish()
+                        onShowQrCode(ncryptsec)
+                    }
+                } finally {
+                    onLoading(false)
                 }
             }
+        } else {
+            showDialog.value = true
         }
     }
 
     val keyguardLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
-        if (result.resultCode == Activity.RESULT_OK) {
-            if (password.isNotBlank()) {
-                appScope.launch {
-                    onLoading(true)
-                    try {
-                        encryptForQr(account, password, context)?.let { ncryptsec ->
-                            account.didBackup = true
-                            onBackupFinish()
-                            onShowQrCode(ncryptsec)
-                        }
-                    } finally {
-                        onLoading(false)
-                    }
-                }
-            } else {
-                showDialog.value = true
-            }
-        }
+        if (result.resultCode == Activity.RESULT_OK) showQr()
     }
 
     val text = stringResource(if (password.isBlank()) Res.string.show_qr_code else Res.string.encrypt_and_show_qr_code)
@@ -586,29 +619,7 @@ private fun NSecQrButton(
                 title = text,
                 context = context,
                 keyguardLauncher = keyguardLauncher,
-                onApproved = {
-                    if (password.isNotBlank()) {
-                        appScope.launch {
-                            onLoading(true)
-                            try {
-                                val ncryptsec = account.nip49Encrypt(password)
-                                account.didBackup = true
-                                onBackupFinish()
-                                onShowQrCode(ncryptsec)
-                            } catch (e: Exception) {
-                                if (e is CancellationException) throw e
-                                AmberLog.e(Amber.TAG, "Failed to encrypt secret key for QR", e)
-                                launch(Dispatchers.Main) {
-                                    Toast.makeText(context, getStringBlocking(Res.string.failed_to_encrypt_key), Toast.LENGTH_SHORT).show()
-                                }
-                            } finally {
-                                onLoading(false)
-                            }
-                        }
-                    } else {
-                        showDialog.value = true
-                    }
-                },
+                onApproved = showQr,
                 onError = { _, message ->
                     scope.launch {
                         Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
@@ -617,6 +628,34 @@ private fun NSecQrButton(
             )
         },
     )
+}
+
+/** The plain nsec as a QR code; closing it marks the account as backed up. */
+@Composable
+private fun NsecQrDialog(
+    account: Account,
+    onBackupFinish: () -> Unit,
+    onClose: () -> Unit,
+) {
+    val appScope = LocalAppScope.current
+    val context = LocalContext.current
+    var nsec by remember { mutableStateOf("") }
+    val currentOnClose by rememberUpdatedState(onClose)
+    LaunchedEffect(Unit) {
+        launch(Dispatchers.IO) {
+            val exported = exportNsec(account, context)
+            if (exported == null) currentOnClose() else nsec = exported
+        }
+    }
+    if (nsec.isNotBlank()) {
+        QrCodeDialog(content = nsec) {
+            appScope.launch {
+                account.didBackup = true
+                onBackupFinish()
+                onClose()
+            }
+        }
+    }
 }
 
 @Composable

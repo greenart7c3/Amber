@@ -62,6 +62,10 @@ Nếu bạn quên mật khẩu, bạn sẽ không thể khôi phục khóa của
     <string name="add_permission">Thêm quyền</string>
     <string name="add_permission_description">Chọn các quyền bạn muốn được tự động phê duyệt cho ứng dụng này.</string>
     <string name="search_permissions">Tìm kiếm quyền</string>
+    <string name="search">Tìm kiếm</string>
+    <string name="loading">Đang tải…</string>
+    <string name="error_loading_data">Lỗi khi tải dữ liệu</string>
+    <string name="not_logged_in">Chưa đăng nhập</string>
     <string name="no_permissions_found">Không tìm thấy quyền nào</string>
     <string name="custom_event_kind">Loại sự kiện tùy chỉnh</string>
     <string name="custom_event_kind_already_added">Quyền này đã có trong danh sách</string>

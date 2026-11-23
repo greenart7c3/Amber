@@ -27,8 +27,11 @@ import androidx.compose.ui.semantics.isTraversalGroup
 import androidx.compose.ui.semantics.semantics
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import com.greenart7c3.nostrsigner.commonsui.Res
+import com.greenart7c3.nostrsigner.commonsui.search
 import com.greenart7c3.nostrsigner.ui.theme.AmberPreview
 import com.greenart7c3.nostrsigner.ui.theme.ThemePreviews
+import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -85,7 +88,7 @@ fun SimpleSearchBar(
                     },
                     expanded = expanded,
                     onExpandedChange = { expanded = it },
-                    placeholder = { Text("Search") },
+                    placeholder = { Text(stringResource(Res.string.search)) },
                 )
             },
             expanded = expanded,

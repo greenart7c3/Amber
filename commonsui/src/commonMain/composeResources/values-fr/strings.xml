@@ -53,6 +53,10 @@ Si vous perdez votre mot de passe, vous ne pourrez pas récupérer votre clé.</
     <string name="add_permission">Ajouter une autorisation</string>
     <string name="add_permission_description">Sélectionnez les autorisations que vous souhaitez voir approuvées automatiquement pour cette application.</string>
     <string name="search_permissions">Rechercher des autorisations</string>
+    <string name="search">Rechercher</string>
+    <string name="loading">Chargement…</string>
+    <string name="error_loading_data">Erreur lors du chargement des données</string>
+    <string name="not_logged_in">Non connecté</string>
     <string name="no_permissions_found">Aucune autorisation trouvée</string>
     <string name="custom_event_kind">Type d'événement personnalisé</string>
     <string name="custom_event_kind_already_added">Cette autorisation est déjà dans la liste</string>

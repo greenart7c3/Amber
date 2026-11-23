@@ -62,6 +62,10 @@
     <string name="add_permission">権限を追加</string>
     <string name="add_permission_description">このアプリケーションで自動的に承認したい権限を選択してください。</string>
     <string name="search_permissions">権限を検索</string>
+    <string name="search">検索</string>
+    <string name="loading">読み込み中…</string>
+    <string name="error_loading_data">データの読み込み中にエラーが発生しました</string>
+    <string name="not_logged_in">ログインしていません</string>
     <string name="no_permissions_found">権限が見つかりません</string>
     <string name="custom_event_kind">カスタムイベント種別</string>
     <string name="custom_event_kind_already_added">この権限はすでにリストにあります</string>

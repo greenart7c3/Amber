@@ -73,6 +73,10 @@ If you lose your password, you will not be able to recover your key.</string>
     <string name="add_permission">Add permission</string>
     <string name="add_permission_description">Select the permissions you want to be approved automatically for this application.</string>
     <string name="search_permissions">Search permissions</string>
+    <string name="search">Search</string>
+    <string name="loading">Loading…</string>
+    <string name="error_loading_data">Error loading data</string>
+    <string name="not_logged_in">Not logged in</string>
     <string name="no_permissions_found">No permissions found</string>
     <string name="custom_event_kind">Custom event kind</string>
     <string name="custom_event_kind_already_added">This permission is already in the list</string>

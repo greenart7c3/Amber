@@ -31,6 +31,7 @@ import com.greenart7c3.nostrsigner.common.sanitizeAppName
 import com.greenart7c3.nostrsigner.commonsui.Res
 import com.greenart7c3.nostrsigner.commonsui.event_pubkey_is_not_equal_to_current_logged_in_user
 import com.greenart7c3.nostrsigner.commonsui.getStringBlocking
+import com.greenart7c3.nostrsigner.commonsui.not_logged_in
 import com.greenart7c3.nostrsigner.commonsui.warning
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.IntentData
@@ -59,6 +60,7 @@ import com.vitorpamplona.quartz.utils.Hex
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.stringResource
 
 /** What every request type's composable needs about the request and its app. */
 @Immutable
@@ -344,7 +346,7 @@ private fun NotLoggedIn(pubKey: String, modifier: Modifier = Modifier) {
             fontSize = 21.sp,
         )
         Spacer(Modifier.size(8.dp))
-        Text("Not logged in")
+        Text(stringResource(Res.string.not_logged_in))
     }
 }
 

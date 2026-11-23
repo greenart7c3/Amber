@@ -53,6 +53,10 @@ Si pierdes tu contraseña, no podrás recuperar tu clave.</string>
     <string name="add_permission">Añadir permiso</string>
     <string name="add_permission_description">Selecciona los permisos que quieres que se aprueben automáticamente para esta aplicación.</string>
     <string name="search_permissions">Buscar permisos</string>
+    <string name="search">Buscar</string>
+    <string name="loading">Cargando…</string>
+    <string name="error_loading_data">Error al cargar los datos</string>
+    <string name="not_logged_in">Sesión no iniciada</string>
     <string name="no_permissions_found">No se encontraron permisos</string>
     <string name="custom_event_kind">Tipo de evento personalizado</string>
     <string name="custom_event_kind_already_added">Este permiso ya está en la lista</string>

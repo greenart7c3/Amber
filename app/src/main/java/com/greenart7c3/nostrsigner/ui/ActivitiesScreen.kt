@@ -46,9 +46,11 @@ import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.common.SignerType
 import com.greenart7c3.nostrsigner.commonsui.Res
 import com.greenart7c3.nostrsigner.commonsui.content
+import com.greenart7c3.nostrsigner.commonsui.error_loading_data
 import com.greenart7c3.nostrsigner.commonsui.filter_accepted
 import com.greenart7c3.nostrsigner.commonsui.filter_all
 import com.greenart7c3.nostrsigner.commonsui.filter_rejected
+import com.greenart7c3.nostrsigner.commonsui.loading
 import com.greenart7c3.nostrsigner.commonsui.localizedBlocking
 import com.greenart7c3.nostrsigner.commonsui.no_activities_found
 import com.greenart7c3.nostrsigner.commonsui.supportedKindNumbers
@@ -165,11 +167,11 @@ fun ActivitiesScreen(
                 when (loadState.refresh) {
                     is LoadState.Loading -> item {
                         AmberLog.d("ActivitiesScreen", "Loading...")
-                        Text("Loading...", Modifier.padding(16.dp))
+                        Text(stringResource(Res.string.loading), Modifier.padding(16.dp))
                     }
                     is LoadState.Error -> item {
                         AmberLog.d("ActivitiesScreen", "Error loading data")
-                        Text("Error loading data", Modifier.padding(16.dp))
+                        Text(stringResource(Res.string.error_loading_data), Modifier.padding(16.dp))
                     }
                     is LoadState.NotLoading -> { }
                 }

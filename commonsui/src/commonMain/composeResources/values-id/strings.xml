@@ -53,6 +53,10 @@ Jika Anda lupa kata sandi, Anda tidak akan dapat memulihkan kunci Anda.</string>
     <string name="add_permission">Tambahkan izin</string>
     <string name="add_permission_description">Pilih izin yang ingin disetujui otomatis untuk aplikasi ini.</string>
     <string name="search_permissions">Cari izin</string>
+    <string name="search">Cari</string>
+    <string name="loading">Memuat…</string>
+    <string name="error_loading_data">Gagal memuat data</string>
+    <string name="not_logged_in">Belum masuk</string>
     <string name="no_permissions_found">Tidak ada izin ditemukan</string>
     <string name="custom_event_kind">Jenis event kustom</string>
     <string name="custom_event_kind_already_added">Izin ini sudah ada di daftar</string>

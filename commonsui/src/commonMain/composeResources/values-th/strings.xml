@@ -62,6 +62,10 @@
     <string name="add_permission">เพิ่มสิทธิ์</string>
     <string name="add_permission_description">เลือกสิทธิ์ที่คุณต้องการให้อนุมัติโดยอัตโนมัติสำหรับแอปพลิเคชันนี้</string>
     <string name="search_permissions">ค้นหาสิทธิ์</string>
+    <string name="search">ค้นหา</string>
+    <string name="loading">กำลังโหลด…</string>
+    <string name="error_loading_data">เกิดข้อผิดพลาดในการโหลดข้อมูล</string>
+    <string name="not_logged_in">ยังไม่ได้เข้าสู่ระบบ</string>
     <string name="no_permissions_found">ไม่พบสิทธิ์</string>
     <string name="custom_event_kind">ชนิดเหตุการณ์แบบกำหนดเอง</string>
     <string name="custom_event_kind_already_added">สิทธิ์นี้อยู่ในรายการแล้ว</string>

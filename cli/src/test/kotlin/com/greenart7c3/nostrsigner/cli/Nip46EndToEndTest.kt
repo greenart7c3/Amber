@@ -198,6 +198,33 @@ class Nip46EndToEndTest {
     }
 
     @Test
+    fun aTimedOutConnectResumesWithTheSameUri() {
+        var first = ""
+        val timedOut = amber("connect", "--relay", relayUrl, "--timeout", "2", onPairingUri = { first = it })
+        assertEquals(timedOut.err, Exit.TIMEOUT, timedOut.exit)
+
+        // No --relay: the pending pairing's relays, key and secret are reused.
+        var second = ""
+        val approved = amber("connect", "--timeout", TIMEOUT, onPairingUri = { uri ->
+            second = uri
+            signer.approve(uri)
+        })
+        assertEquals(approved.err, Exit.OK, approved.exit)
+        assertTrue(first.startsWith("nostrconnect://"))
+        assertEquals(first, second)
+    }
+
+    @Test
+    fun aPairedProfileIsReplacedOnlyWithForce() {
+        assertEquals(Exit.OK, amber("login", bunkerUri(), "--timeout", TIMEOUT).exit)
+        val refused = amber("connect", "--relay", relayUrl, "--timeout", "2")
+        assertEquals(Exit.ERROR, refused.exit)
+        assertTrue(refused.err, refused.err.contains("is already paired"))
+        val replaced = amber("connect", "--relay", relayUrl, "--force", "--timeout", TIMEOUT, onPairingUri = { signer.approve(it) })
+        assertEquals(replaced.err, Exit.OK, replaced.exit)
+    }
+
+    @Test
     fun aRelayThatNeverAnswersDoesNotHoldBackTheUri() {
         // Accepts the TCP connection (the kernel does, without accept()) but never
         // answers the WebSocket upgrade, like a dead public relay behind a firewall.

@@ -2,9 +2,6 @@
 <SmellBaseline>
   <ManuallySuppressedIssues/>
   <CurrentIssues>
-    <ID>CyclomaticComplexMethod:AmberCli.kt:Session$private fun connect: Int</ID>
-    <ID>LongMethod:AmberCli.kt:Session$private fun connect: Int</ID>
-    <ID>LongMethod:Help.kt:Help$fun overview: String</ID>
     <ID>TooManyFunctions:Nip46Client.kt:Nip46Client : AutoCloseable</ID>
   </CurrentIssues>
 </SmellBaseline>

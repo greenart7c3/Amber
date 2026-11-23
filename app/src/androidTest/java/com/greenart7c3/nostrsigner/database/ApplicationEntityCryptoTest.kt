@@ -23,7 +23,7 @@ import org.junit.runner.RunWith
 /**
  * Instrumented coverage for the GHSA-5fjp-ghh8-wch8 fix — envelope encryption
  * of [ApplicationEntity.secret] and [ApplicationEntity.localKey] at the DAO
- * boundary, plus the [MIGRATION_18_19] row re-encryption.
+ * boundary, plus the [MIGRATION_19_20] row re-encryption.
  *
  * Lives under `androidTest/` because [SecureCryptoHelper] depends on the
  * AndroidKeyStore provider, which is unavailable under JVM unit tests.
@@ -273,24 +273,24 @@ class ApplicationEntityCryptoTest {
     )
 
     /**
-     * Verifies MIGRATION_18_19 envelope-encrypts existing plaintext columns.
+     * Verifies MIGRATION_19_20 envelope-encrypts existing plaintext columns.
      *
-     * Creates a v18 DB (schema loaded from app/schemas/18.json), inserts
+     * Creates a v19 DB (schema loaded from app/schemas/19.json), inserts
      * plaintext `secret`/`localKey` rows directly via SQL, runs the migration
-     * to v19, then opens the DB via [AppDatabase] and asserts the DAO returns
-     * the original plaintext values while the raw columns now hold ciphertext.
+     * to v20, and asserts the raw columns now hold ciphertext that decrypts
+     * to the original values.
      */
     @Test
-    fun migration_18_19_encryptsPlaintextSecrets() {
+    fun migration_19_20_encryptsPlaintextSecrets() {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         context.deleteDatabase(dbName)
 
-        val v18 = migrationHelper.createDatabase(dbName, 18)
-        v18.insertV18App("migApp", "Migration App", secret = sampleSecret, useSecret = 1, localKey = sampleLocalKey)
-        v18.insertV18App("migAppEmpty", "Empty App", secret = "", useSecret = 0, localKey = "")
-        v18.close()
+        val v19 = migrationHelper.createDatabase(dbName, 19)
+        v19.insertPlaintextApp("migApp", "Migration App", secret = sampleSecret, useSecret = 1, localKey = sampleLocalKey)
+        v19.insertPlaintextApp("migAppEmpty", "Empty App", secret = "", useSecret = 0, localKey = "")
+        v19.close()
 
-        val migrated = migrationHelper.runMigrationsAndValidate(dbName, 19, false, MIGRATION_18_19)
+        val migrated = migrationHelper.runMigrationsAndValidate(dbName, 20, false, MIGRATION_19_20)
         // After migration the raw columns must be ciphertext for non-empty values
         // and "" for the empty-sentinel row.
         val (rawSecret, rawLocalKey) = migrated.rawSecrets("migApp")
@@ -303,8 +303,8 @@ class ApplicationEntityCryptoTest {
         context.deleteDatabase(dbName)
     }
 
-    /** A row in the v18 `application` table, which has the `secret` and `localKey` TEXT columns. */
-    private fun SupportSQLiteDatabase.insertV18App(
+    /** A row in the pre-encryption (v19) `application` table, whose `secret` and `localKey` TEXT columns hold plaintext. */
+    private fun SupportSQLiteDatabase.insertPlaintextApp(
         key: String,
         name: String,
         secret: String,

@@ -200,6 +200,11 @@ android {
             manifest.srcFile("src/offline/AndroidManifest.xml")
             kotlin.directories.add("src/offline/java")
         }
+        // Room's MigrationTestHelper reads the exported schemas (room.schemaLocation)
+        // from the instrumented tests' assets.
+        named("androidTest") {
+            assets.directories.add("$projectDir/schemas")
+        }
     }
 
     splits {

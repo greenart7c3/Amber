@@ -258,7 +258,6 @@ internal fun NavGraphBuilder.securityDestinations(layout: MainLayout, account: A
     composable(Route.ConfirmPin.route, arguments = listOf(navArgument("pin") { type = NavType.StringType })) {
         it.arguments?.getString("pin")?.let { pin -> ConfirmPinScreen(modifier = Modifier.fixedScreen(layout), pin = pin, navController = navController.navController) }
     }
-    composable(Route.SeeDetails.route) { SeeDetailsScreen(modifier = Modifier.fixedScreen(layout), onBack = { navController.navController.popBackStack() }) }
     composable(Route.UpdateSettings.route) { UpdateSettingsScreen(modifier = Modifier.scrollingScreen(layout, rememberScrollState())) }
     composable(Route.ServiceSettings.route) { ServiceSettingsScreen(modifier = Modifier.scrollingScreen(layout, rememberScrollState())) }
     composable(Route.ApplicationsBackup.route) { ApplicationsBackupScreen(modifier = Modifier.scrollingScreen(layout, rememberScrollState())) }

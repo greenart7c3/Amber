@@ -97,27 +97,33 @@ internal class Session(
         return try {
             if (command == "help" || args.has("help")) {
                 out.println(Help.forCommand(if (command == "help") args.positionals.firstOrNull() else command))
-                return Exit.OK
-            }
-            when (command) {
-                "login" -> login(args)
-                "connect" -> connect(args)
-                "sign-event" -> signEvent(args)
-                "get-public-key" -> getPublicKey(args)
-                "nip44-encrypt" -> crypto(args, encrypt = true, nip44 = true)
-                "nip44-decrypt" -> crypto(args, encrypt = false, nip44 = true)
-                "nip04-encrypt" -> crypto(args, encrypt = true, nip44 = false)
-                "nip04-decrypt" -> crypto(args, encrypt = false, nip44 = false)
-                "ping" -> ping(args)
-                "status" -> status(args)
-                "logout" -> logout(args)
-                else -> throw CliError("unknown command \"$command\" (run `amber help`)", Exit.USAGE)
+                Exit.OK
+            } else {
+                runCommand(command, args)
             }
         } catch (e: CliError) {
             fail(environment, args.has("json"), e)
         } catch (e: Exception) {
             fail(environment, args.has("json"), CliError("$command failed: ${e.message ?: e.toString()}"))
         }
+    }
+
+    private fun runCommand(
+        command: String,
+        args: Args,
+    ): Int = when (command) {
+        "login" -> login(args)
+        "connect" -> connect(args)
+        "sign-event" -> signEvent(args)
+        "get-public-key" -> getPublicKey(args)
+        "nip44-encrypt" -> crypto(args, encrypt = true, nip44 = true)
+        "nip44-decrypt" -> crypto(args, encrypt = false, nip44 = true)
+        "nip04-encrypt" -> crypto(args, encrypt = true, nip44 = false)
+        "nip04-decrypt" -> crypto(args, encrypt = false, nip44 = false)
+        "ping" -> ping(args)
+        "status" -> status(args)
+        "logout" -> logout(args)
+        else -> throw CliError("unknown command \"$command\" (run `amber help`)", Exit.USAGE)
     }
 
     // ---- commands ---------------------------------------------------------
@@ -492,17 +498,15 @@ internal class Session(
     private fun readTags(node: JsonNode?): Array<Array<String>> {
         if (node == null || node.isNull) return emptyArray()
         if (!node.isArray) throw CliError("the event's \"tags\" must be an array of string arrays", Exit.USAGE)
-        val tags = mutableListOf<Array<String>>()
-        node.forEach { tag ->
-            if (!tag.isArray) throw CliError("every tag must be an array of strings", Exit.USAGE)
-            val values = mutableListOf<String>()
-            tag.forEach { value ->
-                if (!value.isTextual) throw CliError("every tag element must be a string", Exit.USAGE)
-                values += value.asText()
-            }
-            tags += values.toTypedArray()
-        }
-        return tags.toTypedArray()
+        return node.map(::readTag).toTypedArray()
+    }
+
+    private fun readTag(tag: JsonNode): Array<String> {
+        if (!tag.isArray) throw CliError("every tag must be an array of strings", Exit.USAGE)
+        return tag.map { value ->
+            if (!value.isTextual) throw CliError("every tag element must be a string", Exit.USAGE)
+            value.asText()
+        }.toTypedArray()
     }
 
     /** stdin, minus the newline a shell (`echo`) adds. */

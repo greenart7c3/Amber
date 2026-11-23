@@ -69,6 +69,11 @@ class ConnectionStore(
     /** The parsed file; a missing one is an empty store. */
     fun read(): ConnectionFile {
         if (!file.exists()) return ConnectionFile()
+        return parse(readEncrypted())
+    }
+
+    /** The file's encrypted contents after the format marker. */
+    private fun readEncrypted(): String {
         val stored = try {
             Files.readString(file).trim()
         } catch (e: Exception) {
@@ -77,13 +82,15 @@ class ConnectionStore(
         if (!stored.startsWith(HEADER)) {
             throw CliError("$file was not written by amber-cli or is corrupted. Delete it and pair again.")
         }
-        return try {
-            mapper.readValue<ConnectionFile>(decrypt(stored.removePrefix(HEADER)))
-        } catch (e: CliError) {
-            throw e
-        } catch (e: Exception) {
-            throw CliError("could not read $file: ${e.message}. Delete it and pair again.")
-        }
+        return stored.removePrefix(HEADER)
+    }
+
+    private fun parse(encrypted: String): ConnectionFile = try {
+        mapper.readValue<ConnectionFile>(decrypt(encrypted))
+    } catch (e: CliError) {
+        throw e
+    } catch (e: Exception) {
+        throw CliError("could not read $file: ${e.message}. Delete it and pair again.")
     }
 
     fun get(profile: String): SavedConnection? = read().profiles[profile]
@@ -201,15 +208,11 @@ class ConnectionStore(
             val override = System.getenv("AMBER_CLI_HOME")
             if (!override.isNullOrBlank()) return Paths.get(override).toAbsolutePath()
             val windows = System.getProperty("os.name").lowercase().contains("win")
-            if (windows) {
-                val appData = System.getenv("APPDATA")
-                if (!appData.isNullOrBlank()) return Paths.get(appData, "amber-cli")
-            } else {
-                val xdg = System.getenv("XDG_CONFIG_HOME")
-                if (!xdg.isNullOrBlank()) return Paths.get(xdg, "amber-cli")
-                return Paths.get(System.getProperty("user.home"), ".config", "amber-cli")
-            }
-            return Paths.get(System.getProperty("user.home"), ".amber-cli")
+            // %APPDATA% on Windows, $XDG_CONFIG_HOME elsewhere; without them a folder in the home directory.
+            val configHome = System.getenv(if (windows) "APPDATA" else "XDG_CONFIG_HOME")
+            if (!configHome.isNullOrBlank()) return Paths.get(configHome, "amber-cli")
+            val home = System.getProperty("user.home")
+            return if (windows) Paths.get(home, ".amber-cli") else Paths.get(home, ".config", "amber-cli")
         }
     }
 }

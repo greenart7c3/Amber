@@ -579,3 +579,10 @@ systemd quoting characters, the mDNS address lengths, a local address, the lock
 screen's enter keys). The "switch to the requested account" block, copied in
 `MainActivity`, `SignerActivity` and `MainViewModel`, is one
 `MainViewModel.switchToRequestedAccount`.
+
+`ReturnCount` / `ThrowsCount` / `LongParameterList` in `:common` and `:cli` (11):
+the local relay's checks became functions that name the refusal (`upgradeRejection`,
+`dataFrameError`, `checkControlFrame`, `readPayloadLength`), with `LocalRelayFramesTest`
+covering the handshake and every frame error byte by byte; `RelayFilter`'s fields
+are optional, as in NIP-01. The CLI checks an option once (`Args.optionError`), reads
+one tag at a time and dispatches commands in `Session.runCommand`.

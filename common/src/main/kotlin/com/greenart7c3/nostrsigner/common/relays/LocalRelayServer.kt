@@ -155,6 +155,7 @@ private class RelayCore(
         const val MAX_HANDSHAKE_BYTES = 8 * 1024
 
         private const val WS_GUID = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
+        private const val BAD_REQUEST = "HTTP/1.1 400 Bad Request"
 
         /** How often the approved-sender set is rebuilt from the saved connections. */
         private const val APPROVED_SENDER_REFRESH_MS = 30_000L
@@ -325,12 +326,8 @@ private class RelayCore(
             val head = readHandshakeHead(input) ?: return false
             val lines = head.split("\r\n")
             val request = lines.firstOrNull()?.split(" ") ?: return false
-            if (request.size < 3) return reject("HTTP/1.1 400 Bad Request")
-            val headers = HashMap<String, String>()
-            for (line in lines.drop(1)) {
-                val separator = line.indexOf(':')
-                if (separator > 0) headers[line.substring(0, separator).trim().lowercase()] = line.substring(separator + 1).trim()
-            }
+            if (request.size < 3) return reject(BAD_REQUEST)
+            val headers = parseHeaders(lines.drop(1))
             // Chrome sends a CORS/PNA preflight (OPTIONS) before a WebSocket to
             // a private address from a public page (coracle.social -> ws://127.0.0.1).
             // Answer it and close; the real handshake arrives on a new connection.
@@ -346,13 +343,8 @@ private class RelayCore(
                 )
                 return false
             }
-            if (!request[0].equals("GET", true)) return reject("HTTP/1.1 400 Bad Request")
-            if (headers["upgrade"]?.equals("websocket", true) != true) return reject("HTTP/1.1 400 Bad Request")
-            if (headers["connection"]?.contains("upgrade", true) != true) return reject("HTTP/1.1 400 Bad Request")
-            val key = headers["sec-websocket-key"] ?: return reject("HTTP/1.1 400 Bad Request")
-            if (headers["sec-websocket-version"] != "13") {
-                return reject("HTTP/1.1 426 Upgrade Required\r\nSec-WebSocket-Version: 13")
-            }
+            upgradeRejection(request[0], headers)?.let { return reject(it) }
+            val key = headers.getValue("sec-websocket-key")
             val digest = MessageDigest.getInstance("SHA-1").digest((key + WS_GUID).toByteArray(Charsets.UTF_8))
             val accept = Base64.getEncoder().encodeToString(digest)
             // Access-Control-Allow-* lets pages on public origins (coracle.social,
@@ -367,6 +359,27 @@ private class RelayCore(
                     "\r\n",
             )
             return true
+        }
+
+        /** Header names lowercased; a line without a name before its colon is skipped. */
+        private fun parseHeaders(lines: List<String>): Map<String, String> = buildMap {
+            for (line in lines) {
+                val separator = line.indexOf(':')
+                if (separator > 0) put(line.substring(0, separator).trim().lowercase(), line.substring(separator + 1).trim())
+            }
+        }
+
+        /** The status line (and headers) refusing a request that is not a version 13 WebSocket upgrade, or null to accept it. */
+        private fun upgradeRejection(
+            method: String,
+            headers: Map<String, String>,
+        ): String? = when {
+            !method.equals("GET", true) -> BAD_REQUEST
+            headers["upgrade"]?.equals("websocket", true) != true -> BAD_REQUEST
+            headers["connection"]?.contains("upgrade", true) != true -> BAD_REQUEST
+            headers["sec-websocket-key"] == null -> BAD_REQUEST
+            headers["sec-websocket-version"] != "13" -> "HTTP/1.1 426 Upgrade Required\r\nSec-WebSocket-Version: 13"
+            else -> null
         }
 
         /** Why the upgrade was refused; extra headers (like Sec-WebSocket-Version) ride in [reason]. */
@@ -405,16 +418,7 @@ private class RelayCore(
                     OP_PING -> sendFrame(OP_PONG, frame.payload)
                     OP_PONG -> {}
                     else -> {
-                        if (frame.opcode == OP_CONTINUATION && dataOpcode == -1) {
-                            throw ProtocolError("continuation frame outside a message")
-                        }
-                        if (frame.opcode != OP_CONTINUATION && dataOpcode != -1) {
-                            throw ProtocolError("new data frame inside a fragmented message")
-                        }
-                        if (frame.opcode == OP_BINARY) throw ProtocolError("binary messages are not supported")
-                        if (fragments.size() + frame.payload.size > MAX_MESSAGE_BYTES) {
-                            throw ProtocolError("message exceeds the ${MAX_MESSAGE_BYTES / 1024} KiB limit", 1009)
-                        }
+                        dataFrameError(frame, inMessage = dataOpcode != -1, bufferedBytes = fragments.size())?.let { throw it }
                         fragments.write(frame.payload)
                         if (frame.opcode != OP_CONTINUATION) dataOpcode = frame.opcode
                         if (frame.fin) {
@@ -426,6 +430,19 @@ private class RelayCore(
                     }
                 }
             }
+        }
+
+        /** Why a text, binary or continuation frame breaks the message being assembled, or null when it fits. */
+        private fun dataFrameError(
+            frame: Frame,
+            inMessage: Boolean,
+            bufferedBytes: Int,
+        ): ProtocolError? = when {
+            frame.opcode == OP_CONTINUATION && !inMessage -> ProtocolError("continuation frame outside a message")
+            frame.opcode != OP_CONTINUATION && inMessage -> ProtocolError("new data frame inside a fragmented message")
+            frame.opcode == OP_BINARY -> ProtocolError("binary messages are not supported")
+            bufferedBytes + frame.payload.size > MAX_MESSAGE_BYTES -> ProtocolError("message exceeds the ${MAX_MESSAGE_BYTES / 1024} KiB limit", 1009)
+            else -> null
         }
 
         /** Malformed or unknown command: answer while the connection is under its budget, drop it when this is abuse. */
@@ -615,25 +632,38 @@ private class RelayCore(
             val opcode = first and 0x0F
             val second = input.readU8()
             if (second and 0x80 == 0) throw ProtocolError("client frames must be masked")
-            var length = (second and 0x7F).toLong()
-            when (length) {
-                126L -> length = (input.readU8().toLong() shl 8) or input.readU8().toLong()
-                127L -> {
-                    length = 0L
-                    repeat(8) { length = (length shl 8) or input.readU8().toLong() }
-                }
-            }
+            val length = readPayloadLength(input, second and 0x7F)
             if (length > MAX_MESSAGE_BYTES) throw ProtocolError("frame exceeds the ${MAX_MESSAGE_BYTES / 1024} KiB limit", 1009)
             val mask = ByteArray(4)
             input.readFully(mask)
             val payload = ByteArray(length.toInt())
             input.readFully(payload)
             for (i in payload.indices) payload[i] = (payload[i].toInt() xor mask[i % 4].toInt()).toByte()
-            if (opcode >= OP_CLOSE) {
-                if (!fin) throw ProtocolError("control frames must not be fragmented")
-                if (payload.size > 125) throw ProtocolError("control frame payload too large")
-            }
+            if (opcode >= OP_CLOSE) checkControlFrame(fin, payload.size)
             return Frame(opcode, fin, payload)
+        }
+
+        /** The payload length: the 7-bit [short] value, or the 16- or 64-bit length that follows when it is 126 or 127. */
+        private fun readPayloadLength(
+            input: InputStream,
+            short: Int,
+        ): Long {
+            val extraBytes = when (short) {
+                126 -> 2
+                127 -> 8
+                else -> return short.toLong()
+            }
+            var length = 0L
+            repeat(extraBytes) { length = (length shl 8) or input.readU8().toLong() }
+            return length
+        }
+
+        private fun checkControlFrame(
+            fin: Boolean,
+            size: Int,
+        ) {
+            if (!fin) throw ProtocolError("control frames must not be fragmented")
+            if (size > 125) throw ProtocolError("control frame payload too large")
         }
     }
 }
@@ -660,15 +690,18 @@ private class StoredEvent(
     val tags: Map<String, List<String>>,
 )
 
-/** The NIP-01 filter subset the bunker flow needs: ids/authors/kinds/since/until/limit plus #tag lists. */
+/**
+ * The NIP-01 filter subset the bunker flow needs: ids/authors/kinds/since/until/limit plus #tag lists.
+ * Every field is optional in a filter; a missing one (null, or no tag lists) matches everything.
+ */
 private class RelayFilter(
-    val ids: List<String>?,
-    val authors: List<String>?,
-    val kinds: Set<Int>?,
-    val since: Long?,
-    val until: Long?,
-    val limit: Int?,
-    val tagValues: Map<String, Set<String>>,
+    val ids: List<String>? = null,
+    val authors: List<String>? = null,
+    val kinds: Set<Int>? = null,
+    val since: Long? = null,
+    val until: Long? = null,
+    val limit: Int? = null,
+    val tagValues: Map<String, Set<String>> = emptyMap(),
 ) {
     fun matches(event: StoredEvent): Boolean {
         if (ids?.none(event.id::startsWith) == true) return false

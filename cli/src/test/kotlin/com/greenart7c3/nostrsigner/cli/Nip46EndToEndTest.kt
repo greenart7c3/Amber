@@ -154,6 +154,24 @@ class Nip46EndToEndTest {
     }
 
     @Test
+    fun signEventRefusesMalformedTags() {
+        assertEquals(Exit.OK, amber("login", bunkerUri(), "--timeout", TIMEOUT).exit)
+        val errors = mapOf(
+            """{"kind":1,"tags":{}}""" to "the event's \"tags\" must be an array of string arrays",
+            """{"kind":1,"tags":["t"]}""" to "every tag must be an array of strings",
+            """{"kind":1,"tags":[["t",1]]}""" to "every tag element must be a string",
+        )
+        for ((event, error) in errors) {
+            val signed = amber("sign-event", event, "--timeout", TIMEOUT)
+            assertEquals(signed.err, Exit.USAGE, signed.exit)
+            assertTrue(signed.err, signed.err.contains(error))
+        }
+        val tags = amber("sign-event", """{"kind":1,"tags":[["t","a","b"],[]]}""", "--timeout", TIMEOUT)
+        assertEquals(tags.err, Exit.OK, tags.exit)
+        assertEquals(listOf(listOf("t", "a", "b"), emptyList()), Event.fromJsonOrNull(tags.out.trim())!!.tags.map { it.toList() })
+    }
+
+    @Test
     fun connectPairsByApprovalThenSigns() {
         val connect = amber(
             "connect",

@@ -44,21 +44,13 @@ class Args internal constructor(
                     argument.startsWith("--") -> {
                         val name = argument.substring(2).substringBefore('=')
                         val inline = if ('=' in argument) argument.substringAfter('=') else null
-                        when {
-                            name in VALUE_FLAGS -> {
-                                val value = inline
-                                    ?: arguments.getOrNull(index + 1)
-                                    ?: throw CliError("--$name needs a value", Exit.USAGE)
-                                if (inline == null) index++
-                                flag(name, value)
-                            }
-
-                            name in BOOLEAN_FLAGS -> {
-                                if (inline != null) throw CliError("--$name takes no value", Exit.USAGE)
-                                flag(name)
-                            }
-
-                            else -> throw CliError("unknown option --$name (run `amber help`)", Exit.USAGE)
+                        val next = arguments.getOrNull(index + 1)
+                        optionError(name, inline, next)?.let { throw CliError(it, Exit.USAGE) }
+                        if (name in VALUE_FLAGS) {
+                            if (inline == null) index++
+                            flag(name, inline ?: next.orEmpty())
+                        } else {
+                            flag(name)
                         }
                     }
 
@@ -67,6 +59,17 @@ class Args internal constructor(
                 index++
             }
             return Args(positionals.firstOrNull(), positionals.drop(1), flags)
+        }
+
+        /** Why `--[name]` (with its `=`[inline] value, or the [next] argument) is not a valid option, or null when it is. */
+        private fun optionError(
+            name: String,
+            inline: String?,
+            next: String?,
+        ): String? = when (name) {
+            in VALUE_FLAGS -> if (inline == null && next == null) "--$name needs a value" else null
+            in BOOLEAN_FLAGS -> if (inline != null) "--$name takes no value" else null
+            else -> "unknown option --$name (run `amber help`)"
         }
     }
 }

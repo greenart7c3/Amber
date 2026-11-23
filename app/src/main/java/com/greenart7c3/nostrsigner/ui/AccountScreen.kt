@@ -126,14 +126,16 @@ fun AccountScreen(
                     MainScreen(
                         account = state.account,
                         accountStateViewModel = accountStateViewModel,
-                        intents = intents,
-                        bunkerRequests = bunkerRequests,
-                        packageName = packageName,
-                        appName = appName,
+                        requests = IncomingRequests(
+                            intents = intents,
+                            bunkerRequests = bunkerRequests,
+                            packageName = packageName,
+                            appName = appName,
+                            isExternalRequest = isExternalRequest || (intents.isEmpty() && bunkerRequests.isNotEmpty() && (packageName != null || intent.intent?.getStringExtra("route") == Route.IncomingRequest.route)),
+                        ),
                         route = { localRoute.value },
                         onConsumeRoute = { localRoute.value = null },
                         navController = navController,
-                        isExternalRequest = isExternalRequest || (intents.isEmpty() && bunkerRequests.isNotEmpty() && (packageName != null || intent.intent?.getStringExtra("route") == Route.IncomingRequest.route)),
                         onRemoveIntentData = { results, type ->
                             when (type) {
                                 IntentResultType.ADD -> {

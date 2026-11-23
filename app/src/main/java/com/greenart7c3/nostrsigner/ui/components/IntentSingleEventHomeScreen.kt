@@ -227,11 +227,8 @@ private fun Nip44v3Request(
         isBunker = false,
         appName = request.appName,
         packageName = request.packageName,
-        type = intentData.type,
+        prompt = Nip44v3Prompt(intentData.type, intentData.nip44v3Kind, intentData.nip44v3Scope, intentData.encryptedData),
         account = request.account,
-        kind = intentData.nip44v3Kind,
-        scope = intentData.nip44v3Scope,
-        encryptedData = intentData.encryptedData,
         shouldRunOnAccept = request.remembered(),
         onAccept = { rememberType, scope ->
             val result = intentData.encryptedData?.result ?: ""

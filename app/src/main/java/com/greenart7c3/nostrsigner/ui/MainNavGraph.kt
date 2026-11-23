@@ -81,9 +81,13 @@ internal fun Modifier.scrollingScreenAboveKeyboard(layout: MainLayout, scrollSta
     .padding(top = layout.margin * 1.5f)
     .imePadding()
 
-/** The requests the main screen shows, and whether another app opened Amber for them. */
+/**
+ * The requests the main screen shows: the queued NIP-55 intents and NIP-46 bunker requests,
+ * the app that sent them ([packageName], [appName]; null for bunker requests) and whether
+ * another app opened Amber for them.
+ */
 @Immutable
-internal class IncomingRequests(
+class IncomingRequests(
     val intents: ImmutableList<IntentData>,
     val bunkerRequests: ImmutableList<AmberBunkerRequest>,
     val packageName: String?,
@@ -136,14 +140,10 @@ internal fun NavGraphBuilder.requestDestination(
                 .verticalScroll(scrollState)
                 .padding(horizontal = layout.margin),
             scaffoldPadding = layout.padding,
-            intents = requests.intents,
-            bunkerRequests = requests.bunkerRequests,
-            packageName = requests.packageName,
-            applicationName = requests.appName,
+            requests = requests,
             account = account,
             onRemoveIntentData = onRemoveIntentData,
             onLoading = onLoading,
-            isExternalRequest = requests.isExternalRequest,
         )
     }
 }

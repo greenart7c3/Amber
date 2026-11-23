@@ -143,13 +143,7 @@ internal class Session(
         // "-" keeps the URI's secret out of the process list and the shell history.
         val uri = if (input == "-") readInput().trim().ifEmpty { throw missing } else input
         val profile = profile(args)
-        val existing = store.get(profile)
-        if (existing != null && existing.isPaired && !args.has("force")) {
-            throw CliError(
-                "profile \"$profile\" is already paired. Use `amber logout` to drop it, " +
-                    "--force to replace it, or --profile NAME to keep both.",
-            )
-        }
+        replaceableConnection(args, profile)
         val seconds = timeout(args)
         val keyPair = KeyPair()
         // The relays come from the URI, which Quartz parses: none are needed up front.
@@ -165,12 +159,34 @@ internal class Session(
             pairedAt = TimeUtils.now(),
         )
         store.put(profile, connection)
+        reportPaired(profile, connection)
+        emit(args, TextNode(connection.userPubKey), connection.userPubKey)
+        return Exit.OK
+    }
+
+    /** The connection saved under [profile], if any; refuses to replace a paired one without --force. */
+    private fun replaceableConnection(
+        args: Args,
+        profile: String,
+    ): SavedConnection? {
+        val existing = store.get(profile)
+        if (existing != null && existing.isPaired && !args.has("force")) {
+            throw CliError(
+                "profile \"$profile\" is already paired. Use `amber logout` to drop it, " +
+                    "--force to replace it, or --profile NAME to keep both.",
+            )
+        }
+        return existing
+    }
+
+    private fun reportPaired(
+        profile: String,
+        connection: SavedConnection,
+    ) {
         err.println(
             "paired profile \"$profile\": signs as ${shortKey(connection.userPubKey)} " +
                 "through ${shortKey(connection.signerPubKey)}",
         )
-        emit(args, TextNode(connection.userPubKey), connection.userPubKey)
-        return Exit.OK
     }
 
     /**
@@ -181,14 +197,48 @@ internal class Session(
      */
     private fun connect(args: Args): Int {
         val profile = profile(args)
-        val existing = store.get(profile)
-        if (existing != null && existing.isPaired && !args.has("force")) {
-            throw CliError(
-                "profile \"$profile\" is already paired. Use `amber logout` to drop it, " +
-                    "--force to replace it, or --profile NAME to keep both.",
+        val existing = replaceableConnection(args, profile)
+        val seconds = timeout(args)
+        val pairing = nostrConnectPairing(args, existing)
+        store.put(profile, pairing.pendingConnection())
+        val paired = awaitApproval(args, pairing, seconds)
+        if (paired.signerPubKey.isEmpty()) throw CliError("Amber approved without naming a connection key", Exit.ERROR)
+        store.put(profile, paired)
+        reportPaired(profile, paired)
+        if (args.has("json")) {
+            emit(
+                args,
+                mapper.createObjectNode()
+                    .put("uri", pairing.uri)
+                    .put("state", "paired")
+                    .put("profile", profile)
+                    .put("signer", paired.signerPubKey)
+                    .put("user", paired.userPubKey),
+                pairing.uri,
             )
         }
-        val seconds = timeout(args)
+        return Exit.OK
+    }
+
+    /** A `nostrconnect://` pairing: its client key, relays, secret and name, and the URI built from them. */
+    private class NostrConnectPairing(
+        val keyPair: KeyPair,
+        val relays: List<NormalizedRelayUrl>,
+        val secret: String,
+        val name: String,
+        val uri: String,
+    ) {
+        val clientPrivKey: String get() = keyPair.privKey!!.toHexKey()
+
+        /** What is saved while the pairing waits, so a timed-out one resumes with the same URI. */
+        fun pendingConnection() = SavedConnection(clientPrivKey = clientPrivKey, relays = relays.map { it.url }, name = name, pendingSecret = secret)
+    }
+
+    /** Resumes [existing] when it is a pending pairing for the same relays (or no --relay was given), else starts a new one. */
+    private fun nostrConnectPairing(
+        args: Args,
+        existing: SavedConnection?,
+    ): NostrConnectPairing {
         val requestedRelays = args.values("relay").takeIf { it.isNotEmpty() }?.let { normalizeRelays(it) }
         val resumable = existing?.takeIf { pending ->
             !pending.isPaired &&
@@ -199,19 +249,21 @@ internal class Session(
         val keyPair = resumable?.let { clientKeyPair(it.clientPrivKey) } ?: KeyPair()
         val secret = resumable?.pendingSecret?.takeIf { it.isNotEmpty() } ?: randomSecret()
         val name = args.value("name") ?: resumable?.name?.takeIf { it.isNotBlank() } ?: "amber-cli"
-        val perms = args.value("perms").orEmpty()
-        val uri = buildNostrConnectUri(keyPair.pubKey.toHexKey(), relays.map { it.url }, secret, name, perms)
-        val clientPrivKey = keyPair.privKey!!.toHexKey()
-        store.put(
-            profile,
-            SavedConnection(
-                clientPrivKey = clientPrivKey,
-                relays = relays.map { it.url },
-                name = name,
-                pendingSecret = secret,
-            ),
-        )
-        val paired = Nip46Client(keyPair, relays, seconds, err, environment.openUri).use { client ->
+        val uri = buildNostrConnectUri(keyPair.pubKey.toHexKey(), relays.map { it.url }, secret, name, args.value("perms").orEmpty())
+        return NostrConnectPairing(keyPair, relays, secret, name, uri)
+    }
+
+    /** Shows the pairing URI once the relays hold the subscription for the answer, then waits for Amber's approval. */
+    private fun awaitApproval(
+        args: Args,
+        pairing: NostrConnectPairing,
+        seconds: Long,
+    ): SavedConnection {
+        val uri = pairing.uri
+        val name = pairing.name
+        val relays = pairing.relays
+        val secret = pairing.secret
+        return Nip46Client(pairing.keyPair, relays, seconds, err, environment.openUri).use { client ->
             // The URI leaves the process only once the relays hold the subscription
             // for the answer: they do not replay an approval that came before it.
             val signerPubKey = client.awaitNostrConnectApproval(secret) {
@@ -228,7 +280,7 @@ internal class Session(
             }
             client.open(signerPubKey, userPubKey = "")
             SavedConnection(
-                clientPrivKey = clientPrivKey,
+                clientPrivKey = pairing.clientPrivKey,
                 signerPubKey = client.signerPubKey().orEmpty(),
                 userPubKey = client.getPublicKey(),
                 relays = relays.map { it.url },
@@ -236,25 +288,6 @@ internal class Session(
                 pairedAt = TimeUtils.now(),
             )
         }
-        if (paired.signerPubKey.isEmpty()) throw CliError("Amber approved without naming a connection key", Exit.ERROR)
-        store.put(profile, paired)
-        err.println(
-            "paired profile \"$profile\": signs as ${shortKey(paired.userPubKey)} " +
-                "through ${shortKey(paired.signerPubKey)}",
-        )
-        if (args.has("json")) {
-            emit(
-                args,
-                mapper.createObjectNode()
-                    .put("uri", uri)
-                    .put("state", "paired")
-                    .put("profile", profile)
-                    .put("signer", paired.signerPubKey)
-                    .put("user", paired.userPubKey),
-                uri,
-            )
-        }
-        return Exit.OK
     }
 
     private fun signEvent(args: Args): Int {

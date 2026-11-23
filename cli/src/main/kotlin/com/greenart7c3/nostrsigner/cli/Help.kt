@@ -21,7 +21,20 @@ object Help {
         else -> throw CliError("unknown help topic \"$name\" (run `amber help`)", Exit.USAGE)
     }
 
-    fun overview(): String = """
+    fun overview(): String = listOf(
+        overviewIntro(),
+        usageSection(),
+        commandsSection(),
+        pairingSection(),
+        flagsSection(),
+        inputOutputSection(),
+        exitCodesSection(),
+        storageSection(),
+        environmentSection(),
+        examplesSection(),
+    ).joinToString("\n\n")
+
+    private fun overviewIntro(): String = """
         amber ${BuildInfo.version} - ask Amber to sign Nostr events (NIP-46)
 
         amber is a command-line NIP-46 client. It keeps no keys and no accounts: it
@@ -29,11 +42,15 @@ object Help {
         on this computer, or the app on your phone) decides every request. Pair once,
         then any script, app or agent can ask for signatures and get the result on
         stdout.
+    """.trimIndent()
 
+    private fun usageSection(): String = """
         USAGE
           amber <command> [arguments] [flags]
           amber help [command]
+    """.trimIndent()
 
+    private fun commandsSection(): String = """
         COMMANDS
           login <bunker://...|->     pair using a bunker URI from Amber
           connect                    print a nostrconnect:// URI/QR and pair by approval
@@ -46,7 +63,9 @@ object Help {
           ping                       check that Amber answers
           status                     show the saved connection and whether it answers
           logout                     tell Amber to forget the connection and delete it here
+    """.trimIndent()
 
+    private fun pairingSection(): String = """
         PAIRING (once per machine, needs a human in Amber)
           With a bunker URI: in Amber, open the connection's details, copy the
           bunker:// URI, then run
@@ -59,7 +78,9 @@ object Help {
             amber connect --perms 'sign_event:1,sign_event:30023,nip44_encrypt'
           Approvals are the human's decision in Amber; if a request waits for one
           and nobody is there, the command exits with code 5 after --timeout seconds.
+    """.trimIndent()
 
+    private fun flagsSection(): String = """
         FLAGS (before or after the command)
           --profile NAME     saved connection to use (default: "default")
           --timeout SECONDS  how long to wait for Amber, and for a locked OS
@@ -77,7 +98,9 @@ object Help {
           --open             (connect) hand the URI to the OS handler
           -h, --help         help for the command
           -V, --version      print the version
+    """.trimIndent()
 
+    private fun inputOutputSection(): String = """
         INPUT AND OUTPUT
           Results go to stdout and nothing else: the signed event JSON, the public
           key, the ciphertext, "pong". Progress, warnings, the QR code and pairing
@@ -85,7 +108,9 @@ object Help {
           stdout first (with --json, as {"ok":true,"result":{"uri":...,"state":
           "waiting-for-approval"}}), so a script can capture it before the approval.
           JSON on stdin: pass - as the argument, e.g. `... | amber sign-event -`.
+    """.trimIndent()
 
+    private fun exitCodesSection(): String = """
         EXIT CODES
           0  success
           1  error: an invalid answer, a broken saved file, I/O
@@ -94,7 +119,9 @@ object Help {
           4  refused: the user rejected in Amber, or Amber has no grant for it
           5  timeout: no answer; Amber may be offline or still waiting for a human
           6  unreachable: no relay accepted a connection
+    """.trimIndent()
 
+    private fun storageSection(): String = """
         STORAGE
           Saved connections live in AMBER_CLI_HOME (default ~/.config/amber-cli,
           %APPDATA%\amber-cli on Windows) in connections.json, encrypted with
@@ -105,14 +132,18 @@ object Help {
           starts (or stops) does not lock the saved connections out. Other users and apps cannot
           read the saved client key, and that key alone cannot sign anything:
           Amber approves every request.
+    """.trimIndent()
 
+    private fun environmentSection(): String = """
         ENVIRONMENT
           AMBER_PROFILE    default profile when --profile is not given
           AMBER_CLI_HOME   directory holding the saved connections
                            (default: ~/.config/amber-cli, %APPDATA%\amber-cli on Windows)
           AMBER_CLI_KEY_STORE  file or keyring: where the connections key is kept,
                            over the recorded choice (a new store, or after moving a store)
+    """.trimIndent()
 
+    private fun examplesSection(): String = """
         EXAMPLES
           # first time, in a terminal a human can see
           amber connect --qr --perms 'sign_event:1,sign_event:30023'

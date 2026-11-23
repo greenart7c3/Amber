@@ -80,6 +80,13 @@ open class LocalRelayServer(
         /** Default port; debug builds run one port up so they never fight an installed release. */
         const val DEFAULT_PORT = 7777
         const val DEBUG_PORT = 7778
+
+        /**
+         * 127.0.0.1, the address every relay URL and bunker URI names. Not
+         * `InetAddress.getLoopbackAddress()`: that is ::1 on Android, where an
+         * IPv6-only listener refused every `ws://127.0.0.1` connection.
+         */
+        private val IPV4_LOOPBACK: InetAddress = InetAddress.getByAddress("localhost", byteArrayOf(127, 0, 0, 1))
     }
 
     val status = MutableStateFlow(Status.STOPPED)
@@ -101,7 +108,7 @@ open class LocalRelayServer(
         if (server != null) return status.value
         val started = try {
             tagThread()
-            val socket = ServerSocket(requestedPort, RelayCore.MAX_CLIENTS, InetAddress.getLoopbackAddress())
+            val socket = ServerSocket(requestedPort, RelayCore.MAX_CLIENTS, IPV4_LOOPBACK)
             boundPort = socket.localPort
             server = socket
             core = RelayCore(socket, logger, approvedSenders, tagThread, storesEphemeral, onAcceptFailure = ::stop)

@@ -600,3 +600,9 @@ Key handling (3): the rotation sweep reports a `SweepOutcome` per pass
 `migrateFromPreviousKey`, and the decrypt pre-check walks one lazy list of grant
 lookups in the order the final lookup uses (`SignerProviderQueryTest` now checks each
 grant alone).
+
+`SignerProviderQuery.query` (`ReturnCount`, `NestedBlockDepth`, `CyclomaticComplexMethod`,
+`LongMethod`): the 570-line function is a dispatcher over one function per operation
+(`signEvent`, `encryptOrDecrypt` with its `encrypt` / `decrypt` paths, `signPsbt`,
+`ping`), sharing the account lookup, the grant decision, the history record and the
+answers (`requestAccount`, `isAllowed`, `recordHistory`, `rejected`, `resultCursor`).

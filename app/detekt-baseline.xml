@@ -16,7 +16,6 @@
     <ID>CyclomaticComplexMethod:IntentUtilsBeforeAfterTest.kt:IntentUtilsBeforeAfterTest$@Test fun `before-after parameter dispatch - all six keys`</ID>
     <ID>CyclomaticComplexMethod:ProfileSubscription.kt:ProfileSubscription$override suspend fun onIncomingMessage</ID>
     <ID>CyclomaticComplexMethod:SeeDetailsScreen.kt:@Composable fun SeeDetailsScreen</ID>
-    <ID>CyclomaticComplexMethod:SignerProviderQuery.kt:SignerProviderQuery$@Suppress("RunBlocking") fun query: Cursor?</ID>
     <ID>CyclomaticComplexMethod:UpdateSettingsScreen.kt:@Composable fun UpdateSettingsScreen</ID>
     <ID>CyclomaticComplexMethod:ZapstoreUpdater.kt:ZapstoreUpdater$private fun processFileEvent</ID>
     <ID>CyclomaticComplexMethod:ZapstoreUpdater.kt:ZapstoreUpdater$private suspend fun processReleaseEvent</ID>
@@ -86,7 +85,6 @@
     <ID>LongMethod:SeedWordsPage.kt:@Composable fun SeedWordsPage</ID>
     <ID>LongMethod:SignPolicySettingsScreen.kt:@Composable fun SignPolicySettingsScreen</ID>
     <ID>LongMethod:SignerActivity.kt:SignerActivity$override fun onCreate</ID>
-    <ID>LongMethod:SignerProviderQuery.kt:SignerProviderQuery$@Suppress("RunBlocking") fun query: Cursor?</ID>
     <ID>LongMethod:SigningAs.kt:@Composable fun SigningAs</ID>
     <ID>LongMethod:SimpleSearchBar.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun SimpleSearchBar</ID>
     <ID>LongMethod:TranslationReportScreen.kt:@Composable fun TranslationReportScreen</ID>
@@ -101,9 +99,7 @@
     <ID>MultipleEmitters:ActivityStatsCard.kt:@Composable private fun ActivityStatsBar</ID>
     <ID>MultipleEmitters:RelaysScreen.kt:@Composable private fun LocalBunkerServerSettings</ID>
     <ID>MultipleEmitters:SignPsbt.kt:@Composable private fun PsbtBody</ID>
-    <ID>NestedBlockDepth:SignerProviderQuery.kt:SignerProviderQuery$@Suppress("RunBlocking") fun query: Cursor?</ID>
     <ID>PreviewAnnotationNaming:Previews.kt:ThemePreviews</ID>
-    <ID>ReturnCount:SignerProviderQuery.kt:SignerProviderQuery$@Suppress("RunBlocking") fun query: Cursor?</ID>
     <ID>TooManyFunctions:Account.kt:Account</ID>
     <ID>TooManyFunctions:ApplicationBackup.kt:ApplicationBackup</ID>
     <ID>TooManyFunctions:ApplicationDao.kt:ApplicationDao</ID>

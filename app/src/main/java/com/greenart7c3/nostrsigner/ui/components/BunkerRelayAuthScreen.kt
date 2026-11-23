@@ -13,6 +13,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -59,13 +60,16 @@ fun BunkerRelayAuthScreen(
 ) {
     var rememberType by remember { mutableStateOf(RememberType.NEVER) }
     var scope by remember { mutableStateOf(defaultScope) }
+    // The effect below runs once; it must call the latest callbacks, not the first ones.
+    val currentOnAccept by rememberUpdatedState(onAccept)
+    val currentOnReject by rememberUpdatedState(onReject)
 
     if (shouldAcceptOrReject != null) {
         LaunchedEffect(Unit) {
             if (shouldAcceptOrReject) {
-                onAccept(RememberType.entries[0], scope)
+                currentOnAccept(RememberType.entries[0], scope)
             } else {
-                onReject(RememberType.entries[0], scope)
+                currentOnReject(RememberType.entries[0], scope)
             }
         }
     }

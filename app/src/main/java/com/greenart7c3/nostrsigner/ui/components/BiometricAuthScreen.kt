@@ -17,6 +17,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -48,6 +49,8 @@ fun BiometricAuthScreen(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     var showPinDialog by remember { mutableStateOf(false) }
+    // The effect below runs once; it must call the latest callback, not the first one.
+    val currentOnAuth by rememberUpdatedState(onAuth)
     val keyguardLauncher =
         rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
             if (result.resultCode == RESULT_OK) {
@@ -68,7 +71,7 @@ fun BiometricAuthScreen(
             }
             val shouldAuthenticate = (settings.useAuth || settings.usePin) && isTimeToAsk
             if (!shouldAuthenticate) {
-                onAuth(true)
+                currentOnAuth(true)
             } else {
                 launch(Dispatchers.Main) {
                     if (settings.usePin) {
@@ -84,7 +87,7 @@ fun BiometricAuthScreen(
                                 )
 
                                 LocalPreferences.saveSettingsToEncryptedStorage(context, settingsStore.settings)
-                                onAuth(true)
+                                currentOnAuth(true)
                             },
                             { _, message ->
                                 activity?.finishAndRemoveTask()

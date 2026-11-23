@@ -141,6 +141,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -485,6 +486,41 @@ private fun AccountBackupCard(
     }
 }
 
+/**
+ * The nsec to show, or null after telling the user it could not be exported. Caught
+ * because a throw here (device locked, or a WorkManager cold start before settings
+ * load) would cancel the composition scope and crash the app.
+ */
+private suspend fun exportNsec(
+    account: Account,
+    context: Context,
+): String? = try {
+    account.getNsec()
+} catch (e: Exception) {
+    if (e is CancellationException) throw e
+    AmberLog.e(Amber.TAG, "Failed to export secret key", e)
+    withContext(Dispatchers.Main) {
+        Toast.makeText(context, getStringBlocking(Res.string.failed_to_export_key), Toast.LENGTH_SHORT).show()
+    }
+    null
+}
+
+/** The ncryptsec of the key under [password], or null after telling the user it could not be made. */
+private suspend fun encryptForQr(
+    account: Account,
+    password: String,
+    context: Context,
+): String? = try {
+    account.nip49Encrypt(password)
+} catch (e: Exception) {
+    if (e is CancellationException) throw e
+    AmberLog.e(Amber.TAG, "Failed to encrypt secret key for QR", e)
+    withContext(Dispatchers.Main) {
+        Toast.makeText(context, getStringBlocking(Res.string.failed_to_encrypt_key), Toast.LENGTH_SHORT).show()
+    }
+    null
+}
+
 @Composable
 private fun NSecQrButton(
     account: Account,
@@ -503,19 +539,8 @@ private fun NSecQrButton(
         var nsec by remember { mutableStateOf("") }
         LaunchedEffect(Unit) {
             launch(Dispatchers.IO) {
-                try {
-                    nsec = account.getNsec()
-                } catch (e: Exception) {
-                    if (e is CancellationException) throw e
-                    // An uncaught throw here (device locked, or a WorkManager
-                    // cold start before settings load) cancels the composition
-                    // scope and crashes the app.
-                    AmberLog.e(Amber.TAG, "Failed to export secret key", e)
-                    showDialog.value = false
-                    launch(Dispatchers.Main) {
-                        Toast.makeText(context, getStringBlocking(Res.string.failed_to_export_key), Toast.LENGTH_SHORT).show()
-                    }
-                }
+                val exported = exportNsec(account, context)
+                if (exported == null) showDialog.value = false else nsec = exported
             }
         }
         if (nsec.isNotBlank()) {
@@ -535,15 +560,10 @@ private fun NSecQrButton(
                 appScope.launch {
                     onLoading(true)
                     try {
-                        val ncryptsec = account.nip49Encrypt(password)
-                        account.didBackup = true
-                        onBackupFinish()
-                        onShowQrCode(ncryptsec)
-                    } catch (e: Exception) {
-                        if (e is CancellationException) throw e
-                        AmberLog.e(Amber.TAG, "Failed to encrypt secret key for QR", e)
-                        launch(Dispatchers.Main) {
-                            Toast.makeText(context, getStringBlocking(Res.string.failed_to_encrypt_key), Toast.LENGTH_SHORT).show()
+                        encryptForQr(account, password, context)?.let { ncryptsec ->
+                            account.didBackup = true
+                            onBackupFinish()
+                            onShowQrCode(ncryptsec)
                         }
                     } finally {
                         onLoading(false)

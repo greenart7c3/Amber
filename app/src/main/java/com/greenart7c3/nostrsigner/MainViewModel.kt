@@ -40,69 +40,45 @@ class MainViewModel(val context: Context) : ViewModel() {
     /** The queued requests this screen owns. */
     fun ownIntents(): List<IntentData> = IntentUtils.intents.value.filter { it.owner == ownerId }
 
+    /**
+     * The account to show: the saved one [userFromIntent] names, else the one the first
+     * queued request (intent or bunker) signs as, else the current saved account or the
+     * first saved one. Falls back to the last two when a key does not decode.
+     */
     fun getAccount(userFromIntent: String?): String? {
-        val currentAccount = SavedAccounts.current(context)
-        try {
-            if (!userFromIntent.isNullOrBlank()) {
-                if (userFromIntent.startsWith("npub")) {
-                    if (SavedAccounts.contains(context, userFromIntent)) {
-                        AmberLog.d(Amber.TAG, "getAccount: $userFromIntent")
-                        return userFromIntent
-                    }
-                } else {
-                    val localNpub = Hex.decode(userFromIntent).toNpub()
-                    if (SavedAccounts.contains(context, localNpub)) {
-                        AmberLog.d(Amber.TAG, "getAccount: $localNpub")
-                        return localNpub
-                    }
-                }
-            }
-
-            val pubKeys =
-                ownIntents().mapNotNull {
-                    it.event?.pubKey
-                }.filter { it.isNotBlank() } + BunkerRequestUtils.getBunkerRequests().mapNotNull {
-                    when (val parsed = Nip19Parser.uriToRoute(it.currentAccount)?.entity) {
-                        is NPub -> parsed.hex
-                        else -> null
-                    }
-                }
-
-            if (pubKeys.isEmpty()) {
-                if (currentAccount != null && SavedAccounts.contains(context, currentAccount)) {
-                    AmberLog.d(Amber.TAG, "getAccount: $currentAccount")
-                    return currentAccount
-                }
-
-                val acc = SavedAccounts.all(context).firstOrNull()
-                if (acc != null) {
-                    AmberLog.d(Amber.TAG, "getAccount: ${acc.npub}")
-                    return acc.npub
-                } else {
-                    AmberLog.d(Amber.TAG, "getAccount: null")
-                    return null
-                }
-            }
-
-            val npub = Hex.decode(pubKeys.first()).toNpub()
-            AmberLog.d(Amber.TAG, "getAccount: $npub")
-            return npub
+        val account = try {
+            savedAccount(userFromIntent) ?: requestedAccount() ?: fallbackAccount()
         } catch (e: Exception) {
             AmberLog.e(Amber.TAG, "Error getting account", e)
-            if (currentAccount != null && SavedAccounts.contains(context, currentAccount)) {
-                AmberLog.d(Amber.TAG, "getAccount: $currentAccount")
-                return currentAccount
-            }
-
-            val acc = SavedAccounts.all(context).firstOrNull()
-            if (acc != null) {
-                AmberLog.d(Amber.TAG, "getAccount: ${acc.npub}")
-                return acc.npub
-            } else {
-                AmberLog.d(Amber.TAG, "getAccount: null")
-                return null
-            }
+            fallbackAccount()
         }
+        AmberLog.d(Amber.TAG, "getAccount: $account")
+        return account
+    }
+
+    /** [key] (an npub or a hex public key) as an npub. */
+    private fun npubOf(key: String): String = if (key.startsWith("npub")) key else Hex.decode(key).toNpub()
+
+    /** The npub [userFromIntent] names, when it is a saved account. */
+    private fun savedAccount(userFromIntent: String?): String? {
+        if (userFromIntent.isNullOrBlank()) return null
+        return npubOf(userFromIntent).takeIf { SavedAccounts.contains(context, it) }
+    }
+
+    /** The account the first queued request signs as: an intent's event author, else a bunker request's account. */
+    private fun requestedAccount(): String? {
+        val intentKeys = ownIntents().mapNotNull { it.event?.pubKey }.filter { it.isNotBlank() }
+        val bunkerKeys = BunkerRequestUtils.getBunkerRequests().mapNotNull {
+            (Nip19Parser.uriToRoute(it.currentAccount)?.entity as? NPub)?.hex
+        }
+        return (intentKeys + bunkerKeys).firstOrNull()?.let { Hex.decode(it).toNpub() }
+    }
+
+    /** The current account when it is still saved, else the first saved one. */
+    private fun fallbackAccount(): String? {
+        val current = SavedAccounts.current(context)
+        if (current != null && SavedAccounts.contains(context, current)) return current
+        return SavedAccounts.all(context).firstOrNull()?.npub
     }
 
     fun showBunkerRequests(accountStateViewModel: AccountStateViewModel? = null) {
@@ -126,7 +102,7 @@ class MainViewModel(val context: Context) : ViewModel() {
     fun switchToRequestedAccount(requested: String?, accountStateViewModel: AccountStateViewModel?) {
         val currentAccount = SavedAccounts.current(context) ?: return
         if (requested.isNullOrBlank() || requested == currentAccount) return
-        val npub = if (requested.startsWith("npub")) requested else Hex.decode(requested).toNpub()
+        val npub = npubOf(requested)
         AmberLog.d(Amber.TAG, "Switching account to $npub")
         if (SavedAccounts.contains(context, npub)) {
             accountStateViewModel?.switchUser(npub, Route.IncomingRequest.route)

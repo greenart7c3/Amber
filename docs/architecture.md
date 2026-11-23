@@ -586,3 +586,11 @@ the local relay's checks became functions that name the refusal (`upgradeRejecti
 covering the handshake and every frame error byte by byte; `RelayFilter`'s fields
 are optional, as in NIP-01. The CLI checks an option once (`Args.optionError`), reads
 one tag at a time and dispatches commands in `Session.runCommand`.
+
+App `ReturnCount` / `ThrowsCount`, first batch (5): `MainViewModel.getAccount` is
+"the named saved account, else the requested one, else the fallback"
+(`savedAccount`, `requestedAccount`, `fallbackAccount`); `onAddRelay` checks the typed
+address before it shows the spinner (`relayUrlToAdd`, which also stops an address
+that is not a relay URL from leaving the spinner on); the relay status notification
+and the applications backup split the decision from the try/catch around it; the
+nsec QR export and encryption are `exportNsec` / `encryptForQr`.

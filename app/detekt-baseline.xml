@@ -33,7 +33,6 @@
     <ID>LongMethod:ActivityStatsCard.kt:@Composable private fun ActivityStatsBar</ID>
     <ID>LongMethod:AddPermissionsSheet.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun AddPermissionsSheet</ID>
     <ID>LongMethod:AmberNavigationBar.kt:@Composable fun AmberNavigationBar</ID>
-    <ID>LongMethod:AmberRelayStat.kt:AmberRelayStats$fun createNotification: Notification?</ID>
     <ID>LongMethod:AmberToggles.kt:@Composable fun &lt;T&gt; AmberToggles</ID>
     <ID>LongMethod:AmberTopAppBar.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun AmberTopAppBar</ID>
     <ID>LongMethod:ApplicationEntityCryptoTest.kt:ApplicationEntityCryptoTest$@Test fun migration_18_19_encryptsPlaintextSecrets</ID>
@@ -104,15 +103,10 @@
     <ID>MultipleEmitters:SignPsbt.kt:@Composable private fun PsbtBody</ID>
     <ID>NestedBlockDepth:SignerProviderQuery.kt:SignerProviderQuery$@Suppress("RunBlocking") fun query: Cursor?</ID>
     <ID>PreviewAnnotationNaming:Previews.kt:ThemePreviews</ID>
-    <ID>ReturnCount:AmberRelayStat.kt:AmberRelayStats$fun createNotification: Notification?</ID>
-    <ID>ReturnCount:ApplicationBackup.kt:ApplicationBackup$suspend fun publishBackup: Boolean</ID>
-    <ID>ReturnCount:EditRelaysDialog.kt:fun onAddRelay</ID>
-    <ID>ReturnCount:MainViewModel.kt:MainViewModel$fun getAccount: String?</ID>
     <ID>ReturnCount:SecureCryptoHelper.kt:SecureCryptoHelper$internal fun migrateCiphertext: CiphertextMigration</ID>
     <ID>ReturnCount:SecureCryptoHelper.kt:SecureCryptoHelper$private suspend fun finishRotation: Boolean</ID>
     <ID>ReturnCount:SignerProviderQuery.kt:SignerProviderQuery$@Suppress("RunBlocking") fun query: Cursor?</ID>
     <ID>ReturnCount:SignerProviderQuery.kt:SignerProviderQuery$private fun hasAnyAcceptingDecryptPermission: Boolean</ID>
-    <ID>ThrowsCount:AccountBackupScreen.kt:@Composable private fun NSecQrButton</ID>
     <ID>TooManyFunctions:Account.kt:Account</ID>
     <ID>TooManyFunctions:ApplicationBackup.kt:ApplicationBackup</ID>
     <ID>TooManyFunctions:ApplicationDao.kt:ApplicationDao</ID>

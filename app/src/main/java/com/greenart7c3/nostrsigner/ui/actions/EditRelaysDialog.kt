@@ -375,129 +375,71 @@ fun onAddRelay(
 ) {
     checkNotInMainThread()
     val url = textFieldRelay.value.text
-    if (url.isNotBlank() && url != "/") {
-        isLoading.value = true
+    if (url.isBlank() || url == "/") return
+    val addedWSS = relayUrlToAdd(url) ?: return
+    if (relays2.any { it == addedWSS }) {
+        textFieldRelay.value = TextFieldValue("")
+        return
+    }
+    isLoading.value = true
 
-        val client = NostrClient(factory)
-        val isPrivateIp = PrivateAddress.isPrivate(url)
-        val addedWSS =
-            if (!url.startsWith("wss://") && !url.startsWith("ws://")) {
-                if (url.endsWith(".onion") || url.endsWith(".onion/") || isPrivateIp) {
-                    RelayUrlNormalizer.normalizeOrNull("ws://$url") ?: return
-                } else {
-                    RelayUrlNormalizer.normalizeOrNull("wss://$url") ?: return
-                }
-            } else {
-                RelayUrlNormalizer.normalizeOrNull(url) ?: return
+    val client = NostrClient(factory)
+
+    scope.launch(Dispatchers.IO) secondLaunch@{
+        if (shouldCheckForBunker) {
+            val relays = savedRelays()
+            if (addedWSS in relays) {
+                relays2.add(addedWSS)
+                onDone()
+                textFieldRelay.value = TextFieldValue("")
+                isLoading.value = false
+                return@secondLaunch
             }
 
-        if (relays2.any { it == addedWSS }) {
-            textFieldRelay.value = TextFieldValue("")
-            isLoading.value = false
-            return
-        }
+            val signer = NostrSignerInternal(KeyPair())
+            val encryptedContent = signer.signerSync.nip04Encrypt(
+                "Test bunker event",
+                signer.keyPair.pubKey.toHexKey(),
+            )
 
-        scope.launch(Dispatchers.IO) secondLaunch@{
-            if (shouldCheckForBunker) {
-                val relays = savedRelays()
-                if (addedWSS in relays) {
-                    relays2.add(addedWSS)
-                    onDone()
-                    textFieldRelay.value = TextFieldValue("")
-                    isLoading.value = false
-                    return@secondLaunch
+            var signedEvent = signer.signerSync.sign<Event>(
+                TimeUtils.now(),
+                NostrConnectEvent.KIND,
+                arrayOf(arrayOf("p", signer.keyPair.pubKey.toHexKey())),
+                encryptedContent,
+            )
+
+            val filters = listOf(
+                Filter(
+                    kinds = listOf(NostrConnectEvent.KIND),
+                    tags = mapOf("p" to listOf(signedEvent.pubKey)),
+                ),
+            )
+
+            var filterResult = false
+            val ncSub = UUID.randomUUID().toString().substring(0, 4)
+
+            var canSendRequest = false
+
+            val listener = object : RelayConnectionListener {
+                override fun onSent(relay: IRelayClient, cmdStr: String, cmd: Command, success: Boolean) {
+                    if (!success) {
+                        AmberListenerSingleton.latestErrorMessages.add("Failed to send event. Try again.")
+                    }
+
+                    super.onSent(relay, cmdStr, cmd, success)
                 }
 
-                val signer = NostrSignerInternal(KeyPair())
-                val encryptedContent = signer.signerSync.nip04Encrypt(
-                    "Test bunker event",
-                    signer.keyPair.pubKey.toHexKey(),
-                )
-
-                var signedEvent = signer.signerSync.sign<Event>(
-                    TimeUtils.now(),
-                    NostrConnectEvent.KIND,
-                    arrayOf(arrayOf("p", signer.keyPair.pubKey.toHexKey())),
-                    encryptedContent,
-                )
-
-                val filters = listOf(
-                    Filter(
-                        kinds = listOf(NostrConnectEvent.KIND),
-                        tags = mapOf("p" to listOf(signedEvent.pubKey)),
-                    ),
-                )
-
-                var filterResult = false
-                val ncSub = UUID.randomUUID().toString().substring(0, 4)
-
-                var canSendRequest = false
-
-                val listener = object : RelayConnectionListener {
-                    override fun onSent(relay: IRelayClient, cmdStr: String, cmd: Command, success: Boolean) {
-                        if (!success) {
-                            AmberListenerSingleton.latestErrorMessages.add("Failed to send event. Try again.")
-                        }
-
-                        super.onSent(relay, cmdStr, cmd, success)
-                    }
-
-                    override fun onDisconnected(relay: IRelayClient) {
-                        AmberLog.d(Amber.TAG, "Disconnected from ${relay.url.url}")
-                        super.onDisconnected(relay)
-                    }
-                    override fun onConnected(relay: IRelayClient, pingMillis: Int, compressed: Boolean) {
-                        canSendRequest = true
-                        super.onConnected(relay, pingMillis, compressed)
-                    }
-
-                    override fun onCannotConnect(relay: IRelayClient, errorMessage: String) {
-                        ToastManager.toast(
-                            getStringBlocking(Res.string.relay),
-                            getStringBlocking(Res.string.could_not_connect_to_relay),
-                            onAccept = {
-                                relays2.add(addedWSS)
-                                onDone()
-                            },
-                            onReject = {},
-                        )
-                        super.onCannotConnect(relay, errorMessage)
-                    }
-
-                    override suspend fun onIncomingMessage(relay: IRelayClient, msgStr: String, msg: Message) {
-                        if (msg is EventMessage) {
-                            if (ncSub == msg.subId && msg.event.kind == NostrConnectEvent.KIND && msg.event.id == signedEvent.id) {
-                                filterResult = true
-                            }
-                        }
-
-                        if (msg is OkMessage && !msg.success) {
-                            AmberListenerSingleton.latestErrorMessages.add(msg.message)
-                        }
-
-                        super.onIncomingMessage(relay, msgStr, msg)
-                    }
+                override fun onDisconnected(relay: IRelayClient) {
+                    AmberLog.d(Amber.TAG, "Disconnected from ${relay.url.url}")
+                    super.onDisconnected(relay)
+                }
+                override fun onConnected(relay: IRelayClient, pingMillis: Int, compressed: Boolean) {
+                    canSendRequest = true
+                    super.onConnected(relay, pingMillis, compressed)
                 }
 
-                client.addConnectionListener(listener)
-
-                if (!client.isActive()) {
-                    client.connect()
-                }
-
-                client.subscribe(
-                    ncSub,
-                    mapOf(addedWSS to filters),
-                )
-
-                val canContinue = withTimeoutOrNull(30.seconds) {
-                    while (!canSendRequest) {
-                        delay(200.milliseconds)
-                    }
-                    true
-                }
-
-                if (canContinue == null) {
+                override fun onCannotConnect(relay: IRelayClient, errorMessage: String) {
                     ToastManager.toast(
                         getStringBlocking(Res.string.relay),
                         getStringBlocking(Res.string.could_not_connect_to_relay),
@@ -507,70 +449,129 @@ fun onAddRelay(
                         },
                         onReject = {},
                     )
-                    client.unsubscribe(ncSub)
-                    client.removeConnectionListener(listener)
-                    client.disconnect()
-                    textFieldRelay.value = TextFieldValue("")
-                    isLoading.value = false
-                    return@secondLaunch
+                    super.onCannotConnect(relay, errorMessage)
                 }
 
-                var success = false
-                var errorCount = 0
-                while (!success && errorCount < 3) {
-                    success = client.publishAndConfirm(signedEvent, setOf(addedWSS))
-                    if (!success) {
-                        errorCount++
-                        delay(1.seconds)
-                        signedEvent = signer.signerSync.sign(
-                            TimeUtils.now(),
-                            NostrConnectEvent.KIND,
-                            arrayOf(arrayOf("p", signer.keyPair.pubKey.toHexKey())),
-                            encryptedContent,
-                        )
+                override suspend fun onIncomingMessage(relay: IRelayClient, msgStr: String, msg: Message) {
+                    if (msg is EventMessage) {
+                        if (ncSub == msg.subId && msg.event.kind == NostrConnectEvent.KIND && msg.event.id == signedEvent.id) {
+                            filterResult = true
+                        }
                     }
-                }
 
-                if (success) {
-                    AmberListenerSingleton.latestErrorMessages.clear()
-                    var count = 0
-                    while (!filterResult && count < 10) {
-                        delay(1.seconds)
-                        count++
+                    if (msg is OkMessage && !msg.success) {
+                        AmberListenerSingleton.latestErrorMessages.add(msg.message)
                     }
-                } else {
-                    AmberListenerSingleton.showErrorMessage(context)
-                    filterResult = true
-                }
 
+                    super.onIncomingMessage(relay, msgStr, msg)
+                }
+            }
+
+            client.addConnectionListener(listener)
+
+            if (!client.isActive()) {
+                client.connect()
+            }
+
+            client.subscribe(
+                ncSub,
+                mapOf(addedWSS to filters),
+            )
+
+            val canContinue = withTimeoutOrNull(30.seconds) {
+                while (!canSendRequest) {
+                    delay(200.milliseconds)
+                }
+                true
+            }
+
+            if (canContinue == null) {
+                ToastManager.toast(
+                    getStringBlocking(Res.string.relay),
+                    getStringBlocking(Res.string.could_not_connect_to_relay),
+                    onAccept = {
+                        relays2.add(addedWSS)
+                        onDone()
+                    },
+                    onReject = {},
+                )
                 client.unsubscribe(ncSub)
-                client.disconnect()
                 client.removeConnectionListener(listener)
-
-                if (success && filterResult) {
-                    relays2.add(addedWSS)
-                    onDone()
-                } else if (!filterResult) {
-                    ToastManager.toast(
-                        getStringBlocking(Res.string.relay),
-                        getStringBlocking(Res.string.relay_filter_failed),
-                        onAccept = {
-                            relays2.add(addedWSS)
-                            onDone()
-                        },
-                        onReject = {},
-                    )
-                }
-
+                client.disconnect()
                 textFieldRelay.value = TextFieldValue("")
                 isLoading.value = false
+                return@secondLaunch
+            }
+
+            var success = false
+            var errorCount = 0
+            while (!success && errorCount < 3) {
+                success = client.publishAndConfirm(signedEvent, setOf(addedWSS))
+                if (!success) {
+                    errorCount++
+                    delay(1.seconds)
+                    signedEvent = signer.signerSync.sign(
+                        TimeUtils.now(),
+                        NostrConnectEvent.KIND,
+                        arrayOf(arrayOf("p", signer.keyPair.pubKey.toHexKey())),
+                        encryptedContent,
+                    )
+                }
+            }
+
+            if (success) {
+                AmberListenerSingleton.latestErrorMessages.clear()
+                var count = 0
+                while (!filterResult && count < 10) {
+                    delay(1.seconds)
+                    count++
+                }
             } else {
+                AmberListenerSingleton.showErrorMessage(context)
+                filterResult = true
+            }
+
+            client.unsubscribe(ncSub)
+            client.disconnect()
+            client.removeConnectionListener(listener)
+
+            if (success && filterResult) {
                 relays2.add(addedWSS)
                 onDone()
-                textFieldRelay.value = TextFieldValue("")
+            } else if (!filterResult) {
+                ToastManager.toast(
+                    getStringBlocking(Res.string.relay),
+                    getStringBlocking(Res.string.relay_filter_failed),
+                    onAccept = {
+                        relays2.add(addedWSS)
+                        onDone()
+                    },
+                    onReject = {},
+                )
             }
+
+            textFieldRelay.value = TextFieldValue("")
+            isLoading.value = false
+        } else {
+            relays2.add(addedWSS)
+            onDone()
+            textFieldRelay.value = TextFieldValue("")
         }
     }
+}
+
+/**
+ * The relay a typed address names: as given with a `ws://` or `wss://` scheme, otherwise
+ * `ws://` for onion and private-network hosts (no TLS there) and `wss://` for the rest;
+ * null when it is not a relay URL.
+ */
+fun relayUrlToAdd(url: String): NormalizedRelayUrl? {
+    val withScheme = when {
+        url.startsWith("wss://") || url.startsWith("ws://") -> url
+        url.endsWith(".onion") || url.endsWith(".onion/") || PrivateAddress.isPrivate(url) -> "ws://$url"
+        else -> "wss://$url"
+    }
+    return RelayUrlNormalizer.normalizeOrNull(withScheme)
 }
 
 @Composable

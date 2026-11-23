@@ -7,32 +7,26 @@ import android.widget.Toast
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.BottomSheetDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.ModalBottomSheetProperties
 import androidx.compose.material3.Surface
 import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Density
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.rememberNavController
-import com.greenart7c3.nostrsigner.common.sanitizeAppName
 import com.greenart7c3.nostrsigner.commonsui.Res
 import com.greenart7c3.nostrsigner.commonsui.getStringBlocking
 import com.greenart7c3.nostrsigner.commonsui.rate_limit_too_many_requests
@@ -43,16 +37,12 @@ import com.greenart7c3.nostrsigner.service.IntentRateLimitInspector
 import com.greenart7c3.nostrsigner.service.IntentUtils
 import com.greenart7c3.nostrsigner.service.safeReferrer
 import com.greenart7c3.nostrsigner.ui.AccountScreen
-import com.greenart7c3.nostrsigner.ui.AccountStateViewModel
 import com.greenart7c3.nostrsigner.ui.IntentWrapper
 import com.greenart7c3.nostrsigner.ui.InvalidIntentScreen
 import com.greenart7c3.nostrsigner.ui.NavHostControllerWrapper
 import com.greenart7c3.nostrsigner.ui.appDependencies
-import com.greenart7c3.nostrsigner.ui.components.BiometricAuthScreen
 import com.greenart7c3.nostrsigner.ui.theme.NostrSignerTheme
 import kotlinx.collections.immutable.persistentListOf
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 class SignerActivity : AppCompatActivity() {
@@ -85,17 +75,7 @@ class SignerActivity : AppCompatActivity() {
                 }
 
                 val packageName = callingPackage
-                val appName =
-                    if (packageName != null) {
-                        try {
-                            val info = applicationContext.packageManager.getApplicationInfo(packageName, 0)
-                            sanitizeAppName(applicationContext.packageManager.getApplicationLabel(info).toString())
-                        } catch (_: Exception) {
-                            null
-                        }
-                    } else {
-                        null
-                    }
+                val appName = applicationContext.callerAppName(packageName)
 
                 CompositionLocalProvider(
                     LocalDensity provides Density(
@@ -106,86 +86,24 @@ class SignerActivity : AppCompatActivity() {
                 ) {
                     val navController = rememberNavController()
                     mainViewModel.navController = navController
-                    var isAuthenticated by remember { mutableStateOf(false) }
 
-                    val invalidIntent by IntentUtils.invalidIntents
-                        .collectAsStateWithLifecycle(initialValue = null)
+                    RequestSheet(onFinish = ::finishAndRemoveTask) {
+                        AuthGate {
+                            val bunkerRequests = BunkerRequestUtils.state.collectAsStateWithLifecycle(persistentListOf())
+                            val accountStateViewModel = accountStateViewModel { mainViewModel.requestedAccount(intent) }
+                            SwitchToRequestedAccountEffect(mainViewModel, accountStateViewModel, bunkerRequests.value) { intent }
 
-                    ModalBottomSheet(
-                        sheetGesturesEnabled = false,
-                        onDismissRequest = {
-                            finishAndRemoveTask()
-                        },
-                        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-                        containerColor = MaterialTheme.colorScheme.background,
-                        scrimColor = Color.Transparent,
-                        dragHandle = { BottomSheetDefaults.DragHandle() },
-                        properties = ModalBottomSheetProperties(
-                            shouldDismissOnBackPress = false,
-                            shouldDismissOnClickOutside = false,
-                        ),
-                    ) {
-                        Surface(
-                            modifier = Modifier.fillMaxWidth(),
-                            color = MaterialTheme.colorScheme.background,
-                        ) {
-                            if (invalidIntent != null) {
-                                InvalidIntentScreen(
-                                    modifier = Modifier.fillMaxSize(),
-                                    onClose = {
-                                        IntentUtils.clearInvalidIntents()
-                                        finishAndRemoveTask()
-                                    },
-                                )
-                            } else {
-                                BiometricAuthScreen(
-                                    onAuth = {
-                                        isAuthenticated = it
-                                    },
-                                )
-
-                                if (!isAuthenticated) {
-                                    Box(
-                                        modifier = Modifier.fillMaxSize(),
-                                        contentAlignment = Alignment.Center,
-                                    ) {
-                                        CircularProgressIndicator()
-                                    }
-                                } else {
-                                    val bunkerRequests = BunkerRequestUtils.state.collectAsStateWithLifecycle(persistentListOf())
-                                    val npub = remember { mainViewModel.getAccount(intent?.getStringExtra("current_user")) }
-
-                                    val accountStateViewModel: AccountStateViewModel =
-                                        viewModel {
-                                            AccountStateViewModel(
-                                                npub = npub,
-                                                appContext = amber,
-                                                settingsStore = amber,
-                                                accountRepository = amber.accountDatabases,
-                                                relayClient = amber.relayClient,
-                                                appScope = amber.applicationIOScope,
-                                            )
-                                        }
-
-                                    LaunchedEffect(Unit, bunkerRequests.value) {
-                                        launch(Dispatchers.IO) {
-                                            mainViewModel.switchToRequestedAccount(mainViewModel.getAccount(intent?.getStringExtra("current_user")), accountStateViewModel)
-                                        }
-                                    }
-
-                                    AccountScreen(
-                                        accountStateViewModel = accountStateViewModel,
-                                        intent = remember(intent) { IntentWrapper(intent) },
-                                        packageName = packageName,
-                                        appName = appName,
-                                        referrer = launchReferrer,
-                                        bunkerRequests = bunkerRequests.value,
-                                        navController = NavHostControllerWrapper(navController),
-                                        isExternalRequest = true,
-                                        intentOwner = mainViewModel.ownerId,
-                                    )
-                                }
-                            }
+                            AccountScreen(
+                                accountStateViewModel = accountStateViewModel,
+                                intent = remember(intent) { IntentWrapper(intent) },
+                                packageName = packageName,
+                                appName = appName,
+                                referrer = launchReferrer,
+                                bunkerRequests = bunkerRequests.value,
+                                navController = NavHostControllerWrapper(navController),
+                                isExternalRequest = true,
+                                intentOwner = mainViewModel.ownerId,
+                            )
                         }
                     }
                 }
@@ -259,11 +177,48 @@ class SignerActivity : AppCompatActivity() {
 
     private fun resolveCallerLabel(pkg: String?): String {
         if (pkg.isNullOrBlank()) return getStringBlocking(Res.string.rate_limit_unknown_app)
-        return try {
-            val info = applicationContext.packageManager.getApplicationInfo(pkg, 0)
-            sanitizeAppName(applicationContext.packageManager.getApplicationLabel(info).toString())
-        } catch (_: Exception) {
-            pkg
+        return applicationContext.callerAppName(pkg) ?: pkg
+    }
+}
+
+/**
+ * The bottom sheet the approval screens open in over the calling app. An invalid
+ * request replaces [content] with its explanation; closing either calls [onFinish].
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun RequestSheet(
+    onFinish: () -> Unit,
+    content: @Composable () -> Unit,
+) {
+    val invalidIntent by IntentUtils.invalidIntents.collectAsStateWithLifecycle(initialValue = null)
+    ModalBottomSheet(
+        sheetGesturesEnabled = false,
+        onDismissRequest = onFinish,
+        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+        containerColor = MaterialTheme.colorScheme.background,
+        scrimColor = Color.Transparent,
+        dragHandle = { BottomSheetDefaults.DragHandle() },
+        properties = ModalBottomSheetProperties(
+            shouldDismissOnBackPress = false,
+            shouldDismissOnClickOutside = false,
+        ),
+    ) {
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            color = MaterialTheme.colorScheme.background,
+        ) {
+            if (invalidIntent != null) {
+                InvalidIntentScreen(
+                    modifier = Modifier.fillMaxSize(),
+                    onClose = {
+                        IntentUtils.clearInvalidIntents()
+                        onFinish()
+                    },
+                )
+            } else {
+                content()
+            }
         }
     }
 }

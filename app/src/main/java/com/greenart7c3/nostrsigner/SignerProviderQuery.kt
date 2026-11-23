@@ -682,35 +682,34 @@ class SignerProviderQuery(
         stringType: String,
     ): Boolean {
         val now = TimeUtils.now()
-        fun ApplicationPermissionsEntity?.canAccept() = this?.activeDecision(now) == true
-
-        if (v3Kind != null) {
+        // Looked up lazily, in this order, until one accepts.
+        val lookups: List<() -> ApplicationPermissionsEntity?> = if (v3Kind != null) {
             // Kind-scoped like the final V3 lookup: the kind-agnostic
             // getPermission(key, type) would match a grant for any other kind,
             // and a kind-B request then decrypted only to answer "rejected" on
             // failure versus null on success, a ciphertext-validity oracle.
-            if (permDao.getPermission(requesterId, type.toString(), v3Kind).canAccept()) return true
-            if (permDao.getPermissionAllKinds(requesterId, type.toString()).canAccept()) return true
+            listOf(
+                { permDao.getPermission(requesterId, type.toString(), v3Kind) },
+                { permDao.getPermissionAllKinds(requesterId, type.toString()) },
+            )
         } else {
-            if (permDao.getPermission(requesterId, type.toString()).canAccept()) return true
-            // V2 classified content-type grants. The set of possible types
-            // comes from permissionTypeFromContent / EncryptedDataKind.
-            if (permDao.getPermission(requesterId, "DECRYPT_CLEAR_TEXT").canAccept()) return true
-            if (permDao.getPermission(requesterId, "DECRYPT_EVENT").canAccept()) return true
-            if (permDao.getPermission(requesterId, "DECRYPT_TAG_ARRAY").canAccept()) return true
-            if (permDao.getPermission(requesterId, "DECRYPT_ZAP_EVENT").canAccept()) return true
-
-            // NIP-level fallback grant (matches the lookup at line ~341-358).
+            // The generic grant, the V2 classified content-type grants (the set of
+            // possible types comes from permissionTypeFromContent / EncryptedDataKind),
+            // then the NIP-level fallback grant the final lookup also consults.
             val nip = when (stringType) {
                 "NIP04_DECRYPT" -> 4
                 "NIP44_DECRYPT" -> 44
                 else -> null
             }
-            nip?.let {
-                if (permDao.getPermission(requesterId, "NIP", it).canAccept()) return true
-            }
+            listOf<() -> ApplicationPermissionsEntity?>(
+                { permDao.getPermission(requesterId, type.toString()) },
+                { permDao.getPermission(requesterId, "DECRYPT_CLEAR_TEXT") },
+                { permDao.getPermission(requesterId, "DECRYPT_EVENT") },
+                { permDao.getPermission(requesterId, "DECRYPT_TAG_ARRAY") },
+                { permDao.getPermission(requesterId, "DECRYPT_ZAP_EVENT") },
+            ) + listOfNotNull(nip?.let { { permDao.getPermission(requesterId, "NIP", it) } })
         }
-        return false
+        return lookups.any { it()?.activeDecision(now) == true }
     }
 }
 

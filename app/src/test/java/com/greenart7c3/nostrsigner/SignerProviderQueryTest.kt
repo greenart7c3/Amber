@@ -242,6 +242,37 @@ class SignerProviderQueryTest {
         }
     }
 
+    // The pre-check must let through every grant the final lookup can decide on:
+    // the generic one, each classified content type and the NIP-level grant.
+    @Test
+    fun `every grant the decrypt lookup consults passes the pre-check on its own`() {
+        val grants = listOf("NIP44_DECRYPT", "DECRYPT_CLEAR_TEXT", "DECRYPT_EVENT", "DECRYPT_TAG_ARRAY", "DECRYPT_ZAP_EVENT").map { decryptRow(it, accept = true) } +
+            decryptRow("NIP", accept = true).copy(kind = 44)
+        for (grant in grants) {
+            stubDecryptGrants(grant.takeIf { it.kind == null } ?: decryptRow("none", accept = false))
+            if (grant.kind != null) {
+                every { dao.getPermission(REQUESTER, "NIP", 44) } returns grant
+            }
+            try {
+                queryDecrypt()
+                coVerify(exactly = 1) { AmberUtils.encryptOrDecryptData("ciphertext", SignerType.NIP44_DECRYPT, any(), any(), any(), any()) }
+            } finally {
+                unmockkObject(AmberUtils)
+            }
+        }
+    }
+
+    @Test
+    fun `a caller without any decrypt grant is answered without decrypting`() {
+        stubDecryptGrants()
+        try {
+            assertNull(queryDecrypt())
+            coVerify(exactly = 0) { AmberUtils.encryptOrDecryptData(any(), any(), any(), any(), any(), any()) }
+        } finally {
+            unmockkObject(AmberUtils)
+        }
+    }
+
     private fun queryV3Decrypt(kind: Int) = SignerProviderQuery(amber, amber.accountDatabases, amber.applicationIOScope).query(
         context = context,
         requesterId = REQUESTER,

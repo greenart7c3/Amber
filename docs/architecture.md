@@ -594,3 +594,9 @@ address before it shows the spinner (`relayUrlToAdd`, which also stops an addres
 that is not a relay URL from leaving the spinner on); the relay status notification
 and the applications backup split the decision from the try/catch around it; the
 nsec QR export and encryption are `exportNsec` / `encryptForQr`.
+
+Key handling (3): the rotation sweep reports a `SweepOutcome` per pass
+(`sweepUntilSettled`), `migrateCiphertext` checks the current key before
+`migrateFromPreviousKey`, and the decrypt pre-check walks one lazy list of grant
+lookups in the order the final lookup uses (`SignerProviderQueryTest` now checks each
+grant alone).

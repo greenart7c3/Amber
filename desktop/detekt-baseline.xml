@@ -46,8 +46,6 @@
     <ID>MultipleEmitters:SettingsScreen.kt:@Composable private fun SecuritySection</ID>
     <ID>MultipleEmitters:SettingsScreen.kt:@Composable private fun SettingsSection</ID>
     <ID>MultipleEmitters:SettingsScreen.kt:@Composable private fun TorSection</ID>
-    <ID>MutableStateAutoboxing:ApplicationDetailScreen.kt:mutableStateOf(0)</ID>
-    <ID>MutableStateAutoboxing:LoginScreen.kt:mutableStateOf(0)</ID>
     <ID>NestedBlockDepth:AccountAvatar.kt:ProfileImages$private fun download: ByteArray?</ID>
     <ID>ReturnCount:App.kt:@Composable fun App</ID>
     <ID>ReturnCount:DesktopKeyStore.kt:DesktopKeyStore$private fun loadOrCreateFromKeystore: SecretKey</ID>

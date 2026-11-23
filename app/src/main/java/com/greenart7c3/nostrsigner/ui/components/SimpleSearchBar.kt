@@ -1,7 +1,6 @@
 package com.greenart7c3.nostrsigner.ui.components
 
 import android.view.ViewTreeObserver
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
@@ -23,7 +22,6 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.semantics.isTraversalGroup
 import androidx.compose.ui.semantics.semantics
@@ -72,8 +70,8 @@ fun SimpleSearchBar(
             windowInsets = WindowInsets(0),
             inputField = {
                 SearchBarDefaults.InputField(
-                    modifier = modifier
-                        .fillMaxWidth(),
+                    // The caller's modifier is the Box's; the field only fills it.
+                    modifier = Modifier.fillMaxWidth(),
                     query = textFieldState.text.toString(),
                     onQueryChange = {
                         textFieldState.edit { replace(0, length, it) }
@@ -99,13 +97,12 @@ fun SimpleSearchBar(
                     ListItem(
                         headlineContent = { Text(result) },
                         modifier = Modifier
+                            .fillMaxWidth()
                             .clickable {
                                 textFieldState.edit { replace(0, length, result) }
                                 onSearch(textFieldState.text.toString())
                                 expanded = false
-                            }
-                            .background(Color.Red)
-                            .fillMaxWidth(),
+                            },
                     )
                 }
             }

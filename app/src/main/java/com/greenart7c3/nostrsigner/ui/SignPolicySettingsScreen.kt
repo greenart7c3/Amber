@@ -20,6 +20,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
@@ -63,12 +64,8 @@ fun SignPolicySettingsScreen(
             Row(
                 Modifier
                     .fillMaxWidth()
-                    .selectable(
-                        selected = selectedOption == index,
-                        onClick = {
-                            selectedOption = index
-                        },
-                    )
+                    // Clipped before the click, so the ripple keeps the rounded shape.
+                    .clip(RoundedCornerShape(8.dp))
                     .border(
                         width = 1.dp,
                         color = if (selectedOption == index) {
@@ -77,6 +74,12 @@ fun SignPolicySettingsScreen(
                             Color.Transparent
                         },
                         shape = RoundedCornerShape(8.dp),
+                    )
+                    .selectable(
+                        selected = selectedOption == index,
+                        onClick = {
+                            selectedOption = index
+                        },
                     )
                     .padding(16.dp),
                 verticalAlignment = Alignment.CenterVertically,

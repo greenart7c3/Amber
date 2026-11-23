@@ -424,7 +424,7 @@ fun RelayCard(
     showTrustScore: Boolean = true,
 ) {
     Card(
-        Modifier
+        modifier
             .fillMaxWidth()
             .padding(vertical = 4.dp),
         border = BorderStroke(1.dp, Color.LightGray),
@@ -433,7 +433,7 @@ fun RelayCard(
         ),
     ) {
         Row(
-            modifier
+            Modifier
                 .fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Center,

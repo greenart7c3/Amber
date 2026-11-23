@@ -6,9 +6,11 @@ import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.KeystorePolicy
 import com.greenart7c3.nostrsigner.service.DeviceUnlockPolicy
 import com.vitorpamplona.quartz.nip01Core.core.Event
+import com.vitorpamplona.quartz.nip01Core.crypto.KeyPair
 import com.vitorpamplona.quartz.nip01Core.signers.NostrSignerInternal
 import io.mockk.Called
 import io.mockk.every
+import io.mockk.excludeRecords
 import io.mockk.mockk
 import io.mockk.mockkObject
 import io.mockk.unmockkAll
@@ -23,10 +25,15 @@ import org.junit.Assert.assertThrows
 import org.junit.Test
 
 class AccountCachedKeyLockTest {
+    // The account reads its public key from the signer's key pair. That is not key
+    // use, so wasNot Called ignores it.
+    private fun NostrSignerInternal.withKeyPair(): NostrSignerInternal = apply {
+        every { keyPair } returns KeyPair()
+        excludeRecords { keyPair }
+    }
+
     private fun newAccount(signer: NostrSignerInternal, scope: CoroutineScope, appContext: Context? = null): Account = Account(
-        signer = signer,
-        hexKey = "owner",
-        npub = "npub-owner",
+        signer = signer.withKeyPair(),
         name = MutableStateFlow(""),
         picture = MutableStateFlow(""),
         signPolicy = 1,
@@ -41,9 +48,7 @@ class AccountCachedKeyLockTest {
         val signer = mockk<NostrSignerInternal>()
         var locked = false
         val account = Account(
-            signer = signer,
-            hexKey = "owner",
-            npub = "npub-owner",
+            signer = signer.withKeyPair(),
             name = MutableStateFlow(""),
             picture = MutableStateFlow(""),
             signPolicy = 1,

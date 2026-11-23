@@ -5,10 +5,8 @@ import com.greenart7c3.nostrsigner.models.Account
 import com.vitorpamplona.quartz.nip01Core.core.hexToByteArray
 import com.vitorpamplona.quartz.nip01Core.core.toHexKey
 import com.vitorpamplona.quartz.nip01Core.crypto.KeyPair
-import com.vitorpamplona.quartz.nip01Core.crypto.Nip01Crypto
 import com.vitorpamplona.quartz.nip01Core.signers.NostrSignerInternal
 import com.vitorpamplona.quartz.nip06KeyDerivation.Nip06
-import com.vitorpamplona.quartz.nip19Bech32.toNpub
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
@@ -45,10 +43,7 @@ class AccountExportSeedRestoreTest {
 
     private fun realAccount(privKeyHex: String): Account {
         val privKey = privKeyHex.hexToByteArray()
-        val pubKey = Nip01Crypto.pubKeyCreate(privKey)
         return Account(
-            hexKey = pubKey.toHexKey(),
-            npub = pubKey.toNpub(),
             name = MutableStateFlow(""),
             picture = MutableStateFlow(""),
             signPolicy = 1,

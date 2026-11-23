@@ -24,6 +24,7 @@ import com.vitorpamplona.quartz.nip01Core.signers.NostrSignerInternal
 import com.vitorpamplona.quartz.nip06KeyDerivation.Nip06
 import com.vitorpamplona.quartz.nip17Dm.NIP17Factory
 import com.vitorpamplona.quartz.nip17Dm.messages.ChatMessageEvent
+import com.vitorpamplona.quartz.nip19Bech32.toNpub
 import com.vitorpamplona.quartz.nip19Bech32.toNsec
 import com.vitorpamplona.quartz.nip49PrivKeyEnc.Nip49
 import com.vitorpamplona.quartz.nip57Zaps.PrivateZapRequestBuilder
@@ -40,8 +41,6 @@ import kotlinx.coroutines.launch
 @Stable
 class Account(
     val signer: NostrSignerInternal,
-    val hexKey: HexKey,
-    val npub: String,
     val name: MutableStateFlow<String>,
     val picture: MutableStateFlow<String>,
     signPolicy: Int,
@@ -57,6 +56,15 @@ class Account(
         KeystorePolicy.requireAccess(checkNotNull(appContext) { "No context to check the device lock with" })
     },
 ) {
+    /**
+     * The account's public key, read from [signer]'s key pair: a copy passed in
+     * separately could disagree with the key that actually signs.
+     */
+    val hexKey: HexKey = signer.keyPair.pubKey.toHexKey()
+
+    /** [hexKey] as an npub. */
+    val npub: String = signer.keyPair.pubKey.toNpub()
+
     private fun requireContext(): Context = checkNotNull(appContext) { "Account has no application context" }
 
     var signPolicy: Int = signPolicy

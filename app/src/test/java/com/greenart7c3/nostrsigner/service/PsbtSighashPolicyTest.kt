@@ -16,7 +16,6 @@ import com.vitorpamplona.quartz.nipBCOnchainZaps.psbt.setInputSighashType
 import com.vitorpamplona.quartz.nipBCOnchainZaps.psbt.setInputTapInternalKey
 import com.vitorpamplona.quartz.nipBCOnchainZaps.psbt.setInputWitnessUtxo
 import com.vitorpamplona.quartz.nipBCOnchainZaps.taproot.TaprootAddress
-import com.vitorpamplona.quartz.utils.Hex
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -32,8 +31,6 @@ class PsbtSighashPolicyTest {
 
     private val account = Account(
         signer = NostrSignerInternal(userKp),
-        hexKey = Hex.encode(userKp.pubKey),
-        npub = "npub-test",
         name = MutableStateFlow(""),
         picture = MutableStateFlow(""),
         signPolicy = 0,

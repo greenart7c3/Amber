@@ -11,7 +11,6 @@ import com.greenart7c3.nostrsigner.models.Account
 import com.vitorpamplona.quartz.nip01Core.core.hexToByteArray
 import com.vitorpamplona.quartz.nip01Core.crypto.KeyPair
 import com.vitorpamplona.quartz.nip01Core.signers.NostrSignerInternal
-import com.vitorpamplona.quartz.nip19Bech32.toNpub
 import com.vitorpamplona.quartz.utils.cache.LargeCache
 import java.io.File
 import java.security.InvalidKeyException
@@ -215,11 +214,10 @@ object AccountStorage {
     private suspend fun decrypt(context: Context, npub: String): Account? {
         val privKey = decryptPrivateKey(context, npub) ?: return null
         val prefs = accountPreferences(context, npub)
-        val pubKey = prefs.getString(AccountPrefKeys.NOSTR_PUBKEY.key, null) ?: return null
+        // A saved account always has its public key stored; without it the save is incomplete.
+        if (prefs.getString(AccountPrefKeys.NOSTR_PUBKEY.key, null) == null) return null
         return Account(
             signer = NostrSignerInternal(KeyPair(privKey.hexToByteArray())),
-            hexKey = pubKey,
-            npub = pubKey.hexToByteArray().toNpub(),
             name = MutableStateFlow(prefs.getString(AccountPrefKeys.ACCOUNT_NAME.key, "") ?: ""),
             picture = MutableStateFlow(prefs.getString(AccountPrefKeys.PROFILE_URL.key, "") ?: ""),
             signPolicy = prefs.getInt(AccountPrefKeys.SIGN_POLICY.key, 1),

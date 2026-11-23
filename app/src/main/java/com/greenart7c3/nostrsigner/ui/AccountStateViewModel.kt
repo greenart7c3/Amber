@@ -23,7 +23,6 @@ import com.vitorpamplona.quartz.nip01Core.core.toHexKey
 import com.vitorpamplona.quartz.nip01Core.crypto.KeyPair
 import com.vitorpamplona.quartz.nip01Core.signers.NostrSignerInternal
 import com.vitorpamplona.quartz.nip06KeyDerivation.Nip06
-import com.vitorpamplona.quartz.nip19Bech32.toNpub
 import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -135,8 +134,6 @@ class AccountStateViewModel(
         signPolicy: Int,
     ) {
         val account = Account(
-            hexKey = keyPair.pubKey.toHexKey(),
-            npub = keyPair.pubKey.toNpub(),
             name = MutableStateFlow(""),
             picture = MutableStateFlow(""),
             signPolicy = signPolicy,
@@ -174,11 +171,8 @@ class AccountStateViewModel(
         val key = seedWords.joinToString(separator = " ") { it }
         val keyPair = KeyPair(privKey = Nip06().privateKeyFromMnemonic(key))
         val hexKey = keyPair.pubKey.toHexKey()
-        val npub = keyPair.pubKey.toNpub()
         val privKey = keyPair.privKey!!.toHexKey()
         val account = Account(
-            hexKey = hexKey,
-            npub = npub,
             name = MutableStateFlow(name),
             picture = MutableStateFlow(""),
             signPolicy = signPolicy,

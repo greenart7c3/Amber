@@ -89,8 +89,6 @@
     <ID>LongMethod:SimpleSearchBar.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun SimpleSearchBar</ID>
     <ID>LongMethod:TranslationReportScreen.kt:@Composable fun TranslationReportScreen</ID>
     <ID>LongMethod:UpdateSettingsScreen.kt:@Composable fun UpdateSettingsScreen</ID>
-    <ID>LongParameterList:Account.kt:Account</ID>
-    <ID>LongParameterList:AmberEvent.kt:AmberEvent</ID>
     <ID>ModifierNotUsedAtRoot:LoginWithPubKey.kt:modifier = modifier .weight(1f)</ID>
     <ID>MultipleEmitters:ActivityStatsCard.kt:@Composable private fun ActivityStatsBar</ID>
     <ID>MultipleEmitters:RelaysScreen.kt:@Composable private fun LocalBunkerServerSettings</ID>

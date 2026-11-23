@@ -216,13 +216,11 @@ class EventNotificationConsumerTest {
      * this unverified sender must be published once ([UNVERIFIED_REPLY_ATTEMPTS]).
      */
     private suspend fun consumeFromUnknownSender(requestJson: String, onAccount: (Account) -> Unit): List<BunkerResponse> {
-        val signer = mockk<NostrSignerInternal>(relaxed = true)
         val kp = KeyPair()
+        val signer = mockk<NostrSignerInternal>(relaxed = true) { every { keyPair } returns kp }
         val acc = spyk(
             Account(
                 signer = signer,
-                hexKey = kp.pubKey.toHexKey(),
-                npub = "npub-preauth-test",
                 name = MutableStateFlow(""),
                 picture = MutableStateFlow(""),
                 signPolicy = 2,
@@ -326,12 +324,10 @@ class EventNotificationConsumerTest {
 
     @Test
     fun `an expired connection is answered as an unknown app`() = runBlocking {
-        val signer = mockk<NostrSignerInternal>(relaxed = true)
         val kp = KeyPair()
+        val signer = mockk<NostrSignerInternal>(relaxed = true) { every { keyPair } returns kp }
         val expiredAccount = Account(
             signer = signer,
-            hexKey = kp.pubKey.toHexKey(),
-            npub = "npub-expired-test",
             name = MutableStateFlow(""),
             picture = MutableStateFlow(""),
             signPolicy = 2,
@@ -413,9 +409,7 @@ class EventNotificationConsumerTest {
     private suspend fun consumeFromConnectedApp(requestJson: String, onAccount: (Account) -> Unit = {}): List<SentReply> {
         val acc = spyk(
             Account(
-                signer = mockk<NostrSignerInternal>(relaxed = true),
-                hexKey = KeyPair().pubKey.toHexKey(),
-                npub = "npub-connected-test",
+                signer = mockk<NostrSignerInternal>(relaxed = true) { every { keyPair } returns KeyPair() },
                 name = MutableStateFlow(""),
                 picture = MutableStateFlow(""),
                 signPolicy = 2,

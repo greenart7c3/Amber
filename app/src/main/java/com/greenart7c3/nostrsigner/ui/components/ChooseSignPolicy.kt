@@ -18,6 +18,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -59,12 +60,8 @@ fun ChooseSignPolicy(
                 Modifier
                     .fillMaxWidth()
                     .padding(vertical = 2.dp)
-                    .selectable(
-                        selected = selected,
-                        onClick = {
-                            onSelect(index)
-                        },
-                    )
+                    // Clipped before the click, so the ripple keeps the rounded shape.
+                    .clip(RoundedCornerShape(10.dp))
                     .background(
                         color = if (selected) {
                             MaterialTheme.colorScheme.primary.copy(alpha = 0.18f)
@@ -81,6 +78,12 @@ fun ChooseSignPolicy(
                             Color.Transparent
                         },
                         shape = RoundedCornerShape(10.dp),
+                    )
+                    .selectable(
+                        selected = selected,
+                        onClick = {
+                            onSelect(index)
+                        },
                     )
                     .padding(14.dp),
                 verticalAlignment = Alignment.CenterVertically,

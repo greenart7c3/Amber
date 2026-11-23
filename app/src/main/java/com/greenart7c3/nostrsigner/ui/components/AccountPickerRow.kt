@@ -32,6 +32,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
@@ -179,10 +180,8 @@ fun AccountPickerRow(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clickable {
-                                    onSelect(index)
-                                    sheetOpen = false
-                                }
+                                // Clipped before the click, so the ripple keeps the rounded shape.
+                                .clip(RoundedCornerShape(10.dp))
                                 .background(
                                     color = if (index == selectedAccountIndex) {
                                         MaterialTheme.colorScheme.primary.copy(alpha = 0.18f)
@@ -191,6 +190,10 @@ fun AccountPickerRow(
                                     },
                                     shape = RoundedCornerShape(10.dp),
                                 )
+                                .clickable {
+                                    onSelect(index)
+                                    sheetOpen = false
+                                }
                                 .padding(horizontal = 12.dp, vertical = 10.dp),
                             verticalAlignment = Alignment.CenterVertically,
                         ) {

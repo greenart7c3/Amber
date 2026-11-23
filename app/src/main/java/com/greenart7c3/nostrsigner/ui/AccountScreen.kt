@@ -110,13 +110,17 @@ fun AccountScreen(
                             }
                         }
                     }
-                    val localRoute = mutableStateOf(
-                        intents.firstNotNullOfOrNull { it.route } ?: if (bunkerRequests.isNotEmpty()) {
-                            Route.IncomingRequest.route
-                        } else {
-                            null
-                        } ?: state.route,
-                    )
+                    // Remembered, so a consumed route (set to null) is not brought back by the
+                    // next recomposition; recomputed when the requests or the route change.
+                    val localRoute = remember(intents, bunkerRequests, state.route) {
+                        mutableStateOf(
+                            intents.firstNotNullOfOrNull { it.route } ?: if (bunkerRequests.isNotEmpty()) {
+                                Route.IncomingRequest.route
+                            } else {
+                                null
+                            } ?: state.route,
+                        )
+                    }
 
                     DisplayErrorMessages()
                     MainScreen(

@@ -106,20 +106,12 @@
     <ID>LongParameterList:IncomingRequestScreen.kt:@Composable fun IncomingRequestScreen</ID>
     <ID>LongParameterList:MainScreen.kt:@SuppressLint("ConfigurationScreenWidthHeight") @OptIn(ExperimentalMaterial3Api::class) @Composable fun MainScreen</ID>
     <ID>LongParameterList:Nip44v3ApprovalData.kt:@Composable fun Nip44v3ApprovalData</ID>
-    <ID>ModifierClickableOrder:AccountPickerRow.kt:clickable { onSelect(index) sheetOpen = false }</ID>
-    <ID>ModifierClickableOrder:ChooseSignPolicy.kt:selectable( selected = selected, onClick = { onSelect(index) }, )</ID>
-    <ID>ModifierClickableOrder:SignPolicySettingsScreen.kt:selectable( selected = selectedOption == index, onClick = { selectedOption = index }, )</ID>
-    <ID>ModifierNotUsedAtRoot:EditPermission.kt:modifier .fillMaxWidth()</ID>
     <ID>ModifierNotUsedAtRoot:LoginWithPubKey.kt:modifier = modifier .weight(1f)</ID>
-    <ID>ModifierNotUsedAtRoot:SimpleSearchBar.kt:modifier = modifier .fillMaxWidth()</ID>
-    <ID>ModifierReused:SimpleSearchBar.kt:Box( modifier .semantics { isTraversalGroup = true }, ) { SearchBar( windowInsets = WindowInsets(0), inputField = { SearchBarDefaults.InputField( modifier = modifier .fillMaxWidth(), query = textFieldState.text.toString(), onQueryChange = { textFieldState.edit { replace(0, length, it) } localSearchResults = searchResults.filter { result -&gt; result.contains(textFieldState.text.toString(), ignoreCase = true) } }, onSearch = { onSearch(textFieldState.text.toString()) expanded = false }, expanded = expanded, onExpandedChange = { expanded = it }, placeholder = { Text("Search") }, ) }, expanded = expanded, onExpandedChange = { expanded = it }, ) { // Display search results in a scrollable column LazyColumn { items(localSearchResults) { result -&gt; ListItem( headlineContent = { Text(result) }, modifier = Modifier .clickable { textFieldState.edit { replace(0, length, result) } onSearch(textFieldState.text.toString()) expanded = false } .background(Color.Red) .fillMaxWidth(), ) } } } }</ID>
-    <ID>ModifierReused:SimpleSearchBar.kt:InputField( modifier = modifier .fillMaxWidth(), query = textFieldState.text.toString(), onQueryChange = { textFieldState.edit { replace(0, length, it) } localSearchResults = searchResults.filter { result -&gt; result.contains(textFieldState.text.toString(), ignoreCase = true) } }, onSearch = { onSearch(textFieldState.text.toString()) expanded = false }, expanded = expanded, onExpandedChange = { expanded = it }, placeholder = { Text("Search") }, )</ID>
     <ID>MultipleEmitters:ActivityStatsCard.kt:@Composable private fun ActivityStatsBar</ID>
     <ID>MultipleEmitters:RelaysScreen.kt:@Composable private fun LocalBunkerServerSettings</ID>
     <ID>MultipleEmitters:SignPsbt.kt:@Composable private fun PsbtBody</ID>
     <ID>NestedBlockDepth:SignerProviderQuery.kt:SignerProviderQuery$@Suppress("RunBlocking") fun query: Cursor?</ID>
     <ID>PreviewAnnotationNaming:Previews.kt:ThemePreviews</ID>
-    <ID>RememberMissing:AccountScreen.kt:mutableStateOf( intents.firstNotNullOfOrNull { it.route } ?: if (bunkerRequests.isNotEmpty()) { Route.IncomingRequest.route } else { null } ?: state.route, )</ID>
     <ID>ReturnCount:AmberRelayStat.kt:AmberRelayStats$fun createNotification: Notification?</ID>
     <ID>ReturnCount:ApplicationBackup.kt:ApplicationBackup$suspend fun publishBackup: Boolean</ID>
     <ID>ReturnCount:EditRelaysDialog.kt:fun onAddRelay</ID>

@@ -561,4 +561,14 @@ function per change, regenerating the baselines each time (no new entries):
 Done so far: `LambdaParameterInRestartableEffect` (7). An effect that outlives
 recompositions (a one-shot `LaunchedEffect`, a layout listener, the desktop popup
 timeout) called the callback it captured first; it now reads it through
-`rememberUpdatedState`, so it always calls the latest one.
+`rememberUpdatedState`, so it always calls the latest one. Then `ModifierReused`,
+`ModifierNotUsedAtRoot`, `ModifierClickableOrder`, `RememberMissing` and
+`MutableStateAutoboxing` (10): the search bar no longer gives its modifier to both its
+box and its field (and its suggestions lose a leftover red background), `RelayCard`
+takes its modifier at the root, the sign-policy and account-picker rows clip before
+the click so the ripple keeps their rounded shape, the main screen remembers its
+pending route (it was recreated on every recomposition, bringing a consumed route
+back), and the desktop tabs use `mutableIntStateOf`. `LoginWithPubKey` keeps its
+`ModifierNotUsedAtRoot` entry on purpose: the screen's modifier scrolls the content
+while the Cancel/Connect row stays pinned, so it cannot move to the root without a
+separate content modifier.

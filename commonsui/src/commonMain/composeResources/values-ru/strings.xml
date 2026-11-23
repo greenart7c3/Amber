@@ -53,6 +53,10 @@
     <string name="add_permission">Добавить разрешение</string>
     <string name="add_permission_description">Выберите разрешения, которые должны автоматически одобряться для этого приложения.</string>
     <string name="search_permissions">Поиск разрешений</string>
+    <string name="search">Поиск</string>
+    <string name="loading">Загрузка…</string>
+    <string name="error_loading_data">Ошибка загрузки данных</string>
+    <string name="not_logged_in">Вход не выполнен</string>
     <string name="no_permissions_found">Разрешения не найдены</string>
     <string name="custom_event_kind">Пользовательский тип события</string>
     <string name="custom_event_kind_already_added">Это разрешение уже есть в списке</string>

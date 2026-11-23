@@ -53,6 +53,10 @@ Wenn du dein Passwort verlierst, wirst du deinen Schlüssel nicht wiederherstell
     <string name="add_permission">Berechtigung hinzufügen</string>
     <string name="add_permission_description">Wähle die Berechtigungen aus, die für diese Anwendung automatisch genehmigt werden sollen.</string>
     <string name="search_permissions">Berechtigungen suchen</string>
+    <string name="search">Suchen</string>
+    <string name="loading">Wird geladen…</string>
+    <string name="error_loading_data">Fehler beim Laden der Daten</string>
+    <string name="not_logged_in">Nicht angemeldet</string>
     <string name="no_permissions_found">Keine Berechtigungen gefunden</string>
     <string name="custom_event_kind">Benutzerdefinierte Ereignis-Art</string>
     <string name="custom_event_kind_already_added">Diese Berechtigung ist bereits in der Liste</string>

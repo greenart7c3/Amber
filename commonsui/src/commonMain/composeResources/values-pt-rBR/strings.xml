@@ -53,6 +53,10 @@ Se você perder sua senha, não será possível recuperar sua chave.</string>
     <string name="add_permission">Adicionar permissão</string>
     <string name="add_permission_description">Selecione as permissões que você deseja que sejam aprovadas automaticamente para este aplicativo.</string>
     <string name="search_permissions">Pesquisar permissões</string>
+    <string name="search">Pesquisar</string>
+    <string name="loading">Carregando…</string>
+    <string name="error_loading_data">Erro ao carregar os dados</string>
+    <string name="not_logged_in">Não conectado</string>
     <string name="no_permissions_found">Nenhuma permissão encontrada</string>
     <string name="custom_event_kind">Tipo de evento personalizado</string>
     <string name="custom_event_kind_already_added">Esta permissão já está na lista</string>

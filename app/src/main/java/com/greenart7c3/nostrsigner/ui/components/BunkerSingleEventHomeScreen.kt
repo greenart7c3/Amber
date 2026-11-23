@@ -38,6 +38,7 @@ import com.greenart7c3.nostrsigner.commonsui.containsNip
 import com.greenart7c3.nostrsigner.commonsui.create_a_new_connection
 import com.greenart7c3.nostrsigner.commonsui.event_pubkey_is_not_equal_to_current_logged_in_user
 import com.greenart7c3.nostrsigner.commonsui.getStringBlocking
+import com.greenart7c3.nostrsigner.commonsui.not_logged_in
 import com.greenart7c3.nostrsigner.commonsui.replace
 import com.greenart7c3.nostrsigner.commonsui.replace_app_message
 import com.greenart7c3.nostrsigner.commonsui.replace_connection
@@ -290,7 +291,7 @@ private fun NotLoggedIn(pubKey: String, modifier: Modifier = Modifier) {
     Column(modifier.fillMaxSize(), Arrangement.Center, Alignment.CenterHorizontally) {
         Text(Hex.decode(pubKey).toNpub().toShortenHex(), fontWeight = FontWeight.Bold, fontSize = 21.sp)
         Spacer(Modifier.size(8.dp))
-        Text("Not logged in")
+        Text(stringResource(Res.string.not_logged_in))
     }
 }
 

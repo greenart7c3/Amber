@@ -23,6 +23,9 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.paging.LoadState
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.greenart7c3.nostrsigner.AmberLog
+import com.greenart7c3.nostrsigner.commonsui.Res
+import com.greenart7c3.nostrsigner.commonsui.error_loading_data
+import com.greenart7c3.nostrsigner.commonsui.loading
 import com.greenart7c3.nostrsigner.commonsui.localizedBlocking
 import com.greenart7c3.nostrsigner.commonsui.supportedKindNumbers
 import com.greenart7c3.nostrsigner.models.Account
@@ -33,6 +36,7 @@ import com.greenart7c3.nostrsigner.ui.ActivityViewModel
 import com.greenart7c3.nostrsigner.ui.LocalAccountRepository
 import com.greenart7c3.nostrsigner.ui.components.ActivityStatsCard
 import com.greenart7c3.nostrsigner.ui.components.SimpleSearchBar
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun ActivityScreen(
@@ -114,11 +118,11 @@ fun ActivityScreen(
                 when (loadState.refresh) {
                     is LoadState.Loading -> item {
                         AmberLog.d("ActivitiesScreen", "Loading...")
-                        Text("Loading...", Modifier.padding(16.dp))
+                        Text(stringResource(Res.string.loading), Modifier.padding(16.dp))
                     }
                     is LoadState.Error -> item {
                         AmberLog.d("ActivitiesScreen", "Error loading data")
-                        Text("Error loading data", Modifier.padding(16.dp))
+                        Text(stringResource(Res.string.error_loading_data), Modifier.padding(16.dp))
                     }
                     is LoadState.NotLoading -> { }
                 }

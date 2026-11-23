@@ -53,6 +53,10 @@ Hesabınız gizli bir anahtarla güvence altına alınmıştır. Bu anahtar **ns
     <string name="add_permission">İzin ekle</string>
     <string name="add_permission_description">Bu uygulama için otomatik olarak onaylanmasını istediğiniz izinleri seçin.</string>
     <string name="search_permissions">İzinleri ara</string>
+    <string name="search">Ara</string>
+    <string name="loading">Yükleniyor…</string>
+    <string name="error_loading_data">Veriler yüklenirken hata oluştu</string>
+    <string name="not_logged_in">Giriş yapılmadı</string>
     <string name="no_permissions_found">İzin bulunamadı</string>
     <string name="custom_event_kind">Özel etkinlik türü</string>
     <string name="custom_event_kind_already_added">Bu izin listede zaten var</string>

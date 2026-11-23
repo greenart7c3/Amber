@@ -249,12 +249,20 @@ subprojects {
                 )
             }
         }
-        tasks.withType<Detekt>().configureEach { baseline.set(baselineFile) }
+        // The type-resolving tasks also read each source set's generated sources
+        // (the Compose resource accessors, BuildConfig, …) under build/. They are
+        // not ours to split, so neither the checks nor the baselines see them.
+        val generatedSources = project.layout.buildDirectory.get().asFile
+        tasks.withType<Detekt>().configureEach {
+            baseline.set(baselineFile)
+            exclude { it.file.startsWith(generatedSources) }
+        }
         // detekt writes a baseline from scratch (it does not merge), so each
         // baseline task gets its own file under build/, and detektBaselineAll
         // unions them into the committed one.
         tasks.withType<DetektCreateBaselineTask>().configureEach {
             baseline.set(project.layout.buildDirectory.file("detekt-baselines/${name}.xml"))
+            exclude { it.file.startsWith(generatedSources) }
         }
     }
 

@@ -118,6 +118,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
+import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -382,181 +383,162 @@ fun onAddRelay(
         return
     }
     isLoading.value = true
+    val add = {
+        relays2.add(addedWSS)
+        onDone()
+    }
 
-    val client = NostrClient(factory)
-
-    scope.launch(Dispatchers.IO) secondLaunch@{
-        if (shouldCheckForBunker) {
-            val relays = savedRelays()
-            if (addedWSS in relays) {
-                relays2.add(addedWSS)
-                onDone()
-                textFieldRelay.value = TextFieldValue("")
-                isLoading.value = false
-                return@secondLaunch
-            }
-
-            val signer = NostrSignerInternal(KeyPair())
-            val encryptedContent = signer.signerSync.nip04Encrypt(
-                "Test bunker event",
-                signer.keyPair.pubKey.toHexKey(),
-            )
-
-            var signedEvent = signer.signerSync.sign<Event>(
-                TimeUtils.now(),
-                NostrConnectEvent.KIND,
-                arrayOf(arrayOf("p", signer.keyPair.pubKey.toHexKey())),
-                encryptedContent,
-            )
-
-            val filters = listOf(
-                Filter(
-                    kinds = listOf(NostrConnectEvent.KIND),
-                    tags = mapOf("p" to listOf(signedEvent.pubKey)),
-                ),
-            )
-
-            var filterResult = false
-            val ncSub = UUID.randomUUID().toString().substring(0, 4)
-
-            var canSendRequest = false
-
-            val listener = object : RelayConnectionListener {
-                override fun onSent(relay: IRelayClient, cmdStr: String, cmd: Command, success: Boolean) {
-                    if (!success) {
-                        AmberListenerSingleton.latestErrorMessages.add("Failed to send event. Try again.")
-                    }
-
-                    super.onSent(relay, cmdStr, cmd, success)
-                }
-
-                override fun onDisconnected(relay: IRelayClient) {
-                    AmberLog.d(Amber.TAG, "Disconnected from ${relay.url.url}")
-                    super.onDisconnected(relay)
-                }
-                override fun onConnected(relay: IRelayClient, pingMillis: Int, compressed: Boolean) {
-                    canSendRequest = true
-                    super.onConnected(relay, pingMillis, compressed)
-                }
-
-                override fun onCannotConnect(relay: IRelayClient, errorMessage: String) {
-                    ToastManager.toast(
-                        getStringBlocking(Res.string.relay),
-                        getStringBlocking(Res.string.could_not_connect_to_relay),
-                        onAccept = {
-                            relays2.add(addedWSS)
-                            onDone()
-                        },
-                        onReject = {},
-                    )
-                    super.onCannotConnect(relay, errorMessage)
-                }
-
-                override suspend fun onIncomingMessage(relay: IRelayClient, msgStr: String, msg: Message) {
-                    if (msg is EventMessage) {
-                        if (ncSub == msg.subId && msg.event.kind == NostrConnectEvent.KIND && msg.event.id == signedEvent.id) {
-                            filterResult = true
-                        }
-                    }
-
-                    if (msg is OkMessage && !msg.success) {
-                        AmberListenerSingleton.latestErrorMessages.add(msg.message)
-                    }
-
-                    super.onIncomingMessage(relay, msgStr, msg)
-                }
-            }
-
-            client.addConnectionListener(listener)
-
-            if (!client.isActive()) {
-                client.connect()
-            }
-
-            client.subscribe(
-                ncSub,
-                mapOf(addedWSS to filters),
-            )
-
-            val canContinue = withTimeoutOrNull(30.seconds) {
-                while (!canSendRequest) {
-                    delay(200.milliseconds)
-                }
-                true
-            }
-
-            if (canContinue == null) {
-                ToastManager.toast(
-                    getStringBlocking(Res.string.relay),
-                    getStringBlocking(Res.string.could_not_connect_to_relay),
-                    onAccept = {
-                        relays2.add(addedWSS)
-                        onDone()
-                    },
-                    onReject = {},
-                )
-                client.unsubscribe(ncSub)
-                client.removeConnectionListener(listener)
-                client.disconnect()
-                textFieldRelay.value = TextFieldValue("")
-                isLoading.value = false
-                return@secondLaunch
-            }
-
-            var success = false
-            var errorCount = 0
-            while (!success && errorCount < 3) {
-                success = client.publishAndConfirm(signedEvent, setOf(addedWSS))
-                if (!success) {
-                    errorCount++
-                    delay(1.seconds)
-                    signedEvent = signer.signerSync.sign(
-                        TimeUtils.now(),
-                        NostrConnectEvent.KIND,
-                        arrayOf(arrayOf("p", signer.keyPair.pubKey.toHexKey())),
-                        encryptedContent,
-                    )
-                }
-            }
-
-            if (success) {
-                AmberListenerSingleton.latestErrorMessages.clear()
-                var count = 0
-                while (!filterResult && count < 10) {
-                    delay(1.seconds)
-                    count++
-                }
-            } else {
-                AmberListenerSingleton.showErrorMessage(context)
-                filterResult = true
-            }
-
-            client.unsubscribe(ncSub)
-            client.disconnect()
-            client.removeConnectionListener(listener)
-
-            if (success && filterResult) {
-                relays2.add(addedWSS)
-                onDone()
-            } else if (!filterResult) {
-                ToastManager.toast(
-                    getStringBlocking(Res.string.relay),
-                    getStringBlocking(Res.string.relay_filter_failed),
-                    onAccept = {
-                        relays2.add(addedWSS)
-                        onDone()
-                    },
-                    onReject = {},
-                )
-            }
-
+    scope.launch(Dispatchers.IO) {
+        if (!shouldCheckForBunker) {
+            add()
             textFieldRelay.value = TextFieldValue("")
-            isLoading.value = false
-        } else {
-            relays2.add(addedWSS)
-            onDone()
-            textFieldRelay.value = TextFieldValue("")
+            return@launch
         }
+        // An added relay already among the account's saved relays needs no bunker check.
+        if (addedWSS in savedRelays()) add() else probeBunkerRelay(addedWSS, factory, context, add)
+        textFieldRelay.value = TextFieldValue("")
+        isLoading.value = false
+    }
+}
+
+/**
+ * Adds [relay] once a NIP-46 request published to it comes back on a subscription;
+ * when it cannot be reached or does not serve the request back, asks before adding it.
+ */
+private suspend fun probeBunkerRelay(
+    relay: NormalizedRelayUrl,
+    factory: OkHttpWebSocket.Builder,
+    context: Context,
+    add: () -> Unit,
+) {
+    val probe = BunkerRelayProbe(NostrClient(factory), relay, onCannotConnect = { offerToAdd(Res.string.could_not_connect_to_relay, add) })
+    if (!probe.awaitConnection()) {
+        offerToAdd(Res.string.could_not_connect_to_relay, add)
+        probe.close()
+        return
+    }
+    val published = probe.publish()
+    val echoed = if (published) {
+        AmberListenerSingleton.latestErrorMessages.clear()
+        probe.awaitEcho()
+    } else {
+        // The failure is shown as it is, not as a filter problem.
+        AmberListenerSingleton.showErrorMessage(context)
+        true
+    }
+    probe.close()
+    when {
+        published && echoed -> add()
+        !echoed -> offerToAdd(Res.string.relay_filter_failed, add)
+    }
+}
+
+/** A toast saying [message] about the relay, whose Accept adds it anyway. */
+private fun offerToAdd(
+    message: StringResource,
+    add: () -> Unit,
+) {
+    ToastManager.toast(getStringBlocking(Res.string.relay), getStringBlocking(message), onAccept = add, onReject = {})
+}
+
+/**
+ * A throwaway NIP-46 request (kind 24133) on [relay] from a fresh key, and a
+ * subscription to that key's requests, to see whether the relay serves them back.
+ */
+private class BunkerRelayProbe(
+    private val client: NostrClient,
+    private val relay: NormalizedRelayUrl,
+    onCannotConnect: () -> Unit,
+) {
+    private val signer = NostrSignerInternal(KeyPair())
+    private val encryptedContent = signer.signerSync.nip04Encrypt("Test bunker event", signer.keyPair.pubKey.toHexKey())
+    private val subId = UUID.randomUUID().toString().substring(0, 4)
+
+    // Re-signed after a failed publish; the echo must match the latest one.
+    @Volatile private var event: Event = sign()
+
+    @Volatile private var connected = false
+
+    @Volatile private var echoed = false
+
+    private val listener = object : RelayConnectionListener {
+        override fun onSent(relay: IRelayClient, cmdStr: String, cmd: Command, success: Boolean) {
+            if (!success) {
+                AmberListenerSingleton.latestErrorMessages.add("Failed to send event. Try again.")
+            }
+            super.onSent(relay, cmdStr, cmd, success)
+        }
+
+        override fun onDisconnected(relay: IRelayClient) {
+            AmberLog.d(Amber.TAG, "Disconnected from ${relay.url.url}")
+            super.onDisconnected(relay)
+        }
+
+        override fun onConnected(relay: IRelayClient, pingMillis: Int, compressed: Boolean) {
+            connected = true
+            super.onConnected(relay, pingMillis, compressed)
+        }
+
+        override fun onCannotConnect(relay: IRelayClient, errorMessage: String) {
+            onCannotConnect()
+            super.onCannotConnect(relay, errorMessage)
+        }
+
+        override suspend fun onIncomingMessage(relay: IRelayClient, msgStr: String, msg: Message) {
+            if (msg is EventMessage && msg.isEcho()) echoed = true
+            if (msg is OkMessage && !msg.success) {
+                AmberListenerSingleton.latestErrorMessages.add(msg.message)
+            }
+            super.onIncomingMessage(relay, msgStr, msg)
+        }
+    }
+
+    init {
+        client.addConnectionListener(listener)
+        if (!client.isActive()) client.connect()
+        val filter = Filter(kinds = listOf(NostrConnectEvent.KIND), tags = mapOf("p" to listOf(event.pubKey)))
+        client.subscribe(subId, mapOf(relay to listOf(filter)))
+    }
+
+    /** The latest request, served back on our subscription. */
+    private fun EventMessage.isEcho(): Boolean = subId == this@BunkerRelayProbe.subId && event.kind == NostrConnectEvent.KIND && event.id == this@BunkerRelayProbe.event.id
+
+    private fun sign(): Event = signer.signerSync.sign(
+        TimeUtils.now(),
+        NostrConnectEvent.KIND,
+        arrayOf(arrayOf("p", signer.keyPair.pubKey.toHexKey())),
+        encryptedContent,
+    )
+
+    /** Whether the relay connects within 30 seconds. */
+    suspend fun awaitConnection(): Boolean = withTimeoutOrNull(30.seconds) {
+        while (!connected) delay(200.milliseconds)
+        true
+    } ?: false
+
+    /** Publishes the request, re-signed after each failure, up to three times. */
+    suspend fun publish(): Boolean {
+        repeat(3) {
+            if (client.publishAndConfirm(event, setOf(relay))) return true
+            delay(1.seconds)
+            event = sign()
+        }
+        return false
+    }
+
+    /** Whether the request comes back on the subscription within 10 seconds. */
+    suspend fun awaitEcho(): Boolean {
+        repeat(10) {
+            if (echoed) return true
+            delay(1.seconds)
+        }
+        return echoed
+    }
+
+    fun close() {
+        client.unsubscribe(subId)
+        client.disconnect()
+        client.removeConnectionListener(listener)
     }
 }
 

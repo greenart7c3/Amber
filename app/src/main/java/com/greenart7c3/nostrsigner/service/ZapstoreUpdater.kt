@@ -188,46 +188,19 @@ class ZapstoreUpdater(
     }
 
     private suspend fun processReleaseEvent(event: Event) {
-        // The authors filter is only a request to the relay, which may ignore it.
-        // The release is the trust root for the URL, hash and file event ids, so it
-        // must be signed by the developer key, not just validly signed by anyone.
-        if (event.pubKey != Amber.DEVELOPER_HEX_KEY) {
-            AmberLog.w(Amber.TAG, "ZapstoreUpdater: ignoring release event ${event.id} from ${event.pubKey}")
-            return
-        }
-        if (!event.verify()) {
-            AmberLog.w(Amber.TAG, "ZapstoreUpdater: invalid release event: ${event.toJson()}")
-            return
-        }
-
+        if (!isTrustedRelease(event)) return
         val tags = event.tags
+        if (!isForThisApp(tags) || !isOnUpdateChannel(tags)) return
 
-        // Only process events for this app
-        val identifier = tags.firstOrNull { it.size > 1 && it[0] == "d" }?.getOrNull(1) ?: ""
-        val appId = tags.firstOrNull { it.size > 1 && it[0] == "i" }?.getOrNull(1) ?: ""
-        val isForThisApp = identifier.startsWith(APP_IDENTIFIER) || appId == APP_IDENTIFIER
-        if (!isForThisApp) return
-
-        // Channel filter: stable users skip events tagged c=beta (the relay may ignore
-        // the `c` tag in the filter). Events with no `c` tag (legacy releases) are
-        // treated as stable and shown on both channels.
-        val channelTag = tags.firstOrNull { it.size > 1 && it[0] == "c" }?.getOrNull(1)
-        val isBeta = channelTag.equals("beta", ignoreCase = true)
-        val settings = withContext(Dispatchers.IO) {
-            LocalPreferences.loadSettingsFromEncryptedStorage(appContext)
-        }
-        if (isBeta && settings.updateChannel == UpdateChannel.STABLE) return
-
-        val version = tags.firstOrNull { it.size > 1 && it[0] == "version" }?.getOrNull(1) ?: return
+        val version = tags.tagValue("version") ?: return
         if (!isNewerVersion(version)) return
 
         AmberLog.d(Amber.TAG, "ZapstoreUpdater: found release $version (current: ${BuildConfig.VERSION_NAME})")
 
         // Try direct URL first (some release events include it)
-        val directUrl = tags.firstOrNull { it.size > 1 && it[0] == "url" }?.getOrNull(1)
+        val directUrl = tags.tagValue("url")
         if (directUrl != null) {
-            val hash = tags.firstOrNull { it.size > 1 && (it[0] == "x" || it[0] == "hash") }?.getOrNull(1)
-            updateLatestRelease(version, directUrl, hash, event.createdAt)
+            updateLatestRelease(version, directUrl, tags.tagValue("x", "hash"), event.createdAt)
             return
         }
 
@@ -237,6 +210,38 @@ class ZapstoreUpdater(
             pendingFileEventIds.add(eventId)
             versionByEventId[eventId] = Pair(version, event.createdAt)
         }
+    }
+
+    /**
+     * The authors filter is only a request to the relay, which may ignore it.
+     * The release is the trust root for the URL, hash and file event ids, so it
+     * must be signed by the developer key, not just validly signed by anyone.
+     */
+    private fun isTrustedRelease(event: Event): Boolean {
+        if (event.pubKey != Amber.DEVELOPER_HEX_KEY) {
+            AmberLog.w(Amber.TAG, "ZapstoreUpdater: ignoring release event ${event.id} from ${event.pubKey}")
+            return false
+        }
+        if (!event.verify()) {
+            AmberLog.w(Amber.TAG, "ZapstoreUpdater: invalid release event: ${event.toJson()}")
+            return false
+        }
+        return true
+    }
+
+    private fun isForThisApp(tags: Array<Array<String>>): Boolean = tags.tagValue("d").orEmpty().startsWith(APP_IDENTIFIER) || tags.tagValue("i").orEmpty() == APP_IDENTIFIER
+
+    /**
+     * Channel filter: stable users skip events tagged c=beta (the relay may ignore
+     * the `c` tag in the filter). Events with no `c` tag (legacy releases) are
+     * treated as stable and shown on both channels.
+     */
+    private suspend fun isOnUpdateChannel(tags: Array<Array<String>>): Boolean {
+        val isBeta = tags.tagValue("c").equals("beta", ignoreCase = true)
+        val settings = withContext(Dispatchers.IO) {
+            LocalPreferences.loadSettingsFromEncryptedStorage(appContext)
+        }
+        return !(isBeta && settings.updateChannel == UpdateChannel.STABLE)
     }
 
     private fun onReleaseEose() {
@@ -270,24 +275,29 @@ class ZapstoreUpdater(
         }
 
         val tags = event.tags
-        val url = tags.firstOrNull { it.size > 1 && it[0] == "url" }?.getOrNull(1) ?: return
-        val mimeType = tags.firstOrNull { it.size > 1 && it[0] == "m" }?.getOrNull(1)
-        val platform = tags.firstOrNull { it.size > 1 && it[0] == "platform" }?.getOrNull(1)
+        val url = tags.tagValue("url") ?: return
+        if (!isForThisDevice(tags, url)) return
 
-        // Only process Android APK files
-        val isApk = mimeType?.contains("android") == true || url.endsWith(".apk")
-        val isAndroid = platform == null || platform == "android"
-        if (!isApk || !isAndroid) return
-
-        // Skip ABI-specific builds that don't match the running device ABI (prefer universal)
-        val arch = tags.firstOrNull { it.size > 1 && it[0] == "arch" }?.getOrNull(1)
-        if (arch != null && arch != "universal" && !isMatchingArch(arch)) return
-
-        val hash = tags.firstOrNull { it.size > 1 && it[0] == "x" }?.getOrNull(1)
+        val hash = tags.tagValue("x")
         val versionInfo = versionByEventId[event.id] ?: return
         val (version, createdAt) = versionInfo
 
         updateLatestRelease(version, url, hash, createdAt)
+    }
+
+    /**
+     * Only Android APK files, and no ABI-specific build that doesn't match the running
+     * device ABI (prefer universal).
+     */
+    private fun isForThisDevice(
+        tags: Array<Array<String>>,
+        url: String,
+    ): Boolean {
+        val platform = tags.tagValue("platform")
+        val isApk = tags.tagValue("m")?.contains("android") == true || url.endsWith(".apk")
+        val isAndroid = platform == null || platform == "android"
+        val arch = tags.tagValue("arch")
+        return isApk && isAndroid && (arch == null || arch == "universal" || isMatchingArch(arch))
     }
 
     private fun isMatchingArch(arch: String): Boolean {
@@ -458,3 +468,6 @@ class ZapstoreUpdater(
         }
     }
 }
+
+/** The value of the first tag named one of [names], or null when there is none. */
+private fun Array<Array<String>>.tagValue(vararg names: String): String? = firstOrNull { it.size > 1 && it[0] in names }?.getOrNull(1)

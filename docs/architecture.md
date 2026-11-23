@@ -544,3 +544,21 @@ the approval and keep the content-type grant it had just added.
 
 With that, what both bunker paths still do separately is their storage, UI and
 platform glue: the decisions are in `:common`.
+
+### 12. Clear the remaining detekt baseline findings
+
+What step 10 left out: about 260 grandfathered findings, most of them `LongMethod`
+(106) and `CyclomaticComplexMethod` (31). They go in this order, one rule or one
+function per change, regenerating the baselines each time (no new entries):
+
+1. The Compose findings that can be real bugs (`LambdaParameterInRestartableEffect`,
+   `ModifierReused`, `ModifierNotUsedAtRoot`, `ModifierClickableOrder`,
+   `RememberMissing`, `MutableStateAutoboxing`, `MultipleEmitters`).
+2. The small logic rules outside the UI (`ReturnCount`, `ComplexCondition`,
+   `ThrowsCount`, `NestedBlockDepth`, `LongParameterList`).
+3. `CyclomaticComplexMethod`, then `LongMethod`, one screen or function at a time.
+
+Done so far: `LambdaParameterInRestartableEffect` (7). An effect that outlives
+recompositions (a one-shot `LaunchedEffect`, a layout listener, the desktop popup
+timeout) called the callback it captured first; it now reads it through
+`rememberUpdatedState`, so it always calls the latest one.

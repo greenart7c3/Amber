@@ -132,11 +132,13 @@ fun RequestNotificationPopup(
     val state = rememberWindowState(size = windowSize, position = position)
 
     val hovered by hover.collectIsHoveredAsState()
+    // The timeout outlives recompositions; it must call the latest callback.
+    val currentOnDismiss by rememberUpdatedState(onDismiss)
     // Restarts while hovered, so the popup never vanishes under the pointer.
     LaunchedEffect(request.request.id, hovered) {
         if (!hovered) {
             delay(POPUP_TIMEOUT_MS.milliseconds)
-            onDismiss()
+            currentOnDismiss()
         }
     }
 

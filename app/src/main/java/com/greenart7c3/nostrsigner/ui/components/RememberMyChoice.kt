@@ -13,6 +13,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -88,12 +89,15 @@ fun RememberMyChoice(
     alwaysShow: Boolean = false,
 ) {
     var selected by remember { mutableStateOf(RememberType.NEVER) }
+    // The effect below runs once; it must call the latest callbacks, not the first ones.
+    val currentOnAccept by rememberUpdatedState(onAccept)
+    val currentOnReject by rememberUpdatedState(onReject)
     if (shouldRunAcceptOrReject != null) {
         LaunchedEffect(Unit) {
             if (shouldRunAcceptOrReject) {
-                onAccept(selected)
+                currentOnAccept(selected)
             } else {
-                onReject(selected)
+                currentOnReject(selected)
             }
         }
     }

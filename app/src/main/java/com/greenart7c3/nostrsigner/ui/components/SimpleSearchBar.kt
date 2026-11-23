@@ -19,6 +19,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -45,12 +46,14 @@ fun SimpleSearchBar(
 
     val view = LocalView.current
     val viewTreeObserver = view.viewTreeObserver
+    // The listener lives as long as the view tree; it must call the latest callback.
+    val currentOnSearch by rememberUpdatedState(onSearch)
     DisposableEffect(viewTreeObserver) {
         val listener = ViewTreeObserver.OnGlobalLayoutListener {
             val isKeyboardOpen = ViewCompat.getRootWindowInsets(view)
                 ?.isVisible(WindowInsetsCompat.Type.ime()) != false
             if (!isKeyboardOpen) {
-                onSearch(textFieldState.text.toString())
+                currentOnSearch(textFieldState.text.toString())
                 expanded = false
             }
         }

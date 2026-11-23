@@ -28,12 +28,6 @@
     <ID>CyclomaticComplexMethod:UpdateSettingsScreen.kt:@Composable fun UpdateSettingsScreen</ID>
     <ID>CyclomaticComplexMethod:ZapstoreUpdater.kt:ZapstoreUpdater$private fun processFileEvent</ID>
     <ID>CyclomaticComplexMethod:ZapstoreUpdater.kt:ZapstoreUpdater$private suspend fun processReleaseEvent</ID>
-    <ID>LambdaParameterInRestartableEffect:BiometricAuthScreen.kt:onAuth: (Boolean) -&gt; Unit</ID>
-    <ID>LambdaParameterInRestartableEffect:BunkerRelayAuthScreen.kt:onAccept: (RememberType, RelayAuthScope) -&gt; Unit</ID>
-    <ID>LambdaParameterInRestartableEffect:BunkerRelayAuthScreen.kt:onReject: (RememberType, RelayAuthScope) -&gt; Unit</ID>
-    <ID>LambdaParameterInRestartableEffect:RememberMyChoice.kt:onAccept: (RememberType) -&gt; Unit</ID>
-    <ID>LambdaParameterInRestartableEffect:RememberMyChoice.kt:onReject: (RememberType) -&gt; Unit</ID>
-    <ID>LambdaParameterInRestartableEffect:SimpleSearchBar.kt:onSearch: (String) -&gt; Unit</ID>
     <ID>LongMethod:AccountBackupScreen.kt:@Composable fun AccountBackupScreen</ID>
     <ID>LongMethod:AccountBackupScreen.kt:@Composable private fun AccountBackupCard</ID>
     <ID>LongMethod:AccountBackupScreen.kt:@Composable private fun NSecQrButton</ID>

@@ -19,7 +19,6 @@
     <ID>CyclomaticComplexMethod:SettingsScreen.kt:@Composable private fun TorSection</ID>
     <ID>CyclomaticComplexMethod:Storage.kt:private inline fun &lt;reified T&gt; readSecure: T?</ID>
     <ID>CyclomaticComplexMethod:UiState.kt:fun handleShortcut: Boolean</ID>
-    <ID>LambdaParameterInRestartableEffect:RequestNotificationPopup.kt:onDismiss: () -&gt; Unit</ID>
     <ID>LongMethod:App.kt:@Composable fun App</ID>
     <ID>LongMethod:App.kt:@Composable private fun AccountSwitcher</ID>
     <ID>LongMethod:ApplicationDetailScreen.kt:@Composable fun ApplicationDetailScreen</ID>

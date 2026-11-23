@@ -1,6 +1,7 @@
 package com.greenart7c3.nostrsigner.ui.components
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -48,6 +49,7 @@ import com.greenart7c3.nostrsigner.models.EncryptedDataKind
 import com.greenart7c3.nostrsigner.models.EventEncryptedDataKind
 import com.greenart7c3.nostrsigner.models.PrivateZapEncryptedDataKind
 import com.greenart7c3.nostrsigner.models.TagArrayEncryptedDataKind
+import com.greenart7c3.nostrsigner.service.model.AmberEvent
 import com.greenart7c3.nostrsigner.ui.RememberType
 import com.greenart7c3.nostrsigner.ui.theme.AmberPreview
 import com.greenart7c3.nostrsigner.ui.theme.ThemePreviews
@@ -71,55 +73,14 @@ fun EncryptDecryptData(
         mutableStateOf(RememberType.NEVER)
     }
     var scope by remember { mutableStateOf(defaultScope) }
-    val showScopeToggle = type != SignerType.DECRYPT_ZAP_EVENT
 
     Column(
         modifier,
     ) {
         LocalAppIcon(packageName)
 
-        val text = if (type.name.contains("ENCRYPT")) {
-            when (encryptedData) {
-                is EventEncryptedDataKind -> {
-                    val permission = Permission("sign_event", encryptedData.event.kind)
-                    val kindTranslation = permission.localizedBlocking()
-                    val unknownKindString = stringResource(Res.string.event_kind, encryptedData.event.kind.toString())
-                    val altTag = encryptedData.event.tags.firstOrNull { it.size > 1 && it[0] == "alt" }?.getOrNull(1)
-                    val displayTranslation = if (kindTranslation == unknownKindString && altTag != null) altTag else kindTranslation
-                    stringResource(Res.string.wants_to_encrypt_with, displayTranslation, type.name.split("_").first())
-                }
-
-                is TagArrayEncryptedDataKind -> {
-                    stringResource(Res.string.wants_to_encrypt_this_list_of_tags_with, type.name.split("_").first())
-                }
-
-                else -> stringResource(Res.string.wants_to_encrypt_this_text_with, type.name.split("_").first())
-            }
-        } else {
-            when (encryptedData) {
-                is EventEncryptedDataKind -> {
-                    val permission = Permission("sign_event", encryptedData.event.kind)
-                    val kindTranslation = permission.localizedBlocking()
-                    val unknownKindString = stringResource(Res.string.event_kind, encryptedData.event.kind.toString())
-                    val altTag = encryptedData.event.tags.firstOrNull { it.size > 1 && it[0] == "alt" }?.getOrNull(1)
-                    val displayTranslation = if (kindTranslation == unknownKindString && altTag != null) altTag else kindTranslation
-                    stringResource(Res.string.wants_to_read_from_encrypted_content, displayTranslation, type.name.split("_").first())
-                }
-
-                is TagArrayEncryptedDataKind -> {
-                    stringResource(Res.string.wants_to_read_this_list_of_tags_from_encrypted_content, type.name.split("_").first())
-                }
-
-                is PrivateZapEncryptedDataKind -> {
-                    stringResource(Res.string.wants_you_to, stringResource(Res.string.decrypt_zap_event))
-                }
-
-                else -> stringResource(Res.string.wants_to_read_this_text_from_encrypted_content, type.name.split("_").first())
-            }
-        }
-
         Text(
-            text.trim().capitalize(Locale.current),
+            encryptDecryptPrompt(type, encryptedData).trim().capitalize(Locale.current),
             fontSize = 18.sp,
         )
 
@@ -133,58 +94,9 @@ fun EncryptDecryptData(
         ) {
             Column {
                 if (encryptedData is EventEncryptedDataKind) {
-                    if (encryptedData.sealEncryptedDataKind != null) {
-                        if (encryptedData.sealEncryptedDataKind is EventEncryptedDataKind) {
-                            var showDetails by remember {
-                                mutableStateOf(false)
-                            }
-                            RawJsonButton(
-                                onCLick = {
-                                    showDetails = !showDetails
-                                },
-                                stringResource(Res.string.show_details),
-                            )
-                            if (showDetails) {
-                                EventDetailModal(encryptedData.sealEncryptedDataKind.event.toEvent()) {
-                                    showDetails = false
-                                }
-                            }
-                        }
-                    } else {
-                        var showDetails by remember {
-                            mutableStateOf(false)
-                        }
-                        RawJsonButton(
-                            onCLick = {
-                                showDetails = !showDetails
-                            },
-                            stringResource(Res.string.show_details),
-                        )
-                        if (showDetails) {
-                            EventDetailModal(encryptedData.event.toEvent()) {
-                                showDetails = false
-                            }
-                        }
-                    }
+                    requestEvent(encryptedData)?.let { EventDetailsButton(it) }
                 } else {
-                    if (encryptedData is TagArrayEncryptedDataKind) {
-                        Spacer(Modifier.size(16.dp))
-                        SigningAs(account)
-                        EncryptedTagArraySection(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .weight(1f)
-                                .padding(top = 8.dp),
-                            tags = encryptedData.tagArray,
-                        )
-                    } else {
-                        Text(
-                            plainCardText(type, encryptedData),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(top = 8.dp),
-                        )
-                    }
+                    TagArrayOrText(type, encryptedData, account)
                 }
             }
         }
@@ -195,28 +107,9 @@ fun EncryptDecryptData(
             Spacer(modifier = Modifier.weight(1f))
         }
 
-        if (showScopeToggle) {
+        if (type != SignerType.DECRYPT_ZAP_EVENT) {
             Spacer(Modifier.size(8.dp))
-            LabeledBorderBox(
-                label = stringResource(Res.string.encryption_scope),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
-            ) {
-                AmberToggles(
-                    selected = scope,
-                    options = listOf(DecryptTypeScope.SPECIFIC, DecryptTypeScope.ALL),
-                    onSelect = { scope = it },
-                    label = {
-                        stringResource(
-                            when (it) {
-                                DecryptTypeScope.SPECIFIC -> Res.string.for_this_method_only
-                                DecryptTypeScope.ALL -> Res.string.for_all_methods
-                            },
-                        )
-                    },
-                )
-            }
+            EncryptionScopeToggle(scope, onSelect = { scope = it })
             Spacer(Modifier.size(8.dp))
         }
 
@@ -267,62 +160,11 @@ fun BunkerEncryptDecryptData(
         mutableStateOf(RememberType.NEVER)
     }
     var scope by remember { mutableStateOf(defaultScope) }
-    val showScopeToggle = type != SignerType.DECRYPT_ZAP_EVENT
 
     Column(
         modifier,
     ) {
-        RemoteAppIcon(iconUrl, appName)
-
-        Text(
-            buildAnnotatedString {
-                withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
-                    append(appName)
-                }
-                if (type.name.contains("ENCRYPT")) {
-                    when (encryptedData) {
-                        is EventEncryptedDataKind -> {
-                            val permission = Permission("sign_event", encryptedData.event.kind)
-                            val kindTranslation = permission.localizedBlocking()
-                            val unknownKindString = stringResource(Res.string.event_kind, encryptedData.event.kind.toString())
-                            val altTag = encryptedData.event.tags.firstOrNull { it.size > 1 && it[0] == "alt" }?.getOrNull(1)
-                            val displayTranslation = if (kindTranslation == unknownKindString && altTag != null) altTag else kindTranslation
-                            append(stringResource(Res.string.wants_to_encrypt_with, displayTranslation, type.name.split("_").first()))
-                        }
-
-                        is TagArrayEncryptedDataKind -> {
-                            append(stringResource(Res.string.wants_to_encrypt_this_list_of_tags_with, type.name.split("_").first()))
-                        }
-
-                        else -> append(stringResource(Res.string.wants_to_encrypt_this_text_with, type.name.split("_").first()))
-                    }
-                } else {
-                    when (encryptedData) {
-                        is EventEncryptedDataKind -> {
-                            val permission = Permission("sign_event", encryptedData.event.kind)
-                            val kindTranslation = permission.localizedBlocking()
-                            val unknownKindString = stringResource(Res.string.event_kind, encryptedData.event.kind.toString())
-                            val altTag = encryptedData.event.tags.firstOrNull { it.size > 1 && it[0] == "alt" }?.getOrNull(1)
-                            val displayTranslation = if (kindTranslation == unknownKindString && altTag != null) altTag else kindTranslation
-                            append(stringResource(Res.string.wants_to_read_from_encrypted_content, displayTranslation, type.name.split("_").first()))
-                        }
-
-                        is TagArrayEncryptedDataKind -> {
-                            append(stringResource(Res.string.wants_to_read_this_list_of_tags_from_encrypted_content, type.name.split("_").first()))
-                        }
-
-                        // Like the intent screen; this string has no leading space.
-                        is PrivateZapEncryptedDataKind -> {
-                            append(" ")
-                            append(stringResource(Res.string.wants_you_to, stringResource(Res.string.decrypt_zap_event)))
-                        }
-
-                        else -> append(stringResource(Res.string.wants_to_read_this_text_from_encrypted_content, type.name.split("_").first()))
-                    }
-                }
-            },
-            fontSize = 18.sp,
-        )
+        BunkerRequestTitle(iconUrl, appName, type, encryptedData)
 
         Card(
             modifier = Modifier
@@ -334,58 +176,9 @@ fun BunkerEncryptDecryptData(
         ) {
             Column {
                 if (encryptedData is EventEncryptedDataKind) {
-                    if (encryptedData.sealEncryptedDataKind != null) {
-                        if (encryptedData.sealEncryptedDataKind is EventEncryptedDataKind) {
-                            val content = if (encryptedData.sealEncryptedDataKind.event.kind == 22242) encryptedData.sealEncryptedDataKind.event.relay() else encryptedData.sealEncryptedDataKind.event.content
-                            if (encryptedData.event.kind == ContactListEvent.KIND) {
-                                ContactListDetail(
-                                    title = stringResource(Res.string.following),
-                                    text = "${encryptedData.event.verifiedFollowKeySet().size}",
-                                )
-                            } else {
-                                Text(
-                                    content,
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(top = 8.dp),
-                                )
-                            }
-                        }
-                    } else {
-                        val content = if (encryptedData.event.kind == 22242) encryptedData.event.relay() else encryptedData.event.content
-                        if (encryptedData.event.kind == ContactListEvent.KIND) {
-                            ContactListDetail(
-                                title = stringResource(Res.string.following),
-                                text = "${encryptedData.event.verifiedFollowKeySet().size}",
-                            )
-                        } else {
-                            Text(
-                                content,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(top = 8.dp),
-                            )
-                        }
-                    }
+                    requestEvent(encryptedData)?.let { BunkerEventContent(shown = it, outer = encryptedData.event) }
                 } else {
-                    if (encryptedData is TagArrayEncryptedDataKind) {
-                        Spacer(Modifier.size(16.dp))
-                        SigningAs(account)
-                        EncryptedTagArraySection(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .weight(1f)
-                                .padding(top = 8.dp),
-                            tags = encryptedData.tagArray,
-                        )
-                    } else {
-                        Text(
-                            plainCardText(type, encryptedData),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(top = 8.dp),
-                        )
-                    }
+                    TagArrayOrText(type, encryptedData, account)
                 }
             }
         }
@@ -396,28 +189,9 @@ fun BunkerEncryptDecryptData(
             Spacer(modifier = Modifier.weight(1f))
         }
 
-        if (showScopeToggle) {
+        if (type != SignerType.DECRYPT_ZAP_EVENT) {
             Spacer(Modifier.size(8.dp))
-            LabeledBorderBox(
-                label = stringResource(Res.string.encryption_scope),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
-            ) {
-                AmberToggles(
-                    selected = scope,
-                    options = listOf(DecryptTypeScope.SPECIFIC, DecryptTypeScope.ALL),
-                    onSelect = { scope = it },
-                    label = {
-                        stringResource(
-                            when (it) {
-                                DecryptTypeScope.SPECIFIC -> Res.string.for_this_method_only
-                                DecryptTypeScope.ALL -> Res.string.for_all_methods
-                            },
-                        )
-                    },
-                )
-            }
+            EncryptionScopeToggle(scope, onSelect = { scope = it })
             Spacer(Modifier.size(8.dp))
         }
 
@@ -436,6 +210,168 @@ fun BunkerEncryptDecryptData(
             },
             onReject = {
                 onReject(rememberType, scope)
+            },
+        )
+    }
+}
+
+/** The app's icon, then its name in bold followed by what it asks. */
+@Composable
+private fun BunkerRequestTitle(
+    iconUrl: String,
+    appName: String,
+    type: SignerType,
+    encryptedData: EncryptedDataKind?,
+) {
+    Column {
+        RemoteAppIcon(iconUrl, appName)
+        val prompt = encryptDecryptPrompt(type, encryptedData)
+        Text(
+            buildAnnotatedString {
+                withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
+                    append(appName)
+                }
+                // Like the intent screen; this string has no leading space.
+                if (!type.isEncrypt() && encryptedData is PrivateZapEncryptedDataKind) append(" ")
+                append(prompt)
+            },
+            fontSize = 18.sp,
+        )
+    }
+}
+
+private fun SignerType.isEncrypt(): Boolean = name.contains("ENCRYPT")
+
+/** The method's NIP as the prompts name it: NIP04 or NIP44. */
+private fun SignerType.nipName(): String = name.split("_").first()
+
+/**
+ * The event the request is about: the sealed event when [encryptedData] wraps a seal
+ * (null when the seal holds no event), else the event itself.
+ */
+private fun requestEvent(encryptedData: EventEncryptedDataKind): AmberEvent? {
+    val seal = encryptedData.sealEncryptedDataKind ?: return encryptedData.event
+    return (seal as? EventEncryptedDataKind)?.event
+}
+
+/** What [event]'s kind is called, or its `alt` tag when Amber has no name for the kind. */
+@Composable
+private fun eventKindLabel(event: AmberEvent): String {
+    val kindTranslation = Permission("sign_event", event.kind).localizedBlocking()
+    val unknownKindString = stringResource(Res.string.event_kind, event.kind.toString())
+    val altTag = event.tags.firstOrNull { it.size > 1 && it[0] == "alt" }?.getOrNull(1)
+    return if (kindTranslation == unknownKindString && altTag != null) altTag else kindTranslation
+}
+
+/** What the app asks, after its name: "wants to encrypt this text with NIP44", … */
+@Composable
+private fun encryptDecryptPrompt(
+    type: SignerType,
+    encryptedData: EncryptedDataKind?,
+): String = if (type.isEncrypt()) {
+    when (encryptedData) {
+        is EventEncryptedDataKind -> stringResource(Res.string.wants_to_encrypt_with, eventKindLabel(encryptedData.event), type.nipName())
+        is TagArrayEncryptedDataKind -> stringResource(Res.string.wants_to_encrypt_this_list_of_tags_with, type.nipName())
+        else -> stringResource(Res.string.wants_to_encrypt_this_text_with, type.nipName())
+    }
+} else {
+    when (encryptedData) {
+        is EventEncryptedDataKind -> stringResource(Res.string.wants_to_read_from_encrypted_content, eventKindLabel(encryptedData.event), type.nipName())
+        is TagArrayEncryptedDataKind -> stringResource(Res.string.wants_to_read_this_list_of_tags_from_encrypted_content, type.nipName())
+        is PrivateZapEncryptedDataKind -> stringResource(Res.string.wants_you_to, stringResource(Res.string.decrypt_zap_event))
+        else -> stringResource(Res.string.wants_to_read_this_text_from_encrypted_content, type.nipName())
+    }
+}
+
+/** A button opening [event]'s details. */
+@Composable
+private fun EventDetailsButton(event: AmberEvent) {
+    var showDetails by remember { mutableStateOf(false) }
+    RawJsonButton(
+        onCLick = { showDetails = !showDetails },
+        stringResource(Res.string.show_details),
+    )
+    if (showDetails) {
+        EventDetailModal(event.toEvent()) {
+            showDetails = false
+        }
+    }
+}
+
+/**
+ * The bunker card for an event: the follow count of a contact list ([outer] is the
+ * event as requested), else [shown]'s content (the relay of a relay auth event).
+ */
+@Composable
+private fun BunkerEventContent(
+    shown: AmberEvent,
+    outer: AmberEvent,
+) {
+    if (outer.kind == ContactListEvent.KIND) {
+        ContactListDetail(
+            title = stringResource(Res.string.following),
+            text = "${outer.verifiedFollowKeySet().size}",
+        )
+    } else {
+        Text(
+            if (shown.kind == 22242) shown.relay() else shown.content,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 8.dp),
+        )
+    }
+}
+
+/** A tag array, under the account signing it, or else the request's text (see [plainCardText]). */
+@Composable
+private fun ColumnScope.TagArrayOrText(
+    type: SignerType,
+    encryptedData: EncryptedDataKind?,
+    account: Account,
+) {
+    if (encryptedData is TagArrayEncryptedDataKind) {
+        Spacer(Modifier.size(16.dp))
+        SigningAs(account)
+        EncryptedTagArraySection(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f)
+                .padding(top = 8.dp),
+            tags = encryptedData.tagArray,
+        )
+    } else {
+        Text(
+            plainCardText(type, encryptedData),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 8.dp),
+        )
+    }
+}
+
+/** Whether the grant covers this method only or every method of the NIP. */
+@Composable
+private fun EncryptionScopeToggle(
+    scope: DecryptTypeScope,
+    onSelect: (DecryptTypeScope) -> Unit,
+) {
+    LabeledBorderBox(
+        label = stringResource(Res.string.encryption_scope),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp),
+    ) {
+        AmberToggles(
+            selected = scope,
+            options = listOf(DecryptTypeScope.SPECIFIC, DecryptTypeScope.ALL),
+            onSelect = onSelect,
+            label = {
+                stringResource(
+                    when (it) {
+                        DecryptTypeScope.SPECIFIC -> Res.string.for_this_method_only
+                        DecryptTypeScope.ALL -> Res.string.for_all_methods
+                    },
+                )
             },
         )
     }

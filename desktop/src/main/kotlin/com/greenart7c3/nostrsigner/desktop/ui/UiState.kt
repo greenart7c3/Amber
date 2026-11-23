@@ -356,96 +356,102 @@ fun handleShortcut(
     val detailsOpen = UiState.detailsRequestId.value != null
 
     val modifier = if (isMacOs) event.isMetaPressed else event.isCtrlPressed
-    if (!modifier) {
-        if (event.key == Key.Escape && UiState.selectedApplication.value != null) {
-            UiState.selectedApplication.value = null
-            return true
-        }
-        // Plain arrows drive the incoming-requests list: ↑/↓ selects a card,
-        // ←/→ cycles its "Remember" duration. Only consumed on that screen so
-        // arrow keys elsewhere (text fields, scrolling) keep working.
-        val onIncoming = loggedIn &&
-            UiState.currentRoute.value == Route.IncomingRequest &&
-            UiState.selectedApplication.value == null &&
-            !detailsOpen &&
-            AmberDesktop.engine.pending.value.isNotEmpty()
-        if (onIncoming) {
-            when (event.key) {
-                Key.DirectionUp -> {
-                    UiState.moveRequestSelection(-1)
-                    return true
-                }
-
-                Key.DirectionDown -> {
-                    UiState.moveRequestSelection(1)
-                    return true
-                }
-
-                Key.DirectionLeft -> {
-                    UiState.cycleRememberChoice(-1)
-                    return true
-                }
-
-                Key.DirectionRight -> {
-                    UiState.cycleRememberChoice(1)
-                    return true
-                }
-
-                Key.One -> return UiState.setSelectedSignPolicy(0)
-
-                Key.Two -> return UiState.setSelectedSignPolicy(1)
-
-                Key.Three -> return UiState.setSelectedSignPolicy(2)
-
-                Key.A -> return UiState.cycleSelectedAccount()
-
-                Key.S -> return UiState.toggleSelectedScope()
-
-                Key.D -> return UiState.showSelectedDetails()
-
-                Key.Spacebar -> return UiState.toggleSelectedBatchApproval(wholeGroup = event.isShiftPressed)
-            }
-        }
-        return false
+    return if (modifier) {
+        modifiedShortcut(event, loggedIn, detailsOpen, hideWindow, quit)
+    } else {
+        plainShortcut(event, loggedIn, detailsOpen)
     }
+}
 
-    when (event.key) {
-        Key.One -> if (loggedIn) UiState.navigate(Route.IncomingRequest) else return false
-        Key.Two -> if (loggedIn) UiState.navigate(Route.Applications) else return false
-        Key.Three -> if (loggedIn) UiState.navigate(Route.Relays) else return false
-        Key.Four -> if (loggedIn) UiState.navigate(Route.Settings) else return false
+/** Runs [action]; the key was consumed. */
+private inline fun consumed(action: () -> Unit): Boolean {
+    action()
+    return true
+}
 
-        Key.Enter -> {
-            if (!loggedIn || detailsOpen) return false
-            // Several requests: Confirm answers the batch; there is no reject-all.
-            if (singleRequest(AmberDesktop.engine.pending.value) == null) {
-                if (event.isShiftPressed || !UiState.confirmBatch()) return false
-                return true
-            }
-            val request = UiState.selectedRequest() ?: return false
-            if (event.isShiftPressed) {
-                UiState.reject(request)
-                Toaster.toast(getStringBlocking(Res.string.d_request_rejected))
-            } else {
-                UiState.approve(request)
-                Toaster.toast(getStringBlocking(Res.string.d_request_approved))
-            }
-        }
+/** A key without Ctrl/⌘: Escape leaves the application detail screen, the rest drive the incoming-requests list. */
+private fun plainShortcut(
+    event: KeyEvent,
+    loggedIn: Boolean,
+    detailsOpen: Boolean,
+): Boolean {
+    if (event.key == Key.Escape && UiState.selectedApplication.value != null) {
+        UiState.selectedApplication.value = null
+        return true
+    }
+    // Plain arrows drive the incoming-requests list: ↑/↓ selects a card,
+    // ←/→ cycles its "Remember" duration. Only consumed on that screen so
+    // arrow keys elsewhere (text fields, scrolling) keep working.
+    val onIncoming = loggedIn &&
+        UiState.currentRoute.value == Route.IncomingRequest &&
+        UiState.selectedApplication.value == null &&
+        !detailsOpen &&
+        AmberDesktop.engine.pending.value.isNotEmpty()
+    return onIncoming && incomingRequestKey(event)
+}
 
-        Key.L -> {
-            if (PassphraseLock.isEnabled() && !PassphraseLock.isLocked()) {
-                PassphraseLock.lock()
-            } else {
-                return false
-            }
-        }
+private fun incomingRequestKey(event: KeyEvent): Boolean = when (event.key) {
+    Key.DirectionUp -> consumed { UiState.moveRequestSelection(-1) }
+    Key.DirectionDown -> consumed { UiState.moveRequestSelection(1) }
+    Key.DirectionLeft -> consumed { UiState.cycleRememberChoice(-1) }
+    Key.DirectionRight -> consumed { UiState.cycleRememberChoice(1) }
+    Key.One -> UiState.setSelectedSignPolicy(0)
+    Key.Two -> UiState.setSelectedSignPolicy(1)
+    Key.Three -> UiState.setSelectedSignPolicy(2)
+    Key.A -> UiState.cycleSelectedAccount()
+    Key.S -> UiState.toggleSelectedScope()
+    Key.D -> UiState.showSelectedDetails()
+    Key.Spacebar -> UiState.toggleSelectedBatchApproval(wholeGroup = event.isShiftPressed)
+    else -> false
+}
 
-        // Ctrl/⌘ + M — minimize to tray (keep running in the background).
-        // Ctrl/⌘ + W stays as an alias.
-        Key.M -> hideWindow()
-        Key.W -> hideWindow()
-        Key.Q -> quit()
-        else -> return false
+/** A key with Ctrl/⌘ held. */
+private fun modifiedShortcut(
+    event: KeyEvent,
+    loggedIn: Boolean,
+    detailsOpen: Boolean,
+    hideWindow: () -> Unit,
+    quit: () -> Unit,
+): Boolean {
+    navigationKeys[event.key]?.let { route -> return loggedIn && consumed { UiState.navigate(route) } }
+    return otherModifiedShortcut(event, loggedIn, detailsOpen, hideWindow, quit)
+}
+
+/** Ctrl/⌘ 1–4 open the screens in sidebar order. */
+private val navigationKeys = mapOf(
+    Key.One to Route.IncomingRequest,
+    Key.Two to Route.Applications,
+    Key.Three to Route.Relays,
+    Key.Four to Route.Settings,
+)
+
+private fun otherModifiedShortcut(
+    event: KeyEvent,
+    loggedIn: Boolean,
+    detailsOpen: Boolean,
+    hideWindow: () -> Unit,
+    quit: () -> Unit,
+): Boolean = when (event.key) {
+    Key.Enter -> loggedIn && !detailsOpen && answerSelectedRequest(reject = event.isShiftPressed)
+    Key.L -> PassphraseLock.isEnabled() && !PassphraseLock.isLocked() && consumed { PassphraseLock.lock() }
+    // Ctrl/⌘ + M — minimize to tray (keep running in the background).
+    // Ctrl/⌘ + W stays as an alias.
+    Key.M, Key.W -> consumed(hideWindow)
+    Key.Q -> consumed(quit)
+    else -> false
+}
+
+/** Ctrl/⌘ Enter approves the selected request, with Shift it rejects it; with several requests Enter confirms the batch. */
+private fun answerSelectedRequest(reject: Boolean): Boolean {
+    // Several requests: Confirm answers the batch; there is no reject-all.
+    if (singleRequest(AmberDesktop.engine.pending.value) == null) return !reject && UiState.confirmBatch()
+    val request = UiState.selectedRequest() ?: return false
+    if (reject) {
+        UiState.reject(request)
+        Toaster.toast(getStringBlocking(Res.string.d_request_rejected))
+    } else {
+        UiState.approve(request)
+        Toaster.toast(getStringBlocking(Res.string.d_request_approved))
     }
     return true
 }

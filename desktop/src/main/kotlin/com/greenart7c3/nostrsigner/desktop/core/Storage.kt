@@ -117,32 +117,7 @@ private fun writeJson(file: File, value: Any, backup: File? = null) {
 private inline fun <reified T> readSecure(file: File, context: String, rollbackProtected: Boolean = false): T? {
     if (!file.exists()) return null
     return try {
-        val raw = file.readText()
-        val json = when {
-            rollbackProtected && raw.startsWith(ENC_MARKER_V3) -> {
-                val rest = raw.substring(ENC_MARKER_V3.length)
-                val generation = rest.substringBefore(':').toLongOrNull() ?: throw SecurityException("Malformed generation header")
-                val payload = rest.substringAfter(':')
-                if (!DesktopKeyStore.isBound(payload)) throw SecurityException("Unbound payload under the bound header")
-                // The generation is part of the bound context, so the header can't be edited.
-                val decrypted = DesktopKeyStore.decryptString(payload, "$context#$generation")
-                val expected = StoreGenerations.expected(context)
-                if (expected != null && generation < expected) {
-                    throw SecurityException("${file.name} is generation $generation, older than the last one written ($expected): refusing a rolled-back copy")
-                }
-                StoreGenerations.accepted(context, generation, expected)
-                decrypted
-            }
-            rollbackProtected && raw.startsWith(ENC_MARKER) -> throw SecurityException("Refusing an encrypted ${file.name} without a generation header")
-            raw.startsWith(ENC_MARKER) -> {
-                val payload = raw.substring(ENC_MARKER.length)
-                if (!DesktopKeyStore.isBound(payload)) throw SecurityException("Unbound payload under the bound header")
-                DesktopKeyStore.decryptString(payload, context)
-            }
-            PassphraseLock.isEnabled() -> throw SecurityException("Refusing an unbound ${file.name} while a passphrase lock is set")
-            else -> raw
-        }
-        mapper.readValue<T>(json)
+        mapper.readValue<T>(storeJson(file, context, rollbackProtected))
     } catch (e: DesktopKeyStore.LockedException) {
         AmberLogger.e("Storage", "Cannot read ${file.name} while the key store is locked")
         null
@@ -151,6 +126,42 @@ private inline fun <reified T> readSecure(file: File, context: String, rollbackP
         AmberLogger.e("Storage", "Failed to read ${file.name}; kept it as ${moved?.name}", e)
         null
     }
+}
+
+/**
+ * The JSON [file] holds, decrypted when it is encrypted. Throws a
+ * [SecurityException] for anything [readSecure] must not trust: a store that
+ * needs a generation header without one, an unbound payload, a rolled-back
+ * copy, or a plaintext file while a passphrase lock is set.
+ */
+private fun storeJson(file: File, context: String, rollbackProtected: Boolean): String {
+    val raw = file.readText()
+    return when {
+        rollbackProtected && raw.startsWith(ENC_MARKER_V3) -> rollbackProtectedJson(file, raw.substring(ENC_MARKER_V3.length), context)
+        rollbackProtected && raw.startsWith(ENC_MARKER) -> throw SecurityException("Refusing an encrypted ${file.name} without a generation header")
+        raw.startsWith(ENC_MARKER) -> DesktopKeyStore.decryptString(boundPayload(raw.substring(ENC_MARKER.length)), context)
+        PassphraseLock.isEnabled() -> throw SecurityException("Refusing an unbound ${file.name} while a passphrase lock is set")
+        else -> raw
+    }
+}
+
+/** A `<generation>:<payload>` store: decrypted, and refused when older than the last generation written. */
+private fun rollbackProtectedJson(file: File, rest: String, context: String): String {
+    val generation = rest.substringBefore(':').toLongOrNull() ?: throw SecurityException("Malformed generation header")
+    // The generation is part of the bound context, so the header can't be edited.
+    val decrypted = DesktopKeyStore.decryptString(boundPayload(rest.substringAfter(':')), "$context#$generation")
+    val expected = StoreGenerations.expected(context)
+    if (expected != null && generation < expected) {
+        throw SecurityException("${file.name} is generation $generation, older than the last one written ($expected): refusing a rolled-back copy")
+    }
+    StoreGenerations.accepted(context, generation, expected)
+    return decrypted
+}
+
+/** [payload], when it is bound to a context (`DesktopKeyStore.encryptString(…, context)`). */
+private fun boundPayload(payload: String): String {
+    if (!DesktopKeyStore.isBound(payload)) throw SecurityException("Unbound payload under the bound header")
+    return payload
 }
 
 /**

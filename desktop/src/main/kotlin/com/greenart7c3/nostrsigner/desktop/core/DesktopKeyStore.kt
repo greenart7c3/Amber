@@ -238,26 +238,23 @@ object DesktopKeyStore {
         AmberLogger.d("DesktopKeyStore", "Keystore password source: ${resolved.source.description}")
         val password = resolved.password.toCharArray()
 
-        if (keyStoreFile.exists()) {
-            val keyStore = loadKeyStore(password)
-            val entry = keyStore.getEntry(KEY_ALIAS, KeyStore.PasswordProtection(password)) as? KeyStore.SecretKeyEntry
-            if (entry != null) {
-                val key = WipeableAesKey.copyOf(entry.secretKey)
-                cachedKey = key
-                return key
-            }
-            // Keystore exists but the entry is missing (should not happen);
-            // fall through and add a fresh key to the same store.
-            val key = generateKey()
-            keyStore.setEntry(KEY_ALIAS, KeyStore.SecretKeyEntry(SecretKeySpec(key.encoded, "AES")), KeyStore.PasswordProtection(password))
-            storeKeystoreAtomically(keyStore, password)
-            cachedKey = key
-            return key
+        val key = if (keyStoreFile.exists()) {
+            loadOrAddKey(password)
+        } else {
+            generateKey().also { writeKeystore(it, password) }
         }
-
-        val key = generateKey()
-        writeKeystore(key, password)
         cachedKey = key
+        return key
+    }
+
+    /** The master key in the existing keystore, or a fresh one added to it when its entry is missing (should not happen). */
+    private fun loadOrAddKey(password: CharArray): SecretKey {
+        val keyStore = loadKeyStore(password)
+        val entry = keyStore.getEntry(KEY_ALIAS, KeyStore.PasswordProtection(password)) as? KeyStore.SecretKeyEntry
+        if (entry != null) return WipeableAesKey.copyOf(entry.secretKey)
+        val key = generateKey()
+        keyStore.setEntry(KEY_ALIAS, KeyStore.SecretKeyEntry(SecretKeySpec(key.encoded, "AES")), KeyStore.PasswordProtection(password))
+        storeKeystoreAtomically(keyStore, password)
         return key
     }
 

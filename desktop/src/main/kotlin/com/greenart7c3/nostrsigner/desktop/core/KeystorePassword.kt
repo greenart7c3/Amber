@@ -118,41 +118,57 @@ object KeystorePassword {
         keystoreExists: Boolean,
         opens: (String) -> Boolean,
     ): Resolved {
-        if (!keystoreExists) {
-            val fresh = generate()
-            if (osStore.store(fresh)) {
-                // Never leave a stale file copy behind once the OS store owns it.
-                fileStore.delete()
-                return Resolved(fresh, osStore)
-            }
-            fileStore.store(fresh)
-            return Resolved(fresh, fileStore)
-        }
+        if (!keystoreExists) return storeFresh(osStore, fileStore)
+        return fromOsStore(osStore, fileStore, opens)
+            ?: fromFileStore(osStore, fileStore, opens)
+            ?: throw IllegalStateException(
+                "Unable to unlock the key store: no working password in the " +
+                    "OS credential store or the password file. If you copied the " +
+                    "data directory from another machine, also transfer the " +
+                    "'${OsCredentialStore.SERVICE}' entry from its credential store.",
+            )
+    }
 
-        val osValue = osStore.load()
-        if (osValue != null && opens(osValue)) {
-            // The OS store is authoritative; drop any file copy so the data
-            // directory alone is no longer enough to unlock the keys.
+    /** A new password for a new keystore, kept in the OS store when it works, else in the file. */
+    private fun storeFresh(
+        osStore: PasswordStore,
+        fileStore: PasswordStore,
+    ): Resolved {
+        val fresh = generate()
+        if (osStore.store(fresh)) {
+            // Never leave a stale file copy behind once the OS store owns it.
             fileStore.delete()
-            return Resolved(osValue, osStore)
+            return Resolved(fresh, osStore)
         }
+        fileStore.store(fresh)
+        return Resolved(fresh, fileStore)
+    }
 
-        val fileValue = fileStore.load()
-        if (fileValue != null && opens(fileValue)) {
-            // Migrate the legacy file into the OS store when possible.
-            return if (osStore.store(fileValue)) {
-                fileStore.delete()
-                Resolved(fileValue, osStore)
-            } else {
-                Resolved(fileValue, fileStore)
-            }
+    /** The OS store's password when it opens the keystore. */
+    private fun fromOsStore(
+        osStore: PasswordStore,
+        fileStore: PasswordStore,
+        opens: (String) -> Boolean,
+    ): Resolved? {
+        val osValue = osStore.load()?.takeIf(opens) ?: return null
+        // The OS store is authoritative; drop any file copy so the data
+        // directory alone is no longer enough to unlock the keys.
+        fileStore.delete()
+        return Resolved(osValue, osStore)
+    }
+
+    /** The password file's password when it opens the keystore, migrated into the OS store when possible. */
+    private fun fromFileStore(
+        osStore: PasswordStore,
+        fileStore: PasswordStore,
+        opens: (String) -> Boolean,
+    ): Resolved? {
+        val fileValue = fileStore.load()?.takeIf(opens) ?: return null
+        return if (osStore.store(fileValue)) {
+            fileStore.delete()
+            Resolved(fileValue, osStore)
+        } else {
+            Resolved(fileValue, fileStore)
         }
-
-        throw IllegalStateException(
-            "Unable to unlock the key store: no working password in the " +
-                "OS credential store or the password file. If you copied the " +
-                "data directory from another machine, also transfer the " +
-                "'${OsCredentialStore.SERVICE}' entry from its credential store.",
-        )
     }
 }

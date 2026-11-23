@@ -34,6 +34,7 @@ import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.Request
+import okhttp3.ResponseBody
 import org.jetbrains.skia.Image as SkiaImage
 
 /**
@@ -118,19 +119,18 @@ object ProfileImages {
 
     private fun download(url: String): ByteArray? = try {
         RelayHttpClients.clientFor(url).newCall(Request.Builder().url(url).build()).execute().use { response ->
-            val body = response.body
-            if (!response.isSuccessful || body.contentLength() > MAX_BYTES) {
-                null
-            } else {
-                body.byteStream().use { input ->
-                    val bytes = input.readNBytes((MAX_BYTES + 1).toInt())
-                    if (bytes.size > MAX_BYTES) null else bytes
-                }
-            }
+            if (response.isSuccessful) readCapped(response.body) else null
         }
     } catch (e: Exception) {
         AmberLogger.d("ProfileImages", "Could not download profile picture: ${e.message}")
         null
+    }
+
+    /** The body, or null when it is (or says it is) larger than [MAX_BYTES]. */
+    private fun readCapped(body: ResponseBody): ByteArray? {
+        if (body.contentLength() > MAX_BYTES) return null
+        val bytes = body.byteStream().use { it.readNBytes((MAX_BYTES + 1).toInt()) }
+        return bytes.takeIf { it.size <= MAX_BYTES }
     }
 
     private fun sha256(text: String): String = MessageDigest.getInstance("SHA-256").digest(text.toByteArray()).joinToString("") { "%02x".format(it) }

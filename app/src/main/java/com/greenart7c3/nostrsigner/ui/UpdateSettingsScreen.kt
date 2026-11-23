@@ -45,6 +45,8 @@ import com.greenart7c3.nostrsigner.commonsui.updates_not_available
 import com.greenart7c3.nostrsigner.models.UpdateChannel
 import com.greenart7c3.nostrsigner.models.UpdateCheckFrequency
 import com.greenart7c3.nostrsigner.service.DownloadState
+import com.greenart7c3.nostrsigner.service.ZapstoreRelease
+import com.greenart7c3.nostrsigner.service.ZapstoreUpdater
 import com.greenart7c3.nostrsigner.ui.components.TitleExplainer
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.Dispatchers
@@ -53,11 +55,7 @@ import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun UpdateSettingsScreen(modifier: Modifier = Modifier) {
-    val context = LocalContext.current
-    val settingsStore = LocalSettingsStore.current
-    val appScope = LocalAppScope.current
     val zapstoreUpdater = LocalZapstoreUpdater.current
-    val scope = rememberCoroutineScope()
 
     Column(modifier = modifier) {
         // Current version
@@ -79,31 +77,28 @@ fun UpdateSettingsScreen(modifier: Modifier = Modifier) {
             return@Column
         }
 
-        val latestRelease by updater.latestRelease.collectAsStateWithLifecycle()
-        val isChecking by updater.isChecking.collectAsStateWithLifecycle()
-        val dlState by updater.downloadState.collectAsStateWithLifecycle()
-        val dlProgress by updater.downloadProgress.collectAsStateWithLifecycle()
-        var autoCheck by remember { mutableStateOf(settingsStore.settings.autoCheckUpdates) }
-        var frequency by remember { mutableStateOf(settingsStore.settings.updateCheckFrequency) }
-        var channel by remember { mutableStateOf(settingsStore.settings.updateChannel) }
+        UpdateStatus(updater)
 
-        // Status row
-        val statusText = when {
-            dlState == DownloadState.DOWNLOADING -> stringResource(Res.string.downloading_update)
-            dlState == DownloadState.INSTALLING -> stringResource(Res.string.installing_update)
-            dlState == DownloadState.ERROR -> stringResource(Res.string.update_download_failed)
-            latestRelease != null -> stringResource(Res.string.update_available, latestRelease!!.version)
-            isChecking -> stringResource(Res.string.checking_for_updates)
-            else -> stringResource(Res.string.up_to_date)
-        }
-        val statusColor = when {
-            dlState == DownloadState.ERROR -> MaterialTheme.colorScheme.error
-            latestRelease != null -> MaterialTheme.colorScheme.primary
-            else -> Color.Gray
-        }
+        HorizontalDivider(modifier = Modifier.padding(vertical = 16.dp))
+
+        AutoUpdateSettings()
+    }
+}
+
+/** Whether an update is available (or downloading), and the button to check for one or install it. */
+@Composable
+private fun UpdateStatus(updater: ZapstoreUpdater) {
+    val context = LocalContext.current
+    val appScope = LocalAppScope.current
+    val latestRelease by updater.latestRelease.collectAsStateWithLifecycle()
+    val isChecking by updater.isChecking.collectAsStateWithLifecycle()
+    val dlState by updater.downloadState.collectAsStateWithLifecycle()
+    val dlProgress by updater.downloadProgress.collectAsStateWithLifecycle()
+
+    Column {
         Text(
-            text = statusText,
-            color = statusColor,
+            text = updateStatusText(dlState, latestRelease, isChecking),
+            color = updateStatusColor(dlState, latestRelease),
             style = MaterialTheme.typography.bodyMedium,
             modifier = Modifier.padding(bottom = 8.dp),
         )
@@ -117,12 +112,13 @@ fun UpdateSettingsScreen(modifier: Modifier = Modifier) {
             )
         }
 
-        // Action button
+        // Installs the release when one is available, else checks again.
+        val release = latestRelease?.takeIf { dlState == DownloadState.IDLE }
         Button(
             onClick = {
                 appScope.launch {
-                    if (latestRelease != null && dlState == DownloadState.IDLE) {
-                        updater.downloadAndInstall(context, latestRelease!!)
+                    if (release != null) {
+                        updater.downloadAndInstall(context, release)
                     } else if (!isChecking && dlState != DownloadState.DOWNLOADING) {
                         LocalPreferences.setLastUpdateCheckTime(context, 0L)
                         updater.checkForUpdates()
@@ -132,39 +128,54 @@ fun UpdateSettingsScreen(modifier: Modifier = Modifier) {
             enabled = !isChecking && dlState != DownloadState.DOWNLOADING,
             modifier = Modifier.fillMaxWidth(),
         ) {
-            Text(
-                text = if (latestRelease != null && dlState == DownloadState.IDLE) {
-                    stringResource(Res.string.download_and_install_update)
-                } else {
-                    stringResource(Res.string.check_for_updates_now)
-                },
-            )
+            Text(stringResource(if (release != null) Res.string.download_and_install_update else Res.string.check_for_updates_now))
         }
+    }
+}
 
-        HorizontalDivider(modifier = Modifier.padding(vertical = 16.dp))
+@Composable
+private fun updateStatusText(
+    dlState: DownloadState,
+    latestRelease: ZapstoreRelease?,
+    isChecking: Boolean,
+): String = when {
+    dlState == DownloadState.DOWNLOADING -> stringResource(Res.string.downloading_update)
+    dlState == DownloadState.INSTALLING -> stringResource(Res.string.installing_update)
+    dlState == DownloadState.ERROR -> stringResource(Res.string.update_download_failed)
+    latestRelease != null -> stringResource(Res.string.update_available, latestRelease.version)
+    isChecking -> stringResource(Res.string.checking_for_updates)
+    else -> stringResource(Res.string.up_to_date)
+}
 
-        // Auto-check toggle
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 4.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                text = stringResource(Res.string.auto_check_updates),
-                modifier = Modifier.weight(1f),
-            )
-            Switch(
-                checked = autoCheck,
-                onCheckedChange = { enabled ->
-                    autoCheck = enabled
-                    scope.launch(Dispatchers.IO) {
-                        LocalPreferences.updateAutoCheckUpdates(context, enabled)
-                    }
-                },
-            )
-        }
+@Composable
+private fun updateStatusColor(
+    dlState: DownloadState,
+    latestRelease: ZapstoreRelease?,
+): Color = when {
+    dlState == DownloadState.ERROR -> MaterialTheme.colorScheme.error
+    latestRelease != null -> MaterialTheme.colorScheme.primary
+    else -> Color.Gray
+}
+
+/** Whether and how often to check for updates, and on which channel. */
+@Composable
+private fun AutoUpdateSettings() {
+    val context = LocalContext.current
+    val settingsStore = LocalSettingsStore.current
+    val scope = rememberCoroutineScope()
+    var autoCheck by remember { mutableStateOf(settingsStore.settings.autoCheckUpdates) }
+    var frequency by remember { mutableStateOf(settingsStore.settings.updateCheckFrequency) }
+
+    Column {
+        AutoCheckRow(
+            checked = autoCheck,
+            onCheckedChange = { enabled ->
+                autoCheck = enabled
+                scope.launch(Dispatchers.IO) {
+                    LocalPreferences.updateAutoCheckUpdates(context, enabled)
+                }
+            },
+        )
 
         // Frequency selector (only when auto-check is on)
         if (autoCheck) {
@@ -191,27 +202,60 @@ fun UpdateSettingsScreen(modifier: Modifier = Modifier) {
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        val channelOptions = UpdateChannel.entries.map {
-            TitleExplainer(stringResource(it.resourceId))
-        }.toImmutableList()
+        UpdateChannelSetting()
+    }
+}
 
-        SettingsRow(
-            name = Res.string.update_channel,
-            description = Res.string.update_channel_description,
-            selectedItems = channelOptions,
-            selectedIndex = UpdateChannel.entries.indexOf(channel),
-            onSelect = { index ->
-                val selected = UpdateChannel.entries[index]
-                if (selected != channel) {
-                    channel = selected
-                    scope.launch(Dispatchers.IO) {
-                        LocalPreferences.updateUpdateChannel(context, selected)
-                        // Reset last-check timestamp so the next check actually runs
-                        // and surfaces a release on the newly selected channel.
-                        LocalPreferences.setLastUpdateCheckTime(context, 0L)
-                    }
-                }
-            },
+@Composable
+private fun AutoCheckRow(
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = stringResource(Res.string.auto_check_updates),
+            modifier = Modifier.weight(1f),
+        )
+        Switch(
+            checked = checked,
+            onCheckedChange = onCheckedChange,
         )
     }
+}
+
+/** Stable or beta releases; changing it makes the next check run at once. */
+@Composable
+private fun UpdateChannelSetting() {
+    val context = LocalContext.current
+    val settingsStore = LocalSettingsStore.current
+    val scope = rememberCoroutineScope()
+    var channel by remember { mutableStateOf(settingsStore.settings.updateChannel) }
+    val channelOptions = UpdateChannel.entries.map {
+        TitleExplainer(stringResource(it.resourceId))
+    }.toImmutableList()
+
+    SettingsRow(
+        name = Res.string.update_channel,
+        description = Res.string.update_channel_description,
+        selectedItems = channelOptions,
+        selectedIndex = UpdateChannel.entries.indexOf(channel),
+        onSelect = { index ->
+            val selected = UpdateChannel.entries[index]
+            if (selected != channel) {
+                channel = selected
+                scope.launch(Dispatchers.IO) {
+                    LocalPreferences.updateUpdateChannel(context, selected)
+                    // Reset last-check timestamp so the next check actually runs
+                    // and surfaces a release on the newly selected channel.
+                    LocalPreferences.setLastUpdateCheckTime(context, 0L)
+                }
+            }
+        },
+    )
 }

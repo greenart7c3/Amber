@@ -189,12 +189,6 @@ sealed class Route(
         icon = R.drawable.settings,
     )
 
-    data object SeeDetails : Route(
-        titleResId = Res.string.incoming_request,
-        route = "SeeDetails",
-        icon = R.drawable.settings,
-    )
-
     data object RelaysScreen : Route(
         titleResId = Res.string.relays,
         route = "RelaysScreen",
@@ -296,7 +290,6 @@ val routes = listOf(
     Route.EditConfiguration,
     Route.SetupPin,
     Route.ConfirmPin,
-    Route.SeeDetails,
     Route.RelaysScreen,
     Route.DefaultProfileRelaysScreen,
     Route.TorSettings,

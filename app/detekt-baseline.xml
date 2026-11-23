@@ -9,8 +9,6 @@
     <ID>CyclomaticComplexMethod:CloudBackupScreen.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun CloudBackupScreen</ID>
     <ID>CyclomaticComplexMethod:ExportAllAccountsScreen.kt:@Composable fun ExportAllAccountsScreen</ID>
     <ID>CyclomaticComplexMethod:IntentMultiEventHomeScreen.kt:@Composable private fun IntentRequestCard</ID>
-    <ID>CyclomaticComplexMethod:SeeDetailsScreen.kt:@Composable fun SeeDetailsScreen</ID>
-    <ID>CyclomaticComplexMethod:UpdateSettingsScreen.kt:@Composable fun UpdateSettingsScreen</ID>
     <ID>LongMethod:AccountPickerRow.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun AccountPickerRow</ID>
     <ID>LongMethod:AccountScreen.kt:@SuppressLint("StateFlowValueCalledInComposition", "UnrememberedMutableState") @Composable fun AccountScreen</ID>
     <ID>LongMethod:AccountsBottomSheet.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun AccountsBottomSheet</ID>
@@ -58,12 +56,10 @@
     <ID>LongMethod:RelaysScreen.kt:@Composable private fun LocalBunkerServerSettings</ID>
     <ID>LongMethod:RequestGroupUtils.kt:@Composable fun RequestGroupOptions</ID>
     <ID>LongMethod:SecurityScreen.kt:@Composable fun SecurityScreen</ID>
-    <ID>LongMethod:SeeDetailsScreen.kt:@Composable fun SeeDetailsScreen</ID>
     <ID>LongMethod:SeedWordsPage.kt:@Composable fun SeedWordsPage</ID>
     <ID>LongMethod:SignPolicySettingsScreen.kt:@Composable fun SignPolicySettingsScreen</ID>
     <ID>LongMethod:SimpleSearchBar.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun SimpleSearchBar</ID>
     <ID>LongMethod:TranslationReportScreen.kt:@Composable fun TranslationReportScreen</ID>
-    <ID>LongMethod:UpdateSettingsScreen.kt:@Composable fun UpdateSettingsScreen</ID>
     <ID>ModifierNotUsedAtRoot:LoginWithPubKey.kt:modifier = modifier .weight(1f)</ID>
     <ID>MultipleEmitters:ActivityStatsCard.kt:@Composable private fun ActivityStatsBar</ID>
     <ID>MultipleEmitters:RelaysScreen.kt:@Composable private fun LocalBunkerServerSettings</ID>

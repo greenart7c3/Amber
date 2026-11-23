@@ -3,6 +3,9 @@ package com.greenart7c3.nostrsigner.ui
 import android.content.Context
 import androidx.compose.runtime.Stable
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
 import com.greenart7c3.nostrsigner.AccountStorage
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.AmberLog
@@ -264,5 +267,19 @@ class AccountStateViewModel(
 
     fun dismissRestore() {
         restorePrompt.value = null
+    }
+
+    companion object {
+        /** [npub] is only read when the view model is first created. */
+        fun factory(
+            npub: () -> String?,
+            appContext: Context,
+            settingsStore: SettingsStore,
+            accountRepository: AccountRepository,
+            relayClient: RelayClient,
+            appScope: CoroutineScope,
+        ): ViewModelProvider.Factory = viewModelFactory {
+            initializer { AccountStateViewModel(npub(), appContext, settingsStore, accountRepository, relayClient, appScope) }
+        }
     }
 }

@@ -263,37 +263,42 @@ object ApplicationBackup {
 
     suspend fun publishBackup(npub: String, account: Account, accountRepository: AccountRepository, relayClient: RelayClient, settingsStore: SettingsStore): Boolean {
         if (BuildFlavorChecker.isOfflineFlavor()) return false
-        try {
-            val payload = buildPayload(account, accountRepository.dao(npub))
-            if (payload.applications.isEmpty()) {
-                AmberLog.d(Amber.TAG, "ApplicationBackup: no applications to backup for $npub, skipping")
-                return true
-            }
-            val json = toJson(payload)
-            val backupSigner = backupSigner(account)
-            val encrypted = backupSigner.nip44Encrypt(json, backupSigner.keyPair.pubKey.toHexKey())
-            val event = account.signSync<Event>(
-                TimeUtils.now(),
-                BACKUP_KIND,
-                arrayOf(
-                    arrayOf("d", BACKUP_D_TAG),
-                    arrayOf("client", "amber"),
-                ),
-                encrypted,
-            )
-            val relays = resolveWriteRelays(account, relayClient.client, settingsStore)
-            if (relays.isEmpty()) {
-                AmberLog.w(Amber.TAG, "ApplicationBackup: no relays resolved for backup")
-                return false
-            }
-            val ok = relayClient.client.publishAndConfirm(event, relays, untilFirstAccept = true)
-            AmberLog.d(Amber.TAG, "ApplicationBackup: publish for $npub result=$ok relays=${relays.size}")
-            return ok
+        return try {
+            encryptAndPublish(npub, account, accountRepository, relayClient, settingsStore)
         } catch (e: Exception) {
             if (e is CancellationException) throw e
             AmberLog.e(Amber.TAG, "ApplicationBackup: failed to publish backup for $npub", e)
+            false
+        }
+    }
+
+    /** Publishes the encrypted backup; true when a relay accepted it or there is nothing to back up. */
+    private suspend fun encryptAndPublish(npub: String, account: Account, accountRepository: AccountRepository, relayClient: RelayClient, settingsStore: SettingsStore): Boolean {
+        val payload = buildPayload(account, accountRepository.dao(npub))
+        if (payload.applications.isEmpty()) {
+            AmberLog.d(Amber.TAG, "ApplicationBackup: no applications to backup for $npub, skipping")
+            return true
+        }
+        val json = toJson(payload)
+        val backupSigner = backupSigner(account)
+        val encrypted = backupSigner.nip44Encrypt(json, backupSigner.keyPair.pubKey.toHexKey())
+        val event = account.signSync<Event>(
+            TimeUtils.now(),
+            BACKUP_KIND,
+            arrayOf(
+                arrayOf("d", BACKUP_D_TAG),
+                arrayOf("client", "amber"),
+            ),
+            encrypted,
+        )
+        val relays = resolveWriteRelays(account, relayClient.client, settingsStore)
+        if (relays.isEmpty()) {
+            AmberLog.w(Amber.TAG, "ApplicationBackup: no relays resolved for backup")
             return false
         }
+        val ok = relayClient.client.publishAndConfirm(event, relays, untilFirstAccept = true)
+        AmberLog.d(Amber.TAG, "ApplicationBackup: publish for $npub result=$ok relays=${relays.size}")
+        return ok
     }
 
     suspend fun fetchLatestBackupEvent(account: Account, relays: Set<NormalizedRelayUrl>, client: NostrClient): Event? {

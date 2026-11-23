@@ -198,88 +198,105 @@ class AmberRelayStats(
         connected: Set<NormalizedRelayUrl>,
         available: Set<NormalizedRelayUrl>,
         forceCreate: Boolean = false,
+    ): Notification? = try {
+        statusNotification(connected, available, forceCreate)
+    } catch (e: Exception) {
+        AmberLog.e(Amber.TAG, "failed to create notification", e)
+        null
+    }
+
+    /** The relay status notification; null (and the shown one removed) without relays, or when nothing changed. */
+    private fun statusNotification(
+        connected: Set<NormalizedRelayUrl>,
+        available: Set<NormalizedRelayUrl>,
+        forceCreate: Boolean,
     ): Notification? {
-        try {
-            if (available.isEmpty() && connected.isEmpty() && !settingsStore.settings.killSwitch.value) {
-                AmberLog.d(Amber.TAG, "No relays available, removing relay notification")
-                val notificationManager = NotificationManagerCompat.from(appContext)
-                notificationManager.cancel(2)
-                return null
-            }
-
-            val message = available.joinToString("\n") { relay ->
-                val stats = relayStats.get(relay)
-                val session = get(relay)
-
-                val status = if (relay in connected) "✓" else "✗"
-                val ping = "${stats.pingInMs}ms"
-
-                // Build a comma-separated list of stats to save vertical space
-                val details = mutableListOf<String>()
-                if (session.sent > 0) details.add("S:${session.sent}")
-                if (session.received > 0) details.add("R:${session.received}")
-                if (session.failed > 0) details.add("F:${session.failed}")
-                if (stats.errorCounter > 0) details.add("E:${stats.errorCounter}")
-
-                val detailsStr = if (details.isNotEmpty()) " | ${details.joinToString(" ")}" else ""
-
-                // Result: wss://relay.url ✓ 474ms | S:1 R:2
-                "${relay.displayUrl()} $status $ping$detailsStr"
-            }.trim()
-            if (message == oldMessage && oldMessage.isNotBlank() && !forceCreate) {
-                return null
-            }
-            this.oldMessage = message
-
-            val contentIntent = Intent(appContext, MainActivity::class.java)
-            contentIntent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP)
-            val contentPendingIntent =
-                PendingIntent.getActivity(
-                    appContext,
-                    0,
-                    contentIntent,
-                    PendingIntent.FLAG_IMMUTABLE,
-                )
-
-            val reconnectIntent = Intent(appContext, ReconnectReceiver::class.java)
-            val reconnectPendingIntent = PendingIntent.getBroadcast(
-                appContext,
-                0,
-                reconnectIntent,
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
-            )
-
-            val killSwitchIntent = Intent(appContext, KillSwitchReceiver::class.java)
-            val killSwitchPendingIntent = PendingIntent.getBroadcast(
-                appContext,
-                0,
-                killSwitchIntent,
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
-            )
-
-            val notificationBuilder =
-                NotificationCompat.Builder(appContext, statusChannel.id)
-                    .setGroup(statusGroup.id)
-                    .setContentTitle(getStringBlocking(Res.string.of_connected_relays, connected.size, available.size))
-                    .setStyle(
-                        NotificationCompat.BigTextStyle()
-                            .bigText(message.trim())
-                            .setBigContentTitle(getStringBlocking(Res.string.of_connected_relays, connected.size, available.size))
-                            .setSummaryText(getStringBlocking(Res.string.status_detail)),
-                    )
-                    .setPriority(NotificationCompat.PRIORITY_MIN)
-                    .setOnlyAlertOnce(true)
-                    .setSmallIcon(R.drawable.ic_notification)
-                    .setContentIntent(contentPendingIntent)
-                    .addAction(R.drawable.ic_notification, getStringBlocking(Res.string.reconnect), reconnectPendingIntent)
-                    .addAction(R.drawable.ic_notification, getStringBlocking(if (settingsStore.settings.killSwitch.value) Res.string.disable_kill_switch else Res.string.enable_kill_switch), killSwitchPendingIntent)
-                    .setCategory(Notification.CATEGORY_STATUS)
-
-            return notificationBuilder.build()
-        } catch (e: Exception) {
-            AmberLog.e(Amber.TAG, "failed to create notification", e)
+        if (available.isEmpty() && connected.isEmpty() && !settingsStore.settings.killSwitch.value) {
+            AmberLog.d(Amber.TAG, "No relays available, removing relay notification")
+            val notificationManager = NotificationManagerCompat.from(appContext)
+            notificationManager.cancel(2)
             return null
         }
+        val message = statusMessage(connected, available)
+        if (message == oldMessage && oldMessage.isNotBlank() && !forceCreate) return null
+        this.oldMessage = message
+        return buildStatusNotification(connected, available, message)
+    }
+
+    /** One line per relay: `wss://relay.url ✓ 474ms | S:1 R:2`. */
+    private fun statusMessage(
+        connected: Set<NormalizedRelayUrl>,
+        available: Set<NormalizedRelayUrl>,
+    ): String = available.joinToString("\n") { relay ->
+        val stats = relayStats.get(relay)
+        val session = get(relay)
+
+        val status = if (relay in connected) "✓" else "✗"
+        val ping = "${stats.pingInMs}ms"
+
+        // Build a comma-separated list of stats to save vertical space
+        val details = mutableListOf<String>()
+        if (session.sent > 0) details.add("S:${session.sent}")
+        if (session.received > 0) details.add("R:${session.received}")
+        if (session.failed > 0) details.add("F:${session.failed}")
+        if (stats.errorCounter > 0) details.add("E:${stats.errorCounter}")
+
+        val detailsStr = if (details.isNotEmpty()) " | ${details.joinToString(" ")}" else ""
+
+        // Result: wss://relay.url ✓ 474ms | S:1 R:2
+        "${relay.displayUrl()} $status $ping$detailsStr"
+    }.trim()
+
+    private fun buildStatusNotification(
+        connected: Set<NormalizedRelayUrl>,
+        available: Set<NormalizedRelayUrl>,
+        message: String,
+    ): Notification {
+        val contentIntent = Intent(appContext, MainActivity::class.java)
+        contentIntent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+        val contentPendingIntent =
+            PendingIntent.getActivity(
+                appContext,
+                0,
+                contentIntent,
+                PendingIntent.FLAG_IMMUTABLE,
+            )
+
+        val reconnectIntent = Intent(appContext, ReconnectReceiver::class.java)
+        val reconnectPendingIntent = PendingIntent.getBroadcast(
+            appContext,
+            0,
+            reconnectIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+        )
+
+        val killSwitchIntent = Intent(appContext, KillSwitchReceiver::class.java)
+        val killSwitchPendingIntent = PendingIntent.getBroadcast(
+            appContext,
+            0,
+            killSwitchIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+        )
+
+        val notificationBuilder =
+            NotificationCompat.Builder(appContext, statusChannel.id)
+                .setGroup(statusGroup.id)
+                .setContentTitle(getStringBlocking(Res.string.of_connected_relays, connected.size, available.size))
+                .setStyle(
+                    NotificationCompat.BigTextStyle()
+                        .bigText(message.trim())
+                        .setBigContentTitle(getStringBlocking(Res.string.of_connected_relays, connected.size, available.size))
+                        .setSummaryText(getStringBlocking(Res.string.status_detail)),
+                )
+                .setPriority(NotificationCompat.PRIORITY_MIN)
+                .setOnlyAlertOnce(true)
+                .setSmallIcon(R.drawable.ic_notification)
+                .setContentIntent(contentPendingIntent)
+                .addAction(R.drawable.ic_notification, getStringBlocking(Res.string.reconnect), reconnectPendingIntent)
+                .addAction(R.drawable.ic_notification, getStringBlocking(if (settingsStore.settings.killSwitch.value) Res.string.disable_kill_switch else Res.string.enable_kill_switch), killSwitchPendingIntent)
+                .setCategory(Notification.CATEGORY_STATUS)
+
+        return notificationBuilder.build()
     }
 
     fun updateNotification() {

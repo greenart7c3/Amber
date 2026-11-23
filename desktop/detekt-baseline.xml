@@ -11,9 +11,6 @@
     <ID>CyclomaticComplexMethod:RelayListEditor.kt:@Composable fun RelayListEditor</ID>
     <ID>CyclomaticComplexMethod:SettingsScreen.kt:@Composable fun SettingsScreen</ID>
     <ID>CyclomaticComplexMethod:SettingsScreen.kt:@Composable private fun TorSection</ID>
-    <ID>CyclomaticComplexMethod:Storage.kt:private inline fun &lt;reified T&gt; readSecure: T?</ID>
-    <ID>CyclomaticComplexMethod:UiState.kt:fun handleShortcut: Boolean</ID>
-    <ID>LongMethod:App.kt:@Composable fun App</ID>
     <ID>LongMethod:App.kt:@Composable private fun AccountSwitcher</ID>
     <ID>LongMethod:ApplicationDetailScreen.kt:@Composable fun ApplicationDetailScreen</ID>
     <ID>LongMethod:ApplicationDetailScreen.kt:@Composable private fun PermissionCard</ID>
@@ -31,8 +28,6 @@
     <ID>LongMethod:SettingsScreen.kt:@Composable private fun BackupDialog</ID>
     <ID>LongMethod:SettingsScreen.kt:@Composable private fun ChangePassphraseDialog</ID>
     <ID>LongMethod:SettingsScreen.kt:@Composable private fun TorSection</ID>
-    <ID>LongMethod:UiState.kt:fun handleShortcut: Boolean</ID>
-    <ID>MultipleEmitters:App.kt:@Composable fun App</ID>
     <ID>MultipleEmitters:LoginScreen.kt:@Composable private fun ImportKeyPane</ID>
     <ID>MultipleEmitters:LoginScreen.kt:@Composable private fun NewKeyPane</ID>
     <ID>MultipleEmitters:RequestDetails.kt:@Composable private fun DetailSection</ID>
@@ -40,14 +35,6 @@
     <ID>MultipleEmitters:SettingsScreen.kt:@Composable private fun SecuritySection</ID>
     <ID>MultipleEmitters:SettingsScreen.kt:@Composable private fun SettingsSection</ID>
     <ID>MultipleEmitters:SettingsScreen.kt:@Composable private fun TorSection</ID>
-    <ID>NestedBlockDepth:AccountAvatar.kt:ProfileImages$private fun download: ByteArray?</ID>
-    <ID>ReturnCount:App.kt:@Composable fun App</ID>
-    <ID>ReturnCount:DesktopKeyStore.kt:DesktopKeyStore$private fun loadOrCreateFromKeystore: SecretKey</ID>
-    <ID>ReturnCount:KeystorePassword.kt:KeystorePassword$fun resolve: Resolved</ID>
-    <ID>ReturnCount:Notifier.kt:Notifier$private fun linux: Notification?</ID>
-    <ID>ReturnCount:UiState.kt:fun handleShortcut: Boolean</ID>
-    <ID>ReturnCount:UriLaunch.kt:UriLaunch$private fun readUri</ID>
-    <ID>ThrowsCount:Storage.kt:private inline fun &lt;reified T&gt; readSecure: T?</ID>
     <ID>TooManyFunctions:AmberDesktop.kt:AmberDesktop</ID>
     <ID>TooManyFunctions:DesktopKeyStore.kt:DesktopKeyStore</ID>
     <ID>TooManyFunctions:Storage.kt:AccountStore</ID>

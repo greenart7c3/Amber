@@ -606,3 +606,12 @@ grant alone).
 (`signEvent`, `encryptOrDecrypt` with its `encrypt` / `decrypt` paths, `signPsbt`,
 `ping`), sharing the account lookup, the grant decision, the history record and the
 answers (`requestAccount`, `isAllowed`, `recordHistory`, `rejected`, `resultCursor`).
+
+Desktop `ReturnCount` / `ThrowsCount` / `NestedBlockDepth` (8): `App` is one `when` over
+its gates (loading, locked, passphrase setup, account loading, login) with the signed-in
+layout in `SignedInApp`; `handleShortcut` splits into the plain keys and the Ctrl/⌘ keys
+(`navigationKeys`, `answerSelectedRequest`); `readSecure` reads through `storeJson`,
+`rollbackProtectedJson` and `boundPayload`; `KeystorePassword.resolve` tries
+`fromOsStore`, then `fromFileStore`, or `storeFresh`; and the keystore, the profile
+picture download, the Linux notification and the URI forwarding each lose a branch to a
+named helper.

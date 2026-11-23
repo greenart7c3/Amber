@@ -215,11 +215,14 @@ object UriLaunch {
             if (buffer.position() >= buffer.capacity()) break
         }
         val uri = String(buffer.array(), 0, buffer.position(), Charsets.UTF_8).trim()
-        if (uri == SHOW_MESSAGE) {
-            showRequests.tryEmit(Unit)
-            return
+        when {
+            uri == SHOW_MESSAGE -> showRequests.tryEmit(Unit)
+            uri.startsWith(PREFIX) -> forward(uri)
         }
-        if (!uri.startsWith(PREFIX)) return
+    }
+
+    /** Publishes [uri] as [pending], unless one is still uncollected or the last one was too recent. */
+    private fun forward(uri: String) {
         if (pending.value != null) {
             AmberLogger.d("UriLaunch", "Ignored a forwarded URI; one is already pending")
             return

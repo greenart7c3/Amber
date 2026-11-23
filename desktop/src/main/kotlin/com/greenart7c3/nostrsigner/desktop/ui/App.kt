@@ -123,46 +123,41 @@ fun App(modifier: Modifier = Modifier) {
     }
 
     val acc = account
-    if (loading) {
-        Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+    val lockStatus by PassphraseLock.state.collectAsState()
+    val ready by Session.ready.collectAsState()
+    when {
+        loading -> Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             CircularProgressIndicator()
         }
-        return
-    }
 
-    val lockStatus by PassphraseLock.state.collectAsState()
-    when (lockStatus) {
-        PassphraseLock.Status.LOCKED -> {
-            UnlockScreen()
-            return
-        }
+        lockStatus == PassphraseLock.Status.LOCKED -> UnlockScreen()
 
         // First run: no passphrase yet. Nothing else may load until it is set.
-        PassphraseLock.Status.DISABLED -> {
-            PassphraseSetupScreen()
-            return
-        }
+        lockStatus == PassphraseLock.Status.DISABLED -> PassphraseSetupScreen()
 
-        PassphraseLock.Status.UNLOCKED -> {}
-    }
-
-    // Unlocked, but the account is still being loaded: don't flash the login screen.
-    val ready by Session.ready.collectAsState()
-    if (!ready) {
-        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        // Unlocked, but the account is still being loaded: don't flash the login screen.
+        !ready -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             CircularProgressIndicator()
         }
-        return
-    }
 
-    if (acc == null || addingAccount) {
-        LoginScreen(
+        acc == null || addingAccount -> LoginScreen(
             hasAccounts = acc != null,
             snackbarHostState = snackbarHostState,
         )
-        return
-    }
 
+        else -> SignedInApp(acc, snackbarHostState, currentRoute, selectedApplication, pending.size)
+    }
+}
+
+/** The app once it is unlocked and [acc] is loaded: the navigation and the current screen. */
+@Composable
+private fun SignedInApp(
+    acc: DesktopAccount,
+    snackbarHostState: SnackbarHostState,
+    currentRoute: Route,
+    selectedApplication: String?,
+    pendingCount: Int,
+) {
     // A nostrconnect:// link opened Amber (launch argument, or forwarded by
     // a second launch). Process it here — after the gates — so a link
     // clicked while locked or before an account exists waits for unlock.
@@ -198,14 +193,14 @@ fun App(modifier: Modifier = Modifier) {
                         CompactTopBar(acc)
                         HorizontalDivider()
                         MainContent(acc, currentRoute, selectedApplication, Modifier.weight(1f))
-                        BottomNavigation(currentRoute, pending.size, onSelect)
+                        BottomNavigation(currentRoute, pendingCount, onSelect)
                     }
                 } else {
                     Row(Modifier.fillMaxSize()) {
                         if (layoutWidth == LayoutWidth.EXPANDED) {
-                            Sidebar(acc, currentRoute, pending.size, onSelect)
+                            Sidebar(acc, currentRoute, pendingCount, onSelect)
                         } else {
-                            NavigationRail(acc, currentRoute, pending.size, onSelect)
+                            NavigationRail(acc, currentRoute, pendingCount, onSelect)
                         }
                         VerticalDivider()
                         MainContent(acc, currentRoute, selectedApplication, Modifier.weight(1f))

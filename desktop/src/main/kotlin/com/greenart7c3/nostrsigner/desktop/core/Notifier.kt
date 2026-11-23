@@ -151,23 +151,26 @@ object Notifier {
         // When a click handler or buttons are wanted, try an actionable
         // notification first: over D-Bus directly, else libnotify 0.8+
         // --wait/--action. Falls through if neither works.
-        if (onActivate != null || actions.isNotEmpty()) {
-            dbusWithActions(title, message, actions, onActivate)?.let { return it }
-            notifySendWithActions(title, message, actions, onActivate)?.let { return it }
+        val actionable = if (onActivate != null || actions.isNotEmpty()) {
+            dbusWithActions(title, message, actions, onActivate) ?: notifySendWithActions(title, message, actions, onActivate)
+        } else {
+            null
         }
+        return actionable ?: plainLinuxNotification(title, message)
+    }
+
+    /** A notification without buttons: notify-send, else gdbus; null when neither shows it. */
+    private fun plainLinuxNotification(title: String, message: String): Notification? {
         // `--` stops option parsing so a summary/body starting with '-' is safe.
-        if (run("notify-send", "-a", BuildVariant.appName, "-u", "normal", "--", title, message)) return Notification(tracked = false) {}
-        if (run(
+        val shown = run("notify-send", "-a", BuildVariant.appName, "-u", "normal", "--", title, message) ||
+            run(
                 "gdbus", "call", "--session",
                 "--dest", "org.freedesktop.Notifications",
                 "--object-path", "/org/freedesktop/Notifications",
                 "--method", "org.freedesktop.Notifications.Notify",
                 BuildVariant.appName, "0", "", title, message, "[]", "{}", "5000",
             )
-        ) {
-            return Notification(tracked = false) {}
-        }
-        return null
+        return if (shown) Notification(tracked = false) {} else null
     }
 
     /**

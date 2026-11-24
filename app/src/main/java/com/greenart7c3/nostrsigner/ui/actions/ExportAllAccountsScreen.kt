@@ -1,13 +1,18 @@
 package com.greenart7c3.nostrsigner.ui.actions
 
 import android.app.Activity
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
 import android.widget.Toast
+import androidx.activity.compose.ManagedActivityResultLauncher
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -29,6 +34,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -83,8 +89,10 @@ import com.greenart7c3.nostrsigner.ui.theme.outlineIfAny
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -93,97 +101,25 @@ fun ExportAllAccountsScreen(
 ) {
     val context = LocalContext.current
     val appScope = LocalAppScope.current
-    var isLoading by remember { mutableStateOf(false) }
-    var exportProgress by remember { mutableStateOf("") }
-    var accountCount by remember { mutableIntStateOf(0) }
-    var showConfirmationDialog by remember { mutableStateOf(false) }
+    val state = remember { ExportAllAccountsState() }
+    val keyboardController = LocalSoftwareKeyboardController.current
 
     LaunchedEffect(Unit) {
         launch(Dispatchers.IO) {
-            accountCount = SavedAccounts.all(context).size
+            state.accountCount = SavedAccounts.all(context).size
         }
     }
 
-    val password = remember { mutableStateOf(TextFieldValue("")) }
-    val passwordConfirm = remember { mutableStateOf(TextFieldValue("")) }
-    var errorMessage by remember { mutableStateOf("") }
-    var showCharsPassword by remember { mutableStateOf(false) }
-    var showCharsPasswordConfirm by remember { mutableStateOf(false) }
-    val keyboardController = LocalSoftwareKeyboardController.current
-
-    // File save launcher
     val exportLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.CreateDocument("application/octet-stream"),
     ) { uri ->
-        uri?.let {
-            appScope.launch {
-                isLoading = true
-                exportProgress = getStringBlocking(Res.string.preparing_export)
-
-                val result = AccountExportService.exportAllAccountsEncrypted(
-                    context = context,
-                    password = password.value.text,
-                    onProgress = { current, total ->
-                        exportProgress = getStringBlocking(
-                            Res.string.exporting_accounts_progress,
-                            current,
-                            total,
-                        )
-                    },
-                )
-
-                result.onSuccess { encryptedData ->
-                    try {
-                        context.contentResolver.openOutputStream(it)?.use { stream ->
-                            stream.write(encryptedData.toByteArray())
-                        }
-
-                        // Mark all accounts as backed up
-                        SavedAccounts.all(context).forEach { accountInfo ->
-                            AccountStorage.load(context, accountInfo.npub)?.let { account ->
-                                account.didBackup = true
-                            }
-                        }
-
-                        launch(Dispatchers.Main) {
-                            Toast.makeText(
-                                context,
-                                getStringBlocking(Res.string.export_success, accountCount),
-                                Toast.LENGTH_LONG,
-                            ).show()
-                            isLoading = false
-                            exportProgress = ""
-                        }
-                    } catch (e: Exception) {
-                        launch(Dispatchers.Main) {
-                            Toast.makeText(
-                                context,
-                                getStringBlocking(Res.string.export_failed, e.message.toString()),
-                                Toast.LENGTH_LONG,
-                            ).show()
-                            isLoading = false
-                            exportProgress = ""
-                        }
-                    }
-                }.onFailure { e ->
-                    launch(Dispatchers.Main) {
-                        Toast.makeText(
-                            context,
-                            getStringBlocking(Res.string.export_failed, e.message.toString()),
-                            Toast.LENGTH_LONG,
-                        ).show()
-                        isLoading = false
-                        exportProgress = ""
-                    }
-                }
-            }
-        }
+        uri?.let { state.export(appScope, context, it) }
     }
 
     val keyguardLauncher =
         rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
             if (result.resultCode == Activity.RESULT_OK) {
-                showConfirmationDialog = true
+                state.showConfirmationDialog = true
             }
         }
 
@@ -196,205 +132,326 @@ fun ExportAllAccountsScreen(
                 .fillMaxSize()
                 .padding(16.dp),
         ) {
-            if (isLoading) {
-                CenterCircularProgressIndicator(Modifier)
-                Text(
-                    text = exportProgress,
-                    style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier
-                        .padding(top = 16.dp)
-                        .align(Alignment.CenterHorizontally),
-                )
+            if (state.isLoading) {
+                ExportProgress(state.exportProgress)
             } else {
-                // Security warning
-                val warningContent = stringResource(Res.string.export_all_accounts_warning)
-                MarkdownText(
-                    markdown = warningContent,
-                    modifier = Modifier.padding(bottom = 16.dp),
-                )
-
-                Text(
-                    text = stringResource(Res.string.accounts_to_export, accountCount),
-                    style = MaterialTheme.typography.bodyLarge,
-                    modifier = Modifier.padding(bottom = 16.dp),
-                )
-
-                // Password input
-                OutlinedTextField(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .semantics {
-                            contentType = ContentType.Password
-                        },
-                    value = password.value,
-                    onValueChange = {
-                        password.value = it
-                        if (errorMessage.isNotEmpty()) {
-                            errorMessage = ""
-                        }
-                    },
-                    keyboardOptions = KeyboardOptions(
-                        autoCorrectEnabled = false,
-                        keyboardType = KeyboardType.Password,
-                        imeAction = ImeAction.Next,
-                    ),
-                    label = {
-                        Text(text = stringResource(Res.string.encryption_password))
-                    },
-                    placeholder = {
-                        Text(text = stringResource(Res.string.enter_strong_password))
-                    },
-                    trailingIcon = {
-                        IconButton(onClick = { showCharsPassword = !showCharsPassword }) {
-                            Icon(
-                                imageVector = if (showCharsPassword) Icons.Outlined.VisibilityOff else Icons.Outlined.Visibility,
-                                contentDescription = if (showCharsPassword) {
-                                    stringResource(Res.string.hide_password)
-                                } else {
-                                    stringResource(Res.string.show_password)
-                                },
-                            )
-                        }
-                    },
-                    visualTransformation = if (showCharsPassword) VisualTransformation.None else PasswordVisualTransformation(),
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Password confirmation
-                OutlinedTextField(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .semantics {
-                            contentType = ContentType.Password
-                        },
-                    value = passwordConfirm.value,
-                    onValueChange = {
-                        passwordConfirm.value = it
-                        if (errorMessage.isNotEmpty()) {
-                            errorMessage = ""
-                        }
-                    },
-                    keyboardOptions = KeyboardOptions(
-                        autoCorrectEnabled = false,
-                        keyboardType = KeyboardType.Password,
-                        imeAction = ImeAction.Done,
-                    ),
-                    keyboardActions = KeyboardActions(
-                        onDone = {
-                            keyboardController?.hide()
-                        },
-                    ),
-                    label = {
-                        Text(text = stringResource(Res.string.confirm_password))
-                    },
-                    trailingIcon = {
-                        IconButton(onClick = { showCharsPasswordConfirm = !showCharsPasswordConfirm }) {
-                            Icon(
-                                imageVector = if (showCharsPasswordConfirm) Icons.Outlined.VisibilityOff else Icons.Outlined.Visibility,
-                                contentDescription = if (showCharsPasswordConfirm) {
-                                    stringResource(Res.string.hide_password)
-                                } else {
-                                    stringResource(Res.string.show_password)
-                                },
-                            )
-                        }
-                    },
-                    visualTransformation = if (showCharsPasswordConfirm) VisualTransformation.None else PasswordVisualTransformation(),
-                )
-
-                if (errorMessage.isNotBlank()) {
-                    Text(
-                        text = errorMessage,
-                        color = MaterialTheme.colorScheme.error,
-                        style = MaterialTheme.typography.bodySmall,
-                        modifier = Modifier.padding(top = 8.dp),
-                    )
-                }
-
-                Spacer(modifier = Modifier.weight(1f))
-
-                // Export button
-                AmberButton(
-                    modifier = Modifier.fillMaxWidth(),
-                    text = stringResource(Res.string.export_all_accounts_button),
-                    onClick = {
-                        // Validate password
-                        when {
-                            password.value.text.isBlank() -> {
-                                errorMessage = getStringBlocking(Res.string.password_is_required)
-                            }
-                            password.value.text.length < 8 -> {
-                                errorMessage = getStringBlocking(Res.string.password_too_short)
-                            }
-                            password.value.text != passwordConfirm.value.text -> {
-                                errorMessage = getStringBlocking(Res.string.passwords_do_not_match)
-                            }
-                            else -> {
-                                // Require biometric authentication
-                                authenticate(
-                                    title = getStringBlocking(Res.string.export_all_accounts_title),
-                                    context = context,
-                                    keyguardLauncher = keyguardLauncher,
-                                    onApproved = {
-                                        showConfirmationDialog = true
-                                    },
-                                    onError = { _, message ->
-                                        appScope.launch(Dispatchers.Main) {
-                                            Toast.makeText(
-                                                context,
-                                                message,
-                                                Toast.LENGTH_SHORT,
-                                            ).show()
-                                        }
-                                    },
-                                )
-                            }
-                        }
-                    },
+                ExportForm(
+                    state = state,
+                    onDone = { keyboardController?.hide() },
+                    onExport = { requestExport(state, context, keyguardLauncher, appScope) },
                 )
             }
         }
     }
 
-    // Confirmation dialog
-    if (showConfirmationDialog) {
-        AlertDialog(
-            modifier = Modifier.outlineIfAny(amoledBorder(), AlertDialogDefaults.shape),
-            onDismissRequest = { showConfirmationDialog = false },
-            title = {
-                Text(text = stringResource(Res.string.confirm_export_title))
+    if (state.showConfirmationDialog) {
+        ConfirmExportDialog(
+            accountCount = state.accountCount,
+            onConfirm = {
+                state.showConfirmationDialog = false
+                val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())
+                exportLauncher.launch("amber_backup_$timestamp.jsonl")
             },
-            text = {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(
-                        text = stringResource(Res.string.confirm_export_message, accountCount),
-                    )
-                    Text(
-                        text = stringResource(Res.string.confirm_export_warning),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.error,
-                    )
-                }
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        showConfirmationDialog = false
-                        val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())
-                        exportLauncher.launch("amber_backup_$timestamp.jsonl")
-                    },
-                ) {
-                    Text(text = stringResource(Res.string.export))
-                }
-            },
-            dismissButton = {
-                TextButton(
-                    onClick = { showConfirmationDialog = false },
-                ) {
-                    Text(text = stringResource(Res.string.cancel))
-                }
-            },
+            onDismiss = { state.showConfirmationDialog = false },
         )
     }
+}
+
+/** Once the password is fine, asks for the biometric or the device credential, then for confirmation. */
+private fun requestExport(
+    state: ExportAllAccountsState,
+    context: Context,
+    keyguardLauncher: ManagedActivityResultLauncher<Intent, ActivityResult>,
+    appScope: CoroutineScope,
+) {
+    if (!state.checkPassword()) return
+    authenticate(
+        title = getStringBlocking(Res.string.export_all_accounts_title),
+        context = context,
+        keyguardLauncher = keyguardLauncher,
+        onApproved = { state.showConfirmationDialog = true },
+        onError = { _, message ->
+            appScope.launch(Dispatchers.Main) {
+                Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+            }
+        },
+    )
+}
+
+/** The export screen's state: the password and its confirmation, and how the export is going. */
+@Stable
+private class ExportAllAccountsState {
+    var isLoading by mutableStateOf(false)
+    var exportProgress by mutableStateOf("")
+    var accountCount by mutableIntStateOf(0)
+    var showConfirmationDialog by mutableStateOf(false)
+    var password by mutableStateOf(TextFieldValue(""))
+        private set
+    var confirmation by mutableStateOf(TextFieldValue(""))
+        private set
+    var errorMessage by mutableStateOf("")
+        private set
+
+    fun onPasswordChange(value: TextFieldValue) {
+        password = value
+        if (errorMessage.isNotEmpty()) errorMessage = ""
+    }
+
+    fun onConfirmationChange(value: TextFieldValue) {
+        confirmation = value
+        if (errorMessage.isNotEmpty()) errorMessage = ""
+    }
+
+    /** Shows what is wrong with the password, if anything; true when it can be used. */
+    fun checkPassword(): Boolean {
+        val error = exportPasswordError(password.text, confirmation.text) ?: return true
+        errorMessage = getStringBlocking(error)
+        return false
+    }
+
+    /** Exports every account to [uri] on [scope], showing the progress, then a toast with the outcome. */
+    fun export(
+        scope: CoroutineScope,
+        context: Context,
+        uri: Uri,
+    ) {
+        scope.launch {
+            isLoading = true
+            exportProgress = getStringBlocking(Res.string.preparing_export)
+
+            val message = exportAccounts(context, uri, password.text, accountCount) { current, total ->
+                exportProgress = getStringBlocking(Res.string.exporting_accounts_progress, current, total)
+            }
+
+            launch(Dispatchers.Main) {
+                Toast.makeText(context, message, Toast.LENGTH_LONG).show()
+                isLoading = false
+                exportProgress = ""
+            }
+        }
+    }
+}
+
+/** What is wrong with the export password: missing, shorter than 8 characters, or not confirmed; null when it can be used. */
+internal fun exportPasswordError(
+    password: String,
+    confirmation: String,
+): StringResource? = when {
+    password.isBlank() -> Res.string.password_is_required
+    password.length < 8 -> Res.string.password_too_short
+    password != confirmation -> Res.string.passwords_do_not_match
+    else -> null
+}
+
+/**
+ * Writes every account, encrypted with [password], to [uri], and marks them backed up.
+ * Returns the message to show: how many accounts were exported, or why the export failed.
+ */
+private suspend fun exportAccounts(
+    context: Context,
+    uri: Uri,
+    password: String,
+    accountCount: Int,
+    onProgress: (current: Int, total: Int) -> Unit,
+): String {
+    val result = AccountExportService.exportAllAccountsEncrypted(
+        context = context,
+        password = password,
+        onProgress = onProgress,
+    )
+    val encryptedData = result.getOrElse { e ->
+        return getStringBlocking(Res.string.export_failed, e.message.toString())
+    }
+    return try {
+        context.contentResolver.openOutputStream(uri)?.use { stream ->
+            stream.write(encryptedData.toByteArray())
+        }
+        SavedAccounts.all(context).forEach { accountInfo ->
+            AccountStorage.load(context, accountInfo.npub)?.let { account ->
+                account.didBackup = true
+            }
+        }
+        getStringBlocking(Res.string.export_success, accountCount)
+    } catch (e: Exception) {
+        getStringBlocking(Res.string.export_failed, e.message.toString())
+    }
+}
+
+@Composable
+private fun ColumnScope.ExportProgress(progress: String) {
+    CenterCircularProgressIndicator(Modifier)
+    Text(
+        text = progress,
+        style = MaterialTheme.typography.bodyMedium,
+        modifier = Modifier
+            .padding(top = 16.dp)
+            .align(Alignment.CenterHorizontally),
+    )
+}
+
+/** The notice, the password form and the Export button, pushed to the bottom of the screen. */
+@Composable
+private fun ColumnScope.ExportForm(
+    state: ExportAllAccountsState,
+    onDone: () -> Unit,
+    onExport: () -> Unit,
+) {
+    ExportWarning(state.accountCount)
+
+    ExportPasswordForm(
+        password = state.password,
+        onPasswordChange = state::onPasswordChange,
+        confirmation = state.confirmation,
+        onConfirmationChange = state::onConfirmationChange,
+        errorMessage = state.errorMessage,
+        onDone = onDone,
+    )
+
+    Spacer(modifier = Modifier.weight(1f))
+
+    AmberButton(
+        modifier = Modifier.fillMaxWidth(),
+        text = stringResource(Res.string.export_all_accounts_button),
+        onClick = onExport,
+    )
+}
+
+/** The security notice, and how many accounts the file will hold. */
+@Composable
+private fun ExportWarning(accountCount: Int) {
+    Column {
+        MarkdownText(
+            markdown = stringResource(Res.string.export_all_accounts_warning),
+            modifier = Modifier.padding(bottom = 16.dp),
+        )
+
+        Text(
+            text = stringResource(Res.string.accounts_to_export, accountCount),
+            style = MaterialTheme.typography.bodyLarge,
+            modifier = Modifier.padding(bottom = 16.dp),
+        )
+    }
+}
+
+/** The export password, its confirmation, and what is wrong with them. */
+@Composable
+private fun ExportPasswordForm(
+    password: TextFieldValue,
+    onPasswordChange: (TextFieldValue) -> Unit,
+    confirmation: TextFieldValue,
+    onConfirmationChange: (TextFieldValue) -> Unit,
+    errorMessage: String,
+    onDone: () -> Unit,
+) {
+    Column {
+        ExportPasswordField(
+            value = password,
+            onValueChange = onPasswordChange,
+            label = Res.string.encryption_password,
+            placeholder = Res.string.enter_strong_password,
+            imeAction = ImeAction.Next,
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        ExportPasswordField(
+            value = confirmation,
+            onValueChange = onConfirmationChange,
+            label = Res.string.confirm_password,
+            placeholder = null,
+            imeAction = ImeAction.Done,
+            onDone = onDone,
+        )
+
+        if (errorMessage.isNotBlank()) {
+            Text(
+                text = errorMessage,
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.padding(top = 8.dp),
+            )
+        }
+    }
+}
+
+/** A password field whose characters can be shown, with its own show or hide toggle. */
+@Composable
+private fun ExportPasswordField(
+    value: TextFieldValue,
+    onValueChange: (TextFieldValue) -> Unit,
+    label: StringResource,
+    placeholder: StringResource?,
+    imeAction: ImeAction,
+    onDone: () -> Unit = {},
+) {
+    var showChars by remember { mutableStateOf(false) }
+    OutlinedTextField(
+        modifier = Modifier
+            .fillMaxWidth()
+            .semantics {
+                contentType = ContentType.Password
+            },
+        value = value,
+        onValueChange = onValueChange,
+        keyboardOptions = KeyboardOptions(
+            autoCorrectEnabled = false,
+            keyboardType = KeyboardType.Password,
+            imeAction = imeAction,
+        ),
+        keyboardActions = KeyboardActions(onDone = { onDone() }),
+        label = {
+            Text(text = stringResource(label))
+        },
+        placeholder = placeholder?.let { { Text(text = stringResource(it)) } },
+        trailingIcon = {
+            IconButton(onClick = { showChars = !showChars }) {
+                Icon(
+                    imageVector = if (showChars) Icons.Outlined.VisibilityOff else Icons.Outlined.Visibility,
+                    contentDescription = if (showChars) {
+                        stringResource(Res.string.hide_password)
+                    } else {
+                        stringResource(Res.string.show_password)
+                    },
+                )
+            }
+        },
+        visualTransformation = if (showChars) VisualTransformation.None else PasswordVisualTransformation(),
+    )
+}
+
+@Composable
+private fun ConfirmExportDialog(
+    accountCount: Int,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    AlertDialog(
+        modifier = Modifier.outlineIfAny(amoledBorder(), AlertDialogDefaults.shape),
+        onDismissRequest = onDismiss,
+        title = {
+            Text(text = stringResource(Res.string.confirm_export_title))
+        },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(
+                    text = stringResource(Res.string.confirm_export_message, accountCount),
+                )
+                Text(
+                    text = stringResource(Res.string.confirm_export_warning),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error,
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onConfirm) {
+                Text(text = stringResource(Res.string.export))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(text = stringResource(Res.string.cancel))
+            }
+        },
+    )
 }

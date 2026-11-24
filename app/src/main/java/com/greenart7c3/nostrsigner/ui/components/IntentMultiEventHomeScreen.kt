@@ -35,7 +35,6 @@ import com.greenart7c3.nostrsigner.commonsui.approve
 import com.greenart7c3.nostrsigner.commonsui.confirm
 import com.greenart7c3.nostrsigner.commonsui.connect
 import com.greenart7c3.nostrsigner.commonsui.decrypt_zap_event
-import com.greenart7c3.nostrsigner.commonsui.deny
 import com.greenart7c3.nostrsigner.commonsui.encrypt_this_list_of_tags_with
 import com.greenart7c3.nostrsigner.commonsui.encrypt_this_text_with
 import com.greenart7c3.nostrsigner.commonsui.encrypt_with
@@ -45,11 +44,11 @@ import com.greenart7c3.nostrsigner.commonsui.localizedBlocking
 import com.greenart7c3.nostrsigner.commonsui.read_from_encrypted_content
 import com.greenart7c3.nostrsigner.commonsui.read_this_list_of_tags_from_encrypted_content
 import com.greenart7c3.nostrsigner.commonsui.read_this_text_from_encrypted_content
-import com.greenart7c3.nostrsigner.commonsui.relay_not_in_auth_whitelist
 import com.greenart7c3.nostrsigner.commonsui.show_details
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.ClearTextEncryptedDataKind
 import com.greenart7c3.nostrsigner.models.CompressionType
+import com.greenart7c3.nostrsigner.models.EncryptedDataKind
 import com.greenart7c3.nostrsigner.models.EventEncryptedDataKind
 import com.greenart7c3.nostrsigner.models.IntentData
 import com.greenart7c3.nostrsigner.models.IntentResultType
@@ -190,80 +189,10 @@ private fun IntentRequestCard(
     onApproveChange: (Boolean) -> Unit,
 ) {
     val settingsStore = LocalSettingsStore.current
-    val type = intent.type
     var showDetails by remember { mutableStateOf(false) }
-    val hasDetails = (type == SignerType.SIGN_EVENT && intent.event != null) ||
-        ((type.toString().contains("ENCRYPT") || type.toString().contains("DECRYPT")) && intent.encryptedData != null)
-    val permission = if (type == SignerType.SIGN_EVENT) {
-        Permission("sign_event", intent.event!!.kind)
-    } else {
-        Permission(type.toString().lowercase(), null)
-    }
-
-    var label = if (type == SignerType.CONNECT) {
-        stringResource(Res.string.connect)
-    } else {
-        val encryptedData = intent.encryptedData
-        if (type.toString().contains("ENCRYPT")) {
-            when (encryptedData) {
-                is EventEncryptedDataKind -> {
-                    val p = Permission("sign_event", encryptedData.event.kind)
-                    stringResource(Res.string.encrypt_with, p.localizedBlocking(), type.toString().split("_").first())
-                }
-                is TagArrayEncryptedDataKind -> {
-                    stringResource(Res.string.encrypt_this_list_of_tags_with, type.toString().split("_").first())
-                }
-                else -> stringResource(Res.string.encrypt_this_text_with, type.toString().split("_").first())
-            }
-        } else if (type.toString().contains("DECRYPT")) {
-            when (encryptedData) {
-                is EventEncryptedDataKind -> {
-                    val p = Permission("sign_event", encryptedData.event.kind)
-                    stringResource(Res.string.read_from_encrypted_content, p.localizedBlocking(), type.toString().split("_").first())
-                }
-                is TagArrayEncryptedDataKind -> {
-                    stringResource(Res.string.read_this_list_of_tags_from_encrypted_content, type.toString().split("_").first())
-                }
-                is PrivateZapEncryptedDataKind -> {
-                    stringResource(Res.string.decrypt_zap_event).capitalize(Locale.current)
-                }
-                else -> stringResource(Res.string.read_this_text_from_encrypted_content, type.toString().split("_").first())
-            }
-        } else {
-            permission.localizedBlocking()
-        }
-    }
-    val unknownKindString = stringResource(Res.string.event_kind, permission.kind?.toString() ?: "")
-    if (label == unknownKindString && type == SignerType.SIGN_EVENT) {
-        val altTag = intent.event?.tags?.firstOrNull { it.size > 1 && it[0] == "alt" }?.getOrNull(1)
-        label = altTag ?: label
-    }
-
-    val preview = if (type == SignerType.SIGN_EVENT) {
-        val event = intent.event!!
-        if (event.kind == 22242) AmberEvent.relay(event) ?: event.content else event.content
-    } else {
-        val encryptedData = intent.encryptedData
-        if (type.name.contains("ENCRYPT") && encryptedData is ClearTextEncryptedDataKind) {
-            encryptedData.text
-        } else if (encryptedData is EventEncryptedDataKind) {
-            if (encryptedData.sealEncryptedDataKind != null) {
-                if (encryptedData.sealEncryptedDataKind is EventEncryptedDataKind) {
-                    encryptedData.sealEncryptedDataKind.event.content
-                } else {
-                    encryptedData.sealEncryptedDataKind.result
-                }
-            } else {
-                encryptedData.event.content
-            }
-        } else if (encryptedData is TagArrayEncryptedDataKind) {
-            encryptedData.tagArray.joinToString(separator = ", ") {
-                "[${it.joinToString(separator = ", ") { tag -> "\"$tag\"" }}]"
-            }
-        } else {
-            encryptedData?.result ?: ""
-        }
-    }
+    val hasDetails = hasDetails(intent)
+    val label = intentRequestLabel(intent)
+    val preview = intentRequestPreview(intent)
 
     Card(
         Modifier.padding(4.dp),
@@ -303,45 +232,127 @@ private fun IntentRequestCard(
 
             signingAs?.let { SigningAs(it) }
 
-            if (isBlockedByAuthWhitelist(intent.event, settingsStore.settings.authWhitelist)) {
-                // Always rejected on confirm, as on the single screen.
-                Text(
-                    text = stringResource(Res.string.relay_not_in_auth_whitelist),
-                    color = MaterialTheme.colorScheme.error,
-                    modifier = Modifier.padding(vertical = 8.dp),
-                )
-            } else {
-                AmberToggles(
-                    selected = approved,
-                    options = listOf(true, false),
-                    onSelect = onApproveChange,
-                    label = {
-                        if (it) stringResource(Res.string.approve) else stringResource(Res.string.deny)
-                    },
-                    indicatorColor = {
-                        if (it) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
-                    },
-                    selectedTextColor = {
-                        if (it) Color.Black else MaterialTheme.colorScheme.onError
-                    },
-                )
-            }
+            RequestApproval(
+                blockedByAuthWhitelist = isBlockedByAuthWhitelist(intent.event, settingsStore.settings.authWhitelist),
+                approved = approved,
+                onApproveChange = onApproveChange,
+            )
         }
     }
 
     if (showDetails) {
-        if (type == SignerType.SIGN_EVENT) {
-            EventDetailModal(
-                event = intent.event!!,
-                onDismiss = { showDetails = false },
-            )
+        IntentRequestDetails(intent = intent, onDismiss = { showDetails = false })
+    }
+}
+
+/** A signed event, or encrypted data, has raw details to show. */
+private fun hasDetails(intent: IntentData): Boolean {
+    val type = intent.type.toString()
+    return (intent.type == SignerType.SIGN_EVENT && intent.event != null) ||
+        ((type.contains("ENCRYPT") || type.contains("DECRYPT")) && intent.encryptedData != null)
+}
+
+@Composable
+private fun IntentRequestDetails(
+    intent: IntentData,
+    onDismiss: () -> Unit,
+) {
+    if (intent.type == SignerType.SIGN_EVENT) {
+        EventDetailModal(
+            event = intent.event!!,
+            onDismiss = onDismiss,
+        )
+    } else {
+        EncryptDecryptDetailModal(
+            type = intent.type,
+            encryptedData = intent.encryptedData,
+            onDismiss = onDismiss,
+        )
+    }
+}
+
+private fun intentPermission(intent: IntentData): Permission = if (intent.type == SignerType.SIGN_EVENT) {
+    Permission("sign_event", intent.event!!.kind)
+} else {
+    Permission(intent.type.toString().lowercase(), null)
+}
+
+/**
+ * What the request asks for; an event of a kind Amber has no name for is described by its
+ * alt tag, when it has one.
+ */
+@Composable
+private fun intentRequestLabel(intent: IntentData): String {
+    val type = intent.type
+    val permission = intentPermission(intent)
+    val nip = type.toString().split("_").first()
+    val label = when {
+        type == SignerType.CONNECT -> stringResource(Res.string.connect)
+        type.toString().contains("ENCRYPT") -> encryptLabel(intent.encryptedData, nip)
+        type.toString().contains("DECRYPT") -> decryptLabel(intent.encryptedData, nip)
+        else -> permission.localizedBlocking()
+    }
+    val unknownKindString = stringResource(Res.string.event_kind, permission.kind?.toString() ?: "")
+    val altTag = if (label == unknownKindString && type == SignerType.SIGN_EVENT) {
+        intent.event?.tags?.firstOrNull { it.size > 1 && it[0] == "alt" }?.getOrNull(1)
+    } else {
+        null
+    }
+    return altTag ?: label
+}
+
+@Composable
+private fun encryptLabel(
+    encryptedData: EncryptedDataKind?,
+    nip: String,
+): String = when (encryptedData) {
+    is EventEncryptedDataKind -> {
+        val p = Permission("sign_event", encryptedData.event.kind)
+        stringResource(Res.string.encrypt_with, p.localizedBlocking(), nip)
+    }
+    is TagArrayEncryptedDataKind -> stringResource(Res.string.encrypt_this_list_of_tags_with, nip)
+    else -> stringResource(Res.string.encrypt_this_text_with, nip)
+}
+
+@Composable
+private fun decryptLabel(
+    encryptedData: EncryptedDataKind?,
+    nip: String,
+): String = when (encryptedData) {
+    is EventEncryptedDataKind -> {
+        val p = Permission("sign_event", encryptedData.event.kind)
+        stringResource(Res.string.read_from_encrypted_content, p.localizedBlocking(), nip)
+    }
+    is TagArrayEncryptedDataKind -> stringResource(Res.string.read_this_list_of_tags_from_encrypted_content, nip)
+    is PrivateZapEncryptedDataKind -> stringResource(Res.string.decrypt_zap_event).capitalize(Locale.current)
+    else -> stringResource(Res.string.read_this_text_from_encrypted_content, nip)
+}
+
+/** The request's content in short: the event's content (the relay, for a relay AUTH), or the data to encrypt or decrypt. */
+private fun intentRequestPreview(intent: IntentData): String {
+    if (intent.type == SignerType.SIGN_EVENT) {
+        val event = intent.event!!
+        return if (event.kind == 22242) AmberEvent.relay(event) ?: event.content else event.content
+    }
+    val encryptedData = intent.encryptedData
+    return if (intent.type.name.contains("ENCRYPT") && encryptedData is ClearTextEncryptedDataKind) {
+        encryptedData.text
+    } else if (encryptedData is EventEncryptedDataKind) {
+        if (encryptedData.sealEncryptedDataKind != null) {
+            if (encryptedData.sealEncryptedDataKind is EventEncryptedDataKind) {
+                encryptedData.sealEncryptedDataKind.event.content
+            } else {
+                encryptedData.sealEncryptedDataKind.result
+            }
         } else {
-            EncryptDecryptDetailModal(
-                type = type,
-                encryptedData = intent.encryptedData,
-                onDismiss = { showDetails = false },
-            )
+            encryptedData.event.content
         }
+    } else if (encryptedData is TagArrayEncryptedDataKind) {
+        encryptedData.tagArray.joinToString(separator = ", ") {
+            "[${it.joinToString(separator = ", ") { tag -> "\"$tag\"" }}]"
+        }
+    } else {
+        encryptedData?.result ?: ""
     }
 }
 

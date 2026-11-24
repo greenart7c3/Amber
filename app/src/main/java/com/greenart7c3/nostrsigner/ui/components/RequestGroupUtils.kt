@@ -41,6 +41,7 @@ import com.greenart7c3.nostrsigner.commonsui.read_from_encrypted_content
 import com.greenart7c3.nostrsigner.commonsui.read_this_list_of_tags_from_encrypted_content
 import com.greenart7c3.nostrsigner.commonsui.read_this_text_from_encrypted_content
 import com.greenart7c3.nostrsigner.commonsui.relay_auth_scope
+import com.greenart7c3.nostrsigner.commonsui.relay_not_in_auth_whitelist
 import com.greenart7c3.nostrsigner.commonsui.remember_my_choice_for
 import com.greenart7c3.nostrsigner.models.ClearTextEncryptedDataKind
 import com.greenart7c3.nostrsigner.models.EncryptedDataKind
@@ -289,19 +290,53 @@ fun RequestGroupHeader(
             )
         }
 
-        AmberToggles(
-            selected = approved,
-            options = listOf(true, false),
-            onSelect = onApproveChange,
-            label = {
-                if (it) stringResource(Res.string.approve) else stringResource(Res.string.deny)
-            },
-            indicatorColor = {
-                if (it) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
-            },
-            selectedTextColor = {
-                if (it) Color.Black else MaterialTheme.colorScheme.onError
-            },
-        )
+        ApproveDenyToggle(approved = approved, onApproveChange = onApproveChange)
     }
+}
+
+/**
+ * A batched request's approve or deny choice; a relay AUTH for a relay outside the AUTH
+ * whitelist ([blockedByAuthWhitelist]) is always rejected on confirm, as on the single screen,
+ * so it says that instead.
+ */
+@Composable
+fun RequestApproval(
+    blockedByAuthWhitelist: Boolean,
+    approved: Boolean,
+    onApproveChange: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    if (blockedByAuthWhitelist) {
+        Text(
+            text = stringResource(Res.string.relay_not_in_auth_whitelist),
+            color = MaterialTheme.colorScheme.error,
+            modifier = modifier.padding(vertical = 8.dp),
+        )
+    } else {
+        ApproveDenyToggle(approved = approved, onApproveChange = onApproveChange, modifier = modifier)
+    }
+}
+
+/** Approve or deny, for a request or a whole group of them. */
+@Composable
+private fun ApproveDenyToggle(
+    approved: Boolean,
+    onApproveChange: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    AmberToggles(
+        selected = approved,
+        options = listOf(true, false),
+        onSelect = onApproveChange,
+        modifier = modifier,
+        label = {
+            if (it) stringResource(Res.string.approve) else stringResource(Res.string.deny)
+        },
+        indicatorColor = {
+            if (it) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
+        },
+        selectedTextColor = {
+            if (it) Color.Black else MaterialTheme.colorScheme.onError
+        },
+    )
 }

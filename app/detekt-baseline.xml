@@ -4,7 +4,6 @@
   <CurrentIssues>
     <ID>CompositionLocalAllowlist:Theme.kt:private val LocalAmoledTheme = staticCompositionLocalOf { false }</ID>
     <ID>CompositionLocalAllowlist:Theme.kt:private val LocalDarkTheme = staticCompositionLocalOf { false }</ID>
-    <ID>CyclomaticComplexMethod:BunkerConnectRequestScreen.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun BunkerConnectRequestScreen</ID>
     <ID>CyclomaticComplexMethod:CloudBackupScreen.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun CloudBackupScreen</ID>
     <ID>LongMethod:AccountPickerRow.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun AccountPickerRow</ID>
     <ID>LongMethod:AccountScreen.kt:@SuppressLint("StateFlowValueCalledInComposition", "UnrememberedMutableState") @Composable fun AccountScreen</ID>
@@ -19,7 +18,6 @@
     <ID>LongMethod:ApplicationsScreen.kt:@Composable fun ApplicationsScreen</ID>
     <ID>LongMethod:AuthWhitelistScreen.kt:@Composable fun AuthWhitelistScreen</ID>
     <ID>LongMethod:BiometricAuthScreen.kt:@Composable fun BiometricAuthScreen</ID>
-    <ID>LongMethod:BunkerConnectRequestScreen.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun BunkerConnectRequestScreen</ID>
     <ID>LongMethod:BunkerRelayAuthScreen.kt:@Composable fun BunkerRelayAuthScreen</ID>
     <ID>LongMethod:ChooseSignPolicy.kt:@Composable fun ChooseSignPolicy</ID>
     <ID>LongMethod:CloudBackupScreen.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun CloudBackupScreen</ID>

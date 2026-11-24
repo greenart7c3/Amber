@@ -179,9 +179,10 @@ private class NewBunkerForm(initialRelays: List<NormalizedRelayUrl>) {
 
 /** How long until the bunker deletes itself. */
 @Composable
-private fun DeleteAfterSetting(
+internal fun DeleteAfterSetting(
     selectedIndex: Int,
     onSelect: (Int) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val deleteAfterItems =
         persistentListOf(
@@ -193,7 +194,7 @@ private fun DeleteAfterSetting(
             TitleExplainer(stringResource(DeleteAfterType.ONE_WEEK.resourceId)),
         )
 
-    Box {
+    Box(modifier) {
         SettingsRow(
             Res.string.delete_after,
             null,

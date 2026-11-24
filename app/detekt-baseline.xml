@@ -4,7 +4,6 @@
   <CurrentIssues>
     <ID>CompositionLocalAllowlist:Theme.kt:private val LocalAmoledTheme = staticCompositionLocalOf { false }</ID>
     <ID>CompositionLocalAllowlist:Theme.kt:private val LocalDarkTheme = staticCompositionLocalOf { false }</ID>
-    <ID>CyclomaticComplexMethod:AmberTopAppBar.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun AmberTopAppBar</ID>
     <ID>CyclomaticComplexMethod:BunkerConnectRequestScreen.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun BunkerConnectRequestScreen</ID>
     <ID>CyclomaticComplexMethod:CloudBackupScreen.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun CloudBackupScreen</ID>
     <ID>LongMethod:AccountPickerRow.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun AccountPickerRow</ID>
@@ -15,7 +14,6 @@
     <ID>LongMethod:ActivityScreen.kt:@Composable fun ActivityScreen</ID>
     <ID>LongMethod:ActivityStatsCard.kt:@Composable private fun ActivityStatsBar</ID>
     <ID>LongMethod:AddPermissionsSheet.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun AddPermissionsSheet</ID>
-    <ID>LongMethod:AmberTopAppBar.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun AmberTopAppBar</ID>
     <ID>LongMethod:ApplicationsBackupScreen.kt:@Composable fun ApplicationsBackupScreen</ID>
     <ID>LongMethod:ApplicationsBackupScreen.kt:@Composable private fun AccountBackupRow</ID>
     <ID>LongMethod:ApplicationsScreen.kt:@Composable fun ApplicationsScreen</ID>

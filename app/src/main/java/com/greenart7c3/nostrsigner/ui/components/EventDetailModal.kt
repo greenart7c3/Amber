@@ -4,6 +4,7 @@ import android.content.ClipData
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -24,14 +25,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
 import com.greenart7c3.nostrsigner.R
-import com.greenart7c3.nostrsigner.commonsui.Permission
 import com.greenart7c3.nostrsigner.commonsui.Res
 import com.greenart7c3.nostrsigner.commonsui.content
 import com.greenart7c3.nostrsigner.commonsui.date
-import com.greenart7c3.nostrsigner.commonsui.event_kind
 import com.greenart7c3.nostrsigner.commonsui.go_back
 import com.greenart7c3.nostrsigner.commonsui.kind
-import com.greenart7c3.nostrsigner.commonsui.localizedBlocking
 import com.greenart7c3.nostrsigner.commonsui.pubkey
 import com.greenart7c3.nostrsigner.commonsui.tags
 import com.greenart7c3.nostrsigner.models.TimeUtils
@@ -55,26 +53,31 @@ fun rememberCopyToClipboard(): (String) -> Unit {
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+/** The raw event a request asks to sign; its kind is named by its alt tag when Amber has no name for it. */
 @Composable
 fun EventDetailModal(
     event: Event,
     onDismiss: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
-    val copyToClipboard = rememberCopyToClipboard()
-    val permission = Permission(
-        "sign_event",
-        event.kind,
-    )
-    val context = LocalContext.current
-    val kindTranslation = permission.localizedBlocking()
-    val unknownKindString = stringResource(Res.string.event_kind, event.kind.toString())
-    val altTag = event.tags.firstOrNull { it.size > 1 && it[0] == "alt" }?.getOrNull(1)
-    val displayTranslation = if (kindTranslation == unknownKindString && altTag != null) altTag else kindTranslation
+    DetailSheet(onDismiss = onDismiss, modifier = modifier) {
+        EventSections(event = event, kindLabel = eventKindLabel(event.kind, event.tags))
+    }
+}
+
+/** A full-width sheet that only Go back closes, with [content] in a scrolling column. */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+internal fun DetailSheet(
+    onDismiss: () -> Unit,
+    modifier: Modifier = Modifier,
+    content: @Composable ColumnScope.() -> Unit,
+) {
     val sheetState = rememberModalBottomSheetState(
         skipPartiallyExpanded = true,
     )
     ModalBottomSheet(
+        modifier = modifier,
         sheetGesturesEnabled = false,
         properties = ModalBottomSheetProperties(
             shouldDismissOnBackPress = false,
@@ -99,56 +102,59 @@ fun EventDetailModal(
                     )
                 }
             },
-        ) {
+        ) { padding ->
             val scrollState = rememberScrollState()
             Column(
                 Modifier
-                    .padding(it)
+                    .padding(padding)
                     .verticalScrollbar(scrollState)
                     .verticalScroll(scrollState),
-            ) {
-                EventSection(
-                    stringResource(Res.string.kind),
-                    "${event.kind} - $displayTranslation",
-                    {
-                        copyToClipboard("${event.kind} - $displayTranslation")
-                    },
-                )
-                EventSection(
-                    stringResource(Res.string.pubkey),
-                    event.pubKey.toShortenHex(),
-                    {
-                        copyToClipboard(event.pubKey)
-                    },
-                )
-                EventSection(
-                    stringResource(Res.string.date),
-                    TimeUtils.formatDateTime(context, event.createdAt * 1000, withSeconds = true),
-                    {
-                        copyToClipboard("${event.createdAt}")
-                    },
-                )
-                if (event.content.isNotEmpty()) {
-                    EventSection(
-                        stringResource(Res.string.content),
-                        event.content,
-                        {
-                            copyToClipboard(event.content)
-                        },
-                    )
-                }
-                if (event.tags.isNotEmpty()) {
-                    TagsSection(
-                        label = stringResource(Res.string.tags),
-                        tags = event.tags,
-                        onCopy = {
-                            copyToClipboard(
-                                event.tags.joinToString(separator = ", ") { tag -> "[${tag.joinToString(separator = ", ") { value -> "\"${value}\"" }}]" },
-                            )
-                        },
-                    )
-                }
-            }
+                content = content,
+            )
         }
     }
+}
+
+/** An event's kind (as [kindLabel] names it), author, date, content and tags, each one copyable. */
+@Composable
+internal fun EventSections(
+    event: Event,
+    kindLabel: String,
+) {
+    val copyToClipboard = rememberCopyToClipboard()
+    val context = LocalContext.current
+    EventSection(
+        stringResource(Res.string.kind),
+        "${event.kind} - $kindLabel",
+        { copyToClipboard("${event.kind} - $kindLabel") },
+    )
+    EventSection(
+        stringResource(Res.string.pubkey),
+        event.pubKey.toShortenHex(),
+        { copyToClipboard(event.pubKey) },
+    )
+    EventSection(
+        stringResource(Res.string.date),
+        TimeUtils.formatDateTime(context, event.createdAt * 1000, withSeconds = true),
+        { copyToClipboard("${event.createdAt}") },
+    )
+    if (event.content.isNotEmpty()) {
+        EventSection(
+            stringResource(Res.string.content),
+            event.content,
+            { copyToClipboard(event.content) },
+        )
+    }
+    if (event.tags.isNotEmpty()) {
+        TagsSection(
+            label = stringResource(Res.string.tags),
+            tags = event.tags,
+            onCopy = { copyToClipboard(tagsCopyText(event.tags)) },
+        )
+    }
+}
+
+/** Tags as they are copied: `["p", "…"], ["t", "…"]`. */
+internal fun tagsCopyText(tags: Array<Array<String>>): String = tags.joinToString(separator = ", ") { tag ->
+    "[${tag.joinToString(separator = ", ") { value -> "\"$value\"" }}]"
 }

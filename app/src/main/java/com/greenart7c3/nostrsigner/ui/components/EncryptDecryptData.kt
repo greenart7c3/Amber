@@ -292,9 +292,7 @@ private fun EventDetailsButton(event: AmberEvent) {
         stringResource(Res.string.show_details),
     )
     if (showDetails) {
-        EventDetailModal(event.toEvent()) {
-            showDetails = false
-        }
+        EventDetailModal(event = event.toEvent(), onDismiss = { showDetails = false })
     }
 }
 

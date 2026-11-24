@@ -33,10 +33,8 @@
     <ID>LongMethod:EditRelaysDialog.kt:@Composable fun DefaultRelaysScreen</ID>
     <ID>LongMethod:EditRelaysDialog.kt:@SuppressLint("StateFlowValueCalledInComposition") @Composable private fun ActiveRelayRow</ID>
     <ID>LongMethod:EnabledPermissions.kt:@Composable fun EnabledPermissions</ID>
-    <ID>LongMethod:EncryptDecryptDetailModal.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun EncryptDecryptDetailModal</ID>
     <ID>LongMethod:EventData.kt:@Composable fun BunkerEventData</ID>
     <ID>LongMethod:EventData.kt:@Composable fun EventData</ID>
-    <ID>LongMethod:EventDetailModal.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun EventDetailModal</ID>
     <ID>LongMethod:ExportAllAccountsScreen.kt:@Composable fun ExportAllAccountsScreen</ID>
     <ID>LongMethod:FeedbackScreen.kt:@Composable fun FeedbackScreen</ID>
     <ID>LongMethod:IncomingRequestScreen.kt:@Composable fun IncomingRequestScreen</ID>

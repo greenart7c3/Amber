@@ -1,8 +1,12 @@
 package com.greenart7c3.nostrsigner.ui.actions
 
+import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import android.widget.Toast
+import androidx.activity.compose.ManagedActivityResultLauncher
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -28,6 +32,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -102,54 +107,266 @@ import com.greenart7c3.nostrsigner.ui.components.AmberButton
 import com.greenart7c3.nostrsigner.ui.theme.amoledBorder
 import com.greenart7c3.nostrsigner.ui.theme.outlineIfAny
 import java.io.File
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CloudBackupScreen(modifier: Modifier = Modifier) {
     val webDavService = WebDavService(LocalSettingsStore.current, LocalRelayClient.current)
     val appScope = LocalAppScope.current
     val context = LocalContext.current
     val keyboardController = LocalSoftwareKeyboardController.current
-
-    var isLoading by remember { mutableStateOf(false) }
-    var statusText by remember { mutableStateOf("") }
-
-    // Encryption password shared across both providers
-    var password by remember { mutableStateOf(TextFieldValue("")) }
-    var showPassword by remember { mutableStateOf(false) }
-    var passwordError by remember { mutableStateOf("") }
-
-    // WebDAV state
-    var webDavUrl by remember { mutableStateOf(TextFieldValue("")) }
-    var webDavUsername by remember { mutableStateOf(TextFieldValue("")) }
-    var webDavPassword by remember { mutableStateOf(TextFieldValue("")) }
-    var showWebDavPassword by remember { mutableStateOf(false) }
-    var webDavError by remember { mutableStateOf("") }
-    var webDavRestoreNpub by remember { mutableStateOf(TextFieldValue("")) }
-
-    // Google Drive sheet state
-    var showGdriveSheet by remember { mutableStateOf(false) }
+    val state = remember { CloudBackupState() }
 
     LaunchedEffect(Unit) {
         launch(Dispatchers.IO) {
-            webDavUrl = TextFieldValue(WebDavSettings.url(context))
-            webDavUsername = TextFieldValue(WebDavSettings.username(context))
-            webDavPassword = TextFieldValue(WebDavSettings.password(context))
+            state.loadWebDavSettings(context)
         }
     }
 
     val keyguardLauncher =
         rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { }
+    val actions = CloudBackupActions(state, context, appScope, webDavService, keyguardLauncher)
 
-    // Share all ncryptsec pairs via the Android share sheet.
-    // Writes each to a temp file in cacheDir, gets a FileProvider URI, then fires
-    // ACTION_SEND / ACTION_SEND_MULTIPLE so the user can pick Google Drive (or any app).
-    // No file is persisted on-device beyond the cache.
-    fun shareNcryptsecFiles(pairs: List<Pair<String, String>>) {
+    val filePickerLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+        uri?.let { fileUri ->
+            if (state.requirePassword()) actions.restoreFromFile(fileUri)
+        }
+    }
+
+    if (state.isLoading) {
+        CenterCircularProgressIndicator(modifier, state.statusText)
+        return
+    }
+
+    Column(modifier = modifier.padding(16.dp)) {
+        EncryptionPasswordSection(state = state, onDone = { keyboardController?.hide() })
+
+        SectionDivider()
+
+        BackupSection(Res.string.cloud_backup_gdrive_section, Res.string.cloud_backup_gdrive_description)
+        AmberButton(
+            modifier = Modifier.fillMaxWidth(),
+            text = stringResource(Res.string.cloud_backup_gdrive_open),
+            onClick = {
+                if (state.requirePassword()) state.showGdriveSheet = true
+            },
+        )
+
+        SectionDivider()
+
+        WebDavSection(state = state, actions = actions, onDone = { keyboardController?.hide() })
+    }
+
+    if (state.showGdriveSheet) {
+        GoogleDriveSheet(
+            onBackup = actions::backupToGoogleDrive,
+            onRestore = {
+                state.showGdriveSheet = false
+                filePickerLauncher.launch("*/*")
+            },
+            onDismiss = { state.showGdriveSheet = false },
+        )
+    }
+}
+
+@Stable
+private class CloudBackupState {
+    var isLoading by mutableStateOf(false)
+    var statusText by mutableStateOf("")
+
+    var password by mutableStateOf(TextFieldValue(""))
+    var passwordError by mutableStateOf("")
+
+    var webDavUrl by mutableStateOf(TextFieldValue(""))
+    var webDavUsername by mutableStateOf(TextFieldValue(""))
+    var webDavPassword by mutableStateOf(TextFieldValue(""))
+    var webDavError by mutableStateOf("")
+    var webDavRestoreNpub by mutableStateOf(TextFieldValue(""))
+
+    var showGdriveSheet by mutableStateOf(false)
+
+    suspend fun loadWebDavSettings(context: Context) {
+        webDavUrl = TextFieldValue(WebDavSettings.url(context))
+        webDavUsername = TextFieldValue(WebDavSettings.username(context))
+        webDavPassword = TextFieldValue(WebDavSettings.password(context))
+    }
+
+    fun requirePassword(): Boolean {
+        if (password.text.isNotBlank()) return true
+        passwordError = getStringBlocking(Res.string.cloud_backup_password_required)
+        return false
+    }
+
+    fun doneLoading() {
+        isLoading = false
+        statusText = ""
+    }
+}
+
+private class CloudBackupActions(
+    private val state: CloudBackupState,
+    private val context: Context,
+    private val appScope: CoroutineScope,
+    private val webDavService: WebDavService,
+    private val keyguardLauncher: ManagedActivityResultLauncher<Intent, ActivityResult>,
+) {
+    fun saveWebDavSettings() {
+        appScope.launch {
+            try {
+                WebDavTransportPolicy.requireSecureServerUrl(state.webDavUrl.text)
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    state.webDavError = e.message ?: getStringBlocking(Res.string.cloud_backup_webdav_url_required)
+                }
+                return@launch
+            }
+            saveWebDav()
+            withContext(Dispatchers.Main) {
+                Toast.makeText(context, getStringBlocking(Res.string.cloud_backup_webdav_saved), Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    fun testWebDav() {
+        if (state.webDavUrl.text.isBlank()) {
+            state.webDavError = getStringBlocking(Res.string.cloud_backup_webdav_url_required)
+            return
+        }
+        appScope.launch {
+            state.isLoading = true
+            state.statusText = getStringBlocking(Res.string.cloud_backup_testing_connection)
+            val result = withContext(Dispatchers.IO) {
+                webDavService.testConnection(
+                    serverUrl = state.webDavUrl.text,
+                    username = state.webDavUsername.text,
+                    password = state.webDavPassword.text,
+                )
+            }
+            withContext(Dispatchers.Main) {
+                if (result.isSuccess) {
+                    Toast.makeText(context, getStringBlocking(Res.string.cloud_backup_webdav_connected), Toast.LENGTH_SHORT).show()
+                } else {
+                    Toast.makeText(context, getStringBlocking(Res.string.cloud_backup_failed, result.exceptionOrNull()?.message.toString()), Toast.LENGTH_LONG).show()
+                }
+                state.doneLoading()
+            }
+        }
+    }
+
+    fun backupToWebDav() {
+        when {
+            state.password.text.isBlank() -> state.passwordError = getStringBlocking(Res.string.cloud_backup_password_required)
+            state.password.text.length < 8 -> state.passwordError = getStringBlocking(Res.string.password_too_short)
+            state.webDavUrl.text.isBlank() -> state.webDavError = getStringBlocking(Res.string.cloud_backup_webdav_url_required)
+            else -> authenticated(Res.string.cloud_backup_webdav_backup) { appScope.launch { uploadToWebDav() } }
+        }
+    }
+
+    private suspend fun uploadToWebDav() {
+        state.isLoading = true
+        state.statusText = getStringBlocking(Res.string.preparing_export)
+
+        try {
+            WebDavTransportPolicy.requireSecureServerUrl(state.webDavUrl.text)
+        } catch (e: Exception) {
+            state.isLoading = false
+            state.statusText = e.message ?: getStringBlocking(Res.string.cloud_backup_webdav_url_required)
+            return
+        }
+
+        saveWebDav()
+
+        exportAccounts().onSuccess { pairs ->
+            val allOk = uploadAll(pairs)
+            withContext(Dispatchers.Main) {
+                if (allOk) {
+                    Toast.makeText(context, getStringBlocking(Res.string.cloud_backup_success, "${pairs.size} accounts"), Toast.LENGTH_LONG).show()
+                } else {
+                    Toast.makeText(context, getStringBlocking(Res.string.cloud_backup_partial_failure), Toast.LENGTH_LONG).show()
+                }
+                state.doneLoading()
+            }
+        }.onFailure { e -> failed(e) }
+    }
+
+    private suspend fun uploadAll(pairs: List<Pair<String, String>>): Boolean {
+        var allOk = true
+        pairs.forEachIndexed { index, (npub, ncryptsec) ->
+            state.statusText = getStringBlocking(Res.string.cloud_backup_uploading) + " (${index + 1}/${pairs.size})"
+            val uploadResult = withContext(Dispatchers.IO) {
+                webDavService.uploadFile(
+                    serverUrl = state.webDavUrl.text,
+                    username = state.webDavUsername.text,
+                    password = state.webDavPassword.text,
+                    fileName = "$npub.ncryptsec",
+                    content = ncryptsec,
+                )
+            }
+            if (uploadResult.isFailure) allOk = false
+        }
+        return allOk
+    }
+
+    fun restoreFromWebDav() {
+        when {
+            state.password.text.isBlank() -> state.passwordError = getStringBlocking(Res.string.cloud_backup_password_required)
+            state.webDavUrl.text.isBlank() -> state.webDavError = getStringBlocking(Res.string.cloud_backup_webdav_url_required)
+            state.webDavRestoreNpub.text.isBlank() -> state.webDavError = getStringBlocking(Res.string.cloud_backup_webdav_npub_required)
+            else -> appScope.launch { downloadFromWebDav() }
+        }
+    }
+
+    private suspend fun downloadFromWebDav() {
+        state.isLoading = true
+        state.statusText = getStringBlocking(Res.string.cloud_backup_downloading)
+
+        val downloadResult = withContext(Dispatchers.IO) {
+            webDavService.downloadLatestFile(
+                serverUrl = state.webDavUrl.text,
+                username = state.webDavUsername.text,
+                password = state.webDavPassword.text,
+                fileName = "${state.webDavRestoreNpub.text.trim()}.ncryptsec",
+            )
+        }
+
+        downloadResult.onSuccess { data -> import(data) }.onFailure { e -> failed(e) }
+    }
+
+    fun restoreFromFile(fileUri: Uri) {
+        appScope.launch {
+            state.isLoading = true
+            state.statusText = getStringBlocking(Res.string.cloud_backup_restoring)
+            val content = withContext(Dispatchers.IO) {
+                context.contentResolver.openInputStream(fileUri)?.bufferedReader()?.readText() ?: ""
+            }
+            import(content)
+        }
+    }
+
+    fun backupToGoogleDrive() {
+        authenticated(Res.string.cloud_backup_gdrive_backup) {
+            state.showGdriveSheet = false
+            appScope.launch {
+                state.isLoading = true
+                state.statusText = getStringBlocking(Res.string.preparing_export)
+                exportAccounts().onSuccess { pairs ->
+                    withContext(Dispatchers.Main) {
+                        state.doneLoading()
+                        if (pairs.isNotEmpty()) {
+                            shareNcryptsecFiles(pairs)
+                        }
+                    }
+                }.onFailure { e -> failed(e) }
+            }
+        }
+    }
+
+    private fun shareNcryptsecFiles(pairs: List<Pair<String, String>>) {
         val dir = SharedFiles.freshShareDir(context)
         val uris = pairs.map { (npub, ncryptsec) ->
             val file = File(dir, "$npub.ncryptsec")
@@ -172,142 +389,232 @@ fun CloudBackupScreen(modifier: Modifier = Modifier) {
         context.startActivity(Intent.createChooser(shareIntent, getStringBlocking(Res.string.cloud_backup_share_title)))
     }
 
-    // Restore: pick any .ncryptsec file and import it
-    val filePickerLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
-        uri?.let { fileUri ->
-            if (password.text.isBlank()) {
-                passwordError = getStringBlocking(Res.string.cloud_backup_password_required)
-                return@let
-            }
-            appScope.launch {
-                isLoading = true
-                statusText = getStringBlocking(Res.string.cloud_backup_restoring)
-                val content = withContext(Dispatchers.IO) {
-                    context.contentResolver.openInputStream(fileUri)?.bufferedReader()?.readText() ?: ""
+    private suspend fun exportAccounts() = AccountExportService.exportPerAccountNcryptsec(
+        context = context,
+        password = state.password.text,
+        onProgress = { cur, tot ->
+            state.statusText = getStringBlocking(Res.string.exporting_accounts_progress, cur, tot)
+        },
+    )
+
+    private suspend fun import(content: String) {
+        AccountExportService.importFromNcryptsec(
+            context = context.applicationContext,
+            scope = appScope,
+            content = content,
+            password = state.password.text,
+            onLoading = { loading -> state.isLoading = loading },
+            onText = { t -> state.statusText = t },
+            onFinish = {
+                appScope.launch(Dispatchers.Main) {
+                    Toast.makeText(context, getStringBlocking(Res.string.cloud_backup_restore_success), Toast.LENGTH_LONG).show()
+                    state.doneLoading()
                 }
-                AccountExportService.importFromNcryptsec(
-                    context = context.applicationContext,
-                    scope = appScope,
-                    content = content,
-                    password = password.text,
-                    onLoading = { loading -> isLoading = loading },
-                    onText = { t -> statusText = t },
-                    onFinish = {
-                        appScope.launch(Dispatchers.Main) {
-                            Toast.makeText(context, getStringBlocking(Res.string.cloud_backup_restore_success), Toast.LENGTH_LONG).show()
-                            statusText = ""
-                            isLoading = false
-                        }
-                    },
-                )
-            }
+            },
+        )
+    }
+
+    private suspend fun saveWebDav() {
+        WebDavSettings.save(
+            context = context,
+            url = state.webDavUrl.text,
+            username = state.webDavUsername.text,
+            password = state.webDavPassword.text,
+            fileName = "",
+        )
+    }
+
+    private suspend fun failed(e: Throwable) {
+        withContext(Dispatchers.Main) {
+            Toast.makeText(context, getStringBlocking(Res.string.cloud_backup_failed, e.message.toString()), Toast.LENGTH_LONG).show()
+            state.doneLoading()
         }
     }
 
-    if (isLoading) {
-        CenterCircularProgressIndicator(modifier, statusText)
-        return
+    private fun authenticated(
+        title: StringResource,
+        onApproved: () -> Unit,
+    ) {
+        authenticate(
+            title = getStringBlocking(title),
+            context = context,
+            keyguardLauncher = keyguardLauncher,
+            onApproved = onApproved,
+            onError = { _, msg ->
+                appScope.launch(Dispatchers.Main) {
+                    Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+                }
+            },
+        )
     }
+}
 
-    Column(modifier = modifier.padding(16.dp)) {
-        // --- Encryption password (shared) ---
+@Composable
+private fun SectionDivider() {
+    Column {
+        Spacer(modifier = Modifier.height(16.dp))
+        HorizontalDivider()
+        Spacer(modifier = Modifier.height(16.dp))
+    }
+}
+
+@Composable
+private fun BackupSection(
+    title: StringResource,
+    description: StringResource,
+) {
+    Column {
         Text(
-            text = stringResource(Res.string.cloud_backup_encryption_section),
+            text = stringResource(title),
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
         )
         Text(
-            text = stringResource(Res.string.cloud_backup_encryption_description),
+            text = stringResource(description),
             style = MaterialTheme.typography.bodySmall,
             color = Color.Gray,
         )
         Spacer(modifier = Modifier.height(8.dp))
-        OutlinedTextField(
-            modifier = Modifier
-                .fillMaxWidth()
-                .semantics { contentType = ContentType.Password },
-            value = password,
+    }
+}
+
+@Composable
+private fun EncryptionPasswordSection(
+    state: CloudBackupState,
+    onDone: () -> Unit,
+) {
+    Column {
+        BackupSection(Res.string.cloud_backup_encryption_section, Res.string.cloud_backup_encryption_description)
+        PasswordField(
+            value = state.password,
             onValueChange = {
-                password = it
-                passwordError = ""
+                state.password = it
+                state.passwordError = ""
             },
-            label = { Text(text = stringResource(Res.string.encryption_password)) },
-            placeholder = { Text(text = stringResource(Res.string.enter_strong_password)) },
-            isError = passwordError.isNotBlank(),
-            supportingText = if (passwordError.isNotBlank()) {
-                { Text(text = passwordError, color = MaterialTheme.colorScheme.error) }
-            } else {
-                null
-            },
-            trailingIcon = {
-                IconButton(onClick = { showPassword = !showPassword }) {
-                    Icon(
-                        imageVector = if (showPassword) Icons.Outlined.VisibilityOff else Icons.Outlined.Visibility,
-                        contentDescription = if (showPassword) {
-                            stringResource(Res.string.hide_password)
-                        } else {
-                            stringResource(Res.string.show_password)
-                        },
-                    )
-                }
-            },
-            visualTransformation = if (showPassword) VisualTransformation.None else PasswordVisualTransformation(),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
-            keyboardActions = KeyboardActions(onDone = { keyboardController?.hide() }),
+            label = Res.string.encryption_password,
+            placeholder = Res.string.enter_strong_password,
+            error = state.passwordError,
+            onDone = onDone,
+        )
+    }
+}
+
+@Composable
+private fun PasswordField(
+    value: TextFieldValue,
+    onValueChange: (TextFieldValue) -> Unit,
+    label: StringResource,
+    placeholder: StringResource?,
+    error: String,
+    onDone: () -> Unit,
+) {
+    var showPassword by remember { mutableStateOf(false) }
+    OutlinedTextField(
+        modifier = Modifier
+            .fillMaxWidth()
+            .semantics { contentType = ContentType.Password },
+        value = value,
+        onValueChange = onValueChange,
+        label = { Text(text = stringResource(label)) },
+        placeholder = placeholder?.let { { Text(text = stringResource(it)) } },
+        isError = error.isNotBlank(),
+        supportingText = if (error.isNotBlank()) {
+            { Text(text = error, color = MaterialTheme.colorScheme.error) }
+        } else {
+            null
+        },
+        trailingIcon = {
+            IconButton(onClick = { showPassword = !showPassword }) {
+                Icon(
+                    imageVector = if (showPassword) Icons.Outlined.VisibilityOff else Icons.Outlined.Visibility,
+                    contentDescription = if (showPassword) {
+                        stringResource(Res.string.hide_password)
+                    } else {
+                        stringResource(Res.string.show_password)
+                    },
+                )
+            }
+        },
+        visualTransformation = if (showPassword) VisualTransformation.None else PasswordVisualTransformation(),
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
+        keyboardActions = KeyboardActions(onDone = { onDone() }),
+        singleLine = true,
+    )
+}
+
+@Composable
+private fun WebDavSection(
+    state: CloudBackupState,
+    actions: CloudBackupActions,
+    onDone: () -> Unit,
+) {
+    Column {
+        BackupSection(Res.string.cloud_backup_webdav_section, Res.string.cloud_backup_webdav_description)
+
+        WebDavServerFields(state = state, onDone = onDone)
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            AmberButton(
+                modifier = Modifier.weight(1f),
+                text = stringResource(Res.string.cloud_backup_webdav_save),
+                onClick = actions::saveWebDavSettings,
+            )
+
+            AmberButton(
+                modifier = Modifier.weight(1f),
+                text = stringResource(Res.string.cloud_backup_webdav_test),
+                onClick = actions::testWebDav,
+            )
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        AmberButton(
+            modifier = Modifier.fillMaxWidth(),
+            text = stringResource(Res.string.cloud_backup_webdav_backup),
+            onClick = actions::backupToWebDav,
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        OutlinedTextField(
+            modifier = Modifier.fillMaxWidth(),
+            value = state.webDavRestoreNpub,
+            onValueChange = { state.webDavRestoreNpub = it },
+            label = { Text(text = stringResource(Res.string.cloud_backup_webdav_restore_npub)) },
+            placeholder = { Text(text = "npub1...") },
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text, imeAction = ImeAction.Done),
+            keyboardActions = KeyboardActions(onDone = { onDone() }),
             singleLine = true,
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
-        HorizontalDivider()
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // --- Google Drive row ---
-        Text(
-            text = stringResource(Res.string.cloud_backup_gdrive_section),
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold,
-        )
-        Text(
-            text = stringResource(Res.string.cloud_backup_gdrive_description),
-            style = MaterialTheme.typography.bodySmall,
-            color = Color.Gray,
-        )
         Spacer(modifier = Modifier.height(8.dp))
+
         AmberButton(
             modifier = Modifier.fillMaxWidth(),
-            text = stringResource(Res.string.cloud_backup_gdrive_open),
-            onClick = {
-                if (password.text.isBlank()) {
-                    passwordError = getStringBlocking(Res.string.cloud_backup_password_required)
-                } else {
-                    showGdriveSheet = true
-                }
-            },
+            text = stringResource(Res.string.cloud_backup_webdav_restore),
+            onClick = actions::restoreFromWebDav,
         )
+    }
+}
 
-        Spacer(modifier = Modifier.height(16.dp))
-        HorizontalDivider()
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // --- WebDAV section ---
-        Text(
-            text = stringResource(Res.string.cloud_backup_webdav_section),
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold,
-        )
-        Text(
-            text = stringResource(Res.string.cloud_backup_webdav_description),
-            style = MaterialTheme.typography.bodySmall,
-            color = Color.Gray,
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-
+@Composable
+private fun WebDavServerFields(
+    state: CloudBackupState,
+    onDone: () -> Unit,
+) {
+    Column {
         OutlinedTextField(
             modifier = Modifier.fillMaxWidth(),
-            value = webDavUrl,
+            value = state.webDavUrl,
             onValueChange = {
-                webDavUrl = it
-                webDavError = ""
+                state.webDavUrl = it
+                state.webDavError = ""
             },
             label = { Text(text = stringResource(Res.string.cloud_backup_webdav_url)) },
             placeholder = { Text(text = "https://dav.example.com/remote.php/dav/files/user/") },
@@ -319,10 +626,10 @@ fun CloudBackupScreen(modifier: Modifier = Modifier) {
 
         OutlinedTextField(
             modifier = Modifier.fillMaxWidth(),
-            value = webDavUsername,
+            value = state.webDavUsername,
             onValueChange = {
-                webDavUsername = it
-                webDavError = ""
+                state.webDavUsername = it
+                state.webDavError = ""
             },
             label = { Text(text = stringResource(Res.string.cloud_backup_webdav_username)) },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text, imeAction = ImeAction.Next),
@@ -331,347 +638,68 @@ fun CloudBackupScreen(modifier: Modifier = Modifier) {
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        OutlinedTextField(
+        PasswordField(
+            value = state.webDavPassword,
+            onValueChange = {
+                state.webDavPassword = it
+                state.webDavError = ""
+            },
+            label = Res.string.cloud_backup_webdav_password,
+            placeholder = null,
+            error = "",
+            onDone = onDone,
+        )
+
+        if (state.webDavError.isNotBlank()) {
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(text = state.webDavError, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun GoogleDriveSheet(
+    onBackup: () -> Unit,
+    onRestore: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    ModalBottomSheet(
+        modifier = Modifier.outlineIfAny(amoledBorder(), BottomSheetDefaults.ExpandedShape),
+        onDismissRequest = onDismiss,
+        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+    ) {
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .semantics { contentType = ContentType.Password },
-            value = webDavPassword,
-            onValueChange = {
-                webDavPassword = it
-                webDavError = ""
-            },
-            label = { Text(text = stringResource(Res.string.cloud_backup_webdav_password)) },
-            trailingIcon = {
-                IconButton(onClick = { showWebDavPassword = !showWebDavPassword }) {
-                    Icon(
-                        imageVector = if (showWebDavPassword) Icons.Outlined.VisibilityOff else Icons.Outlined.Visibility,
-                        contentDescription = if (showWebDavPassword) {
-                            stringResource(Res.string.hide_password)
-                        } else {
-                            stringResource(Res.string.show_password)
-                        },
-                    )
-                }
-            },
-            visualTransformation = if (showWebDavPassword) VisualTransformation.None else PasswordVisualTransformation(),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
-            keyboardActions = KeyboardActions(onDone = { keyboardController?.hide() }),
-            singleLine = true,
-        )
-
-        if (webDavError.isNotBlank()) {
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(text = webDavError, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
-        }
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                .padding(horizontal = 24.dp)
+                .padding(bottom = 32.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
+            Text(
+                text = stringResource(Res.string.cloud_backup_gdrive_section),
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+            )
+            Text(
+                text = stringResource(Res.string.cloud_backup_gdrive_sheet_description),
+                style = MaterialTheme.typography.bodySmall,
+                color = Color.Gray,
+            )
+
+            HorizontalDivider()
+
             AmberButton(
-                modifier = Modifier.weight(1f),
-                text = stringResource(Res.string.cloud_backup_webdav_save),
-                onClick = {
-                    appScope.launch {
-                        // Enforce the HTTPS policy at save time: an http:// URL
-                        // must not be stored silently and only fail later from
-                        // a generic backup error.
-                        try {
-                            WebDavTransportPolicy.requireSecureServerUrl(webDavUrl.text)
-                        } catch (e: Exception) {
-                            withContext(Dispatchers.Main) {
-                                webDavError = e.message ?: getStringBlocking(Res.string.cloud_backup_webdav_url_required)
-                            }
-                            return@launch
-                        }
-                        WebDavSettings.save(
-                            context = context,
-                            url = webDavUrl.text,
-                            username = webDavUsername.text,
-                            password = webDavPassword.text,
-                            fileName = "",
-                        )
-                        withContext(Dispatchers.Main) {
-                            Toast.makeText(context, getStringBlocking(Res.string.cloud_backup_webdav_saved), Toast.LENGTH_SHORT).show()
-                        }
-                    }
-                },
+                modifier = Modifier.fillMaxWidth(),
+                text = stringResource(Res.string.cloud_backup_gdrive_backup),
+                onClick = onBackup,
             )
 
             AmberButton(
-                modifier = Modifier.weight(1f),
-                text = stringResource(Res.string.cloud_backup_webdav_test),
-                onClick = {
-                    if (webDavUrl.text.isBlank()) {
-                        webDavError = getStringBlocking(Res.string.cloud_backup_webdav_url_required)
-                    } else {
-                        appScope.launch {
-                            isLoading = true
-                            statusText = getStringBlocking(Res.string.cloud_backup_testing_connection)
-                            val result = withContext(Dispatchers.IO) {
-                                webDavService.testConnection(
-                                    serverUrl = webDavUrl.text,
-                                    username = webDavUsername.text,
-                                    password = webDavPassword.text,
-                                )
-                            }
-                            withContext(Dispatchers.Main) {
-                                if (result.isSuccess) {
-                                    Toast.makeText(context, getStringBlocking(Res.string.cloud_backup_webdav_connected), Toast.LENGTH_SHORT).show()
-                                } else {
-                                    Toast.makeText(context, getStringBlocking(Res.string.cloud_backup_failed, result.exceptionOrNull()?.message.toString()), Toast.LENGTH_LONG).show()
-                                }
-                                isLoading = false
-                                statusText = ""
-                            }
-                        }
-                    }
-                },
+                modifier = Modifier.fillMaxWidth(),
+                text = stringResource(Res.string.cloud_backup_gdrive_restore),
+                onClick = onRestore,
             )
-        }
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        AmberButton(
-            modifier = Modifier.fillMaxWidth(),
-            text = stringResource(Res.string.cloud_backup_webdav_backup),
-            onClick = {
-                when {
-                    password.text.isBlank() -> passwordError = getStringBlocking(Res.string.cloud_backup_password_required)
-                    password.text.length < 8 -> passwordError = getStringBlocking(Res.string.password_too_short)
-                    webDavUrl.text.isBlank() -> webDavError = getStringBlocking(Res.string.cloud_backup_webdav_url_required)
-                    else -> {
-                        authenticate(
-                            title = getStringBlocking(Res.string.cloud_backup_webdav_backup),
-                            context = context,
-                            keyguardLauncher = keyguardLauncher,
-                            onApproved = {
-                                appScope.launch {
-                                    isLoading = true
-                                    statusText = getStringBlocking(Res.string.preparing_export)
-
-                                    try {
-                                        WebDavTransportPolicy.requireSecureServerUrl(webDavUrl.text)
-                                    } catch (e: Exception) {
-                                        isLoading = false
-                                        statusText = e.message ?: getStringBlocking(Res.string.cloud_backup_webdav_url_required)
-                                        return@launch
-                                    }
-
-                                    WebDavSettings.save(
-                                        context = context,
-                                        url = webDavUrl.text,
-                                        username = webDavUsername.text,
-                                        password = webDavPassword.text,
-                                        fileName = "",
-                                    )
-
-                                    val exportResult = AccountExportService.exportPerAccountNcryptsec(
-                                        context = context,
-                                        password = password.text,
-                                        onProgress = { cur, tot ->
-                                            statusText = getStringBlocking(Res.string.exporting_accounts_progress, cur, tot)
-                                        },
-                                    )
-
-                                    exportResult.onSuccess { pairs ->
-                                        var allOk = true
-                                        pairs.forEachIndexed { index, (npub, ncryptsec) ->
-                                            statusText = getStringBlocking(Res.string.cloud_backup_uploading) + " (${index + 1}/${pairs.size})"
-                                            val uploadResult = withContext(Dispatchers.IO) {
-                                                webDavService.uploadFile(
-                                                    serverUrl = webDavUrl.text,
-                                                    username = webDavUsername.text,
-                                                    password = webDavPassword.text,
-                                                    fileName = "$npub.ncryptsec",
-                                                    content = ncryptsec,
-                                                )
-                                            }
-                                            if (uploadResult.isFailure) allOk = false
-                                        }
-                                        withContext(Dispatchers.Main) {
-                                            if (allOk) {
-                                                Toast.makeText(context, getStringBlocking(Res.string.cloud_backup_success, "${pairs.size} accounts"), Toast.LENGTH_LONG).show()
-                                            } else {
-                                                Toast.makeText(context, getStringBlocking(Res.string.cloud_backup_partial_failure), Toast.LENGTH_LONG).show()
-                                            }
-                                            isLoading = false
-                                            statusText = ""
-                                        }
-                                    }.onFailure { e ->
-                                        withContext(Dispatchers.Main) {
-                                            Toast.makeText(context, getStringBlocking(Res.string.cloud_backup_failed, e.message.toString()), Toast.LENGTH_LONG).show()
-                                            isLoading = false
-                                            statusText = ""
-                                        }
-                                    }
-                                }
-                            },
-                            onError = { _, msg ->
-                                appScope.launch(Dispatchers.Main) {
-                                    Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
-                                }
-                            },
-                        )
-                    }
-                }
-            },
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        OutlinedTextField(
-            modifier = Modifier.fillMaxWidth(),
-            value = webDavRestoreNpub,
-            onValueChange = { webDavRestoreNpub = it },
-            label = { Text(text = stringResource(Res.string.cloud_backup_webdav_restore_npub)) },
-            placeholder = { Text(text = "npub1...") },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text, imeAction = ImeAction.Done),
-            keyboardActions = KeyboardActions(onDone = { keyboardController?.hide() }),
-            singleLine = true,
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        AmberButton(
-            modifier = Modifier.fillMaxWidth(),
-            text = stringResource(Res.string.cloud_backup_webdav_restore),
-            onClick = {
-                when {
-                    password.text.isBlank() -> passwordError = getStringBlocking(Res.string.cloud_backup_password_required)
-                    webDavUrl.text.isBlank() -> webDavError = getStringBlocking(Res.string.cloud_backup_webdav_url_required)
-                    webDavRestoreNpub.text.isBlank() -> webDavError = getStringBlocking(Res.string.cloud_backup_webdav_npub_required)
-                    else -> {
-                        appScope.launch {
-                            isLoading = true
-                            statusText = getStringBlocking(Res.string.cloud_backup_downloading)
-
-                            val downloadResult = withContext(Dispatchers.IO) {
-                                webDavService.downloadLatestFile(
-                                    serverUrl = webDavUrl.text,
-                                    username = webDavUsername.text,
-                                    password = webDavPassword.text,
-                                    fileName = "${webDavRestoreNpub.text.trim()}.ncryptsec",
-                                )
-                            }
-
-                            downloadResult.onSuccess { data ->
-                                AccountExportService.importFromNcryptsec(
-                                    context = context.applicationContext,
-                                    scope = appScope,
-                                    content = data,
-                                    password = password.text,
-                                    onLoading = { loading -> isLoading = loading },
-                                    onText = { t -> statusText = t },
-                                    onFinish = {
-                                        appScope.launch(Dispatchers.Main) {
-                                            Toast.makeText(context, getStringBlocking(Res.string.cloud_backup_restore_success), Toast.LENGTH_LONG).show()
-                                            statusText = ""
-                                            isLoading = false
-                                        }
-                                    },
-                                )
-                            }.onFailure { e ->
-                                withContext(Dispatchers.Main) {
-                                    Toast.makeText(context, getStringBlocking(Res.string.cloud_backup_failed, e.message.toString()), Toast.LENGTH_LONG).show()
-                                    isLoading = false
-                                    statusText = ""
-                                }
-                            }
-                        }
-                    }
-                }
-            },
-        )
-    }
-
-    // Google Drive bottom sheet: sends each {npub}.ncryptsec directly via CreateDocument
-    // (Android system picker — user can choose Google Drive, no local save needed)
-    if (showGdriveSheet) {
-        ModalBottomSheet(
-            modifier = Modifier.outlineIfAny(amoledBorder(), BottomSheetDefaults.ExpandedShape),
-            onDismissRequest = { showGdriveSheet = false },
-            sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 24.dp)
-                    .padding(bottom = 32.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                Text(
-                    text = stringResource(Res.string.cloud_backup_gdrive_section),
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                )
-                Text(
-                    text = stringResource(Res.string.cloud_backup_gdrive_sheet_description),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Color.Gray,
-                )
-
-                HorizontalDivider()
-
-                // Backup: export all accounts and launch CreateDocument for each, one at a time
-                AmberButton(
-                    modifier = Modifier.fillMaxWidth(),
-                    text = stringResource(Res.string.cloud_backup_gdrive_backup),
-                    onClick = {
-                        authenticate(
-                            title = getStringBlocking(Res.string.cloud_backup_gdrive_backup),
-                            context = context,
-                            keyguardLauncher = keyguardLauncher,
-                            onApproved = {
-                                showGdriveSheet = false
-                                appScope.launch {
-                                    isLoading = true
-                                    statusText = getStringBlocking(Res.string.preparing_export)
-                                    val result = AccountExportService.exportPerAccountNcryptsec(
-                                        context = context,
-                                        password = password.text,
-                                        onProgress = { cur, tot ->
-                                            statusText = getStringBlocking(Res.string.exporting_accounts_progress, cur, tot)
-                                        },
-                                    )
-                                    result.onSuccess { pairs ->
-                                        withContext(Dispatchers.Main) {
-                                            isLoading = false
-                                            statusText = ""
-                                            if (pairs.isNotEmpty()) {
-                                                shareNcryptsecFiles(pairs)
-                                            }
-                                        }
-                                    }.onFailure { e ->
-                                        withContext(Dispatchers.Main) {
-                                            Toast.makeText(context, getStringBlocking(Res.string.cloud_backup_failed, e.message.toString()), Toast.LENGTH_LONG).show()
-                                            isLoading = false
-                                            statusText = ""
-                                        }
-                                    }
-                                }
-                            },
-                            onError = { _, msg ->
-                                appScope.launch(Dispatchers.Main) {
-                                    Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
-                                }
-                            },
-                        )
-                    },
-                )
-
-                // Restore: user picks a .ncryptsec file from any provider (Google Drive, etc.)
-                AmberButton(
-                    modifier = Modifier.fillMaxWidth(),
-                    text = stringResource(Res.string.cloud_backup_gdrive_restore),
-                    onClick = {
-                        showGdriveSheet = false
-                        filePickerLauncher.launch("*/*")
-                    },
-                )
-            }
         }
     }
 }

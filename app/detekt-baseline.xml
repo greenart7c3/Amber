@@ -23,7 +23,6 @@
     <ID>LongMethod:AuthWhitelistScreen.kt:@Composable fun AuthWhitelistScreen</ID>
     <ID>LongMethod:BiometricAuthScreen.kt:@Composable fun BiometricAuthScreen</ID>
     <ID>LongMethod:BunkerConnectRequestScreen.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun BunkerConnectRequestScreen</ID>
-    <ID>LongMethod:BunkerMultiEventHomeScreen.kt:@Composable private fun BunkerRequestCard</ID>
     <ID>LongMethod:BunkerRelayAuthScreen.kt:@Composable fun BunkerRelayAuthScreen</ID>
     <ID>LongMethod:ChooseSignPolicy.kt:@Composable fun ChooseSignPolicy</ID>
     <ID>LongMethod:CloudBackupScreen.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun CloudBackupScreen</ID>

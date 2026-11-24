@@ -1,28 +1,20 @@
 package com.greenart7c3.nostrsigner.ui.components
 
 import androidx.activity.compose.LocalActivity
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.capitalize
 import androidx.compose.ui.text.intl.Locale
@@ -44,7 +36,6 @@ import com.greenart7c3.nostrsigner.commonsui.localizedBlocking
 import com.greenart7c3.nostrsigner.commonsui.read_from_encrypted_content
 import com.greenart7c3.nostrsigner.commonsui.read_this_list_of_tags_from_encrypted_content
 import com.greenart7c3.nostrsigner.commonsui.read_this_text_from_encrypted_content
-import com.greenart7c3.nostrsigner.commonsui.show_details
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.ClearTextEncryptedDataKind
 import com.greenart7c3.nostrsigner.models.CompressionType
@@ -56,7 +47,6 @@ import com.greenart7c3.nostrsigner.models.PrivateZapEncryptedDataKind
 import com.greenart7c3.nostrsigner.models.ReturnType
 import com.greenart7c3.nostrsigner.models.TagArrayEncryptedDataKind
 import com.greenart7c3.nostrsigner.service.MultiEventScreenIntents
-import com.greenart7c3.nostrsigner.service.isBlockedByAuthWhitelist
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
 import com.greenart7c3.nostrsigner.ui.LocalAccountRepository
 import com.greenart7c3.nostrsigner.ui.LocalAppScope
@@ -188,87 +178,16 @@ private fun IntentRequestCard(
     approved: Boolean,
     onApproveChange: (Boolean) -> Unit,
 ) {
-    val settingsStore = LocalSettingsStore.current
-    var showDetails by remember { mutableStateOf(false) }
-    val hasDetails = hasDetails(intent)
-    val label = intentRequestLabel(intent)
-    val preview = intentRequestPreview(intent)
-
-    Card(
-        Modifier.padding(4.dp),
-        colors = CardDefaults.cardColors().copy(
-            containerColor = MaterialTheme.colorScheme.background,
-        ),
-        border = BorderStroke(1.dp, Color.Gray),
-    ) {
-        Column(
-            Modifier.padding(8.dp),
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Column(
-                    Modifier
-                        .weight(1f)
-                        .padding(end = 8.dp),
-                ) {
-                    Text(text = label)
-                    if (preview.isNotBlank()) {
-                        Text(
-                            text = preview,
-                            color = Color.Gray,
-                            maxLines = 2,
-                        )
-                    }
-                    if (hasDetails) {
-                        RawJsonButton(
-                            onCLick = { showDetails = true },
-                            text = stringResource(Res.string.show_details),
-                        )
-                    }
-                }
-            }
-
-            signingAs?.let { SigningAs(it) }
-
-            RequestApproval(
-                blockedByAuthWhitelist = isBlockedByAuthWhitelist(intent.event, settingsStore.settings.authWhitelist),
-                approved = approved,
-                onApproveChange = onApproveChange,
-            )
-        }
-    }
-
-    if (showDetails) {
-        IntentRequestDetails(intent = intent, onDismiss = { showDetails = false })
-    }
-}
-
-/** A signed event, or encrypted data, has raw details to show. */
-private fun hasDetails(intent: IntentData): Boolean {
-    val type = intent.type.toString()
-    return (intent.type == SignerType.SIGN_EVENT && intent.event != null) ||
-        ((type.contains("ENCRYPT") || type.contains("DECRYPT")) && intent.encryptedData != null)
-}
-
-@Composable
-private fun IntentRequestDetails(
-    intent: IntentData,
-    onDismiss: () -> Unit,
-) {
-    if (intent.type == SignerType.SIGN_EVENT) {
-        EventDetailModal(
-            event = intent.event!!,
-            onDismiss = onDismiss,
-        )
-    } else {
-        EncryptDecryptDetailModal(
-            type = intent.type,
-            encryptedData = intent.encryptedData,
-            onDismiss = onDismiss,
-        )
-    }
+    BatchRequestCard(
+        type = intent.type,
+        label = intentRequestLabel(intent),
+        preview = intentRequestPreview(intent),
+        event = intent.event,
+        encryptedData = intent.encryptedData,
+        signingAs = signingAs,
+        approved = approved,
+        onApproveChange = onApproveChange,
+    )
 }
 
 private fun intentPermission(intent: IntentData): Permission = if (intent.type == SignerType.SIGN_EVENT) {

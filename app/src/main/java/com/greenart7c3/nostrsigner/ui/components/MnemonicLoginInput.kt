@@ -63,85 +63,121 @@ fun MnemonicLoginInput(
     val wordList = remember { Bip39Mnemonics.englishWordlist.toList() }
 
     Column(modifier = modifier) {
+        WordCountRow(wordCount = wordCount, onWordCountChange = onWordCountChange, onPaste = onPaste)
+
+        Spacer(modifier = Modifier.height(8.dp))
+
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalAlignment = Alignment.CenterVertically,
         ) {
-            FilterChip(
-                selected = wordCount == 12,
-                onClick = { onWordCountChange(12) },
-                label = { Text(stringResource(Res.string.mnemonic_12_words)) },
-            )
-            FilterChip(
-                selected = wordCount == 24,
-                onClick = { onWordCountChange(24) },
-                label = { Text(stringResource(Res.string.mnemonic_24_words)) },
-            )
-            Spacer(Modifier.weight(1f))
-            IconButton(onClick = onPaste) {
-                Icon(
-                    imageVector = Icons.Outlined.ContentPaste,
-                    contentDescription = stringResource(Res.string.paste_from_clipboard),
-                    tint = MaterialTheme.colorScheme.primary,
+            for (indices in listOf(0 until halfCount, halfCount until wordCount)) {
+                WordColumn(
+                    indices = indices,
+                    words = words,
+                    wordList = wordList,
+                    focusRequesters = focusRequesters,
+                    onWordChange = onWordChange,
+                    modifier = Modifier.weight(1f),
                 )
             }
         }
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(6.dp),
-            ) {
-                for (i in 0 until halfCount) {
-                    WordField(
-                        displayNumber = i + 1,
-                        word = words.getOrElse(i) { "" },
-                        wordList = wordList,
-                        onWordChange = { onWordChange(i, it) },
-                        focusRequester = focusRequesters[i],
-                        nextFocusRequester = focusRequesters.getOrNull(i + 1),
-                        imeAction = ImeAction.Next,
-                    )
-                }
-            }
-
-            Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(6.dp),
-            ) {
-                for (i in halfCount until wordCount) {
-                    WordField(
-                        displayNumber = i + 1,
-                        word = words.getOrElse(i) { "" },
-                        wordList = wordList,
-                        onWordChange = { onWordChange(i, it) },
-                        focusRequester = focusRequesters[i],
-                        nextFocusRequester = focusRequesters.getOrNull(i + 1),
-                        imeAction = if (i < wordCount - 1) ImeAction.Next else ImeAction.Done,
-                    )
-                }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        val filledCount = words.count { it.isNotBlank() }
-        Text(
-            text = stringResource(Res.string.mnemonic_words_entered, filledCount, wordCount),
-            style = MaterialTheme.typography.bodySmall,
-            color = if (filledCount == wordCount) {
-                MaterialTheme.colorScheme.primary
-            } else {
-                MaterialTheme.colorScheme.onSurfaceVariant
-            },
-        )
+        WordsEntered(filledCount = words.count { it.isNotBlank() }, wordCount = wordCount)
     }
+}
+
+/** 12 or 24 words, and the button that pastes the whole phrase. */
+@Composable
+private fun WordCountRow(
+    wordCount: Int,
+    onWordCountChange: (Int) -> Unit,
+    onPaste: () -> Unit,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        FilterChip(
+            selected = wordCount == 12,
+            onClick = { onWordCountChange(12) },
+            label = { Text(stringResource(Res.string.mnemonic_12_words)) },
+        )
+        FilterChip(
+            selected = wordCount == 24,
+            onClick = { onWordCountChange(24) },
+            label = { Text(stringResource(Res.string.mnemonic_24_words)) },
+        )
+        Spacer(Modifier.weight(1f))
+        IconButton(onClick = onPaste) {
+            Icon(
+                imageVector = Icons.Outlined.ContentPaste,
+                contentDescription = stringResource(Res.string.paste_from_clipboard),
+                tint = MaterialTheme.colorScheme.primary,
+            )
+        }
+    }
+}
+
+/** The word fields at [indices]; each moves on to the next word, and the last word of the phrase is Done. */
+@Composable
+private fun WordColumn(
+    indices: IntRange,
+    words: List<String>,
+    wordList: List<String>,
+    focusRequesters: List<FocusRequester>,
+    onWordChange: (index: Int, word: String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        for (i in indices) {
+            WordField(
+                displayNumber = i + 1,
+                word = words.getOrElse(i) { "" },
+                wordList = wordList,
+                onWordChange = { onWordChange(i, it) },
+                focusRequester = focusRequesters[i],
+                nextFocusRequester = focusRequesters.getOrNull(i + 1),
+                imeAction = if (i < focusRequesters.lastIndex) ImeAction.Next else ImeAction.Done,
+            )
+        }
+    }
+}
+
+@Composable
+private fun WordsEntered(
+    filledCount: Int,
+    wordCount: Int,
+) {
+    Text(
+        text = stringResource(Res.string.mnemonic_words_entered, filledCount, wordCount),
+        style = MaterialTheme.typography.bodySmall,
+        color = if (filledCount == wordCount) {
+            MaterialTheme.colorScheme.primary
+        } else {
+            MaterialTheme.colorScheme.onSurfaceVariant
+        },
+    )
+}
+
+/**
+ * What typing [raw] into a word field means: the [word] to keep (lower-cased, without leading
+ * spaces; null when there is none), and whether a space was typed, which ends the word and
+ * [movesOn] to the next field.
+ */
+internal data class TypedWord(val word: String?, val movesOn: Boolean)
+
+internal fun typedWord(raw: String): TypedWord {
+    val cleaned = raw.trimStart().lowercase()
+    if (!cleaned.contains(" ")) return TypedWord(cleaned, movesOn = false)
+    val firstWord = cleaned.substringBefore(" ").trim()
+    return TypedWord(firstWord.ifEmpty { null }, movesOn = true)
 }
 
 @Composable
@@ -175,17 +211,10 @@ private fun WordField(
         OutlinedTextField(
             value = word,
             onValueChange = { raw ->
-                val cleaned = raw.trimStart().lowercase()
-                if (cleaned.contains(" ")) {
-                    val firstWord = cleaned.substringBefore(" ").trim()
-                    if (firstWord.isNotEmpty()) {
-                        onWordChange(firstWord)
-                    }
-                    nextFocusRequester?.requestFocus()
-                } else {
-                    selectedWord = "" // reset so menu can reappear while typing
-                    onWordChange(cleaned)
-                }
+                val typed = typedWord(raw)
+                if (!typed.movesOn) selectedWord = "" // reset so menu can reappear while typing
+                typed.word?.let(onWordChange)
+                if (typed.movesOn) nextFocusRequester?.requestFocus()
             },
             modifier = Modifier
                 .fillMaxWidth()
@@ -213,22 +242,38 @@ private fun WordField(
             ),
         )
 
-        DropdownMenu(
+        WordSuggestions(
             expanded = menuExpanded,
-            onDismissRequest = { selectedWord = word },
-            modifier = Modifier.heightIn(max = 200.dp),
-            properties = PopupProperties(focusable = false),
-        ) {
-            suggestions.forEach { suggestion ->
-                DropdownMenuItem(
-                    text = { Text(text = suggestion, fontSize = 14.sp) },
-                    onClick = {
-                        selectedWord = suggestion
-                        onWordChange(suggestion)
-                        nextFocusRequester?.requestFocus()
-                    },
-                )
-            }
+            suggestions = suggestions,
+            onDismiss = { selectedWord = word },
+            onPick = { suggestion ->
+                selectedWord = suggestion
+                onWordChange(suggestion)
+                nextFocusRequester?.requestFocus()
+            },
+        )
+    }
+}
+
+/** Up to five words of the list that start with what was typed; the menu does not take the keyboard's focus. */
+@Composable
+private fun WordSuggestions(
+    expanded: Boolean,
+    suggestions: List<String>,
+    onDismiss: () -> Unit,
+    onPick: (String) -> Unit,
+) {
+    DropdownMenu(
+        expanded = expanded,
+        onDismissRequest = onDismiss,
+        modifier = Modifier.heightIn(max = 200.dp),
+        properties = PopupProperties(focusable = false),
+    ) {
+        suggestions.forEach { suggestion ->
+            DropdownMenuItem(
+                text = { Text(text = suggestion, fontSize = 14.sp) },
+                onClick = { onPick(suggestion) },
+            )
         }
     }
 }

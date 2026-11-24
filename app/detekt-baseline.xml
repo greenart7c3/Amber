@@ -48,8 +48,6 @@
     <ID>LongMethod:MnemonicLoginInput.kt:@Composable fun MnemonicLoginInput</ID>
     <ID>LongMethod:MnemonicLoginInput.kt:@Composable private fun WordField</ID>
     <ID>LongMethod:NewApplicationScreen.kt:@Composable fun NewApplicationScreen</ID>
-    <ID>LongMethod:NewNsecBunkerScreen.kt:@Composable fun NewNsecBunkerCreatedScreen</ID>
-    <ID>LongMethod:NewNsecBunkerScreen.kt:@Composable fun NewNsecBunkerScreen</ID>
     <ID>LongMethod:Nip44v3ApprovalData.kt:@Composable fun Nip44v3ApprovalData</ID>
     <ID>LongMethod:QrCodeScanner.kt:@Composable fun SimpleQrCodeScanner</ID>
     <ID>LongMethod:RandomPinInput.kt:@Composable fun RandomPinInput</ID>

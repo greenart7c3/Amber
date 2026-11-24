@@ -1,7 +1,6 @@
 package com.greenart7c3.nostrsigner.ui.components
 
 import androidx.activity.compose.LocalActivity
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -10,22 +9,18 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateMap
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.unit.dp
@@ -49,7 +44,6 @@ import com.greenart7c3.nostrsigner.commonsui.read_from_encrypted_content
 import com.greenart7c3.nostrsigner.commonsui.read_this_list_of_tags_from_encrypted_content
 import com.greenart7c3.nostrsigner.commonsui.read_this_text_from_encrypted_content
 import com.greenart7c3.nostrsigner.commonsui.several_apps_are_requiring_some_permissions_please_review_them
-import com.greenart7c3.nostrsigner.commonsui.show_details
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.AmberBunkerRequest
 import com.greenart7c3.nostrsigner.models.BunkerClientMetadata
@@ -59,7 +53,6 @@ import com.greenart7c3.nostrsigner.models.PrivateZapEncryptedDataKind
 import com.greenart7c3.nostrsigner.models.TagArrayEncryptedDataKind
 import com.greenart7c3.nostrsigner.service.BunkerRequestUtils
 import com.greenart7c3.nostrsigner.service.MultiEventScreenIntents
-import com.greenart7c3.nostrsigner.service.isBlockedByAuthWhitelist
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
 import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.LocalAccountRepository
@@ -339,73 +332,17 @@ private fun BunkerRequestCard(
     approved: Boolean,
     onApproveChange: (Boolean) -> Unit,
 ) {
-    val settingsStore = LocalSettingsStore.current
     val type = nip46SignerType(bunkerRequest.request.method)
-    var showDetails by remember { mutableStateOf(false) }
-    val hasDetails = (type == SignerType.SIGN_EVENT && bunkerRequest.signedEvent != null) ||
-        ((type.toString().contains("ENCRYPT") || type.toString().contains("DECRYPT")) && bunkerRequest.encryptedData != null)
-
-    Card(
-        Modifier.padding(4.dp),
-        colors = CardDefaults.cardColors().copy(
-            containerColor = MaterialTheme.colorScheme.background,
-        ),
-        border = BorderStroke(1.dp, Color.Gray),
-    ) {
-        Column(
-            Modifier.padding(8.dp),
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Column(
-                    Modifier
-                        .weight(1f)
-                        .padding(end = 8.dp),
-                ) {
-                    Text(text = bunkerRequestLabel(bunkerRequest, type))
-                    val preview = bunkerRequestPreview(bunkerRequest, type)
-                    if (preview.isNotBlank()) {
-                        Text(
-                            text = preview,
-                            color = Color.Gray,
-                            maxLines = 2,
-                        )
-                    }
-                    if (hasDetails) {
-                        RawJsonButton(
-                            onCLick = { showDetails = true },
-                            text = stringResource(Res.string.show_details),
-                        )
-                    }
-                }
-            }
-
-            signingAs?.let { SigningAs(it) }
-
-            RequestApproval(
-                blockedByAuthWhitelist = isBlockedByAuthWhitelist(bunkerRequest.signedEvent, settingsStore.settings.authWhitelist),
-                approved = approved,
-                onApproveChange = onApproveChange,
-            )
-        }
-    }
-
-    if (showDetails) {
-        if (type == SignerType.SIGN_EVENT) {
-            EventDetailModal(
-                event = bunkerRequest.signedEvent!!,
-                onDismiss = { showDetails = false },
-            )
-        } else {
-            EncryptDecryptDetailModal(
-                type = type,
-                encryptedData = bunkerRequest.encryptedData,
-                onDismiss = { showDetails = false },
-            )
-        }
-    }
+    BatchRequestCard(
+        type = type,
+        label = bunkerRequestLabel(bunkerRequest, type),
+        preview = bunkerRequestPreview(bunkerRequest, type),
+        event = bunkerRequest.signedEvent,
+        encryptedData = bunkerRequest.encryptedData,
+        signingAs = signingAs,
+        approved = approved,
+        onApproveChange = onApproveChange,
+    )
 }
 
 private fun bunkerRequestLabel(bunkerRequest: AmberBunkerRequest, type: SignerType): String {

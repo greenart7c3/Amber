@@ -33,6 +33,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -147,12 +148,14 @@ import com.greenart7c3.nostrsigner.commonsui.warning
 import com.greenart7c3.nostrsigner.commonsui.yes
 import com.greenart7c3.nostrsigner.desktop.Session
 import com.greenart7c3.nostrsigner.desktop.core.AccountManager
+import com.greenart7c3.nostrsigner.desktop.core.AccountRecord
 import com.greenart7c3.nostrsigner.desktop.core.AccountsStore
 import com.greenart7c3.nostrsigner.desktop.core.AmberDesktop
 import com.greenart7c3.nostrsigner.desktop.core.AutoStart
 import com.greenart7c3.nostrsigner.desktop.core.DateTimes
 import com.greenart7c3.nostrsigner.desktop.core.DesktopAccount
 import com.greenart7c3.nostrsigner.desktop.core.DesktopKeyStore
+import com.greenart7c3.nostrsigner.desktop.core.DesktopSettings
 import com.greenart7c3.nostrsigner.desktop.core.PassphraseLock
 import com.greenart7c3.nostrsigner.desktop.core.RelayHttpClients
 import com.greenart7c3.nostrsigner.desktop.core.SettingsStore
@@ -161,9 +164,11 @@ import com.greenart7c3.nostrsigner.desktop.core.TorManager
 import com.greenart7c3.nostrsigner.desktop.core.TorMode
 import com.greenart7c3.nostrsigner.desktop.core.TorStatus
 import com.greenart7c3.nostrsigner.desktop.core.toShortenHex
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -173,184 +178,23 @@ fun SettingsScreen(account: DesktopAccount, modifier: Modifier = Modifier) {
     val accounts by AccountsStore.accounts.collectAsState()
     var showBackupDialog by remember { mutableStateOf(false) }
     var showLogsDialog by remember { mutableStateOf(false) }
-    var showLogoutConfirm by remember { mutableStateOf<String?>(null) }
-    // Re-keyed on the account's name so a name fetched from its profile shows up.
-    val accountName by account.name.collectAsState()
-    var name by remember(accountName) { mutableStateOf(accountName) }
-
+    var logoutNpub by remember { mutableStateOf<String?>(null) }
     val scrollState = rememberScrollState()
+
     ScrollbarBox(rememberScrollbarAdapter(scrollState), modifier.fillMaxSize()) {
         Column(Modifier.fillMaxSize().verticalScroll(scrollState)) {
-            SettingsSection(stringResource(Res.string.account)) {
-                Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    OutlinedTextField(
-                        value = name,
-                        onValueChange = { name = it },
-                        label = { Text(stringResource(Res.string.name)) },
-                        singleLine = true,
-                        modifier = Modifier.widthIn(max = 420.dp).weight(1f, fill = false),
-                    )
-                    AmberOutlinedButton(
-                        text = stringResource(Res.string.save),
-                        onClick = {
-                            account.name.value = name
-                            Session.saveMeta(account)
-                            Toaster.toast(getStringBlocking(Res.string.d_saved))
-                        },
-                    )
-                }
-                Text(
-                    stringResource(Res.string.d_public_key, account.npub),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                Spacer(Modifier.height(8.dp))
-                AmberButton(text = stringResource(Res.string.backup_keys), onClick = { showBackupDialog = true })
-            }
-            SettingsSection(stringResource(Res.string.d_sign_policy), stringResource(Res.string.d_sign_policy_sub)) {
-                val policies = listOf(
-                    0 to stringResource(Res.string.d_policy_basic),
-                    1 to stringResource(Res.string.d_policy_approve),
-                    2 to stringResource(Res.string.d_policy_sign_all),
-                )
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    policies.forEach { (value, label) ->
-                        FilterChip(
-                            selected = account.signPolicy == value,
-                            onClick = {
-                                account.signPolicy = value
-                                Session.saveMeta(account)
-                            },
-                            label = { Text(label) },
-                        )
-                    }
-                }
-            }
-            SettingsSection(stringResource(Res.string.d_theme)) {
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    listOf(
-                        null to stringResource(Res.string.d_theme_system),
-                        false to stringResource(Res.string.d_theme_light),
-                        true to stringResource(Res.string.d_theme_dark),
-                    ).forEach { (value, label) ->
-                        FilterChip(
-                            selected = settings.darkTheme == value,
-                            onClick = { SettingsStore.update { it.copy(darkTheme = value) } },
-                            label = { Text(label) },
-                        )
-                    }
-                }
-            }
-            SettingsSection(stringResource(Res.string.language)) {
-                LanguagePicker()
-            }
-            SettingsSection(stringResource(Res.string.d_desktop)) {
-                if (isTraySupported) {
-                    SettingSwitch(
-                        title = stringResource(Res.string.d_keep_in_tray),
-                        description = stringResource(Res.string.d_keep_in_tray_sub),
-                        checked = settings.closeToTray,
-                        onCheckedChange = { value -> SettingsStore.update { it.copy(closeToTray = value) } },
-                    )
-                }
-                SettingSwitch(
-                    title = stringResource(Res.string.d_notifications),
-                    description = stringResource(Res.string.d_notifications_sub),
-                    checked = settings.showNotifications,
-                    onCheckedChange = { value -> SettingsStore.update { it.copy(showNotifications = value) } },
-                )
-                if (AutoStart.isSupported()) {
-                    SettingSwitch(
-                        title = stringResource(Res.string.d_start_on_boot),
-                        description = stringResource(Res.string.d_start_on_boot_sub),
-                        checked = settings.startOnBoot,
-                        onCheckedChange = { value ->
-                            SettingsStore.update { it.copy(startOnBoot = value) }
-                            AutoStart.setEnabled(value)
-                        },
-                    )
-                }
-                SettingSwitch(
-                    title = stringResource(Res.string.d_local_bunker_server),
-                    description = stringResource(Res.string.d_local_bunker_server_sub, AmberDesktop.localBunkerPort()),
-                    checked = settings.localBunkerServer,
-                    onCheckedChange = { value ->
-                        SettingsStore.update { it.copy(localBunkerServer = value) }
-                        AmberDesktop.applyLocalBunkerServerSetting()
-                    },
-                )
-                Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    var portText by remember(settings.localBunkerPort) { mutableStateOf(AmberDesktop.localBunkerPort().toString()) }
-                    OutlinedTextField(
-                        value = portText,
-                        onValueChange = { portText = it.filter(Char::isDigit).take(5) },
-                        label = { Text(stringResource(Res.string.d_local_bunker_port)) },
-                        singleLine = true,
-                        modifier = Modifier.widthIn(max = 180.dp),
-                    )
-                    AmberOutlinedButton(
-                        text = stringResource(Res.string.save),
-                        onClick = {
-                            val port = portText.toIntOrNull()
-                            if (port == null || port !in 1024..65535) {
-                                Toaster.toast(getStringBlocking(Res.string.d_local_bunker_port_invalid))
-                                return@AmberOutlinedButton
-                            }
-                            val error = AmberDesktop.changeLocalBunkerPort(port)
-                            Toaster.toast(getStringBlocking(error ?: Res.string.d_saved))
-                        },
-                    )
-                }
-            }
-            SettingsSection(stringResource(Res.string.connect_via_tor_short), stringResource(Res.string.tor_subtitle)) {
-                TorSection()
-            }
-            SettingsSection(stringResource(Res.string.auth_whitelist), stringResource(Res.string.auth_whitelist_description)) {
-                AuthWhitelistSection()
-            }
-            SettingsSection(stringResource(Res.string.accounts)) {
-                accounts.forEach { record ->
-                    Row(
-                        Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 2.dp),
-                        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
-                    ) {
-                        AccountAvatar(record.npub)
-                        Spacer(Modifier.width(10.dp))
-                        Column(Modifier.weight(1f)) {
-                            Text(
-                                record.name.ifBlank { record.npub.toShortenHex() },
-                                style = MaterialTheme.typography.bodyMedium,
-                            )
-                            if (record.npub == account.npub) {
-                                Text(
-                                    stringResource(Res.string.d_active),
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                )
-                            }
-                        }
-                        if (record.npub != account.npub) {
-                            AmberTextButton(
-                                text = stringResource(Res.string.d_switch),
-                                onClick = { scope.launch { Session.switchTo(record.npub) } },
-                            )
-                        }
-                        AmberTextButton(
-                            text = stringResource(Res.string.d_log_out),
-                            onClick = { showLogoutConfirm = record.npub },
-                        )
-                    }
-                    HorizontalDivider()
-                }
-                Spacer(Modifier.height(8.dp))
-                AmberOutlinedButton(text = stringResource(Res.string.d_add_an_account), onClick = { Session.addingAccount.value = true })
-            }
+            SettingsSection(stringResource(Res.string.account)) { AccountSection(account) { showBackupDialog = true } }
+            SettingsSection(stringResource(Res.string.d_sign_policy), stringResource(Res.string.d_sign_policy_sub)) { SignPolicySection(account) }
+            SettingsSection(stringResource(Res.string.d_theme)) { ThemeSection(settings.darkTheme) }
+            SettingsSection(stringResource(Res.string.language)) { LanguagePicker() }
+            SettingsSection(stringResource(Res.string.d_desktop)) { DesktopSection(settings) }
+            SettingsSection(stringResource(Res.string.connect_via_tor_short), stringResource(Res.string.tor_subtitle)) { TorSection() }
+            SettingsSection(stringResource(Res.string.auth_whitelist), stringResource(Res.string.auth_whitelist_description)) { AuthWhitelistSection() }
+            SettingsSection(stringResource(Res.string.accounts)) { AccountsSection(accounts, account.npub) { logoutNpub = it } }
             SettingsSection(
                 stringResource(Res.string.security),
                 stringResource(Res.string.d_security_keys_desc, DesktopKeyStore.passwordSourceDescription ?: "…"),
-            ) {
-                SecuritySection()
-            }
+            ) { SecuritySection() }
             SettingsSection(stringResource(Res.string.d_diagnostics)) {
                 AmberOutlinedButton(text = stringResource(Res.string.d_view_logs), onClick = { showLogsDialog = true })
             }
@@ -358,73 +202,294 @@ fun SettingsScreen(account: DesktopAccount, modifier: Modifier = Modifier) {
         }
     }
 
-    if (showBackupDialog) {
-        BackupDialog(account) { showBackupDialog = false }
+    if (showBackupDialog) BackupDialog(account = account, onDismiss = { showBackupDialog = false })
+    if (showLogsDialog) LogsDialog(account = account, onDismiss = { showLogsDialog = false })
+    logoutNpub?.let { npub ->
+        LogoutConfirmDialog(
+            onConfirm = {
+                logoutNpub = null
+                scope.launch { Session.logout(npub) }
+            },
+            onDismiss = { logoutNpub = null },
+        )
     }
-    if (showLogsDialog) {
-        LogsDialog(account) { showLogsDialog = false }
+}
+
+@Composable
+private fun ColumnScope.AccountSection(
+    account: DesktopAccount,
+    onOpenBackup: () -> Unit,
+) {
+    val accountName by account.name.collectAsState()
+    var name by remember(account.npub, accountName) { mutableStateOf(accountName) }
+
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        OutlinedTextField(
+            value = name,
+            onValueChange = { name = it },
+            label = { Text(stringResource(Res.string.name)) },
+            singleLine = true,
+            modifier = Modifier.widthIn(max = 420.dp).weight(1f, fill = false),
+        )
+        AmberOutlinedButton(
+            text = stringResource(Res.string.save),
+            onClick = {
+                account.name.value = name
+                Session.saveMeta(account)
+                Toaster.toast(getStringBlocking(Res.string.d_saved))
+            },
+        )
     }
-    showLogoutConfirm?.let { npub ->
-        var logoutPassphrase by remember { mutableStateOf("") }
-        var loggingOut by remember { mutableStateOf(false) }
-        AlertDialog(
-            onDismissRequest = { if (!loggingOut) showLogoutConfirm = null },
-            title = { Text(stringResource(Res.string.d_log_out_q)) },
-            text = {
-                Column {
-                    Text(stringResource(Res.string.d_log_out_confirm))
-                    Spacer(Modifier.height(8.dp))
-                    Text(stringResource(Res.string.d_log_out_passphrase))
-                    Spacer(Modifier.height(4.dp))
-                    OutlinedTextField(
-                        value = logoutPassphrase,
-                        onValueChange = { logoutPassphrase = it },
-                        label = { Text(stringResource(Res.string.d_passphrase)) },
-                        singleLine = true,
-                        visualTransformation = PasswordVisualTransformation(),
-                        enabled = !loggingOut,
-                        modifier = Modifier.fillMaxWidth(),
-                    )
+    Text(
+        stringResource(Res.string.d_public_key, account.npub),
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+    Spacer(Modifier.height(8.dp))
+    AmberButton(text = stringResource(Res.string.backup_keys), onClick = onOpenBackup)
+}
+
+@Composable
+private fun SignPolicySection(account: DesktopAccount) {
+    val policies = listOf(
+        0 to stringResource(Res.string.d_policy_basic),
+        1 to stringResource(Res.string.d_policy_approve),
+        2 to stringResource(Res.string.d_policy_sign_all),
+    )
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        policies.forEach { (value, label) ->
+            FilterChip(
+                selected = account.signPolicy == value,
+                onClick = {
+                    account.signPolicy = value
+                    Session.saveMeta(account)
+                },
+                label = { Text(label) },
+            )
+        }
+    }
+}
+
+@Composable
+private fun ThemeSection(darkTheme: Boolean?) {
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        listOf(
+            null to stringResource(Res.string.d_theme_system),
+            false to stringResource(Res.string.d_theme_light),
+            true to stringResource(Res.string.d_theme_dark),
+        ).forEach { (value, label) ->
+            FilterChip(
+                selected = darkTheme == value,
+                onClick = { SettingsStore.update { it.copy(darkTheme = value) } },
+                label = { Text(label) },
+            )
+        }
+    }
+}
+
+@Composable
+private fun ColumnScope.DesktopSection(settings: DesktopSettings) {
+    if (isTraySupported) {
+        SettingSwitch(
+            title = stringResource(Res.string.d_keep_in_tray),
+            description = stringResource(Res.string.d_keep_in_tray_sub),
+            checked = settings.closeToTray,
+            onCheckedChange = { value -> SettingsStore.update { it.copy(closeToTray = value) } },
+        )
+    }
+    SettingSwitch(
+        title = stringResource(Res.string.d_notifications),
+        description = stringResource(Res.string.d_notifications_sub),
+        checked = settings.showNotifications,
+        onCheckedChange = { value -> SettingsStore.update { it.copy(showNotifications = value) } },
+    )
+    if (AutoStart.isSupported()) {
+        SettingSwitch(
+            title = stringResource(Res.string.d_start_on_boot),
+            description = stringResource(Res.string.d_start_on_boot_sub),
+            checked = settings.startOnBoot,
+            onCheckedChange = { value ->
+                SettingsStore.update { it.copy(startOnBoot = value) }
+                AutoStart.setEnabled(value)
+            },
+        )
+    }
+    SettingSwitch(
+        title = stringResource(Res.string.d_local_bunker_server),
+        description = stringResource(Res.string.d_local_bunker_server_sub, AmberDesktop.localBunkerPort()),
+        checked = settings.localBunkerServer,
+        onCheckedChange = { value ->
+            SettingsStore.update { it.copy(localBunkerServer = value) }
+            AmberDesktop.applyLocalBunkerServerSetting()
+        },
+    )
+    LocalBunkerPortRow(settings.localBunkerPort)
+}
+
+@Composable
+private fun LocalBunkerPortRow(configuredPort: Int?) {
+    var portText by remember(configuredPort) { mutableStateOf(AmberDesktop.localBunkerPort().toString()) }
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        OutlinedTextField(
+            value = portText,
+            onValueChange = { portText = it.filter(Char::isDigit).take(5) },
+            label = { Text(stringResource(Res.string.d_local_bunker_port)) },
+            singleLine = true,
+            modifier = Modifier.widthIn(max = 180.dp),
+        )
+        AmberOutlinedButton(
+            text = stringResource(Res.string.save),
+            onClick = {
+                val port = portText.toIntOrNull()
+                if (port == null || port !in 1024..65535) {
+                    Toaster.toast(getStringBlocking(Res.string.d_local_bunker_port_invalid))
+                } else {
+                    val error = AmberDesktop.changeLocalBunkerPort(port)
+                    Toaster.toast(getStringBlocking(error ?: Res.string.d_saved))
                 }
-            },
-            confirmButton = {
-                AmberTextButton(
-                    text = if (loggingOut) stringResource(Res.string.d_working) else stringResource(Res.string.d_log_out),
-                    enabled = !loggingOut,
-                    onClick = {
-                        loggingOut = true
-                        scope.launch {
-                            try {
-                                if (PassphraseLock.verify(logoutPassphrase.toCharArray())) {
-                                    showLogoutConfirm = null
-                                    Session.logout(npub)
-                                } else {
-                                    Toaster.toast(getStringBlocking(Res.string.d_wrong_passphrase))
-                                }
-                            } catch (e: PassphraseLock.OsSecretUnavailableException) {
-                                Toaster.toast(getStringBlocking(Res.string.d_os_secret_unavailable, e.storeDescription))
-                            }
-                            loggingOut = false
-                        }
-                    },
-                )
-            },
-            dismissButton = {
-                AmberTextButton(
-                    text = stringResource(Res.string.cancel),
-                    enabled = !loggingOut,
-                    onClick = { showLogoutConfirm = null },
-                )
             },
         )
     }
 }
 
-/**
- * One settings group. On wide windows the title and [description] sit in a
- * left column beside the controls, separated from the next group by a
- * divider; otherwise they stack above the controls.
- */
+@Composable
+private fun ColumnScope.AccountsSection(
+    accounts: List<AccountRecord>,
+    activeNpub: String,
+    onLogout: (String) -> Unit,
+) {
+    val scope = rememberCoroutineScope()
+    accounts.forEach { record ->
+        AccountRow(
+            record = record,
+            isActive = record.npub == activeNpub,
+            onSwitch = { scope.launch { Session.switchTo(record.npub) } },
+            onLogout = { onLogout(record.npub) },
+        )
+        HorizontalDivider()
+    }
+    Spacer(Modifier.height(8.dp))
+    AmberOutlinedButton(text = stringResource(Res.string.d_add_an_account), onClick = { Session.addingAccount.value = true })
+}
+
+@Composable
+private fun AccountRow(
+    record: AccountRecord,
+    isActive: Boolean,
+    onSwitch: () -> Unit,
+    onLogout: () -> Unit,
+) {
+    Row(
+        Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 2.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        AccountAvatar(record.npub)
+        Spacer(Modifier.width(10.dp))
+        Column(Modifier.weight(1f)) {
+            Text(
+                record.name.ifBlank { record.npub.toShortenHex() },
+                style = MaterialTheme.typography.bodyMedium,
+            )
+            if (isActive) {
+                Text(
+                    stringResource(Res.string.d_active),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+        if (!isActive) {
+            AmberTextButton(
+                text = stringResource(Res.string.d_switch),
+                onClick = onSwitch,
+            )
+        }
+        AmberTextButton(
+            text = stringResource(Res.string.d_log_out),
+            onClick = onLogout,
+        )
+    }
+}
+
+@Composable
+private fun PassphraseField(
+    label: StringResource,
+    value: String,
+    onValueChange: (String) -> Unit,
+    enabled: Boolean = true,
+) {
+    OutlinedTextField(
+        value = value,
+        onValueChange = onValueChange,
+        label = { Text(stringResource(label)) },
+        singleLine = true,
+        visualTransformation = PasswordVisualTransformation(),
+        enabled = enabled,
+        modifier = Modifier.fillMaxWidth(),
+    )
+}
+
+@Composable
+private fun LogoutConfirmDialog(
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    val scope = rememberCoroutineScope()
+    var passphrase by remember { mutableStateOf("") }
+    var loggingOut by remember { mutableStateOf(false) }
+
+    AlertDialog(
+        onDismissRequest = { if (!loggingOut) onDismiss() },
+        title = { Text(stringResource(Res.string.d_log_out_q)) },
+        text = {
+            Column {
+                Text(stringResource(Res.string.d_log_out_confirm))
+                Spacer(Modifier.height(8.dp))
+                Text(stringResource(Res.string.d_log_out_passphrase))
+                Spacer(Modifier.height(4.dp))
+                PassphraseField(
+                    label = Res.string.d_passphrase,
+                    value = passphrase,
+                    onValueChange = { passphrase = it },
+                    enabled = !loggingOut,
+                )
+            }
+        },
+        confirmButton = {
+            AmberTextButton(
+                text = if (loggingOut) stringResource(Res.string.d_working) else stringResource(Res.string.d_log_out),
+                enabled = !loggingOut,
+                onClick = {
+                    loggingOut = true
+                    scope.launch {
+                        try {
+                            if (verifyPassphrase(passphrase)) onConfirm()
+                        } finally {
+                            loggingOut = false
+                        }
+                    }
+                },
+            )
+        },
+        dismissButton = {
+            AmberTextButton(
+                text = stringResource(Res.string.cancel),
+                enabled = !loggingOut,
+                onClick = onDismiss,
+            )
+        },
+    )
+}
+
+private suspend fun verifyPassphrase(passphrase: String): Boolean = try {
+    val verified = PassphraseLock.verify(passphrase.toCharArray())
+    if (!verified) Toaster.toast(getStringBlocking(Res.string.d_wrong_passphrase))
+    verified
+} catch (e: PassphraseLock.OsSecretUnavailableException) {
+    Toaster.toast(getStringBlocking(Res.string.d_os_secret_unavailable, e.storeDescription))
+    false
+}
+
 @Composable
 private fun SettingsSection(
     title: String,
@@ -432,17 +497,19 @@ private fun SettingsSection(
     content: @Composable ColumnScope.() -> Unit,
 ) {
     if (LocalLayoutWidth.current == LayoutWidth.EXPANDED) {
-        Row(Modifier.fillMaxWidth().padding(vertical = 20.dp)) {
-            Column(Modifier.width(240.dp).padding(end = 32.dp)) {
-                Text(title, style = MaterialTheme.typography.titleMedium)
-                if (description != null) {
-                    Spacer(Modifier.height(4.dp))
-                    Text(description, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Column(Modifier.fillMaxWidth()) {
+            Row(Modifier.fillMaxWidth().padding(vertical = 20.dp)) {
+                Column(Modifier.width(240.dp).padding(end = 32.dp)) {
+                    Text(title, style = MaterialTheme.typography.titleMedium)
+                    if (description != null) {
+                        Spacer(Modifier.height(4.dp))
+                        Text(description, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
                 }
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp), content = content)
             }
-            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp), content = content)
+            HorizontalDivider()
         }
-        HorizontalDivider()
     } else {
         Column(Modifier.fillMaxWidth().padding(bottom = 16.dp)) {
             Text(title, style = MaterialTheme.typography.titleMedium)
@@ -487,7 +554,7 @@ private fun SettingSwitch(
 ) {
     Row(
         Modifier.fillMaxWidth().padding(vertical = 4.dp),
-        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(Modifier.weight(1f)) {
             Text(title, style = MaterialTheme.typography.bodyMedium)
@@ -498,97 +565,26 @@ private fun SettingSwitch(
 }
 
 @Composable
-private fun TorSection() {
+private fun ColumnScope.TorSection() {
     val settings by SettingsStore.settings.collectAsState()
     val torStatus by TorManager.status.collectAsState()
     val scope = rememberCoroutineScope()
     var confirmDisable by remember { mutableStateOf(false) }
-    var portText by remember(settings.proxyPort) { mutableStateOf(settings.proxyPort.toString()) }
 
-    fun applyMode(mode: TorMode, port: Int = settings.proxyPort) {
-        SettingsStore.update { it.copy(torMode = mode, proxyPort = port) }
-        AmberDesktop.applyTorSettings()
-        if (mode == TorMode.EXTERNAL) {
-            scope.launch {
-                val alive = withContext(Dispatchers.IO) { RelayHttpClients.isSocksProxyAlive(port) }
-                Toaster.toast(getStringBlocking(if (alive) Res.string.d_tor_proxy_ok else Res.string.failed_to_connect_to_tor_orbot))
+    TorModeChips(
+        selected = settings.torMode,
+        onSelect = { mode ->
+            when (mode) {
+                settings.torMode -> {}
+                TorMode.DISABLED -> confirmDisable = true
+                else -> applyTorMode(scope, mode, settings.proxyPort)
             }
-        }
-    }
-
-    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        listOf(
-            TorMode.DISABLED to stringResource(Res.string.d_tor_off),
-            TorMode.BUILTIN to stringResource(Res.string.builtin_tor_title),
-            TorMode.EXTERNAL to stringResource(Res.string.d_tor_external),
-        ).forEach { (mode, label) ->
-            FilterChip(
-                selected = settings.torMode == mode,
-                onClick = {
-                    when (mode) {
-                        settings.torMode -> {}
-                        // Like Android: confirm before traffic moves back to the clearnet.
-                        TorMode.DISABLED -> confirmDisable = true
-                        else -> applyMode(mode)
-                    }
-                },
-                label = { Text(label) },
-            )
-        }
-    }
+        },
+    )
     Spacer(Modifier.height(4.dp))
     when (settings.torMode) {
-        TorMode.BUILTIN -> {
-            Text(stringResource(Res.string.builtin_tor_description), style = MaterialTheme.typography.bodySmall)
-            Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                val statusText = when (val status = torStatus) {
-                    TorStatus.Stopped -> stringResource(Res.string.d_tor_stopped)
-                    is TorStatus.Connecting -> if (status.percentage <= 0) {
-                        stringResource(Res.string.tor_starting)
-                    } else {
-                        stringResource(Res.string.tor_connecting, status.percentage)
-                    }
-                    TorStatus.Connected -> stringResource(Res.string.builtin_tor_active)
-                    is TorStatus.Failed -> listOfNotNull(stringResource(Res.string.tor_connection_failed), status.message?.takeIf { it.isNotBlank() }).joinToString(": ")
-                }
-                Text(
-                    statusText,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = if (torStatus is TorStatus.Failed) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.weight(1f, fill = false),
-                )
-                AmberTextButton(
-                    text = stringResource(Res.string.tor_restart),
-                    onClick = { TorManager.restart(AmberDesktop.applicationIOScope) },
-                )
-            }
-        }
-
-        TorMode.EXTERNAL -> {
-            Text(stringResource(Res.string.d_tor_external_sub), style = MaterialTheme.typography.bodySmall)
-            Spacer(Modifier.height(4.dp))
-            Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                OutlinedTextField(
-                    value = portText,
-                    onValueChange = { value -> portText = value.filter { it.isDigit() }.take(5) },
-                    label = { Text(stringResource(Res.string.d_tor_socks_port)) },
-                    singleLine = true,
-                    modifier = Modifier.widthIn(max = 200.dp),
-                )
-                AmberOutlinedButton(
-                    text = stringResource(Res.string.save),
-                    onClick = {
-                        val port = portText.toIntOrNull()
-                        if (port == null || port !in 1..65535) {
-                            Toaster.toast(getStringBlocking(Res.string.d_tor_invalid_port))
-                        } else {
-                            applyMode(TorMode.EXTERNAL, port)
-                        }
-                    },
-                )
-            }
-        }
-
+        TorMode.BUILTIN -> BuiltinTorSection(torStatus)
+        TorMode.EXTERNAL -> ExternalTorSection(settings.proxyPort) { applyTorMode(scope, TorMode.EXTERNAL, it) }
         TorMode.DISABLED -> {}
     }
     Text(
@@ -598,28 +594,133 @@ private fun TorSection() {
     )
 
     if (confirmDisable) {
-        AlertDialog(
-            onDismissRequest = { confirmDisable = false },
-            title = { Text(stringResource(Res.string.do_you_really_want_to_disable_tor_title)) },
-            text = { Text(stringResource(Res.string.do_you_really_want_to_disable_tor_text)) },
-            confirmButton = {
-                AmberTextButton(
-                    text = stringResource(Res.string.yes),
-                    onClick = {
-                        confirmDisable = false
-                        applyMode(TorMode.DISABLED)
-                    },
-                )
+        ConfirmDisableTorDialog(
+            onConfirm = {
+                confirmDisable = false
+                applyTorMode(scope, TorMode.DISABLED, settings.proxyPort)
             },
-            dismissButton = {
-                AmberTextButton(text = stringResource(Res.string.no), onClick = { confirmDisable = false })
+            onDismiss = { confirmDisable = false },
+        )
+    }
+}
+
+@Composable
+private fun TorModeChips(
+    selected: TorMode,
+    onSelect: (TorMode) -> Unit,
+) {
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        listOf(
+            TorMode.DISABLED to stringResource(Res.string.d_tor_off),
+            TorMode.BUILTIN to stringResource(Res.string.builtin_tor_title),
+            TorMode.EXTERNAL to stringResource(Res.string.d_tor_external),
+        ).forEach { (mode, label) ->
+            FilterChip(
+                selected = selected == mode,
+                onClick = { onSelect(mode) },
+                label = { Text(label) },
+            )
+        }
+    }
+}
+
+@Composable
+private fun ColumnScope.BuiltinTorSection(torStatus: TorStatus) {
+    Text(stringResource(Res.string.builtin_tor_description), style = MaterialTheme.typography.bodySmall)
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        Text(
+            torStatusText(torStatus),
+            style = MaterialTheme.typography.bodyMedium,
+            color = if (torStatus is TorStatus.Failed) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.weight(1f, fill = false),
+        )
+        AmberTextButton(
+            text = stringResource(Res.string.tor_restart),
+            onClick = { TorManager.restart(AmberDesktop.applicationIOScope) },
+        )
+    }
+}
+
+@Composable
+private fun torStatusText(status: TorStatus): String = when (status) {
+    TorStatus.Stopped -> stringResource(Res.string.d_tor_stopped)
+    is TorStatus.Connecting -> if (status.percentage <= 0) {
+        stringResource(Res.string.tor_starting)
+    } else {
+        stringResource(Res.string.tor_connecting, status.percentage)
+    }
+    TorStatus.Connected -> stringResource(Res.string.builtin_tor_active)
+    is TorStatus.Failed -> listOfNotNull(
+        stringResource(Res.string.tor_connection_failed),
+        status.message?.takeIf { it.isNotBlank() },
+    ).joinToString(": ")
+}
+
+@Composable
+private fun ColumnScope.ExternalTorSection(
+    proxyPort: Int,
+    onSave: (Int) -> Unit,
+) {
+    var portText by remember(proxyPort) { mutableStateOf(proxyPort.toString()) }
+    Text(stringResource(Res.string.d_tor_external_sub), style = MaterialTheme.typography.bodySmall)
+    Spacer(Modifier.height(4.dp))
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        OutlinedTextField(
+            value = portText,
+            onValueChange = { value -> portText = value.filter { it.isDigit() }.take(5) },
+            label = { Text(stringResource(Res.string.d_tor_socks_port)) },
+            singleLine = true,
+            modifier = Modifier.widthIn(max = 200.dp),
+        )
+        AmberOutlinedButton(
+            text = stringResource(Res.string.save),
+            onClick = {
+                val port = portText.toIntOrNull()
+                if (port == null || port !in 1..65535) {
+                    Toaster.toast(getStringBlocking(Res.string.d_tor_invalid_port))
+                } else {
+                    onSave(port)
+                }
             },
         )
     }
 }
 
 @Composable
-private fun SecuritySection() {
+private fun ConfirmDisableTorDialog(
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(Res.string.do_you_really_want_to_disable_tor_title)) },
+        text = { Text(stringResource(Res.string.do_you_really_want_to_disable_tor_text)) },
+        confirmButton = {
+            AmberTextButton(text = stringResource(Res.string.yes), onClick = onConfirm)
+        },
+        dismissButton = {
+            AmberTextButton(text = stringResource(Res.string.no), onClick = onDismiss)
+        },
+    )
+}
+
+private fun applyTorMode(
+    scope: CoroutineScope,
+    mode: TorMode,
+    port: Int,
+) {
+    SettingsStore.update { it.copy(torMode = mode, proxyPort = port) }
+    AmberDesktop.applyTorSettings()
+    if (mode == TorMode.EXTERNAL) {
+        scope.launch {
+            val alive = withContext(Dispatchers.IO) { RelayHttpClients.isSocksProxyAlive(port) }
+            Toaster.toast(getStringBlocking(if (alive) Res.string.d_tor_proxy_ok else Res.string.failed_to_connect_to_tor_orbot))
+        }
+    }
+}
+
+@Composable
+private fun ColumnScope.SecuritySection() {
     val settings by SettingsStore.settings.collectAsState()
     var showChangeDialog by remember { mutableStateOf(false) }
 
@@ -662,7 +763,7 @@ private fun SecuritySection() {
 private fun ChangePassphraseDialog(onDismiss: () -> Unit) {
     val scope = rememberCoroutineScope()
     var current by remember { mutableStateOf("") }
-    var new by remember { mutableStateOf("") }
+    var newPassphrase by remember { mutableStateOf("") }
     var confirm by remember { mutableStateOf("") }
     var working by remember { mutableStateOf(false) }
 
@@ -671,37 +772,13 @@ private fun ChangePassphraseDialog(onDismiss: () -> Unit) {
         title = { Text(stringResource(Res.string.d_change_the_passphrase)) },
         text = {
             Column {
-                Text(
-                    stringResource(Res.string.d_passphrase_never_stored),
-                    style = MaterialTheme.typography.bodySmall,
-                )
+                Text(stringResource(Res.string.d_passphrase_never_stored), style = MaterialTheme.typography.bodySmall)
                 Spacer(Modifier.height(8.dp))
-                OutlinedTextField(
-                    value = current,
-                    onValueChange = { current = it },
-                    label = { Text(stringResource(Res.string.d_current_passphrase)) },
-                    singleLine = true,
-                    visualTransformation = PasswordVisualTransformation(),
-                    modifier = Modifier.fillMaxWidth(),
-                )
+                PassphraseField(label = Res.string.d_current_passphrase, value = current, onValueChange = { current = it })
                 Spacer(Modifier.height(8.dp))
-                OutlinedTextField(
-                    value = new,
-                    onValueChange = { new = it },
-                    label = { Text(stringResource(Res.string.d_new_passphrase)) },
-                    singleLine = true,
-                    visualTransformation = PasswordVisualTransformation(),
-                    modifier = Modifier.fillMaxWidth(),
-                )
+                PassphraseField(label = Res.string.d_new_passphrase, value = newPassphrase, onValueChange = { newPassphrase = it })
                 Spacer(Modifier.height(8.dp))
-                OutlinedTextField(
-                    value = confirm,
-                    onValueChange = { confirm = it },
-                    label = { Text(stringResource(Res.string.d_repeat_passphrase)) },
-                    singleLine = true,
-                    visualTransformation = PasswordVisualTransformation(),
-                    modifier = Modifier.fillMaxWidth(),
-                )
+                PassphraseField(label = Res.string.d_repeat_passphrase, value = confirm, onValueChange = { confirm = it })
             }
         },
         confirmButton = {
@@ -709,29 +786,18 @@ private fun ChangePassphraseDialog(onDismiss: () -> Unit) {
                 text = if (working) stringResource(Res.string.d_working) else stringResource(Res.string.save),
                 enabled = !working,
                 onClick = {
-                    if (new.length < PassphraseLock.MIN_PASSPHRASE_LENGTH) {
-                        Toaster.toast(getStringBlocking(Res.string.d_use_12_chars))
-                        return@AmberTextButton
-                    }
-                    if (new != confirm) {
-                        Toaster.toast(getStringBlocking(Res.string.d_passphrases_no_match))
+                    val error = validateNewPassphrase(newPassphrase, confirm)
+                    if (error != null) {
+                        Toaster.toast(getStringBlocking(error))
                         return@AmberTextButton
                     }
                     working = true
                     scope.launch {
                         try {
-                            if (PassphraseLock.changePassphrase(current.toCharArray(), new.toCharArray())) {
-                                Toaster.toast(getStringBlocking(Res.string.d_passphrase_changed))
-                                onDismiss()
-                            } else {
-                                Toaster.toast(getStringBlocking(Res.string.d_wrong_current_passphrase))
-                            }
-                        } catch (e: PassphraseLock.OsSecretUnavailableException) {
-                            Toaster.toast(getStringBlocking(Res.string.d_os_secret_unavailable, e.storeDescription))
-                        } catch (e: Exception) {
-                            Toaster.toast(e.message ?: getStringBlocking(Res.string.d_failed_update_passphrase))
+                            if (applyPassphraseChange(current, newPassphrase)) onDismiss()
+                        } finally {
+                            working = false
                         }
-                        working = false
                     }
                 },
             )
@@ -746,113 +812,152 @@ private fun ChangePassphraseDialog(onDismiss: () -> Unit) {
     )
 }
 
+private fun validateNewPassphrase(newPassphrase: String, confirm: String): StringResource? = when {
+    newPassphrase.length < PassphraseLock.MIN_PASSPHRASE_LENGTH -> Res.string.d_use_12_chars
+    newPassphrase != confirm -> Res.string.d_passphrases_no_match
+    else -> null
+}
+
+private suspend fun applyPassphraseChange(current: String, newPassphrase: String): Boolean = try {
+    if (PassphraseLock.changePassphrase(current.toCharArray(), newPassphrase.toCharArray())) {
+        Toaster.toast(getStringBlocking(Res.string.d_passphrase_changed))
+        true
+    } else {
+        Toaster.toast(getStringBlocking(Res.string.d_wrong_current_passphrase))
+        false
+    }
+} catch (e: PassphraseLock.OsSecretUnavailableException) {
+    Toaster.toast(getStringBlocking(Res.string.d_os_secret_unavailable, e.storeDescription))
+    false
+} catch (e: Exception) {
+    Toaster.toast(e.message ?: getStringBlocking(Res.string.d_failed_update_passphrase))
+    false
+}
+
 @Composable
 private fun BackupDialog(
     account: DesktopAccount,
     onDismiss: () -> Unit,
 ) {
     val copyText = rememberCopyText()
-    val scope = rememberCoroutineScope()
-    var showSecret by remember { mutableStateOf(false) }
     var confirmCopy by remember { mutableStateOf(false) }
-    var password by remember { mutableStateOf("") }
-    var ncryptsec by remember { mutableStateOf("") }
-    var seedWords by remember { mutableStateOf("") }
 
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(Res.string.backup_keys)) },
         text = {
             Column(Modifier.verticalScroll(rememberScrollState())) {
-                Text(stringResource(Res.string.d_secret_key_nsec), style = MaterialTheme.typography.titleSmall)
-                if (showSecret) {
-                    Text(account.getNsec(), fontFamily = FontFamily.Monospace, style = MaterialTheme.typography.bodySmall)
-                    if (seedWords.isNotBlank()) {
-                        Spacer(Modifier.height(8.dp))
-                        Text(stringResource(Res.string.d_seed_words), style = MaterialTheme.typography.titleSmall)
-                        Text(seedWords, fontFamily = FontFamily.Monospace, style = MaterialTheme.typography.bodySmall)
-                    }
-                } else {
-                    AmberTextButton(
-                        text = stringResource(Res.string.d_show),
-                        onClick = {
-                            showSecret = true
-                            scope.launch { seedWords = AccountManager.seedWords(account.npub) }
-                        },
-                    )
-                }
-                Row {
-                    AmberTextButton(
-                        text = stringResource(Res.string.d_copy_nsec),
-                        onClick = { confirmCopy = true },
-                    )
-                }
-
+                PlainKeyBackupSection(account = account, onRequestCopy = { confirmCopy = true })
                 Spacer(Modifier.height(12.dp))
-                Text(stringResource(Res.string.d_encrypted_backup), style = MaterialTheme.typography.titleSmall)
-                OutlinedTextField(
-                    value = password,
-                    onValueChange = { password = it },
-                    label = { Text(stringResource(Res.string.d_password)) },
-                    visualTransformation = PasswordVisualTransformation(),
-                    modifier = Modifier.fillMaxWidth(),
-                )
-                if (ncryptsec.isNotBlank()) {
-                    Spacer(Modifier.height(4.dp))
-                    Text(
-                        ncryptsec,
-                        fontFamily = FontFamily.Monospace,
-                        style = MaterialTheme.typography.bodySmall,
-                        modifier = Modifier.heightIn(max = 90.dp).verticalScroll(rememberScrollState()),
-                    )
-                }
-                AmberTextButton(
-                    text = stringResource(Res.string.d_encrypt_and_copy),
-                    onClick = {
-                        if (password.isBlank()) {
-                            Toaster.toast(getStringBlocking(Res.string.d_password_required))
-                            return@AmberTextButton
-                        }
-                        ncryptsec = account.nip49Encrypt(password)
-                        copyText(ncryptsec)
-                        account.didBackup = true
-                        Session.saveMeta(account)
-                        Toaster.toast(getStringBlocking(Res.string.d_encrypted_key_copied))
-                    },
-                )
+                EncryptedKeyBackupSection(account = account, copyText = copyText)
             }
         },
         confirmButton = {
-            AmberTextButton(
-                text = stringResource(Res.string.d_close),
-                onClick = onDismiss,
-            )
+            AmberTextButton(text = stringResource(Res.string.d_close), onClick = onDismiss)
         },
     )
     if (confirmCopy) {
-        // Same warning as the seed-words copy: the plain nsec in the clipboard
-        // is full control of the account.
-        AlertDialog(
-            onDismissRequest = { confirmCopy = false },
-            title = { Text(stringResource(Res.string.warning)) },
-            text = { Text(stringResource(Res.string.d_copy_nsec_warning)) },
-            confirmButton = {
-                AmberTextButton(
-                    text = stringResource(Res.string.d_copy_nsec),
-                    onClick = {
-                        confirmCopy = false
-                        copyText(account.getNsec())
-                        account.didBackup = true
-                        Session.saveMeta(account)
-                        Toaster.toast(getStringBlocking(Res.string.d_nsec_copied))
-                    },
-                )
+        ConfirmCopyNsecDialog(
+            onConfirm = {
+                confirmCopy = false
+                copyText(account.getNsec())
+                account.didBackup = true
+                Session.saveMeta(account)
+                Toaster.toast(getStringBlocking(Res.string.d_nsec_copied))
             },
-            dismissButton = {
-                AmberTextButton(text = stringResource(Res.string.cancel), onClick = { confirmCopy = false })
+            onDismiss = { confirmCopy = false },
+        )
+    }
+}
+
+@Composable
+private fun ColumnScope.PlainKeyBackupSection(
+    account: DesktopAccount,
+    onRequestCopy: () -> Unit,
+) {
+    val scope = rememberCoroutineScope()
+    var showSecret by remember { mutableStateOf(false) }
+    var seedWords by remember { mutableStateOf("") }
+
+    Text(stringResource(Res.string.d_secret_key_nsec), style = MaterialTheme.typography.titleSmall)
+    if (showSecret) {
+        Text(account.getNsec(), fontFamily = FontFamily.Monospace, style = MaterialTheme.typography.bodySmall)
+        if (seedWords.isNotBlank()) {
+            Spacer(Modifier.height(8.dp))
+            Text(stringResource(Res.string.d_seed_words), style = MaterialTheme.typography.titleSmall)
+            Text(seedWords, fontFamily = FontFamily.Monospace, style = MaterialTheme.typography.bodySmall)
+        }
+    } else {
+        AmberTextButton(
+            text = stringResource(Res.string.d_show),
+            onClick = {
+                showSecret = true
+                scope.launch { seedWords = AccountManager.seedWords(account.npub) }
             },
         )
     }
+    Row {
+        AmberTextButton(text = stringResource(Res.string.d_copy_nsec), onClick = onRequestCopy)
+    }
+}
+
+@Composable
+private fun ColumnScope.EncryptedKeyBackupSection(
+    account: DesktopAccount,
+    copyText: (String) -> Unit,
+) {
+    var password by remember { mutableStateOf("") }
+    var ncryptsec by remember { mutableStateOf("") }
+
+    Text(stringResource(Res.string.d_encrypted_backup), style = MaterialTheme.typography.titleSmall)
+    OutlinedTextField(
+        value = password,
+        onValueChange = { password = it },
+        label = { Text(stringResource(Res.string.d_password)) },
+        visualTransformation = PasswordVisualTransformation(),
+        modifier = Modifier.fillMaxWidth(),
+    )
+    if (ncryptsec.isNotBlank()) {
+        Spacer(Modifier.height(4.dp))
+        Text(
+            ncryptsec,
+            fontFamily = FontFamily.Monospace,
+            style = MaterialTheme.typography.bodySmall,
+            modifier = Modifier.heightIn(max = 90.dp).verticalScroll(rememberScrollState()),
+        )
+    }
+    AmberTextButton(
+        text = stringResource(Res.string.d_encrypt_and_copy),
+        onClick = {
+            if (password.isBlank()) {
+                Toaster.toast(getStringBlocking(Res.string.d_password_required))
+                return@AmberTextButton
+            }
+            ncryptsec = account.nip49Encrypt(password)
+            copyText(ncryptsec)
+            account.didBackup = true
+            Session.saveMeta(account)
+            Toaster.toast(getStringBlocking(Res.string.d_encrypted_key_copied))
+        },
+    )
+}
+
+@Composable
+private fun ConfirmCopyNsecDialog(
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(Res.string.warning)) },
+        text = { Text(stringResource(Res.string.d_copy_nsec_warning)) },
+        confirmButton = {
+            AmberTextButton(text = stringResource(Res.string.d_copy_nsec), onClick = onConfirm)
+        },
+        dismissButton = {
+            AmberTextButton(text = stringResource(Res.string.cancel), onClick = onDismiss)
+        },
+    )
 }
 
 @Composable
@@ -885,9 +990,7 @@ private fun LogsDialog(
         confirmButton = {
             AmberTextButton(
                 text = stringResource(Res.string.d_clear),
-                onClick = {
-                    store.clearLogs()
-                },
+                onClick = { store.clearLogs() },
             )
         },
         dismissButton = {
@@ -899,13 +1002,8 @@ private fun LogsDialog(
     )
 }
 
-/**
- * Mirrors the Android `AuthWhitelistScreen`: the relay hosts relay auth
- * (kind 22242) may be signed for. Entries are stored as "host[:port]", the
- * form the request path compares against.
- */
 @Composable
-private fun AuthWhitelistSection() {
+private fun ColumnScope.AuthWhitelistSection() {
     val settings by SettingsStore.settings.collectAsState()
     var input by remember { mutableStateOf("") }
 
@@ -917,7 +1015,7 @@ private fun AuthWhitelistSection() {
         input = ""
     }
 
-    Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
         OutlinedTextField(
             value = input,
             onValueChange = { input = it },
@@ -935,7 +1033,7 @@ private fun AuthWhitelistSection() {
     settings.authWhitelist.forEach { host ->
         Row(
             Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 2.dp),
-            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(host, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
             AmberTextButton(

@@ -2,6 +2,87 @@
 <SmellBaseline>
   <ManuallySuppressedIssues/>
   <CurrentIssues>
+    <ID>NoComments:AmberCli.kt:"-" keeps the URI's secret out of the process list and the shell history.</ID>
+    <ID>NoComments:AmberCli.kt:---- commands ---------------------------------------------------------</ID>
+    <ID>NoComments:AmberCli.kt:---- helpers ----------------------------------------------------------</ID>
+    <ID>NoComments:AmberCli.kt:A `nostrconnect://` pairing: its client key, relays, secret and name, and the URI built from them.</ID>
+    <ID>NoComments:AmberCli.kt:Also for the parse errors below, which happen before Args exists.</ID>
+    <ID>NoComments:AmberCli.kt:Kept whole: the exit code says why it is offline (5 silent, 6 unreachable, 4 refused).</ID>
+    <ID>NoComments:AmberCli.kt:Pairing by URI: prints a `nostrconnect://` link (and QR) that a human</ID>
+    <ID>NoComments:AmberCli.kt:Pairing from a `bunker://` URI Amber created for a new connection. Amber</ID>
+    <ID>NoComments:AmberCli.kt:Resumes [existing] when it is a pending pairing for the same relays (or no --relay was given), else </ID>
+    <ID>NoComments:AmberCli.kt:Shows the pairing URI once the relays hold the subscription for the answer, then waits for Amber's a</ID>
+    <ID>NoComments:AmberCli.kt:Tells Amber to forget the connection and deletes the local profile.</ID>
+    <ID>NoComments:AmberCli.kt:The OS credential store (a locked keyring waits for its unlock prompt) gets the same bound.</ID>
+    <ID>NoComments:AmberCli.kt:The URI leaves the process only once the relays hold the subscription</ID>
+    <ID>NoComments:AmberCli.kt:The command's result on stdout: the plain value, or one `{"ok":…}` object with --json.</ID>
+    <ID>NoComments:AmberCli.kt:The connection saved under [profile], if any; refuses to replace a paired one without --force.</ID>
+    <ID>NoComments:AmberCli.kt:The relays a new nostrconnect URI names: Amber's own defaults, plus the</ID>
+    <ID>NoComments:AmberCli.kt:The relays come from the URI, which Quartz parses: none are needed up front.</ID>
+    <ID>NoComments:AmberCli.kt:The release local relay, and the debug build's one, when a running Amber listens there.</ID>
+    <ID>NoComments:AmberCli.kt:The same four relays Amber itself uses for new connections: `defaultAppRelays`</ID>
+    <ID>NoComments:AmberCli.kt:The unsigned event as Amber's `sign_event` expects it: created_at filled in when absent.</ID>
+    <ID>NoComments:AmberCli.kt:What is saved and whether the signer answers right now: the first thing</ID>
+    <ID>NoComments:AmberCli.kt:What is saved while the pairing waits, so a timed-out one resumes with the same URI.</ID>
+    <ID>NoComments:AmberCli.kt:With [error], the command still has a [result] to show but exits with the</ID>
+    <ID>NoComments:AmberCli.kt:for the answer: they do not replay an approval that came before it.</ID>
+    <ID>NoComments:AmberCli.kt:stdin, minus the newline a shell (`echo`) adds.</ID>
+    <ID>NoComments:Args.kt:Flags that stand alone.</ID>
+    <ID>NoComments:Args.kt:Flags that take a value, either `--flag value` or `--flag=value`.</ID>
+    <ID>NoComments:Args.kt:Why `--[name]` (with its `=`[inline] value, or the [next] argument) is not a valid option, or null w</ID>
+    <ID>NoComments:ArgsAndHelpTest.kt:A port nothing listens on keeps `connect` off the network.</ID>
+    <ID>NoComments:ArgsAndHelpTest.kt:Its own profile, so one command's saved pending pairing cannot</ID>
+    <ID>NoComments:ArgsAndHelpTest.kt:Without a saved connection each of them stops with "not paired",</ID>
+    <ID>NoComments:ArgsAndHelpTest.kt:a usage error for the arguments it needs, or (connect) an</ID>
+    <ID>NoComments:ArgsAndHelpTest.kt:leak into the next one's "not paired" expectation.</ID>
+    <ID>NoComments:ArgsAndHelpTest.kt:unreachable relay: never with "unknown command".</ID>
+    <ID>NoComments:ConnectionStore.kt:%APPDATA% on Windows, $XDG_CONFIG_HOME elsewhere; without them a folder in the home directory.</ID>
+    <ID>NoComments:ConnectionStore.kt:Encrypts [plaintext] with the key in [secrets], creating and saving one on first use.</ID>
+    <ID>NoComments:ConnectionStore.kt:The file's encrypted contents after the format marker.</ID>
+    <ID>NoComments:ConnectionStore.kt:The format marker, authenticated with the ciphertext.</ID>
+    <ID>NoComments:ConnectionStoreTest.kt:A second instance sees what the first wrote.</ID>
+    <ID>NoComments:ConnectionStoreTest.kt:Nothing of the connection is readable in the file itself.</ID>
+    <ID>NoComments:FakeSigner.kt:Counted down on the EOSE of the signer's own subscription: from then on it hears every request.</ID>
+    <ID>NoComments:FakeSigner.kt:Signs the event template the way Amber's account key does.</ID>
+    <ID>NoComments:FakeSigner.kt:The request an EVENT message carries, if it is a valid kind-24133 event to this signer.</ID>
+    <ID>NoComments:FakeSigner.kt:The test relay keeps no ephemeral events, so a request sent before the REQ is lost.</ID>
+    <ID>NoComments:KeyringTimeoutTest.kt:Like a locked keyring waiting on its unlock prompt.</ID>
+    <ID>NoComments:Nip46Client.kt:Approvals of a `nostrconnect://` URI: signer connection key to the secret it answered.</ID>
+    <ID>NoComments:Nip46Client.kt:Healthy relays subscribe within a second or two of the first; a human then</ID>
+    <ID>NoComments:Nip46Client.kt:Long-lived sockets: no read timeout, and ping so idle NATs keep them.</ID>
+    <ID>NoComments:Nip46Client.kt:One request, bounded by `--timeout` (a human may have to approve it in Amber).</ID>
+    <ID>NoComments:Nip46Client.kt:The saved connection's key: Amber binds the connection to this pubkey. Not an account.</ID>
+    <ID>NoComments:Nip46Client.kt:The subscription is what dials the relays, so it comes first.</ID>
+    <ID>NoComments:Nip46Client.kt:Which relays have registered the approval subscription. A relay is</ID>
+    <ID>NoComments:Nip46Client.kt:still takes longer than that to paste the URI and approve it.</ID>
+    <ID>NoComments:Nip46EndToEndTest.kt:A signer that does not answer: offline, exit 5, and the JSON says so.</ID>
+    <ID>NoComments:Nip46EndToEndTest.kt:Accepts the TCP connection (the kernel does, without accept()) but never</ID>
+    <ID>NoComments:Nip46EndToEndTest.kt:Like public relays: an answer sent before the client subscribed is lost,</ID>
+    <ID>NoComments:Nip46EndToEndTest.kt:No --relay: the pending pairing's relays, key and secret are reused.</ID>
+    <ID>NoComments:Nip46EndToEndTest.kt:Quartz's own DEBUG logging must not leak onto the CLI's stderr.</ID>
+    <ID>NoComments:Nip46EndToEndTest.kt:The argument form saves the same pairing (a new client key aside).</ID>
+    <ID>NoComments:Nip46EndToEndTest.kt:The saved relay is down: unreachable, exit 6 as everywhere else.</ID>
+    <ID>NoComments:Nip46EndToEndTest.kt:What `status` reports about the saved pairing: signer, user and relays.</ID>
+    <ID>NoComments:Nip46EndToEndTest.kt:answers the WebSocket upgrade, like a dead public relay behind a firewall.</ID>
+    <ID>NoComments:Nip46EndToEndTest.kt:so a client that subscribes too late fails here instead of being rescued.</ID>
+    <ID>NoComments:OkHttpRelaySocket.kt:A dial in flight is not a dead session.</ID>
+    <ID>NoComments:OkHttpRelaySocket.kt:A disconnect() that landed while dialing has no socket to cancel yet.</ID>
+    <ID>NoComments:OkHttpRelaySocket.kt:Incoming messages are handed to Quartz one at a time, in order, and off</ID>
+    <ID>NoComments:OkHttpRelaySocket.kt:OkHttp reports onClosed only once both sides sent a close frame.</ID>
+    <ID>NoComments:OkHttpRelaySocket.kt:OkHttp's reader thread: a slow consumer must not stall the socket.</ID>
+    <ID>NoComments:OkHttpRelaySocket.kt:Set once by whichever of onClosed, onFailure or [disconnect] ends the session first.</ID>
+    <ID>NoComments:PinnedSecretStoreTest.kt:A fresh store object per call, as every CLI run makes one.</ID>
+    <ID>NoComments:PinnedSecretStoreTest.kt:The explicit choice is recorded, so later runs without it stay on the file.</ID>
+    <ID>NoComments:SecretStore.kt:A daemon: a call that never returns must not keep the process alive.</ID>
+    <ID>NoComments:SecretStore.kt:Before the marker existed only the file backend wrote connection.key.</ID>
+    <ID>NoComments:SecretStore.kt:How long a call to the OS credential store may take: the command's `--timeout`</ID>
+    <ID>NoComments:SecretStore.kt:No secret in it, but private like everything else in the directory.</ID>
+    <ID>NoComments:SecretStore.kt:Opening the freedesktop backend already unlocks the collection, which is where a locked keyring prom</ID>
+    <ID>NoComments:SecretStore.kt:Runs [block] (a call into the OS credential store) for at most [seconds]. A</ID>
+    <ID>NoComments:SecretStore.kt:The backend answered: there is simply no key saved yet.</ID>
+    <ID>NoComments:UrisTest.kt:Amber decodes each query value with URLDecoder ('+' is a space).</ID>
+    <ID>NoComments:UrisTest.kt:Quartz parses what it builds, so the CLI and an Amber reading the URI</ID>
+    <ID>NoComments:UrisTest.kt:agree on every value.</ID>
     <ID>TooManyFunctions:Nip46Client.kt:Nip46Client : AutoCloseable</ID>
   </CurrentIssues>
 </SmellBaseline>

@@ -35,6 +35,1136 @@
     <ID>MultipleEmitters:SettingsScreen.kt:@Composable private fun SecuritySection</ID>
     <ID>MultipleEmitters:SettingsScreen.kt:@Composable private fun SettingsSection</ID>
     <ID>MultipleEmitters:SettingsScreen.kt:@Composable private fun TorSection</ID>
+    <ID>NoComments:AccountAvatar.kt:The body, or null when it is (or says it is) larger than [MAX_BYTES].</ID>
+    <ID>NoComments:AccountManager.kt:Decodes ASCII hex and wipes [hex].</ID>
+    <ID>NoComments:AccountManager.kt:Never sign as one identity under another account's name and permissions.</ID>
+    <ID>NoComments:AccountManager.kt:String, so every copy of the key can be wiped.</ID>
+    <ID>NoComments:AccountManager.kt:The private key is stored as hex text (the original format). These</ID>
+    <ID>NoComments:AccountManager.kt:Zeroes the private key bytes; the account cannot sign afterward.</ID>
+    <ID>NoComments:AccountManager.kt:helpers convert between raw bytes and hex bytes without an intermediate</ID>
+    <ID>NoComments:AmberDesktop.kt:A running relay must come down first: start() never rebinds a live one.</ID>
+    <ID>NoComments:AmberDesktop.kt:Always call connect() so that failed relays (socket == null) are</ID>
+    <ID>NoComments:AmberDesktop.kt:Authenticates with relays that request NIP-42 AUTH.</ID>
+    <ID>NoComments:AmberDesktop.kt:Like Android: one account failing to sign (e.g. its key was</ID>
+    <ID>NoComments:AmberDesktop.kt:Persist debounced log/history writes first: once locked, writeSecure</ID>
+    <ID>NoComments:AmberDesktop.kt:The client is picked per dial, so Tor routing (and the local-relay</ID>
+    <ID>NoComments:AmberDesktop.kt:Zeroes evicted private keys. Quartz's NIP-04/NIP-44 shared-secret caches</ID>
+    <ID>NoComments:AmberDesktop.kt:bypass) applies to every socket opened after a settings change.</ID>
+    <ID>NoComments:AmberDesktop.kt:delay. For relays already connected, connect() is a safe no-op.</ID>
+    <ID>NoComments:AmberDesktop.kt:refuses to touch the encrypted files, so anything still volatile</ID>
+    <ID>NoComments:AmberDesktop.kt:retried directly, bypassing the relay client's internal backoff</ID>
+    <ID>NoComments:AmberDesktop.kt:wiped by the lock mid-AUTH) must not abort AUTH for the others.</ID>
+    <ID>NoComments:AmberDesktop.kt:would sit in memory only until the next unlock.</ID>
+    <ID>NoComments:App.kt:A crash report from this or a previous run, offered once an account</ID>
+    <ID>NoComments:App.kt:A nostrconnect:// link opened Amber (launch argument, or forwarded by</ID>
+    <ID>NoComments:App.kt:Compact-width header: app name, relay status and the account switcher.</ID>
+    <ID>NoComments:App.kt:Compact-width navigation: the sidebar routes as a bottom bar.</ID>
+    <ID>NoComments:App.kt:Expanded: full sidebar. Medium: icon rail. Compact: the</ID>
+    <ID>NoComments:App.kt:First run: no passphrase yet. Nothing else may load until it is set.</ID>
+    <ID>NoComments:App.kt:Jump to the approval screen whenever a new request arrives.</ID>
+    <ID>NoComments:App.kt:Medium-width navigation: the sidebar collapsed to icons, titles in tooltips.</ID>
+    <ID>NoComments:App.kt:On the selected (amber) row inherit the container's dark</ID>
+    <ID>NoComments:App.kt:On wide windows the capped content column sits centered rather than hugging the sidebar.</ID>
+    <ID>NoComments:App.kt:The account chip at the bottom of the sidebar: shows the active account and</ID>
+    <ID>NoComments:App.kt:The app once it is unlocked and [acc] is loaded: the navigation and the current screen.</ID>
+    <ID>NoComments:App.kt:Unlocked, but the account is still being loaded: don't flash the login screen.</ID>
+    <ID>NoComments:App.kt:a second launch). Process it here — after the gates — so a link</ID>
+    <ID>NoComments:App.kt:can send it (as on Android, after unlock).</ID>
+    <ID>NoComments:App.kt:clicked while locked or before an account exists waits for unlock.</ID>
+    <ID>NoComments:App.kt:navigation moves to a bottom bar under a slim top bar.</ID>
+    <ID>NoComments:App.kt:on-color; otherwise use the muted variant.</ID>
+    <ID>NoComments:AppDirs.kt:Filesystem without atomic rename support: best-effort replace.</ID>
+    <ID>NoComments:AppDirs.kt:Overwrite in place; the existing file was created under this policy.</ID>
+    <ID>NoComments:AppDirs.kt:Windows cannot open a directory as a channel; NTFS journals the rename.</ID>
+    <ID>NoComments:AppDirs.kt:mkdirs() honors the umask (typically 0755); the account's apps,</ID>
+    <ID>NoComments:AppDirs.kt:permissions and history live here, so keep it owner-only. Also</ID>
+    <ID>NoComments:AppDirs.kt:tightens a directory that already existed with a looser mode.</ID>
+    <ID>NoComments:AppDirsTest.kt:A directory left behind by an older version with the umask default.</ID>
+    <ID>NoComments:AppDirsTest.kt:The file must already be owner-only at creation time, not only</ID>
+    <ID>NoComments:AppDirsTest.kt:after a post-write restriction pass.</ID>
+    <ID>NoComments:AppImageIntegration.kt:The program an entry written by [desktopEntry] launches, unquoted.</ID>
+    <ID>NoComments:AppImageIntegrationTest.kt:Shown in the app launcher, unlike the nostrconnect:// handler entry.</ID>
+    <ID>NoComments:AppIndicatorShimTest.kt:let the code mkdirs</ID>
+    <ID>NoComments:ApplicationDetailScreen.kt:A local socket client has no relays: its tabs skip index 1.</ID>
+    <ID>NoComments:ApplicationDetailScreen.kt:Deleting drops this screen from composition, so run the</ID>
+    <ID>NoComments:ApplicationDetailScreen.kt:Deny, neither -&gt; Ask; a NEVER remember choice edits as ALWAYS.</ID>
+    <ID>NoComments:ApplicationDetailScreen.kt:Localized display title for a permission or history entry — the kind /</ID>
+    <ID>NoComments:ApplicationDetailScreen.kt:Mirrors the Android "Reset Bunker" (EditConfigurationScreen): a new</ID>
+    <ID>NoComments:ApplicationDetailScreen.kt:Mirrors the Android EditConfigurationScreen relay section: the</ID>
+    <ID>NoComments:ApplicationDetailScreen.kt:Mirrors the Android app-detail connection string (EditPermission):</ID>
+    <ID>NoComments:ApplicationDetailScreen.kt:Mirrors the mobile mapping: accept window -&gt; Allow, reject window -&gt;</ID>
+    <ID>NoComments:ApplicationDetailScreen.kt:NIP-44 v3 grants are per context kind, or for all kinds without one.</ID>
+    <ID>NoComments:ApplicationDetailScreen.kt:One permission, with the same options as the mobile `PermissionRow`:</ID>
+    <ID>NoComments:ApplicationDetailScreen.kt:Queued requests from the removed app must not linger as approval cards.</ID>
+    <ID>NoComments:ApplicationDetailScreen.kt:The bunker:// string and its reset only exist for NIP-46 connections.</ID>
+    <ID>NoComments:ApplicationDetailScreen.kt:key and secret invalidate the old pairing; permission rules stay.</ID>
+    <ID>NoComments:ApplicationDetailScreen.kt:on the relays it was handed), then shown read-only.</ID>
+    <ID>NoComments:ApplicationDetailScreen.kt:relays are editable until the client connects (it only listens</ID>
+    <ID>NoComments:ApplicationDetailScreen.kt:subscription is left behind.</ID>
+    <ID>NoComments:ApplicationDetailScreen.kt:the bunker:// URI the client app can re-paste to reconnect.</ID>
+    <ID>NoComments:ApplicationDetailScreen.kt:to be sure the relay refresh completes and no stale relay</ID>
+    <ID>NoComments:ApplicationDetailScreen.kt:unsubscribe on the application scope (not this composable's)</ID>
+    <ID>NoComments:ApplicationsScreen.kt:The dialog is at least as wide as the QR code: keep it inside small windows.</ID>
+    <ID>NoComments:ApprovalRevertTest.kt:A relay nothing listens on: every publish to it fails.</ID>
+    <ID>NoComments:ApprovalRevertTest.kt:Approves, remembering it, a sign_event card from a connection on [relay]; returns the connection aft</ID>
+    <ID>NoComments:ApprovalRevertTest.kt:What the connection was granted before stays.</ID>
+    <ID>NoComments:AutoStart.kt:Control characters (newlines in particular) cannot be quoted away in a unit file.</ID>
+    <ID>NoComments:AutoStart.kt:Inside an AppImage the binary runs from a per-launch mount</ID>
+    <ID>NoComments:AutoStart.kt:No --now on purpose: disabling autostart must not kill an</ID>
+    <ID>NoComments:AutoStart.kt:RunAtLoad starts Amber once per login. No KeepAlive: quitting Amber</ID>
+    <ID>NoComments:AutoStart.kt:Set by the jpackage launcher to the installed binary; absent in dev (Gradle) runs.</ID>
+    <ID>NoComments:AutoStart.kt:The Run value is a command line: always quote the path (e.g. `C:\Program Files\...`).</ID>
+    <ID>NoComments:AutoStart.kt:The characters that make a systemd value need double quotes (see [quote]).</ID>
+    <ID>NoComments:AutoStart.kt:The local signer's socket dir must exist before the unit starts, like</ID>
+    <ID>NoComments:AutoStart.kt:Where the start-on-boot unit has an AppImage extract itself (see</ID>
+    <ID>NoComments:AutoStart.kt:Writes (or removes) the LaunchAgent. launchd picks it up at the next</ID>
+    <ID>NoComments:AutoStart.kt:Writes (or removes) the Run entry. Like the systemd path, enabling never</ID>
+    <ID>NoComments:AutoStart.kt:[appImageCacheDir] is set when [exePath] is an AppImage: under</ID>
+    <ID>NoComments:AutoStart.kt:app the user is currently using.</ID>
+    <ID>NoComments:AutoStart.kt:launchd label; also the plist file name. Matches the bundle id.</ID>
+    <ID>NoComments:AutoStart.kt:records the path exactly as invoked (it can be relative).</ID>
+    <ID>NoComments:AutoStart.kt:systemd requires an absolute ExecStart: /proc/self/cmdline</ID>
+    <ID>NoComments:AutoStart.kt:systemd(5) word splitting for `ExecStart=` / `Environment=`: values with</ID>
+    <ID>NoComments:AutoStartTest.kt:"C:\Program Files\..." would try to launch "C:\Program".</ID>
+    <ID>NoComments:AutoStartTest.kt:Even unquoted values must not leak a specifier.</ID>
+    <ID>NoComments:AutoStartTest.kt:Quitting Amber must stick: launchd must not relaunch it.</ID>
+    <ID>NoComments:AutoStartTest.kt:The JVM's JIT needs writable executable memory: this hardening flag</ID>
+    <ID>NoComments:AutoStartTest.kt:The Run value is parsed as a command line: an unquoted</ID>
+    <ID>NoComments:AutoStartTest.kt:The extraction replaces the FUSE mount precisely so none of the</ID>
+    <ID>NoComments:AutoStartTest.kt:backslash; $ would start variable expansion and % a specifier.</ID>
+    <ID>NoComments:AutoStartTest.kt:hardening has to be relaxed for it.</ID>
+    <ID>NoComments:AutoStartTest.kt:systemd(5): inside double quotes \ and " are escaped with a</ID>
+    <ID>NoComments:AutoStartTest.kt:would kill the service instantly and must never be emitted.</ID>
+    <ID>NoComments:BunkerApproval.kt:A nostrconnect URI names the client key itself. Approving it</ID>
+    <ID>NoComments:BunkerApproval.kt:A rejected connect leaves nothing behind (socket connects are plain</ID>
+    <ID>NoComments:BunkerApproval.kt:An expired connection counts as gone: approving a card queued before</ID>
+    <ID>NoComments:BunkerApproval.kt:Answers [req] over its local socket, or else as a kind-24133 event on [relays].</ID>
+    <ID>NoComments:BunkerApproval.kt:Approving changes this list in place; kept to take the approval back.</ID>
+    <ID>NoComments:BunkerApproval.kt:Each connection gets its own signing key.</ID>
+    <ID>NoComments:BunkerApproval.kt:Like Android: what the client never heard of must not stay granted.</ID>
+    <ID>NoComments:BunkerApproval.kt:Mirrors the Android connect screen's account picker: the connection is</ID>
+    <ID>NoComments:BunkerApproval.kt:Only a connect may create an application. A non-connect request whose</ID>
+    <ID>NoComments:BunkerApproval.kt:Remembers the decision ([accepted]) on a request (the common `rememberedGrant`, as on</ID>
+    <ID>NoComments:BunkerApproval.kt:Takes back what approving [req] remembered when its reply did not reach the</ID>
+    <ID>NoComments:BunkerApproval.kt:The common revertedConnectKey / revertedGrants, as on Android.</ID>
+    <ID>NoComments:BunkerApproval.kt:The connection [req] is approved on in [acc]'s store, or null for a new one. A</ID>
+    <ID>NoComments:BunkerApproval.kt:The grants of [signPolicy] (the common `signPolicyGrants`, as on Android).</ID>
+    <ID>NoComments:BunkerApproval.kt:The record of a connection seen for the first time.</ID>
+    <ID>NoComments:BunkerApproval.kt:What approving a connect sets: the chosen sign policy and its grants, and the</ID>
+    <ID>NoComments:BunkerApproval.kt:What approving or rejecting a queued request does.</ID>
+    <ID>NoComments:BunkerApproval.kt:Where the approval is answered. A brand-new connection (bunker:// or a</ID>
+    <ID>NoComments:BunkerApproval.kt:`BunkerRequest`s, so check the type rather than the class), and a</ID>
+    <ID>NoComments:BunkerApproval.kt:app is gone (deleted, expired or logged out while the card was queued)</ID>
+    <ID>NoComments:BunkerApproval.kt:default relays, so clients on this machine work without any public relay; a</ID>
+    <ID>NoComments:BunkerApproval.kt:it expired must not sign for it (a new connect replaces it below).</ID>
+    <ID>NoComments:BunkerApproval.kt:local socket client never talks to relays.</ID>
+    <ID>NoComments:BunkerApproval.kt:must not resurrect the revoked connection: answer it like an unknown client.</ID>
+    <ID>NoComments:BunkerApproval.kt:nostrconnect:// that named no relays) gets the local WebSocket relay beside the</ID>
+    <ID>NoComments:BunkerApproval.kt:rejection never creates an application: if the app was deleted while</ID>
+    <ID>NoComments:BunkerApproval.kt:replaces the connection saved under that key (the card shows</ID>
+    <ID>NoComments:BunkerApproval.kt:saved under (and signs for) the chosen account.</ID>
+    <ID>NoComments:BunkerApproval.kt:silently merging into it and keeping its grants and relays.</ID>
+    <ID>NoComments:BunkerApproval.kt:the card was queued, there is nothing to record the rejection on.</ID>
+    <ID>NoComments:BunkerApproval.kt:which, like Android's "Replace connection" dialog) instead of</ID>
+    <ID>NoComments:BunkerConnections.kt:AmberDesktop.newBunkerRelays() (the local relay plus the defaults),</ID>
+    <ID>NoComments:BunkerConnections.kt:Client-chosen (sanitized by the parser): the card, the saved record and every notification show it.</ID>
+    <ID>NoComments:BunkerConnections.kt:Connections made from this side: a nostrconnect:// URI queued for approval, a new bunker:// URI, and</ID>
+    <ID>NoComments:BunkerConnections.kt:Exactly the relays the caller picked: the dialog seeds them with</ID>
+    <ID>NoComments:BunkerConnections.kt:The client's key becomes the connection's identity and a p tag</ID>
+    <ID>NoComments:BunkerConnections.kt:While locked the per-account databases can't be read (or would be</ID>
+    <ID>NoComments:BunkerConnections.kt:and any the user removed there must stay out of the URI.</ID>
+    <ID>NoComments:BunkerConnections.kt:cached empty); the next tick after unlocking catches up.</ID>
+    <ID>NoComments:BunkerConnections.kt:on every reply: the shared parser accepts only a well-formed one.</ID>
+    <ID>NoComments:BunkerE2eTest.kt:1. connect — requires the user's approval in the UI.</ID>
+    <ID>NoComments:BunkerE2eTest.kt:2. get_public_key — granted automatically on connect, no UI involved.</ID>
+    <ID>NoComments:BunkerE2eTest.kt:A tag array is a different content type: it prompts. Approve for all methods.</ID>
+    <ID>NoComments:BunkerE2eTest.kt:Amber imports the URI -&gt; a pending CONNECT request appears.</ID>
+    <ID>NoComments:BunkerE2eTest.kt:Another kind prompts; grant all kinds.</ID>
+    <ID>NoComments:BunkerE2eTest.kt:Another text is answered without prompting.</ID>
+    <ID>NoComments:BunkerE2eTest.kt:Any kind is now covered.</ID>
+    <ID>NoComments:BunkerE2eTest.kt:Client side.</ID>
+    <ID>NoComments:BunkerE2eTest.kt:Connect + approve both.</ID>
+    <ID>NoComments:BunkerE2eTest.kt:Connect with the manual policy and no requested perms.</ID>
+    <ID>NoComments:BunkerE2eTest.kt:Despite the canceled caller, the ack must still arrive.</ID>
+    <ID>NoComments:BunkerE2eTest.kt:Follow-up request goes to the signer's per-connection key.</ID>
+    <ID>NoComments:BunkerE2eTest.kt:Kind 1, this kind only.</ID>
+    <ID>NoComments:BunkerE2eTest.kt:No kind: rejected up front.</ID>
+    <ID>NoComments:BunkerE2eTest.kt:Same kind: answered without prompting.</ID>
+    <ID>NoComments:BunkerE2eTest.kt:Signer side.</ID>
+    <ID>NoComments:BunkerE2eTest.kt:Simulate the UI: fire approve from a scope, then cancel that scope</ID>
+    <ID>NoComments:BunkerE2eTest.kt:Simulate the approval UI, which passes the requested permissions so</ID>
+    <ID>NoComments:BunkerE2eTest.kt:Text: approve and remember for this content type only.</ID>
+    <ID>NoComments:BunkerE2eTest.kt:The client receives the connect ack (result == secret) from the signer key.</ID>
+    <ID>NoComments:BunkerE2eTest.kt:The whole-NIP grant now covers an event too.</ID>
+    <ID>NoComments:BunkerE2eTest.kt:get_public_key on each connection returns that connection's account key.</ID>
+    <ID>NoComments:BunkerE2eTest.kt:let both subscriptions settle</ID>
+    <ID>NoComments:BunkerE2eTest.kt:pubkey of the sender of the last connect response (the signer's per-connection key).</ID>
+    <ID>NoComments:BunkerE2eTest.kt:right away (as the removed card's composition scope would be).</ID>
+    <ID>NoComments:BunkerE2eTest.kt:sign_event kind 1 was granted in the connect perms, so it must be</ID>
+    <ID>NoComments:BunkerE2eTest.kt:signed automatically without landing in the approval queue.</ID>
+    <ID>NoComments:BunkerE2eTest.kt:the granted perms (sign_event:1, get_public_key) are remembered.</ID>
+    <ID>NoComments:BunkerEngine.kt:60s, and resets after a quiet minute. A single job per engine replaces</ID>
+    <ID>NoComments:BunkerEngine.kt:A first-time `connect` always goes through the approval UI: approving</ID>
+    <ID>NoComments:BunkerEngine.kt:A stored connection is deleted once the client has the ack.</ID>
+    <ID>NoComments:BunkerEngine.kt:A stored connection moves to the default relays once the client has the answer.</ID>
+    <ID>NoComments:BunkerEngine.kt:A v3 request without a kind was refused up front (nip46Step).</ID>
+    <ID>NoComments:BunkerEngine.kt:Already-connected client re-sending `connect`: ack silently.</ID>
+    <ID>NoComments:BunkerEngine.kt:An approval whose reply never reached the client, and was taken back; the UI says so.</ID>
+    <ID>NoComments:BunkerEngine.kt:Android: classify the plaintext (the encrypt input, or the decrypt</ID>
+    <ID>NoComments:BunkerEngine.kt:Answers from the stored grants, else queues the request for the user's decision.</ID>
+    <ID>NoComments:BunkerEngine.kt:Auto-accept publishes a signed result: re-check the lock so</ID>
+    <ID>NoComments:BunkerEngine.kt:Bundles the request's context so the handlers take one argument.</ID>
+    <ID>NoComments:BunkerEngine.kt:Checked after verify() and keyed on the proven signer pubkey, so forged</ID>
+    <ID>NoComments:BunkerEngine.kt:Concurrent: mutated in updateFilterLocked while relay I/O threads read it</ID>
+    <ID>NoComments:BunkerEngine.kt:Counts the failure against the relay and only schedules a reconnect</ID>
+    <ID>NoComments:BunkerEngine.kt:Decided by the admission alone (the common Nip46Admission.reply), as on Android.</ID>
+    <ID>NoComments:BunkerEngine.kt:Every NIP-46 connection has its own key; the account key itself is</ID>
+    <ID>NoComments:BunkerEngine.kt:Mirrors Android's validateNip44v3Request errors; kept generic so</ID>
+    <ID>NoComments:BunkerEngine.kt:Mirrors EventNotificationConsumer: the user set a finite lifetime</ID>
+    <ID>NoComments:BunkerEngine.kt:Mirrors NotificationSubscription: make every endpoint routable before</ID>
+    <ID>NoComments:BunkerEngine.kt:Mirrors NotificationSubscription: one REQ per relay for every endpoint (#644).</ID>
+    <ID>NoComments:BunkerEngine.kt:Mirrors `NostrClientLoggerListener.saveLog`: every account's relay log.</ID>
+    <ID>NoComments:BunkerEngine.kt:Mirrors `NostrClientLoggerListener`: backoff starts at 5s, doubles up to</ID>
+    <ID>NoComments:BunkerEngine.kt:NIP-04/NIP-44 encrypt/decrypt grants are per content type, like</ID>
+    <ID>NoComments:BunkerEngine.kt:NIP-44 decrypt batches, rapid signing) and must never be silently dropped.</ID>
+    <ID>NoComments:BunkerEngine.kt:NIP-44 v3 carries its context kind/scope at params[1..2].</ID>
+    <ID>NoComments:BunkerEngine.kt:Oldest createdAt of a request deferred by a mid-request lock; guarded by [seenEvents].</ID>
+    <ID>NoComments:BunkerEngine.kt:Once per update: it also hands over (and clears) a lock-deferred `since`.</ID>
+    <ID>NoComments:BunkerEngine.kt:Only a connection's own key routes a request; one tagged to an</ID>
+    <ID>NoComments:BunkerEngine.kt:Per-sender token bucket: bounds the work (decrypt, log writes, signed</ID>
+    <ID>NoComments:BunkerEngine.kt:Reach back to a request a lock deferred, so the relays redeliver it.</ID>
+    <ID>NoComments:BunkerEngine.kt:Read like a nostrconnect:// URI's perms, so both ways of connecting ask for the same grants.</ID>
+    <ID>NoComments:BunkerEngine.kt:Recently processed event ids -&gt; createdAt, for dedup + `since` computation.</ID>
+    <ID>NoComments:BunkerEngine.kt:Refuses, before admission and before any key is used, a request that can never be</ID>
+    <ID>NoComments:BunkerEngine.kt:Refuses, without computing anything, what may never be signed (the common nip46Step).</ID>
+    <ID>NoComments:BunkerEngine.kt:Relay auth is granted per relay or for all relays, like Android.</ID>
+    <ID>NoComments:BunkerEngine.kt:Relay recovered: clear its failure streak so it is eligible for the</ID>
+    <ID>NoComments:BunkerEngine.kt:RelayHealthTracker also makes updateFilterLocked drop it from the</ID>
+    <ID>NoComments:BunkerEngine.kt:Saved names came from a client; older records were stored unsanitized.</ID>
+    <ID>NoComments:BunkerEngine.kt:The common first step, as on Android.</ID>
+    <ID>NoComments:BunkerEngine.kt:The key the reply is encrypted and signed with: the connection's own.</ID>
+    <ID>NoComments:BunkerEngine.kt:The one subscription every bunker endpoint shares, keyed in subIds.</ID>
+    <ID>NoComments:BunkerEngine.kt:The passphrase lock came down while [event] was being handled. Forget it</ID>
+    <ID>NoComments:BunkerEngine.kt:The request [event] carries, decrypted with the connection key, or null (logged) when it cannot be r</ID>
+    <ID>NoComments:BunkerEngine.kt:The response payload (also the approval preview), or null after answering that it can't be made.</ID>
+    <ID>NoComments:BunkerEngine.kt:The sender's own stored connection; [app] is it, or the one a connect secret names.</ID>
+    <ID>NoComments:BunkerEngine.kt:The stored grant that decides [type] for [appKey], with Android's fallbacks.</ID>
+    <ID>NoComments:BunkerEngine.kt:Unauthenticated error reply: publish once, no retry/backoff.</ID>
+    <ID>NoComments:BunkerEngine.kt:Unknown senders are rate-limited: their events force decrypt/log work and</ID>
+    <ID>NoComments:BunkerEngine.kt:What every handler of an admitted request needs.</ID>
+    <ID>NoComments:BunkerEngine.kt:Whether [event] is a request to process now: unlocked, a verified non-empty</ID>
+    <ID>NoComments:BunkerEngine.kt:Who an error reply to a not-admitted sender goes to, and under which key.</ID>
+    <ID>NoComments:BunkerEngine.kt:`since` past the real clock (relays would drop legitimate requests).</ID>
+    <ID>NoComments:BunkerEngine.kt:a failed decrypt doesn't leak the ciphertext's embedded context.</ID>
+    <ID>NoComments:BunkerEngine.kt:a network change / manual reconnect.</ID>
+    <ID>NoComments:BunkerEngine.kt:a signer locked mid-request never publishes.</ID>
+    <ID>NoComments:BunkerEngine.kt:account key is not addressed to any connection and is ignored.</ID>
+    <ID>NoComments:BunkerEngine.kt:any pending reconnect when a relay drops again.</ID>
+    <ID>NoComments:BunkerEngine.kt:any subscription can deliver a request, otherwise the first request</ID>
+    <ID>NoComments:BunkerEngine.kt:bypass the limiter entirely — an approved app legitimately bursts (bulk</ID>
+    <ID>NoComments:BunkerEngine.kt:consume() checked the lock on arrival; re-check before any signing</ID>
+    <ID>NoComments:BunkerEngine.kt:dropped. One reference swap, so consume() never sees a half-filled index.</ID>
+    <ID>NoComments:BunkerEngine.kt:events cannot drain a legitimate sender's budget.</ID>
+    <ID>NoComments:BunkerEngine.kt:in onIncomingMessage (containsValue).</ID>
+    <ID>NoComments:BunkerEngine.kt:is what migrates the bunker placeholder to the client key and grants</ID>
+    <ID>NoComments:BunkerEngine.kt:localPubKey -&gt; (npub, localPrivKey), mirrors `LocalKeyAccountIndex`.</ID>
+    <ID>NoComments:BunkerEngine.kt:never an endpoint, so nothing subscribes to it.</ID>
+    <ID>NoComments:BunkerEngine.kt:normal reconnect-with-backoff path (and the subscription) again.</ID>
+    <ID>NoComments:BunkerEngine.kt:of a new connection can arrive while its key is still unknown and is</ID>
+    <ID>NoComments:BunkerEngine.kt:on this connection, so answer as an unknown app even before the</ID>
+    <ID>NoComments:BunkerEngine.kt:prune loop deletes it.</ID>
+    <ID>NoComments:BunkerEngine.kt:refresh. The streak resets on a successful connection (onConnected) or</ID>
+    <ID>NoComments:BunkerEngine.kt:replies) one relay sender can force per window.</ID>
+    <ID>NoComments:BunkerEngine.kt:result) and try that grant, then the whole-NIP grant, then `nip:N`.</ID>
+    <ID>NoComments:BunkerEngine.kt:seenEvents holds sender-chosen created_at values; never let one push</ID>
+    <ID>NoComments:BunkerEngine.kt:signed error replies, so a flood must cost them silence. Stored connections</ID>
+    <ID>NoComments:BunkerEngine.kt:subscription relay set, so Quartz stops opening sockets to it on every</ID>
+    <ID>NoComments:BunkerEngine.kt:the default permissions. Reconnects were already acked above.</ID>
+    <ID>NoComments:BunkerEngine.kt:while it is still worth retrying. Once a relay is dead,</ID>
+    <ID>NoComments:BunkerEngine.kt:work, since the passphrase lock may have come down in between.</ID>
+    <ID>NoComments:BunkerFreshnessTest.kt:Dropped before processing: never logged as a new request, app untouched.</ID>
+    <ID>NoComments:BunkerOverLocalRelayTest.kt:1. connect — arrives at the engine through its subscription on the local relay.</ID>
+    <ID>NoComments:BunkerOverLocalRelayTest.kt:2. get_public_key — granted automatically by the connect approval.</ID>
+    <ID>NoComments:BunkerOverLocalRelayTest.kt:A saved connection still lists the relay: the port must not move.</ID>
+    <ID>NoComments:BunkerOverLocalRelayTest.kt:Configure the port first, exactly as the settings UI does: the guard</ID>
+    <ID>NoComments:BunkerOverLocalRelayTest.kt:Freed, the port change restarts the relay on the new port.</ID>
+    <ID>NoComments:BunkerOverLocalRelayTest.kt:Local-only defaults: the new bunker's URI then references the local relay alone.</ID>
+    <ID>NoComments:BunkerOverLocalRelayTest.kt:The client app: same production wiring as `BunkerE2eTest`, pointed at the local relay only.</ID>
+    <ID>NoComments:BunkerOverLocalRelayTest.kt:The user removed the local relay and one default from the dialog.</ID>
+    <ID>NoComments:BunkerOverLocalRelayTest.kt:compares saved connections against the configured relay URL.</ID>
+    <ID>NoComments:BunkerReplies.kt:Publishing a reply to a NIP-46 client; building and retrying it is the common publishNip46Reply.</ID>
+    <ID>NoComments:BunkerReplies.kt:The account key, for a connection from before per-connection keys.</ID>
+    <ID>NoComments:Components.kt:Read straight from the classpath: the Compose resources library would need</ID>
+    <ID>NoComments:Components.kt:a generated Res class for one image.</ID>
+    <ID>NoComments:ComputedResult.kt:NIP-46 layout: [pubkey, kind, scope, base64 plaintext or the v3 payload]</ID>
+    <ID>NoComments:ComputedResult.kt:The answer to [request] for [acc] (the NIP-46 and local socket paths share it) and</ID>
+    <ID>NoComments:ComputedResult.kt:[sealPreview]: a seal in an encrypt/decrypt payload, opened for the preview (openSealForPreview).</ID>
+    <ID>NoComments:ComputedResult.kt:params: [pubkey, ciphertext]</ID>
+    <ID>NoComments:ComputedResult.kt:params: [pubkey, plaintext]</ID>
+    <ID>NoComments:ConnectionKeyBindingTest.kt:A connect is how a client attaches to a new key.</ID>
+    <ID>NoComments:ConnectionKeyBindingTest.kt:App A addressing app B's connection key: dropped and logged, no card.</ID>
+    <ID>NoComments:ConnectionKeyBindingTest.kt:Control: the same request on app A's own key reaches the approval queue.</ID>
+    <ID>NoComments:ConnectionKeyBindingTest.kt:Desktop never hands out the account key as an endpoint: every</ID>
+    <ID>NoComments:ConnectionKeyBindingTest.kt:Its own key, or the account key (no per-connection key): allowed.</ID>
+    <ID>NoComments:ConnectionKeyBindingTest.kt:addressed to any connection.</ID>
+    <ID>NoComments:ConnectionKeyBindingTest.kt:connection has its own key, so a request to the account key is not</ID>
+    <ID>NoComments:CrashReporter.kt:An encrypted report waits for the unlock (see [loadAfterUnlock]).</ID>
+    <ID>NoComments:CrashReporter.kt:Every wrap (the developer's and the sender's own copy), as on Android.</ID>
+    <ID>NoComments:CrashReporter.kt:Exception messages and stack traces can embed request data (parser</ID>
+    <ID>NoComments:CrashReporter.kt:For an OutOfMemoryError these say how close the heap was to its limit.</ID>
+    <ID>NoComments:CrashReporter.kt:Marks a report encrypted with the master key; its plaintext is only readable after unlock.</ID>
+    <ID>NoComments:CrashReporter.kt:Still locked: leave the report for the next unlock rather than lose it.</ID>
+    <ID>NoComments:CrashReporter.kt:The sender's own copy would be wrapped to the throwaway key, which nobody keeps.</ID>
+    <ID>NoComments:CrashReporter.kt:The whole cause chain (Android stops at the first cause); identity set</ID>
+    <ID>NoComments:CrashReporter.kt:What goes on disk. Exception messages can quote request data that the</ID>
+    <ID>NoComments:CrashReporter.kt:guards against cyclic causes.</ID>
+    <ID>NoComments:CrashReporter.kt:material, long base64 blobs and the home directory, as on Android.</ID>
+    <ID>NoComments:CrashReporter.kt:or crypto exceptions quoting bad input) and file paths: redact key</ID>
+    <ID>NoComments:CrashReporterTest.kt:A restart picks the saved report up again: at launch, or (stored</ID>
+    <ID>NoComments:CrashReporterTest.kt:Out-of-memory errors are reported too, with the heap numbers.</ID>
+    <ID>NoComments:CrashReporterTest.kt:encrypted when another test class has set a passphrase) at unlock.</ID>
+    <ID>NoComments:DateTimes.kt:java.text.DateFormat is not thread-safe, so build one per call.</ID>
+    <ID>NoComments:DbusNotifications.kt:Actionable notifications over the session bus. The daemon delivers</ID>
+    <ID>NoComments:DbusNotifications.kt:Post a notification with [actions] as (key, label) pairs and run</ID>
+    <ID>NoComments:DbusNotifications.kt:Test hook: connect to this bus address instead of the session bus.</ID>
+    <ID>NoComments:DbusNotifications.kt:Unique bus name of the notification daemon we post through. Only its</ID>
+    <ID>NoComments:DbusNotifications.kt:Withdraw notification [id] and forget its handler, so a click on the</ID>
+    <ID>NoComments:DesktopCoreTest.kt:A fresh key per event no longer evades the limit.</ID>
+    <ID>NoComments:DesktopCoreTest.kt:A fresh sender gets its whole budget at once, then drops the excess.</ID>
+    <ID>NoComments:DesktopCoreTest.kt:A full window restores the whole budget.</ID>
+    <ID>NoComments:DesktopCoreTest.kt:A ping on [localKey]; every entry reuses the client-chosen request id "X".</ID>
+    <ID>NoComments:DesktopCoreTest.kt:A stale timestamp on the side acceptable does not select never decides.</ID>
+    <ID>NoComments:DesktopCoreTest.kt:An active rejection wins over the "fully trust" sign policy.</ID>
+    <ID>NoComments:DesktopCoreTest.kt:Keep in sync with `defaultAppRelays` in the Android AmberSettings.kt.</ID>
+    <ID>NoComments:DesktopCoreTest.kt:No stored permission -&gt; ask the user.</ID>
+    <ID>NoComments:DesktopCoreTest.kt:Nothing hit the disk yet: the writes are debounced.</ID>
+    <ID>NoComments:DesktopCoreTest.kt:One noisy sender only spends its own budget of the shared one.</ID>
+    <ID>NoComments:DesktopCoreTest.kt:Point the app data dir at a scratch location so tests never touch</ID>
+    <ID>NoComments:DesktopCoreTest.kt:Relay clients choose their own request ids: the same id arriving for</ID>
+    <ID>NoComments:DesktopCoreTest.kt:Removal matches the full key, not the bare client id.</ID>
+    <ID>NoComments:DesktopCoreTest.kt:Senders are evicted oldest-first, so the map cannot grow unbounded.</ID>
+    <ID>NoComments:DesktopCoreTest.kt:Sign policy 2 always auto-accepts.</ID>
+    <ID>NoComments:DesktopCoreTest.kt:Steady refill: half a window later exactly one token is back.</ID>
+    <ID>NoComments:DesktopCoreTest.kt:The very same (account, connection, id) is still collapsed.</ID>
+    <ID>NoComments:DesktopCoreTest.kt:a real install.</ID>
+    <ID>NoComments:DesktopCoreTest.kt:another connection (or account) must not be swallowed by the first.</ID>
+    <ID>NoComments:DesktopKeyStore.kt:':' is outside the Base64 alphabet, so legacy values can never match.</ID>
+    <ID>NoComments:DesktopKeyStore.kt:----- keystore-backed path (before the first passphrase is set) -----</ID>
+    <ID>NoComments:DesktopKeyStore.kt:----- master key management (used by PassphraseLock) -----</ID>
+    <ID>NoComments:DesktopKeyStore.kt:96 bits</ID>
+    <ID>NoComments:DesktopKeyStore.kt:An AES key whose bytes can actually be wiped: the JDK's SecretKeySpec does</ID>
+    <ID>NoComments:DesktopKeyStore.kt:Copies [source] (and wipes the intermediate encoding).</ID>
+    <ID>NoComments:DesktopKeyStore.kt:Crash recovery for [PassphraseLock.enable]: the wrapped-key blob is</ID>
+    <ID>NoComments:DesktopKeyStore.kt:Deletes the unprotected key copies (PKCS12 keystore + its password in</ID>
+    <ID>NoComments:DesktopKeyStore.kt:Evicts the in-memory master key (lock), wiping its bytes.</ID>
+    <ID>NoComments:DesktopKeyStore.kt:First key-storage access in this process: reap unprotected copies</ID>
+    <ID>NoComments:DesktopKeyStore.kt:Installs an unwrapped master key (unlock, or right after enabling the lock).</ID>
+    <ID>NoComments:DesktopKeyStore.kt:Replaces the keystore atomically (see [AppDirs.writeAtomically]) so a</ID>
+    <ID>NoComments:DesktopKeyStore.kt:Returns the master key for wrapping under a passphrase, creating it</ID>
+    <ID>NoComments:DesktopKeyStore.kt:The master key in the existing keystore, or a fresh one added to it when its entry is missing (shoul</ID>
+    <ID>NoComments:DesktopKeyStore.kt:an interrupted passphrase setup may have left behind.</ID>
+    <ID>NoComments:DesktopKeyStore.kt:bits</ID>
+    <ID>NoComments:EncryptedContentTest.kt:Broken JSON (or JSON that is not an event / tag array) is just text.</ID>
+    <ID>NoComments:ExpiredConnectionTest.kt:A fully trusted connection (signs everything unasked) expiring at [deleteAfter].</ID>
+    <ID>NoComments:IncomingRequestsScreen.kt:"Account: name · npub…" for a request; with [canSwitch] and more than one</ID>
+    <ID>NoComments:IncomingRequestsScreen.kt:A socket tool names itself in its hello: any local process can</ID>
+    <ID>NoComments:IncomingRequestsScreen.kt:An app header (when there are several apps), then that app's groups.</ID>
+    <ID>NoComments:IncomingRequestsScreen.kt:Approving a nostrconnect URI for a client key that is already</ID>
+    <ID>NoComments:IncomingRequestsScreen.kt:Confirm for the whole batch, with the keyboard shortcuts the batch screen takes.</ID>
+    <ID>NoComments:IncomingRequestsScreen.kt:Keep the keyboard selection valid as requests come and go.</ID>
+    <ID>NoComments:IncomingRequestsScreen.kt:Like Android: a connect, or the only request, gets the full card; several</ID>
+    <ID>NoComments:IncomingRequestsScreen.kt:Mirrors Android's BunkerConnectRequestScreen: pick the sign</ID>
+    <ID>NoComments:IncomingRequestsScreen.kt:Mirrors Android's Nip44v3ContextBox: the kind + scope the</ID>
+    <ID>NoComments:IncomingRequestsScreen.kt:Mirrors the Android "Encryption scope" toggle: NIP-04/44 grants</ID>
+    <ID>NoComments:IncomingRequestsScreen.kt:Mirrors the Android BunkerRequestCard: what the event says (or</ID>
+    <ID>NoComments:IncomingRequestsScreen.kt:One request in a batch: its Approve/Deny checkbox and what it is about.</ID>
+    <ID>NoComments:IncomingRequestsScreen.kt:One request type of one app: approve-all checkbox, the group's Remember/scope choice, and its reques</ID>
+    <ID>NoComments:IncomingRequestsScreen.kt:Several requests (mirrors Android's BunkerMultiEventHomeScreen): per app, per type, one Confirm.</ID>
+    <ID>NoComments:IncomingRequestsScreen.kt:The "Encryption scope" toggle: NIP-04/44 grants this content type or the</ID>
+    <ID>NoComments:IncomingRequestsScreen.kt:The account that signs this request; a connect can be moved to</ID>
+    <ID>NoComments:IncomingRequestsScreen.kt:The app a batch's requests come from, and the account they sign as.</ID>
+    <ID>NoComments:IncomingRequestsScreen.kt:The keyboard shortcuts that approve or reject [req].</ID>
+    <ID>NoComments:IncomingRequestsScreen.kt:The relays the client asks Amber to answer on come straight</ID>
+    <ID>NoComments:IncomingRequestsScreen.kt:Too narrow to share the row with the buttons: hint underneath.</ID>
+    <ID>NoComments:IncomingRequestsScreen.kt:another account, like the Android connect screen's picker.</ID>
+    <ID>NoComments:IncomingRequestsScreen.kt:approve() runs on the engine's application scope, so it</ID>
+    <ID>NoComments:IncomingRequestsScreen.kt:ciphertext is bound to, i.e. what is being granted.</ID>
+    <ID>NoComments:IncomingRequestsScreen.kt:claim a trusted tool's name, so say so before it is approved.</ID>
+    <ID>NoComments:IncomingRequestsScreen.kt:from the nostrconnect:// URI, so show them: they are part of</ID>
+    <ID>NoComments:IncomingRequestsScreen.kt:gets the same warning as a manually entered one.</ID>
+    <ID>NoComments:IncomingRequestsScreen.kt:policy (requested permissions are only granted one by one</ID>
+    <ID>NoComments:IncomingRequestsScreen.kt:publishes the relay response. Toast optimistically.</ID>
+    <ID>NoComments:IncomingRequestsScreen.kt:relay auth (BunkerRelayAuthScreen) this relay or every relay.</ID>
+    <ID>NoComments:IncomingRequestsScreen.kt:requests are reviewed together and answered with one Confirm.</ID>
+    <ID>NoComments:IncomingRequestsScreen.kt:saved replaces that connection; say so before Approve.</ID>
+    <ID>NoComments:IncomingRequestsScreen.kt:survives this card leaving composition and still</ID>
+    <ID>NoComments:IncomingRequestsScreen.kt:the text being encrypted/decrypted), the rest behind "See details".</ID>
+    <ID>NoComments:IncomingRequestsScreen.kt:this content type or the whole NIP; NIP-44 v3 this kind or all;</ID>
+    <ID>NoComments:IncomingRequestsScreen.kt:under the manual policy) and when to delete the connection.</ID>
+    <ID>NoComments:IncomingRequestsScreen.kt:what "Approve" agrees to. An attacker-chosen cleartext relay</ID>
+    <ID>NoComments:InvalidParamsTest.kt:Missing params are refused before admission (hasRequiredParams); a v3 request</ID>
+    <ID>NoComments:InvalidParamsTest.kt:anything is computed (nip46Step).</ID>
+    <ID>NoComments:InvalidParamsTest.kt:with its pubkey but no kind passes that check and is refused after it, before</ID>
+    <ID>NoComments:KeystorePassword.kt:A new password for a new keystore, kept in the OS store when it works, else in the file.</ID>
+    <ID>NoComments:KeystorePassword.kt:Debug runs get their own entry: a reset there deletes it (see DesktopKeyStore).</ID>
+    <ID>NoComments:KeystorePassword.kt:Never leave a stale file copy behind once the OS store owns it.</ID>
+    <ID>NoComments:KeystorePassword.kt:The OS store is authoritative; drop any file copy so the data</ID>
+    <ID>NoComments:KeystorePassword.kt:The OS store's password when it opens the keystore.</ID>
+    <ID>NoComments:KeystorePassword.kt:The password file's password when it opens the keystore, migrated into the OS store when possible.</ID>
+    <ID>NoComments:KeystorePassword.kt:Thrown both for "no entry" and "backend broken"; either way there is</ID>
+    <ID>NoComments:KeystorePassword.kt:directory alone is no longer enough to unlock the keys.</ID>
+    <ID>NoComments:KeystorePassword.kt:nothing usable here.</ID>
+    <ID>NoComments:KeystorePasswordTest.kt:The working password replaces the stale credential-store entry.</ID>
+    <ID>NoComments:KeystorePasswordTest.kt:e.g. a stale credential-store entry from a wiped install.</ID>
+    <ID>NoComments:LocalBunkerRelayTest.kt:"rate limited" and the session is dropped right after it.</ID>
+    <ID>NoComments:LocalBunkerRelayTest.kt:A second start must not rebind or reset the relay.</ID>
+    <ID>NoComments:LocalBunkerRelayTest.kt:A signature that is no longer valid for the event's id.</ID>
+    <ID>NoComments:LocalBunkerRelayTest.kt:A stopped relay accepts a fresh start.</ID>
+    <ID>NoComments:LocalBunkerRelayTest.kt:All 30 acked as accepted: approved senders bypass the bucket.</ID>
+    <ID>NoComments:LocalBunkerRelayTest.kt:Asserts nothing else arrives: filters must not leak events to non-matching subscribers.</ID>
+    <ID>NoComments:LocalBunkerRelayTest.kt:Both the client key and the engine's connection key are approved.</ID>
+    <ID>NoComments:LocalBunkerRelayTest.kt:Consume the acks so nothing queues up behind the subscription replay.</ID>
+    <ID>NoComments:LocalBunkerRelayTest.kt:Hold the port on the loopback address the relay binds: on macOS a</ID>
+    <ID>NoComments:LocalBunkerRelayTest.kt:The event does not match the other subscription's p tag.</ID>
+    <ID>NoComments:LocalBunkerRelayTest.kt:The first 60 stay within the per-connection budget; the 61st is told</ID>
+    <ID>NoComments:LocalBunkerRelayTest.kt:The next relay message, failing the test instead of hanging when the relay goes quiet.</ID>
+    <ID>NoComments:LocalBunkerRelayTest.kt:The publisher is subscribed itself, so it gets its OK ack first.</ID>
+    <ID>NoComments:LocalBunkerRelayTest.kt:The session stays usable afterwards.</ID>
+    <ID>NoComments:LocalBunkerRelayTest.kt:The subscription cap (20 per client) binds first; the rate limiter</ID>
+    <ID>NoComments:LocalBunkerRelayTest.kt:catches the rest of the flood past 60 REQs per minute.</ID>
+    <ID>NoComments:LocalBunkerRelayTest.kt:wildcard listener does not block a more specific 127.0.0.1 bind.</ID>
+    <ID>NoComments:LocalSigner.kt:An expired connection no longer authenticates the client.</ID>
+    <ID>NoComments:LocalSigner.kt:Apps approved on this very connection: known even if the tool ignores the secret.</ID>
+    <ID>NoComments:LocalSigner.kt:Asks the user to approve the tool behind [session] on [acc] (or, with</ID>
+    <ID>NoComments:LocalSigner.kt:Checked (and set to 0700) without following links, before anything touches it.</ID>
+    <ID>NoComments:LocalSigner.kt:Checked after queuing: either this sees the flag or serve's drop sees the request.</ID>
+    <ID>NoComments:LocalSigner.kt:EOF can be a half-close (`echo request | nc -U ...`): the client is</ID>
+    <ID>NoComments:LocalSigner.kt:It can't be told apart from a tool that exited, though, so prompts</ID>
+    <ID>NoComments:LocalSigner.kt:Malformed calls are reported as such before anything else.</ID>
+    <ID>NoComments:LocalSigner.kt:Mirrors BunkerEngine.handleRequest from the permission check on.</ID>
+    <ID>NoComments:LocalSigner.kt:No handshake reply: an unnamed client sending requests right away.</ID>
+    <ID>NoComments:LocalSigner.kt:Not toList(): it reads size, then next(), and a session ending in</ID>
+    <ID>NoComments:LocalSigner.kt:One secret per tool: a tool already holding one keeps it for further accounts.</ID>
+    <ID>NoComments:LocalSigner.kt:Queue id for a request: scoped to this connection, and unique even</ID>
+    <ID>NoComments:LocalSigner.kt:Queues [req] for the user and answers with their decision.</ID>
+    <ID>NoComments:LocalSigner.kt:Queues an approval; a client whose input already closed gets the error at once.</ID>
+    <ID>NoComments:LocalSigner.kt:Relay auth is granted per relay; a relay outside a non-empty auth</ID>
+    <ID>NoComments:LocalSigner.kt:See [isSameUserPeer]: fails closed wherever peer credentials exist.</ID>
+    <ID>NoComments:LocalSigner.kt:Serializes app resolution so overlapping requests ask for one connect, not several.</ID>
+    <ID>NoComments:LocalSigner.kt:Set at EOF: from then on nothing of this client may wait for a decision.</ID>
+    <ID>NoComments:LocalSigner.kt:The approval may have picked another account: find where the app landed.</ID>
+    <ID>NoComments:LocalSigner.kt:The documented 0600 socket: if it can't be set, don't serve.</ID>
+    <ID>NoComments:LocalSigner.kt:The kind a grant is keyed by: the event's for sign_event; NIP-44 v3 grants</ID>
+    <ID>NoComments:LocalSigner.kt:The result, plus the secret when this request got the tool approved.</ID>
+    <ID>NoComments:LocalSigner.kt:The secret this connection presented in its hello or was given on approval.</ID>
+    <ID>NoComments:LocalSigner.kt:The tool picks its own label; keep it to one plain line.</ID>
+    <ID>NoComments:LocalSigner.kt:Why [dir] can't hold the socket, or null when it can. On POSIX systems</ID>
+    <ID>NoComments:LocalSigner.kt:are per context kind, carried at params[1].</ID>
+    <ID>NoComments:LocalSigner.kt:between makes next() throw. The map's own iterator tolerates that.</ID>
+    <ID>NoComments:LocalSigner.kt:don't wait: they're dropped (and answered with an error) instead</ID>
+    <ID>NoComments:LocalSigner.kt:done sending but still reading, so answer what it already asked.</ID>
+    <ID>NoComments:LocalSigner.kt:of lingering in the approval list for a client that is gone.</ID>
+    <ID>NoComments:LocalSigner.kt:whitelist is rejected without asking (see BunkerEngine.handleRequest).</ID>
+    <ID>NoComments:LocalSignerProtocol.kt:Events travel as objects here and as JSON strings in NIP-46.</ID>
+    <ID>NoComments:LocalSignerProtocol.kt:Method -&gt; (type, number of params before the optional account).</ID>
+    <ID>NoComments:LocalSignerProtocol.kt:NIP-44 v3, NIP-46 layout: [pubkey, kind, scope, base64 plaintext | ciphertext].</ID>
+    <ID>NoComments:LocalSignerProtocol.kt:The v3 context kind may come as a JSON number.</ID>
+    <ID>NoComments:LocalSignerProtocolTest.kt:A client that skips the handshake reply and sends a request straight away.</ID>
+    <ID>NoComments:LocalSignerProtocolTest.kt:Hex and npub name the same account.</ID>
+    <ID>NoComments:LocalSignerProtocolTest.kt:NIP-55 style: approval only through get_public_key.</ID>
+    <ID>NoComments:LocalSignerProtocolTest.kt:Numeric ids are accepted and echoed as text.</ID>
+    <ID>NoComments:LocalSignerProtocolTest.kt:The socket takes just the zap request; the NIP-46 request it becomes carries it</ID>
+    <ID>NoComments:LocalSignerProtocolTest.kt:second, as the Android app reads it.</ID>
+    <ID>NoComments:LocalSignerTest.kt:A directory left group/world-readable is tightened back to 0700 on start.</ID>
+    <ID>NoComments:LocalSignerTest.kt:A made-up secret doesn't help either.</ID>
+    <ID>NoComments:LocalSignerTest.kt:A new connection with the secret: matched, no prompt, whatever name it uses.</ID>
+    <ID>NoComments:LocalSignerTest.kt:Approve in reverse order: each answer must still reach its own connection.</ID>
+    <ID>NoComments:LocalSignerTest.kt:From then on the tool's requests default to that account.</ID>
+    <ID>NoComments:LocalSignerTest.kt:Like NIP-55: an unknown tool asks for the key without naming an</ID>
+    <ID>NoComments:LocalSignerTest.kt:Not approved for b yet: a connect for exactly that account (no switching).</ID>
+    <ID>NoComments:LocalSignerTest.kt:Remembered: the second one is signed without a prompt.</ID>
+    <ID>NoComments:LocalSignerTest.kt:Saved as a local socket app with no relays.</ID>
+    <ID>NoComments:LocalSignerTest.kt:Someone else's directory behind a link must not receive the socket.</ID>
+    <ID>NoComments:LocalSignerTest.kt:Still recognized on the same connection; no second secret.</ID>
+    <ID>NoComments:LocalSignerTest.kt:The kind may be a JSON number; the scope travels as text.</ID>
+    <ID>NoComments:LocalSignerTest.kt:The same name without the secret is a stranger: refused, and only a new approval helps.</ID>
+    <ID>NoComments:LocalSignerTest.kt:The sign waits for approval; the ping behind it must not.</ID>
+    <ID>NoComments:LocalSignerTest.kt:What PassphraseLock.lock() does to the queue.</ID>
+    <ID>NoComments:LocalSignerTest.kt:Windows has no POSIX permissions; the user-profile ACLs guard the socket there.</ID>
+    <ID>NoComments:LocalSignerTest.kt:Without a usable kind the request is refused as invalid, with no prompt.</ID>
+    <ID>NoComments:LocalSignerTest.kt:`echo request | nc -U ...`: write, then close the sending side.</ID>
+    <ID>NoComments:LocalSignerTest.kt:account, and whichever account the user picks is the answer.</ID>
+    <ID>NoComments:LockDeferredRequestTest.kt:Already seen: a redelivery is ignored.</ID>
+    <ID>NoComments:LockDeferredRequestTest.kt:Deferred by a lock: `since` reaches back to it and the redelivery is handled.</ID>
+    <ID>NoComments:LoginScreen.kt:Hidden until asked for, so they don't sit on screen (or in a screen share) by default.</ID>
+    <ID>NoComments:MacNotifications.kt:A click on the notification itself, like the freedesktop "default" action.</ID>
+    <ID>NoComments:MacNotifications.kt:A global block (isa, flags, reserved, invoke, descriptor{reserved, size}).</ID>
+    <ID>NoComments:MacNotifications.kt:An autoreleased NSString; the bytes are passed NUL-terminated, never as a platform-encoded string.</ID>
+    <ID>NoComments:MacNotifications.kt:Both delegate methods: (self, _cmd, center, notification or response, completion block).</ID>
+    <ID>NoComments:MacNotifications.kt:Callbacks and native memory macOS keeps pointers to: never collected.</ID>
+    <ID>NoComments:MacNotifications.kt:Native memory the block above points at.</ID>
+    <ID>NoComments:MacNotifications.kt:Notification Center (it was killed, or crashed) answers nothing now.</ID>
+    <ID>NoComments:MacNotifications.kt:Offset of the `invoke` function pointer in a block: isa, flags, reserved.</ID>
+    <ID>NoComments:MacNotifications.kt:Post a notification with [actions] as (key, label) buttons and run</ID>
+    <ID>NoComments:MacNotifications.kt:Registered categories: identifier → its (action, label) buttons. Only touched on [worker].</ID>
+    <ID>NoComments:MacNotifications.kt:Requests do not outlive the process: what an earlier run left in</ID>
+    <ID>NoComments:MacNotifications.kt:Show it even while Amber is the frontmost app (its tray window, say).</ID>
+    <ID>NoComments:MacNotifications.kt:Stable per set of buttons and their labels, so a language change gets its own category.</ID>
+    <ID>NoComments:MacNotifications.kt:The category whose buttons are [actions], registering it first when it</ID>
+    <ID>NoComments:MacNotifications.kt:The center does not retain its delegate; this instance is never released.</ID>
+    <ID>NoComments:MacNotifications.kt:The notification center with Amber's delegate installed, or null outside</ID>
+    <ID>NoComments:MacNotifications.kt:The notification center, or null when it cannot be used. Only touched on [worker].</ID>
+    <ID>NoComments:MacNotifications.kt:Waits for the removal, so a notification closed while Amber</ID>
+    <ID>NoComments:MacNotifications.kt:What to run for a click, per notification identifier.</ID>
+    <ID>NoComments:MacNotifications.kt:Whether the user allows Amber's notifications. The first call makes</ID>
+    <ID>NoComments:MacNotifications.kt:Whether this process can use the notification center at all (the packaged app).</ID>
+    <ID>NoComments:MacNotifications.kt:`BLOCK_IS_GLOBAL`: a block that is never copied or freed.</ID>
+    <ID>NoComments:MacNotifications.kt:`UNAuthorizationOptionAlert`.</ID>
+    <ID>NoComments:MacNotifications.kt:`UNNotificationPresentationOptionList | …Banner` (macOS 11+), else the older `…Alert`.</ID>
+    <ID>NoComments:MacNotifications.kt:`UNNotificationResponse` → the handler of the notification it answers.</ID>
+    <ID>NoComments:MacNotifications.kt:macOS notifications with buttons, through `UNUserNotificationCenter` (JNA</ID>
+    <ID>NoComments:MacNotifications.kt:quits is really gone before the process ends.</ID>
+    <ID>NoComments:MacNotifications.kt:v@:@@@? — void, self, _cmd, two objects and a block.</ID>
+    <ID>NoComments:Main.kt:"Minimize to tray" should keep Amber running in the background so it</ID>
+    <ID>NoComments:Main.kt:(Gradle): it arrives via the drop file (Gradle cannot take it as an</ID>
+    <ID>NoComments:Main.kt:(Linux daemons that never draw them, an unsigned macOS app, a</ID>
+    <ID>NoComments:Main.kt:A nostrconnect:// link explicitly targets Amber: raise the window,</ID>
+    <ID>NoComments:Main.kt:A report saved encrypted by a previous run is readable now.</ID>
+    <ID>NoComments:Main.kt:AWT derives the X11 WM_CLASS from whichever thread first loaded the toolkit</ID>
+    <ID>NoComments:Main.kt:AWT's tray only works with an XEmbed host, which excludes Wayland; on</ID>
+    <ID>NoComments:Main.kt:Amber was opened again from the app launcher: show the window.</ID>
+    <ID>NoComments:Main.kt:Amber, which focuses the main window before the click reaches the</ID>
+    <ID>NoComments:Main.kt:Answered or dropped requests lose their notification; the ones</ID>
+    <ID>NoComments:Main.kt:Approve/Reject button on a request notification. The request may have been</ID>
+    <ID>NoComments:Main.kt:Approve/Reject buttons pointing at a request that no longer exists.</ID>
+    <ID>NoComments:Main.kt:Before any string is read: Compose resources follow the default locale.</ID>
+    <ID>NoComments:Main.kt:Close the popup once its request is answered elsewhere or dropped.</ID>
+    <ID>NoComments:Main.kt:Could not forward (no listener): fall through and start anyway.</ID>
+    <ID>NoComments:Main.kt:Drop requests whose client has most likely given up (see PendingBunkerRequest.expiresAt),</ID>
+    <ID>NoComments:Main.kt:First, so a crash anywhere below is saved for the report dialog.</ID>
+    <ID>NoComments:Main.kt:Focusing Amber shows the request card, so the popup is redundant —</ID>
+    <ID>NoComments:Main.kt:GTK (dorkbox has to own GTK loading, otherwise the AppIndicator backend</ID>
+    <ID>NoComments:Main.kt:Holds the native (dorkbox) tray and the window-visibility/quit signals it</ID>
+    <ID>NoComments:Main.kt:Keep the autostart entry fresh (binary path can change between builds/installs).</ID>
+    <ID>NoComments:Main.kt:Key material is evicted (or not set up yet); drop the</ID>
+    <ID>NoComments:Main.kt:Linux daemons that never draw action buttons get Amber's own popup.</ID>
+    <ID>NoComments:Main.kt:Linux incl. Wayland/Hyprland, a toast on Windows),</ID>
+    <ID>NoComments:Main.kt:Linux we use the dorkbox tray (created above) instead, and keep AWT</ID>
+    <ID>NoComments:Main.kt:Local WebSocket relay for bunker connections (opt out under</ID>
+    <ID>NoComments:Main.kt:NIP-5F: CLI tools sign over a local socket (always on).</ID>
+    <ID>NoComments:Main.kt:No native channel with buttons, or it failed (the user</ID>
+    <ID>NoComments:Main.kt:No notification reached the user and there's no tray to reopen</ID>
+    <ID>NoComments:Main.kt:Notify when a new approval request arrives. Do NOT force the window</ID>
+    <ID>NoComments:Main.kt:OS-native notification cannot show it with Approve/Reject buttons</ID>
+    <ID>NoComments:Main.kt:Opened from the app launcher: the running instance may be hidden</ID>
+    <ID>NoComments:Main.kt:Packaged handler: the URI arrives as an argument. Dev handler</ID>
+    <ID>NoComments:Main.kt:Posted and registered on the IO thread: the effect is</ID>
+    <ID>NoComments:Main.kt:Rebuilt on a language change, so the menu labels follow it.</ID>
+    <ID>NoComments:Main.kt:Remember maximized state and the floating size across launches. The</ID>
+    <ID>NoComments:Main.kt:Settings -&gt; Desktop): same-machine clients skip the public relays.</ID>
+    <ID>NoComments:Main.kt:Single instance: a second launch hands its nostrconnect:// URI to the</ID>
+    <ID>NoComments:Main.kt:Strings follow the JVM default locale (Strings.setLanguage): recompose them all.</ID>
+    <ID>NoComments:Main.kt:The OS-native notification channel (freedesktop on</ID>
+    <ID>NoComments:Main.kt:The client-chosen name is the (plain-text) title; the</ID>
+    <ID>NoComments:Main.kt:The dorkbox tray prefers to be created before Compose/AWT initializes</ID>
+    <ID>NoComments:Main.kt:The native request notification currently showing per request, so</ID>
+    <ID>NoComments:Main.kt:The request shown in Amber's own notification popup: only where the</ID>
+    <ID>NoComments:Main.kt:The tray's Quit routes here so we can exit the Compose app cleanly.</ID>
+    <ID>NoComments:Main.kt:Tracks the requests themselves, not the count: answering one from a</ID>
+    <ID>NoComments:Main.kt:UriLaunch.showRequests) or the tray icon, when present, brings it back.</ID>
+    <ID>NoComments:Main.kt:Whether the main window has keyboard focus, i.e. the user is looking</ID>
+    <ID>NoComments:Main.kt:Without a tray icon a hidden Amber looks like it quit: say once per</ID>
+    <ID>NoComments:Main.kt:a second instance would linger invisibly instead of exiting.</ID>
+    <ID>NoComments:Main.kt:account reference so nothing in the UI can reach a</ID>
+    <ID>NoComments:Main.kt:and abandons init that takes too long. A host that shows up later (the</ID>
+    <ID>NoComments:Main.kt:and connections whose "delete after" time has passed.</ID>
+    <ID>NoComments:Main.kt:another notification — also takes its banner down instead of leaving</ID>
+    <ID>NoComments:Main.kt:answering a request — on its card, from the tray window, or from</ID>
+    <ID>NoComments:Main.kt:are flaky) — so the window at least hides instead of quitting; a new</ID>
+    <ID>NoComments:Main.kt:argument (also to an already-running Amber). Install the handler</ID>
+    <ID>NoComments:Main.kt:argument).</ID>
+    <ID>NoComments:Main.kt:at Amber, where the request card already shows: no notification then.</ID>
+    <ID>NoComments:Main.kt:bar starting after Amber at login) still gets the tray, via onLateTray.</ID>
+    <ID>NoComments:Main.kt:before Compose starts so the event that launched the app is not</ID>
+    <ID>NoComments:Main.kt:body, which daemons may render as markup, is Amber's own.</ID>
+    <ID>NoComments:Main.kt:but never let it block the window: createBounded probes for an SNI host</ID>
+    <ID>NoComments:Main.kt:can be approved from here; the rest need their card,</ID>
+    <ID>NoComments:Main.kt:cancelled when the queue changes again, and a handle</ID>
+    <ID>NoComments:Main.kt:decrypted signer, and keep the engine disconnected</ID>
+    <ID>NoComments:Main.kt:dies, so a failed acquire always means a live instance exists.</ID>
+    <ID>NoComments:Main.kt:even when it was minimized to the tray.</ID>
+    <ID>NoComments:Main.kt:fails to start and SystemTray.get() returns null even when</ID>
+    <ID>NoComments:Main.kt:for Windows/macOS where it works well.</ID>
+    <ID>NoComments:Main.kt:from — surface the window so the request isn't missed.</ID>
+    <ID>NoComments:Main.kt:is enabled — even if no tray icon could be published (Wayland trays</ID>
+    <ID>NoComments:Main.kt:it from the notification or the tray. Only surface it as a last</ID>
+    <ID>NoComments:Main.kt:libayatana-appindicator is installed). So start it here, first thing —</ID>
+    <ID>NoComments:Main.kt:lost in that window would leave a stale banner up.</ID>
+    <ID>NoComments:Main.kt:macOS asks to allow Amber's notifications the first time the</ID>
+    <ID>NoComments:Main.kt:macOS delivers nostrconnect:// links as an Apple event, not as an</ID>
+    <ID>NoComments:Main.kt:missed — but only in the primary instance: it initializes AWT, and</ID>
+    <ID>NoComments:Main.kt:native post that failed).</ID>
+    <ID>NoComments:Main.kt:notification and the client's next request arriving can leave the</ID>
+    <ID>NoComments:Main.kt:notification center is used: at launch, not over the first request.</ID>
+    <ID>NoComments:Main.kt:once AWT is up returning from main no longer ends the process, so</ID>
+    <ID>NoComments:Main.kt:open — a minimized Amber should stay minimized and let the user open</ID>
+    <ID>NoComments:Main.kt:popup's button, and closing it then would swallow the Approve.</ID>
+    <ID>NoComments:Main.kt:request, opening Amber again from the app launcher (see</ID>
+    <ID>NoComments:Main.kt:resort, when the user could not be reached any other way.</ID>
+    <ID>NoComments:Main.kt:running app and exits. The OS releases the lock if the first instance</ID>
+    <ID>NoComments:Main.kt:session that it still runs, and how to bring it back.</ID>
+    <ID>NoComments:Main.kt:size is only saved while floating, so un-maximizing restores it.</ID>
+    <ID>NoComments:Main.kt:size unchanged between recompositions.</ID>
+    <ID>NoComments:Main.kt:so only Reject.</ID>
+    <ID>NoComments:Main.kt:still answers requests. On Linux we honor it whenever close-to-tray</ID>
+    <ID>NoComments:Main.kt:still pending keep theirs.</ID>
+    <ID>NoComments:Main.kt:turned Amber's notifications off, …): Amber's own popup.</ID>
+    <ID>NoComments:Main.kt:unless the pointer is on the popup: on macOS clicking it activates</ID>
+    <ID>NoComments:Main.kt:until the passphrase has been set up and unlocked.</ID>
+    <ID>NoComments:Main.kt:with Approve / Reject buttons. Only low-risk requests</ID>
+    <ID>NoComments:Main.kt:with no tray icon to bring it back, so ask it to show its window.</ID>
+    <ID>NoComments:MdnsResolver.kt:A and AAAA records for [name] in a DNS response (answers and additional records).</ID>
+    <ID>NoComments:MdnsResolver.kt:A standard query (id 0, no flags) asking for both A and AAAA of [name].</ID>
+    <ID>NoComments:MdnsResolver.kt:Compression pointer; bounded so a looping message can't hang us.</ID>
+    <ID>NoComments:MdnsResolver.kt:TTL</ID>
+    <ID>NoComments:MdnsResolver.kt:The address length an A (IPv4) or AAAA (IPv6) record carries; a record of another length is skipped.</ID>
+    <ID>NoComments:MdnsResolver.kt:The top bit of the class is mDNS's cache-flush flag.</ID>
+    <ID>NoComments:MdnsResolverTest.kt:A record name pointing at itself.</ID>
+    <ID>NoComments:MdnsResolverTest.kt:A record whose name is a compression pointer to the question (offset 12).</ID>
+    <ID>NoComments:MdnsResolverTest.kt:A response with one question, then [answers] encoded after it.</ID>
+    <ID>NoComments:MdnsResolverTest.kt:Question at offset 12: nas.local A IN.</ID>
+    <ID>NoComments:Models.kt:An extension, not a member: Jackson would persist a member getter as a field.</ID>
+    <ID>NoComments:NativeNotificationFormatTest.kt:The control character XML cannot carry is dropped; nothing becomes markup.</ID>
+    <ID>NoComments:NativeNotificationFormatTest.kt:Title plus two lines: a generic toast shows three.</ID>
+    <ID>NoComments:NativeTray.kt:(SNI) is the one waybar and the Wayland shells actually host.</ID>
+    <ID>NoComments:NativeTray.kt:A fresh, owner-only directory for the shim links. `createTempDirectory`</ID>
+    <ID>NoComments:NativeTray.kt:An explicit AMBER_TRAY_TYPE overrides the host probe (debugging).</ID>
+    <ID>NoComments:NativeTray.kt:If only the Ayatana appindicator library is present, symlink it under</ID>
+    <ID>NoComments:NativeTray.kt:Nothing to do if the legacy library dorkbox wants already exists.</ID>
+    <ID>NoComments:NativeTray.kt:On Wayland the GtkStatusIcon backend is invisible; AppIndicator</ID>
+    <ID>NoComments:NativeTray.kt:Only the GTK3 names — we force PREFER_GTK3, and pointing a GTK2</ID>
+    <ID>NoComments:NativeTray.kt:Package-visible for testing: a host is registered only on a `true` reply.</ID>
+    <ID>NoComments:NativeTray.kt:Probes up to [attempts] times, [intervalMs] apart; true as soon as a host is registered.</ID>
+    <ID>NoComments:NativeTray.kt:True when the session bus advertises a StatusNotifierItem host</ID>
+    <ID>NoComments:NativeTray.kt:dorkbox 4.4 only looks for the legacy `libappindicator3.so` family of</ID>
+    <ID>NoComments:NativeTray.kt:dorkbox hands the shell the tray icon as a file path under its</ID>
+    <ID>NoComments:NativeTray.kt:name at a GTK3 lib would mismatch.</ID>
+    <ID>NoComments:NativeTrayShimDirTest.kt:Freshly created, not a pre-existing directory that was adopted.</ID>
+    <ID>NoComments:NativeTrayTest.kt:(waybar's tray module, GNOME Shell, …) is registered.</ID>
+    <ID>NoComments:NativeTrayTest.kt:At login the bar's tray host can come up after Amber.</ID>
+    <ID>NoComments:NativeTrayTest.kt:Either null (headless / no tray host) or a real tray; both are fine —</ID>
+    <ID>NoComments:NativeTrayTest.kt:Errors ("The name … was not provided by any .service files") and</ID>
+    <ID>NoComments:NativeTrayTest.kt:No SNI host exists under Gradle test workers, so the probe path</ID>
+    <ID>NoComments:NativeTrayTest.kt:all, quickly, without throwing" (the pre-fix hang lived in create()).</ID>
+    <ID>NoComments:NativeTrayTest.kt:an unregistered host must not be mistaken for a host.</ID>
+    <ID>NoComments:NativeTrayTest.kt:gdbus returns GVariant text like "(&lt;true&gt;,)" when a tray host</ID>
+    <ID>NoComments:NativeTrayTest.kt:returns null immediately — the contract under test is "returns at</ID>
+    <ID>NoComments:NativeTrayTest.kt:the contract under test is "does not throw". Clean up if created.</ID>
+    <ID>NoComments:NetworkConnectivity.kt:Local relays keep working without internet: only drop</ID>
+    <ID>NoComments:NetworkConnectivity.kt:One probe socket per target; overridden in tests to dial a hermetic fake</ID>
+    <ID>NoComments:NetworkConnectivity.kt:TCP reachability of any probe target; false on any failure.</ID>
+    <ID>NoComments:NetworkConnectivity.kt:The SOCKS proxy for a probe target when Tor routing is on — exactly</ID>
+    <ID>NoComments:NetworkConnectivity.kt:and back off on their own).</ID>
+    <ID>NoComments:NetworkConnectivity.kt:everything when none are in use (remote ones then fail</ID>
+    <ID>NoComments:NetworkConnectivityProbeTest.kt:Port 0 is the placeholder that refuses everything; the probe fails</ID>
+    <ID>NoComments:NetworkConnectivityProbeTest.kt:Records the connect targets; never touches the network.</ID>
+    <ID>NoComments:NetworkConnectivityProbeTest.kt:`any` stops at the first success: exactly one probe target dialed.</ID>
+    <ID>NoComments:NetworkConnectivityProbeTest.kt:with the relays instead of leaking a direct dial.</ID>
+    <ID>NoComments:NetworkConnectivityTransitionTest.kt:Startup probe only records state, mirroring Android's first</ID>
+    <ID>NoComments:NetworkConnectivityTransitionTest.kt:onAvailable (no reconnect before the boot connect path runs).</ID>
+    <ID>NoComments:NostrConnectReplaceTest.kt:...but a bunker:// reconnect under the same key is not a replacement.</ID>
+    <ID>NoComments:NostrConnectReplaceTest.kt:A line break and a right-to-left override in the client-chosen name.</ID>
+    <ID>NoComments:NostrConnectReplaceTest.kt:The card can name the connection it will replace...</ID>
+    <ID>NoComments:NostrConnectReplaceTest.kt:The shared parser: relays, the secret byte for byte, metadata, and only grantable permissions.</ID>
+    <ID>NoComments:NotificationPolicy.kt:Blossom auth</ID>
+    <ID>NoComments:NotificationPolicy.kt:DM relays</ID>
+    <ID>NoComments:NotificationPolicy.kt:Event kinds whose signature changes the user's profile, social graph,</ID>
+    <ID>NoComments:NotificationPolicy.kt:HTTP auth</ID>
+    <ID>NoComments:NotificationPolicy.kt:NIP-42 relay auth</ID>
+    <ID>NoComments:NotificationPolicy.kt:NIP-46 message</ID>
+    <ID>NoComments:NotificationPolicy.kt:NWC request</ID>
+    <ID>NoComments:NotificationPolicy.kt:NWC response</ID>
+    <ID>NoComments:NotificationPolicy.kt:NWC wallet info</ID>
+    <ID>NoComments:NotificationPolicy.kt:app-specific data (Amber's own backups use it)</ID>
+    <ID>NoComments:NotificationPolicy.kt:contact list</ID>
+    <ID>NoComments:NotificationPolicy.kt:deletion</ID>
+    <ID>NoComments:NotificationPolicy.kt:gift wrap</ID>
+    <ID>NoComments:NotificationPolicy.kt:mute list</ID>
+    <ID>NoComments:NotificationPolicy.kt:profile metadata</ID>
+    <ID>NoComments:NotificationPolicy.kt:relay list</ID>
+    <ID>NoComments:NotificationPolicy.kt:seal</ID>
+    <ID>NoComments:NotificationPolicyTest.kt:A sign_event whose kind could not be read is not low-risk either.</ID>
+    <ID>NoComments:NotificationPolicyTest.kt:Bidi overrides and zero-width characters are dropped.</ID>
+    <ID>NoComments:NotificationPolicyTest.kt:Line breaks and tabs become single spaces: no fake second line.</ID>
+    <ID>NoComments:NotificationPolicyTest.kt:Ordinary names, including non-Latin ones, are kept as they are.</ID>
+    <ID>NoComments:Notifier.kt:"(uint32 2258,)" → 2258.</ID>
+    <ID>NoComments:Notifier.kt:--wait/--action. Falls through if neither works.</ID>
+    <ID>NoComments:Notifier.kt:A Windows toast (see [WindowsToasts]); null when it could not be posted.</ID>
+    <ID>NoComments:Notifier.kt:A `gdbus call` reply, or null when it fails or times out.</ID>
+    <ID>NoComments:Notifier.kt:A macOS notification (see [MacNotifications]); null when it could not be posted.</ID>
+    <ID>NoComments:Notifier.kt:A notification without buttons: notify-send, else gdbus; null when neither shows it.</ID>
+    <ID>NoComments:Notifier.kt:A plain notice has nothing to click or take down: the caller's AWT</ID>
+    <ID>NoComments:Notifier.kt:Also LinkageError: JNA or WinRT missing on this machine.</ID>
+    <ID>NoComments:Notifier.kt:Also LinkageError: a runtime image without a module dbus-java needs.</ID>
+    <ID>NoComments:Notifier.kt:Bound how long we wait so a never-expiring notification can't leak</ID>
+    <ID>NoComments:Notifier.kt:Launch a command, returning true if it ran and exited successfully (or is</ID>
+    <ID>NoComments:Notifier.kt:Notification daemons that accept actions (and advertise the "actions"</ID>
+    <ID>NoComments:Notifier.kt:Notifications not closed yet. A request does not outlive the process, so</ID>
+    <ID>NoComments:Notifier.kt:Older notify-send rejects --wait/--action and exits fast &amp; non-zero.</ID>
+    <ID>NoComments:Notifier.kt:Omarchy's shell keeps a card on screen after its sender closes it: a</ID>
+    <ID>NoComments:Notifier.kt:Reply: "('gnome-shell', 'GNOME', '50.1', '1.2')"</ID>
+    <ID>NoComments:Notifier.kt:Show a clickable notification via `notify-send --wait --action`. With</ID>
+    <ID>NoComments:Notifier.kt:Show an actionable notification straight over the session D-Bus (see</ID>
+    <ID>NoComments:Notifier.kt:Still running: --wait is supported and blocking for interaction.</ID>
+    <ID>NoComments:Notifier.kt:Take down a notification posted over D-Bus: through the connection that</ID>
+    <ID>NoComments:Notifier.kt:Test hook: exercises the process plumbing without depending on the OS.</ID>
+    <ID>NoComments:Notifier.kt:The commands that dismiss the card titled [title] in the Omarchy shell</ID>
+    <ID>NoComments:Notifier.kt:The config directory a quickshell command line runs: `-p`/`--path &lt;dir&gt;`,</ID>
+    <ID>NoComments:Notifier.kt:The config directory of Omarchy's shell while it is the notification</ID>
+    <ID>NoComments:Notifier.kt:The id (--print-id) and, once the user picks one, the action key.</ID>
+    <ID>NoComments:Notifier.kt:When a click handler or buttons are wanted, try an actionable</ID>
+    <ID>NoComments:Notifier.kt:[close], on the calling thread: for the shutdown hook, where the executor's daemon thread is no use.</ID>
+    <ID>NoComments:Notifier.kt:`--` stops option parsing so a summary/body starting with '-' is safe.</ID>
+    <ID>NoComments:Notifier.kt:freedesktop.org notifications. Prefer libnotify's `notify-send`; if it is</ID>
+    <ID>NoComments:Notifier.kt:notification first: over D-Bus directly, else libnotify 0.8+</ID>
+    <ID>NoComments:Notifier.kt:notify-send 0.7.6+ prints the id ahead of the action; an</ID>
+    <ID>NoComments:Notifier.kt:older build that ignores --print-id prints the action only.</ID>
+    <ID>NoComments:Notifier.kt:quickshell is a toolkit, and every shell built on it reports the same</ID>
+    <ID>NoComments:Notifier.kt:the process/thread.</ID>
+    <ID>NoComments:Notifier.kt:tray notification does for it on Windows and macOS.</ID>
+    <ID>NoComments:NotifierButtonsTest.kt:Read after [closeReceived] fires, which publishes the write.</ID>
+    <ID>NoComments:NotifierDaemonTest.kt:The shell matches by substring: "ab" is in most summaries.</ID>
+    <ID>NoComments:NotifierTest.kt:`true` exits 0 on any POSIX system; skip elsewhere (e.g. bare Windows).</ID>
+    <ID>NoComments:OkHttpWebSocket.kt:</ID>
+    <ID>NoComments:OkHttpWebSocket.kt:(connect() cancels it once OkHttp returns it), and its callbacks must find the session</ID>
+    <ID>NoComments:OkHttpWebSocket.kt:A bounded hand-off: `offer` never blocks, so the OkHttp</ID>
+    <ID>NoComments:OkHttpWebSocket.kt:A disconnect() that landed while dialing ended the session but had no socket to</ID>
+    <ID>NoComments:OkHttpWebSocket.kt:Always 1000 rather than echoing `code`: close() validates the code it is</ID>
+    <ID>NoComments:OkHttpWebSocket.kt:Bounded hand-off between OkHttp's reader thread and the consumer coroutine.</ID>
+    <ID>NoComments:OkHttpWebSocket.kt:Buffered relay messages before the oldest one is dropped. Deep</ID>
+    <ID>NoComments:OkHttpWebSocket.kt:Claim the session ourselves: OkHttp's cancel() raises no callback when no reader is</ID>
+    <ID>NoComments:OkHttpWebSocket.kt:Claimed even with no socket yet: a dial still in flight must not open after this</ID>
+    <ID>NoComments:OkHttpWebSocket.kt:Claims the session's single terminal report. False if it already ended.</ID>
+    <ID>NoComments:OkHttpWebSocket.kt:Ends the session side: no further offers accepted; receives drain, then return null.</ID>
+    <ID>NoComments:OkHttpWebSocket.kt:Exists to avoid exceptions stopping the coroutine</ID>
+    <ID>NoComments:OkHttpWebSocket.kt:Full: make room by dropping the oldest buffered message. A</ID>
+    <ID>NoComments:OkHttpWebSocket.kt:Launch a coroutine to process messages from the buffer.</ID>
+    <ID>NoComments:OkHttpWebSocket.kt:Never blocks (bounded buffer, drops the oldest on</ID>
+    <ID>NoComments:OkHttpWebSocket.kt:Never blocks: on a full buffer, drops the oldest message and retries.</ID>
+    <ID>NoComments:OkHttpWebSocket.kt:Next message, or null once the session ended and the buffer drained.</ID>
+    <ID>NoComments:OkHttpWebSocket.kt:OkHttp dials on its own thread, so this can run before newWebSocket()</ID>
+    <ID>NoComments:OkHttpWebSocket.kt:OkHttp reports onClosed at once, whether the relay still holds the</ID>
+    <ID>NoComments:OkHttpWebSocket.kt:REQs from onOpen: without this they went to a null socket and were</ID>
+    <ID>NoComments:OkHttpWebSocket.kt:RealWebSocket, and its own WebSocketEcho recipe) is that onClosed fires</ID>
+    <ID>NoComments:OkHttpWebSocket.kt:Set once, by whichever of `onClosed`, `onFailure` or [disconnect] ends the session first.</ID>
+    <ID>NoComments:OkHttpWebSocket.kt:TCP session open.</ID>
+    <ID>NoComments:OkHttpWebSocket.kt:The relay sent a CLOSE frame. OkHttp's contract (WebSocketListener KDoc,</ID>
+    <ID>NoComments:OkHttpWebSocket.kt:True from the start of [connect] until OkHttp hands back its socket. A dial in flight is not</ID>
+    <ID>NoComments:OkHttpWebSocket.kt:[RelayMessageBuffer].</ID>
+    <ID>NoComments:OkHttpWebSocket.kt:a later cancel() is silent too -- so the relay client kept believing it</ID>
+    <ID>NoComments:OkHttpWebSocket.kt:app, never on the relay's outbound buffers). But the queue</ID>
+    <ID>NoComments:OkHttpWebSocket.kt:application's job. Left unanswered, the socket sits half-closed: no</ID>
+    <ID>NoComments:OkHttpWebSocket.kt:asked to write and throws on the reserved ones (1005, 1006, 1015), and a</ID>
+    <ID>NoComments:OkHttpWebSocket.kt:cancel yet: cancel it now, or it opens and lives on beside the relay client's next one.</ID>
+    <ID>NoComments:OkHttpWebSocket.kt:closed-and-empty channel can never accept again, so give up.</ID>
+    <ID>NoComments:OkHttpWebSocket.kt:dropped, and the relay, never asked, never answered.</ID>
+    <ID>NoComments:OkHttpWebSocket.kt:ended. Nothing was open, so there is nothing to report.</ID>
+    <ID>NoComments:OkHttpWebSocket.kt:failed up to two intervals later. Answering completes the handshake and</ID>
+    <ID>NoComments:OkHttpWebSocket.kt:failure arrives later on its own thread. The relay client needs the answer now.</ID>
+    <ID>NoComments:OkHttpWebSocket.kt:itself is capped: an unbounded buffer under a flooded or</ID>
+    <ID>NoComments:OkHttpWebSocket.kt:keep draining the socket.</ID>
+    <ID>NoComments:OkHttpWebSocket.kt:left to fail (the state a relay-initiated close leaves behind), and when it does the</ID>
+    <ID>NoComments:OkHttpWebSocket.kt:onClosed, no onFailure, send() still accepted and silently discarded, and</ID>
+    <ID>NoComments:OkHttpWebSocket.kt:only once BOTH peers have sent a close, and sending ours is the</ID>
+    <ID>NoComments:OkHttpWebSocket.kt:overflow): the OkHttp reader thread must stay free to</ID>
+    <ID>NoComments:OkHttpWebSocket.kt:reader thread stays free to keep draining the socket (the</ID>
+    <ID>NoComments:OkHttpWebSocket.kt:reason this was UNLIMITED — backpressure must park on the</ID>
+    <ID>NoComments:OkHttpWebSocket.kt:relay may send anything.</ID>
+    <ID>NoComments:OkHttpWebSocket.kt:returns to connect() and stores the socket. The relay client sends its</ID>
+    <ID>NoComments:OkHttpWebSocket.kt:the oldest buffered message is dropped; see</ID>
+    <ID>NoComments:OkHttpWebSocket.kt:was connected, with its REQs live, until OkHttp's 120s ping path finally</ID>
+    <ID>NoComments:OkHttpWebSocket.kt:wedged consumer grew until the process OOMed. On overflow</ID>
+    <ID>NoComments:OkHttpWebSocketTest.kt:And the terminal callback the relay client's bookkeeping depends on.</ID>
+    <ID>NoComments:OkHttpWebSocketTest.kt:Asked by connect() itself, mid-dial: a concurrent reconnect pass</ID>
+    <ID>NoComments:OkHttpWebSocketTest.kt:Client frames are masked; decode enough to spot a CLOSE and read its status code.</ID>
+    <ID>NoComments:OkHttpWebSocketTest.kt:Handshakes one client, sends it a CLOSE frame on demand, and records the frames it sends back.</ID>
+    <ID>NoComments:OkHttpWebSocketTest.kt:OkHttp's own reaction to cancel() -- a failure on its reader thread -- and the relay's</ID>
+    <ID>NoComments:OkHttpWebSocketTest.kt:Reported before disconnect() returned: the relay client dials the replacement</ID>
+    <ID>NoComments:OkHttpWebSocketTest.kt:Server-initiated CLOSE, status 1000, unmasked as servers send it. The TCP session stays open.</ID>
+    <ID>NoComments:OkHttpWebSocketTest.kt:The half of the handshake that is ours to send.</ID>
+    <ID>NoComments:OkHttpWebSocketTest.kt:The relay client sends its REQs from here, possibly before</ID>
+    <ID>NoComments:OkHttpWebSocketTest.kt:The session already ended; the usual teardown afterward must not report it twice.</ID>
+    <ID>NoComments:OkHttpWebSocketTest.kt:asking now must not tear this dial down and start a second one.</ID>
+    <ID>NoComments:OkHttpWebSocketTest.kt:newWebSocket() has returned to connect().</ID>
+    <ID>NoComments:OkHttpWebSocketTest.kt:reaction to the dropped TCP session must both be swallowed.</ID>
+    <ID>NoComments:OkHttpWebSocketTest.kt:right after this call and must not hear from the old socket later.</ID>
+    <ID>NoComments:PassphraseLock.kt:----- wrapping crypto -----</ID>
+    <ID>NoComments:PassphraseLock.kt:256 MB, about 1 s on a current desktop CPU</ID>
+    <ID>NoComments:PassphraseLock.kt:A blob that has the second factor keeps the exact secret that</ID>
+    <ID>NoComments:PassphraseLock.kt:After an unlock: adds the credential-store secret once the store works,</ID>
+    <ID>NoComments:PassphraseLock.kt:Argon2 run) instead of interleaving with it.</ID>
+    <ID>NoComments:PassphraseLock.kt:Argon2id(passphrase), combined with the credential-store secret via HKDF-SHA256 when present.</ID>
+    <ID>NoComments:PassphraseLock.kt:Authenticates the blob header, so neither the version nor the factors can be downgraded.</ID>
+    <ID>NoComments:PassphraseLock.kt:Blocks on purpose: the lock must have happened when this returns.</ID>
+    <ID>NoComments:PassphraseLock.kt:BouncyCastle needs the password as a standalone exact-size array;</ID>
+    <ID>NoComments:PassphraseLock.kt:Checked before the (slow) Argon2 run, and reported separately from a</ID>
+    <ID>NoComments:PassphraseLock.kt:Cost new and rehashed blobs get; tests lower it to keep Argon2 fast.</ID>
+    <ID>NoComments:PassphraseLock.kt:Encode straight into a heap byte buffer: an intermediate String</ID>
+    <ID>NoComments:PassphraseLock.kt:Holds the same mutex as [unlock] and [changePassphrase], so a lock can</ID>
+    <ID>NoComments:PassphraseLock.kt:Holds the second unlock factor; tests swap in an in-memory store.</ID>
+    <ID>NoComments:PassphraseLock.kt:Load every account database before the blob exists: from then on</ID>
+    <ID>NoComments:PassphraseLock.kt:Moves derived key bytes into a [WipeableAesKey] (SecretKeySpec would keep an unwipeable copy).</ID>
+    <ID>NoComments:PassphraseLock.kt:On-disk wrapped master key (the only format the desktop app writes).</ID>
+    <ID>NoComments:PassphraseLock.kt:Returns the credential-store secret, creating it on first use, or null</ID>
+    <ID>NoComments:PassphraseLock.kt:Rewrap with the very secret that just unwrapped the blob: reading the</ID>
+    <ID>NoComments:PassphraseLock.kt:Suspends on the mutex, so an unlock that reschedules (and so</ID>
+    <ID>NoComments:PassphraseLock.kt:The desktop app has no released predecessor: only the current</ID>
+    <ID>NoComments:PassphraseLock.kt:The key-encryption key also mixes in the secret from [osSecretStore].</ID>
+    <ID>NoComments:PassphraseLock.kt:The master key, plus the credential-store secret that unwrapped it (null</ID>
+    <ID>NoComments:PassphraseLock.kt:Waits for an unlock or passphrase change in flight (at most its</ID>
+    <ID>NoComments:PassphraseLock.kt:blob format is honored, and anything else is treated as a</ID>
+    <ID>NoComments:PassphraseLock.kt:cancels) this timer meanwhile also cancels the stale lock.</ID>
+    <ID>NoComments:PassphraseLock.kt:copies the input</ID>
+    <ID>NoComments:PassphraseLock.kt:extract it from the buffer's backing array. Both byte arrays are</ID>
+    <ID>NoComments:PassphraseLock.kt:isEnabled() is now true, so re-encrypt every account's database at rest.</ID>
+    <ID>NoComments:PassphraseLock.kt:replace the secret the current blob still needs.</ID>
+    <ID>NoComments:PassphraseLock.kt:store again could fail now and silently drop the second factor, or</ID>
+    <ID>NoComments:PassphraseLock.kt:tampered file rather than migrated.</ID>
+    <ID>NoComments:PassphraseLock.kt:unwrapped it; only a blob without one asks the store for a new one.</ID>
+    <ID>NoComments:PassphraseLock.kt:wiped below, so no unwipeable copy of the passphrase remains.</ID>
+    <ID>NoComments:PassphraseLock.kt:would be an immutable copy whose characters could never be wiped.</ID>
+    <ID>NoComments:PassphraseLock.kt:writes are strict, and the stores are re-encrypted from memory.</ID>
+    <ID>NoComments:PassphraseLock.kt:wrong passphrase or tampered header (GCM tag mismatch)</ID>
+    <ID>NoComments:PassphraseLock.kt:wrong passphrase.</ID>
+    <ID>NoComments:PassphraseLockTest.kt:...even with no generation recorded yet: there is no older format to accept.</ID>
+    <ID>NoComments:PassphraseLockTest.kt:A blob cheaper than the current Argon2id target is rehashed at unlock.</ID>
+    <ID>NoComments:PassphraseLockTest.kt:A copy without a generation header is refused too.</ID>
+    <ID>NoComments:PassphraseLockTest.kt:A crash between writing the file and recording its generation leaves</ID>
+    <ID>NoComments:PassphraseLockTest.kt:A fresh reader (simulating a restart) decrypts it back.</ID>
+    <ID>NoComments:PassphraseLockTest.kt:A legacy AMBERENC1 database is refused and quarantined.</ID>
+    <ID>NoComments:PassphraseLockTest.kt:A lock (e.g. the auto-lock timer) arriving while an unlock is mid-way</ID>
+    <ID>NoComments:PassphraseLockTest.kt:A planted plaintext database is rejected too.</ID>
+    <ID>NoComments:PassphraseLockTest.kt:A restart re-reads the file; the corrupt one is kept, the backup restored.</ID>
+    <ID>NoComments:PassphraseLockTest.kt:A second account to swap data with.</ID>
+    <ID>NoComments:PassphraseLockTest.kt:A store read under the rolled-back blob refuses and quarantines the</ID>
+    <ID>NoComments:PassphraseLockTest.kt:After a restart it is only readable once unlocked.</ID>
+    <ID>NoComments:PassphraseLockTest.kt:An old-format (unbound) key copy is refused outright.</ID>
+    <ID>NoComments:PassphraseLockTest.kt:Back to the passphrase the other tests in this class use.</ID>
+    <ID>NoComments:PassphraseLockTest.kt:Changing the passphrase requires the old one and keeps the data.</ID>
+    <ID>NoComments:PassphraseLockTest.kt:Continues the state from fullLifecycle: v2 blob, bound stores,</ID>
+    <ID>NoComments:PassphraseLockTest.kt:Crash reports: exception messages can quote request data, so with a</ID>
+    <ID>NoComments:PassphraseLockTest.kt:In-memory stand-in for the OS credential store holding the second unlock factor.</ID>
+    <ID>NoComments:PassphraseLockTest.kt:Locked (no key): only exception types and frames are stored.</ID>
+    <ID>NoComments:PassphraseLockTest.kt:Locking evicts the key: crypto operations fail, and the key bytes</ID>
+    <ID>NoComments:PassphraseLockTest.kt:Plain mode (pre-setup): keys and the account database are plaintext.</ID>
+    <ID>NoComments:PassphraseLockTest.kt:Restore the supported blob: later test classes share this data dir.</ID>
+    <ID>NoComments:PassphraseLockTest.kt:Roll the blob back to the pre-release v1 format and plant a</ID>
+    <ID>NoComments:PassphraseLockTest.kt:Rollback: an older, validly encrypted copy put back after a grant was</ID>
+    <ID>NoComments:PassphraseLockTest.kt:Same for the Argon2id rehash that runs during unlock.</ID>
+    <ID>NoComments:PassphraseLockTest.kt:Setup wraps the same master key under the passphrase: old</ID>
+    <ID>NoComments:PassphraseLockTest.kt:Simulate a crash between writeBlob() and removeUnprotectedCopies():</ID>
+    <ID>NoComments:PassphraseLockTest.kt:Swapping account keys between records is rejected.</ID>
+    <ID>NoComments:PassphraseLockTest.kt:Swapping one account's encrypted database into another is rejected,</ID>
+    <ID>NoComments:PassphraseLockTest.kt:The generation is bound into the ciphertext: raising it in the header breaks the file.</ID>
+    <ID>NoComments:PassphraseLockTest.kt:The header is authenticated: dropping the second-factor flag breaks the blob.</ID>
+    <ID>NoComments:PassphraseLockTest.kt:The keyring stumbling right after it unwrapped the blob (one good</ID>
+    <ID>NoComments:PassphraseLockTest.kt:The per-file generations, kept off the real keyring.</ID>
+    <ID>NoComments:PassphraseLockTest.kt:The pre-v2 ciphertext format (no context binding), to fabricate old installs.</ID>
+    <ID>NoComments:PassphraseLockTest.kt:The singleton may have initialized as LOCKED while the</ID>
+    <ID>NoComments:PassphraseLockTest.kt:The unprotected copies are gone.</ID>
+    <ID>NoComments:PassphraseLockTest.kt:The unsupported blob is refused before anything is decrypted, so</ID>
+    <ID>NoComments:PassphraseLockTest.kt:Unlocked: the full report is stored encrypted with the master key.</ID>
+    <ID>NoComments:PassphraseLockTest.kt:When set, only this many more reads succeed; later ones fail like a stumbling keyring.</ID>
+    <ID>NoComments:PassphraseLockTest.kt:When set, the next read counts down the first latch and waits for the second: holds an unlock mid-wa</ID>
+    <ID>NoComments:PassphraseLockTest.kt:Without the keyring secret the data dir and passphrase are not</ID>
+    <ID>NoComments:PassphraseLockTest.kt:Wrong passphrase is rejected, right one restores access.</ID>
+    <ID>NoComments:PassphraseLockTest.kt:and the paused unlock then reinstalled the key and set UNLOCKED.</ID>
+    <ID>NoComments:PassphraseLockTest.kt:and the rejected file is kept aside rather than overwritten.</ID>
+    <ID>NoComments:PassphraseLockTest.kt:at rest.</ID>
+    <ID>NoComments:PassphraseLockTest.kt:back is restoring a supported blob.</ID>
+    <ID>NoComments:PassphraseLockTest.kt:ciphertexts still decrypt, and the account database is re-encrypted</ID>
+    <ID>NoComments:PassphraseLockTest.kt:enough, and the failure is reported as such (not "wrong passphrase").</ID>
+    <ID>NoComments:PassphraseLockTest.kt:fabricated blob existed; restore the fresh-install state.</ID>
+    <ID>NoComments:PassphraseLockTest.kt:keep the blob. Safe in any method order: it only fabricates state</ID>
+    <ID>NoComments:PassphraseLockTest.kt:on disk. The startup cleanup must delete the unprotected copies and</ID>
+    <ID>NoComments:PassphraseLockTest.kt:passphrase "new passphrase 42".</ID>
+    <ID>NoComments:PassphraseLockTest.kt:passphrase set nothing readable reaches the disk.</ID>
+    <ID>NoComments:PassphraseLockTest.kt:plaintext application database next to it.</ID>
+    <ID>NoComments:PassphraseLockTest.kt:planted file too.</ID>
+    <ID>NoComments:PassphraseLockTest.kt:read, then failures) must neither drop the second factor nor replace</ID>
+    <ID>NoComments:PassphraseLockTest.kt:removed is refused, so the removed connection does not come back.</ID>
+    <ID>NoComments:PassphraseLockTest.kt:that was not there and restores it afterward.</ID>
+    <ID>NoComments:PassphraseLockTest.kt:the file one ahead of the record: it is accepted and the record catches up.</ID>
+    <ID>NoComments:PassphraseLockTest.kt:the planted file is never read, let alone blessed. The only way</ID>
+    <ID>NoComments:PassphraseLockTest.kt:the secret the current blob depends on: a rewrap reuses that secret.</ID>
+    <ID>NoComments:PassphraseLockTest.kt:the wrapped blob exists AND an unprotected master-key copy is still</ID>
+    <ID>NoComments:PassphraseLockTest.kt:themselves are wiped, not just dereferenced.</ID>
+    <ID>NoComments:PassphraseLockTest.kt:verify() checks the passphrase without unlocking anything.</ID>
+    <ID>NoComments:PassphraseLockTest.kt:waits for it instead of interleaving: it used to run straight through,</ID>
+    <ID>NoComments:PeerCredentials.kt:Whether the peer of a Unix-domain socket runs as the same OS user that owns</ID>
+    <ID>NoComments:PeerCredentialsTest.kt:The socket's owner can no longer be read: this used to let the peer in.</ID>
+    <ID>NoComments:PendingQueue.kt:Atomic updates: socket clients queue from several threads at once, and a</ID>
+    <ID>NoComments:PendingQueue.kt:The approval queue: what is waiting for the user, and taking requests off it.</ID>
+    <ID>NoComments:PendingQueue.kt:plain read-then-write of `pending.value` loses one of two racing requests.</ID>
+    <ID>NoComments:ProfileFetcher.kt:A relay may answer a profile REQ with anything it likes: accept only</ID>
+    <ID>NoComments:ProfileFetcher.kt:Applies [event] unless an equal or newer kind-0 was already applied: a</ID>
+    <ID>NoComments:ProfileFetcher.kt:Default profile relays from the settings plus the account's own saved relay list.</ID>
+    <ID>NoComments:ProfileFetcher.kt:Keep a loaded account (sidebar, settings) in step with the record.</ID>
+    <ID>NoComments:ProfileFetcher.kt:Same as the Android default `ProfileFetchInterval.FIFTEEN_MINUTES`.</ID>
+    <ID>NoComments:ProfileFetcher.kt:Saves the newest kind-10002 write relays so later fetches also query them.</ID>
+    <ID>NoComments:ProfileFetcher.kt:Subscribes [filter] on [relays] and returns the newest verified event</ID>
+    <ID>NoComments:ProfileFetcherTest.kt:A later fetch only reached a relay serving an older profile.</ID>
+    <ID>NoComments:ProfileFetcherTest.kt:Checked a minute ago: wait for the 15-minute interval.</ID>
+    <ID>NoComments:ProfileFetcherTest.kt:Metadata updated within the last day: no refetch.</ID>
+    <ID>NoComments:ProfileFetcherTest.kt:jack</ID>
+    <ID>NoComments:RelayAuthTest.kt:Hands an auth request to the engine without waiting for its reply to be published.</ID>
+    <ID>NoComments:RelayAuthTest.kt:Runs an approve/reject and waits until it is recorded (the grant is</ID>
+    <ID>NoComments:RelayAuthTest.kt:Sends an auth request and returns how it was answered without a card</ID>
+    <ID>NoComments:RelayAuthTest.kt:The basic sign policy stores a blank-relay grant, which covers every relay.</ID>
+    <ID>NoComments:RelayChecker.kt:Already used somewhere -&gt; it has proven itself; skip the round-trip.</ID>
+    <ID>NoComments:RelayChecker.kt:Relays already trusted by the user: defaults plus every connected app's.</ID>
+    <ID>NoComments:RelayListEditor.kt:Non-null while asking "the check failed — add anyway?"; holds the relay</ID>
+    <ID>NoComments:RelayListEditor.kt:and the message key (could_not_connect_to_relay / relay_filter_failed).</ID>
+    <ID>NoComments:RelayNetwork.kt:100.64.0.0/10 — carrier-grade NAT range used by Tailscale and similar overlays.</ID>
+    <ID>NoComments:RelayNetwork.kt:An IP literal: getByName parses it without a DNS lookup.</ID>
+    <ID>NoComments:RelayNetwork.kt:An explicit proxy also means OkHttp never falls back to a direct</ID>
+    <ID>NoComments:RelayNetwork.kt:Bare IPv6 without brackets (no port possible to tell apart).</ID>
+    <ID>NoComments:RelayNetwork.kt:Direct client for local URLs, which skip Tor. It never follows redirects:</ID>
+    <ID>NoComments:RelayNetwork.kt:LocalNameDns); proxied clients hand hosts unresolved to Tor.</ID>
+    <ID>NoComments:RelayNetwork.kt:Loopback, private (RFC 1918), link-local or the wildcard address.</ID>
+    <ID>NoComments:RelayNetwork.kt:Tor circuits are slower to establish; triple the timeouts like Android.</ID>
+    <ID>NoComments:RelayNetwork.kt:`.localhost` and `.local` never reach the system resolver (see</ID>
+    <ID>NoComments:RelayNetwork.kt:fc00::/7 — IPv6 unique local addresses.</ID>
+    <ID>NoComments:RelayNetwork.kt:route, and SOCKS hosts are passed unresolved so DNS goes through Tor.</ID>
+    <ID>NoComments:RelayNetworkTest.kt:A local URL skips Tor, so a redirect from it to a public host would be</ID>
+    <ID>NoComments:RelayNetworkTest.kt:DNS-rebindable suffixes are not trusted: only mDNS `.local`</ID>
+    <ID>NoComments:RelayNetworkTest.kt:DNS-rebindable suffixes are public hosts now: warned like the rest.</ID>
+    <ID>NoComments:RelayNetworkTest.kt:OkHttp ends the authority at '\', so the dialed host is attacker.example.</ID>
+    <ID>NoComments:RelayNetworkTest.kt:Old substring matching flagged these as private.</ID>
+    <ID>NoComments:RelayNetworkTest.kt:Port 0 refuses every connection instead of falling back to the clearnet.</ID>
+    <ID>NoComments:RelayNetworkTest.kt:Public URLs keep following redirects (through Tor when it is on).</ID>
+    <ID>NoComments:RelayNetworkTest.kt:and the localhost loopback names are unconditional locals.</ID>
+    <ID>NoComments:RelayNetworkTest.kt:dialed directly and reveal the user's IP.</ID>
+    <ID>NoComments:RelayStatusWidget.kt:Manual reconnect: give relays marked dead another chance.</ID>
+    <ID>NoComments:RelayStatusWidget.kt:Port of the Android `R.drawable.relays` vector.</ID>
+    <ID>NoComments:RelaysScreen.kt:Live connection state of one configured relay: connected, in the client's</ID>
+    <ID>NoComments:RelaysScreen.kt:Mirrors the Android active relays screen: relays existing connections</ID>
+    <ID>NoComments:RelaysScreen.kt:Mirrors the mobile onAddRelay flow: normalize (bare hosts</ID>
+    <ID>NoComments:RelaysScreen.kt:Non-null while asking "the check failed — add anyway?"; holds the relay</ID>
+    <ID>NoComments:RelaysScreen.kt:Port of the Android GHSA-8844-q5vh-9j8f warning: an explicit ws://</ID>
+    <ID>NoComments:RelaysScreen.kt:Rows without a trailing button keep the height of those with one.</ID>
+    <ID>NoComments:RelaysScreen.kt:Union with the shipped defaults (same set as Android):</ID>
+    <ID>NoComments:RelaysScreen.kt:and the message key (could_not_connect_to_relay / relay_filter_failed).</ID>
+    <ID>NoComments:RelaysScreen.kt:existing relays stay, missing defaults come back.</ID>
+    <ID>NoComments:RelaysScreen.kt:get wss://, .onion and private IPs ws://), then live-test</ID>
+    <ID>NoComments:RelaysScreen.kt:relay on the public internet is cleartext; fine for .onion / local.</ID>
+    <ID>NoComments:RelaysScreen.kt:still use that are not in the default set get their own section.</ID>
+    <ID>NoComments:RelaysScreen.kt:the relay as a bunker relay before adding; on failure ask</ID>
+    <ID>NoComments:RelaysScreen.kt:whether to add it anyway.</ID>
+    <ID>NoComments:RequestDetails.kt:A seal shows the event it holds, as on Android; else the event itself.</ID>
+    <ID>NoComments:RequestDetails.kt:A sign_psbt request: what the transaction pays, mirroring Android's `SignPsbt`.</ID>
+    <ID>NoComments:RequestDetails.kt:An auth event says nothing in its content: show the relay instead.</ID>
+    <ID>NoComments:RequestDetails.kt:Fill small windows (leaving room for the title and buttons), cap on large ones.</ID>
+    <ID>NoComments:RequestDetails.kt:Mirrors Android's `PsbtBody`: sending and change outputs, the fee, then the raw PSBT.</ID>
+    <ID>NoComments:RequestDetails.kt:Mirrors the Android `EventDetailModal` / `EncryptDecryptDetailModal`.</ID>
+    <ID>NoComments:RequestDetails.kt:Non-segwit scripts have no bech32 address: show the script itself.</ID>
+    <ID>NoComments:RequestDetails.kt:Null when there is nothing to detail (connect, get_public_key, ping…).</ID>
+    <ID>NoComments:RequestDetails.kt:The kind's name; for a kind Amber has no name for, the event's NIP-31 `alt` tag when it</ID>
+    <ID>NoComments:RequestDetails.kt:The parts of an event the details dialog shows, read from any event JSON.</ID>
+    <ID>NoComments:RequestDetails.kt:The short text under the request's description on the card.</ID>
+    <ID>NoComments:RequestDetails.kt:What a request card and its details dialog show, mirroring the Android</ID>
+    <ID>NoComments:RequestDetailsTest.kt:A connect is shown alone (never batched), and has no details.</ID>
+    <ID>NoComments:RequestDetailsTest.kt:Android opens a seal for the preview and shows the event inside it, not the seal.</ID>
+    <ID>NoComments:RequestDetailsTest.kt:Answered elsewhere (shortcut, notification, expiry): the dialog closes.</ID>
+    <ID>NoComments:RequestDetailsTest.kt:NIP-31: a kind Amber has no name for is named by the event's alt tag, as on Android.</ID>
+    <ID>NoComments:RequestNotificationPopup.kt:Compose windows are JFrames, which X11 always hands to the window</ID>
+    <ID>NoComments:RequestNotificationPopup.kt:Create the native window first so it can be typed before it maps.</ID>
+    <ID>NoComments:RequestNotificationPopup.kt:Distance between the card and the screen edges, like the OS's own notifications.</ID>
+    <ID>NoComments:RequestNotificationPopup.kt:Makes AWT announce the popup as `_NET_WM_WINDOW_TYPE_POPUP_MENU`. AWT writes</ID>
+    <ID>NoComments:RequestNotificationPopup.kt:NORMAL, which Hyprland focuses on map, hence markAsX11Popup.</ID>
+    <ID>NoComments:RequestNotificationPopup.kt:Never take keyboard focus from what the user is typing in.</ID>
+    <ID>NoComments:RequestNotificationPopup.kt:One button on the popup.</ID>
+    <ID>NoComments:RequestNotificationPopup.kt:Puts the popup back where and how big it was placed whenever the compositor</ID>
+    <ID>NoComments:RequestNotificationPopup.kt:Restarts while hovered, so the popup never vanishes under the pointer.</ID>
+    <ID>NoComments:RequestNotificationPopup.kt:Room left for a Wayland top bar (waybar, quickshell, …) the popup cannot see.</ID>
+    <ID>NoComments:RequestNotificationPopup.kt:The timeout outlives recompositions; it must call the latest callback.</ID>
+    <ID>NoComments:RequestNotificationPopup.kt:Transparent margin around the card so its drop shadow isn't clipped by the window.</ID>
+    <ID>NoComments:RequestNotificationPopup.kt:Wayland compositors give XWayland no work area, so leave room for</ID>
+    <ID>NoComments:RequestNotificationPopup.kt:Where the OS shows its own notifications: above the taskbar on</ID>
+    <ID>NoComments:RequestNotificationPopup.kt:Windows 11 toast: app header with close button, title and body, then a row of equal-width buttons.</ID>
+    <ID>NoComments:RequestNotificationPopup.kt:Windows, under the menu bar / top panel on macOS and Linux.</ID>
+    <ID>NoComments:RequestNotificationPopup.kt:Without a</ID>
+    <ID>NoComments:RequestNotificationPopup.kt:a top bar when the reported one starts at the screen edge.</ID>
+    <ID>NoComments:RequestNotificationPopup.kt:macOS alert-style notification: app icon, bold title and body on the left,</ID>
+    <ID>NoComments:RequestNotificationPopup.kt:manager: Hyprland &amp; co. would border, and focus, them as a normal</ID>
+    <ID>NoComments:RequestNotificationPopup.kt:never managed, framed or focused, like a real notification surface —</ID>
+    <ID>NoComments:RequestNotificationPopup.kt:so host the card in one through a ComposePanel. AWT still types it</ID>
+    <ID>NoComments:RequestNotificationPopup.kt:transparent margin there is no drop shadow; the shape rounds it.</ID>
+    <ID>NoComments:RequestNotificationPopup.kt:window. A plain AWT POPUP JWindow is override-redirect instead —</ID>
+    <ID>NoComments:SealPreview.kt:What a seal (kind 13) in [plaintext] holds, opened with the account key for the approval</ID>
+    <ID>NoComments:SettingsScreen.kt:Like Android: confirm before traffic moves back to the clearnet.</ID>
+    <ID>NoComments:SettingsScreen.kt:Mirrors the Android `AuthWhitelistScreen`: the relay hosts relay auth</ID>
+    <ID>NoComments:SettingsScreen.kt:One settings group. On wide windows the title and [description] sit in a</ID>
+    <ID>NoComments:SettingsScreen.kt:Re-keyed on the account's name so a name fetched from its profile shows up.</ID>
+    <ID>NoComments:SettingsScreen.kt:Same warning as the seed-words copy: the plain nsec in the clipboard</ID>
+    <ID>NoComments:SettingsScreen.kt:is full control of the account.</ID>
+    <ID>NoComments:StaleRequestAfterDeleteTest.kt:Account default "fully trust" is the worst case: a recreated app would auto-sign.</ID>
+    <ID>NoComments:StaleRequestAfterDeleteTest.kt:Queues a sign_event card for a connected app, deletes the app, and returns the stale card.</ID>
+    <ID>NoComments:Storage.kt:(see writeSecure/readSecure).</ID>
+    <ID>NoComments:Storage.kt:A `&lt;generation&gt;:&lt;payload&gt;` store: decrypted, and refused when older than the last generation written</ID>
+    <ID>NoComments:Storage.kt:A deleted account's key must not linger in the backup.</ID>
+    <ID>NoComments:Storage.kt:Binds each file's ciphertext to this account and file name.</ID>
+    <ID>NoComments:Storage.kt:Constant-time equality for secret material (connection secrets, secret</ID>
+    <ID>NoComments:Storage.kt:Header on a file whose JSON payload is AES-GCM encrypted with the master key, bound to its account a</ID>
+    <ID>NoComments:Storage.kt:Header on a rollback-protected file: `AMBERENC3:&lt;generation&gt;:&lt;payload&gt;`, the</ID>
+    <ID>NoComments:Storage.kt:Last generation read or written per context, so a write needs no store read.</ID>
+    <ID>NoComments:Storage.kt:Live stores, so the shutdown hook can persist volatile entries and</ID>
+    <ID>NoComments:Storage.kt:One daemon thread schedules every account's debounced writes, so a</ID>
+    <ID>NoComments:Storage.kt:Only called from the @Synchronized writers, so no extra locking is</ID>
+    <ID>NoComments:Storage.kt:Re-reads accounts.json from disk (startup path; also used by tests).</ID>
+    <ID>NoComments:Storage.kt:Reads a JSON file that may be encrypted. Encrypted files carry the</ID>
+    <ID>NoComments:Storage.kt:Reads a JSON file. A file that exists but cannot be parsed is moved aside</ID>
+    <ID>NoComments:Storage.kt:Recorded only once the file is in place: a crash in between leaves a</ID>
+    <ID>NoComments:Storage.kt:The JSON [file] holds, decrypted when it is encrypted. Throws a</ID>
+    <ID>NoComments:Storage.kt:The credential-store entry for a file context; tests swap in an in-memory store.</ID>
+    <ID>NoComments:Storage.kt:The empty-list write supersedes anything still volatile.</ID>
+    <ID>NoComments:Storage.kt:The generation is part of the bound context, so the header can't be edited.</ID>
+    <ID>NoComments:Storage.kt:The generation the next write of [context] gets.</ID>
+    <ID>NoComments:Storage.kt:The history rewrite includes anything still volatile.</ID>
+    <ID>NoComments:Storage.kt:The newest generation written for each rollback-protected file, kept in the</ID>
+    <ID>NoComments:Storage.kt:The per-account database (apps + permissions, request history, relay</ID>
+    <ID>NoComments:Storage.kt:The previous version of accounts.json, the only file holding the</ID>
+    <ID>NoComments:Storage.kt:Writes a JSON file, encrypting the payload with the master key whenever a</ID>
+    <ID>NoComments:Storage.kt:Writes a JSON file; with [backup], the previous version is kept there first.</ID>
+    <ID>NoComments:Storage.kt:[generation] was read and passed the check against [expected]; record it if newer.</ID>
+    <ID>NoComments:Storage.kt:[payload], when it is bound to a context (`DesktopKeyStore.encryptString(…, context)`).</ID>
+    <ID>NoComments:Storage.kt:addLog/addHistory update memory at once but persist with a short</ID>
+    <ID>NoComments:Storage.kt:debounce (see [scheduleVolatileFlush]): a relay flood logs one line per</ID>
+    <ID>NoComments:Storage.kt:encrypted at rest with the master key whenever a passphrase lock is set</ID>
+    <ID>NoComments:Storage.kt:encrypted keys; restored if the main file is ever unreadable.</ID>
+    <ID>NoComments:Storage.kt:event, and rewriting the whole AES-GCM file per line turns that into a</ID>
+    <ID>NoComments:Storage.kt:file newer than the record, which the next read accepts and records.</ID>
+    <ID>NoComments:Storage.kt:file rewrite per event. All three flags are guarded by `this`.</ID>
+    <ID>NoComments:Storage.kt:logs) is the sensitive metadata about who you sign for, so it is</ID>
+    <ID>NoComments:Storage.kt:needed to check flushQueued.</ID>
+    <ID>NoComments:Storage.kt:relay flood costs at most a couple of file writes per second.</ID>
+    <ID>NoComments:Storage.kt:the lock path can flush before the key material is evicted.</ID>
+    <ID>NoComments:Strings.kt:forLanguageTag normalizes legacy codes ("in" is "id" on Java 17+).</ID>
+    <ID>NoComments:StringsTest.kt:Includes the languages selected without their region (it, ko, vi)</ID>
+    <ID>NoComments:StringsTest.kt:Kinds the old desktop copy of the table lacked resolve like on Android.</ID>
+    <ID>NoComments:StringsTest.kt:Plain text (Compose resources): line breaks and apostrophes as written.</ID>
+    <ID>NoComments:StringsTest.kt:Range mapping (5000..5999).</ID>
+    <ID>NoComments:StringsTest.kt:Reads [block] with [tag] as the UI language, as Strings.setLanguage applies it.</ID>
+    <ID>NoComments:StringsTest.kt:Single-argument strings use positional %1$s, which Compose resources substitute.</ID>
+    <ID>NoComments:StringsTest.kt:Strings the en-GB file doesn't override come from values/strings.xml.</ID>
+    <ID>NoComments:StringsTest.kt:The XML holds "Starting Tor…"; it must render as an ellipsis.</ID>
+    <ID>NoComments:StringsTest.kt:\' is an apostrophe.</ID>
+    <ID>NoComments:StringsTest.kt:and Indonesian, stored as "in" but "id" (values-id) on Java 17+.</ID>
+    <ID>NoComments:StringsTest.kt:en-GB only overrides spellings, so most of its strings legitimately match English.</ID>
+    <ID>NoComments:Theme.kt:Mirrors the mobile theme (app/ui/theme/Theme.kt).</ID>
+    <ID>NoComments:Theme.kt:The accent (amber / orange) is light, so anything painted on top of it —</ID>
+    <ID>NoComments:Theme.kt:primary buttons, selected chips, the selected sidebar row — must use dark</ID>
+    <ID>NoComments:Theme.kt:text. The default dark scheme pairs these containers with light on-colors,</ID>
+    <ID>NoComments:Theme.kt:which is what produced the unreadable light-on-amber elements.</ID>
+    <ID>NoComments:TorManager.kt:(UnsatisfiedLinkError, ExceptionInInitializerError).</ID>
+    <ID>NoComments:TorManager.kt:0 while there is no SOCKS listener: the fail-closed placeholder port.</ID>
+    <ID>NoComments:TorManager.kt:Published before the port, so no dial can reach the listener without them.</ID>
+    <ID>NoComments:TorManager.kt:Serializes start/stop/restart.</ID>
+    <ID>NoComments:TorManager.kt:The bootstrap watcher; non-null while Tor is up or coming up.</ID>
+    <ID>NoComments:TorManager.kt:The proxy accepts connections right away (each one waits for its</ID>
+    <ID>NoComments:TorManager.kt:Throwable: a missing/broken native library surfaces as an Error</ID>
+    <ID>NoComments:TorManager.kt:True once the native library loaded; native calls are skipped until then.</ID>
+    <ID>NoComments:UiState.kt:A key with Ctrl/⌘ held.</ID>
+    <ID>NoComments:UiState.kt:A key without Ctrl/⌘: Escape leaves the application detail screen, the rest drive the incoming-reque</ID>
+    <ID>NoComments:UiState.kt:Ctrl/⌘ + M — minimize to tray (keep running in the background).</ID>
+    <ID>NoComments:UiState.kt:Ctrl/⌘ + W stays as an alias.</ID>
+    <ID>NoComments:UiState.kt:Ctrl/⌘ 1–4 open the screens in sidebar order.</ID>
+    <ID>NoComments:UiState.kt:Ctrl/⌘ Enter approves the selected request, with Shift it rejects it; with several requests Enter co</ID>
+    <ID>NoComments:UiState.kt:Plain arrows drive the incoming-requests list: ↑/↓ selects a card,</ID>
+    <ID>NoComments:UiState.kt:Runs [action]; the key was consumed.</ID>
+    <ID>NoComments:UiState.kt:S on a selected encrypt/decrypt request: toggles its "Encryption scope"</ID>
+    <ID>NoComments:UiState.kt:Several requests: Confirm answers the batch; there is no reject-all.</ID>
+    <ID>NoComments:UiState.kt:The details dialog is read-only: keep ⌘↵ and the list keys from acting</ID>
+    <ID>NoComments:UiState.kt:The requests a "Remember"/scope pick applies to: the request's batch group, or just itself.</ID>
+    <ID>NoComments:UiState.kt:arrow keys elsewhere (text fields, scrolling) keep working.</ID>
+    <ID>NoComments:UiState.kt:on the requests behind it. Esc (handled by the dialog) closes it.</ID>
+    <ID>NoComments:UiState.kt:←/→ cycles its "Remember" duration. Only consumed on that screen so</ID>
+    <ID>NoComments:UiStateTest.kt:A connect is never batched: it is shown alone first.</ID>
+    <ID>NoComments:UiStateTest.kt:A remember choice set on B's card never applies to A's.</ID>
+    <ID>NoComments:UiStateTest.kt:Android defaults: NIP-04/44 all methods, NIP-44 v3 this kind only.</ID>
+    <ID>NoComments:UiStateTest.kt:Both entries are addressable even though their request ids match.</ID>
+    <ID>NoComments:UiStateTest.kt:Expired relay request goes; unexpired and never-expiring (nostrconnect://) stay.</ID>
+    <ID>NoComments:UiStateTest.kt:In a batch, ←/→ sets "Remember" for the selected request's whole group only.</ID>
+    <ID>NoComments:UiStateTest.kt:Keyboard selection moves between the two distinct entries.</ID>
+    <ID>NoComments:UiStateTest.kt:Needs a real account for PendingBunkerRequest; create one.</ID>
+    <ID>NoComments:UiStateTest.kt:Not an encrypt/decrypt request: the key is left alone.</ID>
+    <ID>NoComments:UiStateTest.kt:Only shown requests get a decision; Space flips the selected one; prune drops answered ones.</ID>
+    <ID>NoComments:UiStateTest.kt:Per app in arrival order, then per type (sign before decrypt), kinds kept together.</ID>
+    <ID>NoComments:UiStateTest.kt:Pruning keeps choices whose queue key still exists.</ID>
+    <ID>NoComments:UiStateTest.kt:Shift+Space flips the selected request's whole section: partly denied -&gt; approve all, then deny all.</ID>
+    <ID>NoComments:UiStateTest.kt:Two connections queue the same client-chosen id. The UI keys on the</ID>
+    <ID>NoComments:UiStateTest.kt:Wrap backwards from the first entry to the last.</ID>
+    <ID>NoComments:UiStateTest.kt:clamps at the first</ID>
+    <ID>NoComments:UiStateTest.kt:clamps at the last item</ID>
+    <ID>NoComments:UiStateTest.kt:other section untouched</ID>
+    <ID>NoComments:UiStateTest.kt:queue entry (account, connection, id), so one card's selection and</ID>
+    <ID>NoComments:UiStateTest.kt:remember choice must never apply to the other.</ID>
+    <ID>NoComments:UiStateTest.kt:unchanged</ID>
+    <ID>NoComments:UiStateTest.kt:↓ follows the screen order: note, note2, decrypt, other.</ID>
+    <ID>NoComments:UnlockScreen.kt:Enter (or numpad enter) runs the primary action, the way</ID>
+    <ID>NoComments:UnlockScreen.kt:Shared centered layout for the lock and first-run passphrase screens.</ID>
+    <ID>NoComments:UnlockScreen.kt:The keys that run a lock screen's primary action.</ID>
+    <ID>NoComments:UnlockScreen.kt:every password prompt behaves.</ID>
+    <ID>NoComments:UriLaunch.kt:A desktop-entry string value (e.g. `Icon=`): backslashes doubled, line breaks refused.</ID>
+    <ID>NoComments:UriLaunch.kt:At most one accepted URI per this many milliseconds, on top of the</ID>
+    <ID>NoComments:UriLaunch.kt:Characters a quoted Exec argument escapes with a backslash.</ID>
+    <ID>NoComments:UriLaunch.kt:Characters that make an Exec argument need quoting (Desktop Entry spec).</ID>
+    <ID>NoComments:UriLaunch.kt:One Exec argument, written as the Desktop Entry spec reads it back: a</ID>
+    <ID>NoComments:UriLaunch.kt:Publishes [uri] as [pending], unless one is still uncollected or the last one was too recent.</ID>
+    <ID>NoComments:UriLaunch.kt:Reads at most one 64 KiB message from [client] and publishes it as</ID>
+    <ID>NoComments:UriLaunch.kt:See [isSameUserPeer]: fails closed wherever peer credentials exist.</ID>
+    <ID>NoComments:UriLaunch.kt:Tests point this at a scratch dir: XDG_RUNTIME_DIR cannot be scrubbed</ID>
+    <ID>NoComments:UriLaunch.kt:The AppImage file rather than its per-launch mount; see AutoStart.currentExecutable.</ID>
+    <ID>NoComments:UriLaunch.kt:The desktop entry pointing at [exePath] (single binary, no args).</ID>
+    <ID>NoComments:UriLaunch.kt:The inverse of [quoteForDesktopEntry] for one argument.</ID>
+    <ID>NoComments:UriLaunch.kt:The stable launch target for the handler: the packaged binary, or a</ID>
+    <ID>NoComments:UriLaunch.kt:What a second launch without a URI sends: "show your window".</ID>
+    <ID>NoComments:UriLaunchIpcTest.kt:Coalescing: while a URI is uncollected, later forwards are ignored</ID>
+    <ID>NoComments:UriLaunchIpcTest.kt:Subscribed before the request is sent: the flow does not replay.</ID>
+    <ID>NoComments:UriLaunchIpcTest.kt:instead of overwriting it (flood hardening on the socket).</ID>
+    <ID>NoComments:UriLaunchTest.kt:A literal % would be read as a field code; $ and ` are escaped in quotes.</ID>
+    <ID>NoComments:UriLaunchTest.kt:A literal backslash needs four in the file.</ID>
+    <ID>NoComments:UriLaunchTest.kt:A quote is escaped for the quoting (\") and that backslash again</ID>
+    <ID>NoComments:UriLaunchTest.kt:In the file: quote, the escaped char preceded by two backslashes (quoting + string level).</ID>
+    <ID>NoComments:UriLaunchTest.kt:Paths without separators stay bare; spaces and quotes get the</ID>
+    <ID>NoComments:UriLaunchTest.kt:at the string level (\\"), as the Desktop Entry spec reads it back.</ID>
+    <ID>NoComments:UriLaunchTest.kt:desktop-entry double-quote treatment.</ID>
+    <ID>NoComments:WindowGeometry.kt:Space kept free around the window so its edges and title bar stay reachable.</ID>
+    <ID>NoComments:WindowGeometryTest.kt:1280x800 display with a 48px Windows taskbar: the 780dp default used</ID>
+    <ID>NoComments:WindowGeometryTest.kt:to hide the window's bottom (and the account switcher) under it.</ID>
+    <ID>NoComments:WindowsToasts.kt:A COM object, called by vtable slot.</ID>
+    <ID>NoComments:WindowsToasts.kt:Escaped for XML text and attributes; characters XML 1.0 cannot carry are dropped.</ID>
+    <ID>NoComments:WindowsToasts.kt:Fails with "element not found" until the id has posted its</ID>
+    <ID>NoComments:WindowsToasts.kt:Handlers Windows may still call, so neither they nor their callbacks are</ID>
+    <ID>NoComments:WindowsToasts.kt:Hide [toast] and stop listening to it. Runs on [worker], once per toast.</ID>
+    <ID>NoComments:WindowsToasts.kt:IInspectable takes the first six vtable slots; these follow them.</ID>
+    <ID>NoComments:WindowsToasts.kt:Let the native memory go, once Windows no longer holds the handler.</ID>
+    <ID>NoComments:WindowsToasts.kt:Marks the handler as callable from any thread, so WinRT does not try to marshal it.</ID>
+    <ID>NoComments:WindowsToasts.kt:Name the toasts: an unpackaged app has no identity of its own, and a</ID>
+    <ID>NoComments:WindowsToasts.kt:Only touched on [worker].</ID>
+    <ID>NoComments:WindowsToasts.kt:Post a toast with [actions] as (argument, label) buttons and run</ID>
+    <ID>NoComments:WindowsToasts.kt:S_FALSE / RPC_E_CHANGED_MODE: the thread already has an apartment, which is fine.</ID>
+    <ID>NoComments:WindowsToasts.kt:The COM object Windows calls when the toast is clicked: a hand-built</ID>
+    <ID>NoComments:WindowsToasts.kt:The app icon as a file Windows can read (the resource lives in the jar).</ID>
+    <ID>NoComments:WindowsToasts.kt:The body click's argument, like the freedesktop "default" action.</ID>
+    <ID>NoComments:WindowsToasts.kt:The toast's XML: the title, up to two more lines of [message] (a generic</ID>
+    <ID>NoComments:WindowsToasts.kt:Waits for the toast to be gone, so one closed while Amber</ID>
+    <ID>NoComments:WindowsToasts.kt:Windows toast notifications with buttons, straight through the WinRT</ID>
+    <ID>NoComments:WindowsToasts.kt:`ITypedEventHandler&lt;ToastNotification, IInspectable&gt;`.</ID>
+    <ID>NoComments:WindowsToasts.kt:`NotificationSetting.Enabled`.</ID>
+    <ID>NoComments:WindowsToasts.kt:`ToastActivatedEventArgs.Arguments`: the clicked button's argument, or the toast's `launch`.</ID>
+    <ID>NoComments:WindowsToasts.kt:first toast, so only a setting Windows does report counts.</ID>
+    <ID>NoComments:WindowsToasts.kt:quits is really taken down before the process ends.</ID>
     <ID>TooManyFunctions:AmberDesktop.kt:AmberDesktop</ID>
     <ID>TooManyFunctions:DesktopKeyStore.kt:DesktopKeyStore</ID>
     <ID>TooManyFunctions:Storage.kt:AccountStore</ID>

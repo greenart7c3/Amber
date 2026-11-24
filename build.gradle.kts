@@ -70,7 +70,7 @@ dependencies {
     kover(project(":desktop"))
 }
 
-val unusedCodeModules = listOf("app", "cli", "common", "commonsui", "desktop", "tools/architecture-tests", "tools/unused-code")
+val unusedCodeModules = listOf("app", "cli", "common", "commonsui", "desktop", "tools/architecture-tests", "tools/unused-code", "tools/detekt-rules")
 
 // Modules that put the Compose rules on their detekt classpath (compile form:
 // they also get config/detekt/compose.yml).
@@ -130,6 +130,8 @@ tasks.register("detektAll") {
         ":architecture-tests:detektTest",
         ":unused-code:detektMain",
         ":unused-code:detektTest",
+        ":detekt-rules:detektMain",
+        ":detekt-rules:detektTest",
     )
     dependsOn(unusedCode)
 }
@@ -162,6 +164,8 @@ tasks.register("detektBaselineAll") {
         ":architecture-tests:detektBaselineTest",
         ":unused-code:detektBaselineMain",
         ":unused-code:detektBaselineTest",
+        ":detekt-rules:detektBaselineMain",
+        ":detekt-rules:detektBaselineTest",
     )
 
     val modules = listOf(
@@ -172,6 +176,7 @@ tasks.register("detektBaselineAll") {
         ":desktop" to "desktop",
         ":architecture-tests" to "tools/architecture-tests",
         ":unused-code" to "tools/unused-code",
+        ":detekt-rules" to "tools/detekt-rules",
     )
     val taskBaselines = modules.map { (path, _) ->
         project(path).layout.buildDirectory.dir("detekt-baselines").get().asFile
@@ -236,18 +241,25 @@ subprojects {
         // the code instead. Regenerate with `./gradlew detektBaselineAll`, which
         // merges each task's findings into the module's file (see below).
         val baselineFile = project.layout.projectDirectory.file("detekt-baseline.xml")
+        // Amber's own rules (tools/detekt-rules, config/detekt/amber.yml) check
+        // every module but the one that builds them.
+        val usesAmberRules = project.path != ":detekt-rules"
+        if (usesAmberRules) {
+            dependencies.add("detektPlugins", project(":detekt-rules"))
+        }
         extensions.configure<dev.detekt.gradle.extensions.DetektExtension> {
             source.setFrom("src")
             baseline.set(baselineFile)
-            // The Compose rules (config/detekt/compose.yml) are only on the
-            // detekt classpath of the modules that declare them, and detekt
-            // rejects their ruleset key in the others.
-            if (project.path in composeDetektModules) {
-                config.setFrom(
+            // A rule set's config (compose.yml, amber.yml) is only valid where
+            // its rules are on the detekt classpath: detekt rejects the key in
+            // the other modules.
+            config.setFrom(
+                listOfNotNull(
                     rootProject.file("config/detekt/detekt.yml"),
-                    rootProject.file("config/detekt/compose.yml"),
-                )
-            }
+                    rootProject.file("config/detekt/compose.yml").takeIf { project.path in composeDetektModules },
+                    rootProject.file("config/detekt/amber.yml").takeIf { usesAmberRules },
+                ),
+            )
         }
         // The type-resolving tasks also read each source set's generated sources
         // (the Compose resource accessors, BuildConfig, …) under build/. They are

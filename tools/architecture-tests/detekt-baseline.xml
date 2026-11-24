@@ -2,5 +2,15 @@
 <SmellBaseline>
   <ManuallySuppressedIssues/>
   <CurrentIssues>
+    <ID>NoComments:ArchitectureTest.kt:@Immutable for the compose compiler, compileOnly: no Compose UI.</ID>
+    <ID>NoComments:ArchitectureTest.kt:A DAO call needs no import when Kotlin infers its types, so the calls count too.</ID>
+    <ID>NoComments:ArchitectureTest.kt:Compose Multiplatform resolves to androidx.compose on both targets.</ID>
+    <ID>NoComments:ArchitectureTest.kt:Empty since step 6: no ui/ file outside a ViewModel may use the database.</ID>
+    <ID>NoComments:ArchitectureTest.kt:Empty since step 8: service/ and database/ take what needs the UI as a function the composable passe</ID>
+    <ID>NoComments:ArchitectureTest.kt:Hyphens excluded: "amber-key-check" is a string, not the extension.</ID>
+    <ID>NoComments:ArchitectureTest.kt:Opening a Room database or DAO: AccountRepository.dao/getDatabase/getHistoryDatabase/getLogDatabase.</ID>
+    <ID>NoComments:ArchitectureTest.kt:Root-package files use the extension without an import (and often without a receiver).</ID>
+    <ID>NoComments:ArchitectureTest.kt:The layer the rule sends data loading to: a ViewModel may expose what it loaded.</ID>
+    <ID>NoComments:ArchitectureTest.kt:The same container without the extension: (context.applicationContext as Amber).</ID>
   </CurrentIssues>
 </SmellBaseline>

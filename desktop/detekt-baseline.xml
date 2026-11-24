@@ -9,8 +9,6 @@
     <ID>CyclomaticComplexMethod:IncomingRequestsScreen.kt:@Composable private fun RequestCard</ID>
     <ID>CyclomaticComplexMethod:Main.kt:fun main</ID>
     <ID>CyclomaticComplexMethod:RelayListEditor.kt:@Composable fun RelayListEditor</ID>
-    <ID>CyclomaticComplexMethod:SettingsScreen.kt:@Composable fun SettingsScreen</ID>
-    <ID>CyclomaticComplexMethod:SettingsScreen.kt:@Composable private fun TorSection</ID>
     <ID>LongMethod:App.kt:@Composable private fun AccountSwitcher</ID>
     <ID>LongMethod:ApplicationDetailScreen.kt:@Composable fun ApplicationDetailScreen</ID>
     <ID>LongMethod:ApplicationDetailScreen.kt:@Composable private fun PermissionCard</ID>
@@ -24,17 +22,10 @@
     <ID>LongMethod:RelayListEditor.kt:@Composable fun RelayListEditor</ID>
     <ID>LongMethod:RelaysScreen.kt:@Composable fun RelaysScreen</ID>
     <ID>LongMethod:RequestNotificationPopup.kt:@Composable fun RequestNotificationPopup</ID>
-    <ID>LongMethod:SettingsScreen.kt:@Composable fun SettingsScreen</ID>
-    <ID>LongMethod:SettingsScreen.kt:@Composable private fun BackupDialog</ID>
-    <ID>LongMethod:SettingsScreen.kt:@Composable private fun ChangePassphraseDialog</ID>
-    <ID>LongMethod:SettingsScreen.kt:@Composable private fun TorSection</ID>
     <ID>MultipleEmitters:LoginScreen.kt:@Composable private fun ImportKeyPane</ID>
     <ID>MultipleEmitters:LoginScreen.kt:@Composable private fun NewKeyPane</ID>
     <ID>MultipleEmitters:RequestDetails.kt:@Composable private fun DetailSection</ID>
     <ID>MultipleEmitters:RequestDetails.kt:@Composable private fun PsbtSections</ID>
-    <ID>MultipleEmitters:SettingsScreen.kt:@Composable private fun SecuritySection</ID>
-    <ID>MultipleEmitters:SettingsScreen.kt:@Composable private fun SettingsSection</ID>
-    <ID>MultipleEmitters:SettingsScreen.kt:@Composable private fun TorSection</ID>
     <ID>NoComments:AccountAvatar.kt:The body, or null when it is (or says it is) larger than [MAX_BYTES].</ID>
     <ID>NoComments:AccountManager.kt:Decodes ASCII hex and wipes [hex].</ID>
     <ID>NoComments:AccountManager.kt:Never sign as one identity under another account's name and permissions.</ID>
@@ -1002,12 +993,6 @@
     <ID>NoComments:RequestNotificationPopup.kt:transparent margin there is no drop shadow; the shape rounds it.</ID>
     <ID>NoComments:RequestNotificationPopup.kt:window. A plain AWT POPUP JWindow is override-redirect instead —</ID>
     <ID>NoComments:SealPreview.kt:What a seal (kind 13) in [plaintext] holds, opened with the account key for the approval</ID>
-    <ID>NoComments:SettingsScreen.kt:Like Android: confirm before traffic moves back to the clearnet.</ID>
-    <ID>NoComments:SettingsScreen.kt:Mirrors the Android `AuthWhitelistScreen`: the relay hosts relay auth</ID>
-    <ID>NoComments:SettingsScreen.kt:One settings group. On wide windows the title and [description] sit in a</ID>
-    <ID>NoComments:SettingsScreen.kt:Re-keyed on the account's name so a name fetched from its profile shows up.</ID>
-    <ID>NoComments:SettingsScreen.kt:Same warning as the seed-words copy: the plain nsec in the clipboard</ID>
-    <ID>NoComments:SettingsScreen.kt:is full control of the account.</ID>
     <ID>NoComments:StaleRequestAfterDeleteTest.kt:Account default "fully trust" is the worst case: a recreated app would auto-sign.</ID>
     <ID>NoComments:StaleRequestAfterDeleteTest.kt:Queues a sign_event card for a connected app, deletes the app, and returns the stale card.</ID>
     <ID>NoComments:Storage.kt:(see writeSecure/readSecure).</ID>

@@ -4,14 +4,10 @@
   <CurrentIssues>
     <ID>CompositionLocalAllowlist:WindowGeometry.kt:/** The current window's content size, provided by [App]. */ val LocalWindowContentSize = staticCompositionLocalOf { DEFAULT_WINDOW_SIZE }</ID>
     <ID>CompositionLocalAllowlist:WindowGeometry.kt:/** The width bucket of the current window, provided by [App]. */ val LocalLayoutWidth = staticCompositionLocalOf { LayoutWidth.EXPANDED }</ID>
-    <ID>CyclomaticComplexMethod:ApplicationDetailScreen.kt:@Composable fun ApplicationDetailScreen</ID>
-    <ID>CyclomaticComplexMethod:ApplicationDetailScreen.kt:@Composable private fun PermissionCard</ID>
     <ID>CyclomaticComplexMethod:IncomingRequestsScreen.kt:@Composable private fun RequestCard</ID>
     <ID>CyclomaticComplexMethod:Main.kt:fun main</ID>
     <ID>CyclomaticComplexMethod:RelayListEditor.kt:@Composable fun RelayListEditor</ID>
     <ID>LongMethod:App.kt:@Composable private fun AccountSwitcher</ID>
-    <ID>LongMethod:ApplicationDetailScreen.kt:@Composable fun ApplicationDetailScreen</ID>
-    <ID>LongMethod:ApplicationDetailScreen.kt:@Composable private fun PermissionCard</ID>
     <ID>LongMethod:ApplicationsScreen.kt:@Composable fun ApplicationsScreen</ID>
     <ID>LongMethod:ApplicationsScreen.kt:@Composable private fun NewBunkerDialog</ID>
     <ID>LongMethod:CrashReportDialog.kt:@Composable fun CrashReportDialog</ID>
@@ -76,25 +72,6 @@
     <ID>NoComments:AppImageIntegration.kt:The program an entry written by [desktopEntry] launches, unquoted.</ID>
     <ID>NoComments:AppImageIntegrationTest.kt:Shown in the app launcher, unlike the nostrconnect:// handler entry.</ID>
     <ID>NoComments:AppIndicatorShimTest.kt:let the code mkdirs</ID>
-    <ID>NoComments:ApplicationDetailScreen.kt:A local socket client has no relays: its tabs skip index 1.</ID>
-    <ID>NoComments:ApplicationDetailScreen.kt:Deleting drops this screen from composition, so run the</ID>
-    <ID>NoComments:ApplicationDetailScreen.kt:Deny, neither -&gt; Ask; a NEVER remember choice edits as ALWAYS.</ID>
-    <ID>NoComments:ApplicationDetailScreen.kt:Localized display title for a permission or history entry — the kind /</ID>
-    <ID>NoComments:ApplicationDetailScreen.kt:Mirrors the Android "Reset Bunker" (EditConfigurationScreen): a new</ID>
-    <ID>NoComments:ApplicationDetailScreen.kt:Mirrors the Android EditConfigurationScreen relay section: the</ID>
-    <ID>NoComments:ApplicationDetailScreen.kt:Mirrors the Android app-detail connection string (EditPermission):</ID>
-    <ID>NoComments:ApplicationDetailScreen.kt:Mirrors the mobile mapping: accept window -&gt; Allow, reject window -&gt;</ID>
-    <ID>NoComments:ApplicationDetailScreen.kt:NIP-44 v3 grants are per context kind, or for all kinds without one.</ID>
-    <ID>NoComments:ApplicationDetailScreen.kt:One permission, with the same options as the mobile `PermissionRow`:</ID>
-    <ID>NoComments:ApplicationDetailScreen.kt:Queued requests from the removed app must not linger as approval cards.</ID>
-    <ID>NoComments:ApplicationDetailScreen.kt:The bunker:// string and its reset only exist for NIP-46 connections.</ID>
-    <ID>NoComments:ApplicationDetailScreen.kt:key and secret invalidate the old pairing; permission rules stay.</ID>
-    <ID>NoComments:ApplicationDetailScreen.kt:on the relays it was handed), then shown read-only.</ID>
-    <ID>NoComments:ApplicationDetailScreen.kt:relays are editable until the client connects (it only listens</ID>
-    <ID>NoComments:ApplicationDetailScreen.kt:subscription is left behind.</ID>
-    <ID>NoComments:ApplicationDetailScreen.kt:the bunker:// URI the client app can re-paste to reconnect.</ID>
-    <ID>NoComments:ApplicationDetailScreen.kt:to be sure the relay refresh completes and no stale relay</ID>
-    <ID>NoComments:ApplicationDetailScreen.kt:unsubscribe on the application scope (not this composable's)</ID>
     <ID>NoComments:ApplicationsScreen.kt:The dialog is at least as wide as the QR code: keep it inside small windows.</ID>
     <ID>NoComments:ApprovalRevertTest.kt:A relay nothing listens on: every publish to it fails.</ID>
     <ID>NoComments:ApprovalRevertTest.kt:Approves, remembering it, a sign_event card from a connection on [relay]; returns the connection aft</ID>

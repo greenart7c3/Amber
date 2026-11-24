@@ -13,6 +13,8 @@ on:
       - 'common/**'
       - 'commonsui/**'
       - 'tools/unused-code/**'
+      - 'tools/detekt-rules/**'
+      - 'config/detekt/**'
       - 'gradle/**'
       - '*.gradle.kts'
       - 'gradle.properties'

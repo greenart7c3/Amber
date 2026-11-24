@@ -113,6 +113,7 @@ dbus-java-transport-native-unixsocket = { module = "com.github.hypfvieh:dbus-jav
 slf4j-nop = { module = "org.slf4j:slf4j-nop", version = "2.0.20" }
 bouncycastle = { module = "org.bouncycastle:bcprov-jdk18on", version = "1.86" }
 detekt-compose-rules = { module = "io.nlopez.compose.rules:detekt", version.ref = "detektComposeRules" }
+detekt-api = { module = "dev.detekt:detekt-api", version.ref = "detekt" }
 konsist = { module = "com.lemonappdev:konsist", version.ref = "konsist" }
 
 [plugins]

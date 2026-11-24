@@ -1,0 +1,12 @@
+# Amber's own rules (tools/detekt-rules), on every module except the rules
+# module itself.
+#
+# NoComments: code explains itself through names, types and structure. Allowed:
+# KDoc on public or protected declarations of public classes, a license header,
+# tool directives (noinspection, ktlint-disable, @formatter:, language=) and
+# links to an issue, an RFC or a NIP. A comment about a constraint outside our
+# code (a platform, vendor or protocol quirk) goes under @Suppress("NoComments")
+# on its declaration. Existing comments are grandfathered in the baselines.
+amber:
+  NoComments:
+    active: true

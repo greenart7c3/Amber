@@ -2,5 +2,12 @@
 <SmellBaseline>
   <ManuallySuppressedIssues/>
   <CurrentIssues>
+    <ID>NoComments:Permission.kt:LAST_COMMIT_CHECKED = "14ec14dac92d891715239bfb83ed1c9bdf2ac382"</ID>
+    <ID>NoComments:Permission.kt:The NIPs Amber describes, by number.</ID>
+    <ID>NoComments:Permission.kt:The event kinds with a label of their own (the ranges are in [eventKindRangeString]).</ID>
+    <ID>NoComments:Permission.kt:The kinds labelled as a range; a kind with its own label in [eventKindStrings] is looked up first.</ID>
+    <ID>NoComments:Permission.kt:The label of a `sign_event` permission for [kind]: the kind's own, its range's, its NIP's, or "kind </ID>
+    <ID>NoComments:Permission.kt:The permission types described by one string, whatever their kind.</ID>
+    <ID>NoComments:PermissionTest.kt:30443 has its own string; a kind no table lists falls back to "Event kind N".</ID>
   </CurrentIssues>
 </SmellBaseline>

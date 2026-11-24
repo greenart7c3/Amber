@@ -379,9 +379,9 @@ private fun BackupPasswordField(
                 Icon(
                     imageVector = if (showCharsPassword) Icons.Outlined.VisibilityOff else Icons.Outlined.Visibility,
                     contentDescription = if (showCharsPassword) {
-                        stringResource(Res.string.show_password)
-                    } else {
                         stringResource(Res.string.hide_password)
+                    } else {
+                        stringResource(Res.string.show_password)
                     },
                 )
             }

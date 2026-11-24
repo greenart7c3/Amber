@@ -19,7 +19,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.greenart7c3.nostrsigner.common.SignerType
+import com.greenart7c3.nostrsigner.commonsui.Permission
 import com.greenart7c3.nostrsigner.commonsui.Res
+import com.greenart7c3.nostrsigner.commonsui.event_kind
+import com.greenart7c3.nostrsigner.commonsui.getStringBlocking
+import com.greenart7c3.nostrsigner.commonsui.localizedBlocking
 import com.greenart7c3.nostrsigner.commonsui.show_details
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.EncryptedDataKind
@@ -84,6 +88,19 @@ fun BatchRequestCard(
     if (showDetails) {
         BatchRequestDetails(type = type, event = event, encryptedData = encryptedData, onDismiss = { showDetails = false })
     }
+}
+
+/**
+ * What an event of [kind] is called in a batch, or its `alt` tag (NIP-31) when Amber has no
+ * name for the kind and the event has one.
+ */
+fun eventKindLabel(
+    kind: Int,
+    tags: Array<Array<String>>,
+): String {
+    val kindName = Permission("sign_event", kind).localizedBlocking()
+    if (kindName != getStringBlocking(Res.string.event_kind, kind.toString())) return kindName
+    return tags.firstOrNull { it.size > 1 && it[0] == "alt" }?.getOrNull(1) ?: kindName
 }
 
 /** The request's label and short content, and Show Details when [onShowDetails] is given. */

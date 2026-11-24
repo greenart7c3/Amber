@@ -39,7 +39,6 @@ import com.greenart7c3.nostrsigner.commonsui.approve
 import com.greenart7c3.nostrsigner.commonsui.confirm
 import com.greenart7c3.nostrsigner.commonsui.connect
 import com.greenart7c3.nostrsigner.commonsui.decrypt_zap_event
-import com.greenart7c3.nostrsigner.commonsui.deny
 import com.greenart7c3.nostrsigner.commonsui.encrypt_this_list_of_tags_with
 import com.greenart7c3.nostrsigner.commonsui.encrypt_this_text_with
 import com.greenart7c3.nostrsigner.commonsui.encrypt_with
@@ -49,7 +48,6 @@ import com.greenart7c3.nostrsigner.commonsui.localizedBlocking
 import com.greenart7c3.nostrsigner.commonsui.read_from_encrypted_content
 import com.greenart7c3.nostrsigner.commonsui.read_this_list_of_tags_from_encrypted_content
 import com.greenart7c3.nostrsigner.commonsui.read_this_text_from_encrypted_content
-import com.greenart7c3.nostrsigner.commonsui.relay_not_in_auth_whitelist
 import com.greenart7c3.nostrsigner.commonsui.several_apps_are_requiring_some_permissions_please_review_them
 import com.greenart7c3.nostrsigner.commonsui.show_details
 import com.greenart7c3.nostrsigner.models.Account
@@ -386,29 +384,11 @@ private fun BunkerRequestCard(
 
             signingAs?.let { SigningAs(it) }
 
-            if (isBlockedByAuthWhitelist(bunkerRequest.signedEvent, settingsStore.settings.authWhitelist)) {
-                // Always rejected on confirm, as on the single screen.
-                Text(
-                    text = stringResource(Res.string.relay_not_in_auth_whitelist),
-                    color = MaterialTheme.colorScheme.error,
-                    modifier = Modifier.padding(vertical = 8.dp),
-                )
-            } else {
-                AmberToggles(
-                    selected = approved,
-                    options = listOf(true, false),
-                    onSelect = onApproveChange,
-                    label = {
-                        if (it) stringResource(Res.string.approve) else stringResource(Res.string.deny)
-                    },
-                    indicatorColor = {
-                        if (it) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
-                    },
-                    selectedTextColor = {
-                        if (it) Color.Black else MaterialTheme.colorScheme.onError
-                    },
-                )
-            }
+            RequestApproval(
+                blockedByAuthWhitelist = isBlockedByAuthWhitelist(bunkerRequest.signedEvent, settingsStore.settings.authWhitelist),
+                approved = approved,
+                onApproveChange = onApproveChange,
+            )
         }
     }
 

@@ -4,7 +4,6 @@
   <CurrentIssues>
     <ID>CompositionLocalAllowlist:Theme.kt:private val LocalAmoledTheme = staticCompositionLocalOf { false }</ID>
     <ID>CompositionLocalAllowlist:Theme.kt:private val LocalDarkTheme = staticCompositionLocalOf { false }</ID>
-    <ID>CyclomaticComplexMethod:CloudBackupScreen.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun CloudBackupScreen</ID>
     <ID>LongMethod:AccountPickerRow.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun AccountPickerRow</ID>
     <ID>LongMethod:AccountScreen.kt:@SuppressLint("StateFlowValueCalledInComposition", "UnrememberedMutableState") @Composable fun AccountScreen</ID>
     <ID>LongMethod:AccountsBottomSheet.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun AccountsBottomSheet</ID>
@@ -20,7 +19,6 @@
     <ID>LongMethod:BiometricAuthScreen.kt:@Composable fun BiometricAuthScreen</ID>
     <ID>LongMethod:BunkerRelayAuthScreen.kt:@Composable fun BunkerRelayAuthScreen</ID>
     <ID>LongMethod:ChooseSignPolicy.kt:@Composable fun ChooseSignPolicy</ID>
-    <ID>LongMethod:CloudBackupScreen.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun CloudBackupScreen</ID>
     <ID>LongMethod:ConnectOrbotDialog.kt:@Composable fun ConnectOrbotScreen</ID>
     <ID>LongMethod:CrashReportScreen.kt:@Composable fun CrashReportScreen</ID>
     <ID>LongMethod:DefaultProfileRelaysScreen.kt:@Composable fun DefaultProfileRelaysScreen</ID>
@@ -572,24 +570,6 @@
     <ID>NoComments:CachingApplicationDaoTest.kt:Runs [read] on another thread, blocks it inside the delegate until [revoke]</ID>
     <ID>NoComments:CachingApplicationDaoTest.kt:could alias; equality stays intact.</ID>
     <ID>NoComments:ChooseSignPolicy.kt:Clipped before the click, so the ripple keeps the rounded shape.</ID>
-    <ID>NoComments:CloudBackupScreen.kt:(Android system picker — user can choose Google Drive, no local save needed)</ID>
-    <ID>NoComments:CloudBackupScreen.kt:--- Encryption password (shared) ---</ID>
-    <ID>NoComments:CloudBackupScreen.kt:--- Google Drive row ---</ID>
-    <ID>NoComments:CloudBackupScreen.kt:--- WebDAV section ---</ID>
-    <ID>NoComments:CloudBackupScreen.kt:ACTION_SEND / ACTION_SEND_MULTIPLE so the user can pick Google Drive (or any app).</ID>
-    <ID>NoComments:CloudBackupScreen.kt:Backup: export all accounts and launch CreateDocument for each, one at a time</ID>
-    <ID>NoComments:CloudBackupScreen.kt:Encryption password shared across both providers</ID>
-    <ID>NoComments:CloudBackupScreen.kt:Enforce the HTTPS policy at save time: an http:// URL</ID>
-    <ID>NoComments:CloudBackupScreen.kt:Google Drive bottom sheet: sends each {npub}.ncryptsec directly via CreateDocument</ID>
-    <ID>NoComments:CloudBackupScreen.kt:Google Drive sheet state</ID>
-    <ID>NoComments:CloudBackupScreen.kt:No file is persisted on-device beyond the cache.</ID>
-    <ID>NoComments:CloudBackupScreen.kt:Restore: pick any .ncryptsec file and import it</ID>
-    <ID>NoComments:CloudBackupScreen.kt:Restore: user picks a .ncryptsec file from any provider (Google Drive, etc.)</ID>
-    <ID>NoComments:CloudBackupScreen.kt:Share all ncryptsec pairs via the Android share sheet.</ID>
-    <ID>NoComments:CloudBackupScreen.kt:WebDAV state</ID>
-    <ID>NoComments:CloudBackupScreen.kt:Writes each to a temp file in cacheDir, gets a FileProvider URI, then fires</ID>
-    <ID>NoComments:CloudBackupScreen.kt:a generic backup error.</ID>
-    <ID>NoComments:CloudBackupScreen.kt:must not be stored silently and only fail later from</ID>
     <ID>NoComments:ConnectionSetupPage.kt:The SOCKS port to save: the typed one for Orbot (null when it is not a number), else the default.</ID>
     <ID>NoComments:ConnectionToReplaceTest.kt:The URI claims a different name, so the same-name check alone missed it.</ID>
     <ID>NoComments:ConnectivityService.kt:Always tracked (also under the kill switch) so the detector's baseline is</ID>

@@ -1,6 +1,7 @@
 package com.greenart7c3.nostrsigner.ui.components
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -28,6 +29,7 @@ import androidx.compose.ui.unit.sp
 import com.greenart7c3.nostrsigner.commonsui.Permission
 import com.greenart7c3.nostrsigner.commonsui.Res
 import com.greenart7c3.nostrsigner.commonsui.event_kind
+import com.greenart7c3.nostrsigner.commonsui.getStringBlocking
 import com.greenart7c3.nostrsigner.commonsui.localizedBlocking
 import com.greenart7c3.nostrsigner.commonsui.report_missing_event_kind_translation
 import com.greenart7c3.nostrsigner.commonsui.show_details
@@ -51,77 +53,104 @@ fun EventData(
     onReject: (RememberType) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    var showMore by androidx.compose.runtime.remember {
-        mutableStateOf(false)
-    }
-    var rememberType by remember {
-        mutableStateOf(RememberType.NEVER)
-    }
-
     Column(
         modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         LocalAppIcon(packageName)
 
-        val permission = Permission("sign_event", event.kind)
-        val kindTranslation = permission.localizedBlocking()
-        val unknownKindString = stringResource(Res.string.event_kind, event.kind.toString())
-        val altTag = event.tags.firstOrNull { it.size > 1 && it[0] == "alt" }?.getOrNull(1)
-        val displayTranslation = if (kindTranslation == unknownKindString && altTag != null) altTag else kindTranslation
-        val text = stringResource(Res.string.wants_you_to_sign_a, displayTranslation)
+        val text = stringResource(Res.string.wants_you_to_sign_a, eventKindLabel(event.kind, event.tags))
         Text(
             text.capitalize(Locale.current),
             fontSize = 18.sp,
             textAlign = TextAlign.Center,
             modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
         )
-        if (kindTranslation == unknownKindString && altTag == null) {
+        if (isUnnamedKind(event)) {
             val appInfo = packageName?.let { rememberAppDisplayInfo(it) }
             ReportMissingEventKindButton(event.kind, appInfo?.name)
         }
-        Spacer(Modifier.size(4.dp))
 
-        RawJsonButton(
-            onCLick = {
-                showMore = !showMore
-            },
-            stringResource(Res.string.show_details),
-        )
-
-        Spacer(Modifier.size(16.dp))
-
-        SigningAs(account)
-
-        if (showMore) {
-            EventDetailModal(
-                event = event,
-                onDismiss = {
-                    showMore = false
-                },
-            )
-        } else {
-            Spacer(modifier = Modifier.weight(1f))
-        }
-
-        RememberMyChoice(
-            shouldRunAcceptOrReject = shouldAcceptOrReject,
+        SignEventActions(
+            event = event,
+            account = account,
+            shouldAcceptOrReject = shouldAcceptOrReject,
             packageName = packageName,
-            alwaysShow = false,
+            alwaysShowRemember = false,
             onAccept = onAccept,
             onReject = onReject,
-            onChange = { rememberType = it },
-        )
-
-        AcceptRejectButtons(
-            onAccept = {
-                onAccept(rememberType)
-            },
-            onReject = {
-                onReject(rememberType)
-            },
         )
     }
+}
+
+/** Amber has no name for [event]'s kind, and the event has no alt tag to name it either. */
+private fun isUnnamedKind(event: Event): Boolean {
+    val unnamed = Permission("sign_event", event.kind).localizedBlocking() == getStringBlocking(Res.string.event_kind, event.kind.toString())
+    return unnamed && event.tags.none { it.size > 1 && it[0] == "alt" }
+}
+
+/**
+ * The rest of a sign screen: Show Details, the signing account, the remember choice
+ * ([alwaysShowRemember] for a bunker client) and accept or reject.
+ */
+@Composable
+private fun ColumnScope.SignEventActions(
+    event: Event,
+    account: Account,
+    shouldAcceptOrReject: Boolean?,
+    packageName: String?,
+    alwaysShowRemember: Boolean,
+    onAccept: (RememberType) -> Unit,
+    onReject: (RememberType) -> Unit,
+) {
+    var showMore by remember {
+        mutableStateOf(false)
+    }
+    var rememberType by remember {
+        mutableStateOf(RememberType.NEVER)
+    }
+
+    Spacer(Modifier.size(4.dp))
+
+    RawJsonButton(
+        onCLick = {
+            showMore = !showMore
+        },
+        stringResource(Res.string.show_details),
+    )
+
+    Spacer(Modifier.size(16.dp))
+
+    SigningAs(account)
+
+    if (showMore) {
+        EventDetailModal(
+            event = event,
+            onDismiss = {
+                showMore = false
+            },
+        )
+    } else {
+        Spacer(modifier = Modifier.weight(1f))
+    }
+
+    RememberMyChoice(
+        shouldRunAcceptOrReject = shouldAcceptOrReject,
+        packageName = packageName,
+        alwaysShow = alwaysShowRemember,
+        onAccept = onAccept,
+        onReject = onReject,
+        onChange = { rememberType = it },
+    )
+
+    AcceptRejectButtons(
+        onAccept = {
+            onAccept(rememberType)
+        },
+        onReject = {
+            onReject(rememberType)
+        },
+    )
 }
 
 @Composable
@@ -135,25 +164,13 @@ fun BunkerEventData(
     modifier: Modifier = Modifier,
     iconUrl: String = "",
 ) {
-    var showMore by androidx.compose.runtime.remember {
-        mutableStateOf(false)
-    }
-    var rememberType by remember {
-        mutableStateOf(RememberType.NEVER)
-    }
-
     Column(
         modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Spacer(Modifier.size(16.dp))
         RemoteAppIcon(iconUrl, appName)
-        val permission = Permission("sign_event", event.kind)
-        val kindTranslation = permission.localizedBlocking()
-        val unknownKindString = stringResource(Res.string.event_kind, event.kind.toString())
-        val altTag = event.tags.firstOrNull { it.size > 1 && it[0] == "alt" }?.getOrNull(1)
-        val displayTranslation = if (kindTranslation == unknownKindString && altTag != null) altTag else kindTranslation
-        val text = stringResource(Res.string.wants_you_to_sign_a, displayTranslation)
+        val text = stringResource(Res.string.wants_you_to_sign_a, eventKindLabel(event.kind, event.tags))
         Text(
             buildAnnotatedString {
                 withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
@@ -165,49 +182,18 @@ fun BunkerEventData(
             textAlign = TextAlign.Center,
             modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
         )
-        if (kindTranslation == unknownKindString && altTag == null) {
+        if (isUnnamedKind(event)) {
             ReportMissingEventKindButton(event.kind, appName)
         }
-        Spacer(Modifier.size(4.dp))
 
-        RawJsonButton(
-            onCLick = {
-                showMore = !showMore
-            },
-            stringResource(Res.string.show_details),
-        )
-
-        Spacer(Modifier.size(16.dp))
-
-        SigningAs(account)
-
-        if (showMore) {
-            EventDetailModal(
-                event = event,
-                onDismiss = {
-                    showMore = false
-                },
-            )
-        } else {
-            Spacer(modifier = Modifier.weight(1f))
-        }
-
-        RememberMyChoice(
-            shouldRunAcceptOrReject = shouldAcceptOrReject,
+        SignEventActions(
+            event = event,
+            account = account,
+            shouldAcceptOrReject = shouldAcceptOrReject,
             packageName = null,
-            alwaysShow = true,
+            alwaysShowRemember = true,
             onAccept = onAccept,
             onReject = onReject,
-            onChange = { rememberType = it },
-        )
-
-        AcceptRejectButtons(
-            onAccept = {
-                onAccept(rememberType)
-            },
-            onReject = {
-                onReject(rememberType)
-            },
         )
     }
 }

@@ -30,7 +30,6 @@ import com.greenart7c3.nostrsigner.commonsui.decrypt_zap_event
 import com.greenart7c3.nostrsigner.commonsui.encrypt_this_list_of_tags_with
 import com.greenart7c3.nostrsigner.commonsui.encrypt_this_text_with
 import com.greenart7c3.nostrsigner.commonsui.encrypt_with
-import com.greenart7c3.nostrsigner.commonsui.event_kind
 import com.greenart7c3.nostrsigner.commonsui.is_requiring_some_permissions_please_review_them2
 import com.greenart7c3.nostrsigner.commonsui.localizedBlocking
 import com.greenart7c3.nostrsigner.commonsui.read_from_encrypted_content
@@ -190,34 +189,18 @@ private fun IntentRequestCard(
     )
 }
 
-private fun intentPermission(intent: IntentData): Permission = if (intent.type == SignerType.SIGN_EVENT) {
-    Permission("sign_event", intent.event!!.kind)
-} else {
-    Permission(intent.type.toString().lowercase(), null)
-}
-
-/**
- * What the request asks for; an event of a kind Amber has no name for is described by its
- * alt tag, when it has one.
- */
+/** What the request asks for. */
 @Composable
 private fun intentRequestLabel(intent: IntentData): String {
     val type = intent.type
-    val permission = intentPermission(intent)
     val nip = type.toString().split("_").first()
-    val label = when {
+    return when {
         type == SignerType.CONNECT -> stringResource(Res.string.connect)
         type.toString().contains("ENCRYPT") -> encryptLabel(intent.encryptedData, nip)
         type.toString().contains("DECRYPT") -> decryptLabel(intent.encryptedData, nip)
-        else -> permission.localizedBlocking()
+        type == SignerType.SIGN_EVENT -> intent.event!!.let { eventKindLabel(it.kind, it.tags) }
+        else -> Permission(type.toString().lowercase(), null).localizedBlocking()
     }
-    val unknownKindString = stringResource(Res.string.event_kind, permission.kind?.toString() ?: "")
-    val altTag = if (label == unknownKindString && type == SignerType.SIGN_EVENT) {
-        intent.event?.tags?.firstOrNull { it.size > 1 && it[0] == "alt" }?.getOrNull(1)
-    } else {
-        null
-    }
-    return altTag ?: label
 }
 
 @Composable

@@ -375,14 +375,11 @@ private fun bunkerRequestLabel(bunkerRequest: AmberBunkerRequest, type: SignerTy
             }
             else -> getStringBlocking(Res.string.read_this_text_from_encrypted_content, type.toString().split("_").first())
         }
+    } else if (type == SignerType.SIGN_EVENT) {
+        val event = (bunkerRequest.request as? BunkerRequestSign)?.event
+        eventKindLabel(event?.kind ?: 0, event?.tags ?: emptyArray())
     } else {
-        val permission = if (type == SignerType.SIGN_EVENT) {
-            val kind = (bunkerRequest.request as? BunkerRequestSign)?.event?.kind ?: 0
-            Permission("sign_event", kind)
-        } else {
-            Permission(type.toString().lowercase(), null)
-        }
-        permission.localizedBlocking()
+        Permission(type.toString().lowercase(), null).localizedBlocking()
     }
 }
 

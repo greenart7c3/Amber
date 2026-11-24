@@ -27,6 +27,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -49,6 +50,7 @@ import com.greenart7c3.nostrsigner.commonsui.proxy_is_connected
 import com.greenart7c3.nostrsigner.commonsui.proxy_is_not_working
 import com.greenart7c3.nostrsigner.commonsui.reconnect
 import com.greenart7c3.nostrsigner.models.Account
+import com.greenart7c3.nostrsigner.models.AmberBunkerRequest
 import com.greenart7c3.nostrsigner.models.TorMode
 import com.greenart7c3.nostrsigner.service.TorManager
 import com.greenart7c3.nostrsigner.service.toShortenHex
@@ -66,11 +68,15 @@ import com.greenart7c3.nostrsigner.ui.theme.connectedColorLight
 import com.greenart7c3.nostrsigner.ui.theme.isAmberDarkTheme
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequestConnect
 import java.util.Base64
+import kotlinx.collections.immutable.ImmutableList
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 // The routes whose title comes from the "content" argument of the destination.
 private val contentTitledRoutes = listOf("Permission/", "Activity/", "RelayLogScreen/", "qrcode/")
+
+// The login screens draw no top bar.
+private val routesWithoutTopBar = setOf("login", "create", "loginPage")
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -82,181 +88,226 @@ fun AmberTopAppBar(
     modifier: Modifier = Modifier,
     viewModel: TopAppBarViewModel = viewModel(factory = TopAppBarViewModel.factory(LocalAccountRepository.current)),
 ) {
-    val lifecycleOwner = LocalLifecycleOwner.current
-    val scope = rememberCoroutineScope()
-    val context = LocalContext.current
-    val intents = requests.intents
-    val bunkerRequests = requests.bunkerRequests
-    val packageName = requests.packageName
+    val showsIntents = requests.intents.isNotEmpty() && requests.packageName != null && destinationRoute == Route.IncomingRequest.route
+    if (showsIntents || destinationRoute in routesWithoutTopBar) return
+
+    CenterAlignedTopAppBar(
+        actions = { TopBarStatus() },
+        title = {
+            TopBarTitle(
+                destinationRoute = destinationRoute,
+                navBackStackEntry = navBackStackEntry,
+                npub = account.npub,
+                bunkerRequests = requests.bunkerRequests,
+                savedApp = viewModel::savedApp,
+            )
+        },
+        modifier = modifier,
+    )
+}
+
+/** The relays connected out of all, which reconnects them, and with a proxy on, whether it works. */
+@Composable
+private fun TopBarStatus() {
+    val relayClient = LocalRelayClient.current
     val settingsStore = LocalSettingsStore.current
+    val relayStats by relayClient.stats.relayStatus.collectAsStateWithLifecycle(Pair(emptySet(), emptySet()))
+    if (relayStats.first.isEmpty() && relayStats.second.isEmpty()) return
+
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        RelayStatusButton(connected = relayStats.second.size, total = relayStats.first.size)
+
+        if (settingsStore.settings.useProxy) {
+            ProxyStatusButton()
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun RelayStatusButton(
+    connected: Int,
+    total: Int,
+) {
     val relayClient = LocalRelayClient.current
     val appScope = LocalAppScope.current
-    if (intents.isEmpty() || packageName == null || destinationRoute != Route.IncomingRequest.route) {
-        if (destinationRoute != "login" && destinationRoute != "create" && destinationRoute != "loginPage") {
-            CenterAlignedTopAppBar(
-                actions = {
-                    if (intents.isEmpty() || packageName == null || destinationRoute != Route.IncomingRequest.route) {
-                        val relayStats = relayClient.stats.relayStatus.collectAsStateWithLifecycle(Pair(emptySet(), emptySet()))
-                        if (relayStats.value.first.isNotEmpty() || relayStats.value.second.isNotEmpty()) {
-                            Row(
-                                horizontalArrangement = Arrangement.spacedBy(4.dp),
-                            ) {
-                                TooltipBox(
-                                    positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
-                                    tooltip = {
-                                        PlainTooltip {
-                                            Text(text = getStringBlocking(Res.string.reconnect))
-                                        }
-                                    },
-                                    state = rememberTooltipState(),
-                                ) {
-                                    Row(
-                                        modifier = Modifier
-                                            .minimumInteractiveComponentSize()
-                                            .clickable(
-                                                onClick = {
-                                                    appScope.launch {
-                                                        relayClient.reconnect()
-                                                    }
-                                                },
-                                            ),
-                                        horizontalArrangement = Arrangement.spacedBy(4.dp),
-                                        verticalAlignment = Alignment.CenterVertically,
-                                    ) {
-                                        val relayStats = relayClient.stats.relayStatus.collectAsStateWithLifecycle(Pair(emptySet(), emptySet()))
-                                        Text("${relayStats.value.second.size}/${relayStats.value.first.size}")
-                                        Icon(
-                                            imageVector = ImageVector.vectorResource(R.drawable.relays),
-                                            contentDescription = getStringBlocking(Res.string.reconnect),
-                                            tint = LocalContentColor.current,
-                                        )
-                                    }
-                                }
-
-                                if (settingsStore.settings.useProxy) {
-                                    val torIsRunning by TorManager.isRunning.collectAsStateWithLifecycle()
-                                    var orbotProxyEnabled by remember { mutableStateOf(false) }
-                                    DisposableEffect(lifecycleOwner) {
-                                        val observer = LifecycleEventObserver { _, event ->
-                                            when (event) {
-                                                Lifecycle.Event.ON_START,
-                                                Lifecycle.Event.ON_RESUME,
-                                                -> {
-                                                    if (settingsStore.settings.torMode != TorMode.BUILTIN) {
-                                                        appScope.launch {
-                                                            orbotProxyEnabled = relayClient.isSocksProxyAlive("127.0.0.1", settingsStore.settings.proxyPort)
-                                                        }
-                                                    }
-                                                }
-
-                                                else -> {}
-                                            }
-                                        }
-                                        lifecycleOwner.lifecycle.addObserver(observer)
-
-                                        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
-                                    }
-                                    val isProxyEnabled = if (settingsStore.settings.torMode == TorMode.BUILTIN) torIsRunning else orbotProxyEnabled
-
-                                    TooltipBox(
-                                        positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
-                                        tooltip = {
-                                            PlainTooltip {
-                                                Text(text = if (isProxyEnabled) getStringBlocking(Res.string.proxy_is_connected) else getStringBlocking(Res.string.proxy_is_not_working))
-                                            }
-                                        },
-                                        state = rememberTooltipState(),
-                                    ) {
-                                        IconButton(
-                                            onClick = {
-                                                scope.launch {
-                                                    if (isProxyEnabled) {
-                                                        Toast.makeText(context, getStringBlocking(Res.string.proxy_is_connected), Toast.LENGTH_SHORT).show()
-                                                    } else {
-                                                        Toast.makeText(context, getStringBlocking(Res.string.proxy_is_not_working), Toast.LENGTH_SHORT).show()
-                                                    }
-                                                }
-                                            },
-                                            content = {
-                                                Icon(
-                                                    Icons.Outlined.Shield,
-                                                    getStringBlocking(Res.string.proxy),
-                                                    tint = if (isProxyEnabled) {
-                                                        if (isAmberDarkTheme()) connectedColorDark else connectedColorLight
-                                                    } else {
-                                                        MaterialTheme.colorScheme.error
-                                                    },
-                                                )
-                                            },
-                                        )
-                                    }
-                                }
-                            }
+    TooltipBox(
+        positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
+        tooltip = {
+            PlainTooltip {
+                Text(text = getStringBlocking(Res.string.reconnect))
+            }
+        },
+        state = rememberTooltipState(),
+    ) {
+        Row(
+            modifier = Modifier
+                .minimumInteractiveComponentSize()
+                .clickable(
+                    onClick = {
+                        appScope.launch {
+                            relayClient.reconnect()
                         }
-                    }
-                },
-                title = {
-                    val configuration = LocalConfiguration.current
-                    var title by remember(destinationRoute, configuration) {
-                        mutableStateOf(routes.find { it.route.startsWith(destinationRoute) }?.title() ?: "")
-                    }
-                    LaunchedEffect(destinationRoute, configuration) {
-                        if (contentTitledRoutes.any { destinationRoute.startsWith(it) }) {
-                            launch(Dispatchers.IO) {
-                                navBackStackEntry.navBackStackEntry?.arguments?.getString("content")?.let {
-                                    title = Route.QrCode.title()
-                                }
-                                navBackStackEntry.navBackStackEntry?.arguments?.getString("packageName")?.let { packageName ->
-                                    val application = viewModel.savedApp(account.npub, packageName)
-                                    title = if (destinationRoute.startsWith("Activity/")) {
-                                        "${application?.name?.ifBlank { application.key.toShortenHex() } ?: packageName} - ${routes.find { it.route.startsWith(destinationRoute) }?.title()}"
-                                    } else {
-                                        application?.name?.ifBlank { application.key.toShortenHex() } ?: packageName
-                                    }
-                                }
-                                navBackStackEntry.navBackStackEntry?.arguments?.getString("key")?.let { packageName ->
-                                    val application = viewModel.savedApp(account.npub, packageName)
-                                    title = if (destinationRoute.startsWith("Activity/")) {
-                                        "${application?.name?.ifBlank { application.key.toShortenHex() } ?: packageName} - ${routes.find { it.route.startsWith(destinationRoute) }?.title()}"
-                                    } else {
-                                        application?.name?.ifBlank { application.key.toShortenHex() } ?: packageName
-                                    }
-                                }
-                                navBackStackEntry.navBackStackEntry?.arguments?.getString("url")?.let { url ->
-                                    val localUrl = Base64.getDecoder().decode(url).toString(Charsets.UTF_8)
-                                    title = localUrl
-                                }
-                            }
-                        } else {
-                            launch(Dispatchers.IO) {
-                                if (destinationRoute == Route.IncomingRequest.route && (bunkerRequests.isNotEmpty())) {
-                                    val request = bunkerRequests.first()
-                                    val key = bunkerRequests.first().localKey
-
-                                    var application = viewModel.savedApp(account.npub, key)
-                                    if (application == null && request.request is BunkerRequestConnect) {
-                                        val secret = request.request.secret
-                                        if (secret != null) {
-                                            application = viewModel.savedApp(account.npub, secret)
-                                        }
-                                    }
-                                    val titleTemp = application?.name?.ifBlank { request.name.ifBlank { application.key.toShortenHex() } } ?: request.name
-                                    title = titleTemp.ifBlank {
-                                        routes.find { it.route == destinationRoute }?.title() ?: ""
-                                    }
-                                } else {
-                                    title = routes.find { it.route == destinationRoute }?.title() ?: ""
-                                }
-                            }
-                        }
-                    }
-
-                    Text(title)
-                },
-                modifier = modifier,
+                    },
+                ),
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text("$connected/$total")
+            Icon(
+                imageVector = ImageVector.vectorResource(R.drawable.relays),
+                contentDescription = getStringBlocking(Res.string.reconnect),
+                tint = LocalContentColor.current,
             )
         }
     }
+}
+
+/** Whether the proxy works: the built-in Tor running, or Orbot's SOCKS port answering (checked when the screen starts or resumes). */
+@Composable
+private fun rememberProxyWorks(): Boolean {
+    val lifecycleOwner = LocalLifecycleOwner.current
+    val settingsStore = LocalSettingsStore.current
+    val relayClient = LocalRelayClient.current
+    val appScope = LocalAppScope.current
+    val torIsRunning by TorManager.isRunning.collectAsStateWithLifecycle()
+    var orbotProxyEnabled by remember { mutableStateOf(false) }
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            when (event) {
+                Lifecycle.Event.ON_START,
+                Lifecycle.Event.ON_RESUME,
+                -> {
+                    if (settingsStore.settings.torMode != TorMode.BUILTIN) {
+                        appScope.launch {
+                            orbotProxyEnabled = relayClient.isSocksProxyAlive("127.0.0.1", settingsStore.settings.proxyPort)
+                        }
+                    }
+                }
+
+                else -> {}
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
+    return if (settingsStore.settings.torMode == TorMode.BUILTIN) torIsRunning else orbotProxyEnabled
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ProxyStatusButton() {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val isProxyEnabled = rememberProxyWorks()
+    val status = if (isProxyEnabled) Res.string.proxy_is_connected else Res.string.proxy_is_not_working
+
+    TooltipBox(
+        positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
+        tooltip = {
+            PlainTooltip {
+                Text(text = getStringBlocking(status))
+            }
+        },
+        state = rememberTooltipState(),
+    ) {
+        IconButton(
+            onClick = {
+                scope.launch {
+                    Toast.makeText(context, getStringBlocking(status), Toast.LENGTH_SHORT).show()
+                }
+            },
+            content = {
+                Icon(
+                    Icons.Outlined.Shield,
+                    getStringBlocking(Res.string.proxy),
+                    tint = if (isProxyEnabled) {
+                        if (isAmberDarkTheme()) connectedColorDark else connectedColorLight
+                    } else {
+                        MaterialTheme.colorScheme.error
+                    },
+                )
+            },
+        )
+    }
+}
+
+/**
+ * The route's title, or what the destination shows: the QR code, the app (with "- Activity"
+ * on its activity screen), the relay, or the app a bunker request comes from.
+ */
+@Composable
+private fun TopBarTitle(
+    destinationRoute: String,
+    navBackStackEntry: NavBackStackEntryWrapper,
+    npub: String,
+    bunkerRequests: ImmutableList<AmberBunkerRequest>,
+    savedApp: suspend (npub: String, key: String) -> SavedAppName?,
+) {
+    val currentSavedApp by rememberUpdatedState(savedApp)
+    val configuration = LocalConfiguration.current
+    var title by remember(destinationRoute, configuration) {
+        mutableStateOf(routes.find { it.route.startsWith(destinationRoute) }?.title() ?: "")
+    }
+    LaunchedEffect(destinationRoute, configuration) {
+        launch(Dispatchers.IO) {
+            if (contentTitledRoutes.any { destinationRoute.startsWith(it) }) {
+                val arguments = navBackStackEntry.navBackStackEntry?.arguments
+                arguments?.getString("content")?.let {
+                    title = Route.QrCode.title()
+                }
+                for (argument in listOf("packageName", "key")) {
+                    arguments?.getString(argument)?.let { key ->
+                        title = savedAppTitle(currentSavedApp(npub, key), key, destinationRoute)
+                    }
+                }
+                arguments?.getString("url")?.let { url ->
+                    title = Base64.getDecoder().decode(url).toString(Charsets.UTF_8)
+                }
+            } else if (destinationRoute == Route.IncomingRequest.route && bunkerRequests.isNotEmpty()) {
+                title = bunkerRequestTitle(bunkerRequests.first(), npub, currentSavedApp).ifBlank {
+                    routes.find { it.route == destinationRoute }?.title() ?: ""
+                }
+            } else {
+                title = routes.find { it.route == destinationRoute }?.title() ?: ""
+            }
+        }
+    }
+
+    Text(title)
+}
+
+/** The saved app's name (its key, shortened, when it has none), or [key] when the app is not saved. */
+private fun savedAppTitle(
+    application: SavedAppName?,
+    key: String,
+    destinationRoute: String,
+): String {
+    val name = application?.name?.ifBlank { application.key.toShortenHex() } ?: key
+    return if (destinationRoute.startsWith("Activity/")) {
+        "$name - ${routes.find { it.route.startsWith(destinationRoute) }?.title()}"
+    } else {
+        name
+    }
+}
+
+/** The name of the app a bunker request comes from: the saved app (found by its key, or a connect's secret), else the name it gave. */
+private suspend fun bunkerRequestTitle(
+    request: AmberBunkerRequest,
+    npub: String,
+    savedApp: suspend (npub: String, key: String) -> SavedAppName?,
+): String {
+    var application = savedApp(npub, request.localKey)
+    if (application == null && request.request is BunkerRequestConnect) {
+        val secret = request.request.secret
+        if (secret != null) {
+            application = savedApp(npub, secret)
+        }
+    }
+    return application?.name?.ifBlank { request.name.ifBlank { application.key.toShortenHex() } } ?: request.name
 }
 
 @Composable

@@ -621,3 +621,16 @@ the top bar take one `IncomingRequests`, and the NIP-44 v3 approval a `Nip44v3Pr
 `Account` reads `hexKey` and `npub` from its signer's key pair instead of taking copies
 that could disagree with the key that signs; `AmberEvent` keeps the seven NIP-01 fields
 under a commented `@Suppress`.
+
+`MultipleEmitters` (none left): a section that emits several rows into its parent's
+`Column` is a `ColumnScope` extension instead of being wrapped in a `Column` of its own,
+which would drop the parent's spacing between the rows. That covers the desktop request
+details (`DetailSection`, `TagsSection`, `PsbtSections`, `PsbtOutputs`), the Android
+`PsbtBody` and `LocalBunkerServerSettings`, which also loses its `LongMethod` entry by
+splitting into its switch row and its port field.
+
+`LongMethod` goes one screen or component per change, keeping the state and actions in
+the original function and moving each block it lays out to a private composable that
+takes plain values and callbacks. Repeated blocks become one composable: the request
+group options build their three scope toggle boxes with one `ScopeToggles`, each caller
+keeping an exhaustive `when` for its labels.

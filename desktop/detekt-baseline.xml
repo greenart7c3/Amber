@@ -4,13 +4,11 @@
   <CurrentIssues>
     <ID>CompositionLocalAllowlist:WindowGeometry.kt:/** The current window's content size, provided by [App]. */ val LocalWindowContentSize = staticCompositionLocalOf { DEFAULT_WINDOW_SIZE }</ID>
     <ID>CompositionLocalAllowlist:WindowGeometry.kt:/** The width bucket of the current window, provided by [App]. */ val LocalLayoutWidth = staticCompositionLocalOf { LayoutWidth.EXPANDED }</ID>
-    <ID>CyclomaticComplexMethod:IncomingRequestsScreen.kt:@Composable private fun RequestCard</ID>
     <ID>CyclomaticComplexMethod:Main.kt:fun main</ID>
     <ID>LongMethod:App.kt:@Composable private fun AccountSwitcher</ID>
     <ID>LongMethod:ApplicationsScreen.kt:@Composable fun ApplicationsScreen</ID>
     <ID>LongMethod:ApplicationsScreen.kt:@Composable private fun NewBunkerDialog</ID>
     <ID>LongMethod:CrashReportDialog.kt:@Composable fun CrashReportDialog</ID>
-    <ID>LongMethod:IncomingRequestsScreen.kt:@Composable private fun RequestCard</ID>
     <ID>LongMethod:LoginScreen.kt:@Composable private fun NewKeyPane</ID>
     <ID>LongMethod:Main.kt:fun main</ID>
     <ID>LongMethod:PassphraseLockTest.kt:PassphraseLockTest$@Test fun fullLifecycle</ID>
@@ -332,42 +330,6 @@
     <ID>NoComments:DesktopKeyStore.kt:bits</ID>
     <ID>NoComments:EncryptedContentTest.kt:Broken JSON (or JSON that is not an event / tag array) is just text.</ID>
     <ID>NoComments:ExpiredConnectionTest.kt:A fully trusted connection (signs everything unasked) expiring at [deleteAfter].</ID>
-    <ID>NoComments:IncomingRequestsScreen.kt:"Account: name · npub…" for a request; with [canSwitch] and more than one</ID>
-    <ID>NoComments:IncomingRequestsScreen.kt:A socket tool names itself in its hello: any local process can</ID>
-    <ID>NoComments:IncomingRequestsScreen.kt:An app header (when there are several apps), then that app's groups.</ID>
-    <ID>NoComments:IncomingRequestsScreen.kt:Approving a nostrconnect URI for a client key that is already</ID>
-    <ID>NoComments:IncomingRequestsScreen.kt:Confirm for the whole batch, with the keyboard shortcuts the batch screen takes.</ID>
-    <ID>NoComments:IncomingRequestsScreen.kt:Keep the keyboard selection valid as requests come and go.</ID>
-    <ID>NoComments:IncomingRequestsScreen.kt:Like Android: a connect, or the only request, gets the full card; several</ID>
-    <ID>NoComments:IncomingRequestsScreen.kt:Mirrors Android's BunkerConnectRequestScreen: pick the sign</ID>
-    <ID>NoComments:IncomingRequestsScreen.kt:Mirrors Android's Nip44v3ContextBox: the kind + scope the</ID>
-    <ID>NoComments:IncomingRequestsScreen.kt:Mirrors the Android "Encryption scope" toggle: NIP-04/44 grants</ID>
-    <ID>NoComments:IncomingRequestsScreen.kt:Mirrors the Android BunkerRequestCard: what the event says (or</ID>
-    <ID>NoComments:IncomingRequestsScreen.kt:One request in a batch: its Approve/Deny checkbox and what it is about.</ID>
-    <ID>NoComments:IncomingRequestsScreen.kt:One request type of one app: approve-all checkbox, the group's Remember/scope choice, and its reques</ID>
-    <ID>NoComments:IncomingRequestsScreen.kt:Several requests (mirrors Android's BunkerMultiEventHomeScreen): per app, per type, one Confirm.</ID>
-    <ID>NoComments:IncomingRequestsScreen.kt:The "Encryption scope" toggle: NIP-04/44 grants this content type or the</ID>
-    <ID>NoComments:IncomingRequestsScreen.kt:The account that signs this request; a connect can be moved to</ID>
-    <ID>NoComments:IncomingRequestsScreen.kt:The app a batch's requests come from, and the account they sign as.</ID>
-    <ID>NoComments:IncomingRequestsScreen.kt:The keyboard shortcuts that approve or reject [req].</ID>
-    <ID>NoComments:IncomingRequestsScreen.kt:The relays the client asks Amber to answer on come straight</ID>
-    <ID>NoComments:IncomingRequestsScreen.kt:Too narrow to share the row with the buttons: hint underneath.</ID>
-    <ID>NoComments:IncomingRequestsScreen.kt:another account, like the Android connect screen's picker.</ID>
-    <ID>NoComments:IncomingRequestsScreen.kt:approve() runs on the engine's application scope, so it</ID>
-    <ID>NoComments:IncomingRequestsScreen.kt:ciphertext is bound to, i.e. what is being granted.</ID>
-    <ID>NoComments:IncomingRequestsScreen.kt:claim a trusted tool's name, so say so before it is approved.</ID>
-    <ID>NoComments:IncomingRequestsScreen.kt:from the nostrconnect:// URI, so show them: they are part of</ID>
-    <ID>NoComments:IncomingRequestsScreen.kt:gets the same warning as a manually entered one.</ID>
-    <ID>NoComments:IncomingRequestsScreen.kt:policy (requested permissions are only granted one by one</ID>
-    <ID>NoComments:IncomingRequestsScreen.kt:publishes the relay response. Toast optimistically.</ID>
-    <ID>NoComments:IncomingRequestsScreen.kt:relay auth (BunkerRelayAuthScreen) this relay or every relay.</ID>
-    <ID>NoComments:IncomingRequestsScreen.kt:requests are reviewed together and answered with one Confirm.</ID>
-    <ID>NoComments:IncomingRequestsScreen.kt:saved replaces that connection; say so before Approve.</ID>
-    <ID>NoComments:IncomingRequestsScreen.kt:survives this card leaving composition and still</ID>
-    <ID>NoComments:IncomingRequestsScreen.kt:the text being encrypted/decrypted), the rest behind "See details".</ID>
-    <ID>NoComments:IncomingRequestsScreen.kt:this content type or the whole NIP; NIP-44 v3 this kind or all;</ID>
-    <ID>NoComments:IncomingRequestsScreen.kt:under the manual policy) and when to delete the connection.</ID>
-    <ID>NoComments:IncomingRequestsScreen.kt:what "Approve" agrees to. An attacker-chosen cleartext relay</ID>
     <ID>NoComments:InvalidParamsTest.kt:Missing params are refused before admission (hasRequiredParams); a v3 request</ID>
     <ID>NoComments:InvalidParamsTest.kt:anything is computed (nip46Step).</ID>
     <ID>NoComments:InvalidParamsTest.kt:with its pubkey but no kind passes that check and is refused after it, before</ID>

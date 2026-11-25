@@ -10,7 +10,6 @@
     <ID>LongMethod:ActivitiesScreen.kt:@Composable fun ActivitiesScreen</ID>
     <ID>LongMethod:ActivitiesScreen.kt:@Composable fun ActivityRow</ID>
     <ID>LongMethod:ActivityScreen.kt:@Composable fun ActivityScreen</ID>
-    <ID>LongMethod:ActivityStatsCard.kt:@Composable private fun ActivityStatsBar</ID>
     <ID>LongMethod:AddPermissionsSheet.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun AddPermissionsSheet</ID>
     <ID>LongMethod:ApplicationsBackupScreen.kt:@Composable fun ApplicationsBackupScreen</ID>
     <ID>LongMethod:ApplicationsBackupScreen.kt:@Composable private fun AccountBackupRow</ID>
@@ -42,7 +41,6 @@
     <ID>LongMethod:SimpleSearchBar.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun SimpleSearchBar</ID>
     <ID>LongMethod:TranslationReportScreen.kt:@Composable fun TranslationReportScreen</ID>
     <ID>ModifierNotUsedAtRoot:LoginWithPubKey.kt:modifier = modifier .weight(1f)</ID>
-    <ID>MultipleEmitters:ActivityStatsCard.kt:@Composable private fun ActivityStatsBar</ID>
     <ID>MultipleEmitters:RelaysScreen.kt:@Composable private fun LocalBunkerServerSettings</ID>
     <ID>MultipleEmitters:SignPsbt.kt:@Composable private fun PsbtBody</ID>
     <ID>NoComments:Account.kt:Gate before reading: the repair below swallows decrypt failures and</ID>

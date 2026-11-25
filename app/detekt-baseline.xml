@@ -7,8 +7,6 @@
     <ID>LongMethod:AccountPickerRow.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun AccountPickerRow</ID>
     <ID>LongMethod:AccountScreen.kt:@SuppressLint("StateFlowValueCalledInComposition", "UnrememberedMutableState") @Composable fun AccountScreen</ID>
     <ID>LongMethod:AccountsBottomSheet.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun AccountsBottomSheet</ID>
-    <ID>LongMethod:ActivitiesScreen.kt:@Composable fun ActivitiesScreen</ID>
-    <ID>LongMethod:ActivitiesScreen.kt:@Composable fun ActivityRow</ID>
     <ID>LongMethod:ActivityScreen.kt:@Composable fun ActivityScreen</ID>
     <ID>LongMethod:ActivityStatsCard.kt:@Composable private fun ActivityStatsBar</ID>
     <ID>LongMethod:AddPermissionsSheet.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun AddPermissionsSheet</ID>

@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.paging.LoadState
+import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.commonsui.Res
@@ -29,6 +30,7 @@ import com.greenart7c3.nostrsigner.commonsui.loading
 import com.greenart7c3.nostrsigner.commonsui.localizedBlocking
 import com.greenart7c3.nostrsigner.commonsui.supportedKindNumbers
 import com.greenart7c3.nostrsigner.models.Account
+import com.greenart7c3.nostrsigner.ui.ActivityEntry
 import com.greenart7c3.nostrsigner.ui.ActivityFilter
 import com.greenart7c3.nostrsigner.ui.ActivityFilterRow
 import com.greenart7c3.nostrsigner.ui.ActivityRow
@@ -56,6 +58,8 @@ fun ActivityScreen(
 
     val textFieldState by remember { mutableStateOf(TextFieldState(initialText = searchQuery)) }
     val searchResults = remember(context) { supportedKindNumbers.map { it.localizedBlocking(true) } }
+    val start = paddingValues.calculateLeftPadding(LayoutDirection.Ltr)
+    val end = paddingValues.calculateRightPadding(LayoutDirection.Ltr)
 
     Column(
         modifier = modifier.padding(top = topPadding),
@@ -64,28 +68,19 @@ fun ActivityScreen(
             account = account,
             pkKey = key,
             modifier = Modifier
-                .padding(
-                    start = paddingValues.calculateLeftPadding(LayoutDirection.Ltr),
-                    end = paddingValues.calculateRightPadding(LayoutDirection.Ltr),
-                    top = 8.dp,
-                    bottom = 4.dp,
-                )
+                .padding(start = start, end = end, top = 8.dp, bottom = 4.dp)
                 .fillMaxWidth(),
         )
         ActivityFilterRow(
             selected = filter,
             onSelect = { filter = it },
             modifier = Modifier
-                .padding(
-                    start = paddingValues.calculateLeftPadding(LayoutDirection.Ltr),
-                    end = paddingValues.calculateRightPadding(LayoutDirection.Ltr),
-                    bottom = 4.dp,
-                )
+                .padding(start = start, end = end, bottom = 4.dp)
                 .fillMaxWidth(),
         )
         SimpleSearchBar(
             modifier = Modifier
-                .padding(start = paddingValues.calculateLeftPadding(LayoutDirection.Ltr), end = paddingValues.calculateRightPadding(LayoutDirection.Ltr))
+                .padding(start = start, end = end)
                 .fillMaxWidth(),
             textFieldState = textFieldState,
             onSearch = {
@@ -93,40 +88,49 @@ fun ActivityScreen(
             },
             searchResults = searchResults,
         )
-        LazyColumn(
+        ActivityList(
+            activities = lazyPagingItems,
+            account = account,
+            contentPadding = PaddingValues(start = start, end = end, bottom = paddingValues.calculateBottomPadding()),
             modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(
-                start = paddingValues.calculateLeftPadding(LayoutDirection.Ltr),
-                end = paddingValues.calculateRightPadding(LayoutDirection.Ltr),
-                bottom = paddingValues.calculateBottomPadding(),
-            ),
-        ) {
-            // No item keys: history rows are inserted continuously and Room pages
-            // are independent LIMIT/OFFSET queries, so a row can transiently appear
-            // in two loaded pages. Keying by the database id then crashes with
-            // "Key X was already used". Positional keys are always unique.
-            items(
-                count = lazyPagingItems.itemCount,
-            ) { index ->
-                val activity = lazyPagingItems[index]
-                activity?.let {
-                    ActivityRow(activity = activity, account = account)
-                }
-            }
+        )
+    }
+}
 
-            lazyPagingItems.apply {
-                when (loadState.refresh) {
-                    is LoadState.Loading -> item {
-                        AmberLog.d("ActivitiesScreen", "Loading...")
-                        Text(stringResource(Res.string.loading), Modifier.padding(16.dp))
-                    }
-                    is LoadState.Error -> item {
-                        AmberLog.d("ActivitiesScreen", "Error loading data")
-                        Text(stringResource(Res.string.error_loading_data), Modifier.padding(16.dp))
-                    }
-                    is LoadState.NotLoading -> { }
-                }
+@Composable
+private fun ActivityList(
+    activities: LazyPagingItems<ActivityEntry>,
+    account: Account,
+    contentPadding: PaddingValues,
+    modifier: Modifier = Modifier,
+) {
+    LazyColumn(
+        modifier = modifier,
+        contentPadding = contentPadding,
+    ) {
+        // No item keys: history rows are inserted continuously and Room pages
+        // are independent LIMIT/OFFSET queries, so a row can transiently appear
+        // in two loaded pages. Keying by the database id then crashes with
+        // "Key X was already used". Positional keys are always unique.
+        items(
+            count = activities.itemCount,
+        ) { index ->
+            val activity = activities[index]
+            activity?.let {
+                ActivityRow(activity = activity, account = account)
             }
+        }
+
+        when (activities.loadState.refresh) {
+            is LoadState.Loading -> item {
+                AmberLog.d("ActivitiesScreen", "Loading...")
+                Text(stringResource(Res.string.loading), Modifier.padding(16.dp))
+            }
+            is LoadState.Error -> item {
+                AmberLog.d("ActivitiesScreen", "Error loading data")
+                Text(stringResource(Res.string.error_loading_data), Modifier.padding(16.dp))
+            }
+            is LoadState.NotLoading -> { }
         }
     }
 }

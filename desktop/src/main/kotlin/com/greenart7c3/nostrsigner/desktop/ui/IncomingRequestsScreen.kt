@@ -114,13 +114,10 @@ fun IncomingRequestsScreen(modifier: Modifier = Modifier) {
         return
     }
 
-    // Keep the keyboard selection valid as requests come and go.
     LaunchedEffect(pending) {
         UiState.pruneRequestState(pending)
     }
 
-    // Like Android: a connect, or the only request, gets the full card; several
-    // requests are reviewed together and answered with one Confirm.
     val single = singleRequest(pending)
     if (single != null) {
         val scrollState = rememberScrollState()
@@ -136,14 +133,12 @@ fun IncomingRequestsScreen(modifier: Modifier = Modifier) {
     }
 }
 
-/** Several requests (mirrors Android's BunkerMultiEventHomeScreen): per app, per type, one Confirm. */
 @Composable
 private fun RequestBatch(apps: List<RequestApp>) {
     val selectedId by UiState.selectedRequestId.collectAsState()
     val approved by UiState.batchApproved.collectAsState()
     val expanded = remember { mutableStateMapOf<String, Boolean>() }
     val listState = rememberLazyListState()
-    // An app header (when there are several apps), then that app's groups.
     val entries: List<Any> = remember(apps) {
         apps.flatMap { app -> (if (apps.size > 1) listOf<Any>(app) else emptyList()) + app.groups }
     }
@@ -196,7 +191,6 @@ private fun RequestBatch(apps: List<RequestApp>) {
 
 private fun PendingBunkerRequest.displayName() = appName.ifBlank { localKey.toShortenHex() }
 
-/** The app a batch's requests come from, and the account they sign as. */
 @Composable
 private fun BatchAppHeader(
     app: RequestApp,
@@ -217,7 +211,6 @@ private fun BatchAppHeader(
     }
 }
 
-/** One request type of one app: approve-all checkbox, the group's Remember/scope choice, and its requests. */
 @Composable
 private fun BatchGroupCard(
     group: RequestGroup,
@@ -263,7 +256,6 @@ private fun BatchGroupCard(
     }
 }
 
-/** One request in a batch: its Approve/Deny checkbox and what it is about. */
 @Composable
 private fun BatchRequestRow(
     req: PendingBunkerRequest,
@@ -313,10 +305,6 @@ private fun BatchRequestRow(
     }
 }
 
-/**
- * The "Encryption scope" toggle: NIP-04/44 grants this content type or the
- * whole NIP; NIP-44 v3 this kind or all; relay auth this relay or every relay.
- */
 @Composable
 private fun ScopeChips(
     req: PendingBunkerRequest,
@@ -348,9 +336,7 @@ private fun ScopeChips(
 }
 
 @Composable
-private fun RequestCard(
-    req: PendingBunkerRequest,
-) {
+private fun RequestCard(req: PendingBunkerRequest) {
     val rememberChoices by UiState.rememberChoices.collectAsState()
     val rememberType = rememberChoices[req.queueKey] ?: RememberType.NEVER
     var working by remember { mutableStateOf(false) }
@@ -359,212 +345,270 @@ private fun RequestCard(
 
     Card(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(16.dp)) {
-            Text(
-                req.appName.ifBlank { req.localKey.toShortenHex() },
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
+            RequestCardHeader(
+                req = req,
+                signingAccountNpub = if (req.type == SignerType.CONNECT) connectChoice.accountNpub else req.account.npub,
+                onSelectAccount = { UiState.setConnectChoice(req.queueKey, connectChoice.copy(accountNpub = it)) },
             )
-            if (req.appUrl.isNotBlank()) {
-                Text(req.appUrl, style = MaterialTheme.typography.bodySmall)
-            }
-            if (req.isLocalSocket) {
-                Text(stringResource(Res.string.d_via_local_socket), style = MaterialTheme.typography.bodySmall)
-                // A socket tool names itself in its hello: any local process can
-                // claim a trusted tool's name, so say so before it is approved.
-                if (req.type == SignerType.CONNECT) {
-                    Text(
-                        stringResource(Res.string.d_socket_name_unverified),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.error,
-                    )
-                }
-            }
-            Spacer(Modifier.height(4.dp))
-            Text(req.type.describe(req.kind, req.encryptedContent), style = MaterialTheme.typography.bodyLarge)
-            Spacer(Modifier.height(4.dp))
-            // The account that signs this request; a connect can be moved to
-            // another account, like the Android connect screen's picker.
-            SigningAccountRow(
-                npub = if (req.type == SignerType.CONNECT) connectChoice.accountNpub else req.account.npub,
-                canSwitch = req.canSwitchAccount,
-                onSelect = { UiState.setConnectChoice(req.queueKey, connectChoice.copy(accountNpub = it)) },
-            )
-
-            val details = remember(req) { RequestDetails.of(req) }
-            if (details != null) {
-                // Mirrors the Android BunkerRequestCard: what the event says (or
-                // the text being encrypted/decrypted), the rest behind "See details".
-                val summary = details.summary()
-                if (summary.isNotBlank()) {
-                    Spacer(Modifier.height(8.dp))
-                    Text(
-                        summary,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 3,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                }
-                AmberTextButton(
-                    text = "${stringResource(Res.string.see_details)} (D)",
-                    onClick = { UiState.detailsRequestId.value = req.queueKey },
-                )
-                val detailsId by UiState.detailsRequestId.collectAsState()
-                if (detailsId == req.queueKey) {
-                    RequestDetailsDialog(req, details, onDismiss = { UiState.detailsRequestId.value = null })
-                }
-            } else if (req.preview.isNotBlank()) {
-                Spacer(Modifier.height(8.dp))
-                Card(Modifier.fillMaxWidth()) {
-                    Text(
-                        req.preview,
-                        style = MaterialTheme.typography.bodySmall,
-                        fontFamily = FontFamily.Monospace,
-                        modifier = Modifier
-                            .heightIn(max = 200.dp)
-                            .verticalScroll(rememberScrollState())
-                            .padding(8.dp),
-                    )
-                }
-            }
-
+            RequestPreviewSection(req)
             if (req.type == SignerType.CONNECT) {
-                // Approving a nostrconnect URI for a client key that is already
-                // saved replaces that connection; say so before Approve.
-                val replaced = remember(req, connectChoice.accountNpub) {
-                    connectionToReplace(req, connectChoice.accountNpub)
-                }
-                if (replaced != null) {
-                    Spacer(Modifier.height(8.dp))
-                    Text(
-                        stringResource(
-                            Res.string.replace_app_message,
-                            replaced.app.name.ifBlank { replaced.app.key.toShortenHex() },
-                        ),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.error,
-                    )
-                }
-                // The relays the client asks Amber to answer on come straight
-                // from the nostrconnect:// URI, so show them: they are part of
-                // what "Approve" agrees to. An attacker-chosen cleartext relay
-                // gets the same warning as a manually entered one.
-                if (!req.isLocalSocket && req.relays.isNotEmpty()) {
-                    Spacer(Modifier.height(8.dp))
-                    Text(
-                        stringResource(Res.string.d_relays_label, req.relays.joinToString { it.url }),
-                        style = MaterialTheme.typography.bodySmall,
-                    )
-                    if (req.relays.any { LocalRelays.isInsecure(it.url) }) {
-                        Text(
-                            stringResource(Res.string.insecure_relay_warning),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.error,
-                            modifier = Modifier.padding(top = 4.dp),
-                        )
-                    }
-                }
-                // Mirrors Android's BunkerConnectRequestScreen: pick the sign
-                // policy (requested permissions are only granted one by one
-                // under the manual policy) and when to delete the connection.
-                Spacer(Modifier.height(8.dp))
-                Text(stringResource(Res.string.permissions), style = MaterialTheme.typography.titleSmall)
-                SignPolicySelector(connectChoice.signPolicy, onSelect = {
-                    UiState.setConnectChoice(req.queueKey, connectChoice.copy(signPolicy = it))
-                })
-                if (connectChoice.signPolicy == 1 && connectChoice.granted.isNotEmpty()) {
-                    Column(Modifier.padding(start = 24.dp)) {
-                        connectChoice.granted.forEachIndexed { index, perm ->
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Checkbox(
-                                    checked = perm.checked,
-                                    onCheckedChange = { checked ->
-                                        val granted = connectChoice.granted.toMutableList()
-                                        granted[index] = perm.copy(checked = checked)
-                                        UiState.setConnectChoice(req.queueKey, connectChoice.copy(granted = granted))
-                                    },
-                                )
-                                Text(
-                                    Permission(perm.type, perm.kind).localizedBlocking(),
-                                    style = MaterialTheme.typography.bodyMedium,
-                                )
-                            }
-                        }
-                    }
-                }
-                Spacer(Modifier.height(8.dp))
-                DeleteAfterSelector(connectChoice.deleteAfter, onSelect = {
-                    UiState.setConnectChoice(req.queueKey, connectChoice.copy(deleteAfter = it))
-                })
+                ConnectRequestSection(
+                    req = req,
+                    connectChoice = connectChoice,
+                    onChoiceChange = { UiState.setConnectChoice(req.queueKey, it) },
+                )
             }
-
             Spacer(Modifier.height(12.dp))
-            val isV3 = req.type in nip44v3SignerTypes
-            if (isV3) {
-                // Mirrors Android's Nip44v3ContextBox: the kind + scope the
-                // ciphertext is bound to, i.e. what is being granted.
-                Spacer(Modifier.height(4.dp))
-                Text(stringResource(Res.string.nip44_v3_context), style = MaterialTheme.typography.labelMedium)
-                val kindLabel = req.kind?.let { "$it (${Permission("sign_event", it).localizedBlocking()})" } ?: "-"
-                Text(stringResource(Res.string.nip44_v3_kind, kindLabel), style = MaterialTheme.typography.bodySmall)
-                Text(
-                    stringResource(Res.string.nip44_v3_scope, req.nip44v3Scope.ifEmpty { stringResource(Res.string.nip44_v3_no_scope) }),
-                    style = MaterialTheme.typography.bodySmall,
-                )
-            }
-            if (req.hasScopeChoice) {
-                // Mirrors the Android "Encryption scope" toggle: NIP-04/44 grants
-                // this content type or the whole NIP; NIP-44 v3 this kind or all;
-                // relay auth (BunkerRelayAuthScreen) this relay or every relay.
-                val scopeChoices by UiState.scopeChoices.collectAsState()
-                ScopeChips(req, scopeChoices[req.queueKey] ?: req.defaultScope) { UiState.setScopeChoice(req.queueKey, it) }
-                Spacer(Modifier.height(4.dp))
-            }
-            if (req.type != SignerType.CONNECT) {
-                RememberTypeSelector(rememberType, onValueChange = { UiState.setRememberChoice(req.queueKey, it) })
-                Spacer(Modifier.height(8.dp))
-            }
+            RequestGrantOptions(req = req, rememberType = rememberType)
+            RequestActionBar(
+                req = req,
+                working = working,
+                onApprove = {
+                    working = true
+                    UiState.approve(req)
+                    Toaster.toast(getStringBlocking(Res.string.d_request_approved))
+                },
+                onReject = {
+                    working = true
+                    UiState.reject(req)
+                    Toaster.toast(getStringBlocking(Res.string.d_request_rejected))
+                },
+            )
+        }
+    }
+}
 
-            val compact = LocalLayoutWidth.current == LayoutWidth.COMPACT
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                AmberButton(
-                    text = if (working) stringResource(Res.string.d_working) else stringResource(Res.string.d_approve),
-                    enabled = !working,
-                    onClick = {
-                        working = true
-                        // approve() runs on the engine's application scope, so it
-                        // survives this card leaving composition and still
-                        // publishes the relay response. Toast optimistically.
-                        UiState.approve(req)
-                        Toaster.toast(getStringBlocking(Res.string.d_request_approved))
-                    },
+@Composable
+private fun RequestCardHeader(
+    req: PendingBunkerRequest,
+    signingAccountNpub: String,
+    onSelectAccount: (String) -> Unit,
+) {
+    Column {
+        Text(
+            req.displayName(),
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+        )
+        if (req.appUrl.isNotBlank()) {
+            Text(req.appUrl, style = MaterialTheme.typography.bodySmall)
+        }
+        if (req.isLocalSocket) {
+            Text(stringResource(Res.string.d_via_local_socket), style = MaterialTheme.typography.bodySmall)
+            if (req.type == SignerType.CONNECT) {
+                Text(
+                    stringResource(Res.string.d_socket_name_unverified),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error,
                 )
-                AmberOutlinedButton(
-                    text = stringResource(Res.string.reject),
-                    onClick = {
-                        working = true
-                        UiState.reject(req)
-                        Toaster.toast(getStringBlocking(Res.string.d_request_rejected))
-                    },
-                )
-                if (!compact) {
-                    Spacer(Modifier.weight(1f))
-                    ShortcutHint(req)
-                }
             }
-            // Too narrow to share the row with the buttons: hint underneath.
-            if (compact) {
-                Spacer(Modifier.height(6.dp))
-                ShortcutHint(req)
+        }
+        Spacer(Modifier.height(4.dp))
+        Text(req.type.describe(req.kind, req.encryptedContent), style = MaterialTheme.typography.bodyLarge)
+        Spacer(Modifier.height(4.dp))
+        SigningAccountRow(
+            npub = signingAccountNpub,
+            canSwitch = req.canSwitchAccount,
+            onSelect = onSelectAccount,
+        )
+    }
+}
+
+@Composable
+private fun RequestPreviewSection(req: PendingBunkerRequest) {
+    val details = remember(req) { RequestDetails.of(req) }
+    if (details == null && req.preview.isBlank()) return
+
+    Column {
+        if (details != null) {
+            val summary = details.summary()
+            if (summary.isNotBlank()) {
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    summary,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 3,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+            AmberTextButton(
+                text = "${stringResource(Res.string.see_details)} (D)",
+                onClick = { UiState.detailsRequestId.value = req.queueKey },
+            )
+            val detailsId by UiState.detailsRequestId.collectAsState()
+            if (detailsId == req.queueKey) {
+                RequestDetailsDialog(req, details, onDismiss = { UiState.detailsRequestId.value = null })
+            }
+        } else {
+            Spacer(Modifier.height(8.dp))
+            Card(Modifier.fillMaxWidth()) {
+                Text(
+                    req.preview,
+                    style = MaterialTheme.typography.bodySmall,
+                    fontFamily = FontFamily.Monospace,
+                    modifier = Modifier
+                        .heightIn(max = 200.dp)
+                        .verticalScroll(rememberScrollState())
+                        .padding(8.dp),
+                )
             }
         }
     }
 }
 
-/** The keyboard shortcuts that approve or reject [req]. */
+@Composable
+private fun ConnectRequestSection(
+    req: PendingBunkerRequest,
+    connectChoice: ConnectChoice,
+    onChoiceChange: (ConnectChoice) -> Unit,
+) {
+    val replaced = remember(req, connectChoice.accountNpub) {
+        connectionToReplace(req, connectChoice.accountNpub)
+    }
+    Column {
+        if (replaced != null) {
+            Spacer(Modifier.height(8.dp))
+            Text(
+                stringResource(
+                    Res.string.replace_app_message,
+                    replaced.app.name.ifBlank { replaced.app.key.toShortenHex() },
+                ),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.error,
+            )
+        }
+        if (!req.isLocalSocket && req.relays.isNotEmpty()) {
+            ConnectRelaysNotice(req.relays.map { it.url })
+        }
+        Spacer(Modifier.height(8.dp))
+        Text(stringResource(Res.string.permissions), style = MaterialTheme.typography.titleSmall)
+        SignPolicySelector(connectChoice.signPolicy, onSelect = {
+            onChoiceChange(connectChoice.copy(signPolicy = it))
+        })
+        if (connectChoice.signPolicy == 1 && connectChoice.granted.isNotEmpty()) {
+            ConnectPermissionChecklist(connectChoice, onChoiceChange)
+        }
+        Spacer(Modifier.height(8.dp))
+        DeleteAfterSelector(connectChoice.deleteAfter, onSelect = {
+            onChoiceChange(connectChoice.copy(deleteAfter = it))
+        })
+    }
+}
+
+@Composable
+private fun ConnectRelaysNotice(relayUrls: List<String>) {
+    Column {
+        Spacer(Modifier.height(8.dp))
+        Text(
+            stringResource(Res.string.d_relays_label, relayUrls.joinToString()),
+            style = MaterialTheme.typography.bodySmall,
+        )
+        if (relayUrls.any { LocalRelays.isInsecure(it) }) {
+            Text(
+                stringResource(Res.string.insecure_relay_warning),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.error,
+                modifier = Modifier.padding(top = 4.dp),
+            )
+        }
+    }
+}
+
+@Composable
+private fun ConnectPermissionChecklist(
+    connectChoice: ConnectChoice,
+    onChoiceChange: (ConnectChoice) -> Unit,
+) {
+    Column(Modifier.padding(start = 24.dp)) {
+        connectChoice.granted.forEachIndexed { index, perm ->
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Checkbox(
+                    checked = perm.checked,
+                    onCheckedChange = { checked ->
+                        val granted = connectChoice.granted.toMutableList()
+                        granted[index] = perm.copy(checked = checked)
+                        onChoiceChange(connectChoice.copy(granted = granted))
+                    },
+                )
+                Text(
+                    Permission(perm.type, perm.kind).localizedBlocking(),
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun RequestGrantOptions(
+    req: PendingBunkerRequest,
+    rememberType: RememberType,
+) {
+    Column {
+        if (req.type in nip44v3SignerTypes) {
+            Nip44v3ContextNotice(req)
+        }
+        if (req.hasScopeChoice) {
+            val scopeChoices by UiState.scopeChoices.collectAsState()
+            ScopeChips(req, scopeChoices[req.queueKey] ?: req.defaultScope) { UiState.setScopeChoice(req.queueKey, it) }
+            Spacer(Modifier.height(4.dp))
+        }
+        if (req.type != SignerType.CONNECT) {
+            RememberTypeSelector(rememberType, onValueChange = { UiState.setRememberChoice(req.queueKey, it) })
+            Spacer(Modifier.height(8.dp))
+        }
+    }
+}
+
+@Composable
+private fun Nip44v3ContextNotice(req: PendingBunkerRequest) {
+    Column {
+        Spacer(Modifier.height(4.dp))
+        Text(stringResource(Res.string.nip44_v3_context), style = MaterialTheme.typography.labelMedium)
+        val kindLabel = req.kind?.let { "$it (${Permission("sign_event", it).localizedBlocking()})" } ?: "-"
+        Text(stringResource(Res.string.nip44_v3_kind, kindLabel), style = MaterialTheme.typography.bodySmall)
+        Text(
+            stringResource(Res.string.nip44_v3_scope, req.nip44v3Scope.ifEmpty { stringResource(Res.string.nip44_v3_no_scope) }),
+            style = MaterialTheme.typography.bodySmall,
+        )
+    }
+}
+
+@Composable
+private fun RequestActionBar(
+    req: PendingBunkerRequest,
+    working: Boolean,
+    onApprove: () -> Unit,
+    onReject: () -> Unit,
+) {
+    val compact = LocalLayoutWidth.current == LayoutWidth.COMPACT
+    Column {
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            AmberButton(
+                text = if (working) stringResource(Res.string.d_working) else stringResource(Res.string.d_approve),
+                enabled = !working,
+                onClick = onApprove,
+            )
+            AmberOutlinedButton(
+                text = stringResource(Res.string.reject),
+                onClick = onReject,
+            )
+            if (!compact) {
+                Spacer(Modifier.weight(1f))
+                ShortcutHint(req)
+            }
+        }
+        if (compact) {
+            Spacer(Modifier.height(6.dp))
+            ShortcutHint(req)
+        }
+    }
+}
+
 @Composable
 private fun ShortcutHint(
     req: PendingBunkerRequest,
@@ -584,10 +628,6 @@ private fun ShortcutHint(
     )
 }
 
-/**
- * "Account: name · npub…" for a request; with [canSwitch] and more than one
- * account, a dropdown to pick the account a connection is saved under.
- */
 @Composable
 private fun SigningAccountRow(
     npub: String,
@@ -644,7 +684,6 @@ private fun SigningAccountRow(
     }
 }
 
-/** Confirm for the whole batch, with the keyboard shortcuts the batch screen takes. */
 @Composable
 private fun BatchConfirmBar() {
     Row(Modifier.padding(vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {

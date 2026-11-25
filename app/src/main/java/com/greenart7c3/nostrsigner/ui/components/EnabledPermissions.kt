@@ -59,55 +59,78 @@ fun EnabledPermissions(
             .fillMaxWidth()
             .padding(8.dp),
     ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable { toggleAll() },
-        ) {
-            TriStateCheckbox(
-                state = allCheckedState,
-                onClick = { toggleAll() },
-            )
-            Text(stringResource(Res.string.select_deselect_all))
-        }
+        SelectAllRow(
+            state = allCheckedState,
+            onToggle = { toggleAll() },
+        )
 
         LazyColumn(
             Modifier.fillMaxWidth(),
         ) {
             itemsIndexed(localPermissions) { index, item ->
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 4.dp),
-                    border = BorderStroke(1.dp, Color.LightGray),
-                    colors = CardDefaults.cardColors().copy(
-                        containerColor = MaterialTheme.colorScheme.background,
-                    ),
-                ) {
-                    Row(
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier
-                            .clickable {
-                                item.checked = !item.checked
-                                enabledPermissions[index].value = item.checked
-                            },
-                    ) {
-                        Checkbox(
-                            checked = enabledPermissions[index].value,
-                            onCheckedChange = { _ ->
-                                item.checked = !item.checked
-                                enabledPermissions[index].value = item.checked
-                            },
-                        )
-                        Text(
-                            modifier = Modifier.weight(1f),
-                            text = item.localizedBlocking(),
-                        )
-                    }
-                }
+                PermissionCard(
+                    checked = enabledPermissions[index].value,
+                    text = item.localizedBlocking(),
+                    onToggle = {
+                        item.checked = !item.checked
+                        enabledPermissions[index].value = item.checked
+                    },
+                )
             }
+        }
+    }
+}
+
+@Composable
+private fun SelectAllRow(
+    state: ToggleableState,
+    onToggle: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable { onToggle() },
+    ) {
+        TriStateCheckbox(
+            state = state,
+            onClick = { onToggle() },
+        )
+        Text(stringResource(Res.string.select_deselect_all))
+    }
+}
+
+@Composable
+private fun PermissionCard(
+    checked: Boolean,
+    text: String,
+    onToggle: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Card(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        border = BorderStroke(1.dp, Color.LightGray),
+        colors = CardDefaults.cardColors().copy(
+            containerColor = MaterialTheme.colorScheme.background,
+        ),
+    ) {
+        Row(
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .clickable { onToggle() },
+        ) {
+            Checkbox(
+                checked = checked,
+                onCheckedChange = { _ -> onToggle() },
+            )
+            Text(
+                modifier = Modifier.weight(1f),
+                text = text,
+            )
         }
     }
 }

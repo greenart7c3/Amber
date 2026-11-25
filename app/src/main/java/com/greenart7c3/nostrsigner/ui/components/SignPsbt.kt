@@ -3,6 +3,7 @@ package com.greenart7c3.nostrsigner.ui.components
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -136,7 +137,7 @@ fun BunkerSignPsbt(
 }
 
 @Composable
-private fun PsbtBody(psbtHex: String, decoded: DecodedPsbt) {
+private fun ColumnScope.PsbtBody(psbtHex: String, decoded: DecodedPsbt) {
     val parseError = decoded.parseError
     if (parseError != null) {
         Card(modifier = Modifier.fillMaxWidth(), border = amoledBorder()) {

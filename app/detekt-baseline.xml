@@ -36,7 +36,6 @@
     <ID>LongMethod:TranslationReportScreen.kt:@Composable fun TranslationReportScreen</ID>
     <ID>ModifierNotUsedAtRoot:LoginWithPubKey.kt:modifier = modifier .weight(1f)</ID>
     <ID>MultipleEmitters:RelaysScreen.kt:@Composable private fun LocalBunkerServerSettings</ID>
-    <ID>MultipleEmitters:SignPsbt.kt:@Composable private fun PsbtBody</ID>
     <ID>NoComments:Account.kt:Gate before reading: the repair below swallows decrypt failures and</ID>
     <ID>NoComments:Account.kt:Lazy repair for accounts restored by pre-fix builds, which stored the</ID>
     <ID>NoComments:Account.kt:NIP-44 ciphertext in SEED_WORDS. If the stored value is not a valid</ID>

@@ -100,7 +100,6 @@ class EventNotificationConsumerRateLimitTest {
                 settingsStore = amber,
                 accountRepository = amber.accountDatabases,
                 scope = amber.applicationIOScope,
-                notificationCache = amber.notificationCache,
                 bunkerResponder = bunkerResponder,
             ) { amber.notificationSubscription.updateFilter() },
         )

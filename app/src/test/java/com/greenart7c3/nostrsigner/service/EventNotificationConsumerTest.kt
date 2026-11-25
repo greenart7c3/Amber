@@ -74,6 +74,10 @@ class EventNotificationConsumerTest {
         mockkStatic("com.vitorpamplona.quartz.nip40Expiration.EventExtKt")
 
         bunkerEventDao = mockk(relaxed = true)
+        // Room returns the new rowId on success and null only on a unique-index
+        // conflict; production reads null as "already claimed by another
+        // delivery", and a relaxed mock would answer null for Long?.
+        coEvery { bunkerEventDao.insert(any()) } returns 1L
         dao = mockk(relaxed = true)
         val database = mockk<AppDatabase>(relaxed = true)
         every { database.bunkerEventDao() } returns bunkerEventDao
@@ -100,7 +104,6 @@ class EventNotificationConsumerTest {
                 scope = object : CoroutineScope {
                     override val coroutineContext get() = amber.applicationIOScope.coroutineContext
                 },
-                notificationCache = amber.notificationCache,
                 bunkerResponder = bunkerResponder,
             ) { amber.notificationSubscription.updateFilter() },
         )
@@ -248,7 +251,6 @@ class EventNotificationConsumerTest {
         mockkObject(BunkerRequestUtils)
         try {
             every { amber.applicationIOScope } returns CoroutineScope(Dispatchers.Unconfined + SupervisorJob())
-            every { amber.notificationCache[any()] } returns null
             val responses = mutableListOf<BunkerResponse>()
             val attempts = mutableListOf<Int>()
             coEvery {
@@ -355,7 +357,6 @@ class EventNotificationConsumerTest {
             every { amber.applicationIOScope } returns CoroutineScope(Dispatchers.Unconfined + SupervisorJob())
             // The relaxed mock returns 0L (non-null) from the dedup cache, which
             // makes notify() treat the request as already processed.
-            every { amber.notificationCache[any()] } returns null
             val responses = mutableListOf<BunkerResponse>()
             coEvery {
                 bunkerResponder.sendBunkerResponse(any(), any(), any(), any(), any(), any(), any())

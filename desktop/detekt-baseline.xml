@@ -6,11 +6,8 @@
     <ID>CompositionLocalAllowlist:WindowGeometry.kt:/** The width bucket of the current window, provided by [App]. */ val LocalLayoutWidth = staticCompositionLocalOf { LayoutWidth.EXPANDED }</ID>
     <ID>LongMethod:App.kt:@Composable private fun AccountSwitcher</ID>
     <ID>LongMethod:CrashReportDialog.kt:@Composable fun CrashReportDialog</ID>
-    <ID>LongMethod:LoginScreen.kt:@Composable private fun NewKeyPane</ID>
     <ID>LongMethod:PassphraseLockTest.kt:PassphraseLockTest$@Test fun fullLifecycle</ID>
     <ID>LongMethod:RequestNotificationPopup.kt:@Composable fun RequestNotificationPopup</ID>
-    <ID>MultipleEmitters:LoginScreen.kt:@Composable private fun ImportKeyPane</ID>
-    <ID>MultipleEmitters:LoginScreen.kt:@Composable private fun NewKeyPane</ID>
     <ID>MultipleEmitters:RequestDetails.kt:@Composable private fun DetailSection</ID>
     <ID>MultipleEmitters:RequestDetails.kt:@Composable private fun PsbtSections</ID>
     <ID>NoComments:AccountAvatar.kt:The body, or null when it is (or says it is) larger than [MAX_BYTES].</ID>
@@ -418,7 +415,6 @@
     <ID>NoComments:LocalSignerTest.kt:account, and whichever account the user picks is the answer.</ID>
     <ID>NoComments:LockDeferredRequestTest.kt:Already seen: a redelivery is ignored.</ID>
     <ID>NoComments:LockDeferredRequestTest.kt:Deferred by a lock: `since` reaches back to it and the redelivery is handled.</ID>
-    <ID>NoComments:LoginScreen.kt:Hidden until asked for, so they don't sit on screen (or in a screen share) by default.</ID>
     <ID>NoComments:MacNotifications.kt:A click on the notification itself, like the freedesktop "default" action.</ID>
     <ID>NoComments:MacNotifications.kt:A global block (isa, flags, reserved, invoke, descriptor{reserved, size}).</ID>
     <ID>NoComments:MacNotifications.kt:An autoreleased NSString; the bytes are passed NUL-terminated, never as a platform-encoded string.</ID>

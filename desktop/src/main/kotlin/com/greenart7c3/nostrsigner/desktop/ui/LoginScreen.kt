@@ -66,6 +66,7 @@ import com.greenart7c3.nostrsigner.commonsui.warning
 import com.greenart7c3.nostrsigner.desktop.Session
 import com.greenart7c3.nostrsigner.desktop.core.AccountManager
 import com.greenart7c3.nostrsigner.desktop.core.BuildVariant
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 
@@ -136,59 +137,78 @@ fun LoginScreen(
 }
 
 @Composable
-private fun ImportKeyPane(scope: kotlinx.coroutines.CoroutineScope) {
+private fun ImportKeyPane(scope: CoroutineScope) {
     var key by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var working by remember { mutableStateOf(false) }
 
-    OutlinedTextField(
-        value = key,
-        onValueChange = { key = it },
-        label = { Text(stringResource(Res.string.d_import_key_label)) },
-        modifier = Modifier.fillMaxWidth(),
-        visualTransformation = PasswordVisualTransformation(),
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-    )
-    if (key.trim().startsWith("ncryptsec")) {
-        Spacer(Modifier.height(8.dp))
+    Column(
+        Modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
         OutlinedTextField(
-            value = password,
-            onValueChange = { password = it },
-            label = { Text(stringResource(Res.string.d_password)) },
+            value = key,
+            onValueChange = { key = it },
+            label = { Text(stringResource(Res.string.d_import_key_label)) },
             modifier = Modifier.fillMaxWidth(),
             visualTransformation = PasswordVisualTransformation(),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
         )
-    }
-    Spacer(Modifier.height(16.dp))
-    AmberButton(
-        text = if (working) stringResource(Res.string.d_adding) else stringResource(Res.string.d_add_key),
-        fillWidth = true,
-        enabled = key.isNotBlank() && !working,
-        onClick = {
-            working = true
-            scope.launch {
-                AccountManager.parseKey(key, password).fold(
-                    onSuccess = { keyPair ->
-                        val account = AccountManager.addAccount(
-                            keyPair = keyPair,
-                            seedWords = if (key.trim().contains(" ")) key.trim() else "",
-                            didBackup = true,
-                        )
-                        Session.onAccountAdded(account)
-                    },
-                    onFailure = {
-                        Toaster.toast(it.message ?: getStringBlocking(Res.string.d_invalid_key))
-                    },
+        if (key.trim().startsWith("ncryptsec")) {
+            Spacer(Modifier.height(8.dp))
+            OutlinedTextField(
+                value = password,
+                onValueChange = { password = it },
+                label = { Text(stringResource(Res.string.d_password)) },
+                modifier = Modifier.fillMaxWidth(),
+                visualTransformation = PasswordVisualTransformation(),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+            )
+        }
+        Spacer(Modifier.height(16.dp))
+        AmberButton(
+            text = if (working) stringResource(Res.string.d_adding) else stringResource(Res.string.d_add_key),
+            fillWidth = true,
+            enabled = key.isNotBlank() && !working,
+            onClick = {
+                importAccountKey(
+                    key = key,
+                    password = password,
+                    scope = scope,
+                    onWorkingChange = { working = it },
                 )
-                working = false
-            }
-        },
-    )
+            },
+        )
+    }
+}
+
+private fun importAccountKey(
+    key: String,
+    password: String,
+    scope: CoroutineScope,
+    onWorkingChange: (Boolean) -> Unit,
+) {
+    onWorkingChange(true)
+    scope.launch {
+        AccountManager.parseKey(key, password).fold(
+            onSuccess = { keyPair ->
+                val account = AccountManager.addAccount(
+                    keyPair = keyPair,
+                    seedWords = if (key.trim().contains(" ")) key.trim() else "",
+                    didBackup = true,
+                )
+                Session.onAccountAdded(account)
+            },
+            onFailure = {
+                Toaster.toast(it.message ?: getStringBlocking(Res.string.d_invalid_key))
+            },
+        )
+        onWorkingChange(false)
+    }
 }
 
 @Composable
-private fun NewKeyPane(scope: kotlinx.coroutines.CoroutineScope) {
+private fun NewKeyPane(scope: CoroutineScope) {
     var name by remember { mutableStateOf("") }
     var working by remember { mutableStateOf(false) }
     val seedWords = remember { AccountManager.generateSeedWords() }
@@ -196,24 +216,59 @@ private fun NewKeyPane(scope: kotlinx.coroutines.CoroutineScope) {
     var confirmCopy by remember { mutableStateOf(false) }
     val copyText = rememberCopyText()
 
-    OutlinedTextField(
-        value = name,
-        onValueChange = { name = it },
-        label = { Text(stringResource(Res.string.d_name_optional)) },
-        modifier = Modifier.fillMaxWidth(),
-    )
-    Spacer(Modifier.height(16.dp))
-    Text(stringResource(Res.string.d_your_seed_words), style = MaterialTheme.typography.titleMedium)
-    Text(
-        stringResource(Res.string.d_seed_words_desc),
-        style = MaterialTheme.typography.bodySmall,
-    )
-    Spacer(Modifier.height(8.dp))
+    Column(
+        Modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        OutlinedTextField(
+            value = name,
+            onValueChange = { name = it },
+            label = { Text(stringResource(Res.string.d_name_optional)) },
+            modifier = Modifier.fillMaxWidth(),
+        )
+        Spacer(Modifier.height(16.dp))
+        Text(stringResource(Res.string.d_your_seed_words), style = MaterialTheme.typography.titleMedium)
+        Text(stringResource(Res.string.d_seed_words_desc), style = MaterialTheme.typography.bodySmall)
+        Spacer(Modifier.height(8.dp))
+        SeedWordsCard(
+            seedWords = seedWords,
+            revealed = revealed,
+            onReveal = { revealed = true },
+            onHide = { revealed = false },
+            onCopyClick = { confirmCopy = true },
+        )
+        if (confirmCopy) {
+            CopySeedWordsDialog(
+                onConfirm = {
+                    confirmCopy = false
+                    copyText(seedWords.joinToString(" "))
+                    Toaster.toast(getStringBlocking(Res.string.d_seed_words_copied))
+                },
+                onDismiss = { confirmCopy = false },
+            )
+        }
+        Spacer(Modifier.height(16.dp))
+        AmberButton(
+            text = if (working) stringResource(Res.string.d_creating) else stringResource(Res.string.d_create_account),
+            fillWidth = true,
+            enabled = !working,
+            onClick = { createAccountFromSeedWords(seedWords, name, scope) { working = it } },
+        )
+    }
+}
+
+@Composable
+private fun SeedWordsCard(
+    seedWords: List<String>,
+    revealed: Boolean,
+    onReveal: () -> Unit,
+    onHide: () -> Unit,
+    onCopyClick: () -> Unit,
+) {
     Card(Modifier.fillMaxWidth()) {
         if (!revealed) {
-            // Hidden until asked for, so they don't sit on screen (or in a screen share) by default.
             Box(Modifier.fillMaxWidth().padding(24.dp), contentAlignment = Alignment.Center) {
-                AmberOutlinedButton(text = stringResource(Res.string.show_seed_words), onClick = { revealed = true })
+                AmberOutlinedButton(text = stringResource(Res.string.show_seed_words), onClick = onReveal)
             }
         } else {
             Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -230,56 +285,54 @@ private fun NewKeyPane(scope: kotlinx.coroutines.CoroutineScope) {
                     }
                 }
                 FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                    AmberTextButton(text = stringResource(Res.string.d_hide_seed_words), onClick = { revealed = false })
-                    AmberTextButton(text = stringResource(Res.string.copy_to_clipboard), onClick = { confirmCopy = true })
+                    AmberTextButton(text = stringResource(Res.string.d_hide_seed_words), onClick = onHide)
+                    AmberTextButton(text = stringResource(Res.string.copy_to_clipboard), onClick = onCopyClick)
                 }
             }
         }
     }
-    if (confirmCopy) {
-        AlertDialog(
-            onDismissRequest = { confirmCopy = false },
-            title = { Text(stringResource(Res.string.warning)) },
-            text = { Text(stringResource(Res.string.d_copy_seed_words_warning)) },
-            confirmButton = {
-                AmberTextButton(
-                    text = stringResource(Res.string.copy_to_clipboard),
-                    onClick = {
-                        confirmCopy = false
-                        copyText(seedWords.joinToString(" "))
-                        Toaster.toast(getStringBlocking(Res.string.d_seed_words_copied))
-                    },
-                )
-            },
-            dismissButton = {
-                AmberTextButton(text = stringResource(Res.string.cancel), onClick = { confirmCopy = false })
-            },
-        )
-    }
-    Spacer(Modifier.height(16.dp))
-    AmberButton(
-        text = if (working) stringResource(Res.string.d_creating) else stringResource(Res.string.d_create_account),
-        fillWidth = true,
-        enabled = !working,
-        onClick = {
-            working = true
-            scope.launch {
-                AccountManager.parseKey(seedWords.joinToString(" ")).fold(
-                    onSuccess = { keyPair ->
-                        val account = AccountManager.addAccount(
-                            keyPair = keyPair,
-                            name = name,
-                            seedWords = seedWords.joinToString(" "),
-                            didBackup = false,
-                        )
-                        Session.onAccountAdded(account)
-                    },
-                    onFailure = {
-                        Toaster.toast(it.message ?: getStringBlocking(Res.string.d_failed_create_key))
-                    },
-                )
-                working = false
-            }
+}
+
+@Composable
+private fun CopySeedWordsDialog(
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(Res.string.warning)) },
+        text = { Text(stringResource(Res.string.d_copy_seed_words_warning)) },
+        confirmButton = {
+            AmberTextButton(text = stringResource(Res.string.copy_to_clipboard), onClick = onConfirm)
+        },
+        dismissButton = {
+            AmberTextButton(text = stringResource(Res.string.cancel), onClick = onDismiss)
         },
     )
+}
+
+private fun createAccountFromSeedWords(
+    seedWords: List<String>,
+    name: String,
+    scope: CoroutineScope,
+    onWorkingChange: (Boolean) -> Unit,
+) {
+    onWorkingChange(true)
+    scope.launch {
+        AccountManager.parseKey(seedWords.joinToString(" ")).fold(
+            onSuccess = { keyPair ->
+                val account = AccountManager.addAccount(
+                    keyPair = keyPair,
+                    name = name,
+                    seedWords = seedWords.joinToString(" "),
+                    didBackup = false,
+                )
+                Session.onAccountAdded(account)
+            },
+            onFailure = {
+                Toaster.toast(it.message ?: getStringBlocking(Res.string.d_failed_create_key))
+            },
+        )
+        onWorkingChange(false)
+    }
 }

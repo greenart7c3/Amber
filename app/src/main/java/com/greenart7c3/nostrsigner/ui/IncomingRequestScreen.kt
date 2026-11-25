@@ -59,33 +59,10 @@ fun IncomingRequestScreen(
         CenterCircularProgressIndicator(modifier)
     } else {
         if (intents.isEmpty() && bunkerRequests.isEmpty()) {
-            Column(
-                modifier.fillMaxSize(),
-                Arrangement.Center,
-                Alignment.CenterHorizontally,
-            ) {
-                Text(
-                    stringResource(Res.string.nothing_to_approve_yet),
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 21.sp,
-                )
-                Spacer(Modifier.size(8.dp))
-                Text(
-                    stringResource(Res.string.why_not_explore_your_favorite_nostr_app_a_bit),
-                    textAlign = TextAlign.Center,
-                )
-                if (isExternalRequest) {
-                    Spacer(Modifier.size(16.dp))
-                    val activity = LocalActivity.current
-                    OutlinedButton(
-                        onClick = {
-                            activity?.finishAndRemoveTask()
-                        },
-                    ) {
-                        Text(stringResource(Res.string.invalid_intent_close_app))
-                    }
-                }
-            }
+            NothingToApprove(
+                isExternalRequest = isExternalRequest,
+                modifier = modifier,
+            )
         } else if (intents.size == 1) {
             IntentSingleEventHomeScreen(
                 horizontalPadding = horizontalPadding,
@@ -119,6 +96,40 @@ fun IncomingRequestScreen(
                 onRemoveIntentData = onRemoveIntentData,
                 onLoading = onLoading,
             )
+        }
+    }
+}
+
+@Composable
+private fun NothingToApprove(
+    isExternalRequest: Boolean,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier.fillMaxSize(),
+        Arrangement.Center,
+        Alignment.CenterHorizontally,
+    ) {
+        Text(
+            stringResource(Res.string.nothing_to_approve_yet),
+            fontWeight = FontWeight.Bold,
+            fontSize = 21.sp,
+        )
+        Spacer(Modifier.size(8.dp))
+        Text(
+            stringResource(Res.string.why_not_explore_your_favorite_nostr_app_a_bit),
+            textAlign = TextAlign.Center,
+        )
+        if (isExternalRequest) {
+            Spacer(Modifier.size(16.dp))
+            val activity = LocalActivity.current
+            OutlinedButton(
+                onClick = {
+                    activity?.finishAndRemoveTask()
+                },
+            ) {
+                Text(stringResource(Res.string.invalid_intent_close_app))
+            }
         }
     }
 }

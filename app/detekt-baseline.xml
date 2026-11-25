@@ -31,7 +31,6 @@
     <ID>LongMethod:QrCodeScanner.kt:@Composable fun SimpleQrCodeScanner</ID>
     <ID>LongMethod:RandomPinInput.kt:@Composable fun RandomPinInput</ID>
     <ID>LongMethod:RelaysScreen.kt:@Composable private fun LocalBunkerServerSettings</ID>
-    <ID>LongMethod:RequestGroupUtils.kt:@Composable fun RequestGroupOptions</ID>
     <ID>LongMethod:SecurityScreen.kt:@Composable fun SecurityScreen</ID>
     <ID>LongMethod:SeedWordsPage.kt:@Composable fun SeedWordsPage</ID>
     <ID>LongMethod:SignPolicySettingsScreen.kt:@Composable fun SignPolicySettingsScreen</ID>

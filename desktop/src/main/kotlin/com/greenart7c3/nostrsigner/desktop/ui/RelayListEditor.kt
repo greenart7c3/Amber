@@ -45,9 +45,15 @@ import com.greenart7c3.nostrsigner.commonsui.yes
 import com.greenart7c3.nostrsigner.desktop.core.LocalRelays
 import com.greenart7c3.nostrsigner.desktop.core.RelayChecker
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
+
+private data class FailedRelayCheck(
+    val relay: NormalizedRelayUrl,
+    val messageKey: StringResource,
+)
 
 /**
  * Editable list of a connection's relays, mirroring the Android relay
@@ -68,9 +74,7 @@ fun RelayListEditor(
 ) {
     var newRelay by remember { mutableStateOf("") }
     var checking by remember { mutableStateOf(false) }
-    // Non-null while asking "the check failed — add anyway?"; holds the relay
-    // and the message key (could_not_connect_to_relay / relay_filter_failed).
-    var addAnyway by remember { mutableStateOf<Pair<NormalizedRelayUrl, StringResource>?>(null) }
+    var failedCheck by remember { mutableStateOf<FailedRelayCheck?>(null) }
     val scope = rememberCoroutineScope()
 
     fun addRelay(relay: NormalizedRelayUrl) {
@@ -78,76 +82,40 @@ fun RelayListEditor(
         newRelay = ""
     }
 
-    addAnyway?.let { (relay, messageKey) ->
-        AlertDialog(
-            onDismissRequest = { addAnyway = null },
-            title = { Text(stringResource(Res.string.relay)) },
-            text = { Text(stringResource(messageKey)) },
-            confirmButton = {
-                AmberTextButton(
-                    text = stringResource(Res.string.yes),
-                    onClick = {
-                        addAnyway = null
-                        addRelay(relay)
-                    },
-                )
+    failedCheck?.let { check ->
+        AddRelayAnywayDialog(
+            messageKey = check.messageKey,
+            onConfirm = {
+                failedCheck = null
+                addRelay(check.relay)
             },
-            dismissButton = {
-                AmberTextButton(
-                    text = stringResource(Res.string.no),
-                    onClick = { addAnyway = null },
-                )
-            },
+            onDismiss = { failedCheck = null },
         )
     }
 
     Column(modifier) {
         if (editable) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                OutlinedTextField(
-                    value = newRelay,
-                    onValueChange = { newRelay = it },
-                    label = { Text(stringResource(Res.string.d_relay_hint)) },
-                    singleLine = true,
-                    enabled = !checking,
-                    modifier = Modifier.weight(1f),
-                )
-                AmberOutlinedButton(
-                    text = if (checking) stringResource(Res.string.d_working) else stringResource(Res.string.add),
-                    enabled = !checking,
-                    onClick = {
-                        val normalized = RelayChecker.normalizeUserInput(newRelay)
-                        if (normalized == null) {
-                            Toaster.toast(getStringBlocking(Res.string.d_invalid_relay))
-                            return@AmberOutlinedButton
-                        }
-                        if (relays.contains(normalized.url)) {
-                            newRelay = ""
-                            return@AmberOutlinedButton
-                        }
-                        checking = true
-                        scope.launch {
-                            try {
-                                when (RelayChecker.check(normalized)) {
-                                    RelayChecker.Outcome.OK -> addRelay(normalized)
-                                    RelayChecker.Outcome.CANNOT_CONNECT -> addAnyway = normalized to Res.string.could_not_connect_to_relay
-                                    RelayChecker.Outcome.FILTER_FAILED -> addAnyway = normalized to Res.string.relay_filter_failed
-                                }
-                            } finally {
-                                checking = false
+            RelayInputRow(
+                value = newRelay,
+                onValueChange = { newRelay = it },
+                checking = checking,
+                onAdd = {
+                    submitNewRelay(
+                        input = newRelay,
+                        existingRelays = relays,
+                        scope = scope,
+                        onDuplicate = { newRelay = "" },
+                        onCheckingChange = { checking = it },
+                        onChecked = { relay, failureMessage ->
+                            if (failureMessage == null) {
+                                addRelay(relay)
+                            } else {
+                                failedCheck = FailedRelayCheck(relay, failureMessage)
                             }
-                        }
-                    },
-                )
-            }
-            if (LocalRelays.isInsecure(newRelay)) {
-                Text(
-                    stringResource(Res.string.insecure_relay_warning),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.error,
-                    modifier = Modifier.padding(top = 4.dp),
-                )
-            }
+                        },
+                    )
+                },
+            )
             Spacer(Modifier.height(8.dp))
         }
 
@@ -160,33 +128,139 @@ fun RelayListEditor(
             )
         }
         relays.forEach { relay ->
-            Row(
-                Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 2.dp).height(40.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
+            RelayListRow(
+                relay = relay,
+                editable = editable,
+                onRemove = { onChange(relays.filter { it != relay }) },
+            )
+        }
+    }
+}
+
+@Composable
+private fun AddRelayAnywayDialog(
+    messageKey: StringResource,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(Res.string.relay)) },
+        text = { Text(stringResource(messageKey)) },
+        confirmButton = {
+            AmberTextButton(
+                text = stringResource(Res.string.yes),
+                onClick = onConfirm,
+            )
+        },
+        dismissButton = {
+            AmberTextButton(
+                text = stringResource(Res.string.no),
+                onClick = onDismiss,
+            )
+        },
+    )
+}
+
+@Composable
+private fun RelayInputRow(
+    value: String,
+    onValueChange: (String) -> Unit,
+    checking: Boolean,
+    onAdd: () -> Unit,
+) {
+    Column {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            OutlinedTextField(
+                value = value,
+                onValueChange = onValueChange,
+                label = { Text(stringResource(Res.string.d_relay_hint)) },
+                singleLine = true,
+                enabled = !checking,
+                modifier = Modifier.weight(1f),
+            )
+            AmberOutlinedButton(
+                text = if (checking) stringResource(Res.string.d_working) else stringResource(Res.string.add),
+                enabled = !checking,
+                onClick = onAdd,
+            )
+        }
+        if (LocalRelays.isInsecure(value)) {
+            Text(
+                stringResource(Res.string.insecure_relay_warning),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.error,
+                modifier = Modifier.padding(top = 4.dp),
+            )
+        }
+    }
+}
+
+@Composable
+private fun RelayListRow(
+    relay: String,
+    editable: Boolean,
+    onRemove: () -> Unit,
+) {
+    Column {
+        Row(
+            Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 2.dp).height(40.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                relay,
+                Modifier.weight(1f),
+                style = MaterialTheme.typography.bodyMedium,
+                color = if (editable) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.outline,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            if (LocalRelays.isLocal(relay)) {
                 Text(
-                    relay,
-                    Modifier.weight(1f),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = if (editable) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.outline,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
+                    stringResource(Res.string.d_local_relay),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-                if (LocalRelays.isLocal(relay)) {
-                    Text(
-                        stringResource(Res.string.d_local_relay),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    Spacer(Modifier.width(8.dp))
-                }
-                if (editable) {
-                    IconButton(onClick = { onChange(relays.filter { it != relay }) }) {
-                        Icon(Icons.Default.Delete, stringResource(Res.string.d_remove_relay))
-                    }
+                Spacer(Modifier.width(8.dp))
+            }
+            if (editable) {
+                IconButton(onClick = onRemove) {
+                    Icon(Icons.Default.Delete, stringResource(Res.string.d_remove_relay))
                 }
             }
-            HorizontalDivider()
+        }
+        HorizontalDivider()
+    }
+}
+
+private fun submitNewRelay(
+    input: String,
+    existingRelays: List<String>,
+    scope: CoroutineScope,
+    onDuplicate: () -> Unit,
+    onCheckingChange: (Boolean) -> Unit,
+    onChecked: (NormalizedRelayUrl, StringResource?) -> Unit,
+) {
+    val normalized = RelayChecker.normalizeUserInput(input)
+    if (normalized == null) {
+        Toaster.toast(getStringBlocking(Res.string.d_invalid_relay))
+        return
+    }
+    if (existingRelays.contains(normalized.url)) {
+        onDuplicate()
+        return
+    }
+    onCheckingChange(true)
+    scope.launch {
+        try {
+            val failureMessage = when (RelayChecker.check(normalized)) {
+                RelayChecker.Outcome.OK -> null
+                RelayChecker.Outcome.CANNOT_CONNECT -> Res.string.could_not_connect_to_relay
+                RelayChecker.Outcome.FILTER_FAILED -> Res.string.relay_filter_failed
+            }
+            onChecked(normalized, failureMessage)
+        } finally {
+            onCheckingChange(false)
         }
     }
 }

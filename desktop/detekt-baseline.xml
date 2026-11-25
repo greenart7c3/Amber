@@ -6,7 +6,6 @@
     <ID>CompositionLocalAllowlist:WindowGeometry.kt:/** The width bucket of the current window, provided by [App]. */ val LocalLayoutWidth = staticCompositionLocalOf { LayoutWidth.EXPANDED }</ID>
     <ID>CyclomaticComplexMethod:IncomingRequestsScreen.kt:@Composable private fun RequestCard</ID>
     <ID>CyclomaticComplexMethod:Main.kt:fun main</ID>
-    <ID>CyclomaticComplexMethod:RelayListEditor.kt:@Composable fun RelayListEditor</ID>
     <ID>LongMethod:App.kt:@Composable private fun AccountSwitcher</ID>
     <ID>LongMethod:ApplicationsScreen.kt:@Composable fun ApplicationsScreen</ID>
     <ID>LongMethod:ApplicationsScreen.kt:@Composable private fun NewBunkerDialog</ID>
@@ -15,7 +14,6 @@
     <ID>LongMethod:LoginScreen.kt:@Composable private fun NewKeyPane</ID>
     <ID>LongMethod:Main.kt:fun main</ID>
     <ID>LongMethod:PassphraseLockTest.kt:PassphraseLockTest$@Test fun fullLifecycle</ID>
-    <ID>LongMethod:RelayListEditor.kt:@Composable fun RelayListEditor</ID>
     <ID>LongMethod:RelaysScreen.kt:@Composable fun RelaysScreen</ID>
     <ID>LongMethod:RequestNotificationPopup.kt:@Composable fun RequestNotificationPopup</ID>
     <ID>MultipleEmitters:LoginScreen.kt:@Composable private fun ImportKeyPane</ID>
@@ -891,8 +889,6 @@
     <ID>NoComments:RelayAuthTest.kt:The basic sign policy stores a blank-relay grant, which covers every relay.</ID>
     <ID>NoComments:RelayChecker.kt:Already used somewhere -&gt; it has proven itself; skip the round-trip.</ID>
     <ID>NoComments:RelayChecker.kt:Relays already trusted by the user: defaults plus every connected app's.</ID>
-    <ID>NoComments:RelayListEditor.kt:Non-null while asking "the check failed — add anyway?"; holds the relay</ID>
-    <ID>NoComments:RelayListEditor.kt:and the message key (could_not_connect_to_relay / relay_filter_failed).</ID>
     <ID>NoComments:RelayNetwork.kt:100.64.0.0/10 — carrier-grade NAT range used by Tailscale and similar overlays.</ID>
     <ID>NoComments:RelayNetwork.kt:An IP literal: getByName parses it without a DNS lookup.</ID>
     <ID>NoComments:RelayNetwork.kt:An explicit proxy also means OkHttp never falls back to a direct</ID>

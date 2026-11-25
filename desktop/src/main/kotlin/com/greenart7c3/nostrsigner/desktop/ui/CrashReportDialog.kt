@@ -47,8 +47,6 @@ fun CrashReportDialog(
     report: String,
     account: DesktopAccount,
 ) {
-    val scope = rememberCoroutineScope()
-    val copyText = rememberCopyText()
     var edited by remember(report) { mutableStateOf(report) }
     var sending by remember { mutableStateOf(false) }
 
@@ -56,54 +54,19 @@ fun CrashReportDialog(
         onDismissRequest = {},
         title = { Text(stringResource(Res.string.crashreport_found)) },
         text = {
-            Column {
-                Text(
-                    stringResource(Res.string.crash_report_send_prompt),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                Spacer(Modifier.height(8.dp))
-                OutlinedTextField(
-                    value = edited,
-                    onValueChange = { edited = it },
-                    enabled = !sending,
-                    textStyle = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace),
-                    modifier = Modifier.fillMaxWidth().heightIn(min = 200.dp, max = 360.dp),
-                )
-            }
+            CrashReportEditor(
+                report = edited,
+                enabled = !sending,
+                onReportChange = { edited = it },
+            )
         },
         confirmButton = {
-            Row {
-                AmberTextButton(
-                    text = stringResource(Res.string.copy),
-                    enabled = !sending,
-                    onClick = {
-                        copyText(edited)
-                        Toaster.toast(getStringBlocking(Res.string.d_copied_clipboard))
-                    },
-                )
-                val send = { anonymous: Boolean ->
-                    sending = true
-                    scope.launch {
-                        if (CrashReporter.send(account, edited, anonymous)) {
-                            Toaster.toast(getStringBlocking(Res.string.d_crash_report_sent))
-                        } else {
-                            Toaster.toast(getStringBlocking(Res.string.d_crash_report_send_failed))
-                        }
-                        sending = false
-                    }
-                }
-                AmberTextButton(
-                    text = stringResource(Res.string.crash_report_send_anonymously),
-                    enabled = !sending && edited.isNotBlank(),
-                    onClick = { send(true) },
-                )
-                AmberTextButton(
-                    text = if (sending) stringResource(Res.string.d_working) else stringResource(Res.string.crashreport_found_send),
-                    enabled = !sending && edited.isNotBlank(),
-                    onClick = { send(false) },
-                )
-            }
+            CrashReportActions(
+                report = edited,
+                account = account,
+                sending = sending,
+                onSendingChange = { sending = it },
+            )
         },
         dismissButton = {
             AmberTextButton(
@@ -113,4 +76,69 @@ fun CrashReportDialog(
             )
         },
     )
+}
+
+@Composable
+private fun CrashReportEditor(
+    report: String,
+    enabled: Boolean,
+    onReportChange: (String) -> Unit,
+) {
+    Column {
+        Text(
+            stringResource(Res.string.crash_report_send_prompt),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Spacer(Modifier.height(8.dp))
+        OutlinedTextField(
+            value = report,
+            onValueChange = onReportChange,
+            enabled = enabled,
+            textStyle = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace),
+            modifier = Modifier.fillMaxWidth().heightIn(min = 200.dp, max = 360.dp),
+        )
+    }
+}
+
+@Composable
+private fun CrashReportActions(
+    report: String,
+    account: DesktopAccount,
+    sending: Boolean,
+    onSendingChange: (Boolean) -> Unit,
+) {
+    val scope = rememberCoroutineScope()
+    val copyText = rememberCopyText()
+    val send = { anonymous: Boolean ->
+        onSendingChange(true)
+        scope.launch {
+            if (CrashReporter.send(account, report, anonymous)) {
+                Toaster.toast(getStringBlocking(Res.string.d_crash_report_sent))
+            } else {
+                Toaster.toast(getStringBlocking(Res.string.d_crash_report_send_failed))
+            }
+            onSendingChange(false)
+        }
+    }
+    Row {
+        AmberTextButton(
+            text = stringResource(Res.string.copy),
+            enabled = !sending,
+            onClick = {
+                copyText(report)
+                Toaster.toast(getStringBlocking(Res.string.d_copied_clipboard))
+            },
+        )
+        AmberTextButton(
+            text = stringResource(Res.string.crash_report_send_anonymously),
+            enabled = !sending && report.isNotBlank(),
+            onClick = { send(true) },
+        )
+        AmberTextButton(
+            text = if (sending) stringResource(Res.string.d_working) else stringResource(Res.string.crashreport_found_send),
+            enabled = !sending && report.isNotBlank(),
+            onClick = { send(false) },
+        )
+    }
 }

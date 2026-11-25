@@ -4,7 +4,6 @@
   <CurrentIssues>
     <ID>CompositionLocalAllowlist:WindowGeometry.kt:/** The current window's content size, provided by [App]. */ val LocalWindowContentSize = staticCompositionLocalOf { DEFAULT_WINDOW_SIZE }</ID>
     <ID>CompositionLocalAllowlist:WindowGeometry.kt:/** The width bucket of the current window, provided by [App]. */ val LocalLayoutWidth = staticCompositionLocalOf { LayoutWidth.EXPANDED }</ID>
-    <ID>LongMethod:PassphraseLockTest.kt:PassphraseLockTest$@Test fun fullLifecycle</ID>
     <ID>MultipleEmitters:RequestDetails.kt:@Composable private fun DetailSection</ID>
     <ID>MultipleEmitters:RequestDetails.kt:@Composable private fun PsbtSections</ID>
     <ID>NoComments:AccountAvatar.kt:The body, or null when it is (or says it is) larger than [MAX_BYTES].</ID>

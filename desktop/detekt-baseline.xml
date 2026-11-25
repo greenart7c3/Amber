@@ -4,13 +4,11 @@
   <CurrentIssues>
     <ID>CompositionLocalAllowlist:WindowGeometry.kt:/** The current window's content size, provided by [App]. */ val LocalWindowContentSize = staticCompositionLocalOf { DEFAULT_WINDOW_SIZE }</ID>
     <ID>CompositionLocalAllowlist:WindowGeometry.kt:/** The width bucket of the current window, provided by [App]. */ val LocalLayoutWidth = staticCompositionLocalOf { LayoutWidth.EXPANDED }</ID>
-    <ID>CyclomaticComplexMethod:Main.kt:fun main</ID>
     <ID>LongMethod:App.kt:@Composable private fun AccountSwitcher</ID>
     <ID>LongMethod:ApplicationsScreen.kt:@Composable fun ApplicationsScreen</ID>
     <ID>LongMethod:ApplicationsScreen.kt:@Composable private fun NewBunkerDialog</ID>
     <ID>LongMethod:CrashReportDialog.kt:@Composable fun CrashReportDialog</ID>
     <ID>LongMethod:LoginScreen.kt:@Composable private fun NewKeyPane</ID>
-    <ID>LongMethod:Main.kt:fun main</ID>
     <ID>LongMethod:PassphraseLockTest.kt:PassphraseLockTest$@Test fun fullLifecycle</ID>
     <ID>LongMethod:RelaysScreen.kt:@Composable fun RelaysScreen</ID>
     <ID>LongMethod:RequestNotificationPopup.kt:@Composable fun RequestNotificationPopup</ID>
@@ -453,104 +451,6 @@
     <ID>NoComments:MacNotifications.kt:macOS notifications with buttons, through `UNUserNotificationCenter` (JNA</ID>
     <ID>NoComments:MacNotifications.kt:quits is really gone before the process ends.</ID>
     <ID>NoComments:MacNotifications.kt:v@:@@@? — void, self, _cmd, two objects and a block.</ID>
-    <ID>NoComments:Main.kt:"Minimize to tray" should keep Amber running in the background so it</ID>
-    <ID>NoComments:Main.kt:(Gradle): it arrives via the drop file (Gradle cannot take it as an</ID>
-    <ID>NoComments:Main.kt:(Linux daemons that never draw them, an unsigned macOS app, a</ID>
-    <ID>NoComments:Main.kt:A nostrconnect:// link explicitly targets Amber: raise the window,</ID>
-    <ID>NoComments:Main.kt:A report saved encrypted by a previous run is readable now.</ID>
-    <ID>NoComments:Main.kt:AWT derives the X11 WM_CLASS from whichever thread first loaded the toolkit</ID>
-    <ID>NoComments:Main.kt:AWT's tray only works with an XEmbed host, which excludes Wayland; on</ID>
-    <ID>NoComments:Main.kt:Amber was opened again from the app launcher: show the window.</ID>
-    <ID>NoComments:Main.kt:Amber, which focuses the main window before the click reaches the</ID>
-    <ID>NoComments:Main.kt:Answered or dropped requests lose their notification; the ones</ID>
-    <ID>NoComments:Main.kt:Approve/Reject button on a request notification. The request may have been</ID>
-    <ID>NoComments:Main.kt:Approve/Reject buttons pointing at a request that no longer exists.</ID>
-    <ID>NoComments:Main.kt:Before any string is read: Compose resources follow the default locale.</ID>
-    <ID>NoComments:Main.kt:Close the popup once its request is answered elsewhere or dropped.</ID>
-    <ID>NoComments:Main.kt:Could not forward (no listener): fall through and start anyway.</ID>
-    <ID>NoComments:Main.kt:Drop requests whose client has most likely given up (see PendingBunkerRequest.expiresAt),</ID>
-    <ID>NoComments:Main.kt:First, so a crash anywhere below is saved for the report dialog.</ID>
-    <ID>NoComments:Main.kt:Focusing Amber shows the request card, so the popup is redundant —</ID>
-    <ID>NoComments:Main.kt:GTK (dorkbox has to own GTK loading, otherwise the AppIndicator backend</ID>
-    <ID>NoComments:Main.kt:Holds the native (dorkbox) tray and the window-visibility/quit signals it</ID>
-    <ID>NoComments:Main.kt:Keep the autostart entry fresh (binary path can change between builds/installs).</ID>
-    <ID>NoComments:Main.kt:Key material is evicted (or not set up yet); drop the</ID>
-    <ID>NoComments:Main.kt:Linux daemons that never draw action buttons get Amber's own popup.</ID>
-    <ID>NoComments:Main.kt:Linux incl. Wayland/Hyprland, a toast on Windows),</ID>
-    <ID>NoComments:Main.kt:Linux we use the dorkbox tray (created above) instead, and keep AWT</ID>
-    <ID>NoComments:Main.kt:Local WebSocket relay for bunker connections (opt out under</ID>
-    <ID>NoComments:Main.kt:NIP-5F: CLI tools sign over a local socket (always on).</ID>
-    <ID>NoComments:Main.kt:No native channel with buttons, or it failed (the user</ID>
-    <ID>NoComments:Main.kt:No notification reached the user and there's no tray to reopen</ID>
-    <ID>NoComments:Main.kt:Notify when a new approval request arrives. Do NOT force the window</ID>
-    <ID>NoComments:Main.kt:OS-native notification cannot show it with Approve/Reject buttons</ID>
-    <ID>NoComments:Main.kt:Opened from the app launcher: the running instance may be hidden</ID>
-    <ID>NoComments:Main.kt:Packaged handler: the URI arrives as an argument. Dev handler</ID>
-    <ID>NoComments:Main.kt:Posted and registered on the IO thread: the effect is</ID>
-    <ID>NoComments:Main.kt:Rebuilt on a language change, so the menu labels follow it.</ID>
-    <ID>NoComments:Main.kt:Remember maximized state and the floating size across launches. The</ID>
-    <ID>NoComments:Main.kt:Settings -&gt; Desktop): same-machine clients skip the public relays.</ID>
-    <ID>NoComments:Main.kt:Single instance: a second launch hands its nostrconnect:// URI to the</ID>
-    <ID>NoComments:Main.kt:Strings follow the JVM default locale (Strings.setLanguage): recompose them all.</ID>
-    <ID>NoComments:Main.kt:The OS-native notification channel (freedesktop on</ID>
-    <ID>NoComments:Main.kt:The client-chosen name is the (plain-text) title; the</ID>
-    <ID>NoComments:Main.kt:The dorkbox tray prefers to be created before Compose/AWT initializes</ID>
-    <ID>NoComments:Main.kt:The native request notification currently showing per request, so</ID>
-    <ID>NoComments:Main.kt:The request shown in Amber's own notification popup: only where the</ID>
-    <ID>NoComments:Main.kt:The tray's Quit routes here so we can exit the Compose app cleanly.</ID>
-    <ID>NoComments:Main.kt:Tracks the requests themselves, not the count: answering one from a</ID>
-    <ID>NoComments:Main.kt:UriLaunch.showRequests) or the tray icon, when present, brings it back.</ID>
-    <ID>NoComments:Main.kt:Whether the main window has keyboard focus, i.e. the user is looking</ID>
-    <ID>NoComments:Main.kt:Without a tray icon a hidden Amber looks like it quit: say once per</ID>
-    <ID>NoComments:Main.kt:a second instance would linger invisibly instead of exiting.</ID>
-    <ID>NoComments:Main.kt:account reference so nothing in the UI can reach a</ID>
-    <ID>NoComments:Main.kt:and abandons init that takes too long. A host that shows up later (the</ID>
-    <ID>NoComments:Main.kt:and connections whose "delete after" time has passed.</ID>
-    <ID>NoComments:Main.kt:another notification — also takes its banner down instead of leaving</ID>
-    <ID>NoComments:Main.kt:answering a request — on its card, from the tray window, or from</ID>
-    <ID>NoComments:Main.kt:are flaky) — so the window at least hides instead of quitting; a new</ID>
-    <ID>NoComments:Main.kt:argument (also to an already-running Amber). Install the handler</ID>
-    <ID>NoComments:Main.kt:argument).</ID>
-    <ID>NoComments:Main.kt:at Amber, where the request card already shows: no notification then.</ID>
-    <ID>NoComments:Main.kt:bar starting after Amber at login) still gets the tray, via onLateTray.</ID>
-    <ID>NoComments:Main.kt:before Compose starts so the event that launched the app is not</ID>
-    <ID>NoComments:Main.kt:body, which daemons may render as markup, is Amber's own.</ID>
-    <ID>NoComments:Main.kt:but never let it block the window: createBounded probes for an SNI host</ID>
-    <ID>NoComments:Main.kt:can be approved from here; the rest need their card,</ID>
-    <ID>NoComments:Main.kt:cancelled when the queue changes again, and a handle</ID>
-    <ID>NoComments:Main.kt:decrypted signer, and keep the engine disconnected</ID>
-    <ID>NoComments:Main.kt:dies, so a failed acquire always means a live instance exists.</ID>
-    <ID>NoComments:Main.kt:even when it was minimized to the tray.</ID>
-    <ID>NoComments:Main.kt:fails to start and SystemTray.get() returns null even when</ID>
-    <ID>NoComments:Main.kt:for Windows/macOS where it works well.</ID>
-    <ID>NoComments:Main.kt:from — surface the window so the request isn't missed.</ID>
-    <ID>NoComments:Main.kt:is enabled — even if no tray icon could be published (Wayland trays</ID>
-    <ID>NoComments:Main.kt:it from the notification or the tray. Only surface it as a last</ID>
-    <ID>NoComments:Main.kt:libayatana-appindicator is installed). So start it here, first thing —</ID>
-    <ID>NoComments:Main.kt:lost in that window would leave a stale banner up.</ID>
-    <ID>NoComments:Main.kt:macOS asks to allow Amber's notifications the first time the</ID>
-    <ID>NoComments:Main.kt:macOS delivers nostrconnect:// links as an Apple event, not as an</ID>
-    <ID>NoComments:Main.kt:missed — but only in the primary instance: it initializes AWT, and</ID>
-    <ID>NoComments:Main.kt:native post that failed).</ID>
-    <ID>NoComments:Main.kt:notification and the client's next request arriving can leave the</ID>
-    <ID>NoComments:Main.kt:notification center is used: at launch, not over the first request.</ID>
-    <ID>NoComments:Main.kt:once AWT is up returning from main no longer ends the process, so</ID>
-    <ID>NoComments:Main.kt:open — a minimized Amber should stay minimized and let the user open</ID>
-    <ID>NoComments:Main.kt:popup's button, and closing it then would swallow the Approve.</ID>
-    <ID>NoComments:Main.kt:request, opening Amber again from the app launcher (see</ID>
-    <ID>NoComments:Main.kt:resort, when the user could not be reached any other way.</ID>
-    <ID>NoComments:Main.kt:running app and exits. The OS releases the lock if the first instance</ID>
-    <ID>NoComments:Main.kt:session that it still runs, and how to bring it back.</ID>
-    <ID>NoComments:Main.kt:size is only saved while floating, so un-maximizing restores it.</ID>
-    <ID>NoComments:Main.kt:size unchanged between recompositions.</ID>
-    <ID>NoComments:Main.kt:so only Reject.</ID>
-    <ID>NoComments:Main.kt:still answers requests. On Linux we honor it whenever close-to-tray</ID>
-    <ID>NoComments:Main.kt:still pending keep theirs.</ID>
-    <ID>NoComments:Main.kt:turned Amber's notifications off, …): Amber's own popup.</ID>
-    <ID>NoComments:Main.kt:unless the pointer is on the popup: on macOS clicking it activates</ID>
-    <ID>NoComments:Main.kt:until the passphrase has been set up and unlocked.</ID>
-    <ID>NoComments:Main.kt:with Approve / Reject buttons. Only low-risk requests</ID>
-    <ID>NoComments:Main.kt:with no tray icon to bring it back, so ask it to show its window.</ID>
     <ID>NoComments:MdnsResolver.kt:A and AAAA records for [name] in a DNS response (answers and additional records).</ID>
     <ID>NoComments:MdnsResolver.kt:A standard query (id 0, no flags) asking for both A and AAAA of [name].</ID>
     <ID>NoComments:MdnsResolver.kt:Compression pointer; bounded so a looping message can't hang us.</ID>

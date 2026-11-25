@@ -122,6 +122,7 @@ internal class Session(
         "nip04-decrypt" -> crypto(args, encrypt = false, nip44 = false)
         "ping" -> ping(args)
         "status" -> status(args)
+        "switch-relays" -> switchRelays(args)
         "logout" -> logout(args)
         else -> throw CliError("unknown command \"$command\" (run `amber help`)", Exit.USAGE)
     }
@@ -437,6 +438,86 @@ internal class Session(
         store.remove(profile)
         emit(args, TextNode("logged out"), "logged out profile \"$profile\"")
         return Exit.OK
+    }
+
+    private fun switchRelays(args: Args): Int = if (args.has("all")) {
+        switchAllRelays(args)
+    } else {
+        switchSingleProfileRelays(args)
+    }
+
+    private fun switchSingleProfileRelays(args: Args): Int {
+        val profile = profile(args)
+        val connection = requireConnection(profile)
+        val (changed, relays) = requestRelaySwitch(profile, connection, timeout(args))
+        if (changed) {
+            err.println("switched profile \"$profile\" to ${relays.size} relay(s)")
+        } else {
+            err.println("profile \"$profile\" relays unchanged")
+        }
+        emit(args, switchRelaysNode(profile, changed, relays), relays.joinToString("\n"))
+        return Exit.OK
+    }
+
+    private fun switchAllRelays(args: Args): Int {
+        val paired = store.read().profiles.filterValues { it.isPaired }.toSortedMap()
+        if (paired.isEmpty()) {
+            throw CliError(
+                "no paired profiles found: run `amber login <bunker://...>` or `amber connect`",
+                Exit.NOT_PAIRED,
+            )
+        }
+        val seconds = timeout(args)
+        val results = mapper.createArrayNode()
+        val lines = mutableListOf<String>()
+        var firstFailure: CliError? = null
+        for ((name, connection) in paired) {
+            val outcome = runCatching { requestRelaySwitch(name, connection, seconds) }
+            val failure = outcome.exceptionOrNull() as? CliError
+            if (failure != null) {
+                if (firstFailure == null) firstFailure = failure
+                err.println("profile \"$name\": ${failure.message}")
+                results.add(switchRelaysNode(name, changed = false, connection.relays, failure))
+                lines += "$name: error (${failure.message})"
+            } else {
+                val (changed, relays) = outcome.getOrThrow()
+                val label = if (changed) "switched" else "unchanged"
+                results.add(switchRelaysNode(name, changed, relays))
+                lines += "$name ($label): ${relays.joinToString(", ")}"
+            }
+        }
+        emit(args, results, lines.joinToString("\n"), firstFailure)
+        return firstFailure?.code ?: Exit.OK
+    }
+
+    private fun requestRelaySwitch(
+        profile: String,
+        connection: SavedConnection,
+        seconds: Long,
+    ): Pair<Boolean, List<String>> {
+        val switched = session(connection, seconds).use { it.switchRelays() }
+        val changed = !switched.isNullOrEmpty()
+        val relays = if (changed) switched else connection.relays
+        if (changed) {
+            store.put(profile, connection.copy(relays = relays))
+        }
+        return changed to relays
+    }
+
+    private fun switchRelaysNode(
+        profile: String,
+        changed: Boolean,
+        relays: List<String>,
+        error: CliError? = null,
+    ): JsonNode = mapper.createObjectNode().apply {
+        put("profile", profile)
+        put("changed", changed)
+        val array = putArray("relays")
+        relays.forEach { array.add(it) }
+        if (error != null) {
+            put("error", error.message)
+            put("code", error.code)
+        }
     }
 
     // ---- helpers ----------------------------------------------------------

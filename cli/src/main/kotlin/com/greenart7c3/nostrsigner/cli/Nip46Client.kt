@@ -272,6 +272,10 @@ class Nip46Client(
         call("ping") { requireSigner().ping() }
     }
 
+    fun switchRelays(): List<String>? = call("switch_relays") {
+        SwitchRelaysOutcome(requireSigner().switchRelays()?.map { it.url })
+    }.relays
+
     fun logout() {
         call("logout") { requireSigner().logout() }
     }
@@ -290,6 +294,10 @@ class Nip46Client(
         val signerPubKey: String,
         val userPubKey: String,
         val relays: List<String>,
+    )
+
+    private class SwitchRelaysOutcome(
+        val relays: List<String>?,
     )
 
     private fun requireSigner(): NostrSignerRemote = remote ?: throw CliError("this connection is not paired with a signer", Exit.NOT_PAIRED)

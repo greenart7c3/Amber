@@ -74,6 +74,7 @@ for work scripts and one for an agent.
 | `amber nip44-encrypt\|nip44-decrypt\|nip04-encrypt\|nip04-decrypt <pubkey> [TEXT \| -]` | NIP-44 / NIP-04 with anyone |
 | `amber ping` | check that Amber answers |
 | `amber status` | the saved connection and whether it answers right now |
+| `amber switch-relays [--all]` | NIP-46 `switch_relays`: fetch updated relays from Amber and save them |
 | `amber logout` | NIP-46 logout and delete the saved connection |
 | `amber help [command]` | the full reference, also written for agents |
 

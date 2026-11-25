@@ -46,6 +46,9 @@ class FakeSigner(
     @Volatile
     var mode: Mode = Mode.ANSWER
 
+    @Volatile
+    var switchRelaysTo: List<String>? = null
+
     /** The requests this signer received, in order, for assertions. */
     val received = java.util.Collections.synchronizedList(mutableListOf<String>())
 
@@ -126,26 +129,43 @@ class FakeSigner(
             return
         }
         val params = request.get("params") ?: mapper.createArrayNode()
-        when (method) {
-            "connect" -> {
-                if (params.get(1)?.asText("") == secret) {
-                    publish(event.pubKey, id, "ack", null)
-                } else {
-                    publish(event.pubKey, id, "", "wrong secret")
-                }
-            }
+        handleMethod(event.pubKey, id, method, params)
+    }
 
-            "get_public_key" -> publish(event.pubKey, id, accountPubKey, null)
-            "ping" -> publish(event.pubKey, id, "pong", null)
-            "logout" -> publish(event.pubKey, id, "ack", null)
-            "sign_event" -> publish(event.pubKey, id, sign(params.get(0)?.asText().orEmpty()), null)
-            "nip44_encrypt" -> publish(event.pubKey, id, signer.signerSync.nip44Encrypt(params.get(1).asText(""), params.get(0).asText("")), null)
-            "nip44_decrypt" -> publish(event.pubKey, id, signer.signerSync.nip44Decrypt(params.get(1).asText(""), params.get(0).asText("")), null)
-            "nip04_encrypt" -> publish(event.pubKey, id, signer.signerSync.nip04Encrypt(params.get(1).asText(""), params.get(0).asText("")), null)
-            "nip04_decrypt" -> publish(event.pubKey, id, signer.signerSync.nip04Decrypt(params.get(1).asText(""), params.get(0).asText("")), null)
-            else -> publish(event.pubKey, id, "", "Unrecognized method: $method")
+    private fun handleMethod(
+        clientPubKey: String,
+        id: String,
+        method: String,
+        params: JsonNode,
+    ) {
+        when (method) {
+            "connect" -> handleConnect(clientPubKey, id, params)
+            "get_public_key" -> publish(clientPubKey, id, accountPubKey, null)
+            "ping" -> publish(clientPubKey, id, "pong", null)
+            "switch_relays" -> publish(clientPubKey, id, encodedSwitchRelays(), null)
+            "logout" -> publish(clientPubKey, id, "ack", null)
+            "sign_event" -> publish(clientPubKey, id, sign(params.get(0)?.asText().orEmpty()), null)
+            "nip44_encrypt" -> publish(clientPubKey, id, signer.signerSync.nip44Encrypt(params.get(1).asText(""), params.get(0).asText("")), null)
+            "nip44_decrypt" -> publish(clientPubKey, id, signer.signerSync.nip44Decrypt(params.get(1).asText(""), params.get(0).asText("")), null)
+            "nip04_encrypt" -> publish(clientPubKey, id, signer.signerSync.nip04Encrypt(params.get(1).asText(""), params.get(0).asText("")), null)
+            "nip04_decrypt" -> publish(clientPubKey, id, signer.signerSync.nip04Decrypt(params.get(1).asText(""), params.get(0).asText("")), null)
+            else -> publish(clientPubKey, id, "", "Unrecognized method: $method")
         }
     }
+
+    private fun handleConnect(
+        clientPubKey: String,
+        id: String,
+        params: JsonNode,
+    ) {
+        if (params.get(1)?.asText("") == secret) {
+            publish(clientPubKey, id, "ack", null)
+        } else {
+            publish(clientPubKey, id, "", "wrong secret")
+        }
+    }
+
+    private fun encodedSwitchRelays(): String? = switchRelaysTo?.joinToString(",", "[", "]") { "\"$it\"" }
 
     /** Signs the event template the way Amber's account key does. */
     private fun sign(templateJson: String): String {
@@ -156,12 +176,12 @@ class FakeSigner(
     private fun publish(
         clientPubKey: String,
         id: String,
-        result: String,
+        result: String?,
         error: String?,
     ) {
         val response: JsonNode = mapper.createObjectNode().apply {
             put("id", id)
-            put("result", result)
+            if (result != null) put("result", result) else putNull("result")
             if (error != null) put("error", error) else putNull("error")
         }
         val encrypted = signer.signerSync.nip44Encrypt(response.toString(), clientPubKey)

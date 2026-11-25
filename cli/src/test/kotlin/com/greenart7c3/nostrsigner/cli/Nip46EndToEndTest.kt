@@ -364,4 +364,98 @@ class Nip46EndToEndTest {
         assertEquals(Exit.NOT_PAIRED, node.get("code").asInt())
         assertEquals("waiting-for-approval", node.get("result").get("state").asText())
     }
+
+    @Test
+    fun switchRelaysUpdatesSavedRelaysAndUsesTheNewRelay() {
+        val nextRelay = LocalRelayServer(
+            logger = object : LocalRelayServer.Logger {
+                override fun d(message: String) = Unit
+
+                override fun i(message: String) = Unit
+
+                override fun e(
+                    message: String,
+                    throwable: Throwable?,
+                ) = Unit
+            },
+            approvedSenders = { emptySet() },
+            storesEphemeral = false,
+        )
+        assertEquals(LocalRelayServer.Status.RUNNING, nextRelay.start(0))
+        val nextRelayUrl = nextRelay.relayUrl()!!.url
+        val nextSigner = FakeSigner(
+            nextRelayUrl,
+            connectionKey = signer.connectionKey,
+            accountKey = signer.accountKey,
+            secret = SECRET,
+        )
+        try {
+            assertEquals(Exit.OK, amber("login", bunkerUri(), "--timeout", TIMEOUT).exit)
+            signer.switchRelaysTo = listOf(nextRelayUrl)
+
+            val switched = amber("switch-relays", "--json", "--timeout", TIMEOUT)
+            assertEquals(switched.err + switched.out, Exit.OK, switched.exit)
+            val result = JacksonMapper.mapper.readTree(switched.out.trim()).get("result")
+            assertEquals(true, result.get("changed").asBoolean())
+            assertEquals(listOf(nextRelayUrl), result.get("relays").map { it.asText() })
+
+            relay.stop()
+            val ping = amber("ping", "--timeout", TIMEOUT)
+            assertEquals(ping.err + ping.out, Exit.OK, ping.exit)
+            assertEquals("pong", ping.out.trim())
+        } finally {
+            nextSigner.close()
+            nextRelay.stop()
+        }
+    }
+
+    @Test
+    fun switchRelaysLeavesRelaysUnchangedWhenSignerReturnsNull() {
+        assertEquals(Exit.OK, amber("login", bunkerUri(), "--timeout", TIMEOUT).exit)
+        signer.switchRelaysTo = null
+
+        val unchanged = amber("switch-relays", "--json", "--timeout", TIMEOUT)
+        assertEquals(unchanged.err + unchanged.out, Exit.OK, unchanged.exit)
+        val result = JacksonMapper.mapper.readTree(unchanged.out.trim()).get("result")
+        assertEquals(false, result.get("changed").asBoolean())
+        assertEquals(listOf(relayUrl), result.get("relays").map { it.asText() })
+    }
+
+    @Test
+    fun switchRelaysAllUpdatesEveryPairedProfile() {
+        val nextRelay = LocalRelayServer(
+            logger = object : LocalRelayServer.Logger {
+                override fun d(message: String) = Unit
+
+                override fun i(message: String) = Unit
+
+                override fun e(
+                    message: String,
+                    throwable: Throwable?,
+                ) = Unit
+            },
+            approvedSenders = { emptySet() },
+            storesEphemeral = false,
+        )
+        assertEquals(LocalRelayServer.Status.RUNNING, nextRelay.start(0))
+        val nextRelayUrl = nextRelay.relayUrl()!!.url
+        try {
+            assertEquals(Exit.OK, amber("login", bunkerUri(), "--profile", "alpha", "--timeout", TIMEOUT).exit)
+            assertEquals(Exit.OK, amber("login", bunkerUri(), "--profile", "beta", "--timeout", TIMEOUT).exit)
+            signer.switchRelaysTo = listOf(nextRelayUrl)
+
+            val switched = amber("switch-relays", "--all", "--json", "--timeout", TIMEOUT)
+            assertEquals(switched.err + switched.out, Exit.OK, switched.exit)
+            val items = JacksonMapper.mapper.readTree(switched.out.trim()).get("result")
+            assertEquals(2, items.size())
+            assertEquals("alpha", items[0].get("profile").asText())
+            assertEquals(true, items[0].get("changed").asBoolean())
+            assertEquals(listOf(nextRelayUrl), items[0].get("relays").map { it.asText() })
+            assertEquals("beta", items[1].get("profile").asText())
+            assertEquals(true, items[1].get("changed").asBoolean())
+            assertEquals(listOf(nextRelayUrl), items[1].get("relays").map { it.asText() })
+        } finally {
+            nextRelay.stop()
+        }
+    }
 }

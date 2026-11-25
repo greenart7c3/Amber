@@ -21,7 +21,7 @@ class Args internal constructor(
         private val VALUE_FLAGS = setOf("profile", "timeout", "relay", "name", "perms")
 
         /** Flags that stand alone. */
-        private val BOOLEAN_FLAGS = setOf("json", "qr", "open", "force", "help", "version", "verbose")
+        private val BOOLEAN_FLAGS = setOf("json", "qr", "open", "force", "all", "help", "version", "verbose")
 
         fun parse(arguments: List<String>): Args {
             val positionals = mutableListOf<String>()

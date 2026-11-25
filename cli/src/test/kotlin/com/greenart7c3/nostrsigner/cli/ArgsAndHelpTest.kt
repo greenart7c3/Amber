@@ -24,6 +24,7 @@ class ArgsAndHelpTest {
         "nip04-decrypt",
         "ping",
         "status",
+        "switch-relays",
         "logout",
     )
 

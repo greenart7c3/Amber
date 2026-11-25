@@ -16,6 +16,7 @@ object Help {
         "nip44-encrypt", "nip44-decrypt", "nip04-encrypt", "nip04-decrypt" -> crypto(name)
         "ping" -> ping()
         "status" -> status()
+        "switch-relays" -> switchRelays()
         "logout" -> logout()
         "help" -> overview()
         else -> throw CliError("unknown help topic \"$name\" (run `amber help`)", Exit.USAGE)
@@ -62,6 +63,7 @@ object Help {
           nip04-decrypt <pubkey> [TEXT|-]
           ping                       check that Amber answers
           status                     show the saved connection and whether it answers
+          switch-relays              ask Amber for updated relays and save them
           logout                     tell Amber to forget the connection and delete it here
     """.trimIndent()
 
@@ -89,6 +91,7 @@ object Help {
                              {"ok":false,"error":...,"code":...} object
           --verbose          relay traffic notes on stderr
           --force            replace an already paired profile
+          --all              (switch-relays) run across every paired profile
           --relay URL        (connect) relay to pair over, repeatable; replaces the
                              defaults (Amber's own list, plus a local Amber's relay)
           --name NAME        (connect/login) the app name Amber shows
@@ -319,6 +322,33 @@ object Help {
         EXIT CODES
           0 online    1 invalid answer    3 not paired (or still waiting for approval)
           4 refused by Amber    5 offline: no answer in time    6 no relay reachable
+    """.trimIndent()
+
+    private fun switchRelays(): String = """
+        amber switch-relays [--all]
+
+        Sends NIP-46 switch_relays to Amber and, when Amber returns a new relay
+        list, saves those relays for --profile (default "default") so later
+        commands use them. When Amber returns no change, the saved relays stay
+        as they are.
+
+        Flags
+          --all    run switch_relays for every paired profile
+
+        Output
+          stdout: the active relay URLs (one per line), or one line per profile
+          with --all. With --json, {"ok":true,"result":{"profile":...,"changed":
+          true|false,"relays":[...]}} (or an array of those objects with --all).
+          stderr: summary notes and any per-profile errors.
+
+        EXIT CODES
+          0 done    3 not paired    4 refused by Amber    5 no answer in time
+          6 no relay reachable
+
+        EXAMPLES
+          amber switch-relays
+          amber switch-relays --profile work
+          amber switch-relays --all
     """.trimIndent()
 
     private fun logout(): String = """

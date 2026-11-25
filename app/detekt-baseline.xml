@@ -36,7 +36,6 @@
     <ID>LongMethod:SecurityScreen.kt:@Composable fun SecurityScreen</ID>
     <ID>LongMethod:SeedWordsPage.kt:@Composable fun SeedWordsPage</ID>
     <ID>LongMethod:SignPolicySettingsScreen.kt:@Composable fun SignPolicySettingsScreen</ID>
-    <ID>LongMethod:SimpleSearchBar.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun SimpleSearchBar</ID>
     <ID>LongMethod:TranslationReportScreen.kt:@Composable fun TranslationReportScreen</ID>
     <ID>ModifierNotUsedAtRoot:LoginWithPubKey.kt:modifier = modifier .weight(1f)</ID>
     <ID>MultipleEmitters:RelaysScreen.kt:@Composable private fun LocalBunkerServerSettings</ID>
@@ -1573,8 +1572,6 @@
     <ID>NoComments:SignerProviderQueryTest.kt:the generic one, each classified content type and the NIP-level grant.</ID>
     <ID>NoComments:SigningAs.kt:The account's name over its short npub; without a name, the npub alone in bold.</ID>
     <ID>NoComments:SigningAs.kt:The account's picture, or its placeholder when it has none (always in the offline flavor) or it fail</ID>
-    <ID>NoComments:SimpleSearchBar.kt:Controls expansion state of the search bar</ID>
-    <ID>NoComments:SimpleSearchBar.kt:Display search results in a scrollable column</ID>
     <ID>NoComments:SimpleSearchBar.kt:The caller's modifier is the Box's; the field only fills it.</ID>
     <ID>NoComments:SimpleSearchBar.kt:The listener lives as long as the view tree; it must call the latest callback.</ID>
     <ID>NoComments:Theme.kt:Pure black at every elevation for AMOLED screens. Surface tint is transparent so</ID>

@@ -41,28 +41,12 @@ fun SimpleSearchBar(
     searchResults: List<String>,
     modifier: Modifier = Modifier,
 ) {
-    // Controls expansion state of the search bar
     var expanded by rememberSaveable { mutableStateOf(false) }
     var localSearchResults by remember { mutableStateOf(searchResults) }
 
-    val view = LocalView.current
-    val viewTreeObserver = view.viewTreeObserver
-    // The listener lives as long as the view tree; it must call the latest callback.
-    val currentOnSearch by rememberUpdatedState(onSearch)
-    DisposableEffect(viewTreeObserver) {
-        val listener = ViewTreeObserver.OnGlobalLayoutListener {
-            val isKeyboardOpen = ViewCompat.getRootWindowInsets(view)
-                ?.isVisible(WindowInsetsCompat.Type.ime()) != false
-            if (!isKeyboardOpen) {
-                currentOnSearch(textFieldState.text.toString())
-                expanded = false
-            }
-        }
-
-        viewTreeObserver.addOnGlobalLayoutListener(listener)
-        onDispose {
-            viewTreeObserver.removeOnGlobalLayoutListener(listener)
-        }
+    KeyboardHiddenEffect {
+        onSearch(textFieldState.text.toString())
+        expanded = false
     }
 
     Box(
@@ -94,21 +78,54 @@ fun SimpleSearchBar(
             expanded = expanded,
             onExpandedChange = { expanded = it },
         ) {
-            // Display search results in a scrollable column
-            LazyColumn {
-                items(localSearchResults) { result ->
-                    ListItem(
-                        headlineContent = { Text(result) },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable {
-                                textFieldState.edit { replace(0, length, result) }
-                                onSearch(textFieldState.text.toString())
-                                expanded = false
-                            },
-                    )
-                }
+            SearchSuggestions(
+                suggestions = localSearchResults,
+                onPick = { result ->
+                    textFieldState.edit { replace(0, length, result) }
+                    onSearch(textFieldState.text.toString())
+                    expanded = false
+                },
+            )
+        }
+    }
+}
+
+@Composable
+private fun KeyboardHiddenEffect(onKeyboardHide: () -> Unit) {
+    val view = LocalView.current
+    val viewTreeObserver = view.viewTreeObserver
+    // The listener lives as long as the view tree; it must call the latest callback.
+    val currentOnKeyboardHide by rememberUpdatedState(onKeyboardHide)
+    DisposableEffect(viewTreeObserver) {
+        val listener = ViewTreeObserver.OnGlobalLayoutListener {
+            val isKeyboardOpen = ViewCompat.getRootWindowInsets(view)
+                ?.isVisible(WindowInsetsCompat.Type.ime()) != false
+            if (!isKeyboardOpen) {
+                currentOnKeyboardHide()
             }
+        }
+
+        viewTreeObserver.addOnGlobalLayoutListener(listener)
+        onDispose {
+            viewTreeObserver.removeOnGlobalLayoutListener(listener)
+        }
+    }
+}
+
+@Composable
+private fun SearchSuggestions(
+    suggestions: List<String>,
+    onPick: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    LazyColumn(modifier = modifier) {
+        items(suggestions) { result ->
+            ListItem(
+                headlineContent = { Text(result) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onPick(result) },
+            )
         }
     }
 }

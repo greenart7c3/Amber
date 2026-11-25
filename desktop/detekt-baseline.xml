@@ -5,8 +5,6 @@
     <ID>CompositionLocalAllowlist:WindowGeometry.kt:/** The current window's content size, provided by [App]. */ val LocalWindowContentSize = staticCompositionLocalOf { DEFAULT_WINDOW_SIZE }</ID>
     <ID>CompositionLocalAllowlist:WindowGeometry.kt:/** The width bucket of the current window, provided by [App]. */ val LocalLayoutWidth = staticCompositionLocalOf { LayoutWidth.EXPANDED }</ID>
     <ID>LongMethod:App.kt:@Composable private fun AccountSwitcher</ID>
-    <ID>LongMethod:ApplicationsScreen.kt:@Composable fun ApplicationsScreen</ID>
-    <ID>LongMethod:ApplicationsScreen.kt:@Composable private fun NewBunkerDialog</ID>
     <ID>LongMethod:CrashReportDialog.kt:@Composable fun CrashReportDialog</ID>
     <ID>LongMethod:LoginScreen.kt:@Composable private fun NewKeyPane</ID>
     <ID>LongMethod:PassphraseLockTest.kt:PassphraseLockTest$@Test fun fullLifecycle</ID>
@@ -66,7 +64,6 @@
     <ID>NoComments:AppImageIntegration.kt:The program an entry written by [desktopEntry] launches, unquoted.</ID>
     <ID>NoComments:AppImageIntegrationTest.kt:Shown in the app launcher, unlike the nostrconnect:// handler entry.</ID>
     <ID>NoComments:AppIndicatorShimTest.kt:let the code mkdirs</ID>
-    <ID>NoComments:ApplicationsScreen.kt:The dialog is at least as wide as the QR code: keep it inside small windows.</ID>
     <ID>NoComments:ApprovalRevertTest.kt:A relay nothing listens on: every publish to it fails.</ID>
     <ID>NoComments:ApprovalRevertTest.kt:Approves, remembering it, a sign_event card from a connection on [relay]; returns the connection aft</ID>
     <ID>NoComments:ApprovalRevertTest.kt:What the connection was granted before stays.</ID>

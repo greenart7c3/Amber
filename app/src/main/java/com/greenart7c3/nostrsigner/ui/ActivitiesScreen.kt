@@ -41,6 +41,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.paging.LoadState
+import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.common.SignerType
@@ -65,6 +66,7 @@ import com.greenart7c3.nostrsigner.ui.components.EventSection
 import com.greenart7c3.nostrsigner.ui.components.SimpleSearchBar
 import com.greenart7c3.nostrsigner.ui.components.TagsSection
 import com.greenart7c3.nostrsigner.ui.components.rememberCopyToClipboard
+import com.vitorpamplona.quartz.nip01Core.core.Event
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.compose.resources.stringResource
@@ -92,6 +94,8 @@ fun ActivitiesScreen(
 
     val textFieldState by remember { mutableStateOf(TextFieldState(initialText = searchQuery)) }
     val searchResults = remember(context) { supportedKindNumbers.map { it.localizedBlocking(true) } }
+    val start = paddingValues.calculateLeftPadding(LayoutDirection.Ltr)
+    val end = paddingValues.calculateRightPadding(LayoutDirection.Ltr)
 
     Column(
         modifier = modifier.padding(top = topPadding),
@@ -99,28 +103,19 @@ fun ActivitiesScreen(
         ActivityStatsCard(
             account = account,
             modifier = Modifier
-                .padding(
-                    start = paddingValues.calculateLeftPadding(LayoutDirection.Ltr),
-                    end = paddingValues.calculateRightPadding(LayoutDirection.Ltr),
-                    top = 8.dp,
-                    bottom = 4.dp,
-                )
+                .padding(start = start, end = end, top = 8.dp, bottom = 4.dp)
                 .fillMaxWidth(),
         )
         ActivityFilterRow(
             selected = filter,
             onSelect = { filter = it },
             modifier = Modifier
-                .padding(
-                    start = paddingValues.calculateLeftPadding(LayoutDirection.Ltr),
-                    end = paddingValues.calculateRightPadding(LayoutDirection.Ltr),
-                    bottom = 4.dp,
-                )
+                .padding(start = start, end = end, bottom = 4.dp)
                 .fillMaxWidth(),
         )
         SimpleSearchBar(
             modifier = Modifier
-                .padding(start = paddingValues.calculateLeftPadding(LayoutDirection.Ltr), end = paddingValues.calculateRightPadding(LayoutDirection.Ltr))
+                .padding(start = start, end = end)
                 .fillMaxWidth(),
             textFieldState = textFieldState,
             onSearch = {
@@ -128,54 +123,63 @@ fun ActivitiesScreen(
             },
             searchResults = searchResults,
         )
-        LazyColumn(
+        ActivityList(
+            activities = lazyPagingItems,
+            account = account,
+            contentPadding = PaddingValues(start = start, end = end, bottom = paddingValues.calculateBottomPadding()),
             modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(
-                start = paddingValues.calculateLeftPadding(LayoutDirection.Ltr),
-                end = paddingValues.calculateRightPadding(LayoutDirection.Ltr),
-                bottom = paddingValues.calculateBottomPadding(),
-            ),
-        ) {
-            item {
-                if (lazyPagingItems.itemCount == 0) {
-                    Text(
-                        stringResource(Res.string.no_activities_found),
-                        Modifier
-                            .fillMaxWidth()
-                            .padding(8.dp),
-                        fontWeight = FontWeight.Bold,
-                        textAlign = TextAlign.Center,
-                        fontSize = 18.sp,
-                    )
-                }
-            }
+        )
+    }
+}
 
-            // No item keys: history rows are inserted continuously and Room pages
-            // are independent LIMIT/OFFSET queries, so a row can transiently appear
-            // in two loaded pages. Keying by the database id then crashes with
-            // "Key X was already used". Positional keys are always unique.
-            items(
-                count = lazyPagingItems.itemCount,
-            ) { index ->
-                val activity = lazyPagingItems[index]
-                if (activity != null) {
-                    ActivityRow(activity = activity, account = account)
-                }
+@Composable
+private fun ActivityList(
+    activities: LazyPagingItems<ActivityEntry>,
+    account: Account,
+    contentPadding: PaddingValues,
+    modifier: Modifier = Modifier,
+) {
+    LazyColumn(
+        modifier = modifier,
+        contentPadding = contentPadding,
+    ) {
+        item {
+            if (activities.itemCount == 0) {
+                Text(
+                    stringResource(Res.string.no_activities_found),
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(8.dp),
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center,
+                    fontSize = 18.sp,
+                )
             }
+        }
 
-            lazyPagingItems.apply {
-                when (loadState.refresh) {
-                    is LoadState.Loading -> item {
-                        AmberLog.d("ActivitiesScreen", "Loading...")
-                        Text(stringResource(Res.string.loading), Modifier.padding(16.dp))
-                    }
-                    is LoadState.Error -> item {
-                        AmberLog.d("ActivitiesScreen", "Error loading data")
-                        Text(stringResource(Res.string.error_loading_data), Modifier.padding(16.dp))
-                    }
-                    is LoadState.NotLoading -> { }
-                }
+        // No item keys: history rows are inserted continuously and Room pages
+        // are independent LIMIT/OFFSET queries, so a row can transiently appear
+        // in two loaded pages. Keying by the database id then crashes with
+        // "Key X was already used". Positional keys are always unique.
+        items(
+            count = activities.itemCount,
+        ) { index ->
+            val activity = activities[index]
+            if (activity != null) {
+                ActivityRow(activity = activity, account = account)
             }
+        }
+
+        when (activities.loadState.refresh) {
+            is LoadState.Loading -> item {
+                AmberLog.d("ActivitiesScreen", "Loading...")
+                Text(stringResource(Res.string.loading), Modifier.padding(16.dp))
+            }
+            is LoadState.Error -> item {
+                AmberLog.d("ActivitiesScreen", "Error loading data")
+                Text(stringResource(Res.string.error_loading_data), Modifier.padding(16.dp))
+            }
+            is LoadState.NotLoading -> { }
         }
     }
 }
@@ -217,18 +221,7 @@ suspend fun decryptHistoryContent(activity: ActivityEntry, account: Account): St
 
 @Composable
 fun ActivityRow(activity: ActivityEntry, account: Account, modifier: Modifier = Modifier) {
-    val copyToClipboard = rememberCopyToClipboard()
     val context = LocalContext.current
-    val displayContent by produceState(initialValue = "", activity.id, activity.content) {
-        value = withContext(Dispatchers.IO) { decryptHistoryContent(activity, account) }
-    }
-    val parsedEvent = remember(displayContent) {
-        if (displayContent.isBlank()) {
-            null
-        } else {
-            runCatching { AmberEvent.fromJson(displayContent).toEvent() }.getOrNull()
-        }
-    }
 
     Column(modifier) {
         Row(
@@ -254,43 +247,7 @@ fun ActivityRow(activity: ActivityEntry, account: Account, modifier: Modifier = 
                     color = if (activity.accepted) Color.Unspecified else Color.Gray,
                 )
 
-                if (parsedEvent != null) {
-                    if (parsedEvent.content.isNotBlank()) {
-                        Spacer(Modifier.height(4.dp))
-                        EventSection(
-                            padding = 0.dp,
-                            label = stringResource(Res.string.content),
-                            displayValue = parsedEvent.content,
-                            onCopy = { copyToClipboard(parsedEvent.content) },
-                        )
-                    }
-                    if (parsedEvent.tags.isNotEmpty()) {
-                        Spacer(Modifier.height(4.dp))
-                        TagsSection(
-                            horizontalPadding = 0,
-                            verticalPadding = 0,
-                            label = stringResource(Res.string.tags),
-                            tags = parsedEvent.tags,
-                            onCopy = {
-                                copyToClipboard(
-                                    parsedEvent.tags.joinToString(separator = ", ") {
-                                        "[${it.joinToString(separator = ", ") { tag -> "\"$tag\"" }}]"
-                                    },
-                                )
-                            },
-                        )
-                    }
-                } else if (displayContent.isNotBlank()) {
-                    Spacer(Modifier.height(4.dp))
-                    Text(
-                        modifier = Modifier.padding(top = 2.dp),
-                        text = displayContent,
-                        maxLines = 3,
-                        overflow = TextOverflow.Ellipsis,
-                        fontSize = 14.sp,
-                        color = if (activity.accepted) Color.Unspecified else Color.Gray,
-                    )
-                }
+                ActivityContentPreview(activity, account)
 
                 Text(
                     modifier = Modifier.padding(top = 4.dp, bottom = 16.dp),
@@ -309,6 +266,68 @@ fun ActivityRow(activity: ActivityEntry, account: Account, modifier: Modifier = 
             )
         }
         HorizontalDivider(color = MaterialTheme.colorScheme.primary)
+    }
+}
+
+@Composable
+private fun ActivityContentPreview(activity: ActivityEntry, account: Account) {
+    val displayContent by produceState(initialValue = "", activity.id, activity.content) {
+        value = withContext(Dispatchers.IO) { decryptHistoryContent(activity, account) }
+    }
+    val parsedEvent = remember(displayContent) {
+        if (displayContent.isBlank()) {
+            null
+        } else {
+            runCatching { AmberEvent.fromJson(displayContent).toEvent() }.getOrNull()
+        }
+    }
+
+    if (parsedEvent != null) {
+        ActivityEventPreview(parsedEvent)
+    } else if (displayContent.isNotBlank()) {
+        Column {
+            Spacer(Modifier.height(4.dp))
+            Text(
+                modifier = Modifier.padding(top = 2.dp),
+                text = displayContent,
+                maxLines = 3,
+                overflow = TextOverflow.Ellipsis,
+                fontSize = 14.sp,
+                color = if (activity.accepted) Color.Unspecified else Color.Gray,
+            )
+        }
+    }
+}
+
+@Composable
+private fun ActivityEventPreview(event: Event) {
+    val copyToClipboard = rememberCopyToClipboard()
+    Column {
+        if (event.content.isNotBlank()) {
+            Spacer(Modifier.height(4.dp))
+            EventSection(
+                padding = 0.dp,
+                label = stringResource(Res.string.content),
+                displayValue = event.content,
+                onCopy = { copyToClipboard(event.content) },
+            )
+        }
+        if (event.tags.isNotEmpty()) {
+            Spacer(Modifier.height(4.dp))
+            TagsSection(
+                horizontalPadding = 0,
+                verticalPadding = 0,
+                label = stringResource(Res.string.tags),
+                tags = event.tags,
+                onCopy = {
+                    copyToClipboard(
+                        event.tags.joinToString(separator = ", ") {
+                            "[${it.joinToString(separator = ", ") { tag -> "\"$tag\"" }}]"
+                        },
+                    )
+                },
+            )
+        }
     }
 }
 

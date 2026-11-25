@@ -8,7 +8,6 @@
     <ID>LongMethod:CrashReportDialog.kt:@Composable fun CrashReportDialog</ID>
     <ID>LongMethod:LoginScreen.kt:@Composable private fun NewKeyPane</ID>
     <ID>LongMethod:PassphraseLockTest.kt:PassphraseLockTest$@Test fun fullLifecycle</ID>
-    <ID>LongMethod:RelaysScreen.kt:@Composable fun RelaysScreen</ID>
     <ID>LongMethod:RequestNotificationPopup.kt:@Composable fun RequestNotificationPopup</ID>
     <ID>MultipleEmitters:LoginScreen.kt:@Composable private fun ImportKeyPane</ID>
     <ID>MultipleEmitters:LoginScreen.kt:@Composable private fun NewKeyPane</ID>
@@ -770,20 +769,6 @@
     <ID>NoComments:RelayNetworkTest.kt:dialed directly and reveal the user's IP.</ID>
     <ID>NoComments:RelayStatusWidget.kt:Manual reconnect: give relays marked dead another chance.</ID>
     <ID>NoComments:RelayStatusWidget.kt:Port of the Android `R.drawable.relays` vector.</ID>
-    <ID>NoComments:RelaysScreen.kt:Live connection state of one configured relay: connected, in the client's</ID>
-    <ID>NoComments:RelaysScreen.kt:Mirrors the Android active relays screen: relays existing connections</ID>
-    <ID>NoComments:RelaysScreen.kt:Mirrors the mobile onAddRelay flow: normalize (bare hosts</ID>
-    <ID>NoComments:RelaysScreen.kt:Non-null while asking "the check failed — add anyway?"; holds the relay</ID>
-    <ID>NoComments:RelaysScreen.kt:Port of the Android GHSA-8844-q5vh-9j8f warning: an explicit ws://</ID>
-    <ID>NoComments:RelaysScreen.kt:Rows without a trailing button keep the height of those with one.</ID>
-    <ID>NoComments:RelaysScreen.kt:Union with the shipped defaults (same set as Android):</ID>
-    <ID>NoComments:RelaysScreen.kt:and the message key (could_not_connect_to_relay / relay_filter_failed).</ID>
-    <ID>NoComments:RelaysScreen.kt:existing relays stay, missing defaults come back.</ID>
-    <ID>NoComments:RelaysScreen.kt:get wss://, .onion and private IPs ws://), then live-test</ID>
-    <ID>NoComments:RelaysScreen.kt:relay on the public internet is cleartext; fine for .onion / local.</ID>
-    <ID>NoComments:RelaysScreen.kt:still use that are not in the default set get their own section.</ID>
-    <ID>NoComments:RelaysScreen.kt:the relay as a bunker relay before adding; on failure ask</ID>
-    <ID>NoComments:RelaysScreen.kt:whether to add it anyway.</ID>
     <ID>NoComments:RequestDetails.kt:A seal shows the event it holds, as on Android; else the event itself.</ID>
     <ID>NoComments:RequestDetails.kt:A sign_psbt request: what the transaction pays, mirroring Android's `SignPsbt`.</ID>
     <ID>NoComments:RequestDetails.kt:An auth event says nothing in its content: show the relay instead.</ID>

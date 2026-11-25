@@ -22,7 +22,6 @@ import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -44,9 +43,7 @@ import com.greenart7c3.nostrsigner.commonsui.Res
 import com.greenart7c3.nostrsigner.commonsui.active_relays_connections_description
 import com.greenart7c3.nostrsigner.commonsui.active_relays_default_description
 import com.greenart7c3.nostrsigner.commonsui.add
-import com.greenart7c3.nostrsigner.commonsui.could_not_connect_to_relay
 import com.greenart7c3.nostrsigner.commonsui.d_default_relays
-import com.greenart7c3.nostrsigner.commonsui.d_invalid_relay
 import com.greenart7c3.nostrsigner.commonsui.d_local_relay
 import com.greenart7c3.nostrsigner.commonsui.d_one_relay_required
 import com.greenart7c3.nostrsigner.commonsui.d_reconnect_relays
@@ -61,20 +58,15 @@ import com.greenart7c3.nostrsigner.commonsui.d_working
 import com.greenart7c3.nostrsigner.commonsui.default_relays
 import com.greenart7c3.nostrsigner.commonsui.getStringBlocking
 import com.greenart7c3.nostrsigner.commonsui.insecure_relay_warning
-import com.greenart7c3.nostrsigner.commonsui.no
-import com.greenart7c3.nostrsigner.commonsui.relay
-import com.greenart7c3.nostrsigner.commonsui.relay_filter_failed
 import com.greenart7c3.nostrsigner.commonsui.relays_used_by_connections
-import com.greenart7c3.nostrsigner.commonsui.yes
 import com.greenart7c3.nostrsigner.desktop.core.AmberDesktop
 import com.greenart7c3.nostrsigner.desktop.core.DesktopSettings
 import com.greenart7c3.nostrsigner.desktop.core.LocalRelays
-import com.greenart7c3.nostrsigner.desktop.core.RelayChecker
 import com.greenart7c3.nostrsigner.desktop.core.SettingsStore
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.RelayUrlNormalizer
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -83,57 +75,73 @@ fun RelaysScreen(modifier: Modifier = Modifier) {
     val available by AmberDesktop.client.availableRelaysFlow().collectAsState()
     val connected by AmberDesktop.client.connectedRelaysFlow().collectAsState()
     val connectionRelays by remember { AmberDesktop.connectionRelaysFlow() }.collectAsState(emptySet())
-    // Mirrors the Android active relays screen: relays existing connections
-    // still use that are not in the default set get their own section.
     val connectionOnlyRelays = remember(connectionRelays, settings.defaultRelays) {
         val defaults = settings.normalizedDefaultRelays().toSet()
         connectionRelays.filterNot { it in defaults }.map { it.url }.sorted()
     }
     var newRelay by remember { mutableStateOf("") }
     var checking by remember { mutableStateOf(false) }
-    // Non-null while asking "the check failed — add anyway?"; holds the relay
-    // and the message key (could_not_connect_to_relay / relay_filter_failed).
-    var addAnyway by remember { mutableStateOf<Pair<NormalizedRelayUrl, StringResource>?>(null) }
+    var failedCheck by remember { mutableStateOf<FailedRelayCheck?>(null) }
     val scope = rememberCoroutineScope()
 
-    fun addRelay(relay: NormalizedRelayUrl) {
-        SettingsStore.update {
-            it.copy(defaultRelays = (it.defaultRelays + relay.url).distinct())
-        }
-        newRelay = ""
-        scope.launch {
-            AmberDesktop.engine.checkForNewRelaysAndUpdateAllFilters()
-        }
-    }
-
-    addAnyway?.let { (relay, messageKey) ->
-        AlertDialog(
-            onDismissRequest = { addAnyway = null },
-            title = { Text(stringResource(Res.string.relay)) },
-            text = { Text(stringResource(messageKey)) },
-            confirmButton = {
-                AmberTextButton(
-                    text = stringResource(Res.string.yes),
-                    onClick = {
-                        addAnyway = null
-                        addRelay(relay)
-                    },
-                )
+    failedCheck?.let { check ->
+        AddRelayAnywayDialog(
+            messageKey = check.messageKey,
+            onConfirm = {
+                failedCheck = null
+                addDefaultRelay(check.relay, scope)
+                newRelay = ""
             },
-            dismissButton = {
-                AmberTextButton(
-                    text = stringResource(Res.string.no),
-                    onClick = { addAnyway = null },
-                )
-            },
+            onDismiss = { failedCheck = null },
         )
     }
 
     Column(modifier.fillMaxSize()) {
+        DefaultRelayInputRow(
+            value = newRelay,
+            onValueChange = { newRelay = it },
+            checking = checking,
+            onAdd = {
+                submitDefaultRelay(
+                    input = newRelay,
+                    existingRelays = settings.defaultRelays,
+                    scope = scope,
+                    onClearInput = { newRelay = "" },
+                    onCheckingChange = { checking = it },
+                    onFailure = { failedCheck = it },
+                )
+            },
+        )
+        Spacer(Modifier.height(8.dp))
+        RelaysList(
+            defaultRelays = settings.defaultRelays,
+            connectionOnlyRelays = connectionOnlyRelays,
+            available = available,
+            connected = connected,
+            onRemoveDefault = { removeDefaultRelay(it, settings.defaultRelays, scope) },
+            modifier = Modifier.weight(1f),
+        )
+        Spacer(Modifier.height(8.dp))
+        RelaysActionRow(
+            onRestoreDefaults = { restoreDefaultRelays(scope) },
+            onReconnect = { reconnectRelays(scope) },
+        )
+        Spacer(Modifier.height(12.dp))
+    }
+}
+
+@Composable
+private fun DefaultRelayInputRow(
+    value: String,
+    onValueChange: (String) -> Unit,
+    checking: Boolean,
+    onAdd: () -> Unit,
+) {
+    Column {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             OutlinedTextField(
-                value = newRelay,
-                onValueChange = { newRelay = it },
+                value = value,
+                onValueChange = onValueChange,
                 label = { Text(stringResource(Res.string.d_relay_hint)) },
                 singleLine = true,
                 enabled = !checking,
@@ -142,38 +150,10 @@ fun RelaysScreen(modifier: Modifier = Modifier) {
             AmberOutlinedButton(
                 text = if (checking) stringResource(Res.string.d_working) else stringResource(Res.string.add),
                 enabled = !checking,
-                onClick = {
-                    // Mirrors the mobile onAddRelay flow: normalize (bare hosts
-                    // get wss://, .onion and private IPs ws://), then live-test
-                    // the relay as a bunker relay before adding; on failure ask
-                    // whether to add it anyway.
-                    val normalized = RelayChecker.normalizeUserInput(newRelay)
-                    if (normalized == null) {
-                        Toaster.toast(getStringBlocking(Res.string.d_invalid_relay))
-                        return@AmberOutlinedButton
-                    }
-                    if (settings.defaultRelays.contains(normalized.url)) {
-                        newRelay = ""
-                        return@AmberOutlinedButton
-                    }
-                    checking = true
-                    scope.launch {
-                        try {
-                            when (RelayChecker.check(normalized)) {
-                                RelayChecker.Outcome.OK -> addRelay(normalized)
-                                RelayChecker.Outcome.CANNOT_CONNECT -> addAnyway = normalized to Res.string.could_not_connect_to_relay
-                                RelayChecker.Outcome.FILTER_FAILED -> addAnyway = normalized to Res.string.relay_filter_failed
-                            }
-                        } finally {
-                            checking = false
-                        }
-                    }
-                },
+                onClick = onAdd,
             )
         }
-        // Port of the Android GHSA-8844-q5vh-9j8f warning: an explicit ws://
-        // relay on the public internet is cleartext; fine for .onion / local.
-        if (LocalRelays.isInsecure(newRelay)) {
+        if (LocalRelays.isInsecure(value)) {
             Text(
                 stringResource(Res.string.insecure_relay_warning),
                 style = MaterialTheme.typography.bodySmall,
@@ -181,84 +161,139 @@ fun RelaysScreen(modifier: Modifier = Modifier) {
                 modifier = Modifier.widthIn(max = 520.dp).padding(top = 4.dp),
             )
         }
-        Spacer(Modifier.height(8.dp))
+    }
+}
 
-        val listState = rememberLazyListState()
-        ScrollbarBox(rememberScrollbarAdapter(listState), Modifier.weight(1f)) {
-            LazyColumn(
-                Modifier.fillMaxSize(),
-                state = listState,
-                contentPadding = PaddingValues(bottom = 8.dp),
-            ) {
+@Composable
+private fun RelaysList(
+    defaultRelays: List<String>,
+    connectionOnlyRelays: List<String>,
+    available: Set<NormalizedRelayUrl>,
+    connected: Set<NormalizedRelayUrl>,
+    onRemoveDefault: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val listState = rememberLazyListState()
+    ScrollbarBox(rememberScrollbarAdapter(listState), modifier) {
+        LazyColumn(
+            Modifier.fillMaxSize(),
+            state = listState,
+            contentPadding = PaddingValues(bottom = 8.dp),
+        ) {
+            item {
+                RelaySectionHeader(
+                    stringResource(Res.string.default_relays),
+                    stringResource(Res.string.active_relays_default_description),
+                )
+            }
+            items(defaultRelays.size) { index ->
+                val relay = defaultRelays[index]
+                RelayRow(relay, available, connected) {
+                    IconButton(onClick = { onRemoveDefault(relay) }) {
+                        Icon(Icons.Default.Delete, stringResource(Res.string.d_remove_relay))
+                    }
+                }
+                HorizontalDivider()
+            }
+            if (connectionOnlyRelays.isNotEmpty()) {
                 item {
                     RelaySectionHeader(
-                        stringResource(Res.string.default_relays),
-                        stringResource(Res.string.active_relays_default_description),
+                        stringResource(Res.string.relays_used_by_connections),
+                        stringResource(Res.string.active_relays_connections_description),
+                        Modifier.padding(top = 16.dp),
                     )
                 }
-                items(settings.defaultRelays.size) { index ->
-                    val relay = settings.defaultRelays[index]
-                    RelayRow(relay, available, connected) {
-                        IconButton(
-                            onClick = {
-                                if (settings.defaultRelays.size == 1) {
-                                    Toaster.toast(getStringBlocking(Res.string.d_one_relay_required))
-                                    return@IconButton
-                                }
-                                SettingsStore.update {
-                                    it.copy(defaultRelays = it.defaultRelays.filter { url -> url != relay })
-                                }
-                                scope.launch { AmberDesktop.engine.checkForNewRelaysAndUpdateAllFilters() }
-                            },
-                        ) {
-                            Icon(Icons.Default.Delete, stringResource(Res.string.d_remove_relay))
-                        }
-                    }
+                items(connectionOnlyRelays.size) { index ->
+                    RelayRow(connectionOnlyRelays[index], available, connected)
                     HorizontalDivider()
-                }
-                if (connectionOnlyRelays.isNotEmpty()) {
-                    item {
-                        RelaySectionHeader(
-                            stringResource(Res.string.relays_used_by_connections),
-                            stringResource(Res.string.active_relays_connections_description),
-                            Modifier.padding(top = 16.dp),
-                        )
-                    }
-                    items(connectionOnlyRelays.size) { index ->
-                        RelayRow(connectionOnlyRelays[index], available, connected)
-                        HorizontalDivider()
-                    }
                 }
             }
         }
+    }
+}
 
-        Spacer(Modifier.height(8.dp))
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            AmberOutlinedButton(
-                text = stringResource(Res.string.d_default_relays),
-                onClick = {
-                    // Union with the shipped defaults (same set as Android):
-                    // existing relays stay, missing defaults come back.
-                    SettingsStore.update {
-                        it.copy(defaultRelays = (it.defaultRelays + DesktopSettings().defaultRelays).distinct())
-                    }
-                    scope.launch {
-                        AmberDesktop.engine.checkForNewRelaysAndUpdateAllFilters()
-                        Toaster.toast(getStringBlocking(Res.string.d_saved))
-                    }
-                },
-            )
-            AmberOutlinedButton(
-                text = stringResource(Res.string.d_reconnect_relays),
-                onClick = {
-                    scope.launch {
-                        AmberDesktop.engine.checkForNewRelaysAndUpdateAllFilters(shouldReconnect = true)
-                        Toaster.toast(getStringBlocking(Res.string.d_reconnecting))
-                    }
-                },
-            )
-        }
-        Spacer(Modifier.height(12.dp))
+@Composable
+private fun RelaysActionRow(
+    onRestoreDefaults: () -> Unit,
+    onReconnect: () -> Unit,
+) {
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        AmberOutlinedButton(
+            text = stringResource(Res.string.d_default_relays),
+            onClick = onRestoreDefaults,
+        )
+        AmberOutlinedButton(
+            text = stringResource(Res.string.d_reconnect_relays),
+            onClick = onReconnect,
+        )
+    }
+}
+
+private fun submitDefaultRelay(
+    input: String,
+    existingRelays: List<String>,
+    scope: CoroutineScope,
+    onClearInput: () -> Unit,
+    onCheckingChange: (Boolean) -> Unit,
+    onFailure: (FailedRelayCheck) -> Unit,
+) {
+    submitNewRelay(
+        input = input,
+        existingRelays = existingRelays,
+        scope = scope,
+        onDuplicate = onClearInput,
+        onCheckingChange = onCheckingChange,
+        onChecked = { relay, failureMessage ->
+            if (failureMessage == null) {
+                addDefaultRelay(relay, scope)
+                onClearInput()
+            } else {
+                onFailure(FailedRelayCheck(relay, failureMessage))
+            }
+        },
+    )
+}
+
+private fun addDefaultRelay(relay: NormalizedRelayUrl, scope: CoroutineScope) {
+    SettingsStore.update {
+        it.copy(defaultRelays = (it.defaultRelays + relay.url).distinct())
+    }
+    scope.launch {
+        AmberDesktop.engine.checkForNewRelaysAndUpdateAllFilters()
+    }
+}
+
+private fun removeDefaultRelay(
+    relay: String,
+    currentDefaults: List<String>,
+    scope: CoroutineScope,
+) {
+    if (currentDefaults.size == 1) {
+        Toaster.toast(getStringBlocking(Res.string.d_one_relay_required))
+        return
+    }
+    SettingsStore.update {
+        it.copy(defaultRelays = it.defaultRelays.filter { url -> url != relay })
+    }
+    scope.launch {
+        AmberDesktop.engine.checkForNewRelaysAndUpdateAllFilters()
+    }
+}
+
+private fun restoreDefaultRelays(scope: CoroutineScope) {
+    SettingsStore.update {
+        it.copy(defaultRelays = (it.defaultRelays + DesktopSettings().defaultRelays).distinct())
+    }
+    scope.launch {
+        AmberDesktop.engine.checkForNewRelaysAndUpdateAllFilters()
+        Toaster.toast(getStringBlocking(Res.string.d_saved))
+    }
+}
+
+private fun reconnectRelays(scope: CoroutineScope) {
+    scope.launch {
+        AmberDesktop.engine.checkForNewRelaysAndUpdateAllFilters(shouldReconnect = true)
+        Toaster.toast(getStringBlocking(Res.string.d_reconnecting))
     }
 }
 
@@ -282,7 +317,6 @@ private fun RelayRow(
     trailing: @Composable () -> Unit = {},
 ) {
     Row(
-        // Rows without a trailing button keep the height of those with one.
         Modifier.fillMaxWidth().heightIn(min = 48.dp).padding(horizontal = 4.dp, vertical = 2.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -301,11 +335,6 @@ private fun RelayRow(
     }
 }
 
-/**
- * Live connection state of one configured relay: connected, in the client's
- * pool but not connected (connecting, failing or given up on), or not in use
- * (no subscription references it, so the client never opens a socket).
- */
 @Composable
 private fun RelayConnectionStatus(
     relay: NormalizedRelayUrl?,

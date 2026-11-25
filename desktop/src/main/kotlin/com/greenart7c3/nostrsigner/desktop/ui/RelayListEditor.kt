@@ -50,7 +50,7 @@ import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 
-private data class FailedRelayCheck(
+internal data class FailedRelayCheck(
     val relay: NormalizedRelayUrl,
     val messageKey: StringResource,
 )
@@ -138,7 +138,7 @@ fun RelayListEditor(
 }
 
 @Composable
-private fun AddRelayAnywayDialog(
+internal fun AddRelayAnywayDialog(
     messageKey: StringResource,
     onConfirm: () -> Unit,
     onDismiss: () -> Unit,
@@ -233,7 +233,7 @@ private fun RelayListRow(
     }
 }
 
-private fun submitNewRelay(
+internal fun submitNewRelay(
     input: String,
     existingRelays: List<String>,
     scope: CoroutineScope,

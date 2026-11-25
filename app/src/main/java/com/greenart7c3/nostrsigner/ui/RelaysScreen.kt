@@ -4,6 +4,7 @@ import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -122,7 +123,7 @@ fun RelaysScreen(
 
 /** The local bunker relay switch and its port (mirrors desktop Settings -> Desktop). */
 @Composable
-private fun LocalBunkerServerSettings() {
+private fun ColumnScope.LocalBunkerServerSettings() {
     val localBunkerRelay = LocalBunkerRelay.current
     val settingsStore = LocalSettingsStore.current
     val context = LocalContext.current
@@ -143,12 +144,46 @@ private fun LocalBunkerServerSettings() {
         }
     }
 
+    fun savePort() {
+        val newPort = portText.toIntOrNull()
+        if (newPort == null || newPort !in 1024..65535) {
+            Toast.makeText(context, invalidPort, Toast.LENGTH_SHORT).show()
+            return
+        }
+        scope.launch(Dispatchers.IO) {
+            val applied = localBunkerRelay.changePort(newPort)
+            withContext(Dispatchers.Main) {
+                if (applied) port = newPort else portText = port.toString()
+                Toast.makeText(context, if (applied) saved else portInUse, Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    LocalBunkerServerSwitch(
+        enabled = enabled,
+        port = port,
+        onEnabledChange = ::setEnabled,
+    )
+    LocalBunkerPortField(
+        portText = portText,
+        onPortTextChange = { portText = it.filter(Char::isDigit).take(5) },
+        onSave = ::savePort,
+    )
+}
+
+@Composable
+private fun LocalBunkerServerSwitch(
+    enabled: Boolean,
+    port: Int,
+    onEnabledChange: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
+) {
     Row(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
-            .clickable { setEnabled(!enabled) }
+            .clickable { onEnabledChange(!enabled) }
             .padding(horizontal = 8.dp, vertical = 4.dp),
     ) {
         Column(modifier = Modifier.weight(1f)) {
@@ -161,18 +196,26 @@ private fun LocalBunkerServerSettings() {
         }
         Switch(
             checked = enabled,
-            onCheckedChange = { setEnabled(it) },
+            onCheckedChange = onEnabledChange,
         )
     }
+}
 
+@Composable
+private fun LocalBunkerPortField(
+    portText: String,
+    onPortTextChange: (String) -> Unit,
+    onSave: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     Row(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.padding(horizontal = 8.dp),
+        modifier = modifier.padding(horizontal = 8.dp),
     ) {
         OutlinedTextField(
             value = portText,
-            onValueChange = { portText = it.filter(Char::isDigit).take(5) },
+            onValueChange = onPortTextChange,
             label = { Text(stringResource(Res.string.d_local_bunker_port)) },
             singleLine = true,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done),
@@ -183,20 +226,7 @@ private fun LocalBunkerServerSettings() {
         AmberButton(
             modifier = Modifier.weight(1f),
             text = stringResource(Res.string.save),
-            onClick = {
-                val newPort = portText.toIntOrNull()
-                if (newPort == null || newPort !in 1024..65535) {
-                    Toast.makeText(context, invalidPort, Toast.LENGTH_SHORT).show()
-                    return@AmberButton
-                }
-                scope.launch(Dispatchers.IO) {
-                    val applied = localBunkerRelay.changePort(newPort)
-                    withContext(Dispatchers.Main) {
-                        if (applied) port = newPort else portText = port.toString()
-                        Toast.makeText(context, if (applied) saved else portInUse, Toast.LENGTH_SHORT).show()
-                    }
-                }
-            },
+            onClick = onSave,
         )
     }
 }

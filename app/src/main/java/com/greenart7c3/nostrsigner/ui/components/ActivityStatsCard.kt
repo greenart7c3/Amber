@@ -149,76 +149,87 @@ private fun LegendSwatch(color: Color) {
 
 @Composable
 private fun ActivityStatsBar(stats: WindowStats, maxTotal: Long) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(
-            text = stringResource(stats.labelRes),
-            modifier = Modifier.weight(0.32f),
-        )
-        Box(
-            modifier = Modifier
-                .weight(1f)
-                .height(12.dp)
-                .clip(RoundedCornerShape(6.dp))
-                .background(MaterialTheme.colorScheme.surface),
+    Column {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            if (maxTotal > 0 && stats.total > 0) {
-                val filledFraction = stats.total.toFloat() / maxTotal.toFloat()
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth(filledFraction)
-                        .height(12.dp),
-                ) {
-                    if (stats.accepted > 0) {
-                        Box(
-                            modifier = Modifier
-                                .weight(stats.accepted.toFloat())
-                                .fillMaxWidth()
-                                .background(AcceptedColor),
-                        )
-                    }
-                    if (stats.rejected > 0) {
-                        Box(
-                            modifier = Modifier
-                                .weight(stats.rejected.toFloat())
-                                .fillMaxWidth()
-                                .background(RejectedColor),
-                        )
-                    }
+            Text(
+                text = stringResource(stats.labelRes),
+                modifier = Modifier.weight(0.32f),
+            )
+            StackedBar(stats, maxTotal, Modifier.weight(1f))
+            Text(
+                text = stats.total.toString(),
+                modifier = Modifier.padding(start = 8.dp),
+                textAlign = TextAlign.End,
+                fontWeight = FontWeight.Medium,
+                maxLines = 1,
+            )
+        }
+        if (stats.total > 0) {
+            AcceptedRejectedCounts(stats)
+        }
+    }
+}
+
+@Composable
+private fun StackedBar(stats: WindowStats, maxTotal: Long, modifier: Modifier = Modifier) {
+    Box(
+        modifier = modifier
+            .height(12.dp)
+            .clip(RoundedCornerShape(6.dp))
+            .background(MaterialTheme.colorScheme.surface),
+    ) {
+        if (maxTotal > 0 && stats.total > 0) {
+            val filledFraction = stats.total.toFloat() / maxTotal.toFloat()
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth(filledFraction)
+                    .height(12.dp),
+            ) {
+                if (stats.accepted > 0) {
+                    Box(
+                        modifier = Modifier
+                            .weight(stats.accepted.toFloat())
+                            .fillMaxWidth()
+                            .background(AcceptedColor),
+                    )
+                }
+                if (stats.rejected > 0) {
+                    Box(
+                        modifier = Modifier
+                            .weight(stats.rejected.toFloat())
+                            .fillMaxWidth()
+                            .background(RejectedColor),
+                    )
                 }
             }
         }
-        Text(
-            text = stats.total.toString(),
-            modifier = Modifier.padding(start = 8.dp),
-            textAlign = TextAlign.End,
-            fontWeight = FontWeight.Medium,
-            maxLines = 1,
-        )
     }
-    if (stats.total > 0) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(start = 4.dp, top = 2.dp),
-            horizontalArrangement = Arrangement.End,
-        ) {
-            Text(
-                text = "${stats.accepted}",
-                color = AcceptedColor,
-                fontWeight = FontWeight.Medium,
-            )
-            Text(
-                text = " · ",
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Text(
-                text = "${stats.rejected}",
-                color = RejectedColor,
-                fontWeight = FontWeight.Medium,
-            )
-        }
+}
+
+@Composable
+private fun AcceptedRejectedCounts(stats: WindowStats) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(start = 4.dp, top = 2.dp),
+        horizontalArrangement = Arrangement.End,
+    ) {
+        Text(
+            text = "${stats.accepted}",
+            color = AcceptedColor,
+            fontWeight = FontWeight.Medium,
+        )
+        Text(
+            text = " · ",
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Text(
+            text = "${stats.rejected}",
+            color = RejectedColor,
+            fontWeight = FontWeight.Medium,
+        )
     }
 }

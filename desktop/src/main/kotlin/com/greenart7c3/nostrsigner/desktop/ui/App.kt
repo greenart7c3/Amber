@@ -485,80 +485,108 @@ private fun AccountSwitcher(
     account: DesktopAccount,
     avatarOnly: Boolean = false,
 ) {
-    val accounts by AccountsStore.accounts.collectAsState()
-    val name by account.name.collectAsState()
-    val scope = rememberCoroutineScope()
     var expanded by remember { mutableStateOf(false) }
 
     Box {
         if (avatarOnly) {
-            Box(
-                Modifier
-                    .clip(CircleShape)
-                    .clickable { expanded = true }
-                    .padding(4.dp),
-            ) {
-                AccountAvatar(account.npub)
-            }
+            AccountAvatarChip(account, onClick = { expanded = true })
         } else {
-            Row(
-                Modifier
-                    .fillMaxWidth()
-                    .clickable { expanded = true }
-                    .padding(horizontal = 8.dp, vertical = 6.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                AccountAvatar(account.npub)
-                Spacer(Modifier.width(10.dp))
-                Column(Modifier.weight(1f)) {
-                    Text(
-                        name.ifBlank { stringResource(Res.string.account) },
-                        style = MaterialTheme.typography.bodyMedium,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                    Text(
-                        account.npub.toShortenHex(),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                }
-                Icon(Icons.Default.UnfoldMore, stringResource(Res.string.d_switch_account), Modifier.size(18.dp))
-            }
+            AccountRowChip(account, onClick = { expanded = true })
         }
-
-        DropdownMenu(
+        AccountMenu(
+            account = account,
             expanded = expanded,
-            onDismissRequest = { expanded = false },
-        ) {
-            accounts.forEach { record ->
-                DropdownMenuItem(
-                    leadingIcon = { AccountAvatar(record.npub, size = 24.dp) },
-                    text = {
-                        Text(
-                            (record.name.ifBlank { record.npub.toShortenHex() }) +
-                                if (record.npub == account.npub) "  ✓" else "",
-                        )
-                    },
-                    onClick = {
-                        expanded = false
-                        if (record.npub != account.npub) {
-                            scope.launch { Session.switchTo(record.npub) }
-                        }
-                    },
-                )
-            }
-            HorizontalDivider()
+            onDismiss = { expanded = false },
+        )
+    }
+}
+
+@Composable
+private fun AccountAvatarChip(
+    account: DesktopAccount,
+    onClick: () -> Unit,
+) {
+    Box(
+        Modifier
+            .clip(CircleShape)
+            .clickable(onClick = onClick)
+            .padding(4.dp),
+    ) {
+        AccountAvatar(account.npub)
+    }
+}
+
+@Composable
+private fun AccountRowChip(
+    account: DesktopAccount,
+    onClick: () -> Unit,
+) {
+    val name by account.name.collectAsState()
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(horizontal = 8.dp, vertical = 6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        AccountAvatar(account.npub)
+        Spacer(Modifier.width(10.dp))
+        Column(Modifier.weight(1f)) {
+            Text(
+                name.ifBlank { stringResource(Res.string.account) },
+                style = MaterialTheme.typography.bodyMedium,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Text(
+                account.npub.toShortenHex(),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+        Icon(Icons.Default.UnfoldMore, stringResource(Res.string.d_switch_account), Modifier.size(18.dp))
+    }
+}
+
+@Composable
+private fun AccountMenu(
+    account: DesktopAccount,
+    expanded: Boolean,
+    onDismiss: () -> Unit,
+) {
+    val accounts by AccountsStore.accounts.collectAsState()
+    val scope = rememberCoroutineScope()
+    DropdownMenu(
+        expanded = expanded,
+        onDismissRequest = onDismiss,
+    ) {
+        accounts.forEach { record ->
             DropdownMenuItem(
-                text = { Text(stringResource(Res.string.d_add_an_account)) },
-                leadingIcon = { Icon(Icons.Default.Add, null, Modifier.size(18.dp)) },
+                leadingIcon = { AccountAvatar(record.npub, size = 24.dp) },
+                text = {
+                    Text(
+                        (record.name.ifBlank { record.npub.toShortenHex() }) +
+                            if (record.npub == account.npub) "  ✓" else "",
+                    )
+                },
                 onClick = {
-                    expanded = false
-                    Session.addingAccount.value = true
+                    onDismiss()
+                    if (record.npub != account.npub) {
+                        scope.launch { Session.switchTo(record.npub) }
+                    }
                 },
             )
         }
+        HorizontalDivider()
+        DropdownMenuItem(
+            text = { Text(stringResource(Res.string.d_add_an_account)) },
+            leadingIcon = { Icon(Icons.Default.Add, null, Modifier.size(18.dp)) },
+            onClick = {
+                onDismiss()
+                Session.addingAccount.value = true
+            },
+        )
     }
 }

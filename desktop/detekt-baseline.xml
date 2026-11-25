@@ -4,7 +4,6 @@
   <CurrentIssues>
     <ID>CompositionLocalAllowlist:WindowGeometry.kt:/** The current window's content size, provided by [App]. */ val LocalWindowContentSize = staticCompositionLocalOf { DEFAULT_WINDOW_SIZE }</ID>
     <ID>CompositionLocalAllowlist:WindowGeometry.kt:/** The width bucket of the current window, provided by [App]. */ val LocalLayoutWidth = staticCompositionLocalOf { LayoutWidth.EXPANDED }</ID>
-    <ID>LongMethod:App.kt:@Composable private fun AccountSwitcher</ID>
     <ID>LongMethod:CrashReportDialog.kt:@Composable fun CrashReportDialog</ID>
     <ID>LongMethod:PassphraseLockTest.kt:PassphraseLockTest$@Test fun fullLifecycle</ID>
     <ID>LongMethod:RequestNotificationPopup.kt:@Composable fun RequestNotificationPopup</ID>

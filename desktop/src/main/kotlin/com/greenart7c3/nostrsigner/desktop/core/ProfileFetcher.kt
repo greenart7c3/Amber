@@ -46,6 +46,7 @@ object ProfileFetcher {
      * recently. Safe to call from every composable that shows the account.
      */
     fun refresh(npub: String) {
+        if (!SettingsStore.settings.value.fetchProfiles) return
         val record = AccountsStore.get(npub) ?: return
         if (!shouldFetch(record, TimeUtils.now())) return
         if (!inFlight.add(npub)) return

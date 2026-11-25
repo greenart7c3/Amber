@@ -1034,6 +1034,8 @@ What you can do:
     <string name="d_keep_in_tray_sub">Closing the window minimizes Amber to the system tray so it keeps answering requests.</string>
     <string name="d_notifications">Notifications</string>
     <string name="d_notifications_sub">Show a system notification when a request needs your approval.</string>
+    <string name="d_fetch_profiles">Fetch profiles</string>
+    <string name="d_fetch_profiles_sub">Load each account's name and picture from the profile relays. Turn off to never contact them.</string>
     <string name="d_start_on_boot">Start on boot</string>
     <string name="d_start_on_boot_sub">Start Amber automatically when you log in. It starts locked — enter your passphrase to sign.</string>
     <string name="d_local_bunker_server">Local bunker server</string>

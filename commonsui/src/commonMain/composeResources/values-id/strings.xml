@@ -1024,6 +1024,8 @@ Yang dapat Anda lakukan:
     <string name="d_keep_in_tray_sub">Menutup jendela akan meminimalkan Amber ke tray sistem agar tetap menjawab permintaan.</string>
     <string name="d_notifications">Notifikasi</string>
     <string name="d_notifications_sub">Tampilkan notifikasi sistem saat ada permintaan yang perlu persetujuan Anda.</string>
+    <string name="d_fetch_profiles">Ambil profil</string>
+    <string name="d_fetch_profiles_sub">Muat nama dan gambar setiap akun dari relay profil. Matikan agar tidak pernah menghubungi relay tersebut.</string>
     <string name="d_start_on_boot">Mulai saat boot</string>
     <string name="d_start_on_boot_sub">Mulai Amber secara otomatis saat Anda masuk. Terbuka dalam keadaan terkunci — masukkan frasa sandi Anda untuk menandatangani.</string>
     <string name="d_local_bunker_server">Server bunker lokal</string>

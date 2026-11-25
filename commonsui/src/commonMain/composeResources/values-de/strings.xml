@@ -1025,6 +1025,8 @@ Was du tun kannst:
     <string name="d_keep_in_tray_sub">Beim Schließen des Fensters wird Amber in den Infobereich minimiert und beantwortet weiterhin Anfragen.</string>
     <string name="d_notifications">Benachrichtigungen</string>
     <string name="d_notifications_sub">Eine Systembenachrichtigung anzeigen, wenn eine Anfrage deine Genehmigung erfordert.</string>
+    <string name="d_fetch_profiles">Profile abrufen</string>
+    <string name="d_fetch_profiles_sub">Lädt Name und Bild jedes Kontos von den Profil-Relays. Schalte es aus, um sie nie zu kontaktieren.</string>
     <string name="d_start_on_boot">Beim Start ausführen</string>
     <string name="d_start_on_boot_sub">Amber automatisch starten, wenn du dich anmeldest. Es startet gesperrt — gib deine Passphrase ein, um zu signieren.</string>
     <string name="d_local_bunker_server">Lokaler Bunker-Server</string>

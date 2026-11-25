@@ -1027,6 +1027,8 @@
     <string name="d_keep_in_tray_sub">При закрытии окна Amber сворачивается в системный трей и продолжает отвечать на запросы.</string>
     <string name="d_notifications">Уведомления</string>
     <string name="d_notifications_sub">Показывать системное уведомление, когда запрос требует вашего одобрения.</string>
+    <string name="d_fetch_profiles">Загружать профили</string>
+    <string name="d_fetch_profiles_sub">Загружает имя и изображение каждого аккаунта с релеев профилей. Отключите, чтобы никогда к ним не подключаться.</string>
     <string name="d_start_on_boot">Запускать при включении</string>
     <string name="d_start_on_boot_sub">Запускает Amber автоматически при входе в систему. Он запускается заблокированным — введите пароль-фразу для подписи.</string>
     <string name="d_local_bunker_server">Локальный bunker-сервер</string>

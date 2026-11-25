@@ -283,6 +283,8 @@ data class DesktopSettings(
         "wss://directory.yabu.me/",
         "wss://indexer.coracle.social/",
     ),
+    /** Fetch each account's name and picture from the profile relays; mirrors the Android `ProfileFetchInterval.NEVER` when off. */
+    val fetchProfiles: Boolean = true,
     /** Sort the applications list alphabetically instead of by last use. */
     val sortApplicationsAlphabetically: Boolean = false,
     /**

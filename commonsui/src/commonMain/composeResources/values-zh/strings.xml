@@ -1041,6 +1041,8 @@
     <string name="d_keep_in_tray_sub">关闭窗口会将 Amber 最小化到系统托盘，以便它继续响应请求。</string>
     <string name="d_notifications">通知</string>
     <string name="d_notifications_sub">当请求需要你批准时显示系统通知。</string>
+    <string name="d_fetch_profiles">获取个人资料</string>
+    <string name="d_fetch_profiles_sub">从个人资料中继加载每个账户的名称和头像。关闭后将不再连接这些中继。</string>
     <string name="d_start_on_boot">开机自动启动</string>
     <string name="d_start_on_boot_sub">登录时自动启动 Amber。启动时处于锁定状态——输入密码短语后才能签名。</string>
     <string name="d_local_bunker_server">本地 bunker 服务器</string>

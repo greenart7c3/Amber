@@ -68,6 +68,8 @@ import com.greenart7c3.nostrsigner.commonsui.d_encrypt_and_copy
 import com.greenart7c3.nostrsigner.commonsui.d_encrypted_backup
 import com.greenart7c3.nostrsigner.commonsui.d_encrypted_key_copied
 import com.greenart7c3.nostrsigner.commonsui.d_failed_update_passphrase
+import com.greenart7c3.nostrsigner.commonsui.d_fetch_profiles
+import com.greenart7c3.nostrsigner.commonsui.d_fetch_profiles_sub
 import com.greenart7c3.nostrsigner.commonsui.d_keep_in_tray
 import com.greenart7c3.nostrsigner.commonsui.d_keep_in_tray_sub
 import com.greenart7c3.nostrsigner.commonsui.d_local_bunker_port
@@ -302,6 +304,12 @@ private fun ColumnScope.DesktopSection(settings: DesktopSettings) {
         description = stringResource(Res.string.d_notifications_sub),
         checked = settings.showNotifications,
         onCheckedChange = { value -> SettingsStore.update { it.copy(showNotifications = value) } },
+    )
+    SettingSwitch(
+        title = stringResource(Res.string.d_fetch_profiles),
+        description = stringResource(Res.string.d_fetch_profiles_sub),
+        checked = settings.fetchProfiles,
+        onCheckedChange = { value -> SettingsStore.update { it.copy(fetchProfiles = value) } },
     )
     if (AutoStart.isSupported()) {
         SettingSwitch(

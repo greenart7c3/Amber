@@ -1026,6 +1026,8 @@ Ce que vous pouvez faire :
     <string name="d_keep_in_tray_sub">Fermer la fenêtre réduit Amber dans la barre d'état système pour qu'il continue de répondre aux requêtes.</string>
     <string name="d_notifications">Notifications</string>
     <string name="d_notifications_sub">Afficher une notification système lorsqu'une requête nécessite votre approbation.</string>
+    <string name="d_fetch_profiles">Récupérer les profils</string>
+    <string name="d_fetch_profiles_sub">Charge le nom et l'image de chaque compte depuis les relais de profils. Désactivez pour ne jamais les contacter.</string>
     <string name="d_start_on_boot">Lancer au démarrage</string>
     <string name="d_start_on_boot_sub">Lance Amber automatiquement à l'ouverture de session. Il démarre verrouillé — saisissez votre phrase secrète pour signer.</string>
     <string name="d_local_bunker_server">Serveur bunker local</string>

@@ -178,24 +178,39 @@ fun RequestGroupOptions(
             RequestGroupScopeKind.RELAY_AUTH -> ScopeToggles(
                 label = Res.string.relay_auth_scope,
                 selected = relayAuthScope,
+                options = RelayAuthScope.entries,
                 onSelect = onRelayAuthScopeChange,
-                specific = RelayAuthScope.SPECIFIC to Res.string.for_this_relay_only,
-                all = RelayAuthScope.ALL to Res.string.for_all_relays,
+                optionLabel = {
+                    when (it) {
+                        RelayAuthScope.SPECIFIC -> Res.string.for_this_relay_only
+                        RelayAuthScope.ALL -> Res.string.for_all_relays
+                    }
+                },
             )
             RequestGroupScopeKind.ENCRYPTION_METHOD -> ScopeToggles(
                 label = Res.string.encryption_scope,
                 selected = decryptTypeScope,
+                options = DecryptTypeScope.entries,
                 onSelect = onDecryptTypeScopeChange,
-                specific = DecryptTypeScope.SPECIFIC to Res.string.for_this_method_only,
-                all = DecryptTypeScope.ALL to Res.string.for_all_methods,
+                optionLabel = {
+                    when (it) {
+                        DecryptTypeScope.SPECIFIC -> Res.string.for_this_method_only
+                        DecryptTypeScope.ALL -> Res.string.for_all_methods
+                    }
+                },
             )
             RequestGroupScopeKind.NIP44_V3_KIND -> if (groupKey.kind != null) {
                 ScopeToggles(
                     label = Res.string.encryption_scope,
                     selected = decryptTypeScope,
+                    options = DecryptTypeScope.entries,
                     onSelect = onDecryptTypeScopeChange,
-                    specific = DecryptTypeScope.SPECIFIC to Res.string.for_this_kind_only,
-                    all = DecryptTypeScope.ALL to Res.string.for_all_kinds,
+                    optionLabel = {
+                        when (it) {
+                            DecryptTypeScope.SPECIFIC -> Res.string.for_this_kind_only
+                            DecryptTypeScope.ALL -> Res.string.for_all_kinds
+                        }
+                    },
                 )
             }
             RequestGroupScopeKind.NONE -> {}
@@ -213,9 +228,9 @@ fun RequestGroupOptions(
 private fun <T> ScopeToggles(
     label: StringResource,
     selected: T,
+    options: List<T>,
     onSelect: (T) -> Unit,
-    specific: Pair<T, StringResource>,
-    all: Pair<T, StringResource>,
+    optionLabel: (T) -> StringResource,
     modifier: Modifier = Modifier,
 ) {
     LabeledBorderBox(
@@ -226,9 +241,9 @@ private fun <T> ScopeToggles(
     ) {
         AmberToggles(
             selected = selected,
-            options = listOf(specific.first, all.first),
+            options = options,
             onSelect = onSelect,
-            label = { stringResource(if (it == specific.first) specific.second else all.second) },
+            label = { stringResource(optionLabel(it)) },
         )
     }
 }

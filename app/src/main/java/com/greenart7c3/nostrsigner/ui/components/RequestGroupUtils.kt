@@ -50,6 +50,7 @@ import com.greenart7c3.nostrsigner.models.PrivateZapEncryptedDataKind
 import com.greenart7c3.nostrsigner.models.TagArrayEncryptedDataKind
 import com.greenart7c3.nostrsigner.models.encryptDecryptSignerTypes
 import com.greenart7c3.nostrsigner.ui.RememberType
+import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 
 enum class RequestPayloadShape {
@@ -174,73 +175,43 @@ fun RequestGroupOptions(
             .padding(horizontal = 4.dp, vertical = 4.dp),
     ) {
         when (groupKey.scopeKind()) {
-            RequestGroupScopeKind.RELAY_AUTH -> {
-                LabeledBorderBox(
-                    label = stringResource(Res.string.relay_auth_scope),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 8.dp),
-                ) {
-                    AmberToggles(
-                        selected = relayAuthScope,
-                        options = listOf(RelayAuthScope.SPECIFIC, RelayAuthScope.ALL),
-                        onSelect = onRelayAuthScopeChange,
-                        label = {
-                            stringResource(
-                                when (it) {
-                                    RelayAuthScope.SPECIFIC -> Res.string.for_this_relay_only
-                                    RelayAuthScope.ALL -> Res.string.for_all_relays
-                                },
-                            )
-                        },
-                    )
-                }
-            }
-            RequestGroupScopeKind.ENCRYPTION_METHOD -> {
-                LabeledBorderBox(
-                    label = stringResource(Res.string.encryption_scope),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 8.dp),
-                ) {
-                    AmberToggles(
-                        selected = decryptTypeScope,
-                        options = listOf(DecryptTypeScope.SPECIFIC, DecryptTypeScope.ALL),
-                        onSelect = onDecryptTypeScopeChange,
-                        label = {
-                            stringResource(
-                                when (it) {
-                                    DecryptTypeScope.SPECIFIC -> Res.string.for_this_method_only
-                                    DecryptTypeScope.ALL -> Res.string.for_all_methods
-                                },
-                            )
-                        },
-                    )
-                }
-            }
-            RequestGroupScopeKind.NIP44_V3_KIND -> {
-                if (groupKey.kind != null) {
-                    LabeledBorderBox(
-                        label = stringResource(Res.string.encryption_scope),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(bottom = 8.dp),
-                    ) {
-                        AmberToggles(
-                            selected = decryptTypeScope,
-                            options = listOf(DecryptTypeScope.SPECIFIC, DecryptTypeScope.ALL),
-                            onSelect = onDecryptTypeScopeChange,
-                            label = {
-                                stringResource(
-                                    when (it) {
-                                        DecryptTypeScope.SPECIFIC -> Res.string.for_this_kind_only
-                                        DecryptTypeScope.ALL -> Res.string.for_all_kinds
-                                    },
-                                )
-                            },
-                        )
+            RequestGroupScopeKind.RELAY_AUTH -> ScopeToggles(
+                label = Res.string.relay_auth_scope,
+                selected = relayAuthScope,
+                options = RelayAuthScope.entries,
+                onSelect = onRelayAuthScopeChange,
+                optionLabel = {
+                    when (it) {
+                        RelayAuthScope.SPECIFIC -> Res.string.for_this_relay_only
+                        RelayAuthScope.ALL -> Res.string.for_all_relays
                     }
-                }
+                },
+            )
+            RequestGroupScopeKind.ENCRYPTION_METHOD -> ScopeToggles(
+                label = Res.string.encryption_scope,
+                selected = decryptTypeScope,
+                options = DecryptTypeScope.entries,
+                onSelect = onDecryptTypeScopeChange,
+                optionLabel = {
+                    when (it) {
+                        DecryptTypeScope.SPECIFIC -> Res.string.for_this_method_only
+                        DecryptTypeScope.ALL -> Res.string.for_all_methods
+                    }
+                },
+            )
+            RequestGroupScopeKind.NIP44_V3_KIND -> if (groupKey.kind != null) {
+                ScopeToggles(
+                    label = Res.string.encryption_scope,
+                    selected = decryptTypeScope,
+                    options = DecryptTypeScope.entries,
+                    onSelect = onDecryptTypeScopeChange,
+                    optionLabel = {
+                        when (it) {
+                            DecryptTypeScope.SPECIFIC -> Res.string.for_this_kind_only
+                            DecryptTypeScope.ALL -> Res.string.for_all_kinds
+                        }
+                    },
+                )
             }
             RequestGroupScopeKind.NONE -> {}
         }
@@ -249,6 +220,30 @@ fun RequestGroupOptions(
             selected = rememberType,
             onSelect = onRememberTypeChange,
             label = stringResource(Res.string.remember_my_choice_for),
+        )
+    }
+}
+
+@Composable
+private fun <T> ScopeToggles(
+    label: StringResource,
+    selected: T,
+    options: List<T>,
+    onSelect: (T) -> Unit,
+    optionLabel: (T) -> StringResource,
+    modifier: Modifier = Modifier,
+) {
+    LabeledBorderBox(
+        label = stringResource(label),
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(bottom = 8.dp),
+    ) {
+        AmberToggles(
+            selected = selected,
+            options = options,
+            onSelect = onSelect,
+            label = { stringResource(optionLabel(it)) },
         )
     }
 }

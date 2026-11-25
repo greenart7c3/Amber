@@ -19,7 +19,6 @@
     <ID>LongMethod:EditRelaysDialog.kt:@Composable fun DefaultRelaysScreen</ID>
     <ID>LongMethod:EditRelaysDialog.kt:@SuppressLint("StateFlowValueCalledInComposition") @Composable private fun ActiveRelayRow</ID>
     <ID>LongMethod:FeedbackScreen.kt:@Composable fun FeedbackScreen</ID>
-    <ID>LongMethod:IncomingRequestScreen.kt:@Composable fun IncomingRequestScreen</ID>
     <ID>LongMethod:LoginWithPubKey.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun LoginWithPubKey</ID>
     <ID>LongMethod:LogsScreen.kt:@Composable fun LogsScreen</ID>
     <ID>LongMethod:NewApplicationScreen.kt:@Composable fun NewApplicationScreen</ID>

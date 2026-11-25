@@ -72,6 +72,7 @@ import com.greenart7c3.nostrsigner.commonsui.getStringBlocking
 import com.greenart7c3.nostrsigner.commonsui.no_relays_added
 import com.greenart7c3.nostrsigner.commonsui.relays
 import com.greenart7c3.nostrsigner.desktop.core.AmberDesktop
+import com.greenart7c3.nostrsigner.desktop.core.AppWithPermissions
 import com.greenart7c3.nostrsigner.desktop.core.DateTimes
 import com.greenart7c3.nostrsigner.desktop.core.DeleteAfterType
 import com.greenart7c3.nostrsigner.desktop.core.DesktopAccount
@@ -80,6 +81,7 @@ import com.greenart7c3.nostrsigner.desktop.core.addNostrConnect
 import com.greenart7c3.nostrsigner.desktop.core.createBunkerConnection
 import com.greenart7c3.nostrsigner.desktop.core.isLocalSocket
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.RelayUrlNormalizer
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 
@@ -96,23 +98,14 @@ fun ApplicationsScreen(
     var showBunkerDialog by remember { mutableStateOf(false) }
 
     Column(modifier.fillMaxSize()) {
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            AmberButton(text = stringResource(Res.string.d_connect_nostrconnect), onClick = { showNostrConnectDialog = true })
-            AmberOutlinedButton(text = stringResource(Res.string.d_create_bunker), onClick = { showBunkerDialog = true })
-            IconButton(
-                onClick = {
-                    SettingsStore.update { it.copy(sortApplicationsAlphabetically = !it.sortApplicationsAlphabetically) }
-                },
-            ) {
-                Icon(
-                    imageVector = Icons.Default.SortByAlpha,
-                    contentDescription = stringResource(
-                        if (settings.sortApplicationsAlphabetically) Res.string.d_sort_most_recent else Res.string.d_sort_alphabetically,
-                    ),
-                    tint = if (settings.sortApplicationsAlphabetically) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onBackground,
-                )
-            }
-        }
+        ApplicationsToolbar(
+            sortAlphabetically = settings.sortApplicationsAlphabetically,
+            onConnectClick = { showNostrConnectDialog = true },
+            onCreateBunkerClick = { showBunkerDialog = true },
+            onToggleSort = {
+                SettingsStore.update { it.copy(sortApplicationsAlphabetically = !it.sortApplicationsAlphabetically) }
+            },
+        )
         Spacer(Modifier.height(16.dp))
 
         if (apps.isEmpty()) {
@@ -124,65 +117,11 @@ fun ApplicationsScreen(
                 )
             }
         } else {
-            val listState = rememberLazyListState()
-            ScrollbarBox(rememberScrollbarAdapter(listState), Modifier.fillMaxSize()) {
-                LazyColumn(Modifier.fillMaxSize(), state = listState, contentPadding = PaddingValues(bottom = 12.dp)) {
-                    val sorted =
-                        if (settings.sortApplicationsAlphabetically) {
-                            apps.sortedBy { it.app.displayName().lowercase() }
-                        } else {
-                            apps.sortedByDescending { it.app.lastUsed }
-                        }
-                    items(sorted.size, key = { sorted[it].app.key }) { index ->
-                        val app = sorted[index]
-                        Row(
-                            Modifier
-                                .fillMaxWidth()
-                                .clickable { onOpenApplication(app.app.key) }
-                                .padding(horizontal = 4.dp, vertical = 10.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Column(Modifier.weight(1f)) {
-                                Text(
-                                    app.app.displayName(),
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    fontWeight = FontWeight.Medium,
-                                )
-                                Text(
-                                    buildString {
-                                        append(if (app.app.isConnected) stringResource(Res.string.d_app_connected) else stringResource(Res.string.d_app_waiting))
-                                        if (app.app.isLocalSocket) append(" · ${stringResource(Res.string.d_local_socket)}")
-                                        append(" · ${stringResource(Res.string.d_permissions_count, app.permissions.size)}")
-                                        if (app.app.lastUsed > 0) {
-                                            append(" · ${stringResource(Res.string.d_last_used, DateTimes.format(app.app.lastUsed * 1000))}")
-                                        }
-                                    },
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                )
-                                if (app.app.relays.isNotEmpty()) {
-                                    Text(
-                                        stringResource(
-                                            Res.string.d_relays_label,
-                                            app.app.relays.joinToString { it.removePrefix("wss://").removeSuffix("/") },
-                                        ),
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        maxLines = 2,
-                                        overflow = TextOverflow.Ellipsis,
-                                    )
-                                }
-                            }
-                            Icon(
-                                Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                        }
-                        HorizontalDivider()
-                    }
-                }
-            }
+            ApplicationsList(
+                apps = apps,
+                sortAlphabetically = settings.sortApplicationsAlphabetically,
+                onOpenApplication = onOpenApplication,
+            )
         }
     }
 
@@ -191,6 +130,107 @@ fun ApplicationsScreen(
     }
     if (showBunkerDialog) {
         NewBunkerDialog(account) { showBunkerDialog = false }
+    }
+}
+
+@Composable
+private fun ApplicationsToolbar(
+    sortAlphabetically: Boolean,
+    onConnectClick: () -> Unit,
+    onCreateBunkerClick: () -> Unit,
+    onToggleSort: () -> Unit,
+) {
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        AmberButton(text = stringResource(Res.string.d_connect_nostrconnect), onClick = onConnectClick)
+        AmberOutlinedButton(text = stringResource(Res.string.d_create_bunker), onClick = onCreateBunkerClick)
+        IconButton(onClick = onToggleSort) {
+            Icon(
+                imageVector = Icons.Default.SortByAlpha,
+                contentDescription = stringResource(
+                    if (sortAlphabetically) Res.string.d_sort_most_recent else Res.string.d_sort_alphabetically,
+                ),
+                tint = if (sortAlphabetically) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onBackground,
+            )
+        }
+    }
+}
+
+@Composable
+private fun ApplicationsList(
+    apps: List<AppWithPermissions>,
+    sortAlphabetically: Boolean,
+    onOpenApplication: (String) -> Unit,
+) {
+    val listState = rememberLazyListState()
+    val sorted = if (sortAlphabetically) {
+        apps.sortedBy { it.app.displayName().lowercase() }
+    } else {
+        apps.sortedByDescending { it.app.lastUsed }
+    }
+    ScrollbarBox(rememberScrollbarAdapter(listState), Modifier.fillMaxSize()) {
+        LazyColumn(Modifier.fillMaxSize(), state = listState, contentPadding = PaddingValues(bottom = 12.dp)) {
+            items(sorted.size, key = { sorted[it].app.key }) { index ->
+                val app = sorted[index]
+                ApplicationListRow(
+                    app = app,
+                    onClick = { onOpenApplication(app.app.key) },
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ApplicationListRow(
+    app: AppWithPermissions,
+    onClick: () -> Unit,
+) {
+    Column {
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .clickable(onClick = onClick)
+                .padding(horizontal = 4.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(Modifier.weight(1f)) {
+                Text(
+                    app.app.displayName(),
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.Medium,
+                )
+                Text(
+                    buildString {
+                        append(if (app.app.isConnected) stringResource(Res.string.d_app_connected) else stringResource(Res.string.d_app_waiting))
+                        if (app.app.isLocalSocket) append(" · ${stringResource(Res.string.d_local_socket)}")
+                        append(" · ${stringResource(Res.string.d_permissions_count, app.permissions.size)}")
+                        if (app.app.lastUsed > 0) {
+                            append(" · ${stringResource(Res.string.d_last_used, DateTimes.format(app.app.lastUsed * 1000))}")
+                        }
+                    },
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                if (app.app.relays.isNotEmpty()) {
+                    Text(
+                        stringResource(
+                            Res.string.d_relays_label,
+                            app.app.relays.joinToString { it.removePrefix("wss://").removeSuffix("/") },
+                        ),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+            }
+            Icon(
+                Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        HorizontalDivider()
     }
 }
 
@@ -253,7 +293,6 @@ private fun NewBunkerDialog(
     var name by remember { mutableStateOf("") }
     var relays by remember { mutableStateOf(AmberDesktop.newBunkerRelays().map { it.url }) }
     var deleteAfter by remember { mutableStateOf(DeleteAfterType.NEVER) }
-    val nameFocus = remember { FocusRequester() }
     var bunkerUri by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
     val copyText = rememberCopyText()
@@ -268,74 +307,37 @@ private fun NewBunkerDialog(
             ) {
                 val uri = bunkerUri
                 if (uri == null) {
-                    Text(stringResource(Res.string.d_bunker_desc))
-                    Spacer(Modifier.height(8.dp))
-                    OutlinedTextField(
-                        value = name,
-                        onValueChange = { name = it },
-                        label = { Text(stringResource(Res.string.d_application_name)) },
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth().focusRequester(nameFocus),
-                    )
-                    LaunchedEffect(Unit) { nameFocus.requestFocus() }
-                    Spacer(Modifier.height(12.dp))
-                    Box(Modifier.fillMaxWidth()) {
-                        DeleteAfterSelector(deleteAfter, onSelect = { deleteAfter = it })
-                    }
-                    Spacer(Modifier.height(12.dp))
-                    Text(
-                        stringResource(Res.string.relays),
-                        style = MaterialTheme.typography.titleSmall,
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                    Spacer(Modifier.height(4.dp))
-                    RelayListEditor(
+                    NewBunkerFormFields(
+                        name = name,
+                        deleteAfter = deleteAfter,
                         relays = relays,
-                        onChange = { relays = it },
-                        modifier = Modifier.fillMaxWidth(),
+                        onNameChange = { name = it },
+                        onDeleteAfterChange = { deleteAfter = it },
+                        onRelaysChange = { relays = it },
                     )
                 } else {
-                    // The dialog is at least as wide as the QR code: keep it inside small windows.
-                    QrCodeImage(uri, size = (LocalWindowContentSize.current.width - 120.dp).coerceIn(160.dp, 300.dp))
-                    Spacer(Modifier.height(8.dp))
-                    Text(uri, style = MaterialTheme.typography.bodySmall)
+                    BunkerCreatedContent(uri)
                 }
             }
         },
         confirmButton = {
-            val uri = bunkerUri
-            if (uri == null) {
-                AmberTextButton(
-                    text = stringResource(Res.string.d_create),
-                    onClick = {
-                        if (name.isBlank()) {
-                            Toaster.toast(getStringBlocking(Res.string.d_name_required))
-                            return@AmberTextButton
-                        }
-                        val normalized = relays.mapNotNull { RelayUrlNormalizer.normalizeOrNull(it) }
-                        if (normalized.isEmpty()) {
-                            Toaster.toast(getStringBlocking(Res.string.no_relays_added))
-                            return@AmberTextButton
-                        }
-                        scope.launch {
-                            bunkerUri = AmberDesktop.engine.createBunkerConnection(
-                                account,
-                                name,
-                                normalized,
-                                deleteAfter.deleteAt(),
-                            )
-                        }
-                    },
-                )
-            } else {
-                AmberTextButton(
-                    text = stringResource(Res.string.copy).trim(),
-                    onClick = {
-                        copyText(uri)
-                        Toaster.toast(getStringBlocking(Res.string.d_copied_clipboard))
-                    },
-                )
-            }
+            NewBunkerConfirmButton(
+                uri = bunkerUri,
+                onCreate = {
+                    createBunker(
+                        account = account,
+                        name = name,
+                        relays = relays,
+                        deleteAfter = deleteAfter,
+                        scope = scope,
+                        onCreated = { bunkerUri = it },
+                    )
+                },
+                onCopy = { uri ->
+                    copyText(uri)
+                    Toaster.toast(getStringBlocking(Res.string.d_copied_clipboard))
+                },
+            )
         },
         dismissButton = {
             AmberTextButton(
@@ -344,4 +346,95 @@ private fun NewBunkerDialog(
             )
         },
     )
+}
+
+@Composable
+private fun NewBunkerConfirmButton(
+    uri: String?,
+    onCreate: () -> Unit,
+    onCopy: (String) -> Unit,
+) {
+    AmberTextButton(
+        text = if (uri == null) stringResource(Res.string.d_create) else stringResource(Res.string.copy).trim(),
+        onClick = { if (uri == null) onCreate() else onCopy(uri) },
+    )
+}
+
+@Composable
+private fun NewBunkerFormFields(
+    name: String,
+    deleteAfter: DeleteAfterType,
+    relays: List<String>,
+    onNameChange: (String) -> Unit,
+    onDeleteAfterChange: (DeleteAfterType) -> Unit,
+    onRelaysChange: (List<String>) -> Unit,
+) {
+    val nameFocus = remember { FocusRequester() }
+    Column {
+        Text(stringResource(Res.string.d_bunker_desc))
+        Spacer(Modifier.height(8.dp))
+        OutlinedTextField(
+            value = name,
+            onValueChange = onNameChange,
+            label = { Text(stringResource(Res.string.d_application_name)) },
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth().focusRequester(nameFocus),
+        )
+        LaunchedEffect(Unit) { nameFocus.requestFocus() }
+        Spacer(Modifier.height(12.dp))
+        Box(Modifier.fillMaxWidth()) {
+            DeleteAfterSelector(deleteAfter, onSelect = onDeleteAfterChange)
+        }
+        Spacer(Modifier.height(12.dp))
+        Text(
+            stringResource(Res.string.relays),
+            style = MaterialTheme.typography.titleSmall,
+            modifier = Modifier.fillMaxWidth(),
+        )
+        Spacer(Modifier.height(4.dp))
+        RelayListEditor(
+            relays = relays,
+            onChange = onRelaysChange,
+            modifier = Modifier.fillMaxWidth(),
+        )
+    }
+}
+
+@Composable
+private fun BunkerCreatedContent(uri: String) {
+    val qrSize = (LocalWindowContentSize.current.width - 120.dp).coerceIn(160.dp, 300.dp)
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        QrCodeImage(uri, size = qrSize)
+        Spacer(Modifier.height(8.dp))
+        Text(uri, style = MaterialTheme.typography.bodySmall)
+    }
+}
+
+private fun createBunker(
+    account: DesktopAccount,
+    name: String,
+    relays: List<String>,
+    deleteAfter: DeleteAfterType,
+    scope: CoroutineScope,
+    onCreated: (String) -> Unit,
+) {
+    if (name.isBlank()) {
+        Toaster.toast(getStringBlocking(Res.string.d_name_required))
+        return
+    }
+    val normalized = relays.mapNotNull { RelayUrlNormalizer.normalizeOrNull(it) }
+    if (normalized.isEmpty()) {
+        Toaster.toast(getStringBlocking(Res.string.no_relays_added))
+        return
+    }
+    scope.launch {
+        onCreated(
+            AmberDesktop.engine.createBunkerConnection(
+                account,
+                name,
+                normalized,
+                deleteAfter.deleteAt(),
+            ),
+        )
+    }
 }

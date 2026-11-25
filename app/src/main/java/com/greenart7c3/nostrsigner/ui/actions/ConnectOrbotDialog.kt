@@ -23,6 +23,7 @@
 package com.greenart7c3.nostrsigner.ui.actions
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -70,30 +71,9 @@ fun ConnectOrbotScreen(
     Column(
         modifier = modifier,
     ) {
-        Text(
-            text = stringResource(Res.string.builtin_tor_title),
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold,
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Text(
-            text = stringResource(Res.string.builtin_tor_description),
-            style = MaterialTheme.typography.bodyMedium,
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        AmberButton(
-            modifier = Modifier.fillMaxWidth(),
-            onClick = onBuiltinTor,
-            text = if (settingsStore.settings.torMode == TorMode.BUILTIN) {
-                stringResource(Res.string.builtin_tor_active)
-            } else {
-                stringResource(Res.string.use_builtin_tor)
-            },
-            enabled = settingsStore.settings.torMode != TorMode.BUILTIN,
+        BuiltinTorSection(
+            isBuiltinTorActive = settingsStore.settings.torMode == TorMode.BUILTIN,
+            onBuiltinTor = onBuiltinTor,
         )
 
         Spacer(modifier = Modifier.height(24.dp))
@@ -102,51 +82,101 @@ fun ConnectOrbotScreen(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        Text(
-            text = stringResource(Res.string.orbot_title),
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold,
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        val content1 = stringResource(Res.string.connect_through_your_orbot_setup_markdown)
-        MarkdownText(content1)
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        OutlinedTextField(
-            modifier = Modifier.fillMaxWidth(),
-            value = portNumber.value,
-            onValueChange = { portNumber.value = it },
-            keyboardOptions = KeyboardOptions.Default.copy(
-                capitalization = KeyboardCapitalization.None,
-                keyboardType = KeyboardType.Number,
-            ),
-            label = { Text(text = stringResource(Res.string.orbot_socks_port)) },
-            placeholder = {
-                Text(
-                    text = "9050",
-                )
-            },
-        )
-
         val toastMessage = stringResource(Res.string.invalid_port_number)
 
-        AmberButton(
-            modifier = Modifier.padding(top = 20.dp),
-            onClick = {
+        OrbotSection(
+            portNumber = portNumber.value,
+            onPortNumberChange = { portNumber.value = it },
+            onUseOrbot = useOrbot@{
                 try {
                     Integer.parseInt(portNumber.value)
                 } catch (e: Exception) {
                     if (e is CancellationException) throw e
                     onError(toastMessage)
-                    return@AmberButton
+                    return@useOrbot
                 }
 
                 onPost(portNumber.value.toInt())
             },
-            text = stringResource(Res.string.use_orbot),
         )
     }
+}
+
+@Composable
+private fun SectionTitle(
+    text: String,
+    modifier: Modifier = Modifier,
+) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.titleMedium,
+        fontWeight = FontWeight.Bold,
+        modifier = modifier,
+    )
+}
+
+@Composable
+private fun ColumnScope.BuiltinTorSection(
+    isBuiltinTorActive: Boolean,
+    onBuiltinTor: () -> Unit,
+) {
+    SectionTitle(stringResource(Res.string.builtin_tor_title))
+
+    Spacer(modifier = Modifier.height(8.dp))
+
+    Text(
+        text = stringResource(Res.string.builtin_tor_description),
+        style = MaterialTheme.typography.bodyMedium,
+    )
+
+    Spacer(modifier = Modifier.height(8.dp))
+
+    AmberButton(
+        modifier = Modifier.fillMaxWidth(),
+        onClick = onBuiltinTor,
+        text = if (isBuiltinTorActive) {
+            stringResource(Res.string.builtin_tor_active)
+        } else {
+            stringResource(Res.string.use_builtin_tor)
+        },
+        enabled = !isBuiltinTorActive,
+    )
+}
+
+@Composable
+private fun ColumnScope.OrbotSection(
+    portNumber: String,
+    onPortNumberChange: (String) -> Unit,
+    onUseOrbot: () -> Unit,
+) {
+    SectionTitle(stringResource(Res.string.orbot_title))
+
+    Spacer(modifier = Modifier.height(8.dp))
+
+    val content1 = stringResource(Res.string.connect_through_your_orbot_setup_markdown)
+    MarkdownText(content1)
+
+    Spacer(modifier = Modifier.height(16.dp))
+
+    OutlinedTextField(
+        modifier = Modifier.fillMaxWidth(),
+        value = portNumber,
+        onValueChange = onPortNumberChange,
+        keyboardOptions = KeyboardOptions.Default.copy(
+            capitalization = KeyboardCapitalization.None,
+            keyboardType = KeyboardType.Number,
+        ),
+        label = { Text(text = stringResource(Res.string.orbot_socks_port)) },
+        placeholder = {
+            Text(
+                text = "9050",
+            )
+        },
+    )
+
+    AmberButton(
+        modifier = Modifier.padding(top = 20.dp),
+        onClick = onUseOrbot,
+        text = stringResource(Res.string.use_orbot),
+    )
 }

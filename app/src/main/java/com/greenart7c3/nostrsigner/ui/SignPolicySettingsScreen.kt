@@ -61,51 +61,11 @@ fun SignPolicySettingsScreen(
             .fillMaxSize(),
     ) {
         radioOptions.forEachIndexed { index, option ->
-            Row(
-                Modifier
-                    .fillMaxWidth()
-                    // Clipped before the click, so the ripple keeps the rounded shape.
-                    .clip(RoundedCornerShape(8.dp))
-                    .border(
-                        width = 1.dp,
-                        color = if (selectedOption == index) {
-                            MaterialTheme.colorScheme.primary
-                        } else {
-                            Color.Transparent
-                        },
-                        shape = RoundedCornerShape(8.dp),
-                    )
-                    .selectable(
-                        selected = selectedOption == index,
-                        onClick = {
-                            selectedOption = index
-                        },
-                    )
-                    .padding(16.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                RadioButton(
-                    selected = selectedOption == index,
-                    onClick = {
-                        selectedOption = index
-                    },
-                )
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(4.dp),
-                ) {
-                    Text(
-                        text = option.title,
-                        modifier = Modifier.padding(start = 16.dp),
-                        style = MaterialTheme.typography.titleLarge,
-                    )
-                    option.explainer?.let {
-                        Text(
-                            text = it,
-                            modifier = Modifier.padding(start = 16.dp),
-                        )
-                    }
-                }
-            }
+            SignPolicyOptionRow(
+                option = option,
+                selected = selectedOption == index,
+                onSelect = { selectedOption = index },
+            )
         }
 
         AmberButton(
@@ -119,5 +79,55 @@ fun SignPolicySettingsScreen(
             },
             text = stringResource(Res.string.save),
         )
+    }
+}
+
+@Composable
+private fun SignPolicyOptionRow(
+    option: TitleExplainer,
+    selected: Boolean,
+    onSelect: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier
+            .fillMaxWidth()
+            // Clipped before the click, so the ripple keeps the rounded shape.
+            .clip(RoundedCornerShape(8.dp))
+            .border(
+                width = 1.dp,
+                color = if (selected) {
+                    MaterialTheme.colorScheme.primary
+                } else {
+                    Color.Transparent
+                },
+                shape = RoundedCornerShape(8.dp),
+            )
+            .selectable(
+                selected = selected,
+                onClick = onSelect,
+            )
+            .padding(16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        RadioButton(
+            selected = selected,
+            onClick = onSelect,
+        )
+        Column(
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            Text(
+                text = option.title,
+                modifier = Modifier.padding(start = 16.dp),
+                style = MaterialTheme.typography.titleLarge,
+            )
+            option.explainer?.let {
+                Text(
+                    text = it,
+                    modifier = Modifier.padding(start = 16.dp),
+                )
+            }
+        }
     }
 }

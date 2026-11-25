@@ -14,8 +14,11 @@ Compose:
   CompositionLocalAllowlist:
     active: true
     # The app dependencies (ui/AppDependencies.kt), provided once per activity
-    # root instead of passed through every screen.
-    allowedCompositionLocals: LocalSettingsStore,LocalAccountRepository,LocalRelayClient,LocalAppScope,LocalBunkerResponder,LocalBunkerRelay,LocalNotificationSubscription,LocalProfileSubscription,LocalPendingReports,LocalZapstoreUpdater
+    # root instead of passed through every screen; the theme's dark and AMOLED
+    # flags (ui/theme/Theme.kt), set by NostrSignerTheme like MaterialTheme's own
+    # locals; and the desktop window's size and width bucket (WindowGeometry.kt),
+    # provided once by App.
+    allowedCompositionLocals: LocalSettingsStore,LocalAccountRepository,LocalRelayClient,LocalAppScope,LocalBunkerResponder,LocalBunkerRelay,LocalNotificationSubscription,LocalProfileSubscription,LocalPendingReports,LocalZapstoreUpdater,LocalDarkTheme,LocalAmoledTheme,LocalWindowContentSize,LocalLayoutWidth
   CompositionLocalNaming:
     active: true
   ContentEmitterReturningValues:

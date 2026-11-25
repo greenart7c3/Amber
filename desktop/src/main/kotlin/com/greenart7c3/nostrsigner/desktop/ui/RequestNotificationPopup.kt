@@ -117,30 +117,9 @@ fun RequestNotificationPopup(
 ) {
     val cardSize = if (isMac) DpSize(344.dp, 86.dp) else DpSize(364.dp, 160.dp)
     val windowSize = DpSize(cardSize.width + SHADOW_PADDING * 2, cardSize.height + SHADOW_PADDING * 2)
-    val position = remember {
-        val bounds = GraphicsEnvironment.getLocalGraphicsEnvironment().maximumWindowBounds
-        val margin = SCREEN_MARGIN.value.toInt()
-        val x = bounds.x + bounds.width - windowSize.width.value.toInt() - margin
-        // Where the OS shows its own notifications: above the taskbar on
-        // Windows, under the menu bar / top panel on macOS and Linux.
-        // Wayland compositors give XWayland no work area, so leave room for
-        // a top bar when the reported one starts at the screen edge.
-        val top = if (isLinux && bounds.y == 0) LINUX_TOP_BAR.value.toInt() else bounds.y
-        val y = if (isWindows) bounds.y + bounds.height - windowSize.height.value.toInt() - margin else top + margin
-        WindowPosition(x.dp, y.dp)
-    }
-    val state = rememberWindowState(size = windowSize, position = position)
+    val position = remember { popupPosition(windowSize) }
 
-    val hovered by hover.collectIsHoveredAsState()
-    // The timeout outlives recompositions; it must call the latest callback.
-    val currentOnDismiss by rememberUpdatedState(onDismiss)
-    // Restarts while hovered, so the popup never vanishes under the pointer.
-    LaunchedEffect(request.request.id, hovered) {
-        if (!hovered) {
-            delay(POPUP_TIMEOUT_MS.milliseconds)
-            currentOnDismiss()
-        }
-    }
+    DismissAfterTimeout(request.request.id, hover, onDismiss)
 
     val actions = buildList {
         if (request.allowsQuickApprove()) add(PopupAction(stringResource(Res.string.d_approve), onApprove))
@@ -165,40 +144,11 @@ fun RequestNotificationPopup(
     }
 
     if (isLinux) {
-        // Compose windows are JFrames, which X11 always hands to the window
-        // manager: Hyprland & co. would border, and focus, them as a normal
-        // window. A plain AWT POPUP JWindow is override-redirect instead —
-        // never managed, framed or focused, like a real notification surface —
-        // so host the card in one through a ComposePanel. AWT still types it
-        // NORMAL, which Hyprland focuses on map, hence markAsX11Popup.
-        // Without a
-        // transparent margin there is no drop shadow; the shape rounds it.
-        val currentContent by rememberUpdatedState(content)
-        DisposableEffect(Unit) {
-            val pad = SHADOW_PADDING.value.toInt()
-            val width = cardSize.width.value.toInt()
-            val height = cardSize.height.value.toInt()
-            val popup = JWindow().apply {
-                type = java.awt.Window.Type.POPUP
-                focusableWindowState = false
-                // Never take keyboard focus from what the user is typing in.
-                isAutoRequestFocus = false
-                isAlwaysOnTop = true
-                setBounds(position.x.value.toInt() + pad, position.y.value.toInt() + pad, width, height)
-                shape = RoundRectangle2D.Double(0.0, 0.0, width.toDouble(), height.toDouble(), 16.0, 16.0)
-                contentPane.add(ComposePanel().apply { setContent { currentContent(0.dp) } })
-                // Create the native window first so it can be typed before it maps.
-                addNotify()
-                markAsX11Popup(this)
-                keepBounds(this)
-                isVisible = true
-            }
-            onDispose { popup.dispose() }
-        }
+        LinuxPopupWindow(position, cardSize, content)
     } else {
         Window(
             onCloseRequest = onDismiss,
-            state = state,
+            state = rememberWindowState(size = windowSize, position = position),
             title = BuildVariant.appName,
             icon = amberIconPainter(),
             undecorated = true,
@@ -207,6 +157,75 @@ fun RequestNotificationPopup(
             focusable = false,
             alwaysOnTop = true,
         ) { content(SHADOW_PADDING) }
+    }
+}
+
+private fun popupPosition(windowSize: DpSize): WindowPosition {
+    val bounds = GraphicsEnvironment.getLocalGraphicsEnvironment().maximumWindowBounds
+    val margin = SCREEN_MARGIN.value.toInt()
+    val x = bounds.x + bounds.width - windowSize.width.value.toInt() - margin
+    // Where the OS shows its own notifications: above the taskbar on
+    // Windows, under the menu bar / top panel on macOS and Linux.
+    // Wayland compositors give XWayland no work area, so leave room for
+    // a top bar when the reported one starts at the screen edge.
+    val top = if (isLinux && bounds.y == 0) LINUX_TOP_BAR.value.toInt() else bounds.y
+    val y = if (isWindows) bounds.y + bounds.height - windowSize.height.value.toInt() - margin else top + margin
+    return WindowPosition(x.dp, y.dp)
+}
+
+@Composable
+private fun DismissAfterTimeout(
+    requestId: String,
+    hover: MutableInteractionSource,
+    onDismiss: () -> Unit,
+) {
+    val hovered by hover.collectIsHoveredAsState()
+    // The timeout outlives recompositions; it must call the latest callback.
+    val currentOnDismiss by rememberUpdatedState(onDismiss)
+    // Restarts while hovered, so the popup never vanishes under the pointer.
+    LaunchedEffect(requestId, hovered) {
+        if (!hovered) {
+            delay(POPUP_TIMEOUT_MS.milliseconds)
+            currentOnDismiss()
+        }
+    }
+}
+
+@Composable
+private fun LinuxPopupWindow(
+    position: WindowPosition,
+    cardSize: DpSize,
+    content: @Composable (Dp) -> Unit,
+) {
+    // Compose windows are JFrames, which X11 always hands to the window
+    // manager: Hyprland & co. would border, and focus, them as a normal
+    // window. A plain AWT POPUP JWindow is override-redirect instead —
+    // never managed, framed or focused, like a real notification surface —
+    // so host the card in one through a ComposePanel. AWT still types it
+    // NORMAL, which Hyprland focuses on map, hence markAsX11Popup.
+    // Without a
+    // transparent margin there is no drop shadow; the shape rounds it.
+    val currentContent by rememberUpdatedState(content)
+    DisposableEffect(Unit) {
+        val pad = SHADOW_PADDING.value.toInt()
+        val width = cardSize.width.value.toInt()
+        val height = cardSize.height.value.toInt()
+        val popup = JWindow().apply {
+            type = java.awt.Window.Type.POPUP
+            focusableWindowState = false
+            // Never take keyboard focus from what the user is typing in.
+            isAutoRequestFocus = false
+            isAlwaysOnTop = true
+            setBounds(position.x.value.toInt() + pad, position.y.value.toInt() + pad, width, height)
+            shape = RoundRectangle2D.Double(0.0, 0.0, width.toDouble(), height.toDouble(), 16.0, 16.0)
+            contentPane.add(ComposePanel().apply { setContent { currentContent(0.dp) } })
+            // Create the native window first so it can be typed before it maps.
+            addNotify()
+            markAsX11Popup(this)
+            keepBounds(this)
+            isVisible = true
+        }
+        onDispose { popup.dispose() }
     }
 }
 

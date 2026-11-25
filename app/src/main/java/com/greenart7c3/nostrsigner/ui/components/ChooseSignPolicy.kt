@@ -55,68 +55,77 @@ fun ChooseSignPolicy(
     )
     Column(modifier) {
         radioOptions.forEachIndexed { index, option ->
-            val selected = selectedOption == index
-            Row(
-                Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 2.dp)
-                    // Clipped before the click, so the ripple keeps the rounded shape.
-                    .clip(RoundedCornerShape(10.dp))
-                    .background(
-                        color = if (selected) {
-                            MaterialTheme.colorScheme.primary.copy(alpha = 0.18f)
-                        } else {
-                            Color.Transparent
-                        },
-                        shape = RoundedCornerShape(10.dp),
-                    )
-                    .border(
-                        width = 1.dp,
-                        color = if (selected) {
-                            MaterialTheme.colorScheme.primary.copy(alpha = 0.45f)
-                        } else {
-                            Color.Transparent
-                        },
-                        shape = RoundedCornerShape(10.dp),
-                    )
-                    .selectable(
-                        selected = selected,
-                        onClick = {
-                            onSelect(index)
-                        },
-                    )
-                    .padding(14.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                if (selected) {
-                    Icon(
-                        Icons.Default.Check,
-                        contentDescription = null,
-                        tint = Color(0xFF1D8802),
-                    )
+            SignPolicyOption(
+                option = option,
+                selected = selectedOption == index,
+                onSelect = { onSelect(index) },
+            )
+        }
+    }
+}
+
+@Composable
+private fun SignPolicyOption(
+    option: TitleExplainer,
+    selected: Boolean,
+    onSelect: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier
+            .fillMaxWidth()
+            .padding(vertical = 2.dp)
+            // Clipped before the click, so the ripple keeps the rounded shape.
+            .clip(RoundedCornerShape(10.dp))
+            .background(
+                color = if (selected) {
+                    MaterialTheme.colorScheme.primary.copy(alpha = 0.18f)
                 } else {
-                    RadioButton(
-                        selected = false,
-                        onClick = {
-                            onSelect(index)
-                        },
-                    )
-                }
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(4.dp),
-                ) {
-                    Text(
-                        text = option.title,
-                        modifier = Modifier.padding(start = 16.dp),
-                        fontWeight = FontWeight.Medium,
-                    )
-                    option.explainer?.let {
-                        Text(
-                            text = it,
-                            modifier = Modifier.padding(start = 16.dp),
-                        )
-                    }
-                }
+                    Color.Transparent
+                },
+                shape = RoundedCornerShape(10.dp),
+            )
+            .border(
+                width = 1.dp,
+                color = if (selected) {
+                    MaterialTheme.colorScheme.primary.copy(alpha = 0.45f)
+                } else {
+                    Color.Transparent
+                },
+                shape = RoundedCornerShape(10.dp),
+            )
+            .selectable(
+                selected = selected,
+                onClick = onSelect,
+            )
+            .padding(14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        if (selected) {
+            Icon(
+                Icons.Default.Check,
+                contentDescription = null,
+                tint = Color(0xFF1D8802),
+            )
+        } else {
+            RadioButton(
+                selected = false,
+                onClick = onSelect,
+            )
+        }
+        Column(
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            Text(
+                text = option.title,
+                modifier = Modifier.padding(start = 16.dp),
+                fontWeight = FontWeight.Medium,
+            )
+            option.explainer?.let {
+                Text(
+                    text = it,
+                    modifier = Modifier.padding(start = 16.dp),
+                )
             }
         }
     }

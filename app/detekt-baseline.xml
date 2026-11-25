@@ -14,7 +14,6 @@
     <ID>LongMethod:AuthWhitelistScreen.kt:@Composable fun AuthWhitelistScreen</ID>
     <ID>LongMethod:BiometricAuthScreen.kt:@Composable fun BiometricAuthScreen</ID>
     <ID>LongMethod:BunkerRelayAuthScreen.kt:@Composable fun BunkerRelayAuthScreen</ID>
-    <ID>LongMethod:ChooseSignPolicy.kt:@Composable fun ChooseSignPolicy</ID>
     <ID>LongMethod:ConnectOrbotDialog.kt:@Composable fun ConnectOrbotScreen</ID>
     <ID>LongMethod:CrashReportScreen.kt:@Composable fun CrashReportScreen</ID>
     <ID>LongMethod:DefaultProfileRelaysScreen.kt:@Composable fun DefaultProfileRelaysScreen</ID>

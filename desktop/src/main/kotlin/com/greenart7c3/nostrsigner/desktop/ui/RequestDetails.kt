@@ -2,6 +2,7 @@ package com.greenart7c3.nostrsigner.desktop.ui
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
@@ -210,7 +211,7 @@ private fun sats(amount: Long) = getStringBlocking(Res.string.psbt_amount_sats, 
 
 /** Mirrors Android's `PsbtBody`: sending and change outputs, the fee, then the raw PSBT. */
 @Composable
-private fun PsbtSections(details: RequestDetails.OfPsbt) {
+private fun ColumnScope.PsbtSections(details: RequestDetails.OfPsbt) {
     val decoded = details.decoded
     val parseError = decoded.parseError
     if (parseError != null) {
@@ -230,7 +231,7 @@ private fun PsbtSections(details: RequestDetails.OfPsbt) {
 }
 
 @Composable
-private fun PsbtOutputs(title: String, totalSats: Long, outputs: List<DecodedPsbtOutput>) {
+private fun ColumnScope.PsbtOutputs(title: String, totalSats: Long, outputs: List<DecodedPsbtOutput>) {
     if (outputs.isEmpty()) return
     Text("$title: ${sats(totalSats)}", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
     outputs.forEach { output ->
@@ -243,7 +244,7 @@ private fun PsbtOutputs(title: String, totalSats: Long, outputs: List<DecodedPsb
 private fun contentLabel() = getStringBlocking(Res.string.content).replaceFirstChar { it.uppercase() }
 
 @Composable
-private fun DetailSection(
+private fun ColumnScope.DetailSection(
     label: String,
     value: String,
     copyValue: String = value,
@@ -275,7 +276,7 @@ private fun DetailSection(
 }
 
 @Composable
-private fun TagsSection(label: String, tags: List<List<String>>) {
+private fun ColumnScope.TagsSection(label: String, tags: List<List<String>>) {
     DetailSection(
         label = label,
         value = tags.joinToString("\n") { tag -> tag.joinToString(", ", "[", "]") { "\"$it\"" } },

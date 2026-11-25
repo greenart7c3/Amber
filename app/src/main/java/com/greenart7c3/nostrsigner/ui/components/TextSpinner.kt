@@ -57,7 +57,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.greenart7c3.nostrsigner.ui.theme.AmberPreview
-import com.greenart7c3.nostrsigner.ui.theme.ThemePreviews
+import com.greenart7c3.nostrsigner.ui.theme.PreviewsLightDark
 import com.greenart7c3.nostrsigner.ui.theme.amoledBorder
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
@@ -225,7 +225,7 @@ fun <T> SpinnerSelectionDialog(
 
 @Immutable data class TitleExplainer(val title: String, val explainer: String? = null)
 
-@ThemePreviews
+@PreviewsLightDark
 @Composable
 private fun TextSpinnerPreview() {
     AmberPreview {

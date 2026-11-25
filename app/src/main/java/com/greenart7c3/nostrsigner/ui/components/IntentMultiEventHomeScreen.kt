@@ -51,7 +51,7 @@ import com.greenart7c3.nostrsigner.ui.LocalAccountRepository
 import com.greenart7c3.nostrsigner.ui.LocalAppScope
 import com.greenart7c3.nostrsigner.ui.LocalSettingsStore
 import com.greenart7c3.nostrsigner.ui.theme.AmberPreview
-import com.greenart7c3.nostrsigner.ui.theme.ThemePreviews
+import com.greenart7c3.nostrsigner.ui.theme.PreviewsLightDark
 import com.greenart7c3.nostrsigner.ui.theme.previewAccount
 import com.vitorpamplona.quartz.nip01Core.core.Event
 import kotlinx.collections.immutable.ImmutableList
@@ -296,7 +296,7 @@ private fun previewSignIntent(id: String, content: String) = previewIntent(
     ),
 )
 
-@ThemePreviews
+@PreviewsLightDark
 @Composable
 private fun IntentMultiEventHomeScreenPreview() {
     AmberPreview {

@@ -9,7 +9,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.greenart7c3.nostrsigner.ui.theme.AmberPreview
-import com.greenart7c3.nostrsigner.ui.theme.ThemePreviews
+import com.greenart7c3.nostrsigner.ui.theme.PreviewsLightDark
 
 @Composable
 fun SignerConnectAppTab(
@@ -31,7 +31,7 @@ fun SignerConnectAppTab(
     )
 }
 
-@ThemePreviews
+@PreviewsLightDark
 @Composable
 private fun SignerConnectAppTabPreview() {
     AmberPreview {

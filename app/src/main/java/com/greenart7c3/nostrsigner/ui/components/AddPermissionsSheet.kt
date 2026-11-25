@@ -53,7 +53,7 @@ import com.greenart7c3.nostrsigner.commonsui.no_permissions_found
 import com.greenart7c3.nostrsigner.commonsui.search_permissions
 import com.greenart7c3.nostrsigner.commonsui.supportedKindNumbers
 import com.greenart7c3.nostrsigner.ui.theme.AmberPreview
-import com.greenart7c3.nostrsigner.ui.theme.ThemePreviews
+import com.greenart7c3.nostrsigner.ui.theme.PreviewsLightDark
 import com.greenart7c3.nostrsigner.ui.theme.amoledBorder
 import com.greenart7c3.nostrsigner.ui.theme.outlineIfAny
 import org.jetbrains.compose.resources.stringResource
@@ -261,7 +261,7 @@ fun AddPermissionsSheet(
     }
 }
 
-@ThemePreviews
+@PreviewsLightDark
 @Composable
 private fun AddPermissionsSheetPreview() {
     AmberPreview {

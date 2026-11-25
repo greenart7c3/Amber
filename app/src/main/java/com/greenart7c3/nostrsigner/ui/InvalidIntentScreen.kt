@@ -36,7 +36,7 @@ import com.greenart7c3.nostrsigner.commonsui.invalid_intent_body
 import com.greenart7c3.nostrsigner.commonsui.invalid_intent_close_app
 import com.greenart7c3.nostrsigner.commonsui.invalid_intent_title
 import com.greenart7c3.nostrsigner.ui.theme.AmberPreview
-import com.greenart7c3.nostrsigner.ui.theme.ThemePreviews
+import com.greenart7c3.nostrsigner.ui.theme.PreviewsLightDark
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -79,7 +79,7 @@ fun InvalidIntentScreen(
     }
 }
 
-@ThemePreviews
+@PreviewsLightDark
 @Composable
 private fun InvalidIntentScreenPreview() {
     AmberPreview {

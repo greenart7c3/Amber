@@ -9,7 +9,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.greenart7c3.nostrsigner.ui.theme.AmberPreview
-import com.greenart7c3.nostrsigner.ui.theme.ThemePreviews
+import com.greenart7c3.nostrsigner.ui.theme.PreviewsLightDark
 
 /**
  * Centered avatar header for a request screen. Shows the remote client icon from
@@ -36,7 +36,7 @@ fun RemoteAppIcon(
     }
 }
 
-@ThemePreviews
+@PreviewsLightDark
 @Composable
 private fun RemoteAppIconPreview() {
     AmberPreview {

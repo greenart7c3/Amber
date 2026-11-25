@@ -52,7 +52,7 @@ class UnusedCodeAnalyzerTest {
                 fun main() {}
                 enum class Kind { ONE }
                 class Holder { companion object }
-                @ThemePreviews @Composable fun ScreenPreview() {}
+                @PreviewsLightDark @Composable fun ScreenPreview() {}
                 @Suppress("unused") fun keptForTheNdk() {}
                 @Entity data class Row(val id: Int) { val extra: Int = 0 }
                 fun use(b: Base) { b.call(); Impl(); Kind.ONE; Holder(); Row(0) }

@@ -32,7 +32,7 @@ import com.greenart7c3.nostrsigner.commonsui.relay_auth_scope
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.ui.RememberType
 import com.greenart7c3.nostrsigner.ui.theme.AmberPreview
-import com.greenart7c3.nostrsigner.ui.theme.ThemePreviews
+import com.greenart7c3.nostrsigner.ui.theme.PreviewsLightDark
 import com.greenart7c3.nostrsigner.ui.theme.previewAccount
 import org.jetbrains.compose.resources.stringResource
 
@@ -154,7 +154,7 @@ fun BunkerRelayAuthScreen(
     }
 }
 
-@ThemePreviews
+@PreviewsLightDark
 @Composable
 private fun BunkerRelayAuthScreenPreview() {
     AmberPreview {

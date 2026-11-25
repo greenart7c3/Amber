@@ -26,7 +26,7 @@ import coil3.compose.AsyncImage
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.service.AppIconStore
 import com.greenart7c3.nostrsigner.ui.theme.AmberPreview
-import com.greenart7c3.nostrsigner.ui.theme.ThemePreviews
+import com.greenart7c3.nostrsigner.ui.theme.PreviewsLightDark
 import java.io.File
 
 /**
@@ -106,7 +106,7 @@ internal fun avatarModel(iconUrl: String?, offline: Boolean, isStoredIcon: (Stri
 
 internal fun isRemoteIconUrl(iconUrl: String): Boolean = iconUrl.startsWith("https://", ignoreCase = true)
 
-@ThemePreviews
+@PreviewsLightDark
 @Composable
 private fun AppAvatarPlaceholderPreview() {
     AmberPreview {

@@ -25,7 +25,7 @@ import com.greenart7c3.nostrsigner.commonsui.automatically_sign_this_for
 import com.greenart7c3.nostrsigner.ui.RememberType
 import com.greenart7c3.nostrsigner.ui.rememberTypeDisplayOrder
 import com.greenart7c3.nostrsigner.ui.theme.AmberPreview
-import com.greenart7c3.nostrsigner.ui.theme.ThemePreviews
+import com.greenart7c3.nostrsigner.ui.theme.PreviewsLightDark
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -112,7 +112,7 @@ fun RememberMyChoice(
     }
 }
 
-@ThemePreviews
+@PreviewsLightDark
 @Composable
 private fun LabeledBorderBoxPreview() {
     AmberPreview {
@@ -128,7 +128,7 @@ private fun LabeledBorderBoxPreview() {
     }
 }
 
-@ThemePreviews
+@PreviewsLightDark
 @Composable
 private fun RememberMyChoicePreview() {
     AmberPreview {

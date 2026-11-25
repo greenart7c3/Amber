@@ -45,7 +45,7 @@ import com.greenart7c3.nostrsigner.commonsui.mnemonic_24_words
 import com.greenart7c3.nostrsigner.commonsui.mnemonic_words_entered
 import com.greenart7c3.nostrsigner.commonsui.paste_from_clipboard
 import com.greenart7c3.nostrsigner.ui.theme.AmberPreview
-import com.greenart7c3.nostrsigner.ui.theme.ThemePreviews
+import com.greenart7c3.nostrsigner.ui.theme.PreviewsLightDark
 import com.vitorpamplona.quartz.nip06KeyDerivation.Bip39Mnemonics
 import org.jetbrains.compose.resources.stringResource
 
@@ -278,7 +278,7 @@ private fun WordSuggestions(
     }
 }
 
-@ThemePreviews
+@PreviewsLightDark
 @Composable
 private fun MnemonicLoginInputPreview() {
     AmberPreview {

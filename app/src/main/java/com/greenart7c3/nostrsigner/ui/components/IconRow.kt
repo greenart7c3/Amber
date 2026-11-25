@@ -20,7 +20,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.greenart7c3.nostrsigner.ui.theme.AmberPreview
-import com.greenart7c3.nostrsigner.ui.theme.ThemePreviews
+import com.greenart7c3.nostrsigner.ui.theme.PreviewsLightDark
 
 @Composable
 fun IconRow(
@@ -66,7 +66,7 @@ fun IconRow(
     }
 }
 
-@ThemePreviews
+@PreviewsLightDark
 @Composable
 private fun IconRowVectorPreview() {
     AmberPreview {

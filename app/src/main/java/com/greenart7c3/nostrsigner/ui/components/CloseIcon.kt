@@ -7,8 +7,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import com.greenart7c3.nostrsigner.ui.theme.AmberPreview
+import com.greenart7c3.nostrsigner.ui.theme.PreviewsLightDark
 import com.greenart7c3.nostrsigner.ui.theme.Size20Modifier
-import com.greenart7c3.nostrsigner.ui.theme.ThemePreviews
 
 @Composable
 fun CloseIcon(modifier: Modifier = Modifier) {
@@ -20,7 +20,7 @@ fun CloseIcon(modifier: Modifier = Modifier) {
     )
 }
 
-@ThemePreviews
+@PreviewsLightDark
 @Composable
 private fun CloseIconPreview() {
     AmberPreview {

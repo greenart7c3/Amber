@@ -30,7 +30,7 @@ import androidx.core.view.WindowInsetsCompat
 import com.greenart7c3.nostrsigner.commonsui.Res
 import com.greenart7c3.nostrsigner.commonsui.search
 import com.greenart7c3.nostrsigner.ui.theme.AmberPreview
-import com.greenart7c3.nostrsigner.ui.theme.ThemePreviews
+import com.greenart7c3.nostrsigner.ui.theme.PreviewsLightDark
 import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -130,7 +130,7 @@ private fun SearchSuggestions(
     }
 }
 
-@ThemePreviews
+@PreviewsLightDark
 @Composable
 private fun SimpleSearchBarPreview() {
     AmberPreview {

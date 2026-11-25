@@ -140,7 +140,7 @@ import com.greenart7c3.nostrsigner.ui.components.TextSpinner
 import com.greenart7c3.nostrsigner.ui.components.TitleExplainer
 import com.greenart7c3.nostrsigner.ui.navigation.Route
 import com.greenart7c3.nostrsigner.ui.theme.AmberPreview
-import com.greenart7c3.nostrsigner.ui.theme.ThemePreviews
+import com.greenart7c3.nostrsigner.ui.theme.PreviewsLightDark
 import com.greenart7c3.nostrsigner.ui.theme.amoledBorder
 import com.greenart7c3.nostrsigner.ui.theme.outlineIfAny
 import kotlinx.collections.immutable.ImmutableList
@@ -451,7 +451,7 @@ private fun DisableTorDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
     )
 }
 
-@ThemePreviews
+@PreviewsLightDark
 @Composable
 internal fun SettingsContentPreview() {
     AmberPreview {

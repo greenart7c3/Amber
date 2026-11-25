@@ -30,7 +30,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.greenart7c3.nostrsigner.ui.theme.AmberPreview
-import com.greenart7c3.nostrsigner.ui.theme.ThemePreviews
+import com.greenart7c3.nostrsigner.ui.theme.PreviewsLightDark
 import kotlin.math.roundToInt
 
 /**
@@ -174,7 +174,7 @@ private fun ToggleScrollbar(
     }
 }
 
-@ThemePreviews
+@PreviewsLightDark
 @Composable
 private fun AmberTogglesPreview() {
     AmberPreview {

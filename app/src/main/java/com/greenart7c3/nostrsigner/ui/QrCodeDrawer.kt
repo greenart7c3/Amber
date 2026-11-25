@@ -30,7 +30,7 @@ import com.google.zxing.qrcode.encoder.Encoder
 import com.google.zxing.qrcode.encoder.QRCode
 import com.greenart7c3.nostrsigner.ui.actions.QrCodeDialog
 import com.greenart7c3.nostrsigner.ui.theme.AmberPreview
-import com.greenart7c3.nostrsigner.ui.theme.ThemePreviews
+import com.greenart7c3.nostrsigner.ui.theme.PreviewsLightDark
 
 const val QR_MARGIN_PX = 100f
 
@@ -281,7 +281,7 @@ private fun DrawScope.drawQrCodeFinder(
     )
 }
 
-@ThemePreviews
+@PreviewsLightDark
 @Composable
 private fun QrCodeDrawerPreview() {
     AmberPreview {

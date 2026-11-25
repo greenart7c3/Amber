@@ -17,7 +17,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.greenart7c3.nostrsigner.ui.theme.AmberPreview
-import com.greenart7c3.nostrsigner.ui.theme.ThemePreviews
+import com.greenart7c3.nostrsigner.ui.theme.PreviewsLightDark
 
 @Composable
 fun AmberWarningCard(
@@ -58,7 +58,7 @@ fun AmberWarningCard(
     }
 }
 
-@ThemePreviews
+@PreviewsLightDark
 @Composable
 private fun AmberWarningCardPreview() {
     AmberPreview {

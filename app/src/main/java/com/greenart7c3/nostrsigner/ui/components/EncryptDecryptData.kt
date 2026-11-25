@@ -52,7 +52,7 @@ import com.greenart7c3.nostrsigner.models.TagArrayEncryptedDataKind
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
 import com.greenart7c3.nostrsigner.ui.RememberType
 import com.greenart7c3.nostrsigner.ui.theme.AmberPreview
-import com.greenart7c3.nostrsigner.ui.theme.ThemePreviews
+import com.greenart7c3.nostrsigner.ui.theme.PreviewsLightDark
 import com.greenart7c3.nostrsigner.ui.theme.previewAccount
 import com.vitorpamplona.quartz.nip02FollowList.ContactListEvent
 import org.jetbrains.compose.resources.stringResource
@@ -385,7 +385,7 @@ internal fun plainCardText(type: SignerType, encryptedData: EncryptedDataKind?):
     else -> encryptedData?.result ?: ""
 }
 
-@ThemePreviews
+@PreviewsLightDark
 @Composable
 private fun EncryptDecryptDataPreview() {
     AmberPreview {
@@ -405,7 +405,7 @@ private fun EncryptDecryptDataPreview() {
     }
 }
 
-@ThemePreviews
+@PreviewsLightDark
 @Composable
 private fun BunkerEncryptDecryptDataPreview() {
     AmberPreview {

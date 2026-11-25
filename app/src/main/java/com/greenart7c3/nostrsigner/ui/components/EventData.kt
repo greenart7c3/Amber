@@ -38,7 +38,7 @@ import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.ui.LocalPendingReports
 import com.greenart7c3.nostrsigner.ui.RememberType
 import com.greenart7c3.nostrsigner.ui.theme.AmberPreview
-import com.greenart7c3.nostrsigner.ui.theme.ThemePreviews
+import com.greenart7c3.nostrsigner.ui.theme.PreviewsLightDark
 import com.greenart7c3.nostrsigner.ui.theme.previewAccount
 import com.vitorpamplona.quartz.nip01Core.core.Event
 import org.jetbrains.compose.resources.stringResource
@@ -238,7 +238,7 @@ private fun previewEvent() = Event(
     sig = "",
 )
 
-@ThemePreviews
+@PreviewsLightDark
 @Composable
 private fun EventDataPreview() {
     AmberPreview {
@@ -257,7 +257,7 @@ private fun EventDataPreview() {
     }
 }
 
-@ThemePreviews
+@PreviewsLightDark
 @Composable
 private fun BunkerEventDataPreview() {
     AmberPreview {

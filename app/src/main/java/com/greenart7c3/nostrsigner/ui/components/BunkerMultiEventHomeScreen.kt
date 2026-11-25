@@ -61,7 +61,7 @@ import com.greenart7c3.nostrsigner.ui.LocalBunkerResponder
 import com.greenart7c3.nostrsigner.ui.LocalRelayClient
 import com.greenart7c3.nostrsigner.ui.LocalSettingsStore
 import com.greenart7c3.nostrsigner.ui.theme.AmberPreview
-import com.greenart7c3.nostrsigner.ui.theme.ThemePreviews
+import com.greenart7c3.nostrsigner.ui.theme.PreviewsLightDark
 import com.greenart7c3.nostrsigner.ui.theme.previewAccount
 import com.vitorpamplona.quartz.nip01Core.core.Event
 import com.vitorpamplona.quartz.nip01Core.signers.EventTemplate
@@ -456,7 +456,7 @@ private fun previewSignRequest(id: String, content: String) = previewBunkerReque
     ),
 )
 
-@ThemePreviews
+@PreviewsLightDark
 @Composable
 private fun BunkerMultiEventHomeScreenPreview() {
     AmberPreview {
@@ -492,7 +492,7 @@ private fun BunkerMultiEventHomeScreenPreview() {
     }
 }
 
-@ThemePreviews
+@PreviewsLightDark
 @Composable
 private fun BunkerMultiEventHomeScreenMultipleAppsPreview() {
     AmberPreview {

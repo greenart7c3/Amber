@@ -28,7 +28,7 @@ import androidx.compose.ui.unit.sp
 import com.greenart7c3.nostrsigner.commonsui.Res
 import com.greenart7c3.nostrsigner.commonsui.copy
 import com.greenart7c3.nostrsigner.ui.theme.AmberPreview
-import com.greenart7c3.nostrsigner.ui.theme.ThemePreviews
+import com.greenart7c3.nostrsigner.ui.theme.PreviewsLightDark
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -80,7 +80,7 @@ fun EventSection(
     }
 }
 
-@ThemePreviews
+@PreviewsLightDark
 @Composable
 private fun EventSectionPreview() {
     AmberPreview {

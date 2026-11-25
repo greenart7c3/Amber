@@ -6,7 +6,6 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 plugins {
     alias(libs.plugins.androidApplication) apply false
     alias(libs.plugins.androidKotlinMultiplatformLibrary) apply false
-    alias(libs.plugins.serialization) apply false
     alias(libs.plugins.kotlin.ksp) apply false
     alias(libs.plugins.gradle.ktlint) apply false
     alias(libs.plugins.detekt) apply false

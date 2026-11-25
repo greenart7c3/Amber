@@ -26,6 +26,8 @@ jobs:
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
+        with:
+          cache-cleanup: never
 
       - name: Grant execute permission to Gradle wrapper
         run: chmod +x ./gradlew

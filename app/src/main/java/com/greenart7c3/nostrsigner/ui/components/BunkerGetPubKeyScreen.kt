@@ -21,7 +21,7 @@ import com.greenart7c3.nostrsigner.commonsui.Res
 import com.greenart7c3.nostrsigner.commonsui.would_like_your_permission_to_read_your_public_key_and_sign_events_on_your_behalf
 import com.greenart7c3.nostrsigner.ui.RememberType
 import com.greenart7c3.nostrsigner.ui.theme.AmberPreview
-import com.greenart7c3.nostrsigner.ui.theme.ThemePreviews
+import com.greenart7c3.nostrsigner.ui.theme.PreviewsLightDark
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -75,7 +75,7 @@ fun BunkerGetPubKeyScreen(
     }
 }
 
-@ThemePreviews
+@PreviewsLightDark
 @Composable
 private fun BunkerGetPubKeyScreenPreview() {
     AmberPreview {

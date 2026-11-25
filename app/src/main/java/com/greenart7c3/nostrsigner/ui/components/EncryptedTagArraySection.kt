@@ -8,7 +8,7 @@ import androidx.compose.ui.Modifier
 import com.greenart7c3.nostrsigner.commonsui.Res
 import com.greenart7c3.nostrsigner.commonsui.tags
 import com.greenart7c3.nostrsigner.ui.theme.AmberPreview
-import com.greenart7c3.nostrsigner.ui.theme.ThemePreviews
+import com.greenart7c3.nostrsigner.ui.theme.PreviewsLightDark
 import com.vitorpamplona.quartz.nip01Core.core.TagArray
 import org.jetbrains.compose.resources.stringResource
 
@@ -37,7 +37,7 @@ fun EncryptedTagArraySection(
     }
 }
 
-@ThemePreviews
+@PreviewsLightDark
 @Composable
 private fun EncryptedTagArraySectionPreview() {
     AmberPreview {

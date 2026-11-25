@@ -40,7 +40,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.greenart7c3.nostrsigner.ui.theme.AmberPreview
-import com.greenart7c3.nostrsigner.ui.theme.ThemePreviews
+import com.greenart7c3.nostrsigner.ui.theme.PreviewsLightDark
 
 @Composable
 fun RandomPinInput(
@@ -209,7 +209,7 @@ fun RandomPinInput(
     }
 }
 
-@ThemePreviews
+@PreviewsLightDark
 @Composable
 private fun RandomPinInputPreview() {
     AmberPreview {

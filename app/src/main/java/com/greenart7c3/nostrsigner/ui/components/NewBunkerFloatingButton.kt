@@ -15,7 +15,7 @@ import androidx.compose.ui.unit.dp
 import com.greenart7c3.nostrsigner.commonsui.Res
 import com.greenart7c3.nostrsigner.commonsui.connect_app
 import com.greenart7c3.nostrsigner.ui.theme.AmberPreview
-import com.greenart7c3.nostrsigner.ui.theme.ThemePreviews
+import com.greenart7c3.nostrsigner.ui.theme.PreviewsLightDark
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -47,7 +47,7 @@ fun NewBunkerFloatingButton(
     }
 }
 
-@ThemePreviews
+@PreviewsLightDark
 @Composable
 private fun NewBunkerFloatingButtonPreview() {
     AmberPreview {

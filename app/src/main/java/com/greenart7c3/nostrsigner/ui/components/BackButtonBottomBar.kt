@@ -11,7 +11,7 @@ import com.greenart7c3.nostrsigner.commonsui.add_a_new_application
 import com.greenart7c3.nostrsigner.commonsui.back_to
 import com.greenart7c3.nostrsigner.commonsui.go_back
 import com.greenart7c3.nostrsigner.ui.theme.AmberPreview
-import com.greenart7c3.nostrsigner.ui.theme.ThemePreviews
+import com.greenart7c3.nostrsigner.ui.theme.PreviewsLightDark
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -41,7 +41,7 @@ fun BackButtonAppBar(
     }
 }
 
-@ThemePreviews
+@PreviewsLightDark
 @Composable
 private fun BackButtonAppBarPreview() {
     AmberPreview {

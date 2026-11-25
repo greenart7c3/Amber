@@ -5,7 +5,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.greenart7c3.nostrsigner.ui.theme.AmberPreview
 import com.greenart7c3.nostrsigner.ui.theme.ButtonBorder
-import com.greenart7c3.nostrsigner.ui.theme.ThemePreviews
+import com.greenart7c3.nostrsigner.ui.theme.PreviewsLightDark
 
 @Composable
 fun CloseButton(onCancel: () -> Unit, modifier: Modifier = Modifier) {
@@ -20,7 +20,7 @@ fun CloseButton(onCancel: () -> Unit, modifier: Modifier = Modifier) {
     }
 }
 
-@ThemePreviews
+@PreviewsLightDark
 @Composable
 private fun CloseButtonPreview() {
     AmberPreview {

@@ -21,7 +21,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import com.greenart7c3.nostrsigner.ui.theme.AmberPreview
-import com.greenart7c3.nostrsigner.ui.theme.ThemePreviews
+import com.greenart7c3.nostrsigner.ui.theme.PreviewsLightDark
 
 @Composable
 fun AmberButton(
@@ -113,7 +113,7 @@ fun AmberElevatedButton(
     }
 }
 
-@ThemePreviews
+@PreviewsLightDark
 @Composable
 private fun AmberButtonPreview() {
     AmberPreview {
@@ -124,7 +124,7 @@ private fun AmberButtonPreview() {
     }
 }
 
-@ThemePreviews
+@PreviewsLightDark
 @Composable
 private fun AmberButtonDisabledPreview() {
     AmberPreview {
@@ -136,7 +136,7 @@ private fun AmberButtonDisabledPreview() {
     }
 }
 
-@ThemePreviews
+@PreviewsLightDark
 @Composable
 private fun AmberElevatedButtonPreview() {
     AmberPreview {

@@ -13,7 +13,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.greenart7c3.nostrsigner.ui.theme.AmberPreview
-import com.greenart7c3.nostrsigner.ui.theme.ThemePreviews
+import com.greenart7c3.nostrsigner.ui.theme.PreviewsLightDark
 
 @Composable
 fun CenterCircularProgressIndicator(
@@ -37,7 +37,7 @@ fun CenterCircularProgressIndicator(
     }
 }
 
-@ThemePreviews
+@PreviewsLightDark
 @Composable
 private fun CenterCircularProgressIndicatorPreview() {
     AmberPreview {

@@ -27,7 +27,7 @@ import com.greenart7c3.nostrsigner.commonsui.Res
 import com.greenart7c3.nostrsigner.commonsui.copy_to_clipboard
 import com.greenart7c3.nostrsigner.commonsui.more
 import com.greenart7c3.nostrsigner.ui.theme.AmberPreview
-import com.greenart7c3.nostrsigner.ui.theme.ThemePreviews
+import com.greenart7c3.nostrsigner.ui.theme.PreviewsLightDark
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -102,7 +102,7 @@ fun TagsSection(
     }
 }
 
-@ThemePreviews
+@PreviewsLightDark
 @Composable
 private fun TagsSectionPreview() {
     AmberPreview {

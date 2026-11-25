@@ -11,7 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.greenart7c3.nostrsigner.ui.theme.AmberPreview
 import com.greenart7c3.nostrsigner.ui.theme.ButtonBorder
-import com.greenart7c3.nostrsigner.ui.theme.ThemePreviews
+import com.greenart7c3.nostrsigner.ui.theme.PreviewsLightDark
 
 @Composable
 fun RawJsonButton(
@@ -34,7 +34,7 @@ fun RawJsonButton(
     }
 }
 
-@ThemePreviews
+@PreviewsLightDark
 @Composable
 private fun RawJsonButtonPreview() {
     AmberPreview {

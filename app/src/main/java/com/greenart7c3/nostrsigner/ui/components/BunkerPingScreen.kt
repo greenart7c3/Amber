@@ -27,7 +27,7 @@ import com.greenart7c3.nostrsigner.commonsui.requests
 import com.greenart7c3.nostrsigner.commonsui.response
 import com.greenart7c3.nostrsigner.ui.RememberType
 import com.greenart7c3.nostrsigner.ui.theme.AmberPreview
-import com.greenart7c3.nostrsigner.ui.theme.ThemePreviews
+import com.greenart7c3.nostrsigner.ui.theme.PreviewsLightDark
 import com.greenart7c3.nostrsigner.ui.theme.amoledBorder
 import org.jetbrains.compose.resources.stringResource
 
@@ -106,7 +106,7 @@ fun BunkerPingScreen(
     }
 }
 
-@ThemePreviews
+@PreviewsLightDark
 @Composable
 private fun BunkerPingScreenPreview() {
     AmberPreview {

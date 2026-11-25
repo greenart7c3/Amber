@@ -25,7 +25,7 @@ import com.greenart7c3.nostrsigner.commonsui.signing_as
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.theme.AmberPreview
-import com.greenart7c3.nostrsigner.ui.theme.ThemePreviews
+import com.greenart7c3.nostrsigner.ui.theme.PreviewsLightDark
 import com.greenart7c3.nostrsigner.ui.theme.previewAccount
 import org.jetbrains.compose.resources.stringResource
 
@@ -103,7 +103,7 @@ private fun AccountNameLabel(
     }
 }
 
-@ThemePreviews
+@PreviewsLightDark
 @Composable
 private fun SigningAsPreview() {
     AmberPreview {

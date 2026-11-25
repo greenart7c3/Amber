@@ -21,7 +21,7 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import com.greenart7c3.nostrsigner.ui.theme.AmberPreview
-import com.greenart7c3.nostrsigner.ui.theme.ThemePreviews
+import com.greenart7c3.nostrsigner.ui.theme.PreviewsLightDark
 
 /**
  * Renders a subset of Markdown as styled Compose text.
@@ -137,7 +137,7 @@ private fun AnnotatedString.Builder.appendPlain(text: String): Int {
     return count
 }
 
-@ThemePreviews
+@PreviewsLightDark
 @Composable
 private fun MarkdownTextPreview() {
     AmberPreview {

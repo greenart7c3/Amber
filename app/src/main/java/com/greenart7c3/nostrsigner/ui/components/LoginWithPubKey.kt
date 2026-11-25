@@ -52,7 +52,7 @@ import com.greenart7c3.nostrsigner.commonsui.permissions
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.ui.RememberType
 import com.greenart7c3.nostrsigner.ui.theme.AmberPreview
-import com.greenart7c3.nostrsigner.ui.theme.ThemePreviews
+import com.greenart7c3.nostrsigner.ui.theme.PreviewsLightDark
 import com.greenart7c3.nostrsigner.ui.theme.amoledBorder
 import com.greenart7c3.nostrsigner.ui.theme.outlineIfAny
 import com.greenart7c3.nostrsigner.ui.theme.previewAccount
@@ -273,7 +273,7 @@ fun LoginWithPubKey(
     }
 }
 
-@ThemePreviews
+@PreviewsLightDark
 @Composable
 private fun LoginWithPubKeyPreview() {
     AmberPreview {

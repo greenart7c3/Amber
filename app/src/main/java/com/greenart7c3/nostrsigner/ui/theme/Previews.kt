@@ -26,7 +26,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
  */
 @Preview(name = "Light", showBackground = true)
 @Preview(name = "Dark", showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES)
-annotation class ThemePreviews
+annotation class PreviewsLightDark
 
 /**
  * Shared wrapper for component previews: applies [NostrSignerTheme] and paints

@@ -446,7 +446,7 @@ regenerated each time so the fixed entries drop out. `LongMethod` and
 refactor of its own.
 
 Done: `PreviewPublic` (50 previews made private; detekt's
-`UnusedPrivateFunction` ignores `@Preview` and `@ThemePreviews` functions, which only
+`UnusedPrivateFunction` ignores `@Preview` and `@PreviewsLightDark` functions, which only
 the IDE calls, as `unusedCode` already did) and `ParameterNaming` (13 callbacks in the
 present tense: `onSelect`, `onPress`, `onApproveChange`, `onPinEnter`, `onChange`,
 `onBackupFinish`, ...). `ModifierWithoutDefault` and `ComposableParamOrder` go together:

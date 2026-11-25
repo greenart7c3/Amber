@@ -30,7 +30,7 @@ import com.greenart7c3.nostrsigner.commonsui.sign_policy_fully_explainer
 import com.greenart7c3.nostrsigner.commonsui.sign_policy_manual_new_app
 import com.greenart7c3.nostrsigner.commonsui.sign_policy_manual_new_app_explainer
 import com.greenart7c3.nostrsigner.ui.theme.AmberPreview
-import com.greenart7c3.nostrsigner.ui.theme.ThemePreviews
+import com.greenart7c3.nostrsigner.ui.theme.PreviewsLightDark
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -131,7 +131,7 @@ private fun SignPolicyOption(
     }
 }
 
-@ThemePreviews
+@PreviewsLightDark
 @Composable
 private fun ChooseSignPolicyPreview() {
     AmberPreview {

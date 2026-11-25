@@ -36,7 +36,7 @@ import com.greenart7c3.nostrsigner.commonsui.seed_words_explainer
 import com.greenart7c3.nostrsigner.commonsui.seed_words_title
 import com.greenart7c3.nostrsigner.ui.setSensitiveClip
 import com.greenart7c3.nostrsigner.ui.theme.AmberPreview
-import com.greenart7c3.nostrsigner.ui.theme.ThemePreviews
+import com.greenart7c3.nostrsigner.ui.theme.PreviewsLightDark
 import com.greenart7c3.nostrsigner.ui.verticalScrollbar
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
@@ -180,7 +180,7 @@ fun SeedWordsPage(
     }
 }
 
-@ThemePreviews
+@PreviewsLightDark
 @Composable
 private fun SeedWordsPagePreview() {
     AmberPreview {

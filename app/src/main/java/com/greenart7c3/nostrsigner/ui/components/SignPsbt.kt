@@ -38,7 +38,7 @@ import com.greenart7c3.nostrsigner.commonsui.requests_message
 import com.greenart7c3.nostrsigner.commonsui.sign_psbt
 import com.greenart7c3.nostrsigner.ui.RememberType
 import com.greenart7c3.nostrsigner.ui.theme.AmberPreview
-import com.greenart7c3.nostrsigner.ui.theme.ThemePreviews
+import com.greenart7c3.nostrsigner.ui.theme.PreviewsLightDark
 import com.greenart7c3.nostrsigner.ui.theme.amoledBorder
 import org.jetbrains.compose.resources.stringResource
 
@@ -274,7 +274,7 @@ private fun previewDecodedPsbt() = DecodedPsbt(
     parseError = null,
 )
 
-@ThemePreviews
+@PreviewsLightDark
 @Composable
 private fun SignPsbtPreview() {
     AmberPreview {
@@ -293,7 +293,7 @@ private fun SignPsbtPreview() {
     }
 }
 
-@ThemePreviews
+@PreviewsLightDark
 @Composable
 private fun BunkerSignPsbtPreview() {
     AmberPreview {

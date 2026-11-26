@@ -107,8 +107,10 @@ footprint small.
   cannot silently rot.
 - **Coverage** (Kover) — `./gradlew koverXmlReport koverHtmlReport` writes one
   merged report to `build/reports/kover` (generated code excluded);
-  `:common:koverVerify` enforces its minimum line bound. CI runs both and
-  uploads the HTML report.
+  every module (app, cli, common, commonsui, desktop) has a minimum line bound
+  that its `koverVerify` enforces, a ratchet set just below its measured
+  coverage. CI runs the reports and every `koverVerify` and uploads the HTML
+  report.
 
 ## Roadmap
 

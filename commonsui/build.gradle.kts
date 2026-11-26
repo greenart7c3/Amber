@@ -54,3 +54,18 @@ compose.resources {
     packageOfResClass = "com.greenart7c3.nostrsigner.commonsui"
     generateResClass = always
 }
+
+kover {
+    reports {
+        total {
+            verify {
+                rule {
+                    // Just below the line coverage :commonsui's own tests reach (97.3%),
+                    // the generated resource accessors excluded. A ratchet: raise it
+                    // when coverage improves, never lower it to make a change pass.
+                    minBound(96)
+                }
+            }
+        }
+    }
+}

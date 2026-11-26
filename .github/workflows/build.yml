@@ -41,7 +41,7 @@ jobs:
         run: ./gradlew test --no-daemon
 
       - name: Coverage (gradle)
-        run: ./gradlew koverXmlReport koverHtmlReport :common:koverVerify --no-daemon
+        run: ./gradlew koverXmlReport koverHtmlReport :app:koverVerify :cli:koverVerify :common:koverVerify :commonsui:koverVerify :desktop:koverVerify --no-daemon
 
       - name: Upload coverage
         if: always()

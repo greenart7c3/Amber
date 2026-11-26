@@ -68,19 +68,14 @@ class ArgsAndHelpTest {
     }
 
     @Test
-    fun everyCommandIsDispatched() {
-        // A port nothing listens on keeps `connect` off the network.
-        val closedPort = java.net.ServerSocket(0).use { it.localPort }
+    fun everyUnpairedCommandIsDispatchedAndStopsAsNotPairedUsageOrUnreachable() {
+        val portNothingListensOn = java.net.ServerSocket(0).use { it.localPort }
         for (command in commands) {
-            // Without a saved connection each of them stops with "not paired",
-            // a usage error for the arguments it needs, or (connect) an
-            // unreachable relay: never with "unknown command".
-            // Its own profile, so one command's saved pending pairing cannot
-            // leak into the next one's "not paired" expectation.
+            val ownProfileSoNoPendingPairingLeaks = command
             val arguments = if (command == "connect") {
-                arrayOf(command, "--relay", "ws://127.0.0.1:$closedPort/", "--timeout", "1", "--profile", command)
+                arrayOf(command, "--relay", "ws://127.0.0.1:$portNothingListensOn/", "--timeout", "1", "--profile", ownProfileSoNoPendingPairingLeaks)
             } else {
-                arrayOf(command, "--profile", command)
+                arrayOf(command, "--profile", ownProfileSoNoPendingPairingLeaks)
             }
             val (exit, _, err) = run(*arguments)
             assertTrue("$command exited $exit: $err", exit in setOf(Exit.USAGE, Exit.NOT_PAIRED, Exit.UNREACHABLE))

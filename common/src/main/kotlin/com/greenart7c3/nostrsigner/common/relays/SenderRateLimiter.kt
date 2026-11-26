@@ -18,9 +18,7 @@ package com.greenart7c3.nostrsigner.common.relays
 class SenderRateLimiter(
     private val capacity: Int = DEFAULT_CAPACITY,
     private val windowSeconds: Long = DEFAULT_WINDOW_SECONDS,
-    // Read in buckets' removeEldestEntry, which detekt doesn't see inside an object expression.
-    @Suppress("UnusedPrivateProperty")
-    private val maxSenders: Int = DEFAULT_MAX_SENDERS,
+    maxSenders: Int = DEFAULT_MAX_SENDERS,
     private val aggregateCapacity: Int = DEFAULT_AGGREGATE_CAPACITY,
 ) {
     private class Bucket(var tokens: Double, var updatedAtMs: Long)

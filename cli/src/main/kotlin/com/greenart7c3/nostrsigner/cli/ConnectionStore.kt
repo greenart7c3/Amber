@@ -69,20 +69,19 @@ class ConnectionStore(
     /** The parsed file; a missing one is an empty store. */
     fun read(): ConnectionFile {
         if (!file.exists()) return ConnectionFile()
-        return parse(readEncrypted())
+        return parse(readCiphertextAfterFormatMarker())
     }
 
-    /** The file's encrypted contents after the format marker. */
-    private fun readEncrypted(): String {
+    private fun readCiphertextAfterFormatMarker(): String {
         val stored = try {
             Files.readString(file).trim()
         } catch (e: Exception) {
             throw CliError("could not read $file: ${e.message}")
         }
-        if (!stored.startsWith(HEADER)) {
+        if (!stored.startsWith(FORMAT_MARKER)) {
             throw CliError("$file was not written by amber-cli or is corrupted. Delete it and pair again.")
         }
-        return stored.removePrefix(HEADER)
+        return stored.removePrefix(FORMAT_MARKER)
     }
 
     private fun parse(encrypted: String): ConnectionFile = try {
@@ -143,18 +142,19 @@ class ConnectionStore(
         }
     }
 
-    /** Encrypts [plaintext] with the key in [secrets], creating and saving one on first use. */
+    private fun savedKeyOrNewOne(): ByteArray = secrets.read() ?: randomKey().also { secrets.write(it) }
+
     private fun encrypt(plaintext: String): String {
-        val key = secrets.read() ?: randomKey().also { secrets.write(it) }
+        val key = savedKeyOrNewOne()
         if (key.size != KEY_BYTES) {
             throw CliError("the connection key in ${secrets.description} is damaged; delete $file and pair again")
         }
         val iv = ByteArray(IV_BYTES).also { random.nextBytes(it) }
         val cipher = Cipher.getInstance("AES/GCM/NoPadding")
         cipher.init(Cipher.ENCRYPT_MODE, SecretKeySpec(key, "AES"), GCMParameterSpec(TAG_BITS, iv))
-        cipher.updateAAD(HEADER.toByteArray(Charsets.UTF_8))
+        cipher.updateAAD(FORMAT_MARKER.toByteArray(Charsets.UTF_8))
         val ciphertext = cipher.doFinal(plaintext.toByteArray(Charsets.UTF_8))
-        return HEADER + Base64.getEncoder().encodeToString(iv + ciphertext)
+        return FORMAT_MARKER + Base64.getEncoder().encodeToString(iv + ciphertext)
     }
 
     private fun decrypt(encoded: String): String {
@@ -180,7 +180,7 @@ class ConnectionStore(
             SecretKeySpec(key, "AES"),
             GCMParameterSpec(TAG_BITS, blob, 0, IV_BYTES),
         )
-        cipher.updateAAD(HEADER.toByteArray(Charsets.UTF_8))
+        cipher.updateAAD(FORMAT_MARKER.toByteArray(Charsets.UTF_8))
         val plaintext = try {
             cipher.doFinal(blob, IV_BYTES, blob.size - IV_BYTES)
         } catch (_: Exception) {
@@ -193,8 +193,7 @@ class ConnectionStore(
     }
 
     companion object {
-        /** The format marker, authenticated with the ciphertext. */
-        private const val HEADER = "amber-cli-1:"
+        private const val FORMAT_MARKER = "amber-cli-1:"
         private const val KEY_BYTES = 32
         private const val IV_BYTES = 12
         private const val TAG_BITS = 128
@@ -208,7 +207,6 @@ class ConnectionStore(
             val override = System.getenv("AMBER_CLI_HOME")
             if (!override.isNullOrBlank()) return Paths.get(override).toAbsolutePath()
             val windows = System.getProperty("os.name").lowercase().contains("win")
-            // %APPDATA% on Windows, $XDG_CONFIG_HOME elsewhere; without them a folder in the home directory.
             val configHome = System.getenv(if (windows) "APPDATA" else "XDG_CONFIG_HOME")
             if (!configHome.isNullOrBlank()) return Paths.get(configHome, "amber-cli")
             val home = System.getProperty("user.home")

@@ -81,10 +81,8 @@ class ArchitectureTest {
     fun `the ui package does not talk to the database`() {
         val actual = appMain
             .filter { it.relativePath().startsWith("ui/") }
-            // The layer the rule sends data loading to: a ViewModel may expose what it loaded.
             .filterNot { it.relativePath().endsWith("ViewModel.kt") }
-            // A DAO call needs no import when Kotlin infers its types, so the calls count too.
-            .filter { file -> file.imports.any { it.name.startsWith("com.greenart7c3.nostrsigner.database") } || daoCall.containsMatchIn(file.text) }
+            .filter { file -> file.imports.any { it.name.startsWith("com.greenart7c3.nostrsigner.database") } || databaseOrDaoCallEvenWithoutImport.containsMatchIn(file.text) }
             .map { it.relativePath() }
             .toSet()
 
@@ -93,19 +91,16 @@ class ArchitectureTest {
 
     @Test
     fun `Context amber usage can only shrink`() {
-        // Root-package files use the extension without an import (and often without a receiver).
-        // Hyphens excluded: "amber-key-check" is a string, not the extension.
-        val rootUse = Regex("""(?<![\w-])amber(?![\w-])""")
-        // The same container without the extension: (context.applicationContext as Amber).
-        val castToAmber = Regex("""\bas\??\s+(com\.greenart7c3\.nostrsigner\.)?Amber\b""")
+        val unimportedAmberExtensionNotInAHyphenatedName = Regex("""(?<![\w-])amber(?![\w-])""")
+        val containerCastWithoutTheExtension = Regex("""\bas\??\s+(com\.greenart7c3\.nostrsigner\.)?Amber\b""")
         val actual = appMain
             .filter { it.relativePath() != "Amber.kt" }
             .filter { file ->
                 file.imports.any { it.name == "com.greenart7c3.nostrsigner.amber" } ||
-                    castToAmber.containsMatchIn(file.text) ||
+                    containerCastWithoutTheExtension.containsMatchIn(file.text) ||
                     (
                         file.packagee?.name == "com.greenart7c3.nostrsigner" &&
-                            rootUse.containsMatchIn(file.text.lines().filterNot { it.startsWith("import ") }.joinToString("\n"))
+                            unimportedAmberExtensionNotInAHyphenatedName.containsMatchIn(file.text.lines().filterNot { it.startsWith("import ") }.joinToString("\n"))
                         )
             }
             .map { it.relativePath() }
@@ -307,18 +302,20 @@ class ArchitectureTest {
 
     private fun String.isAllowedInCommon(): Boolean = when {
         startsWith("android.") -> false
-        // @Immutable for the compose compiler, compileOnly: no Compose UI.
-        startsWith("androidx.compose.runtime.") -> true
+        isComposeRuntimeCompileOnlyForImmutable() -> true
         startsWith("androidx.") -> false
         startsWith("java.awt") || startsWith("javax.swing") || startsWith("javafx.") -> false
         startsWith("com.greenart7c3.nostrsigner.") -> startsWith("com.greenart7c3.nostrsigner.common.")
         else -> true
     }
 
+    private fun String.isComposeRuntimeCompileOnlyForImmutable(): Boolean = startsWith("androidx.compose.runtime.")
+
+    private fun String.isComposeMultiplatformRuntimeOnBothTargets(): Boolean = startsWith("androidx.compose.runtime.")
+
     private fun String.isAllowedInCommonsui(): Boolean = when {
         startsWith("android.") -> false
-        // Compose Multiplatform resolves to androidx.compose on both targets.
-        startsWith("androidx.compose.runtime.") -> true
+        isComposeMultiplatformRuntimeOnBothTargets() -> true
         startsWith("androidx.") -> false
         startsWith("java.awt") || startsWith("javax.swing") || startsWith("javafx.") -> false
         startsWith("com.greenart7c3.nostrsigner.") -> startsWith("com.greenart7c3.nostrsigner.commonsui.")
@@ -326,10 +323,8 @@ class ArchitectureTest {
     }
 
     private companion object {
-        // Opening a Room database or DAO: AccountRepository.dao/getDatabase/getHistoryDatabase/getLogDatabase.
-        val daoCall = Regex("""\.(\w*D|d)aos?\(|\bget(History|Log)?Database\(""")
+        val databaseOrDaoCallEvenWithoutImport = Regex("""\.(\w*D|d)aos?\(|\bget(History|Log)?Database\(""")
 
-        // Empty since step 6: no ui/ file outside a ViewModel may use the database.
         val databaseInUi = emptySet<String>()
 
         val contextAmberUsers = setOf(
@@ -347,7 +342,6 @@ class ArchitectureTest {
             "SignerProvider.kt",
         )
 
-        // Empty since step 8: service/ and database/ take what needs the UI as a function the composable passes in.
         val composeUiInService = emptySet<String>()
 
         val writeDaoNames = listOf("ApplicationWriteDao", "PermissionWriteDao", "PermissionMaintenanceDao")

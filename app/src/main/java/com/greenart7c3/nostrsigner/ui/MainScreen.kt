@@ -27,7 +27,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -58,6 +57,8 @@ import com.greenart7c3.nostrsigner.data.RelayClient
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.IntentData
 import com.greenart7c3.nostrsigner.models.IntentResultType
+import com.greenart7c3.nostrsigner.service.BackupApplication
+import com.greenart7c3.nostrsigner.service.RestoreResult
 import com.greenart7c3.nostrsigner.service.crashreports.DisplayCrashMessages
 import com.greenart7c3.nostrsigner.ui.actions.AccountsBottomSheet
 import com.greenart7c3.nostrsigner.ui.components.AmberBottomBar
@@ -67,6 +68,7 @@ import com.greenart7c3.nostrsigner.ui.components.ProfileSubscriptionEffect
 import com.greenart7c3.nostrsigner.ui.navigation.Route
 import com.greenart7c3.nostrsigner.ui.theme.amoledBorder
 import com.greenart7c3.nostrsigner.ui.theme.outlineIfAny
+import com.vitorpamplona.quartz.nip01Core.crypto.KeyPair
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
@@ -170,18 +172,33 @@ private fun NotificationPermissionPrompt() {
     }
 }
 
+class LoginActions(
+    val onOpenFirstAccount: suspend () -> Unit,
+    val onCreate: suspend (ConnectionSetup, Set<String>, String) -> Unit,
+    val onLogin: suspend (KeyPair, ConnectionSetup) -> Unit,
+)
+
+class AccountActions(
+    val login: LoginActions,
+    val onSwitchAccount: (npub: String, route: String?) -> Unit,
+    val onLogOff: (npub: String) -> Unit,
+    val onAcceptRestore: (List<BackupApplication>, (RestoreResult) -> Unit) -> Unit,
+    val onDismissRestore: () -> Unit,
+)
+
 @SuppressLint("ConfigurationScreenWidthHeight")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(
     account: Account,
-    accountStateViewModel: AccountStateViewModel,
     requests: IncomingRequests,
     // Read through a function so that only this screen recomposes when it is consumed.
     route: () -> String?,
     onConsumeRoute: () -> Unit,
     navController: NavHostControllerWrapper,
     onRemoveIntentData: (List<IntentData>, IntentResultType) -> Unit,
+    restorePrompt: RestorePromptState?,
+    actions: AccountActions,
     modifier: Modifier = Modifier,
     viewModel: MainScreenViewModel = viewModel(
         factory = MainScreenViewModel.factory(LocalContext.current.applicationContext, LocalSettingsStore.current, LocalRelayClient.current, LocalAppScope.current),
@@ -204,8 +221,8 @@ fun MainScreen(
             account,
             navController,
             requests,
-            onSwitchAccount = { accountStateViewModel.switchUser(it, null) },
-            onLogOff = accountStateViewModel::logOff,
+            onSwitchAccount = { actions.onSwitchAccount(it, null) },
+            onLogOff = actions.onLogOff,
         ) { padding ->
             Box(Modifier.fillMaxSize()) {
                 val layout = MainLayout(padding, margin)
@@ -217,9 +234,9 @@ fun MainScreen(
                 ) {
                     loginDestinations(
                         navController,
-                        onOpenFirstAccount = accountStateViewModel::openFirstImportedAccount,
-                        onCreate = { setup, seedWords, name -> accountStateViewModel.newKey(setup.torMode, setup.proxyPort, setup.signPolicy, seedWords, name) },
-                        onLogin = { keyPair, setup -> accountStateViewModel.startUI(keyPair, null, setup.torMode, setup.proxyPort, setup.signPolicy) },
+                        onOpenFirstAccount = actions.login.onOpenFirstAccount,
+                        onCreate = actions.login.onCreate,
+                        onLogin = actions.login.onLogin,
                         onSignedUp = { appScope.launch { notificationSubscription.updateFilter() } },
                     )
                     requestDestination(layout, account, requests, onRemoveIntentData, onLoading = { isLoading = it })
@@ -227,12 +244,11 @@ fun MainScreen(
                     relayDestinations(layout, account, navController)
                     applicationDestinations(layout, account, navController)
                     securityDestinations(layout, account, navController)
-                    profileDestinations(layout, navController, viewModel::useOrbot, viewModel::useBuiltinTor, onSaveProfile = { accountStateViewModel.switchUser(account.npub, Route.Settings.route) })
+                    profileDestinations(layout, navController, viewModel::useOrbot, viewModel::useBuiltinTor, onSaveProfile = { actions.onSwitchAccount(account.npub, Route.Settings.route) })
                     reportDestinations(layout, account, navController, onLoading = { isLoading = it })
                 }
 
-                val restorePrompt by accountStateViewModel.restorePrompt.collectAsState()
-                RestoreBackupDialog(restorePrompt, onAccept = accountStateViewModel::acceptRestore, onDismiss = accountStateViewModel::dismissRestore)
+                RestoreBackupDialog(restorePrompt, onAccept = actions.onAcceptRestore, onDismiss = actions.onDismissRestore)
 
                 DisplayCrashMessages(appContext, pendingReports, account, navController)
 

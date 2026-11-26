@@ -42,13 +42,16 @@ import com.greenart7c3.nostrsigner.commonsui.keystore_error_title
 import com.greenart7c3.nostrsigner.commonsui.no
 import com.greenart7c3.nostrsigner.commonsui.ok
 import com.greenart7c3.nostrsigner.commonsui.yes
+import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.AmberBunkerRequest
+import com.greenart7c3.nostrsigner.models.IntentData
 import com.greenart7c3.nostrsigner.models.IntentResultType
 import com.greenart7c3.nostrsigner.service.IntentUtils
 import com.greenart7c3.nostrsigner.ui.navigation.Route
 import com.greenart7c3.nostrsigner.ui.navigation.externalRoute
 import com.greenart7c3.nostrsigner.ui.theme.amoledBorder
 import com.greenart7c3.nostrsigner.ui.theme.outlineIfAny
+import com.vitorpamplona.quartz.nip01Core.crypto.KeyPair
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
@@ -70,7 +73,7 @@ fun AccountScreen(
     // The owner tag of this activity's MainViewModel: only its requests show.
 ) {
     val accountState by accountStateViewModel.accountContent.collectAsState()
-    val context = LocalContext.current
+    val actions = remember(accountStateViewModel) { accountActions(accountStateViewModel) }
 
     KeystoreFailureWarning()
 
@@ -91,65 +94,130 @@ fun AccountScreen(
                 }
                 is AccountState.LoggedOff -> {
                     val newNavController = rememberNavController()
-                    MainLoginPage(accountStateViewModel, NavHostControllerWrapper(newNavController))
+                    MainLoginPage(NavHostControllerWrapper(newNavController), actions.login)
                 }
                 is AccountState.LoggedIn -> {
-                    val allIntents by IntentUtils.intents.collectAsState(initial = persistentListOf())
-                    val intents = remember(allIntents, intentOwner) { allIntents.filter { it.owner == intentOwner }.toImmutableList() }
-                    LaunchedEffect(intent) {
-                        intent.intent?.let {
-                            IntentUtils.getIntentData(
-                                context,
-                                it,
-                                packageName,
-                                externalRoute(it.getStringExtra("route")),
-                                state.account,
-                                referrer,
-                            )?.let { intentData ->
-                                IntentUtils.addAll(listOf(intentData.copy(owner = intentOwner)))
-                            }
-                        }
-                    }
-                    // Remembered, so a consumed route (set to null) is not brought back by the
-                    // next recomposition; recomputed when the requests or the route change.
-                    val localRoute = remember(intents, bunkerRequests, state.route) {
-                        mutableStateOf(
-                            intents.firstNotNullOfOrNull { it.route } ?: if (bunkerRequests.isNotEmpty()) {
-                                Route.IncomingRequest.route
-                            } else {
-                                null
-                            } ?: state.route,
-                        )
-                    }
-
-                    DisplayErrorMessages()
-                    MainScreen(
-                        account = state.account,
-                        accountStateViewModel = accountStateViewModel,
-                        requests = IncomingRequests(
-                            intents = intents,
-                            bunkerRequests = bunkerRequests,
-                            packageName = packageName,
-                            appName = appName,
-                            isExternalRequest = isExternalRequest || (intents.isEmpty() && bunkerRequests.isNotEmpty() && (packageName != null || intent.intent?.getStringExtra("route") == Route.IncomingRequest.route)),
-                        ),
-                        route = { localRoute.value },
-                        onConsumeRoute = { localRoute.value = null },
+                    val restorePrompt by accountStateViewModel.restorePrompt.collectAsState()
+                    LoggedInScreen(
+                        state = state,
+                        intent = intent,
+                        requests = ExternalRequestSource(packageName, appName, bunkerRequests, intentOwner, isExternalRequest, referrer),
                         navController = navController,
-                        onRemoveIntentData = { results, type ->
-                            when (type) {
-                                IntentResultType.ADD -> {
-                                    IntentUtils.addAll(results)
-                                }
-
-                                IntentResultType.REMOVE -> {
-                                    IntentUtils.removeAll(results)
-                                }
-                            }
-                        },
+                        restorePrompt = restorePrompt,
+                        actions = actions,
                     )
                 }
             }
+        }
+    }
+}
+
+private suspend fun AccountStateViewModel.createAccount(setup: ConnectionSetup, seedWords: Set<String>, name: String) = newKey(setup.torMode, setup.proxyPort, setup.signPolicy, seedWords, name)
+
+private suspend fun AccountStateViewModel.logIn(keyPair: KeyPair, setup: ConnectionSetup) = startUI(keyPair, null, setup.torMode, setup.proxyPort, setup.signPolicy)
+
+private fun accountActions(accountStateViewModel: AccountStateViewModel) = AccountActions(
+    login = LoginActions(
+        onOpenFirstAccount = accountStateViewModel::openFirstImportedAccount,
+        onCreate = accountStateViewModel::createAccount,
+        onLogin = accountStateViewModel::logIn,
+    ),
+    onSwitchAccount = accountStateViewModel::switchUser,
+    onLogOff = accountStateViewModel::logOff,
+    onAcceptRestore = accountStateViewModel::acceptRestore,
+    onDismissRestore = accountStateViewModel::dismissRestore,
+)
+
+private class ExternalRequestSource(
+    val packageName: String?,
+    val appName: String?,
+    val bunkerRequests: ImmutableList<AmberBunkerRequest>,
+    val intentOwner: String,
+    val isExternalRequest: Boolean,
+    val referrer: Uri?,
+)
+
+@SuppressLint("UnrememberedMutableState")
+@Composable
+private fun LoggedInScreen(
+    state: AccountState.LoggedIn,
+    intent: IntentWrapper,
+    requests: ExternalRequestSource,
+    navController: NavHostControllerWrapper,
+    restorePrompt: RestorePromptState?,
+    actions: AccountActions,
+    modifier: Modifier = Modifier,
+) {
+    val packageName = requests.packageName
+    val bunkerRequests = requests.bunkerRequests
+    val intents = rememberOwnIntents(intent, requests, state.account)
+    // Remembered, so a consumed route (set to null) is not brought back by the
+    // next recomposition; recomputed when the requests or the route change.
+    val localRoute = remember(intents, bunkerRequests, state.route) {
+        mutableStateOf(
+            intents.firstNotNullOfOrNull { it.route } ?: if (bunkerRequests.isNotEmpty()) {
+                Route.IncomingRequest.route
+            } else {
+                null
+            } ?: state.route,
+        )
+    }
+
+    DisplayErrorMessages()
+    MainScreen(
+        account = state.account,
+        requests = IncomingRequests(
+            intents = intents,
+            bunkerRequests = bunkerRequests,
+            packageName = packageName,
+            appName = requests.appName,
+            isExternalRequest = requests.isExternalRequest || (intents.isEmpty() && bunkerRequests.isNotEmpty() && (packageName != null || intent.intent?.getStringExtra("route") == Route.IncomingRequest.route)),
+        ),
+        route = { localRoute.value },
+        onConsumeRoute = { localRoute.value = null },
+        navController = navController,
+        onRemoveIntentData = ::updateIntents,
+        restorePrompt = restorePrompt,
+        actions = actions,
+        modifier = modifier,
+    )
+}
+
+@Composable
+private fun rememberOwnIntents(
+    intent: IntentWrapper,
+    requests: ExternalRequestSource,
+    account: Account,
+): ImmutableList<IntentData> {
+    val context = LocalContext.current
+    val intentOwner = requests.intentOwner
+    val allIntents by IntentUtils.intents.collectAsState(initial = persistentListOf())
+    val intents = remember(allIntents, intentOwner) { allIntents.filter { it.owner == intentOwner }.toImmutableList() }
+    LaunchedEffect(intent) {
+        intent.intent?.let {
+            IntentUtils.getIntentData(
+                context,
+                it,
+                requests.packageName,
+                externalRoute(it.getStringExtra("route")),
+                account,
+                requests.referrer,
+            )?.let { intentData ->
+                IntentUtils.addAll(listOf(intentData.copy(owner = intentOwner)))
+            }
+        }
+    }
+    return intents
+}
+
+private fun updateIntents(results: List<IntentData>, type: IntentResultType) {
+    when (type) {
+        IntentResultType.ADD -> {
+            IntentUtils.addAll(results)
+        }
+
+        IntentResultType.REMOVE -> {
+            IntentUtils.removeAll(results)
         }
     }
 }

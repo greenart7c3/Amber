@@ -4,6 +4,13 @@ import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
 
+/**
+ * One request in an account's history.
+ *
+ * @property content for encrypt/decrypt requests the ciphertext (the encrypted form that was sent
+ * or received), never the plaintext. The plaintext is recovered on demand in the activity/history
+ * UI via [encryptionPubKey] (the counterparty key) and, for NIP-44 v3, [kind] + [encryptionScope].
+ */
 @Entity(
     tableName = "history",
     indices = [
@@ -34,10 +41,6 @@ data class HistoryEntity(
     val time: Long,
     val accepted: Boolean,
     val translatedPermission: String = "",
-    // For encrypt/decrypt requests `content` holds the ciphertext (the encrypted
-    // form that was sent or received), never the plaintext. The plaintext is
-    // recovered on demand in the activity/history UI via [encryptionPubKey] (the
-    // counterparty key) and, for NIP-44 v3, [kind] + [encryptionScope].
     val content: String = "",
     val encryptionPubKey: String = "",
     val encryptionScope: String = "",

@@ -30,18 +30,20 @@ import kotlinx.coroutines.delay
  * The app's relay connections: the Quartz client, how it dials (Tor or not), its status, and
  * the connect / reconnect / reset logic. The subscriptions on top of it are passed in as
  * functions, since they take this client themselves.
+ *
+ * @param appContext the Application; [AmberRelayStats] builds the relay-status notification with it.
+ * @param isSettingsLoaded false until the stored settings are loaded; until then every dial goes through the proxy.
+ * @param updateSubscriptions sends the current relay lists to the subscriptions (the profile one only while the UI is visible).
  */
 class AppRelayClient(
-    // The Application; AmberRelayStats builds the relay-status notification with it.
     appContext: Context,
     private val settingsStore: SettingsStore,
-    // False until the stored settings are loaded; until then every dial goes through the proxy.
     isSettingsLoaded: () -> Boolean,
     scope: CoroutineScope,
-    // Sends the current relay lists to the subscriptions (the profile one only while the UI is visible).
     private val updateSubscriptions: suspend () -> Unit,
     private val closeSubscriptions: () -> Unit,
 ) : RelayClient {
+    @Suppress("NoComments")
     override val factory = OkHttpWebSocket.Builder { url ->
         if (PrivateAddress.isPrivate(url.url)) return@Builder HttpClientManager.getLocalHttpClient()
         val useProxy = when {
@@ -73,7 +75,7 @@ class AppRelayClient(
                         TrafficStats.setThreadStatsTag(0x0001)
                     }
                     val socket = Socket()
-                    socket.connect(InetSocketAddress(proxyHost, port), 5000)
+                    socket.connect(InetSocketAddress(proxyHost, port), PROXY_PROBE_TIMEOUT_MILLIS)
                     TrafficStats.tagSocket(socket)
                     socket.close()
                     true
@@ -86,7 +88,7 @@ class AppRelayClient(
                 TrafficStats.setThreadStatsTag(0x0001)
             }
             val socket = Socket()
-            socket.connect(InetSocketAddress(proxyHost, proxyPort), 5000) // 3-second timeout
+            socket.connect(InetSocketAddress(proxyHost, proxyPort), PROXY_PROBE_TIMEOUT_MILLIS)
             TrafficStats.tagSocket(socket)
             socket.close()
             return true
@@ -112,6 +114,7 @@ class AppRelayClient(
         client.disconnect()
     }
 
+    @Suppress("NoComments")
     override fun reconnect() {
         if (settingsStore.settings.killSwitch.value) {
             return
@@ -141,6 +144,7 @@ class AppRelayClient(
      * list, which removes them from the subscriptions entirely. All of it is about the
      * old network, so it is cleared here.
      */
+    @Suppress("NoComments")
     override suspend fun resetRelayConnections(reason: String) {
         if (BuildFlavorChecker.isOfflineFlavor()) return
         if (settingsStore.settings.killSwitch.value) return
@@ -148,15 +152,11 @@ class AppRelayClient(
         AmberLog.d(Amber.TAG, "Resetting relay connections: $reason")
         RelayHealthTracker.reset()
 
-        // The teardown reports onDisconnected for every relay; mark it intentional so
-        // NostrClientLoggerListener does not count it as failures or schedule retries.
-        intentionalDisconnectTime = System.currentTimeMillis()
-        client.disconnect()
+        disconnectIntentionally()
         // disconnect() also clears each relay's backoff; this covers relays without a socket.
         client.resetBackoff()
         client.connect()
 
-        // Re-adds relays the dead list had dropped from the subscriptions.
         checkForNewRelaysAndUpdateAllFilters()
         stats.updateNotification()
     }
@@ -169,8 +169,6 @@ class AppRelayClient(
 
         val wasActive = client.isActive()
         if (!BuildFlavorChecker.isOfflineFlavor()) {
-            // these update the relay list in the filters and send them to the
-            // relay, reconnecting if needed
             updateSubscriptions()
         }
         AmberLog.d(Amber.TAG, "checkForNewRelaysAndUpdateAllFilters wasActive: $wasActive")
@@ -184,3 +182,5 @@ class AppRelayClient(
         }
     }
 }
+
+private const val PROXY_PROBE_TIMEOUT_MILLIS = 5000

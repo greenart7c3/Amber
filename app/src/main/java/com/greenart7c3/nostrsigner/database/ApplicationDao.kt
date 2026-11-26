@@ -83,8 +83,6 @@ interface ApplicationDao {
                 runCatching { SecureCryptoHelper.decryptBlocking(row.secret) }.getOrDefault(null) == secret
             }
         }?.key ?: return null
-        // Eager-load the related permissions via the wrapped getByKey so callers
-        // receive the same shape the original @Transaction/SELECT joined query did.
         return getByKey(matchKey)
     }
 }
@@ -127,8 +125,6 @@ interface PermissionWriteDao {
         permissions.forEach {
             if (it.kind != null) {
                 if (it.relay.isNotEmpty()) {
-                    // For relay-specific permissions (kind 22242): wildcard "*" clears all relay entries,
-                    // specific relay only clears its own entry
                     if (it.relay == "*") {
                         deletePermissionsForKind(it.pkKey, it.type, it.kind)
                     } else {

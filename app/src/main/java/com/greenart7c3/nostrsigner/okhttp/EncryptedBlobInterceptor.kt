@@ -46,11 +46,12 @@ class EncryptedBlobInterceptor(
     }
 
     private fun Response.decryptOrNullWithErrorCorrection(cipher: SymmetricCipher): Response? = decryptOrNull(cipher) ?: if (cipher is AESGCM) {
-        // Some clients used the hex string of the nonce as the nonce bytes.
-        decryptOrNull(AESGCM(cipher.keyBytes, cipher.nonce.toHexKey().toByteArray(Charsets.UTF_8)))
+        decryptOrNull(cipher.withHexStringOfNonceAsNonceBytes())
     } else {
         null
     }
+
+    private fun AESGCM.withHexStringOfNonceAsNonceBytes() = AESGCM(keyBytes, nonce.toHexKey().toByteArray(Charsets.UTF_8))
 
     override fun intercept(chain: Interceptor.Chain): Response {
         val request = chain.request()
@@ -61,11 +62,17 @@ class EncryptedBlobInterceptor(
         if (response.isSuccessful) {
             return response.decryptOrNullWithErrorCorrection(cipher) ?: response
         } else {
-            // Log redirections to be able to use the cipher.
-            response.header("Location")?.let {
-                cache.add(it, cipher)
-            }
+            rememberCipherForRedirectTarget(response, cipher)
         }
         return response
+    }
+
+    private fun rememberCipherForRedirectTarget(
+        response: Response,
+        cipher: SymmetricCipher,
+    ) {
+        response.header("Location")?.let {
+            cache.add(it, cipher)
+        }
     }
 }

@@ -57,15 +57,18 @@ class OkHttpWebSocket(
      * than reaching a relay client that has already moved on. Claimed with a compare-and-set so a
      * [disconnect] racing a terminal callback still yields exactly one report.
      */
+    @Suppress("NoComments")
     private val ended = AtomicBoolean(false)
 
     /**
      * True from the start of [connect] until OkHttp hands back its socket. A dial in flight is not
-     * a dead session: reporting it as one let a concurrent reconnect pass tear it down and dial
-     * again, and the first dial, never ended, opened as well -- two connections to one relay, the
-     * REQ sent twice and every message delivered twice.
+     * a dead session: reporting it as one let a concurrent reconnect pass of the Quartz relay client
+     * tear it down and dial again, and the first dial, never ended, opened as well -- two connections
+     * to one relay, the REQ sent twice and every message delivered twice.
      */
-    @Volatile private var dialing = false
+    @Suppress("NoComments")
+    @Volatile
+    private var dialing = false
 
     fun buildRequest() = Request.Builder().url(url.url).build()
 
@@ -91,6 +94,7 @@ class OkHttpWebSocket(
         return false
     }
 
+    @Suppress("NoComments")
     override fun connect() {
         if (socket != null || dialing || ended.get()) return
         dialing = true
@@ -122,16 +126,16 @@ class OkHttpWebSocket(
         // relay's outbound buffers — infrastructure that isn't ours. Drain
         // the remote as fast as it can send; consumer speed is handled
         // downstream.
+        @Suppress("NoComments")
         val incomingMessages: Channel<String> = Channel(Channel.UNLIMITED)
-        val job = // Launch a coroutine to process messages from the channel.
+        val job =
             scope.launch {
                 for (message in incomingMessages) {
                     out.onMessage(message)
                 }
             }
 
-        /** Claims the session's single terminal report. False if it already ended. */
-        private fun endSession(): Boolean {
+        private fun claimSessionEnd(): Boolean {
             if (!ended.compareAndSet(false, true)) return false
             socket = null
             incomingMessages.close()
@@ -140,6 +144,7 @@ class OkHttpWebSocket(
             return true
         }
 
+        @Suppress("NoComments")
         override fun onOpen(
             webSocket: okhttp3.WebSocket,
             response: Response,
@@ -161,11 +166,10 @@ class OkHttpWebSocket(
             text: String,
         ) {
             if (ended.get()) return
-            // Never blocks (unlimited channel): the OkHttp reader
-            // thread must stay free to keep draining the socket.
             incomingMessages.trySendBlocking(text)
         }
 
+        @Suppress("NoComments")
         override fun onClosing(
             webSocket: okhttp3.WebSocket,
             code: Int,
@@ -193,7 +197,7 @@ class OkHttpWebSocket(
             code: Int,
             reason: String,
         ) {
-            if (!endSession()) return
+            if (!claimSessionEnd()) return
             out.onClosed(code, reason)
         }
 
@@ -202,7 +206,7 @@ class OkHttpWebSocket(
             t: Throwable,
             response: Response?,
         ) {
-            if (!endSession()) return
+            if (!claimSessionEnd()) return
             out.onFailure(t, response?.code, response?.message)
         }
     }
@@ -210,13 +214,13 @@ class OkHttpWebSocket(
     class Builder(
         val httpClient: (NormalizedRelayUrl) -> OkHttpClient,
     ) : WebsocketBuilder {
-        // Called when connecting.
         override fun build(
             url: NormalizedRelayUrl,
             out: WebSocketListener,
         ) = OkHttpWebSocket(url, httpClient, out)
     }
 
+    @Suppress("NoComments")
     override fun disconnect() {
         // Claim the session ourselves: OkHttp's cancel() raises no callback when no reader is
         // left to fail (the state a relay-initiated close leaves behind), and when it does the

@@ -13,8 +13,8 @@ class CachingPermissionLookupDao(
     private val cache: ApplicationDaoCache,
 ) : PermissionLookupDao {
     private fun isExpired(pkKey: String): Boolean {
-        val deleteAfter = delegate.getDeleteAfter(pkKey) ?: return false
-        return deleteAfter > 0 && deleteAfter <= TimeUtils.now()
+        val deleteAfter = getDeleteAfter(pkKey) ?: return false
+        return deleteAfter in 1..TimeUtils.now()
     }
 
     override fun getSignPolicy(key: String): Int? {
@@ -47,7 +47,7 @@ class CachingPermissionLookupDao(
         return cache.wildcardRelayPermission(key, type, kind) { delegate.getWildcardRelayPermission(key, type, kind) }
     }
 
-    override fun getDeleteAfter(key: String): Long? = delegate.getDeleteAfter(key)
+    override fun getDeleteAfter(key: String): Long? = cache.deleteAfter(key) { delegate.getDeleteAfter(key) }
 
     override suspend fun getAllByKey(key: String): List<ApplicationPermissionsEntity> = delegate.getAllByKey(key)
 

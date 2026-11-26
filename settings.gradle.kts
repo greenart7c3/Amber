@@ -27,12 +27,6 @@ dependencyResolutionManagement {
         mavenCentral()
     }
 }
-buildCache {
-    local {
-        isEnabled = !providers.environmentVariable("CI").isPresent
-    }
-}
-
 rootProject.name = "Nostr Signer"
 include(":app")
 include(":cli")

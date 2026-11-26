@@ -4,6 +4,7 @@ import android.widget.Toast
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -104,10 +105,62 @@ fun ApplicationsBackupScreen(
         value = withContext(Dispatchers.IO) { AccountStorage.all(context) }
     }
 
-    val loadedAccounts = accounts
     var isBusy by remember { mutableStateOf(false) }
     var pendingRestore by remember { mutableStateOf<Pair<Account, BackupPayload>?>(null) }
 
+    AccountBackupList(
+        accounts = accounts,
+        isBusy = isBusy,
+        onBusyChange = { isBusy = it },
+        onRequestRestore = { account ->
+            isBusy = true
+            appScope.launch {
+                // Fetch first and let the user review what the backup
+                // contains; nothing is written until they confirm.
+                val fetched = ApplicationBackup.fetchLatestPayload(account, relayClient.client, settingsStore)
+                withContext(Dispatchers.Main) {
+                    isBusy = false
+                    when (fetched) {
+                        is BackupFetchResult.Found -> pendingRestore = account to fetched.payload
+                        is BackupFetchResult.NoBackupFound ->
+                            Toast.makeText(context, getStringBlocking(Res.string.restore_no_backup_found), Toast.LENGTH_LONG).show()
+                        is BackupFetchResult.Failed ->
+                            Toast.makeText(context, getStringBlocking(Res.string.restore_failed, fetched.message), Toast.LENGTH_LONG).show()
+                    }
+                }
+            }
+        },
+        modifier = modifier,
+    )
+
+    pendingRestore?.let { (account, payload) ->
+        RestoreConfirmDialog(
+            payload = payload,
+            onConfirm = { applications ->
+                pendingRestore = null
+                isBusy = true
+                val selected = payload.copy(applications = applications)
+                appScope.launch(Dispatchers.IO) {
+                    val result = ApplicationBackup.restoreFromPayload(account.npub, selected, accountRepository, relayClient)
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(context, restoreResultMessage(result), Toast.LENGTH_LONG).show()
+                        isBusy = false
+                    }
+                }
+            },
+            onDismiss = { pendingRestore = null },
+        )
+    }
+}
+
+@Composable
+private fun AccountBackupList(
+    accounts: List<Account>?,
+    isBusy: Boolean,
+    onBusyChange: (Boolean) -> Unit,
+    onRequestRestore: (Account) -> Unit,
+    modifier: Modifier = Modifier,
+) {
     Column(modifier = modifier) {
         Text(
             text = stringResource(Res.string.applications_backup_explainer),
@@ -117,7 +170,7 @@ fun ApplicationsBackupScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        if (loadedAccounts == null) {
+        if (accounts == null) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.Center,
@@ -125,73 +178,53 @@ fun ApplicationsBackupScreen(
                 CircularProgressIndicator()
             }
         } else {
-            loadedAccounts.forEachIndexed { index, account ->
+            accounts.forEachIndexed { index, account ->
                 if (index > 0) {
                     HorizontalDivider(modifier = Modifier.padding(vertical = 16.dp))
                 }
                 AccountBackupRow(
                     account = account,
                     isBusy = isBusy,
-                    onBusyChange = { isBusy = it },
-                    onRequestRestore = {
-                        isBusy = true
-                        appScope.launch {
-                            // Fetch first and let the user review what the backup
-                            // contains; nothing is written until they confirm.
-                            val fetched = ApplicationBackup.fetchLatestPayload(account, relayClient.client, settingsStore)
-                            withContext(Dispatchers.Main) {
-                                isBusy = false
-                                when (fetched) {
-                                    is BackupFetchResult.Found -> pendingRestore = account to fetched.payload
-                                    is BackupFetchResult.NoBackupFound ->
-                                        Toast.makeText(context, getStringBlocking(Res.string.restore_no_backup_found), Toast.LENGTH_LONG).show()
-                                    is BackupFetchResult.Failed ->
-                                        Toast.makeText(context, getStringBlocking(Res.string.restore_failed, fetched.message), Toast.LENGTH_LONG).show()
-                                }
-                            }
-                        }
-                    },
+                    onBusyChange = onBusyChange,
+                    onRequestRestore = { onRequestRestore(account) },
                 )
             }
         }
     }
+}
 
-    pendingRestore?.let { (account, payload) ->
-        val selection = rememberBackupSelection(payload)
-        AlertDialog(
-            modifier = Modifier.outlineIfAny(amoledBorder(), AlertDialogDefaults.shape),
-            onDismissRequest = { pendingRestore = null },
-            title = { Text(stringResource(Res.string.restore_confirm_title)) },
-            text = {
-                BackupContents(selection) {
-                    Text(stringResource(Res.string.restore_confirm_text))
-                }
-            },
-            confirmButton = {
-                TextButton(enabled = selection.hasSelection, onClick = {
-                    pendingRestore = null
-                    isBusy = true
-                    val selected = payload.copy(applications = selection.selected())
-                    val scope = appScope
-                    scope.launch(Dispatchers.IO) {
-                        val result = ApplicationBackup.restoreFromPayload(account.npub, selected, accountRepository, relayClient)
-                        withContext(Dispatchers.Main) {
-                            val msg = when (result) {
-                                is RestoreResult.Success -> getStringBlocking(Res.string.restore_success, result.apps, result.permissions)
-                                is RestoreResult.NoBackupFound -> getStringBlocking(Res.string.restore_no_backup_found)
-                                is RestoreResult.Failed -> getStringBlocking(Res.string.restore_failed, result.message)
-                            }
-                            Toast.makeText(context, msg, Toast.LENGTH_LONG).show()
-                            isBusy = false
-                        }
-                    }
-                }) { Text(stringResource(Res.string.yes)) }
-            },
-            dismissButton = {
-                TextButton(onClick = { pendingRestore = null }) { Text(stringResource(Res.string.no)) }
-            },
-        )
-    }
+@Composable
+private fun RestoreConfirmDialog(
+    payload: BackupPayload,
+    onConfirm: (List<BackupApplication>) -> Unit,
+    onDismiss: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val selection = rememberBackupSelection(payload)
+    AlertDialog(
+        modifier = modifier.outlineIfAny(amoledBorder(), AlertDialogDefaults.shape),
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(Res.string.restore_confirm_title)) },
+        text = {
+            BackupContents(selection) {
+                Text(stringResource(Res.string.restore_confirm_text))
+            }
+        },
+        confirmButton = {
+            TextButton(enabled = selection.hasSelection, onClick = { onConfirm(selection.selected()) }) {
+                Text(stringResource(Res.string.yes))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text(stringResource(Res.string.no)) }
+        },
+    )
+}
+
+private fun restoreResultMessage(result: RestoreResult): String = when (result) {
+    is RestoreResult.Success -> getStringBlocking(Res.string.restore_success, result.apps, result.permissions)
+    is RestoreResult.NoBackupFound -> getStringBlocking(Res.string.restore_no_backup_found)
+    is RestoreResult.Failed -> getStringBlocking(Res.string.restore_failed, result.message)
 }
 
 @Composable
@@ -214,49 +247,30 @@ private fun AccountBackupRow(
     }
 
     Column(modifier = Modifier.fillMaxWidth()) {
-        Row(
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
+        AccountBackupHeader(
+            account = account,
+            name = name,
+            picture = picture,
+            backupEnabled = backupEnabled,
+            onBackupEnabledChange = { enabled ->
+                backupEnabled = enabled
+                scope.launch(Dispatchers.IO) {
+                    AccountPreferences.setBackupApplications(context, account.npub, enabled)
+                    if (anyAccountBackupEnabled(context)) {
+                        BackupApplicationsWorker.schedule(context.applicationContext)
+                    } else {
+                        BackupApplicationsWorker.cancel(context.applicationContext)
+                    }
+                }
+            },
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(vertical = 4.dp),
-        ) {
-            AccountAvatar(account = account, picture = picture)
-            Spacer(modifier = Modifier.width(12.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                if (name.isNotBlank()) {
-                    Text(text = name)
-                }
-                Text(
-                    text = account.npub.toShortenHex(),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Color.Gray,
-                )
-            }
-            Switch(
-                checked = backupEnabled,
-                onCheckedChange = { enabled ->
-                    backupEnabled = enabled
-                    scope.launch(Dispatchers.IO) {
-                        AccountPreferences.setBackupApplications(context, account.npub, enabled)
-                        if (anyAccountBackupEnabled(context)) {
-                            BackupApplicationsWorker.schedule(context.applicationContext)
-                        } else {
-                            BackupApplicationsWorker.cancel(context.applicationContext)
-                        }
-                    }
-                },
-            )
-        }
+        )
 
-        Spacer(modifier = Modifier.height(8.dp))
-
-        AmberButton(
-            modifier = Modifier.fillMaxWidth(),
-            text = stringResource(Res.string.backup_now),
-            enabled = !isBusy,
-            onClick = {
-                if (isBusy) return@AmberButton
+        AccountBackupButtons(
+            isBusy = isBusy,
+            onBackupNow = {
                 onBusyChange(true)
                 scope.launch(Dispatchers.IO) {
                     val ok = ApplicationBackup.publishBackup(account.npub, account, accountRepository, relayClient, settingsStore)
@@ -270,17 +284,69 @@ private fun AccountBackupRow(
                     }
                 }
             },
+            onRequestRestore = onRequestRestore,
         )
+    }
+}
 
-        Spacer(modifier = Modifier.height(8.dp))
+@Composable
+private fun ColumnScope.AccountBackupButtons(
+    isBusy: Boolean,
+    onBackupNow: () -> Unit,
+    onRequestRestore: () -> Unit,
+) {
+    Spacer(modifier = Modifier.height(8.dp))
 
-        AmberButton(
-            modifier = Modifier.fillMaxWidth(),
-            text = stringResource(Res.string.restore_from_relays),
-            enabled = !isBusy,
-            onClick = {
-                if (!isBusy) onRequestRestore()
-            },
+    AmberButton(
+        modifier = Modifier.fillMaxWidth(),
+        text = stringResource(Res.string.backup_now),
+        enabled = !isBusy,
+        onClick = {
+            if (!isBusy) onBackupNow()
+        },
+    )
+
+    Spacer(modifier = Modifier.height(8.dp))
+
+    AmberButton(
+        modifier = Modifier.fillMaxWidth(),
+        text = stringResource(Res.string.restore_from_relays),
+        enabled = !isBusy,
+        onClick = {
+            if (!isBusy) onRequestRestore()
+        },
+    )
+}
+
+@Composable
+private fun AccountBackupHeader(
+    account: Account,
+    name: String,
+    picture: String,
+    backupEnabled: Boolean,
+    onBackupEnabledChange: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = modifier,
+    ) {
+        AccountAvatar(account = account, picture = picture)
+        Spacer(modifier = Modifier.width(12.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            if (name.isNotBlank()) {
+                Text(text = name)
+            }
+            Text(
+                text = account.npub.toShortenHex(),
+                style = MaterialTheme.typography.bodySmall,
+                color = Color.Gray,
+            )
+        }
+        Switch(
+            checked = backupEnabled,
+            onCheckedChange = onBackupEnabledChange,
         )
     }
 }
@@ -341,12 +407,7 @@ fun RestoreBackupDialog(
         confirmButton = {
             TextButton(enabled = selection.hasSelection, onClick = {
                 onAccept(selection.selected()) { result ->
-                    val msg = when (result) {
-                        is RestoreResult.Success -> getStringBlocking(Res.string.restore_success, result.apps, result.permissions)
-                        is RestoreResult.NoBackupFound -> getStringBlocking(Res.string.restore_no_backup_found)
-                        is RestoreResult.Failed -> getStringBlocking(Res.string.restore_failed, result.message)
-                    }
-                    Toast.makeText(context, msg, Toast.LENGTH_LONG).show()
+                    Toast.makeText(context, restoreResultMessage(result), Toast.LENGTH_LONG).show()
                 }
             }) { Text(stringResource(Res.string.signin_restore_accept)) }
         },

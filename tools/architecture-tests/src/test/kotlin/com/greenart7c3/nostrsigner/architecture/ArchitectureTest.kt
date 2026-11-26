@@ -2,6 +2,7 @@ package com.greenart7c3.nostrsigner.architecture
 
 import com.lemonappdev.konsist.api.Konsist
 import com.lemonappdev.konsist.api.declaration.KoFileDeclaration
+import com.lemonappdev.konsist.api.declaration.KoFunctionDeclaration
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -134,6 +135,108 @@ class ArchitectureTest {
     }
 
     @Test
+    fun `every application write evicts the permission cache`() {
+        val skipping = writeInterfaces()
+            .flatMap { (writeDao, cachingDao) ->
+                writeDao.functions()
+                    .filterNot { it.name.endsWith("Raw") || it.isSelect() }
+                    .filterNot { function ->
+                        val overrides = cachingDao.functions().filter { it.name == function.name }
+                        overrides.isNotEmpty() && overrides.all { evictsApplication.containsMatchIn(it.text) }
+                    }
+                    .map { "${writeDao.name}.${it.name}" }
+            }
+            .toSet()
+
+        assertRatchet(
+            "Each write of ApplicationWriteDao, PermissionWriteDao and PermissionMaintenanceDao must be overridden in its Caching " +
+                "wrapper and evict the application it changes (cache.invalidateApp or cache.invalidateAll), or the permission " +
+                "cache keeps serving the old grants and expiry:",
+            skipping,
+            writesThatKeepTheCache,
+        )
+    }
+
+    @Test
+    fun `application writes go through the caching DAOs`() {
+        val writeDaos = writeInterfaces()
+        val passThroughWrites = writeDaos
+            .flatMap { (writeDao, cachingDao) ->
+                writeDao.functions()
+                    .filter { it.name.endsWith("Raw") && !it.isSelect() }
+                    .filterNot { function -> cachingDao.functions().any { it.name == function.name && evictsApplication.containsMatchIn(it.text) } }
+                    .map { it.name }
+            }
+            .toSet()
+        assertTrue("no pass-through writes were found: did the write DAOs change?", passThroughWrites.isNotEmpty())
+
+        val cacheLayer = writeDaos.flatMap { (writeDao, cachingDao) -> listOf(writeDao.containingFile.path, cachingDao.containingFile.path) }.toSet() +
+            appSources.filter { it.name == "ApplicationDaos" || it.name == "AccountDatabases" }.map { it.path }
+        val passThroughCall = Regex("""\b(${passThroughWrites.joinToString("|")})\(""")
+        val actual = appSources
+            .filterNot { it.path in cacheLayer }
+            .flatMap { file ->
+                passThroughCall.findAll(file.text).map { "${file.relativePath()}: ${it.groupValues[1]}" } +
+                    uncachedDaos.findAll(file.text).map { "${file.relativePath()}: ${it.value}" }
+            }
+            .toSet()
+
+        assertRatchet(
+            "Write applications and permissions through AccountRepository.daos(npub), whose Caching DAOs evict the permission " +
+                "cache. The uncached DAOs (AppDatabase.applicationWriteDao() etc., ApplicationDaos.of) and the *Raw writes the " +
+                "wrappers pass through leave stale grants and expiry in it:",
+            actual,
+            passThroughCallers,
+        )
+    }
+
+    @Test
+    fun `only the write DAOs write the application tables`() {
+        val writeDaos = writeInterfaces().map { it.first }
+        val writeDaoTexts = writeDaos.map { it.text }
+        val sqlOutside = appSources
+            .flatMap { file ->
+                val migrations = file.properties().filter { migration.containsMatchIn(it.text) }.map { it.text }
+                val rest = (writeDaoTexts + migrations).fold(file.text) { text, excluded -> text.replace(excluded, "") }
+                applicationTableWrite.findAll(rest).map { "${file.relativePath()}: ${it.value.trim()}" }
+            }
+        val roomWritesOutside = (scope.interfaces() + scope.classes())
+            .filter { it.containingFile.path in appSourcePaths && it.hasAnnotationWithName("Dao") }
+            .filterNot { dao -> writeDaos.any { it.name == dao.name } }
+            .flatMap { dao ->
+                dao.functions()
+                    .filter { function -> function.annotations.any { it.name in roomWrites } && applicationEntity.containsMatchIn(function.text) }
+                    .map { "${dao.containingFile.relativePath()}: ${dao.name}.${it.name}" }
+            }
+        val violations = sqlOutside + roomWritesOutside
+
+        assertTrue(
+            "Only ApplicationWriteDao, PermissionWriteDao and PermissionMaintenanceDao (whose Caching wrappers evict the permission " +
+                "cache) and the Room migrations may write the application and applicationPermission tables:\n" +
+                violations.joinToString("\n"),
+            violations.isEmpty(),
+        )
+    }
+
+    private val appSources by lazy {
+        scope.files.filter { file ->
+            val path = file.path.replace('\\', '/')
+            file.moduleName == "app" && "/src/test/" !in path && "/src/androidTest/" !in path
+        }
+    }
+
+    private val appSourcePaths by lazy { appSources.map { it.path }.toSet() }
+
+    private fun writeInterfaces() = writeDaoNames.map { name ->
+        val writeDao = scope.interfaces().singleOrNull { it.name == name && it.containingFile.path in appSourcePaths }
+        val cachingDao = scope.classes().singleOrNull { it.name == "Caching$name" && it.containingFile.path in appSourcePaths }
+        assertTrue("$name and Caching$name were not found", writeDao != null && cachingDao != null)
+        writeDao!! to cachingDao!!
+    }
+
+    private fun KoFunctionDeclaration.isSelect(): Boolean = annotations.any { it.name == "Query" && selectQuery.containsMatchIn(it.text) }
+
+    @Test
     fun `desktop core does not depend on the desktop ui`() {
         val violations = scope.files
             .filter { it.moduleName == "desktop" && it.path.replace('\\', '/').contains("/desktop/core/") }
@@ -206,5 +309,31 @@ class ArchitectureTest {
 
         // Empty since step 8: service/ and database/ take what needs the UI as a function the composable passes in.
         val composeUiInService = emptySet<String>()
+
+        val writeDaoNames = listOf("ApplicationWriteDao", "PermissionWriteDao", "PermissionMaintenanceDao")
+
+        val evictsApplication = Regex("""\bcache(\.|::)invalidate(App|All)\b""")
+
+        val selectQuery = Regex("""@Query\(\s*"+\s*SELECT\b""", RegexOption.IGNORE_CASE)
+
+        val uncachedDaos = Regex("""\.(applicationWriteDao|permissionWriteDao|permissionMaintenanceDao)\(\)|\bApplicationDaos\.of\(""")
+
+        val migration = Regex("""object\s*:\s*Migration\(""")
+
+        val applicationTableWrite = Regex(
+            """\b(UPDATE|DELETE\s+FROM|INSERT(\s+OR\s+\w+)?\s+INTO|REPLACE\s+INTO)\s+`?(application|applicationPermission)\b""",
+            RegexOption.IGNORE_CASE,
+        )
+
+        val roomWrites = setOf("Insert", "Update", "Delete", "Upsert")
+
+        val applicationEntity = Regex("""\bApplication(Entity|PermissionsEntity|WithPermissions)\b""")
+
+        val writesThatKeepTheCache = setOf("ApplicationWriteDao.updateLastUsed")
+
+        val passThroughCallers = setOf(
+            "SecureCryptoHelper.kt: replaceLocalKeyRaw",
+            "SecureCryptoHelper.kt: replaceSecretRaw",
+        )
     }
 }

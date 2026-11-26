@@ -4,7 +4,6 @@
   <CurrentIssues>
     <ID>LongMethod:AccountPickerRow.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun AccountPickerRow</ID>
     <ID>LongMethod:AccountScreen.kt:@SuppressLint("StateFlowValueCalledInComposition", "UnrememberedMutableState") @Composable fun AccountScreen</ID>
-    <ID>LongMethod:AccountsBottomSheet.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun AccountsBottomSheet</ID>
     <ID>LongMethod:AddPermissionsSheet.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun AddPermissionsSheet</ID>
     <ID>LongMethod:BiometricAuthScreen.kt:@Composable fun BiometricAuthScreen</ID>
     <ID>LongMethod:BunkerRelayAuthScreen.kt:@Composable fun BunkerRelayAuthScreen</ID>

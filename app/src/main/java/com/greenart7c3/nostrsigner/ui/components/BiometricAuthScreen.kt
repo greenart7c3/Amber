@@ -1,6 +1,8 @@
 package com.greenart7c3.nostrsigner.ui.components
 
+import android.app.Activity
 import android.app.Activity.RESULT_OK
+import android.content.Context
 import android.widget.Toast
 import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -30,11 +32,14 @@ import com.greenart7c3.nostrsigner.commonsui.authenticate
 import com.greenart7c3.nostrsigner.commonsui.enter_pin
 import com.greenart7c3.nostrsigner.commonsui.getStringBlocking
 import com.greenart7c3.nostrsigner.commonsui.pin_does_not_match
+import com.greenart7c3.nostrsigner.data.SettingsStore
 import com.greenart7c3.nostrsigner.minutesBetween
+import com.greenart7c3.nostrsigner.models.AmberSettings
 import com.greenart7c3.nostrsigner.service.Biometrics
 import com.greenart7c3.nostrsigner.ui.BiometricsTimeType
 import com.greenart7c3.nostrsigner.ui.LocalAppScope
 import com.greenart7c3.nostrsigner.ui.LocalSettingsStore
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
@@ -61,16 +66,7 @@ fun BiometricAuthScreen(
     LaunchedEffect(Unit) {
         launch(Dispatchers.IO) {
             val settings = settingsStore.settings
-            val lastAuthTime = settings.lastBiometricsTime
-            val whenToAsk = settings.biometricsTimeType
-            val isTimeToAsk = when (whenToAsk) {
-                BiometricsTimeType.EVERY_TIME -> true
-                BiometricsTimeType.ONE_MINUTE -> minutesBetween(lastAuthTime, System.currentTimeMillis()) >= 1
-                BiometricsTimeType.FIVE_MINUTES -> minutesBetween(lastAuthTime, System.currentTimeMillis()) >= 5
-                BiometricsTimeType.TEN_MINUTES -> minutesBetween(lastAuthTime, System.currentTimeMillis()) >= 10
-            }
-            val shouldAuthenticate = (settings.useAuth || settings.usePin) && isTimeToAsk
-            if (!shouldAuthenticate) {
+            if (!shouldAuthenticate(settings)) {
                 currentOnAuth(true)
             } else {
                 launch(Dispatchers.Main) {
@@ -82,22 +78,11 @@ fun BiometricAuthScreen(
                             context,
                             keyguardLauncher,
                             {
-                                settingsStore.settings = settingsStore.settings.copy(
-                                    lastBiometricsTime = System.currentTimeMillis(),
-                                )
-
-                                LocalPreferences.saveSettingsToEncryptedStorage(context, settingsStore.settings)
+                                recordAuthentication(settingsStore, context)
                                 currentOnAuth(true)
                             },
                             { _, message ->
-                                activity?.finishAndRemoveTask()
-                                appScope.launch(Dispatchers.Main) {
-                                    Toast.makeText(
-                                        context,
-                                        message,
-                                        Toast.LENGTH_SHORT,
-                                    ).show()
-                                }
+                                finishWithToast(activity, appScope, context) { message }
                             },
                         )
                     }
@@ -107,53 +92,101 @@ fun BiometricAuthScreen(
     }
 
     if (showPinDialog) {
-        Dialog(
-            properties = DialogProperties(usePlatformDefaultWidth = false),
+        PinDialog(
             onDismissRequest = {
                 showPinDialog = false
-                activity?.finishAndRemoveTask()
-                appScope.launch(Dispatchers.Main) {
-                    Toast.makeText(
-                        context,
-                        getStringBlocking(Res.string.pin_does_not_match),
-                        Toast.LENGTH_SHORT,
-                    ).show()
+                finishWithToast(activity, appScope, context) { getStringBlocking(Res.string.pin_does_not_match) }
+            },
+            onPinEnter = { enteredPin ->
+                verifyPin(scope, context, enteredPin) {
+                    recordAuthentication(settingsStore, context)
+                    onAuth(true)
+                    showPinDialog = false
                 }
             },
+        )
+    }
+}
+
+@Composable
+private fun PinDialog(
+    onDismissRequest: () -> Unit,
+    onPinEnter: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Dialog(
+        properties = DialogProperties(usePlatformDefaultWidth = false),
+        onDismissRequest = onDismissRequest,
+    ) {
+        Surface(
+            modifier = modifier
+                .fillMaxSize(),
+            color = MaterialTheme.colorScheme.background,
         ) {
-            Surface(
-                modifier = Modifier
-                    .fillMaxSize(),
-                color = MaterialTheme.colorScheme.background,
+            Box(
+                Modifier.padding(40.dp),
             ) {
-                Box(
-                    Modifier.padding(40.dp),
-                ) {
-                    RandomPinInput(
-                        text = stringResource(Res.string.enter_pin),
-                        onPinEnter = { enteredPin ->
-                            scope.launch(Dispatchers.IO) {
-                                val pin = LocalPreferences.loadPinFromEncryptedStorage(context)
-                                scope.launch(Dispatchers.Main) {
-                                    if (enteredPin == pin) {
-                                        settingsStore.settings = settingsStore.settings.copy(
-                                            lastBiometricsTime = System.currentTimeMillis(),
-                                        )
-                                        LocalPreferences.saveSettingsToEncryptedStorage(context, settingsStore.settings)
-                                        onAuth(true)
-                                        showPinDialog = false
-                                    } else {
-                                        Toast.makeText(
-                                            context,
-                                            getStringBlocking(Res.string.pin_does_not_match),
-                                            Toast.LENGTH_SHORT,
-                                        ).show()
-                                    }
-                                }
-                            }
-                        },
-                    )
-                }
+                RandomPinInput(
+                    text = stringResource(Res.string.enter_pin),
+                    onPinEnter = onPinEnter,
+                )
+            }
+        }
+    }
+}
+
+private fun shouldAuthenticate(settings: AmberSettings): Boolean {
+    val lastAuthTime = settings.lastBiometricsTime
+    val whenToAsk = settings.biometricsTimeType
+    val isTimeToAsk = when (whenToAsk) {
+        BiometricsTimeType.EVERY_TIME -> true
+        BiometricsTimeType.ONE_MINUTE -> minutesBetween(lastAuthTime, System.currentTimeMillis()) >= 1
+        BiometricsTimeType.FIVE_MINUTES -> minutesBetween(lastAuthTime, System.currentTimeMillis()) >= 5
+        BiometricsTimeType.TEN_MINUTES -> minutesBetween(lastAuthTime, System.currentTimeMillis()) >= 10
+    }
+    return (settings.useAuth || settings.usePin) && isTimeToAsk
+}
+
+private fun recordAuthentication(settingsStore: SettingsStore, context: Context) {
+    settingsStore.settings = settingsStore.settings.copy(
+        lastBiometricsTime = System.currentTimeMillis(),
+    )
+    LocalPreferences.saveSettingsToEncryptedStorage(context, settingsStore.settings)
+}
+
+private fun finishWithToast(
+    activity: Activity?,
+    appScope: CoroutineScope,
+    context: Context,
+    message: () -> String,
+) {
+    activity?.finishAndRemoveTask()
+    appScope.launch(Dispatchers.Main) {
+        Toast.makeText(
+            context,
+            message(),
+            Toast.LENGTH_SHORT,
+        ).show()
+    }
+}
+
+private fun verifyPin(
+    scope: CoroutineScope,
+    context: Context,
+    enteredPin: String,
+    onMatch: () -> Unit,
+) {
+    scope.launch(Dispatchers.IO) {
+        val pin = LocalPreferences.loadPinFromEncryptedStorage(context)
+        scope.launch(Dispatchers.Main) {
+            if (enteredPin == pin) {
+                onMatch()
+            } else {
+                Toast.makeText(
+                    context,
+                    getStringBlocking(Res.string.pin_does_not_match),
+                    Toast.LENGTH_SHORT,
+                ).show()
             }
         }
     }

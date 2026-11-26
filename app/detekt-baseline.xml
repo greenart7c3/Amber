@@ -1384,7 +1384,6 @@
     <ID>NoComments:TimeUtils.kt:locale / clock style for the timestamps formatted during composition. ICU</ID>
     <ID>NoComments:ToastManager.kt:DROP_OLDEST means tryEmit always succeeds, so callers no longer need to</ID>
     <ID>NoComments:ToastManager.kt:spawn a coroutine on the application scope just to push a message.</ID>
-    <ID>NoComments:TorManager.kt:No-op in offline flavor</ID>
     <ID>NoComments:TorProxyReleaseTest.kt:The offline flavor ships a no-op TorManager with no fail() at all.</ID>
     <ID>NoComments:TorProxyReleaseTest.kt:Tor is torn down after the user already switched to Orbot on 9050.</ID>
     <ID>NoComments:TrustScoreBadge.kt:Gray - null score</ID>

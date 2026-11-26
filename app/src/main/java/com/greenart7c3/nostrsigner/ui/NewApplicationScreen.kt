@@ -1,7 +1,9 @@
 package com.greenart7c3.nostrsigner.ui
 
+import android.content.Context
 import android.content.Intent
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
@@ -60,15 +62,8 @@ fun NewApplicationScreen(
         SimpleQrCodeScanner(onDismiss = { dialogOpen.value = false }) {
             dialogOpen.value = false
 
-            if (it.isNullOrBlank()) {
-                ToastManager.toast(
-                    title,
-                    message,
-                )
-                return@SimpleQrCodeScanner
-            }
-
-            if (!it.startsWith("nostrconnect://")) {
+            val uri = it.asNostrConnectUri()
+            if (uri == null) {
                 ToastManager.toast(
                     title,
                     message,
@@ -77,16 +72,76 @@ fun NewApplicationScreen(
             }
 
             appScope.launch(Dispatchers.IO) {
-                val intent = Intent(Intent.ACTION_VIEW)
-                intent.data = it.toUri()
-                intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP)
-                intent.putExtra("closeApplication", false)
-                intent.`package` = context.packageName
-                IntentUtils.getIntentData(context, intent, null, Route.IncomingRequest.route, account)
+                openScannedNostrConnectUri(context, uri, account)
             }
         }
     }
 
+    NewApplicationOptions(
+        onPaste = {
+            scope.launch {
+                val clipboardText = clipboardManager.getClipEntry()?.clipData?.getItemAt(0)
+                val uri = clipboardText?.text?.toString().asNostrConnectUri()
+                if (uri == null) {
+                    ToastManager.toast(
+                        title,
+                        message,
+                    )
+                    return@launch
+                }
+
+                openPastedNostrConnectUri(context, uri, account)
+            }
+        },
+        onScan = {
+            dialogOpen.value = true
+        },
+        onAddNsecBunker = {
+            navController.navigate(Route.NewNsecBunker.route)
+        },
+        modifier = modifier,
+    )
+}
+
+private fun String?.asNostrConnectUri(): String? = this?.takeIf { it.isNotBlank() && it.startsWith("nostrconnect://") }
+
+private suspend fun openScannedNostrConnectUri(
+    context: Context,
+    uri: String,
+    account: Account,
+) {
+    val intent = Intent(Intent.ACTION_VIEW)
+    intent.data = uri.toUri()
+    intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+    intent.putExtra("closeApplication", false)
+    intent.`package` = context.packageName
+    IntentUtils.getIntentData(context, intent, null, Route.IncomingRequest.route, account)
+}
+
+private suspend fun openPastedNostrConnectUri(
+    context: Context,
+    uri: String,
+    account: Account,
+) {
+    val intent = Intent(Intent.ACTION_VIEW)
+    intent.data = uri.toUri()
+    intent.`package` = context.packageName
+    IntentUtils.getIntentData(
+        context = context.applicationContext,
+        intent = intent,
+        packageName = null,
+        route = Route.IncomingRequest.route,
+        currentLoggedInAccount = account,
+    )
+}
+
+@Composable
+private fun NewApplicationOptions(
+    onPaste: () -> Unit,
+    onScan: () -> Unit,
+    onAddNsecBunker: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     Column(
         modifier =
         modifier
@@ -97,100 +152,77 @@ fun NewApplicationScreen(
             text = stringResource(Res.string.new_app_description),
         )
 
-        AmberButton(
-            onClick = {
-                scope.launch {
-                    val clipboardText = clipboardManager.getClipEntry()?.clipData?.getItemAt(0)
-                    val clipboardItemText = clipboardText?.text?.toString()
-                    if (clipboardItemText.isNullOrBlank()) {
-                        ToastManager.toast(
-                            title,
-                            message,
-                        )
-                        return@launch
-                    }
-
-                    if (!clipboardItemText.startsWith("nostrconnect://")) {
-                        ToastManager.toast(
-                            title,
-                            message,
-                        )
-                        return@launch
-                    }
-
-                    val intent = Intent(Intent.ACTION_VIEW)
-                    intent.data = clipboardItemText.toUri()
-                    intent.`package` = context.packageName
-                    IntentUtils.getIntentData(
-                        context = context.applicationContext,
-                        intent = intent,
-                        packageName = null,
-                        route = Route.IncomingRequest.route,
-                        currentLoggedInAccount = account,
-                    )
-                }
-            },
-            text = stringResource(Res.string.paste_from_clipboard),
+        NewApplicationOption(
+            buttonText = stringResource(Res.string.paste_from_clipboard),
+            description = stringResource(Res.string.nostr_connect_description),
+            onClick = onPaste,
         )
 
-        Text(
-            modifier = Modifier.padding(bottom = 20.dp),
-            text = stringResource(Res.string.nostr_connect_description),
+        NewApplicationOption(
+            buttonText = stringResource(Res.string.scan_qr_code),
+            description = stringResource(Res.string.nostr_connect_qr_description),
+            onClick = onScan,
         )
 
-        AmberButton(
-            onClick = {
-                dialogOpen.value = true
-            },
-            text = stringResource(Res.string.scan_qr_code),
+        NewApplicationOption(
+            buttonText = stringResource(Res.string.add_a_nsecbunker),
+            description = stringResource(Res.string.nsecbunker_description),
+            onClick = onAddNsecBunker,
         )
 
-        Text(
-            modifier = Modifier.padding(bottom = 20.dp),
-            text = stringResource(Res.string.nostr_connect_qr_description),
-        )
-
-        AmberButton(
-            onClick = {
-                navController.navigate(Route.NewNsecBunker.route)
-            },
-            text = stringResource(Res.string.add_a_nsecbunker),
-        )
-
-        Text(
-            modifier = Modifier.padding(bottom = 20.dp),
-            text = stringResource(Res.string.nsecbunker_description),
-        )
-
-        Text(
-            buildAnnotatedString {
-                append(stringResource(Res.string.discover_more))
-                withLink(
-                    LinkAnnotation.Url(
-                        "https://" + stringResource(Res.string.nostr_app),
-                        styles = TextLinkStyles(
-                            style = SpanStyle(
-                                textDecoration = TextDecoration.Underline,
-                            ),
-                        ),
-                    ),
-                ) {
-                    append(" " + stringResource(Res.string.nostr_app))
-                }
-                append(" or ")
-                withLink(
-                    LinkAnnotation.Url(
-                        if (context.isZapstoreInstalled()) "zapstore://" else stringResource(Res.string.zapstore_website),
-                        styles = TextLinkStyles(
-                            style = SpanStyle(
-                                textDecoration = TextDecoration.Underline,
-                            ),
-                        ),
-                    ),
-                ) {
-                    append(stringResource(Res.string.zapstore))
-                }
-            },
-        )
+        DiscoverMoreApps()
     }
+}
+
+@Composable
+private fun ColumnScope.NewApplicationOption(
+    buttonText: String,
+    description: String,
+    onClick: () -> Unit,
+) {
+    AmberButton(
+        onClick = onClick,
+        text = buttonText,
+    )
+
+    Text(
+        modifier = Modifier.padding(bottom = 20.dp),
+        text = description,
+    )
+}
+
+@Composable
+private fun DiscoverMoreApps(modifier: Modifier = Modifier) {
+    val context = LocalContext.current
+    Text(
+        buildAnnotatedString {
+            append(stringResource(Res.string.discover_more))
+            withLink(
+                LinkAnnotation.Url(
+                    "https://" + stringResource(Res.string.nostr_app),
+                    styles = TextLinkStyles(
+                        style = SpanStyle(
+                            textDecoration = TextDecoration.Underline,
+                        ),
+                    ),
+                ),
+            ) {
+                append(" " + stringResource(Res.string.nostr_app))
+            }
+            append(" or ")
+            withLink(
+                LinkAnnotation.Url(
+                    if (context.isZapstoreInstalled()) "zapstore://" else stringResource(Res.string.zapstore_website),
+                    styles = TextLinkStyles(
+                        style = SpanStyle(
+                            textDecoration = TextDecoration.Underline,
+                        ),
+                    ),
+                ),
+            ) {
+                append(stringResource(Res.string.zapstore))
+            }
+        },
+        modifier = modifier,
+    )
 }

@@ -56,7 +56,6 @@ class Finding(val path: String, val line: Int, val message: String) {
  * the sources look up by name or list (`valueOf`, `entries`, `values()`). `@Suppress("unused")` on a
  * declaration, an enclosing one, or the file opts out on purpose.
  */
-// The parser needs a compiler environment, whose API Kotlin plans to rework.
 @OptIn(CoreEnvironmentDeprecation::class, CompilerConfiguration.Internals::class, ExperimentalCompilerApi::class)
 class UnusedCodeAnalyzer {
     private val disposable = Disposer.newDisposable()
@@ -73,7 +72,7 @@ class UnusedCodeAnalyzer {
         val files = sources.map { it to factory.createFile(it.path.substringAfterLast('/'), it.text.replace("\r\n", "\n")) }
         val references = HashSet(otherTokens)
         files.forEach { (_, file) -> references += referencedNames(file) }
-        val listedEnums = files.flatMapTo(HashSet()) { (_, file) -> listedEnums(file) }
+        val listedEnums = files.flatMapTo(HashSet()) { (_, file) -> enumsReachedWithoutEntryNames(file) }
 
         val findings = mutableListOf<Finding>()
         for ((source, file) in files) {
@@ -104,12 +103,7 @@ class UnusedCodeAnalyzer {
         return names
     }
 
-    /**
-     * Enums whose entries are reached without their names: `X.valueOf(…)`,
-     * `X.entries`, `X.values()`, `enumValueOf<X>()`…, or an unqualified
-     * `entries`/`values()`/`valueOf(…)` inside the enum itself.
-     */
-    private fun listedEnums(file: KtFile): Set<String> {
+    private fun enumsReachedWithoutEntryNames(file: KtFile): Set<String> {
         val names = HashSet<String>()
         file.collectDescendantsOfType<KtSimpleNameExpression>().forEach { expression ->
             val name = expression.getReferencedName()
@@ -160,20 +154,19 @@ class UnusedCodeAnalyzer {
     }
 
     private fun isReportable(declaration: KtNamedDeclaration): Boolean {
-        // Private code is detekt's (UnusedPrivate*), which also sees what this cannot.
-        if (declaration.hasModifier(KtTokens.PRIVATE_KEYWORD)) return false
+        if (isLeftToDetektUnusedPrivateRules(declaration)) return false
         if (ENTRY_POINT_MODIFIERS.any { declaration.hasModifier(it) }) return false
         if (declaration.annotationNames().any { it in ENTRY_POINT_ANNOTATIONS || "Preview" in it }) return false
-        // A serializer writes and reads these entries by name.
-        if (declaration is KtEnumEntry && declaration.getStrictParentOfType<KtClass>()?.annotationNames()?.any { it in GENERATED_ACCESS_ANNOTATIONS } == true) return false
+        if (declaration is KtEnumEntry && declaration.getStrictParentOfType<KtClass>()?.annotationNames()?.any { it in READ_BY_ROOM_OR_SERIALIZER_ANNOTATIONS } == true) return false
         if (declaration is KtProperty && declaration.name == "serialVersionUID") return false
-        // Room and the serializers read these classes' properties themselves.
         if (declaration is KtProperty) {
             val owner = declaration.getStrictParentOfType<KtClassOrObject>()
-            if (owner != null && owner.annotationNames().any { it in GENERATED_ACCESS_ANNOTATIONS }) return false
+            if (owner != null && owner.annotationNames().any { it in READ_BY_ROOM_OR_SERIALIZER_ANNOTATIONS }) return false
         }
         return !isSuppressed(declaration)
     }
+
+    private fun isLeftToDetektUnusedPrivateRules(declaration: KtNamedDeclaration): Boolean = declaration.hasModifier(KtTokens.PRIVATE_KEYWORD)
 
     private fun isSuppressed(declaration: KtDeclaration): Boolean {
         val scopes = sequenceOf<PsiElement>(declaration) + declaration.parents.filter { it is KtDeclaration }
@@ -216,10 +209,9 @@ class UnusedCodeAnalyzer {
     private companion object {
         val ENTRY_POINT_MODIFIERS = listOf(KtTokens.OVERRIDE_KEYWORD, KtTokens.OPERATOR_KEYWORD, KtTokens.ACTUAL_KEYWORD, KtTokens.EXPECT_KEYWORD)
 
-        // Called by a framework or a test runner, never by name.
         val ENTRY_POINT_ANNOTATIONS = setOf("Test", "Before", "After", "BeforeClass", "AfterClass", "TypeConverter", "JsonCreator", "JsonValue", "JsonProperty", "SerialName", "Keep")
 
-        val GENERATED_ACCESS_ANNOTATIONS = setOf("Entity", "Serializable", "Fts4")
+        val READ_BY_ROOM_OR_SERIALIZER_ANNOTATIONS = setOf("Entity", "Serializable", "Fts4")
 
         val ENUM_LISTINGS = setOf("valueOf", "entries", "values")
 

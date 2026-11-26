@@ -52,15 +52,19 @@ import kotlinx.coroutines.flow.MutableStateFlow
  * [tagThread] runs on every thread that creates a socket (the caller of
  * [start] and the accept thread) before it does: Android tags them for
  * TrafficStats, as it does all its sockets (StrictMode flags untagged ones).
+ *
+ * [isAllowed] is false where the relay must never run (the Android offline
+ * flavor): [start] then binds nothing.
+ *
+ * [storesEphemeral] false forwards ephemeral kinds (20000-29999) to live
+ * subscriptions only, as most public relays do: tests use it to catch a client
+ * that subscribes too late.
  */
 open class LocalRelayServer(
     private val logger: Logger,
     private val approvedSenders: () -> Set<String>,
     private val tagThread: () -> Unit = {},
-    // False where the relay must never run (the Android offline flavor): start() then binds nothing.
     private val isAllowed: () -> Boolean = { true },
-    // False forwards ephemeral kinds (20000-29999) to live subscriptions only, as most
-    // public relays do: tests use it to catch a client that subscribes too late.
     private val storesEphemeral: Boolean = true,
 ) {
     enum class Status { STOPPED, RUNNING, IN_USE, FAILED }
@@ -86,6 +90,7 @@ open class LocalRelayServer(
          * `InetAddress.getLoopbackAddress()`: that is ::1 on Android, where an
          * IPv6-only listener refused every `ws://127.0.0.1` connection.
          */
+        @Suppress("NoComments")
         private val IPV4_LOOPBACK: InetAddress = InetAddress.getByAddress("localhost", byteArrayOf(127, 0, 0, 1))
     }
 
@@ -137,11 +142,6 @@ open class LocalRelayServer(
     }
 }
 
-/**
- * The relay engine: the accept loop, the connected WebSocket clients with
- * their subscriptions, and the bounded in-memory event store. One instance
- * per [LocalRelayServer.start]; [shutdown] tears everything down.
- */
 private class RelayCore(
     serverSocket: ServerSocket,
     private val logger: LocalRelayServer.Logger,
@@ -157,15 +157,17 @@ private class RelayCore(
         const val MAX_EVENTS = 512
         const val MAX_SUBSCRIPTIONS_PER_CLIENT = 20
 
-        /** Matches the desktop local socket signer's per-message cap. */
         const val MAX_MESSAGE_BYTES = 1024 * 1024
         const val MAX_HANDSHAKE_BYTES = 8 * 1024
 
         private const val WS_GUID = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
         private const val BAD_REQUEST = "HTTP/1.1 400 Bad Request"
 
-        /** How often the approved-sender set is rebuilt from the saved connections. */
         private const val APPROVED_SENDER_REFRESH_MS = 30_000L
+
+        private const val MAX_SEVEN_BIT_PAYLOAD_LENGTH = 125
+        private const val SIXTEEN_BIT_PAYLOAD_LENGTH_FOLLOWS = 126
+        private const val SIXTY_FOUR_BIT_PAYLOAD_LENGTH_FOLLOWS = 127
 
         private const val OP_CONTINUATION = 0x0
         private const val OP_TEXT = 0x1
@@ -179,20 +181,15 @@ private class RelayCore(
     private val mapper = JacksonMapper.mapper
     private val connections = ConcurrentHashMap<Long, Connection>()
     private val connectionSeq = AtomicLong()
-    private val store = EventStore()
+    private val store = BoundedInMemoryEventStore()
 
-    // Ids of the ephemeral events forwarded but not stored (storesEphemeral off),
-    // so a duplicate is not delivered twice; the oldest are dropped past MAX_EVENTS.
-    private val forwardedEphemeral = object : LinkedHashMap<String, Unit>() {
+    private val forwardedUnstoredEphemeralIds = object : LinkedHashMap<String, Unit>() {
         override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, Unit>?) = size > MAX_EVENTS
     }
 
-    // Unapproved EVENT senders: per-pubkey token buckets (denied events skip
-    // verification — the schnorr check is the CPU cost a flood exploits).
-    private val eventLimiter = SenderRateLimiter()
+    private val unapprovedEventSenderLimiter = SenderRateLimiter()
 
-    // REQ subscriptions and malformed commands per client connection.
-    private val clientLimiter = SenderRateLimiter(
+    private val perConnectionCommandLimiter = SenderRateLimiter(
         capacity = 60,
         windowSeconds = 60,
         aggregateCapacity = 240,
@@ -223,6 +220,7 @@ private class RelayCore(
         }, "$tag-accept").apply { isDaemon = true }.start()
     }
 
+    @Suppress("NoComments")
     fun shutdown() {
         shuttingDown = true
         // Closing the server socket breaks the accept loop (accept() is not
@@ -234,6 +232,7 @@ private class RelayCore(
         synchronized(store) { store.clear() }
     }
 
+    @Suppress("NoComments")
     private fun acceptLoop(socket: ServerSocket) {
         while (!socket.isClosed) {
             val client = try {
@@ -254,7 +253,6 @@ private class RelayCore(
             val connection = Connection(id, client)
             connections[id] = connection
             if (shuttingDown) {
-                // Accepted while stop() was tearing the relay down.
                 connection.close()
                 connections.remove(id)
                 return
@@ -271,8 +269,7 @@ private class RelayCore(
         }
     }
 
-    /** First value of every single-letter tag, under its lowercased name: what REQ tag filters match. */
-    private fun Event.tagValues(): Map<String, List<String>> = buildMap {
+    private fun Event.filterableTagValues(): Map<String, List<String>> = buildMap {
         for (tag in tags) {
             if (tag.size > 1 && tag[0].length == 1) {
                 merge(tag[0].lowercase(), listOf(tag[1])) { old, extra -> old + extra }
@@ -299,13 +296,12 @@ private class RelayCore(
                 if (!handshake(input)) return
                 logger.d("Client #$id connected")
                 while (true) {
-                    handleCommand(nextMessage(input) ?: return)
+                    handleCommand(nextTextMessageUntilClose(input) ?: return)
                 }
             } catch (e: ProtocolError) {
                 logger.d("Client #$id protocol error: ${e.message}")
                 sendClose(e.closeCode, e.message ?: "protocol error")
             } catch (_: EOFException) {
-                // The peer hung up: a normal end for one-shot clients.
             } catch (e: Exception) {
                 if (!closed) logger.e("Client #$id failed", e)
             } finally {
@@ -329,6 +325,7 @@ private class RelayCore(
             }
         }
 
+        @Suppress("NoComments")
         private fun handshake(input: InputStream): Boolean {
             val head = readHandshakeHead(input) ?: return false
             val lines = head.split("\r\n")
@@ -368,7 +365,6 @@ private class RelayCore(
             return true
         }
 
-        /** Header names lowercased; a line without a name before its colon is skipped. */
         private fun parseHeaders(lines: List<String>): Map<String, String> = buildMap {
             for (line in lines) {
                 val separator = line.indexOf(':')
@@ -376,7 +372,6 @@ private class RelayCore(
             }
         }
 
-        /** The status line (and headers) refusing a request that is not a version 13 WebSocket upgrade, or null to accept it. */
         private fun upgradeRejection(
             method: String,
             headers: Map<String, String>,
@@ -389,13 +384,11 @@ private class RelayCore(
             else -> null
         }
 
-        /** Why the upgrade was refused; extra headers (like Sec-WebSocket-Version) ride in [reason]. */
-        private fun reject(reason: String): Boolean {
-            sendRaw("$reason\r\nConnection: close\r\n\r\n")
+        private fun reject(statusLineAndHeaders: String): Boolean {
+            sendRaw("$statusLineAndHeaders\r\nConnection: close\r\n\r\n")
             return false
         }
 
-        /** The request head up to the blank line, or null on EOF / when it exceeds the cap. */
         private fun readHandshakeHead(input: InputStream): String? {
             val bytes = ByteArrayOutputStream()
             val buffer = ByteArray(1024)
@@ -410,8 +403,7 @@ private class RelayCore(
             }
         }
 
-        /** The next complete text message, or null once the client closed the session. */
-        private fun nextMessage(input: InputStream): String? {
+        private fun nextTextMessageUntilClose(input: InputStream): String? {
             val fragments = ByteArrayOutputStream()
             var dataOpcode = -1
             while (true) {
@@ -439,7 +431,6 @@ private class RelayCore(
             }
         }
 
-        /** Why a text, binary or continuation frame breaks the message being assembled, or null when it fits. */
         private fun dataFrameError(
             frame: Frame,
             inMessage: Boolean,
@@ -452,9 +443,8 @@ private class RelayCore(
             else -> null
         }
 
-        /** Malformed or unknown command: answer while the connection is under its budget, drop it when this is abuse. */
-        private fun malformed(message: String) {
-            if (clientLimiter.allow("bad|$id", System.currentTimeMillis())) {
+        private fun answerMalformedOrDropWhenOverBudget(message: String) {
+            if (perConnectionCommandLimiter.allow("bad|$id", System.currentTimeMillis())) {
                 send(notice(message))
             } else {
                 send(notice("rate limited"))
@@ -466,21 +456,22 @@ private class RelayCore(
             val node = try {
                 mapper.readTree(text)
             } catch (_: Exception) {
-                malformed("invalid JSON")
+                answerMalformedOrDropWhenOverBudget("invalid JSON")
                 return
             }
             if (!node.isArray || node.isEmpty) {
-                malformed("a command must be a non-empty array")
+                answerMalformedOrDropWhenOverBudget("a command must be a non-empty array")
                 return
             }
             when (node.get(0).asText("")) {
                 "EVENT" -> handleEvent(node)
                 "REQ" -> handleReq(node)
                 "CLOSE" -> handleClose(node)
-                else -> malformed("unknown command")
+                else -> answerMalformedOrDropWhenOverBudget("unknown command")
             }
         }
 
+        @Suppress("NoComments")
         private fun handleEvent(command: JsonNode) {
             val eventNode = command.get(1)
             val eventId = eventNode?.takeIf { it.isObject }?.get("id")?.takeIf { it.isTextual }?.asText() ?: ""
@@ -505,11 +496,10 @@ private class RelayCore(
             // is the CPU cost a flood exploits. Approved senders (saved client
             // keys + the engine's own connection key) are never limited, like
             // in BunkerEngine.
-            if (event.pubKey !in approvedSenders() && !eventLimiter.allow(event.pubKey, System.currentTimeMillis())) {
+            if (event.pubKey !in approvedSenders() && !unapprovedEventSenderLimiter.allow(event.pubKey, System.currentTimeMillis())) {
                 send(ok(event.id, false, "rate limited"))
                 return
             }
-            // verify() checks both the id (serialization hash) and the signature.
             if (!event.verify()) {
                 send(ok(event.id, false, "invalid: id or signature verification failed"))
                 return
@@ -520,12 +510,12 @@ private class RelayCore(
                 createdAt = event.createdAt,
                 kind = event.kind,
                 pubKey = event.pubKey,
-                tags = event.tagValues(),
+                filterableTags = event.filterableTagValues(),
             )
             val isNew = if (!storesEphemeral && event.kind in EPHEMERAL_KINDS) {
-                synchronized(forwardedEphemeral) { forwardedEphemeral.put(event.id, Unit) == null }
+                synchronized(forwardedUnstoredEphemeralIds) { forwardedUnstoredEphemeralIds.put(event.id, Unit) == null }
             } else {
-                synchronized(store) { store.add(stored) }
+                synchronized(store) { store.addIfNew(stored) }
             }
             send(ok(event.id, true, ""))
             if (isNew) {
@@ -535,7 +525,7 @@ private class RelayCore(
         }
 
         private fun handleReq(command: JsonNode) {
-            if (!clientLimiter.allow("req|$id", System.currentTimeMillis())) {
+            if (!perConnectionCommandLimiter.allow("req|$id", System.currentTimeMillis())) {
                 send(notice("rate limited"))
                 return
             }
@@ -601,15 +591,15 @@ private class RelayCore(
                 val out = output ?: return
                 out.write(0x80 or opcode)
                 when {
-                    payload.size <= 125 -> out.write(payload.size)
+                    payload.size <= MAX_SEVEN_BIT_PAYLOAD_LENGTH -> out.write(payload.size)
                     payload.size <= 0xFFFF -> {
-                        out.write(126)
+                        out.write(SIXTEEN_BIT_PAYLOAD_LENGTH_FOLLOWS)
                         out.write((payload.size shr 8) and 0xFF)
                         out.write(payload.size and 0xFF)
                     }
 
                     else -> {
-                        out.write(127)
+                        out.write(SIXTY_FOUR_BIT_PAYLOAD_LENGTH_FOLLOWS)
                         for (shift in 56 downTo 8 step 8) out.write(((payload.size.toLong() shr shift) and 0xFF).toInt())
                         out.write(payload.size and 0xFF)
                     }
@@ -650,18 +640,17 @@ private class RelayCore(
             return Frame(opcode, fin, payload)
         }
 
-        /** The payload length: the 7-bit [short] value, or the 16- or 64-bit length that follows when it is 126 or 127. */
         private fun readPayloadLength(
             input: InputStream,
-            short: Int,
+            sevenBitLength: Int,
         ): Long {
-            val extraBytes = when (short) {
-                126 -> 2
-                127 -> 8
-                else -> return short.toLong()
+            val extendedLengthBytes = when (sevenBitLength) {
+                SIXTEEN_BIT_PAYLOAD_LENGTH_FOLLOWS -> 2
+                SIXTY_FOUR_BIT_PAYLOAD_LENGTH_FOLLOWS -> 8
+                else -> return sevenBitLength.toLong()
             }
             var length = 0L
-            repeat(extraBytes) { length = (length shl 8) or input.readU8().toLong() }
+            repeat(extendedLengthBytes) { length = (length shl 8) or input.readU8().toLong() }
             return length
         }
 
@@ -686,21 +675,16 @@ private class Frame(
     val payload: ByteArray,
 )
 
-/** A stored event: the raw JSON as received (forwarded verbatim) plus the fields filters match on. */
 private class StoredEvent(
     val id: String,
     val raw: String,
     val createdAt: Long,
     val kind: Int,
     val pubKey: String,
-    /** First value of every single-letter tag, lowercased name: the NIP-01 filterable shape. */
-    val tags: Map<String, List<String>>,
+    val filterableTags: Map<String, List<String>>,
 )
 
-/**
- * The NIP-01 filter subset the bunker flow needs: ids/authors/kinds/since/until/limit plus #tag lists.
- * Every field is optional in a filter; a missing one (null, or no tag lists) matches everything.
- */
+// https://github.com/nostr-protocol/nips/blob/master/01.md#from-client-to-relay-sending-events-and-creating-subscriptions
 private class RelayFilter(
     val ids: List<String>? = null,
     val authors: List<String>? = null,
@@ -717,7 +701,7 @@ private class RelayFilter(
         if (since != null && event.createdAt < since) return false
         if (until != null && event.createdAt > until) return false
         for ((name, values) in tagValues) {
-            val present = event.tags[name] ?: return false
+            val present = event.filterableTags[name] ?: return false
             if (values.none(present::contains)) return false
         }
         return true
@@ -757,13 +741,11 @@ private class RelayFilter(
     }
 }
 
-/** Bounded in-memory event store; the relay is a request pipe, not an archive. */
-private class EventStore {
+private class BoundedInMemoryEventStore {
     private val events = ArrayDeque<StoredEvent>(RelayCore.MAX_EVENTS)
     private val ids = HashSet<String>()
 
-    /** true when the event is new; duplicates are acked but neither stored nor broadcast again. */
-    fun add(event: StoredEvent): Boolean {
+    fun addIfNew(event: StoredEvent): Boolean {
         if (!ids.add(event.id)) return false
         events.addLast(event)
         while (events.size > RelayCore.MAX_EVENTS) {
@@ -772,7 +754,7 @@ private class EventStore {
         return true
     }
 
-    /** Matches sorted by created_at; a filter's limit keeps the latest events (NIP-01 semantics). */
+    // https://github.com/nostr-protocol/nips/blob/master/01.md#from-client-to-relay-sending-events-and-creating-subscriptions
     fun query(filters: List<RelayFilter>): List<StoredEvent> {
         val matches = events.filter { event -> filters.any { it.matches(event) } }.sortedBy { it.createdAt }
         val limit = filters.mapNotNull { it.limit }.maxOrNull()

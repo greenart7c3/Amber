@@ -114,10 +114,9 @@ class RequestDetailsTest {
     fun detailsShortcutOpensOnlyForRequestsWithDetails() {
         val connect = req(SignerType.CONNECT)
         val sign = req(SignerType.SIGN_EVENT, preview = note)
-        // A connect is shown alone (never batched), and has no details.
         AmberDesktop.engine.pending.value = listOf(connect)
         UiState.selectedRequestId.value = connect.queueKey
-        assertFalse(RequestKeyboard.showSelectedDetails())
+        assertFalse("a connect has no details", RequestKeyboard.showSelectedDetails())
         assertNull(UiState.detailsRequestId.value)
 
         AmberDesktop.engine.pending.value = listOf(connect, sign)
@@ -128,9 +127,8 @@ class RequestDetailsTest {
         assertTrue(RequestKeyboard.showSelectedDetails())
         assertEquals(sign.queueKey, UiState.detailsRequestId.value)
 
-        // Answered elsewhere (shortcut, notification, expiry): the dialog closes.
         UiState.pruneRequestState(emptyList())
-        assertNull(UiState.detailsRequestId.value)
+        assertNull("a request answered elsewhere closes its dialog", UiState.detailsRequestId.value)
     }
 
     private fun taprootScript(xOnly: ByteArray) = TaprootAddress.outputKeyToScriptPubKey(TaprootAddress.tweakOutputKey(xOnly))
@@ -158,7 +156,6 @@ class RequestDetailsTest {
         assertTrue(details!!.summary().startsWith("Could not decode PSBT"))
     }
 
-    // Android opens a seal for the preview and shows the event inside it, not the seal.
     @Test
     fun aSealShowsTheEventItHolds() {
         val rumor = """{"kind":14,"content":"secret dm","tags":[["p","abc"]],"created_at":1700000001}"""
@@ -189,7 +186,6 @@ class RequestDetailsTest {
         assertEquals("", runBlocking { openSealForPreview("plain text", account) })
     }
 
-    // NIP-31: a kind Amber has no name for is named by the event's alt tag, as on Android.
     @Test
     fun anUnnamedKindUsesItsAltTag() {
         val unnamed = DetailEvent(kind = 39999, pubKey = "", createdAt = 0, content = "", tags = listOf(listOf("alt", "A custom thing")))

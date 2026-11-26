@@ -26,9 +26,8 @@ class Nip46AdmissionTest {
         assertEquals(Nip46Admission.Unknown, admitNip46Request(SignerType.SIGN_EVENT, null, "conn-key"))
     }
 
-    // The user gave the connection a lifetime: once over, it answers as an unknown app.
     @Test
-    fun `an expired connection counts as none`() {
+    fun `a connection whose user-given lifetime is over counts as none`() {
         val expired = connection.copy(isExpired = true)
         assertEquals(Nip46Admission.Unknown, admitNip46Request(SignerType.SIGN_EVENT, expired, "conn-key"))
     }
@@ -36,7 +35,10 @@ class Nip46AdmissionTest {
     @Test
     fun `a stored app writing to another connection's key is ignored`() {
         assertEquals(Nip46Admission.Ignore, admitNip46Request(SignerType.SIGN_EVENT, connection, "other-key"))
-        // Addressed to the account key (a legacy client): not routed through another connection.
+    }
+
+    @Test
+    fun `a legacy client writing to the account key is not routed through another connection`() {
         assertEquals(Nip46Admission.Admit(connection, null), admitNip46Request(SignerType.SIGN_EVENT, connection, ""))
     }
 
@@ -77,7 +79,6 @@ class Nip46AdmissionTest {
         assertEquals(BUNKER_REPLY_ATTEMPTS, ack.attempts)
     }
 
-    // The app used to send the ack nowhere when the stored connection had no relays.
     @Test
     fun `a repeated connect from a connection without relays is acknowledged where it arrived`() {
         assertEquals(delivered, (Nip46Admission.AckRepeatedConnect(connection).replyFor(storedRelays = emptyList()) as Nip46AdmissionReply.Ack).relays)

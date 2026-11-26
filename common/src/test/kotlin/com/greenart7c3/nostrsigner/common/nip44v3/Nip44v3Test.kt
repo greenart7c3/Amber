@@ -38,14 +38,12 @@ class Nip44v3Test {
     private fun pubKeyFor(privKeyHex: String): ByteArray = KeyPair(privKey = hex(privKeyHex)).pubKey
 
     @Test
-    fun `padded length vectors match`() {
+    fun `padded length vectors match the target size of the length-prefixed plaintext`() {
         val arr = loadVectors().get("padded_length")
         for (entry in arr) {
-            val len = entry.get(0).intValue()
+            val prefixedPlaintextLength = entry.get(0).intValue()
             val expected = entry.get(1).intValue()
-            // The spec's target_size is over length(prefixed_plaintext); the
-            // table is parameterized on that prefixed length directly.
-            assertEquals("targetSize($len)", expected, Nip44v3.targetSize(len))
+            assertEquals("targetSize($prefixedPlaintextLength)", expected, Nip44v3.targetSize(prefixedPlaintextLength))
         }
     }
 
@@ -66,7 +64,6 @@ class Nip44v3Test {
             val expectedEnc = v.get("encryption_key").textValue()
             val expectedMac = v.get("mac_key").textValue()
 
-            // Key derivation matches PRK / encryption_key / mac_key from spec
             val prk1 = Nip44v3.extract(
                 Secp256k1Instance.pubKeyTweakMulCompact(pub2, priv1),
                 nonce,
@@ -76,15 +73,12 @@ class Nip44v3Test {
             assertEquals("vector $idx: encryption_key", expectedEnc, toHex(enc))
             assertEquals("vector $idx: mac_key", expectedMac, toHex(mac))
 
-            // Encrypt from secret1 → must match the spec ciphertext byte for byte.
             val ct1 = Nip44v3.encryptWithNonce(plaintext, priv1, pub2, kind, scope, nonce)
             assertEquals("vector $idx: ciphertext from secret1", expectedCt, ct1)
 
-            // Encrypt from secret2 with the same nonce — same ECDH product, same ciphertext.
             val ct2 = Nip44v3.encryptWithNonce(plaintext, priv2, pub1, kind, scope, nonce)
             assertEquals("vector $idx: ciphertext from secret2", expectedCt, ct2)
 
-            // Decryption recovers plaintext from each side
             val dec1 = Nip44v3.decrypt(expectedCt, priv1, pub2, kind, scope)
             assertArrayEquals("vector $idx: decrypt from secret1", plaintext, dec1)
             val dec2 = Nip44v3.decrypt(expectedCt, priv2, pub1, kind, scope)
@@ -92,6 +86,7 @@ class Nip44v3Test {
         }
     }
 
+    @Suppress("NoComments")
     @Test
     fun `decrypt-only vectors with non-standard padding decrypt correctly`() {
         // The spec allows ciphertexts whose padding length differs from the one
@@ -143,9 +138,8 @@ class Nip44v3Test {
             val hash = toHex(sha.digest(ct.toByteArray(Charsets.US_ASCII)))
             assertEquals("vector $idx: ciphertext sha256", expectedHash, hash)
 
-            // Round-trip with the other side, just to exercise the symmetric path
-            val recovered = Nip44v3.decrypt(ct, priv2, pub1, kind, scope)
-            assertArrayEquals("vector $idx: long decrypt", plaintext, recovered)
+            val recoveredByOtherSide = Nip44v3.decrypt(ct, priv2, pub1, kind, scope)
+            assertArrayEquals("vector $idx: long decrypt", plaintext, recoveredByOtherSide)
         }
     }
 
@@ -228,7 +222,8 @@ class Nip44v3Test {
     fun `unpad rejects non-zero padding`() {
         val plain = byteArrayOf(1, 2, 3)
         val padded = Nip44v3.pad(plain)
-        padded[padded.size - 1] = 0x42 // tamper trailing pad byte
+        val trailingPadByte = padded.size - 1
+        padded[trailingPadByte] = 0x42
         assertThrows(Nip44v3.Nip44v3Exception::class.java) { Nip44v3.unpad(padded) }
     }
 
@@ -241,8 +236,8 @@ class Nip44v3Test {
 
         val ct = Nip44v3.encrypt("hello".toByteArray(), priv, peerPub, kind = 1, scope = "")
         val decoded = Base64.decode(ct)
-        // Flip a bit in the MAC region (bytes 33..65)
-        decoded[40] = (decoded[40].toInt() xor 0x01).toByte()
+        val byteInMacRegion = 40
+        decoded[byteInMacRegion] = (decoded[byteInMacRegion].toInt() xor 0x01).toByte()
         val tampered = Base64.encode(decoded)
         val ex = assertThrows(Nip44v3.Nip44v3Exception::class.java) {
             Nip44v3.decrypt(tampered, peer, ownPub, 1, "")
@@ -251,8 +246,7 @@ class Nip44v3Test {
     }
 
     @Test
-    fun `kind above 65535 is supported`() {
-        // The signer libs MUST support kinds above 65535 per implementing.md.
+    fun `kind above 65535 is supported as the spec requires of signers`() {
         val priv = hex("0000000000000000000000000000000000000000000000000000000000000001")
         val peer = hex("0000000000000000000000000000000000000000000000000000000000000002")
         val peerPub = pubKeyFor("0000000000000000000000000000000000000000000000000000000000000002")

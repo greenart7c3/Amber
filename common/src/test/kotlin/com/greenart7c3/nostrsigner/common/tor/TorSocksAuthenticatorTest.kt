@@ -29,12 +29,7 @@ class TorSocksAuthenticatorTest {
         Authenticator.setDefault(null)
     }
 
-    /**
-     * A minimal SOCKS5 server that requires username/password, like Arti's
-     * listener. Completes with the credentials the client sent, or null when
-     * the client did not offer the username/password method.
-     */
-    private fun fakeSocksServer(server: ServerSocket): CompletableFuture<Pair<String, String>?> {
+    private fun credentialsSentToArtiLikeUserPassSocks5Server(server: ServerSocket): CompletableFuture<Pair<String, String>?> {
         val result = CompletableFuture<Pair<String, String>?>()
         thread(isDaemon = true) {
             runCatching {
@@ -53,8 +48,8 @@ class TorSocksAuthenticatorTest {
                     val username = ByteArray(input.readUnsignedByte()).also { input.readFully(it) }
                     val password = ByteArray(input.readUnsignedByte()).also { input.readFully(it) }
                     result.complete(String(username) to String(password))
-                    // Refuse: only the credentials matter here.
-                    output.write(byteArrayOf(1, 1))
+                    val authenticationFailure = byteArrayOf(1, 1)
+                    output.write(authenticationFailure)
                 }
             }.onFailure { result.completeExceptionally(it) }
         }
@@ -72,7 +67,7 @@ class TorSocksAuthenticatorTest {
     @Test
     fun `java's SOCKS client sends the listener's credentials`() {
         ServerSocket(0, 1, InetAddress.getLoopbackAddress()).use { server ->
-            val sent = fakeSocksServer(server)
+            val sent = credentialsSentToArtiLikeUserPassSocks5Server(server)
             val (username, password) = TorSocksAuthenticator.newCredentials()
             TorSocksAuthenticator.set(server.localPort, username, password)
 

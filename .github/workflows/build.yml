@@ -50,8 +50,10 @@ jobs:
           name: Coverage report
           path: build/reports/kover
 
+      # Serialize debug APK packaging: parallel ApkFlinger + apksig tasks across
+      # 4 flavors x 5 ABI splits can deadlock ForkJoinPool.commonPool() on 4-core runners.
       - name: Build APK (gradle)
-        run: ./gradlew assembleDebug --no-daemon
+        run: ./gradlew assembleDebug --no-daemon --max-workers=1
 
       - name: Upload APK
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7

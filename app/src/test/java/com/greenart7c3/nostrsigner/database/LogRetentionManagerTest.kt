@@ -27,8 +27,7 @@ class LogRetentionManagerTest {
             size -= 100
             10
         }
-        // 350 -> 250 -> 150 -> 50
-        assertEquals(30, deleted)
+        assertEquals("three batches of 10 rows: 350 -> 250 -> 150 -> 50", 30, deleted)
         assertEquals(50, size)
     }
 

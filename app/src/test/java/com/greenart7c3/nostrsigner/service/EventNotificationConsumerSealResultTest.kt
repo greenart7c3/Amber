@@ -30,7 +30,6 @@ import org.junit.Test
  * into a disclosure of that self-encrypted plaintext.
  */
 class EventNotificationConsumerSealResultTest {
-    // A real responder over the mocked Application, spied so tests can stub its replies.
     private val bunkerResponder by lazy {
         spyk(
             BunkerResponder(

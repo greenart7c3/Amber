@@ -63,8 +63,6 @@ class NotificationSubscriptionTest {
 
         val amber = mockk<Amber>(relaxed = true)
         every { amber.accountDatabases.getDatabase(any()) } returns database
-        // updateFilter reads through the caching wrapper; a fresh wrapper per call
-        // mirrors per-test dao state without cross-test cache leakage.
         every { amber.accountDatabases.daos(any()) } answers { ApplicationDaos.cached(ApplicationDaos(dao, listDao, mockk(), mockk(), mockk(), mockk())) }
         every { amber.notificationCache } returns LruCache(512)
 
@@ -90,7 +88,6 @@ class NotificationSubscriptionTest {
 
     @Test
     fun `updateFilter subscribes a connection with a local key`() = runBlocking {
-        // updateFilter is a no-op on the offline flavor by design
         assumeFalse(BuildFlavorChecker.isOfflineFlavor())
         coEvery { dao.getAll(account.hexKey) } returns listOf(connection())
         every { listDao.getAllRelayLists() } returns emptyList()
@@ -288,7 +285,6 @@ class NotificationSubscriptionTest {
         queued.await()
         verify(exactly = 0) { client.subscribe(any(), any()) }
         assertEquals(1, reads)
-        // A deliberate fresh refresh after close still restores the connection.
         subscription.updateFilter()
         verify(exactly = 1) { client.subscribe(any(), any()) }
     }

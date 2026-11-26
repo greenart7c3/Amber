@@ -42,14 +42,13 @@ class KeystorePolicyTest {
         assertTrue(KeystorePolicy.isLockedOut(context))
     }
 
-    // The gate fails closed; a key failure without a keyguard is still reported as broken.
     @Test
-    fun `without a keyguard the gate refuses but the failure is not blamed on the lock`() {
+    fun `without a keyguard the gate fails closed but the failure is not blamed on the lock`() {
         policyOn()
         every { context.getSystemService(KeyguardManager::class.java) } returns null
 
         assertThrows(SecurityException::class.java) { KeystorePolicy.requireAccess(context) }
-        assertFalse(KeystorePolicy.isLockedOut(context))
+        assertFalse("a key failure without a keyguard is still reported as broken", KeystorePolicy.isLockedOut(context))
     }
 
     @Test

@@ -74,6 +74,7 @@ class SensitiveClipboardTest {
         assertNull(readClipboardText())
     }
 
+    @Suppress("NoComments")
     companion object {
         // Hidden system permission held by the shell, not in the public SDK.
         private const val READ_CLIPBOARD_IN_BACKGROUND = "android.permission.READ_CLIPBOARD_IN_BACKGROUND"

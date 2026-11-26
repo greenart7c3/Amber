@@ -40,10 +40,16 @@ class SharedStringsDeviceTest {
     fun stringsFollowTheDefaultLocale() {
         assertEquals("Short text note", inLanguage("en") { getStringBlocking(Res.string.event_kind_1) })
         assertEquals("Kurztext-Note", inLanguage("de") { getStringBlocking(Res.string.event_kind_1) })
-        // Folders without a region (values-it) match a regional locale too.
-        assertEquals("Nota di testo breve", inLanguage("it-IT") { getStringBlocking(Res.string.event_kind_1) })
-        // Indonesian: Java and Android 15+ call it "id" (values-id).
-        assertEquals("Catatan teks singkat", inLanguage("id") { getStringBlocking(Res.string.event_kind_1) })
+        assertEquals(
+            "a folder without a region (values-it) matches a regional locale too",
+            "Nota di testo breve",
+            inLanguage("it-IT") { getStringBlocking(Res.string.event_kind_1) },
+        )
+        assertEquals(
+            "Indonesian is \"id\" (values-id), as Java and Android 15+ call it",
+            "Catatan teks singkat",
+            inLanguage("id") { getStringBlocking(Res.string.event_kind_1) },
+        )
     }
 
     @Test

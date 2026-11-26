@@ -39,8 +39,6 @@ class IntentResponseTest {
         nip44v3Scope = nip44v3Scope,
     )
 
-    // --- historyContent: never the plaintext ---
-
     @Test
     fun `an accepted encrypt stores its ciphertext`() {
         assertEquals("cipher", IntentResponse.historyContent(request(SignerType.NIP44_ENCRYPT), true, "event", "cipher"))
@@ -53,7 +51,7 @@ class IntentResponseTest {
     }
 
     @Test
-    fun `a decrypt stores the ciphertext it was asked to open`() {
+    fun `a decrypt stores the ciphertext it was asked to open, never the plaintext`() {
         assertEquals("request-data", IntentResponse.historyContent(request(SignerType.NIP44_DECRYPT), true, "", "plaintext"))
         assertEquals("request-data", IntentResponse.historyContent(request(SignerType.NIP44_DECRYPT), false, "", ""))
     }
@@ -63,8 +61,6 @@ class IntentResponseTest {
         assertEquals("event", IntentResponse.historyContent(request(SignerType.SIGN_EVENT), true, "event", "sig"))
         assertEquals("request-data", IntentResponse.historyContent(request(SignerType.SIGN_EVENT), false, "", ""))
     }
-
-    // --- historyEntry ---
 
     @Test
     fun `an encryption entry keeps the peer key`() {
@@ -92,8 +88,6 @@ class IntentResponseTest {
         assertEquals("", IntentResponse.historyEntry(request(SignerType.NIP44_DECRYPT), "app", null, true, "c").encryptionScope)
         assertNull(IntentResponse.historyEntry(request(SignerType.NIP44_DECRYPT), "app", null, true, "c").kind)
     }
-
-    // --- callbackPayload ---
 
     @Test
     fun `the callback gets the signature or the event as asked`() {

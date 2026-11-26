@@ -46,9 +46,8 @@ class SettingsReadTest {
         verify(exactly = 0) { HttpClientManager.setDefaultProxyOnPort(any()) }
     }
 
-    // Installs from before TorMode only have the use_proxy boolean.
     @Test
-    fun `the old use_proxy flag reads as Orbot on the stored port`() {
+    fun `the use_proxy flag of an install from before TorMode reads as Orbot on the stored port`() {
         prefs.values["use_proxy"] = true
         prefs.values["proxy_port"] = 9150
 

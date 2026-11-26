@@ -29,6 +29,7 @@ class ApplicationBackupCryptoTest {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private lateinit var account: Account
 
+    @Suppress("NoComments")
     @Before
     fun setUp() {
         // decryptContent's failure path logs; android.util.Log is not mocked on the JVM.
@@ -75,12 +76,13 @@ class ApplicationBackupCryptoTest {
             }
         }
 
-        // The pre-fix scheme encrypted to the identity key itself (encrypt-to-self);
-        // that content IS readable by any decrypt-capable client, which is the leak
-        // the derived key removes.
         val identitySigner = NostrSignerInternal(KeyPair(privKey = identityPrivKey))
-        val leakedCiphertext = runBlocking { identitySigner.nip44Encrypt(payload, identitySigner.keyPair.pubKey.toHexKey()) }
-        assertEquals(payload, runBlocking { identitySigner.nip44Decrypt(leakedCiphertext, identitySigner.keyPair.pubKey.toHexKey()) })
+        val encryptedToSelf = runBlocking { identitySigner.nip44Encrypt(payload, identitySigner.keyPair.pubKey.toHexKey()) }
+        assertEquals(
+            "content encrypted to the identity key itself is readable by any decrypt-capable client, the leak the derived key removes",
+            payload,
+            runBlocking { identitySigner.nip44Decrypt(encryptedToSelf, identitySigner.keyPair.pubKey.toHexKey()) },
+        )
     }
 
     @Test
@@ -88,11 +90,7 @@ class ApplicationBackupCryptoTest {
         val identityPrivKey = KeyPair().privKey!!
         val backupPrivKey = backupKeyPair(identityPrivKey).privKey
 
-        // Nonces a client could pass to a future NIP-55/NIP-46 derive_key: the
-        // backup labels themselves, the scheme prefix, and empty. None may land
-        // on the backup key — the derivations must stay independent so shipping
-        // derive_key later cannot expose backup key material.
-        val appRequestableNonces = listOf(
+        val futureDeriveKeyNonces = listOf(
             "amber-app-backup",
             "amber-app-backup-salt-v1",
             "amber-app-backup-key",
@@ -100,9 +98,12 @@ class ApplicationBackupCryptoTest {
             "nip44kdamber-app-backup",
             "",
         )
-        for (nonce in appRequestableNonces) {
+        for (nonce in futureDeriveKeyNonces) {
             val derived = EncryptionKeyDerivation.derivePrivateKey(identityPrivKey, nonce.encodeToByteArray())
-            assertFalse("nonce='$nonce' collides with the backup key", backupPrivKey.contentEquals(derived))
+            assertFalse(
+                "nonce='$nonce', which a client could pass to a NIP-55/NIP-46 derive_key, collides with the backup key",
+                backupPrivKey.contentEquals(derived),
+            )
         }
     }
 
@@ -110,12 +111,13 @@ class ApplicationBackupCryptoTest {
     fun `decryptContent reads derived-key backups and rejects legacy and garbage`() = runBlocking {
         val backupSigner = backupSigner(account)
         val newCiphertext = backupSigner.nip44Encrypt(payload, backupSigner.keyPair.pubKey.toHexKey())
-        // Any client with an encrypt grant can get this from Amber's nip44_encrypt
-        // to the user's own pubkey, so it must not be restorable as a backup.
         val legacyCiphertext = account.crypto.nip44Encrypt(payload, account.hexKey)
 
         assertEquals(payload, ApplicationBackupPayloads.decryptContent(newCiphertext, account))
-        assertNull(ApplicationBackupPayloads.decryptContent(legacyCiphertext, account))
+        assertNull(
+            "content any client with an encrypt grant can get from nip44_encrypt to the user's own pubkey must not restore",
+            ApplicationBackupPayloads.decryptContent(legacyCiphertext, account),
+        )
         assertNull(ApplicationBackupPayloads.decryptContent("not-a-backup-payload", account))
     }
 }

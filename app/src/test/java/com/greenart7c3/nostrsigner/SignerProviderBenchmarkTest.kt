@@ -20,10 +20,6 @@ import org.junit.Test
  */
 class SignerProviderBenchmarkTest {
 
-    // -------------------------------------------------------------------------
-    // 1. Startup wait: Thread.sleep poll  vs  StateFlow.first { !it }
-    // -------------------------------------------------------------------------
-
     /**
      * Old approach: busy-poll with Thread.sleep.
      *
@@ -56,8 +52,6 @@ class SignerProviderBenchmarkTest {
             "[Benchmark] startup poll : ${elapsed}ms  " +
                 "(state flipped at ~${releaseAfterMs}ms, sleep=${sleepIntervalMs}ms)",
         )
-        // The poll does not notice the flip until the sleep returns, so elapsed
-        // must be at least one full sleep interval.
         assertTrue(
             "Poll approach should take >= sleep interval (${sleepIntervalMs}ms), got ${elapsed}ms",
             elapsed >= sleepIntervalMs,
@@ -74,16 +68,9 @@ class SignerProviderBenchmarkTest {
     @Test
     fun `benchmark startup wait - flow reacts within milliseconds of state change`() {
         val releaseAfterMs = 30L
+        val slowCiHeadroomMs = 150L
 
-        // Warmup: initialize coroutine runtime so it doesn't inflate the timed run.
-        runBlocking {
-            val warmup = MutableStateFlow(true)
-            launch {
-                delay(1.milliseconds)
-                warmup.value = false
-            }
-            warmup.first { !it }
-        }
+        warmUpCoroutineRuntime()
 
         val elapsed = measureTimeMillis {
             val state = MutableStateFlow(true)
@@ -97,17 +84,20 @@ class SignerProviderBenchmarkTest {
         }
 
         println("[Benchmark] startup flow  : ${elapsed}ms  (state flipped at ~${releaseAfterMs}ms)")
-        // Should complete near releaseAfterMs, not after an extra sleep interval.
-        // Allow generous headroom (150 ms) for slow CI machines.
         assertTrue(
-            "Flow approach should complete within 150ms of state change, got ${elapsed}ms",
-            elapsed < releaseAfterMs + 150,
+            "Flow approach should complete within ${slowCiHeadroomMs}ms of state change, got ${elapsed}ms",
+            elapsed < releaseAfterMs + slowCiHeadroomMs,
         )
     }
 
-    // -------------------------------------------------------------------------
-    // 2. URI string caching: repeated toString()  vs  cache once
-    // -------------------------------------------------------------------------
+    private fun warmUpCoroutineRuntime() = runBlocking {
+        val warmup = MutableStateFlow(true)
+        launch {
+            delay(1.milliseconds)
+            warmup.value = false
+        }
+        warmup.first { !it }
+    }
 
     /**
      * In the old code, every history/log write inside query() called
@@ -116,34 +106,28 @@ class SignerProviderBenchmarkTest {
      * using a CharSequence whose toString() is non-trivial (StringBuilder).
      */
     @Test
-    fun `benchmark uri string - caching toString is faster than repeated calls`() {
+    fun `benchmark uri string - reports the speedup of caching toString over repeated calls`() {
         val appId = "com.greenart7c3.nostrsigner"
         val prefix = "content://$appId."
         val iterations = 200_000
         val warmupIterations = 10_000
 
-        // Use StringBuilder so toString() allocates a new String each call,
-        // mirroring android.net.Uri which reconstructs from components.
-        val uri = StringBuilder(prefix + "SIGN_EVENT")
+        val uriRebuiltOnEachToString = StringBuilder(prefix + "SIGN_EVENT")
 
-        // Warmup – let JIT settle before timing.
-        repeat(warmupIterations) { uri.toString().replace(prefix, "") }
+        repeat(warmupIterations) { uriRebuiltOnEachToString.toString().replace(prefix, "") }
 
         val repeatedNs = measureNanoTime {
             repeat(iterations) {
-                // Old: uri.toString() called separately at each use site.
-                val a = uri.toString().replace(prefix, "")
-                val b = uri.toString().replace(prefix, "")
-                val c = uri.toString().replace(prefix, "")
-                // prevent dead-code elimination
+                val a = uriRebuiltOnEachToString.toString().replace(prefix, "")
+                val b = uriRebuiltOnEachToString.toString().replace(prefix, "")
+                val c = uriRebuiltOnEachToString.toString().replace(prefix, "")
                 check(a == b && b == c)
             }
         }
 
         val cachedNs = measureNanoTime {
             repeat(iterations) {
-                // New: one toString() call, result reused.
-                val cached = uri.toString()
+                val cached = uriRebuiltOnEachToString.toString()
                 val a = cached.replace(prefix, "")
                 val b = cached.replace(prefix, "")
                 val c = cached.replace(prefix, "")
@@ -158,22 +142,13 @@ class SignerProviderBenchmarkTest {
                 "cached=${cachedNs / 1_000_000}ms  " +
                 "speedup=${"%.2f".format(speedup)}x",
         )
-        // JIT can optimize either path differently depending on prior compilations
-        // in the same JVM process, so no strict assertion here.  The speedup
-        // figure in the output demonstrates the expected gain under steady-state
-        // conditions (confirmed by the composite benchmark below).
     }
-
-    // -------------------------------------------------------------------------
-    // 3. Relay URL parsing: parse host twice  vs  parse once and reuse
-    // -------------------------------------------------------------------------
 
     /**
      * For kind-22242 (NIP-42) events the old code called AmberEvent.relay() and
      * java.net.URI.host twice: once for the whitelist check and once for the
      * permission lookup.  This benchmark measures the cost of that duplication.
-     */
-    /**
+     *
      * Timing assertions are inherently subject to JIT compilation variance and
      * transient CPU scheduling noise, so the measurement is retried a few
      * times before declaring failure.  Passing on any attempt is enough: it
@@ -186,6 +161,7 @@ class SignerProviderBenchmarkTest {
         val iterations = 100_000
         val warmupIterations = 5_000
         val maxAttempts = 3
+        val settleBetweenAttemptsMs = 100L
 
         fun extractHost(url: String): String = try {
             URI(url).host ?: url
@@ -193,16 +169,13 @@ class SignerProviderBenchmarkTest {
             url
         }
 
-        // (twiceNs, onceNs) per attempt, kept for the failure message.
-        val attempts = mutableListOf<Pair<Long, Long>>()
+        val twiceAndOnceNsPerAttempt = mutableListOf<Pair<Long, Long>>()
 
         for (attempt in 1..maxAttempts) {
-            // Warmup before every attempt so JIT state does not carry over bias.
             repeat(warmupIterations) { extractHost(relayUrl) }
 
             val twiceNs = measureNanoTime {
                 repeat(iterations) {
-                    // Old: host extracted in two separate blocks.
                     val forWhitelist = extractHost(relayUrl)
                     val forPermission = extractHost(relayUrl)
                     check(forWhitelist == forPermission)
@@ -211,13 +184,12 @@ class SignerProviderBenchmarkTest {
 
             val onceNs = measureNanoTime {
                 repeat(iterations) {
-                    // New: extracted once, shared between whitelist and permission check.
                     val relayHost = extractHost(relayUrl)
                     check(relayHost == relayHost)
                 }
             }
 
-            attempts += twiceNs to onceNs
+            twiceAndOnceNsPerAttempt += twiceNs to onceNs
             println(
                 "[Benchmark] relay host parse (attempt $attempt/$maxAttempts): " +
                     "twice=${twiceNs / 1_000_000}ms  " +
@@ -227,28 +199,20 @@ class SignerProviderBenchmarkTest {
 
             if (onceNs <= twiceNs) return
 
-            // Let the machine settle briefly so the next attempt is not
-            // polluted by whichever background task skewed this one.
-            if (attempt < maxAttempts) Thread.sleep(100)
+            if (attempt < maxAttempts) Thread.sleep(settleBetweenAttemptsMs)
         }
 
         assertTrue(
             "Parsing relay host once should be at least as fast as twice " +
-                "(attempts: ${attempts.joinToString { (twiceNs, onceNs) ->
+                "(attempts: ${twiceAndOnceNsPerAttempt.joinToString { (twiceNs, onceNs) ->
                     "twice=${twiceNs / 1_000_000}ms once=${onceNs / 1_000_000}ms"
                 }})",
-            attempts.any { (twiceNs, onceNs) -> onceNs <= twiceNs },
+            twiceAndOnceNsPerAttempt.any { (twiceNs, onceNs) -> onceNs <= twiceNs },
         )
     }
 
-    // -------------------------------------------------------------------------
-    // 4. Composite: end-to-end query path cost model
-    //    Runs a simplified simulation of the full query() hot path with and
-    //    without all optimisations applied to confirm the cumulative gain.
-    // -------------------------------------------------------------------------
-
     @Test
-    fun `benchmark composite - optimised query path is faster than original`() {
+    fun `benchmark composite - reports the speedup of the optimised query path over the original`() {
         val appId = "com.greenart7c3.nostrsigner"
         val prefix = "content://$appId."
         val relayUrl = "wss://relay.example.com/nostr"
@@ -263,7 +227,6 @@ class SignerProviderBenchmarkTest {
             url
         }
 
-        // Warmup
         repeat(warmupIterations) {
             uri.toString().replace(prefix, "")
             extractHost(relayUrl)
@@ -271,23 +234,21 @@ class SignerProviderBenchmarkTest {
 
         val originalNs = measureNanoTime {
             repeat(iterations) {
-                // Old pattern: uri.toString() at each call site, relay URL parsed twice.
-                val t1 = uri.toString().replace(prefix, "")
-                val host1 = extractHost(relayUrl) // whitelist check
-                val host2 = extractHost(relayUrl) // permission lookup
-                val t2 = uri.toString().replace(prefix, "") // history write (rejected)
-                val t3 = uri.toString().replace(prefix, "") // history write (accepted)
-                check(t1 == t2 && t2 == t3 && host1 == host2)
+                val requestType = uri.toString().replace(prefix, "")
+                val hostForWhitelist = extractHost(relayUrl)
+                val hostForPermission = extractHost(relayUrl)
+                val rejectedHistoryType = uri.toString().replace(prefix, "")
+                val acceptedHistoryType = uri.toString().replace(prefix, "")
+                check(requestType == rejectedHistoryType && rejectedHistoryType == acceptedHistoryType && hostForWhitelist == hostForPermission)
             }
         }
 
         val optimisedNs = measureNanoTime {
             repeat(iterations) {
-                // New pattern: cache uri string once, relay URL extracted once.
                 val uriString = uri.toString()
-                val t = uriString.replace(prefix, "")
-                val relayHost = extractHost(relayUrl) // used for both checks
-                check(t == t && relayHost == relayHost)
+                val requestType = uriString.replace(prefix, "")
+                val relayHost = extractHost(relayUrl)
+                check(requestType == requestType && relayHost == relayHost)
             }
         }
 
@@ -298,8 +259,5 @@ class SignerProviderBenchmarkTest {
                 "optimised=${optimisedNs / 1_000_000}ms  " +
                 "speedup=${"%.2f".format(speedup)}x",
         )
-        // Reporting-only: JIT variance across test ordering makes strict assertion
-        // unreliable here.  The startup-wait and relay-url tests carry the
-        // algorithmic assertions; this benchmark provides the combined picture.
     }
 }

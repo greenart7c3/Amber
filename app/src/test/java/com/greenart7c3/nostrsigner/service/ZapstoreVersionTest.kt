@@ -39,13 +39,10 @@ class ZapstoreVersionTest {
         assertFalse(newer("7.0.0-pre1", "7.0.0-pre1"))
         assertFalse(newer("7.0.0-pre1", "7.0.0-pre2"))
         assertFalse(newer("6.6.9-pre5", "7.0.0-pre1"))
-        // Not a -preN suffix: counts as a final release, as before.
-        assertFalse(newer("7.0.0-preX", "7.0.0"))
-        assertTrue(newer("7.0.0-preX", "7.0.0-pre1"))
+        assertFalse("a non -preN suffix counts as a final release", newer("7.0.0-preX", "7.0.0"))
+        assertTrue("a non -preN suffix counts as a final release", newer("7.0.0-preX", "7.0.0-pre1"))
     }
 
-    // The old fallback compared the strings, where e.g. "x" or "v1.0" sort
-    // above "6.6.9", so an unparsable version was offered as an update.
     @Test
     fun unparsableVersionsAreNeverNewer() {
         listOf("x", "v1.0", "9.a", "7..0", "+7.0.0", "", "7.0.0 ", "99999999999.0.0").forEach {

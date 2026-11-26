@@ -29,8 +29,6 @@ class WebDavTransportPolicyTest {
 
     @Test
     fun `urls okHttp accepts keep working`() {
-        // The java.net.URI-based check rejected all of these with a misleading
-        // "requires an HTTPS server URL" error even though requests worked.
         listOf(
             "https://backup.example:8443/remote.php/dav/files/user",
             "https://backup.example/dav ",
@@ -49,13 +47,10 @@ class WebDavTransportPolicyTest {
         val url = WebDavTransportPolicy.buildFileUrl("https://backup.example/dav", "amber.ncryptsec")
         assertEquals("https://backup.example/dav/amber.ncryptsec", url.toString())
 
-        // Query/fragment injection via the restore text field must be encoded,
-        // not interpreted. OkHttp's PATH_SEGMENT_ENCODE_SET covers ? and #
-        // (and whitespace, quotes, brackets) but leaves '=' alone.
         val injected = WebDavTransportPolicy.buildFileUrl("https://backup.example/dav", "x?token=secret#f")
-        assertNull(injected.query)
-        assertNull(injected.fragment)
-        assertTrue(injected.encodedPath.endsWith("/x%3Ftoken=secret%23f"))
+        assertNull("a typed '?' must not start a query", injected.query)
+        assertNull("a typed '#' must not start a fragment", injected.fragment)
+        assertTrue("'?' and '#' are encoded into the path segment, '=' is left alone", injected.encodedPath.endsWith("/x%3Ftoken=secret%23f"))
 
         listOf("", "..", ".", "a/b", "a\\b").forEach {
             assertThrows(IllegalArgumentException::class.java) { WebDavTransportPolicy.buildFileUrl("https://backup.example/dav", it) }
@@ -75,17 +70,13 @@ class WebDavTransportPolicyTest {
 
     @Test
     fun `redirects are followed only within https`() {
-        // Tor off: the client is direct, so no proxy has to be reachable.
-        val settingsStore = object : SettingsStore {
+        val directClientSettings = object : SettingsStore {
             override var settings = AmberSettings(torMode = TorMode.DISABLED)
             override val themeMode = MutableStateFlow(ThemeMode.SYSTEM)
         }
-        val client = WebDavService(settingsStore, mockk(relaxed = true)).createClient("https://backup.example/dav")
+        val client = WebDavService(directClientSettings, mockk(relaxed = true)).createClient("https://backup.example/dav")
 
-        // Same-scheme redirects (e.g. a collection's trailing-slash 301) still
-        // work; an https -> http hop is returned as an error, so a 307/308
-        // cannot resend the backup body in cleartext.
-        assertTrue(client.followRedirects)
-        assertFalse(client.followSslRedirects)
+        assertTrue("same-scheme redirects such as a trailing-slash 301 must still work", client.followRedirects)
+        assertFalse("an https to http hop must not resend the backup body in cleartext", client.followSslRedirects)
     }
 }

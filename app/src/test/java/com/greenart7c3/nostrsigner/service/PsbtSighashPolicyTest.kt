@@ -79,8 +79,7 @@ class PsbtSighashPolicyTest {
     }
 
     @Test
-    fun `ignores inputs the account does not sign`() {
-        // Another signer's input may use any sighash; Amber leaves it untouched.
+    fun `ignores inputs the account does not sign, whatever their sighash`() {
         PsbtSighashPolicy.requireCommitsToAllOutputs(psbt(otherKp.pubKey, TaprootSigHash.SIGHASH_NONE), userKp.pubKey)
     }
 }

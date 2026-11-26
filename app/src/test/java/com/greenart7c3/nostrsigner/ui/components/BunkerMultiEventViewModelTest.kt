@@ -181,8 +181,8 @@ class BunkerMultiEventViewModelTest {
         coVerify(timeout = 5_000) { historyDao.addHistory(capture(history), account.npub) }
         assertEquals(listOf(true), history.captured.map { it.accepted })
         assertEquals("SIGN_EVENT", history.captured.single().type)
-        // Remember my choice defaults to NEVER: only the app row is saved, once.
-        coVerify(exactly = 1) { permissionWriteDao.insertApplicationWithPermissions(savedApplication) }
+        val onlyTheAppRowSinceRememberDefaultsToNever = 1
+        coVerify(exactly = onlyTheAppRowSinceRememberDefaultsToNever) { permissionWriteDao.insertApplicationWithPermissions(savedApplication) }
     }
 
     @Test
@@ -247,17 +247,25 @@ class BunkerMultiEventViewModelTest {
         coVerify(timeout = 5_000, exactly = 2) {
             bunkerResponder.sendBunkerResponse(any(), any(), any(), any(), any(), any(), any())
         }
-        // Capture after the wait: a timeout verify re-captures on every poll.
-        val replies = mutableListOf<BunkerResponse>()
-        coVerify { bunkerResponder.sendBunkerResponse(any(), any(), capture(replies), any(), any(), any(), any()) }
+        val replies = repliesCapturedAfterTheWait()
         assertEquals(listOf("id-5", "id-6"), replies.map { it.id })
-        // Each remembered request saves twice: the app row, then its grant.
-        coVerify(timeout = 5_000, exactly = 4) { permissionWriteDao.insertApplicationWithPermissions(savedApplication) }
+        val appRowThenGrantForEachOfTwoRequests = 4
+        coVerify(timeout = 5_000, exactly = appRowThenGrantForEachOfTwoRequests) { permissionWriteDao.insertApplicationWithPermissions(savedApplication) }
         val remembered = savedApplication.permissions.single { it.relay == "relay.example.com" }
         assertEquals(RememberType.ALWAYS.screenCode, remembered.rememberType)
-        // A blank relay-auth relay reads as the all-relays wildcard in the DAO:
-        // remembering it would silently grant every relay.
         val downgraded = savedApplication.permissions.single { it.kind == 22242 && it.relay.isEmpty() }
-        assertEquals(RememberType.NEVER.screenCode, downgraded.rememberType)
+        assertEquals(
+            "a blank relay-auth relay is the DAO's all-relays wildcard: remembering it would grant every relay",
+            RememberType.NEVER.screenCode,
+            downgraded.rememberType,
+        )
+    }
+
+    @Suppress("NoComments")
+    private fun repliesCapturedAfterTheWait(): List<BunkerResponse> {
+        // MockK: a timeout verify re-captures on every poll, so capture only once the replies are in.
+        val replies = mutableListOf<BunkerResponse>()
+        coVerify { bunkerResponder.sendBunkerResponse(any(), any(), capture(replies), any(), any(), any(), any()) }
+        return replies
     }
 }

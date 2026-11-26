@@ -20,9 +20,8 @@ class WebDavSettingsTest {
         assertEquals("", WebDavSettings.password(context))
     }
 
-    // Key rotation re-encrypts the password; a save made meanwhile must not be overwritten.
     @Test
-    fun `the encrypted password is replaced only while it is still the expected one`() {
+    fun `a key rotation replaces the encrypted password only while it is still the expected one`() {
         prefs.values["webdav_password_encrypted"] = "old"
 
         assertFalse(WebDavSettings.replaceEncryptedPassword(context, expected = "other", encryptedPassword = "new"))

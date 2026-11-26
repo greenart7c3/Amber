@@ -11,8 +11,6 @@ import org.junit.Test
 
 class IntentUtilsTest {
 
-    // --- decodeData ---
-
     @Test
     fun `decodeData removes nostrsigner prefix`() {
         val result = decodeData("nostrsigner:hello")
@@ -26,15 +24,13 @@ class IntentUtilsTest {
     }
 
     @Test
-    fun `decodeData with replace=true preserves literal plus sign`() {
-        // replace=true swaps '+' → '%2b' before URLDecoder runs, so '+' is kept
+    fun `decodeData with replace=true escapes plus before URL-decoding so it stays literal`() {
         val result = decodeData("nostrsigner:hello+world", replace = true)
         assertEquals("hello+world", result)
     }
 
     @Test
-    fun `decodeData with replace=false treats plus as space`() {
-        // replace=false lets URLDecoder treat '+' as a space (standard form-encoding)
+    fun `decodeData with replace=false treats plus as a form-encoded space`() {
         val result = decodeData("nostrsigner:hello+world", replace = false)
         assertEquals("hello world", result)
     }
@@ -68,8 +64,6 @@ class IntentUtilsTest {
         val result = decodeData("nostrsigner:foo%3Dbar%26baz%3D1")
         assertEquals("foo=bar&baz=1", result)
     }
-
-    // --- isUrlEncoded ---
 
     @Test
     fun `isUrlEncoded returns true for lowercase hex percent-encoding`() {
@@ -116,8 +110,6 @@ class IntentUtilsTest {
         assertFalse(isUrlEncoded(""))
     }
 
-    // --- parsePubKey ---
-
     @Test
     fun `parsePubKey returns npub unchanged when already npub-prefixed`() {
         val npub = "npub1testvalue"
@@ -126,20 +118,16 @@ class IntentUtilsTest {
 
     @Test
     fun `parsePubKey converts valid 32-byte hex key to npub format`() {
-        // x-coordinate of secp256k1 generator point — a well-known 32-byte value
-        val hex = "79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798"
-        val result = parsePubKey(hex)
+        val secp256k1GeneratorX = "79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798"
+        val result = parsePubKey(secp256k1GeneratorX)
         assertNotNull(result)
         assertTrue(result!!.startsWith("npub1"))
     }
 
     @Test
-    fun `parsePubKey returns null for odd-length hex string`() {
-        // Odd-length strings cannot represent whole bytes
+    fun `parsePubKey returns null for odd-length hex string, which has no whole bytes`() {
         assertNull(parsePubKey("deadbeef1"))
     }
-
-    // --- isRemembered ---
 
     @Test
     fun `isRemembered returns true when signPolicy is 2 regardless of permission`() {
@@ -245,7 +233,6 @@ class IntentUtilsTest {
         assertFalse(isWebRequest(dataString = "nostrsigner:?pubkey=123"))
     }
 
-    // Helper to build a minimal ApplicationPermissionsEntity for isRemembered tests
     private fun permissionWith(
         acceptable: Boolean = true,
         acceptUntil: Long = 0L,

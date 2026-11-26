@@ -9,7 +9,6 @@ import org.junit.Test
 class PlainCardTextTest {
     private val zapRequest = """{"id":"${"0".repeat(64)}","pubkey":"${"ab".repeat(32)}","created_at":1,"kind":9733,"tags":[["p","${"cd".repeat(32)}"]],"content":"thanks for the post","sig":"${"0".repeat(128)}"}"""
 
-    // The card used to show the whole decrypted zap request as JSON.
     @Test
     fun `a private zap shows its message, not the event JSON`() {
         assertEquals("thanks for the post", plainCardText(SignerType.DECRYPT_ZAP_EVENT, PrivateZapEncryptedDataKind(zapRequest)))

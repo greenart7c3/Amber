@@ -62,7 +62,6 @@ class EncryptedDataPreviewTest {
         assertEquals(1, errors.size)
     }
 
-    // A bunker decrypt_zap_event approved on screen used to answer "": it had no preview.
     @Test
     fun `a private zap preview carries the decrypted zap request as its result`() {
         every { account.decryptZapEvent("zap-request") } returns event(9733, "secret")

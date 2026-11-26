@@ -17,8 +17,6 @@ import org.junit.Test
 class NostrSignerRequestTest {
     private val pubKey = "3bf0c63fcb93463407af97a5e5ee64fa883d107ef9e558472c4eb9aaaefa459d"
 
-    // --- fromUri (web apps) ---
-
     @Test
     fun `fromUri reads the query parameters`() {
         val request = NostrSignerRequestParser.fromUri(
@@ -67,8 +65,6 @@ class NostrSignerRequestTest {
         assertNull(NostrSignerRequestParser.fromUri("nostrsigner:hello"))
         assertNull(NostrSignerRequestParser.fromUri("nostrsigner:hello?"))
     }
-
-    // --- fromExtras (native apps) ---
 
     @Test
     fun `fromExtras reads the intent extras`() {
@@ -124,8 +120,6 @@ class NostrSignerRequestTest {
             unmockkObject(AmberLog)
         }
     }
-
-    // --- rejection ---
 
     @Test
     fun `an unknown type is rejected`() {

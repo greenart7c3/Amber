@@ -5,18 +5,13 @@ import org.junit.Test
 
 class RelayUrlUtilsTest {
 
-    // --- bare host inputs (no scheme) ---
-
     @Test
     fun `bare hostname is returned unchanged`() {
         assertEquals("relay.example.com", RelayUrlUtils.extractHostAndPort("relay.example.com"))
     }
 
     @Test
-    fun `bare hostname with port is preserved`() {
-        // Regression: URI("relay.example.com:8080") treats the host as a scheme,
-        // so a naive URI.host call returns null and drops the port. The helper
-        // prepends "wss://" so the port is preserved.
+    fun `bare hostname with port keeps the port although URI reads the host as a scheme`() {
         assertEquals("relay.example.com:8080", RelayUrlUtils.extractHostAndPort("relay.example.com:8080"))
     }
 
@@ -24,8 +19,6 @@ class RelayUrlUtilsTest {
     fun `bare IPv4 with port is preserved`() {
         assertEquals("127.0.0.1:7777", RelayUrlUtils.extractHostAndPort("127.0.0.1:7777"))
     }
-
-    // --- inputs with scheme ---
 
     @Test
     fun `wss URL without port returns host only`() {
@@ -67,13 +60,8 @@ class RelayUrlUtilsTest {
         assertEquals("relay.example.com:8080", RelayUrlUtils.extractHostAndPort("wss://relay.example.com:8080/some/path"))
     }
 
-    // --- equivalence: the whitelist check (uses `in`) is essentially a string compare ---
-
     @Test
-    fun `bare host-port and wss URL with same port normalize to same value`() {
-        // This is the core whitelist regression: a user adds "relay.example.com:8080"
-        // to the whitelist; the event's "relay" tag is "wss://relay.example.com:8080".
-        // Both must normalize to the same string for `relayHost in authWhitelist` to pass.
+    fun `a bare host-port whitelist entry matches the wss relay tag with the same port`() {
         val whitelistEntry = RelayUrlUtils.extractHostAndPort("relay.example.com:8080")
         val eventTag = RelayUrlUtils.extractHostAndPort("wss://relay.example.com:8080")
         assertEquals(whitelistEntry, eventTag)
@@ -95,8 +83,6 @@ class RelayUrlUtilsTest {
         assertEquals("relay.example.com", withoutPort)
     }
 
-    // --- edge cases ---
-
     @Test
     fun `null input returns empty string`() {
         assertEquals("", RelayUrlUtils.extractHostAndPort(null))
@@ -113,9 +99,7 @@ class RelayUrlUtilsTest {
     }
 
     @Test
-    fun `unparseable input falls back to the trimmed original`() {
-        // Garbage that URI cannot parse should fall through to the trimmed input
-        // rather than throw.
+    fun `unparseable input falls back to the trimmed original instead of throwing`() {
         val weird = "not a valid uri at all <<>>"
         assertEquals(weird, RelayUrlUtils.extractHostAndPort("  $weird  "))
     }

@@ -77,9 +77,7 @@ class CachingApplicationDaoTest {
         val first = dao.getAll(accountKey)
         val second = dao.getAll(accountKey)
 
-        // Cache hits must not hand out the same mutable list instance callers
-        // could alias; equality stays intact.
-        assertNotSame(first, second)
+        assertNotSame("a cache hit must not hand out a list instance callers could alias", first, second)
         assertEquals(first, second)
     }
 
@@ -223,11 +221,6 @@ class CachingApplicationDaoTest {
         coVerify(exactly = 1) { delegate.getAll(otherAccount) }
     }
 
-    /**
-     * Runs [read] on another thread, blocks it inside the delegate until [revoke]
-     * has completed, then lets the stale delegate result return. Models a signing
-     * request racing a revocation from the UI.
-     */
     private fun <T> raceReadAgainstRevocation(
         stubFirstRead: (blockUntilRevoked: () -> Unit) -> Unit,
         read: () -> T,

@@ -68,8 +68,8 @@ class ZapstoreUpdaterAuthorTest {
         assertNotEquals(Amber.DEVELOPER_HEX_KEY, forged.pubKey)
 
         updater.onIncomingMessage(mockk<IRelayClient>(relaxed = true), forged.toJson(), EventMessage(releaseSubId, forged))
-        // Release processing runs on the updater's own coroutine; give it time to act.
-        delay(1_500.milliseconds)
+        val updaterCoroutineGrace = 1_500.milliseconds
+        delay(updaterCoroutineGrace)
 
         assertNull(updater.latestRelease.value)
     }

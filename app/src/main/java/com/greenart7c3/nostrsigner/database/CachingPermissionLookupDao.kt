@@ -18,63 +18,33 @@ class CachingPermissionLookupDao(
     }
 
     override fun getSignPolicy(key: String): Int? {
-        val k = ApplicationDaoCache.Key(ApplicationDaoCache.Method.SIGN_POLICY, key, null, null, null)
         if (isExpired(key)) return null
-        val readGeneration = cache.generation()
-        cache.lookup(k)?.let { return it.signPolicy }
-        val result = delegate.getSignPolicy(key)
-        cache.store(k, ApplicationDaoCache.Value(result, null), readGeneration)
-        return result
+        return cache.signPolicy(key) { delegate.getSignPolicy(key) }
     }
 
     override fun getPermission(key: String, type: String, kind: Int?): ApplicationPermissionsEntity? {
-        val k = ApplicationDaoCache.Key(ApplicationDaoCache.Method.PERM_KIND, key, type, kind, null)
         if (isExpired(key)) return null
-        val readGeneration = cache.generation()
-        cache.lookup(k)?.let { return it.permission }
-        val result = delegate.getPermission(key, type, kind)
-        cache.store(k, ApplicationDaoCache.Value(null, result), readGeneration)
-        return result
+        return cache.permission(key, type, kind) { delegate.getPermission(key, type, kind) }
     }
 
     override fun getPermission(key: String, type: String): ApplicationPermissionsEntity? {
-        val k = ApplicationDaoCache.Key(ApplicationDaoCache.Method.PERM, key, type, null, null)
         if (isExpired(key)) return null
-        val readGeneration = cache.generation()
-        cache.lookup(k)?.let { return it.permission }
-        val result = delegate.getPermission(key, type)
-        cache.store(k, ApplicationDaoCache.Value(null, result), readGeneration)
-        return result
+        return cache.permission(key, type) { delegate.getPermission(key, type) }
     }
 
     override fun getPermissionAllKinds(key: String, type: String): ApplicationPermissionsEntity? {
-        val k = ApplicationDaoCache.Key(ApplicationDaoCache.Method.PERM_ALL_KINDS, key, type, null, null)
         if (isExpired(key)) return null
-        val readGeneration = cache.generation()
-        cache.lookup(k)?.let { return it.permission }
-        val result = delegate.getPermissionAllKinds(key, type)
-        cache.store(k, ApplicationDaoCache.Value(null, result), readGeneration)
-        return result
+        return cache.permissionAllKinds(key, type) { delegate.getPermissionAllKinds(key, type) }
     }
 
     override fun getPermissionForRelay(key: String, type: String, kind: Int, relay: String): ApplicationPermissionsEntity? {
-        val k = ApplicationDaoCache.Key(ApplicationDaoCache.Method.PERM_RELAY, key, type, kind, relay)
         if (isExpired(key)) return null
-        val readGeneration = cache.generation()
-        cache.lookup(k)?.let { return it.permission }
-        val result = delegate.getPermissionForRelay(key, type, kind, relay)
-        cache.store(k, ApplicationDaoCache.Value(null, result), readGeneration)
-        return result
+        return cache.permissionForRelay(key, type, kind, relay) { delegate.getPermissionForRelay(key, type, kind, relay) }
     }
 
     override fun getWildcardRelayPermission(key: String, type: String, kind: Int): ApplicationPermissionsEntity? {
-        val k = ApplicationDaoCache.Key(ApplicationDaoCache.Method.PERM_WILDCARD, key, type, kind, null)
         if (isExpired(key)) return null
-        val readGeneration = cache.generation()
-        cache.lookup(k)?.let { return it.permission }
-        val result = delegate.getWildcardRelayPermission(key, type, kind)
-        cache.store(k, ApplicationDaoCache.Value(null, result), readGeneration)
-        return result
+        return cache.wildcardRelayPermission(key, type, kind) { delegate.getWildcardRelayPermission(key, type, kind) }
     }
 
     override fun getDeleteAfter(key: String): Long? = delegate.getDeleteAfter(key)

@@ -10,6 +10,13 @@ import androidx.room.Transaction
 /** Room DAO for permission upkeep: expiring grants, pruning applications past their lifetime, and raw permission rows. */
 @Dao
 interface PermissionMaintenanceDao {
+    /**
+     * Resets (`acceptUntil = 0`, `rejectUntil = 0`, `rememberType = 0`) every permission row without an
+     * active decision at [time], i.e. neither accepted with `acceptUntil > time` nor rejected with
+     * `rejectUntil > time`. ALWAYS rows (`rememberType = 4`) are kept, and rows that are already reset
+     * (all three columns 0) are skipped, so the returned count covers only rows that really changed.
+     * [CachingPermissionMaintenanceDao] clears the permission cache only when that count is > 0.
+     */
     @Query(
         "UPDATE applicationPermission SET acceptUntil = 0, rejectUntil = 0, rememberType = 0 " +
             "WHERE rememberType <> 4 " +

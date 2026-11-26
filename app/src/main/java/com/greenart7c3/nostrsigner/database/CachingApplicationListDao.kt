@@ -2,7 +2,10 @@ package com.greenart7c3.nostrsigner.database
 
 import androidx.paging.PagingSource
 
-/** The cached path's [ApplicationListDao]: it caches nothing, but like the other caching DAOs hides connections past their `deleteAfter` lifetime. */
+/**
+ * The cached path's [ApplicationListDao]. It caches nothing: [getAllWithLocalKey] drops connections
+ * past their `deleteAfter` lifetime, and every other method passes straight through to the delegate.
+ */
 class CachingApplicationListDao(
     private val delegate: ApplicationListDao,
 ) : ApplicationListDao {

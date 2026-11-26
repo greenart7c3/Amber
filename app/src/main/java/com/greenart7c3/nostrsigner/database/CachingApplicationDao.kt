@@ -3,7 +3,9 @@ package com.greenart7c3.nostrsigner.database
 import androidx.collection.LruCache
 
 /**
- * The bounded read-through cache one account's caching DAOs ([ApplicationDaos.cached]) share.
+ * The bounded read-through cache one account's caching DAOs share. [ApplicationDaos.cached] builds one
+ * instance per account and hands it to every caching DAO of that account: the writes of one DAO evict the
+ * reads of another only because they share it, so never give a caching DAO a cache of its own.
  *
  * [CachingPermissionLookupDao] caches the queries on the signing hot path
  * through it. SignerProvider runs its
@@ -15,10 +17,20 @@ import androidx.collection.LruCache
  * Negative results are cached too — "no permission row" is the common branch
  * and dominates the miss path otherwise.
  *
- * Writes invalidate every cache entry whose key shares the affected pkKey
- * (coarse-grained per-app). Every mutation of the application and permission
- * DAOs is scoped to a single app key, so this matches the natural granularity
- * without forcing callers to know which exact (type, kind, relay) tuple they touched.
+ * Invalidation is coarse-grained, so callers never need to know which exact (type, kind, relay) tuple
+ * they touched. Every caching write delegates first and evicts afterwards:
+ * - A permission write evicts every permission entry of its app key, and so does an application-row
+ *   write (an insert or delete can change `signPolicy`, which the SIGN_POLICY entry holds).
+ * - [CachingPermissionMaintenanceDao.updateExpiredPermissions] and
+ *   [CachingPermissionMaintenanceDao.deleteOldApplications] touch many apps at once and clear the whole
+ *   permission cache (the latter also every [CachingApplicationDao.getAll] list), and only when they
+ *   changed a row.
+ * - [CachingApplicationWriteDao.updateLastUsed], [CachingApplicationWriteDao.replaceSecretRaw] and
+ *   [CachingApplicationWriteDao.replaceLocalKeyRaw] change no column a cached permission read uses, so
+ *   they evict only the [CachingApplicationDao.getAll] lists.
+ * - The other `*Raw` writes forward without evicting, on purpose: they are the Room halves of the DAOs'
+ *   default methods, whose caching overrides evict after delegating, and only tests call them through a
+ *   caching DAO.
  *
  * Every invalidation bumps a generation counter, and a read only stores its
  * result if the generation is unchanged since the read began. Otherwise, a
@@ -30,18 +42,16 @@ import androidx.collection.LruCache
  * AES-GCM, a binder hop to keystore2 per field) and
  * [com.greenart7c3.nostrsigner.service.NotificationSubscription] re-runs it on
  * every relay-refresh cycle, which made it the app's dominant native allocator.
- * Any mutation of the `application` table evicts the affected account's entry
- * (or all entries when only the app key — not the owning account — is known).
+ * A write evicts the affected account's list, or every list when only the app key — not the owning
+ * account — is known.
  * Cached lists are handed out as defensive copies; callers must not expect
  * in-place edits of returned entities to be visible (all current call sites are
  * read-only consumers).
  */
 class ApplicationDaoCache {
-    /** The cached query a [Key] belongs to. */
-    enum class Method { SIGN_POLICY, PERM, PERM_KIND, PERM_ALL_KINDS, PERM_RELAY, PERM_WILDCARD }
+    private enum class Method { SIGN_POLICY, PERM, PERM_KIND, PERM_ALL_KINDS, PERM_RELAY, PERM_WILDCARD }
 
-    /** One cached query with its arguments. */
-    data class Key(
+    private data class Key(
         val method: Method,
         val pkKey: String,
         val type: String?,
@@ -49,8 +59,7 @@ class ApplicationDaoCache {
         val relay: String?,
     )
 
-    /** A cached query result, including a cached "no row". */
-    data class Value(
+    private data class Value(
         val signPolicy: Int?,
         val permission: ApplicationPermissionsEntity?,
     )
@@ -62,26 +71,38 @@ class ApplicationDaoCache {
     private val getAllCache = LruCache<String, List<ApplicationEntity>>(GET_ALL_MAX_ENTRIES)
     private var getAllGeneration = 0L
 
-    fun generation(): Long = synchronized(cache) { cacheGeneration }
+    internal fun signPolicy(key: String, load: () -> Int?): Int? = cached(Key(Method.SIGN_POLICY, key, null, null, null), Value::signPolicy, { Value(it, null) }, load)
 
-    fun lookup(key: Key): Value? = synchronized(cache) { cache[key] }
+    internal fun permission(key: String, type: String, kind: Int?, load: () -> ApplicationPermissionsEntity?): ApplicationPermissionsEntity? = cachedPermission(Key(Method.PERM_KIND, key, type, kind, null), load)
 
-    /** Caches [value] unless an invalidation ran after the read began at [readGeneration]. */
-    fun store(key: Key, value: Value, readGeneration: Long) {
+    internal fun permission(key: String, type: String, load: () -> ApplicationPermissionsEntity?): ApplicationPermissionsEntity? = cachedPermission(Key(Method.PERM, key, type, null, null), load)
+
+    internal fun permissionAllKinds(key: String, type: String, load: () -> ApplicationPermissionsEntity?): ApplicationPermissionsEntity? = cachedPermission(Key(Method.PERM_ALL_KINDS, key, type, null, null), load)
+
+    internal fun permissionForRelay(key: String, type: String, kind: Int, relay: String, load: () -> ApplicationPermissionsEntity?): ApplicationPermissionsEntity? = cachedPermission(Key(Method.PERM_RELAY, key, type, kind, relay), load)
+
+    internal fun wildcardRelayPermission(key: String, type: String, kind: Int, load: () -> ApplicationPermissionsEntity?): ApplicationPermissionsEntity? = cachedPermission(Key(Method.PERM_WILDCARD, key, type, kind, null), load)
+
+    private fun cachedPermission(key: Key, load: () -> ApplicationPermissionsEntity?): ApplicationPermissionsEntity? = cached(key, Value::permission, { Value(null, it) }, load)
+
+    private fun <T> cached(key: Key, extract: (Value) -> T, wrap: (T) -> Value, load: () -> T): T {
+        val readGeneration = synchronized(cache) { cacheGeneration }
+        synchronized(cache) { cache[key] }?.let { return extract(it) }
+        val result = load()
         synchronized(cache) {
-            if (readGeneration == cacheGeneration) cache.put(key, value)
+            if (readGeneration == cacheGeneration) cache.put(key, wrap(result))
         }
+        return result
     }
 
-    /** Evicts the cached [getAll] list for [pubKey], or every list when null. */
-    fun invalidateGetAll(pubKey: String?) {
+    internal fun invalidateGetAll(pubKey: String?) {
         synchronized(getAllCache) {
             getAllGeneration++
             if (pubKey != null) getAllCache.remove(pubKey) else getAllCache.evictAll()
         }
     }
 
-    fun invalidateApp(pkKey: String) {
+    internal fun invalidateApp(pkKey: String) {
         synchronized(cache) {
             cacheGeneration++
             val toRemove = cache.snapshot().keys.filter { it.pkKey == pkKey }
@@ -89,14 +110,14 @@ class ApplicationDaoCache {
         }
     }
 
-    fun invalidateAll() {
+    internal fun invalidateAll() {
         synchronized(cache) {
             cacheGeneration++
             cache.evictAll()
         }
     }
 
-    suspend fun getAll(pubKey: String, load: suspend () -> List<ApplicationEntity>): List<ApplicationEntity> {
+    internal suspend fun getAll(pubKey: String, load: suspend () -> List<ApplicationEntity>): List<ApplicationEntity> {
         val readGeneration = synchronized(getAllCache) {
             getAllCache[pubKey]?.let { return it.toList() }
             getAllGeneration

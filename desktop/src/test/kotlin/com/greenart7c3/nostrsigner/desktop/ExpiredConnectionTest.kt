@@ -37,7 +37,6 @@ class ExpiredConnectionTest {
         return client.signerSync.sign(TimeUtils.now(), 24133, arrayOf(arrayOf("p", connectionHex)), content)
     }
 
-    /** A fully trusted connection (signs everything unasked) expiring at [deleteAfter]. */
     private suspend fun fullyTrustedApp(name: String, deleteAfter: Long): Triple<String, NostrSignerInternal, String> {
         val account = AccountManager.addAccount(KeyPair(), name = name, signPolicy = 1)
         val client = KeyPair()

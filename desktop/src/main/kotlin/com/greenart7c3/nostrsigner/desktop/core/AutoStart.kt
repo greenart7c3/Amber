@@ -41,12 +41,13 @@ object AutoStart {
     val isMac: Boolean = System.getProperty("os.name").lowercase().contains("mac")
 
     /** launchd label; also the plist file name. Matches the bundle id. */
+    @Suppress("NoComments")
     private const val LAUNCH_AGENT_LABEL = "com.greenart7c3.nostrsigner"
 
-    // The characters that make a systemd value need double quotes (see [quote]).
     private val QUOTE_TRIGGERS = setOf(' ', '\t', '"', '\\', '$')
 
     /** Set by the jpackage launcher to the installed binary; absent in dev (Gradle) runs. */
+    @Suppress("NoComments")
     private fun packagedExecutable(): String? = System.getProperty("jpackage.app-path")?.takeIf { it.isNotBlank() }
 
     /**
@@ -54,6 +55,7 @@ object AutoStart {
      * (/tmp/.mount_*), so use the AppImage file itself; its runtime exports
      * the path as APPIMAGE.
      */
+    @Suppress("NoComments")
     private fun currentExecutable(): String? = System.getenv("APPIMAGE")?.takeIf { it.isNotBlank() } ?: runCatching {
         String(java.nio.file.Files.readAllBytes(java.nio.file.Path.of("/proc/self/cmdline")), Charsets.UTF_8)
             .split('\u0000')
@@ -76,6 +78,12 @@ object AutoStart {
      * Installs (or refreshes) the unit and enables it, then starts the
      * service. Starting while a manual instance is already running is
      * harmless: that instance forwards a raise to it and exits cleanly.
+     * Disabling never kills an app the user is currently using: `disable` gets
+     * no `--now`. The Windows Run entry is only written or removed, so there
+     * enabling launches nothing and disabling kills nothing.
+     *
+     * systemd requires an absolute ExecStart, and /proc/self/cmdline records
+     * the path exactly as invoked (it can be relative), so it is canonicalized.
      */
     fun setEnabled(enabled: Boolean) {
         if (!isSupported()) return
@@ -88,8 +96,6 @@ object AutoStart {
             return
         }
         runCatching {
-            // systemd requires an absolute ExecStart: /proc/self/cmdline
-            // records the path exactly as invoked (it can be relative).
             val exe = currentExecutable()
                 ?.let { File(it).canonicalFile.path }
                 ?: return
@@ -107,17 +113,11 @@ object AutoStart {
                 systemctl("enable", UNIT_NAME)
                 systemctl("start", UNIT_NAME)
             } else {
-                // No --now on purpose: disabling autostart must not kill an
-                // app the user is currently using.
                 systemctl("disable", UNIT_NAME)
             }
         }
     }
 
-    /**
-     * Writes (or removes) the Run entry. Like the systemd path, enabling never
-     * launches a second instance and disabling never kills the running one.
-     */
     private fun setWindowsRunEntry(enabled: Boolean) {
         runCatching {
             if (enabled) {
@@ -134,6 +134,7 @@ object AutoStart {
      * login; it is deliberately not loaded with launchctl, so enabling never
      * launches a second instance and disabling never kills the running one.
      */
+    @Suppress("NoComments")
     private fun setMacLaunchAgent(enabled: Boolean) {
         runCatching {
             val plist = File(System.getProperty("user.home"), "Library/LaunchAgents/$LAUNCH_AGENT_LABEL.plist")
@@ -152,6 +153,7 @@ object AutoStart {
      * must stick. LimitLoadToSessionType=Aqua keeps it out of SSH/background
      * sessions, where there is no window server to show it on.
      */
+    @Suppress("NoComments")
     internal fun launchAgentContent(exePath: String): String = """
         <?xml version="1.0" encoding="UTF-8"?>
         <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -180,6 +182,7 @@ object AutoStart {
         .replace("\"", "&quot;")
 
     /** The Run value is a command line: always quote the path (e.g. `C:\Program Files\...`). */
+    @Suppress("NoComments")
     internal fun windowsRunCommand(exePath: String): String = "\"$exePath\""
 
     private fun systemctl(vararg args: String): Boolean = runCatching {
@@ -192,6 +195,7 @@ object AutoStart {
      * escapes itself and `"`; `$` would start variable expansion and `%`
      * would start a specifier (`%h`, `%t`, …), so both are escaped too.
      */
+    @Suppress("NoComments")
     internal fun quote(value: String): String {
         val escaped = value
             .replace("\\", "\\\\")
@@ -202,6 +206,7 @@ object AutoStart {
     }
 
     /** Control characters (newlines in particular) cannot be quoted away in a unit file. */
+    @Suppress("NoComments")
     internal fun isUnitSafe(vararg paths: String): Boolean = paths.all { path -> path.none { it < ' ' } }
 
     /**
@@ -211,6 +216,7 @@ object AutoStart {
      * Extractions of older AppImages are removed; the one this process runs
      * from ($APPDIR) is kept.
      */
+    @Suppress("NoComments")
     private fun prepareAppImageCache(): File {
         val cacheHome = System.getenv("XDG_CACHE_HOME")?.takeIf { it.isNotBlank() } ?: File(System.getProperty("user.home"), ".cache").path
         val dir = File(cacheHome, "amber/appimage").apply { mkdirs() }
@@ -227,6 +233,7 @@ object AutoStart {
      * the sandbox could then not create it, so the local signer would not
      * start. Owner-only, as [LocalSigner] requires.
      */
+    @Suppress("NoComments")
     private fun prepareLocalSignerDir() {
         val dir = LocalSigner.socketPath().parent.toFile()
         if (!dir.exists() && dir.mkdirs()) AppDirs.restrictToOwner(dir)
@@ -238,6 +245,7 @@ object AutoStart {
      * (setuid fusermount3, mount(2)), so the unit has it extract into that
      * dir instead; NO_CLEANUP keeps the extraction for the next login.
      */
+    @Suppress("NoComments")
     internal fun unitContent(exePath: String, appImageCacheDir: String? = null): String {
         val appImage = appImageCacheDir?.let {
             "# AppImage: extract instead of FUSE-mounting (blocked by the sandbox).\n" +

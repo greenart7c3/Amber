@@ -35,11 +35,13 @@ object AppDirs {
         dir
     }
 
+    /**
+     * The account's directory, owner-only: mkdirs() honors the umask
+     * (typically 0755), and the account's apps, permissions and history live
+     * here. Also tightens a directory that already existed with a looser mode.
+     */
     fun accountDir(npub: String): File = File(dataDir, npub).apply {
         mkdirs()
-        // mkdirs() honors the umask (typically 0755); the account's apps,
-        // permissions and history live here, so keep it owner-only. Also
-        // tightens a directory that already existed with a looser mode.
         restrictToOwner(this)
     }
 
@@ -62,7 +64,8 @@ object AppDirs {
      * Opens [file] for writing, creating it with owner-only permissions
      * BEFORE any content is written, so secrets never exist on disk even
      * briefly readable by other users. POSIX only; on Windows the user
-     * profile ACLs already scope access, so the plain write is kept.
+     * profile ACLs already scope access, so the plain write is kept. An
+     * existing file is overwritten in place, as it was created under this policy.
      */
     fun privateOutput(file: File): OutputStream {
         if (System.getProperty("os.name").lowercase().contains("win")) {
@@ -74,7 +77,6 @@ object AppDirs {
         try {
             Files.createFile(file.toPath(), ownerOnly)
         } catch (_: FileAlreadyExistsException) {
-            // Overwrite in place; the existing file was created under this policy.
         }
         return Files.newOutputStream(
             file.toPath(),
@@ -90,7 +92,8 @@ object AppDirs {
      * to an owner-only temp file, is flushed to disk, and is then renamed
      * over the target (an atomic replace on POSIX and on Windows, where
      * `MoveFileEx` honors ATOMIC_MOVE). The directory entry is synced too, so
-     * the rename itself survives a power loss on Linux.
+     * the rename itself survives a power loss on Linux. On a filesystem
+     * without atomic rename support the replace is best effort.
      */
     fun writeAtomically(file: File, bytes: ByteArray) {
         val tmp = File(file.parentFile, "${file.name}.tmp")
@@ -103,7 +106,6 @@ object AppDirs {
         try {
             Files.move(tmp.toPath(), file.toPath(), StandardCopyOption.ATOMIC_MOVE)
         } catch (_: AtomicMoveNotSupportedException) {
-            // Filesystem without atomic rename support: best-effort replace.
             Files.move(tmp.toPath(), file.toPath(), StandardCopyOption.REPLACE_EXISTING)
         }
         syncDirectory(file.parentFile)
@@ -134,7 +136,8 @@ object AppDirs {
         return FileChannel.open(file.toPath(), options, ownerOnly)
     }
 
-    // Windows cannot open a directory as a channel; NTFS journals the rename.
+    /** Windows cannot open a directory as a channel; NTFS journals the rename. */
+    @Suppress("NoComments")
     private fun syncDirectory(dir: File) {
         runCatching { FileChannel.open(dir.toPath(), StandardOpenOption.READ).use { it.force(true) } }
     }

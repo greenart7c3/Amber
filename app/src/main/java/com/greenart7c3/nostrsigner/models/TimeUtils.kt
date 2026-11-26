@@ -15,6 +15,7 @@ object TimeUtils {
     // Building an ICU formatter resolves the locale's pattern, so cache one per
     // locale / clock style for the timestamps formatted during composition. ICU
     // formatters are not thread-safe: format() locks the instance.
+    @Suppress("NoComments")
     private val formatters = ConcurrentHashMap<FormatKey, IcuDateFormat>()
 
     /**
@@ -42,9 +43,12 @@ object TimeUtils {
             IcuDateFormat.getInstanceForSkeleton(skeleton, key.locale)
         }
         return synchronized(formatter) {
-            // The device time zone can change while the app runs.
-            formatter.timeZone = IcuTimeZone.getTimeZone(TimeZone.getDefault().id)
+            formatter.followDeviceTimeZoneChangedWhileRunning()
             formatter.format(Date(millis))
         }
+    }
+
+    private fun IcuDateFormat.followDeviceTimeZoneChangedWhileRunning() {
+        timeZone = IcuTimeZone.getTimeZone(TimeZone.getDefault().id)
     }
 }

@@ -58,14 +58,12 @@ class LockDeferredRequestTest {
         withTimeout(20.seconds) { while (!queued()) delay(50.milliseconds) }
         engine.pending.value.filter { it.request.id == REQUEST_ID }.forEach { engine.removePending(it) }
 
-        // Already seen: a redelivery is ignored.
         engine.consume(event, relay)
         delay(500.milliseconds)
-        assertFalse(queued())
+        assertFalse("a redelivery of an already seen request is ignored", queued())
 
-        // Deferred by a lock: `since` reaches back to it and the redelivery is handled.
         engine.deferUntilUnlock(event)
-        assertTrue(engine.computeSince() <= createdAt)
+        assertTrue("since reaches back to a request the lock deferred", engine.computeSince() <= createdAt)
         engine.consume(event, relay)
         withTimeout(20.seconds) { while (!queued()) delay(50.milliseconds) }
     }

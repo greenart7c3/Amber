@@ -6,6 +6,12 @@ import androidx.room.Index
 import androidx.room.Index.Order
 import androidx.room.PrimaryKey
 
+/**
+ * One entry of an account's log.
+ *
+ * @property repeatCount number of identical (url, type, message) entries merged into this row;
+ * see [LogDao.insertOrCollapse]. [time] is the latest occurrence.
+ */
 @Entity(
     tableName = "amber_log",
     indices = [
@@ -27,8 +33,6 @@ data class LogEntity(
     val type: String,
     val message: String,
     val time: Long,
-    // Number of identical (url, type, message) entries merged into this row;
-    // see [LogDao.insertOrCollapse]. [time] is the latest occurrence.
     @ColumnInfo(defaultValue = "1")
     val repeatCount: Int = 1,
 )

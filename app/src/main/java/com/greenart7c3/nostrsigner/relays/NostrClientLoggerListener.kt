@@ -73,6 +73,7 @@ class NostrClientLoggerListener(
     // Only failed dials count (onCannotConnect). Quartz reports every failed dial as
     // onCannotConnect followed by onDisconnected, so counting both halved the real
     // threshold, and a plain server-side close is not a connection failure.
+    @Suppress("NoComments")
     private fun recordFailureAndScheduleReconnect(relay: NormalizedRelayUrl) {
         if (!RelayHealthTracker.recordFailure(relay)) {
             AmberLog.d(Amber.TAG, "Relay ${relay.url} marked dead; skipping reconnect")
@@ -153,6 +154,7 @@ class NostrClientLoggerListener(
         super.onCannotConnect(relay, errorMessage)
     }
 
+    @Suppress("NoComments")
     override fun onSent(relay: IRelayClient, cmdStr: String, cmd: Command, success: Boolean) {
         // Defense-in-depth (GHSA-8844-q5vh-9j8f, L2): never log raw relay
         // frames verbatim — they can carry NIP-46 envelopes, DM/gift-wrap
@@ -180,10 +182,9 @@ class NostrClientLoggerListener(
         super.onSent(relay, cmdStr, cmd, success)
     }
 
+    @Suppress("NoComments")
     override suspend fun onIncomingMessage(relay: IRelayClient, msgStr: String, msg: Message) {
-        // Defense-in-depth (GHSA-8844-q5vh-9j8f, L2): log only the message
-        // type and wire size, not the raw frame (which may carry NIP-46
-        // envelopes, DM/gift-wrap ciphertexts and event content).
+        // Defense-in-depth (GHSA-8844-q5vh-9j8f, L2): log only the message type and wire size, as in onSent.
         AmberLog.d(Amber.TAG, "onIncomingMessage: ${relay.url.url} msg: ${msg.javaClass.simpleName} bytes: ${msgStr.toByteArray().size}")
 
         if (msg is OkMessage) {
@@ -220,8 +221,6 @@ class NostrClientLoggerListener(
     override fun onConnected(relay: IRelayClient, pingMillis: Int, compressed: Boolean) {
         AmberLog.d(Amber.TAG, "onConnected: ${relay.url.url} ping: ${pingMillis}ms compressed: $compressed")
         saveLog(relay.url.url, "onConnected", "Connected")
-        // Relay recovered: clear its failure streak so it is eligible for the
-        // normal reconnect-with-backoff path (and the subscription) again.
         RelayHealthTracker.recordSuccess(relay.url)
         super.onConnected(relay, pingMillis, compressed)
     }

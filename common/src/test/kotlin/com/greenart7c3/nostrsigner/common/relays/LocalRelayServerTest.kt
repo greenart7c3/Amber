@@ -37,7 +37,6 @@ class LocalRelayServerTest {
         ) = Unit
     }
 
-    /** A relay client: every text message the relay sends lands in [messages]. */
     private class Client(
         val socket: WebSocket,
         val messages: LinkedBlockingQueue<JsonNode>,
@@ -95,8 +94,10 @@ class LocalRelayServerTest {
         }
     }
 
-    // Distinct content: two events signed in the same second would otherwise share an id.
-    private fun event(kind: Int): Event = signer.signerSync.sign(TimeUtils.now(), kind, emptyArray(), UUID.randomUUID().toString())
+    private fun event(kind: Int): Event {
+        val contentKeepingIdsDistinctWithinASecond = UUID.randomUUID().toString()
+        return signer.signerSync.sign(TimeUtils.now(), kind, emptyArray(), contentKeepingIdsDistinctWithinASecond)
+    }
 
     private fun Client.publish(event: Event) {
         send("EVENT", mapper.readTree(event.toJson()))
@@ -145,8 +146,8 @@ class LocalRelayServerTest {
         assertEquals("sub", delivered.get(1).asText())
         assertEquals(live.id, delivered.get(2).get("id").asText())
 
-        // A duplicate is acknowledged but not delivered a second time.
-        publisher.publish(live)
+        val duplicate = live
+        publisher.publish(duplicate)
         assertNull(subscriber.messages.poll(300, TimeUnit.MILLISECONDS))
     }
 

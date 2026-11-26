@@ -11,8 +11,6 @@ import com.vitorpamplona.quartz.nip01Core.relay.client.accessories.publishAndCon
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerResponse
 
-// Publishing a reply to a NIP-46 client; building and retrying it is the common publishNip46Reply.
-
 internal suspend fun BunkerEngine.sendResponse(
     account: DesktopAccount,
     signerPrivKey: String,
@@ -28,7 +26,7 @@ internal suspend fun BunkerEngine.sendResponse(
         return false
     }
 
-    val key = if (signerPrivKey.isNotEmpty()) ConnectionReplyKey(signerPrivKey) else account.replyKey()
+    val key = if (signerPrivKey.isNotEmpty()) ConnectionReplyKey(signerPrivKey) else account.legacyAccountReplyKey()
     val success = publishNip46Reply(bunkerResponse, localKey, encryptionType, key, attempts) { event ->
         client.publishAndConfirm(event = event, relayList = relays.toSet(), timeoutInSeconds = 5, untilFirstAccept = true)
     }
@@ -38,11 +36,10 @@ internal suspend fun BunkerEngine.sendResponse(
     return success
 }
 
-// The account key, for a connection from before per-connection keys.
-private fun DesktopAccount.replyKey(): Nip46ReplyKey = object : Nip46ReplyKey {
-    override suspend fun nip04Encrypt(plainText: String, toPubKey: String): String = this@replyKey.nip04Encrypt(plainText, toPubKey)
+private fun DesktopAccount.legacyAccountReplyKey(): Nip46ReplyKey = object : Nip46ReplyKey {
+    override suspend fun nip04Encrypt(plainText: String, toPubKey: String): String = this@legacyAccountReplyKey.nip04Encrypt(plainText, toPubKey)
 
-    override suspend fun nip44Encrypt(plainText: String, toPubKey: String): String = this@replyKey.nip44Encrypt(plainText, toPubKey)
+    override suspend fun nip44Encrypt(plainText: String, toPubKey: String): String = this@legacyAccountReplyKey.nip44Encrypt(plainText, toPubKey)
 
     override fun sign(createdAt: Long, kind: Int, tags: Array<Array<String>>, content: String): Event = signSync(createdAt, kind, tags, content)
 }

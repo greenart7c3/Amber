@@ -12,6 +12,7 @@ import jdk.net.ExtendedSocketOptions
  * Windows has none for AF_UNIX; the owner-only socket under the user's
  * profile is the guard there, so a socket without the option is accepted.
  */
+@Suppress("NoComments")
 internal fun isSameUserPeer(client: SocketChannel, socketPath: Path): Boolean = ExtendedSocketOptions.SO_PEERCRED !in client.supportedOptions() ||
     runCatching {
         client.getOption(ExtendedSocketOptions.SO_PEERCRED).user().name == Files.getOwner(socketPath).name

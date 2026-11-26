@@ -35,6 +35,7 @@ import java.util.concurrent.TimeUnit
  * the event arrives on a Windows thread pool thread and is handed to
  * [callbacks] so the handler never blocks Windows.
  */
+@Suppress("NoComments")
 internal object WindowsToasts {
     private const val IID_MANAGER_STATICS = "{50AC103F-D235-4598-BBEF-98FE4D1A3AD4}"
     private const val IID_TOAST_FACTORY = "{04124B20-82C6-4229-B109-FD9ED4662B53}"
@@ -58,7 +59,6 @@ internal object WindowsToasts {
     /** `NotificationSetting.Enabled`. */
     private const val SETTING_ENABLED = 0
 
-    /** The body click's argument, like the freedesktop "default" action. */
     const val DEFAULT_ACTION = "default"
 
     // IInspectable takes the first six vtable slots; these follow them.
@@ -84,7 +84,6 @@ internal object WindowsToasts {
 
     private val combase: Combase by lazy { Native.load("combase", Combase::class.java) }
 
-    /** A COM object, called by vtable slot. */
     private class Com(pointer: Pointer) : Unknown(pointer) {
         fun call(slot: Int, vararg args: Any?): Int = _invokeNativeInt(slot, arrayOf(pointer, *args))
 
@@ -173,7 +172,6 @@ internal object WindowsToasts {
      */
     private val live = mutableSetOf<ActivatedHandler>()
 
-    /** Hide [toast] and stop listening to it. Runs on [worker], once per toast. */
     private fun close(toast: Com, handler: ActivatedHandler, token: Long) {
         if (!live.remove(handler)) return
         try {

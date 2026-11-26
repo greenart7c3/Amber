@@ -55,12 +55,12 @@ interface FreedesktopNotifications : DBusInterface {
  * closes, or [WATCH_MS] passes (GNOME keeps the buttons usable from its
  * notification list after the banner hides).
  */
+@Suppress("NoComments")
 internal object DbusNotifications {
     private const val BUS_NAME = "org.freedesktop.Notifications"
     private const val OBJECT_PATH = "/org/freedesktop/Notifications"
     private const val WATCH_MS = 10 * 60 * 1000L
 
-    /** Test hook: connect to this bus address instead of the session bus. */
     @Volatile
     internal var busAddress: String? = null
 

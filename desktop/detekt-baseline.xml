@@ -2,57 +2,14 @@
 <SmellBaseline>
   <ManuallySuppressedIssues/>
   <CurrentIssues>
-    <ID>NoComments:AccountManager.kt:Decodes ASCII hex and wipes [hex].</ID>
-    <ID>NoComments:AccountManager.kt:Never sign as one identity under another account's name and permissions.</ID>
-    <ID>NoComments:AccountManager.kt:String, so every copy of the key can be wiped.</ID>
-    <ID>NoComments:AccountManager.kt:The private key is stored as hex text (the original format). These</ID>
-    <ID>NoComments:AccountManager.kt:Zeroes the private key bytes; the account cannot sign afterward.</ID>
-    <ID>NoComments:AccountManager.kt:helpers convert between raw bytes and hex bytes without an intermediate</ID>
-    <ID>NoComments:AmberDesktop.kt:A running relay must come down first: start() never rebinds a live one.</ID>
-    <ID>NoComments:AmberDesktop.kt:Always call connect() so that failed relays (socket == null) are</ID>
-    <ID>NoComments:AmberDesktop.kt:Authenticates with relays that request NIP-42 AUTH.</ID>
-    <ID>NoComments:AmberDesktop.kt:Like Android: one account failing to sign (e.g. its key was</ID>
-    <ID>NoComments:AmberDesktop.kt:Persist debounced log/history writes first: once locked, writeSecure</ID>
-    <ID>NoComments:AmberDesktop.kt:The client is picked per dial, so Tor routing (and the local-relay</ID>
-    <ID>NoComments:AmberDesktop.kt:Zeroes evicted private keys. Quartz's NIP-04/NIP-44 shared-secret caches</ID>
-    <ID>NoComments:AmberDesktop.kt:bypass) applies to every socket opened after a settings change.</ID>
-    <ID>NoComments:AmberDesktop.kt:delay. For relays already connected, connect() is a safe no-op.</ID>
-    <ID>NoComments:AmberDesktop.kt:refuses to touch the encrypted files, so anything still volatile</ID>
-    <ID>NoComments:AmberDesktop.kt:retried directly, bypassing the relay client's internal backoff</ID>
-    <ID>NoComments:AmberDesktop.kt:wiped by the lock mid-AUTH) must not abort AUTH for the others.</ID>
-    <ID>NoComments:AmberDesktop.kt:would sit in memory only until the next unlock.</ID>
-    <ID>NoComments:AppDirs.kt:Filesystem without atomic rename support: best-effort replace.</ID>
-    <ID>NoComments:AppDirs.kt:Overwrite in place; the existing file was created under this policy.</ID>
-    <ID>NoComments:AppDirs.kt:Windows cannot open a directory as a channel; NTFS journals the rename.</ID>
-    <ID>NoComments:AppDirs.kt:mkdirs() honors the umask (typically 0755); the account's apps,</ID>
-    <ID>NoComments:AppDirs.kt:permissions and history live here, so keep it owner-only. Also</ID>
-    <ID>NoComments:AppDirs.kt:tightens a directory that already existed with a looser mode.</ID>
     <ID>NoComments:AppDirsTest.kt:A directory left behind by an older version with the umask default.</ID>
     <ID>NoComments:AppDirsTest.kt:The file must already be owner-only at creation time, not only</ID>
     <ID>NoComments:AppDirsTest.kt:after a post-write restriction pass.</ID>
-    <ID>NoComments:AppImageIntegration.kt:The program an entry written by [desktopEntry] launches, unquoted.</ID>
     <ID>NoComments:AppImageIntegrationTest.kt:Shown in the app launcher, unlike the nostrconnect:// handler entry.</ID>
     <ID>NoComments:AppIndicatorShimTest.kt:let the code mkdirs</ID>
     <ID>NoComments:ApprovalRevertTest.kt:A relay nothing listens on: every publish to it fails.</ID>
     <ID>NoComments:ApprovalRevertTest.kt:Approves, remembering it, a sign_event card from a connection on [relay]; returns the connection aft</ID>
     <ID>NoComments:ApprovalRevertTest.kt:What the connection was granted before stays.</ID>
-    <ID>NoComments:AutoStart.kt:Control characters (newlines in particular) cannot be quoted away in a unit file.</ID>
-    <ID>NoComments:AutoStart.kt:Inside an AppImage the binary runs from a per-launch mount</ID>
-    <ID>NoComments:AutoStart.kt:No --now on purpose: disabling autostart must not kill an</ID>
-    <ID>NoComments:AutoStart.kt:RunAtLoad starts Amber once per login. No KeepAlive: quitting Amber</ID>
-    <ID>NoComments:AutoStart.kt:Set by the jpackage launcher to the installed binary; absent in dev (Gradle) runs.</ID>
-    <ID>NoComments:AutoStart.kt:The Run value is a command line: always quote the path (e.g. `C:\Program Files\...`).</ID>
-    <ID>NoComments:AutoStart.kt:The characters that make a systemd value need double quotes (see [quote]).</ID>
-    <ID>NoComments:AutoStart.kt:The local signer's socket dir must exist before the unit starts, like</ID>
-    <ID>NoComments:AutoStart.kt:Where the start-on-boot unit has an AppImage extract itself (see</ID>
-    <ID>NoComments:AutoStart.kt:Writes (or removes) the LaunchAgent. launchd picks it up at the next</ID>
-    <ID>NoComments:AutoStart.kt:Writes (or removes) the Run entry. Like the systemd path, enabling never</ID>
-    <ID>NoComments:AutoStart.kt:[appImageCacheDir] is set when [exePath] is an AppImage: under</ID>
-    <ID>NoComments:AutoStart.kt:app the user is currently using.</ID>
-    <ID>NoComments:AutoStart.kt:launchd label; also the plist file name. Matches the bundle id.</ID>
-    <ID>NoComments:AutoStart.kt:records the path exactly as invoked (it can be relative).</ID>
-    <ID>NoComments:AutoStart.kt:systemd requires an absolute ExecStart: /proc/self/cmdline</ID>
-    <ID>NoComments:AutoStart.kt:systemd(5) word splitting for `ExecStart=` / `Environment=`: values with</ID>
     <ID>NoComments:AutoStartTest.kt:"C:\Program Files\..." would try to launch "C:\Program".</ID>
     <ID>NoComments:AutoStartTest.kt:Even unquoted values must not leak a specifier.</ID>
     <ID>NoComments:AutoStartTest.kt:Quitting Amber must stick: launchd must not relaunch it.</ID>
@@ -108,26 +65,9 @@
     <ID>NoComments:ConnectionKeyBindingTest.kt:Its own key, or the account key (no per-connection key): allowed.</ID>
     <ID>NoComments:ConnectionKeyBindingTest.kt:addressed to any connection.</ID>
     <ID>NoComments:ConnectionKeyBindingTest.kt:connection has its own key, so a request to the account key is not</ID>
-    <ID>NoComments:CrashReporter.kt:An encrypted report waits for the unlock (see [loadAfterUnlock]).</ID>
-    <ID>NoComments:CrashReporter.kt:Every wrap (the developer's and the sender's own copy), as on Android.</ID>
-    <ID>NoComments:CrashReporter.kt:Exception messages and stack traces can embed request data (parser</ID>
-    <ID>NoComments:CrashReporter.kt:For an OutOfMemoryError these say how close the heap was to its limit.</ID>
-    <ID>NoComments:CrashReporter.kt:Marks a report encrypted with the master key; its plaintext is only readable after unlock.</ID>
-    <ID>NoComments:CrashReporter.kt:Still locked: leave the report for the next unlock rather than lose it.</ID>
-    <ID>NoComments:CrashReporter.kt:The sender's own copy would be wrapped to the throwaway key, which nobody keeps.</ID>
-    <ID>NoComments:CrashReporter.kt:The whole cause chain (Android stops at the first cause); identity set</ID>
-    <ID>NoComments:CrashReporter.kt:What goes on disk. Exception messages can quote request data that the</ID>
-    <ID>NoComments:CrashReporter.kt:guards against cyclic causes.</ID>
-    <ID>NoComments:CrashReporter.kt:material, long base64 blobs and the home directory, as on Android.</ID>
-    <ID>NoComments:CrashReporter.kt:or crypto exceptions quoting bad input) and file paths: redact key</ID>
     <ID>NoComments:CrashReporterTest.kt:A restart picks the saved report up again: at launch, or (stored</ID>
     <ID>NoComments:CrashReporterTest.kt:Out-of-memory errors are reported too, with the heap numbers.</ID>
     <ID>NoComments:CrashReporterTest.kt:encrypted when another test class has set a passphrase) at unlock.</ID>
-    <ID>NoComments:DbusNotifications.kt:Actionable notifications over the session bus. The daemon delivers</ID>
-    <ID>NoComments:DbusNotifications.kt:Post a notification with [actions] as (key, label) pairs and run</ID>
-    <ID>NoComments:DbusNotifications.kt:Test hook: connect to this bus address instead of the session bus.</ID>
-    <ID>NoComments:DbusNotifications.kt:Unique bus name of the notification daemon we post through. Only its</ID>
-    <ID>NoComments:DbusNotifications.kt:Withdraw notification [id] and forget its handler, so a click on the</ID>
     <ID>NoComments:DesktopCoreTest.kt:A fresh key per event no longer evades the limit.</ID>
     <ID>NoComments:DesktopCoreTest.kt:A fresh sender gets its whole budget at once, then drops the excess.</ID>
     <ID>NoComments:DesktopCoreTest.kt:A full window restores the whole budget.</ID>
@@ -147,25 +87,11 @@
     <ID>NoComments:DesktopCoreTest.kt:The very same (account, connection, id) is still collapsed.</ID>
     <ID>NoComments:DesktopCoreTest.kt:a real install.</ID>
     <ID>NoComments:DesktopCoreTest.kt:another connection (or account) must not be swallowed by the first.</ID>
-    <ID>NoComments:DesktopKeyStore.kt:':' is outside the Base64 alphabet, so legacy values can never match.</ID>
-    <ID>NoComments:DesktopKeyStore.kt:96 bits</ID>
-    <ID>NoComments:DesktopKeyStore.kt:An AES key whose bytes can actually be wiped: the JDK's SecretKeySpec does</ID>
-    <ID>NoComments:DesktopKeyStore.kt:Copies [source] (and wipes the intermediate encoding).</ID>
-    <ID>NoComments:DesktopKeyStore.kt:bits</ID>
     <ID>NoComments:EncryptedContentTest.kt:Broken JSON (or JSON that is not an event / tag array) is just text.</ID>
     <ID>NoComments:ExpiredConnectionTest.kt:A fully trusted connection (signs everything unasked) expiring at [deleteAfter].</ID>
     <ID>NoComments:InvalidParamsTest.kt:Missing params are refused before admission (hasRequiredParams); a v3 request</ID>
     <ID>NoComments:InvalidParamsTest.kt:anything is computed (nip46Step).</ID>
     <ID>NoComments:InvalidParamsTest.kt:with its pubkey but no kind passes that check and is refused after it, before</ID>
-    <ID>NoComments:KeystorePassword.kt:A new password for a new keystore, kept in the OS store when it works, else in the file.</ID>
-    <ID>NoComments:KeystorePassword.kt:Debug runs get their own entry: a reset there deletes it (see DesktopKeyStore).</ID>
-    <ID>NoComments:KeystorePassword.kt:Never leave a stale file copy behind once the OS store owns it.</ID>
-    <ID>NoComments:KeystorePassword.kt:The OS store is authoritative; drop any file copy so the data</ID>
-    <ID>NoComments:KeystorePassword.kt:The OS store's password when it opens the keystore.</ID>
-    <ID>NoComments:KeystorePassword.kt:The password file's password when it opens the keystore, migrated into the OS store when possible.</ID>
-    <ID>NoComments:KeystorePassword.kt:Thrown both for "no entry" and "backend broken"; either way there is</ID>
-    <ID>NoComments:KeystorePassword.kt:directory alone is no longer enough to unlock the keys.</ID>
-    <ID>NoComments:KeystorePassword.kt:nothing usable here.</ID>
     <ID>NoComments:KeystorePasswordTest.kt:The working password replaces the stale credential-store entry.</ID>
     <ID>NoComments:KeystorePasswordTest.kt:e.g. a stale credential-store entry from a wiped install.</ID>
     <ID>NoComments:LocalBunkerRelayTest.kt:"rate limited" and the session is dropped right after it.</ID>
@@ -212,34 +138,6 @@
     <ID>NoComments:LocalSignerTest.kt:account, and whichever account the user picks is the answer.</ID>
     <ID>NoComments:LockDeferredRequestTest.kt:Already seen: a redelivery is ignored.</ID>
     <ID>NoComments:LockDeferredRequestTest.kt:Deferred by a lock: `since` reaches back to it and the redelivery is handled.</ID>
-    <ID>NoComments:MacNotifications.kt:A click on the notification itself, like the freedesktop "default" action.</ID>
-    <ID>NoComments:MacNotifications.kt:A global block (isa, flags, reserved, invoke, descriptor{reserved, size}).</ID>
-    <ID>NoComments:MacNotifications.kt:An autoreleased NSString; the bytes are passed NUL-terminated, never as a platform-encoded string.</ID>
-    <ID>NoComments:MacNotifications.kt:Both delegate methods: (self, _cmd, center, notification or response, completion block).</ID>
-    <ID>NoComments:MacNotifications.kt:Callbacks and native memory macOS keeps pointers to: never collected.</ID>
-    <ID>NoComments:MacNotifications.kt:Native memory the block above points at.</ID>
-    <ID>NoComments:MacNotifications.kt:Notification Center (it was killed, or crashed) answers nothing now.</ID>
-    <ID>NoComments:MacNotifications.kt:Offset of the `invoke` function pointer in a block: isa, flags, reserved.</ID>
-    <ID>NoComments:MacNotifications.kt:Post a notification with [actions] as (key, label) buttons and run</ID>
-    <ID>NoComments:MacNotifications.kt:Registered categories: identifier → its (action, label) buttons. Only touched on [worker].</ID>
-    <ID>NoComments:MacNotifications.kt:Requests do not outlive the process: what an earlier run left in</ID>
-    <ID>NoComments:MacNotifications.kt:Show it even while Amber is the frontmost app (its tray window, say).</ID>
-    <ID>NoComments:MacNotifications.kt:Stable per set of buttons and their labels, so a language change gets its own category.</ID>
-    <ID>NoComments:MacNotifications.kt:The category whose buttons are [actions], registering it first when it</ID>
-    <ID>NoComments:MacNotifications.kt:The center does not retain its delegate; this instance is never released.</ID>
-    <ID>NoComments:MacNotifications.kt:The notification center with Amber's delegate installed, or null outside</ID>
-    <ID>NoComments:MacNotifications.kt:The notification center, or null when it cannot be used. Only touched on [worker].</ID>
-    <ID>NoComments:MacNotifications.kt:Waits for the removal, so a notification closed while Amber</ID>
-    <ID>NoComments:MacNotifications.kt:What to run for a click, per notification identifier.</ID>
-    <ID>NoComments:MacNotifications.kt:Whether the user allows Amber's notifications. The first call makes</ID>
-    <ID>NoComments:MacNotifications.kt:Whether this process can use the notification center at all (the packaged app).</ID>
-    <ID>NoComments:MacNotifications.kt:`BLOCK_IS_GLOBAL`: a block that is never copied or freed.</ID>
-    <ID>NoComments:MacNotifications.kt:`UNAuthorizationOptionAlert`.</ID>
-    <ID>NoComments:MacNotifications.kt:`UNNotificationPresentationOptionList | …Banner` (macOS 11+), else the older `…Alert`.</ID>
-    <ID>NoComments:MacNotifications.kt:`UNNotificationResponse` → the handler of the notification it answers.</ID>
-    <ID>NoComments:MacNotifications.kt:macOS notifications with buttons, through `UNUserNotificationCenter` (JNA</ID>
-    <ID>NoComments:MacNotifications.kt:quits is really gone before the process ends.</ID>
-    <ID>NoComments:MacNotifications.kt:v@:@@@? — void, self, _cmd, two objects and a block.</ID>
     <ID>NoComments:MdnsResolverTest.kt:A record name pointing at itself.</ID>
     <ID>NoComments:MdnsResolverTest.kt:A record whose name is a compression pointer to the question (offset 12).</ID>
     <ID>NoComments:MdnsResolverTest.kt:A response with one question, then [answers] encoded after it.</ID>
@@ -267,62 +165,10 @@
     <ID>NoComments:NostrConnectReplaceTest.kt:A line break and a right-to-left override in the client-chosen name.</ID>
     <ID>NoComments:NostrConnectReplaceTest.kt:The card can name the connection it will replace...</ID>
     <ID>NoComments:NostrConnectReplaceTest.kt:The shared parser: relays, the secret byte for byte, metadata, and only grantable permissions.</ID>
-    <ID>NoComments:NotificationPolicy.kt:Blossom auth</ID>
-    <ID>NoComments:NotificationPolicy.kt:DM relays</ID>
-    <ID>NoComments:NotificationPolicy.kt:Event kinds whose signature changes the user's profile, social graph,</ID>
-    <ID>NoComments:NotificationPolicy.kt:HTTP auth</ID>
-    <ID>NoComments:NotificationPolicy.kt:NIP-42 relay auth</ID>
-    <ID>NoComments:NotificationPolicy.kt:NIP-46 message</ID>
-    <ID>NoComments:NotificationPolicy.kt:NWC request</ID>
-    <ID>NoComments:NotificationPolicy.kt:NWC response</ID>
-    <ID>NoComments:NotificationPolicy.kt:NWC wallet info</ID>
-    <ID>NoComments:NotificationPolicy.kt:app-specific data (Amber's own backups use it)</ID>
-    <ID>NoComments:NotificationPolicy.kt:contact list</ID>
-    <ID>NoComments:NotificationPolicy.kt:deletion</ID>
-    <ID>NoComments:NotificationPolicy.kt:gift wrap</ID>
-    <ID>NoComments:NotificationPolicy.kt:mute list</ID>
-    <ID>NoComments:NotificationPolicy.kt:profile metadata</ID>
-    <ID>NoComments:NotificationPolicy.kt:relay list</ID>
-    <ID>NoComments:NotificationPolicy.kt:seal</ID>
     <ID>NoComments:NotificationPolicyTest.kt:A sign_event whose kind could not be read is not low-risk either.</ID>
     <ID>NoComments:NotificationPolicyTest.kt:Bidi overrides and zero-width characters are dropped.</ID>
     <ID>NoComments:NotificationPolicyTest.kt:Line breaks and tabs become single spaces: no fake second line.</ID>
     <ID>NoComments:NotificationPolicyTest.kt:Ordinary names, including non-Latin ones, are kept as they are.</ID>
-    <ID>NoComments:Notifier.kt:"(uint32 2258,)" → 2258.</ID>
-    <ID>NoComments:Notifier.kt:--wait/--action. Falls through if neither works.</ID>
-    <ID>NoComments:Notifier.kt:A Windows toast (see [WindowsToasts]); null when it could not be posted.</ID>
-    <ID>NoComments:Notifier.kt:A `gdbus call` reply, or null when it fails or times out.</ID>
-    <ID>NoComments:Notifier.kt:A macOS notification (see [MacNotifications]); null when it could not be posted.</ID>
-    <ID>NoComments:Notifier.kt:A notification without buttons: notify-send, else gdbus; null when neither shows it.</ID>
-    <ID>NoComments:Notifier.kt:A plain notice has nothing to click or take down: the caller's AWT</ID>
-    <ID>NoComments:Notifier.kt:Also LinkageError: JNA or WinRT missing on this machine.</ID>
-    <ID>NoComments:Notifier.kt:Also LinkageError: a runtime image without a module dbus-java needs.</ID>
-    <ID>NoComments:Notifier.kt:Bound how long we wait so a never-expiring notification can't leak</ID>
-    <ID>NoComments:Notifier.kt:Launch a command, returning true if it ran and exited successfully (or is</ID>
-    <ID>NoComments:Notifier.kt:Notification daemons that accept actions (and advertise the "actions"</ID>
-    <ID>NoComments:Notifier.kt:Notifications not closed yet. A request does not outlive the process, so</ID>
-    <ID>NoComments:Notifier.kt:Older notify-send rejects --wait/--action and exits fast &amp; non-zero.</ID>
-    <ID>NoComments:Notifier.kt:Omarchy's shell keeps a card on screen after its sender closes it: a</ID>
-    <ID>NoComments:Notifier.kt:Reply: "('gnome-shell', 'GNOME', '50.1', '1.2')"</ID>
-    <ID>NoComments:Notifier.kt:Show a clickable notification via `notify-send --wait --action`. With</ID>
-    <ID>NoComments:Notifier.kt:Show an actionable notification straight over the session D-Bus (see</ID>
-    <ID>NoComments:Notifier.kt:Still running: --wait is supported and blocking for interaction.</ID>
-    <ID>NoComments:Notifier.kt:Take down a notification posted over D-Bus: through the connection that</ID>
-    <ID>NoComments:Notifier.kt:Test hook: exercises the process plumbing without depending on the OS.</ID>
-    <ID>NoComments:Notifier.kt:The commands that dismiss the card titled [title] in the Omarchy shell</ID>
-    <ID>NoComments:Notifier.kt:The config directory a quickshell command line runs: `-p`/`--path &lt;dir&gt;`,</ID>
-    <ID>NoComments:Notifier.kt:The config directory of Omarchy's shell while it is the notification</ID>
-    <ID>NoComments:Notifier.kt:The id (--print-id) and, once the user picks one, the action key.</ID>
-    <ID>NoComments:Notifier.kt:When a click handler or buttons are wanted, try an actionable</ID>
-    <ID>NoComments:Notifier.kt:[close], on the calling thread: for the shutdown hook, where the executor's daemon thread is no use.</ID>
-    <ID>NoComments:Notifier.kt:`--` stops option parsing so a summary/body starting with '-' is safe.</ID>
-    <ID>NoComments:Notifier.kt:freedesktop.org notifications. Prefer libnotify's `notify-send`; if it is</ID>
-    <ID>NoComments:Notifier.kt:notification first: over D-Bus directly, else libnotify 0.8+</ID>
-    <ID>NoComments:Notifier.kt:notify-send 0.7.6+ prints the id ahead of the action; an</ID>
-    <ID>NoComments:Notifier.kt:older build that ignores --print-id prints the action only.</ID>
-    <ID>NoComments:Notifier.kt:quickshell is a toolkit, and every shell built on it reports the same</ID>
-    <ID>NoComments:Notifier.kt:the process/thread.</ID>
-    <ID>NoComments:Notifier.kt:tray notification does for it on Windows and macOS.</ID>
     <ID>NoComments:NotifierButtonsTest.kt:Read after [closeReceived] fires, which publishes the write.</ID>
     <ID>NoComments:NotifierDaemonTest.kt:The shell matches by substring: "ab" is in most summaries.</ID>
     <ID>NoComments:NotifierTest.kt:`true` exits 0 on any POSIX system; skip elsewhere (e.g. bare Windows).</ID>
@@ -340,44 +186,6 @@
     <ID>NoComments:OkHttpWebSocketTest.kt:newWebSocket() has returned to connect().</ID>
     <ID>NoComments:OkHttpWebSocketTest.kt:reaction to the dropped TCP session must both be swallowed.</ID>
     <ID>NoComments:OkHttpWebSocketTest.kt:right after this call and must not hear from the old socket later.</ID>
-    <ID>NoComments:PassphraseLock.kt:----- wrapping crypto -----</ID>
-    <ID>NoComments:PassphraseLock.kt:256 MB, about 1 s on a current desktop CPU</ID>
-    <ID>NoComments:PassphraseLock.kt:A blob that has the second factor keeps the exact secret that</ID>
-    <ID>NoComments:PassphraseLock.kt:After an unlock: adds the credential-store secret once the store works,</ID>
-    <ID>NoComments:PassphraseLock.kt:Argon2 run) instead of interleaving with it.</ID>
-    <ID>NoComments:PassphraseLock.kt:Argon2id(passphrase), combined with the credential-store secret via HKDF-SHA256 when present.</ID>
-    <ID>NoComments:PassphraseLock.kt:Authenticates the blob header, so neither the version nor the factors can be downgraded.</ID>
-    <ID>NoComments:PassphraseLock.kt:Blocks on purpose: the lock must have happened when this returns.</ID>
-    <ID>NoComments:PassphraseLock.kt:BouncyCastle needs the password as a standalone exact-size array;</ID>
-    <ID>NoComments:PassphraseLock.kt:Checked before the (slow) Argon2 run, and reported separately from a</ID>
-    <ID>NoComments:PassphraseLock.kt:Cost new and rehashed blobs get; tests lower it to keep Argon2 fast.</ID>
-    <ID>NoComments:PassphraseLock.kt:Encode straight into a heap byte buffer: an intermediate String</ID>
-    <ID>NoComments:PassphraseLock.kt:Holds the same mutex as [unlock] and [changePassphrase], so a lock can</ID>
-    <ID>NoComments:PassphraseLock.kt:Holds the second unlock factor; tests swap in an in-memory store.</ID>
-    <ID>NoComments:PassphraseLock.kt:Load every account database before the blob exists: from then on</ID>
-    <ID>NoComments:PassphraseLock.kt:Moves derived key bytes into a [WipeableAesKey] (SecretKeySpec would keep an unwipeable copy).</ID>
-    <ID>NoComments:PassphraseLock.kt:On-disk wrapped master key (the only format the desktop app writes).</ID>
-    <ID>NoComments:PassphraseLock.kt:Returns the credential-store secret, creating it on first use, or null</ID>
-    <ID>NoComments:PassphraseLock.kt:Rewrap with the very secret that just unwrapped the blob: reading the</ID>
-    <ID>NoComments:PassphraseLock.kt:Suspends on the mutex, so an unlock that reschedules (and so</ID>
-    <ID>NoComments:PassphraseLock.kt:The desktop app has no released predecessor: only the current</ID>
-    <ID>NoComments:PassphraseLock.kt:The key-encryption key also mixes in the secret from [osSecretStore].</ID>
-    <ID>NoComments:PassphraseLock.kt:The master key, plus the credential-store secret that unwrapped it (null</ID>
-    <ID>NoComments:PassphraseLock.kt:Waits for an unlock or passphrase change in flight (at most its</ID>
-    <ID>NoComments:PassphraseLock.kt:blob format is honored, and anything else is treated as a</ID>
-    <ID>NoComments:PassphraseLock.kt:cancels) this timer meanwhile also cancels the stale lock.</ID>
-    <ID>NoComments:PassphraseLock.kt:copies the input</ID>
-    <ID>NoComments:PassphraseLock.kt:extract it from the buffer's backing array. Both byte arrays are</ID>
-    <ID>NoComments:PassphraseLock.kt:isEnabled() is now true, so re-encrypt every account's database at rest.</ID>
-    <ID>NoComments:PassphraseLock.kt:replace the secret the current blob still needs.</ID>
-    <ID>NoComments:PassphraseLock.kt:store again could fail now and silently drop the second factor, or</ID>
-    <ID>NoComments:PassphraseLock.kt:tampered file rather than migrated.</ID>
-    <ID>NoComments:PassphraseLock.kt:unwrapped it; only a blob without one asks the store for a new one.</ID>
-    <ID>NoComments:PassphraseLock.kt:wiped below, so no unwipeable copy of the passphrase remains.</ID>
-    <ID>NoComments:PassphraseLock.kt:would be an immutable copy whose characters could never be wiped.</ID>
-    <ID>NoComments:PassphraseLock.kt:writes are strict, and the stores are re-encrypted from memory.</ID>
-    <ID>NoComments:PassphraseLock.kt:wrong passphrase or tampered header (GCM tag mismatch)</ID>
-    <ID>NoComments:PassphraseLock.kt:wrong passphrase.</ID>
     <ID>NoComments:PassphraseLockTest.kt:...even with no generation recorded yet: there is no older format to accept.</ID>
     <ID>NoComments:PassphraseLockTest.kt:A blob cheaper than the current Argon2id target is rehashed at unlock.</ID>
     <ID>NoComments:PassphraseLockTest.kt:A copy without a generation header is refused too.</ID>
@@ -463,45 +271,6 @@
     <ID>NoComments:RelayNetworkTest.kt:dialed directly and reveal the user's IP.</ID>
     <ID>NoComments:StaleRequestAfterDeleteTest.kt:Account default "fully trust" is the worst case: a recreated app would auto-sign.</ID>
     <ID>NoComments:StaleRequestAfterDeleteTest.kt:Queues a sign_event card for a connected app, deletes the app, and returns the stale card.</ID>
-    <ID>NoComments:Storage.kt:(see writeSecure/readSecure).</ID>
-    <ID>NoComments:Storage.kt:A `&lt;generation&gt;:&lt;payload&gt;` store: decrypted, and refused when older than the last generation written</ID>
-    <ID>NoComments:Storage.kt:A deleted account's key must not linger in the backup.</ID>
-    <ID>NoComments:Storage.kt:Binds each file's ciphertext to this account and file name.</ID>
-    <ID>NoComments:Storage.kt:Constant-time equality for secret material (connection secrets, secret</ID>
-    <ID>NoComments:Storage.kt:Header on a file whose JSON payload is AES-GCM encrypted with the master key, bound to its account a</ID>
-    <ID>NoComments:Storage.kt:Header on a rollback-protected file: `AMBERENC3:&lt;generation&gt;:&lt;payload&gt;`, the</ID>
-    <ID>NoComments:Storage.kt:Last generation read or written per context, so a write needs no store read.</ID>
-    <ID>NoComments:Storage.kt:Live stores, so the shutdown hook can persist volatile entries and</ID>
-    <ID>NoComments:Storage.kt:One daemon thread schedules every account's debounced writes, so a</ID>
-    <ID>NoComments:Storage.kt:Only called from the @Synchronized writers, so no extra locking is</ID>
-    <ID>NoComments:Storage.kt:Re-reads accounts.json from disk (startup path; also used by tests).</ID>
-    <ID>NoComments:Storage.kt:Reads a JSON file that may be encrypted. Encrypted files carry the</ID>
-    <ID>NoComments:Storage.kt:Reads a JSON file. A file that exists but cannot be parsed is moved aside</ID>
-    <ID>NoComments:Storage.kt:Recorded only once the file is in place: a crash in between leaves a</ID>
-    <ID>NoComments:Storage.kt:The JSON [file] holds, decrypted when it is encrypted. Throws a</ID>
-    <ID>NoComments:Storage.kt:The credential-store entry for a file context; tests swap in an in-memory store.</ID>
-    <ID>NoComments:Storage.kt:The empty-list write supersedes anything still volatile.</ID>
-    <ID>NoComments:Storage.kt:The generation is part of the bound context, so the header can't be edited.</ID>
-    <ID>NoComments:Storage.kt:The generation the next write of [context] gets.</ID>
-    <ID>NoComments:Storage.kt:The history rewrite includes anything still volatile.</ID>
-    <ID>NoComments:Storage.kt:The newest generation written for each rollback-protected file, kept in the</ID>
-    <ID>NoComments:Storage.kt:The per-account database (apps + permissions, request history, relay</ID>
-    <ID>NoComments:Storage.kt:The previous version of accounts.json, the only file holding the</ID>
-    <ID>NoComments:Storage.kt:Writes a JSON file, encrypting the payload with the master key whenever a</ID>
-    <ID>NoComments:Storage.kt:Writes a JSON file; with [backup], the previous version is kept there first.</ID>
-    <ID>NoComments:Storage.kt:[generation] was read and passed the check against [expected]; record it if newer.</ID>
-    <ID>NoComments:Storage.kt:[payload], when it is bound to a context (`DesktopKeyStore.encryptString(…, context)`).</ID>
-    <ID>NoComments:Storage.kt:addLog/addHistory update memory at once but persist with a short</ID>
-    <ID>NoComments:Storage.kt:debounce (see [scheduleVolatileFlush]): a relay flood logs one line per</ID>
-    <ID>NoComments:Storage.kt:encrypted at rest with the master key whenever a passphrase lock is set</ID>
-    <ID>NoComments:Storage.kt:encrypted keys; restored if the main file is ever unreadable.</ID>
-    <ID>NoComments:Storage.kt:event, and rewriting the whole AES-GCM file per line turns that into a</ID>
-    <ID>NoComments:Storage.kt:file newer than the record, which the next read accepts and records.</ID>
-    <ID>NoComments:Storage.kt:file rewrite per event. All three flags are guarded by `this`.</ID>
-    <ID>NoComments:Storage.kt:logs) is the sensitive metadata about who you sign for, so it is</ID>
-    <ID>NoComments:Storage.kt:needed to check flushQueued.</ID>
-    <ID>NoComments:Storage.kt:relay flood costs at most a couple of file writes per second.</ID>
-    <ID>NoComments:Storage.kt:the lock path can flush before the key material is evicted.</ID>
     <ID>NoComments:StringsTest.kt:Includes the languages selected without their region (it, ko, vi)</ID>
     <ID>NoComments:StringsTest.kt:Kinds the old desktop copy of the table lacked resolve like on Android.</ID>
     <ID>NoComments:StringsTest.kt:Plain text (Compose resources): line breaks and apostrophes as written.</ID>
@@ -545,28 +314,5 @@
     <ID>NoComments:UriLaunchTest.kt:Paths without separators stay bare; spaces and quotes get the</ID>
     <ID>NoComments:UriLaunchTest.kt:at the string level (\\"), as the Desktop Entry spec reads it back.</ID>
     <ID>NoComments:UriLaunchTest.kt:desktop-entry double-quote treatment.</ID>
-    <ID>NoComments:WindowsToasts.kt:A COM object, called by vtable slot.</ID>
-    <ID>NoComments:WindowsToasts.kt:Escaped for XML text and attributes; characters XML 1.0 cannot carry are dropped.</ID>
-    <ID>NoComments:WindowsToasts.kt:Fails with "element not found" until the id has posted its</ID>
-    <ID>NoComments:WindowsToasts.kt:Handlers Windows may still call, so neither they nor their callbacks are</ID>
-    <ID>NoComments:WindowsToasts.kt:Hide [toast] and stop listening to it. Runs on [worker], once per toast.</ID>
-    <ID>NoComments:WindowsToasts.kt:IInspectable takes the first six vtable slots; these follow them.</ID>
-    <ID>NoComments:WindowsToasts.kt:Let the native memory go, once Windows no longer holds the handler.</ID>
-    <ID>NoComments:WindowsToasts.kt:Marks the handler as callable from any thread, so WinRT does not try to marshal it.</ID>
-    <ID>NoComments:WindowsToasts.kt:Name the toasts: an unpackaged app has no identity of its own, and a</ID>
-    <ID>NoComments:WindowsToasts.kt:Only touched on [worker].</ID>
-    <ID>NoComments:WindowsToasts.kt:Post a toast with [actions] as (argument, label) buttons and run</ID>
-    <ID>NoComments:WindowsToasts.kt:S_FALSE / RPC_E_CHANGED_MODE: the thread already has an apartment, which is fine.</ID>
-    <ID>NoComments:WindowsToasts.kt:The COM object Windows calls when the toast is clicked: a hand-built</ID>
-    <ID>NoComments:WindowsToasts.kt:The app icon as a file Windows can read (the resource lives in the jar).</ID>
-    <ID>NoComments:WindowsToasts.kt:The body click's argument, like the freedesktop "default" action.</ID>
-    <ID>NoComments:WindowsToasts.kt:The toast's XML: the title, up to two more lines of [message] (a generic</ID>
-    <ID>NoComments:WindowsToasts.kt:Waits for the toast to be gone, so one closed while Amber</ID>
-    <ID>NoComments:WindowsToasts.kt:Windows toast notifications with buttons, straight through the WinRT</ID>
-    <ID>NoComments:WindowsToasts.kt:`ITypedEventHandler&lt;ToastNotification, IInspectable&gt;`.</ID>
-    <ID>NoComments:WindowsToasts.kt:`NotificationSetting.Enabled`.</ID>
-    <ID>NoComments:WindowsToasts.kt:`ToastActivatedEventArgs.Arguments`: the clicked button's argument, or the toast's `launch`.</ID>
-    <ID>NoComments:WindowsToasts.kt:first toast, so only a setting Windows does report counts.</ID>
-    <ID>NoComments:WindowsToasts.kt:quits is really taken down before the process ends.</ID>
   </CurrentIssues>
 </SmellBaseline>

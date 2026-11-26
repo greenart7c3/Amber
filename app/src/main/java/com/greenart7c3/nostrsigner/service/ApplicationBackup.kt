@@ -136,7 +136,8 @@ internal fun backupSigner(account: Account): NostrSignerInternal {
 // The event [subId] delivered, when it is of [kind] and by [pubKey] (the account's own); else null.
 private fun Message.ownEvent(subId: String, kind: Int, pubKey: String): Event? = (this as? EventMessage)?.takeIf { it.subId == subId && it.event.kind == kind }?.event?.takeIf { it.pubKey == pubKey }
 
-object ApplicationBackup {
+/** Builds the backup payload of an account's applications, serializes it and decrypts a fetched backup. */
+object ApplicationBackupPayloads {
     private val mapper = jacksonObjectMapper()
         .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
 
@@ -180,6 +181,40 @@ object ApplicationBackup {
 
     fun fromJson(json: String): BackupPayload = mapper.readValue(json)
 
+    /**
+     * Decrypts backup content with the derived backup key. Legacy backups
+     * encrypted from the account key to itself are deliberately not accepted:
+     * any client holding an encrypt grant can produce that ciphertext through
+     * Amber's own nip44_encrypt, so it cannot prove Amber authored the backup.
+     * Upgraded installs overwrite those replaceable events on their next publish.
+     */
+    internal suspend fun decryptContent(content: String, account: Account): String? = try {
+        val backupSigner = backupSigner(account)
+        backupSigner.nip44Decrypt(content, backupSigner.keyPair.pubKey.toHexKey())
+    } catch (e: Exception) {
+        if (e is CancellationException) throw e
+        // A device-lock refusal is not a decrypt failure: treating it as one
+        // makes callers skip a valid restore or publish an empty backup over
+        // the real one. Rethrow so it surfaces as its own condition.
+        if (e is SecurityException || e is IllegalStateException) throw e
+        AmberLog.e(Amber.TAG, "ApplicationBackup: failed to decrypt backup payload", e)
+        null
+    }
+
+    suspend fun decryptPayload(event: Event, account: Account): BackupPayload? {
+        val json = decryptContent(event.content, account) ?: return null
+        return try {
+            fromJson(json)
+        } catch (e: Exception) {
+            if (e is CancellationException) throw e
+            AmberLog.e(Amber.TAG, "ApplicationBackup: failed to parse backup payload", e)
+            null
+        }
+    }
+}
+
+/** Publishes the encrypted backup to the account's relays and fetches the newest one back. */
+object ApplicationBackup {
     /**
      * Relays to query when fetching an existing backup:
      * inbox (NIP-65 read-marker) ∪ aggregator ∪ INBOX_FALLBACK_RELAYS.
@@ -274,12 +309,12 @@ object ApplicationBackup {
 
     /** Publishes the encrypted backup; true when a relay accepted it or there is nothing to back up. */
     private suspend fun encryptAndPublish(npub: String, account: Account, accountRepository: AccountRepository, relayClient: RelayClient, settingsStore: SettingsStore): Boolean {
-        val payload = buildPayload(account, accountRepository.daos(npub))
+        val payload = ApplicationBackupPayloads.buildPayload(account, accountRepository.daos(npub))
         if (payload.applications.isEmpty()) {
             AmberLog.d(Amber.TAG, "ApplicationBackup: no applications to backup for $npub, skipping")
             return true
         }
-        val json = toJson(payload)
+        val json = ApplicationBackupPayloads.toJson(payload)
         val backupSigner = backupSigner(account)
         val encrypted = backupSigner.nip44Encrypt(json, backupSigner.keyPair.pubKey.toHexKey())
         val event = account.signSync<Event>(
@@ -342,36 +377,19 @@ object ApplicationBackup {
     }
 
     /**
-     * Decrypts backup content with the derived backup key. Legacy backups
-     * encrypted from the account key to itself are deliberately not accepted:
-     * any client holding an encrypt grant can produce that ciphertext through
-     * Amber's own nip44_encrypt, so it cannot prove Amber authored the backup.
-     * Upgraded installs overwrite those replaceable events on their next publish.
+     * Fetches and decrypts the newest backup without restoring it, so the user
+     * can review its applications before [ApplicationBackupRestore.restoreFromPayload] writes them.
      */
-    internal suspend fun decryptContent(content: String, account: Account): String? = try {
-        val backupSigner = backupSigner(account)
-        backupSigner.nip44Decrypt(content, backupSigner.keyPair.pubKey.toHexKey())
-    } catch (e: Exception) {
-        if (e is CancellationException) throw e
-        // A device-lock refusal is not a decrypt failure: treating it as one
-        // makes callers skip a valid restore or publish an empty backup over
-        // the real one. Rethrow so it surfaces as its own condition.
-        if (e is SecurityException || e is IllegalStateException) throw e
-        AmberLog.e(Amber.TAG, "ApplicationBackup: failed to decrypt backup payload", e)
-        null
+    suspend fun fetchLatestPayload(account: Account, client: NostrClient, settingsStore: SettingsStore): BackupFetchResult {
+        val relays = resolveReadRelays(account, client, settingsStore)
+        val event = fetchLatestBackupEvent(account, relays, client) ?: return BackupFetchResult.NoBackupFound
+        val payload = ApplicationBackupPayloads.decryptPayload(event, account) ?: return BackupFetchResult.Failed("Failed to decrypt backup")
+        return BackupFetchResult.Found(payload)
     }
+}
 
-    suspend fun decryptPayload(event: Event, account: Account): BackupPayload? {
-        val json = decryptContent(event.content, account) ?: return null
-        return try {
-            fromJson(json)
-        } catch (e: Exception) {
-            if (e is CancellationException) throw e
-            AmberLog.e(Amber.TAG, "ApplicationBackup: failed to parse backup payload", e)
-            null
-        }
-    }
-
+/** Writes a fetched backup's unexpired applications and their permissions into the account database. */
+object ApplicationBackupRestore {
     /**
      * Whether [app] has outlived its [BackupApplication.deleteAfter]: the
      * cleanup worker would delete it, so a restore must not bring it back.
@@ -429,16 +447,5 @@ object ApplicationBackup {
         if (e is CancellationException) throw e
         AmberLog.e(Amber.TAG, "ApplicationBackup: failed to restore payload for $npub", e)
         RestoreResult.Failed(e.message ?: "Unknown error")
-    }
-
-    /**
-     * Fetches and decrypts the newest backup without restoring it, so the user
-     * can review its applications before [restoreFromPayload] writes them.
-     */
-    suspend fun fetchLatestPayload(account: Account, client: NostrClient, settingsStore: SettingsStore): BackupFetchResult {
-        val relays = resolveReadRelays(account, client, settingsStore)
-        val event = fetchLatestBackupEvent(account, relays, client) ?: return BackupFetchResult.NoBackupFound
-        val payload = decryptPayload(event, account) ?: return BackupFetchResult.Failed("Failed to decrypt backup")
-        return BackupFetchResult.Found(payload)
     }
 }

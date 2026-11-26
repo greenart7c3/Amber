@@ -74,6 +74,7 @@ import com.greenart7c3.nostrsigner.commonsui.signin_restore_title
 import com.greenart7c3.nostrsigner.commonsui.yes
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.service.ApplicationBackup
+import com.greenart7c3.nostrsigner.service.ApplicationBackupRestore
 import com.greenart7c3.nostrsigner.service.BackupApplication
 import com.greenart7c3.nostrsigner.service.BackupApplicationsWorker
 import com.greenart7c3.nostrsigner.service.BackupFetchResult
@@ -141,7 +142,7 @@ fun ApplicationsBackupScreen(
                 isBusy = true
                 val selected = payload.copy(applications = applications)
                 appScope.launch(Dispatchers.IO) {
-                    val result = ApplicationBackup.restoreFromPayload(account.npub, selected, accountRepository, relayClient)
+                    val result = ApplicationBackupRestore.restoreFromPayload(account.npub, selected, accountRepository, relayClient)
                     withContext(Dispatchers.Main) {
                         Toast.makeText(context, restoreResultMessage(result), Toast.LENGTH_LONG).show()
                         isBusy = false
@@ -436,7 +437,7 @@ private class BackupSelection(val applications: List<BackupApplication>) {
 @Composable
 private fun rememberBackupSelection(payload: BackupPayload): BackupSelection = remember(payload) {
     val now = TimeUtils.now()
-    BackupSelection(payload.applications.filterNot { ApplicationBackup.isExpired(it, now) })
+    BackupSelection(payload.applications.filterNot { ApplicationBackupRestore.isExpired(it, now) })
 }
 
 /**

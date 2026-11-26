@@ -18,6 +18,8 @@ import com.greenart7c3.nostrsigner.data.SettingsStore
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.TorMode
 import com.greenart7c3.nostrsigner.service.ApplicationBackup
+import com.greenart7c3.nostrsigner.service.ApplicationBackupPayloads
+import com.greenart7c3.nostrsigner.service.ApplicationBackupRestore
 import com.greenart7c3.nostrsigner.service.BackupApplication
 import com.greenart7c3.nostrsigner.service.BackupPayload
 import com.greenart7c3.nostrsigner.service.RestoreResult
@@ -241,7 +243,7 @@ class AccountStateViewModel(
                     restorePrompt.value = null
                     return@launch
                 }
-                val payload = ApplicationBackup.decryptPayload(event, account)
+                val payload = ApplicationBackupPayloads.decryptPayload(event, account)
                 if (payload == null || payload.applications.isEmpty()) {
                     restorePrompt.value = null
                     return@launch
@@ -259,7 +261,7 @@ class AccountStateViewModel(
     fun acceptRestore(applications: List<BackupApplication>, onResult: (RestoreResult) -> Unit) {
         val current = restorePrompt.value as? RestorePromptState.Found ?: return
         appScope.launch {
-            val result = ApplicationBackup.restoreFromPayload(current.account.npub, current.payload.copy(applications = applications), accountRepository, relayClient)
+            val result = ApplicationBackupRestore.restoreFromPayload(current.account.npub, current.payload.copy(applications = applications), accountRepository, relayClient)
             restorePrompt.value = null
             launch(Dispatchers.Main) { onResult(result) }
         }

@@ -316,10 +316,22 @@ object UriLaunch {
         Type=Application
         Name=${BuildVariant.appName}
         NoDisplay=true
-        Exec=${quoteForDesktopEntry(exePath)} %u
+        Exec=${DesktopEntryEscaping.quoteForDesktopEntry(exePath)} %u
         MimeType=x-scheme-handler/nostrconnect;
     """.trimIndent() + "\n"
 
+    /** The AppImage file rather than its per-launch mount; see AutoStart.currentExecutable. */
+    private fun currentCommandLine(): String? = System.getenv("APPIMAGE")?.takeIf { it.isNotBlank() } ?: runCatching {
+        String(Files.readAllBytes(Path.of("/proc/self/cmdline")), Charsets.UTF_8)
+            .split('\u0000')
+            .firstOrNull { it.isNotBlank() }
+    }.getOrNull()
+
+    private fun socketPath(): Path = Path.of(xdgRuntimeDir(), SOCKET_NAME)
+}
+
+/** Escapes desktop-entry values (Exec arguments and plain strings) the way the Desktop Entry spec reads them back. */
+object DesktopEntryEscaping {
     /** Characters that make an Exec argument need quoting (Desktop Entry spec). */
     private const val EXEC_RESERVED = " \t\"'\\><~|&;$*?#()`"
 
@@ -375,13 +387,4 @@ object UriLaunch {
         }
         return unquoted.replace("%%", "%")
     }
-
-    /** The AppImage file rather than its per-launch mount; see AutoStart.currentExecutable. */
-    private fun currentCommandLine(): String? = System.getenv("APPIMAGE")?.takeIf { it.isNotBlank() } ?: runCatching {
-        String(Files.readAllBytes(Path.of("/proc/self/cmdline")), Charsets.UTF_8)
-            .split('\u0000')
-            .firstOrNull { it.isNotBlank() }
-    }.getOrNull()
-
-    private fun socketPath(): Path = Path.of(xdgRuntimeDir(), SOCKET_NAME)
 }

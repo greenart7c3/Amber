@@ -957,7 +957,5 @@
     <ID>NoComments:WindowsToasts.kt:quits is really taken down before the process ends.</ID>
     <ID>TooManyFunctions:AmberDesktop.kt:AmberDesktop</ID>
     <ID>TooManyFunctions:DesktopKeyStore.kt:DesktopKeyStore</ID>
-    <ID>TooManyFunctions:UiState.kt:UiState</ID>
-    <ID>TooManyFunctions:UriLaunch.kt:UriLaunch</ID>
   </CurrentIssues>
 </SmellBaseline>

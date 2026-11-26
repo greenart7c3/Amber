@@ -45,9 +45,9 @@ class ApplicationBackupRestoreTest {
 
     @Test
     fun `an app is expired only once a set deleteAfter has passed`() {
-        assertTrue(ApplicationBackup.isExpired(app("a", deleteAfter = 1_500), now = 2_000))
-        assertFalse(ApplicationBackup.isExpired(app("a", deleteAfter = 3_000), now = 2_000))
-        assertFalse(ApplicationBackup.isExpired(app("a", deleteAfter = 0), now = 2_000))
+        assertTrue(ApplicationBackupRestore.isExpired(app("a", deleteAfter = 1_500), now = 2_000))
+        assertFalse(ApplicationBackupRestore.isExpired(app("a", deleteAfter = 3_000), now = 2_000))
+        assertFalse(ApplicationBackupRestore.isExpired(app("a", deleteAfter = 0), now = 2_000))
     }
 
     @Test
@@ -59,7 +59,7 @@ class ApplicationBackupRestoreTest {
         val written = mutableListOf<ApplicationWithPermissions>()
         coEvery { dao.insertApplicationWithPermissions(capture(written)) } returns Unit
 
-        val result = ApplicationBackup.restoreFromPayload("npub1test", payload, amber.accountDatabases, amber.relayClient)
+        val result = ApplicationBackupRestore.restoreFromPayload("npub1test", payload, amber.accountDatabases, amber.relayClient)
 
         assertEquals(RestoreResult.Success(2, 0), result)
         assertEquals(listOf("pending", "forever"), written.map { it.application.key })

@@ -10,7 +10,7 @@ import com.greenart7c3.nostrsigner.commonsui.last_24_hours
 import com.greenart7c3.nostrsigner.commonsui.last_30_days
 import com.greenart7c3.nostrsigner.commonsui.last_7_days
 import com.greenart7c3.nostrsigner.data.AccountRepository
-import com.greenart7c3.nostrsigner.database.HistoryDao
+import com.greenart7c3.nostrsigner.database.HistoryStatsDao
 import com.vitorpamplona.quartz.utils.TimeUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -45,7 +45,7 @@ class ActivityStatsViewModel(
     fun load(npub: String, pkKey: String?) {
         if (job != null) return
         job = viewModelScope.launch(Dispatchers.IO) {
-            _stats.value = loadStats(accountRepository.getHistoryDatabase(npub).dao(), pkKey)
+            _stats.value = loadStats(accountRepository.getHistoryDatabase(npub).statsDao(), pkKey)
         }
     }
 
@@ -63,7 +63,7 @@ class ActivityStatsViewModel(
     }
 }
 
-private suspend fun loadStats(dao: HistoryDao, pkKey: String?): List<WindowStats> {
+private suspend fun loadStats(dao: HistoryStatsDao, pkKey: String?): List<WindowStats> {
     val now = TimeUtils.now()
     val day = 24L * 60 * 60
     val windows = listOf(

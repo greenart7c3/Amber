@@ -1,7 +1,7 @@
 package com.greenart7c3.nostrsigner.ui.components
 
 import com.greenart7c3.nostrsigner.data.AccountRepository
-import com.greenart7c3.nostrsigner.database.HistoryDao
+import com.greenart7c3.nostrsigner.database.HistoryStatsDao
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -17,14 +17,14 @@ import org.junit.Test
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class ActivityStatsViewModelTest {
-    private val dao = mockk<HistoryDao> {
+    private val dao = mockk<HistoryStatsDao> {
         coEvery { countAcceptedSince(any()) } returns 10
         coEvery { countRejectedSince(any()) } returns 2
         coEvery { countAcceptedSince(any(), any()) } returns 4
         coEvery { countRejectedSince(any(), any()) } returns 1
     }
     private val accountRepository = mockk<AccountRepository> {
-        every { getHistoryDatabase(any()).dao() } returns dao
+        every { getHistoryDatabase(any()).statsDao() } returns dao
     }
 
     @Before

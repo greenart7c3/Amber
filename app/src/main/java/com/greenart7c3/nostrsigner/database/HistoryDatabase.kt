@@ -40,6 +40,10 @@ val migration_3_4 = object : Migration(3, 4) {
 abstract class HistoryDatabase : RoomDatabase() {
     abstract fun dao(): HistoryDao
 
+    abstract fun pagingDao(): HistoryPagingDao
+
+    abstract fun statsDao(): HistoryStatsDao
+
     // Set by getDatabase: HistoryDao.addHistory honors
     // the privacy mode and refreshes the cached permission DAO.
     lateinit var settingsStore: SettingsStore

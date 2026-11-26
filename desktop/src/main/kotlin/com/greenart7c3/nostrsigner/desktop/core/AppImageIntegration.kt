@@ -64,7 +64,6 @@ object AppImageIntegration {
         StartupWMClass=$WINDOW_CLASS
     """.trimIndent() + "\n"
 
-    /** The program an entry written by [desktopEntry] launches, unquoted. */
     internal fun execTarget(entry: String): String? {
         val exec = entry.lineSequence().firstOrNull { it.startsWith("Exec=") }?.removePrefix("Exec=")?.removeSuffix(" %u") ?: return null
         return DesktopEntryEscaping.unquoteDesktopEntryArg(exec)

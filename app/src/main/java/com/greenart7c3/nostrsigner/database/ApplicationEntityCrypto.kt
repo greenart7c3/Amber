@@ -4,9 +4,23 @@ import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.SecureCryptoHelper
 
+private fun String.encryptField(): String = if (this.isEmpty()) this else SecureCryptoHelper.encryptBlocking(this)
+
+private fun String.decryptFieldOrKeepCiphertext(): String {
+    if (this.isEmpty()) return this
+    return try {
+        SecureCryptoHelper.decryptBlocking(this)
+    } catch (e: Exception) {
+        AmberLog.w(Amber.TAG, "ApplicationEntityCrypto: failed to decrypt field", e)
+        this
+    }
+}
+
 /**
- * Envelope-encrypts / envelope-decrypts the two NIP-46 secret columns of
- * [ApplicationEntity] ([ApplicationEntity.secret] and [ApplicationEntity.localKey]) using the Keystore-backed
+ * Encrypts [secret] and [localKey] for Room persistence. Inverse of [decryptFromStorage].
+ *
+ * Envelope-encrypts the two NIP-46 secret columns of [ApplicationEntity]
+ * ([ApplicationEntity.secret] and [ApplicationEntity.localKey]) using the Keystore-backed
  * AES-256-GCM key in [SecureCryptoHelper].
  *
  * Mitigates GHSA-5fjp-ghh8-wch8 (CWE-312): both columns previously lived as
@@ -26,39 +40,26 @@ import com.greenart7c3.nostrsigner.SecureCryptoHelper
  * The mappers are applied at the DAO boundary so every consumer of
  * `ApplicationEntity` / `ApplicationWithPermissions` continues to see the
  * plaintext values it already expects. The only at-rest reader is Room itself.
- *
- * Failure mode: if [SecureCryptoHelper.decryptBlocking] throws (e.g. the
- * AndroidKeyStore key has become permanently unusable after a device KeyMint
- * upgrade), the row is returned with the raw ciphertext in place. The caller
- * will then treat the secret as a non-matching string (lookup miss) and the
- * corrupted localKey as a non-hex value, which surfaces as a connection
- * failure rather than a crash — matching the `InvalidKeyException`/log-and-skip
- * convention in `AccountStorage.load`.
  */
-private fun String.encryptField(): String = if (this.isEmpty()) this else SecureCryptoHelper.encryptBlocking(this)
-
-private fun String.decryptField(): String {
-    if (this.isEmpty()) return this
-    return try {
-        SecureCryptoHelper.decryptBlocking(this)
-    } catch (e: Exception) {
-        // Leave the ciphertext in place rather than crashing the DAO read.
-        // See the class KDoc for the recovery contract.
-        AmberLog.w(Amber.TAG, "ApplicationEntityCrypto: failed to decrypt field", e)
-        this
-    }
-}
-
-/** Encrypts [secret] and [localKey] for Room persistence. Inverse of [decryptFromStorage]. */
 fun ApplicationEntity.encryptForStorage(): ApplicationEntity = copy(
     secret = secret.encryptField(),
     localKey = localKey.encryptField(),
 )
 
-/** Decrypts [secret] and [localKey] after a Room read. Inverse of [encryptForStorage]. */
+/**
+ * Decrypts [secret] and [localKey] after a Room read. Inverse of [encryptForStorage].
+ *
+ * Failure mode: if [SecureCryptoHelper.decryptBlocking] throws (e.g. the
+ * AndroidKeyStore key has become permanently unusable after a device KeyMint
+ * upgrade), the row is returned with the raw ciphertext in place rather than
+ * crashing the DAO read. The caller will then treat the secret as a non-matching
+ * string (lookup miss) and the corrupted localKey as a non-hex value, which
+ * surfaces as a connection failure rather than a crash — matching the
+ * `InvalidKeyException`/log-and-skip convention in `AccountStorage.load`.
+ */
 fun ApplicationEntity.decryptFromStorage(): ApplicationEntity = copy(
-    secret = secret.decryptField(),
-    localKey = localKey.decryptField(),
+    secret = secret.decryptFieldOrKeepCiphertext(),
+    localKey = localKey.decryptFieldOrKeepCiphertext(),
 )
 
 /** Decrypts the embedded [ApplicationWithPermissions.application] after a Room read. */

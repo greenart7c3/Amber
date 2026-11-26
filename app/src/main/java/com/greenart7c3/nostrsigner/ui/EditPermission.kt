@@ -63,6 +63,7 @@ import com.greenart7c3.nostrsigner.commonsui.localizedBlocking
 import com.greenart7c3.nostrsigner.commonsui.remove_all_permissions
 import com.greenart7c3.nostrsigner.commonsui.sign
 import com.greenart7c3.nostrsigner.models.Account
+import com.greenart7c3.nostrsigner.service.TrustScoreService
 import com.greenart7c3.nostrsigner.ui.actions.RemoveAllPermissionsDialog
 import com.greenart7c3.nostrsigner.ui.components.AddPermissionsSheet
 import com.greenart7c3.nostrsigner.ui.components.AmberButton
@@ -101,7 +102,6 @@ fun EditPermission(
     Column(
         modifier = modifier,
     ) {
-        // Only a loaded bunker connection has relays, so the URI is never shown before the app loads.
         if (applicationData.relays.isNotEmpty()) {
             BunkerUriSection(bunkerUriOf(applicationData, account.hexKey), isConnected = applicationData.isConnected)
         }
@@ -146,7 +146,6 @@ fun EditPermission(
     }
 }
 
-/** The connection's bunker:// URI: its own key (else the account's), relays and, when it uses one, secret. */
 private fun bunkerUriOf(
     app: PermissionsApp,
     accountHex: String,
@@ -156,7 +155,6 @@ private fun bunkerUriOf(
     return "bunker://${app.localPubKey.ifEmpty { accountHex }}?$relays$secret"
 }
 
-/** Grants for [added] permissions, allowed until revoked. */
 private fun alwaysAllowed(added: List<Permission>): List<PermissionGrant> = added.map {
     PermissionGrant(
         null,
@@ -169,7 +167,6 @@ private fun alwaysAllowed(added: List<Permission>): List<PermissionGrant> = adde
     )
 }
 
-/** Removes every permission after a confirmation; [onRemoveAll] calls back once they are gone. */
 @Composable
 private fun RemoveAllPermissionsButton(onRemoveAll: (onRemoved: () -> Unit) -> Unit) {
     var confirming by remember { mutableStateOf(false) }
@@ -195,7 +192,6 @@ private fun RemoveAllPermissionsButton(onRemoveAll: (onRemoved: () -> Unit) -> U
     )
 }
 
-/** A bunker connection's URI with a copy button, under a warning when the app is connected. */
 @Composable
 private fun BunkerUriSection(
     bunkerUri: String,
@@ -238,7 +234,6 @@ private fun BunkerUriSection(
     }
 }
 
-/** The app's activity and configuration screens, and what the permissions below do. */
 @Composable
 private fun AppLinks(
     navController: NavController,
@@ -270,7 +265,6 @@ private fun AppLinks(
     }
 }
 
-/** The Add permission button and the sheet it opens. */
 @Composable
 private fun AddPermissionsButton(
     existingPermissions: List<Permission>,
@@ -380,7 +374,6 @@ fun PermissionRow(
     }
 }
 
-/** "Sign <kind>" for an event or NIP permission, else the permission's own description. */
 private fun permissionLabel(permission: PermissionGrant): String {
     val localPermission = Permission(permission.type.lowercase(), permission.kind)
     return if (permission.type == "SIGN_EVENT" || permission.type == "NIP") {
@@ -390,14 +383,12 @@ private fun permissionLabel(permission: PermissionGrant): String {
     }
 }
 
-/** The action a stored grant shows: 0 allow, 1 deny, 2 ask (no active decision). */
 private fun actionOption(permission: PermissionGrant): Int = when {
     permission.acceptable && permission.acceptUntil > 0 -> 0
     !permission.acceptable && permission.rejectUntil > 0 -> 1
     else -> 2
 }
 
-/** The relay a relay-auth grant is for; `*` is every relay. */
 @Composable
 private fun AuthRelayLabel(relay: String) {
     Text(
@@ -415,7 +406,6 @@ private fun AuthRelayLabel(relay: String) {
     )
 }
 
-/** Allow (0), deny (1) or ask (2). */
 @Composable
 private fun ActionToggle(
     optionIndex: Int,
@@ -442,7 +432,6 @@ private fun ActionToggle(
     }
 }
 
-/** How long an allow or deny lasts. */
 @Composable
 private fun RememberForToggle(
     rememberType: RememberType,
@@ -467,6 +456,8 @@ private fun RememberForToggle(
         )
     }
 }
+
+internal fun hasMeaningfulTrustBadge(relayUrl: String) = !TrustScoreService.isExcludedFromScoring(relayUrl)
 
 @Composable
 fun RelayCard(
@@ -501,9 +492,6 @@ fun RelayCard(
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
-            // Excluded relays (private/anonymous endpoints) show no badge at
-            // all: UNKNOWN would read as "untrusted" for a relay the ratings
-            // API will never be asked about.
             if (showTrustScore) {
                 TrustScoreBadge(
                     score = trustScore,

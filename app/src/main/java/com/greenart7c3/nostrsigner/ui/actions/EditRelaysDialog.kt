@@ -95,6 +95,7 @@ import com.greenart7c3.nostrsigner.ui.ToastManager
 import com.greenart7c3.nostrsigner.ui.components.AmberButton
 import com.greenart7c3.nostrsigner.ui.components.SectionLabel
 import com.greenart7c3.nostrsigner.ui.components.TrustScoreBadge
+import com.greenart7c3.nostrsigner.ui.hasMeaningfulTrustBadge
 import com.vitorpamplona.quartz.nip01Core.core.Event
 import com.vitorpamplona.quartz.nip01Core.core.toHexKey
 import com.vitorpamplona.quartz.nip01Core.crypto.KeyPair
@@ -139,7 +140,6 @@ fun DefaultRelaysScreen(
     val clipboardManager = LocalClipboard.current
     val state = remember { DefaultRelaysState(settingsStore.settings.defaultRelays) }
 
-    // Fetch trust scores for all relays
     LaunchedEffect(state.relays.toList()) {
         state.fetchMissingTrustScores(scope, settingsStore)
     }
@@ -349,6 +349,7 @@ private fun RelayAddressField(
     )
 }
 
+@Suppress("NoComments")
 @Composable
 private fun InsecureRelayWarning(
     text: String,
@@ -391,7 +392,7 @@ private fun DefaultRelayList(
                 relay = relayUrl,
                 trustScore = trustScores[relayUrl],
                 isLoadingScore = loadingScores[relayUrl] == true,
-                showTrustScore = !TrustScoreService.isExcludedFromScoring(relayUrl),
+                showTrustScore = hasMeaningfulTrustBadge(relayUrl),
                 onClick = { onRemove(it, relayUrl) },
             )
         }
@@ -403,7 +404,6 @@ fun onAddRelay(
     isLoading: MutableState<Boolean>,
     relays2: SnapshotStateList<NormalizedRelayUrl>,
     scope: CoroutineScope,
-    // The account's saved relays: an added relay already among them needs no bunker check.
     savedRelays: suspend () -> Set<NormalizedRelayUrl>,
     factory: OkHttpWebSocket.Builder,
     context: Context,
@@ -430,17 +430,12 @@ fun onAddRelay(
             textFieldRelay.value = TextFieldValue("")
             return@launch
         }
-        // An added relay already among the account's saved relays needs no bunker check.
         if (addedWSS in savedRelays()) add() else probeBunkerRelay(addedWSS, factory, context, add)
         textFieldRelay.value = TextFieldValue("")
         isLoading.value = false
     }
 }
 
-/**
- * Adds [relay] once a NIP-46 request published to it comes back on a subscription;
- * when it cannot be reached or does not serve the request back, asks before adding it.
- */
 private suspend fun probeBunkerRelay(
     relay: NormalizedRelayUrl,
     factory: OkHttpWebSocket.Builder,
@@ -454,22 +449,20 @@ private suspend fun probeBunkerRelay(
         return
     }
     val published = probe.publish()
-    val echoed = if (published) {
+    val noFilterProblem = if (published) {
         AmberListenerSingleton.latestErrorMessages.clear()
         probe.awaitEcho()
     } else {
-        // The failure is shown as it is, not as a filter problem.
         AmberListenerSingleton.showErrorMessage(context)
         true
     }
     probe.close()
     when {
-        published && echoed -> add()
-        !echoed -> offerToAdd(Res.string.relay_filter_failed, add)
+        published && noFilterProblem -> add()
+        !noFilterProblem -> offerToAdd(Res.string.relay_filter_failed, add)
     }
 }
 
-/** A toast saying [message] about the relay, whose Accept adds it anyway. */
 private fun offerToAdd(
     message: StringResource,
     add: () -> Unit,
@@ -477,10 +470,6 @@ private fun offerToAdd(
     ToastManager.toast(getStringBlocking(Res.string.relay), getStringBlocking(message), onAccept = add, onReject = {})
 }
 
-/**
- * A throwaway NIP-46 request (kind 24133) on [relay] from a fresh key, and a
- * subscription to that key's requests, to see whether the relay serves them back.
- */
 private class BunkerRelayProbe(
     private val client: NostrClient,
     private val relay: NormalizedRelayUrl,
@@ -490,8 +479,7 @@ private class BunkerRelayProbe(
     private val encryptedContent = signer.signerSync.nip04Encrypt("Test bunker event", signer.keyPair.pubKey.toHexKey())
     private val subId = UUID.randomUUID().toString().substring(0, 4)
 
-    // Re-signed after a failed publish; the echo must match the latest one.
-    @Volatile private var event: Event = sign()
+    @Volatile private var latestSignedRequest: Event = sign()
 
     @Volatile private var connected = false
 
@@ -532,12 +520,11 @@ private class BunkerRelayProbe(
     init {
         client.addConnectionListener(listener)
         if (!client.isActive()) client.connect()
-        val filter = Filter(kinds = listOf(NostrConnectEvent.KIND), tags = mapOf("p" to listOf(event.pubKey)))
+        val filter = Filter(kinds = listOf(NostrConnectEvent.KIND), tags = mapOf("p" to listOf(latestSignedRequest.pubKey)))
         client.subscribe(subId, mapOf(relay to listOf(filter)))
     }
 
-    /** The latest request, served back on our subscription. */
-    private fun EventMessage.isEcho(): Boolean = subId == this@BunkerRelayProbe.subId && event.kind == NostrConnectEvent.KIND && event.id == this@BunkerRelayProbe.event.id
+    private fun EventMessage.isEcho(): Boolean = subId == this@BunkerRelayProbe.subId && event.kind == NostrConnectEvent.KIND && event.id == latestSignedRequest.id
 
     private fun sign(): Event = signer.signerSync.sign(
         TimeUtils.now(),
@@ -546,23 +533,20 @@ private class BunkerRelayProbe(
         encryptedContent,
     )
 
-    /** Whether the relay connects within 30 seconds. */
     suspend fun awaitConnection(): Boolean = withTimeoutOrNull(30.seconds) {
         while (!connected) delay(200.milliseconds)
         true
     } ?: false
 
-    /** Publishes the request, re-signed after each failure, up to three times. */
     suspend fun publish(): Boolean {
         repeat(3) {
-            if (client.publishAndConfirm(event, setOf(relay))) return true
+            if (client.publishAndConfirm(latestSignedRequest, setOf(relay))) return true
             delay(1.seconds)
-            event = sign()
+            latestSignedRequest = sign()
         }
         return false
     }
 
-    /** Whether the request comes back on the subscription within 10 seconds. */
     suspend fun awaitEcho(): Boolean {
         repeat(10) {
             if (echoed) return true
@@ -659,11 +643,7 @@ fun ActiveRelaysScreen(
     val settingsStore = LocalSettingsStore.current
     val accountRepository = LocalAccountRepository.current
     val scope = rememberCoroutineScope()
-    // Relays configured as defaults — these are used for every new connection.
     val defaultRelays = remember { mutableStateListOf<NormalizedRelayUrl>() }
-    // Relays that existing connections still use but that are not part of the
-    // default set. Shown separately so it is clear they come from individual app
-    // connections, not from the default relay settings.
     val connectionRelays = remember { mutableStateListOf<NormalizedRelayUrl>() }
     val trustScores = remember { mutableStateMapOf<String, Int?>() }
     val loadingScores = remember { mutableStateMapOf<String, Boolean>() }
@@ -679,7 +659,6 @@ fun ActiveRelaysScreen(
         }
     }
 
-    // Fetch trust scores for every relay shown
     LaunchedEffect(defaultRelays.toList(), connectionRelays.toList()) {
         if (TrustScoreService.isEnabled(settingsStore.settings)) {
             (defaultRelays + connectionRelays).forEach { relay ->

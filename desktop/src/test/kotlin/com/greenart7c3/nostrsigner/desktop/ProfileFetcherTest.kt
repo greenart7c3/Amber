@@ -40,11 +40,9 @@ class ProfileFetcherTest {
         val now = 10_000_000L
         val never = AccountRecord(npub = "npub1x")
         assertTrue(ProfileFetcher.shouldFetch(never, now))
-        // Checked a minute ago: wait for the 15-minute interval.
-        assertFalse(ProfileFetcher.shouldFetch(never.copy(lastProfileCheck = now - 60), now))
+        assertFalse("checked a minute ago waits for the 15-minute interval", ProfileFetcher.shouldFetch(never.copy(lastProfileCheck = now - 60), now))
         assertTrue(ProfileFetcher.shouldFetch(never.copy(lastProfileCheck = now - 16 * 60), now))
-        // Metadata updated within the last day: no refetch.
-        assertFalse(ProfileFetcher.shouldFetch(never.copy(lastMetadataUpdate = now - 3600, lastProfileCheck = now - 16 * 60), now))
+        assertFalse("metadata updated within the last day is not refetched", ProfileFetcher.shouldFetch(never.copy(lastMetadataUpdate = now - 3600, lastProfileCheck = now - 16 * 60), now))
         assertTrue(ProfileFetcher.shouldFetch(never.copy(lastMetadataUpdate = now - 25 * 3600, lastProfileCheck = now - 16 * 60), now))
     }
 
@@ -56,8 +54,8 @@ class ProfileFetcherTest {
         AccountsStore.upsert(AccountRecord(npub = npub))
 
         ProfileFetcher.applyMetadata(npub, profile(2_000, "current"))
-        // A later fetch only reached a relay serving an older profile.
-        ProfileFetcher.applyMetadata(npub, profile(1_000, "stale"))
+        val olderProfileFromALaterFetch = profile(1_000, "stale")
+        ProfileFetcher.applyMetadata(npub, olderProfileFromALaterFetch)
         val afterStale = AccountsStore.get(npub)!!
         ProfileFetcher.applyMetadata(npub, profile(2_000, "same-time"))
         val afterSameTime = AccountsStore.get(npub)!!
@@ -77,8 +75,8 @@ class ProfileFetcherTest {
     fun fetchesNameAndPictureFromIndexers() = runBlocking {
         assumeTrue("Set AMBER_E2E=1 to run the relay round-trip test", System.getenv("AMBER_E2E") != null)
 
-        // jack
-        val npub = "npub1sg6plzptd64u62a878hep2kev88swjh3tw00gjsfl8f237lmu63q0uf63m"
+        val jackNpub = "npub1sg6plzptd64u62a878hep2kev88swjh3tw00gjsfl8f237lmu63q0uf63m"
+        val npub = jackNpub
         AccountsStore.upsert(AccountRecord(npub = npub))
         ProfileFetcher.refresh(npub)
 

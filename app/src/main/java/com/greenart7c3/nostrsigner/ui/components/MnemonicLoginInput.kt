@@ -89,7 +89,6 @@ fun MnemonicLoginInput(
     }
 }
 
-/** 12 or 24 words, and the button that pastes the whole phrase. */
 @Composable
 private fun WordCountRow(
     wordCount: Int,
@@ -122,7 +121,6 @@ private fun WordCountRow(
     }
 }
 
-/** The word fields at [indices]; each moves on to the next word, and the last word of the phrase is Done. */
 @Composable
 private fun WordColumn(
     indices: IntRange,
@@ -166,11 +164,6 @@ private fun WordsEntered(
     )
 }
 
-/**
- * What typing [raw] into a word field means: the [word] to keep (lower-cased, without leading
- * spaces; null when there is none), and whether a space was typed, which ends the word and
- * [movesOn] to the next field.
- */
 internal data class TypedWord(val word: String?, val movesOn: Boolean)
 
 internal fun typedWord(raw: String): TypedWord {
@@ -190,12 +183,15 @@ private fun WordField(
     nextFocusRequester: FocusRequester?,
     imeAction: ImeAction,
 ) {
-    // `remember(word)` resets this state synchronously whenever `word` changes.
-    // Initializing to `word` when it is already a complete BIP-39 entry
-    // suppresses the dropdown immediately — no async gap — covering both the
-    // paste case (word set externally, onValueChange never called) and the
-    // case where the user finishes typing a valid word.
-    var selectedWord by remember(word) { mutableStateOf(if (word in wordList) word else "") }
+    @Suppress("NoComments")
+    var selectedWord by remember(word) {
+        // `remember(word)` resets this state synchronously whenever `word` changes.
+        // Initializing to `word` when it is already a complete BIP-39 entry
+        // suppresses the dropdown immediately — no async gap — covering both the
+        // paste case (word set externally, onValueChange never called) and the
+        // case where the user finishes typing a valid word.
+        mutableStateOf(if (word in wordList) word else "")
+    }
 
     val suggestions = remember(word) {
         if (word.length >= 2) {
@@ -212,7 +208,7 @@ private fun WordField(
             value = word,
             onValueChange = { raw ->
                 val typed = typedWord(raw)
-                if (!typed.movesOn) selectedWord = "" // reset so menu can reappear while typing
+                if (!typed.movesOn) selectedWord = ""
                 typed.word?.let(onWordChange)
                 if (typed.movesOn) nextFocusRequester?.requestFocus()
             },
@@ -255,7 +251,6 @@ private fun WordField(
     }
 }
 
-/** Up to five words of the list that start with what was typed; the menu does not take the keyboard's focus. */
 @Composable
 private fun WordSuggestions(
     expanded: Boolean,

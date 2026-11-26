@@ -210,6 +210,7 @@ const val TRANSPORT_NIP46 = "nip46"
 const val TRANSPORT_SOCKET = "socket"
 
 // An extension, not a member: Jackson would persist a member getter as a field.
+@Suppress("NoComments")
 val AppRecord.isLocalSocket: Boolean get() = transport == TRANSPORT_SOCKET
 
 /** Mirrors the Android `ApplicationPermissionsEntity`. */

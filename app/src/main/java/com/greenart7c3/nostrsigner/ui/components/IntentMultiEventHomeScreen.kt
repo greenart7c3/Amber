@@ -91,7 +91,6 @@ fun IntentMultiEventHomeScreen(
                 .padding(bottom = 4.dp),
         )
 
-        // Confirm signs each request under its own account.
         val batchAccounts = rememberBatchAccounts(intents.map { it.currentAccount }, accountParam)
         batchAccounts.SigningAsHeader()
 
@@ -113,7 +112,6 @@ fun IntentMultiEventHomeScreen(
     }
 }
 
-/** The requests grouped by kind, each group with its approve toggle and remember options. */
 @Composable
 private fun IntentRequestGroups(
     intents: ImmutableList<IntentData>,
@@ -189,7 +187,6 @@ private fun IntentRequestCard(
     )
 }
 
-/** What the request asks for. */
 @Composable
 private fun intentRequestLabel(intent: IntentData): String {
     val type = intent.type
@@ -230,7 +227,6 @@ private fun decryptLabel(
     else -> stringResource(Res.string.read_this_text_from_encrypted_content, nip)
 }
 
-/** The request's content in short: the event's content (the relay, for a relay AUTH), or the data to encrypt or decrypt. */
 private fun intentRequestPreview(intent: IntentData): String {
     if (intent.type == SignerType.SIGN_EVENT) {
         val event = intent.event!!

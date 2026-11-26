@@ -39,15 +39,13 @@ annotation class PreviewsLightDark
  */
 @Composable
 fun AmberPreview(modifier: Modifier = Modifier, content: @Composable () -> Unit) {
-    // Settings live in memory, so components that read them render; the databases
-    // and relays stay unavailable.
-    val settingsStore = remember {
+    val inMemorySettingsStore = remember {
         object : SettingsStore {
             override var settings = AmberSettings()
             override val themeMode = MutableStateFlow(ThemeMode.SYSTEM)
         }
     }
-    CompositionLocalProvider(LocalSettingsStore provides settingsStore) {
+    CompositionLocalProvider(LocalSettingsStore provides inMemorySettingsStore) {
         NostrSignerTheme {
             Surface(modifier = modifier, color = MaterialTheme.colorScheme.background) {
                 content()

@@ -18,11 +18,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-/**
- * Where the main screen's navigation starts: an external request opens on it, then a
- * route asked for (a deep link, an account switch), then any waiting request, else the
- * app list.
- */
 internal fun startRoute(isExternalRequest: Boolean, pendingRoute: String?, hasRequests: Boolean): String = when {
     isExternalRequest -> Route.IncomingRequest.route
     pendingRoute != null -> pendingRoute
@@ -32,11 +27,9 @@ internal fun startRoute(isExternalRequest: Boolean, pendingRoute: String?, hasRe
 
 /** The main screen's actions that outlive a click: switching how Amber reaches relays through Tor. */
 class MainScreenViewModel(
-    // The Application context: the view model outlives the activity.
     private val appContext: Context,
     private val settingsStore: SettingsStore,
     private val relayClient: RelayClient,
-    // Built-in Tor keeps running after the screen goes away.
     private val appScope: CoroutineScope,
 ) : ViewModel() {
     /** Routes relays through Orbot's SOCKS [port], stopping built-in Tor; [onDone] runs on the main thread. */

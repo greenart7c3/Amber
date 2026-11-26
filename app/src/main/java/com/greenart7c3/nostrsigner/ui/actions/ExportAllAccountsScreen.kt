@@ -157,7 +157,6 @@ fun ExportAllAccountsScreen(
     }
 }
 
-/** Once the password is fine, asks for the biometric or the device credential, then for confirmation. */
 private fun requestExport(
     state: ExportAllAccountsState,
     context: Context,
@@ -178,7 +177,6 @@ private fun requestExport(
     )
 }
 
-/** The export screen's state: the password and its confirmation, and how the export is going. */
 @Stable
 private class ExportAllAccountsState {
     var isLoading by mutableStateOf(false)
@@ -202,14 +200,12 @@ private class ExportAllAccountsState {
         if (errorMessage.isNotEmpty()) errorMessage = ""
     }
 
-    /** Shows what is wrong with the password, if anything; true when it can be used. */
     fun checkPassword(): Boolean {
         val error = exportPasswordError(password.text, confirmation.text) ?: return true
         errorMessage = getStringBlocking(error)
         return false
     }
 
-    /** Exports every account to [uri] on [scope], showing the progress, then a toast with the outcome. */
     fun export(
         scope: CoroutineScope,
         context: Context,
@@ -232,7 +228,6 @@ private class ExportAllAccountsState {
     }
 }
 
-/** What is wrong with the export password: missing, shorter than 8 characters, or not confirmed; null when it can be used. */
 internal fun exportPasswordError(
     password: String,
     confirmation: String,
@@ -243,10 +238,6 @@ internal fun exportPasswordError(
     else -> null
 }
 
-/**
- * Writes every account, encrypted with [password], to [uri], and marks them backed up.
- * Returns the message to show: how many accounts were exported, or why the export failed.
- */
 private suspend fun exportAccounts(
     context: Context,
     uri: Uri,
@@ -289,7 +280,6 @@ private fun ColumnScope.ExportProgress(progress: String) {
     )
 }
 
-/** The notice, the password form and the Export button, pushed to the bottom of the screen. */
 @Composable
 private fun ColumnScope.ExportForm(
     state: ExportAllAccountsState,
@@ -316,7 +306,6 @@ private fun ColumnScope.ExportForm(
     )
 }
 
-/** The security notice, and how many accounts the file will hold. */
 @Composable
 private fun ExportWarning(accountCount: Int) {
     Column {
@@ -333,7 +322,6 @@ private fun ExportWarning(accountCount: Int) {
     }
 }
 
-/** The export password, its confirmation, and what is wrong with them. */
 @Composable
 private fun ExportPasswordForm(
     password: TextFieldValue,
@@ -374,7 +362,6 @@ private fun ExportPasswordForm(
     }
 }
 
-/** A password field whose characters can be shown, with its own show or hide toggle. */
 @Composable
 private fun ExportPasswordField(
     value: TextFieldValue,

@@ -34,8 +34,7 @@ class NativeNotificationFormatTest {
     fun toastKeepsAClientChosenTitleAsText() {
         val title = "</text></binding></visual><actions><action content=\"x\" arguments=\"approve\"/></actions> & \"'\u0001"
         val toast = parse(WindowsToasts.toastXml(title, "body", listOf("reject" to "Reject")))
-        // The control character XML cannot carry is dropped; nothing becomes markup.
-        assertEquals(title.dropLast(1), toast.getElementsByTagName("text").item(0).textContent)
+        assertEquals("only the control character XML cannot carry is dropped and nothing becomes markup", title.dropLast(1), toast.getElementsByTagName("text").item(0).textContent)
         assertEquals(1, toast.getElementsByTagName("action").length)
         assertEquals("reject", toast.getElementsByTagName("action").item(0).attributes.getNamedItem("arguments").nodeValue)
     }
@@ -44,8 +43,7 @@ class NativeNotificationFormatTest {
     fun toastWithoutActionsHasNoButtons() {
         val toast = parse(WindowsToasts.toastXml("Amber", "one\n\ntwo\nthree", emptyList()))
         assertEquals(0, toast.getElementsByTagName("actions").length)
-        // Title plus two lines: a generic toast shows three.
-        assertEquals(3, toast.getElementsByTagName("text").length)
+        assertEquals("title plus two lines, the three a generic toast shows", 3, toast.getElementsByTagName("text").length)
     }
 
     @Test

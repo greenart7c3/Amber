@@ -48,8 +48,7 @@ class NotifierDaemonTest {
     @Test
     fun leavesTitlesThatWouldMatchTooMuchOrLookLikeAnOption() {
         val dir = File("/usr/share/omarchy/shell")
-        // The shell matches by substring: "ab" is in most summaries.
-        assertTrue(Notifier.omarchyDismissCommands(dir, "ab").isEmpty())
+        assertTrue("the shell matches by substring and ab is in most summaries", Notifier.omarchyDismissCommands(dir, "ab").isEmpty())
         assertTrue(Notifier.omarchyDismissCommands(dir, "").isEmpty())
         assertTrue(Notifier.omarchyDismissCommands(dir, "--pid").isEmpty())
         assertEquals(2, Notifier.omarchyDismissCommands(dir, "abc").size)

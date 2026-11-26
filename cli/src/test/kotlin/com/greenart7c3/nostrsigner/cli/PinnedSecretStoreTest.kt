@@ -47,28 +47,27 @@ class PinnedSecretStoreTest {
         directory.toFile().deleteRecursively()
     }
 
-    /** A fresh store object per call, as every CLI run makes one. */
-    private fun store(): SecretStore = PinnedSecretStore(directory, { environment[it] }) { keyring.takeIf { keyringRunning } }
+    private fun freshStorePerRun(): SecretStore = PinnedSecretStore(directory, { environment[it] }) { keyring.takeIf { keyringRunning } }
 
     @Test
     fun aKeyFileStoreKeepsItsKeyWhenACredentialStoreStarts() {
-        store().write(key)
+        freshStorePerRun().write(key)
         assertTrue(Files.exists(directory.resolve("connection.key")))
 
         keyringRunning = true
-        assertArrayEquals(key, store().read())
+        assertArrayEquals(key, freshStorePerRun().read())
         assertEquals(null, keyring.key)
     }
 
     @Test
     fun aCredentialStoreThatGoesAwayIsReportedNotTreatedAsMissing() {
         keyringRunning = true
-        store().write(key)
+        freshStorePerRun().write(key)
         assertArrayEquals(key, keyring.key)
 
         keyringRunning = false
         try {
-            store().read()
+            freshStorePerRun().read()
             fail("expected the unreachable credential store to be reported")
         } catch (e: CliError) {
             assertTrue(e.message, e.message.contains("OS credential store"))
@@ -76,35 +75,34 @@ class PinnedSecretStoreTest {
         }
 
         keyringRunning = true
-        assertArrayEquals(key, store().read())
+        assertArrayEquals(key, freshStorePerRun().read())
     }
 
     @Test
     fun aStoreFromBeforeTheMarkerKeepsItsKeyFile() {
         FileSecretStore(directory.resolve("connection.key")).write(key)
         keyringRunning = true
-        assertArrayEquals(key, store().read())
+        assertArrayEquals(key, freshStorePerRun().read())
         assertEquals("file", Files.readString(directory.resolve("key-store")).trim())
     }
 
     @Test
-    fun theEnvironmentPicksTheBackend() {
+    fun theEnvironmentPicksTheBackendAndLaterRunsWithoutItStayOnIt() {
         keyringRunning = true
         environment[SecretStore.KEY_STORE_ENV] = "file"
-        store().write(key)
+        freshStorePerRun().write(key)
         assertTrue(Files.exists(directory.resolve("connection.key")))
         assertEquals(null, keyring.key)
 
-        // The explicit choice is recorded, so later runs without it stay on the file.
         environment.clear()
-        assertArrayEquals(key, store().read())
+        assertArrayEquals(key, freshStorePerRun().read())
     }
 
     @Test
     fun anUnknownBackendIsAUsageError() {
         environment[SecretStore.KEY_STORE_ENV] = "vault"
         try {
-            store().read()
+            freshStorePerRun().read()
             fail("expected a usage error")
         } catch (e: CliError) {
             assertEquals(Exit.USAGE, e.code)

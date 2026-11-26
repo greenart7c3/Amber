@@ -10,9 +10,12 @@ import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 
-/** Every account's Room databases, opened on first use and kept open until the account logs out. */
+/**
+ * Every account's Room databases, opened on first use and kept open until the account logs out.
+ *
+ * @param application created with the Application, before its context is attached: read it only when a database opens.
+ */
 class AccountDatabases(
-    // Created with the Application, before its context is attached: read it only when a database opens.
     private val application: Application,
     private val settingsStore: SettingsStore,
     private val scope: CoroutineScope,
@@ -28,6 +31,7 @@ class AccountDatabases(
     // fresh RoomDatabase every call, so a racing second caller would build a
     // duplicate that loses the put() and leaks its SQLiteConnection (caught by
     // StrictMode's CloseGuard on finalize).
+    @Suppress("NoComments")
     override fun getDatabase(npub: String): AppDatabase = databases.computeIfAbsent(npub) {
         AppDatabase.getDatabase(application.applicationContext, npub)
     }

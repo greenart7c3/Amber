@@ -27,11 +27,11 @@ import com.greenart7c3.nostrsigner.ui.LocalSettingsStore
 import org.jetbrains.compose.resources.stringResource
 
 enum class TrustLevel(val color: Color) {
-    EXCELLENT(Color(0xFF4CAF50)), // Green - 80-100
-    GOOD(Color(0xFF8BC34A)), // Light green - 60-79
-    FAIR(Color(0xFFFF9800)), // Orange - 40-59
-    POOR(Color(0xFFF44336)), // Red - <40
-    UNKNOWN(Color.Gray), // Gray - null score
+    EXCELLENT(Color(0xFF4CAF50)),
+    GOOD(Color(0xFF8BC34A)),
+    FAIR(Color(0xFFFF9800)),
+    POOR(Color(0xFFF44336)),
+    UNKNOWN(Color.Gray),
 }
 
 fun getTrustLevel(score: Int?): TrustLevel = when {

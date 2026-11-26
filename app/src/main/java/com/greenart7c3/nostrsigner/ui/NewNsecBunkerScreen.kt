@@ -90,8 +90,6 @@ fun NewNsecBunkerScreen(
     viewModel: NewBunkerViewModel = viewModel(factory = NewBunkerViewModel.factory(LocalAccountRepository.current, LocalRelayClient.current)),
 ) {
     val localBunkerRelay = LocalBunkerRelay.current
-    // The local relay rides along with the defaults, so clients on this
-    // device can reach the bunker without any public relay.
     val form = remember { NewBunkerForm(localBunkerRelay.newBunkerRelays()) }
     val context = LocalContext.current
     val relayClient = LocalRelayClient.current
@@ -143,7 +141,6 @@ fun NewNsecBunkerScreen(
     }
 }
 
-/** What the new bunker form holds while it is filled in. */
 @Stable
 private class NewBunkerForm(initialRelays: List<NormalizedRelayUrl>) {
     val secret = UUID.randomUUID().toString()
@@ -151,11 +148,9 @@ private class NewBunkerForm(initialRelays: List<NormalizedRelayUrl>) {
     val relays = mutableStateListOf(*initialRelays.toTypedArray())
     var deleteAfterIndex by mutableIntStateOf(DeleteAfterType.NEVER.screenCode)
 
-    /** The relay being typed, and whether it is being tested before it is added. */
     val relayText = mutableStateOf(TextFieldValue(""))
     val isLoading = mutableStateOf(false)
 
-    /** Tests the typed relay and adds it to [relays]. */
     fun addRelay(
         scope: CoroutineScope,
         savedRelays: suspend () -> Set<NormalizedRelayUrl>,
@@ -177,7 +172,6 @@ private class NewBunkerForm(initialRelays: List<NormalizedRelayUrl>) {
     }
 }
 
-/** How long until the bunker deletes itself. */
 @Composable
 internal fun DeleteAfterSetting(
     selectedIndex: Int,
@@ -205,7 +199,6 @@ internal fun DeleteAfterSetting(
     }
 }
 
-/** The bunker's name; Next moves on to the following field. */
 @Composable
 private fun BunkerNameField(
     name: TextFieldValue,
@@ -233,7 +226,6 @@ private fun BunkerNameField(
     )
 }
 
-/** A relay URL, pasted or typed; Done and the add button both call [onAdd]. */
 @Composable
 private fun RelayUrlField(
     text: String,
@@ -297,7 +289,6 @@ private fun RelayUrlField(
     }
 }
 
-/** The relays the bunker will listen on; tapping one removes it. */
 @Composable
 private fun BunkerRelayList(
     relays: List<NormalizedRelayUrl>,
@@ -313,7 +304,6 @@ private fun BunkerRelayList(
     }
 }
 
-/** Creates the bunker through [onCreate], or, when it has no relays or no name, says which is missing. */
 @Composable
 private fun CreateBunkerButton(
     hasRelays: Boolean,
@@ -387,7 +377,6 @@ fun NewNsecBunkerCreatedScreen(
     }
 }
 
-/** The new bunker's URI, as text and as a QR code, with a button to copy it. */
 @Composable
 private fun BunkerCreated(
     bunkerUri: String,

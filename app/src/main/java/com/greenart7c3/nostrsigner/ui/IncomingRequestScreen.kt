@@ -51,8 +51,6 @@ fun IncomingRequestScreen(
     val applicationName = requests.appName
     val isExternalRequest = requests.isExternalRequest
     var loading by remember { mutableStateOf(false) }
-    // A connect needs the account choice and the replace-or-create-new prompt that
-    // only the single screen has, so it is never batched with other requests.
     val connectRequest = bunkerRequests.firstOrNull { it.request is BunkerRequestConnect }
 
     if (loading) {

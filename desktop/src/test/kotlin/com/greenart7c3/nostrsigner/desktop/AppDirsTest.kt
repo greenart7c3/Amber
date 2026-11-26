@@ -21,9 +21,8 @@ class AppDirsTest {
     @Test
     fun accountDirTightensExistingWorldReadableDir() {
         assumeTrue(!System.getProperty("os.name").lowercase().contains("win"))
-        // A directory left behind by an older version with the umask default.
-        val dir = File(AppDirs.dataDir, "npub1appdirslegacy").apply { mkdirs() }
-        Files.setPosixFilePermissions(dir.toPath(), PosixFilePermissions.fromString("rwxr-xr-x"))
+        val dirWithUmaskDefault = File(AppDirs.dataDir, "npub1appdirslegacy").apply { mkdirs() }
+        Files.setPosixFilePermissions(dirWithUmaskDefault.toPath(), PosixFilePermissions.fromString("rwxr-xr-x"))
         assertEquals("rwx------", perms(AppDirs.accountDir("npub1appdirslegacy")))
     }
 
@@ -33,9 +32,7 @@ class AppDirsTest {
         val file = File(AppDirs.dataDir, "private-output-test.tmp").apply { delete() }
         try {
             AppDirs.privateOutput(file).use { it.write("secret".toByteArray()) }
-            // The file must already be owner-only at creation time, not only
-            // after a post-write restriction pass.
-            assertEquals("rw-------", perms(file))
+            assertEquals("owner-only from creation, not after a post-write pass", "rw-------", perms(file))
         } finally {
             file.delete()
         }

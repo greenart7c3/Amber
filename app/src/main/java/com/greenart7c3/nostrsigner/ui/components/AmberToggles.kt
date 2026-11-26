@@ -71,7 +71,6 @@ fun <T> AmberToggles(
             val scrollable = equalWidth < minSegmentWidth
             val segmentWidth = if (scrollable) minSegmentWidth else equalWidth
 
-            // Keep the selected segment in view when the row is scrollable.
             LaunchedEffect(selectedIndex, scrollable, segmentWidth) {
                 if (scrollable) {
                     val segmentPx = with(density) { segmentWidth.toPx() }
@@ -141,7 +140,6 @@ private fun <T> ToggleSegments(
     }
 }
 
-/** A thin bar under a scrolling row: its thumb is the visible part of [contentWidth] and follows [scrollState]. */
 @Composable
 private fun ToggleScrollbar(
     scrollState: ScrollState,

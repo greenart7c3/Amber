@@ -72,10 +72,8 @@ import kotlinx.collections.immutable.ImmutableList
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
-// The routes whose title comes from the "content" argument of the destination.
 private val contentTitledRoutes = listOf("Permission/", "Activity/", "RelayLogScreen/", "qrcode/")
 
-// The login screens draw no top bar.
 private val routesWithoutTopBar = setOf("login", "create", "loginPage")
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -106,7 +104,6 @@ fun AmberTopAppBar(
     )
 }
 
-/** The relays connected out of all, which reconnects them, and with a proxy on, whether it works. */
 @Composable
 private fun TopBarStatus() {
     val relayClient = LocalRelayClient.current
@@ -165,7 +162,6 @@ private fun RelayStatusButton(
     }
 }
 
-/** Whether the proxy works: the built-in Tor running, or Orbot's SOCKS port answering (checked when the screen starts or resumes). */
 @Composable
 private fun rememberProxyWorks(): Boolean {
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -235,10 +231,6 @@ private fun ProxyStatusButton() {
     }
 }
 
-/**
- * The route's title, or what the destination shows: the QR code, the app (with "- Activity"
- * on its activity screen), the relay, or the app a bunker request comes from.
- */
 @Composable
 private fun TopBarTitle(
     destinationRoute: String,
@@ -280,7 +272,6 @@ private fun TopBarTitle(
     Text(title)
 }
 
-/** The saved app's name (its key, shortened, when it has none), or [key] when the app is not saved. */
 private fun savedAppTitle(
     application: SavedAppName?,
     key: String,
@@ -294,7 +285,6 @@ private fun savedAppTitle(
     }
 }
 
-/** The name of the app a bunker request comes from: the saved app (found by its key, or a connect's secret), else the name it gave. */
 private suspend fun bunkerRequestTitle(
     request: AmberBunkerRequest,
     npub: String,

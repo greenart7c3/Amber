@@ -40,6 +40,7 @@ class Nip46EndToEndTest {
 
     @Before
     fun setUp() {
+        val losesAnswersSentBeforeTheClientSubscribedLikePublicRelays = true
         relay = LocalRelayServer(
             logger = object : LocalRelayServer.Logger {
                 override fun d(message: String) = Unit
@@ -52,9 +53,7 @@ class Nip46EndToEndTest {
                 ) = Unit
             },
             approvedSenders = { emptySet() },
-            // Like public relays: an answer sent before the client subscribed is lost,
-            // so a client that subscribes too late fails here instead of being rescued.
-            storesEphemeral = false,
+            storesEphemeral = !losesAnswersSentBeforeTheClientSubscribedLikePublicRelays,
         )
         assertEquals(LocalRelayServer.Status.RUNNING, relay.start(0))
         relayUrl = relay.relayUrl()!!.url
@@ -121,11 +120,10 @@ class Nip46EndToEndTest {
         val pubKey = amber("get-public-key", "--timeout", TIMEOUT)
         assertEquals(pubKey.err, Exit.OK, pubKey.exit)
         assertEquals(signer.accountPubKey, pubKey.out.trim())
-        val fromStdin = pairing()
+        val fromStdin = statusSignerUserAndRelays()
 
-        // The argument form saves the same pairing (a new client key aside).
         assertEquals(Exit.OK, amber("login", bunkerUri(), "--force", "--timeout", TIMEOUT).exit)
-        assertEquals(fromStdin, pairing())
+        assertEquals("the argument form saved another pairing", fromStdin, statusSignerUserAndRelays())
     }
 
     @Test
@@ -133,8 +131,7 @@ class Nip46EndToEndTest {
         assertEquals(Exit.USAGE, amber("login", "-", stdin = "\n").exit)
     }
 
-    /** What `status` reports about the saved pairing: signer, user and relays. */
-    private fun pairing(): List<String> {
+    private fun statusSignerUserAndRelays(): List<String> {
         val status = amber("status", "--json", "--timeout", TIMEOUT)
         assertEquals(status.err + status.out, Exit.OK, status.exit)
         val node = JacksonMapper.mapper.readTree(status.out.trim()).get("result")
@@ -203,15 +200,14 @@ class Nip46EndToEndTest {
         val timedOut = amber("connect", "--relay", relayUrl, "--timeout", "2", onPairingUri = { first = it })
         assertEquals(timedOut.err, Exit.TIMEOUT, timedOut.exit)
 
-        // No --relay: the pending pairing's relays, key and secret are reused.
-        var second = ""
+        var resumedWithoutRelayFlag = ""
         val approved = amber("connect", "--timeout", TIMEOUT, onPairingUri = { uri ->
-            second = uri
+            resumedWithoutRelayFlag = uri
             signer.approve(uri)
         })
         assertEquals(approved.err, Exit.OK, approved.exit)
         assertTrue(first.startsWith("nostrconnect://"))
-        assertEquals(first, second)
+        assertEquals("the pending pairing's relays, key and secret were not reused", first, resumedWithoutRelayFlag)
     }
 
     @Test
@@ -226,9 +222,7 @@ class Nip46EndToEndTest {
 
     @Test
     fun aRelayThatNeverAnswersDoesNotHoldBackTheUri() {
-        // Accepts the TCP connection (the kernel does, without accept()) but never
-        // answers the WebSocket upgrade, like a dead public relay behind a firewall.
-        ServerSocket(0).use { silent ->
+        ServerSocket(0).use { tcpAcceptedButNeverUpgraded ->
             val startedAt = System.nanoTime()
             var shownAfterMillis = Long.MAX_VALUE
             val connect = amber(
@@ -236,7 +230,7 @@ class Nip46EndToEndTest {
                 "--relay",
                 relayUrl,
                 "--relay",
-                "ws://127.0.0.1:${silent.localPort}/",
+                "ws://127.0.0.1:${tcpAcceptedButNeverUpgraded.localPort}/",
                 "--timeout",
                 TIMEOUT,
                 onPairingUri = { uri ->
@@ -321,8 +315,7 @@ class Nip46EndToEndTest {
         val ping = amber("ping", "--timeout", TIMEOUT)
         assertEquals(ping.err + "|" + ping.out, Exit.OK, ping.exit)
         assertEquals("pong", ping.out.trim())
-        // Quartz's own DEBUG logging must not leak onto the CLI's stderr.
-        assertTrue(!ping.err.contains("DEBUG"))
+        assertTrue("Quartz's DEBUG logging leaked onto stderr", !ping.err.contains("DEBUG"))
     }
 
     @Test
@@ -336,22 +329,20 @@ class Nip46EndToEndTest {
         assertEquals(true, node.get("online").asBoolean())
         assertEquals(true, JacksonMapper.mapper.readTree(status.out.trim()).get("ok").asBoolean())
 
-        // A signer that does not answer: offline, exit 5, and the JSON says so.
         signer.mode = FakeSigner.Mode.SILENT
-        val silent = amber("status", "--json", "--timeout", "1")
-        assertEquals(silent.err, Exit.TIMEOUT, silent.exit)
-        val silentNode = JacksonMapper.mapper.readTree(silent.out.trim())
-        assertEquals(false, silentNode.get("ok").asBoolean())
-        assertEquals(Exit.TIMEOUT, silentNode.get("code").asInt())
-        assertEquals(false, silentNode.get("result").get("online").asBoolean())
+        val silentSignerStatus = amber("status", "--json", "--timeout", "1")
+        assertEquals(silentSignerStatus.err, Exit.TIMEOUT, silentSignerStatus.exit)
+        val silentSignerNode = JacksonMapper.mapper.readTree(silentSignerStatus.out.trim())
+        assertEquals(false, silentSignerNode.get("ok").asBoolean())
+        assertEquals(Exit.TIMEOUT, silentSignerNode.get("code").asInt())
+        assertEquals(false, silentSignerNode.get("result").get("online").asBoolean())
 
-        // The saved relay is down: unreachable, exit 6 as everywhere else.
         relay.stop()
-        val unreachable = amber("status", "--json", "--timeout", "1")
-        assertEquals(unreachable.err, Exit.UNREACHABLE, unreachable.exit)
-        val unreachableNode = JacksonMapper.mapper.readTree(unreachable.out.trim())
-        assertEquals(false, unreachableNode.get("ok").asBoolean())
-        assertEquals(Exit.UNREACHABLE, unreachableNode.get("code").asInt())
+        val relayDownStatus = amber("status", "--json", "--timeout", "1")
+        assertEquals(relayDownStatus.err, Exit.UNREACHABLE, relayDownStatus.exit)
+        val relayDownNode = JacksonMapper.mapper.readTree(relayDownStatus.out.trim())
+        assertEquals(false, relayDownNode.get("ok").asBoolean())
+        assertEquals(Exit.UNREACHABLE, relayDownNode.get("code").asInt())
     }
 
     @Test

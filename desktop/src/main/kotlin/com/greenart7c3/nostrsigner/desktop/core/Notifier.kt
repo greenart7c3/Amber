@@ -52,8 +52,7 @@ object Notifier {
             if (open.remove(this)) withdrawals.execute(withdraw)
         }
 
-        /** [close], on the calling thread: for the shutdown hook, where the executor's daemon thread is no use. */
-        internal fun closeNow() {
+        internal fun closeOnCallingThread() {
             if (open.remove(this)) runCatching(withdraw)
         }
     }
@@ -62,13 +61,8 @@ object Notifier {
         Thread(r, "amber-notify-close").apply { isDaemon = true }
     }
 
-    /**
-     * Notifications not closed yet. A request does not outlive the process, so
-     * when Amber quits with some still showing they are taken down: buttons
-     * left behind would answer nothing.
-     */
     private val open: MutableSet<Notification> = ConcurrentHashMap.newKeySet<Notification>().also { open ->
-        Runtime.getRuntime().addShutdownHook(Thread({ open.toList().forEach { it.closeNow() } }, "amber-notify-shutdown"))
+        Runtime.getRuntime().addShutdownHook(Thread({ open.toList().forEach { it.closeOnCallingThread() } }, "amber-notify-shutdown"))
     }
 
     private val os = System.getProperty("os.name").lowercase()
@@ -89,8 +83,6 @@ object Notifier {
         onActivate: (() -> Unit)? = null,
     ): Notification? = when {
         isLinux -> linux(title, message, actions, onActivate)
-        // A plain notice has nothing to click or take down: the caller's AWT
-        // tray notification does for it on Windows and macOS.
         actions.isEmpty() && onActivate == null -> null
         isWindows -> windows(title, message, actions, onActivate)
         isMac -> mac(title, message, actions, onActivate)
@@ -115,7 +107,6 @@ object Notifier {
         else -> false
     }
 
-    /** A macOS notification (see [MacNotifications]); null when it could not be posted. */
     private fun mac(title: String, message: String, actions: List<Action>, onActivate: (() -> Unit)?): Notification? = try {
         val close = MacNotifications.show(title, message, actions.map { it.key to it.label }) { key ->
             if (key == MacNotifications.DEFAULT_ACTION) onActivate?.invoke() else actions.firstOrNull { it.key == key }?.onInvoke?.invoke()
@@ -126,7 +117,7 @@ object Notifier {
         null
     }
 
-    /** A Windows toast (see [WindowsToasts]); null when it could not be posted. */
+    @Suppress("NoComments")
     private fun windows(title: String, message: String, actions: List<Action>, onActivate: (() -> Unit)?): Notification? = try {
         val close = WindowsToasts.show(title, message, actions.map { it.key to it.label }) { key ->
             if (key == WindowsToasts.DEFAULT_ACTION) onActivate?.invoke() else actions.firstOrNull { it.key == key }?.onInvoke?.invoke()
@@ -147,6 +138,7 @@ object Notifier {
      * request to answer. The plain fallbacks below never report an id to close,
      * so their handle's [Notification.close] does nothing.
      */
+    @Suppress("NoComments")
     private fun linux(title: String, message: String, actions: List<Action>, onActivate: (() -> Unit)?): Notification? {
         // When a click handler or buttons are wanted, try an actionable
         // notification first: over D-Bus directly, else libnotify 0.8+
@@ -159,10 +151,8 @@ object Notifier {
         return actionable ?: plainLinuxNotification(title, message)
     }
 
-    /** A notification without buttons: notify-send, else gdbus; null when neither shows it. */
     private fun plainLinuxNotification(title: String, message: String): Notification? {
-        // `--` stops option parsing so a summary/body starting with '-' is safe.
-        val shown = run("notify-send", "-a", BuildVariant.appName, "-u", "normal", "--", title, message) ||
+        val shown = run("notify-send", "-a", BuildVariant.appName, "-u", "normal", END_OF_OPTIONS, title, message) ||
             run(
                 "gdbus", "call", "--session",
                 "--dest", "org.freedesktop.Notifications",
@@ -178,6 +168,7 @@ object Notifier {
      * [DbusNotifications] for why not notify-send). Returns null when there
      * is no session bus or notification daemon, so notify-send is tried next.
      */
+    @Suppress("NoComments")
     private fun dbusWithActions(title: String, message: String, actions: List<Action>, onActivate: (() -> Unit)?): Notification? = try {
         val keys = buildList {
             if (onActivate != null) add("default" to "Open")
@@ -199,6 +190,7 @@ object Notifier {
      * with gdbus when that connection is gone. Omarchy's shell then still
      * shows the card, so it is also dismissed there by [title].
      */
+    @Suppress("NoComments")
     private fun withdraw(id: Long, title: String) {
         if (!DbusNotifications.close(id)) {
             run(
@@ -212,11 +204,6 @@ object Notifier {
         dismissOnOmarchy(title)
     }
 
-    /**
-     * The config directory of Omarchy's shell while it is the notification
-     * daemon, else null. Refreshed by [linuxDaemonShowsButtons], which runs
-     * before every request notification, so a daemon change is picked up.
-     */
     @Volatile
     private var omarchyShellDir: File? = null
 
@@ -226,6 +213,7 @@ object Notifier {
      * drops the live object and leaves the visible row). Only the shell's own
      * IPC removes the card, so ask it too. A no-op on every other daemon.
      */
+    @Suppress("NoComments")
     private fun dismissOnOmarchy(title: String) {
         val dir = omarchyShellDir ?: return
         omarchyDismissCommands(dir, title).firstOrNull { run(*it.toTypedArray()) }
@@ -242,6 +230,7 @@ object Notifier {
      * dash could be read as an option: neither is dismissed (the card then
      * leaves on the shell's own timer).
      */
+    @Suppress("NoComments")
     internal fun omarchyDismissCommands(shellDir: File, title: String): List<List<String>> {
         if (title.length < OMARCHY_MIN_TITLE || title.startsWith("-")) return emptyList()
         return listOf(
@@ -251,6 +240,8 @@ object Notifier {
     }
 
     private const val OMARCHY_MIN_TITLE = 3
+
+    private const val END_OF_OPTIONS = "--"
 
     /**
      * Show a clickable notification via `notify-send --wait --action`. With
@@ -264,6 +255,7 @@ object Notifier {
      * installed notify-send is too old to understand these options (it exits
      * non-zero immediately) so the caller can fall back to a plain notification.
      */
+    @Suppress("NoComments")
     private fun notifySendWithActions(title: String, message: String, actions: List<Action>, onActivate: (() -> Unit)?): Notification? = try {
         val command = mutableListOf(
             "notify-send",
@@ -280,7 +272,7 @@ object Notifier {
         )
         if (onActivate != null) command += "--action=default=Open"
         actions.forEach { command += "--action=${it.key}=${it.label}" }
-        command += listOf("--", title, message)
+        command += listOf(END_OF_OPTIONS, title, message)
         val process = ProcessBuilder(command).redirectError(ProcessBuilder.Redirect.DISCARD).start()
         // The id (--print-id) and, once the user picks one, the action key.
         val output = process.inputStream.bufferedReader()
@@ -328,6 +320,7 @@ object Notifier {
      * capability) but never draw them as buttons: mako and dunst only offer
      * actions through a keybinding or menu.
      */
+    @Suppress("NoComments")
     private val daemonsWithoutButtons = setOf("mako", "dunst")
 
     /**
@@ -336,11 +329,11 @@ object Notifier {
      * is one of [daemonsWithoutButtons], a quickshell config not known to draw
      * them (see [omarchyShell]), or cannot be asked, in which case
      * the caller draws its own popup instead. Blocks briefly: call off the UI
-     * thread.
+     * thread. The daemon's name is the first field of its
+     * `GetServerInformation` reply, such as `('gnome-shell', 'GNOME', '50.1', '1.2')`.
      */
     fun linuxDaemonShowsButtons(): Boolean = try {
         val reply = gdbus("org.freedesktop.Notifications", "/org/freedesktop/Notifications", "org.freedesktop.Notifications.GetServerInformation")
-        // Reply: "('gnome-shell', 'GNOME', '50.1', '1.2')"
         val name = reply?.let { Regex("""\('([^']*)'""").find(it) }?.groupValues?.get(1)?.lowercase()
         val omarchy = if (name == "quickshell") omarchyShell() else null
         omarchyShellDir = omarchy
@@ -364,6 +357,7 @@ object Notifier {
      * notifications plugin is recognized by its button component. Returns that
      * shell's config directory, or null for any other quickshell config.
      */
+    @Suppress("NoComments")
     private fun omarchyShell(): File? {
         val reply = gdbus("org.freedesktop.DBus", "/org/freedesktop/DBus", "org.freedesktop.DBus.GetConnectionUnixProcessID", "org.freedesktop.Notifications")
         val pid = reply?.let { parsePidReply(it) } ?: return null
@@ -372,14 +366,8 @@ object Notifier {
         return configDir.takeIf { drawsOmarchyButtons(it) }
     }
 
-    /** "(uint32 2258,)" → 2258. */
     internal fun parsePidReply(reply: String): Long? = Regex("""\(uint32 (\d+),\)""").find(reply)?.groupValues?.get(1)?.toLongOrNull()
 
-    /**
-     * The config directory a quickshell command line runs: `-p`/`--path <dir>`,
-     * `-c`/`--config <name>` under `$XDG_CONFIG_HOME/quickshell`, else that
-     * directory itself.
-     */
     internal fun quickshellConfigDir(argv: List<String>, xdgConfigHome: String?, home: String): File? {
         val configRoot = File(xdgConfigHome?.takeIf { it.isNotBlank() } ?: "$home/.config", "quickshell")
         fun valueOf(vararg flags: String): String? {
@@ -398,7 +386,6 @@ object Notifier {
 
     internal fun drawsOmarchyButtons(configDir: File): Boolean = File(configDir, "plugins/notifications/DeedButton.qml").isFile
 
-    /** A `gdbus call` reply, or null when it fails or times out. */
     private fun gdbus(dest: String, path: String, method: String, vararg args: String): String? {
         val process = ProcessBuilder(
             listOf("gdbus", "call", "--session", "--dest", dest, "--object-path", path, "--method", method) + args,
@@ -407,14 +394,8 @@ object Notifier {
         return if (process.waitFor(4, TimeUnit.SECONDS) && process.exitValue() == 0) reply else null
     }
 
-    /** Test hook: exercises the process plumbing without depending on the OS. */
     internal fun tryCommand(command: List<String>): Boolean = run(*command.toTypedArray())
 
-    /**
-     * Launch a command, returning true if it ran and exited successfully (or is
-     * still running after a short grace period). A missing binary throws
-     * IOException and yields false so the next channel can be tried.
-     */
     private fun run(vararg command: String): Boolean = try {
         val process = ProcessBuilder(*command)
             .redirectOutput(ProcessBuilder.Redirect.DISCARD)

@@ -19,7 +19,6 @@ val DEFAULT_WINDOW_SIZE = DpSize(1100.dp, 780.dp)
  */
 val MIN_WINDOW_SIZE = DpSize(360.dp, 420.dp)
 
-/** Space kept free around the window so its edges and title bar stay reachable. */
 private const val SCREEN_MARGIN_DP = 32
 
 /**

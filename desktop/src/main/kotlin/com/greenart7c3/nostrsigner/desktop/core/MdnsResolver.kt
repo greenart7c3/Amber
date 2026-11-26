@@ -24,9 +24,11 @@ object MdnsResolver {
     private const val TYPE_A = 1
     private const val TYPE_AAAA = 28
 
-    // The address length an A (IPv4) or AAAA (IPv6) record carries; a record of another length is skipped.
-    private val ADDRESS_LENGTHS = mapOf(TYPE_A to 4, TYPE_AAAA to 16)
+    private val ADDRESS_LENGTH_BY_RECORD_TYPE = mapOf(TYPE_A to 4, TYPE_AAAA to 16)
     private const val CLASS_IN = 1
+    private const val CLASS_WITHOUT_MDNS_CACHE_FLUSH_BIT = 0x7FFF
+    private const val COMPRESSION_POINTER_FLAGS = 0xC0
+    private const val MAX_COMPRESSION_POINTER_HOPS = 32
     private const val TIMEOUT_MS = 1500
 
     fun resolve(host: String, timeoutMs: Int = TIMEOUT_MS): List<InetAddress> {
@@ -54,16 +56,17 @@ object MdnsResolver {
         }
     }
 
-    /** A standard query (id 0, no flags) asking for both A and AAAA of [name]. */
     internal fun query(name: String): ByteArray {
         val out = ByteArrayOutputStream()
-        out.write(byteArrayOf(0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0))
+        out.write(standardQueryHeaderWithTwoQuestions())
         listOf(TYPE_A, TYPE_AAAA).forEach { type ->
             encodeName(name, out)
             out.write(byteArrayOf((type shr 8).toByte(), type.toByte(), 0, CLASS_IN.toByte()))
         }
         return out.toByteArray()
     }
+
+    private fun standardQueryHeaderWithTwoQuestions(): ByteArray = byteArrayOf(0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0)
 
     private fun encodeName(name: String, out: ByteArrayOutputStream) {
         name.split('.').forEach { label ->
@@ -75,7 +78,6 @@ object MdnsResolver {
         out.write(0)
     }
 
-    /** A and AAAA records for [name] in a DNS response (answers and additional records). */
     internal fun parseAnswers(message: ByteArray, name: String): List<InetAddress> {
         val buf = ByteBuffer.wrap(message)
         buf.position(4)
@@ -89,18 +91,21 @@ object MdnsResolver {
         repeat(records) {
             val recordName = readName(message, buf)
             val type = buf.short.toInt() and 0xFFFF
-            // The top bit of the class is mDNS's cache-flush flag.
-            val recordClass = buf.short.toInt() and 0x7FFF
-            buf.int // TTL
+            val recordClass = buf.short.toInt() and CLASS_WITHOUT_MDNS_CACHE_FLUSH_BIT
+            buf.skipTtl()
             val length = buf.short.toInt() and 0xFFFF
             val data = ByteArray(length).also { buf.get(it) }
             if (recordClass == CLASS_IN && recordName.equals(name, ignoreCase = true)) {
-                if (ADDRESS_LENGTHS[type] == length) {
+                if (ADDRESS_LENGTH_BY_RECORD_TYPE[type] == length) {
                     found += InetAddress.getByAddress(name, data)
                 }
             }
         }
         return found
+    }
+
+    private fun ByteBuffer.skipTtl() {
+        int
     }
 
     private fun readName(message: ByteArray, buf: ByteBuffer): String {
@@ -115,9 +120,8 @@ object MdnsResolver {
                     if (!jumped) buf.position(position + 1)
                     return labels.joinToString(".")
                 }
-                length and 0xC0 == 0xC0 -> {
-                    // Compression pointer; bounded so a looping message can't hang us.
-                    require(++hops <= 32) { "DNS name compression loop" }
+                length and COMPRESSION_POINTER_FLAGS == COMPRESSION_POINTER_FLAGS -> {
+                    require(++hops <= MAX_COMPRESSION_POINTER_HOPS) { "DNS name compression loop" }
                     val target = ((length and 0x3F) shl 8) or (message[position + 1].toInt() and 0xFF)
                     if (!jumped) buf.position(position + 2)
                     jumped = true

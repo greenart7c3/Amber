@@ -319,7 +319,7 @@ private fun ProfileRelayList(
             RelayCard(
                 trustScore = trustScores[relays[it].url],
                 isLoadingScore = loadingScores[relays[it].url] == true,
-                showTrustScore = !TrustScoreService.isExcludedFromScoring(relays[it].url),
+                showTrustScore = hasMeaningfulTrustBadge(relays[it].url),
                 relay = relays[it].url,
                 onClick = {
                     onRemoveRelay(it)

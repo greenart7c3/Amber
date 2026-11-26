@@ -90,6 +90,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.compose.resources.stringResource
 
+/** @param loadConnectionName the saved name of the connection a bunker:// secret belongs to, in the chosen account. */
 @Composable
 fun BunkerConnectRequestScreen(
     horizontalPadding: Dp,
@@ -100,7 +101,6 @@ fun BunkerConnectRequestScreen(
     permissions: ImmutableList<Permission>?,
     onAccept: (List<Permission>?, Int, Boolean?, RememberType, Long, Account) -> Unit,
     onReject: (RememberType) -> Unit,
-    // The saved name of the connection a bunker:// secret belongs to, in the chosen account.
     modifier: Modifier = Modifier,
     loadConnectionName: suspend (npub: String, secret: String) -> String? = { _, _ -> null },
 ) {
@@ -138,7 +138,6 @@ fun BunkerConnectRequestScreen(
     }
 }
 
-/** What the connect screen lets the user choose before connecting. */
 @Stable
 private class ConnectRequestState(
     bunkerRequest: AmberBunkerRequest,
@@ -157,7 +156,6 @@ private class ConnectRequestState(
     var closeApp by mutableStateOf(shouldCloseApp)
 }
 
-/** The connecting app, then the account, relays, permissions and advanced options to connect with. */
 @Composable
 private fun ConnectRequestContent(
     state: ConnectRequestState,
@@ -216,10 +214,6 @@ private fun ConnectRequestContent(
     }
 }
 
-/**
- * The accounts the connection can be made with: every account for a nostrconnect:// URI (the
- * request's own first, when it is not already among them), else only the request's account.
- */
 private fun connectAccounts(
     bunkerRequest: AmberBunkerRequest,
     account: Account,
@@ -269,7 +263,6 @@ private fun ConnectButtons(
     }
 }
 
-/** The connecting app's icon, name and, when it gave one, its URL. */
 @Composable
 private fun ConnectingApp(
     name: String,
@@ -305,7 +298,6 @@ private fun ConnectingApp(
     }
 }
 
-/** The relays the connection uses, each with its trust score when scoring is on. */
 @Composable
 private fun ConnectionRelays(relays: List<NormalizedRelayUrl>) {
     val settingsStore = LocalSettingsStore.current
@@ -375,7 +367,6 @@ private fun ConnectionRelayRow(
     }
 }
 
-/** With manual approval: the requested permissions (in a sheet) and a button to add more. */
 @Composable
 private fun ConnectPermissions(localPermissions: SnapshotStateList<Permission>) {
     var showModal by remember { mutableStateOf(false) }
@@ -428,7 +419,6 @@ private fun CenteredButton(
     }
 }
 
-/** The permissions the app asks for, each of which can be turned off before connecting. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun RequestedPermissionsSheet(
@@ -464,7 +454,6 @@ private fun RequestedPermissionsSheet(
     }
 }
 
-/** The collapsed Advanced section: close the app after answering, and when the connection deletes itself. */
 @Composable
 private fun AdvancedConnectOptions(
     closeApp: Boolean,

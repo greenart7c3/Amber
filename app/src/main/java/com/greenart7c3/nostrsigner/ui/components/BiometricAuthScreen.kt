@@ -55,7 +55,6 @@ fun BiometricAuthScreen(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     var showPinDialog by remember { mutableStateOf(false) }
-    // The effect below runs once; it must call the latest callback, not the first one.
     val currentOnAuth by rememberUpdatedState(onAuth)
     val keyguardLauncher =
         rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->

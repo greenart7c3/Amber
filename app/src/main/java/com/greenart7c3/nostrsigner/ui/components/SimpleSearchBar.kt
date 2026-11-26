@@ -57,7 +57,6 @@ fun SimpleSearchBar(
             windowInsets = WindowInsets(0),
             inputField = {
                 SearchBarDefaults.InputField(
-                    // The caller's modifier is the Box's; the field only fills it.
                     modifier = Modifier.fillMaxWidth(),
                     query = textFieldState.text.toString(),
                     onQueryChange = {
@@ -94,7 +93,6 @@ fun SimpleSearchBar(
 private fun KeyboardHiddenEffect(onKeyboardHide: () -> Unit) {
     val view = LocalView.current
     val viewTreeObserver = view.viewTreeObserver
-    // The listener lives as long as the view tree; it must call the latest callback.
     val currentOnKeyboardHide by rememberUpdatedState(onKeyboardHide)
     DisposableEffect(viewTreeObserver) {
         val listener = ViewTreeObserver.OnGlobalLayoutListener {

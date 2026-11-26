@@ -384,26 +384,26 @@ private fun PreviousOfflineInstallNotice(modifier: Modifier = Modifier) {
 
 @Composable
 fun MainLoginPage(
-    accountViewModel: AccountStateViewModel,
     navHostControllerWrapper: NavHostControllerWrapper,
+    actions: LoginActions,
 ) {
     val appScope = LocalAppScope.current
     val notificationSubscription = LocalNotificationSubscription.current
     NavHost(navHostControllerWrapper.navController, startDestination = "login") {
         composable("login") {
-            MainPage(navHostControllerWrapper, onOpenFirstAccount = accountViewModel::openFirstImportedAccount)
+            MainPage(navHostControllerWrapper, onOpenFirstAccount = actions.onOpenFirstAccount)
         }
         composable("create") {
             SignUpPage(
                 navHostControllerWrapper = navHostControllerWrapper,
-                onCreate = { setup, seedWords, name -> accountViewModel.newKey(setup.torMode, setup.proxyPort, setup.signPolicy, seedWords, name) },
+                onCreate = actions.onCreate,
                 onFinish = { appScope.launch { notificationSubscription.updateFilter() } },
             )
         }
         composable("loginPage") {
             LoginPage(
                 navHostControllerWrapper = navHostControllerWrapper,
-                onLogin = { keyPair, setup -> accountViewModel.startUI(keyPair, null, setup.torMode, setup.proxyPort, setup.signPolicy) },
+                onLogin = actions.onLogin,
                 onFinish = {},
             )
         }

@@ -54,14 +54,10 @@ class SignerActivity : AppCompatActivity() {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
 
-        // Rate-limited per (caller, type, kind). onNewIntent is intentionally exempt —
-        // it is the batch merge into an already-open approval screen.
         if (rejectIfRateLimited(intent)) return
 
         amber.setMainActivity(this)
         mainViewModel = MainViewModel(applicationContext)
-        // Read once here: getReferrer() crashes on OEM builds (Samsung/Android 12) when
-        // the activity has no intent (mIntent == null), e.g. after sendRejection() nulls it.
         val launchReferrer = safeReferrer()
         intent?.let { mainViewModel.onNewIntent(it, callingPackage, launchReferrer) }
         setContent {
@@ -135,6 +131,10 @@ class SignerActivity : AppCompatActivity() {
         super.onResume()
     }
 
+    /**
+     * Not rate-limited, unlike [onCreate] (per caller, type and kind): it is the batch
+     * merge into an already-open approval screen.
+     */
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
@@ -181,10 +181,6 @@ class SignerActivity : AppCompatActivity() {
     }
 }
 
-/**
- * The bottom sheet the approval screens open in over the calling app. An invalid
- * request replaces [content] with its explanation; closing either calls [onFinish].
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun RequestSheet(

@@ -4,9 +4,11 @@ import android.annotation.SuppressLint
 import android.content.Context
 import androidx.core.content.edit
 
-/** The WebDAV server cloud backups go to, in the app-wide preference file; the password is encrypted. */
+/**
+ * The WebDAV server cloud backups go to, in the app-wide preference file; the password
+ * is encrypted. Renaming one of its preference keys loses the stored value.
+ */
 object WebDavSettings {
-    // Keys in the app-wide preference file; renaming one loses the stored value.
     private const val URL = "webdav_url"
     private const val USERNAME = "webdav_username"
     private const val PASSWORD_ENCRYPTED = "webdav_password_encrypted"
@@ -38,10 +40,11 @@ object WebDavSettings {
 
     /**
      * Durably replaces the encrypted password with [encryptedPassword] only if it still
-     * equals [expected]. Used by [SecureCryptoHelper.rotateKey].
+     * equals [expected]. Used by [SecureCryptoHelper.rotateKey]. Not the KTX `edit {}`:
+     * it discards `commit()`'s result (see [KeystorePolicy.commitActiveAlias]).
      */
     @Synchronized
-    @SuppressLint("UseKtx") // needs commit()'s result, see KeystorePolicy.commitActiveAlias
+    @SuppressLint("UseKtx")
     fun replaceEncryptedPassword(context: Context, expected: String, encryptedPassword: String): Boolean = encryptedPassword(context) == expected &&
         appPreferences(context).edit().putString(PASSWORD_ENCRYPTED, encryptedPassword).commit()
 

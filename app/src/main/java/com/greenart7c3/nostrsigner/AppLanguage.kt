@@ -13,7 +13,11 @@ import java.util.Locale
  * updates on Android 13+, so it is set here too.
  */
 object AppLanguage {
-    /** [tags] as stored in the settings; null or blank follows the system. */
+    /**
+     * [tags] as stored in the settings; null or blank follows the system. Amber.onCreate
+     * applies it before any string is read: the notification channels, and background work
+     * that builds notifications before an activity has applied the language.
+     */
     fun apply(tags: String?) {
         val locales = LocaleListCompat.forLanguageTags(tags.orEmpty())
         AppCompatDelegate.setApplicationLocales(locales)

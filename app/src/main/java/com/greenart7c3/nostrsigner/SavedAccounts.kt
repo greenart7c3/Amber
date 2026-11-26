@@ -15,11 +15,11 @@ data class AccountInfo(
 /**
  * The accounts Amber holds (npubs only, no keys), which one is current and which are
  * favorites, kept in the app-wide preference file and cached for the process.
+ * Renaming one of its preference keys loses the stored value.
  */
 object SavedAccounts {
     private const val COMMA = ","
 
-    // Preference keys in the app-wide file; renaming one loses the stored value.
     private const val CURRENT_ACCOUNT = "currently_logged_in_account"
     private const val SAVED_ACCOUNTS = "all_saved_accounts"
     private const val FAVORITE_ACCOUNTS = "favorite_accounts"
@@ -51,7 +51,6 @@ object SavedAccounts {
 
     fun contains(context: Context, npub: String): Boolean = list(context).contains(npub)
 
-    /** The saved npubs in the order they were added. */
     internal fun list(context: Context): List<String> {
         if (saved == null) {
             saved = appPreferences(context).getString(SAVED_ACCOUNTS, null)?.split(COMMA) ?: listOf()
@@ -66,7 +65,6 @@ object SavedAccounts {
         }
     }
 
-    /** Makes [npub] the current account, adding it to the list if new. */
     internal fun select(context: Context, npub: String) {
         switchTo(context, npub)
         if (npub !in list(context)) replace(context, list(context) + npub)
@@ -99,7 +97,6 @@ object SavedAccounts {
         }
     }
 
-    /** Forgets the cached list and current account, so the next read sees the preference file. */
     internal fun invalidate() {
         current = null
         saved = null

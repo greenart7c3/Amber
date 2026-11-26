@@ -38,6 +38,8 @@ import com.greenart7c3.nostrsigner.service.crashreports.AppPendingReports
 import com.greenart7c3.nostrsigner.service.crashreports.CrashReportCache
 import com.greenart7c3.nostrsigner.service.crashreports.UnexpectedCrashSaver
 import com.vitorpamplona.quartz.nip01Core.relay.client.auth.RelayAuthenticator
+import com.vitorpamplona.quartz.nip01Core.signers.EventTemplate
+import com.vitorpamplona.quartz.nip42RelayAuth.RelayAuthEvent
 import java.lang.ref.WeakReference
 import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.CoroutineExceptionHandler
@@ -64,22 +66,28 @@ class Amber :
 
     fun getMainActivity(): AppCompatActivity? = if (mainActivityRef != null) mainActivityRef!!.get() else null
 
-    // Exists to avoid exceptions stopping the coroutine
+    /**
+     * Logs what a coroutine of [applicationIOScope] throws instead of letting it stop the
+     * scope. An [OutOfMemoryError] the process survived is saved as a crash report, since
+     * nothing else would report it.
+     */
     val exceptionHandler =
         CoroutineExceptionHandler { _, throwable ->
             AmberLog.e("AmberCoroutine", "Caught exception: ${throwable.message}", throwable)
             if (throwable is FailedMigrationException) throw throwable
-            // The process survived it, so nothing else would report it.
             if (throwable is OutOfMemoryError) crashReportCache.saveReport(throwable)
         }
 
     val applicationIOScope = CoroutineScope(Dispatchers.IO + SupervisorJob() + exceptionHandler)
 
-    // Above the init blocks below: they hand it on as the AccountRepository.
+    /** Declared above the init block that hands it on as the AccountRepository: properties initialize in order. */
     val accountDatabases = AccountDatabases(this, this, applicationIOScope)
 
-    // At construction, not onCreate: ContentProviders are created before onCreate runs.
     init {
+        installBeforeContentProvidersAreCreated()
+    }
+
+    private fun installBeforeContentProvidersAreCreated() {
         AccountStorage.install(accountRepository = accountDatabases, appScope = applicationIOScope)
         SecureCryptoHelper.install(this, accountDatabases)
         LocalPreferences.install(this, accountDatabases)
@@ -122,42 +130,49 @@ class Amber :
         },
     )
 
-    // Starts the built-in Tor for the relays and reconnects them when it recovers.
+    /**
+     * Starts the built-in Tor for the relays and reconnects them when it recovers. Until
+     * [TorStartup.start] reports it ready, [runMigrations] dials no relay: every connect
+     * through a dead SOCKS proxy would fail, and the retry churn would waste battery.
+     */
     val torStartup = TorStartup(this, this, relayClient, applicationIOScope)
 
-    // Capacity 10 was too small under bursty NIP-46 traffic — duplicate-detection
-    // started missing recent events. 512 covers high-volume relays without being
-    // a meaningful memory cost (event-id hex strings + Long).
+    /**
+     * The NIP-46 event ids seen recently, for duplicate detection. 10 entries missed recent
+     * duplicates under bursty traffic; 512 covers high-volume relays at little memory cost.
+     */
     val notificationCache = LruCache<String, Long>(512)
 
-    // logs and stat counts.
     init {
         relayClient.client.addConnectionListener(NostrClientLoggerListener(this, relayClient.stats, applicationIOScope, settingsStore = this, relayClient = relayClient, accountRepository = accountDatabases))
     }
 
-    // Authenticates with relays; it registers itself with the client.
     init {
-        RelayAuthenticator(relayClient.client, applicationIOScope) { _, event, _ ->
-            // One account failing to sign (device locked under requireUnlockedDevice,
-            // or a transient key error) must not abort AUTH for every other account.
-            AccountStorage.all(this).mapNotNull { account ->
-                runCatching { account.sign(event) }.onFailure { e ->
-                    AmberLog.e(TAG, "NIP-42 auth signing failed for ${account.npub}", e)
-                }.getOrNull()
-            }
-        }
+        RelayAuthenticator(relayClient.client, applicationIOScope) { _, event, _ -> signedByEveryAccountThatCan(event) }
     }
 
-    // The local WebSocket relay for bunker connections (opt in under Settings -> Relays).
+    private suspend fun signedByEveryAccountThatCan(template: EventTemplate<RelayAuthEvent>): List<RelayAuthEvent> = AccountStorage.all(this).mapNotNull { account ->
+        runCatching { account.sign(template) }.onFailure { e ->
+            AmberLog.e(TAG, "NIP-42 auth signing failed for ${account.npub}", e)
+        }.getOrNull()
+    }
+
+    /**
+     * The local WebSocket relay for bunker connections (opt in under Settings -> Relays).
+     * [runMigrations] starts it before the relays are dialed, so connections that list it
+     * subscribe at once; it is loopback only, so it never waits for Tor.
+     */
     val localBunkerRelay by lazy { LocalBunkerRelayServer(this, this, accountDatabases, relayClient) }
 
-    // Answers bunker requests; stateless, shared by the NIP-46 consumer and the approval screens.
+    /** Answers bunker requests; stateless, shared by the NIP-46 consumer and the approval screens. */
     val bunkerResponder by lazy { BunkerResponder(this, this, accountDatabases, relayClient, applicationIOScope, localBunkerRelay) { getMainActivity() } }
 
     val notificationSubscription: NotificationSubscription = NotificationSubscription(relayClient.client, this, settingsStore = this, accountRepository = accountDatabases, bunkerResponder = bunkerResponder, scope = applicationIOScope, notificationCache = notificationCache)
 
-    // Per-account profile metadata fetch, started/stopped by the composables that display
-    // each account (see ProfileSubscriptionEffect) rather than app-wide.
+    /**
+     * Per-account profile metadata fetch, started and stopped by the composables that
+     * display each account (see ProfileSubscriptionEffect) rather than app-wide.
+     */
     val profileSubscription: ProfileSubscription = ProfileSubscription(relayClient.client, this, applicationIOScope, settingsStore = this, relayClient = relayClient)
 
     val zapstoreUpdater: ZapstoreUpdater? = if (!BuildFlavorChecker.isOfflineFlavor() && !BuildFlavorChecker.isFdroidBuild()) {
@@ -166,8 +181,6 @@ class Amber :
         null
     }
 
-    // Hoisted out of runMigrations() so re-entry (e.g. test re-init) can't
-    // double-register and double-fire foreground/background callbacks.
     private var processLifecycleObserverRegistered = false
 
     private val processLifecycleObserver = object : DefaultLifecycleObserver {
@@ -198,40 +211,40 @@ class Amber :
             enableStrictMode()
         }
 
-        // Before anything reads the account list or the settings: an install that
-        // comes from 3.3.0 or older still keeps them in the EncryptedSharedPreferences
-        // files this version no longer reads, so it would look like a first run.
-        // Synchronous because this is the only point ahead of the three request
-        // paths and the settings load (runMigrations only runs from ConnectivityService,
-        // which the offline flavor does not have); on an install with nothing to
-        // migrate it is a single directory read.
-        if (LegacyStorageMigration.needed(this)) {
-            runBlocking { LegacyStorageMigration.run(this@Amber) }
-        }
-        // Before anything can dial: route the proxy client through the user's SOCKS
-        // setup (or the fail-closed placeholder for BUILTIN) read synchronously from
-        // plain prefs. Dials in the window before the async settings load — network
-        // callbacks, profile fetches — pick this up via the factory's !isSettingsLoaded
-        // gate; without it that window leaks clearnet traffic for Tor users.
+        migrateLegacyStorageBeforeAnythingReadsIt()
         LocalPreferences.presetProxyFromPrefs(this)
         settings = LocalPreferences.loadSettingsAtStartup(this)
         isSettingsLoaded = true
-        // Before any string is read: notification channels below, and background work
-        // that builds notifications before an activity has applied the language.
         settings.language?.let { AppLanguage.apply(it) }
         relayClient.stats.createNotificationChannel()
         UnexpectedCrashSaver.install(this, crashReportCache, applicationIOScope)
 
-        // Build Coil's singleton ImageLoader off the main thread. Its factory
-        // (ImageLoaderFactory) touches cacheDir, so letting the first AsyncImage
-        // build it lazily during composition trips StrictMode's DiskReadViolation.
+        buildImageLoaderOffMainThread()
+        loadTimeZoneDataOffMainThread()
+    }
+
+    /**
+     * An install that comes from 3.3.0 or older still keeps the account list and the
+     * settings in EncryptedSharedPreferences files this version no longer reads, so it
+     * would look like a first run. Synchronous because this is the only point ahead of
+     * the three request paths and the settings load (runMigrations only runs from
+     * ConnectivityService, which the offline flavor does not have); with nothing to
+     * migrate it is a single directory read.
+     */
+    @Suppress("NoComments")
+    private fun migrateLegacyStorageBeforeAnythingReadsIt() {
+        if (LegacyStorageMigration.needed(this)) {
+            runBlocking { LegacyStorageMigration.run(this@Amber) }
+        }
+    }
+
+    private fun buildImageLoaderOffMainThread() {
         applicationIOScope.launch {
             SingletonImageLoader.get(this@Amber)
         }
+    }
 
-        // The first time zone lookup lazily mmaps tzdata from disk.
-        // Force it here so it never happens on the main thread during the first
-        // timestamp formatted in composition (StrictMode DiskReadViolation).
+    private fun loadTimeZoneDataOffMainThread() {
         applicationIOScope.launch {
             AmberTimeUtils.warmUp(this@Amber)
         }
@@ -252,6 +265,12 @@ class Amber :
         )
     }
 
+    /**
+     * The startup work that may wait for storage and Tor, then [onDone] even when it failed:
+     * the caller registers the network callback, the safety-net refresh and the unlock
+     * receiver, which are what recover from a start that couldn't connect (Tor down, or a
+     * locked device under requireUnlockedDevice). startFunctions() waits for Tor on its own.
+     */
     fun runMigrations(onDone: () -> Unit) {
         applicationIOScope.launch {
             runCatching { SharedFiles.cleanUp(this@Amber) }
@@ -262,8 +281,6 @@ class Amber :
                 }
                 LocalPreferences.reloadApp(this@Amber)
 
-                // Finish a wrapping-key rotation that was interrupted, so the
-                // previous key does not outlive the data it protected.
                 try {
                     SecureCryptoHelper.completePendingRotation(this@Amber)
                 } catch (e: Exception) {
@@ -273,10 +290,6 @@ class Amber :
                 HttpClientManager.getHttpClient(false)
                 HttpClientManager.getHttpClient(true)
 
-                // Local WebSocket relay for bunker connections (opt in under
-                // Settings -> Relays): up before the relays are dialed, so
-                // connections that list it subscribe at once. Loopback only,
-                // so it never waits for Tor.
                 localBunkerRelay.startIfEnabled()
 
                 launch(Dispatchers.Main) {
@@ -288,9 +301,6 @@ class Amber :
 
                 val torReady = torStartup.start()
 
-                // Do not open relay sockets through a dead SOCKS proxy: every
-                // connect would fail and the retry churn would waste battery.
-                // Relays connect via the recovery observer once Tor is up.
                 if (torReady) {
                     relayClient.checkForNewRelaysAndUpdateAllFilters(true)
                     if (settings.killSwitch.value) {
@@ -302,11 +312,6 @@ class Amber :
                 if (e is CancellationException) throw e
                 if (e is FailedMigrationException) throw e
             }
-            // Always hand over to the caller: it registers the network
-            // callback, the safety-net refresh and the unlock receiver, which
-            // are what recover from a start that couldn't connect (Tor down, or
-            // a locked device under requireUnlockedDevice). startFunctions()
-            // waits for Tor on its own.
             onDone()
         }
     }
@@ -329,13 +334,15 @@ class Amber :
         }
     }
 
+    /**
+     * Since API 34 the system only delivers UI_HIDDEN and BACKGROUND here: the
+     * RUNNING_*, MODERATE and COMPLETE levels are deprecated and never sent. UI_HIDDEN is
+     * not pressure, but a long-lived signer process has no reason to keep UI-only caches
+     * while its UI is invisible.
+     */
     override fun onTrimMemory(level: Int) {
         super.onTrimMemory(level)
 
-        // Since API 34 the system only delivers UI_HIDDEN and BACKGROUND here —
-        // the RUNNING_*/MODERATE/COMPLETE levels are deprecated and never sent.
-        // UI_HIDDEN (20) is not pressure, but a long-lived signer process has no
-        // reason to keep UI-only caches while its UI is invisible either.
         if (level == TRIM_MEMORY_UI_HIDDEN) {
             imageLoaderFactory.trimMemoryCache(this)
         } else if (level >= TRIM_MEMORY_BACKGROUND) {

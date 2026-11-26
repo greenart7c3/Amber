@@ -67,7 +67,6 @@
     <ID>NoComments:AccountPickerRow.kt:Clipped before the click, so the ripple keeps the rounded shape.</ID>
     <ID>NoComments:AccountPickerRow.kt:Sorted and filtered for display only: each row keeps its index into [accounts],</ID>
     <ID>NoComments:AccountPickerRow.kt:which is what the caller selects by, so neither changes the signing account.</ID>
-    <ID>NoComments:AccountPreferences.kt:Keys in each account's preference file (`prefs_&lt;npub&gt;`); renaming one loses the stored value.</ID>
     <ID>NoComments:AccountScreen.kt:Remembered, so a consumed route (set to null) is not brought back by the</ID>
     <ID>NoComments:AccountScreen.kt:The owner tag of this activity's MainViewModel: only its requests show.</ID>
     <ID>NoComments:AccountScreen.kt:next recomposition; recomputed when the requests or the route change.</ID>
@@ -98,34 +97,6 @@
     <ID>NoComments:AccountStateViewModelRestoreTest.kt:acceptRestore reports its result on Main.</ID>
     <ID>NoComments:AccountStateViewModelRestoreTest.kt:calling thread; every ApplicationBackup call it makes is a mocked immediate.</ID>
     <ID>NoComments:AccountStateViewModelRestoreTest.kt:publish-consent flag reads false on relogin.</ID>
-    <ID>NoComments:AccountStorage.kt:(SignerProvider / NIP-46) that always know which npub they want.</ID>
-    <ID>NoComments:AccountStorage.kt:A saved account always has its public key stored; without it the save is incomplete.</ID>
-    <ID>NoComments:AccountStorage.kt:AccountStateViewModel); this path is for direct lookups</ID>
-    <ID>NoComments:AccountStorage.kt:ByteArray, so we overwrite its contents in place.</ID>
-    <ID>NoComments:AccountStorage.kt:Close Room handles BEFORE deleting on-disk preference/data files so</ID>
-    <ID>NoComments:AccountStorage.kt:Defense-in-depth (GHSA-8844-q5vh-9j8f, I3): best-effort zeroize the</ID>
-    <ID>NoComments:AccountStorage.kt:Defense-in-depth (GHSA-8844-q5vh-9j8f, I3): previously this warmed</ID>
-    <ID>NoComments:AccountStorage.kt:Deletes the npub-specific shared preference file.</ID>
-    <ID>NoComments:AccountStorage.kt:For synchronous callers (the ContentProvider); coroutines use load.</ID>
-    <ID>NoComments:AccountStorage.kt:Forgets the cached account list, current account and decrypted accounts,</ID>
-    <ID>NoComments:AccountStorage.kt:Installed by Amber at construction, before any ContentProvider or component runs.</ID>
-    <ID>NoComments:AccountStorage.kt:Logout deletes all local information for the account, as the logout</ID>
-    <ID>NoComments:AccountStorage.kt:The account's private key, or null when the Keystore refuses: while the device is</ID>
-    <ID>NoComments:AccountStorage.kt:The saved account [npub] with its decrypted key, or null when the key or the public key is missing.</ID>
-    <ID>NoComments:AccountStorage.kt:being populated, which all() handles at app start (called from</ID>
-    <ID>NoComments:AccountStorage.kt:cache / size mismatch, decrypting every account's private key</ID>
-    <ID>NoComments:AccountStorage.kt:dialog says: dropping the databases (with their -wal/-shm/-journal</ID>
-    <ID>NoComments:AccountStorage.kt:files) means re-importing the key starts with no connections, grants,</ID>
-    <ID>NoComments:AccountStorage.kt:history or logs instead of silently restoring them.</ID>
-    <ID>NoComments:AccountStorage.kt:in heap until GC. KeyPair.privKey is a `val` referencing a mutable</ID>
-    <ID>NoComments:AccountStorage.kt:locked under the policy (loads after unlock), or broken (reported, account skipped).</ID>
-    <ID>NoComments:AccountStorage.kt:private-key byte array of the logging-out account before dropping</ID>
-    <ID>NoComments:AccountStorage.kt:process-wide on the first IPC/relay lookup. Lazy-load only the</ID>
-    <ID>NoComments:AccountStorage.kt:requested account. The UI account switcher relies on cached()</ID>
-    <ID>NoComments:AccountStorage.kt:the entire cache (runBlocking over all saved accounts) on any cold</ID>
-    <ID>NoComments:AccountStorage.kt:the reference from the cache, so the key material does not linger</ID>
-    <ID>NoComments:AccountStorage.kt:them for the lifetime of the process.</ID>
-    <ID>NoComments:AccountStorage.kt:we release file locks and worker-pool threads instead of leaking</ID>
     <ID>NoComments:AccountStorageTest.kt:The policy refusing while locked is the setting working: reporting it would tell the user to log out</ID>
     <ID>NoComments:AccountsBottomSheet.kt:Load the cached Accounts off the main thread (each decrypts once, then is cached) so we</ID>
     <ID>NoComments:AccountsBottomSheet.kt:can search and observe their name/picture StateFlows and refresh their metadata while</ID>
@@ -134,74 +105,11 @@
     <ID>NoComments:ActivitiesScreen.kt:No item keys: history rows are inserted continuously and Room pages</ID>
     <ID>NoComments:ActivitiesScreen.kt:are independent LIMIT/OFFSET queries, so a row can transiently appear</ID>
     <ID>NoComments:ActivitiesScreen.kt:in two loaded pages. Keying by the database id then crashes with</ID>
-    <ID>NoComments:ActivityContent.kt:Like the Surface the activities used to put these in directly: the children</ID>
-    <ID>NoComments:ActivityContent.kt:The account state for the activities' screens; [npub] is only read when it is first created.</ID>
-    <ID>NoComments:ActivityContent.kt:The account the activity's intent names in `current_user`, else the first queued request's (see [Mai</ID>
-    <ID>NoComments:ActivityContent.kt:The app's screens behind the biometric/PIN lock (UI only, see AGENTS.md): a spinner</ID>
-    <ID>NoComments:ActivityContent.kt:The label of the installed app [packageName], or null when there is none or it cannot be read.</ID>
-    <ID>NoComments:ActivityContent.kt:Whenever the queued bunker requests change, switches [accountStateViewModel] to the</ID>
-    <ID>NoComments:ActivityContent.kt:get its minimum size.</ID>
     <ID>NoComments:ActivityScreen.kt:"Key X was already used". Positional keys are always unique.</ID>
     <ID>NoComments:ActivityScreen.kt:No item keys: history rows are inserted continuously and Room pages</ID>
     <ID>NoComments:ActivityScreen.kt:are independent LIMIT/OFFSET queries, so a row can transiently appear</ID>
     <ID>NoComments:ActivityScreen.kt:in two loaded pages. Keying by the database id then crashes with</ID>
     <ID>NoComments:AddPermissionsSheet.kt:Custom sign_event kinds typed by the user, added on top of the catalog list.</ID>
-    <ID>NoComments:Amber.kt:(ImageLoaderFactory) touches cacheDir, so letting the first AsyncImage</ID>
-    <ID>NoComments:Amber.kt:Above the init blocks below: they hand it on as the AccountRepository.</ID>
-    <ID>NoComments:Amber.kt:Always hand over to the caller: it registers the network</ID>
-    <ID>NoComments:Amber.kt:Answers bunker requests; stateless, shared by the NIP-46 consumer and the approval screens.</ID>
-    <ID>NoComments:Amber.kt:At construction, not onCreate: ContentProviders are created before onCreate runs.</ID>
-    <ID>NoComments:Amber.kt:Authenticates with relays; it registers itself with the client.</ID>
-    <ID>NoComments:Amber.kt:Before any string is read: notification channels below, and background work</ID>
-    <ID>NoComments:Amber.kt:Before anything can dial: route the proxy client through the user's SOCKS</ID>
-    <ID>NoComments:Amber.kt:Before anything reads the account list or the settings: an install that</ID>
-    <ID>NoComments:Amber.kt:Build Coil's singleton ImageLoader off the main thread. Its factory</ID>
-    <ID>NoComments:Amber.kt:Capacity 10 was too small under bursty NIP-46 traffic — duplicate-detection</ID>
-    <ID>NoComments:Amber.kt:Do not open relay sockets through a dead SOCKS proxy: every</ID>
-    <ID>NoComments:Amber.kt:Exists to avoid exceptions stopping the coroutine</ID>
-    <ID>NoComments:Amber.kt:Finish a wrapping-key rotation that was interrupted, so the</ID>
-    <ID>NoComments:Amber.kt:Force it here so it never happens on the main thread during the first</ID>
-    <ID>NoComments:Amber.kt:Hoisted out of runMigrations() so re-entry (e.g. test re-init) can't</ID>
-    <ID>NoComments:Amber.kt:Local WebSocket relay for bunker connections (opt in under</ID>
-    <ID>NoComments:Amber.kt:One account failing to sign (device locked under requireUnlockedDevice,</ID>
-    <ID>NoComments:Amber.kt:Per-account profile metadata fetch, started/stopped by the composables that display</ID>
-    <ID>NoComments:Amber.kt:Relays connect via the recovery observer once Tor is up.</ID>
-    <ID>NoComments:Amber.kt:Settings -&gt; Relays): up before the relays are dialed, so</ID>
-    <ID>NoComments:Amber.kt:Since API 34 the system only delivers UI_HIDDEN and BACKGROUND here —</ID>
-    <ID>NoComments:Amber.kt:Starts the built-in Tor for the relays and reconnects them when it recovers.</ID>
-    <ID>NoComments:Amber.kt:Synchronous because this is the only point ahead of the three request</ID>
-    <ID>NoComments:Amber.kt:The first time zone lookup lazily mmaps tzdata from disk.</ID>
-    <ID>NoComments:Amber.kt:The local WebSocket relay for bunker connections (opt in under Settings -&gt; Relays).</ID>
-    <ID>NoComments:Amber.kt:The process survived it, so nothing else would report it.</ID>
-    <ID>NoComments:Amber.kt:UI_HIDDEN (20) is not pressure, but a long-lived signer process has no</ID>
-    <ID>NoComments:Amber.kt:a locked device under requireUnlockedDevice). startFunctions()</ID>
-    <ID>NoComments:Amber.kt:a meaningful memory cost (event-id hex strings + Long).</ID>
-    <ID>NoComments:Amber.kt:are what recover from a start that couldn't connect (Tor down, or</ID>
-    <ID>NoComments:Amber.kt:build it lazily during composition trips StrictMode's DiskReadViolation.</ID>
-    <ID>NoComments:Amber.kt:callback, the safety-net refresh and the unlock receiver, which</ID>
-    <ID>NoComments:Amber.kt:callbacks, profile fetches — pick this up via the factory's !isSettingsLoaded</ID>
-    <ID>NoComments:Amber.kt:comes from 3.3.0 or older still keeps them in the EncryptedSharedPreferences</ID>
-    <ID>NoComments:Amber.kt:connect would fail and the retry churn would waste battery.</ID>
-    <ID>NoComments:Amber.kt:connections that list it subscribe at once. Loopback only,</ID>
-    <ID>NoComments:Amber.kt:double-register and double-fire foreground/background callbacks.</ID>
-    <ID>NoComments:Amber.kt:each account (see ProfileSubscriptionEffect) rather than app-wide.</ID>
-    <ID>NoComments:Amber.kt:files this version no longer reads, so it would look like a first run.</ID>
-    <ID>NoComments:Amber.kt:gate; without it that window leaks clearnet traffic for Tor users.</ID>
-    <ID>NoComments:Amber.kt:logs and stat counts.</ID>
-    <ID>NoComments:Amber.kt:migrate it is a single directory read.</ID>
-    <ID>NoComments:Amber.kt:or a transient key error) must not abort AUTH for every other account.</ID>
-    <ID>NoComments:Amber.kt:paths and the settings load (runMigrations only runs from ConnectivityService,</ID>
-    <ID>NoComments:Amber.kt:plain prefs. Dials in the window before the async settings load — network</ID>
-    <ID>NoComments:Amber.kt:previous key does not outlive the data it protected.</ID>
-    <ID>NoComments:Amber.kt:reason to keep UI-only caches while its UI is invisible either.</ID>
-    <ID>NoComments:Amber.kt:setup (or the fail-closed placeholder for BUILTIN) read synchronously from</ID>
-    <ID>NoComments:Amber.kt:so it never waits for Tor.</ID>
-    <ID>NoComments:Amber.kt:started missing recent events. 512 covers high-volume relays without being</ID>
-    <ID>NoComments:Amber.kt:that builds notifications before an activity has applied the language.</ID>
-    <ID>NoComments:Amber.kt:the RUNNING_*/MODERATE/COMPLETE levels are deprecated and never sent.</ID>
-    <ID>NoComments:Amber.kt:timestamp formatted in composition (StrictMode DiskReadViolation).</ID>
-    <ID>NoComments:Amber.kt:waits for Tor on its own.</ID>
-    <ID>NoComments:Amber.kt:which the offline flavor does not have); on an install with nothing to</ID>
     <ID>NoComments:AmberEvent.kt:The seven fields are the NIP-01 event, in its order; grouping them would hide the wire format.</ID>
     <ID>NoComments:AmberNavigationBar.kt:The Accounts tab shows the current account's picture, or its placeholder.</ID>
     <ID>NoComments:AmberRelayStat.kt:300ms window.</ID>
@@ -349,7 +257,6 @@
     <ID>NoComments:BatchRequestCard.kt:The request's label and short content, and Show Details when [onShowDetails] is given.</ID>
     <ID>NoComments:BiometricAuthScreen.kt:The effect below runs once; it must call the latest callback, not the first one.</ID>
     <ID>NoComments:Biometrics.kt:The prompt attaches to the activity showing it; [context] is its (maybe wrapped) context.</ID>
-    <ID>NoComments:BuildFlavorChecker.kt:The flavor behind the separate "Amber Offline" Zapstore listing.</ID>
     <ID>NoComments:BunkerConnectRequestScreen.kt:The accounts the connection can be made with: every account for a nostrconnect:// URI (the</ID>
     <ID>NoComments:BunkerConnectRequestScreen.kt:The collapsed Advanced section: close the app after answering, and when the connection deletes itsel</ID>
     <ID>NoComments:BunkerConnectRequestScreen.kt:The connecting app's icon, name and, when it gave one, its URL.</ID>
@@ -940,52 +847,14 @@
     <ID>NoComments:IntentUtilsTest.kt:x-coordinate of secp256k1 generator point — a well-known 32-byte value</ID>
     <ID>NoComments:KeyRotationTest.kt:Nothing pending: must be a no-op that keeps the data readable.</ID>
     <ID>NoComments:KeyRotationTest.kt:Rotate back: exercises the other direction and restores the policy.</ID>
-    <ID>NoComments:KeystorePolicy.kt:Keys in the app-wide preference file; renaming one loses the stored value.</ID>
     <ID>NoComments:KeystorePolicyTest.kt:The gate fails closed; a key failure without a keyguard is still reported as broken.</ID>
     <ID>NoComments:KillSwitchDialog.kt:The preview renderer provides no settings.</ID>
-    <ID>NoComments:LegacyStorageMigration.kt:3.3.0 kept the Tor switch in the settings file, and some versions after it</ID>
-    <ID>NoComments:LegacyStorageMigration.kt:An account only counts as restored when it opens again; everything else</ID>
-    <ID>NoComments:LegacyStorageMigration.kt:Copies every entry of [from] into [to]: [skipped] keys never leave [from], and</ID>
-    <ID>NoComments:LegacyStorageMigration.kt:Copies one preference value, returning false for types `SharedPreferences`</ID>
-    <ID>NoComments:LegacyStorageMigration.kt:Copies the private key and the seed words into the encrypted DataStore and</ID>
-    <ID>NoComments:LegacyStorageMigration.kt:Handled one by one instead of the generic settings copy: the account list</ID>
-    <ID>NoComments:LegacyStorageMigration.kt:Moved to the encrypted DataStore, so they must never reach a plain preference file.</ID>
-    <ID>NoComments:LegacyStorageMigration.kt:Only where this install has no value: the user's choices here win.</ID>
-    <ID>NoComments:LegacyStorageMigration.kt:Opening a missing EncryptedSharedPreferences creates it, so a stale</ID>
-    <ID>NoComments:LegacyStorageMigration.kt:PIN goes straight to the encrypted store rather than through `prefs`.</ID>
-    <ID>NoComments:LegacyStorageMigration.kt:The PIN goes into the encrypted store directly: the settings file is only</ID>
-    <ID>NoComments:LegacyStorageMigration.kt:The caches may hold the empty list that sent the user to onboarding.</ID>
-    <ID>NoComments:LegacyStorageMigration.kt:The legacy files the migration may delete: the account file of every npub in</ID>
-    <ID>NoComments:LegacyStorageMigration.kt:The npubs that can still be restored: the settings file's list in its own</ID>
-    <ID>NoComments:LegacyStorageMigration.kt:The saved account list with [legacy] appended, keeping the order and dropping</ID>
-    <ID>NoComments:LegacyStorageMigration.kt:Union, never replace: the user may have created or imported an</ID>
-    <ID>NoComments:LegacyStorageMigration.kt:`secret_keeper.xml` holds the account list and the settings,</ID>
-    <ID>NoComments:LegacyStorageMigration.kt:`secret_keeper_&lt;npub&gt;.xml` the keys and preferences of one account.</ID>
-    <ID>NoComments:LegacyStorageMigration.kt:account in this build after landing on the onboarding screen.</ID>
-    <ID>NoComments:LegacyStorageMigration.kt:empty file would be left behind for every account that is gone.</ID>
-    <ID>NoComments:LegacyStorageMigration.kt:fails with FailedMigrationException on an empty store, and a key the</ID>
-    <ID>NoComments:LegacyStorageMigration.kt:getEncryptedRaw is the non-throwing existence check: getEncryptedKey</ID>
-    <ID>NoComments:LegacyStorageMigration.kt:is merged with the one this install may have built already (in a different</ID>
-    <ID>NoComments:LegacyStorageMigration.kt:keeps its file (and the settings file) for another attempt.</ID>
-    <ID>NoComments:LegacyStorageMigration.kt:order), the current account is only filled in when there is none, and the</ID>
-    <ID>NoComments:LegacyStorageMigration.kt:user re-imported in this build must not be overwritten with the old one.</ID>
     <ID>NoComments:LegacyStorageMigrationDeviceTest.kt:The second account file exists but holds no key, so it cannot be restored.</ID>
     <ID>NoComments:LocalBunkerRelayServer.kt:A running relay must come down first: start() never rebinds a live one.</ID>
     <ID>NoComments:LocalBunkerRelayServer.kt:One per process: Amber owns the instance (Amber.localBunkerRelay).</ID>
     <ID>NoComments:LocalBunkerRelayServer.kt:Pubkeys the relay treats as approved senders (never rate limited): the</ID>
     <ID>NoComments:LocalBunkerRelayServer.kt:Same tag as the app's other sockets (TaggedSocketFactory).</ID>
     <ID>NoComments:LocalBunkerRelayServer.kt:The offline flavor has no network permission and must never open a port.</ID>
-    <ID>NoComments:LocalPreferences.kt:A stored enum by name; a missing or unknown name (an older or newer build) reads as [default].</ID>
-    <ID>NoComments:LocalPreferences.kt:Amber's constructor installs them before anything reads the settings.</ID>
-    <ID>NoComments:LocalPreferences.kt:Fail-closed placeholder; TorManager will update to the real port once running.</ID>
-    <ID>NoComments:LocalPreferences.kt:One-time cleanup: the pre-rename legacy key is never read again, so</ID>
-    <ID>NoComments:LocalPreferences.kt:Points OkHttp at the proxy before any dial: Orbot's port, or for built-in Tor a</ID>
-    <ID>NoComments:LocalPreferences.kt:Pre-rename consent key, kept only so loadSettingsFromEncryptedStorage can</ID>
-    <ID>NoComments:LocalPreferences.kt:The old use_proxy boolean predates TorMode: true meant Orbot.</ID>
-    <ID>NoComments:LocalPreferences.kt:The settings in effect (updated after every write) and the per-account databases;</ID>
-    <ID>NoComments:LocalPreferences.kt:fail-closed placeholder so no clearnet traffic leaks before TorManager sets the real port.</ID>
-    <ID>NoComments:LocalPreferences.kt:remove it instead of leaving a stale opt-in bit in every prefs file.</ID>
-    <ID>NoComments:LocalPreferences.kt:scrub it. Never read.</ID>
     <ID>NoComments:LogEntity.kt:Number of identical (url, type, message) entries merged into this row;</ID>
     <ID>NoComments:LogEntity.kt:see [LogDao.insertOrCollapse]. [time] is the latest occurrence.</ID>
     <ID>NoComments:LogRetentionManager.kt:Deletes the oldest rows in batches until the database's live size is at most [maxBytes].</ID>
@@ -1019,8 +888,6 @@
     <ID>NoComments:LoginViewModelsTest.kt:Nothing restored: stay on the first page so the user can retry.</ID>
     <ID>NoComments:LogoutButton.kt:The logout deletes the account's databases, its saved apps included.</ID>
     <ID>NoComments:LogoutDeletesDatabasesTest.kt:File and DataStore cleanup is out of scope here.</ID>
-    <ID>NoComments:MainActivity.kt:Read once here: getReferrer() crashes on OEM builds (Samsung/Android 12) when</ID>
-    <ID>NoComments:MainActivity.kt:the activity has no intent (mIntent == null).</ID>
     <ID>NoComments:MainNavGraph.kt:What the main destinations are laid out with: the scaffold's [padding] and the side [margin].</ID>
     <ID>NoComments:MainScreen.kt:Asks for the notification permission a bunker needs (online flavors), with a rationale once refused.</ID>
     <ID>NoComments:MainScreen.kt:Dims the screen and swallows touches while a request is being answered.</ID>
@@ -1032,14 +899,6 @@
     <ID>NoComments:MainScreenViewModel.kt:Built-in Tor keeps running after the screen goes away.</ID>
     <ID>NoComments:MainScreenViewModel.kt:The Application context: the view model outlives the activity.</ID>
     <ID>NoComments:MainScreenViewModel.kt:Where the main screen's navigation starts: an external request opens on it, then a</ID>
-    <ID>NoComments:MainViewModel.kt:Intent IDs added by this ViewModel instance — used by onDestroy to remove only</ID>
-    <ID>NoComments:MainViewModel.kt:The account the first queued request signs as: an intent's event author, else a bunker request's acc</ID>
-    <ID>NoComments:MainViewModel.kt:The calling app is visible to us now; capture its icon/name.</ID>
-    <ID>NoComments:MainViewModel.kt:The current account when it is still saved, else the first saved one.</ID>
-    <ID>NoComments:MainViewModel.kt:The npub [userFromIntent] names, when it is a saved account.</ID>
-    <ID>NoComments:MainViewModel.kt:[key] (an npub or a hex public key) as an npub.</ID>
-    <ID>NoComments:MainViewModel.kt:instance that may have already added its own intents.</ID>
-    <ID>NoComments:MainViewModel.kt:the intents owned by this activity, avoiding races with a new SignerActivity</ID>
     <ID>NoComments:MarkdownText.kt:Plain text up to the next `**` or `[` (at least one character). Returns the characters used.</ID>
     <ID>NoComments:MarkdownText.kt:`**bold**` at the start of [text]; a `**` without its closing pair stays as is. Returns the characte</ID>
     <ID>NoComments:MarkdownText.kt:`[text](url)` at the start of [text]; anything else keeps its `[`. Returns the characters used.</ID>
@@ -1200,8 +1059,6 @@
     <ID>NoComments:PermissionExpiryTest.kt:Denial with a leftover future acceptUntil: must not stay acceptable-looking.</ID>
     <ID>NoComments:PermissionExpiryTest.kt:Grant with a leftover future rejectUntil.</ID>
     <ID>NoComments:PlainCardTextTest.kt:The card used to show the whole decrypted zap request as JSON.</ID>
-    <ID>NoComments:PreferenceFiles.kt:The app-wide preference file (`prefs`): settings and the saved-account list.</ID>
-    <ID>NoComments:PreferenceFiles.kt:The npub-specific preference file (`prefs_&lt;npub&gt;`).</ID>
     <ID>NoComments:Previews.kt:Settings live in memory, so components that read them render; the databases</ID>
     <ID>NoComments:Previews.kt:and relays stay unavailable.</ID>
     <ID>NoComments:ProfileSubscription.kt:(put/remove/clear) takes the same monitor, so the weakly-consistent CHM iterator</ID>
@@ -1286,67 +1143,8 @@
     <ID>NoComments:RequestGroupUtils.kt:CONNECT / GET_PUBLIC_KEY approvals never persist a permission from the grouped flow</ID>
     <ID>NoComments:RequestGroupUtils.kt:Mirrors the single-event defaults: EncryptDecryptData defaults to ALL, Nip44v3ApprovalData to SPECIF</ID>
     <ID>NoComments:Route.kt:The only routes another app may open through the exported activities'</ID>
-    <ID>NoComments:SavedAccounts.kt:Forgets the cached list and current account, so the next read sees the preference file.</ID>
-    <ID>NoComments:SavedAccounts.kt:Makes [npub] the current account, adding it to the list if new.</ID>
-    <ID>NoComments:SavedAccounts.kt:Preference keys in the app-wide file; renaming one loses the stored value.</ID>
-    <ID>NoComments:SavedAccounts.kt:The saved npubs in the order they were added.</ID>
     <ID>NoComments:SealResultDeviceTest.kt:An encrypt result is right when it is ciphertext the peer can open back to the seal.</ID>
     <ID>NoComments:SealResultDeviceTest.kt:Logs what the caller would receive for one request, then returns whether it</ID>
-    <ID>NoComments:SecureCryptoHelper.kt:(API 33), which is also where pruning open operations began.</ID>
-    <ID>NoComments:SecureCryptoHelper.kt:1. Generate the replacement and prove it works before relying on it.</ID>
-    <ID>NoComments:SecureCryptoHelper.kt:2. Switch. commit() updates the in-memory values even when the disk</ID>
-    <ID>NoComments:SecureCryptoHelper.kt:3. Move everything over and drop the old key.</ID>
-    <ID>NoComments:SecureCryptoHelper.kt:96 bits</ID>
-    <ID>NoComments:SecureCryptoHelper.kt:A key could not be used right now; the previous key must be kept.</ID>
-    <ID>NoComments:SecureCryptoHelper.kt:A sweep that rewrote anything is repeated, so a value written with the</ID>
-    <ID>NoComments:SecureCryptoHelper.kt:A value could not be checked or moved; the previous key must be kept.</ID>
-    <ID>NoComments:SecureCryptoHelper.kt:Already readable with the current key.</ID>
-    <ID>NoComments:SecureCryptoHelper.kt:An earlier rotation never finished, so the free alias may still hold</ID>
-    <ID>NoComments:SecureCryptoHelper.kt:Available from API 28 (KeyGenParameterSpec.Builder).</ID>
-    <ID>NoComments:SecureCryptoHelper.kt:Cached [KeyHandle]. An AndroidKeyStore [SecretKey] is a lightweight</ID>
-    <ID>NoComments:SecureCryptoHelper.kt:Counted even when the compare-and-set loses to a</ID>
-    <ID>NoComments:SecureCryptoHelper.kt:Decides what one stored value needs during a rotation. Only an error</ID>
-    <ID>NoComments:SecureCryptoHelper.kt:Defense-in-depth (GHSA-8844-q5vh-9j8f, L1): opt-in toggle — when</ID>
-    <ID>NoComments:SecureCryptoHelper.kt:Moves every value still encrypted under [previousAlias] onto</ID>
-    <ID>NoComments:SecureCryptoHelper.kt:Neither key can decrypt it, so deleting the previous key loses nothing.</ID>
-    <ID>NoComments:SecureCryptoHelper.kt:No key under either alias, so nothing is encrypted yet.</ID>
-    <ID>NoComments:SecureCryptoHelper.kt:Not written with the active key; during an unfinished rotation it</ID>
-    <ID>NoComments:SecureCryptoHelper.kt:One pass over every stored ciphertext; see [migrateCiphertext].</ID>
-    <ID>NoComments:SecureCryptoHelper.kt:Per-account Room `application` tables (GHSA-5fjp-ghh8-wch8).</ID>
-    <ID>NoComments:SecureCryptoHelper.kt:Room converters and DAOs encrypt without a context at hand, so Amber's constructor</ID>
-    <ID>NoComments:SecureCryptoHelper.kt:Runs [block] again when keystore2 finalized the operation underneath</ID>
-    <ID>NoComments:SecureCryptoHelper.kt:Runs [block] with the current key handle, retrying exactly once with a</ID>
-    <ID>NoComments:SecureCryptoHelper.kt:Sweeps until a pass changes nothing; false when a pass failed or values kept moving for [MAX_SWEEP_P</ID>
-    <ID>NoComments:SecureCryptoHelper.kt:The Application itself: install runs in its constructor, before its base context (and applicationCon</ID>
-    <ID>NoComments:SecureCryptoHelper.kt:The alias new ciphertext must be written with. Normally the recorded</ID>
-    <ID>NoComments:SecureCryptoHelper.kt:The key new ciphertext is written with ([key], stored under [alias]),</ID>
-    <ID>NoComments:SecureCryptoHelper.kt:The pass changed nothing: every value is on the current key.</ID>
-    <ID>NoComments:SecureCryptoHelper.kt:The pass moved values, so another pass must re-check them.</ID>
-    <ID>NoComments:SecureCryptoHelper.kt:The per-account databases, for re-encrypting the application rows when the key rotates.</ID>
-    <ID>NoComments:SecureCryptoHelper.kt:The wrapping key alternates between two aliases. Rotation creates the</ID>
-    <ID>NoComments:SecureCryptoHelper.kt:Whether [this] is keystore2 having pruned an in-flight operation, which is</ID>
-    <ID>NoComments:SecureCryptoHelper.kt:[raw] does not belong to the current key: decrypt it with the previous one and re-encrypt it.</ID>
-    <ID>NoComments:SecureCryptoHelper.kt:android.security.KeyStoreException arrived with the keystore2 API</ID>
-    <ID>NoComments:SecureCryptoHelper.kt:biometrics per operation (which would break background NIP-46</ID>
-    <ID>NoComments:SecureCryptoHelper.kt:bits</ID>
-    <ID>NoComments:SecureCryptoHelper.kt:concurrent write, so another pass re-checks that value.</ID>
-    <ID>NoComments:SecureCryptoHelper.kt:durably re-encrypted (GHSA-wv7c-hq2j-ppc5). The alias in use is</ID>
-    <ID>NoComments:SecureCryptoHelper.kt:enabled, require the device to be unlocked at the time the key</ID>
-    <ID>NoComments:SecureCryptoHelper.kt:existing ciphertext is never deleted until every secret has been</ID>
-    <ID>NoComments:SecureCryptoHelper.kt:installs the application context before anything can reach the key.</ID>
-    <ID>NoComments:SecureCryptoHelper.kt:keystore2 runs out of operation slots device-wide, not per app, so a</ID>
-    <ID>NoComments:SecureCryptoHelper.kt:locked cannot decrypt stored account keys. Does not prompt for</ID>
-    <ID>NoComments:SecureCryptoHelper.kt:material is used, so a process that runs while the screen is</ID>
-    <ID>NoComments:SecureCryptoHelper.kt:may still be under the previous one.</ID>
-    <ID>NoComments:SecureCryptoHelper.kt:new key under whichever alias is free, so the key that protects the</ID>
-    <ID>NoComments:SecureCryptoHelper.kt:predate it have never rotated and use KEY_ALIAS.</ID>
-    <ID>NoComments:SecureCryptoHelper.kt:previous key while the sweep was running is still picked up.</ID>
-    <ID>NoComments:SecureCryptoHelper.kt:recorded by KeystorePolicy.commitActiveAlias; installs that</ID>
-    <ID>NoComments:SecureCryptoHelper.kt:signing); it only refuses key use while the device is locked.</ID>
-    <ID>NoComments:SecureCryptoHelper.kt:single pruning can be followed by another while it clears.</ID>
-    <ID>NoComments:SecureCryptoHelper.kt:the key for some values. It can only be replaced once nothing needs it.</ID>
-    <ID>NoComments:SecureCryptoHelper.kt:usually mediatek contains broken strongbox support</ID>
-    <ID>NoComments:SecureCryptoHelper.kt:write fails, so restore them before discarding the new key.</ID>
     <ID>NoComments:SecureCryptoHelperRetryTest.kt:Stands in for the keystore's `INVALID_OPERATION_HANDLE` cause.</ID>
     <ID>NoComments:SecureCryptoHelperRetryTest.kt:The default classifier only recognises the keystore's own cause,</ID>
     <ID>NoComments:SecureCryptoHelperRetryTest.kt:which this exception does not carry.</ID>
@@ -1389,14 +1187,6 @@
     <ID>NoComments:SharedStringsDeviceTest.kt:Folders without a region (values-it) match a regional locale too.</ID>
     <ID>NoComments:SharedStringsDeviceTest.kt:Indonesian: Java and Android 15+ call it "id" (values-id).</ID>
     <ID>NoComments:SignPolicySettingsScreen.kt:Clipped before the click, so the ripple keeps the rounded shape.</ID>
-    <ID>NoComments:SignerActivity.kt:Rate-limited per (caller, type, kind). onNewIntent is intentionally exempt —</ID>
-    <ID>NoComments:SignerActivity.kt:Read once here: getReferrer() crashes on OEM builds (Samsung/Android 12) when</ID>
-    <ID>NoComments:SignerActivity.kt:The bottom sheet the approval screens open in over the calling app. An invalid</ID>
-    <ID>NoComments:SignerActivity.kt:it is the batch merge into an already-open approval screen.</ID>
-    <ID>NoComments:SignerActivity.kt:the activity has no intent (mIntent == null), e.g. after sendRejection() nulls it.</ID>
-    <ID>NoComments:SignerProvider.kt:External apps are always attributed to their own Android package. The</ID>
-    <ID>NoComments:SignerProvider.kt:caller-supplied query arguments, so an app cannot impersonate another one.</ID>
-    <ID>NoComments:SignerProvider.kt:requester identity is taken from the binder's calling package, never from</ID>
     <ID>NoComments:SignerProviderBenchmarkTest.kt:(twiceNs, onceNs) per attempt, kept for the failure message.</ID>
     <ID>NoComments:SignerProviderBenchmarkTest.kt:-------------------------------------------------------------------------</ID>
     <ID>NoComments:SignerProviderBenchmarkTest.kt:1. Startup wait: Thread.sleep poll vs StateFlow.first { !it }</ID>
@@ -1437,63 +1227,6 @@
     <ID>NoComments:SignerProviderBenchmarkTest.kt:used for both checks</ID>
     <ID>NoComments:SignerProviderBenchmarkTest.kt:whitelist check</ID>
     <ID>NoComments:SignerProviderBenchmarkTest.kt:without all optimisations applied to confirm the cumulative gain.</ID>
-    <ID>NoComments:SignerProviderQuery.kt:A ContentProvider query answers synchronously, so it blocks on the signer.</ID>
-    <ID>NoComments:SignerProviderQuery.kt:A V3 decrypt that throws cannot succeed (wrong</ID>
-    <ID>NoComments:SignerProviderQuery.kt:A missing/invalid kind is a malformed request: auto-reject</ID>
-    <ID>NoComments:SignerProviderQuery.kt:A performed operation's answer: [result] in the signature and result columns, [event] in the event c</ID>
-    <ID>NoComments:SignerProviderQuery.kt:A rejected encrypt request was never performed, so no</ID>
-    <ID>NoComments:SignerProviderQuery.kt:An anonymous zap request is answered with the whole event: the client cannot rebuild it from the sig</ID>
-    <ID>NoComments:SignerProviderQuery.kt:Authorization below decides on the first relay tag alone; a second</ID>
-    <ID>NoComments:SignerProviderQuery.kt:Capture the calling app's launcher icon/name onto its saved app while it is</ID>
-    <ID>NoComments:SignerProviderQuery.kt:Decrypt requests are performed first, then classified by their result.</ID>
-    <ID>NoComments:SignerProviderQuery.kt:Decrypt requests carry their ciphertext as input: persist it (accepted</ID>
-    <ID>NoComments:SignerProviderQuery.kt:Encrypt requests are classified by their plaintext input.</ID>
-    <ID>NoComments:SignerProviderQuery.kt:Encrypts or decrypts [request]'s content; null (logged) when that throws.</ID>
-    <ID>NoComments:SignerProviderQuery.kt:For kind 22242 (NIP-42 relay auth), extract relay host once for the</ID>
-    <ID>NoComments:SignerProviderQuery.kt:I1 pre-authorization gate (GHSA-8844-q5vh-9j8f): returns true when the</ID>
-    <ID>NoComments:SignerProviderQuery.kt:Kind 22242 = relay client auth (NIP-42): check relay-specific permission first</ID>
-    <ID>NoComments:SignerProviderQuery.kt:Kind-scoped like the final V3 lookup: the kind-agnostic</ID>
-    <ID>NoComments:SignerProviderQuery.kt:Looked up lazily, in this order, until one accepts.</ID>
-    <ID>NoComments:SignerProviderQuery.kt:One encrypt or decrypt request; [v3Kind] and [v3Scope] are the NIP-44 v3 context (null and empty oth</ID>
-    <ID>NoComments:SignerProviderQuery.kt:PING: [arguments] [0] = npub, optional; without it, the first account that knows the requester.</ID>
-    <ID>NoComments:SignerProviderQuery.kt:Performed only now that the permission is confirmed.</ID>
-    <ID>NoComments:SignerProviderQuery.kt:Persist the encrypted form (the ciphertext output), never the plaintext.</ID>
-    <ID>NoComments:SignerProviderQuery.kt:Pre-authorization (GHSA-8844-q5vh-9j8f, I1): do not invoke</ID>
-    <ID>NoComments:SignerProviderQuery.kt:Records the refused request and answers "rejected".</ID>
-    <ID>NoComments:SignerProviderQuery.kt:SIGN_EVENT: [arguments] [0] = event JSON, [2] = npub.</ID>
-    <ID>NoComments:SignerProviderQuery.kt:SIGN_PSBT: [arguments] [0] = PSBT hex, [2] = npub.</ID>
-    <ID>NoComments:SignerProviderQuery.kt:The NIP-04 / NIP-44 (v2 and v3) encrypt and decrypt operations and DECRYPT_ZAP_EVENT:</ID>
-    <ID>NoComments:SignerProviderQuery.kt:The answer to an encrypt or decrypt that produced nothing.</ID>
-    <ID>NoComments:SignerProviderQuery.kt:The auth whitelist is only a relay constraint: when non-empty, relays</ID>
-    <ID>NoComments:SignerProviderQuery.kt:The encrypt and decrypt operations by name.</ID>
-    <ID>NoComments:SignerProviderQuery.kt:The first stored grant of [order] (`permissionLookupOrder`). A kind-less key</ID>
-    <ID>NoComments:SignerProviderQuery.kt:The generic grant, the V2 classified content-type grants (the set of</ID>
-    <ID>NoComments:SignerProviderQuery.kt:The history entry of an encrypt or decrypt request. [content] is always the</ID>
-    <ID>NoComments:SignerProviderQuery.kt:The operation name history and logs record, e.g. SIGN_EVENT.</ID>
-    <ID>NoComments:SignerProviderQuery.kt:The remembered decision for [request] (see [isAllowed]). V3 grants do NOT</ID>
-    <ID>NoComments:SignerProviderQuery.kt:The remembered decision on the requester's [type] grant: true performs it silently, false refuses it</ID>
-    <ID>NoComments:SignerProviderQuery.kt:The saved account [npubArgument] names, with the caller's icon and name captured for it; null when t</ID>
-    <ID>NoComments:SignerProviderQuery.kt:V3 carries kind and scope as arguments[3] and arguments[4].</ID>
-    <ID>NoComments:SignerProviderQuery.kt:Whether [event] may be signed silently: false refuses it, null leaves it to the user.</ID>
-    <ID>NoComments:SignerProviderQuery.kt:Who asked for [operation] (see [query]'s parameters).</ID>
-    <ID>NoComments:SignerProviderQuery.kt:and a kind-B request then decrypted only to answer "rejected" on</ID>
-    <ID>NoComments:SignerProviderQuery.kt:by itself — a requester-scoped permission (or user prompt) is still</ID>
-    <ID>NoComments:SignerProviderQuery.kt:ciphertext exists — store nothing rather than leaking the</ID>
-    <ID>NoComments:SignerProviderQuery.kt:defines exactly one relay per auth event, so refuse the rest.</ID>
-    <ID>NoComments:SignerProviderQuery.kt:failure versus null on success, a ciphertext-validity oracle.</ID>
-    <ID>NoComments:SignerProviderQuery.kt:getPermission(key, type) would match a grant for any other kind,</ID>
-    <ID>NoComments:SignerProviderQuery.kt:instead of prompting the user.</ID>
-    <ID>NoComments:SignerProviderQuery.kt:or not) and decrypt on demand in the activity/history UI.</ID>
-    <ID>NoComments:SignerProviderQuery.kt:outside the list are auto-rejected. Membership never authorizes signing</ID>
-    <ID>NoComments:SignerProviderQuery.kt:plaintext input.</ID>
-    <ID>NoComments:SignerProviderQuery.kt:possible types comes from permissionTypeFromContent / EncryptedDataKind),</ID>
-    <ID>NoComments:SignerProviderQuery.kt:reject it rather than prompting the user.</ID>
-    <ID>NoComments:SignerProviderQuery.kt:relay tag would be signed without ever being granted. NIP-42</ID>
-    <ID>NoComments:SignerProviderQuery.kt:relay-auth signatures (GHSA-vx4h-56qj-wcp7).</ID>
-    <ID>NoComments:SignerProviderQuery.kt:required, otherwise any app/NIP-46 client could silently obtain</ID>
-    <ID>NoComments:SignerProviderQuery.kt:then the NIP-level fallback grant the final lookup also consults.</ID>
-    <ID>NoComments:SignerProviderQuery.kt:version/context, bad MAC, corrupt padding, ...):</ID>
-    <ID>NoComments:SignerProviderQuery.kt:whitelist gate and the requester-scoped permission checks below.</ID>
     <ID>NoComments:SignerProviderQueryTest.kt:A reject-only caller used to pass the pre-check: Amber decrypted, and the</ID>
     <ID>NoComments:SignerProviderQueryTest.kt:A remembered NIP-44 v3 decrypt grant for kind 30000.</ID>
     <ID>NoComments:SignerProviderQueryTest.kt:Only [rows] exist for the requester; every other decrypt lookup is empty.</ID>
@@ -1607,8 +1340,6 @@
     <ID>NoComments:WebDavService.kt:server doesn't support PROPFIND but is reachable</ID>
     <ID>NoComments:WebDavService.kt:so a new WebDAV method cannot skip it and send Basic auth cleartext.</ID>
     <ID>NoComments:WebDavService.kt:would resend the backup body in cleartext. The 3xx is returned as an</ID>
-    <ID>NoComments:WebDavSettings.kt:Keys in the app-wide preference file; renaming one loses the stored value.</ID>
-    <ID>NoComments:WebDavSettings.kt:needs commit()'s result, see KeystorePolicy.commitActiveAlias</ID>
     <ID>NoComments:WebDavSettingsTest.kt:Key rotation re-encrypts the password; a save made meanwhile must not be overwritten.</ID>
     <ID>NoComments:WebDavTransportPolicyTest.kt:"requires an HTTPS server URL" error even though requests worked.</ID>
     <ID>NoComments:WebDavTransportPolicyTest.kt:(and whitespace, quotes, brackets) but leaves '=' alone.</ID>

@@ -28,9 +28,10 @@ import androidx.collection.LruCache
  * - [CachingApplicationWriteDao.updateLastUsed], [CachingApplicationWriteDao.replaceSecretRaw] and
  *   [CachingApplicationWriteDao.replaceLocalKeyRaw] change no column a cached permission read uses, so
  *   they evict only the [CachingApplicationDao.getAll] lists.
- * - The other `*Raw` writes forward without evicting, on purpose: they are the Room halves of the DAOs'
- *   default methods, whose caching overrides evict after delegating, and only tests call them through a
- *   caching DAO.
+ * - The other `*Raw` writes forward without evicting, on purpose. Most are the Room halves of the DAOs'
+ *   default methods, whose caching overrides evict after delegating;
+ *   [PermissionMaintenanceDao.insertPermissionsRaw] is a standalone insert that only the instrumented
+ *   tests use. Main code must write permissions through an evicting method, never a `*Raw` one.
  *
  * Every invalidation bumps a generation counter, and a read only stores its
  * result if the generation is unchanged since the read began. Otherwise, a

@@ -157,7 +157,7 @@ import com.greenart7c3.nostrsigner.desktop.core.AutoStart
 import com.greenart7c3.nostrsigner.desktop.core.BunkerRelays
 import com.greenart7c3.nostrsigner.desktop.core.DateTimes
 import com.greenart7c3.nostrsigner.desktop.core.DesktopAccount
-import com.greenart7c3.nostrsigner.desktop.core.DesktopKeyStore
+import com.greenart7c3.nostrsigner.desktop.core.DesktopMasterKey
 import com.greenart7c3.nostrsigner.desktop.core.DesktopSettings
 import com.greenart7c3.nostrsigner.desktop.core.PassphraseLock
 import com.greenart7c3.nostrsigner.desktop.core.RelayConnections
@@ -197,7 +197,7 @@ fun SettingsScreen(account: DesktopAccount, modifier: Modifier = Modifier) {
             SettingsSection(stringResource(Res.string.accounts)) { AccountsSection(accounts, account.npub) { logoutNpub = it } }
             SettingsSection(
                 stringResource(Res.string.security),
-                stringResource(Res.string.d_security_keys_desc, DesktopKeyStore.passwordSourceDescription ?: "…"),
+                stringResource(Res.string.d_security_keys_desc, DesktopMasterKey.passwordSourceDescription ?: "…"),
             ) { SecuritySection() }
             SettingsSection(stringResource(Res.string.d_diagnostics)) {
                 AmberOutlinedButton(text = stringResource(Res.string.d_view_logs), onClick = { showLogsDialog = true })

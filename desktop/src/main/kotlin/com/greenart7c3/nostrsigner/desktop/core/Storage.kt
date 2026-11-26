@@ -173,7 +173,7 @@ private fun boundPayload(payload: String): String {
  */
 private fun writeSecure(file: File, value: Any, context: String, rollbackProtected: Boolean = false): Boolean {
     val encrypt = PassphraseLock.isEnabled()
-    if (encrypt && !DesktopKeyStore.isMasterKeyAvailable()) {
+    if (encrypt && !DesktopMasterKey.isMasterKeyAvailable()) {
         AmberLogger.e("Storage", "Refusing to write ${file.name} while the key store is locked")
         return false
     }

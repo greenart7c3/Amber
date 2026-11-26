@@ -8,6 +8,7 @@ import com.greenart7c3.nostrsigner.desktop.core.AccountManager
 import com.greenart7c3.nostrsigner.desktop.core.AmberDesktop
 import com.greenart7c3.nostrsigner.desktop.core.AppRecord
 import com.greenart7c3.nostrsigner.desktop.core.AppWithPermissions
+import com.greenart7c3.nostrsigner.desktop.core.BunkerRelays
 import com.greenart7c3.nostrsigner.desktop.core.LocalBunkerRelay
 import com.vitorpamplona.quartz.nip01Core.core.Event
 import com.vitorpamplona.quartz.nip01Core.core.hexToByteArray
@@ -310,7 +311,7 @@ class LocalBunkerRelayTest {
             ),
         )
         // Both the client key and the engine's connection key are approved.
-        assertTrue(AmberDesktop.approvedRelaySenders().contains(connPub))
+        assertTrue(BunkerRelays.approvedRelaySenders().contains(connPub))
 
         val client = WsClient(http, url)
         repeat(15) { i ->

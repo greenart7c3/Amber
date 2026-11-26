@@ -117,15 +117,15 @@ class RequestDetailsTest {
         // A connect is shown alone (never batched), and has no details.
         AmberDesktop.engine.pending.value = listOf(connect)
         UiState.selectedRequestId.value = connect.queueKey
-        assertFalse(UiState.showSelectedDetails())
+        assertFalse(RequestKeyboard.showSelectedDetails())
         assertNull(UiState.detailsRequestId.value)
 
         AmberDesktop.engine.pending.value = listOf(connect, sign)
-        assertFalse("the sign request waits behind the connect", UiState.showSelectedDetails())
+        assertFalse("the sign request waits behind the connect", RequestKeyboard.showSelectedDetails())
 
         AmberDesktop.engine.pending.value = listOf(sign)
         UiState.selectedRequestId.value = sign.queueKey
-        assertTrue(UiState.showSelectedDetails())
+        assertTrue(RequestKeyboard.showSelectedDetails())
         assertEquals(sign.queueKey, UiState.detailsRequestId.value)
 
         // Answered elsewhere (shortcut, notification, expiry): the dialog closes.

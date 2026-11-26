@@ -283,7 +283,7 @@ internal class Session(
             SavedConnection(
                 clientPrivKey = pairing.clientPrivKey,
                 signerPubKey = client.signerPubKey().orEmpty(),
-                userPubKey = client.getPublicKey(),
+                userPubKey = client.requests.getPublicKey(),
                 relays = relays.map { it.url },
                 name = name,
                 pairedAt = TimeUtils.now(),
@@ -300,7 +300,7 @@ internal class Session(
                 Exit.USAGE,
             )
         val template = eventTemplate(if (input == "-") readInput() else input)
-        val event = session(connection, timeout(args)).use { it.signEvent(template) }
+        val event = session(connection, timeout(args)).use { it.requests.signEvent(template) }
         if (!event.verify()) {
             throw CliError("Amber returned an event whose id or signature does not verify", Exit.ERROR)
         }
@@ -318,7 +318,7 @@ internal class Session(
 
     private fun getPublicKey(args: Args): Int {
         val connection = requireConnection(profile(args))
-        val pubKey = session(connection, timeout(args)).use { it.getPublicKey() }
+        val pubKey = session(connection, timeout(args)).use { it.requests.getPublicKey() }
         if (pubKey != connection.userPubKey) {
             throw CliError("Amber now signs as $pubKey, not as the paired ${connection.userPubKey}", Exit.ERROR)
         }
@@ -343,10 +343,10 @@ internal class Session(
         val text = if (input == "-") readInput() else input
         val result = session(connection, timeout(args)).use { client ->
             when {
-                nip44 && encrypt -> client.nip44Encrypt(pubKey, text)
-                nip44 -> client.nip44Decrypt(pubKey, text)
-                encrypt -> client.nip04Encrypt(pubKey, text)
-                else -> client.nip04Decrypt(pubKey, text)
+                nip44 && encrypt -> client.requests.nip44Encrypt(pubKey, text)
+                nip44 -> client.requests.nip44Decrypt(pubKey, text)
+                encrypt -> client.requests.nip04Encrypt(pubKey, text)
+                else -> client.requests.nip04Decrypt(pubKey, text)
             }
         }
         emit(args, TextNode(result), result)
@@ -355,7 +355,7 @@ internal class Session(
 
     private fun ping(args: Args): Int {
         val connection = requireConnection(profile(args))
-        session(connection, timeout(args)).use { it.ping() }
+        session(connection, timeout(args)).use { it.requests.ping() }
         emit(args, TextNode("pong"), "pong")
         return Exit.OK
     }
@@ -390,7 +390,7 @@ internal class Session(
         }
         // Kept whole: the exit code says why it is offline (5 silent, 6 unreachable, 4 refused).
         val failure = try {
-            session(connection, timeout(args, defaultSeconds = 15)).use { it.ping() }
+            session(connection, timeout(args, defaultSeconds = 15)).use { it.requests.ping() }
             null
         } catch (e: CliError) {
             e
@@ -429,7 +429,7 @@ internal class Session(
             ?: throw CliError("profile \"$profile\" is not paired, nothing to log out of", Exit.NOT_PAIRED)
         if (connection.isPaired) {
             try {
-                session(connection, timeout(args)).use { it.logout() }
+                session(connection, timeout(args)).use { it.requests.logout() }
             } catch (e: CliError) {
                 err.println("warning: ${e.message}")
                 err.println("deleted profile \"$profile\" here anyway; also delete the connection in Amber")
@@ -495,7 +495,7 @@ internal class Session(
         connection: SavedConnection,
         seconds: Long,
     ): Pair<Boolean, List<String>> {
-        val switched = session(connection, seconds).use { it.switchRelays() }
+        val switched = session(connection, seconds).use { it.requests.switchRelays() }
         val changed = !switched.isNullOrEmpty()
         val relays = if (changed) switched else connection.relays
         if (changed) {

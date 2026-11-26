@@ -239,45 +239,51 @@ class Nip46Client(
         if (connected == null) throw unreachable()
     }
 
-    fun getPublicKey(): String = call("get_public_key") { requireSigner().getPublicKey() }
+    /** The requests to the paired signer, after [login] or [open]. */
+    val requests = SignerRequests()
 
-    fun signEvent(template: EventTemplate<Event>): Event = call("sign_event") { requireSigner().sign(template) }
+    /** One NIP-46 request per function, each bounded by `--timeout` and mapped to an exit code. */
+    inner class SignerRequests {
+        fun getPublicKey(): String = call("get_public_key") { requireSigner().getPublicKey() }
 
-    fun nip44Encrypt(
-        pubKey: String,
-        text: String,
-    ): String = call("nip44_encrypt") { requireSigner().nip44Encrypt(text, pubKey) }
+        fun signEvent(template: EventTemplate<Event>): Event = call("sign_event") { requireSigner().sign(template) }
 
-    fun nip44Decrypt(
-        pubKey: String,
-        ciphertext: String,
-    ): String = call("nip44_decrypt") { requireSigner().nip44Decrypt(ciphertext, pubKey) }
+        fun nip44Encrypt(
+            pubKey: String,
+            text: String,
+        ): String = call("nip44_encrypt") { requireSigner().nip44Encrypt(text, pubKey) }
 
-    fun nip04Encrypt(
-        pubKey: String,
-        text: String,
-    ): String = call("nip04_encrypt") { requireSigner().nip04Encrypt(text, pubKey) }
+        fun nip44Decrypt(
+            pubKey: String,
+            ciphertext: String,
+        ): String = call("nip44_decrypt") { requireSigner().nip44Decrypt(ciphertext, pubKey) }
 
-    fun nip04Decrypt(
-        pubKey: String,
-        ciphertext: String,
-    ): String = call("nip04_decrypt") { requireSigner().nip04Decrypt(ciphertext, pubKey) }
+        fun nip04Encrypt(
+            pubKey: String,
+            text: String,
+        ): String = call("nip04_encrypt") { requireSigner().nip04Encrypt(text, pubKey) }
 
-    /**
-     * A ping is, by definition, only answered by a live signer. Quartz's
-     * `PingResult` carries the request id rather than the pong, so the answer
-     * itself is "Amber replied"; this reports the round trip, not that value.
-     */
-    fun ping() {
-        call("ping") { requireSigner().ping() }
-    }
+        fun nip04Decrypt(
+            pubKey: String,
+            ciphertext: String,
+        ): String = call("nip04_decrypt") { requireSigner().nip04Decrypt(ciphertext, pubKey) }
 
-    fun switchRelays(): List<String>? = call("switch_relays") {
-        SwitchRelaysOutcome(requireSigner().switchRelays()?.map { it.url })
-    }.relays
+        /**
+         * A ping is, by definition, only answered by a live signer. Quartz's
+         * `PingResult` carries the request id rather than the pong, so the answer
+         * itself is "Amber replied"; this reports the round trip, not that value.
+         */
+        fun ping() {
+            call("ping") { requireSigner().ping() }
+        }
 
-    fun logout() {
-        call("logout") { requireSigner().logout() }
+        fun switchRelays(): List<String>? = call("switch_relays") {
+            SwitchRelaysOutcome(requireSigner().switchRelays()?.map { it.url })
+        }.relays
+
+        fun logout() {
+            call("logout") { requireSigner().logout() }
+        }
     }
 
     override fun close() {

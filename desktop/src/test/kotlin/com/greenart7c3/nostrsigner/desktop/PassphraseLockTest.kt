@@ -11,6 +11,7 @@ import com.greenart7c3.nostrsigner.desktop.core.AppWithPermissions
 import com.greenart7c3.nostrsigner.desktop.core.CrashReporter
 import com.greenart7c3.nostrsigner.desktop.core.DesktopAccount
 import com.greenart7c3.nostrsigner.desktop.core.DesktopKeyStore
+import com.greenart7c3.nostrsigner.desktop.core.DesktopMasterKey
 import com.greenart7c3.nostrsigner.desktop.core.PassphraseLock
 import com.greenart7c3.nostrsigner.desktop.core.PasswordStore
 import com.greenart7c3.nostrsigner.desktop.core.StoreGenerations
@@ -178,12 +179,12 @@ class PassphraseLockTest {
         // Locking evicts the key: crypto operations fail, and the key bytes
         // themselves are wiped, not just dereferenced.
         val loaded = AmberDesktop.account(npub)!!
-        val liveMasterKey = DesktopKeyStore.masterKeyForWrapping()
+        val liveMasterKey = DesktopMasterKey.masterKeyForWrapping()
         PassphraseLock.lock()
         assertTrue("account key must be zeroed", loaded.signer.keyPair.privKey!!.all { it == 0.toByte() })
         assertTrue("master key must be destroyed", liveMasterKey.isDestroyed)
         assertEquals(PassphraseLock.Status.LOCKED, PassphraseLock.state.value)
-        assertFalse(DesktopKeyStore.isMasterKeyAvailable())
+        assertFalse(DesktopMasterKey.isMasterKeyAvailable())
         assertThrows(DesktopKeyStore.LockedException::class.java) {
             runBlocking { DesktopKeyStore.decrypt(cipher1, "test/secret") }
         }
@@ -313,7 +314,7 @@ class PassphraseLockTest {
         assertEquals(other.npub, AccountManager.loadAccount(other.npub)?.npub)
 
         // An old-format (unbound) key copy is refused outright.
-        val masterKey: SecretKey = SecretKeySpec(DesktopKeyStore.masterKeyForWrapping().encoded, "AES")
+        val masterKey: SecretKey = SecretKeySpec(DesktopMasterKey.masterKeyForWrapping().encoded, "AES")
         val privHex = AccountManager.loadAccount(account.npub)!!.signer.keyPair.privKey!!.toHexKey()
         AccountsStore.upsert(AccountsStore.get(account.npub)!!.copy(encryptedPrivKey = encryptUnbound(masterKey, privHex)))
         assertNull(AccountManager.loadAccount(account.npub))
@@ -400,7 +401,7 @@ class PassphraseLockTest {
         unlocking.join(10_000)
         locking.join(10_000)
         assertEquals(PassphraseLock.Status.LOCKED, PassphraseLock.state.value)
-        assertFalse("the lock that came last wins: no key left behind", DesktopKeyStore.isMasterKeyAvailable())
+        assertFalse("the lock that came last wins: no key left behind", DesktopMasterKey.isMasterKeyAvailable())
         assertTrue(PassphraseLock.unlock(PASS.toCharArray()))
     }
 
@@ -521,7 +522,7 @@ class PassphraseLockTest {
         try {
             keystore.writeText("leftover-keystore")
             passFile.writeText("leftover-password")
-            DesktopKeyStore.cleanupUnprotectedCopiesIfWrapped()
+            DesktopMasterKey.cleanupUnprotectedCopiesIfWrapped()
             assertFalse("leftover keystore must be deleted", keystore.exists())
             assertFalse("leftover password file must be deleted", passFile.exists())
             assertTrue("the wrapped blob must survive the cleanup", blob.exists())

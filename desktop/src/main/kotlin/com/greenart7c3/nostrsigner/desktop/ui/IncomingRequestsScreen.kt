@@ -136,14 +136,14 @@ fun IncomingRequestsScreen(modifier: Modifier = Modifier) {
 @Composable
 private fun RequestBatch(apps: List<RequestApp>) {
     val selectedId by UiState.selectedRequestId.collectAsState()
-    val approved by UiState.batchApproved.collectAsState()
+    val approved by BatchDecisions.batchApproved.collectAsState()
     val expanded = remember { mutableStateMapOf<String, Boolean>() }
     val listState = rememberLazyListState()
     val entries: List<Any> = remember(apps) {
         apps.flatMap { app -> (if (apps.size > 1) listOf<Any>(app) else emptyList()) + app.groups }
     }
 
-    LaunchedEffect(apps) { UiState.seedBatch(apps.flatMap { it.requests }) }
+    LaunchedEffect(apps) { BatchDecisions.seedBatch(apps.flatMap { it.requests }) }
     LaunchedEffect(selectedId, entries) {
         val index = entries.indexOfFirst { entry -> entry is RequestGroup && entry.requests.any { it.queueKey == selectedId } }
         if (index >= 0) listState.animateScrollToItem(index)
@@ -221,14 +221,14 @@ private fun BatchGroupCard(
     onExpandToggle: () -> Unit,
 ) {
     val first = group.requests.first()
-    val rememberChoices by UiState.rememberChoices.collectAsState()
-    val scopeChoices by UiState.scopeChoices.collectAsState()
+    val rememberChoices by RequestChoices.rememberChoices.collectAsState()
+    val scopeChoices by RequestChoices.scopeChoices.collectAsState()
     Card(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(12.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Checkbox(
                     checked = group.requests.all { approved[it.queueKey] != false },
-                    onCheckedChange = { UiState.setBatchApproved(group.requests, it) },
+                    onCheckedChange = { BatchDecisions.setBatchApproved(group.requests, it) },
                 )
                 Text(
                     "${group.type.describe(group.kind, group.content)} (${group.requests.size})",
@@ -240,9 +240,9 @@ private fun BatchGroupCard(
                 }
             }
             if (first.hasScopeChoice) {
-                ScopeChips(first, scopeChoices[first.queueKey] ?: first.defaultScope) { UiState.setGroupScope(group.requests, it) }
+                ScopeChips(first, scopeChoices[first.queueKey] ?: first.defaultScope) { RequestChoices.setGroupScope(group.requests, it) }
             }
-            RememberTypeSelector(rememberChoices[first.queueKey] ?: RememberType.NEVER, onValueChange = { UiState.setGroupRemember(group.requests, it) })
+            RememberTypeSelector(rememberChoices[first.queueKey] ?: RememberType.NEVER, onValueChange = { RequestChoices.setGroupRemember(group.requests, it) })
             if (expanded) {
                 group.requests.forEach { req ->
                     BatchRequestRow(
@@ -268,7 +268,7 @@ private fun BatchRequestRow(
         border = if (selected) BorderStroke(2.dp, orange) else null,
     ) {
         Row(Modifier.padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
-            Checkbox(checked = approved, onCheckedChange = { UiState.setBatchApproved(listOf(req), it) })
+            Checkbox(checked = approved, onCheckedChange = { BatchDecisions.setBatchApproved(listOf(req), it) })
             Column(Modifier.weight(1f)) {
                 Text(
                     stringResource(if (approved) Res.string.approve else Res.string.deny),
@@ -337,25 +337,25 @@ private fun ScopeChips(
 
 @Composable
 private fun RequestCard(req: PendingBunkerRequest) {
-    val rememberChoices by UiState.rememberChoices.collectAsState()
+    val rememberChoices by RequestChoices.rememberChoices.collectAsState()
     val rememberType = rememberChoices[req.queueKey] ?: RememberType.NEVER
     var working by remember { mutableStateOf(false) }
-    val connectChoices by UiState.connectChoices.collectAsState()
-    val connectChoice = connectChoices[req.queueKey] ?: UiState.connectChoiceFor(req)
+    val connectChoices by RequestChoices.connectChoices.collectAsState()
+    val connectChoice = connectChoices[req.queueKey] ?: RequestChoices.connectChoiceFor(req)
 
     Card(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(16.dp)) {
             RequestCardHeader(
                 req = req,
                 signingAccountNpub = if (req.type == SignerType.CONNECT) connectChoice.accountNpub else req.account.npub,
-                onSelectAccount = { UiState.setConnectChoice(req.queueKey, connectChoice.copy(accountNpub = it)) },
+                onSelectAccount = { RequestChoices.setConnectChoice(req.queueKey, connectChoice.copy(accountNpub = it)) },
             )
             RequestPreviewSection(req)
             if (req.type == SignerType.CONNECT) {
                 ConnectRequestSection(
                     req = req,
                     connectChoice = connectChoice,
-                    onChoiceChange = { UiState.setConnectChoice(req.queueKey, it) },
+                    onChoiceChange = { RequestChoices.setConnectChoice(req.queueKey, it) },
                 )
             }
             Spacer(Modifier.height(12.dp))
@@ -365,12 +365,12 @@ private fun RequestCard(req: PendingBunkerRequest) {
                 working = working,
                 onApprove = {
                     working = true
-                    UiState.approve(req)
+                    RequestChoices.approve(req)
                     Toaster.toast(getStringBlocking(Res.string.d_request_approved))
                 },
                 onReject = {
                     working = true
-                    UiState.reject(req)
+                    RequestChoices.reject(req)
                     Toaster.toast(getStringBlocking(Res.string.d_request_rejected))
                 },
             )
@@ -550,12 +550,12 @@ private fun RequestGrantOptions(
             Nip44v3ContextNotice(req)
         }
         if (req.hasScopeChoice) {
-            val scopeChoices by UiState.scopeChoices.collectAsState()
-            ScopeChips(req, scopeChoices[req.queueKey] ?: req.defaultScope) { UiState.setScopeChoice(req.queueKey, it) }
+            val scopeChoices by RequestChoices.scopeChoices.collectAsState()
+            ScopeChips(req, scopeChoices[req.queueKey] ?: req.defaultScope) { RequestChoices.setScopeChoice(req.queueKey, it) }
             Spacer(Modifier.height(4.dp))
         }
         if (req.type != SignerType.CONNECT) {
-            RememberTypeSelector(rememberType, onValueChange = { UiState.setRememberChoice(req.queueKey, it) })
+            RememberTypeSelector(rememberType, onValueChange = { RequestChoices.setRememberChoice(req.queueKey, it) })
             Spacer(Modifier.height(8.dp))
         }
     }
@@ -689,7 +689,7 @@ private fun BatchConfirmBar() {
     Row(Modifier.padding(vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
         AmberButton(
             text = "${stringResource(Res.string.confirm)} (${shortcutLabel("↵")})",
-            onClick = { UiState.confirmBatch() },
+            onClick = { BatchDecisions.confirmBatch() },
         )
         Spacer(Modifier.width(16.dp))
         Text(

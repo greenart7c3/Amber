@@ -552,7 +552,7 @@ the approval and keep the content-type grant it had just added.
 With that, what both bunker paths still do separately is their storage, UI and
 platform glue: the decisions are in `:common`.
 
-### 12. Clear the remaining detekt baseline findings
+### 12. Clear the remaining detekt baseline findings (done)
 
 What step 10 left out: about 260 grandfathered findings, most of them `LongMethod`
 (106) and `CyclomaticComplexMethod` (31). They go in this order, one rule or one
@@ -575,10 +575,9 @@ box and its field (and its suggestions lose a leftover red background), `RelayCa
 takes its modifier at the root, the sign-policy and account-picker rows clip before
 the click so the ripple keeps their rounded shape, the main screen remembers its
 pending route (it was recreated on every recomposition, bringing a consumed route
-back), and the desktop tabs use `mutableIntStateOf`. `LoginWithPubKey` keeps its
-`ModifierNotUsedAtRoot` entry on purpose: the screen's modifier scrolls the content
-while the Cancel/Connect row stays pinned, so it cannot move to the root without a
-separate content modifier.
+back), and the desktop tabs use `mutableIntStateOf`. `LoginWithPubKey` takes the
+scaffold padding and builds its own scrolling content modifier, so its `modifier` now
+sits at the root while the Cancel/Connect row stays pinned.
 
 `ComplexCondition` (13): conditions became named predicates or lookups (the top bar's
 content-titled routes, a backup subscription's own events, a public domain name, the
@@ -636,8 +635,41 @@ details (`DetailSection`, `TagsSection`, `PsbtSections`, `PsbtOutputs`), the And
 `PsbtBody` and `LocalBunkerServerSettings`, which also loses its `LongMethod` entry by
 splitting into its switch row and its port field.
 
-`LongMethod` goes one screen or component per change, keeping the state and actions in
-the original function and moving each block it lays out to a private composable that
-takes plain values and callbacks. Repeated blocks become one composable: the request
-group options build their three scope toggle boxes with one `ScopeToggles`, each caller
-keeping an exhaustive `when` for its labels.
+`LongMethod` (none left) went one screen or component per change, keeping the state
+and actions in the original function and moving each block it lays out to a private
+composable that takes plain values and callbacks. Repeated blocks became one composable
+(the request group options' three scope boxes are one `ScopeToggles`, each caller keeping
+an exhaustive `when` for its labels; the two seed-word columns are one `SeedWordsColumn`).
+Where a screen kept many `remember`s and actions, they moved into a state holder and an
+actions class, as `CloudBackupState` / `CloudBackupActions` already did (default and
+profile relays, security, edit configuration).
+
+`ViewModelForwarding` (none left): `MainLoginPage` and `MainScreen` take `LoginActions` /
+`AccountActions` and the restore prompt instead of `AccountStateViewModel`; only the
+activities that create it and `AccountScreen` hold it.
+
+`CompositionLocalAllowlist` and `PreviewAnnotationNaming` (none left): the theme's
+dark/AMOLED flags and the desktop window's size and width bucket join the allowlist in
+`compose.yml`, and the light/dark multipreview is `PreviewsLightDark`.
+
+`TooManyFunctions` (none left): classes split along
+what their callers use together, with the same bodies.
+- Room DAOs: `ApplicationDao` into six DAOs (application reads, lists, writes, the signing
+  decision's permission lookups, permission writes with their transactions, maintenance),
+  whose caching wrappers share one `ApplicationDaoCache` per account (its KDoc states the
+  invalidation rules); `HistoryDao` into writes, paging and stats; `LogDao` into writes,
+  reads and cleanup. The architecture test's DAO-call pattern matches every `.<x>Dao(` /
+  `.daos(` accessor.
+- `Account` keeps signing; encryption is `account.crypto` (`AccountCrypto`) and key export
+  `account.keyExport` (`AccountKeyExport`), each still behind `requirePrivateKeyAccess`.
+- `ApplicationBackup` into payloads, relays and restore; the CLI's `Nip46Client` keeps the
+  connection and exposes the signer requests as `requests`.
+- Desktop: `DesktopMasterKey` owns the master key's lifecycle (its KDoc lists the
+  invariants) and `DesktopKeyStore` the value encryption; `UiState` into selection,
+  `RequestKeyboard`, `RequestChoices` and `BatchDecisions`; `AccountStore`'s read-only
+  lookups are `store.lookup`; `AmberDesktop`'s relay setup and connections are
+  `BunkerRelays` and `RelayConnections`; desktop-entry escaping is `DesktopEntryEscaping`.
+- `LocalPreferences`' per-setting updaters by area (step 5).
+
+What remains in the baselines is the `NoComments` grandfathering (deleting a comment drops
+its entry).

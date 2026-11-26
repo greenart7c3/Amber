@@ -60,6 +60,7 @@ import com.greenart7c3.nostrsigner.commonsui.getStringBlocking
 import com.greenart7c3.nostrsigner.commonsui.insecure_relay_warning
 import com.greenart7c3.nostrsigner.commonsui.relays_used_by_connections
 import com.greenart7c3.nostrsigner.desktop.core.AmberDesktop
+import com.greenart7c3.nostrsigner.desktop.core.BunkerRelays
 import com.greenart7c3.nostrsigner.desktop.core.DesktopSettings
 import com.greenart7c3.nostrsigner.desktop.core.LocalRelays
 import com.greenart7c3.nostrsigner.desktop.core.SettingsStore
@@ -74,7 +75,7 @@ fun RelaysScreen(modifier: Modifier = Modifier) {
     val settings by SettingsStore.settings.collectAsState()
     val available by AmberDesktop.client.availableRelaysFlow().collectAsState()
     val connected by AmberDesktop.client.connectedRelaysFlow().collectAsState()
-    val connectionRelays by remember { AmberDesktop.connectionRelaysFlow() }.collectAsState(emptySet())
+    val connectionRelays by remember { BunkerRelays.connectionRelaysFlow() }.collectAsState(emptySet())
     val connectionOnlyRelays = remember(connectionRelays, settings.defaultRelays) {
         val defaults = settings.normalizedDefaultRelays().toSet()
         connectionRelays.filterNot { it in defaults }.map { it.url }.sorted()

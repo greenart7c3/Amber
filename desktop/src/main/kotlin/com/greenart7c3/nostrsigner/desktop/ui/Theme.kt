@@ -13,7 +13,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.greenart7c3.nostrsigner.desktop.core.SettingsStore
 
-// Mirrors the mobile theme (app/ui/theme/Theme.kt).
 val Shapes = Shapes(
     small = RoundedCornerShape(4.dp),
     medium = RoundedCornerShape(4.dp),
@@ -27,35 +26,31 @@ val primaryVariant = Color(0xFFC8541A)
 val secondaryColor = Color(0xFFFFCA62)
 val orange = Color(0xFFFF6B00)
 
-// The accent (amber / orange) is light, so anything painted on top of it —
-// primary buttons, selected chips, the selected sidebar row — must use dark
-// text. The default dark scheme pairs these containers with light on-colors,
-// which is what produced the unreadable light-on-amber elements.
-private val onAccent = Color(0xFF201A0B)
+private val darkTextOnLightAccent = Color(0xFF201A0B)
 
 private val DarkColorPalette = darkColorScheme(
     primary = primaryColor,
-    onPrimary = onAccent,
+    onPrimary = darkTextOnLightAccent,
     secondary = primaryVariant,
     onSecondary = Color.White,
     tertiary = secondaryColor,
-    onTertiary = onAccent,
+    onTertiary = darkTextOnLightAccent,
     primaryContainer = secondaryColor,
-    onPrimaryContainer = onAccent,
+    onPrimaryContainer = darkTextOnLightAccent,
     secondaryContainer = secondaryColor,
-    onSecondaryContainer = onAccent,
+    onSecondaryContainer = darkTextOnLightAccent,
 )
 
 private val LightColorPalette = lightColorScheme(
     primary = primaryColor,
-    onPrimary = onAccent,
+    onPrimary = darkTextOnLightAccent,
     secondary = primaryVariant,
     tertiary = secondaryColor,
-    onTertiary = onAccent,
+    onTertiary = darkTextOnLightAccent,
     primaryContainer = secondaryColor,
-    onPrimaryContainer = onAccent,
+    onPrimaryContainer = darkTextOnLightAccent,
     secondaryContainer = secondaryColor,
-    onSecondaryContainer = onAccent,
+    onSecondaryContainer = darkTextOnLightAccent,
     surface = Color(0xFFFFDE9E),
     surfaceContainer = Color(0xFFFFDE9E),
 )

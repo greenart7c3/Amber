@@ -2,11 +2,13 @@ package com.greenart7c3.nostrsigner.common
 
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
 
-/** A saved NIP-46 connection, as the admission check needs it. */
+/**
+ * A saved NIP-46 connection, as the admission check needs it: [key] is the client's public
+ * key, the connection's identity, and [localKey] the private key of the connection's own
+ * signer key, "" for a legacy connection.
+ */
 data class Nip46Connection(
-    // The client's public key, the connection's identity.
     val key: String,
-    // The private key of the connection's own signer key, "" for a legacy connection.
     val localKey: String,
     val secret: String,
     val useSecret: Boolean,
@@ -22,7 +24,11 @@ sealed interface Nip46Admission {
     /** No connection and no valid connect secret: answer "no permission", published once. */
     data object Unknown : Nip46Admission
 
-    /** Drop it: a stored app wrote to a connection key that is not its own. */
+    /**
+     * Drop it: a stored app wrote to a connection key that is not its own. A stored app may
+     * only use its own connection key, so the request is dropped rather than answered under
+     * that other connection's identity.
+     */
     data object Ignore : Nip46Admission
 
     /** An already connected client sent `connect` again: acknowledge it without asking. */
@@ -76,8 +82,6 @@ fun Nip46Admission.reply(
     is Nip46Admission.AckRepeatedConnect -> Nip46AdmissionReply.Ack(connection, storedRelays.orEmpty().ifEmpty { deliveredOn })
     is Nip46Admission.RefuseConnect -> Nip46AdmissionReply.Refuse(message, bySecretRelays ?: deliveredOn, "Connection rejected: $message")
     Nip46Admission.Unknown -> Nip46AdmissionReply.Refuse(NIP46_NO_PERMISSION, deliveredOn, "No permission found for $senderKey")
-    // A stored app may only use its own connection key: a request it sends to another
-    // connection's key is dropped rather than answered under that connection's identity.
     Nip46Admission.Ignore -> Nip46AdmissionReply.Drop("Request $requestId from $senderKey reached another connection's key")
     is Nip46Admission.Admit -> null
 }

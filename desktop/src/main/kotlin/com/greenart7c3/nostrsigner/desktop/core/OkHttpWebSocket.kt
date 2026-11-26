@@ -51,15 +51,8 @@ class OkHttpWebSocket(
     val out: WebSocketListener,
 ) : WebSocket {
     companion object {
-        /**
-         * Buffered relay messages before the oldest one is dropped. Deep
-         * enough to absorb a burst while the consumer catches up (pages of
-         * EVENTs across 2000+ relay connections), small enough that a wedged
-         * consumer costs memory, not the process.
-         */
         private const val MESSAGE_BUFFER_CAPACITY = 1024
 
-        // Exists to avoid exceptions stopping the coroutine
         val exceptionHandler =
             CoroutineExceptionHandler { _, throwable ->
                 AmberLogger.e("OkHttpWebSocket", "WebsocketListener Caught exception: ${throwable.message}", throwable)
@@ -80,18 +73,22 @@ class OkHttpWebSocket(
      * than reaching a relay client that has already moved on. Claimed with a compare-and-set so a
      * [disconnect] racing a terminal callback still yields exactly one report.
      */
+    @Suppress("NoComments")
     private val ended = AtomicBoolean(false)
 
     /**
      * True from the start of [connect] until OkHttp hands back its socket. A dial in flight is not
-     * a dead session: reporting it as one let a concurrent reconnect pass tear it down and dial
-     * again, and the first dial, never ended, opened as well. Measured with amy under load: two
-     * connections to one relay, the REQ sent twice and every message of the page delivered twice.
+     * a dead session: reporting it as one let a concurrent reconnect pass of the Quartz relay client
+     * tear it down and dial again, and the first dial, never ended, opened as well: two connections
+     * to one relay, the REQ sent twice and every message delivered twice.
      */
-    @Volatile private var dialing = false
+    @Suppress("NoComments")
+    @Volatile
+    private var dialing = false
 
     override fun needsReconnect() = ended.get() || (socket == null && !dialing)
 
+    @Suppress("NoComments")
     override fun connect() {
         if (socket != null || dialing || ended.get()) return
         dialing = true
@@ -102,16 +99,8 @@ class OkHttpWebSocket(
             object : OkHttpWebSocketListener() {
                 val scope = CoroutineScope(Dispatchers.IO + exceptionHandler)
 
-                // A bounded hand-off: `offer` never blocks, so the OkHttp
-                // reader thread stays free to keep draining the socket (the
-                // reason this was UNLIMITED — backpressure must park on the
-                // app, never on the relay's outbound buffers). But the queue
-                // itself is capped: an unbounded buffer under a flooded or
-                // wedged consumer grew until the process OOMed. On overflow
-                // the oldest buffered message is dropped; see
-                // [RelayMessageBuffer].
                 val incomingMessages = RelayMessageBuffer(MESSAGE_BUFFER_CAPACITY)
-                val job = // Launch a coroutine to process messages from the buffer.
+                val job =
                     scope.launch {
                         while (true) {
                             val message = incomingMessages.receive() ?: break
@@ -119,8 +108,7 @@ class OkHttpWebSocket(
                         }
                     }
 
-                /** Claims the session's single terminal report. False if it already ended. */
-                private fun endSession(): Boolean {
+                private fun claimSessionEnd(): Boolean {
                     if (!ended.compareAndSet(false, true)) return false
                     socket = null
                     incomingMessages.close()
@@ -150,9 +138,6 @@ class OkHttpWebSocket(
                     text: String,
                 ) {
                     if (ended.get()) return
-                    // Never blocks (bounded buffer, drops the oldest on
-                    // overflow): the OkHttp reader thread must stay free to
-                    // keep draining the socket.
                     incomingMessages.offer(text)
                 }
 
@@ -183,7 +168,7 @@ class OkHttpWebSocket(
                     code: Int,
                     reason: String,
                 ) {
-                    if (!endSession()) return
+                    if (!claimSessionEnd()) return
                     out.onClosed(code, reason)
                 }
 
@@ -192,7 +177,7 @@ class OkHttpWebSocket(
                     t: Throwable,
                     response: Response?,
                 ) {
-                    if (!endSession()) return
+                    if (!claimSessionEnd()) return
                     out.onFailure(t, response?.code, response?.message)
                 }
             }
@@ -211,6 +196,7 @@ class OkHttpWebSocket(
         }
     }
 
+    @Suppress("NoComments")
     override fun disconnect() {
         // Claim the session ourselves: OkHttp's cancel() raises no callback when no reader is
         // left to fail (the state a relay-initiated close leaves behind), and when it does the
@@ -237,20 +223,18 @@ class OkHttpWebSocket(
  * buffers. The queue itself is capped, though: unbounded, it OOMed the whole
  * app when a relay flooded or the consumer wedged. At capacity the OLDEST
  * buffered message is dropped to make room for the newest one (a fresh EVENT
- * is worth more than a stale one) and the drop is counted and logged
- * ([AmberLogger] has no warn level; error is its always-on channel).
+ * is worth more than a stale one).
  */
+@Suppress("NoComments")
 internal class RelayMessageBuffer(capacity: Int) {
     private val channel = Channel<String>(capacity)
     private val droppedCount = AtomicLong()
 
-    /** Never blocks: on a full buffer, drops the oldest message and retries. */
     fun offer(message: String) {
         while (true) {
             val result = channel.trySend(message)
             if (result.isSuccess || result.isClosed) return
-            // Full: make room by dropping the oldest buffered message. A
-            // closed-and-empty channel can never accept again, so give up.
+            // A closed-and-empty channel can never accept again, so give up.
             if (channel.tryReceive().isClosed) return
             val dropped = droppedCount.incrementAndGet()
             if (dropped == 1L || dropped % DROP_LOG_EVERY == 0L) {
@@ -259,10 +243,8 @@ internal class RelayMessageBuffer(capacity: Int) {
         }
     }
 
-    /** Next message, or null once the session ended and the buffer drained. */
     suspend fun receive(): String? = channel.receiveCatching().getOrNull()
 
-    /** Ends the session side: no further offers accepted; receives drain, then return null. */
     fun close() {
         channel.close()
     }

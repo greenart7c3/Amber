@@ -11,6 +11,7 @@ import java.util.Locale
  */
 object DateTimes {
     /** [millis] since the epoch as a medium date and time. */
+    @Suppress("NoComments")
     fun format(millis: Long): String = // java.text.DateFormat is not thread-safe, so build one per call.
         DateFormat
             .getDateTimeInstance(DateFormat.MEDIUM, DateFormat.MEDIUM, Locale.getDefault(Locale.Category.FORMAT))

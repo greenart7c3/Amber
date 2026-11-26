@@ -56,8 +56,6 @@ class GrantsTest {
         assertFalse(remembered.replaces("DECRYPT_CLEAR_TEXT", null, ""))
     }
 
-    // The app used to delete every grant of the request's type (NIP44_DECRYPT here),
-    // removing the grant from before and keeping the one the approval had added.
     @Test
     fun `taking back a content-type approval restores the whole-NIP grant it replaced`() {
         val wholeNip = forever("NIP44_DECRYPT", null)
@@ -100,8 +98,10 @@ class GrantsTest {
         assertTrue(sign.replaces("SIGN_EVENT", 22242, "relay.example"))
         assertFalse(sign.replaces("SIGN_EVENT", 22242, "other.example"))
         assertFalse(sign.replaces("SIGN_EVENT", 1, "relay.example"))
+    }
 
-        // A NIP-44 v3 grant is keyed by its context kind, whatever the scope argument says.
+    @Test
+    fun `a NIP-44 v3 grant is keyed by its context kind whatever the scope argument says`() {
         assertEquals("NIP44_V3_ENCRYPT", rememberedGrant(SignerType.NIP44_V3_ENCRYPT, "NIP44_V3_ENCRYPT", wholeNip = false, kind = 7, accepted = true, rememberType = REMEMBER_ALWAYS, relay = "", now = 0).grant.type)
     }
 }

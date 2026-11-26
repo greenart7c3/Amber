@@ -66,13 +66,7 @@ fun RelayStatusWidget(modifier: Modifier = Modifier) {
             Modifier
                 .clip(RoundedCornerShape(8.dp))
                 .clickable {
-                    scope.launch {
-                        // Manual reconnect: give relays marked dead another chance.
-                        RelayHealthTracker.reset()
-                        AmberDesktop.engine.updateFilter()
-                        RelayConnections.reconnect()
-                        Toaster.toast(getStringBlocking(Res.string.d_reconnecting))
-                    }
+                    scope.launch { reconnectRetryingDeadRelays() }
                 }
                 .padding(horizontal = 6.dp, vertical = 4.dp),
             horizontalArrangement = Arrangement.spacedBy(4.dp),
@@ -84,7 +78,13 @@ fun RelayStatusWidget(modifier: Modifier = Modifier) {
     }
 }
 
-/** Port of the Android `R.drawable.relays` vector. */
+private suspend fun reconnectRetryingDeadRelays() {
+    RelayHealthTracker.reset()
+    AmberDesktop.engine.updateFilter()
+    RelayConnections.reconnect()
+    Toaster.toast(getStringBlocking(Res.string.d_reconnecting))
+}
+
 private val RelaysIcon: ImageVector by lazy {
     val paths = listOf(
         "M13,20.25C13.414,20.25 13.75,20.586 13.75,21C13.75,21.414 13.414,21.75 13,21.75H6C4.796,21.75 3.954,21.741 3.337,21.606C2.792,21.487 2.387,21.276 2.055,20.944C1.724,20.613 1.513,20.208 1.394,19.663C1.259,19.046 1.25,18.204 1.25,17C1.25,15.796 1.259,14.954 1.394,14.337C1.513,13.792 1.724,13.387 2.055,13.056C2.387,12.724 2.792,12.513 3.337,12.394C3.954,12.259 4.796,12.25 6,12.25H18C19.204,12.25 20.046,12.259 20.663,12.394C21.208,12.513 21.613,12.724 21.944,13.056C22.276,13.387 22.487,13.792 22.606,14.337C22.741,14.954 22.75,15.796 22.75,17C22.75,18.204 22.741,19.046 22.606,19.663C22.487,20.208 22.276,20.613 21.944,20.944C21.613,21.276 21.208,21.487 20.663,21.606C20.046,21.741 19.204,21.75 18,21.75H17C16.586,21.75 16.25,21.414 16.25,21C16.25,20.586 16.586,20.25 17,20.25H18C18.9,20.25 19.575,20.253 20.095,20.184C20.442,20.137 20.697,20.071 20.884,19.884C21.071,19.697 21.137,19.442 21.183,19.095C21.253,18.575 21.25,17.9 21.25,17C21.25,16.1 21.253,15.425 21.183,14.905C21.137,14.558 21.071,14.303 20.884,14.116C20.697,13.929 20.442,13.863 20.095,13.816C19.575,13.747 18.9,13.75 18,13.75H6C5.1,13.75 4.425,13.747 3.905,13.816C3.558,13.863 3.303,13.929 3.116,14.116C2.929,14.303 2.863,14.558 2.817,14.905C2.747,15.425 2.75,16.1 2.75,17C2.75,17.9 2.747,18.575 2.817,19.095C2.863,19.442 2.929,19.697 3.116,19.884C3.303,20.071 3.558,20.137 3.905,20.184C4.425,20.253 5.1,20.25 6,20.25H13Z",

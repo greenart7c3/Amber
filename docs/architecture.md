@@ -54,8 +54,10 @@ interfaces from the CompositionLocals the two activities provide
   `core/BunkerEngine.kt` 1502, `service/IntentUtils.kt` 1222,
   `service/EventNotificationConsumer.kt` 1087, `LocalPreferences.kt` 1016,
   `Amber.kt` 982). After steps 1–9 none is: the largest are the desktop
-  `ui/SettingsScreen.kt` 948, `ui/actions/AccountBackupScreen.kt` 899 and
-  `service/EventNotificationConsumer.kt` 846; `Amber.kt` is 393.
+  `ui/SettingsScreen.kt` 948 and `ui/actions/AccountBackupScreen.kt` 899;
+  `Amber.kt` is 393, and `service/EventNotificationConsumer.kt` (846) is split
+  into the consumer (315) and `Nip46RequestAdmission`, `Nip46AdmittedRequests`,
+  `Nip46RequestServices` and `DeviceLockedReply`.
 - The Android bunker flow (`BunkerRequestUtils` + `EventNotificationConsumer`)
   and the desktop one (`BunkerEngine`) implemented the same permission and
   response logic twice; step 1 moved the policy to `:common` and step 11 the rest

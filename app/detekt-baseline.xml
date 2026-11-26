@@ -2,7 +2,6 @@
 <SmellBaseline>
   <ManuallySuppressedIssues/>
   <CurrentIssues>
-    <ID>LongMethod:AccountPickerRow.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun AccountPickerRow</ID>
     <ID>LongMethod:BiometricAuthScreen.kt:@Composable fun BiometricAuthScreen</ID>
     <ID>LongMethod:BunkerRelayAuthScreen.kt:@Composable fun BunkerRelayAuthScreen</ID>
     <ID>LongMethod:EditRelaysDialog.kt:@Composable fun DefaultRelaysScreen</ID>

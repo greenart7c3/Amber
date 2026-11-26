@@ -29,13 +29,13 @@ class ApplicationBackupFetchTest {
     fun setUp() {
         every { amber.accountDatabases.daos(any()) } returns relaxedApplicationDaos(permissionWriteDao = dao)
 
-        mockkObject(ApplicationBackup)
+        mockkObject(ApplicationBackup, ApplicationBackupPayloads, ApplicationBackupRestore)
         coEvery { ApplicationBackup.resolveReadRelays(any(), any(), any()) } returns setOf(mockk())
     }
 
     @After
     fun tearDown() {
-        unmockkObject(ApplicationBackup)
+        unmockkObject(ApplicationBackup, ApplicationBackupPayloads, ApplicationBackupRestore)
     }
 
     @Test
@@ -50,7 +50,7 @@ class ApplicationBackupFetchTest {
     @Test
     fun `an undecryptable backup is reported as failed`() = runBlocking {
         coEvery { ApplicationBackup.fetchLatestBackupEvent(any(), any(), any()) } returns mockk<Event>()
-        coEvery { ApplicationBackup.decryptPayload(any(), any()) } returns null
+        coEvery { ApplicationBackupPayloads.decryptPayload(any(), any()) } returns null
 
         val result = ApplicationBackup.fetchLatestPayload(newTestAccount(scope), mockk(relaxed = true), amber)
 
@@ -61,12 +61,12 @@ class ApplicationBackupFetchTest {
     fun `a backup is returned for review without being restored`() = runBlocking {
         val payload = BackupPayload(applications = emptyList())
         coEvery { ApplicationBackup.fetchLatestBackupEvent(any(), any(), any()) } returns mockk<Event>()
-        coEvery { ApplicationBackup.decryptPayload(any(), any()) } returns payload
+        coEvery { ApplicationBackupPayloads.decryptPayload(any(), any()) } returns payload
 
         val result = ApplicationBackup.fetchLatestPayload(newTestAccount(scope), mockk(relaxed = true), amber)
 
         assertEquals(BackupFetchResult.Found(payload), result)
-        coVerify(exactly = 0) { ApplicationBackup.restoreFromPayload(any(), any(), any(), any()) }
+        coVerify(exactly = 0) { ApplicationBackupRestore.restoreFromPayload(any(), any(), any(), any()) }
         coVerify(exactly = 0) { dao.insertApplicationWithPermissions(any()) }
     }
 }

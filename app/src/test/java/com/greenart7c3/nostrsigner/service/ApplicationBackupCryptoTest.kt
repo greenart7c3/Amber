@@ -114,8 +114,8 @@ class ApplicationBackupCryptoTest {
         // to the user's own pubkey, so it must not be restorable as a backup.
         val legacyCiphertext = account.crypto.nip44Encrypt(payload, account.hexKey)
 
-        assertEquals(payload, ApplicationBackup.decryptContent(newCiphertext, account))
-        assertNull(ApplicationBackup.decryptContent(legacyCiphertext, account))
-        assertNull(ApplicationBackup.decryptContent("not-a-backup-payload", account))
+        assertEquals(payload, ApplicationBackupPayloads.decryptContent(newCiphertext, account))
+        assertNull(ApplicationBackupPayloads.decryptContent(legacyCiphertext, account))
+        assertNull(ApplicationBackupPayloads.decryptContent("not-a-backup-payload", account))
     }
 }

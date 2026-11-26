@@ -615,62 +615,28 @@
     <ID>NoComments:EventDetailModal.kt:An event's kind (as [kindLabel] names it), author, date, content and tags, each one copyable.</ID>
     <ID>NoComments:EventDetailModal.kt:Tags as they are copied: `["p", "…"], ["t", "…"]`.</ID>
     <ID>NoComments:EventNotificationConsumer.kt:(e.g. the message to encrypt, or the event to sign). The encrypted event</ID>
-    <ID>NoComments:EventNotificationConsumer.kt:A device-lock or settings refusal is not a ciphertext problem:</ID>
-    <ID>NoComments:EventNotificationConsumer.kt:A stored connection is deleted, with its history and queued requests, once the client has the ack.</ID>
-    <ID>NoComments:EventNotificationConsumer.kt:A stored connection moves to the default relays once the client has the answer.</ID>
-    <ID>NoComments:EventNotificationConsumer.kt:A v3 request that can never succeed — missing/invalid kind, a</ID>
-    <ID>NoComments:EventNotificationConsumer.kt:Admits [request] (see the common `admitNip46Request`): a repeated connect is</ID>
-    <ID>NoComments:EventNotificationConsumer.kt:Answers a request with a "locked" error instead of letting the client time</ID>
-    <ID>NoComments:EventNotificationConsumer.kt:Answers from the stored grants (through SignerProviderQuery, like an intent), else asks.</ID>
-    <ID>NoComments:EventNotificationConsumer.kt:Builds the preview [EncryptedDataKind] for a NIP-44 v3 bunker request,</ID>
-    <ID>NoComments:EventNotificationConsumer.kt:Bundles the request's context so the handlers take one argument.</ID>
     <ID>NoComments:EventNotificationConsumer.kt:Connection-based match via the in-memory index populated by</ID>
     <ID>NoComments:EventNotificationConsumer.kt:Constructor injection: one parameter per dependency.</ID>
     <ID>NoComments:EventNotificationConsumer.kt:First try to match the tagged key to a logged-in account (real pubkey)</ID>
     <ID>NoComments:EventNotificationConsumer.kt:Freshness is checked after the limiter: these rejections log the</ID>
     <ID>NoComments:EventNotificationConsumer.kt:JSON: Quartz's BunkerRequestConnect only keeps params[0..2] and drops the</ID>
-    <ID>NoComments:EventNotificationConsumer.kt:Leaves the decision to the user: the request notification opens the approval screen.</ID>
     <ID>NoComments:EventNotificationConsumer.kt:Legacy client: the request and any reply are encrypted with the</ID>
     <ID>NoComments:EventNotificationConsumer.kt:NIP-46 connect requests may carry optional client metadata as the 4th</ID>
-    <ID>NoComments:EventNotificationConsumer.kt:NIP-46 requests are attributed to the client's pubkey, not an</ID>
     <ID>NoComments:EventNotificationConsumer.kt:Never persist the decrypted request body — it can contain plaintext</ID>
     <ID>NoComments:EventNotificationConsumer.kt:NotificationSubscription.updateFilter. This replaces an O(accounts × connections)</ID>
     <ID>NoComments:EventNotificationConsumer.kt:One budget per process: several call sites construct their own consumer.</ID>
     <ID>NoComments:EventNotificationConsumer.kt:Only addresses the replies sent before authorization, so it carries no</ID>
-    <ID>NoComments:EventNotificationConsumer.kt:Params come straight from the client: a missing one or an unparsable event is null.</ID>
     <ID>NoComments:EventNotificationConsumer.kt:Refreshes the NIP-46 subscription after a connection is added or removed.</ID>
-    <ID>NoComments:EventNotificationConsumer.kt:Refuses an admitted request before anything is signed or decrypted (the common</ID>
-    <ID>NoComments:EventNotificationConsumer.kt:Saved names may predate sanitizing at entry.</ID>
     <ID>NoComments:EventNotificationConsumer.kt:Senders that are not a stored connection are rate-limited before any</ID>
-    <ID>NoComments:EventNotificationConsumer.kt:Sends what the admission alone decided (the common `Nip46Admission.reply`): an</ID>
     <ID>NoComments:EventNotificationConsumer.kt:The account a request tagged to [taggedHex] is for, with the private key of the</ID>
     <ID>NoComments:EventNotificationConsumer.kt:The account a verified kind-24133 [event] is for, with the private key of the</ID>
-    <ID>NoComments:EventNotificationConsumer.kt:The approval screen answers with the preview's result, as on the intent path.</ID>
-    <ID>NoComments:EventNotificationConsumer.kt:The common first step, as on the desktop: once the sender is admitted (an</ID>
-    <ID>NoComments:EventNotificationConsumer.kt:The key a request acts on (empty when none) and, for sign_event, its event.</ID>
-    <ID>NoComments:EventNotificationConsumer.kt:The params of [request], or null when it was refused before any key is used:</ID>
-    <ID>NoComments:EventNotificationConsumer.kt:The plaintext side is what the user reads: the message of an encrypt, the result of a decrypt.</ID>
-    <ID>NoComments:EventNotificationConsumer.kt:The same event usually arrives from several relays; answer it once,</ID>
-    <ID>NoComments:EventNotificationConsumer.kt:The shared check decides, as on the desktop; requestParams reads the values.</ID>
-    <ID>NoComments:EventNotificationConsumer.kt:The user set a finite lifetime on this connection: answer as an</ID>
-    <ID>NoComments:EventNotificationConsumer.kt:V3 arrives as a generic BunkerRequest; build the preview the dedicated</ID>
-    <ID>NoComments:EventNotificationConsumer.kt:Validates a NIP-44 v3 bunker request. Returns null when it can proceed, or</ID>
-    <ID>NoComments:EventNotificationConsumer.kt:What every handler of an admitted request needs.</ID>
-    <ID>NoComments:EventNotificationConsumer.kt:What it does first (the common nip46Step); never a refusal, those are answered in admit.</ID>
     <ID>NoComments:EventNotificationConsumer.kt:Whether [event] is within the sender's rate limit, fresh and not seen before.</ID>
     <ID>NoComments:EventNotificationConsumer.kt:With requireUnlockedDevice on, nothing may use the account key while</ID>
     <ID>NoComments:EventNotificationConsumer.kt:account key, so it can't even be answered. Leave the event</ID>
-    <ID>NoComments:EventNotificationConsumer.kt:approval screen renders (plaintext, like the v2 path).</ID>
-    <ID>NoComments:EventNotificationConsumer.kt:being told the payload was corrupt.</ID>
-    <ID>NoComments:EventNotificationConsumer.kt:ciphertext, a bad MAC/padding, or a non-base64 encrypt payload</ID>
     <ID>NoComments:EventNotificationConsumer.kt:connecting over the bunker:// flow. It must be read from the raw request</ID>
-    <ID>NoComments:EventNotificationConsumer.kt:decrypt whose context (kind/scope) does not match the</ID>
     <ID>NoComments:EventNotificationConsumer.kt:event id, so a flood of signed stale events must be budgeted too.</ID>
-    <ID>NoComments:EventNotificationConsumer.kt:installed app. There is no installed caller, so nothing to capture.</ID>
     <ID>NoComments:EventNotificationConsumer.kt:is already logged above; here we record only non-sensitive metadata.</ID>
     <ID>NoComments:EventNotificationConsumer.kt:legitimate sender's budget.</ID>
-    <ID>NoComments:EventNotificationConsumer.kt:let it through so the client gets the real condition instead of</ID>
-    <ID>NoComments:EventNotificationConsumer.kt:like notify() does.</ID>
     <ID>NoComments:EventNotificationConsumer.kt:limiter: an approved app legitimately bursts (bulk decrypts, rapid</ID>
     <ID>NoComments:EventNotificationConsumer.kt:metadata element when it rebuilds its params array.</ID>
     <ID>NoComments:EventNotificationConsumer.kt:on the proven signer pubkey, so forged events cannot drain a</ID>
@@ -681,12 +647,8 @@
     <ID>NoComments:EventNotificationConsumer.kt:signing) and must never be dropped. Checked after verify() and keyed</ID>
     <ID>NoComments:EventNotificationConsumer.kt:silence instead of the user's battery. Stored connections bypass the</ID>
     <ID>NoComments:EventNotificationConsumer.kt:synchronous scan that previously ran inside runBlocking on the relay event thread.</ID>
-    <ID>NoComments:EventNotificationConsumer.kt:text = readable plaintext (for display/history); result = wire value.</ID>
     <ID>NoComments:EventNotificationConsumer.kt:the device is locked, and that includes opening the request.</ID>
-    <ID>NoComments:EventNotificationConsumer.kt:unknown app even before the periodic cleanup deletes the row.</ID>
-    <ID>NoComments:EventNotificationConsumer.kt:unknown one got the single "no permission"), and before anything is signed.</ID>
     <ID>NoComments:EventNotificationConsumer.kt:unrecorded so a re-delivery after unlock is processed.</ID>
-    <ID>NoComments:EventNotificationConsumer.kt:— is rejected here, before any approval screen is shown.</ID>
     <ID>NoComments:EventNotificationConsumerRateLimitTest.kt:A real responder over the mocked Application, spied so tests can stub its replies.</ID>
     <ID>NoComments:EventNotificationConsumerRateLimitTest.kt:Empty content: the event is fully admitted (recorded in the persistent</ID>
     <ID>NoComments:EventNotificationConsumerRateLimitTest.kt:Feeds pre-signed [events] and checks that exactly the [capacity] budget</ID>
@@ -694,7 +656,6 @@
     <ID>NoComments:EventNotificationConsumerRateLimitTest.kt:cache) but notify() stops before decrypting, which keeps the test to</ID>
     <ID>NoComments:EventNotificationConsumerRateLimitTest.kt:event id, so they must be budgeted like any other event.</ID>
     <ID>NoComments:EventNotificationConsumerRateLimitTest.kt:the gate itself. A distinct created_at gives each event its own id.</ID>
-    <ID>NoComments:EventNotificationConsumerSealResultTest.kt:A real responder over the mocked Application, spied so tests can stub its replies.</ID>
     <ID>NoComments:EventNotificationConsumerTest.kt:A connection from before per-connection keys: its requests reach the account key.</ID>
     <ID>NoComments:EventNotificationConsumerTest.kt:A real responder over the mocked Application, spied so tests can stub its replies.</ID>
     <ID>NoComments:EventNotificationConsumerTest.kt:A rejected event is never looked up in, or written to, the persistent cache.</ID>

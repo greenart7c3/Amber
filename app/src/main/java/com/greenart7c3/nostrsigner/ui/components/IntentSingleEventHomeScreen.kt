@@ -356,13 +356,13 @@ private fun RelayAuthRequest(
     val intentData = request.intentData
     val event = intentData.event!!
     val relayUrl = RelayUrlUtils.extractHostAndPort(AmberEvent.relay(event))
-    val blockedByWhitelist = isBlockedByAuthWhitelist(RELAY_AUTH_KIND, relayUrl, settingsStore.settings.authWhitelist)
+    val rejectedByAuthWhitelistOverridingRememberedChoice = isBlockedByAuthWhitelist(RELAY_AUTH_KIND, relayUrl, settingsStore.settings.authWhitelist)
 
     BunkerRelayAuthScreen(
         modifier = modifier,
         appName = request.appName,
         relayUrl = relayUrl,
-        shouldAcceptOrReject = if (blockedByWhitelist) false else request.remembered(relayUrl),
+        shouldAcceptOrReject = if (rejectedByAuthWhitelistOverridingRememberedChoice) false else request.remembered(relayUrl),
         defaultScope = RelayAuthScope.SPECIFIC,
         account = request.account,
         onAccept = { rememberType, scope ->

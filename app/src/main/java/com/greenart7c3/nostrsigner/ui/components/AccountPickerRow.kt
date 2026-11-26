@@ -247,13 +247,13 @@ private fun AccountPickerList(
             .padding(horizontal = 12.dp, vertical = 8.dp),
     ) {
         val favorites by SavedAccounts.favorites(LocalContext.current).collectAsStateWithLifecycle()
-        val shownWithSelectableIndex = accounts.withIndex().toList()
+        val displayOnlyRowsKeepingSigningIndex = accounts.withIndex().toList()
             .filter { (_, acc) -> accountMatchesSearch(query, acc.npub, names[acc.npub].orEmpty()) }
             .favoritesFirst(favorites) { it.value.npub }
-        if (shownWithSelectableIndex.isEmpty()) {
+        if (displayOnlyRowsKeepingSigningIndex.isEmpty()) {
             NoAccountsFound()
         }
-        shownWithSelectableIndex.forEach { (index, acc) ->
+        displayOnlyRowsKeepingSigningIndex.forEach { (index, acc) ->
             key(acc.npub) {
                 AccountPickerItem(
                     account = acc,

@@ -79,6 +79,8 @@ import org.jetbrains.compose.resources.stringResource
 
 private const val RELAY_AUTH_KIND = 22242
 
+private fun viewModelKeyIsolatingGrants(account: Account, bunkerRequest: AmberBunkerRequest) = "bunker-single-${account.npub}-${bunkerRequest.queueKey}"
+
 @Composable
 fun BunkerSingleEventHomeScreen(
     horizontalPadding: Dp,
@@ -88,7 +90,7 @@ fun BunkerSingleEventHomeScreen(
     onLoading: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: BunkerSingleEventViewModel = viewModel(
-        key = "bunker-single-${account.npub}-${bunkerRequest.queueKey}",
+        key = viewModelKeyIsolatingGrants(account, bunkerRequest),
         factory = BunkerSingleEventViewModel.factory(
             accountRepository = LocalAccountRepository.current,
             bunkerResponder = LocalBunkerResponder.current,
@@ -106,7 +108,8 @@ fun BunkerSingleEventHomeScreen(
     when (bunkerRequest.request) {
         is BunkerRequestPing -> PingRequest(request, responder, onLoading, modifier)
         is BunkerRequestConnect -> {
-            replacePrompt?.takeIf { it.request.bunkerRequest === bunkerRequest }?.let {
+            val replacePromptRaisedForThisRequest = replacePrompt?.takeIf { it.request.bunkerRequest === bunkerRequest }
+            replacePromptRaisedForThisRequest?.let {
                 ReplaceConnectionDialog(
                     prompt = it,
                     onReplace = { viewModel.replaceConnection(onLoading) },
@@ -302,14 +305,14 @@ private fun RelayAuthRequest(
 ) {
     val context = LocalContext.current
     val relayUrl = RelayUrlUtils.extractHostAndPort(AmberEvent.relay(event))
-    val blockedByWhitelist = isBlockedByAuthWhitelist(RELAY_AUTH_KIND, relayUrl, LocalSettingsStore.current.settings.authWhitelist)
+    val rejectedByAuthWhitelistOverridingRememberedChoice = isBlockedByAuthWhitelist(RELAY_AUTH_KIND, relayUrl, LocalSettingsStore.current.settings.authWhitelist)
 
     BunkerRelayAuthScreen(
         modifier = modifier,
         appName = request.appName,
         iconUrl = request.appIcon,
         relayUrl = relayUrl,
-        shouldAcceptOrReject = if (blockedByWhitelist) false else request.decision(relayUrl),
+        shouldAcceptOrReject = if (rejectedByAuthWhitelistOverridingRememberedChoice) false else request.decision(relayUrl),
         defaultScope = RelayAuthScope.SPECIFIC,
         account = request.account,
         onAccept = { rememberType, scope ->

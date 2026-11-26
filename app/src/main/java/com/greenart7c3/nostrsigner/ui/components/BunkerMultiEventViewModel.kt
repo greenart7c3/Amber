@@ -110,11 +110,15 @@ class BunkerMultiEventViewModel(
     /** Approves every request except relays outside the auth whitelist. */
     fun initChoices(batchRequests: List<AmberBunkerRequest>) {
         MultiEventScreenIntents.rememberType = RememberType.NEVER
-        batchRequests.forEach { MultiEventScreenIntents.checkedStates[it.queueKey] = !isBlocked(it) }
+        setCheckedOnlyForThisBatch(batchRequests.associate { it.queueKey to !isBlocked(it) })
     }
 
     fun setGroupApproved(groupItems: List<AmberBunkerRequest>, approve: Boolean) {
-        MultiEventScreenIntents.checkedStates.putAll(groupItems.associate { it.queueKey to (approve && !isBlocked(it)) })
+        setCheckedOnlyForThisBatch(groupItems.associate { it.queueKey to (approve && !isBlocked(it)) })
+    }
+
+    private fun setCheckedOnlyForThisBatch(decisionsByQueueKey: Map<String, Boolean>) {
+        MultiEventScreenIntents.checkedStates.putAll(decisionsByQueueKey)
     }
 
     /**
@@ -137,11 +141,7 @@ class BunkerMultiEventViewModel(
             try {
                 relayClient.checkForNewRelaysAndUpdateAllFilters()
                 val closeApp = batchRequests.any { it.closeApplication }
-                val notificationManager = appContext.getSystemService(NotificationManager::class.java)
-                batchRequests.forEach {
-                    BunkerRequestUtils.remove(it)
-                    notificationManager.cancel(it.queueKey.hashCode())
-                }
+                dequeueOnlyThisBatchLeavingLaterConnectsPending(batchRequests)
                 finishActivity(activity, closeApp)
                 for (request in batchRequests) {
                     confirmOne(request)
@@ -150,6 +150,26 @@ class BunkerMultiEventViewModel(
                 onLoading(false)
             }
         }
+    }
+
+    private fun dequeueOnlyThisBatchLeavingLaterConnectsPending(batchRequests: List<AmberBunkerRequest>) {
+        val notificationManager = appContext.getSystemService(NotificationManager::class.java)
+        batchRequests.forEach {
+            BunkerRequestUtils.remove(it)
+            notificationManager.cancel(it.queueKey.hashCode())
+        }
+    }
+
+    private suspend fun answerRevokedConnectionWithError(request: AmberBunkerRequest, thisAccount: Account) {
+        BunkerRequestUtils.remove(request)
+        AmberUtils.sendBunkerError(
+            bunkerResponder,
+            account = thisAccount,
+            bunkerRequest = request,
+            relays = BunkerRequestUtils.responseRelays(request, null, settingsStore.settings.defaultRelays),
+            closeApplication = request.closeApplication,
+            onLoading = {},
+        )
     }
 
     private suspend fun confirmOne(request: AmberBunkerRequest) {
@@ -162,15 +182,7 @@ class BunkerMultiEventViewModel(
         val savedApplication = accountRepository.daos(thisAccount.npub).applicationDao.getByKey(request.localKey)
 
         if (savedApplication == null) {
-            BunkerRequestUtils.remove(request)
-            AmberUtils.sendBunkerError(
-                bunkerResponder,
-                account = thisAccount,
-                bunkerRequest = request,
-                relays = BunkerRequestUtils.responseRelays(request, null, settingsStore.settings.defaultRelays),
-                closeApplication = request.closeApplication,
-                onLoading = {},
-            )
+            answerRevokedConnectionWithError(request, thisAccount)
             return
         }
 

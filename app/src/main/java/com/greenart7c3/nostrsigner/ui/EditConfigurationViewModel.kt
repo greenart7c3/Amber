@@ -58,7 +58,7 @@ class EditConfigurationViewModel(
             val localApplicationData = it.application.copy(name = name, relays = relays, closeApplication = closeApplication)
             accountRepository.daos(npub).applicationWriteDao.delete(it.application)
             accountRepository.daos(npub).permissionWriteDao.insertApplicationWithPermissions(ApplicationWithPermissions(localApplicationData, it.permissions))
-            relayClient.checkForNewRelaysAndUpdateAllFilters()
+            rebuildFiltersBeforeLeavingClearsThisScope()
             withContext(Dispatchers.Main) { onDone() }
         }
     }
@@ -80,7 +80,7 @@ class EditConfigurationViewModel(
             daos.applicationWriteDao.delete(it.application)
             accountRepository.getHistoryDatabase(npub).dao().deleteHistory(it.application.key)
             daos.permissionWriteDao.insertApplicationWithPermissions(ApplicationWithPermissions(resetApp, it.permissions))
-            relayClient.checkForNewRelaysAndUpdateAllFilters()
+            rebuildFiltersBeforeLeavingClearsThisScope()
             withContext(Dispatchers.Main) { onDone() }
         }
     }
@@ -91,9 +91,13 @@ class EditConfigurationViewModel(
             dropQueuedRequestsSoStaleCardsCannotResurrect(it.application.key)
             accountRepository.daos(npub).applicationWriteDao.delete(it.application)
             accountRepository.getHistoryDatabase(npub).dao().deleteHistory(it.application.key)
-            relayClient.checkForNewRelaysAndUpdateAllFilters()
+            rebuildFiltersBeforeLeavingClearsThisScope()
             withContext(Dispatchers.Main) { onDone() }
         }
+    }
+
+    private suspend fun rebuildFiltersBeforeLeavingClearsThisScope() {
+        relayClient.checkForNewRelaysAndUpdateAllFilters()
     }
 
     private fun dropQueuedRequestsSoStaleCardsCannotResurrect(connectionKey: String) {

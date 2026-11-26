@@ -63,6 +63,7 @@ import com.greenart7c3.nostrsigner.commonsui.localizedBlocking
 import com.greenart7c3.nostrsigner.commonsui.remove_all_permissions
 import com.greenart7c3.nostrsigner.commonsui.sign
 import com.greenart7c3.nostrsigner.models.Account
+import com.greenart7c3.nostrsigner.service.TrustScoreService
 import com.greenart7c3.nostrsigner.ui.actions.RemoveAllPermissionsDialog
 import com.greenart7c3.nostrsigner.ui.components.AddPermissionsSheet
 import com.greenart7c3.nostrsigner.ui.components.AmberButton
@@ -455,6 +456,8 @@ private fun RememberForToggle(
         )
     }
 }
+
+internal fun hasMeaningfulTrustBadge(relayUrl: String) = !TrustScoreService.isExcludedFromScoring(relayUrl)
 
 @Composable
 fun RelayCard(

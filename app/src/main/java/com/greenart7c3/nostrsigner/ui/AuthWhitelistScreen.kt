@@ -236,12 +236,12 @@ private fun AuthWhitelistEntries(
     ) {
         items(whitelist.size) { index ->
             val hostname = whitelist[index]
-            val urlTheScoringFetchUses = "wss://$hostname"
+            val schemedUrlSoHostnameIsNotExcludedFromScoring = "wss://$hostname"
             RelayCard(
                 relay = hostname,
                 trustScore = trustScores[hostname],
                 isLoadingScore = loadingScores[hostname] == true,
-                showTrustScore = !TrustScoreService.isExcludedFromScoring(urlTheScoringFetchUses),
+                showTrustScore = hasMeaningfulTrustBadge(schemedUrlSoHostnameIsNotExcludedFromScoring),
                 onClick = { onRemove(index) },
             )
         }

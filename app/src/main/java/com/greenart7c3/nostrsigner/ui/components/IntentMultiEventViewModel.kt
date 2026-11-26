@@ -53,11 +53,15 @@ class IntentMultiEventViewModel(
     /** Approves every request except relays outside the auth whitelist. */
     fun initChoices(intents: List<IntentData>) {
         MultiEventScreenIntents.rememberType = RememberType.NEVER
-        intents.forEach { MultiEventScreenIntents.checkedStates[it.queueKey] = !isBlocked(it) }
+        setCheckedOnlyForThisBatch(intents.associate { it.queueKey to !isBlocked(it) })
     }
 
     fun setGroupApproved(intents: List<IntentData>, approve: Boolean) {
-        MultiEventScreenIntents.checkedStates.putAll(intents.associate { it.queueKey to (approve && !isBlocked(it)) })
+        setCheckedOnlyForThisBatch(intents.associate { it.queueKey to (approve && !isBlocked(it)) })
+    }
+
+    private fun setCheckedOnlyForThisBatch(decisionsByQueueKey: Map<String, Boolean>) {
+        MultiEventScreenIntents.checkedStates.putAll(decisionsByQueueKey)
     }
 
     fun confirm(

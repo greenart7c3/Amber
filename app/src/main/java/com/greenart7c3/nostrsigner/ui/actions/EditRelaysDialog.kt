@@ -95,6 +95,7 @@ import com.greenart7c3.nostrsigner.ui.ToastManager
 import com.greenart7c3.nostrsigner.ui.components.AmberButton
 import com.greenart7c3.nostrsigner.ui.components.SectionLabel
 import com.greenart7c3.nostrsigner.ui.components.TrustScoreBadge
+import com.greenart7c3.nostrsigner.ui.hasMeaningfulTrustBadge
 import com.vitorpamplona.quartz.nip01Core.core.Event
 import com.vitorpamplona.quartz.nip01Core.core.toHexKey
 import com.vitorpamplona.quartz.nip01Core.crypto.KeyPair
@@ -391,7 +392,7 @@ private fun DefaultRelayList(
                 relay = relayUrl,
                 trustScore = trustScores[relayUrl],
                 isLoadingScore = loadingScores[relayUrl] == true,
-                showTrustScore = !TrustScoreService.isExcludedFromScoring(relayUrl),
+                showTrustScore = hasMeaningfulTrustBadge(relayUrl),
                 onClick = { onRemove(it, relayUrl) },
             )
         }

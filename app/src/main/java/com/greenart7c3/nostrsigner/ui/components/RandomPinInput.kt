@@ -6,6 +6,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -34,6 +35,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
@@ -86,126 +88,175 @@ fun RandomPinInput(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
-        Column(
+        PinDisplay(
+            text = text,
+            pin = selectedPin,
+            obscureText = obscureText,
+            onToggleObscure = { obscureText = !obscureText },
+        )
+
+        PinKeypad(
+            digits = randomNumbers,
+            canConfirm = selectedPin.length >= 4,
+            onDigit = { digit ->
+                if (selectedPin.length < 6) {
+                    selectedPin += digit.toString()
+                }
+            },
+            onErase = {
+                if (selectedPin.isNotEmpty()) {
+                    selectedPin = selectedPin.dropLast(1)
+                }
+            },
+            onConfirm = {
+                if (selectedPin.length >= 4) {
+                    onPinEnter(selectedPin)
+                }
+            },
+        )
+    }
+}
+
+@Composable
+private fun PinDisplay(
+    text: String?,
+    pin: String,
+    obscureText: Boolean,
+    onToggleObscure: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(100.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+    ) {
+        text?.let {
+            Text(
+                text = it,
+                fontWeight = FontWeight.Bold,
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+        }
+
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(100.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center,
+                .height(40.dp)
+                .border(1.dp, Color.LightGray, RoundedCornerShape(20)),
+            contentAlignment = Alignment.Center,
         ) {
-            text?.let {
-                Text(
-                    text = it,
-                    fontWeight = FontWeight.Bold,
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-            }
+            Text(
+                text = if (!obscureText) pin else pin.map { '*' }.joinToString(""),
+            )
+        }
 
-            Box(
+        IconButton(
+            onClick = onToggleObscure,
+        ) {
+            Icon(
+                imageVector = if (obscureText) Icons.Default.Visibility else Icons.Default.VisibilityOff,
+                contentDescription = "Show/Hide",
+            )
+        }
+    }
+}
+
+@Composable
+private fun ColumnScope.PinKeypad(
+    digits: List<Int>,
+    canConfirm: Boolean,
+    onDigit: (Int) -> Unit,
+    onErase: () -> Unit,
+    onConfirm: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    LazyVerticalGrid(
+        columns = GridCells.Fixed(3),
+        modifier = modifier.fillMaxWidth(),
+    ) {
+        itemsIndexed(digits.dropLast(1)) { _, number ->
+            PinDigitButton(
+                digit = number,
+                onClick = { onDigit(number) },
+                modifier = Modifier.padding(8.dp),
+            )
+        }
+
+        item {
+            PinIconButton(
+                imageVector = Icons.AutoMirrored.Filled.Backspace,
+                contentDescription = "Erase",
+                onClick = onErase,
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .height(40.dp)
-                    .border(1.dp, Color.LightGray, RoundedCornerShape(20)),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(
-                    text = if (!obscureText) selectedPin else selectedPin.map { '*' }.joinToString(""),
-                )
-            }
-
-            IconButton(
-                onClick = { obscureText = !obscureText },
-            ) {
-                Icon(
-                    imageVector = if (obscureText) Icons.Default.Visibility else Icons.Default.VisibilityOff,
-                    contentDescription = "Show/Hide",
-                )
-            }
+                    .weight(1f)
+                    .padding(8.dp),
+            )
         }
 
-        LazyVerticalGrid(
-            columns = GridCells.Fixed(3),
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            itemsIndexed(randomNumbers.dropLast(1)) { _, number ->
-                Button(
-                    shape = RoundedCornerShape(20),
-                    onClick = {
-                        if (selectedPin.length < 6) {
-                            selectedPin += number.toString()
-                        }
-                    },
-                    modifier = Modifier.padding(8.dp),
-                ) {
-                    Text(
-                        number.toString(),
-                        color = Color.Black,
-                        modifier = Modifier.scale(1.50f),
-                    )
-                }
-            }
-
-            item {
-                Button(
-                    shape = RoundedCornerShape(20),
-                    onClick = {
-                        if (selectedPin.isNotEmpty()) {
-                            selectedPin = selectedPin.dropLast(1) // Remove last digit
-                        }
-                    },
-                    modifier = Modifier
-                        .weight(1f)
-                        .padding(8.dp),
-                ) {
-                    Icon(
-                        Icons.AutoMirrored.Filled.Backspace,
-                        contentDescription = "Erase",
-                        tint = Color.Black,
-                    )
-                }
-            }
-
-            item {
-                Button(
-                    shape = RoundedCornerShape(20),
-                    onClick = {
-                        if (selectedPin.length < 6) {
-                            selectedPin += randomNumbers.last().toString()
-                        }
-                    },
-                    modifier = Modifier
-                        .weight(1f)
-                        .padding(8.dp),
-                ) {
-                    Text(
-                        randomNumbers.last().toString(),
-                        color = Color.Black,
-                        modifier = Modifier.scale(1.50f),
-                    )
-                }
-            }
-
-            item {
-                Button(
-                    shape = RoundedCornerShape(20),
-                    enabled = selectedPin.length >= 4,
-                    onClick = {
-                        if (selectedPin.length >= 4) {
-                            onPinEnter(selectedPin) // Confirm the PIN
-                        }
-                    },
-                    modifier = Modifier
-                        .weight(1f)
-                        .padding(8.dp),
-                ) {
-                    Icon(
-                        Icons.Default.Done,
-                        contentDescription = "Done",
-                        tint = Color.Black,
-                    )
-                }
-            }
+        item {
+            PinDigitButton(
+                digit = digits.last(),
+                onClick = { onDigit(digits.last()) },
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(8.dp),
+            )
         }
+
+        item {
+            PinIconButton(
+                imageVector = Icons.Default.Done,
+                contentDescription = "Done",
+                onClick = onConfirm,
+                enabled = canConfirm,
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(8.dp),
+            )
+        }
+    }
+}
+
+@Composable
+private fun PinDigitButton(
+    digit: Int,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Button(
+        shape = RoundedCornerShape(20),
+        onClick = onClick,
+        modifier = modifier,
+    ) {
+        Text(
+            digit.toString(),
+            color = Color.Black,
+            modifier = Modifier.scale(1.50f),
+        )
+    }
+}
+
+@Composable
+private fun PinIconButton(
+    imageVector: ImageVector,
+    contentDescription: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+) {
+    Button(
+        shape = RoundedCornerShape(20),
+        enabled = enabled,
+        onClick = onClick,
+        modifier = modifier,
+    ) {
+        Icon(
+            imageVector,
+            contentDescription = contentDescription,
+            tint = Color.Black,
+        )
     }
 }
 

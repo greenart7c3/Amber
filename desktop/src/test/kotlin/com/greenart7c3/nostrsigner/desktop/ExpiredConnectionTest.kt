@@ -49,7 +49,7 @@ class ExpiredConnectionTest {
         return Triple(account.npub, NostrSignerInternal(client), clientHex)
     }
 
-    private fun connectionHex(npub: String, clientHex: String) = localPubKeyFromPrivKey(AmberDesktop.store(npub).getByKey(clientHex)!!.app.localKey)
+    private fun connectionHex(npub: String, clientHex: String) = localPubKeyFromPrivKey(AmberDesktop.store(npub).lookup.getByKey(clientHex)!!.app.localKey)
 
     @Test
     fun anExpiredConnectionIsNotSignedFor() = runBlocking {

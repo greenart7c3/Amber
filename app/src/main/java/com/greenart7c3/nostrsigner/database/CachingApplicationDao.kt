@@ -17,10 +17,15 @@ import androidx.collection.LruCache
  * Negative results are cached too — "no permission row" is the common branch
  * and dominates the miss path otherwise.
  *
+ * Per app key it holds the SIGN_POLICY entry, one entry per permission lookup, and the DELETE_AFTER entry:
+ * the application row's raw `deleteAfter` timestamp, or null when there is no row. Only the timestamp is
+ * cached, never the verdict: [CachingPermissionLookupDao] compares it with the clock on every lookup, so a
+ * connection whose lifetime runs out stops answering at once, with no write and no database read.
+ *
  * Invalidation is coarse-grained, so callers never need to know which exact (type, kind, relay) tuple
  * they touched. Every caching write delegates first and evicts afterwards:
- * - A permission write evicts every permission entry of its app key, and so does an application-row
- *   write (an insert or delete can change `signPolicy`, which the SIGN_POLICY entry holds).
+ * - A permission write evicts every entry of its app key, and so does an application-row write (an insert
+ *   or delete can change `signPolicy` and `deleteAfter`, which the SIGN_POLICY and DELETE_AFTER entries hold).
  * - [CachingPermissionMaintenanceDao.updateExpiredPermissions] and
  *   [CachingPermissionMaintenanceDao.deleteOldApplications] touch many apps at once and clear the whole
  *   permission cache (the latter also every [CachingApplicationDao.getAll] list), and only when they
@@ -31,7 +36,9 @@ import androidx.collection.LruCache
  * - The other `*Raw` writes forward without evicting, on purpose. Most are the Room halves of the DAOs'
  *   default methods, whose caching overrides evict after delegating;
  *   [PermissionMaintenanceDao.insertPermissionsRaw] is a standalone insert that only the instrumented
- *   tests use. Main code must write permissions through an evicting method, never a `*Raw` one.
+ *   tests use. Main code must write permissions and application rows through an evicting method, never a
+ *   `*Raw` one: a connection's expiry is read from the cached DELETE_AFTER entry, so an application-row
+ *   write that does not evict leaves the old lifetime in force.
  *
  * Every invalidation bumps a generation counter, and a read only stores its
  * result if the generation is unchanged since the read began. Otherwise, a
@@ -50,7 +57,7 @@ import androidx.collection.LruCache
  * read-only consumers).
  */
 class ApplicationDaoCache {
-    private enum class Method { SIGN_POLICY, PERM, PERM_KIND, PERM_ALL_KINDS, PERM_RELAY, PERM_WILDCARD }
+    private enum class Method { SIGN_POLICY, DELETE_AFTER, PERM, PERM_KIND, PERM_ALL_KINDS, PERM_RELAY, PERM_WILDCARD }
 
     private data class Key(
         val method: Method,
@@ -61,8 +68,9 @@ class ApplicationDaoCache {
     )
 
     private data class Value(
-        val signPolicy: Int?,
-        val permission: ApplicationPermissionsEntity?,
+        val signPolicy: Int? = null,
+        val permission: ApplicationPermissionsEntity? = null,
+        val deleteAfter: Long? = null,
     )
 
     private val cache = LruCache<Key, Value>(MAX_ENTRIES)
@@ -72,7 +80,9 @@ class ApplicationDaoCache {
     private val getAllCache = LruCache<String, List<ApplicationEntity>>(GET_ALL_MAX_ENTRIES)
     private var getAllGeneration = 0L
 
-    internal fun signPolicy(key: String, load: () -> Int?): Int? = cached(Key(Method.SIGN_POLICY, key, null, null, null), Value::signPolicy, { Value(it, null) }, load)
+    internal fun signPolicy(key: String, load: () -> Int?): Int? = cached(Key(Method.SIGN_POLICY, key, null, null, null), Value::signPolicy, { Value(signPolicy = it) }, load)
+
+    internal fun deleteAfter(key: String, load: () -> Long?): Long? = cached(Key(Method.DELETE_AFTER, key, null, null, null), Value::deleteAfter, { Value(deleteAfter = it) }, load)
 
     internal fun permission(key: String, type: String, kind: Int?, load: () -> ApplicationPermissionsEntity?): ApplicationPermissionsEntity? = cachedPermission(Key(Method.PERM_KIND, key, type, kind, null), load)
 
@@ -84,7 +94,7 @@ class ApplicationDaoCache {
 
     internal fun wildcardRelayPermission(key: String, type: String, kind: Int, load: () -> ApplicationPermissionsEntity?): ApplicationPermissionsEntity? = cachedPermission(Key(Method.PERM_WILDCARD, key, type, kind, null), load)
 
-    private fun cachedPermission(key: Key, load: () -> ApplicationPermissionsEntity?): ApplicationPermissionsEntity? = cached(key, Value::permission, { Value(null, it) }, load)
+    private fun cachedPermission(key: Key, load: () -> ApplicationPermissionsEntity?): ApplicationPermissionsEntity? = cached(key, Value::permission, { Value(permission = it) }, load)
 
     private fun <T> cached(key: Key, extract: (Value) -> T, wrap: (T) -> Value, load: () -> T): T {
         val readGeneration = synchronized(cache) { cacheGeneration }

@@ -56,7 +56,7 @@ class NostrConnectReplaceTest {
 
         withTimeoutOrNull(20.seconds) { AmberDesktop.engine.approve(card, RememberType.NEVER, signPolicy = 1).join() }
 
-        val app = store.getByKey(clientHex)
+        val app = store.lookup.getByKey(clientHex)
         assertNotNull(app)
         app!!
         assertEquals("new-app", app.app.name)

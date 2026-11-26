@@ -14,6 +14,7 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 
 private val mapper = jacksonObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
 
@@ -172,7 +173,7 @@ private fun boundPayload(payload: String): String {
  */
 private fun writeSecure(file: File, value: Any, context: String, rollbackProtected: Boolean = false): Boolean {
     val encrypt = PassphraseLock.isEnabled()
-    if (encrypt && !DesktopKeyStore.isMasterKeyAvailable()) {
+    if (encrypt && !DesktopMasterKey.isMasterKeyAvailable()) {
         AmberLogger.e("Storage", "Refusing to write ${file.name} while the key store is locked")
         return false
     }
@@ -214,6 +215,27 @@ object AmberLogger {
  */
 internal fun constantTimeEquals(a: String, b: String): Boolean = MessageDigest.isEqual(a.toByteArray(Charsets.UTF_8), b.toByteArray(Charsets.UTF_8))
 
+/** Read-only queries over an account's connected applications and their grants. */
+class AppLookup(private val apps: StateFlow<List<AppWithPermissions>>) {
+    fun getByKey(key: String): AppWithPermissions? = apps.value.firstOrNull { it.app.key == key }
+
+    fun getBySecret(secret: String): AppWithPermissions? = apps.value.firstOrNull { constantTimeEquals(it.app.secret, secret) && it.app.useSecret }
+
+    fun getPermission(key: String, type: String, kind: Int? = null): AppPermissionRecord? = getByKey(key)?.permissions?.firstOrNull {
+        it.type == type && it.kind == kind
+    }
+
+    /**
+     * The kind-22242 grant deciding a relay auth for [relayHost], like the
+     * Android `getPermissionForRelay` then `getWildcardRelayPermission`: a
+     * grant for this relay first, then an all-relays one ("*" or blank).
+     */
+    fun getRelayAuthPermission(key: String, relayHost: String): AppPermissionRecord? {
+        val grants = getByKey(key)?.permissions?.filter { it.type == SignerType.SIGN_EVENT.toString() && it.kind == RELAY_AUTH_KIND }.orEmpty()
+        return grants.firstOrNull { relayHost.isNotEmpty() && it.relay == relayHost } ?: grants.firstOrNull { isAllRelaysGrant(it.relay) }
+    }
+}
+
 /**
  * Per-account persistence: connected applications with their permissions,
  * request history, and relay/bunker logs. The desktop app keeps everything
@@ -246,26 +268,10 @@ class AccountStore(val npub: String) {
         liveStores.add(this)
     }
 
+    val lookup = AppLookup(apps)
+
     // Binds each file's ciphertext to this account and file name.
     private fun context(file: File) = "$npub/${file.name}"
-
-    fun getByKey(key: String): AppWithPermissions? = apps.value.firstOrNull { it.app.key == key }
-
-    fun getBySecret(secret: String): AppWithPermissions? = apps.value.firstOrNull { constantTimeEquals(it.app.secret, secret) && it.app.useSecret }
-
-    fun getPermission(key: String, type: String, kind: Int? = null): AppPermissionRecord? = getByKey(key)?.permissions?.firstOrNull {
-        it.type == type && it.kind == kind
-    }
-
-    /**
-     * The kind-22242 grant deciding a relay auth for [relayHost], like the
-     * Android `getPermissionForRelay` then `getWildcardRelayPermission`: a
-     * grant for this relay first, then an all-relays one ("*" or blank).
-     */
-    fun getRelayAuthPermission(key: String, relayHost: String): AppPermissionRecord? {
-        val grants = getByKey(key)?.permissions?.filter { it.type == SignerType.SIGN_EVENT.toString() && it.kind == RELAY_AUTH_KIND }.orEmpty()
-        return grants.firstOrNull { relayHost.isNotEmpty() && it.relay == relayHost } ?: grants.firstOrNull { isAllRelaysGrant(it.relay) }
-    }
 
     @Synchronized
     fun upsert(app: AppWithPermissions) {

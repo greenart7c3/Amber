@@ -1,0 +1,66 @@
+name: Prune Gradle Caches
+
+# Deletes superseded setup-gradle entries on master so total repository cache
+# usage stays well under GitHub's 10 GB quota without evicting active OS caches.
+# Runs only after master builds finish (never on PR code), keeping actions:write
+# isolated from build workflows.
+
+on:
+  workflow_run:
+    workflows:
+      - Test/Build Android
+      - Test/Build Desktop
+    types: [completed]
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  actions: write
+
+concurrency:
+  group: prune-gradle-caches
+  cancel-in-progress: false
+
+jobs:
+  prune:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Prune superseded master Gradle caches
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          caches=$(gh api --paginate "repos/$REPO/actions/caches?ref=refs/heads/master&per_page=100" --jq '.actions_caches[]' | jq -s '.')
+
+          # Group gradle-home-v2 by (OS, job) prefix (keeping newest 2 per writer),
+          # and all other setup-gradle entries by their GitHub cache version hash
+          # (which uniquely identifies OS + cache type: keeping newest 2 for large
+          # entries > 150 MB and newest 4 for smaller entries so dual-arch macOS
+          # and in-flight PRs stay warm). Also drops any legacy gradle-deps-v1-*.
+          ids=$(printf '%s' "$caches" | jq -r '
+            (map(select(.key | startswith("gradle-deps-v1-"))) | map(.id)) +
+            (map(select(.key | startswith("gradle-home-v2|")))
+              | group_by(.key | sub("-[0-9a-f]{40}$"; ""))
+              | map(sort_by(.created_at) | reverse | .[2:] | map(.id))
+              | add // []) +
+            (map(select((.key | startswith("gradle-")) and ((.key | startswith("gradle-home-v2|")) | not) and ((.key | startswith("gradle-deps-v1-")) | not)))
+              | group_by(.version)
+              | map(
+                  (sort_by(.created_at) | reverse) as $sorted |
+                  (if (($sorted | map(.size_in_bytes) | max) // 0) > 157286400 then 2 else 4 end) as $keep |
+                  $sorted[$keep:] | map(.id)
+                )
+              | add // [])
+            | unique[]
+          ')
+
+          if [ -z "$ids" ]; then
+            echo "No superseded Gradle caches to prune."
+            exit 0
+          fi
+
+          for id in $ids; do
+            echo "Deleting superseded cache id=$id"
+            gh api -X DELETE "repos/$REPO/actions/caches/$id" || true
+          done

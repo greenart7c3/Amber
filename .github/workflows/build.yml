@@ -25,10 +25,11 @@ jobs:
           distribution: 'temurin'
           java-version: 21
 
+      # Sole Linux cache writer (on master); PRs are read-only by default.
+      # Uses default cache-cleanup: on-success so stale build-cache and transform
+      # entries are pruned after each successful master build.
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
-        with:
-          cache-cleanup: never
 
       - name: Create keystore.properties
         run: touch keystore.properties
@@ -49,8 +50,10 @@ jobs:
           name: Coverage report
           path: build/reports/kover
 
+      # Serialize debug APK packaging: parallel ApkFlinger + apksig tasks across
+      # 4 flavors x 5 ABI splits can deadlock ForkJoinPool.commonPool() on 4-core runners.
       - name: Build APK (gradle)
-        run: ./gradlew assembleDebug --no-daemon
+        run: ./gradlew assembleDebug --no-daemon --max-workers=1
 
       - name: Upload APK
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7

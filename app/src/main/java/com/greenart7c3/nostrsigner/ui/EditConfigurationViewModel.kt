@@ -57,8 +57,8 @@ class EditConfigurationViewModel(
         val it = application ?: return
         viewModelScope.launch(Dispatchers.IO) {
             val localApplicationData = it.application.copy(name = name, relays = relays, closeApplication = closeApplication)
-            accountRepository.dao(npub).delete(it.application)
-            accountRepository.dao(npub).insertApplicationWithPermissions(ApplicationWithPermissions(localApplicationData, it.permissions))
+            accountRepository.daos(npub).applicationWriteDao.delete(it.application)
+            accountRepository.daos(npub).permissionWriteDao.insertApplicationWithPermissions(ApplicationWithPermissions(localApplicationData, it.permissions))
             relayClient.checkForNewRelaysAndUpdateAllFilters()
             withContext(Dispatchers.Main) { onDone() }
         }
@@ -75,14 +75,14 @@ class EditConfigurationViewModel(
                 useSecret = true,
                 localKey = generateBunkerPrivKey(),
             )
-            val dao = accountRepository.dao(npub)
+            val daos = accountRepository.daos(npub)
             // The reset retires the old connection key: drop its
             // queued requests so a stale card cannot resurrect it.
             BunkerRequestUtils.removeAllForClient(appContext, it.application.key)
-            dao.deletePermissions(it.application.key)
-            dao.delete(it.application)
+            daos.permissionWriteDao.deletePermissions(it.application.key)
+            daos.applicationWriteDao.delete(it.application)
             accountRepository.getHistoryDatabase(npub).dao().deleteHistory(it.application.key)
-            dao.insertApplicationWithPermissions(ApplicationWithPermissions(resetApp, it.permissions))
+            daos.permissionWriteDao.insertApplicationWithPermissions(ApplicationWithPermissions(resetApp, it.permissions))
             relayClient.checkForNewRelaysAndUpdateAllFilters()
             withContext(Dispatchers.Main) { onDone() }
         }
@@ -94,7 +94,7 @@ class EditConfigurationViewModel(
             // Drop queued requests first: answering a stale card
             // would otherwise resurrect the deleted connection.
             BunkerRequestUtils.removeAllForClient(appContext, it.application.key)
-            accountRepository.dao(npub).delete(it.application)
+            accountRepository.daos(npub).applicationWriteDao.delete(it.application)
             accountRepository.getHistoryDatabase(npub).dao().deleteHistory(it.application.key)
             // Before navigating away, which may clear this ViewModel and cancel its scope.
             relayClient.checkForNewRelaysAndUpdateAllFilters()

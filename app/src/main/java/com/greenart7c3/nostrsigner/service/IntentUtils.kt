@@ -93,8 +93,8 @@ object IntentUtils {
         packageName: String?,
     ) {
         if (packageName.isNullOrBlank()) return
-        val dao = accountRepository.dao(account.npub)
-        val saved = dao.getByKey(packageName)?.application ?: return
+        val daos = accountRepository.daos(account.npub)
+        val saved = daos.applicationDao.getByKey(packageName)?.application ?: return
         if (saved.name.isNotBlank() && saved.icon.isNotBlank()) return
 
         val newIcon = saved.icon.ifBlank {
@@ -108,7 +108,7 @@ object IntentUtils {
         }
 
         if (newName == saved.name && newIcon == saved.icon) return
-        dao.updateNameAndIcon(packageName, newName.ifBlank { saved.name }, newIcon)
+        daos.applicationWriteDao.updateNameAndIcon(packageName, newName.ifBlank { saved.name }, newIcon)
     }
 
     data class InvalidIntentInfo(
@@ -442,8 +442,8 @@ object IntentUtils {
         onLoading(true)
         appScope.launch {
             try {
-                val dao = accountRepository.dao(account.npub)
-                val application = dao.getByKey(key) ?: IntentResponse.newApplication(
+                val daos = accountRepository.daos(account.npub)
+                val application = daos.applicationDao.getByKey(key) ?: IntentResponse.newApplication(
                     key = key,
                     name = appName ?: packageName?.let { installedAppName(context, it) } ?: "",
                     account = account,
@@ -476,7 +476,7 @@ object IntentUtils {
                 }
 
                 if (packageName != null) {
-                    dao.insertApplicationWithPermissions(application)
+                    daos.permissionWriteDao.insertApplicationWithPermissions(application)
                     // The calling app is visible to us now (mid-request); capture its
                     // launcher icon + label so a first-ever connection populates them
                     // immediately, not only on a later request.
@@ -593,11 +593,11 @@ object IntentUtils {
                         relay,
                         intentData.encryptedData,
                         decryptTypeScope,
-                        dao = accountRepository.dao(account.npub),
+                        dao = accountRepository.daos(account.npub).permissionWriteDao,
                     )
                 }
 
-                accountRepository.dao(account.npub).insertApplicationWithPermissions(application)
+                accountRepository.daos(account.npub).permissionWriteDao.insertApplicationWithPermissions(application)
                 val content = IntentResponse.historyContent(intentData, accepted = false, event = "", value = "")
                 accountRepository.getHistoryDatabase(account.npub).dao().addHistory(
                     listOf(IntentResponse.historyEntry(intentData, key, kind, accepted = false, content = content)),

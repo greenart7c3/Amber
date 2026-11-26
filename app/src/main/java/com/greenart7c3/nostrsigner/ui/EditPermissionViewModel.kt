@@ -50,21 +50,21 @@ class EditPermissionViewModel(
      * grants (sorted by type and kind); null when no app is saved under it.
      */
     suspend fun load(npub: String, key: String): Pair<List<PermissionGrant>, PermissionsApp>? = withContext(Dispatchers.IO) {
-        val dao = accountRepository.dao(npub)
-        dao.updateExpiredPermissions(TimeUtils.now())
-        val grants = dao.getAllByKey(key).sortedBy { "${it.type}-${it.kind}" }.map { it.toGrant() }
-        val app = dao.getByKey(key)?.application ?: return@withContext null
+        val daos = accountRepository.daos(npub)
+        daos.permissionMaintenanceDao.updateExpiredPermissions(TimeUtils.now())
+        val grants = daos.permissionLookupDao.getAllByKey(key).sortedBy { "${it.type}-${it.kind}" }.map { it.toGrant() }
+        val app = daos.applicationDao.getByKey(key)?.application ?: return@withContext null
         grants to PermissionsApp(app.key, app.isConnected, app.relays, app.useSecret, app.secret, app.localPubKey)
     }
 
     /** Saves new grants or changed ones for the app [appKey]. */
     fun save(npub: String, appKey: String, grants: List<PermissionGrant>) {
-        viewModelScope.launch(Dispatchers.IO) { accountRepository.dao(npub).insertPermissions(grants.map { it.toEntity(appKey) }) }
+        viewModelScope.launch(Dispatchers.IO) { accountRepository.daos(npub).permissionWriteDao.insertPermissions(grants.map { it.toEntity(appKey) }) }
     }
 
     fun removeAll(npub: String, appKey: String, onDone: () -> Unit) {
         viewModelScope.launch(Dispatchers.IO) {
-            accountRepository.dao(npub).deletePermissions(appKey)
+            accountRepository.daos(npub).permissionWriteDao.deletePermissions(appKey)
             withContext(Dispatchers.Main) { onDone() }
         }
     }

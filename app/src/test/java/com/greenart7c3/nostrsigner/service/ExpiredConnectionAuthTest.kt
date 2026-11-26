@@ -1,9 +1,9 @@
 package com.greenart7c3.nostrsigner.service
 
-import com.greenart7c3.nostrsigner.database.ApplicationDao
+import com.greenart7c3.nostrsigner.database.ApplicationDaos
 import com.greenart7c3.nostrsigner.database.ApplicationEntity
 import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
-import com.greenart7c3.nostrsigner.database.CachingApplicationDao
+import com.greenart7c3.nostrsigner.database.relaxedApplicationDaos
 import com.vitorpamplona.quartz.utils.TimeUtils
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -23,8 +23,10 @@ import org.junit.Test
  * flows, must treat the expired row as absent.
  */
 class ExpiredConnectionAuthTest {
-    private val delegate = mockk<ApplicationDao>(relaxed = true)
-    private val dao = CachingApplicationDao(delegate)
+    private val raw = relaxedApplicationDaos()
+    private val daos = ApplicationDaos.cached(raw)
+    private val delegate = raw.permissionLookupDao
+    private val dao = daos.permissionLookupDao
 
     private fun entity(key: String, deleteAfter: Long) = ApplicationEntity(
         key = key,
@@ -97,36 +99,36 @@ class ExpiredConnectionAuthTest {
     fun `getAll drops expired rows and caches the filtered list`() = runBlocking {
         val expired = entity("expired", TimeUtils.now() - 60)
         val live = entity("live", 0L)
-        coEvery { delegate.getAll("account-hex") } returns listOf(expired, live)
+        coEvery { raw.applicationDao.getAll("account-hex") } returns listOf(expired, live)
 
-        assertEquals(listOf(live), dao.getAll("account-hex"))
+        assertEquals(listOf(live), daos.applicationDao.getAll("account-hex"))
         // Cached value must be the filtered one, not a re-read of the delegate.
-        assertEquals(listOf(live), dao.getAll("account-hex"))
-        coVerify(exactly = 1) { delegate.getAll("account-hex") }
+        assertEquals(listOf(live), daos.applicationDao.getAll("account-hex"))
+        coVerify(exactly = 1) { raw.applicationDao.getAll("account-hex") }
     }
 
     @Test
     fun `getAllWithLocalKey drops expired rows`() = runBlocking {
         val expired = entity("expired", TimeUtils.now() - 60)
         val live = entity("live", TimeUtils.now() + 60)
-        coEvery { delegate.getAllWithLocalKey("account-hex") } returns listOf(expired, live)
+        coEvery { raw.applicationListDao.getAllWithLocalKey("account-hex") } returns listOf(expired, live)
 
-        assertEquals(listOf(live), dao.getAllWithLocalKey("account-hex"))
+        assertEquals(listOf(live), daos.applicationListDao.getAllWithLocalKey("account-hex"))
     }
 
     @Test
     fun `getBySecret of an expired connection reads as unknown`() = runBlocking {
-        coEvery { delegate.getBySecret("secret") } returns wrapper(entity("expired", TimeUtils.now() - 60))
+        coEvery { raw.applicationDao.getBySecret("secret") } returns wrapper(entity("expired", TimeUtils.now() - 60))
 
-        assertNull(dao.getBySecret("secret"))
+        assertNull(daos.applicationDao.getBySecret("secret"))
     }
 
     @Test
     fun `getBySecret of a live connection passes through`() = runBlocking {
         val live = wrapper(entity("live", 0L))
-        coEvery { delegate.getBySecret("secret") } returns live
+        coEvery { raw.applicationDao.getBySecret("secret") } returns live
 
-        assertEquals(live, dao.getBySecret("secret"))
+        assertEquals(live, daos.applicationDao.getBySecret("secret"))
     }
 
     @Test

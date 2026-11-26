@@ -11,10 +11,10 @@ import com.greenart7c3.nostrsigner.common.permissionLookupOrder
 import com.greenart7c3.nostrsigner.commonsui.kindToNip
 import com.greenart7c3.nostrsigner.data.AccountRepository
 import com.greenart7c3.nostrsigner.data.SettingsStore
-import com.greenart7c3.nostrsigner.database.ApplicationDao
 import com.greenart7c3.nostrsigner.database.ApplicationPermissionsEntity
 import com.greenart7c3.nostrsigner.database.HistoryEntity
 import com.greenart7c3.nostrsigner.database.LogEntity
+import com.greenart7c3.nostrsigner.database.PermissionLookupDao
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.encryptDecryptSignerTypes
 import com.greenart7c3.nostrsigner.models.permissionTypeFromContent
@@ -173,7 +173,7 @@ class SignerProviderQuery(
         caller: Caller,
         type: String,
     ): Boolean? {
-        val permDao = accountRepository.dao(account.npub)
+        val permDao = accountRepository.daos(account.npub).permissionLookupDao
         val permission = permDao.getPermission(caller.requesterId, type)
         return isRemembered(permDao.getSignPolicy(caller.requesterId), permission)
     }
@@ -269,7 +269,7 @@ class SignerProviderQuery(
         if (event.kind == 22242 && isBlockedByAuthWhitelist(event.kind, relayHost, settingsStore.settings.authWhitelist)) return false
 
         val requesterId = caller.requesterId
-        val permDao = accountRepository.dao(account.npub)
+        val permDao = accountRepository.daos(account.npub).permissionLookupDao
         val permission = if (event.kind == 22242) {
             // Kind 22242 = relay client auth (NIP-42): check relay-specific permission first
             permDao.getPermissionForRelay(requesterId, "SIGN_EVENT", 22242, relayHost)
@@ -384,7 +384,7 @@ class SignerProviderQuery(
         account: Account,
         request: CryptoRequest,
     ): Boolean {
-        val permDao = accountRepository.dao(account.npub)
+        val permDao = accountRepository.daos(account.npub).permissionLookupDao
         val preAuthorized = permDao.getSignPolicy(caller.requesterId) == 2 ||
             hasAnyAcceptingDecryptPermission(permDao, caller.requesterId, request.type, request.v3Kind, caller.operation)
         if (!preAuthorized) {
@@ -410,7 +410,7 @@ class SignerProviderQuery(
         plaintext: String,
         isEncrypt: Boolean,
     ): Boolean? {
-        val permDao = accountRepository.dao(account.npub)
+        val permDao = accountRepository.daos(account.npub).permissionLookupDao
         val contentType = if (request.isV3) null else permissionTypeFromContent(plaintext, isEncrypt, request.type)
         val permission = permDao.firstGrant(caller.requesterId, permissionLookupOrder(request.type, request.v3Kind, contentType))
         return isRemembered(permDao.getSignPolicy(caller.requesterId), permission)
@@ -528,7 +528,7 @@ class SignerProviderQuery(
      * the rejected-versus-null response.
      */
     private fun hasAnyAcceptingDecryptPermission(
-        permDao: ApplicationDao,
+        permDao: PermissionLookupDao,
         requesterId: String,
         type: SignerType,
         v3Kind: Int?,
@@ -586,7 +586,7 @@ class SignerProviderQuery(
  * The first stored grant of [order] (`permissionLookupOrder`). A kind-less key
  * is the kind IS NULL row: for NIP-44 v3 that is the "all kinds" grant.
  */
-private fun ApplicationDao.firstGrant(requesterId: String, order: List<PermissionKey>): ApplicationPermissionsEntity? = order.firstNotNullOfOrNull { (type, kind) ->
+private fun PermissionLookupDao.firstGrant(requesterId: String, order: List<PermissionKey>): ApplicationPermissionsEntity? = order.firstNotNullOfOrNull { (type, kind) ->
     when {
         kind != null -> getPermission(requesterId, type, kind)
         type == SignerType.NIP44_V3_ENCRYPT.name || type == SignerType.NIP44_V3_DECRYPT.name -> getPermissionAllKinds(requesterId, type)

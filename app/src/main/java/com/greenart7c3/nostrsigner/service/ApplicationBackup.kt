@@ -10,7 +10,7 @@ import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.data.AccountRepository
 import com.greenart7c3.nostrsigner.data.RelayClient
 import com.greenart7c3.nostrsigner.data.SettingsStore
-import com.greenart7c3.nostrsigner.database.ApplicationDao
+import com.greenart7c3.nostrsigner.database.ApplicationDaos
 import com.greenart7c3.nostrsigner.database.ApplicationEntity
 import com.greenart7c3.nostrsigner.database.ApplicationPermissionsEntity
 import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
@@ -140,10 +140,10 @@ object ApplicationBackup {
     private val mapper = jacksonObjectMapper()
         .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
 
-    suspend fun buildPayload(account: Account, dao: ApplicationDao): BackupPayload {
-        val apps = dao.getAll(account.hexKey)
+    suspend fun buildPayload(account: Account, daos: ApplicationDaos): BackupPayload {
+        val apps = daos.applicationDao.getAll(account.hexKey)
         val backupApps = apps.map { app ->
-            val perms = dao.getAllByKey(app.key)
+            val perms = daos.permissionLookupDao.getAllByKey(app.key)
             BackupApplication(
                 key = app.key,
                 name = app.name,
@@ -274,7 +274,7 @@ object ApplicationBackup {
 
     /** Publishes the encrypted backup; true when a relay accepted it or there is nothing to back up. */
     private suspend fun encryptAndPublish(npub: String, account: Account, accountRepository: AccountRepository, relayClient: RelayClient, settingsStore: SettingsStore): Boolean {
-        val payload = buildPayload(account, accountRepository.dao(npub))
+        val payload = buildPayload(account, accountRepository.daos(npub))
         if (payload.applications.isEmpty()) {
             AmberLog.d(Amber.TAG, "ApplicationBackup: no applications to backup for $npub, skipping")
             return true
@@ -379,7 +379,7 @@ object ApplicationBackup {
     internal fun isExpired(app: BackupApplication, now: Long): Boolean = app.deleteAfter in 1..<now
 
     suspend fun restoreFromPayload(npub: String, payload: BackupPayload, accountRepository: AccountRepository, relayClient: RelayClient): RestoreResult = try {
-        val dao = accountRepository.dao(npub)
+        val dao = accountRepository.daos(npub).permissionWriteDao
         var apps = 0
         var permissions = 0
         val now = TimeUtils.now()

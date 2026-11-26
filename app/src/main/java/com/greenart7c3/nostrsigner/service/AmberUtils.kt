@@ -8,9 +8,9 @@ import com.greenart7c3.nostrsigner.common.rememberedGrant
 import com.greenart7c3.nostrsigner.common.signPolicyGrants
 import com.greenart7c3.nostrsigner.commonsui.Permission
 import com.greenart7c3.nostrsigner.commonsui.basicPermissions
-import com.greenart7c3.nostrsigner.database.ApplicationDao
 import com.greenart7c3.nostrsigner.database.ApplicationPermissionsEntity
 import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
+import com.greenart7c3.nostrsigner.database.PermissionWriteDao
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.AmberBunkerRequest
 import com.greenart7c3.nostrsigner.models.EncryptedDataKind
@@ -131,7 +131,7 @@ object AmberUtils {
         relay: String = "",
         encryptedData: EncryptedDataKind?,
         decryptTypeScope: DecryptTypeScope = DecryptTypeScope.ALL,
-        dao: ApplicationDao,
+        dao: PermissionWriteDao,
     ) {
         updatePermission(
             application,

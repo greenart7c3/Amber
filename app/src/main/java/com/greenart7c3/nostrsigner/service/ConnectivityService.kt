@@ -169,11 +169,11 @@ class ConnectivityService : Service() {
             amber.applicationIOScope.launch {
                 // Cached dao so the write invalidates CachingApplicationDao's getAll
                 // entry for this account (the service can restart in a live process).
-                val dao = amber.accountDatabases.dao(it.npub)
-                dao.getAllNotConnected().forEach { app ->
+                val daos = amber.accountDatabases.daos(it.npub)
+                daos.applicationListDao.getAllNotConnected().forEach { app ->
                     if (app.application.secret.isNotEmpty() && app.application.secret != app.application.key) {
                         app.application.isConnected = true
-                        dao.insertApplicationWithPermissions(app)
+                        daos.permissionWriteDao.insertApplicationWithPermissions(app)
                     }
                 }
             }

@@ -95,7 +95,7 @@ class LocalBunkerRelayServer(
         val current = RelayUrlNormalizer.normalizeOrNull("ws://127.0.0.1:${port()}/")
         val inUse = current != null &&
             SavedAccounts.all(appContext).any { account ->
-                accountRepository.getDatabase(account.npub).dao().getAllRelayLists().any { current in it.relays }
+                accountRepository.getDatabase(account.npub).applicationListDao().getAllRelayLists().any { current in it.relays }
             }
         if (inUse) return false
         settingsStore.settings = settingsStore.settings.copy(localBunkerPort = newPort)
@@ -129,7 +129,7 @@ class LocalBunkerRelayServer(
 private fun approvedRelaySenders(context: Context, accountRepository: AccountRepository): Set<String> = buildSet {
     SavedAccounts.all(context).forEach { account ->
         runCatching { add(account.npub.bechToBytes().toHexKey()) }
-        addAll(accountRepository.getDatabase(account.npub).dao().getAllKeys())
+        addAll(accountRepository.getDatabase(account.npub).applicationListDao().getAllKeys())
     }
     addAll(LocalKeyAccountIndex.localPubKeys())
 }

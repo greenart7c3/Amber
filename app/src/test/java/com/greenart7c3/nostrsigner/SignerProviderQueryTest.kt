@@ -3,10 +3,11 @@ package com.greenart7c3.nostrsigner
 import android.content.Context
 import android.net.Uri
 import com.greenart7c3.nostrsigner.common.SignerType
-import com.greenart7c3.nostrsigner.database.ApplicationDao
+import com.greenart7c3.nostrsigner.database.ApplicationDaos
 import com.greenart7c3.nostrsigner.database.ApplicationPermissionsEntity
 import com.greenart7c3.nostrsigner.database.HistoryDao
 import com.greenart7c3.nostrsigner.database.HistoryDatabase
+import com.greenart7c3.nostrsigner.database.PermissionLookupDao
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.AmberSettings
 import com.greenart7c3.nostrsigner.service.AmberUtils
@@ -39,7 +40,7 @@ import org.junit.Test
 class SignerProviderQueryTest {
     private val context = mockk<Context>(relaxed = true)
     private lateinit var amber: Amber
-    private lateinit var dao: ApplicationDao
+    private lateinit var dao: PermissionLookupDao
     private lateinit var account: Account
 
     companion object {
@@ -67,7 +68,7 @@ class SignerProviderQueryTest {
         amber = mockk()
         every { amber.applicationIOScope } returns CoroutineScope(Dispatchers.Unconfined)
         every { amber.accountDatabases.getHistoryDatabase(any()) } returns historyDatabase
-        every { amber.accountDatabases.dao(any()) } returns dao
+        every { amber.accountDatabases.daos(any()) } returns ApplicationDaos(mockk(), mockk(), mockk(), dao, mockk(), mockk())
 
         account = mockk()
         every { account.npub } returns NPUB

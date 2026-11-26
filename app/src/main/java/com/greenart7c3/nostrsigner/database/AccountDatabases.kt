@@ -20,7 +20,7 @@ class AccountDatabases(
     private val databases = ConcurrentHashMap<String, AppDatabase>()
     private val logDatabases = ConcurrentHashMap<String, LogDatabase>()
     private val historyDatabases = ConcurrentHashMap<String, HistoryDatabase>()
-    private val cachingDaos = ConcurrentHashMap<String, CachingApplicationDao>()
+    private val cachingDaos = ConcurrentHashMap<String, ApplicationDaos>()
 
     override val keystoreFailedAccounts = MutableStateFlow<List<String>>(emptyList())
 
@@ -33,14 +33,14 @@ class AccountDatabases(
     }
 
     /**
-     * Returns the per-account permission DAO with read-through caching. All hot-path
-     * permission lookups should go through this; writes routed through it also
-     * invalidate the cache.
+     * Returns the per-account application and permission DAOs with read-through
+     * caching. All hot-path permission lookups should go through these; writes
+     * routed through them also invalidate the cache.
      */
-    override fun dao(npub: String): ApplicationDao {
+    override fun daos(npub: String): ApplicationDaos {
         cachingDaos[npub]?.let { return it }
         return cachingDaos.computeIfAbsent(npub) {
-            CachingApplicationDao(getDatabase(npub).dao())
+            ApplicationDaos.cached(ApplicationDaos.of(getDatabase(npub)))
         }
     }
 
@@ -66,6 +66,6 @@ class AccountDatabases(
     }
 
     override fun getSavedRelays(account: Account): Set<NormalizedRelayUrl> = buildSet {
-        getDatabase(account.npub).dao().getAllRelayLists().forEach { addAll(it.relays) }
+        getDatabase(account.npub).applicationListDao().getAllRelayLists().forEach { addAll(it.relays) }
     }
 }

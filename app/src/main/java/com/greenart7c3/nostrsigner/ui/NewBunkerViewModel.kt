@@ -43,7 +43,7 @@ class NewBunkerViewModel(
                 lastUsed = 0L,
                 localKey = generateBunkerPrivKey(),
             )
-            accountRepository.dao(account.npub).insertApplication(application)
+            accountRepository.daos(account.npub).applicationWriteDao.insertApplication(application)
             withContext(Dispatchers.Main) { onCreated() }
         }
     }
@@ -53,7 +53,7 @@ class NewBunkerViewModel(
      * its key. Throws when it is not saved or its key is not routed to [account] yet.
      */
     suspend fun prepareUri(account: Account, key: String): String = withContext(Dispatchers.IO) {
-        val saved = checkNotNull(accountRepository.dao(account.npub).getByKey(key)?.application)
+        val saved = checkNotNull(accountRepository.daos(account.npub).applicationDao.getByKey(key)?.application)
         // Prepare local endpoint routing before exposing the ephemeral-request URI.
         relayClient.checkForNewRelaysAndUpdateAllFilters(shouldReconnect = true)
         if (saved.localPubKey.isNotEmpty()) {

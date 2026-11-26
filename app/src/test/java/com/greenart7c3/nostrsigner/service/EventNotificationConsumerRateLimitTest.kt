@@ -10,8 +10,9 @@ import com.greenart7c3.nostrsigner.SavedAccounts
 import com.greenart7c3.nostrsigner.common.relays.SenderRateLimiter
 import com.greenart7c3.nostrsigner.database.AppDatabase
 import com.greenart7c3.nostrsigner.database.ApplicationDao
+import com.greenart7c3.nostrsigner.database.ApplicationDaos
 import com.greenart7c3.nostrsigner.database.BunkerEventDao
-import com.greenart7c3.nostrsigner.database.CachingApplicationDao
+import com.greenart7c3.nostrsigner.database.relaxedApplicationDaos
 import com.vitorpamplona.quartz.nip01Core.core.Event
 import com.vitorpamplona.quartz.nip01Core.core.toHexKey
 import com.vitorpamplona.quartz.nip01Core.crypto.KeyPair
@@ -79,7 +80,7 @@ class EventNotificationConsumerRateLimitTest {
 
         every { amber.applicationIOScope } returns scope
         every { amber.accountDatabases.getDatabase(any()) } returns db
-        every { amber.accountDatabases.dao(any()) } returns CachingApplicationDao(appDao)
+        every { amber.accountDatabases.daos(any()) } returns ApplicationDaos.cached(relaxedApplicationDaos(applicationDao = appDao))
 
         val account = newTestAccount(scope)
         accountHex = account.hexKey

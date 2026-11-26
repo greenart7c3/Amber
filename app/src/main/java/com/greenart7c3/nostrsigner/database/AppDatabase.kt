@@ -235,6 +235,16 @@ val MIGRATION_19_20 = object : Migration(19, 20) {
 abstract class AppDatabase : RoomDatabase() {
     abstract fun dao(): ApplicationDao
 
+    abstract fun applicationListDao(): ApplicationListDao
+
+    abstract fun applicationWriteDao(): ApplicationWriteDao
+
+    abstract fun permissionLookupDao(): PermissionLookupDao
+
+    abstract fun permissionWriteDao(): PermissionWriteDao
+
+    abstract fun permissionMaintenanceDao(): PermissionMaintenanceDao
+
     abstract fun bunkerEventDao(): BunkerEventDao
 
     companion object {

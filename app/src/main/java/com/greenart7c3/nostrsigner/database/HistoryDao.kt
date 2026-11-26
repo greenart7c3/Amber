@@ -61,7 +61,7 @@ abstract class HistoryDao(private val database: HistoryDatabase) {
                 if (pkKey != null) {
                     // Cached dao so the write invalidates CachingApplicationDao's
                     // getAll entry (lastUsed is a column of that projection).
-                    database.accountRepository.dao(npub).updateLastUsed(pkKey, lastUsed)
+                    database.accountRepository.daos(npub).applicationWriteDao.updateLastUsed(pkKey, lastUsed)
                 }
             }
         } catch (e: Exception) {

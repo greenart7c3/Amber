@@ -281,7 +281,7 @@ class BunkerResponder(
     ) {
         onLoading(true)
         scope.launch {
-            val dao = accountRepository.dao(account.npub)
+            val dao = accountRepository.daos(account.npub).permissionWriteDao
             val savedApplication = savedConnection(account, key, bunkerRequest, oldKey, deleteAfter)
             val relays = replyRelays(savedApplication, bunkerRequest)
             // Approving changes the grants in place; kept to take the approval back.
@@ -356,13 +356,13 @@ class BunkerResponder(
         oldKey: String,
         deleteAfter: Long,
     ): ApplicationWithPermissions? {
-        val dao = accountRepository.dao(account.npub)
+        val daos = accountRepository.daos(account.npub)
         if (oldKey.isNotBlank()) {
-            dao.delete(oldKey)
+            daos.applicationWriteDao.delete(oldKey)
             accountRepository.getHistoryDatabase(account.npub).dao().deleteHistory(oldKey)
         }
         attachBunkerConnection(account, key, bunkerRequest)
-        val saved = dao.getByKey(key)
+        val saved = daos.applicationDao.getByKey(key)
         if (bunkerRequest.request is BunkerRequestConnect) {
             saved?.application?.deleteAfter = deleteAfter
         }
@@ -390,7 +390,7 @@ class BunkerResponder(
         shouldCloseApplication: Boolean?,
         relays: List<NormalizedRelayUrl>,
     ): Boolean {
-        accountRepository.dao(account.npub).deletePermissions(key)
+        accountRepository.daos(account.npub).permissionWriteDao.deletePermissions(key)
         application.application.isConnected = true
         shouldCloseApplication?.let {
             application.application.closeApplication = it
@@ -443,16 +443,16 @@ class BunkerResponder(
     // A bunker:// connection is saved under its secret until a client connects with
     // it: move that row (and its grants) to the client's key.
     private suspend fun attachBunkerConnection(account: Account, key: String, bunkerRequest: AmberBunkerRequest) {
-        val dao = accountRepository.dao(account.npub)
-        if (dao.getByKey(key) != null) return
+        val daos = accountRepository.daos(account.npub)
+        if (daos.applicationDao.getByKey(key) != null) return
         val secret = (bunkerRequest.request as? BunkerRequestConnect)?.secret?.takeIf { it.isNotBlank() } ?: return
-        val saved = dao.getByKey(secret) ?: return
+        val saved = daos.applicationDao.getByKey(secret) ?: return
         val attached = ApplicationWithPermissions(
             application = saved.application.copy(key = key),
             permissions = saved.permissions.map { it.copy() }.toMutableList(),
         )
-        dao.delete(secret)
-        dao.insertApplicationWithPermissions(attached)
+        daos.applicationWriteDao.delete(secret)
+        daos.permissionWriteDao.insertApplicationWithPermissions(attached)
     }
 
     // The row of a connection seen for the first time.
@@ -595,18 +595,18 @@ class BunkerResponder(
         grantsBefore: List<Grant>,
         grantsAfter: List<Grant>,
     ) {
-        val dao = accountRepository.dao(account.npub)
+        val daos = accountRepository.daos(account.npub)
         val key = application.application.key
         if (nip46SignerType(bunkerRequest.request.method) == SignerType.CONNECT) {
-            dao.delete(application.application)
+            daos.applicationWriteDao.delete(application.application)
             revertedConnectKey(bunkerRequest.isNostrConnectUri, application.application.secret)?.let { secret ->
-                dao.insertApplicationWithPermissions(application.copy(application = application.application.copy(isConnected = false, key = secret)))
+                daos.permissionWriteDao.insertApplicationWithPermissions(application.copy(application = application.application.copy(isConnected = false, key = secret)))
             }
             return
         }
-        val current = dao.getByKey(key) ?: return
+        val current = daos.applicationDao.getByKey(key) ?: return
         val grants = revertedGrants(current.permissions.map { it.toGrant() }, grantsBefore, grantsAfter)
-        dao.insertApplicationWithPermissions(current.copy(permissions = grants.map { it.toEntity(key) }.toMutableList()))
+        daos.permissionWriteDao.insertApplicationWithPermissions(current.copy(permissions = grants.map { it.toEntity(key) }.toMutableList()))
     }
 
     fun sendRejection(
@@ -623,7 +623,7 @@ class BunkerResponder(
     ) {
         onLoading(true)
         scope.launch(Dispatchers.IO) {
-            val savedApplication = accountRepository.dao(account.npub).getByKey(key)
+            val savedApplication = accountRepository.daos(account.npub).applicationDao.getByKey(key)
             val defaultRelays = settingsStore.settings.defaultRelays
             val relays = BunkerRequestUtils.responseRelays(bunkerRequest, savedApplication?.application?.relays, defaultRelays)
 
@@ -691,12 +691,12 @@ class BunkerResponder(
                 relay,
                 bunkerRequest.encryptedData,
                 decryptTypeScope,
-                dao = accountRepository.dao(account.npub),
+                dao = accountRepository.daos(account.npub).permissionWriteDao,
             )
         }
         if (bunkerRequest.request is BunkerRequestConnect) return
 
-        accountRepository.dao(account.npub).insertApplicationWithPermissions(application)
+        accountRepository.daos(account.npub).permissionWriteDao.insertApplicationWithPermissions(application)
         val isV3 = signerType in nip44v3SignerTypes
         // A rejected encrypt request was never performed, so no ciphertext
         // exists — store nothing rather than leaking the plaintext input.

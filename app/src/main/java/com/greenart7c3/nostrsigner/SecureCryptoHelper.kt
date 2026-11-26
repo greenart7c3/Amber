@@ -508,10 +508,10 @@ object SecureCryptoHelper {
         }
         // Per-account Room `application` tables (GHSA-5fjp-ghh8-wch8).
         for ((npub) in accounts) {
-            val dao = accountRepository.dao(npub)
-            for (row in dao.getAllApplicationsRaw()) {
-                move(row.secret) { expected, ciphertext -> dao.replaceSecretRaw(row.key, expected, ciphertext) > 0 }
-                move(row.localKey) { expected, ciphertext -> dao.replaceLocalKeyRaw(row.key, expected, ciphertext) > 0 }
+            val daos = accountRepository.daos(npub)
+            for (row in daos.applicationDao.getAllApplicationsRaw()) {
+                move(row.secret) { expected, ciphertext -> daos.applicationWriteDao.replaceSecretRaw(row.key, expected, ciphertext) > 0 }
+                move(row.localKey) { expected, ciphertext -> daos.applicationWriteDao.replaceLocalKeyRaw(row.key, expected, ciphertext) > 0 }
             }
         }
         return result

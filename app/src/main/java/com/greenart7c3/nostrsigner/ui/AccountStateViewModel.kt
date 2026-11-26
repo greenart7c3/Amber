@@ -230,7 +230,7 @@ class AccountStateViewModel(
 
         appScope.launch {
             try {
-                val dao = accountRepository.dao(account.npub)
+                val dao = accountRepository.daos(account.npub).applicationDao
                 if (dao.getAll(account.hexKey).isNotEmpty()) return@launch
 
                 restorePrompt.value = RestorePromptState.Loading

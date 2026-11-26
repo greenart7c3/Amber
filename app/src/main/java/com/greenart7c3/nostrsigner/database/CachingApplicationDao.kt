@@ -1,45 +1,47 @@
 package com.greenart7c3.nostrsigner.database
 
 import androidx.collection.LruCache
-import androidx.paging.PagingSource
-import com.vitorpamplona.quartz.utils.TimeUtils
 
 /**
- * Bounded read-through cache in front of [ApplicationDao] for the five queries
- * on the signing hot path. SignerProvider runs its lookups inside a runBlocking
- * on the calling app's binder thread, so each redundant SQLite roundtrip costs
- * IPC latency. Most apps issue many requests against the same permission rows,
- * so a small LRU per account eliminates almost all of those roundtrips.
+ * The bounded read-through cache one account's caching DAOs ([ApplicationDaos.cached]) share.
+ *
+ * [CachingPermissionLookupDao] caches the queries on the signing hot path
+ * through it. SignerProvider runs its
+ * lookups inside a runBlocking on the calling app's binder thread, so each
+ * redundant SQLite roundtrip costs IPC latency. Most apps issue many requests
+ * against the same permission rows, so a small LRU per account eliminates almost
+ * all of those roundtrips.
  *
  * Negative results are cached too — "no permission row" is the common branch
  * and dominates the miss path otherwise.
  *
  * Writes invalidate every cache entry whose key shares the affected pkKey
- * (coarse-grained per-app). Every mutation in [ApplicationDao] is scoped to a
- * single app key, so this matches the natural granularity without forcing
- * callers to know which exact (type, kind, relay) tuple they touched.
+ * (coarse-grained per-app). Every mutation of the application and permission
+ * DAOs is scoped to a single app key, so this matches the natural granularity
+ * without forcing callers to know which exact (type, kind, relay) tuple they touched.
  *
  * Every invalidation bumps a generation counter, and a read only stores its
  * result if the generation is unchanged since the read began. Otherwise, a
  * delegate read that started before a revocation could land after the
  * invalidation and resurrect the revoked grant in the cache.
  *
- * [getAll] results are cached per account pubKey in a separate small LRU.
- * That query decrypts every application row (AndroidKeyStore AES-GCM, a binder
- * hop to keystore2 per field) and [com.greenart7c3.nostrsigner.service.NotificationSubscription]
- * re-runs it on every relay-refresh cycle, which made it the app's
- * dominant native allocator. Any mutation of the `application` table evicts
- * the affected account's entry (or all entries when only the app key — not
- * the owning account — is known). Cached lists are handed out as defensive
- * copies; callers must not expect in-place edits of returned entities to be
- * visible (all current call sites are read-only consumers).
+ * [CachingApplicationDao.getAll] results are cached per account pubKey in a
+ * separate small LRU. That query decrypts every application row (AndroidKeyStore
+ * AES-GCM, a binder hop to keystore2 per field) and
+ * [com.greenart7c3.nostrsigner.service.NotificationSubscription] re-runs it on
+ * every relay-refresh cycle, which made it the app's dominant native allocator.
+ * Any mutation of the `application` table evicts the affected account's entry
+ * (or all entries when only the app key — not the owning account — is known).
+ * Cached lists are handed out as defensive copies; callers must not expect
+ * in-place edits of returned entities to be visible (all current call sites are
+ * read-only consumers).
  */
-class CachingApplicationDao(
-    private val delegate: ApplicationDao,
-) : ApplicationDao {
-    private enum class Method { SIGN_POLICY, PERM, PERM_KIND, PERM_ALL_KINDS, PERM_RELAY, PERM_WILDCARD }
+class ApplicationDaoCache {
+    /** The cached query a [Key] belongs to. */
+    enum class Method { SIGN_POLICY, PERM, PERM_KIND, PERM_ALL_KINDS, PERM_RELAY, PERM_WILDCARD }
 
-    private data class Key(
+    /** One cached query with its arguments. */
+    data class Key(
         val method: Method,
         val pkKey: String,
         val type: String?,
@@ -47,7 +49,8 @@ class CachingApplicationDao(
         val relay: String?,
     )
 
-    private data class Value(
+    /** A cached query result, including a cached "no row". */
+    data class Value(
         val signPolicy: Int?,
         val permission: ApplicationPermissionsEntity?,
     )
@@ -59,26 +62,26 @@ class CachingApplicationDao(
     private val getAllCache = LruCache<String, List<ApplicationEntity>>(GET_ALL_MAX_ENTRIES)
     private var getAllGeneration = 0L
 
-    private fun generation(): Long = synchronized(cache) { cacheGeneration }
+    fun generation(): Long = synchronized(cache) { cacheGeneration }
 
-    private fun lookup(key: Key): Value? = synchronized(cache) { cache[key] }
+    fun lookup(key: Key): Value? = synchronized(cache) { cache[key] }
 
     /** Caches [value] unless an invalidation ran after the read began at [readGeneration]. */
-    private fun store(key: Key, value: Value, readGeneration: Long) {
+    fun store(key: Key, value: Value, readGeneration: Long) {
         synchronized(cache) {
             if (readGeneration == cacheGeneration) cache.put(key, value)
         }
     }
 
     /** Evicts the cached [getAll] list for [pubKey], or every list when null. */
-    private fun invalidateGetAll(pubKey: String?) {
+    fun invalidateGetAll(pubKey: String?) {
         synchronized(getAllCache) {
             getAllGeneration++
             if (pubKey != null) getAllCache.remove(pubKey) else getAllCache.evictAll()
         }
     }
 
-    private fun invalidateApp(pkKey: String) {
+    fun invalidateApp(pkKey: String) {
         synchronized(cache) {
             cacheGeneration++
             val toRemove = cache.snapshot().keys.filter { it.pkKey == pkKey }
@@ -86,191 +89,42 @@ class CachingApplicationDao(
         }
     }
 
-    private fun invalidateAll() {
+    fun invalidateAll() {
         synchronized(cache) {
             cacheGeneration++
             cache.evictAll()
         }
     }
 
-    // -------- cached reads --------
-
-    /**
-     * F-13: a row past its user-chosen `deleteAfter` lifetime is
-     * authorization-dead even before the periodic cleanup deletes the row.
-     */
-    private fun isExpired(pkKey: String): Boolean {
-        val deleteAfter = delegate.getDeleteAfter(pkKey) ?: return false
-        return deleteAfter > 0 && deleteAfter <= TimeUtils.now()
-    }
-
-    override fun getSignPolicy(key: String): Int? {
-        val k = Key(Method.SIGN_POLICY, key, null, null, null)
-        if (isExpired(key)) return null
-        val readGeneration = generation()
-        lookup(k)?.let { return it.signPolicy }
-        val result = delegate.getSignPolicy(key)
-        store(k, Value(result, null), readGeneration)
-        return result
-    }
-
-    override fun getPermission(key: String, type: String, kind: Int?): ApplicationPermissionsEntity? {
-        val k = Key(Method.PERM_KIND, key, type, kind, null)
-        if (isExpired(key)) return null
-        val readGeneration = generation()
-        lookup(k)?.let { return it.permission }
-        val result = delegate.getPermission(key, type, kind)
-        store(k, Value(null, result), readGeneration)
-        return result
-    }
-
-    override fun getPermission(key: String, type: String): ApplicationPermissionsEntity? {
-        val k = Key(Method.PERM, key, type, null, null)
-        if (isExpired(key)) return null
-        val readGeneration = generation()
-        lookup(k)?.let { return it.permission }
-        val result = delegate.getPermission(key, type)
-        store(k, Value(null, result), readGeneration)
-        return result
-    }
-
-    override fun getPermissionAllKinds(key: String, type: String): ApplicationPermissionsEntity? {
-        val k = Key(Method.PERM_ALL_KINDS, key, type, null, null)
-        if (isExpired(key)) return null
-        val readGeneration = generation()
-        lookup(k)?.let { return it.permission }
-        val result = delegate.getPermissionAllKinds(key, type)
-        store(k, Value(null, result), readGeneration)
-        return result
-    }
-
-    override fun getPermissionForRelay(key: String, type: String, kind: Int, relay: String): ApplicationPermissionsEntity? {
-        val k = Key(Method.PERM_RELAY, key, type, kind, relay)
-        if (isExpired(key)) return null
-        val readGeneration = generation()
-        lookup(k)?.let { return it.permission }
-        val result = delegate.getPermissionForRelay(key, type, kind, relay)
-        store(k, Value(null, result), readGeneration)
-        return result
-    }
-
-    override fun getWildcardRelayPermission(key: String, type: String, kind: Int): ApplicationPermissionsEntity? {
-        val k = Key(Method.PERM_WILDCARD, key, type, kind, null)
-        if (isExpired(key)) return null
-        val readGeneration = generation()
-        lookup(k)?.let { return it.permission }
-        val result = delegate.getWildcardRelayPermission(key, type, kind)
-        store(k, Value(null, result), readGeneration)
-        return result
-    }
-
-    // -------- writes that must invalidate --------
-
-    override suspend fun insertPermissions(permissions: List<ApplicationPermissionsEntity>): List<Long>? {
-        val result = delegate.insertPermissions(permissions)
-        permissions.asSequence().map { it.pkKey }.distinct().forEach(::invalidateApp)
-        return result
-    }
-
-    override suspend fun insertPermissions2(permissions: List<ApplicationPermissionsEntity>): List<Long>? {
-        val result = delegate.insertPermissions2(permissions)
-        permissions.asSequence().map { it.pkKey }.distinct().forEach(::invalidateApp)
-        return result
-    }
-
-    override suspend fun insertApplicationWithPermissions(application: ApplicationWithPermissions) {
-        delegate.insertApplicationWithPermissions(application)
-        invalidateApp(application.application.key)
-        invalidateGetAll(application.application.pubKey)
-    }
-
-    override suspend fun deletePermissions(key: String) {
-        delegate.deletePermissions(key)
-        invalidateApp(key)
-    }
-
-    override suspend fun deletePermissions(key: String, type: String) {
-        delegate.deletePermissions(key, type)
-        invalidateApp(key)
-    }
-
-    override suspend fun deletePermissions(key: String, type: String, kind: Int) {
-        delegate.deletePermissions(key, type, kind)
-        invalidateApp(key)
-    }
-
-    override suspend fun deletePermissions(key: String, type: String, kind: Int, relay: String) {
-        delegate.deletePermissions(key, type, kind, relay)
-        invalidateApp(key)
-    }
-
-    override suspend fun deletePermissionsForKind(key: String, type: String, kind: Int) {
-        delegate.deletePermissionsForKind(key, type, kind)
-        invalidateApp(key)
-    }
-
-    override suspend fun deletePermission(permission: ApplicationPermissionsEntity) {
-        delegate.deletePermission(permission)
-        invalidateApp(permission.pkKey)
-    }
-
-    override suspend fun delete(entity: ApplicationEntity) {
-        delegate.delete(entity)
-        invalidateApp(entity.key)
-        invalidateGetAll(entity.pubKey)
-    }
-
-    override suspend fun delete(key: String) {
-        delegate.delete(key)
-        invalidateApp(key)
-        // Only the app key is known here, not the owning account, so drop every
-        // getAll entry — there is at most one per account.
-        invalidateGetAll(null)
-    }
-
-    // Affects many apps at once (timestamp predicate), so wipe the whole cache.
-    override fun updateExpiredPermissions(time: Long): Int {
-        val n = delegate.updateExpiredPermissions(time)
-        if (n > 0) {
-            invalidateAll()
-        }
-        return n
-    }
-
-    override suspend fun deleteOldApplications(time: Long): Int {
-        val n = delegate.deleteOldApplications(time)
-        if (n > 0) {
-            invalidateAll()
-            invalidateGetAll(null)
-        }
-        return n
-    }
-
-    // -------- pass-through (not cached, not invalidating) --------
-
-    override suspend fun getAll(pubKey: String): List<ApplicationEntity> {
+    suspend fun getAll(pubKey: String, load: suspend () -> List<ApplicationEntity>): List<ApplicationEntity> {
         val readGeneration = synchronized(getAllCache) {
             getAllCache[pubKey]?.let { return it.toList() }
             getAllGeneration
         }
-        val result = delegate.getAll(pubKey).filterNot { it.isExpired() }
+        val result = load()
         synchronized(getAllCache) {
             if (readGeneration == getAllGeneration) getAllCache.put(pubKey, result)
         }
         return result.toList()
     }
 
-    override suspend fun getAllNotConnected(): List<ApplicationWithPermissions> = delegate.getAllNotConnected()
+    private companion object {
+        const val MAX_ENTRIES = 512
+        const val GET_ALL_MAX_ENTRIES = 8
+    }
+}
 
-    override fun getApplicationListItemsPaging(pubKey: String): PagingSource<Int, ApplicationListItem> = delegate.getApplicationListItemsPaging(pubKey)
-
-    override fun getApplicationListItemsPagingByName(pubKey: String): PagingSource<Int, ApplicationListItem> = delegate.getApplicationListItemsPagingByName(pubKey)
-
-    override fun getAllRelayLists(): List<RelayListWrapper> = delegate.getAllRelayLists()
+/**
+ * [ApplicationDao] in front of Room that serves [getAll] from the shared
+ * [ApplicationDaoCache] and hides connections past their `deleteAfter` lifetime.
+ */
+class CachingApplicationDao(
+    private val delegate: ApplicationDao,
+    private val cache: ApplicationDaoCache,
+) : ApplicationDao {
+    override suspend fun getAll(pubKey: String): List<ApplicationEntity> = cache.getAll(pubKey) { delegate.getAll(pubKey).filterNot { it.isExpired() } }
 
     override suspend fun getAppName(key: String): String? = delegate.getAppName(key)
-
-    override fun getDeleteAfter(key: String): Long? = delegate.getDeleteAfter(key)
 
     override suspend fun getByKey(key: String): ApplicationWithPermissions? = delegate.getByKey(key)
 
@@ -279,47 +133,6 @@ class CachingApplicationDao(
     override suspend fun getByName(name: String): ApplicationWithPermissions? = delegate.getByName(name)
 
     override suspend fun getBySecret(secret: String): ApplicationWithPermissions? = delegate.getBySecret(secret)?.takeUnless { it.application.isExpired() }
-
-    override suspend fun getAllWithLocalKey(pubKey: String): List<ApplicationEntity> = delegate.getAllWithLocalKey(pubKey).filterNot { it.isExpired() }
-
-    override suspend fun getAllByKey(key: String): List<ApplicationPermissionsEntity> = delegate.getAllByKey(key)
-
-    override fun getAllKeys(): List<String> = delegate.getAllKeys()
-
-    override fun getApplicationKeyNames(): List<ApplicationKeyName> = delegate.getApplicationKeyNames()
-
-    override fun getAllRejectedPermissions(): List<ApplicationPermissionsEntity> = delegate.getAllRejectedPermissions()
-
-    override fun getAllAcceptedPermissions(): List<ApplicationPermissionsEntity> = delegate.getAllAcceptedPermissions()
-
-    override suspend fun insertApplication(event: ApplicationEntity): Long? {
-        val result = delegate.insertApplication(event)
-        // ApplicationEntity columns like signPolicy and lastUsed feed cached reads
-        // (getSignPolicy), so invalidate the affected app's entries.
-        invalidateApp(event.key)
-        invalidateGetAll(event.pubKey)
-        return result
-    }
-
-    override fun insertAll(events: List<ApplicationEntity>): List<Long>? {
-        val result = delegate.insertAll(events)
-        events.forEach { invalidateApp(it.key) }
-        events.asSequence().map { it.pubKey }.distinct().forEach(::invalidateGetAll)
-        return result
-    }
-
-    override suspend fun updateLastUsed(key: String, time: Long) {
-        delegate.updateLastUsed(key, time)
-        // lastUsed doesn't affect any cached read of the permission cache, but it
-        // is a column of getAll's projection, so the per-account list goes stale.
-        invalidateGetAll(null)
-    }
-
-    override suspend fun updateNameAndIcon(key: String, name: String, icon: String) {
-        delegate.updateNameAndIcon(key, name, icon)
-        invalidateApp(key)
-        invalidateGetAll(null)
-    }
 
     // -------- *Raw delegations (envelope-encrypted persistence boundary) --------
     //
@@ -334,8 +147,6 @@ class CachingApplicationDao(
 
     override suspend fun getAllRaw(pubKey: String): List<ApplicationEntity> = delegate.getAllRaw(pubKey)
 
-    override suspend fun getAllNotConnectedRaw(): List<ApplicationWithPermissions> = delegate.getAllNotConnectedRaw()
-
     override suspend fun getByKeyRaw(key: String): ApplicationWithPermissions? = delegate.getByKeyRaw(key)
 
     override fun getByKeySyncRaw(key: String): ApplicationWithPermissions? = delegate.getByKeySyncRaw(key)
@@ -343,31 +154,4 @@ class CachingApplicationDao(
     override suspend fun getByNameRaw(name: String): ApplicationWithPermissions? = delegate.getByNameRaw(name)
 
     override suspend fun getAllApplicationsRaw(): List<ApplicationEntity> = delegate.getAllApplicationsRaw()
-
-    override suspend fun getAllWithLocalKeyRaw(pubKey: String): List<ApplicationEntity> = delegate.getAllWithLocalKeyRaw(pubKey)
-
-    // Key-rotation write path: secret/localKey never feed a cached read of the
-    // permission cache, but they ARE columns of getAll's projection, so evict
-    // the per-account lists (SecureCryptoHelper.rotateKey calls this through
-    // the caching wrapper, ciphertext in / ciphertext out).
-    override suspend fun replaceSecretRaw(key: String, expected: String, newValue: String): Int = delegate.replaceSecretRaw(key, expected, newValue).also { invalidateGetAll(null) }
-
-    override suspend fun replaceLocalKeyRaw(key: String, expected: String, newValue: String): Int = delegate.replaceLocalKeyRaw(key, expected, newValue).also { invalidateGetAll(null) }
-
-    override suspend fun insertApplicationRaw(event: ApplicationEntity): Long? = delegate.insertApplicationRaw(event)
-
-    override fun insertAllRaw(events: List<ApplicationEntity>): List<Long>? = delegate.insertAllRaw(events)
-
-    override suspend fun insertPermissions2Raw(permissions: List<ApplicationPermissionsEntity>): List<Long>? = delegate.insertPermissions2Raw(permissions)
-
-    override suspend fun getExistingApplicationKeys(keys: List<String>): List<String> = delegate.getExistingApplicationKeys(keys)
-
-    override suspend fun insertPermissionsRaw(permissions: List<ApplicationPermissionsEntity>): List<Long>? = delegate.insertPermissionsRaw(permissions)
-
-    override suspend fun deleteRaw(entity: ApplicationEntity) = delegate.deleteRaw(entity)
-
-    companion object {
-        private const val MAX_ENTRIES = 512
-        private const val GET_ALL_MAX_ENTRIES = 8
-    }
 }

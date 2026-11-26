@@ -1,6 +1,5 @@
 package com.greenart7c3.nostrsigner.database
 
-import androidx.paging.PagingSource
 import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Insert
@@ -18,64 +17,8 @@ private const val MAX_CONTENT_LENGTH = 500
 
 @Dao
 abstract class HistoryDao(private val database: HistoryDatabase) {
-    @Query(
-        """
-    SELECT * FROM history
-    WHERE pkKey = :pk
-    AND (:acceptedFilter IS NULL OR accepted = :acceptedFilter)
-    ORDER BY time DESC
-    """,
-    )
-    abstract fun getAllHistoryPaging(pk: String, acceptedFilter: Boolean?): PagingSource<Int, HistoryEntity>
-
-    @Query(
-        """
-    SELECT * FROM history
-    WHERE pkKey = :pk
-    AND (kind = :query OR LOWER(type) LIKE '%' || :query || '%'
-    OR LOWER(translatedPermission) LIKE '%' || :query || '%'
-    OR LOWER(content) LIKE '%' || :query || '%')
-    AND (:acceptedFilter IS NULL OR accepted = :acceptedFilter)
-    ORDER BY time DESC
-    """,
-    )
-    abstract fun searchAllHistoryPaging(pk: String, query: String, acceptedFilter: Boolean?): PagingSource<Int, HistoryEntity>
-
-    @Query(
-        """
-    SELECT * FROM history
-    WHERE (:acceptedFilter IS NULL OR accepted = :acceptedFilter)
-    ORDER BY time DESC
-    """,
-    )
-    abstract fun getAllHistoryPaging(acceptedFilter: Boolean?): PagingSource<Int, HistoryEntity>
-
-    @Query(
-        """
-    SELECT * FROM history
-    WHERE (kind = :query OR LOWER(type) LIKE '%' || :query || '%'
-    OR LOWER(translatedPermission) LIKE '%' || :query || '%'
-    OR LOWER(content) LIKE '%' || :query || '%')
-    AND (:acceptedFilter IS NULL OR accepted = :acceptedFilter)
-    ORDER BY time DESC
-    """,
-    )
-    abstract fun searchAllHistoryPaging(query: String, acceptedFilter: Boolean?): PagingSource<Int, HistoryEntity>
-
     @Query("DELETE FROM history where pkKey = :pk")
     abstract suspend fun deleteHistory(pk: String)
-
-    @Query("SELECT COUNT(*) FROM history WHERE time >= :sinceSeconds AND accepted = 1")
-    abstract suspend fun countAcceptedSince(sinceSeconds: Long): Long
-
-    @Query("SELECT COUNT(*) FROM history WHERE time >= :sinceSeconds AND accepted = 0")
-    abstract suspend fun countRejectedSince(sinceSeconds: Long): Long
-
-    @Query("SELECT COUNT(*) FROM history WHERE pkKey = :pk AND time >= :sinceSeconds AND accepted = 1")
-    abstract suspend fun countAcceptedSince(pk: String, sinceSeconds: Long): Long
-
-    @Query("SELECT COUNT(*) FROM history WHERE pkKey = :pk AND time >= :sinceSeconds AND accepted = 0")
-    abstract suspend fun countRejectedSince(pk: String, sinceSeconds: Long): Long
 
     @Query("DELETE FROM history WHERE id IN (SELECT id FROM history ORDER BY time ASC LIMIT :count)")
     abstract suspend fun deleteOldestHistory(count: Int): Int

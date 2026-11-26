@@ -1704,7 +1704,6 @@
     <ID>TooManyFunctions:ApplicationBackup.kt:ApplicationBackup</ID>
     <ID>TooManyFunctions:ApplicationDao.kt:ApplicationDao</ID>
     <ID>TooManyFunctions:CachingApplicationDao.kt:CachingApplicationDao : ApplicationDao</ID>
-    <ID>TooManyFunctions:HistoryDao.kt:HistoryDao</ID>
     <ID>TooManyFunctions:LocalPreferences.kt:LocalPreferences</ID>
     <ID>TooManyFunctions:LogDao.kt:LogDao</ID>
     <ID>ViewModelForwarding:AccountScreen.kt:MainLoginPage(accountStateViewModel, NavHostControllerWrapper(newNavController))</ID>

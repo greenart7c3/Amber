@@ -44,7 +44,7 @@ class ActivityViewModel(
     fun history(npub: String, pkKey: String?, searchQuery: String, filter: ActivityFilter): Flow<PagingData<ActivityEntry>> = Pager(
         PagingConfig(pageSize = 20, enablePlaceholders = false),
     ) {
-        val dao = accountRepository.getHistoryDatabase(npub).dao()
+        val dao = accountRepository.getHistoryDatabase(npub).pagingDao()
         when {
             pkKey == null && searchQuery.isEmpty() -> dao.getAllHistoryPaging(filter.accepted)
             pkKey == null -> dao.searchAllHistoryPaging(searchQuery.lowercase(), filter.accepted)

@@ -18,6 +18,7 @@ on:
       - 'gradle/**'
       - '*.gradle.kts'
       - 'gradle.properties'
+      - '.github/gradle/**'
       - '.github/workflows/desktop.yml'
   push:
     # Branches only: tag pushes are built by desktop-release.yml.
@@ -109,10 +110,14 @@ jobs:
           java-version: 21
 
       # Linux restores from Test/Build Android; Windows and macOS write on master only.
+      # Disable setup-gradle's cache-cleanup so plugin/dependency artifacts are
+      # never stripped from modules-2/files-2.1; Gradle's init script bounds
+      # build-cache-1 and stale transforms on master writers instead.
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
         with:
           cache-read-only: ${{ matrix.os == 'ubuntu-latest' || github.ref_name != github.event.repository.default_branch }}
+          cache-cleanup: never
 
       - name: Create keystore.properties
         run: touch keystore.properties
@@ -131,7 +136,14 @@ jobs:
       # .deb/.rpm on Linux, .msi/.exe on Windows (WiX is fetched by the
       # Compose plugin), .dmg on macOS (signed ad hoc, no certificate).
       - name: Package (gradle)
-        run: ./gradlew :desktop:packageDistributionForCurrentOs --no-daemon
+        env:
+          IS_CACHE_WRITER: ${{ matrix.os != 'ubuntu-latest' && github.ref_name == github.event.repository.default_branch }}
+        run: |
+          if [ "$IS_CACHE_WRITER" = "true" ]; then
+            ./gradlew :desktop:packageDistributionForCurrentOs --no-daemon --init-script .github/gradle/ci-cache-retention.init.gradle
+          else
+            ./gradlew :desktop:packageDistributionForCurrentOs --no-daemon
+          fi
 
       # Distro-independent bundles from the standalone app image (packageDeb/Rpm
       # build from a temporary one).

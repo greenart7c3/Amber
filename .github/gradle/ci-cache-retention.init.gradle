@@ -1,0 +1,14 @@
+import org.gradle.api.cache.Cleanup
+
+// Used on cache-writing master builds with setup-gradle cache-cleanup: never.
+// Keeps modules-2/files-2.1 (downloadedResources) intact across runs while
+// bounding build-cache-1 and stale transforms via Gradle's own access journal.
+beforeSettings { settings ->
+    settings.caches {
+        cleanup = Cleanup.ALWAYS
+        downloadedResources.setRemoveUnusedEntriesAfterDays(90)
+        releasedWrappers.setRemoveUnusedEntriesAfterDays(90)
+        createdResources.setRemoveUnusedEntriesAfterDays(7)
+        buildCache.setRemoveUnusedEntriesAfterDays(1)
+    }
+}

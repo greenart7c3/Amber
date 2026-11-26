@@ -21,20 +21,26 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import okio.Path.Companion.toOkioPath
 
-/** Coil's singleton loader: capped caches, the relays' Tor routing, and a log line per load. */
+private const val MEMORY_CACHE_BYTES_AVOIDING_DMA_BUF_OOM = 32L * 1024 * 1024
+private const val DISK_CACHE_BYTES = 10L * 1024 * 1024
+
+/**
+ * Coil's singleton loader: capped caches, the relays' Tor routing, and a log line per load.
+ * [isSettingsLoaded] is false until the stored settings are loaded; until then every load
+ * goes through the proxy.
+ */
 class ImageLoaderFactory(
     private val settingsStore: SettingsStore,
-    // False until the stored settings are loaded; until then every load goes through the proxy.
     private val isSettingsLoaded: () -> Boolean,
     private val scope: CoroutineScope,
 ) : SingletonImageLoader.Factory {
     override fun newImageLoader(context: PlatformContext): ImageLoader {
         val memCache = MemoryCache.Builder()
-            .maxSizeBytes(32 * 1024 * 1024) // 32 MB cap to prevent DMA-BUF OOM
+            .maxSizeBytes(MEMORY_CACHE_BYTES_AVOIDING_DMA_BUF_OOM)
             .build()
         val diskCache = DiskCache.Builder()
             .directory(context.cacheDir.resolve("coil_image_cache").toOkioPath())
-            .maxSizeBytes(10 * 1024 * 1024) // 10 MB
+            .maxSizeBytes(DISK_CACHE_BYTES)
             .build()
         val coilCallFactory = okhttp3.Call.Factory { request ->
             val url = request.url.toString()
@@ -79,11 +85,12 @@ class ImageLoaderFactory(
             .build()
     }
 
+    /**
+     * Clears Coil's bitmap memory cache. Coil 3 registers no ComponentCallbacks of its own,
+     * so the cache would otherwise stay fully resident in this long-lived signer process even
+     * while its UI is not visible. It rebuilds lazily on the next image load.
+     */
     fun trimMemoryCache(context: Context) {
-        // Coil 3 registers no ComponentCallbacks of its own, so its bitmap
-        // memory cache (32 MB cap) would otherwise stay fully resident in
-        // this long-lived signer process even while its UI is not visible.
-        // The cache rebuilds lazily on the next image load.
         scope.launch {
             runCatching { SingletonImageLoader.get(context).memoryCache?.clear() }
                 .onFailure { AmberLog.w(Amber.TAG, "Failed to trim Coil memory cache", it) }

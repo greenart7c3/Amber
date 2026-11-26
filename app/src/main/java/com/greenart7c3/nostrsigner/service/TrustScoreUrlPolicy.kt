@@ -3,31 +3,29 @@ package com.greenart7c3.nostrsigner.service
 import java.net.URI
 
 object TrustScoreUrlPolicy {
-    // Private, home-network and anonymity endpoints must never be sent to the
-    // ratings API.
-    private val EXCLUDED_SUFFIXES = listOf(".onion", ".i2p", ".loki", ".local", ".localhost", ".internal", ".lan", ".home.arpa", ".home")
+    private val PRIVATE_HOME_NETWORK_AND_ANONYMITY_SUFFIXES = listOf(".onion", ".i2p", ".loki", ".local", ".localhost", ".internal", ".lan", ".home.arpa", ".home")
 
-    // A dotted domain name: not a single label, an IPv6 literal or an IPv4 address.
-    private fun isPublicDomainName(host: String): Boolean {
+    private fun isDottedDomainNameNotIpLiteral(host: String): Boolean {
         val isIpAddress = host.contains(':') || host.all { it.isDigit() || it == '.' }
         return host.contains('.') && !isIpAddress
     }
 
+    /**
+     * The canonical URL of a public relay to send to the ratings API, or null when [value]
+     * must never be sent: not ws/wss, private, home-network and anonymity hosts, IP literals,
+     * and URLs with credentials, a query or a fragment (per-user data). Paths are dropped
+     * rather than rejected, since many public relays live at non-root paths and only the
+     * host identifies the relay. Default ports are dropped too, so `wss://relay.example`
+     * and `wss://relay.example:443` share one cache key and one API query.
+     */
     fun publicRelayUrl(value: String): String? = runCatching {
         val uri = URI(value)
         val scheme = uri.scheme?.lowercase() ?: return null
         if (scheme != "ws" && scheme != "wss") return null
         val host = uri.host?.lowercase()?.trimEnd('.') ?: return null
-        // Endpoint credentials and anything carrying per-user data in the URL
-        // itself must never be sent. Paths are dropped rather than rejected:
-        // many public relays live at non-root paths, and only the host
-        // identifies the relay to the API.
         if (uri.userInfo != null || uri.query != null || uri.fragment != null) return null
-        if (!isPublicDomainName(host)) return null
-        if (EXCLUDED_SUFFIXES.any { host.endsWith(it) }) return null
-        // Drop default ports so one relay has exactly one canonical URL —
-        // otherwise wss://relay.example and wss://relay.example:443 get two
-        // cache keys and two different API queries.
+        if (!isDottedDomainNameNotIpLiteral(host)) return null
+        if (PRIVATE_HOME_NETWORK_AND_ANONYMITY_SUFFIXES.any { host.endsWith(it) }) return null
         val port = when (scheme) {
             "wss" if uri.port == 443 -> -1
             "ws" if uri.port == 80 -> -1

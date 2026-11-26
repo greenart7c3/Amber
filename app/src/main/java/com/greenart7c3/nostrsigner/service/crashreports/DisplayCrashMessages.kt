@@ -32,7 +32,6 @@ import kotlinx.coroutines.withContext
 
 @Composable
 fun DisplayCrashMessages(
-    // The Application context: the crash report file and the exit records live under it.
     appContext: Context,
     pendingReports: PendingReports,
     account: Account,
@@ -41,13 +40,7 @@ fun DisplayCrashMessages(
     LaunchedEffect(account) {
         withContext(Dispatchers.IO) {
             val exceptions = CrashReportCache(appContext).loadAndDelete()
-            // ANRs, low-memory kills and native crashes only appear in the exit records.
-            // The startup detection may still be running: finish it first, or a dismiss
-            // would clear records written after this read, unseen.
-            ExitReasons.detect(appContext)
-            // The exception report already starts with the version and device table.
-            val exits = ExitReasons.pending(appContext)?.takeIf { it.isNotBlank() }
-                ?.let { if (exceptions.isNullOrBlank()) ReportAssembler().buildExitReport(it) else it }
+            val exits = pendingExitRecords(appContext, exceptionReportHasDeviceTable = !exceptions.isNullOrBlank())
             val stack = listOfNotNull(exceptions, exits)
                 .filter { it.isNotBlank() }
                 .joinToString("\n\n")
@@ -60,4 +53,14 @@ fun DisplayCrashMessages(
             }
         }
     }
+}
+
+@Suppress("NoComments")
+private fun pendingExitRecords(appContext: Context, exceptionReportHasDeviceTable: Boolean): String? {
+    // ANRs, low-memory kills and native crashes only appear in Android's exit records.
+    // The startup detection may still be running: finish it first, or a dismiss
+    // would clear records written after this read, unseen.
+    ExitReasons.detect(appContext)
+    return ExitReasons.pending(appContext)?.takeIf { it.isNotBlank() }
+        ?.let { if (exceptionReportHasDeviceTable) it else ReportAssembler().buildExitReport(it) }
 }

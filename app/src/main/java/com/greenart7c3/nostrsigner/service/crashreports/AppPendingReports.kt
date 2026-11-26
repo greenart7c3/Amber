@@ -6,7 +6,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 
 /** The app's [PendingReports]: one instance, held by Amber for the life of the process. */
 class AppPendingReports(
-    // The Application context: the exit records live in its preferences.
     private val appContext: Context,
 ) : PendingReports {
     override var pendingCrashReport: String? = null

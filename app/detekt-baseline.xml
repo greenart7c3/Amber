@@ -49,21 +49,6 @@
     <ID>NoComments:AccountExportSeedRestoreTest.kt:otherWords is a valid mnemonic for a DIFFERENT identity, encrypted</ID>
     <ID>NoComments:AccountExportSeedRestoreTest.kt:produce someone else's key.</ID>
     <ID>NoComments:AccountExportSeedRestoreTest.kt:under this account's key: storing it would let a later "recovery"</ID>
-    <ID>NoComments:AccountExportService.kt:"recovery" produce someone else's key.</ID>
-    <ID>NoComments:AccountExportService.kt:A stale or hand-edited npub in the metadata must</ID>
-    <ID>NoComments:AccountExportService.kt:A valid mnemonic that derives a different identity is not this</ID>
-    <ID>NoComments:AccountExportService.kt:Convert an Account to exportable data with encrypted private key</ID>
-    <ID>NoComments:AccountExportService.kt:Each private key is already encrypted with NIP-49 inside the JSON</ID>
-    <ID>NoComments:AccountExportService.kt:Pre-fix builds could store NIP-44 ciphertext in SEED_WORDS, so a</ID>
-    <ID>NoComments:AccountExportService.kt:Pre-fix builds could store NIP-44 ciphertext in SEED_WORDS; never</ID>
-    <ID>NoComments:AccountExportService.kt:The NIP-49 key is authoritative: it decrypted with</ID>
-    <ID>NoComments:AccountExportService.kt:The seed is best-effort: the NIP-49 private key is what was actually</ID>
-    <ID>NoComments:AccountExportService.kt:account's recovery phrase — storing it would let a later</ID>
-    <ID>NoComments:AccountExportService.kt:backup exported from such an account decrypts to ciphertext here.</ID>
-    <ID>NoComments:AccountExportService.kt:not throw away a valid key.</ID>
-    <ID>NoComments:AccountExportService.kt:re-export a non-mnemonic as if it were the recovery phrase.</ID>
-    <ID>NoComments:AccountExportService.kt:recovered, and a bad seed must never fail the import of a valid key.</ID>
-    <ID>NoComments:AccountExportService.kt:the password and account.npub is derived from it.</ID>
     <ID>NoComments:AccountPickerRow.kt:Clipped before the click, so the ripple keeps the rounded shape.</ID>
     <ID>NoComments:AccountPickerRow.kt:Sorted and filtered for display only: each row keeps its index into [accounts],</ID>
     <ID>NoComments:AccountPickerRow.kt:which is what the caller selects by, so neither changes the signing account.</ID>
@@ -202,7 +187,6 @@
     <ID>NoComments:Amber.kt:timestamp formatted in composition (StrictMode DiskReadViolation).</ID>
     <ID>NoComments:Amber.kt:waits for Tor on its own.</ID>
     <ID>NoComments:Amber.kt:which the offline flavor does not have); on an install with nothing to</ID>
-    <ID>NoComments:AmberEvent.kt:The seven fields are the NIP-01 event, in its order; grouping them would hide the wire format.</ID>
     <ID>NoComments:AmberNavigationBar.kt:The Accounts tab shows the current account's picture, or its placeholder.</ID>
     <ID>NoComments:AmberRelayStat.kt:300ms window.</ID>
     <ID>NoComments:AmberRelayStat.kt:Build a comma-separated list of stats to save vertical space</ID>
@@ -251,12 +235,10 @@
     <ID>NoComments:AppDatabase.kt:history2 may not exist for users who did a fresh install at version 8, 9, or 10</ID>
     <ID>NoComments:AppDependencies.kt:(appDependencies) instead of threading them through every screen.</ID>
     <ID>NoComments:AppDependencies.kt:The app's dependencies for composables, provided once at each activity root</ID>
-    <ID>NoComments:AppIconStore.kt:Canonical paths resolve `..` and symlinks before the comparison.</ID>
     <ID>NoComments:AppNameSanitizerTest.kt:Bidi overrides and zero-width characters are dropped.</ID>
     <ID>NoComments:AppNameSanitizerTest.kt:Cutting never splits a surrogate pair.</ID>
     <ID>NoComments:AppNameSanitizerTest.kt:Line breaks and tabs become single spaces: no fake second line.</ID>
     <ID>NoComments:AppNameSanitizerTest.kt:Ordinary names, including non-Latin ones, are kept as they are.</ID>
-    <ID>NoComments:AppPendingReports.kt:The Application context: the exit records live in its preferences.</ID>
     <ID>NoComments:AppRelayClient.kt:3-second timeout</ID>
     <ID>NoComments:AppRelayClient.kt:Always call connect() so that failed relays (socket == null) are retried</ID>
     <ID>NoComments:AppRelayClient.kt:False until the stored settings are loaded; until then every dial goes through the proxy.</ID>
@@ -275,20 +257,6 @@
     <ID>NoComments:AppRelayClient.kt:relay, reconnecting if needed</ID>
     <ID>NoComments:AppRelayClient.kt:that are already connected (socket != null), connect() is a safe no-op.</ID>
     <ID>NoComments:AppRelayClient.kt:these update the relay list in the filters and send them to the</ID>
-    <ID>NoComments:ApplicationBackup.kt:A device-lock refusal is not a decrypt failure: treating it as one</ID>
-    <ID>NoComments:ApplicationBackup.kt:Decrypts backup content with the derived backup key. Legacy backups</ID>
-    <ID>NoComments:ApplicationBackup.kt:Deterministically derives the backup encryption keypair from the account</ID>
-    <ID>NoComments:ApplicationBackup.kt:HKDF domain separation for the backup encryption key. Payloads are encrypted</ID>
-    <ID>NoComments:ApplicationBackup.kt:NIP-46/NIP-55 derive_key requests draw from, and an app that could request</ID>
-    <ID>NoComments:ApplicationBackup.kt:Publishes the encrypted backup; true when a relay accepted it or there is nothing to back up.</ID>
-    <ID>NoComments:ApplicationBackup.kt:The event [subId] delivered, when it is of [kind] and by [pubKey] (the account's own); else null.</ID>
-    <ID>NoComments:ApplicationBackup.kt:Whether [app] has outlived its [BackupApplication.deleteAfter]: the</ID>
-    <ID>NoComments:ApplicationBackup.kt:decrypt permission cannot read the publicly stored backup event. Deliberately</ID>
-    <ID>NoComments:ApplicationBackup.kt:makes callers skip a valid restore or publish an empty backup over</ID>
-    <ID>NoComments:ApplicationBackup.kt:outside the "nip44kd"/EncryptionKeyDerivation namespace: that is the domain</ID>
-    <ID>NoComments:ApplicationBackup.kt:the backup nonce must never land on the backup key.</ID>
-    <ID>NoComments:ApplicationBackup.kt:the real one. Rethrow so it surfaces as its own condition.</ID>
-    <ID>NoComments:ApplicationBackup.kt:to a keypair derived from the account key, so a client app holding only a</ID>
     <ID>NoComments:ApplicationBackupCryptoTest.kt:Any client with an encrypt grant can get this from Amber's nip44_encrypt</ID>
     <ID>NoComments:ApplicationBackupCryptoTest.kt:Nonces a client could pass to a future NIP-55/NIP-46 derive_key: the</ID>
     <ID>NoComments:ApplicationBackupCryptoTest.kt:The pre-fix scheme encrypted to the identity key itself (encrypt-to-self);</ID>
@@ -339,10 +307,6 @@
     <ID>NoComments:AuthWhitelistScreen.kt:normalizes "wss://$hostname", so check exclusion on</ID>
     <ID>NoComments:AuthWhitelistScreen.kt:the same constructed URL — a scheme-less hostname</ID>
     <ID>NoComments:AuthWhitelistScreen.kt:would be treated as excluded and hide every badge.</ID>
-    <ID>NoComments:BackupApplicationsWorker.kt:With requireUnlockedDevice enabled the gate refuses signing</ID>
-    <ID>NoComments:BackupApplicationsWorker.kt:background worker. Retry later instead of silently skipping</ID>
-    <ID>NoComments:BackupApplicationsWorker.kt:the day's backup.</ID>
-    <ID>NoComments:BackupApplicationsWorker.kt:while the device is locked — usually the case for a daily</ID>
     <ID>NoComments:BatchAccounts.kt:Every account a batch confirm acts as, in the order first seen.</ID>
     <ID>NoComments:BatchAccounts.kt:The account a batched request is signed and recorded under.</ID>
     <ID>NoComments:BatchRequestCard.kt:The raw event to sign, or the data to encrypt or decrypt.</ID>
@@ -507,27 +471,6 @@
     <ID>NoComments:ChooseSignPolicy.kt:Clipped before the click, so the ripple keeps the rounded shape.</ID>
     <ID>NoComments:ConnectionSetupPage.kt:The SOCKS port to save: the typed one for Orbot (null when it is not a number), else the default.</ID>
     <ID>NoComments:ConnectionToReplaceTest.kt:The URI claims a different name, so the same-name check alone missed it.</ID>
-    <ID>NoComments:ConnectivityService.kt:Always tracked (also under the kill switch) so the detector's baseline is</ID>
-    <ID>NoComments:ConnectivityService.kt:Android 12+ can refuse a background FGS start with ForegroundServiceStartNotAllowedException;</ID>
-    <ID>NoComments:ConnectivityService.kt:Built-in Tor gave up earlier (bounded startup retries</ID>
-    <ID>NoComments:ConnectivityService.kt:Cached dao so the write invalidates CachingApplicationDao's getAll</ID>
-    <ID>NoComments:ConnectivityService.kt:Network changes arrive as a burst of callbacks (the new network, then its</ID>
-    <ID>NoComments:ConnectivityService.kt:The system constructs the service, so it reads the container from its own context once attached.</ID>
-    <ID>NoComments:ConnectivityService.kt:USER_PRESENT comes from SystemUI, not the system process, so a</ID>
-    <ID>NoComments:ConnectivityService.kt:Wait for Tor to be ready before connecting (if using built-in Tor)</ID>
-    <ID>NoComments:ConnectivityService.kt:With requireUnlockedDevice on, a start while the device is locked (an app</ID>
-    <ID>NoComments:ConnectivityService.kt:accounts and connections, so the NIP-46 filter comes up empty and stays</ID>
-    <ID>NoComments:ConnectivityService.kt:broadcast: no other app can send it.</ID>
-    <ID>NoComments:ConnectivityService.kt:case it does not, so a new default network is never missed.</ID>
-    <ID>NoComments:ConnectivityService.kt:current when relays come back.</ID>
-    <ID>NoComments:ConnectivityService.kt:entry for this account (the service can restart in a live process).</ID>
-    <ID>NoComments:ConnectivityService.kt:in runMigrations). The network is back, so retry now</ID>
-    <ID>NoComments:ConnectivityService.kt:instead of waiting for a manual restart.</ID>
-    <ID>NoComments:ConnectivityService.kt:non-exported receiver never gets it. It is a protected</ID>
-    <ID>NoComments:ConnectivityService.kt:onCapabilitiesChanged follows right away, but read them here too in</ID>
-    <ID>NoComments:ConnectivityService.kt:swallow it and let the next foreground start (startService) retry.</ID>
-    <ID>NoComments:ConnectivityService.kt:that way. Rebuild it as soon as the user unlocks.</ID>
-    <ID>NoComments:ConnectivityService.kt:update, or the system restarting the process) can't decrypt the stored</ID>
     <ID>NoComments:CrashReportScreen.kt:Offline the report goes through the clipboard to another client, which signs it.</ID>
     <ID>NoComments:CrossAccountSignEventTest.kt:A context whose Application is a relaxed mock: parsing logs failures through it.</ID>
     <ID>NoComments:CrossAccountSignEventTest.kt:Quartz gift-wraps anon zaps under an ephemeral key, so the wrapper</ID>
@@ -539,11 +482,6 @@
     <ID>NoComments:DecryptSignerTypesTest.kt:Ciphertext, signatures and public keys stay ordinary clips.</ID>
     <ID>NoComments:DeviceUnlockPolicy.kt:isDeviceLocked is a supplier so callers only pay for the KeyguardManager</ID>
     <ID>NoComments:DeviceUnlockPolicy.kt:lookup when the opt-in flag is actually set.</ID>
-    <ID>NoComments:DisplayCrashMessages.kt:ANRs, low-memory kills and native crashes only appear in the exit records.</ID>
-    <ID>NoComments:DisplayCrashMessages.kt:The Application context: the crash report file and the exit records live under it.</ID>
-    <ID>NoComments:DisplayCrashMessages.kt:The exception report already starts with the version and device table.</ID>
-    <ID>NoComments:DisplayCrashMessages.kt:The startup detection may still be running: finish it first, or a dismiss</ID>
-    <ID>NoComments:DisplayCrashMessages.kt:would clear records written after this read, unseen.</ID>
     <ID>NoComments:EditConfigurationViewModel.kt:Before navigating away, which may clear this ViewModel and cancel its scope.</ID>
     <ID>NoComments:EditConfigurationViewModel.kt:Drop queued requests first: answering a stale card</ID>
     <ID>NoComments:EditConfigurationViewModel.kt:The Application context: drops the app's queued requests.</ID>
@@ -720,13 +658,6 @@
     <ID>NoComments:EventNotificationConsumerTest.kt:nothing was sent; it now goes where the connect arrived, as on the desktop.</ID>
     <ID>NoComments:EventNotificationConsumerTest.kt:notify() decrypts inside applicationIOScope.launch; run that inline.</ID>
     <ID>NoComments:EventNotificationConsumerTest.kt:with the retried refusal; now an unknown one gets the single "no permission".</ID>
-    <ID>NoComments:ExitReasons.kt:ANRs ship the full traces file; only its first lines are useful in a chat message.</ID>
-    <ID>NoComments:ExitReasons.kt:API check.</ID>
-    <ID>NoComments:ExitReasons.kt:Exit reasons worth showing to a user: all of them mean the process was killed without</ID>
-    <ID>NoComments:ExitReasons.kt:Keep earlier unread records: a crash on startup must not erase the ANR</ID>
-    <ID>NoComments:ExitReasons.kt:reaching the uncaught-exception handler. The constants are compile-time ints copied into</ID>
-    <ID>NoComments:ExitReasons.kt:that happened before it.</ID>
-    <ID>NoComments:ExitReasons.kt:this class, so building the set is safe below API 30; it is only consulted after [detect]'s</ID>
     <ID>NoComments:ExpiredConnectionAuthTest.kt:Cached value must be the filtered one, not a re-read of the delegate.</ID>
     <ID>NoComments:ExpiredConnectionAuthTest.kt:The gate is consulted on every read, so a cached pre-expiry answer</ID>
     <ID>NoComments:ExpiredConnectionAuthTest.kt:is never served even when the delegate still returns the row.</ID>
@@ -741,13 +672,6 @@
     <ID>NoComments:ExportAllAccountsScreen.kt:What is wrong with the export password: missing, shorter than 8 characters, or not confirmed; null w</ID>
     <ID>NoComments:ExportAllAccountsScreen.kt:Writes every account, encrypted with [password], to [uri], and marks them backed up.</ID>
     <ID>NoComments:FakePreferences.kt:An in-memory [SharedPreferences] for unit tests.</ID>
-    <ID>NoComments:FeedbackSender.kt:NIP-34: a repository announcement's `relays` tag lists the relays its</ID>
-    <ID>NoComments:FeedbackSender.kt:Stand-in used for the issue's `a` tag hint when no announcement was found.</ID>
-    <ID>NoComments:FeedbackSender.kt:This will automatically connect to these relays even if they are not in the list</ID>
-    <ID>NoComments:FeedbackSender.kt:Tor round trips are slow; give the relays time to answer OK before</ID>
-    <ID>NoComments:FeedbackSender.kt:declaring the publish failed.</ID>
-    <ID>NoComments:FeedbackSender.kt:filters with them</ID>
-    <ID>NoComments:FeedbackSender.kt:once the events have been saved, it will disconnect from them unless there are other</ID>
     <ID>NoComments:HistoryDao.kt:Cached dao so the write invalidates CachingApplicationDao's</ID>
     <ID>NoComments:HistoryDao.kt:Ciphertext stored for encrypt/decrypt rows must be kept whole so it</ID>
     <ID>NoComments:HistoryDao.kt:can still be decrypted on demand; only truncate plaintext content.</ID>
@@ -790,13 +714,6 @@
     <ID>NoComments:HttpClientManager.kt:thread. getHttpClient() only runs on network/background threads.</ID>
     <ID>NoComments:HttpClientManager.kt:which can take ~40-60s and leaves REQ/EVENT messages stranded</ID>
     <ID>NoComments:HttpClientManager.kt:writes to half-closed WebSockets (returning `true` from</ID>
-    <ID>NoComments:ImageLoaderFactory.kt:10 MB</ID>
-    <ID>NoComments:ImageLoaderFactory.kt:32 MB cap to prevent DMA-BUF OOM</ID>
-    <ID>NoComments:ImageLoaderFactory.kt:Coil 3 registers no ComponentCallbacks of its own, so its bitmap</ID>
-    <ID>NoComments:ImageLoaderFactory.kt:False until the stored settings are loaded; until then every load goes through the proxy.</ID>
-    <ID>NoComments:ImageLoaderFactory.kt:The cache rebuilds lazily on the next image load.</ID>
-    <ID>NoComments:ImageLoaderFactory.kt:memory cache (32 MB cap) would otherwise stay fully resident in</ID>
-    <ID>NoComments:ImageLoaderFactory.kt:this long-lived signer process even while its UI is not visible.</ID>
     <ID>NoComments:IncomingRequestScreen.kt:A connect needs the account choice and the replace-or-create-new prompt that</ID>
     <ID>NoComments:IncomingRequestScreen.kt:only the single screen has, so it is never batched with other requests.</ID>
     <ID>NoComments:IntentData.kt:NIP-44 v3 context fields. Required when [type] is one of the</ID>
@@ -1053,8 +970,6 @@
     <ID>NoComments:MnemonicLoginInput.kt:paste case (word set externally, onValueChange never called) and the</ID>
     <ID>NoComments:MnemonicLoginInput.kt:reset so menu can reappear while typing</ID>
     <ID>NoComments:MnemonicLoginInput.kt:suppresses the dropdown immediately — no async gap — covering both the</ID>
-    <ID>NoComments:NetworkChangeDetector.kt:The first report after registering the callback is the network the</ID>
-    <ID>NoComments:NetworkChangeDetector.kt:relays are already connecting on; only a return after a loss is a change.</ID>
     <ID>NoComments:NetworkStateTest.kt:No network at all: offline, so a change.</ID>
     <ID>NoComments:NewBunkerViewModel.kt:Prepare local endpoint routing before exposing the ephemeral-request URI.</ID>
     <ID>NoComments:NewNsecBunkerScreen.kt:A relay URL, pasted or typed; Done and the add button both call [onAdd].</ID>
@@ -1126,15 +1041,6 @@
     <ID>NoComments:NotificationSubscriptionTest.kt:mirrors per-test dao state without cross-test cache leakage.</ID>
     <ID>NoComments:NotificationSubscriptionTest.kt:updateFilter is a no-op on the offline flavor by design</ID>
     <ID>NoComments:NotificationSubscriptionTest.kt:updateFilter reads through the caching wrapper; a fresh wrapper per call</ID>
-    <ID>NoComments:NotificationUtils.kt:.setGroup(notificationGroupKey) //-&gt; Might need a Group summary as well before we</ID>
-    <ID>NoComments:NotificationUtils.kt:Build the notification</ID>
-    <ID>NoComments:NotificationUtils.kt:One notification per queued request: keyed like the queue, not by the</ID>
-    <ID>NoComments:NotificationUtils.kt:Register the channel with the system</ID>
-    <ID>NoComments:NotificationUtils.kt:The public version is what redacted lock screens render, so it</ID>
-    <ID>NoComments:NotificationUtils.kt:activate this</ID>
-    <ID>NoComments:NotificationUtils.kt:before it is ever queued.</ID>
-    <ID>NoComments:NotificationUtils.kt:carries the same request description as the full notification.</ID>
-    <ID>NoComments:NotificationUtils.kt:client-chosen id, or a second client reusing an id would be dropped here</ID>
     <ID>NoComments:OkHttpWebSocket.kt:</ID>
     <ID>NoComments:OkHttpWebSocket.kt:(connect() cancels it once OkHttp returns it), and its callbacks must find the session</ID>
     <ID>NoComments:OkHttpWebSocket.kt:A disconnect() that landed while dialing ended the session but had no socket to</ID>
@@ -1204,26 +1110,6 @@
     <ID>NoComments:PreferenceFiles.kt:The npub-specific preference file (`prefs_&lt;npub&gt;`).</ID>
     <ID>NoComments:Previews.kt:Settings live in memory, so components that read them render; the databases</ID>
     <ID>NoComments:Previews.kt:and relays stay unavailable.</ID>
-    <ID>NoComments:ProfileSubscription.kt:(put/remove/clear) takes the same monitor, so the weakly-consistent CHM iterator</ID>
-    <ID>NoComments:ProfileSubscription.kt:A metadata event for an account no longer watched ends here, as it always did.</ID>
-    <ID>NoComments:ProfileSubscription.kt:All maps are concurrent: mutated from UI/coroutine threads (updateFilter, closeSub)</ID>
-    <ID>NoComments:ProfileSubscription.kt:Applies [event]'s name and picture to [account] unless an equal or newer</ID>
-    <ID>NoComments:ProfileSubscription.kt:Called when a relay list subscription completes (all relays sent EOSE or the timeout</ID>
-    <ID>NoComments:ProfileSubscription.kt:Default profile relays from the settings plus the user's own saved relay list.</ID>
-    <ID>NoComments:ProfileSubscription.kt:Iteration (updateFilters) is wrapped in synchronized(this map) and every mutation</ID>
-    <ID>NoComments:ProfileSubscription.kt:One relay finished [subId]: once all have, the relay-list step moves on, and the account's last chec</ID>
-    <ID>NoComments:ProfileSubscription.kt:Plain LinkedHashMaps crash with NegativeArraySizeException under that race.</ID>
-    <ID>NoComments:ProfileSubscription.kt:Saves a verified relay list or applies a verified profile from one of our</ID>
-    <ID>NoComments:ProfileSubscription.kt:Saves the newest kind-10002 write relay list locally so profile fetches can also</ID>
-    <ID>NoComments:ProfileSubscription.kt:StateFlows on these instances is what reflects fresh metadata in the UI.</ID>
-    <ID>NoComments:ProfileSubscription.kt:and read/iterated from relay I/O threads (onIncomingMessage) at the same time.</ID>
-    <ID>NoComments:ProfileSubscription.kt:can never run off the end and throw NoSuchElementException when the map shrinks</ID>
-    <ID>NoComments:ProfileSubscription.kt:hexKey -&gt; subId of the kind-0 metadata subscription</ID>
-    <ID>NoComments:ProfileSubscription.kt:hexKey -&gt; subId of the kind-10002 relay list subscription that runs before the metadata one</ID>
-    <ID>NoComments:ProfileSubscription.kt:hexKey -&gt; the cached Account instance a live composable cares about. Updating the</ID>
-    <ID>NoComments:ProfileSubscription.kt:listens until the app crashes.</ID>
-    <ID>NoComments:ProfileSubscription.kt:mid-iteration. Single-key reads stay lock-free.</ID>
-    <ID>NoComments:ProfileSubscription.kt:still fetch the profile with whatever relay list we have saved</ID>
     <ID>NoComments:ProfileSubscriptionEffect.kt:No relay subscriptions in previews: the preview renderer has no Application.</ID>
     <ID>NoComments:ProfileSubscriptionTest.kt:Churn threads recycle the existing pool: closeSub + updateFilter on the same</ID>
     <ID>NoComments:ProfileSubscriptionTest.kt:Every queried relay answers, in any order, and any of them may still</ID>
@@ -1247,8 +1133,6 @@
     <ID>NoComments:QrCodeDrawer.kt:data bits between top left finder pattern and top right finder pattern.</ID>
     <ID>NoComments:QrCodeDrawer.kt:data bits to the right of the bottom left finder pattern.</ID>
     <ID>NoComments:QrCodeDrawer.kt:of the number of rows/columns to the width and height</ID>
-    <ID>NoComments:ReconnectReceiver.kt:Manual reconnect: redial every relay now, ignoring dead-relay state and</ID>
-    <ID>NoComments:ReconnectReceiver.kt:reconnect backoff, and re-add any relay previously dropped from the pool.</ID>
     <ID>NoComments:RelayUrlToAddTest.kt:Quartz logs a URL it cannot normalize; android.util.Log is not mocked on the JVM.</ID>
     <ID>NoComments:RelayUrlUtilsTest.kt:--- bare host inputs (no scheme) ---</ID>
     <ID>NoComments:RelayUrlUtilsTest.kt:--- edge cases ---</ID>
@@ -1266,22 +1150,7 @@
     <ID>NoComments:RelaysScreen.kt:The local bunker relay switch and its port (mirrors desktop Settings -&gt; Desktop).</ID>
     <ID>NoComments:RelaysScreen.kt:take the whole row and squeeze the port field to nothing.</ID>
     <ID>NoComments:RememberMyChoice.kt:The effect below runs once; it must call the latest callbacks, not the first ones.</ID>
-    <ID>NoComments:ReportAssembler.kt:(bech32 npub/nsec/etc, 64-char hex keys) and long base64 blobs</ID>
-    <ID>NoComments:ReportAssembler.kt:A report must not fail on a statistic (and this is unmocked in JVM tests).</ID>
-    <ID>NoComments:ReportAssembler.kt:Defense-in-depth (GHSA-8844-q5vh-9j8f, L3): exception messages and</ID>
-    <ID>NoComments:ReportAssembler.kt:Device and Product Information</ID>
-    <ID>NoComments:ReportAssembler.kt:Hardware Information</ID>
-    <ID>NoComments:ReportAssembler.kt:OS Information</ID>
-    <ID>NoComments:ReportAssembler.kt:Other Useful Information</ID>
-    <ID>NoComments:ReportAssembler.kt:Thread and heap snapshot: for an `OutOfMemoryError` these say which kind</ID>
-    <ID>NoComments:ReportAssembler.kt:Title with the app version and flavor, then the device table.</ID>
-    <ID>NoComments:ReportAssembler.kt:before persistence so the crash report cannot leak secrets.</ID>
-    <ID>NoComments:ReportAssembler.kt:crypto exceptions quoting bad input). Redact Nostr key material</ID>
-    <ID>NoComments:ReportAssembler.kt:stack traces can embed attacker-controlled request data (parser/</ID>
     <ID>NoComments:ReportAssemblerTest.kt:npub1... derived from the hex key above</ID>
-    <ID>NoComments:ReportSender.kt:Puts the report on the clipboard, for the offline flavor (and no account) to paste it into a DM.</ID>
-    <ID>NoComments:ReportSender.kt:The Application context: it opens the nostr: link outside any activity.</ID>
-    <ID>NoComments:ReportSender.kt:The sender's own copy would be wrapped to the throwaway key, which nobody keeps.</ID>
     <ID>NoComments:RequestGroupUtils.kt:Approve or deny, for a request or a whole group of them.</ID>
     <ID>NoComments:RequestGroupUtils.kt:CONNECT / GET_PUBLIC_KEY approvals never persist a permission from the grouped flow</ID>
     <ID>NoComments:RequestGroupUtils.kt:Mirrors the single-event defaults: EncryptDecryptData defaults to ALL, Nip44v3ApprovalData to SPECIF</ID>
@@ -1385,7 +1254,6 @@
     <ID>NoComments:SettingsViewModelTest.kt:Unconfined: the view model's launches run to completion on the calling thread.</ID>
     <ID>NoComments:SettingsViewModelTest.kt:updateTorMode's default port reads the installed settings.</ID>
     <ID>NoComments:SettingsViewModelTest.kt:used to keep showing the flow it saw first.</ID>
-    <ID>NoComments:SharedFiles.kt:Earlier versions wrote these to the cache root, which the provider served whole.</ID>
     <ID>NoComments:SharedStringsDeviceTest.kt:Folders without a region (values-it) match a regional locale too.</ID>
     <ID>NoComments:SharedStringsDeviceTest.kt:Indonesian: Java and Android 15+ call it "id" (values-id).</ID>
     <ID>NoComments:SignPolicySettingsScreen.kt:Clipped before the click, so the ripple keeps the rounded shape.</ID>
@@ -1516,66 +1384,15 @@
     <ID>NoComments:TimeUtils.kt:locale / clock style for the timestamps formatted during composition. ICU</ID>
     <ID>NoComments:ToastManager.kt:DROP_OLDEST means tryEmit always succeeds, so callers no longer need to</ID>
     <ID>NoComments:ToastManager.kt:spawn a coroutine on the application scope just to push a message.</ID>
-    <ID>NoComments:TorManager.kt:(UnsatisfiedLinkError, ExceptionInInitializerError).</ID>
-    <ID>NoComments:TorManager.kt:Binds the SOCKS listener on a free loopback port; null (and Failed) when none could be bound.</ID>
-    <ID>NoComments:TorManager.kt:Drops the SOCKS port and, while OkHttp still dials through it, replaces</ID>
     <ID>NoComments:TorManager.kt:No-op in offline flavor</ID>
-    <ID>NoComments:TorManager.kt:Published before the port, so no dial can reach the listener without them.</ID>
-    <ID>NoComments:TorManager.kt:Serializes binding and releasing the SOCKS listener against [stop].</ID>
-    <ID>NoComments:TorManager.kt:Tag the probe socket like Amber's other sockets (StrictMode untagged-socket check).</ID>
-    <ID>NoComments:TorManager.kt:The proxy accepts connections right away (each one waits for its</ID>
-    <ID>NoComments:TorManager.kt:The start → bootstrap job; non-null and active while Tor is up or coming up.</ID>
-    <ID>NoComments:TorManager.kt:Throwable: a missing/broken native library surfaces as an Error</ID>
-    <ID>NoComments:TorManager.kt:True once the native library loaded; native calls are skipped until then.</ID>
-    <ID>NoComments:TorManager.kt:circuit), but report Connected only once Arti can carry traffic,</ID>
-    <ID>NoComments:TorManager.kt:kmp-tor's working directories from before the switch to Arti.</ID>
-    <ID>NoComments:TorManager.kt:like the C tor daemon's bootstrap did.</ID>
-    <ID>NoComments:TorManager.kt:stop() may have run while initialize() was blocking.</ID>
     <ID>NoComments:TorProxyReleaseTest.kt:The offline flavor ships a no-op TorManager with no fail() at all.</ID>
     <ID>NoComments:TorProxyReleaseTest.kt:Tor is torn down after the user already switched to Orbot on 9050.</ID>
-    <ID>NoComments:TorStartup.kt:(ConnectivityService.onCreate) can run again after the service is</ID>
-    <ID>NoComments:TorStartup.kt:Bounded Tor startup: at most [MAX_TOR_START_ATTEMPTS] full daemon starts,</ID>
-    <ID>NoComments:TorStartup.kt:Bounded: when Tor cannot bootstrap (airplane mode, censored</ID>
-    <ID>NoComments:TorStartup.kt:Guard for startRecoveryObserver(): runMigrations' only caller</ID>
-    <ID>NoComments:TorStartup.kt:Reconnects relays whenever built-in Tor transitions into a running state.</ID>
-    <ID>NoComments:TorStartup.kt:The Application, which TorManager starts the daemon with.</ID>
-    <ID>NoComments:TorStartup.kt:Tor actually comes back.</ID>
-    <ID>NoComments:TorStartup.kt:Wait for Tor to be ready before establishing relay connections.</ID>
-    <ID>NoComments:TorStartup.kt:daemon forever, burning battery and data for as long as the</ID>
-    <ID>NoComments:TorStartup.kt:device stays offline. After the last attempt the daemon is</ID>
-    <ID>NoComments:TorStartup.kt:network) an unbounded stop/start cycle restarts the whole</ID>
-    <ID>NoComments:TorStartup.kt:over; startFunctions() parks on waitIfNeeded() until</ID>
-    <ID>NoComments:TorStartup.kt:recreated, and the observer must be registered once per process.</ID>
-    <ID>NoComments:TorStartup.kt:stopped and the Failed notification (Restart action) takes</ID>
     <ID>NoComments:TrustScoreBadge.kt:Gray - null score</ID>
     <ID>NoComments:TrustScoreBadge.kt:Green - 80-100</ID>
     <ID>NoComments:TrustScoreBadge.kt:Light green - 60-79</ID>
     <ID>NoComments:TrustScoreBadge.kt:Orange - 40-59</ID>
     <ID>NoComments:TrustScoreBadge.kt:Red - &lt;40</ID>
-    <ID>NoComments:TrustScoreService.kt:1 hour</ID>
-    <ID>NoComments:TrustScoreService.kt:5 minutes for failed requests</ID>
-    <ID>NoComments:TrustScoreService.kt:Fetches the trust score from the API. The caller resolves the policy</ID>
-    <ID>NoComments:TrustScoreService.kt:One key function for cache lookups and the API query alike — a lookup</ID>
-    <ID>NoComments:TrustScoreService.kt:Safe call needed: the offline flavor compiles against OkHttp 4, where body is nullable</ID>
-    <ID>NoComments:TrustScoreService.kt:normalized differently from the fetch never hits. Excluded URLs are</ID>
-    <ID>NoComments:TrustScoreService.kt:resolved up front: no cache probe, no network, no failed-entry churn.</ID>
-    <ID>NoComments:TrustScoreUrlPolicy.kt:A dotted domain name: not a single label, an IPv6 literal or an IPv4 address.</ID>
-    <ID>NoComments:TrustScoreUrlPolicy.kt:Drop default ports so one relay has exactly one canonical URL —</ID>
-    <ID>NoComments:TrustScoreUrlPolicy.kt:Endpoint credentials and anything carrying per-user data in the URL</ID>
-    <ID>NoComments:TrustScoreUrlPolicy.kt:Private, home-network and anonymity endpoints must never be sent to the</ID>
-    <ID>NoComments:TrustScoreUrlPolicy.kt:cache keys and two different API queries.</ID>
-    <ID>NoComments:TrustScoreUrlPolicy.kt:identifies the relay to the API.</ID>
-    <ID>NoComments:TrustScoreUrlPolicy.kt:itself must never be sent. Paths are dropped rather than rejected:</ID>
-    <ID>NoComments:TrustScoreUrlPolicy.kt:many public relays live at non-root paths, and only the host</ID>
-    <ID>NoComments:TrustScoreUrlPolicy.kt:otherwise wss://relay.example and wss://relay.example:443 get two</ID>
-    <ID>NoComments:TrustScoreUrlPolicy.kt:ratings API.</ID>
     <ID>NoComments:Type.kt:Set of Material typography styles to start with</ID>
-    <ID>NoComments:UnexpectedCrashSaver.kt:ANRs, low-memory kills and native crashes never reach the handler;</ID>
-    <ID>NoComments:UnexpectedCrashSaver.kt:Android's exit records are the only trace of them.</ID>
-    <ID>NoComments:UnexpectedCrashSaver.kt:Synchronous: the default handler kills the process as soon as this</ID>
-    <ID>NoComments:UnexpectedCrashSaver.kt:returns, so a report written from a coroutine was usually lost.</ID>
-    <ID>NoComments:UpdateCheckWorker.kt:If a check was actually started, wait for it to finish so the notification fires</ID>
-    <ID>NoComments:UpdateCheckWorker.kt:before WorkManager considers the job done.</ID>
     <ID>NoComments:UpdateSettingsScreen.kt:Current version</ID>
     <ID>NoComments:UpdateSettingsScreen.kt:Frequency selector (only when auto-check is on)</ID>
     <ID>NoComments:UpdateSettingsScreen.kt:Installs the release when one is available, else checks again.</ID>
@@ -1584,29 +1401,6 @@
     <ID>NoComments:UpdateSettingsScreen.kt:Whether an update is available (or downloading), and the button to check for one or install it.</ID>
     <ID>NoComments:UpdateSettingsScreen.kt:Whether and how often to check for updates, and on which channel.</ID>
     <ID>NoComments:UpdateSettingsScreen.kt:and surfaces a release on the newly selected channel.</ID>
-    <ID>NoComments:WebDavService.kt:(proxied routes get 3x): building a Tor circuit plus the TLS</ID>
-    <ID>NoComments:WebDavService.kt:A SOCKS proxy that is still bootstrapping would fail later with a</ID>
-    <ID>NoComments:WebDavService.kt:Authorization header when a redirect crosses to another host, so</ID>
-    <ID>NoComments:WebDavService.kt:Dedicated minimal client: the shared relay stack brings request</ID>
-    <ID>NoComments:WebDavService.kt:Direct: keep the long budgets this client always had — large</ID>
-    <ID>NoComments:WebDavService.kt:PROPFIND with Depth: 0 is the standard WebDAV handshake</ID>
-    <ID>NoComments:WebDavService.kt:Safe call needed: the offline flavor compiles against OkHttp 4, where body is nullable</ID>
-    <ID>NoComments:WebDavService.kt:Same-origin redirects are ordinary WebDAV behavior (collection</ID>
-    <ID>NoComments:WebDavService.kt:Single entry point: the HTTPS policy runs before any client exists,</ID>
-    <ID>NoComments:WebDavService.kt:Timeout scaling matches HttpClientManager.buildHttpClient</ID>
-    <ID>NoComments:WebDavService.kt:URLs without a trailing slash 301 to slash). OkHttp strips the</ID>
-    <ID>NoComments:WebDavService.kt:Whether WebDAV traffic is routed through the Tor SOCKS proxy: only when the</ID>
-    <ID>NoComments:WebDavService.kt:backup traffic.</ID>
-    <ID>NoComments:WebDavService.kt:backups to a slow NAS must not time out.</ID>
-    <ID>NoComments:WebDavService.kt:credentials never follow. Scheme changes are refused: the server URL</ID>
-    <ID>NoComments:WebDavService.kt:error instead.</ID>
-    <ID>NoComments:WebDavService.kt:generic connect error; fail here with the real condition.</ID>
-    <ID>NoComments:WebDavService.kt:handshake needs the larger budget.</ID>
-    <ID>NoComments:WebDavService.kt:is always HTTPS, so one would be a downgrade to HTTP, and a 307/308</ID>
-    <ID>NoComments:WebDavService.kt:logging and an URL-keyed decrypt cache that must not apply to</ID>
-    <ID>NoComments:WebDavService.kt:server doesn't support PROPFIND but is reachable</ID>
-    <ID>NoComments:WebDavService.kt:so a new WebDAV method cannot skip it and send Basic auth cleartext.</ID>
-    <ID>NoComments:WebDavService.kt:would resend the backup body in cleartext. The 3xx is returned as an</ID>
     <ID>NoComments:WebDavSettings.kt:Keys in the app-wide preference file; renaming one loses the stored value.</ID>
     <ID>NoComments:WebDavSettings.kt:needs commit()'s result, see KeystorePolicy.commitActiveAlias</ID>
     <ID>NoComments:WebDavSettingsTest.kt:Key rotation re-encrypts the password; a save made meanwhile must not be overwritten.</ID>
@@ -1619,29 +1413,6 @@
     <ID>NoComments:WebDavTransportPolicyTest.kt:cannot resend the backup body in cleartext.</ID>
     <ID>NoComments:WebDavTransportPolicyTest.kt:not interpreted. OkHttp's PATH_SEGMENT_ENCODE_SET covers ? and #</ID>
     <ID>NoComments:WebDavTransportPolicyTest.kt:work; an https -&gt; http hop is returned as an error, so a 307/308</ID>
-    <ID>NoComments:ZapstoreUpdater.kt:Channel filter: stable users skip events tagged c=beta (the relay may ignore</ID>
-    <ID>NoComments:ZapstoreUpdater.kt:Collect file event IDs from e-tags for second subscription</ID>
-    <ID>NoComments:ZapstoreUpdater.kt:EOSE must not end the check before the other relays answer.</ID>
-    <ID>NoComments:ZapstoreUpdater.kt:EVENT had populated pendingFileEventIds, so the file subscription never opened.</ID>
-    <ID>NoComments:ZapstoreUpdater.kt:Each relay is asked separately and answers on its own schedule, so a</ID>
-    <ID>NoComments:ZapstoreUpdater.kt:Launching a coroutine per message let the release EOSE run before the release</ID>
-    <ID>NoComments:ZapstoreUpdater.kt:Messages are processed sequentially in arrival order through this channel.</ID>
-    <ID>NoComments:ZapstoreUpdater.kt:Only Android APK files, and no ABI-specific build that doesn't match the running</ID>
-    <ID>NoComments:ZapstoreUpdater.kt:Safe call needed: the offline flavor compiles against OkHttp 4, where body is nullable</ID>
-    <ID>NoComments:ZapstoreUpdater.kt:Subscribe to release events (kind 30063) from the developer. Stable releases</ID>
-    <ID>NoComments:ZapstoreUpdater.kt:The authors filter is only a request to the relay, which may ignore it.</ID>
-    <ID>NoComments:ZapstoreUpdater.kt:The hash from the developer-signed release is the only integrity check on</ID>
-    <ID>NoComments:ZapstoreUpdater.kt:The numeric parts and the `-preN` number, null for a final release.</ID>
-    <ID>NoComments:ZapstoreUpdater.kt:The timeout goes through it too, so it never races the EOSE handling.</ID>
-    <ID>NoComments:ZapstoreUpdater.kt:The value of the first tag named one of [names], or null when there is none.</ID>
-    <ID>NoComments:ZapstoreUpdater.kt:Try direct URL first (some release events include it)</ID>
-    <ID>NoComments:ZapstoreUpdater.kt:Whether release [version] is newer than [current], comparing numeric</ID>
-    <ID>NoComments:ZapstoreUpdater.kt:are on every relay, pre-releases (channel "beta") on every relay except the</ID>
-    <ID>NoComments:ZapstoreUpdater.kt:phase only ends once every relay has sent EOSE (or on the timeout):</ID>
-    <ID>NoComments:ZapstoreUpdater.kt:pre-releases are never on the zapstore relay, and its early empty</ID>
-    <ID>NoComments:ZapstoreUpdater.kt:the download; without it, fail closed rather than install unverified bytes.</ID>
-    <ID>NoComments:ZapstoreUpdater.kt:would otherwise return a newer pre-release that processReleaseEvent then drops.</ID>
-    <ID>NoComments:ZapstoreUpdater.kt:zapstore one. Stable asks for the main channel only: with limit 1, the others</ID>
     <ID>NoComments:ZapstoreUpdaterAuthorTest.kt:Release processing runs on the updater's own coroutine; give it time to act.</ID>
     <ID>NoComments:ZapstoreUpdaterFileTest.kt:Messages are handled on the updater's own coroutine; give it time to act.</ID>
     <ID>NoComments:ZapstoreUpdaterFileTest.kt:The URL the updater offers after one file event with [tags], or null when it skips it.</ID>

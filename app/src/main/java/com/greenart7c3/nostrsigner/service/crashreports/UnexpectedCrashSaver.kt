@@ -30,6 +30,7 @@ class UnexpectedCrashSaver(
 ) : Thread.UncaughtExceptionHandler {
     private val defaultUEH: Thread.UncaughtExceptionHandler? = Thread.getDefaultUncaughtExceptionHandler()
 
+    @Suppress("NoComments")
     override fun uncaughtException(
         t: Thread,
         e: Throwable,
@@ -41,14 +42,17 @@ class UnexpectedCrashSaver(
     }
 
     companion object {
+        /**
+         * Saves every uncaught exception as a crash report, and logs the deaths that never
+         * reach the handler (ANRs, low-memory kills, native crashes), which only Android's
+         * exit records show.
+         */
         fun install(
             context: Context,
             cache: CrashReportCache,
             scope: CoroutineScope,
         ) {
             Thread.setDefaultUncaughtExceptionHandler(UnexpectedCrashSaver(cache))
-            // ANRs, low-memory kills and native crashes never reach the handler;
-            // Android's exit records are the only trace of them.
             scope.launch {
                 ExitReasons.detect(context).forEach { AmberLog.w("ExitReasons", it) }
             }

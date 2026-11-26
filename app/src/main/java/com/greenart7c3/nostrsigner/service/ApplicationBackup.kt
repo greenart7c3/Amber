@@ -49,6 +49,7 @@ private val INBOX_FALLBACK_RELAYS = listOfNotNull(
     RelayUrlNormalizer.normalizeOrNull("wss://nos.lol/"),
 )
 
+@Suppress("NoComments")
 // HKDF domain separation for the backup encryption key. Payloads are encrypted
 // to a keypair derived from the account key, so a client app holding only a
 // decrypt permission cannot read the publicly stored backup event. Deliberately
@@ -114,6 +115,7 @@ sealed interface RestoreResult {
  * GeohashKeyDerivation. The keypair is never stored: after a key restore it is
  * re-derived, so only the account secret can decrypt.
  */
+@Suppress("NoComments")
 internal fun backupKeyPair(identityPrivKey: ByteArray): KeyPair {
     val prk = backupHkdf.extract(identityPrivKey, BACKUP_KEY_SALT)
     var counter = 1
@@ -133,7 +135,6 @@ internal fun backupSigner(account: Account): NostrSignerInternal {
     return NostrSignerInternal(backupKeyPair(identityPrivKey))
 }
 
-// The event [subId] delivered, when it is of [kind] and by [pubKey] (the account's own); else null.
 private fun Message.ownEvent(subId: String, kind: Int, pubKey: String): Event? = (this as? EventMessage)?.takeIf { it.subId == subId && it.event.kind == kind }?.event?.takeIf { it.pubKey == pubKey }
 
 /** Builds the backup payload of an account's applications, serializes it and decrypts a fetched backup. */
@@ -188,6 +189,7 @@ object ApplicationBackupPayloads {
      * Amber's own nip44_encrypt, so it cannot prove Amber authored the backup.
      * Upgraded installs overwrite those replaceable events on their next publish.
      */
+    @Suppress("NoComments")
     internal suspend fun decryptContent(content: String, account: Account): String? = try {
         val backupSigner = backupSigner(account)
         backupSigner.nip44Decrypt(content, backupSigner.keyPair.pubKey.toHexKey())
@@ -307,7 +309,6 @@ object ApplicationBackup {
         }
     }
 
-    /** Publishes the encrypted backup; true when a relay accepted it or there is nothing to back up. */
     private suspend fun encryptAndPublish(npub: String, account: Account, accountRepository: AccountRepository, relayClient: RelayClient, settingsStore: SettingsStore): Boolean {
         val payload = ApplicationBackupPayloads.buildPayload(account, accountRepository.daos(npub))
         if (payload.applications.isEmpty()) {
@@ -390,10 +391,6 @@ object ApplicationBackup {
 
 /** Writes a fetched backup's unexpired applications and their permissions into the account database. */
 object ApplicationBackupRestore {
-    /**
-     * Whether [app] has outlived its [BackupApplication.deleteAfter]: the
-     * cleanup worker would delete it, so a restore must not bring it back.
-     */
     internal fun isExpired(app: BackupApplication, now: Long): Boolean = app.deleteAfter in 1..<now
 
     suspend fun restoreFromPayload(npub: String, payload: BackupPayload, accountRepository: AccountRepository, relayClient: RelayClient): RestoreResult = try {

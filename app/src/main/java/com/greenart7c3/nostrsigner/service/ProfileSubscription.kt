@@ -58,20 +58,17 @@ class ProfileSubscription(
     private val settingsStore: SettingsStore,
     private val relayClient: RelayClient,
 ) : RelayConnectionListener {
+    @Suppress("NoComments")
     // All maps are concurrent: mutated from UI/coroutine threads (updateFilter, closeSub)
     // and read/iterated from relay I/O threads (onIncomingMessage) at the same time.
     // Plain LinkedHashMaps crash with NegativeArraySizeException under that race.
+    private val metadataSubIds = ConcurrentHashMap<String, String>()
 
-    // hexKey -> subId of the kind-0 metadata subscription
-    private val subIds = ConcurrentHashMap<String, String>()
-
-    // hexKey -> subId of the kind-10002 relay list subscription that runs before the metadata one
     private val relayListSubIds = ConcurrentHashMap<String, String>()
     private val relaysPerSubId = ConcurrentHashMap<String, MutableSet<NormalizedRelayUrl>>()
     private val timeoutJobs = ConcurrentHashMap<String, Job>()
 
-    // hexKey -> the cached Account instance a live composable cares about. Updating the
-    // StateFlows on these instances is what reflects fresh metadata in the UI.
+    @Suppress("NoComments")
     // Iteration (updateFilters) is wrapped in synchronized(this map) and every mutation
     // (put/remove/clear) takes the same monitor, so the weakly-consistent CHM iterator
     // can never run off the end and throw NoSuchElementException when the map shrinks
@@ -79,20 +76,17 @@ class ProfileSubscription(
     private val accounts = ConcurrentHashMap<String, Account>()
 
     init {
-        // listens until the app crashes.
         client.addConnectionListener(this)
     }
 
     override suspend fun onIncomingMessage(relay: IRelayClient, msgStr: String, msg: Message) {
         when (msg) {
             is EoseMessage -> onEose(relay, msg.subId)
-            // A metadata event for an account no longer watched ends here, as it always did.
-            is EventMessage -> if (!onEvent(msg)) return
+            is EventMessage -> if (!handleEventUnlessAccountUnwatched(msg)) return
         }
         super.onIncomingMessage(relay, msgStr, msg)
     }
 
-    /** One relay finished [subId]: once all have, the relay-list step moves on, and the account's last check is recorded. */
     private fun onEose(relay: IRelayClient, subId: String) {
         val relays = relaysPerSubId[subId]
         if (relays != null) {
@@ -103,23 +97,19 @@ class ProfileSubscription(
             }
         }
 
-        val hexKey = subIds.entries.firstOrNull { it.value == subId }?.key
+        val hexKey = metadataSubIds.entries.firstOrNull { it.value == subId }?.key
         val account = hexKey?.let { accounts[it] } ?: return
         scope.launch {
             AccountPreferences.setLastCheck(appContext, account.npub, TimeUtils.now())
         }
     }
 
-    /**
-     * Saves a verified relay list or applies a verified profile from one of our
-     * subscriptions. False when a profile arrives for an account no longer watched.
-     */
-    private fun onEvent(msg: EventMessage): Boolean {
+    private fun handleEventUnlessAccountUnwatched(msg: EventMessage): Boolean {
         val event = msg.event
         if (relayListSubIds.containsValue(msg.subId) && event.kind == AdvertisedRelayListEvent.KIND && event.verify()) {
-            (event as? AdvertisedRelayListEvent)?.let { saveUserRelays(it) }
+            (event as? AdvertisedRelayListEvent)?.let { saveNewestUserWriteRelays(it) }
         }
-        if (subIds.containsValue(msg.subId) && event.kind == MetadataEvent.KIND && event.verify()) {
+        if (metadataSubIds.containsValue(msg.subId) && event.kind == MetadataEvent.KIND && event.verify()) {
             val account = accounts[event.pubKey] ?: return false
             (event as? MetadataEvent)?.let { applyMetadata(account, it) }
         }
@@ -133,6 +123,7 @@ class ProfileSubscription(
      * must not overwrite a newer one. Locked per account: events for the same
      * account arrive concurrently from several relays' I/O threads.
      */
+    @Suppress("NoComments")
     internal fun applyMetadata(account: Account, event: MetadataEvent) {
         synchronized(account) {
             if (event.createdAt <= AccountPreferences.getMetadataCreatedAt(appContext, account.npub)) return
@@ -202,14 +193,13 @@ class ProfileSubscription(
             delay(EOSE_TIMEOUT)
             if (relaysPerSubId.containsKey(subId)) {
                 unsubscribe(subId)
-                // still fetch the profile with whatever relay list we have saved
                 onRelayListSubFinished(subId)
             }
         }
     }
 
     private fun subscribeToProfile(account: Account) {
-        val subId = subIds.getOrPut(account.hexKey) { UUID.randomUUID().toString() }
+        val subId = metadataSubIds.getOrPut(account.hexKey) { UUID.randomUUID().toString() }
         val profileFilter = createProfileFilter(account)
         timeoutJobs.remove(subId)?.cancel()
         relaysPerSubId[subId] = ConcurrentHashMap.newKeySet<NormalizedRelayUrl>().apply { addAll(profileFilter.keys) }
@@ -222,22 +212,13 @@ class ProfileSubscription(
         }
     }
 
-    /**
-     * Called when a relay list subscription completes (all relays sent EOSE or the timeout
-     * fired). Starts the metadata fetch for the account using the just-saved relay list.
-     * No-op for metadata subscription ids.
-     */
     private fun onRelayListSubFinished(subId: String) {
         val hexKey = relayListSubIds.entries.firstOrNull { it.value == subId }?.key ?: return
         relayListSubIds.remove(hexKey)
         accounts[hexKey]?.let { subscribeToProfile(it) }
     }
 
-    /**
-     * Saves the newest kind-10002 write relay list locally so profile fetches can also
-     * query the user's own relays.
-     */
-    private fun saveUserRelays(event: AdvertisedRelayListEvent) {
+    private fun saveNewestUserWriteRelays(event: AdvertisedRelayListEvent) {
         val account = accounts[event.pubKey] ?: return
         val relays = event.writeRelaysNorm() ?: event.relaysNorm()
         if (relays.isEmpty()) return
@@ -266,7 +247,7 @@ class ProfileSubscription(
     fun closeSub(account: Account) {
         synchronized(accounts) { accounts.remove(account.hexKey) }
         relayListSubIds.remove(account.hexKey)?.let { unsubscribe(it) }
-        subIds.remove(account.hexKey)?.let { unsubscribe(it) }
+        metadataSubIds.remove(account.hexKey)?.let { unsubscribe(it) }
     }
 
     /**
@@ -274,17 +255,16 @@ class ProfileSubscription(
      */
     fun closeSub() {
         relayClient.intentionalDisconnectTime = System.currentTimeMillis()
-        (subIds.values + relayListSubIds.values).forEach {
+        (metadataSubIds.values + relayListSubIds.values).forEach {
             timeoutJobs.remove(it)?.cancel()
             client.unsubscribe(it)
         }
         relaysPerSubId.clear()
-        subIds.clear()
+        metadataSubIds.clear()
         relayListSubIds.clear()
         synchronized(accounts) { accounts.clear() }
     }
 
-    /** Default profile relays from the settings plus the user's own saved relay list. */
     private fun profileRelays(account: Account): Set<NormalizedRelayUrl> {
         val defaultRelays = LocalPreferences.loadSettingsFromEncryptedStorage(appContext).defaultProfileRelays
         val userRelays = AccountPreferences.getUserRelays(appContext, account.npub)

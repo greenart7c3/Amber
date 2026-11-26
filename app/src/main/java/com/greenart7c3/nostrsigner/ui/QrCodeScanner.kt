@@ -16,6 +16,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -47,14 +48,7 @@ fun SimpleQrCodeScanner(
             }
         }
 
-    val scanOptions =
-        ScanOptions().apply {
-            setDesiredBarcodeFormats(ScanOptions.QR_CODE)
-            setPrompt("Point to the QR Code")
-            setBeepEnabled(false)
-            setOrientationLocked(false)
-            addExtra(Intents.Scan.SCAN_TYPE, Intents.Scan.MIXED_SCAN)
-        }
+    val scanOptions = qrScanOptions()
 
     val permissionLauncher =
         rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
@@ -75,39 +69,53 @@ fun SimpleQrCodeScanner(
     }
 
     if (permissionDenied) {
-        AlertDialog(
-            onDismissRequest = {
+        CameraPermissionDeniedDialog(
+            onCancel = {
                 permissionDenied = false
                 onDismiss()
             },
-            title = { Text(stringResource(Res.string.camera_permission_required)) },
-            text = { Text(stringResource(Res.string.camera_permission_required_message)) },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        permissionDenied = false
-                        onDismiss()
-                        context.startActivity(
-                            Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-                                data = Uri.fromParts("package", context.packageName, null)
-                                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                            },
-                        )
-                    },
-                ) {
-                    Text(stringResource(Res.string.settings))
-                }
-            },
-            dismissButton = {
-                TextButton(
-                    onClick = {
-                        permissionDenied = false
-                        onDismiss()
-                    },
-                ) {
-                    Text(stringResource(Res.string.cancel))
-                }
+            onOpenSettings = {
+                permissionDenied = false
+                onDismiss()
+                context.startActivity(appDetailsSettingsIntent(context.packageName))
             },
         )
     }
+}
+
+private fun qrScanOptions(): ScanOptions = ScanOptions().apply {
+    setDesiredBarcodeFormats(ScanOptions.QR_CODE)
+    setPrompt("Point to the QR Code")
+    setBeepEnabled(false)
+    setOrientationLocked(false)
+    addExtra(Intents.Scan.SCAN_TYPE, Intents.Scan.MIXED_SCAN)
+}
+
+private fun appDetailsSettingsIntent(packageName: String): Intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+    data = Uri.fromParts("package", packageName, null)
+    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+}
+
+@Composable
+private fun CameraPermissionDeniedDialog(
+    onCancel: () -> Unit,
+    onOpenSettings: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    AlertDialog(
+        onDismissRequest = onCancel,
+        modifier = modifier,
+        title = { Text(stringResource(Res.string.camera_permission_required)) },
+        text = { Text(stringResource(Res.string.camera_permission_required_message)) },
+        confirmButton = {
+            TextButton(onClick = onOpenSettings) {
+                Text(stringResource(Res.string.settings))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onCancel) {
+                Text(stringResource(Res.string.cancel))
+            }
+        },
+    )
 }

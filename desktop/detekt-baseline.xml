@@ -2,7 +2,6 @@
 <SmellBaseline>
   <ManuallySuppressedIssues/>
   <CurrentIssues>
-    <ID>NoComments:AccountAvatar.kt:The body, or null when it is (or says it is) larger than [MAX_BYTES].</ID>
     <ID>NoComments:AccountManager.kt:Decodes ASCII hex and wipes [hex].</ID>
     <ID>NoComments:AccountManager.kt:Never sign as one identity under another account's name and permissions.</ID>
     <ID>NoComments:AccountManager.kt:String, so every copy of the key can be wiped.</ID>
@@ -22,24 +21,6 @@
     <ID>NoComments:AmberDesktop.kt:retried directly, bypassing the relay client's internal backoff</ID>
     <ID>NoComments:AmberDesktop.kt:wiped by the lock mid-AUTH) must not abort AUTH for the others.</ID>
     <ID>NoComments:AmberDesktop.kt:would sit in memory only until the next unlock.</ID>
-    <ID>NoComments:App.kt:A crash report from this or a previous run, offered once an account</ID>
-    <ID>NoComments:App.kt:A nostrconnect:// link opened Amber (launch argument, or forwarded by</ID>
-    <ID>NoComments:App.kt:Compact-width header: app name, relay status and the account switcher.</ID>
-    <ID>NoComments:App.kt:Compact-width navigation: the sidebar routes as a bottom bar.</ID>
-    <ID>NoComments:App.kt:Expanded: full sidebar. Medium: icon rail. Compact: the</ID>
-    <ID>NoComments:App.kt:First run: no passphrase yet. Nothing else may load until it is set.</ID>
-    <ID>NoComments:App.kt:Jump to the approval screen whenever a new request arrives.</ID>
-    <ID>NoComments:App.kt:Medium-width navigation: the sidebar collapsed to icons, titles in tooltips.</ID>
-    <ID>NoComments:App.kt:On the selected (amber) row inherit the container's dark</ID>
-    <ID>NoComments:App.kt:On wide windows the capped content column sits centered rather than hugging the sidebar.</ID>
-    <ID>NoComments:App.kt:The account chip at the bottom of the sidebar: shows the active account and</ID>
-    <ID>NoComments:App.kt:The app once it is unlocked and [acc] is loaded: the navigation and the current screen.</ID>
-    <ID>NoComments:App.kt:Unlocked, but the account is still being loaded: don't flash the login screen.</ID>
-    <ID>NoComments:App.kt:a second launch). Process it here — after the gates — so a link</ID>
-    <ID>NoComments:App.kt:can send it (as on Android, after unlock).</ID>
-    <ID>NoComments:App.kt:clicked while locked or before an account exists waits for unlock.</ID>
-    <ID>NoComments:App.kt:navigation moves to a bottom bar under a slim top bar.</ID>
-    <ID>NoComments:App.kt:on-color; otherwise use the muted variant.</ID>
     <ID>NoComments:AppDirs.kt:Filesystem without atomic rename support: best-effort replace.</ID>
     <ID>NoComments:AppDirs.kt:Overwrite in place; the existing file was created under this policy.</ID>
     <ID>NoComments:AppDirs.kt:Windows cannot open a directory as a channel; NTFS journals the rename.</ID>
@@ -241,8 +222,6 @@
     <ID>NoComments:BunkerOverLocalRelayTest.kt:compares saved connections against the configured relay URL.</ID>
     <ID>NoComments:BunkerReplies.kt:Publishing a reply to a NIP-46 client; building and retrying it is the common publishNip46Reply.</ID>
     <ID>NoComments:BunkerReplies.kt:The account key, for a connection from before per-connection keys.</ID>
-    <ID>NoComments:Components.kt:Read straight from the classpath: the Compose resources library would need</ID>
-    <ID>NoComments:Components.kt:a generated Res class for one image.</ID>
     <ID>NoComments:ComputedResult.kt:NIP-46 layout: [pubkey, kind, scope, base64 plaintext or the v3 payload]</ID>
     <ID>NoComments:ComputedResult.kt:The answer to [request] for [acc] (the NIP-46 and local socket paths share it) and</ID>
     <ID>NoComments:ComputedResult.kt:[sealPreview]: a seal in an encrypt/decrypt payload, opened for the preview (openSealForPreview).</ID>
@@ -437,19 +416,6 @@
     <ID>NoComments:Models.kt:An extension, not a member: Jackson would persist a member getter as a field.</ID>
     <ID>NoComments:NativeNotificationFormatTest.kt:The control character XML cannot carry is dropped; nothing becomes markup.</ID>
     <ID>NoComments:NativeNotificationFormatTest.kt:Title plus two lines: a generic toast shows three.</ID>
-    <ID>NoComments:NativeTray.kt:(SNI) is the one waybar and the Wayland shells actually host.</ID>
-    <ID>NoComments:NativeTray.kt:A fresh, owner-only directory for the shim links. `createTempDirectory`</ID>
-    <ID>NoComments:NativeTray.kt:An explicit AMBER_TRAY_TYPE overrides the host probe (debugging).</ID>
-    <ID>NoComments:NativeTray.kt:If only the Ayatana appindicator library is present, symlink it under</ID>
-    <ID>NoComments:NativeTray.kt:Nothing to do if the legacy library dorkbox wants already exists.</ID>
-    <ID>NoComments:NativeTray.kt:On Wayland the GtkStatusIcon backend is invisible; AppIndicator</ID>
-    <ID>NoComments:NativeTray.kt:Only the GTK3 names — we force PREFER_GTK3, and pointing a GTK2</ID>
-    <ID>NoComments:NativeTray.kt:Package-visible for testing: a host is registered only on a `true` reply.</ID>
-    <ID>NoComments:NativeTray.kt:Probes up to [attempts] times, [intervalMs] apart; true as soon as a host is registered.</ID>
-    <ID>NoComments:NativeTray.kt:True when the session bus advertises a StatusNotifierItem host</ID>
-    <ID>NoComments:NativeTray.kt:dorkbox 4.4 only looks for the legacy `libappindicator3.so` family of</ID>
-    <ID>NoComments:NativeTray.kt:dorkbox hands the shell the tray icon as a file path under its</ID>
-    <ID>NoComments:NativeTray.kt:name at a GTK3 lib would mismatch.</ID>
     <ID>NoComments:NativeTrayShimDirTest.kt:Freshly created, not a pre-existing directory that was adopted.</ID>
     <ID>NoComments:NativeTrayTest.kt:(waybar's tray module, GNOME Shell, …) is registered.</ID>
     <ID>NoComments:NativeTrayTest.kt:At login the bar's tray host can come up after Amber.</ID>
@@ -744,48 +710,6 @@
     <ID>NoComments:RelayNetworkTest.kt:Public URLs keep following redirects (through Tor when it is on).</ID>
     <ID>NoComments:RelayNetworkTest.kt:and the localhost loopback names are unconditional locals.</ID>
     <ID>NoComments:RelayNetworkTest.kt:dialed directly and reveal the user's IP.</ID>
-    <ID>NoComments:RelayStatusWidget.kt:Manual reconnect: give relays marked dead another chance.</ID>
-    <ID>NoComments:RelayStatusWidget.kt:Port of the Android `R.drawable.relays` vector.</ID>
-    <ID>NoComments:RequestDetails.kt:A seal shows the event it holds, as on Android; else the event itself.</ID>
-    <ID>NoComments:RequestDetails.kt:A sign_psbt request: what the transaction pays, mirroring Android's `SignPsbt`.</ID>
-    <ID>NoComments:RequestDetails.kt:An auth event says nothing in its content: show the relay instead.</ID>
-    <ID>NoComments:RequestDetails.kt:Fill small windows (leaving room for the title and buttons), cap on large ones.</ID>
-    <ID>NoComments:RequestDetails.kt:Mirrors Android's `PsbtBody`: sending and change outputs, the fee, then the raw PSBT.</ID>
-    <ID>NoComments:RequestDetails.kt:Mirrors the Android `EventDetailModal` / `EncryptDecryptDetailModal`.</ID>
-    <ID>NoComments:RequestDetails.kt:Non-segwit scripts have no bech32 address: show the script itself.</ID>
-    <ID>NoComments:RequestDetails.kt:Null when there is nothing to detail (connect, get_public_key, ping…).</ID>
-    <ID>NoComments:RequestDetails.kt:The kind's name; for a kind Amber has no name for, the event's NIP-31 `alt` tag when it</ID>
-    <ID>NoComments:RequestDetails.kt:The parts of an event the details dialog shows, read from any event JSON.</ID>
-    <ID>NoComments:RequestDetails.kt:The short text under the request's description on the card.</ID>
-    <ID>NoComments:RequestDetails.kt:What a request card and its details dialog show, mirroring the Android</ID>
-    <ID>NoComments:RequestDetailsTest.kt:A connect is shown alone (never batched), and has no details.</ID>
-    <ID>NoComments:RequestDetailsTest.kt:Android opens a seal for the preview and shows the event inside it, not the seal.</ID>
-    <ID>NoComments:RequestDetailsTest.kt:Answered elsewhere (shortcut, notification, expiry): the dialog closes.</ID>
-    <ID>NoComments:RequestDetailsTest.kt:NIP-31: a kind Amber has no name for is named by the event's alt tag, as on Android.</ID>
-    <ID>NoComments:RequestNotificationPopup.kt:Compose windows are JFrames, which X11 always hands to the window</ID>
-    <ID>NoComments:RequestNotificationPopup.kt:Create the native window first so it can be typed before it maps.</ID>
-    <ID>NoComments:RequestNotificationPopup.kt:Distance between the card and the screen edges, like the OS's own notifications.</ID>
-    <ID>NoComments:RequestNotificationPopup.kt:Makes AWT announce the popup as `_NET_WM_WINDOW_TYPE_POPUP_MENU`. AWT writes</ID>
-    <ID>NoComments:RequestNotificationPopup.kt:NORMAL, which Hyprland focuses on map, hence markAsX11Popup.</ID>
-    <ID>NoComments:RequestNotificationPopup.kt:Never take keyboard focus from what the user is typing in.</ID>
-    <ID>NoComments:RequestNotificationPopup.kt:One button on the popup.</ID>
-    <ID>NoComments:RequestNotificationPopup.kt:Puts the popup back where and how big it was placed whenever the compositor</ID>
-    <ID>NoComments:RequestNotificationPopup.kt:Restarts while hovered, so the popup never vanishes under the pointer.</ID>
-    <ID>NoComments:RequestNotificationPopup.kt:Room left for a Wayland top bar (waybar, quickshell, …) the popup cannot see.</ID>
-    <ID>NoComments:RequestNotificationPopup.kt:The timeout outlives recompositions; it must call the latest callback.</ID>
-    <ID>NoComments:RequestNotificationPopup.kt:Transparent margin around the card so its drop shadow isn't clipped by the window.</ID>
-    <ID>NoComments:RequestNotificationPopup.kt:Wayland compositors give XWayland no work area, so leave room for</ID>
-    <ID>NoComments:RequestNotificationPopup.kt:Where the OS shows its own notifications: above the taskbar on</ID>
-    <ID>NoComments:RequestNotificationPopup.kt:Windows 11 toast: app header with close button, title and body, then a row of equal-width buttons.</ID>
-    <ID>NoComments:RequestNotificationPopup.kt:Windows, under the menu bar / top panel on macOS and Linux.</ID>
-    <ID>NoComments:RequestNotificationPopup.kt:Without a</ID>
-    <ID>NoComments:RequestNotificationPopup.kt:a top bar when the reported one starts at the screen edge.</ID>
-    <ID>NoComments:RequestNotificationPopup.kt:macOS alert-style notification: app icon, bold title and body on the left,</ID>
-    <ID>NoComments:RequestNotificationPopup.kt:manager: Hyprland &amp; co. would border, and focus, them as a normal</ID>
-    <ID>NoComments:RequestNotificationPopup.kt:never managed, framed or focused, like a real notification surface —</ID>
-    <ID>NoComments:RequestNotificationPopup.kt:so host the card in one through a ComposePanel. AWT still types it</ID>
-    <ID>NoComments:RequestNotificationPopup.kt:transparent margin there is no drop shadow; the shape rounds it.</ID>
-    <ID>NoComments:RequestNotificationPopup.kt:window. A plain AWT POPUP JWindow is override-redirect instead —</ID>
     <ID>NoComments:SealPreview.kt:What a seal (kind 13) in [plaintext] holds, opened with the account key for the approval</ID>
     <ID>NoComments:StaleRequestAfterDeleteTest.kt:Account default "fully trust" is the worst case: a recreated app would auto-sign.</ID>
     <ID>NoComments:StaleRequestAfterDeleteTest.kt:Queues a sign_event card for a connected app, deletes the app, and returns the stale card.</ID>
@@ -840,11 +764,6 @@
     <ID>NoComments:StringsTest.kt:\' is an apostrophe.</ID>
     <ID>NoComments:StringsTest.kt:and Indonesian, stored as "in" but "id" (values-id) on Java 17+.</ID>
     <ID>NoComments:StringsTest.kt:en-GB only overrides spellings, so most of its strings legitimately match English.</ID>
-    <ID>NoComments:Theme.kt:Mirrors the mobile theme (app/ui/theme/Theme.kt).</ID>
-    <ID>NoComments:Theme.kt:The accent (amber / orange) is light, so anything painted on top of it —</ID>
-    <ID>NoComments:Theme.kt:primary buttons, selected chips, the selected sidebar row — must use dark</ID>
-    <ID>NoComments:Theme.kt:text. The default dark scheme pairs these containers with light on-colors,</ID>
-    <ID>NoComments:Theme.kt:which is what produced the unreadable light-on-amber elements.</ID>
     <ID>NoComments:TorManager.kt:(UnsatisfiedLinkError, ExceptionInInitializerError).</ID>
     <ID>NoComments:TorManager.kt:0 while there is no SOCKS listener: the fail-closed placeholder port.</ID>
     <ID>NoComments:TorManager.kt:Published before the port, so no dial can reach the listener without them.</ID>
@@ -853,21 +772,6 @@
     <ID>NoComments:TorManager.kt:The proxy accepts connections right away (each one waits for its</ID>
     <ID>NoComments:TorManager.kt:Throwable: a missing/broken native library surfaces as an Error</ID>
     <ID>NoComments:TorManager.kt:True once the native library loaded; native calls are skipped until then.</ID>
-    <ID>NoComments:UiState.kt:A key with Ctrl/⌘ held.</ID>
-    <ID>NoComments:UiState.kt:A key without Ctrl/⌘: Escape leaves the application detail screen, the rest drive the incoming-reque</ID>
-    <ID>NoComments:UiState.kt:Ctrl/⌘ + M — minimize to tray (keep running in the background).</ID>
-    <ID>NoComments:UiState.kt:Ctrl/⌘ + W stays as an alias.</ID>
-    <ID>NoComments:UiState.kt:Ctrl/⌘ 1–4 open the screens in sidebar order.</ID>
-    <ID>NoComments:UiState.kt:Ctrl/⌘ Enter approves the selected request, with Shift it rejects it; with several requests Enter co</ID>
-    <ID>NoComments:UiState.kt:Plain arrows drive the incoming-requests list: ↑/↓ selects a card,</ID>
-    <ID>NoComments:UiState.kt:Runs [action]; the key was consumed.</ID>
-    <ID>NoComments:UiState.kt:S on a selected encrypt/decrypt request: toggles its "Encryption scope"</ID>
-    <ID>NoComments:UiState.kt:Several requests: Confirm answers the batch; there is no reject-all.</ID>
-    <ID>NoComments:UiState.kt:The details dialog is read-only: keep ⌘↵ and the list keys from acting</ID>
-    <ID>NoComments:UiState.kt:The requests a "Remember"/scope pick applies to: the request's batch group, or just itself.</ID>
-    <ID>NoComments:UiState.kt:arrow keys elsewhere (text fields, scrolling) keep working.</ID>
-    <ID>NoComments:UiState.kt:on the requests behind it. Esc (handled by the dialog) closes it.</ID>
-    <ID>NoComments:UiState.kt:←/→ cycles its "Remember" duration. Only consumed on that screen so</ID>
     <ID>NoComments:UiStateTest.kt:A connect is never batched: it is shown alone first.</ID>
     <ID>NoComments:UiStateTest.kt:A remember choice set on B's card never applies to A's.</ID>
     <ID>NoComments:UiStateTest.kt:Android defaults: NIP-04/44 all methods, NIP-44 v3 this kind only.</ID>
@@ -890,10 +794,6 @@
     <ID>NoComments:UiStateTest.kt:remember choice must never apply to the other.</ID>
     <ID>NoComments:UiStateTest.kt:unchanged</ID>
     <ID>NoComments:UiStateTest.kt:↓ follows the screen order: note, note2, decrypt, other.</ID>
-    <ID>NoComments:UnlockScreen.kt:Enter (or numpad enter) runs the primary action, the way</ID>
-    <ID>NoComments:UnlockScreen.kt:Shared centered layout for the lock and first-run passphrase screens.</ID>
-    <ID>NoComments:UnlockScreen.kt:The keys that run a lock screen's primary action.</ID>
-    <ID>NoComments:UnlockScreen.kt:every password prompt behaves.</ID>
     <ID>NoComments:UriLaunch.kt:A desktop-entry string value (e.g. `Icon=`): backslashes doubled, line breaks refused.</ID>
     <ID>NoComments:UriLaunch.kt:At most one accepted URI per this many milliseconds, on top of the</ID>
     <ID>NoComments:UriLaunch.kt:Characters a quoted Exec argument escapes with a backslash.</ID>
@@ -918,9 +818,6 @@
     <ID>NoComments:UriLaunchTest.kt:Paths without separators stay bare; spaces and quotes get the</ID>
     <ID>NoComments:UriLaunchTest.kt:at the string level (\\"), as the Desktop Entry spec reads it back.</ID>
     <ID>NoComments:UriLaunchTest.kt:desktop-entry double-quote treatment.</ID>
-    <ID>NoComments:WindowGeometry.kt:Space kept free around the window so its edges and title bar stay reachable.</ID>
-    <ID>NoComments:WindowGeometryTest.kt:1280x800 display with a 48px Windows taskbar: the 780dp default used</ID>
-    <ID>NoComments:WindowGeometryTest.kt:to hide the window's bottom (and the account switcher) under it.</ID>
     <ID>NoComments:WindowsToasts.kt:A COM object, called by vtable slot.</ID>
     <ID>NoComments:WindowsToasts.kt:Escaped for XML text and attributes; characters XML 1.0 cannot carry are dropped.</ID>
     <ID>NoComments:WindowsToasts.kt:Fails with "element not found" until the id has posted its</ID>

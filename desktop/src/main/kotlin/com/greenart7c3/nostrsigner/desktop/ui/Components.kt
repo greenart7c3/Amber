@@ -90,16 +90,14 @@ fun rememberCopyText(): (String) -> Unit {
     }
 }
 
-// Read straight from the classpath: the Compose resources library would need
-// a generated Res class for one image.
-private val amberIconBitmap: ImageBitmap by lazy {
+private val amberIconBitmapFromClasspath: ImageBitmap by lazy {
     val bytes = checkNotNull(Toaster::class.java.getResourceAsStream("/icon.png")) { "icon.png is missing from the resources" }.use { it.readAllBytes() }
     SkiaImage.makeFromEncoded(bytes).toComposeImageBitmap()
 }
 
 /** The app icon, for windows, the tray and the notification popup. */
 @Composable
-fun amberIconPainter(): Painter = remember { BitmapPainter(amberIconBitmap) }
+fun amberIconPainter(): Painter = remember { BitmapPainter(amberIconBitmapFromClasspath) }
 
 /** Global snackbar feed, the desktop stand-in for the mobile ToastManager. */
 object Toaster {

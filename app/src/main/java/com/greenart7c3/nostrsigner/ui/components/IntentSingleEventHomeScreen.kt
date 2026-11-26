@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
@@ -85,6 +86,7 @@ private data class IntentRequest(
 @Composable
 fun IntentSingleEventHomeScreen(
     horizontalPadding: Dp,
+    scaffoldPadding: PaddingValues,
     packageName: String?,
     applicationName: String?,
     intentData: IntentData,
@@ -105,7 +107,7 @@ fun IntentSingleEventHomeScreen(
     val request = IntentRequest(intentData, account, packageName, appName, applicationName ?: appName, saved)
 
     when (intentData.type) {
-        SignerType.GET_PUBLIC_KEY -> GetPublicKeyRequest(request, horizontalPadding, onRemoveIntentData, onLoading, modifier)
+        SignerType.GET_PUBLIC_KEY -> GetPublicKeyRequest(request, horizontalPadding, scaffoldPadding, onRemoveIntentData, onLoading)
         SignerType.SIGN_PSBT -> SignPsbtRequest(request, onRemoveIntentData, onLoading, modifier)
         SignerType.NIP44_V3_ENCRYPT, SignerType.NIP44_V3_DECRYPT -> Nip44v3Request(request, onRemoveIntentData, onLoading, modifier)
         SignerType.NIP04_DECRYPT, SignerType.NIP04_ENCRYPT, SignerType.NIP44_ENCRYPT, SignerType.NIP44_DECRYPT, SignerType.DECRYPT_ZAP_EVENT ->
@@ -118,17 +120,17 @@ fun IntentSingleEventHomeScreen(
 private fun GetPublicKeyRequest(
     request: IntentRequest,
     horizontalPadding: Dp,
+    scaffoldPadding: PaddingValues,
     onRemoveIntentData: (List<IntentData>, IntentResultType) -> Unit,
     onLoading: (Boolean) -> Unit,
-    modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
     val copyToClipboard = rememberResultCopier()
     val activity = LocalActivity.current
     LoginWithPubKey(
         horizontalPadding = horizontalPadding,
+        scaffoldPadding = scaffoldPadding,
         packageName = request.packageName,
-        modifier = modifier,
         account = request.account,
         permissions = request.intentData.permissions?.toImmutableList(),
         onAccept = { permissions, signPolicy, closeApplication, rememberType, acc ->

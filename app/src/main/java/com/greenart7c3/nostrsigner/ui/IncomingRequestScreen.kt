@@ -66,6 +66,7 @@ fun IncomingRequestScreen(
         } else if (intents.size == 1) {
             IntentSingleEventHomeScreen(
                 horizontalPadding = horizontalPadding,
+                scaffoldPadding = scaffoldPadding,
                 modifier = modifier,
                 packageName = packageName,
                 applicationName = applicationName,

@@ -7,8 +7,9 @@ import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.database.AppDatabase
 import com.greenart7c3.nostrsigner.database.ApplicationDao
+import com.greenart7c3.nostrsigner.database.ApplicationDaos
 import com.greenart7c3.nostrsigner.database.ApplicationEntity
-import com.greenart7c3.nostrsigner.database.CachingApplicationDao
+import com.greenart7c3.nostrsigner.database.ApplicationListDao
 import com.vitorpamplona.quartz.nip01Core.relay.client.NostrClient
 import com.vitorpamplona.quartz.nip01Core.relay.filters.Filter
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
@@ -50,11 +51,13 @@ class NotificationSinceClampTest {
         val captured = mutableListOf<Map<NormalizedRelayUrl, List<Filter>>>()
         every { client.subscribe(any(), capture(captured)) } returns Unit
         val dao = mockk<ApplicationDao>()
+        val listDao = mockk<ApplicationListDao>()
         val db = mockk<AppDatabase>()
         every { db.dao() } returns dao
+        every { db.applicationListDao() } returns listDao
         val amber = mockk<Amber>(relaxed = true)
         every { amber.accountDatabases.getDatabase(any()) } returns db
-        every { amber.accountDatabases.dao(any()) } answers { CachingApplicationDao(dao) }
+        every { amber.accountDatabases.daos(any()) } answers { ApplicationDaos.cached(ApplicationDaos(dao, listDao, mockk(), mockk(), mockk(), mockk())) }
         val cache = LruCache<String, Long>(512)
         every { amber.notificationCache } returns cache
         mockkObject(LocalPreferences, AccountStorage)
@@ -63,7 +66,7 @@ class NotificationSinceClampTest {
         coEvery { dao.getAll(account.hexKey) } returns listOf(
             ApplicationEntity.empty().copy(key = "c1", relays = listOf(NormalizedRelayUrl("wss://r1.example.com/")), localKey = "ab".repeat(32)),
         )
-        every { dao.getAllRelayLists() } returns emptyList()
+        every { listDao.getAllRelayLists() } returns emptyList()
 
         val before = TimeUtils.now()
         cache.put("legit", before - 30)

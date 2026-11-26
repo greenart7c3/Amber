@@ -1,7 +1,8 @@
 package com.greenart7c3.nostrsigner.service
 
 import com.greenart7c3.nostrsigner.Amber
-import com.greenart7c3.nostrsigner.database.ApplicationDao
+import com.greenart7c3.nostrsigner.database.PermissionWriteDao
+import com.greenart7c3.nostrsigner.database.relaxedApplicationDaos
 import com.vitorpamplona.quartz.nip01Core.core.Event
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -22,11 +23,11 @@ class ApplicationBackupFetchTest {
     private val amber = mockk<Amber>(relaxed = true)
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
-    private val dao = mockk<ApplicationDao>(relaxed = true)
+    private val dao = mockk<PermissionWriteDao>(relaxed = true)
 
     @Before
     fun setUp() {
-        every { amber.accountDatabases.dao(any()) } returns dao
+        every { amber.accountDatabases.daos(any()) } returns relaxedApplicationDaos(permissionWriteDao = dao)
 
         mockkObject(ApplicationBackup)
         coEvery { ApplicationBackup.resolveReadRelays(any(), any(), any()) } returns setOf(mockk())

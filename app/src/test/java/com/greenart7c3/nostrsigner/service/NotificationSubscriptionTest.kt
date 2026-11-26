@@ -7,8 +7,9 @@ import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.database.AppDatabase
 import com.greenart7c3.nostrsigner.database.ApplicationDao
+import com.greenart7c3.nostrsigner.database.ApplicationDaos
 import com.greenart7c3.nostrsigner.database.ApplicationEntity
-import com.greenart7c3.nostrsigner.database.CachingApplicationDao
+import com.greenart7c3.nostrsigner.database.ApplicationListDao
 import com.greenart7c3.nostrsigner.models.Account
 import com.vitorpamplona.quartz.nip01Core.core.Event
 import com.vitorpamplona.quartz.nip01Core.relay.client.NostrClient
@@ -45,6 +46,7 @@ class NotificationSubscriptionTest {
     private val sentFilters = Collections.synchronizedList(mutableListOf<Map<NormalizedRelayUrl, List<Filter>>>())
     private lateinit var client: NostrClient
     private lateinit var dao: ApplicationDao
+    private lateinit var listDao: ApplicationListDao
     private lateinit var account: Account
     private lateinit var subscription: NotificationSubscription
 
@@ -54,14 +56,16 @@ class NotificationSubscriptionTest {
         every { client.subscribe(capture(sentSubIds), capture(sentFilters)) } returns Unit
 
         dao = mockk()
+        listDao = mockk()
         val database = mockk<AppDatabase>()
         every { database.dao() } returns dao
+        every { database.applicationListDao() } returns listDao
 
         val amber = mockk<Amber>(relaxed = true)
         every { amber.accountDatabases.getDatabase(any()) } returns database
         // updateFilter reads through the caching wrapper; a fresh wrapper per call
         // mirrors per-test dao state without cross-test cache leakage.
-        every { amber.accountDatabases.dao(any()) } answers { CachingApplicationDao(dao) }
+        every { amber.accountDatabases.daos(any()) } answers { ApplicationDaos.cached(ApplicationDaos(dao, listDao, mockk(), mockk(), mockk(), mockk())) }
         every { amber.notificationCache } returns LruCache(512)
 
         mockkObject(LocalPreferences, AccountStorage)
@@ -89,7 +93,7 @@ class NotificationSubscriptionTest {
         // updateFilter is a no-op on the offline flavor by design
         assumeFalse(BuildFlavorChecker.isOfflineFlavor())
         coEvery { dao.getAll(account.hexKey) } returns listOf(connection())
-        every { dao.getAllRelayLists() } returns emptyList()
+        every { listDao.getAllRelayLists() } returns emptyList()
 
         subscription.updateFilter()
 
@@ -105,7 +109,7 @@ class NotificationSubscriptionTest {
             connection().copy(key = "conn$i", localKey = "%064x".format(i))
         }
         coEvery { dao.getAll(account.hexKey) } returns connections
-        every { dao.getAllRelayLists() } returns emptyList()
+        every { listDao.getAllRelayLists() } returns emptyList()
 
         subscription.updateFilter()
 
@@ -119,7 +123,7 @@ class NotificationSubscriptionTest {
     fun `updateFilter reuses the same subscription id on refresh`() = runBlocking {
         assumeFalse(BuildFlavorChecker.isOfflineFlavor())
         coEvery { dao.getAll(account.hexKey) } returns listOf(connection())
-        every { dao.getAllRelayLists() } returns emptyList()
+        every { listDao.getAllRelayLists() } returns emptyList()
 
         subscription.updateFilter()
         subscription.updateFilter()
@@ -132,7 +136,7 @@ class NotificationSubscriptionTest {
     fun `updateFilter unsubscribes connections that disappeared`() = runBlocking {
         assumeFalse(BuildFlavorChecker.isOfflineFlavor())
         coEvery { dao.getAll(account.hexKey) } returns listOf(connection())
-        every { dao.getAllRelayLists() } returns emptyList()
+        every { listDao.getAllRelayLists() } returns emptyList()
         subscription.updateFilter()
         val subId = sentSubIds.single()
 
@@ -150,7 +154,7 @@ class NotificationSubscriptionTest {
     @Test
     fun `updateFilter closeAllSubs and onIncomingMessage do not throw when run concurrently`() {
         coEvery { dao.getAll(account.hexKey) } returns listOf(connection())
-        every { dao.getAllRelayLists() } returns emptyList()
+        every { listDao.getAllRelayLists() } returns emptyList()
 
         val relay = mockk<IRelayClient>()
         val event = mockk<Event>(relaxed = true)

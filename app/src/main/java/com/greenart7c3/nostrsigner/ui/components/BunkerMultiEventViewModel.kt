@@ -166,8 +166,7 @@ class BunkerMultiEventViewModel(
             account
         } ?: return
 
-        val dao = accountRepository.dao(thisAccount.npub)
-        val savedApplication = dao.getByKey(request.localKey)
+        val savedApplication = accountRepository.daos(thisAccount.npub).applicationDao.getByKey(request.localKey)
 
         // A queued request whose app row is gone was revoked while it waited:
         // answer with an error instead of recreating the connection.
@@ -208,7 +207,7 @@ class BunkerMultiEventViewModel(
         rememberType: RememberType,
     ) {
         val localEvent = request.signedEvent!!
-        val dao = accountRepository.dao(thisAccount.npub)
+        val dao = accountRepository.daos(thisAccount.npub).permissionWriteDao
 
         if (rememberType != RememberType.NEVER) {
             val allRelays = localEvent.kind == RELAY_AUTH_KIND && choices.relayAuthScope(groupKey) == RelayAuthScope.ALL
@@ -278,7 +277,7 @@ class BunkerMultiEventViewModel(
         rememberType: RememberType,
     ) {
         val localKey = request.localKey
-        val dao = accountRepository.dao(thisAccount.npub)
+        val dao = accountRepository.daos(thisAccount.npub).permissionWriteDao
 
         if (rememberType != RememberType.NEVER) {
             val decryptTypeScope = choices.decryptScope(groupKey)

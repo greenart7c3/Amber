@@ -95,8 +95,8 @@ class IntentMultiEventViewModel(
 
     /** Saves the remembered choices and the history of [account]'s requests; returns whether its app closes Amber afterwards. */
     private suspend fun confirmForAccount(account: Account, localKey: String, intents: List<IntentData>, results: MutableList<Result>): Boolean {
-        val dao = accountRepository.dao(account.npub)
-        val application = dao.getByKey(localKey) ?: newApplication(localKey, account)
+        val daos = accountRepository.daos(account.npub)
+        val application = daos.applicationDao.getByKey(localKey) ?: newApplication(localKey, account)
         var permissionsChanged = false
         val history = intents.map { intentData ->
             // A relay outside the auth whitelist is rejected without remembering it, as on the single screen.
@@ -112,7 +112,7 @@ class IntentMultiEventViewModel(
             batchHistoryEntry(localKey, intentData, approved)
         }
         if (permissionsChanged || application.application.key.isBlank()) {
-            dao.insertApplicationWithPermissions(application)
+            daos.permissionWriteDao.insertApplicationWithPermissions(application)
         }
         accountRepository.getHistoryDatabase(account.npub).dao().addHistory(history, account.npub)
         return application.application.closeApplication

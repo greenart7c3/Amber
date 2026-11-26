@@ -1,7 +1,7 @@
 package com.greenart7c3.nostrsigner.data
 
 import com.greenart7c3.nostrsigner.database.AppDatabase
-import com.greenart7c3.nostrsigner.database.ApplicationDao
+import com.greenart7c3.nostrsigner.database.ApplicationDaos
 import com.greenart7c3.nostrsigner.database.HistoryDatabase
 import com.greenart7c3.nostrsigner.database.LogDatabase
 import com.greenart7c3.nostrsigner.models.Account
@@ -12,8 +12,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 interface AccountRepository {
     fun getDatabase(npub: String): AppDatabase
 
-    /** The permission DAO with read-through caching; hot-path lookups and writes go through it. */
-    fun dao(npub: String): ApplicationDao
+    /** The application and permission DAOs with read-through caching; hot-path lookups and writes go through them. */
+    fun daos(npub: String): ApplicationDaos
 
     fun getLogDatabase(npub: String): LogDatabase
 

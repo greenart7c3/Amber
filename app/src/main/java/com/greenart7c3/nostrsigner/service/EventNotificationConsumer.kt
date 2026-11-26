@@ -221,7 +221,7 @@ class EventNotificationConsumer(
         // signing) and must never be dropped. Checked after verify() and keyed
         // on the proven signer pubkey, so forged events cannot drain a
         // legitimate sender's budget.
-        if (accountRepository.dao(acc.npub).getByKeyRaw(event.pubKey) == null &&
+        if (accountRepository.daos(acc.npub).applicationDao.getByKeyRaw(event.pubKey) == null &&
             !senderRateLimiter.allow("${relay.url}|${event.pubKey}", System.currentTimeMillis())
         ) {
             AmberLog.d(Amber.TAG, "${relay.url}: rate-limited event ${event.id} from unknown sender ${event.pubKey}")
@@ -471,7 +471,7 @@ class EventNotificationConsumer(
         params: RequestParams,
         relay: NormalizedRelayUrl,
     ): Admitted? {
-        val dao = accountRepository.dao(acc.npub)
+        val dao = accountRepository.daos(acc.npub).applicationDao
         val bunkerRequest = request.request
         val stored = dao.getByKey(event.pubKey)
         if (stored != null && stored.application.isExpired()) {
@@ -546,9 +546,9 @@ class EventNotificationConsumer(
         reply(a, result) { published ->
             if (published) {
                 scope.launch {
-                    val dao = accountRepository.dao(a.acc.npub)
-                    dao.delete(permission.application.key)
-                    dao.insertApplicationWithPermissions(permission.copy(application = permission.application.copy(relays = defaultRelays)))
+                    val daos = accountRepository.daos(a.acc.npub)
+                    daos.applicationWriteDao.delete(permission.application.key)
+                    daos.permissionWriteDao.insertApplicationWithPermissions(permission.copy(application = permission.application.copy(relays = defaultRelays)))
                     onConnectionsChanged()
                 }
             }
@@ -561,7 +561,7 @@ class EventNotificationConsumer(
         reply(a, Nip46Step.Logout.RESULT) { published ->
             if (published) {
                 scope.launch {
-                    accountRepository.dao(a.acc.npub).delete(permission.application.key)
+                    accountRepository.daos(a.acc.npub).applicationWriteDao.delete(permission.application.key)
                     accountRepository.getHistoryDatabase(a.acc.npub).dao().deleteHistory(permission.application.key)
                     BunkerRequestUtils.removeAllForClient(applicationContext, permission.application.key)
                     onConnectionsChanged()
@@ -571,7 +571,7 @@ class EventNotificationConsumer(
     }
 
     private suspend fun getPublicKey(a: Admitted) {
-        val dao = accountRepository.dao(a.acc.npub)
+        val dao = accountRepository.daos(a.acc.npub).permissionLookupDao
         val accepted = isRemembered(dao.getSignPolicy(a.event.pubKey), dao.getPermission(a.event.pubKey, "GET_PUBLIC_KEY"))
         if (accepted == null) {
             askUser(a)

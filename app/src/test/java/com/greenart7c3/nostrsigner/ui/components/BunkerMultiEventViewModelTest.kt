@@ -12,6 +12,8 @@ import com.greenart7c3.nostrsigner.database.ApplicationEntity
 import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
 import com.greenart7c3.nostrsigner.database.HistoryDao
 import com.greenart7c3.nostrsigner.database.HistoryEntity
+import com.greenart7c3.nostrsigner.database.PermissionWriteDao
+import com.greenart7c3.nostrsigner.database.relaxedApplicationDaos
 import com.greenart7c3.nostrsigner.models.AmberBunkerRequest
 import com.greenart7c3.nostrsigner.models.AmberSettings
 import com.greenart7c3.nostrsigner.models.ThemeMode
@@ -46,9 +48,10 @@ class BunkerMultiEventViewModelTest {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
     private val account = newTestAccount(scope)
     private val dao = mockk<ApplicationDao>(relaxed = true)
+    private val permissionWriteDao = mockk<PermissionWriteDao>(relaxed = true)
     private val historyDao = mockk<HistoryDao>(relaxed = true)
     private val accountRepository = mockk<AccountRepository> {
-        every { dao(any()) } returns dao
+        every { daos(any()) } returns relaxedApplicationDaos(applicationDao = dao, permissionWriteDao = permissionWriteDao)
         every { getHistoryDatabase(any()).dao() } returns historyDao
     }
     private val settingsStore = object : SettingsStore {
@@ -173,13 +176,13 @@ class BunkerMultiEventViewModelTest {
         assertEquals(request.signedEvent!!.toJson(), sent.result)
         verify(timeout = 5_000) { activity.intent = null }
         verify { notificationManager.cancel(request.queueKey.hashCode()) }
-        coVerify(timeout = 5_000) { dao.insertApplicationWithPermissions(savedApplication) }
+        coVerify(timeout = 5_000) { permissionWriteDao.insertApplicationWithPermissions(savedApplication) }
         val history = slot<List<HistoryEntity>>()
         coVerify(timeout = 5_000) { historyDao.addHistory(capture(history), account.npub) }
         assertEquals(listOf(true), history.captured.map { it.accepted })
         assertEquals("SIGN_EVENT", history.captured.single().type)
         // Remember my choice defaults to NEVER: only the app row is saved, once.
-        coVerify(exactly = 1) { dao.insertApplicationWithPermissions(savedApplication) }
+        coVerify(exactly = 1) { permissionWriteDao.insertApplicationWithPermissions(savedApplication) }
     }
 
     @Test
@@ -208,7 +211,7 @@ class BunkerMultiEventViewModelTest {
         viewModel.confirm(listOf(request), activity, {})
 
         assertEquals("user rejected", response("id-3").error)
-        coVerify(timeout = 5_000, exactly = 0) { dao.insertApplicationWithPermissions(any()) }
+        coVerify(timeout = 5_000, exactly = 0) { permissionWriteDao.insertApplicationWithPermissions(any()) }
         coVerify(exactly = 0) { historyDao.addHistory(any(), any()) }
     }
 
@@ -222,9 +225,9 @@ class BunkerMultiEventViewModelTest {
         viewModel.confirm(listOf(request), activity, {})
 
         response("id-4")
-        coVerify(timeout = 5_000) { dao.insertApplicationWithPermissions(any()) }
+        coVerify(timeout = 5_000) { permissionWriteDao.insertApplicationWithPermissions(any()) }
         val saved = mutableListOf<ApplicationWithPermissions>()
-        coVerify { dao.insertApplicationWithPermissions(capture(saved)) }
+        coVerify { permissionWriteDao.insertApplicationWithPermissions(capture(saved)) }
         val grant = saved.last().permissions.single { it.type == "SIGN_EVENT" }
         assertEquals(1, grant.kind)
         assertEquals(RememberType.ONE_HOUR.screenCode, grant.rememberType)
@@ -249,7 +252,7 @@ class BunkerMultiEventViewModelTest {
         coVerify { bunkerResponder.sendBunkerResponse(any(), any(), capture(replies), any(), any(), any(), any()) }
         assertEquals(listOf("id-5", "id-6"), replies.map { it.id })
         // Each remembered request saves twice: the app row, then its grant.
-        coVerify(timeout = 5_000, exactly = 4) { dao.insertApplicationWithPermissions(savedApplication) }
+        coVerify(timeout = 5_000, exactly = 4) { permissionWriteDao.insertApplicationWithPermissions(savedApplication) }
         val remembered = savedApplication.permissions.single { it.relay == "relay.example.com" }
         assertEquals(RememberType.ALWAYS.screenCode, remembered.rememberType)
         // A blank relay-auth relay reads as the all-relays wildcard in the DAO:

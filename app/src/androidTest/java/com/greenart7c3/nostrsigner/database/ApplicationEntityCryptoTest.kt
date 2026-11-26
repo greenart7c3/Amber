@@ -31,6 +31,7 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 class ApplicationEntityCryptoTest {
     private lateinit var db: AppDatabase
+    private lateinit var daos: ApplicationDaos
     private lateinit var dao: ApplicationDao
     private val pubKey = "ab".repeat(32)
     private val sampleSecret = "11111111-2222-3333-4444-555555555555"
@@ -42,7 +43,8 @@ class ApplicationEntityCryptoTest {
         db = Room.inMemoryDatabaseBuilder(context, AppDatabase::class.java)
             .allowMainThreadQueries()
             .build()
-        dao = db.dao()
+        daos = ApplicationDaos.of(db)
+        dao = daos.applicationDao
     }
 
     @After
@@ -74,7 +76,7 @@ class ApplicationEntityCryptoTest {
 
     @Test
     fun insertAndRead_roundTrips_plaintextSecretAndLocalKey() = runBlocking {
-        dao.insertApplication(newEntity())
+        daos.applicationWriteDao.insertApplication(newEntity())
 
         val read = dao.getByKey("app1")?.application
         assertNotNull(read)
@@ -84,7 +86,7 @@ class ApplicationEntityCryptoTest {
 
     @Test
     fun insertPersistsCiphertext_rawColumnDiffersFromPlaintext() = runBlocking {
-        dao.insertApplication(newEntity())
+        daos.applicationWriteDao.insertApplication(newEntity())
 
         val rawCursor = db.openHelper.readableDatabase.query(
             "SELECT `secret`, `localKey` FROM application WHERE `key` = ?",
@@ -107,7 +109,7 @@ class ApplicationEntityCryptoTest {
 
     @Test
     fun emptySentinel_storedAsEmpty_decryptedAsEmpty() = runBlocking {
-        dao.insertApplication(newEntity(secret = "", localKey = ""))
+        daos.applicationWriteDao.insertApplication(newEntity(secret = "", localKey = ""))
 
         val read = dao.getByKey("app1")?.application
         assertNotNull(read)
@@ -128,7 +130,7 @@ class ApplicationEntityCryptoTest {
 
     @Test
     fun localPubKey_accessorReturnsDerivedPubkey() = runBlocking {
-        dao.insertApplication(newEntity())
+        daos.applicationWriteDao.insertApplication(newEntity())
 
         val read = dao.getByKey("app1")?.application
         assertNotNull(read)
@@ -140,10 +142,10 @@ class ApplicationEntityCryptoTest {
 
     @Test
     fun getAllWithLocalKey_onlyReturnsRowsWithNonEmptyLocalKey() = runBlocking {
-        dao.insertApplication(newEntity(key = "withKey", localKey = sampleLocalKey))
-        dao.insertApplication(newEntity(key = "withoutKey", localKey = ""))
+        daos.applicationWriteDao.insertApplication(newEntity(key = "withKey", localKey = sampleLocalKey))
+        daos.applicationWriteDao.insertApplication(newEntity(key = "withoutKey", localKey = ""))
 
-        val rows = dao.getAllWithLocalKey(pubKey)
+        val rows = daos.applicationListDao.getAllWithLocalKey(pubKey)
         assertEquals(1, rows.size)
         assertEquals("withKey", rows.first().key)
         assertEquals(sampleLocalKey, rows.first().localKey)
@@ -151,7 +153,7 @@ class ApplicationEntityCryptoTest {
 
     @Test
     fun getBySecret_findsRowByPlaintextSecret() = runBlocking {
-        dao.insertApplication(newEntity(key = "bunker1", secret = sampleSecret))
+        daos.applicationWriteDao.insertApplication(newEntity(key = "bunker1", secret = sampleSecret))
 
         val found = dao.getBySecret(sampleSecret)?.application
         assertNotNull(found)
@@ -161,14 +163,14 @@ class ApplicationEntityCryptoTest {
 
     @Test
     fun getBySecret_returnsNullForUnknownSecret() = runBlocking {
-        dao.insertApplication(newEntity(secret = sampleSecret))
+        daos.applicationWriteDao.insertApplication(newEntity(secret = sampleSecret))
 
         assertNull(dao.getBySecret("not-a-known-secret"))
     }
 
     @Test
     fun getBySecret_findsRowWithEmptySecretWhenQueriedWithEmpty() = runBlocking {
-        dao.insertApplication(newEntity(key = "empty", secret = ""))
+        daos.applicationWriteDao.insertApplication(newEntity(key = "empty", secret = ""))
 
         val found = dao.getBySecret("")?.application
         assertNotNull(found)
@@ -183,13 +185,13 @@ class ApplicationEntityCryptoTest {
      */
     @Test
     fun replaceRaw_rewritesRowCiphertext_readBackThroughWrapper() = runBlocking {
-        dao.insertApplication(newEntity(key = "rot"))
+        daos.applicationWriteDao.insertApplication(newEntity(key = "rot"))
         val raw = dao.getAllApplicationsRaw().single { it.key == "rot" }
 
         val newSecret = "99999999-8888-7777-6666-555555555555"
         val newLocalKey = "ef".repeat(32)
-        assertEquals(1, dao.replaceSecretRaw("rot", raw.secret, SecureCryptoHelper.encryptBlocking(newSecret)))
-        assertEquals(1, dao.replaceLocalKeyRaw("rot", raw.localKey, SecureCryptoHelper.encryptBlocking(newLocalKey)))
+        assertEquals(1, daos.applicationWriteDao.replaceSecretRaw("rot", raw.secret, SecureCryptoHelper.encryptBlocking(newSecret)))
+        assertEquals(1, daos.applicationWriteDao.replaceLocalKeyRaw("rot", raw.localKey, SecureCryptoHelper.encryptBlocking(newLocalKey)))
 
         val read = dao.getByKey("rot")?.application
         assertNotNull(read)
@@ -209,10 +211,10 @@ class ApplicationEntityCryptoTest {
 
     @Test
     fun replaceRaw_staleExpectedValue_leavesRowUntouched() = runBlocking {
-        dao.insertApplication(newEntity(key = "rotStale"))
+        daos.applicationWriteDao.insertApplication(newEntity(key = "rotStale"))
 
-        assertEquals(0, dao.replaceSecretRaw("rotStale", "not-the-stored-value", SecureCryptoHelper.encryptBlocking("other")))
-        assertEquals(0, dao.replaceLocalKeyRaw("rotStale", "not-the-stored-value", SecureCryptoHelper.encryptBlocking("other")))
+        assertEquals(0, daos.applicationWriteDao.replaceSecretRaw("rotStale", "not-the-stored-value", SecureCryptoHelper.encryptBlocking("other")))
+        assertEquals(0, daos.applicationWriteDao.replaceLocalKeyRaw("rotStale", "not-the-stored-value", SecureCryptoHelper.encryptBlocking("other")))
 
         val read = dao.getByKey("rotStale")?.application
         assertEquals(sampleSecret, read?.secret)
@@ -234,7 +236,7 @@ class ApplicationEntityCryptoTest {
                 rejectUntil = 0L,
             ),
         )
-        dao.insertApplicationWithPermissions(
+        daos.permissionWriteDao.insertApplicationWithPermissions(
             ApplicationWithPermissions(
                 application = entity,
                 permissions = perms,
@@ -250,8 +252,8 @@ class ApplicationEntityCryptoTest {
 
     @Test
     fun getAll_decryptsAllRows() = runBlocking {
-        dao.insertApplication(newEntity(key = "a", secret = "secret-a", localKey = "11".repeat(32)))
-        dao.insertApplication(newEntity(key = "b", secret = "secret-b", localKey = "22".repeat(32)))
+        daos.applicationWriteDao.insertApplication(newEntity(key = "a", secret = "secret-a", localKey = "11".repeat(32)))
+        daos.applicationWriteDao.insertApplication(newEntity(key = "b", secret = "secret-b", localKey = "22".repeat(32)))
 
         val rows = dao.getAll(pubKey)
         assertEquals(2, rows.size)

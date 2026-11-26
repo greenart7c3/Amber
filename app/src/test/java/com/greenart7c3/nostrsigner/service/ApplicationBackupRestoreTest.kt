@@ -1,8 +1,9 @@
 package com.greenart7c3.nostrsigner.service
 
 import com.greenart7c3.nostrsigner.Amber
-import com.greenart7c3.nostrsigner.database.ApplicationDao
 import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
+import com.greenart7c3.nostrsigner.database.PermissionWriteDao
+import com.greenart7c3.nostrsigner.database.relaxedApplicationDaos
 import com.vitorpamplona.quartz.utils.TimeUtils
 import io.mockk.coEvery
 import io.mockk.every
@@ -17,11 +18,11 @@ import org.junit.Test
 class ApplicationBackupRestoreTest {
     private val amber = mockk<Amber>(relaxed = true)
 
-    private val dao = mockk<ApplicationDao>(relaxed = true)
+    private val dao = mockk<PermissionWriteDao>(relaxed = true)
 
     @Before
     fun setUp() {
-        every { amber.accountDatabases.dao(any()) } returns dao
+        every { amber.accountDatabases.daos(any()) } returns relaxedApplicationDaos(permissionWriteDao = dao)
     }
 
     private fun app(key: String, deleteAfter: Long = 0) = BackupApplication(

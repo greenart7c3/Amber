@@ -3,7 +3,8 @@ package com.greenart7c3.nostrsigner.service
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.common.EncryptionType
 import com.greenart7c3.nostrsigner.common.SignerType
-import com.greenart7c3.nostrsigner.database.ApplicationDao
+import com.greenart7c3.nostrsigner.database.ApplicationDaos
+import com.greenart7c3.nostrsigner.database.relaxedApplicationDaos
 import com.greenart7c3.nostrsigner.models.AmberBunkerRequest
 import com.greenart7c3.nostrsigner.ui.RememberType
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
@@ -326,10 +327,10 @@ class BunkerRequestUtilsTest {
 
     private fun responder(amber: Amber) = BunkerResponder(amber, amber, amber.accountDatabases, amber.relayClient, amber.applicationIOScope, mockk(relaxed = true)) { null }
 
-    private fun amberWithDao(getByKeyReturnsNull: Boolean): Pair<Amber, ApplicationDao> {
-        val dao = mockk<ApplicationDao>(relaxed = true)
+    private fun amberWithDao(getByKeyReturnsNull: Boolean): Pair<Amber, ApplicationDaos> {
+        val daos = relaxedApplicationDaos()
         if (getByKeyReturnsNull) {
-            coEvery { dao.getByKey(any()) } returns null
+            coEvery { daos.applicationDao.getByKey(any()) } returns null
         }
         // finishRequest() cancels notifications through the application context.
         val nm = mockk<android.app.NotificationManager>(relaxed = true)
@@ -340,15 +341,15 @@ class BunkerRequestUtilsTest {
         // The responder built from this Application cancels notifications through it.
         every { amber.getSystemService(android.content.Context.NOTIFICATION_SERVICE) } returns nm
         every { amber.getSystemService(android.app.NotificationManager::class.java) } returns nm
-        every { amber.accountDatabases.dao(any()) } returns dao
+        every { amber.accountDatabases.daos(any()) } returns daos
         every { amber.applicationContext } returns appContext
         every { amber.applicationIOScope } returns CoroutineScope(Dispatchers.Unconfined + SupervisorJob())
-        return amber to dao
+        return amber to daos
     }
 
     @Test
     fun `rejecting a queued request for a deleted app does not recreate it`() = runBlocking {
-        val (amber, dao) = amberWithDao(getByKeyReturnsNull = true)
+        val (amber, daos) = amberWithDao(getByKeyReturnsNull = true)
 
         mockkObject(AmberUtils)
         try {
@@ -374,9 +375,9 @@ class BunkerRequestUtilsTest {
             coVerify(timeout = 5_000) {
                 AmberUtils.sendBunkerError(any(), any(), any(), any(), any(), any())
             }
-            coVerify(exactly = 0) { dao.insertApplicationWithPermissions(any()) }
-            coVerify(exactly = 0) { dao.insertPermissions(any()) }
-            coVerify(exactly = 0) { dao.insertPermissions2(any()) }
+            coVerify(exactly = 0) { daos.permissionWriteDao.insertApplicationWithPermissions(any()) }
+            coVerify(exactly = 0) { daos.permissionWriteDao.insertPermissions(any()) }
+            coVerify(exactly = 0) { daos.permissionWriteDao.insertPermissions2(any()) }
             coVerify(exactly = 0) {
                 AmberUtils.acceptOrRejectPermission(any(), any(), any(), any(), any(), any(), any(), any(), any(), any())
             }
@@ -388,7 +389,7 @@ class BunkerRequestUtilsTest {
 
     @Test
     fun `approving a queued request for a deleted app sends an error and inserts nothing`() = runBlocking {
-        val (amber, dao) = amberWithDao(getByKeyReturnsNull = true)
+        val (amber, daos) = amberWithDao(getByKeyReturnsNull = true)
 
         mockkObject(AmberUtils)
         try {
@@ -413,8 +414,8 @@ class BunkerRequestUtilsTest {
             coVerify(timeout = 5_000) {
                 AmberUtils.sendBunkerError(any(), any(), any(), any(), any(), any())
             }
-            coVerify(exactly = 0) { dao.insertApplicationWithPermissions(any()) }
-            coVerify(exactly = 0) { dao.insertPermissions(any()) }
+            coVerify(exactly = 0) { daos.permissionWriteDao.insertApplicationWithPermissions(any()) }
+            coVerify(exactly = 0) { daos.permissionWriteDao.insertPermissions(any()) }
             assertEquals(1, errors.size)
         } finally {
             unmockkObject(AmberUtils)
@@ -425,8 +426,8 @@ class BunkerRequestUtilsTest {
     // malformed sign_event in getDataFromBunker) left the client unanswered.
     @Test
     fun `a rejection is answered even when recording it fails`() = runBlocking {
-        val (amber, dao) = amberWithDao(getByKeyReturnsNull = false)
-        coEvery { dao.getByKey(any()) } returns mockk<com.greenart7c3.nostrsigner.database.ApplicationWithPermissions>(relaxed = true)
+        val (amber, daos) = amberWithDao(getByKeyReturnsNull = false)
+        coEvery { daos.applicationDao.getByKey(any()) } returns mockk<com.greenart7c3.nostrsigner.database.ApplicationWithPermissions>(relaxed = true)
 
         mockkObject(AmberUtils, com.greenart7c3.nostrsigner.AmberLog)
         try {
@@ -462,9 +463,9 @@ class BunkerRequestUtilsTest {
 
     @Test
     fun `a queued request for a live app is still answered normally`() = runBlocking {
-        val (amber, dao) = amberWithDao(getByKeyReturnsNull = false)
+        val (amber, daos) = amberWithDao(getByKeyReturnsNull = false)
         val liveApp = mockk<com.greenart7c3.nostrsigner.database.ApplicationWithPermissions>(relaxed = true)
-        coEvery { dao.getByKey(any()) } returns liveApp
+        coEvery { daos.applicationDao.getByKey(any()) } returns liveApp
 
         mockkObject(AmberUtils)
         try {
@@ -483,7 +484,7 @@ class BunkerRequestUtilsTest {
                 onLoading = {},
             )
 
-            coVerify(timeout = 5_000, exactly = 1) { dao.insertApplicationWithPermissions(any()) }
+            coVerify(timeout = 5_000, exactly = 1) { daos.permissionWriteDao.insertApplicationWithPermissions(any()) }
             // The client still gets its rejection reply from the tail of sendRejection.
             coVerify(timeout = 5_000, exactly = 1) { AmberUtils.sendBunkerError(any(), any(), any(), any(), any(), any()) }
         } finally {

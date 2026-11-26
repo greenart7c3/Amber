@@ -7,6 +7,7 @@ import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.SavedAccounts
 import com.greenart7c3.nostrsigner.database.ApplicationDao
+import com.greenart7c3.nostrsigner.database.relaxedApplicationDaos
 import com.greenart7c3.nostrsigner.service.ApplicationBackup
 import com.greenart7c3.nostrsigner.service.BackupApplication
 import com.greenart7c3.nostrsigner.service.BackupPayload
@@ -58,7 +59,7 @@ class AccountStateViewModelRestoreTest {
         val dao = mockk<ApplicationDao>(relaxed = true)
         coEvery { dao.getAll(any()) } returns emptyList()
         every { amber.applicationIOScope } returns scope
-        every { amber.accountDatabases.dao(any()) } returns dao
+        every { amber.accountDatabases.daos(any()) } returns relaxedApplicationDaos(applicationDao = dao)
 
         mockkObject(ApplicationBackup)
         coEvery { ApplicationBackup.resolveReadRelays(any(), any(), any()) } returns setOf(mockk())

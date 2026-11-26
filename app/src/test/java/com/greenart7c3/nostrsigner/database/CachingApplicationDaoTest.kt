@@ -3,7 +3,6 @@ package com.greenart7c3.nostrsigner.database
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
-import io.mockk.mockk
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
@@ -26,8 +25,10 @@ import org.junit.Test
  * application-table mutation must evict the cached list.
  */
 class CachingApplicationDaoTest {
+    private lateinit var raw: ApplicationDaos
+    private lateinit var daos: ApplicationDaos
     private lateinit var delegate: ApplicationDao
-    private lateinit var dao: CachingApplicationDao
+    private lateinit var dao: ApplicationDao
 
     private val accountKey = "accounthexpubkey"
 
@@ -39,8 +40,10 @@ class CachingApplicationDaoTest {
 
     @Before
     fun setUp() {
-        delegate = mockk(relaxed = true)
-        dao = CachingApplicationDao(delegate)
+        raw = relaxedApplicationDaos()
+        daos = ApplicationDaos.cached(raw)
+        delegate = raw.applicationDao
+        dao = daos.applicationDao
     }
 
     private fun stubGetAll(vararg entities: ApplicationEntity) {
@@ -85,7 +88,7 @@ class CachingApplicationDaoTest {
         stubGetAll(entity())
         dao.getAll(accountKey)
 
-        dao.insertApplication(entity())
+        daos.applicationWriteDao.insertApplication(entity())
 
         dao.getAll(accountKey)
         coVerify(exactly = 2) { delegate.getAll(accountKey) }
@@ -96,7 +99,7 @@ class CachingApplicationDaoTest {
         stubGetAll(entity())
         dao.getAll(accountKey)
 
-        dao.insertAll(listOf(entity()))
+        daos.applicationWriteDao.insertAll(listOf(entity()))
 
         dao.getAll(accountKey)
         coVerify(exactly = 2) { delegate.getAll(accountKey) }
@@ -108,7 +111,7 @@ class CachingApplicationDaoTest {
         dao.getAll(accountKey)
 
         val withPermissions = ApplicationWithPermissions(entity(), mutableListOf())
-        dao.insertApplicationWithPermissions(withPermissions)
+        daos.permissionWriteDao.insertApplicationWithPermissions(withPermissions)
 
         dao.getAll(accountKey)
         coVerify(exactly = 2) { delegate.getAll(accountKey) }
@@ -119,7 +122,7 @@ class CachingApplicationDaoTest {
         stubGetAll(entity())
         dao.getAll(accountKey)
 
-        dao.delete(entity())
+        daos.applicationWriteDao.delete(entity())
 
         dao.getAll(accountKey)
         coVerify(exactly = 2) { delegate.getAll(accountKey) }
@@ -130,7 +133,7 @@ class CachingApplicationDaoTest {
         stubGetAll(entity())
         dao.getAll(accountKey)
 
-        dao.delete("app1")
+        daos.applicationWriteDao.delete("app1")
 
         dao.getAll(accountKey)
         coVerify(exactly = 2) { delegate.getAll(accountKey) }
@@ -141,7 +144,7 @@ class CachingApplicationDaoTest {
         stubGetAll(entity())
         dao.getAll(accountKey)
 
-        dao.updateLastUsed("app1", 123L)
+        daos.applicationWriteDao.updateLastUsed("app1", 123L)
 
         dao.getAll(accountKey)
         coVerify(exactly = 2) { delegate.getAll(accountKey) }
@@ -152,7 +155,7 @@ class CachingApplicationDaoTest {
         stubGetAll(entity())
         dao.getAll(accountKey)
 
-        dao.updateNameAndIcon("app1", "name", "icon")
+        daos.applicationWriteDao.updateNameAndIcon("app1", "name", "icon")
 
         dao.getAll(accountKey)
         coVerify(exactly = 2) { delegate.getAll(accountKey) }
@@ -163,8 +166,8 @@ class CachingApplicationDaoTest {
         stubGetAll(entity())
         dao.getAll(accountKey)
 
-        coEvery { delegate.replaceSecretRaw(any(), any(), any()) } returns 1
-        dao.replaceSecretRaw("app1", "old", "new")
+        coEvery { raw.applicationWriteDao.replaceSecretRaw(any(), any(), any()) } returns 1
+        daos.applicationWriteDao.replaceSecretRaw("app1", "old", "new")
 
         dao.getAll(accountKey)
         coVerify(exactly = 2) { delegate.getAll(accountKey) }
@@ -175,8 +178,8 @@ class CachingApplicationDaoTest {
         stubGetAll(entity())
         dao.getAll(accountKey)
 
-        coEvery { delegate.replaceLocalKeyRaw(any(), any(), any()) } returns 1
-        dao.replaceLocalKeyRaw("app1", "old", "new")
+        coEvery { raw.applicationWriteDao.replaceLocalKeyRaw(any(), any(), any()) } returns 1
+        daos.applicationWriteDao.replaceLocalKeyRaw("app1", "old", "new")
 
         dao.getAll(accountKey)
         coVerify(exactly = 2) { delegate.getAll(accountKey) }
@@ -187,8 +190,8 @@ class CachingApplicationDaoTest {
         stubGetAll(entity())
         dao.getAll(accountKey)
 
-        coEvery { delegate.deleteOldApplications(any()) } returns 1
-        dao.deleteOldApplications(0L)
+        coEvery { raw.permissionMaintenanceDao.deleteOldApplications(any()) } returns 1
+        daos.permissionMaintenanceDao.deleteOldApplications(0L)
 
         dao.getAll(accountKey)
         coVerify(exactly = 2) { delegate.getAll(accountKey) }
@@ -199,7 +202,7 @@ class CachingApplicationDaoTest {
         stubGetAll(entity())
         dao.getAll(accountKey)
 
-        dao.deletePermissions("app1")
+        daos.permissionWriteDao.deletePermissions("app1")
 
         dao.getAll(accountKey)
         coVerify(exactly = 1) { delegate.getAll(accountKey) }
@@ -255,7 +258,7 @@ class CachingApplicationDaoTest {
         var firstRead = true
         raceReadAgainstRevocation(
             stubFirstRead = { block ->
-                every { delegate.getPermission("app1", "SIGN_EVENT", 1) } answers {
+                every { raw.permissionLookupDao.getPermission("app1", "SIGN_EVENT", 1) } answers {
                     if (firstRead) {
                         firstRead = false
                         block()
@@ -265,11 +268,11 @@ class CachingApplicationDaoTest {
                     }
                 }
             },
-            read = { dao.getPermission("app1", "SIGN_EVENT", 1) },
-            revoke = { dao.deletePermissions("app1") },
+            read = { daos.permissionLookupDao.getPermission("app1", "SIGN_EVENT", 1) },
+            revoke = { daos.permissionWriteDao.deletePermissions("app1") },
         )
 
-        assertNull(dao.getPermission("app1", "SIGN_EVENT", 1))
+        assertNull(daos.permissionLookupDao.getPermission("app1", "SIGN_EVENT", 1))
     }
 
     @Test
@@ -277,7 +280,7 @@ class CachingApplicationDaoTest {
         var firstRead = true
         raceReadAgainstRevocation(
             stubFirstRead = { block ->
-                every { delegate.getSignPolicy("app1") } answers {
+                every { raw.permissionLookupDao.getSignPolicy("app1") } answers {
                     if (firstRead) {
                         firstRead = false
                         block()
@@ -287,11 +290,11 @@ class CachingApplicationDaoTest {
                     }
                 }
             },
-            read = { dao.getSignPolicy("app1") },
-            revoke = { dao.delete("app1") },
+            read = { daos.permissionLookupDao.getSignPolicy("app1") },
+            revoke = { daos.applicationWriteDao.delete("app1") },
         )
 
-        assertNull(dao.getSignPolicy("app1"))
+        assertNull(daos.permissionLookupDao.getSignPolicy("app1"))
     }
 
     @Test
@@ -310,7 +313,7 @@ class CachingApplicationDaoTest {
                 }
             },
             read = { runBlocking { dao.getAll(accountKey) } },
-            revoke = { dao.delete(entity()) },
+            revoke = { daos.applicationWriteDao.delete(entity()) },
         )
 
         assertEquals(emptyList<ApplicationEntity>(), runBlocking { dao.getAll(accountKey) })
@@ -335,7 +338,7 @@ class CachingApplicationDaoTest {
         }
         val oldRead = async(start = CoroutineStart.UNDISPATCHED) { dao.getAll(accountKey) }
         started.await()
-        dao.insertApplication(added)
+        daos.applicationWriteDao.insertApplication(added)
         release.complete(Unit)
         assertEquals(listOf(existing), oldRead.await())
         assertEquals(listOf(existing, added), dao.getAll(accountKey))
@@ -361,7 +364,7 @@ class CachingApplicationDaoTest {
         }
         val oldRead = async(start = CoroutineStart.UNDISPATCHED) { dao.getAll(accountKey) }
         started.await()
-        dao.delete(removed)
+        daos.applicationWriteDao.delete(removed)
         release.complete(Unit)
         oldRead.await()
         assertEquals(emptyList<ApplicationEntity>(), dao.getAll(accountKey))

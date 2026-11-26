@@ -10,6 +10,8 @@ import com.greenart7c3.nostrsigner.database.ApplicationDao
 import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
 import com.greenart7c3.nostrsigner.database.HistoryDao
 import com.greenart7c3.nostrsigner.database.HistoryEntity
+import com.greenart7c3.nostrsigner.database.PermissionWriteDao
+import com.greenart7c3.nostrsigner.database.relaxedApplicationDaos
 import com.greenart7c3.nostrsigner.models.AmberSettings
 import com.greenart7c3.nostrsigner.models.ClearTextEncryptedDataKind
 import com.greenart7c3.nostrsigner.models.CompressionType
@@ -45,9 +47,10 @@ class IntentMultiEventViewModelTest {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
     private val account = newTestAccount(scope)
     private val dao = mockk<ApplicationDao>(relaxed = true) { coEvery { getByKey(any()) } returns null }
+    private val permissionWriteDao = mockk<PermissionWriteDao>(relaxed = true)
     private val historyDao = mockk<HistoryDao>(relaxed = true)
     private val accountRepository = mockk<AccountRepository> {
-        every { dao(any()) } returns dao
+        every { daos(any()) } returns relaxedApplicationDaos(applicationDao = dao, permissionWriteDao = permissionWriteDao)
         every { getHistoryDatabase(any()).dao() } returns historyDao
     }
     private val settingsStore = object : SettingsStore {
@@ -110,7 +113,7 @@ class IntentMultiEventViewModelTest {
 
         // Confirming runs on Dispatchers.IO; closing the activity is its last step.
         verify(timeout = 5_000) { activity.finishAndRemoveTask() }
-        coVerify { dao.insertApplicationWithPermissions(capture(saved)) }
+        coVerify { permissionWriteDao.insertApplicationWithPermissions(capture(saved)) }
         assertTrue(saved.captured.permissions.any { it.type == "NIP44_DECRYPT" && it.acceptable })
         coVerify { historyDao.addHistory(capture(history), account.npub) }
         assertEquals(listOf(true, false), history.captured.map { it.accepted })
@@ -137,7 +140,7 @@ class IntentMultiEventViewModelTest {
         viewModel.confirm(listOf(approved), activity, { _, _ -> }, {})
 
         val saved = slot<ApplicationWithPermissions>()
-        coVerify(timeout = 5_000) { dao.insertApplicationWithPermissions(capture(saved)) }
+        coVerify(timeout = 5_000) { permissionWriteDao.insertApplicationWithPermissions(capture(saved)) }
         val grant = saved.captured.permissions.single { it.type == "SIGN_EVENT" }
         assertEquals(RememberType.ONE_HOUR.screenCode, grant.rememberType)
         assertTrue(grant.acceptUntil > TimeUtils.now())

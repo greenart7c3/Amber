@@ -22,7 +22,7 @@ class ApplicationsViewModel(
         // Projection excludes the envelope-encrypted secret/localKey
         // columns: the list renders neither, and each Keystore decrypt
         // is a binder + TEE round trip (2 x rows per page).
-        val dao = accountRepository.getDatabase(npub).dao()
+        val dao = accountRepository.getDatabase(npub).applicationListDao()
         if (sortAlphabetically) dao.getApplicationListItemsPagingByName(hexKey) else dao.getApplicationListItemsPaging(hexKey)
     }.flow
 

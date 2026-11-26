@@ -51,7 +51,7 @@ data class ApplicationPermissionsEntity(
 
 /**
  * Whether a kind-22242 grant's [relay] covers every relay. Matches
- * [ApplicationDao.getWildcardRelayPermission]: an explicit "*", or the blank
+ * [PermissionLookupDao.getWildcardRelayPermission]: an explicit "*", or the blank
  * relay the basic sign policy stores, both mean all relays, so the approval
  * screens decide like the provider and NIP-46 paths.
  */

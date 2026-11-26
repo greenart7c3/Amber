@@ -16,15 +16,15 @@ import org.junit.runner.RunWith
  */
 @RunWith(AndroidJUnit4::class)
 class GenericPermissionLookupTest {
-    private fun withDao(block: suspend (ApplicationDao) -> Unit) = runBlocking {
+    private fun withDao(block: suspend (ApplicationDaos) -> Unit) = runBlocking {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         val database = Room.inMemoryDatabaseBuilder(context, AppDatabase::class.java)
             .allowMainThreadQueries()
             .build()
         try {
-            val dao = database.dao()
-            dao.insertApplicationRaw(ApplicationEntity.empty().copy(key = "caller"))
-            block(dao)
+            val daos = ApplicationDaos.of(database)
+            daos.applicationWriteDao.insertApplicationRaw(ApplicationEntity.empty().copy(key = "caller"))
+            block(daos)
         } finally {
             database.close()
         }
@@ -43,26 +43,26 @@ class GenericPermissionLookupTest {
     )
 
     @Test
-    fun scopedRowsNeverAnswerForTheGenericGrant() = withDao { dao ->
-        dao.insertPermissionsRaw(
+    fun scopedRowsNeverAnswerForTheGenericGrant() = withDao { daos ->
+        daos.permissionMaintenanceDao.insertPermissionsRaw(
             listOf(
                 row(1, "NIP44_DECRYPT", accept = true, kind = 4),
                 row(2, "PING", accept = true, relay = "relay.example.com"),
             ),
         )
-        assertNull(dao.getPermission("caller", "NIP44_DECRYPT"))
-        assertNull(dao.getPermission("caller", "PING"))
+        assertNull(daos.permissionLookupDao.getPermission("caller", "NIP44_DECRYPT"))
+        assertNull(daos.permissionLookupDao.getPermission("caller", "PING"))
     }
 
     @Test
-    fun anExplicitRejectionWinsOverADuplicateAccept() = withDao { dao ->
-        dao.insertPermissionsRaw(listOf(row(1, "GET_PUBLIC_KEY", accept = true), row(2, "GET_PUBLIC_KEY", accept = false), row(3, "GET_PUBLIC_KEY", accept = true)))
-        assertEquals(2, dao.getPermission("caller", "GET_PUBLIC_KEY")!!.id)
+    fun anExplicitRejectionWinsOverADuplicateAccept() = withDao { daos ->
+        daos.permissionMaintenanceDao.insertPermissionsRaw(listOf(row(1, "GET_PUBLIC_KEY", accept = true), row(2, "GET_PUBLIC_KEY", accept = false), row(3, "GET_PUBLIC_KEY", accept = true)))
+        assertEquals(2, daos.permissionLookupDao.getPermission("caller", "GET_PUBLIC_KEY")!!.id)
     }
 
     @Test
-    fun theNewestOfDuplicateAcceptsWins() = withDao { dao ->
-        dao.insertPermissionsRaw(listOf(row(1, "SIGN_PSBT", accept = true), row(5, "SIGN_PSBT", accept = true)))
-        assertEquals(5, dao.getPermission("caller", "SIGN_PSBT")!!.id)
+    fun theNewestOfDuplicateAcceptsWins() = withDao { daos ->
+        daos.permissionMaintenanceDao.insertPermissionsRaw(listOf(row(1, "SIGN_PSBT", accept = true), row(5, "SIGN_PSBT", accept = true)))
+        assertEquals(5, daos.permissionLookupDao.getPermission("caller", "SIGN_PSBT")!!.id)
     }
 }

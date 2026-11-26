@@ -114,7 +114,7 @@ class NotificationSubscription(
                 // getAll re-decrypts every application row through AndroidKeyStore
                 // (a keystore2 binder round-trip per encrypted field) each cycle —
                 // previously the app's dominant native allocator.
-                val allConnections = accountRepository.dao(account.npub).getAll(account.hexKey)
+                val allConnections = accountRepository.daos(account.npub).applicationDao.getAll(account.hexKey)
                 val connectionsWithLocalKey = allConnections.filter { it.localKey.isNotEmpty() }
                 val hasLegacyConnections = allConnections.any { it.localKey.isEmpty() && it.relays.isNotEmpty() }
 

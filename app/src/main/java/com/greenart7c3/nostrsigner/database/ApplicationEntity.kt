@@ -112,7 +112,7 @@ data class ApplicationKeyName(
 )
 
 /**
- * Row projection for the Applications list screen ([ApplicationDao.getApplicationListItemsPaging]):
+ * Row projection for the Applications list screen ([ApplicationListDao.getApplicationListItemsPaging]):
  * exactly the columns that screen renders. Deliberately excludes the
  * envelope-encrypted `secret`/`localKey` columns — every Keystore cipher
  * operation is a binder + TEE round trip, so a `SELECT *` paged load made

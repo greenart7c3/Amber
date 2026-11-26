@@ -207,7 +207,7 @@ had stored some of those under names nothing looked up.
 Step 1 is done. What stays in each app on purpose: decrypting a request and
 encrypting and signing the reply (on Android through `Account`, so the
 `requireUnlockedDevice` gate applies), storage (Room on Android, JSON files on the
-desktop, so `ApplicationDao.insertPermissions` keeps its own delete queries), the
+desktop, so `PermissionWriteDao.insertPermissions` keeps its own delete queries), the
 relay subscriptions, and the approval screens with their scope choices.
 
 ### 2. Split `IntentUtils.kt` (done)

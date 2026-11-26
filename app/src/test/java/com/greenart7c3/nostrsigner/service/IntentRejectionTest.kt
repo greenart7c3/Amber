@@ -5,6 +5,8 @@ import androidx.appcompat.app.AppCompatActivity
 import com.greenart7c3.nostrsigner.common.SignerType
 import com.greenart7c3.nostrsigner.data.AccountRepository
 import com.greenart7c3.nostrsigner.database.ApplicationDao
+import com.greenart7c3.nostrsigner.database.PermissionWriteDao
+import com.greenart7c3.nostrsigner.database.relaxedApplicationDaos
 import com.greenart7c3.nostrsigner.models.CompressionType
 import com.greenart7c3.nostrsigner.models.IntentData
 import com.greenart7c3.nostrsigner.models.IntentResultType
@@ -32,8 +34,9 @@ import org.junit.Test
 class IntentRejectionTest {
     private val activity = mockk<AppCompatActivity>(relaxed = true)
     private val dao = mockk<ApplicationDao>(relaxed = true) { coEvery { getByKey(any()) } returns null }
+    private val permissionWriteDao = mockk<PermissionWriteDao>(relaxed = true)
     private val accounts = mockk<AccountRepository>(relaxed = true) {
-        every { dao(any()) } returns dao
+        every { daos(any()) } returns relaxedApplicationDaos(applicationDao = dao, permissionWriteDao = permissionWriteDao)
         every { getDatabase(any()).dao() } returns dao
     }
 
@@ -94,14 +97,14 @@ class IntentRejectionTest {
         verify(timeout = 5_000) { activity.finishAndRemoveTask() }
         assertEquals(listOf(IntentResultType.REMOVE), awaitRemoved(removed))
         verify(exactly = 0) { accounts.getDatabase(any()) }
-        coVerify(exactly = 0) { dao.insertApplicationWithPermissions(any()) }
+        coVerify(exactly = 0) { permissionWriteDao.insertApplicationWithPermissions(any()) }
     }
 
     @Test
     fun `rejecting a native app's request still records it`() {
         val removed = reject("com.example.app")
 
-        coVerify(timeout = 5_000) { dao.insertApplicationWithPermissions(any()) }
+        coVerify(timeout = 5_000) { permissionWriteDao.insertApplicationWithPermissions(any()) }
         verify(timeout = 5_000) { activity.finishAndRemoveTask() }
         assertEquals(listOf(IntentResultType.REMOVE), awaitRemoved(removed))
     }

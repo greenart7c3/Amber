@@ -10,6 +10,7 @@ import com.greenart7c3.nostrsigner.database.AppDatabase
 import com.greenart7c3.nostrsigner.database.ApplicationDao
 import com.greenart7c3.nostrsigner.database.ApplicationEntity
 import com.greenart7c3.nostrsigner.database.BunkerEventDao
+import com.greenart7c3.nostrsigner.database.relaxedApplicationDaos
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.AmberSettings
 import com.vitorpamplona.quartz.nip01Core.core.Event
@@ -82,7 +83,7 @@ class EventNotificationConsumerTest {
         amber = mockk(relaxed = true)
         every { amber.applicationIOScope } returns scope
         every { amber.accountDatabases.getDatabase(any()) } returns database
-        every { amber.accountDatabases.dao(any()) } returns dao
+        every { amber.accountDatabases.daos(any()) } returns relaxedApplicationDaos(applicationDao = dao)
 
         mockkObject(AmberLog)
         every { AmberLog.d(any(), any()) } returns Unit

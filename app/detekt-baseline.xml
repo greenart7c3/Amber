@@ -17,22 +17,9 @@
     <ID>NoComments:Account.kt:would otherwise turn a lock refusal into an erased recovery phrase.</ID>
     <ID>NoComments:Account.kt:yet, and this gate must see the user's actual decision, not a default.</ID>
     <ID>NoComments:AccountBackupScreen.kt:Collapsible tips section</ID>
-    <ID>NoComments:AccountBackupScreen.kt:Copy and QR buttons side by side</ID>
-    <ID>NoComments:AccountBackupScreen.kt:Defense-in-depth (GHSA-8844-q5vh-9j8f, L4): this dialog renders the</ID>
-    <ID>NoComments:AccountBackupScreen.kt:Defense-in-depth (GHSA-8844-q5vh-9j8f, L4): this screen renders the</ID>
     <ID>NoComments:AccountBackupScreen.kt:Exporting every account at once, and the cloud backup (online flavors only).</ID>
-    <ID>NoComments:AccountBackupScreen.kt:Once the user is authenticated: the ncryptsec under the password, or the plain nsec without one.</ID>
     <ID>NoComments:AccountBackupScreen.kt:Password section</ID>
-    <ID>NoComments:AccountBackupScreen.kt:Seed words button (full width, shown only if valid mnemonic)</ID>
-    <ID>NoComments:AccountBackupScreen.kt:The account's picture, its name (or short key) and whether it is backed up.</ID>
     <ID>NoComments:AccountBackupScreen.kt:The backup card of the saved account [npub], once its key (and seed words) are loaded.</ID>
-    <ID>NoComments:AccountBackupScreen.kt:The ncryptsec of the key under [password], or null after telling the user it could not be made.</ID>
-    <ID>NoComments:AccountBackupScreen.kt:The nsec to show, or null after telling the user it could not be exported. Caught</ID>
-    <ID>NoComments:AccountBackupScreen.kt:The plain nsec as a QR code; closing it marks the account as backed up.</ID>
-    <ID>NoComments:AccountBackupScreen.kt:lifetime of the dialog. Mirrors SeedWordsPage/RandomPinInput.</ID>
-    <ID>NoComments:AccountBackupScreen.kt:raw nsec as a QR code. Prevent screenshots/screen recording for the</ID>
-    <ID>NoComments:AccountBackupScreen.kt:raw nsec/ncryptsec as a QR code (via Route.QrCode). Prevent</ID>
-    <ID>NoComments:AccountBackupScreen.kt:screenshots/screen recording for the lifetime of the screen.</ID>
     <ID>NoComments:AccountCachedKeyLockTest.kt:Opt-in off: allowed regardless of lock state, keyguard untouched.</ID>
     <ID>NoComments:AccountCachedKeyLockTest.kt:Opt-in on, device locked: refused.</ID>
     <ID>NoComments:AccountCachedKeyLockTest.kt:Opt-in on, device unlocked: allowed.</ID>

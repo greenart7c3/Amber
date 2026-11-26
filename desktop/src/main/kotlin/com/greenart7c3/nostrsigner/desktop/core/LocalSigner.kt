@@ -393,7 +393,7 @@ object LocalSigner {
 
         // The approval may have picked another account: find where the app landed.
         for (candidate in AmberDesktop.accounts()) {
-            AmberDesktop.store(candidate.npub).getByKey(appKey)?.let { return Triple(candidate, it, issued) }
+            AmberDesktop.store(candidate.npub).lookup.getByKey(appKey)?.let { return Triple(candidate, it, issued) }
         }
         throw RpcException(LocalSignerProtocol.INTERNAL_ERROR, "connection was not saved")
     }

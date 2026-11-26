@@ -120,7 +120,7 @@ private fun BunkerEngine.revertApproval(req: PendingBunkerRequest, store: Accoun
         }
         return
     }
-    val current = store.getByKey(key) ?: return
+    val current = store.lookup.getByKey(key) ?: return
     store.upsert(current.copy(permissions = revertedGrants(current.permissions, grantsBefore, grantsAfter).toMutableList()))
 }
 
@@ -141,7 +141,7 @@ private fun savedConnection(req: PendingBunkerRequest, acc: DesktopAccount, stor
     val secret = (req.request as? BunkerRequestConnect)?.secret?.takeIf { it.isNotBlank() }
     if (secret != null && acc.npub != req.account.npub) {
         val sourceStore = AmberDesktop.store(req.account.npub)
-        sourceStore.getByKey(secret)?.let { placeholder ->
+        sourceStore.lookup.getByKey(secret)?.let { placeholder ->
             sourceStore.delete(placeholder.app.key)
             store.upsert(placeholder.copy(app = placeholder.app.copy(pubKey = acc.hexKey)))
         }
@@ -149,7 +149,7 @@ private fun savedConnection(req: PendingBunkerRequest, acc: DesktopAccount, stor
 
     // An expired connection counts as gone: approving a card queued before
     // it expired must not sign for it (a new connect replaces it below).
-    var savedApplication = store.getByKey(key)?.takeUnless { it.app.isExpired() }
+    var savedApplication = store.lookup.getByKey(key)?.takeUnless { it.app.isExpired() }
     if (connectionToReplace(req, acc.npub) != null) {
         // A nostrconnect URI names the client key itself. Approving it
         // replaces the connection saved under that key (the card shows
@@ -159,7 +159,7 @@ private fun savedConnection(req: PendingBunkerRequest, acc: DesktopAccount, stor
         savedApplication = null
     }
     if (savedApplication == null && secret != null) {
-        store.getByKey(secret)?.let { placeholder ->
+        store.lookup.getByKey(secret)?.let { placeholder ->
             store.delete(placeholder.app.key)
             savedApplication = placeholder.copy(app = placeholder.app.copy(key = key))
             store.upsert(savedApplication)
@@ -258,7 +258,7 @@ private suspend fun BunkerEngine.doReject(
     val store = AmberDesktop.store(acc.npub)
     val key = req.localKey
 
-    val savedApplication = store.getByKey(key)
+    val savedApplication = store.lookup.getByKey(key)
     val defaultRelays = BunkerRelays.defaultRelays()
     val newConnectionRelays = if (req.isNostrConnectUri) {
         req.relays.ifEmpty { defaultRelays }

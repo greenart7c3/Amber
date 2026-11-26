@@ -956,8 +956,5 @@
     <ID>NoComments:WindowsToasts.kt:first toast, so only a setting Windows does report counts.</ID>
     <ID>NoComments:WindowsToasts.kt:quits is really taken down before the process ends.</ID>
     <ID>TooManyFunctions:DesktopKeyStore.kt:DesktopKeyStore</ID>
-    <ID>TooManyFunctions:Storage.kt:AccountStore</ID>
-    <ID>TooManyFunctions:UiState.kt:UiState</ID>
-    <ID>TooManyFunctions:UriLaunch.kt:UriLaunch</ID>
   </CurrentIssues>
 </SmellBaseline>

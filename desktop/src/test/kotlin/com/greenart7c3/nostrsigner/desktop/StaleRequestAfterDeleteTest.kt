@@ -70,7 +70,7 @@ class StaleRequestAfterDeleteTest {
 
         withTimeoutOrNull(20.seconds) { AmberDesktop.engine.reject(card, RememberType.NEVER).join() }
 
-        assertNull(AmberDesktop.store(npub).getByKey(clientHex))
+        assertNull(AmberDesktop.store(npub).lookup.getByKey(clientHex))
     }
 
     @Test
@@ -80,7 +80,7 @@ class StaleRequestAfterDeleteTest {
         withTimeoutOrNull(20.seconds) { AmberDesktop.engine.approve(card, RememberType.ALWAYS).join() }
 
         val store = AmberDesktop.store(npub)
-        assertNull(store.getByKey(clientHex))
+        assertNull(store.lookup.getByKey(clientHex))
         assertFalse(store.history.value.any { it.appKey == clientHex && it.accepted })
     }
 }

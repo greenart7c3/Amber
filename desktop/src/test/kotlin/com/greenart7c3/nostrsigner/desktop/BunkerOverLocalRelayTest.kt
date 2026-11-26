@@ -5,6 +5,7 @@ import com.greenart7c3.nostrsigner.commonsui.Res
 import com.greenart7c3.nostrsigner.commonsui.d_local_bunker_port_in_use
 import com.greenart7c3.nostrsigner.desktop.core.AccountManager
 import com.greenart7c3.nostrsigner.desktop.core.AmberDesktop
+import com.greenart7c3.nostrsigner.desktop.core.BunkerRelays
 import com.greenart7c3.nostrsigner.desktop.core.LocalBunkerRelay
 import com.greenart7c3.nostrsigner.desktop.core.OkHttpWebSocket
 import com.greenart7c3.nostrsigner.desktop.core.RememberType
@@ -196,7 +197,7 @@ class BunkerOverLocalRelayTest {
         probe.close()
         LocalBunkerRelay.stop()
         SettingsStore.update { it.copy(defaultRelays = emptyList(), localBunkerServer = true, localBunkerPort = port1) }
-        assertEquals(Status.RUNNING, LocalBunkerRelay.start(AmberDesktop.localBunkerPort()))
+        assertEquals(Status.RUNNING, LocalBunkerRelay.start(BunkerRelays.localBunkerPort()))
         val relay = LocalBunkerRelay.relayUrl() ?: error("relay did not start")
 
         val account = AccountManager.addAccount(KeyPair(), name = "port-guard")
@@ -209,14 +210,14 @@ class BunkerOverLocalRelayTest {
         probe2.close()
 
         // A saved connection still lists the relay: the port must not move.
-        assertEquals(Res.string.d_local_bunker_port_in_use, AmberDesktop.changeLocalBunkerPort(port2))
+        assertEquals(Res.string.d_local_bunker_port_in_use, BunkerRelays.changeLocalBunkerPort(port2))
         assertEquals(port1, LocalBunkerRelay.boundPort)
         assertEquals(relay.url, LocalBunkerRelay.relayUrl()?.url)
 
         val app = AmberDesktop.store(account.npub).apps.value.first()
         AmberDesktop.store(account.npub).delete(app.app.key)
         // Freed, the port change restarts the relay on the new port.
-        assertNull(AmberDesktop.changeLocalBunkerPort(port2))
+        assertNull(BunkerRelays.changeLocalBunkerPort(port2))
         assertEquals(port2, LocalBunkerRelay.boundPort)
         assertEquals("ws://127.0.0.1:$port2/", LocalBunkerRelay.relayUrl()?.url)
 

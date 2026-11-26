@@ -72,7 +72,7 @@ import kotlinx.coroutines.sync.withLock
  */
 fun connectionToReplace(req: PendingBunkerRequest, accountNpub: String): AppWithPermissions? {
     if (!req.isNostrConnectUri || req.type != SignerType.CONNECT) return null
-    return AmberDesktop.store(accountNpub).getByKey(req.localKey)
+    return AmberDesktop.store(accountNpub).lookup.getByKey(req.localKey)
 }
 
 /**
@@ -251,7 +251,7 @@ class BunkerEngine(
         AmberLogger.d("BunkerEngine", "onCannotConnect: ${relay.url.url} error: $errorMessage")
         logAll(relay, "onCannotConnect", errorMessage)
 
-        if (System.currentTimeMillis() - AmberDesktop.intentionalDisconnectTime < 2_000) {
+        if (System.currentTimeMillis() - RelayConnections.intentionalDisconnectTime < 2_000) {
             return super.onCannotConnect(relay, errorMessage)
         }
 
@@ -263,7 +263,7 @@ class BunkerEngine(
         AmberLogger.d("BunkerEngine", "onDisconnected: ${relay.url.url}")
         logAll(relay, "onDisconnected", "Disconnected")
 
-        if (System.currentTimeMillis() - AmberDesktop.intentionalDisconnectTime < 2_000) {
+        if (System.currentTimeMillis() - RelayConnections.intentionalDisconnectTime < 2_000) {
             return super.onDisconnected(relay)
         }
 
@@ -306,7 +306,7 @@ class BunkerEngine(
             AmberLogger.d("BunkerEngine", "Reconnecting in ${reconnectDelay.inWholeSeconds}s...")
             delay(reconnectDelay)
             reconnectDelay = (reconnectDelay * 2).coerceAtMost(60.seconds)
-            AmberDesktop.reconnect()
+            RelayConnections.reconnect()
         }
     }
 
@@ -364,7 +364,7 @@ class BunkerEngine(
                 val connPubKey = conn.localPubKey()
                 indexEntries[connPubKey] = account.npub to conn.localKey
 
-                conn.normalizedRelays().ifEmpty { AmberDesktop.savedRelays(account.npub).toList() }
+                conn.normalizedRelays().ifEmpty { BunkerRelays.savedRelays(account.npub).toList() }
                     .filterNot { RelayHealthTracker.isDead(it) }
                     .forEach { keysByRelay.getOrPut(it) { linkedSetOf() }.add(connPubKey) }
             }
@@ -454,7 +454,7 @@ class BunkerEngine(
     // NIP-44 decrypt batches, rapid signing) and must never be silently dropped.
     // Checked after verify() and keyed on the proven signer pubkey, so forged
     // events cannot drain a legitimate sender's budget.
-    private fun isRateLimited(store: AccountStore, event: Event, relay: NormalizedRelayUrl): Boolean = store.getByKey(event.pubKey)?.takeUnless { it.app.isExpired() } == null &&
+    private fun isRateLimited(store: AccountStore, event: Event, relay: NormalizedRelayUrl): Boolean = store.lookup.getByKey(event.pubKey)?.takeUnless { it.app.isExpired() } == null &&
         !rateLimiter.allow("${relay.url}|${event.pubKey}", System.currentTimeMillis())
 
     // The request [event] carries, decrypted with the connection key, or null (logged) when it cannot be read.
@@ -487,7 +487,7 @@ class BunkerEngine(
         val reply = UnadmittedReply(acc, connectionPrivKey, event.pubKey, encryptionType, bunkerRequest.id)
         if (refusedBeforeAdmission(bunkerRequest, type, reply, store, relay)) return
 
-        val stored = store.getByKey(event.pubKey)
+        val stored = store.lookup.getByKey(event.pubKey)
         if (stored != null && stored.app.isExpired()) {
             // Mirrors EventNotificationConsumer: the user set a finite lifetime
             // on this connection, so answer as an unknown app even before the
@@ -495,7 +495,7 @@ class BunkerEngine(
             store.addLog(relay.url, "bunker", "Connection expired for ${event.pubKey}")
         }
         val connectSecret = (bunkerRequest as? BunkerRequestConnect)?.let { it.secret ?: UUID.randomUUID().toString() }
-        val withSecret = connectSecret?.let { store.getBySecret(it) }
+        val withSecret = connectSecret?.let { store.lookup.getBySecret(it) }
         val admission = admitNip46Request(type, stored?.toNip46Connection(), connectionPrivKey, connectSecret, withSecret?.toNip46Connection())
         if (admission is Nip46Admission.Admit) {
             handleRequest(bunkerRequest, event, acc, relay, connectionPrivKey, stored.takeIf { admission.stored != null }, withSecret.takeIf { admission.bySecret != null })
@@ -573,7 +573,7 @@ class BunkerEngine(
     ) {
         val a = AdmittedRequest(bunkerRequest, event, acc, relay, connectionPrivKey, permission, app = permission ?: applicationWithSecret)
         // The common first step, as on Android.
-        when (val step = nip46Step(bunkerRequest, a.type, AmberDesktop.settings.authWhitelist, AmberDesktop.defaultRelays().map { it.url })) {
+        when (val step = nip46Step(bunkerRequest, a.type, AmberDesktop.settings.authWhitelist, BunkerRelays.defaultRelays().map { it.url })) {
             is Nip46Step.SwitchRelays -> switchRelays(a, step.result)
             Nip46Step.Logout -> logout(a)
             is Nip46Step.Refuse -> refuseUpFront(a, step)
@@ -616,7 +616,7 @@ class BunkerEngine(
     private suspend fun switchRelays(a: AdmittedRequest, result: String?) {
         val current = a.permission ?: return
         if (reply(a, result)) {
-            a.store.upsert(current.copy(app = current.app.copy(relays = AmberDesktop.defaultRelays().map { it.url })))
+            a.store.upsert(current.copy(app = current.app.copy(relays = BunkerRelays.defaultRelays().map { it.url })))
             checkForNewRelaysAndUpdateAllFilters(shouldReconnect = true)
         }
     }
@@ -746,12 +746,12 @@ internal fun lookupPermission(
     relayHost: String,
 ): AppPermissionRecord? = when (type) {
     // Relay auth is granted per relay or for all relays, like Android.
-    SignerType.SIGN_EVENT if kind == RELAY_AUTH_KIND -> store.getRelayAuthPermission(appKey, relayHost)
+    SignerType.SIGN_EVENT if kind == RELAY_AUTH_KIND -> store.lookup.getRelayAuthPermission(appKey, relayHost)
 
     else -> permissionLookupOrder(
         type,
         kind,
         contentType = if (type in contentScopedSignerTypes) type.contentPermissionType(encryptedContent) else null,
         signNip = if (type == SignerType.SIGN_EVENT) kind?.kindToNip()?.toIntOrNull() else null,
-    ).firstNotNullOfOrNull { store.getPermission(appKey, it.type, it.kind) }
+    ).firstNotNullOfOrNull { store.lookup.getPermission(appKey, it.type, it.kind) }
 }

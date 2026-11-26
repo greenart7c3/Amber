@@ -154,11 +154,13 @@ import com.greenart7c3.nostrsigner.desktop.core.AccountRecord
 import com.greenart7c3.nostrsigner.desktop.core.AccountsStore
 import com.greenart7c3.nostrsigner.desktop.core.AmberDesktop
 import com.greenart7c3.nostrsigner.desktop.core.AutoStart
+import com.greenart7c3.nostrsigner.desktop.core.BunkerRelays
 import com.greenart7c3.nostrsigner.desktop.core.DateTimes
 import com.greenart7c3.nostrsigner.desktop.core.DesktopAccount
 import com.greenart7c3.nostrsigner.desktop.core.DesktopMasterKey
 import com.greenart7c3.nostrsigner.desktop.core.DesktopSettings
 import com.greenart7c3.nostrsigner.desktop.core.PassphraseLock
+import com.greenart7c3.nostrsigner.desktop.core.RelayConnections
 import com.greenart7c3.nostrsigner.desktop.core.RelayHttpClients
 import com.greenart7c3.nostrsigner.desktop.core.SettingsStore
 import com.greenart7c3.nostrsigner.desktop.core.Strings
@@ -324,11 +326,11 @@ private fun ColumnScope.DesktopSection(settings: DesktopSettings) {
     }
     SettingSwitch(
         title = stringResource(Res.string.d_local_bunker_server),
-        description = stringResource(Res.string.d_local_bunker_server_sub, AmberDesktop.localBunkerPort()),
+        description = stringResource(Res.string.d_local_bunker_server_sub, BunkerRelays.localBunkerPort()),
         checked = settings.localBunkerServer,
         onCheckedChange = { value ->
             SettingsStore.update { it.copy(localBunkerServer = value) }
-            AmberDesktop.applyLocalBunkerServerSetting()
+            BunkerRelays.applyLocalBunkerServerSetting()
         },
     )
     LocalBunkerPortRow(settings.localBunkerPort)
@@ -336,7 +338,7 @@ private fun ColumnScope.DesktopSection(settings: DesktopSettings) {
 
 @Composable
 private fun LocalBunkerPortRow(configuredPort: Int?) {
-    var portText by remember(configuredPort) { mutableStateOf(AmberDesktop.localBunkerPort().toString()) }
+    var portText by remember(configuredPort) { mutableStateOf(BunkerRelays.localBunkerPort().toString()) }
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
         OutlinedTextField(
             value = portText,
@@ -352,7 +354,7 @@ private fun LocalBunkerPortRow(configuredPort: Int?) {
                 if (port == null || port !in 1024..65535) {
                     Toaster.toast(getStringBlocking(Res.string.d_local_bunker_port_invalid))
                 } else {
-                    val error = AmberDesktop.changeLocalBunkerPort(port)
+                    val error = BunkerRelays.changeLocalBunkerPort(port)
                     Toaster.toast(getStringBlocking(error ?: Res.string.d_saved))
                 }
             },
@@ -718,7 +720,7 @@ private fun applyTorMode(
     port: Int,
 ) {
     SettingsStore.update { it.copy(torMode = mode, proxyPort = port) }
-    AmberDesktop.applyTorSettings()
+    RelayConnections.applyTorSettings()
     if (mode == TorMode.EXTERNAL) {
         scope.launch {
             val alive = withContext(Dispatchers.IO) { RelayHttpClients.isSocksProxyAlive(port) }

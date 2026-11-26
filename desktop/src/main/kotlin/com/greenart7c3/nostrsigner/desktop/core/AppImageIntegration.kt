@@ -57,8 +57,8 @@ object AppImageIntegration {
         Type=Application
         Name=Amber
         Comment=Nostr event signer
-        Exec=${UriLaunch.quoteForDesktopEntry(appImagePath)} %u
-        Icon=${UriLaunch.escapeDesktopEntryString(iconPath)}
+        Exec=${DesktopEntryEscaping.quoteForDesktopEntry(appImagePath)} %u
+        Icon=${DesktopEntryEscaping.escapeDesktopEntryString(iconPath)}
         Categories=Network;
         Terminal=false
         StartupWMClass=$WINDOW_CLASS
@@ -67,6 +67,6 @@ object AppImageIntegration {
     /** The program an entry written by [desktopEntry] launches, unquoted. */
     internal fun execTarget(entry: String): String? {
         val exec = entry.lineSequence().firstOrNull { it.startsWith("Exec=") }?.removePrefix("Exec=")?.removeSuffix(" %u") ?: return null
-        return UriLaunch.unquoteDesktopEntryArg(exec)
+        return DesktopEntryEscaping.unquoteDesktopEntryArg(exec)
     }
 }

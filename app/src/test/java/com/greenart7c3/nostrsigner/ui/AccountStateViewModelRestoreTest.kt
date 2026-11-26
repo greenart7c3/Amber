@@ -9,6 +9,7 @@ import com.greenart7c3.nostrsigner.SavedAccounts
 import com.greenart7c3.nostrsigner.database.ApplicationDao
 import com.greenart7c3.nostrsigner.database.relaxedApplicationDaos
 import com.greenart7c3.nostrsigner.service.ApplicationBackup
+import com.greenart7c3.nostrsigner.service.ApplicationBackupRestore
 import com.greenart7c3.nostrsigner.service.BackupApplication
 import com.greenart7c3.nostrsigner.service.BackupPayload
 import com.greenart7c3.nostrsigner.service.RestoreResult
@@ -61,7 +62,7 @@ class AccountStateViewModelRestoreTest {
         every { amber.applicationIOScope } returns scope
         every { amber.accountDatabases.daos(any()) } returns relaxedApplicationDaos(applicationDao = dao)
 
-        mockkObject(ApplicationBackup)
+        mockkObject(ApplicationBackup, ApplicationBackupRestore)
         coEvery { ApplicationBackup.resolveReadRelays(any(), any(), any()) } returns setOf(mockk())
         coEvery { ApplicationBackup.fetchLatestBackupEvent(any(), any(), any()) } returns null
     }
@@ -71,7 +72,7 @@ class AccountStateViewModelRestoreTest {
         Dispatchers.resetMain()
         unmockkObject(BuildFlavorChecker)
         unmockkObject(LocalPreferences, AccountStorage, SavedAccounts, AccountPreferences)
-        unmockkObject(ApplicationBackup)
+        unmockkObject(ApplicationBackup, ApplicationBackupRestore)
     }
 
     @Test
@@ -96,7 +97,7 @@ class AccountStateViewModelRestoreTest {
         val payload = BackupPayload(applications = listOf(kept, backupApp("unchecked")))
         viewModel.restorePrompt.value = RestorePromptState.Found(account, payload, createdAt = 0)
         val restored = slot<BackupPayload>()
-        coEvery { ApplicationBackup.restoreFromPayload(any(), capture(restored), any(), any()) } returns RestoreResult.Success(1, 0)
+        coEvery { ApplicationBackupRestore.restoreFromPayload(any(), capture(restored), any(), any()) } returns RestoreResult.Success(1, 0)
 
         viewModel.acceptRestore(listOf(kept)) { }
 

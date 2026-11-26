@@ -84,15 +84,18 @@ fun ApplicationsScreen(
     val context = LocalContext.current
     val settingsStore = LocalSettingsStore.current
     val appContext = LocalContext.current.applicationContext
-    // remember: without it every recomposition (killSwitch / backup-warning
-    // state flips) builds a new Pager + cold flow and re-runs the initial
-    // load from scratch. Keyed on the account and on the sort toggle so
-    // switching either reloads.
     var sortAlphabetically by remember(account.hexKey) {
         mutableStateOf(settingsStore.settings.sortApplicationsAlphabetically)
     }
 
-    val applications = remember(account.hexKey, sortAlphabetically) { viewModel.applications(account.npub, account.hexKey, sortAlphabetically) }
+    @Suppress("NoComments")
+    val applications = remember(account.hexKey, sortAlphabetically) {
+        // remember: without it every recomposition (killSwitch / backup-warning
+        // state flips) builds a new Pager + cold flow and re-runs the initial
+        // load from scratch. Keyed on the account and on the sort toggle so
+        // switching either reloads.
+        viewModel.applications(account.npub, account.hexKey, sortAlphabetically)
+    }
     val lazyPagingItems = applications.collectAsLazyPagingItems()
 
     val hasAccountsWithoutBackup = rememberHasAccountsWithoutBackup(appContext)
@@ -163,6 +166,7 @@ private fun disableKillSwitch(appContext: Context, npub: String) {
     SavedAccounts.switchTo(appContext, npub)
 }
 
+@Suppress("NoComments")
 private fun openPermissions(navController: NavHostController, key: String) {
     // Only navigate when we are still on the Applications screen. A second
     // tap (or a tap landing while the NavHost graph is being recreated) can

@@ -70,7 +70,6 @@ data class ConnectionSetup(val signPolicy: Int, val torMode: TorMode, val proxyP
 
 private const val DEFAULT_PROXY_PORT = 9050
 
-/** The SOCKS port to save: the typed one for Orbot (null when it is not a number), else the default. */
 internal fun proxyPortFor(torMode: TorMode, typed: String): Int? = if (torMode == TorMode.ORBOT) typed.toIntOrNull() else DEFAULT_PROXY_PORT
 
 /**

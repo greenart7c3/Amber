@@ -61,13 +61,11 @@ fun AccountBackupScreen(
             if (isLoading) {
                 CenterCircularProgressIndicator(Modifier, text = stringResource(Res.string.do_not_leave_the_app_until_the_key_is_generated))
             } else {
-                // Collapsible tips section
                 var tipsExpanded by remember { mutableStateOf(false) }
                 TipsCard(expanded = tipsExpanded, onToggle = { tipsExpanded = !tipsExpanded })
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Password section
                 val password = remember { mutableStateOf(TextFieldValue("")) }
                 var errorMessage by remember { mutableStateOf("") }
                 var showCharsPassword by remember { mutableStateOf(false) }
@@ -109,7 +107,6 @@ fun AccountBackupScreen(
     }
 }
 
-/** The backup card of the saved account [npub], once its key (and seed words) are loaded. */
 @Composable
 private fun SavedAccountBackupCard(
     npub: String,
@@ -141,7 +138,6 @@ private fun SavedAccountBackupCard(
     }
 }
 
-/** Exporting every account at once, and the cloud backup (online flavors only). */
 @Composable
 private fun OtherBackupOptions(navController: NavController) {
     IconRow(

@@ -79,6 +79,8 @@ import org.jetbrains.compose.resources.stringResource
 
 private const val RELAY_AUTH_KIND = 22242
 
+private fun viewModelKeyIsolatingGrants(account: Account, bunkerRequest: AmberBunkerRequest) = "bunker-single-${account.npub}-${bunkerRequest.queueKey}"
+
 @Composable
 fun BunkerSingleEventHomeScreen(
     horizontalPadding: Dp,
@@ -88,8 +90,7 @@ fun BunkerSingleEventHomeScreen(
     onLoading: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: BunkerSingleEventViewModel = viewModel(
-        // Keyed per account, client key and request id: another client or account never sees this saved app and its grants.
-        key = "bunker-single-${account.npub}-${bunkerRequest.queueKey}",
+        key = viewModelKeyIsolatingGrants(account, bunkerRequest),
         factory = BunkerSingleEventViewModel.factory(
             accountRepository = LocalAccountRepository.current,
             bunkerResponder = LocalBunkerResponder.current,
@@ -101,14 +102,14 @@ fun BunkerSingleEventHomeScreen(
     val loaded by viewModel.loaded.collectAsStateWithLifecycle()
     val replacePrompt by viewModel.replacePrompt.collectAsStateWithLifecycle()
     val responder = LocalBunkerResponder.current
-    // Only what was loaded for this very request: another one under the same key may have other grants.
-    val request = BunkerSingleRequest(bunkerRequest, account, loaded?.takeIf { it.request === bunkerRequest }?.application)
+    val applicationLoadedForThisRequest = loaded?.takeIf { it.request === bunkerRequest }?.application
+    val request = BunkerSingleRequest(bunkerRequest, account, applicationLoadedForThisRequest)
 
     when (bunkerRequest.request) {
         is BunkerRequestPing -> PingRequest(request, responder, onLoading, modifier)
         is BunkerRequestConnect -> {
-            // Only the request the prompt was raised for: a later one can reuse the ViewModel.
-            replacePrompt?.takeIf { it.request.bunkerRequest === bunkerRequest }?.let {
+            val replacePromptRaisedForThisRequest = replacePrompt?.takeIf { it.request.bunkerRequest === bunkerRequest }
+            replacePromptRaisedForThisRequest?.let {
                 ReplaceConnectionDialog(
                     prompt = it,
                     onReplace = { viewModel.replaceConnection(onLoading) },
@@ -199,7 +200,6 @@ private fun ConnectRequest(
     )
 }
 
-// The `perm1:kind,perm2` list a connect request asks for, read like a nostrconnect:// URI's perms.
 private fun parseConnectPermissions(permissions: String?): ImmutableList<Permission>? = permissions?.let { value ->
     parseRequestedPermissions(value) { it.containsNip() }.map { Permission(it.type, it.kind) }.toImmutableList()
 }
@@ -295,7 +295,6 @@ private fun NotLoggedIn(pubKey: String, modifier: Modifier = Modifier) {
     }
 }
 
-// NIP-42 relay authentication: the grant is per relay host (from the event's "relay" tag) or all relays.
 @Composable
 private fun RelayAuthRequest(
     request: BunkerSingleRequest,
@@ -306,15 +305,14 @@ private fun RelayAuthRequest(
 ) {
     val context = LocalContext.current
     val relayUrl = RelayUrlUtils.extractHostAndPort(AmberEvent.relay(event))
-    // A relay outside a non-empty auth whitelist is rejected whatever was remembered.
-    val blockedByWhitelist = isBlockedByAuthWhitelist(RELAY_AUTH_KIND, relayUrl, LocalSettingsStore.current.settings.authWhitelist)
+    val rejectedByAuthWhitelistOverridingRememberedChoice = isBlockedByAuthWhitelist(RELAY_AUTH_KIND, relayUrl, LocalSettingsStore.current.settings.authWhitelist)
 
     BunkerRelayAuthScreen(
         modifier = modifier,
         appName = request.appName,
         iconUrl = request.appIcon,
         relayUrl = relayUrl,
-        shouldAcceptOrReject = if (blockedByWhitelist) false else request.decision(relayUrl),
+        shouldAcceptOrReject = if (rejectedByAuthWhitelistOverridingRememberedChoice) false else request.decision(relayUrl),
         defaultScope = RelayAuthScope.SPECIFIC,
         account = request.account,
         onAccept = { rememberType, scope ->
@@ -336,8 +334,6 @@ private fun Nip44v3Request(
     onLoading: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    // NIP-44 v3 requests arrive as a generic BunkerRequest (Quartz doesn't know
-    // the method name); kind/scope are at params[1..2].
     val v3Kind = request.bunkerRequest.request.nip44v3Kind()
     Nip44v3ApprovalData(
         modifier = modifier,
@@ -349,9 +345,6 @@ private fun Nip44v3Request(
         account = request.account,
         shouldRunOnAccept = request.nip44v3Decision(),
         onAccept = { rememberType, scope ->
-            // encryptedData.result holds the Base64 wire value (ciphertext for encrypt,
-            // base64 plaintext for decrypt), computed when the request arrived.
-            // SPECIFIC ⇒ kind-scoped grant; ALL ⇒ broad grant (kind=null).
             val grantedKind = if (scope == DecryptTypeScope.SPECIFIC) v3Kind else null
             responder.accept(request, request.bunkerRequest.encryptedData?.result ?: "", rememberType, onLoading, kind = grantedKind, decryptTypeScope = scope)
         },
@@ -421,7 +414,6 @@ private fun SignPsbtRequest(
     )
 }
 
-// An event of another key is never signed by this account (private events excepted); warns instead.
 private fun refuseOtherAuthor(context: Context, request: BunkerSingleRequest, event: Event): Boolean {
     val refused = event.pubKey != request.account.hexKey && !isPrivateEvent(event.kind, event.tags)
     if (refused) {
@@ -430,7 +422,6 @@ private fun refuseOtherAuthor(context: Context, request: BunkerSingleRequest, ev
     return refused
 }
 
-// The relay a NIP-42 grant covers ("*" for all) and how long it is remembered.
 private fun relayGrant(scope: RelayAuthScope, relayUrl: String, rememberType: RememberType): Pair<String, RememberType> = Pair(
     if (scope == RelayAuthScope.ALL) "*" else relayUrl,
     relayAuthRememberType(allRelays = scope == RelayAuthScope.ALL, relayUrl = relayUrl, rememberType = rememberType),

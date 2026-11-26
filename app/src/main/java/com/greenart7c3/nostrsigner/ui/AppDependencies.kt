@@ -14,8 +14,6 @@ import com.greenart7c3.nostrsigner.service.ProfileSubscription
 import com.greenart7c3.nostrsigner.service.ZapstoreUpdater
 import kotlinx.coroutines.CoroutineScope
 
-// The app's dependencies for composables, provided once at each activity root
-// (appDependencies) instead of threading them through every screen.
 val LocalSettingsStore = staticCompositionLocalOf<SettingsStore> { error("No SettingsStore provided") }
 val LocalAccountRepository = staticCompositionLocalOf<AccountRepository> { error("No AccountRepository provided") }
 val LocalRelayClient = staticCompositionLocalOf<RelayClient> { error("No RelayClient provided") }

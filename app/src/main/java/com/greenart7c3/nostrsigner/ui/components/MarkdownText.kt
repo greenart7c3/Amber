@@ -98,7 +98,6 @@ private fun AnnotatedString.Builder.appendMarkdownInline(
     }
 }
 
-/** `**bold**` at the start of [text]; a `**` without its closing pair stays as is. Returns the characters used. */
 private fun AnnotatedString.Builder.appendBold(text: String): Int {
     val endIdx = text.indexOf("**", 2)
     if (endIdx == -1) {
@@ -111,7 +110,6 @@ private fun AnnotatedString.Builder.appendBold(text: String): Int {
     return endIdx + 2
 }
 
-/** `[text](url)` at the start of [text]; anything else keeps its `[`. Returns the characters used. */
 private fun AnnotatedString.Builder.appendLink(
     text: String,
     linkColor: Color,
@@ -129,7 +127,6 @@ private fun AnnotatedString.Builder.appendLink(
     return urlEnd + 1
 }
 
-/** Plain text up to the next `**` or `[` (at least one character). Returns the characters used. */
 private fun AnnotatedString.Builder.appendPlain(text: String): Int {
     val nextSpecial = listOf(text.indexOf("**"), text.indexOf("[")).filter { it >= 0 }.minOrNull() ?: text.length
     val count = if (nextSpecial == 0) 1 else nextSpecial

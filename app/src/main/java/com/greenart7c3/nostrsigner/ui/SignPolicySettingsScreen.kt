@@ -82,6 +82,7 @@ fun SignPolicySettingsScreen(
     }
 }
 
+@Suppress("NoComments")
 @Composable
 private fun SignPolicyOptionRow(
     option: TitleExplainer,

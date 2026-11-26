@@ -154,14 +154,9 @@ fun AccountsBottomSheet(
 private fun rememberLoadedAccounts(
     context: Context,
     savedAccounts: List<AccountInfo>,
-): State<List<Account>> {
-    // Load the cached Accounts off the main thread (each decrypts once, then is cached) so we
-    // can search and observe their name/picture StateFlows and refresh their metadata while
-    // the sheet is open.
-    return produceState(emptyList<Account>(), savedAccounts) {
-        value = withContext(Dispatchers.IO) {
-            savedAccounts.mapNotNull { AccountStorage.load(context, it.npub) }
-        }
+): State<List<Account>> = produceState(emptyList<Account>(), savedAccounts) {
+    value = withContext(Dispatchers.IO) {
+        savedAccounts.mapNotNull { AccountStorage.load(context, it.npub) }
     }
 }
 

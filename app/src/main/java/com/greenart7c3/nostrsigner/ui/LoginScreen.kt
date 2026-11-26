@@ -160,7 +160,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.compose.resources.stringResource
 
-// The side margin of the login pages: 7% of the screen width.
 @SuppressLint("ConfigurationScreenWidthHeight")
 @Composable
 private fun loginPadding(): Dp = LocalConfiguration.current.screenWidthDp.dp * 0.07f
@@ -301,6 +300,7 @@ private fun SourceCodeFooter() {
     )
 }
 
+@Suppress("NoComments")
 // The application ids an offline Amber can carry: the one shared with the online
 // app (every offline APK released up to 6.6.9) and the one of the separate
 // "Amber Offline" Zapstore listing (7.0.0-pre and later).
@@ -315,6 +315,7 @@ private val OFFLINE_APP_PACKAGES = listOf(
  * Only the INTERNET permission separates an offline install from the online
  * Amber, which keeps its accounts to itself and needs no notice.
  */
+@Suppress("NoComments")
 private fun previousOfflineInstall(context: Context): String? {
     if (!BuildFlavorChecker.isOfflineFlavor()) return null
     // This app holds one of those ids too, and pointing at itself explains
@@ -340,6 +341,7 @@ private fun isOfflineInstall(context: Context, packageName: String): Boolean {
  * separate, empty app, because its data cannot be read across packages. Point
  * the user at the app that has the accounts instead of showing them a first run.
  */
+@Suppress("NoComments")
 @Composable
 private fun PreviousOfflineInstallNotice(modifier: Modifier = Modifier) {
     val context = LocalContext.current
@@ -416,7 +418,6 @@ private fun LoginTopBar(title: String) {
     CenterAlignedTopAppBar(title = { Text(text = title) })
 }
 
-// Back steps through the pager first, then leaves the page.
 @Composable
 private fun LoginBottomBar(pagerState: PagerState, navHostControllerWrapper: NavHostControllerWrapper) {
     val scope = rememberCoroutineScope()
@@ -529,7 +530,6 @@ private fun NewAccountForm(
     }
 }
 
-/** What the user typed on the "add a key" page; saved across process death except the phrase words. */
 @Stable
 private class AddKeyInput(key: String = "", password: String = "", isMnemonicMode: Boolean = false, wordCount: Int = 12, accountIndex: Int = 0) {
     var key by mutableStateOf(TextFieldValue(key))
@@ -743,7 +743,6 @@ private fun PrivateKeySection(input: AddKeyInput, onClearError: () -> Unit, onSu
     }
 }
 
-/** A password-style field with a show/hide toggle. */
 @Composable
 private fun SecretField(
     value: TextFieldValue,

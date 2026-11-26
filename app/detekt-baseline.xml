@@ -2,10 +2,6 @@
 <SmellBaseline>
   <ManuallySuppressedIssues/>
   <CurrentIssues>
-    <ID>NoComments:AccountBackupScreen.kt:Collapsible tips section</ID>
-    <ID>NoComments:AccountBackupScreen.kt:Exporting every account at once, and the cloud backup (online flavors only).</ID>
-    <ID>NoComments:AccountBackupScreen.kt:Password section</ID>
-    <ID>NoComments:AccountBackupScreen.kt:The backup card of the saved account [npub], once its key (and seed words) are loaded.</ID>
     <ID>NoComments:AccountCachedKeyLockTest.kt:Opt-in off: allowed regardless of lock state, keyguard untouched.</ID>
     <ID>NoComments:AccountCachedKeyLockTest.kt:Opt-in on, device locked: refused.</ID>
     <ID>NoComments:AccountCachedKeyLockTest.kt:Opt-in on, device unlocked: allowed.</ID>
@@ -32,35 +28,7 @@
     <ID>NoComments:AccountExportService.kt:re-export a non-mnemonic as if it were the recovery phrase.</ID>
     <ID>NoComments:AccountExportService.kt:recovered, and a bad seed must never fail the import of a valid key.</ID>
     <ID>NoComments:AccountExportService.kt:the password and account.npub is derived from it.</ID>
-    <ID>NoComments:AccountPickerRow.kt:Clipped before the click, so the ripple keeps the rounded shape.</ID>
-    <ID>NoComments:AccountPickerRow.kt:Sorted and filtered for display only: each row keeps its index into [accounts],</ID>
-    <ID>NoComments:AccountPickerRow.kt:which is what the caller selects by, so neither changes the signing account.</ID>
     <ID>NoComments:AccountPreferences.kt:Keys in each account's preference file (`prefs_&lt;npub&gt;`); renaming one loses the stored value.</ID>
-    <ID>NoComments:AccountScreen.kt:Remembered, so a consumed route (set to null) is not brought back by the</ID>
-    <ID>NoComments:AccountScreen.kt:The owner tag of this activity's MainViewModel: only its requests show.</ID>
-    <ID>NoComments:AccountScreen.kt:next recomposition; recomputed when the requests or the route change.</ID>
-    <ID>NoComments:AccountSearch.kt:Seeds the first frame with the names already loaded, so the list doesn't filter on blanks.</ID>
-    <ID>NoComments:AccountSearch.kt:The list filters as you type, so Search only needs to get the keyboard out of the way.</ID>
-    <ID>NoComments:AccountStateViewModel.kt:Fetching is a read of a public, self-authored event; the dao check</ID>
-    <ID>NoComments:AccountStateViewModel.kt:Loading the account decrypts keys via the Android KeyStore, which is a slow</ID>
-    <ID>NoComments:AccountStateViewModel.kt:No BACKUP_APPLICATIONS gate here: that flag is publish consent for the</ID>
-    <ID>NoComments:AccountStateViewModel.kt:PendingIntent (a race with composition) and doesn't exist in the</ID>
-    <ID>NoComments:AccountStateViewModel.kt:Show the loading state while the next account decrypts off the main thread,</ID>
-    <ID>NoComments:AccountStateViewModel.kt:The Application context: the view model outlives the activity.</ID>
-    <ID>NoComments:AccountStateViewModel.kt:The logged-out account's NIP-46 subscriptions, connection keys and</ID>
-    <ID>NoComments:AccountStateViewModel.kt:Warm the full account cache BEFORE any UI state is emitted: the</ID>
-    <ID>NoComments:AccountStateViewModel.kt:account switcher in approval screens reads AccountStorage.cached()</ID>
-    <ID>NoComments:AccountStateViewModel.kt:below skips accounts whose local apps are still present.</ID>
-    <ID>NoComments:AccountStateViewModel.kt:blocking call. Run it off the main thread to avoid StrictMode violations and jank.</ID>
-    <ID>NoComments:AccountStateViewModel.kt:daily worker and is deliberately wiped on logout, so it can never be</ID>
-    <ID>NoComments:AccountStateViewModel.kt:eager load in AccountStorage.loadSync. ConnectivityService's</ID>
-    <ID>NoComments:AccountStateViewModel.kt:offline flavor — so warm here, at the deterministic app start.</ID>
-    <ID>NoComments:AccountStateViewModel.kt:relay sockets must go with it: rebuild the filters from the</ID>
-    <ID>NoComments:AccountStateViewModel.kt:reloadApp() cannot be relied on — it starts via an AlarmManager</ID>
-    <ID>NoComments:AccountStateViewModel.kt:remaining accounts, or Amber keeps listening for a deleted key.</ID>
-    <ID>NoComments:AccountStateViewModel.kt:so the login page does not flash during an account switch.</ID>
-    <ID>NoComments:AccountStateViewModel.kt:synchronously in remember {}, and it used to be populated by the</ID>
-    <ID>NoComments:AccountStateViewModel.kt:true on a logout→login round trip — the main case restore exists for.</ID>
     <ID>NoComments:AccountStateViewModelRestoreTest.kt:Post-logout state: AccountStorage.logout wipes prefs_&lt;npub&gt;, so the</ID>
     <ID>NoComments:AccountStateViewModelRestoreTest.kt:Unconfined so maybeOfferRestore's internal launch runs to completion on the</ID>
     <ID>NoComments:AccountStateViewModelRestoreTest.kt:acceptRestore reports its result on Main.</ID>
@@ -95,13 +63,6 @@
     <ID>NoComments:AccountStorage.kt:them for the lifetime of the process.</ID>
     <ID>NoComments:AccountStorage.kt:we release file locks and worker-pool threads instead of leaking</ID>
     <ID>NoComments:AccountStorageTest.kt:The policy refusing while locked is the setting working: reporting it would tell the user to log out</ID>
-    <ID>NoComments:AccountsBottomSheet.kt:Load the cached Accounts off the main thread (each decrypts once, then is cached) so we</ID>
-    <ID>NoComments:AccountsBottomSheet.kt:can search and observe their name/picture StateFlows and refresh their metadata while</ID>
-    <ID>NoComments:AccountsBottomSheet.kt:the sheet is open.</ID>
-    <ID>NoComments:ActivitiesScreen.kt:"Key X was already used". Positional keys are always unique.</ID>
-    <ID>NoComments:ActivitiesScreen.kt:No item keys: history rows are inserted continuously and Room pages</ID>
-    <ID>NoComments:ActivitiesScreen.kt:are independent LIMIT/OFFSET queries, so a row can transiently appear</ID>
-    <ID>NoComments:ActivitiesScreen.kt:in two loaded pages. Keying by the database id then crashes with</ID>
     <ID>NoComments:ActivityContent.kt:Like the Surface the activities used to put these in directly: the children</ID>
     <ID>NoComments:ActivityContent.kt:The account state for the activities' screens; [npub] is only read when it is first created.</ID>
     <ID>NoComments:ActivityContent.kt:The account the activity's intent names in `current_user`, else the first queued request's (see [Mai</ID>
@@ -109,11 +70,6 @@
     <ID>NoComments:ActivityContent.kt:The label of the installed app [packageName], or null when there is none or it cannot be read.</ID>
     <ID>NoComments:ActivityContent.kt:Whenever the queued bunker requests change, switches [accountStateViewModel] to the</ID>
     <ID>NoComments:ActivityContent.kt:get its minimum size.</ID>
-    <ID>NoComments:ActivityScreen.kt:"Key X was already used". Positional keys are always unique.</ID>
-    <ID>NoComments:ActivityScreen.kt:No item keys: history rows are inserted continuously and Room pages</ID>
-    <ID>NoComments:ActivityScreen.kt:are independent LIMIT/OFFSET queries, so a row can transiently appear</ID>
-    <ID>NoComments:ActivityScreen.kt:in two loaded pages. Keying by the database id then crashes with</ID>
-    <ID>NoComments:AddPermissionsSheet.kt:Custom sign_event kinds typed by the user, added on top of the catalog list.</ID>
     <ID>NoComments:Amber.kt:(ImageLoaderFactory) touches cacheDir, so letting the first AsyncImage</ID>
     <ID>NoComments:Amber.kt:Above the init blocks below: they hand it on as the AccountRepository.</ID>
     <ID>NoComments:Amber.kt:Always hand over to the caller: it registers the network</ID>
@@ -171,32 +127,12 @@
     <ID>NoComments:Amber.kt:waits for Tor on its own.</ID>
     <ID>NoComments:Amber.kt:which the offline flavor does not have); on an install with nothing to</ID>
     <ID>NoComments:AmberEvent.kt:The seven fields are the NIP-01 event, in its order; grouping them would hide the wire format.</ID>
-    <ID>NoComments:AmberNavigationBar.kt:The Accounts tab shows the current account's picture, or its placeholder.</ID>
-    <ID>NoComments:AmberToggles.kt:A thin bar under a scrolling row: its thumb is the visible part of [contentWidth] and follows [scrol</ID>
-    <ID>NoComments:AmberToggles.kt:Keep the selected segment in view when the row is scrollable.</ID>
-    <ID>NoComments:AmberTopAppBar.kt:The login screens draw no top bar.</ID>
-    <ID>NoComments:AmberTopAppBar.kt:The name of the app a bunker request comes from: the saved app (found by its key, or a connect's sec</ID>
-    <ID>NoComments:AmberTopAppBar.kt:The relays connected out of all, which reconnects them, and with a proxy on, whether it works.</ID>
-    <ID>NoComments:AmberTopAppBar.kt:The route's title, or what the destination shows: the QR code, the app (with "- Activity"</ID>
-    <ID>NoComments:AmberTopAppBar.kt:The routes whose title comes from the "content" argument of the destination.</ID>
-    <ID>NoComments:AmberTopAppBar.kt:The saved app's name (its key, shortened, when it has none), or [key] when the app is not saved.</ID>
-    <ID>NoComments:AmberTopAppBar.kt:Whether the proxy works: the built-in Tor running, or Orbot's SOCKS port answering (checked when the</ID>
     <ID>NoComments:AmberUtils.kt:A shared Grant as the app stores it, under the connection [key].</ID>
     <ID>NoComments:AmberUtils.kt:A stored permission as a shared Grant, without its row id, so two reads compare equal.</ID>
     <ID>NoComments:AmberUtils.kt:The common rememberedGrant, as on the desktop: for NIP-04/NIP-44 ALL stores the</ID>
     <ID>NoComments:AmberUtils.kt:The common signPolicyGrants, as on the desktop; an unknown policy changes nothing.</ID>
     <ID>NoComments:AmberUtils.kt:replacing the other.</ID>
     <ID>NoComments:AmberUtils.kt:whole NIP (NIP44_DECRYPT), SPECIFIC the content type (DECRYPT_CLEAR_TEXT), each</ID>
-    <ID>NoComments:AppAvatar.kt:(another local path, plain http, other schemes) is ignored.</ID>
-    <ID>NoComments:AppAvatar.kt:A native app's launcher icon is a file Amber wrote to its own icon store;</ID>
-    <ID>NoComments:AppAvatar.kt:Only query PackageManager when there's no stored icon to show — avoids a</ID>
-    <ID>NoComments:AppAvatar.kt:The image model for a stored icon string, or null when it must not be loaded.</ID>
-    <ID>NoComments:AppAvatar.kt:a remote client icon is never stored, only fetched over https. Local files</ID>
-    <ID>NoComments:AppAvatar.kt:flavor. Remote clients choose the icon string, so anything that is neither</ID>
-    <ID>NoComments:AppAvatar.kt:futile (and log-noisy) lookup for rows that aren't native apps.</ID>
-    <ID>NoComments:AppAvatar.kt:load on every flavor (no network); remote URLs are skipped on the offline</ID>
-    <ID>NoComments:AppDependencies.kt:(appDependencies) instead of threading them through every screen.</ID>
-    <ID>NoComments:AppDependencies.kt:The app's dependencies for composables, provided once at each activity root</ID>
     <ID>NoComments:AppIconStore.kt:Canonical paths resolve `..` and symlinks before the comparison.</ID>
     <ID>NoComments:AppNameSanitizerTest.kt:Bidi overrides and zero-width characters are dropped.</ID>
     <ID>NoComments:AppNameSanitizerTest.kt:Cutting never splits a surrogate pair.</ID>
@@ -239,67 +175,12 @@
     <ID>NoComments:ApplicationEntityTest.kt:31 bytes instead of 32</ID>
     <ID>NoComments:ApplicationPermissionsEntityTest.kt:A denial row with a leftover future acceptUntil used to auto-accept</ID>
     <ID>NoComments:ApplicationPermissionsEntityTest.kt:on the NIP-46 path.</ID>
-    <ID>NoComments:ApplicationsBackupScreen.kt:Fetch first and let the user review what the backup</ID>
-    <ID>NoComments:ApplicationsBackupScreen.kt:Lists what a backup would restore (name, key, relays and permission count</ID>
-    <ID>NoComments:ApplicationsBackupScreen.kt:NIP-46 apps are keyed by a pubkey; NIP-55 apps (no relays) by</ID>
-    <ID>NoComments:ApplicationsBackupScreen.kt:Which of a backup's applications the user picked to restore. Expired ones</ID>
-    <ID>NoComments:ApplicationsBackupScreen.kt:contains; nothing is written until they confirm.</ID>
-    <ID>NoComments:ApplicationsBackupScreen.kt:their package name, which is shown in full.</ID>
-    <ID>NoComments:ApplicationsScreen.kt:Only navigate when we are still on the Applications screen. A second</ID>
-    <ID>NoComments:ApplicationsScreen.kt:Permission destination, crashing with IllegalArgumentException.</ID>
-    <ID>NoComments:ApplicationsScreen.kt:load from scratch. Keyed on the account and on the sort toggle so</ID>
-    <ID>NoComments:ApplicationsScreen.kt:otherwise fire navigate() against a graph that no longer contains the</ID>
-    <ID>NoComments:ApplicationsScreen.kt:remember: without it every recomposition (killSwitch / backup-warning</ID>
-    <ID>NoComments:ApplicationsScreen.kt:state flips) builds a new Pager + cold flow and re-runs the initial</ID>
-    <ID>NoComments:ApplicationsScreen.kt:switching either reloads.</ID>
-    <ID>NoComments:ApplicationsScreen.kt:tap (or a tap landing while the NavHost graph is being recreated) can</ID>
-    <ID>NoComments:ApplicationsViewModel.kt:Projection excludes the envelope-encrypted secret/localKey</ID>
-    <ID>NoComments:ApplicationsViewModel.kt:columns: the list renders neither, and each Keystore decrypt</ID>
-    <ID>NoComments:ApplicationsViewModel.kt:is a binder + TEE round trip (2 x rows per page).</ID>
-    <ID>NoComments:AuthWhitelistScreen.kt:The whitelist stores bare hostnames; the scoring fetch</ID>
-    <ID>NoComments:AuthWhitelistScreen.kt:normalizes "wss://$hostname", so check exclusion on</ID>
-    <ID>NoComments:AuthWhitelistScreen.kt:the same constructed URL — a scheme-less hostname</ID>
-    <ID>NoComments:AuthWhitelistScreen.kt:would be treated as excluded and hide every badge.</ID>
     <ID>NoComments:BackupApplicationsWorker.kt:With requireUnlockedDevice enabled the gate refuses signing</ID>
     <ID>NoComments:BackupApplicationsWorker.kt:background worker. Retry later instead of silently skipping</ID>
     <ID>NoComments:BackupApplicationsWorker.kt:the day's backup.</ID>
     <ID>NoComments:BackupApplicationsWorker.kt:while the device is locked — usually the case for a daily</ID>
-    <ID>NoComments:BatchAccounts.kt:Every account a batch confirm acts as, in the order first seen.</ID>
-    <ID>NoComments:BatchAccounts.kt:The account a batched request is signed and recorded under.</ID>
-    <ID>NoComments:BatchRequestCard.kt:The raw event to sign, or the data to encrypt or decrypt.</ID>
-    <ID>NoComments:BatchRequestCard.kt:The request's label and short content, and Show Details when [onShowDetails] is given.</ID>
-    <ID>NoComments:BiometricAuthScreen.kt:The effect below runs once; it must call the latest callback, not the first one.</ID>
     <ID>NoComments:Biometrics.kt:The prompt attaches to the activity showing it; [context] is its (maybe wrapped) context.</ID>
     <ID>NoComments:BuildFlavorChecker.kt:The flavor behind the separate "Amber Offline" Zapstore listing.</ID>
-    <ID>NoComments:BunkerConnectRequestScreen.kt:The accounts the connection can be made with: every account for a nostrconnect:// URI (the</ID>
-    <ID>NoComments:BunkerConnectRequestScreen.kt:The collapsed Advanced section: close the app after answering, and when the connection deletes itsel</ID>
-    <ID>NoComments:BunkerConnectRequestScreen.kt:The connecting app's icon, name and, when it gave one, its URL.</ID>
-    <ID>NoComments:BunkerConnectRequestScreen.kt:The connecting app, then the account, relays, permissions and advanced options to connect with.</ID>
-    <ID>NoComments:BunkerConnectRequestScreen.kt:The permissions the app asks for, each of which can be turned off before connecting.</ID>
-    <ID>NoComments:BunkerConnectRequestScreen.kt:The relays the connection uses, each with its trust score when scoring is on.</ID>
-    <ID>NoComments:BunkerConnectRequestScreen.kt:The saved name of the connection a bunker:// secret belongs to, in the chosen account.</ID>
-    <ID>NoComments:BunkerConnectRequestScreen.kt:What the connect screen lets the user choose before connecting.</ID>
-    <ID>NoComments:BunkerConnectRequestScreen.kt:With manual approval: the requested permissions (in a sheet) and a button to add more.</ID>
-    <ID>NoComments:BunkerMultiEventHomeScreen.kt:Confirm signs each request under its own account (see below).</ID>
-    <ID>NoComments:BunkerMultiEventHomeScreen.kt:Requests are grouped by the app that sent them (in arrival order), then by request type.</ID>
-    <ID>NoComments:BunkerMultiEventHomeScreen.kt:Resolves each requesting app's name and icon: the saved app row, or the client metadata the request </ID>
-    <ID>NoComments:BunkerMultiEventHomeScreen.kt:Skipped in previews: encrypted storage and the Amber singleton don't</ID>
-    <ID>NoComments:BunkerMultiEventHomeScreen.kt:The requests a batch may show: everything but connects.</ID>
-    <ID>NoComments:BunkerMultiEventHomeScreen.kt:exist in the preview renderer.</ID>
-    <ID>NoComments:BunkerMultiEventViewModel.kt:A queued request whose app row is gone was revoked while it waited:</ID>
-    <ID>NoComments:BunkerMultiEventViewModel.kt:A relay outside the auth whitelist is rejected without remembering it,</ID>
-    <ID>NoComments:BunkerMultiEventViewModel.kt:An encryption only has a result once it ran: no value means nothing to answer with.</ID>
-    <ID>NoComments:BunkerMultiEventViewModel.kt:Confirming publishes the replies even if the screen goes away.</ID>
-    <ID>NoComments:BunkerMultiEventViewModel.kt:Constructor injection: one parameter per dependency.</ID>
-    <ID>NoComments:BunkerMultiEventViewModel.kt:It is shared by every open Amber screen, so set only this batch's keys</ID>
-    <ID>NoComments:BunkerMultiEventViewModel.kt:Mirrors the constructor.</ID>
-    <ID>NoComments:BunkerMultiEventViewModel.kt:Only this batch's requests: a connect queued meanwhile stays</ID>
-    <ID>NoComments:BunkerMultiEventViewModel.kt:The Application context: loads the other accounts a batch signs as, cancels notifications.</ID>
-    <ID>NoComments:BunkerMultiEventViewModel.kt:answer with an error instead of recreating the connection.</ID>
-    <ID>NoComments:BunkerMultiEventViewModel.kt:as on the single screen.</ID>
-    <ID>NoComments:BunkerMultiEventViewModel.kt:checkedStates holds the per-request decision: true = Approve, false = Deny.</ID>
-    <ID>NoComments:BunkerMultiEventViewModel.kt:instead of clearing an intent batch's choices on another screen.</ID>
-    <ID>NoComments:BunkerMultiEventViewModel.kt:pending, with its notification, for the connect screen.</ID>
     <ID>NoComments:BunkerMultiEventViewModelTest.kt:A blank relay-auth relay reads as the all-relays wildcard in the DAO:</ID>
     <ID>NoComments:BunkerMultiEventViewModelTest.kt:Capture after the wait: a timeout verify re-captures on every poll.</ID>
     <ID>NoComments:BunkerMultiEventViewModelTest.kt:Each remembered request saves twice: the app row, then its grant.</ID>
@@ -307,7 +188,6 @@
     <ID>NoComments:BunkerMultiEventViewModelTest.kt:remembering it would silently grant every relay.</ID>
     <ID>NoComments:BunkerPermissionLookup.kt:Ping, zap decryption and PSBT signing: only a grant of the request type (unlike</ID>
     <ID>NoComments:BunkerPermissionLookup.kt:an intent's zap decryption, a bunker one never matches an encryption-type grant).</ID>
-    <ID>NoComments:BunkerRelayAuthScreen.kt:The effect below runs once; it must call the latest callbacks, not the first ones.</ID>
     <ID>NoComments:BunkerRequestUtils.kt:</ID>
     <ID>NoComments:BunkerRequestUtils.kt:(e.g. a malformed request) used to skip the error reply below.</ID>
     <ID>NoComments:BunkerRequestUtils.kt:A bunker:// connection is saved under its secret until a client connects with</ID>
@@ -388,34 +268,12 @@
     <ID>NoComments:BunkerRequestUtilsTest.kt:relays. A TOCTOU race in addRequest used to let duplicates through,</ID>
     <ID>NoComments:BunkerRequestUtilsTest.kt:sendRejection launches on Dispatchers.IO: wait for it to finish.</ID>
     <ID>NoComments:BunkerRequestUtilsTest.kt:sendResult launches on Dispatchers.IO: wait for it to finish.</ID>
-    <ID>NoComments:BunkerSingleEventHomeScreen.kt:A relay outside a non-empty auth whitelist is rejected whatever was remembered.</ID>
-    <ID>NoComments:BunkerSingleEventHomeScreen.kt:An event of another key is never signed by this account (private events excepted); warns instead.</ID>
-    <ID>NoComments:BunkerSingleEventHomeScreen.kt:Keyed per account, client key and request id: another client or account never sees this saved app an</ID>
-    <ID>NoComments:BunkerSingleEventHomeScreen.kt:NIP-42 relay authentication: the grant is per relay host (from the event's "relay" tag) or all relay</ID>
-    <ID>NoComments:BunkerSingleEventHomeScreen.kt:NIP-44 v3 requests arrive as a generic BunkerRequest (Quartz doesn't know</ID>
-    <ID>NoComments:BunkerSingleEventHomeScreen.kt:Only the request the prompt was raised for: a later one can reuse the ViewModel.</ID>
-    <ID>NoComments:BunkerSingleEventHomeScreen.kt:Only what was loaded for this very request: another one under the same key may have other grants.</ID>
-    <ID>NoComments:BunkerSingleEventHomeScreen.kt:SPECIFIC ⇒ kind-scoped grant; ALL ⇒ broad grant (kind=null).</ID>
-    <ID>NoComments:BunkerSingleEventHomeScreen.kt:The `perm1:kind,perm2` list a connect request asks for, read like a nostrconnect:// URI's perms.</ID>
-    <ID>NoComments:BunkerSingleEventHomeScreen.kt:The relay a NIP-42 grant covers ("*" for all) and how long it is remembered.</ID>
-    <ID>NoComments:BunkerSingleEventHomeScreen.kt:base64 plaintext for decrypt), computed when the request arrived.</ID>
-    <ID>NoComments:BunkerSingleEventHomeScreen.kt:encryptedData.result holds the Base64 wire value (ciphertext for encrypt,</ID>
-    <ID>NoComments:BunkerSingleEventHomeScreen.kt:the method name); kind/scope are at params[1..2].</ID>
-    <ID>NoComments:BunkerSingleEventViewModel.kt:An existing connection a connect approval would replace or merge into.</ID>
-    <ID>NoComments:BunkerSingleEventViewModel.kt:False when the request reuses the saved app's key: the key is the row's</ID>
-    <ID>NoComments:BunkerSingleEventViewModel.kt:Prefer the persisted application icon, falling back to the icon carried by</ID>
-    <ID>NoComments:BunkerSingleEventViewModel.kt:The connect reply is published even if the screen goes away.</ID>
-    <ID>NoComments:BunkerSingleEventViewModel.kt:The saved connection the user must confirm replacing before [bunkerRequest]</ID>
-    <ID>NoComments:BunkerSingleEventViewModel.kt:identity, so a second connection can't be created alongside it.</ID>
-    <ID>NoComments:BunkerSingleEventViewModel.kt:the connect request's client metadata (nostr-protocol/nips#2381).</ID>
     <ID>NoComments:BunkerSingleEventViewModelTest.kt:A client picks the JSON-RPC id: a later request reusing it gets this ViewModel back,</ID>
     <ID>NoComments:BunkerSingleEventViewModelTest.kt:The load runs on Dispatchers.IO.</ID>
     <ID>NoComments:BunkerSingleEventViewModelTest.kt:and must be judged on the grants saved now, not on the first request's load.</ID>
     <ID>NoComments:CachingApplicationDaoTest.kt:Cache hits must not hand out the same mutable list instance callers</ID>
     <ID>NoComments:CachingApplicationDaoTest.kt:Runs [read] on another thread, blocks it inside the delegate until [revoke]</ID>
     <ID>NoComments:CachingApplicationDaoTest.kt:could alias; equality stays intact.</ID>
-    <ID>NoComments:ChooseSignPolicy.kt:Clipped before the click, so the ripple keeps the rounded shape.</ID>
-    <ID>NoComments:ConnectionSetupPage.kt:The SOCKS port to save: the typed one for Orbot (null when it is not a number), else the default.</ID>
     <ID>NoComments:ConnectionToReplaceTest.kt:The URI claims a different name, so the same-name check alone missed it.</ID>
     <ID>NoComments:ConnectivityService.kt:Always tracked (also under the kill switch) so the detector's baseline is</ID>
     <ID>NoComments:ConnectivityService.kt:Android 12+ can refuse a background FGS start with ForegroundServiceStartNotAllowedException;</ID>
@@ -438,7 +296,6 @@
     <ID>NoComments:ConnectivityService.kt:swallow it and let the next foreground start (startService) retry.</ID>
     <ID>NoComments:ConnectivityService.kt:that way. Rebuild it as soon as the user unlocks.</ID>
     <ID>NoComments:ConnectivityService.kt:update, or the system restarting the process) can't decrypt the stored</ID>
-    <ID>NoComments:CrashReportScreen.kt:Offline the report goes through the clipboard to another client, which signs it.</ID>
     <ID>NoComments:CrossAccountSignEventTest.kt:A context whose Application is a relaxed mock: parsing logs failures through it.</ID>
     <ID>NoComments:CrossAccountSignEventTest.kt:Quartz gift-wraps anon zaps under an ephemeral key, so the wrapper</ID>
     <ID>NoComments:CrossAccountSignEventTest.kt:Reading the public key is not key use: wasNot Called ignores it.</ID>
@@ -454,73 +311,11 @@
     <ID>NoComments:DisplayCrashMessages.kt:The exception report already starts with the version and device table.</ID>
     <ID>NoComments:DisplayCrashMessages.kt:The startup detection may still be running: finish it first, or a dismiss</ID>
     <ID>NoComments:DisplayCrashMessages.kt:would clear records written after this read, unseen.</ID>
-    <ID>NoComments:EditConfigurationViewModel.kt:Before navigating away, which may clear this ViewModel and cancel its scope.</ID>
-    <ID>NoComments:EditConfigurationViewModel.kt:Drop queued requests first: answering a stale card</ID>
-    <ID>NoComments:EditConfigurationViewModel.kt:The Application context: drops the app's queued requests.</ID>
-    <ID>NoComments:EditConfigurationViewModel.kt:The reset retires the old connection key: drop its</ID>
-    <ID>NoComments:EditConfigurationViewModel.kt:queued requests so a stale card cannot resurrect it.</ID>
-    <ID>NoComments:EditConfigurationViewModel.kt:would otherwise resurrect the deleted connection.</ID>
-    <ID>NoComments:EditPermission.kt:"Sign &lt;kind&gt;" for an event or NIP permission, else the permission's own description.</ID>
-    <ID>NoComments:EditPermission.kt:A bunker connection's URI with a copy button, under a warning when the app is connected.</ID>
-    <ID>NoComments:EditPermission.kt:API will never be asked about.</ID>
-    <ID>NoComments:EditPermission.kt:Allow (0), deny (1) or ask (2).</ID>
-    <ID>NoComments:EditPermission.kt:Excluded relays (private/anonymous endpoints) show no badge at</ID>
-    <ID>NoComments:EditPermission.kt:Grants for [added] permissions, allowed until revoked.</ID>
-    <ID>NoComments:EditPermission.kt:How long an allow or deny lasts.</ID>
-    <ID>NoComments:EditPermission.kt:Only a loaded bunker connection has relays, so the URI is never shown before the app loads.</ID>
-    <ID>NoComments:EditPermission.kt:Removes every permission after a confirmation; [onRemoveAll] calls back once they are gone.</ID>
-    <ID>NoComments:EditPermission.kt:The Add permission button and the sheet it opens.</ID>
-    <ID>NoComments:EditPermission.kt:The action a stored grant shows: 0 allow, 1 deny, 2 ask (no active decision).</ID>
-    <ID>NoComments:EditPermission.kt:The app's activity and configuration screens, and what the permissions below do.</ID>
-    <ID>NoComments:EditPermission.kt:The connection's bunker:// URI: its own key (else the account's), relays and, when it uses one, secr</ID>
-    <ID>NoComments:EditPermission.kt:The relay a relay-auth grant is for; `*` is every relay.</ID>
-    <ID>NoComments:EditPermission.kt:all: UNKNOWN would read as "untrusted" for a relay the ratings</ID>
-    <ID>NoComments:EditPermissionViewModel.kt:The connection's own key, or "" when it signs with the account key.</ID>
-    <ID>NoComments:EditPermissionViewModel.kt:The stored row; null for one not saved yet.</ID>
-    <ID>NoComments:EditRelaysDialog.kt:A throwaway NIP-46 request (kind 24133) on [relay] from a fresh key, and a</ID>
-    <ID>NoComments:EditRelaysDialog.kt:A toast saying [message] about the relay, whose Accept adds it anyway.</ID>
-    <ID>NoComments:EditRelaysDialog.kt:Adds [relay] once a NIP-46 request published to it comes back on a subscription;</ID>
-    <ID>NoComments:EditRelaysDialog.kt:An added relay already among the account's saved relays needs no bunker check.</ID>
-    <ID>NoComments:EditRelaysDialog.kt:Defense-in-depth (GHSA-8844-q5vh-9j8f, I4): warn when the</ID>
-    <ID>NoComments:EditRelaysDialog.kt:Fetch trust scores for all relays</ID>
-    <ID>NoComments:EditRelaysDialog.kt:Fetch trust scores for every relay shown</ID>
-    <ID>NoComments:EditRelaysDialog.kt:Publishes the request, re-signed after each failure, up to three times.</ID>
-    <ID>NoComments:EditRelaysDialog.kt:Re-signed after a failed publish; the echo must match the latest one.</ID>
-    <ID>NoComments:EditRelaysDialog.kt:Relays configured as defaults — these are used for every new connection.</ID>
-    <ID>NoComments:EditRelaysDialog.kt:Relays that existing connections still use but that are not part of the</ID>
-    <ID>NoComments:EditRelaysDialog.kt:The account's saved relays: an added relay already among them needs no bunker check.</ID>
-    <ID>NoComments:EditRelaysDialog.kt:The failure is shown as it is, not as a filter problem.</ID>
-    <ID>NoComments:EditRelaysDialog.kt:The latest request, served back on our subscription.</ID>
-    <ID>NoComments:EditRelaysDialog.kt:Whether the relay connects within 30 seconds.</ID>
-    <ID>NoComments:EditRelaysDialog.kt:Whether the request comes back on the subscription within 10 seconds.</ID>
-    <ID>NoComments:EditRelaysDialog.kt:cleartext exposes metadata + ciphertext to network</ID>
-    <ID>NoComments:EditRelaysDialog.kt:connections, not from the default relay settings.</ID>
-    <ID>NoComments:EditRelaysDialog.kt:default set. Shown separately so it is clear they come from individual app</ID>
-    <ID>NoComments:EditRelaysDialog.kt:non-private-network relay, since NIP-46 traffic over</ID>
-    <ID>NoComments:EditRelaysDialog.kt:observers. wss:// is the default; ws:// is auto-prefixed</ID>
-    <ID>NoComments:EditRelaysDialog.kt:only for .onion / private IPs in onAddRelay.</ID>
-    <ID>NoComments:EditRelaysDialog.kt:user explicitly types a ws:// URL for a non-onion /</ID>
-    <ID>NoComments:EncryptDecryptData.kt:A button opening [event]'s details.</ID>
-    <ID>NoComments:EncryptDecryptData.kt:A tag array, under the account signing it, or else the request's text (see [plainCardText]).</ID>
-    <ID>NoComments:EncryptDecryptData.kt:Like the intent screen; this string has no leading space.</ID>
-    <ID>NoComments:EncryptDecryptData.kt:The app's icon, then its name in bold followed by what it asks.</ID>
-    <ID>NoComments:EncryptDecryptData.kt:The bunker card for an event: the follow count of a contact list ([outer] is the</ID>
-    <ID>NoComments:EncryptDecryptData.kt:The event the request is about: the sealed event when [encryptedData] wraps a seal</ID>
-    <ID>NoComments:EncryptDecryptData.kt:The method's NIP as the prompts name it: NIP04 or NIP44.</ID>
-    <ID>NoComments:EncryptDecryptData.kt:The text an approval card shows for a request that is neither an event nor a tag</ID>
-    <ID>NoComments:EncryptDecryptData.kt:What [event]'s kind is called, or its `alt` tag when Amber has no name for the kind.</ID>
-    <ID>NoComments:EncryptDecryptData.kt:What the app asks, after its name: "wants to encrypt this text with NIP44", …</ID>
-    <ID>NoComments:EncryptDecryptData.kt:Whether the grant covers this method only or every method of the NIP.</ID>
     <ID>NoComments:EncryptIntentAccountTest.kt:A context whose Application is a relaxed mock: parsing logs failures through it.</ID>
     <ID>NoComments:EncryptedDataPreview.kt:The decrypted content of [seal]; the caller still gets the seal itself.</ID>
     <ID>NoComments:EncryptedDataPreview.kt:The preview of a `decrypt_zap_event`: the decrypted [zapRequest], whose result the</ID>
     <ID>NoComments:EncryptedDataPreview.kt:What an encrypt/decrypt approval shows, the same for intents and bunker requests:</ID>
     <ID>NoComments:EncryptedDataPreviewTest.kt:A bunker decrypt_zap_event approved on screen used to answer "": it had no preview.</ID>
-    <ID>NoComments:EventData.kt:Amber has no name for [event]'s kind, and the event has no alt tag to name it either.</ID>
-    <ID>NoComments:EventData.kt:The rest of a sign screen: Show Details, the signing account, the remember choice</ID>
-    <ID>NoComments:EventDetailModal.kt:A full-width sheet that only Go back closes, with [content] in a scrolling column.</ID>
-    <ID>NoComments:EventDetailModal.kt:An event's kind (as [kindLabel] names it), author, date, content and tags, each one copyable.</ID>
-    <ID>NoComments:EventDetailModal.kt:Tags as they are copied: `["p", "…"], ["t", "…"]`.</ID>
     <ID>NoComments:EventNotificationConsumer.kt:(e.g. the message to encrypt, or the event to sign). The encrypted event</ID>
     <ID>NoComments:EventNotificationConsumer.kt:Connection-based match via the in-memory index populated by</ID>
     <ID>NoComments:EventNotificationConsumer.kt:Constructor injection: one parameter per dependency.</ID>
@@ -598,16 +393,6 @@
     <ID>NoComments:ExpiredConnectionAuthTest.kt:Cached value must be the filtered one, not a re-read of the delegate.</ID>
     <ID>NoComments:ExpiredConnectionAuthTest.kt:The gate is consulted on every read, so a cached pre-expiry answer</ID>
     <ID>NoComments:ExpiredConnectionAuthTest.kt:is never served even when the delegate still returns the row.</ID>
-    <ID>NoComments:ExportAllAccountsScreen.kt:A password field whose characters can be shown, with its own show or hide toggle.</ID>
-    <ID>NoComments:ExportAllAccountsScreen.kt:Exports every account to [uri] on [scope], showing the progress, then a toast with the outcome.</ID>
-    <ID>NoComments:ExportAllAccountsScreen.kt:Once the password is fine, asks for the biometric or the device credential, then for confirmation.</ID>
-    <ID>NoComments:ExportAllAccountsScreen.kt:Shows what is wrong with the password, if anything; true when it can be used.</ID>
-    <ID>NoComments:ExportAllAccountsScreen.kt:The export password, its confirmation, and what is wrong with them.</ID>
-    <ID>NoComments:ExportAllAccountsScreen.kt:The export screen's state: the password and its confirmation, and how the export is going.</ID>
-    <ID>NoComments:ExportAllAccountsScreen.kt:The notice, the password form and the Export button, pushed to the bottom of the screen.</ID>
-    <ID>NoComments:ExportAllAccountsScreen.kt:The security notice, and how many accounts the file will hold.</ID>
-    <ID>NoComments:ExportAllAccountsScreen.kt:What is wrong with the export password: missing, shorter than 8 characters, or not confirmed; null w</ID>
-    <ID>NoComments:ExportAllAccountsScreen.kt:Writes every account, encrypted with [password], to [uri], and marks them backed up.</ID>
     <ID>NoComments:FakePreferences.kt:An in-memory [SharedPreferences] for unit tests.</ID>
     <ID>NoComments:FeedbackSender.kt:NIP-34: a repository announcement's `relays` tag lists the relays its</ID>
     <ID>NoComments:FeedbackSender.kt:Stand-in used for the issue's `a` tag hint when no announcement was found.</ID>
@@ -623,24 +408,6 @@
     <ID>NoComments:ImageLoaderFactory.kt:The cache rebuilds lazily on the next image load.</ID>
     <ID>NoComments:ImageLoaderFactory.kt:memory cache (32 MB cap) would otherwise stay fully resident in</ID>
     <ID>NoComments:ImageLoaderFactory.kt:this long-lived signer process even while its UI is not visible.</ID>
-    <ID>NoComments:IncomingRequestScreen.kt:A connect needs the account choice and the replace-or-create-new prompt that</ID>
-    <ID>NoComments:IncomingRequestScreen.kt:only the single screen has, so it is never batched with other requests.</ID>
-    <ID>NoComments:IntentMultiEventHomeScreen.kt:Confirm signs each request under its own account.</ID>
-    <ID>NoComments:IntentMultiEventHomeScreen.kt:The request's content in short: the event's content (the relay, for a relay AUTH), or the data to en</ID>
-    <ID>NoComments:IntentMultiEventHomeScreen.kt:The requests grouped by kind, each group with its approve toggle and remember options.</ID>
-    <ID>NoComments:IntentMultiEventHomeScreen.kt:What the request asks for.</ID>
-    <ID>NoComments:IntentMultiEventViewModel.kt:(owner-scoped queueKeys) instead of clearing another screen's choices.</ID>
-    <ID>NoComments:IntentMultiEventViewModel.kt:A relay outside the auth whitelist is rejected without remembering it, as on the single screen.</ID>
-    <ID>NoComments:IntentMultiEventViewModel.kt:An anonymous zap request is returned whole: its signer is a throwaway key.</ID>
-    <ID>NoComments:IntentMultiEventViewModel.kt:Confirming finishes even if the screen goes away.</ID>
-    <ID>NoComments:IntentMultiEventViewModel.kt:Constructor injection: one parameter per dependency.</ID>
-    <ID>NoComments:IntentMultiEventViewModel.kt:Each request is signed under its own account.</ID>
-    <ID>NoComments:IntentMultiEventViewModel.kt:It is shared by every open Amber screen, so set only this screen's keys</ID>
-    <ID>NoComments:IntentMultiEventViewModel.kt:Mirrors the constructor.</ID>
-    <ID>NoComments:IntentMultiEventViewModel.kt:Saves the remembered choices and the history of [account]'s requests; returns whether its app closes</ID>
-    <ID>NoComments:IntentMultiEventViewModel.kt:The Application context: loads the other accounts a batch signs as.</ID>
-    <ID>NoComments:IntentMultiEventViewModel.kt:What the caller gets back for one request: the signature or result, a rejection, or nothing (an encr</ID>
-    <ID>NoComments:IntentMultiEventViewModel.kt:checkedStates holds the per-request decision: true = Approve, false = Deny.</ID>
     <ID>NoComments:IntentMultiEventViewModelTest.kt:Confirming runs on Dispatchers.IO; closing the activity is its last step.</ID>
     <ID>NoComments:IntentMultiEventViewModelTest.kt:The result list goes back in an Intent; the JVM test stubs do not implement putExtra.</ID>
     <ID>NoComments:IntentParsing.kt:Compiled once at class load time; avoids recompiling the pattern on every isUrlEncoded() call.</ID>
@@ -663,22 +430,6 @@
     <ID>NoComments:IntentResponseTest.kt:--- callbackPayload ---</ID>
     <ID>NoComments:IntentResponseTest.kt:--- historyContent: never the plaintext ---</ID>
     <ID>NoComments:IntentResponseTest.kt:--- historyEntry ---</ID>
-    <ID>NoComments:IntentSingleEventHomeScreen.kt:A non-empty auth whitelist refuses every relay outside it, without asking.</ID>
-    <ID>NoComments:IntentSingleEventHomeScreen.kt:An anonymous zap request answers with the whole event instead of a signature.</ID>
-    <ID>NoComments:IntentSingleEventHomeScreen.kt:An event naming another stored account is never signed by this one; warns instead.</ID>
-    <ID>NoComments:IntentSingleEventHomeScreen.kt:Kind 22242 = relay client authentication (NIP-42), granted per relay host.</ID>
-    <ID>NoComments:IntentSingleEventHomeScreen.kt:Only what was loaded for this very request: another one under the same key may have other grants.</ID>
-    <ID>NoComments:IntentSingleEventHomeScreen.kt:SPECIFIC ⇒ kind-scoped grant; ALL ⇒ all-kinds grant (kind=null).</ID>
-    <ID>NoComments:IntentSingleEventHomeScreen.kt:The app name shown on the screen and stored with a rejection.</ID>
-    <ID>NoComments:IntentSingleEventHomeScreen.kt:The caller's saved app as loaded for this request, or null (none, or not loaded yet).</ID>
-    <ID>NoComments:IntentSingleEventHomeScreen.kt:The name stored with an approval: the caller's own label when it has one.</ID>
-    <ID>NoComments:IntentSingleEventHomeScreen.kt:The relay a NIP-42 grant covers ("*" for all) and how long it is remembered.</ID>
-    <ID>NoComments:IntentSingleEventHomeScreen.kt:What every request type's composable needs about the request and its app.</ID>
-    <ID>NoComments:IntentSingleEventViewModel.kt:Browser deep-links (nostrsigner://) arrive with no calling package, so</ID>
-    <ID>NoComments:IntentSingleEventViewModel.kt:every web caller would otherwise share the single "null" key. Honoring a</ID>
-    <ID>NoComments:IntentSingleEventViewModel.kt:remembered grant for that shared identity would let a grant given to one</ID>
-    <ID>NoComments:IntentSingleEventViewModel.kt:the shared "null" application: force always-ask for null-package callers.</ID>
-    <ID>NoComments:IntentSingleEventViewModel.kt:website auto-approve any other website. Never load (and thus never honor)</ID>
     <ID>NoComments:IntentSingleEventViewModelTest.kt:Browser deep links share the "null" key: a grant given to one site must not answer another.</ID>
     <ID>NoComments:IntentSingleEventViewModelTest.kt:The calling app picks the request id: a later request reusing it gets this ViewModel</ID>
     <ID>NoComments:IntentSingleEventViewModelTest.kt:The load runs on Dispatchers.IO.</ID>
@@ -762,7 +513,6 @@
     <ID>NoComments:KeyRotationTest.kt:Rotate back: exercises the other direction and restores the policy.</ID>
     <ID>NoComments:KeystorePolicy.kt:Keys in the app-wide preference file; renaming one loses the stored value.</ID>
     <ID>NoComments:KeystorePolicyTest.kt:The gate fails closed; a key failure without a keyguard is still reported as broken.</ID>
-    <ID>NoComments:KillSwitchDialog.kt:The preview renderer provides no settings.</ID>
     <ID>NoComments:LegacyStorageMigration.kt:3.3.0 kept the Tor switch in the settings file, and some versions after it</ID>
     <ID>NoComments:LegacyStorageMigration.kt:An account only counts as restored when it opens again; everything else</ID>
     <ID>NoComments:LegacyStorageMigration.kt:Copies every entry of [from] into [to]: [skipped] keys never leave [from], and</ID>
@@ -807,43 +557,10 @@
     <ID>NoComments:LocalPreferences.kt:remove it instead of leaving a stale opt-in bit in every prefs file.</ID>
     <ID>NoComments:LocalPreferences.kt:scrub it. Never read.</ID>
     <ID>NoComments:LogRetentionManagerTest.kt:350 -&gt; 250 -&gt; 150 -&gt; 50</ID>
-    <ID>NoComments:LoginScreen.kt:"Amber Offline" Zapstore listing (7.0.0-pre and later).</ID>
-    <ID>NoComments:LoginScreen.kt:A password-style field with a show/hide toggle.</ID>
-    <ID>NoComments:LoginScreen.kt:Back steps through the pager first, then leaves the page.</ID>
-    <ID>NoComments:LoginScreen.kt:The application ids an offline Amber can carry: the one shared with the online</ID>
-    <ID>NoComments:LoginScreen.kt:The offline app can end up next to an install that still holds the accounts,</ID>
-    <ID>NoComments:LoginScreen.kt:The package of an installed offline Amber that is not this app, or null.</ID>
-    <ID>NoComments:LoginScreen.kt:The side margin of the login pages: 7% of the screen width.</ID>
-    <ID>NoComments:LoginScreen.kt:This app holds one of those ids too, and pointing at itself explains</ID>
-    <ID>NoComments:LoginScreen.kt:What the user typed on the "add a key" page; saved across process death except the phrase words.</ID>
-    <ID>NoComments:LoginScreen.kt:app (every offline APK released up to 6.6.9) and the one of the separate</ID>
-    <ID>NoComments:LoginScreen.kt:nothing to a user who is looking at an empty install.</ID>
-    <ID>NoComments:LoginViewModels.kt:A pasted or scanned key without the invisible and control characters that come along with it.</ID>
-    <ID>NoComments:LoginViewModels.kt:Creating the account finishes even if the page goes away.</ID>
-    <ID>NoComments:LoginViewModels.kt:Logging in finishes even if the page goes away.</ID>
-    <ID>NoComments:LoginViewModels.kt:Null while the key is being drawn, and again once the account holds it.</ID>
-    <ID>NoComments:LoginViewModels.kt:Set when some accounts were restored but not all: they are opened once the error is dismissed.</ID>
-    <ID>NoComments:LoginViewModels.kt:The backup lines that could not be restored; the error dialog shows while non-empty.</ID>
-    <ID>NoComments:LoginViewModels.kt:The checked key, kept only until the account is created from it.</ID>
-    <ID>NoComments:LoginViewModels.kt:Twelve distinct recovery words (a phrase with a repeated word is drawn again) and their key.</ID>
-    <ID>NoComments:LoginViewModels.kt:When nothing was imported, stay here so the user can retry instead of</ID>
-    <ID>NoComments:LoginViewModels.kt:landing on a "your account is ready" screen.</ID>
     <ID>NoComments:LoginViewModelsTest.kt:Nothing restored: stay on the first page so the user can retry.</ID>
-    <ID>NoComments:LogoutButton.kt:The logout deletes the account's databases, its saved apps included.</ID>
     <ID>NoComments:LogoutDeletesDatabasesTest.kt:File and DataStore cleanup is out of scope here.</ID>
     <ID>NoComments:MainActivity.kt:Read once here: getReferrer() crashes on OEM builds (Samsung/Android 12) when</ID>
     <ID>NoComments:MainActivity.kt:the activity has no intent (mIntent == null).</ID>
-    <ID>NoComments:MainNavGraph.kt:What the main destinations are laid out with: the scaffold's [padding] and the side [margin].</ID>
-    <ID>NoComments:MainScreen.kt:Asks for the notification permission a bunker needs (online flavors), with a rationale once refused.</ID>
-    <ID>NoComments:MainScreen.kt:Dims the screen and swallows touches while a request is being answered.</ID>
-    <ID>NoComments:MainScreen.kt:Keep the current account's profile metadata fresh while the main UI is shown.</ID>
-    <ID>NoComments:MainScreen.kt:Launcher unregistered (composable left composition); skip silently.</ID>
-    <ID>NoComments:MainScreen.kt:Read through a function so that only this screen recomposes when it is consumed.</ID>
-    <ID>NoComments:MainScreen.kt:The app bars around the destinations; an external request shows its screen alone.</ID>
-    <ID>NoComments:MainScreen.kt:The start destination: [startRoute] now, and again whenever a route is asked for or</ID>
-    <ID>NoComments:MainScreenViewModel.kt:Built-in Tor keeps running after the screen goes away.</ID>
-    <ID>NoComments:MainScreenViewModel.kt:The Application context: the view model outlives the activity.</ID>
-    <ID>NoComments:MainScreenViewModel.kt:Where the main screen's navigation starts: an external request opens on it, then a</ID>
     <ID>NoComments:MainViewModel.kt:Intent IDs added by this ViewModel instance — used by onDestroy to remove only</ID>
     <ID>NoComments:MainViewModel.kt:The account the first queued request signs as: an intent's event author, else a bunker request's acc</ID>
     <ID>NoComments:MainViewModel.kt:The calling app is visible to us now; capture its icon/name.</ID>
@@ -852,36 +569,9 @@
     <ID>NoComments:MainViewModel.kt:[key] (an npub or a hex public key) as an npub.</ID>
     <ID>NoComments:MainViewModel.kt:instance that may have already added its own intents.</ID>
     <ID>NoComments:MainViewModel.kt:the intents owned by this activity, avoiding races with a new SignerActivity</ID>
-    <ID>NoComments:MarkdownText.kt:Plain text up to the next `**` or `[` (at least one character). Returns the characters used.</ID>
-    <ID>NoComments:MarkdownText.kt:`**bold**` at the start of [text]; a `**` without its closing pair stays as is. Returns the characte</ID>
-    <ID>NoComments:MarkdownText.kt:`[text](url)` at the start of [text]; anything else keeps its `[`. Returns the characters used.</ID>
-    <ID>NoComments:MnemonicLoginInput.kt:12 or 24 words, and the button that pastes the whole phrase.</ID>
-    <ID>NoComments:MnemonicLoginInput.kt:Initializing to `word` when it is already a complete BIP-39 entry</ID>
-    <ID>NoComments:MnemonicLoginInput.kt:The word fields at [indices]; each moves on to the next word, and the last word of the phrase is Don</ID>
-    <ID>NoComments:MnemonicLoginInput.kt:Up to five words of the list that start with what was typed; the menu does not take the keyboard's f</ID>
-    <ID>NoComments:MnemonicLoginInput.kt:What typing [raw] into a word field means: the [word] to keep (lower-cased, without leading</ID>
-    <ID>NoComments:MnemonicLoginInput.kt:`remember(word)` resets this state synchronously whenever `word` changes.</ID>
-    <ID>NoComments:MnemonicLoginInput.kt:case where the user finishes typing a valid word.</ID>
-    <ID>NoComments:MnemonicLoginInput.kt:paste case (word set externally, onValueChange never called) and the</ID>
-    <ID>NoComments:MnemonicLoginInput.kt:reset so menu can reappear while typing</ID>
-    <ID>NoComments:MnemonicLoginInput.kt:suppresses the dropdown immediately — no async gap — covering both the</ID>
     <ID>NoComments:NetworkChangeDetector.kt:The first report after registering the callback is the network the</ID>
     <ID>NoComments:NetworkChangeDetector.kt:relays are already connecting on; only a return after a loss is a change.</ID>
     <ID>NoComments:NetworkStateTest.kt:No network at all: offline, so a change.</ID>
-    <ID>NoComments:NewBunkerViewModel.kt:Prepare local endpoint routing before exposing the ephemeral-request URI.</ID>
-    <ID>NoComments:NewNsecBunkerScreen.kt:A relay URL, pasted or typed; Done and the add button both call [onAdd].</ID>
-    <ID>NoComments:NewNsecBunkerScreen.kt:Creates the bunker through [onCreate], or, when it has no relays or no name, says which is missing.</ID>
-    <ID>NoComments:NewNsecBunkerScreen.kt:How long until the bunker deletes itself.</ID>
-    <ID>NoComments:NewNsecBunkerScreen.kt:Tests the typed relay and adds it to [relays].</ID>
-    <ID>NoComments:NewNsecBunkerScreen.kt:The bunker's name; Next moves on to the following field.</ID>
-    <ID>NoComments:NewNsecBunkerScreen.kt:The local relay rides along with the defaults, so clients on this</ID>
-    <ID>NoComments:NewNsecBunkerScreen.kt:The new bunker's URI, as text and as a QR code, with a button to copy it.</ID>
-    <ID>NoComments:NewNsecBunkerScreen.kt:The relay being typed, and whether it is being tested before it is added.</ID>
-    <ID>NoComments:NewNsecBunkerScreen.kt:The relays the bunker will listen on; tapping one removes it.</ID>
-    <ID>NoComments:NewNsecBunkerScreen.kt:What the new bunker form holds while it is filled in.</ID>
-    <ID>NoComments:NewNsecBunkerScreen.kt:device can reach the bunker without any public relay.</ID>
-    <ID>NoComments:Nip44v3ApprovalData.kt:kind has no translation; only append the name when one exists.</ID>
-    <ID>NoComments:Nip44v3ApprovalData.kt:toLocalizedString returns the "Event kind N" fallback when the</ID>
     <ID>NoComments:NostrSignerRequest.kt:NIP-04 ciphertexts carry their own "?iv=", which is part of the data.</ID>
     <ID>NoComments:NostrSignerRequest.kt:Split the RAW query and decode each value once (see</ID>
     <ID>NoComments:NostrSignerRequest.kt:decodeQueryParamValue): a form-encoded appName "My+App" shows its</ID>
@@ -956,8 +646,6 @@
     <ID>NoComments:PlainCardTextTest.kt:The card used to show the whole decrypted zap request as JSON.</ID>
     <ID>NoComments:PreferenceFiles.kt:The app-wide preference file (`prefs`): settings and the saved-account list.</ID>
     <ID>NoComments:PreferenceFiles.kt:The npub-specific preference file (`prefs_&lt;npub&gt;`).</ID>
-    <ID>NoComments:Previews.kt:Settings live in memory, so components that read them render; the databases</ID>
-    <ID>NoComments:Previews.kt:and relays stay unavailable.</ID>
     <ID>NoComments:ProfileSubscription.kt:(put/remove/clear) takes the same monitor, so the weakly-consistent CHM iterator</ID>
     <ID>NoComments:ProfileSubscription.kt:A metadata event for an account no longer watched ends here, as it always did.</ID>
     <ID>NoComments:ProfileSubscription.kt:All maps are concurrent: mutated from UI/coroutine threads (updateFilter, closeSub)</ID>
@@ -978,7 +666,6 @@
     <ID>NoComments:ProfileSubscription.kt:listens until the app crashes.</ID>
     <ID>NoComments:ProfileSubscription.kt:mid-iteration. Single-key reads stay lock-free.</ID>
     <ID>NoComments:ProfileSubscription.kt:still fetch the profile with whatever relay list we have saved</ID>
-    <ID>NoComments:ProfileSubscriptionEffect.kt:No relay subscriptions in previews: the preview renderer has no Application.</ID>
     <ID>NoComments:ProfileSubscriptionTest.kt:Churn threads recycle the existing pool: closeSub + updateFilter on the same</ID>
     <ID>NoComments:ProfileSubscriptionTest.kt:Every queried relay answers, in any order, and any of them may still</ID>
     <ID>NoComments:ProfileSubscriptionTest.kt:In-memory stand-in for the per-account metadata created_at preference.</ID>
@@ -986,21 +673,6 @@
     <ID>NoComments:ProfileSubscriptionTest.kt:serve an older (validly self-signed) profile.</ID>
     <ID>NoComments:ProfileSubscriptionTest.kt:updateFilter is a no-op on the offline flavor by design</ID>
     <ID>NoComments:PsbtSighashPolicyTest.kt:Another signer's input may use any sighash; Amber leaves it untouched.</ID>
-    <ID>NoComments:QrCodeDrawer.kt:A valid QR code has three finder patterns (top left, top right, bottom left).</ID>
-    <ID>NoComments:QrCodeDrawer.kt:Calculate the height and width of each column/row</ID>
-    <ID>NoComments:QrCodeDrawer.kt:Draw all the finder patterns required by the QR spec. Calculate the ratio</ID>
-    <ID>NoComments:QrCodeDrawer.kt:Draw background for the finder pattern interior (this keeps the arc ratio consistent).</ID>
-    <ID>NoComments:QrCodeDrawer.kt:Draw bottom finder pattern.</ID>
-    <ID>NoComments:QrCodeDrawer.kt:Draw data bits (encoded data part)</ID>
-    <ID>NoComments:QrCodeDrawer.kt:Draw the inner rectangle for the finder pattern.</ID>
-    <ID>NoComments:QrCodeDrawer.kt:Draw the outer rectangle for the finder pattern.</ID>
-    <ID>NoComments:QrCodeDrawer.kt:Draw top left finder pattern.</ID>
-    <ID>NoComments:QrCodeDrawer.kt:Draw top right finder pattern.</ID>
-    <ID>NoComments:QrCodeDrawer.kt:This func is responsible for drawing a single finder pattern, for a QR code</ID>
-    <ID>NoComments:QrCodeDrawer.kt:data bits below top left finder pattern and above bottom left finder pattern.</ID>
-    <ID>NoComments:QrCodeDrawer.kt:data bits between top left finder pattern and top right finder pattern.</ID>
-    <ID>NoComments:QrCodeDrawer.kt:data bits to the right of the bottom left finder pattern.</ID>
-    <ID>NoComments:QrCodeDrawer.kt:of the number of rows/columns to the width and height</ID>
     <ID>NoComments:ReconnectReceiver.kt:Manual reconnect: redial every relay now, ignoring dead-relay state and</ID>
     <ID>NoComments:ReconnectReceiver.kt:reconnect backoff, and re-add any relay previously dropped from the pool.</ID>
     <ID>NoComments:RelayUrlToAddTest.kt:Quartz logs a URL it cannot normalize; android.util.Log is not mocked on the JVM.</ID>
@@ -1016,10 +688,6 @@
     <ID>NoComments:RelayUrlUtilsTest.kt:rather than throw.</ID>
     <ID>NoComments:RelayUrlUtilsTest.kt:so a naive URI.host call returns null and drops the port. The helper</ID>
     <ID>NoComments:RelayUrlUtilsTest.kt:to the whitelist; the event's "relay" tag is "wss://relay.example.com:8080".</ID>
-    <ID>NoComments:RelaysScreen.kt:AmberButton fills the width it gets, so without a weight it would</ID>
-    <ID>NoComments:RelaysScreen.kt:The local bunker relay switch and its port (mirrors desktop Settings -&gt; Desktop).</ID>
-    <ID>NoComments:RelaysScreen.kt:take the whole row and squeeze the port field to nothing.</ID>
-    <ID>NoComments:RememberMyChoice.kt:The effect below runs once; it must call the latest callbacks, not the first ones.</ID>
     <ID>NoComments:ReportAssembler.kt:(bech32 npub/nsec/etc, 64-char hex keys) and long base64 blobs</ID>
     <ID>NoComments:ReportAssembler.kt:A report must not fail on a statistic (and this is unmocked in JVM tests).</ID>
     <ID>NoComments:ReportAssembler.kt:Defense-in-depth (GHSA-8844-q5vh-9j8f, L3): exception messages and</ID>
@@ -1036,10 +704,6 @@
     <ID>NoComments:ReportSender.kt:Puts the report on the clipboard, for the offline flavor (and no account) to paste it into a DM.</ID>
     <ID>NoComments:ReportSender.kt:The Application context: it opens the nostr: link outside any activity.</ID>
     <ID>NoComments:ReportSender.kt:The sender's own copy would be wrapped to the throwaway key, which nobody keeps.</ID>
-    <ID>NoComments:RequestGroupUtils.kt:Approve or deny, for a request or a whole group of them.</ID>
-    <ID>NoComments:RequestGroupUtils.kt:CONNECT / GET_PUBLIC_KEY approvals never persist a permission from the grouped flow</ID>
-    <ID>NoComments:RequestGroupUtils.kt:Mirrors the single-event defaults: EncryptDecryptData defaults to ALL, Nip44v3ApprovalData to SPECIF</ID>
-    <ID>NoComments:Route.kt:The only routes another app may open through the exported activities'</ID>
     <ID>NoComments:SavedAccounts.kt:Forgets the cached list and current account, so the next read sees the preference file.</ID>
     <ID>NoComments:SavedAccounts.kt:Makes [npub] the current account, adding it to the list if new.</ID>
     <ID>NoComments:SavedAccounts.kt:Preference keys in the app-wide file; renaming one loses the stored value.</ID>
@@ -1104,35 +768,8 @@
     <ID>NoComments:SecureCryptoHelperRetryTest.kt:Stands in for the keystore's `INVALID_OPERATION_HANDLE` cause.</ID>
     <ID>NoComments:SecureCryptoHelperRetryTest.kt:The default classifier only recognises the keystore's own cause,</ID>
     <ID>NoComments:SecureCryptoHelperRetryTest.kt:which this exception does not carry.</ID>
-    <ID>NoComments:SecurityScreen.kt:GHSA-8844-q5vh-9j8f, L1: opt-in toggle</ID>
-    <ID>NoComments:SecurityScreen.kt:Re-sync the toggle with the persisted setting (reverts on failure)</ID>
-    <ID>NoComments:SecurityScreen.kt:Use the application-scoped IOScope, not the</ID>
-    <ID>NoComments:SecurityScreen.kt:composition scope: key rotation must complete</ID>
-    <ID>NoComments:SecurityScreen.kt:even if the user leaves the screen/app, or</ID>
-    <ID>NoComments:SecurityScreen.kt:on Android 8 only the software DeviceUnlockPolicy gate applies.</ID>
-    <ID>NoComments:SecurityScreen.kt:setUnlockedDeviceRequired needs API 28 (SecureCryptoHelper), so</ID>
-    <ID>NoComments:SecurityScreen.kt:stored secrets could be left inaccessible.</ID>
-    <ID>NoComments:SensitiveClipboard.kt:Inexact so no exact-alarm permission is needed. The system may defer it</ID>
-    <ID>NoComments:SensitiveClipboard.kt:JobScheduler/WorkManager were not used: they batch jobs of an app that</ID>
-    <ID>NoComments:SensitiveClipboard.kt:The alarm only gets a salted hash to recognize the secret by, never the</ID>
-    <ID>NoComments:SensitiveClipboard.kt:Whether the scheduled clear should wipe the clipboard. Android 10+ blocks</ID>
-    <ID>NoComments:SensitiveClipboard.kt:by up to 75% of the delay (about 45s for the default), also in Doze.</ID>
-    <ID>NoComments:SensitiveClipboard.kt:is not running and can hold the clear back for ~30 minutes.</ID>
-    <ID>NoComments:SensitiveClipboard.kt:secret itself.</ID>
     <ID>NoComments:SensitiveClipboardTest.kt:Hidden system permission held by the shell, not in the public SDK.</ID>
     <ID>NoComments:SettingsReadTest.kt:Installs from before TorMode only have the use_proxy boolean.</ID>
-    <ID>NoComments:SettingsScreen.kt:Defense-in-depth (GHSA-8844-q5vh-9j8f, I2): unknown screenCode values</ID>
-    <ID>NoComments:SettingsScreen.kt:Each visit: another screen may have changed Tor or reloaded the settings meanwhile.</ID>
-    <ID>NoComments:SettingsScreen.kt:or unrecognized stored policy cannot grant indefinite auto-accept.</ID>
-    <ID>NoComments:SettingsScreen.kt:previously failed open to ALWAYS. Fail closed to NEVER so a corrupted</ID>
-    <ID>NoComments:SettingsViewModel.kt:Clearing entries finishes even if the user leaves the screen.</ID>
-    <ID>NoComments:SettingsViewModel.kt:Constructor injection: one parameter per dependency.</ID>
-    <ID>NoComments:SettingsViewModel.kt:False on builds without the updater (offline, F-Droid).</ID>
-    <ID>NoComments:SettingsViewModel.kt:Mirrors the constructor.</ID>
-    <ID>NoComments:SettingsViewModel.kt:Settings reloads (Tor, the service start) replace the settings object and its kill-switch</ID>
-    <ID>NoComments:SettingsViewModel.kt:The Application context: database files, preferences and the kill-switch broadcast.</ID>
-    <ID>NoComments:SettingsViewModel.kt:The newer release, when there is one.</ID>
-    <ID>NoComments:SettingsViewModel.kt:flow, so follow the current one instead of the one seen at construction.</ID>
     <ID>NoComments:SettingsViewModelTest.kt:Like the real one: it stores the mode and reloads the settings.</ID>
     <ID>NoComments:SettingsViewModelTest.kt:Settings reloads replace the settings object, kill-switch flow included; the screen</ID>
     <ID>NoComments:SettingsViewModelTest.kt:The write runs on Dispatchers.IO; reconnecting is its last step.</ID>
@@ -1142,7 +779,6 @@
     <ID>NoComments:SharedFiles.kt:Earlier versions wrote these to the cache root, which the provider served whole.</ID>
     <ID>NoComments:SharedStringsDeviceTest.kt:Folders without a region (values-it) match a regional locale too.</ID>
     <ID>NoComments:SharedStringsDeviceTest.kt:Indonesian: Java and Android 15+ call it "id" (values-id).</ID>
-    <ID>NoComments:SignPolicySettingsScreen.kt:Clipped before the click, so the ripple keeps the rounded shape.</ID>
     <ID>NoComments:SignerActivity.kt:Rate-limited per (caller, type, kind). onNewIntent is intentionally exempt —</ID>
     <ID>NoComments:SignerActivity.kt:Read once here: getReferrer() crashes on OEM builds (Samsung/Android 12) when</ID>
     <ID>NoComments:SignerActivity.kt:The bottom sheet the approval screens open in over the calling app. An invalid</ID>
@@ -1257,15 +893,6 @@
     <ID>NoComments:SignerProviderQueryTest.kt:null = no silent signing; the caller must surface a user prompt.</ID>
     <ID>NoComments:SignerProviderQueryTest.kt:response (rejected for an event, null for anything else) told the caller</ID>
     <ID>NoComments:SignerProviderQueryTest.kt:the generic one, each classified content type and the NIP-level grant.</ID>
-    <ID>NoComments:SigningAs.kt:The account's name over its short npub; without a name, the npub alone in bold.</ID>
-    <ID>NoComments:SigningAs.kt:The account's picture, or its placeholder when it has none (always in the offline flavor) or it fail</ID>
-    <ID>NoComments:SimpleSearchBar.kt:The caller's modifier is the Box's; the field only fills it.</ID>
-    <ID>NoComments:SimpleSearchBar.kt:The listener lives as long as the view tree; it must call the latest callback.</ID>
-    <ID>NoComments:Theme.kt:Pure black at every elevation for AMOLED screens. Surface tint is transparent so</ID>
-    <ID>NoComments:Theme.kt:[amoledOutline] border instead (see [amoledBorder]).</ID>
-    <ID>NoComments:Theme.kt:tonal elevation can't lift cards and sheets to gray; they are told apart by an</ID>
-    <ID>NoComments:ToastManager.kt:DROP_OLDEST means tryEmit always succeeds, so callers no longer need to</ID>
-    <ID>NoComments:ToastManager.kt:spawn a coroutine on the application scope just to push a message.</ID>
     <ID>NoComments:TorManager.kt:(UnsatisfiedLinkError, ExceptionInInitializerError).</ID>
     <ID>NoComments:TorManager.kt:Binds the SOCKS listener on a free loopback port; null (and Failed) when none could be bound.</ID>
     <ID>NoComments:TorManager.kt:Drops the SOCKS port and, while OkHttp still dials through it, replaces</ID>
@@ -1297,11 +924,6 @@
     <ID>NoComments:TorStartup.kt:over; startFunctions() parks on waitIfNeeded() until</ID>
     <ID>NoComments:TorStartup.kt:recreated, and the observer must be registered once per process.</ID>
     <ID>NoComments:TorStartup.kt:stopped and the Failed notification (Restart action) takes</ID>
-    <ID>NoComments:TrustScoreBadge.kt:Gray - null score</ID>
-    <ID>NoComments:TrustScoreBadge.kt:Green - 80-100</ID>
-    <ID>NoComments:TrustScoreBadge.kt:Light green - 60-79</ID>
-    <ID>NoComments:TrustScoreBadge.kt:Orange - 40-59</ID>
-    <ID>NoComments:TrustScoreBadge.kt:Red - &lt;40</ID>
     <ID>NoComments:TrustScoreService.kt:1 hour</ID>
     <ID>NoComments:TrustScoreService.kt:5 minutes for failed requests</ID>
     <ID>NoComments:TrustScoreService.kt:Fetches the trust score from the API. The caller resolves the policy</ID>
@@ -1319,21 +941,12 @@
     <ID>NoComments:TrustScoreUrlPolicy.kt:many public relays live at non-root paths, and only the host</ID>
     <ID>NoComments:TrustScoreUrlPolicy.kt:otherwise wss://relay.example and wss://relay.example:443 get two</ID>
     <ID>NoComments:TrustScoreUrlPolicy.kt:ratings API.</ID>
-    <ID>NoComments:Type.kt:Set of Material typography styles to start with</ID>
     <ID>NoComments:UnexpectedCrashSaver.kt:ANRs, low-memory kills and native crashes never reach the handler;</ID>
     <ID>NoComments:UnexpectedCrashSaver.kt:Android's exit records are the only trace of them.</ID>
     <ID>NoComments:UnexpectedCrashSaver.kt:Synchronous: the default handler kills the process as soon as this</ID>
     <ID>NoComments:UnexpectedCrashSaver.kt:returns, so a report written from a coroutine was usually lost.</ID>
     <ID>NoComments:UpdateCheckWorker.kt:If a check was actually started, wait for it to finish so the notification fires</ID>
     <ID>NoComments:UpdateCheckWorker.kt:before WorkManager considers the job done.</ID>
-    <ID>NoComments:UpdateSettingsScreen.kt:Current version</ID>
-    <ID>NoComments:UpdateSettingsScreen.kt:Frequency selector (only when auto-check is on)</ID>
-    <ID>NoComments:UpdateSettingsScreen.kt:Installs the release when one is available, else checks again.</ID>
-    <ID>NoComments:UpdateSettingsScreen.kt:Reset last-check timestamp so the next check actually runs</ID>
-    <ID>NoComments:UpdateSettingsScreen.kt:Stable or beta releases; changing it makes the next check run at once.</ID>
-    <ID>NoComments:UpdateSettingsScreen.kt:Whether an update is available (or downloading), and the button to check for one or install it.</ID>
-    <ID>NoComments:UpdateSettingsScreen.kt:Whether and how often to check for updates, and on which channel.</ID>
-    <ID>NoComments:UpdateSettingsScreen.kt:and surfaces a release on the newly selected channel.</ID>
     <ID>NoComments:WebDavService.kt:(proxied routes get 3x): building a Tor circuit plus the TLS</ID>
     <ID>NoComments:WebDavService.kt:A SOCKS proxy that is still bootstrapping would fail later with a</ID>
     <ID>NoComments:WebDavService.kt:Authorization header when a redirect crosses to another host, so</ID>

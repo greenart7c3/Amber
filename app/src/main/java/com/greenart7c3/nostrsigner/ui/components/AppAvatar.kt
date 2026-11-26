@@ -48,18 +48,11 @@ fun AppAvatar(
         .size(size)
         .clip(CircleShape)
 
-    // A native app's launcher icon is a file Amber wrote to its own icon store;
-    // a remote client icon is never stored, only fetched over https. Local files
-    // load on every flavor (no network); remote URLs are skipped on the offline
-    // flavor. Remote clients choose the icon string, so anything that is neither
-    // (another local path, plain http, other schemes) is ignored.
     val context = LocalContext.current
     val model: Any? = remember(iconUrl) {
         avatarModel(iconUrl, BuildFlavorChecker.isOfflineFlavor()) { AppIconStore.isStoredIcon(context, it) }
     }
 
-    // Only query PackageManager when there's no stored icon to show — avoids a
-    // futile (and log-noisy) lookup for rows that aren't native apps.
     val systemIcon = if (model == null) rememberAppIcon(packageName) else null
 
     when {
@@ -96,7 +89,15 @@ fun AppAvatar(
     }
 }
 
-/** The image model for a stored icon string, or null when it must not be loaded. */
+/**
+ * The image model for a stored icon string, or null when it must not be loaded.
+ * A native app's launcher icon is a file Amber wrote to its own icon store;
+ * a remote client icon is never stored, only fetched over https. Local files
+ * load on every flavor (no network); remote URLs are skipped on the offline
+ * flavor. Remote clients choose the icon string, so anything that is neither
+ * (another local path, plain http, other schemes) is ignored.
+ */
+@Suppress("NoComments")
 internal fun avatarModel(iconUrl: String?, offline: Boolean, isStoredIcon: (String) -> Boolean): Any? = when {
     iconUrl.isNullOrBlank() -> null
     isRemoteIconUrl(iconUrl) -> if (offline) null else iconUrl

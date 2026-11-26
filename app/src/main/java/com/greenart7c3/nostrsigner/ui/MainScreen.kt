@@ -73,6 +73,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 
+@Suppress("NoComments")
 private fun ManagedActivityResultLauncher<String, Boolean>.tryLaunchPostNotifications() {
     try {
         launch("android.permission.POST_NOTIFICATIONS")
@@ -123,7 +124,6 @@ fun requestIgnoreBatteryOptimizations(context: Context, relayClient: RelayClient
     }
 }
 
-// Asks for the notification permission a bunker needs (online flavors), with a rationale once refused.
 @Composable
 private fun NotificationPermissionPrompt() {
     val context = LocalContext.current
@@ -186,13 +186,13 @@ class AccountActions(
     val onDismissRestore: () -> Unit,
 )
 
+/** [route] is read through a function so that only this screen recomposes when it is consumed. */
 @SuppressLint("ConfigurationScreenWidthHeight")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(
     account: Account,
     requests: IncomingRequests,
-    // Read through a function so that only this screen recomposes when it is consumed.
     route: () -> String?,
     onConsumeRoute: () -> Unit,
     navController: NavHostControllerWrapper,
@@ -212,7 +212,6 @@ fun MainScreen(
     val margin = screenWidthDp - screenWidthDp * 0.93f
     NotificationPermissionPrompt()
     val startDestination = rememberStartRoute(requests, route, onConsumeRoute)
-    // Keep the current account's profile metadata fresh while the main UI is shown.
     ProfileSubscriptionEffect(account)
     var isLoading by remember { mutableStateOf(false) }
 
@@ -265,7 +264,6 @@ fun MainScreen(
     }
 }
 
-// The app bars around the destinations; an external request shows its screen alone.
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun MainScaffold(
@@ -324,7 +322,6 @@ private fun MainScaffold(
     )
 }
 
-// Dims the screen and swallows touches while a request is being answered.
 @Composable
 private fun LoadingOverlay() {
     CenterCircularProgressIndicator(
@@ -341,10 +338,6 @@ private fun LoadingOverlay() {
     )
 }
 
-/**
- * The start destination: [startRoute] now, and again whenever a route is asked for or
- * the requests change. An asked-for route is consumed once it is used.
- */
 @Composable
 private fun rememberStartRoute(requests: IncomingRequests, route: () -> String?, onConsumeRoute: () -> Unit): String {
     val currentRoute by rememberUpdatedState(route)

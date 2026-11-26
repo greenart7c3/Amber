@@ -5,7 +5,7 @@ import android.content.Intent
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
-import com.greenart7c3.nostrsigner.LocalPreferences
+import com.greenart7c3.nostrsigner.DevicePreferences
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkObject
@@ -33,7 +33,7 @@ class BootReceiverTest {
         every { AmberLog.d(any(), any<String>()) } returns Unit
         mockkObject(BuildFlavorChecker)
         every { BuildFlavorChecker.isOfflineFlavor() } returns false
-        mockkObject(LocalPreferences)
+        mockkObject(DevicePreferences)
     }
 
     @After
@@ -42,7 +42,7 @@ class BootReceiverTest {
     }
 
     private fun receive(action: String, startServiceOnBoot: Boolean) = runTest {
-        every { LocalPreferences.getStartServiceOnBoot(any()) } returns startServiceOnBoot
+        every { DevicePreferences.getStartServiceOnBoot(any()) } returns startServiceOnBoot
         val intent = mockk<Intent>()
         every { intent.action } returns action
         val scope = CoroutineScope(StandardTestDispatcher(testScheduler))

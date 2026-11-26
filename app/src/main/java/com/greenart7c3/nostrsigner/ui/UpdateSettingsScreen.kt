@@ -26,7 +26,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.greenart7c3.nostrsigner.BuildConfig
-import com.greenart7c3.nostrsigner.LocalPreferences
+import com.greenart7c3.nostrsigner.UpdateCheckSettings
 import com.greenart7c3.nostrsigner.commonsui.Res
 import com.greenart7c3.nostrsigner.commonsui.auto_check_updates
 import com.greenart7c3.nostrsigner.commonsui.check_for_updates_now
@@ -120,7 +120,7 @@ private fun UpdateStatus(updater: ZapstoreUpdater) {
                     if (release != null) {
                         updater.downloadAndInstall(context, release)
                     } else if (!isChecking && dlState != DownloadState.DOWNLOADING) {
-                        LocalPreferences.setLastUpdateCheckTime(context, 0L)
+                        UpdateCheckSettings.setLastUpdateCheckTime(context, 0L)
                         updater.checkForUpdates()
                     }
                 }
@@ -172,7 +172,7 @@ private fun AutoUpdateSettings() {
             onCheckedChange = { enabled ->
                 autoCheck = enabled
                 scope.launch(Dispatchers.IO) {
-                    LocalPreferences.updateAutoCheckUpdates(context, enabled)
+                    UpdateCheckSettings.updateAutoCheckUpdates(context, enabled)
                 }
             },
         )
@@ -194,7 +194,7 @@ private fun AutoUpdateSettings() {
                     val selected = UpdateCheckFrequency.entries[index]
                     frequency = selected
                     scope.launch(Dispatchers.IO) {
-                        LocalPreferences.updateUpdateCheckFrequency(context, selected)
+                        UpdateCheckSettings.updateUpdateCheckFrequency(context, selected)
                     }
                 },
             )
@@ -250,10 +250,10 @@ private fun UpdateChannelSetting() {
             if (selected != channel) {
                 channel = selected
                 scope.launch(Dispatchers.IO) {
-                    LocalPreferences.updateUpdateChannel(context, selected)
+                    UpdateCheckSettings.updateUpdateChannel(context, selected)
                     // Reset last-check timestamp so the next check actually runs
                     // and surfaces a release on the newly selected channel.
-                    LocalPreferences.setLastUpdateCheckTime(context, 0L)
+                    UpdateCheckSettings.setLastUpdateCheckTime(context, 0L)
                 }
             }
         },

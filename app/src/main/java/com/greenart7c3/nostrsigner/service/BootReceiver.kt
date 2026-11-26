@@ -6,7 +6,7 @@ import android.content.Intent
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
-import com.greenart7c3.nostrsigner.LocalPreferences
+import com.greenart7c3.nostrsigner.DevicePreferences
 import com.greenart7c3.nostrsigner.amber
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -27,7 +27,7 @@ class BootReceiver(
             -> {
                 AmberLog.d(Amber.TAG, "Received ${intent.action}")
                 scope.launch {
-                    if (!LocalPreferences.getStartServiceOnBoot(context)) {
+                    if (!DevicePreferences.getStartServiceOnBoot(context)) {
                         AmberLog.d(Amber.TAG, "Skipping service start (${intent.action}) (disabled in settings)")
                         return@launch
                     }

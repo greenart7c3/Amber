@@ -321,10 +321,17 @@ and the app scope from Amber at construction (`install`, before any
 ContentProvider runs) instead of reaching the container through a context;
 `AccountStorageTest` covers the broken-key report, the locked-device case, the
 cache and the key zeroing at logout. The WebDAV server for cloud backups is
-`WebDavSettings`. What stays in `LocalPreferences` is the app settings; reading
-them is split into small helpers (`enumOr`, the `use_proxy` → `TorMode`
-migration, `applyProxy`) and `SettingsReadTest` pins how stored values are read.
-Its `TooManyFunctions` entry stays: one updater per setting.
+`WebDavSettings`. What stays in `LocalPreferences` is the app settings as one
+`AmberSettings` (load, save, the startup read, `reloadApp`), the Tor/proxy
+settings a load applies and the profile fetch interval updater; reading them is
+split into small helpers (`enumOr`, the `use_proxy` → `TorMode` migration,
+`applyProxy`) and `SettingsReadTest` pins how stored values are read. The other
+per-setting updaters are grouped by area over the same `SettingsKeys`:
+`UpdateCheckSettings` (auto-check, frequency, channel, last
+check time), `DataRetentionSettings` (log and history retention, privacy mode,
+and the pruning they trigger), `LockSettings` (the PIN in `DataStoreAccess`,
+moving a legacy one out of `prefs`, and the `requireUnlockedDevice` key rotation) and `DevicePreferences` (theme, the
+notification and battery-optimization prompts, start on boot).
 
 ### 6. Keep `ui/` off the database (done)
 
@@ -645,7 +652,7 @@ activities that create it and `AccountScreen` hold it.
 dark/AMOLED flags and the desktop window's size and width bucket join the allowlist in
 `compose.yml`, and the light/dark multipreview is `PreviewsLightDark`.
 
-`TooManyFunctions` (only `LocalPreferences` left, kept by step 5): classes split along
+`TooManyFunctions` (none left): classes split along
 what their callers use together, with the same bodies.
 - Room DAOs: `ApplicationDao` into six DAOs (application reads, lists, writes, the signing
   decision's permission lookups, permission writes with their transactions, maintenance),
@@ -662,6 +669,7 @@ what their callers use together, with the same bodies.
   `RequestKeyboard`, `RequestChoices` and `BatchDecisions`; `AccountStore`'s read-only
   lookups are `store.lookup`; `AmberDesktop`'s relay setup and connections are
   `BunkerRelays` and `RelayConnections`; desktop-entry escaping is `DesktopEntryEscaping`.
+- `LocalPreferences`' per-setting updaters by area (step 5).
 
 What remains in the baselines is the `NoComments` grandfathering (deleting a comment drops
-its entry) and `LocalPreferences`' `TooManyFunctions`.
+its entry).

@@ -5,11 +5,8 @@ import android.content.SharedPreferences
 import androidx.core.content.edit
 import com.greenart7c3.nostrsigner.data.AccountRepository
 import com.greenart7c3.nostrsigner.data.SettingsStore
-import com.greenart7c3.nostrsigner.database.LogRetentionManager
 import com.greenart7c3.nostrsigner.models.AmberSettings
 import com.greenart7c3.nostrsigner.models.ProfileFetchInterval
-import com.greenart7c3.nostrsigner.models.RetentionPeriod
-import com.greenart7c3.nostrsigner.models.ThemeMode
 import com.greenart7c3.nostrsigner.models.TorMode
 import com.greenart7c3.nostrsigner.models.UpdateChannel
 import com.greenart7c3.nostrsigner.models.UpdateCheckFrequency
@@ -20,10 +17,9 @@ import com.greenart7c3.nostrsigner.service.TorManager
 import com.greenart7c3.nostrsigner.ui.parseBiometricsTimeType
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.RelayUrlNormalizer
-import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 
-private enum class SettingsKeys(val key: String) {
+internal enum class SettingsKeys(val key: String) {
     DEFAULT_RELAYS("default_relays"),
     DEFAULT_PROFILE_RELAYS("default_profile_relays"),
     LAST_BIOMETRICS_TIME("last_biometrics_time"),
@@ -58,11 +54,24 @@ private enum class SettingsKeys(val key: String) {
     LOCAL_BUNKER_PORT("local_bunker_port"),
 }
 
+// A stored enum by name; a missing or unknown name (an older or newer build) reads as [default].
+internal inline fun <reified T : Enum<T>> SharedPreferences.enumOr(key: SettingsKeys, default: T): T = try {
+    enumValueOf<T>(getString(key.key, default.name)!!)
+} catch (_: IllegalArgumentException) {
+    default
+}
+
+/**
+ * The app settings as one [AmberSettings]: loading and saving them, the reload after a
+ * change, the Tor/proxy settings a load applies, and the profile fetch interval.
+ */
 object LocalPreferences {
     // The settings in effect (updated after every write) and the per-account databases;
     // Amber's constructor installs them before anything reads the settings.
-    private lateinit var settingsStore: SettingsStore
-    private lateinit var accountRepository: AccountRepository
+    internal lateinit var settingsStore: SettingsStore
+        private set
+    internal lateinit var accountRepository: AccountRepository
+        private set
 
     fun install(settings: SettingsStore, accounts: AccountRepository) {
         settingsStore = settings
@@ -72,21 +81,6 @@ object LocalPreferences {
     // Pre-rename consent key, kept only so loadSettingsFromEncryptedStorage can
     // scrub it. Never read.
     private const val LEGACY_TRUST_SCORE_ENABLED_KEY = "trust_score_enabled"
-
-    fun shouldShowRationale(context: Context): Boolean? {
-        if (!sharedPrefs(context).contains(SettingsKeys.RATIONALE.key)) {
-            return null
-        }
-        return sharedPrefs(context).getBoolean(SettingsKeys.RATIONALE.key, true)
-    }
-
-    fun updateShouldShowRationale(context: Context, value: Boolean) {
-        sharedPrefs(context).edit {
-            apply {
-                putBoolean(SettingsKeys.RATIONALE.key, value)
-            }
-        }
-    }
 
     fun saveSettingsToEncryptedStorage(context: Context, settings: AmberSettings) {
         sharedPrefs(context).edit {
@@ -116,53 +110,6 @@ object LocalPreferences {
         }
     }
 
-    /**
-     * Read synchronously, not from [Amber.settings], so pruning that runs before the
-     * async settings load never applies the default (possibly shorter) period and
-     * deletes rows the user chose to keep.
-     */
-    fun getLogRetention(context: Context): RetentionPeriod = getRetention(context, SettingsKeys.LOG_RETENTION, RetentionPeriod.SEVEN_DAYS)
-
-    fun getHistoryRetention(context: Context): RetentionPeriod = getRetention(context, SettingsKeys.HISTORY_RETENTION, RetentionPeriod.THIRTY_DAYS)
-
-    private fun getRetention(context: Context, key: SettingsKeys, default: RetentionPeriod): RetentionPeriod = sharedPrefs(context).enumOr(key, default)
-
-    /** Read synchronously so the first frame of each activity already uses the chosen theme. */
-    fun getThemeMode(context: Context): ThemeMode = sharedPrefs(context).enumOr(SettingsKeys.THEME_MODE, ThemeMode.SYSTEM)
-
-    fun updateThemeMode(context: Context, mode: ThemeMode) {
-        sharedPrefs(context).edit {
-            apply {
-                putString(SettingsKeys.THEME_MODE.key, mode.name)
-            }
-        }
-        settingsStore.themeMode.value = mode
-    }
-
-    fun getBatteryOptimization(context: Context): Boolean = sharedPrefs(context).getBoolean(SettingsKeys.BATERRY_OPTIMIZATION.key, false)
-
-    fun updateBatteryOptimization(context: Context, value: Boolean) {
-        sharedPrefs(context).edit {
-            apply {
-                putBoolean(SettingsKeys.BATERRY_OPTIMIZATION.key, value)
-            }
-        }
-    }
-
-    suspend fun loadPinFromEncryptedStorage(context: Context): String? {
-        // Migration: move PIN from plain SharedPreferences to encrypted DataStore
-        val legacyPin = sharedPrefs(context).getString(SettingsKeys.PIN.key, null)
-        if (legacyPin != null) {
-            DataStoreAccess.savePin(context, legacyPin)
-            sharedPrefs(context).edit { remove(SettingsKeys.PIN.key) }
-        }
-        return DataStoreAccess.loadPin(context)
-    }
-
-    suspend fun savePinToEncryptedStorage(context: Context, pin: String?) {
-        DataStoreAccess.savePin(context, pin)
-    }
-
     suspend fun reloadApp(context: Context) {
         AccountStorage.invalidateCaches()
         AccountStorage.all(context)
@@ -181,8 +128,6 @@ object LocalPreferences {
         val prefs = sharedPrefs(context)
         applyProxy(prefs.enumOr(SettingsKeys.TOR_MODE, TorMode.DISABLED), prefs.getInt(SettingsKeys.PROXY_PORT.key, 9050))
     }
-
-    fun getStartServiceOnBoot(context: Context): Boolean = sharedPrefs(context).getBoolean(SettingsKeys.START_SERVICE_ON_BOOT.key, true)
 
     fun loadSettingsFromEncryptedStorage(context: Context): AmberSettings {
         checkNotInMainThread()
@@ -233,20 +178,13 @@ object LocalPreferences {
                 rateLimitWindowSeconds = getInt(SettingsKeys.RATE_LIMIT_WINDOW_SECONDS.key, 30),
                 profileFetchInterval = enumOr(SettingsKeys.PROFILE_FETCH_INTERVAL, ProfileFetchInterval.FIFTEEN_MINUTES),
                 trustScoreEnabled = getBoolean(SettingsKeys.TRUST_SCORE_ENABLED.key, false),
-                logRetention = getLogRetention(context),
-                historyRetention = getHistoryRetention(context),
+                logRetention = DataRetentionSettings.getLogRetention(context),
+                historyRetention = DataRetentionSettings.getHistoryRetention(context),
                 sortApplicationsAlphabetically = getBoolean(SettingsKeys.SORT_APPLICATIONS_ALPHABETICALLY.key, false),
                 localBunkerServer = getBoolean(SettingsKeys.LOCAL_BUNKER_SERVER.key, false),
                 localBunkerPort = if (contains(SettingsKeys.LOCAL_BUNKER_PORT.key)) getInt(SettingsKeys.LOCAL_BUNKER_PORT.key, 0) else null,
             )
         }
-    }
-
-    // A stored enum by name; a missing or unknown name (an older or newer build) reads as [default].
-    private inline fun <reified T : Enum<T>> SharedPreferences.enumOr(key: SettingsKeys, default: T): T = try {
-        enumValueOf<T>(getString(key.key, default.name)!!)
-    } catch (_: IllegalArgumentException) {
-        default
     }
 
     // The old use_proxy boolean predates TorMode: true meant Orbot.
@@ -302,68 +240,6 @@ object LocalPreferences {
         }
     }
 
-    fun updateAutoCheckUpdates(context: Context, enabled: Boolean) {
-        sharedPrefs(context).edit {
-            apply {
-                putBoolean(SettingsKeys.AUTO_CHECK_UPDATES.key, enabled)
-            }
-        }
-        settingsStore.settings = loadSettingsFromEncryptedStorage(context)
-    }
-
-    fun updateStartServiceOnBoot(context: Context, enabled: Boolean) {
-        sharedPrefs(context).edit {
-            apply {
-                putBoolean(SettingsKeys.START_SERVICE_ON_BOOT.key, enabled)
-            }
-        }
-        settingsStore.settings = loadSettingsFromEncryptedStorage(context)
-    }
-
-    /**
-     * Toggles privacy mode. When enabled, immediately wipes all existing logs and
-     * activity history for every account so no previously collected data survives.
-     * Future writes are blocked at the DAO layer while this setting stays on.
-     */
-    suspend fun updatePrivacyMode(context: Context, enabled: Boolean) {
-        sharedPrefs(context).edit {
-            apply {
-                putBoolean(SettingsKeys.PRIVACY_MODE.key, enabled)
-            }
-        }
-        settingsStore.settings = loadSettingsFromEncryptedStorage(context)
-        if (enabled) {
-            SavedAccounts.all(context).forEach {
-                try {
-                    accountRepository.getLogDatabase(it.npub).cleanupDao().clearLogs()
-                    accountRepository.getHistoryDatabase(it.npub).dao().clearHistory()
-                } catch (e: Exception) {
-                    AmberLog.e(Amber.TAG, "Error wiping data for privacy mode", e)
-                }
-            }
-        }
-    }
-
-    /**
-     * Toggles the opt-in "require unlocked device" key policy (GHSA-8844-q5vh-9j8f, L1).
-     * The Keystore flag is set at key-generation time, so changing the setting
-     * requires rotating to a new wrapping key. [SecureCryptoHelper.rotateKey]
-     * persists the setting together with the new active key alias.
-     */
-    suspend fun updateRequireUnlockedDevice(context: Context, enabled: Boolean) {
-        SecureCryptoHelper.rotateKey(context, requireUnlockedDevice = enabled)
-        settingsStore.settings = loadSettingsFromEncryptedStorage(context)
-    }
-
-    fun updateUpdateCheckFrequency(context: Context, frequency: UpdateCheckFrequency) {
-        sharedPrefs(context).edit {
-            apply {
-                putString(SettingsKeys.UPDATE_CHECK_FREQUENCY.key, frequency.name)
-            }
-        }
-        settingsStore.settings = loadSettingsFromEncryptedStorage(context)
-    }
-
     fun updateProfileFetchInterval(context: Context, interval: ProfileFetchInterval) {
         sharedPrefs(context).edit {
             apply {
@@ -371,56 +247,5 @@ object LocalPreferences {
             }
         }
         settingsStore.settings = loadSettingsFromEncryptedStorage(context)
-    }
-
-    suspend fun updateLogRetention(context: Context, retention: RetentionPeriod) {
-        sharedPrefs(context).edit {
-            apply {
-                putString(SettingsKeys.LOG_RETENTION.key, retention.name)
-            }
-        }
-        settingsStore.settings = loadSettingsFromEncryptedStorage(context)
-        pruneAllAccounts(context)
-    }
-
-    suspend fun updateHistoryRetention(context: Context, retention: RetentionPeriod) {
-        sharedPrefs(context).edit {
-            apply {
-                putString(SettingsKeys.HISTORY_RETENTION.key, retention.name)
-            }
-        }
-        settingsStore.settings = loadSettingsFromEncryptedStorage(context)
-        pruneAllAccounts(context)
-    }
-
-    // Applies a shortened retention period right away instead of at the next cleanup.
-    private suspend fun pruneAllAccounts(context: Context) {
-        SavedAccounts.all(context).forEach {
-            try {
-                LogRetentionManager.prune(context, accountRepository, it.npub)
-            } catch (e: Exception) {
-                if (e is CancellationException) throw e
-                AmberLog.e(Amber.TAG, "Error pruning logs for ${it.npub}", e)
-            }
-        }
-    }
-
-    fun updateUpdateChannel(context: Context, channel: UpdateChannel) {
-        sharedPrefs(context).edit {
-            apply {
-                putString(SettingsKeys.UPDATE_CHANNEL.key, channel.name)
-            }
-        }
-        settingsStore.settings = loadSettingsFromEncryptedStorage(context)
-    }
-
-    fun getLastUpdateCheckTime(context: Context): Long = sharedPrefs(context).getLong(SettingsKeys.LAST_UPDATE_CHECK_TIME.key, 0L)
-
-    fun setLastUpdateCheckTime(context: Context, time: Long) {
-        sharedPrefs(context).edit {
-            apply {
-                putLong(SettingsKeys.LAST_UPDATE_CHECK_TIME.key, time)
-            }
-        }
     }
 }

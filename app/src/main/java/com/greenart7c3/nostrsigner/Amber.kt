@@ -93,7 +93,7 @@ class Amber :
     )
 
     /** The appearance chosen in Settings; the activities' themes follow it live. */
-    override val themeMode by lazy { MutableStateFlow(LocalPreferences.getThemeMode(this)) }
+    override val themeMode by lazy { MutableStateFlow(DevicePreferences.getThemeMode(this)) }
 
     /**
      * False until [settings] holds the stored settings. [onCreate] loads them synchronously
@@ -363,14 +363,14 @@ class Amber :
 
     suspend fun maybeCheckForUpdates() {
         if (zapstoreUpdater == null) return
-        val lastCheck = LocalPreferences.getLastUpdateCheckTime(this)
+        val lastCheck = UpdateCheckSettings.getLastUpdateCheckTime(this)
         val now = System.currentTimeMillis()
         val shouldCheck = when (settings.updateCheckFrequency) {
             UpdateCheckFrequency.DAILY -> now - lastCheck > 24 * 60 * 60 * 1000L
             UpdateCheckFrequency.WEEKLY -> now - lastCheck > 7 * 24 * 60 * 60 * 1000L
         }
         if (shouldCheck) {
-            LocalPreferences.setLastUpdateCheckTime(this, now)
+            UpdateCheckSettings.setLastUpdateCheckTime(this, now)
             zapstoreUpdater.checkForUpdates()
         }
     }

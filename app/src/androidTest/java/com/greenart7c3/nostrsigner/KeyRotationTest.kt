@@ -37,7 +37,7 @@ class KeyRotationTest {
         val startAliases = presentAliases()
         assertEquals(1, startAliases.size)
 
-        LocalPreferences.updateRequireUnlockedDevice(context, !originalPolicy)
+        LockSettings.updateRequireUnlockedDevice(context, !originalPolicy)
 
         assertEquals("synthetic-pin-1234", DataStoreAccess.loadPin(context))
         assertEquals(!originalPolicy, KeystorePolicy.requireUnlockedDevice(context))
@@ -46,7 +46,7 @@ class KeyRotationTest {
         assertNotEquals(startAliases, rotatedAliases)
 
         // Rotate back: exercises the other direction and restores the policy.
-        LocalPreferences.updateRequireUnlockedDevice(context, originalPolicy)
+        LockSettings.updateRequireUnlockedDevice(context, originalPolicy)
 
         assertEquals("synthetic-pin-1234", DataStoreAccess.loadPin(context))
         assertEquals(originalPolicy, KeystorePolicy.requireUnlockedDevice(context))

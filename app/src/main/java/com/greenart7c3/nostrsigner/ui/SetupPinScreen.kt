@@ -7,6 +7,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavController
 import com.greenart7c3.nostrsigner.LocalPreferences
+import com.greenart7c3.nostrsigner.LockSettings
 import com.greenart7c3.nostrsigner.commonsui.Res
 import com.greenart7c3.nostrsigner.commonsui.getStringBlocking
 import com.greenart7c3.nostrsigner.commonsui.pin
@@ -54,11 +55,11 @@ fun ConfirmPinScreen(
                         if (usePin) {
                             settingsStore.settings = settingsStore.settings.copy(usePin = false)
                             LocalPreferences.saveSettingsToEncryptedStorage(context, settingsStore.settings)
-                            LocalPreferences.savePinToEncryptedStorage(context, null)
+                            LockSettings.savePinToEncryptedStorage(context, null)
                         } else {
                             settingsStore.settings = settingsStore.settings.copy(usePin = true)
                             LocalPreferences.saveSettingsToEncryptedStorage(context, settingsStore.settings)
-                            LocalPreferences.savePinToEncryptedStorage(context, pin)
+                            LockSettings.savePinToEncryptedStorage(context, pin)
                         }
                         scope.launch(Dispatchers.Main) {
                             navController.navigate(Route.Security.route) {

@@ -977,9 +977,7 @@
     <ID>NoComments:LocalBunkerRelayServer.kt:The offline flavor has no network permission and must never open a port.</ID>
     <ID>NoComments:LocalPreferences.kt:A stored enum by name; a missing or unknown name (an older or newer build) reads as [default].</ID>
     <ID>NoComments:LocalPreferences.kt:Amber's constructor installs them before anything reads the settings.</ID>
-    <ID>NoComments:LocalPreferences.kt:Applies a shortened retention period right away instead of at the next cleanup.</ID>
     <ID>NoComments:LocalPreferences.kt:Fail-closed placeholder; TorManager will update to the real port once running.</ID>
-    <ID>NoComments:LocalPreferences.kt:Migration: move PIN from plain SharedPreferences to encrypted DataStore</ID>
     <ID>NoComments:LocalPreferences.kt:One-time cleanup: the pre-rename legacy key is never read again, so</ID>
     <ID>NoComments:LocalPreferences.kt:Points OkHttp at the proxy before any dial: Orbot's port, or for built-in Tor a</ID>
     <ID>NoComments:LocalPreferences.kt:Pre-rename consent key, kept only so loadSettingsFromEncryptedStorage can</ID>
@@ -1651,6 +1649,5 @@
     <ID>NoComments:ZapstoreVersionTest.kt:Not a -preN suffix: counts as a final release, as before.</ID>
     <ID>NoComments:ZapstoreVersionTest.kt:The old fallback compared the strings, where e.g. "x" or "v1.0" sort</ID>
     <ID>NoComments:ZapstoreVersionTest.kt:above "6.6.9", so an unparsable version was offered as an update.</ID>
-    <ID>TooManyFunctions:LocalPreferences.kt:LocalPreferences</ID>
   </CurrentIssues>
 </SmellBaseline>

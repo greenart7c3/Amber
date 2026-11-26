@@ -42,8 +42,10 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.AmberLog
+import com.greenart7c3.nostrsigner.DataRetentionSettings
 import com.greenart7c3.nostrsigner.KeystorePolicy
 import com.greenart7c3.nostrsigner.LocalPreferences
+import com.greenart7c3.nostrsigner.LockSettings
 import com.greenart7c3.nostrsigner.commonsui.Res
 import com.greenart7c3.nostrsigner.commonsui.authenticate
 import com.greenart7c3.nostrsigner.commonsui.enable_biometrics
@@ -161,7 +163,7 @@ private class SecurityActions(
     fun setPrivacyMode(enabled: Boolean) {
         state.privacyMode = enabled
         scope.launch(Dispatchers.IO) {
-            LocalPreferences.updatePrivacyMode(context, enabled)
+            DataRetentionSettings.updatePrivacyMode(context, enabled)
         }
     }
 
@@ -169,7 +171,7 @@ private class SecurityActions(
         val selected = RetentionPeriod.entries[index]
         state.logRetention = selected
         appScope.launch {
-            LocalPreferences.updateLogRetention(context, selected)
+            DataRetentionSettings.updateLogRetention(context, selected)
         }
     }
 
@@ -177,7 +179,7 @@ private class SecurityActions(
         val selected = RetentionPeriod.entries[index]
         state.historyRetention = selected
         appScope.launch {
-            LocalPreferences.updateHistoryRetention(context, selected)
+            DataRetentionSettings.updateHistoryRetention(context, selected)
         }
     }
 
@@ -190,7 +192,7 @@ private class SecurityActions(
         // stored secrets could be left inaccessible.
         appScope.launch(Dispatchers.IO) {
             try {
-                LocalPreferences.updateRequireUnlockedDevice(context, enabled)
+                LockSettings.updateRequireUnlockedDevice(context, enabled)
             } catch (e: Exception) {
                 AmberLog.e(Amber.TAG, "Error toggling require unlocked device", e)
             } finally {
@@ -204,7 +206,7 @@ private class SecurityActions(
     fun togglePin() {
         if (state.setupPin) {
             scope.launch(Dispatchers.IO) {
-                val pin = LocalPreferences.loadPinFromEncryptedStorage(context)
+                val pin = LockSettings.loadPinFromEncryptedStorage(context)
                 scope.launch(Dispatchers.Main) {
                     navController.navigate("${Route.ConfirmPin.route.split("/")[0]}/$pin")
                 }

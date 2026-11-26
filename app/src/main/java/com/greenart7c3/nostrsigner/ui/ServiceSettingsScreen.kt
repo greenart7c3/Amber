@@ -20,7 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import com.greenart7c3.nostrsigner.LocalPreferences
+import com.greenart7c3.nostrsigner.DevicePreferences
 import com.greenart7c3.nostrsigner.commonsui.Res
 import com.greenart7c3.nostrsigner.commonsui.start_service_on_boot
 import com.greenart7c3.nostrsigner.commonsui.start_service_on_boot_description
@@ -46,7 +46,7 @@ fun ServiceSettingsScreen(modifier: Modifier = Modifier) {
                     val newValue = !startServiceOnBoot
                     startServiceOnBoot = newValue
                     scope.launch(Dispatchers.IO) {
-                        LocalPreferences.updateStartServiceOnBoot(context, newValue)
+                        DevicePreferences.updateStartServiceOnBoot(context, newValue)
                     }
                 },
         ) {
@@ -63,7 +63,7 @@ fun ServiceSettingsScreen(modifier: Modifier = Modifier) {
                 onCheckedChange = { enabled ->
                     startServiceOnBoot = enabled
                     scope.launch(Dispatchers.IO) {
-                        LocalPreferences.updateStartServiceOnBoot(context, enabled)
+                        DevicePreferences.updateStartServiceOnBoot(context, enabled)
                     }
                 },
             )

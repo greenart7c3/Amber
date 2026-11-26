@@ -6,7 +6,7 @@ import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.AmberLog
-import com.greenart7c3.nostrsigner.LocalPreferences
+import com.greenart7c3.nostrsigner.DataRetentionSettings
 import com.greenart7c3.nostrsigner.data.AccountRepository
 import com.vitorpamplona.quartz.utils.TimeUtils
 import java.util.concurrent.ConcurrentHashMap
@@ -22,8 +22,8 @@ import kotlinx.coroutines.withContext
 /**
  * Keeps the per-account log and history databases bounded.
  *
- * Rows are kept for the user's retention period ([LocalPreferences.getLogRetention] and
- * [LocalPreferences.getHistoryRetention]), but each database is also held
+ * Rows are kept for the user's retention period ([DataRetentionSettings.getLogRetention] and
+ * [DataRetentionSettings.getHistoryRetention]), but each database is also held
  * under a disk budget: an app signing thousands of events per second would otherwise fill the disk long
  * before the retention period expires. Pruning runs from [com.greenart7c3.nostrsigner.service.ClearLogsWorker]
  * and, throttled, whenever a table changes (see [watch]), so a burst is trimmed within
@@ -101,7 +101,7 @@ object LogRetentionManager {
         lock(key).withLock {
             lastPruneTimes[key] = System.currentTimeMillis()
             val dao = db.cleanupDao()
-            val expired = dao.deleteOldLog(System.currentTimeMillis() - LocalPreferences.getLogRetention(context).millis)
+            val expired = dao.deleteOldLog(System.currentTimeMillis() - DataRetentionSettings.getLogRetention(context).millis)
             val trimmed = trimToBudget(LOG_DB_MAX_BYTES, { liveBytes(db) }) { dao.deleteOldestLogs(PRUNE_BATCH) }
             if (expired > 0 || trimmed > 0) {
                 AmberLog.d(Amber.TAG, "Pruned logs: $expired expired, $trimmed over the size budget")
@@ -116,7 +116,7 @@ object LogRetentionManager {
             lastPruneTimes[key] = System.currentTimeMillis()
             val dao = db.dao()
             // History times are in seconds.
-            val expired = dao.deleteOldHistory(TimeUtils.now() - LocalPreferences.getHistoryRetention(context).millis / 1000)
+            val expired = dao.deleteOldHistory(TimeUtils.now() - DataRetentionSettings.getHistoryRetention(context).millis / 1000)
             val trimmed = trimToBudget(HISTORY_DB_MAX_BYTES, { liveBytes(db) }) { dao.deleteOldestHistory(PRUNE_BATCH) }
             if (expired > 0 || trimmed > 0) {
                 AmberLog.d(Amber.TAG, "Pruned history: $expired expired, $trimmed over the size budget")

@@ -10,6 +10,7 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.AmberLog
+import com.greenart7c3.nostrsigner.DevicePreferences
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.SavedAccounts
 import com.greenart7c3.nostrsigner.commonsui.Res
@@ -144,7 +145,7 @@ class SettingsViewModel(
         }
     }
 
-    fun setThemeMode(mode: ThemeMode) = LocalPreferences.updateThemeMode(appContext, mode)
+    fun setThemeMode(mode: ThemeMode) = DevicePreferences.updateThemeMode(appContext, mode)
 
     fun toggleKillSwitch() = appContext.sendBroadcast(Intent(appContext, KillSwitchReceiver::class.java))
 

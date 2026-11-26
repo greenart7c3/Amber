@@ -47,7 +47,7 @@ import androidx.navigation.NavBackStackEntry
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
-import com.greenart7c3.nostrsigner.LocalPreferences
+import com.greenart7c3.nostrsigner.DevicePreferences
 import com.greenart7c3.nostrsigner.commonsui.Res
 import com.greenart7c3.nostrsigner.commonsui.allow
 import com.greenart7c3.nostrsigner.commonsui.deny
@@ -93,7 +93,7 @@ private fun askNotificationPermission(
     }
 
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-        val shouldShowRationale = LocalPreferences.shouldShowRationale(context)
+        val shouldShowRationale = DevicePreferences.shouldShowRationale(context)
         if (shouldShowRationale == null) {
             requestPermissionLauncher.tryLaunchPostNotifications()
             return
@@ -115,8 +115,8 @@ fun requestIgnoreBatteryOptimizations(context: Context, relayClient: RelayClient
     if (relayClient.client.connectedRelaysFlow().value.isEmpty()) return
     val packageName = context.packageName
     val pm = context.getSystemService(PowerManager::class.java)
-    if (!pm.isIgnoringBatteryOptimizations(packageName) && !LocalPreferences.getBatteryOptimization(context)) {
-        LocalPreferences.updateBatteryOptimization(context, true)
+    if (!pm.isIgnoringBatteryOptimizations(packageName) && !DevicePreferences.getBatteryOptimization(context)) {
+        DevicePreferences.updateBatteryOptimization(context, true)
         val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS)
         intent.data = "package:$packageName".toUri()
         context.startActivity(intent)
@@ -131,8 +131,8 @@ private fun NotificationPermissionPrompt() {
     var showRationale by remember { mutableStateOf(false) }
     val requestPermissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
         if (!isGranted) {
-            if (LocalPreferences.shouldShowRationale(context) == null) {
-                LocalPreferences.updateShouldShowRationale(context, true)
+            if (DevicePreferences.shouldShowRationale(context) == null) {
+                DevicePreferences.updateShouldShowRationale(context, true)
             }
         } else {
             relayClient.stats.updateNotification()
@@ -164,7 +164,7 @@ private fun NotificationPermissionPrompt() {
                 Button(
                     onClick = {
                         showRationale = false
-                        LocalPreferences.updateShouldShowRationale(context, false)
+                        DevicePreferences.updateShouldShowRationale(context, false)
                     },
                 ) { Text(text = stringResource(Res.string.deny)) }
             },

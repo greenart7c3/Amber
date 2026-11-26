@@ -321,10 +321,17 @@ and the app scope from Amber at construction (`install`, before any
 ContentProvider runs) instead of reaching the container through a context;
 `AccountStorageTest` covers the broken-key report, the locked-device case, the
 cache and the key zeroing at logout. The WebDAV server for cloud backups is
-`WebDavSettings`. What stays in `LocalPreferences` is the app settings; reading
-them is split into small helpers (`enumOr`, the `use_proxy` → `TorMode`
-migration, `applyProxy`) and `SettingsReadTest` pins how stored values are read.
-Its `TooManyFunctions` entry stays: one updater per setting.
+`WebDavSettings`. What stays in `LocalPreferences` is the app settings as one
+`AmberSettings` (load, save, the startup read, `reloadApp`), the Tor/proxy
+settings a load applies and the profile fetch interval updater; reading them is
+split into small helpers (`enumOr`, the `use_proxy` → `TorMode` migration,
+`applyProxy`) and `SettingsReadTest` pins how stored values are read. The other
+per-setting updaters are grouped by area over the same `SettingsKeys`:
+`UpdateCheckSettings` (auto-check, frequency, channel, last
+check time), `DataRetentionSettings` (log and history retention, privacy mode,
+and the pruning they trigger), `LockSettings` (the PIN in `DataStoreAccess`,
+moving a legacy one out of `prefs`, and the `requireUnlockedDevice` key rotation) and `DevicePreferences` (theme, the
+notification and battery-optimization prompts, start on boot).
 
 ### 6. Keep `ui/` off the database (done)
 

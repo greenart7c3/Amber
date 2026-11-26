@@ -204,7 +204,7 @@ object LegacyStorageMigration {
     /**
      * The PIN goes into the encrypted store directly: the settings file is only
      * encrypted by its own format, and copying it to `prefs` (as the 3.4.0
-     * migration did, leaving [LocalPreferences.loadPinFromEncryptedStorage] to
+     * migration did, leaving [LockSettings.loadPinFromEncryptedStorage] to
      * move it later) would leave it in a plain file until the next unlock.
      */
     private suspend fun restorePin(context: Context, legacySettings: SharedPreferences) {

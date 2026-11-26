@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.greenart7c3.nostrsigner.LocalPreferences
+import com.greenart7c3.nostrsigner.LockSettings
 import com.greenart7c3.nostrsigner.commonsui.Res
 import com.greenart7c3.nostrsigner.commonsui.authenticate
 import com.greenart7c3.nostrsigner.commonsui.enter_pin
@@ -177,7 +178,7 @@ private fun verifyPin(
     onMatch: () -> Unit,
 ) {
     scope.launch(Dispatchers.IO) {
-        val pin = LocalPreferences.loadPinFromEncryptedStorage(context)
+        val pin = LockSettings.loadPinFromEncryptedStorage(context)
         scope.launch(Dispatchers.Main) {
             if (enteredPin == pin) {
                 onMatch()

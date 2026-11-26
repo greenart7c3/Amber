@@ -40,6 +40,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavHostController
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.greenart7c3.nostrsigner.AccountStorage
 import com.greenart7c3.nostrsigner.AmberLog
@@ -67,6 +68,7 @@ import com.greenart7c3.nostrsigner.ui.components.AmberButton
 import com.greenart7c3.nostrsigner.ui.components.AmberWarningCard
 import com.greenart7c3.nostrsigner.ui.components.AppAvatar
 import com.greenart7c3.nostrsigner.ui.navigation.Route
+import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.displayUrl
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -93,6 +95,58 @@ fun ApplicationsScreen(
     val applications = remember(account.hexKey, sortAlphabetically) { viewModel.applications(account.npub, account.hexKey, sortAlphabetically) }
     val lazyPagingItems = applications.collectAsLazyPagingItems()
 
+    val hasAccountsWithoutBackup = rememberHasAccountsWithoutBackup(appContext)
+
+    val killSwitch = settingsStore.settings.killSwitch.collectAsStateWithLifecycle()
+
+    LazyColumn(modifier) {
+        if (killSwitch.value) {
+            item { KillSwitchWarning(onClick = { disableKillSwitch(appContext, account.npub) }) }
+        }
+
+        if (hasAccountsWithoutBackup) {
+            if (killSwitch.value) {
+                item { Spacer(Modifier.height(4.dp)) }
+            }
+            item { BackupWarning(onClick = { navControllerWrapper.navController.navigate(Route.AccountBackup.route) }) }
+        }
+
+        if (lazyPagingItems.itemCount == 0) {
+            item { NewAccountTitle() }
+            item { NewAccountLinks(isZapstoreInstalled = appContext.isZapstoreInstalled()) }
+        } else {
+            item {
+                ApplicationsHeader(
+                    sortAlphabetically = sortAlphabetically,
+                    onOpenActivity = { navControllerWrapper.navController.navigate(Route.Activities.route) },
+                    onToggleSort = {
+                        val newValue = !sortAlphabetically
+                        sortAlphabetically = newValue
+                        settingsStore.settings =
+                            settingsStore.settings.copy(sortApplicationsAlphabetically = newValue)
+                        LocalPreferences.saveSettingsToEncryptedStorage(context, settingsStore.settings)
+                    },
+                )
+            }
+
+            items(lazyPagingItems.itemCount) { index ->
+                lazyPagingItems[index]?.let { applicationWithHistory ->
+                    ApplicationRow(
+                        key = applicationWithHistory.key,
+                        name = applicationWithHistory.name,
+                        icon = applicationWithHistory.icon,
+                        relays = applicationWithHistory.relays,
+                        lastUsed = applicationWithHistory.lastUsed,
+                        onClick = { openPermissions(navControllerWrapper.navController, applicationWithHistory.key) },
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun rememberHasAccountsWithoutBackup(appContext: Context): Boolean {
     var hasAccountsWithoutBackup by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
@@ -100,200 +154,198 @@ fun ApplicationsScreen(
             hasAccountsWithoutBackup = AccountStorage.all(appContext).any { !it.didBackup }
         }
     }
+    return hasAccountsWithoutBackup
+}
 
-    val killSwitch = settingsStore.settings.killSwitch.collectAsStateWithLifecycle()
+private fun disableKillSwitch(appContext: Context, npub: String) {
+    val killSwitchIntent = Intent(appContext, KillSwitchReceiver::class.java)
+    appContext.sendBroadcast(killSwitchIntent)
+    SavedAccounts.switchTo(appContext, npub)
+}
 
-    LazyColumn(
-        modifier,
+private fun openPermissions(navController: NavHostController, key: String) {
+    // Only navigate when we are still on the Applications screen. A second
+    // tap (or a tap landing while the NavHost graph is being recreated) can
+    // otherwise fire navigate() against a graph that no longer contains the
+    // Permission destination, crashing with IllegalArgumentException.
+    if (navController.currentDestination?.route == Route.Applications.route) {
+        runCatching {
+            navController.navigate("Permission/$key")
+        }.onFailure {
+            AmberLog.e("ApplicationsScreen", "Failed to open permissions for $key", it)
+        }
+    }
+}
+
+@Composable
+private fun KillSwitchWarning(onClick: () -> Unit, modifier: Modifier = Modifier) {
+    AmberWarningCard(
+        message = stringResource(Res.string.kill_switch_message),
+        buttonText = stringResource(Res.string.disable_kill_switch),
+        onClick = onClick,
+        modifier = modifier,
+    )
+}
+
+@Composable
+private fun BackupWarning(onClick: () -> Unit, modifier: Modifier = Modifier) {
+    AmberWarningCard(
+        message = stringResource(Res.string.make_backup_message),
+        buttonText = stringResource(Res.string.backup),
+        onClick = onClick,
+        modifier = modifier,
+    )
+}
+
+@Composable
+private fun NewAccountTitle(modifier: Modifier = Modifier) {
+    Text(
+        modifier = modifier.padding(top = 8.dp),
+        text = stringResource(Res.string.congratulations_your_new_account_is_ready),
+        fontSize = 20.sp,
+        fontWeight = FontWeight.Bold,
+    )
+}
+
+@Composable
+private fun NewAccountLinks(isZapstoreInstalled: Boolean, modifier: Modifier = Modifier) {
+    Text(
+        buildAnnotatedString {
+            append(stringResource(Res.string.your_account_is_ready_to_use))
+            withLink(
+                LinkAnnotation.Url(
+                    "https://" + stringResource(Res.string.nostr_app),
+                    styles = TextLinkStyles(
+                        style = SpanStyle(
+                            textDecoration = TextDecoration.Underline,
+                        ),
+                    ),
+                ),
+            ) {
+                append(" " + stringResource(Res.string.nostr_app))
+            }
+            append(" or ")
+            withLink(
+                LinkAnnotation.Url(
+                    if (isZapstoreInstalled) "zapstore://" else stringResource(Res.string.zapstore_website),
+                    styles = TextLinkStyles(
+                        style = SpanStyle(
+                            textDecoration = TextDecoration.Underline,
+                        ),
+                    ),
+                ),
+            ) {
+                append(stringResource(Res.string.zapstore))
+            }
+        },
+        modifier = modifier,
+    )
+}
+
+@Composable
+private fun ApplicationsHeader(
+    sortAlphabetically: Boolean,
+    onOpenActivity: () -> Unit,
+    onToggleSort: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(top = 20.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        if (killSwitch.value) {
-            item {
-                AmberWarningCard(
-                    message = stringResource(Res.string.kill_switch_message),
-                    buttonText = stringResource(Res.string.disable_kill_switch),
-                    onClick = {
-                        val killSwitchIntent = Intent(appContext, KillSwitchReceiver::class.java)
-                        appContext.sendBroadcast(killSwitchIntent)
-                        SavedAccounts.switchTo(appContext, account.npub)
+        AmberButton(
+            modifier = Modifier.weight(1f),
+            onClick = onOpenActivity,
+            text = stringResource(Res.string.activity),
+        )
+        IconButton(
+            onClick = onToggleSort,
+        ) {
+            Icon(
+                imageVector = Icons.Default.SortByAlpha,
+                contentDescription = stringResource(
+                    if (sortAlphabetically) {
+                        Res.string.sort_applications_most_recent
+                    } else {
+                        Res.string.sort_applications_alphabetically
                     },
-                )
-            }
+                ),
+                tint = if (sortAlphabetically) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onBackground,
+            )
         }
+    }
+}
 
-        if (hasAccountsWithoutBackup) {
-            if (killSwitch.value) {
-                item {
-                    Spacer(Modifier.height(4.dp))
-                }
-            }
-            item {
-                AmberWarningCard(
-                    message = stringResource(Res.string.make_backup_message),
-                    buttonText = stringResource(Res.string.backup),
-                    onClick = {
-                        navControllerWrapper.navController.navigate(Route.AccountBackup.route)
-                    },
-                )
-            }
-        }
-
-        if (lazyPagingItems.itemCount == 0) {
-            item {
+@Composable
+private fun ApplicationRow(
+    key: String,
+    name: String,
+    icon: String,
+    relays: List<NormalizedRelayUrl>,
+    lastUsed: Long,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier = modifier
+            .fillMaxSize()
+            .padding(vertical = 4.dp)
+            .clickable(onClick = onClick),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        AppAvatar(
+            modifier = Modifier.padding(end = 12.dp),
+            iconUrl = icon,
+            packageName = key,
+            name = name.ifBlank { key.toShortenHex() },
+            size = 40.dp,
+        )
+        Column(
+            verticalArrangement = Arrangement.Center,
+        ) {
+            Text(
+                modifier = Modifier.padding(top = 16.dp),
+                text = name.ifBlank { key.toShortenHex() },
+                fontSize = 24.sp,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            if (relays.isNotEmpty()) {
                 Text(
-                    modifier = Modifier.padding(top = 8.dp),
-                    text = stringResource(Res.string.congratulations_your_new_account_is_ready),
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(top = 4.dp),
+                    text = relays.joinToString { it.displayUrl() },
+                    fontSize = 16.sp,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                 )
             }
-            item {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
                 Text(
-                    buildAnnotatedString {
-                        append(stringResource(Res.string.your_account_is_ready_to_use))
-                        withLink(
-                            LinkAnnotation.Url(
-                                "https://" + stringResource(Res.string.nostr_app),
-                                styles = TextLinkStyles(
-                                    style = SpanStyle(
-                                        textDecoration = TextDecoration.Underline,
-                                    ),
-                                ),
-                            ),
-                        ) {
-                            append(" " + stringResource(Res.string.nostr_app))
-                        }
-                        append(" or ")
-                        withLink(
-                            LinkAnnotation.Url(
-                                if (appContext.isZapstoreInstalled()) "zapstore://" else stringResource(Res.string.zapstore_website),
-                                styles = TextLinkStyles(
-                                    style = SpanStyle(
-                                        textDecoration = TextDecoration.Underline,
-                                    ),
-                                ),
-                            ),
-                        ) {
-                            append(stringResource(Res.string.zapstore))
-                        }
-                    },
+                    modifier = Modifier.padding(top = 4.dp, bottom = 16.dp),
+                    text = key.toShortenHex(),
+                    fontSize = 16.sp,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Text(
+                    modifier = Modifier.padding(top = 4.dp, bottom = 16.dp),
+                    text = if (lastUsed == 0L) stringResource(Res.string.never) else TimeUtils.formatDateTime(LocalContext.current, lastUsed * 1000),
+                    fontSize = 16.sp,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                 )
             }
-        } else {
-            item {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 20.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    AmberButton(
-                        modifier = Modifier.weight(1f),
-                        onClick = {
-                            navControllerWrapper.navController.navigate(Route.Activities.route)
-                        },
-                        text = stringResource(Res.string.activity),
-                    )
-                    IconButton(
-                        onClick = {
-                            val newValue = !sortAlphabetically
-                            sortAlphabetically = newValue
-                            settingsStore.settings =
-                                settingsStore.settings.copy(sortApplicationsAlphabetically = newValue)
-                            LocalPreferences.saveSettingsToEncryptedStorage(context, settingsStore.settings)
-                        },
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.SortByAlpha,
-                            contentDescription = stringResource(
-                                if (sortAlphabetically) {
-                                    Res.string.sort_applications_most_recent
-                                } else {
-                                    Res.string.sort_applications_alphabetically
-                                },
-                            ),
-                            tint = if (sortAlphabetically) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onBackground,
-                        )
-                    }
-                }
-            }
 
-            items(lazyPagingItems.itemCount) { index ->
-                val applicationWithHistory = lazyPagingItems[index]
-                applicationWithHistory?.let {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(vertical = 4.dp)
-                            .clickable {
-                                // Only navigate when we are still on the Applications screen. A second
-                                // tap (or a tap landing while the NavHost graph is being recreated) can
-                                // otherwise fire navigate() against a graph that no longer contains the
-                                // Permission destination, crashing with IllegalArgumentException.
-                                if (navControllerWrapper.navController.currentDestination?.route == Route.Applications.route) {
-                                    runCatching {
-                                        navControllerWrapper.navController.navigate("Permission/${applicationWithHistory.key}")
-                                    }.onFailure {
-                                        AmberLog.e("ApplicationsScreen", "Failed to open permissions for ${applicationWithHistory.key}", it)
-                                    }
-                                }
-                            },
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        AppAvatar(
-                            modifier = Modifier.padding(end = 12.dp),
-                            iconUrl = applicationWithHistory.icon,
-                            packageName = applicationWithHistory.key,
-                            name = applicationWithHistory.name.ifBlank { applicationWithHistory.key.toShortenHex() },
-                            size = 40.dp,
-                        )
-                        Column(
-                            verticalArrangement = Arrangement.Center,
-                        ) {
-                            Text(
-                                modifier = Modifier.padding(top = 16.dp),
-                                text = applicationWithHistory.name.ifBlank { applicationWithHistory.key.toShortenHex() },
-                                fontSize = 24.sp,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                            )
-                            if (applicationWithHistory.relays.isNotEmpty()) {
-                                Text(
-                                    modifier = Modifier.padding(top = 4.dp),
-                                    text = applicationWithHistory.relays.joinToString { it.displayUrl() },
-                                    fontSize = 16.sp,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                )
-                            }
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                            ) {
-                                Text(
-                                    modifier = Modifier.padding(top = 4.dp, bottom = 16.dp),
-                                    text = applicationWithHistory.key.toShortenHex(),
-                                    fontSize = 16.sp,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                )
-                                Text(
-                                    modifier = Modifier.padding(top = 4.dp, bottom = 16.dp),
-                                    text = if (applicationWithHistory.lastUsed == 0L) stringResource(Res.string.never) else TimeUtils.formatDateTime(LocalContext.current, applicationWithHistory.lastUsed * 1000),
-                                    fontSize = 16.sp,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                )
-                            }
-
-                            Spacer(Modifier.weight(1f))
-                            HorizontalDivider(
-                                color = MaterialTheme.colorScheme.primary,
-                            )
-                        }
-                    }
-                }
-            }
+            Spacer(Modifier.weight(1f))
+            HorizontalDivider(
+                color = MaterialTheme.colorScheme.primary,
+            )
         }
     }
 }

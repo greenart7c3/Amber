@@ -1,6 +1,7 @@
 package com.greenart7c3.nostrsigner.ui.components
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -78,63 +79,19 @@ fun BunkerRelayAuthScreen(
         modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Spacer(Modifier.size(16.dp))
-
-        RemoteAppIcon(iconUrl, appName)
-
-        Text(
-            buildAnnotatedString {
-                withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
-                    append(appName)
-                }
-                append(" ")
-                append(stringResource(Res.string.relay_auth_request, ""))
-            },
-            fontSize = 18.sp,
-            textAlign = TextAlign.Center,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp),
+        RelayAuthRequestHeader(
+            appName = appName,
+            relayUrl = relayUrl,
+            iconUrl = iconUrl,
+            account = account,
         )
-
-        Spacer(Modifier.size(8.dp))
-
-        Text(
-            relayUrl,
-            fontSize = 14.sp,
-            fontWeight = FontWeight.Bold,
-            textAlign = TextAlign.Center,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp),
-        )
-
-        Spacer(Modifier.size(16.dp))
-
-        SigningAs(account)
 
         Spacer(modifier = Modifier.weight(1f))
 
-        LabeledBorderBox(
-            label = stringResource(Res.string.relay_auth_scope),
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp),
-        ) {
-            AmberToggles(
-                selected = scope,
-                options = listOf(RelayAuthScope.SPECIFIC, RelayAuthScope.ALL),
-                onSelect = { scope = it },
-                label = {
-                    stringResource(
-                        when (it) {
-                            RelayAuthScope.SPECIFIC -> Res.string.for_this_relay_only
-                            RelayAuthScope.ALL -> Res.string.for_all_relays
-                        },
-                    )
-                },
-            )
-        }
+        RelayAuthScopeSelector(
+            scope = scope,
+            onSelect = { scope = it },
+        )
 
         Spacer(Modifier.size(8.dp))
 
@@ -150,6 +107,77 @@ fun BunkerRelayAuthScreen(
         AcceptRejectButtons(
             onAccept = { onAccept(rememberType, scope) },
             onReject = { onReject(rememberType, scope) },
+        )
+    }
+}
+
+@Composable
+private fun ColumnScope.RelayAuthRequestHeader(
+    appName: String,
+    relayUrl: String,
+    iconUrl: String,
+    account: Account,
+) {
+    Spacer(Modifier.size(16.dp))
+
+    RemoteAppIcon(iconUrl, appName)
+
+    Text(
+        buildAnnotatedString {
+            withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
+                append(appName)
+            }
+            append(" ")
+            append(stringResource(Res.string.relay_auth_request, ""))
+        },
+        fontSize = 18.sp,
+        textAlign = TextAlign.Center,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp),
+    )
+
+    Spacer(Modifier.size(8.dp))
+
+    Text(
+        relayUrl,
+        fontSize = 14.sp,
+        fontWeight = FontWeight.Bold,
+        textAlign = TextAlign.Center,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp),
+    )
+
+    Spacer(Modifier.size(16.dp))
+
+    SigningAs(account)
+}
+
+@Composable
+private fun RelayAuthScopeSelector(
+    scope: RelayAuthScope,
+    onSelect: (RelayAuthScope) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    LabeledBorderBox(
+        label = stringResource(Res.string.relay_auth_scope),
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp),
+    ) {
+        AmberToggles(
+            selected = scope,
+            options = listOf(RelayAuthScope.SPECIFIC, RelayAuthScope.ALL),
+            onSelect = onSelect,
+            label = {
+                stringResource(
+                    when (it) {
+                        RelayAuthScope.SPECIFIC -> Res.string.for_this_relay_only
+                        RelayAuthScope.ALL -> Res.string.for_all_relays
+                    },
+                )
+            },
         )
     }
 }

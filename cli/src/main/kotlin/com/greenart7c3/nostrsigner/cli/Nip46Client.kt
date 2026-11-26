@@ -53,8 +53,7 @@ class Nip46Client(
     private val err: PrintStream,
     private val openUri: (String) -> Unit,
 ) : AutoCloseable {
-    /** The saved connection's key: Amber binds the connection to this pubkey. Not an account. */
-    private val transport = NostrSignerInternal(clientKey)
+    private val connectionKeySigner = NostrSignerInternal(clientKey)
 
     val clientPubKey: String = clientKey.pubKey.toHexKey()
 
@@ -62,17 +61,20 @@ class Nip46Client(
 
     private val http = OkHttpClient.Builder()
         .connectTimeout(20, TimeUnit.SECONDS)
-        // Long-lived sockets: no read timeout, and ping so idle NATs keep them.
-        .readTimeout(0, TimeUnit.MILLISECONDS)
-        .pingInterval(30, TimeUnit.SECONDS)
+        .readTimeout(LONG_LIVED_SOCKET_NO_READ_TIMEOUT, TimeUnit.MILLISECONDS)
+        .pingInterval(IDLE_NAT_KEEPALIVE_PING_SECONDS, TimeUnit.SECONDS)
         .build()
 
     private val relayClient = NostrClient(OkHttpWebsocketBuilder(http, scope), scope)
 
     private var remote: NostrSignerRemote? = null
 
-    /** Approvals of a `nostrconnect://` URI: signer connection key to the secret it answered. */
-    private val approvals = LinkedBlockingQueue<Pair<String, String?>>()
+    private data class NostrConnectApproval(
+        val signerConnectionKey: String,
+        val answeredSecret: String?,
+    )
+
+    private val approvals = LinkedBlockingQueue<NostrConnectApproval>()
 
     init {
         relayClient.connect()
@@ -85,15 +87,15 @@ class Nip46Client(
      */
     fun login(bunkerUri: String): Login {
         val signer = runCatching {
-            NostrSignerRemote.fromBunkerUri(bunkerUri, transport, relayClient, onAuthUrl = ::authUrl)
+            NostrSignerRemote.fromBunkerUri(bunkerUri, connectionKeySigner, relayClient, onAuthUrl = ::authUrl)
         }.getOrElse {
             throw CliError("not a usable bunker:// URI: ${it.message}", Exit.USAGE)
         }
         remote = signer
         signer.openSubscription()
         awaitRelays()
-        call("connect") { signer.connect() }
-        val userPubKey = call("get_public_key") { signer.getPublicKey() }
+        requestWithinTimeout("connect") { signer.connect() }
+        val userPubKey = requestWithinTimeout("get_public_key") { signer.getPublicKey() }
         return Login(signer.remotePubkey, userPubKey, signer.relays.map { it.url })
     }
 
@@ -118,7 +120,6 @@ class Nip46Client(
             tags = mapOf("p" to listOf(clientPubKey)),
         )
         val listening = RelaysListening(relays.toSet())
-        // The subscription is what dials the relays, so it comes first.
         relayClient.subscribe(
             subId,
             relays.associateWith { listOf(filter) },
@@ -143,7 +144,7 @@ class Nip46Client(
             },
         )
         try {
-            if (!listening.await(timeoutSeconds * 1000)) throw unreachable()
+            if (!listening.awaitSettledOrGraceAfterFirstListening(timeoutSeconds * 1000)) throw unreachable()
             onListening()
             val deadline = Deadline(timeoutSeconds)
             while (true) {
@@ -158,13 +159,6 @@ class Nip46Client(
         }
     }
 
-    /**
-     * Which relays have registered the approval subscription. A relay is
-     * settled once it sent EOSE or failed to connect; [await] waits for all of
-     * them, but once one is listening, the rest only get [LATE_RELAY_GRACE_MILLIS]:
-     * a relay that never answers (one behind a firewall waits out the connect
-     * timeout) must not hold the URI back. True when at least one is listening.
-     */
     private class RelaysListening(
         private val relays: Set<NormalizedRelayUrl>,
     ) {
@@ -184,12 +178,12 @@ class Nip46Client(
             changed.signalAll()
         }
 
-        fun await(timeoutMillis: Long): Boolean = lock.withLock {
+        fun awaitSettledOrGraceAfterFirstListening(timeoutMillis: Long): Boolean = lock.withLock {
             var deadline = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(timeoutMillis)
-            var graceStarted = false
+            var lateRelayGraceStarted = false
             while (!relays.all { it in listening || it in failed }) {
-                if (!graceStarted && listening.isNotEmpty()) {
-                    graceStarted = true
+                if (!lateRelayGraceStarted && listening.isNotEmpty()) {
+                    lateRelayGraceStarted = true
                     deadline = minOf(deadline, System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(LATE_RELAY_GRACE_MILLIS))
                 }
                 val remaining = deadline - System.nanoTime()
@@ -201,9 +195,15 @@ class Nip46Client(
     }
 
     private companion object {
-        // Healthy relays subscribe within a second or two of the first; a human then
-        // still takes longer than that to paste the URI and approve it.
+        @Suppress("NoComments")
+        // A relay behind a firewall never answers and waits out the connect timeout, so it must
+        // not hold the URI back. Healthy relays subscribe within a second or two of the first;
+        // a human then still takes longer than that to paste the URI and approve it.
         const val LATE_RELAY_GRACE_MILLIS = 3_000L
+
+        const val LONG_LIVED_SOCKET_NO_READ_TIMEOUT = 0L
+
+        const val IDLE_NAT_KEEPALIVE_PING_SECONDS = 30L
     }
 
     /** Continues a saved connection. */
@@ -212,7 +212,7 @@ class Nip46Client(
         userPubKey: String,
     ) {
         val signer = NostrSignerRemote(
-            signer = transport,
+            signer = connectionKeySigner,
             remotePubkey = signerPubKey,
             relays = relays.toSet(),
             client = relayClient,
@@ -244,29 +244,29 @@ class Nip46Client(
 
     /** One NIP-46 request per function, each bounded by `--timeout` and mapped to an exit code. */
     inner class SignerRequests {
-        fun getPublicKey(): String = call("get_public_key") { requireSigner().getPublicKey() }
+        fun getPublicKey(): String = requestWithinTimeout("get_public_key") { requireSigner().getPublicKey() }
 
-        fun signEvent(template: EventTemplate<Event>): Event = call("sign_event") { requireSigner().sign(template) }
+        fun signEvent(template: EventTemplate<Event>): Event = requestWithinTimeout("sign_event") { requireSigner().sign(template) }
 
         fun nip44Encrypt(
             pubKey: String,
             text: String,
-        ): String = call("nip44_encrypt") { requireSigner().nip44Encrypt(text, pubKey) }
+        ): String = requestWithinTimeout("nip44_encrypt") { requireSigner().nip44Encrypt(text, pubKey) }
 
         fun nip44Decrypt(
             pubKey: String,
             ciphertext: String,
-        ): String = call("nip44_decrypt") { requireSigner().nip44Decrypt(ciphertext, pubKey) }
+        ): String = requestWithinTimeout("nip44_decrypt") { requireSigner().nip44Decrypt(ciphertext, pubKey) }
 
         fun nip04Encrypt(
             pubKey: String,
             text: String,
-        ): String = call("nip04_encrypt") { requireSigner().nip04Encrypt(text, pubKey) }
+        ): String = requestWithinTimeout("nip04_encrypt") { requireSigner().nip04Encrypt(text, pubKey) }
 
         fun nip04Decrypt(
             pubKey: String,
             ciphertext: String,
-        ): String = call("nip04_decrypt") { requireSigner().nip04Decrypt(ciphertext, pubKey) }
+        ): String = requestWithinTimeout("nip04_decrypt") { requireSigner().nip04Decrypt(ciphertext, pubKey) }
 
         /**
          * A ping is, by definition, only answered by a live signer. Quartz's
@@ -274,15 +274,15 @@ class Nip46Client(
          * itself is "Amber replied"; this reports the round trip, not that value.
          */
         fun ping() {
-            call("ping") { requireSigner().ping() }
+            requestWithinTimeout("ping") { requireSigner().ping() }
         }
 
-        fun switchRelays(): List<String>? = call("switch_relays") {
+        fun switchRelays(): List<String>? = requestWithinTimeout("switch_relays") {
             SwitchRelaysOutcome(requireSigner().switchRelays()?.map { it.url })
         }.relays
 
         fun logout() {
-            call("logout") { requireSigner().logout() }
+            requestWithinTimeout("logout") { requireSigner().logout() }
         }
     }
 
@@ -310,13 +310,12 @@ class Nip46Client(
 
     private fun readApproval(event: Event) {
         val connectEvent = event as? NostrConnectEvent ?: return
-        val message = runCatching { runBlocking { connectEvent.decryptMessage(transport) } }.getOrNull()
+        val message = runCatching { runBlocking { connectEvent.decryptMessage(connectionKeySigner) } }.getOrNull()
         val response = message as? BunkerResponse ?: return
-        approvals.offer(connectEvent.pubKey to response.result)
+        approvals.offer(NostrConnectApproval(connectEvent.pubKey, response.result))
     }
 
-    /** One request, bounded by `--timeout` (a human may have to approve it in Amber). */
-    private fun <T> call(
+    private fun <T> requestWithinTimeout(
         what: String,
         block: suspend () -> T,
     ): T {

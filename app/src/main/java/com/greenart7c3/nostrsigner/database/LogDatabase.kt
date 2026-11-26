@@ -20,6 +20,10 @@ import java.util.concurrent.Executors
 abstract class LogDatabase : RoomDatabase() {
     abstract fun dao(): LogDao
 
+    abstract fun readDao(): LogReadDao
+
+    abstract fun cleanupDao(): LogCleanupDao
+
     /** Set by [getDatabase]; [LogDao.insertLogIfEnabled] honors its privacy mode. */
     lateinit var settingsStore: SettingsStore
 

@@ -335,7 +335,7 @@ object LocalPreferences {
         if (enabled) {
             SavedAccounts.all(context).forEach {
                 try {
-                    accountRepository.getLogDatabase(it.npub).dao().clearLogs()
+                    accountRepository.getLogDatabase(it.npub).cleanupDao().clearLogs()
                     accountRepository.getHistoryDatabase(it.npub).dao().clearHistory()
                 } catch (e: Exception) {
                     AmberLog.e(Amber.TAG, "Error wiping data for privacy mode", e)

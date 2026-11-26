@@ -119,7 +119,7 @@ class SettingsViewModel(
                     val deletedHistory = accountRepository.getHistoryDatabase(it.npub).dao().deleteOldHistory(TimeUtils.oneWeekAgo())
                     if (deletedHistory > 0) AmberLog.d(Amber.TAG, "Deleted $deletedHistory old history entries")
                     val oneWeekAgoMillis = System.currentTimeMillis() - (ONE_WEEK * 1000L)
-                    val deletedLogs = accountRepository.getLogDatabase(it.npub).dao().deleteOldLog(oneWeekAgoMillis)
+                    val deletedLogs = accountRepository.getLogDatabase(it.npub).cleanupDao().deleteOldLog(oneWeekAgoMillis)
                     if (deletedLogs > 0) AmberLog.d(Amber.TAG, "Deleted $deletedLogs old log entries")
                 } catch (e: Exception) {
                     if (e is CancellationException) throw e

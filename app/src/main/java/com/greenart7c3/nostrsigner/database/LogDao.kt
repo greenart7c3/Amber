@@ -1,11 +1,9 @@
 package com.greenart7c3.nostrsigner.database
 
-import androidx.paging.PagingSource
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.Transaction
-import kotlinx.coroutines.flow.Flow
 
 @Dao
 abstract class LogDao(private val database: LogDatabase) {
@@ -57,24 +55,4 @@ abstract class LogDao(private val database: LogDatabase) {
 
     @Query("UPDATE amber_log SET repeatCount = repeatCount + 1, time = MAX(time, :time) WHERE id = :id")
     abstract suspend fun incrementRepeat(id: Int, time: Long)
-
-    @Query("SELECT * FROM amber_log ORDER BY time DESC")
-    abstract fun getLogs(): Flow<List<LogEntity>>
-
-    @Query("SELECT * FROM amber_log ORDER BY time DESC")
-    abstract fun getLogsPaging(): PagingSource<Int, LogEntity>
-
-    @Query("SELECT * FROM amber_log where url = :url ORDER BY time DESC")
-    abstract fun getLogsByUrlPaging(url: String): PagingSource<Int, LogEntity>
-
-    @Query("DELETE FROM amber_log WHERE id IN (SELECT id FROM amber_log ORDER BY time ASC LIMIT :count)")
-    abstract suspend fun deleteOldestLogs(count: Int): Int
-
-    @Query("DELETE FROM amber_log")
-    @Transaction
-    abstract suspend fun clearLogs()
-
-    @Query("DELETE FROM amber_log WHERE time < :time")
-    @Transaction
-    abstract suspend fun deleteOldLog(time: Long): Int
 }

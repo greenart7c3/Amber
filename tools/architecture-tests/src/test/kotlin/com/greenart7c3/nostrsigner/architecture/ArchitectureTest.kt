@@ -184,7 +184,7 @@ class ArchitectureTest {
 
     private companion object {
         // Opening a Room database or DAO: AccountRepository.dao/getDatabase/getHistoryDatabase/getLogDatabase.
-        val daoCall = Regex("""\.dao\(|\bget(History|Log)?Database\(""")
+        val daoCall = Regex("""\.(\w+D|d)ao\(|\bget(History|Log)?Database\(""")
 
         // Empty since step 6: no ui/ file outside a ViewModel may use the database.
         val databaseInUi = emptySet<String>()

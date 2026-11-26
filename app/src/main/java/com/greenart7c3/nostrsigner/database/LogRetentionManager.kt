@@ -100,7 +100,7 @@ object LogRetentionManager {
         val key = logKey(npub)
         lock(key).withLock {
             lastPruneTimes[key] = System.currentTimeMillis()
-            val dao = db.dao()
+            val dao = db.cleanupDao()
             val expired = dao.deleteOldLog(System.currentTimeMillis() - LocalPreferences.getLogRetention(context).millis)
             val trimmed = trimToBudget(LOG_DB_MAX_BYTES, { liveBytes(db) }) { dao.deleteOldestLogs(PRUNE_BATCH) }
             if (expired > 0 || trimmed > 0) {

@@ -175,7 +175,7 @@ private fun savedConnection(req: PendingBunkerRequest, acc: DesktopAccount, stor
 private fun approvalRelays(req: PendingBunkerRequest, savedApplication: AppWithPermissions?): List<NormalizedRelayUrl> {
     if (req.isLocalSocket) return emptyList()
     val newConnectionRelays = if (req.isNostrConnectUri) req.relays.ifEmpty { AmberDesktop.newBunkerRelays() } else AmberDesktop.newBunkerRelays()
-    return savedApplication?.app?.normalizedRelays()?.ifEmpty { AmberDesktop.defaultRelays() } ?: newConnectionRelays
+    return savedApplication?.app?.normalizedRelays()?.ifEmpty { BunkerRelays.defaultRelays() } ?: newConnectionRelays
 }
 
 // The record of a connection seen for the first time.
@@ -259,7 +259,7 @@ private suspend fun BunkerEngine.doReject(
     val key = req.localKey
 
     val savedApplication = store.getByKey(key)
-    val defaultRelays = AmberDesktop.defaultRelays()
+    val defaultRelays = BunkerRelays.defaultRelays()
     val newConnectionRelays = if (req.isNostrConnectUri) {
         req.relays.ifEmpty { defaultRelays }
     } else {

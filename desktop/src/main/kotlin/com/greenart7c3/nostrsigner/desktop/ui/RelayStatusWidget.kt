@@ -31,6 +31,7 @@ import com.greenart7c3.nostrsigner.commonsui.d_reconnecting
 import com.greenart7c3.nostrsigner.commonsui.getStringBlocking
 import com.greenart7c3.nostrsigner.commonsui.reconnect
 import com.greenart7c3.nostrsigner.desktop.core.AmberDesktop
+import com.greenart7c3.nostrsigner.desktop.core.RelayConnections
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 
@@ -69,7 +70,7 @@ fun RelayStatusWidget(modifier: Modifier = Modifier) {
                         // Manual reconnect: give relays marked dead another chance.
                         RelayHealthTracker.reset()
                         AmberDesktop.engine.updateFilter()
-                        AmberDesktop.reconnect()
+                        RelayConnections.reconnect()
                         Toaster.toast(getStringBlocking(Res.string.d_reconnecting))
                     }
                 }

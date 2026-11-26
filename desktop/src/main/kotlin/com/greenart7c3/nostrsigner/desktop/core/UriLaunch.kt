@@ -50,7 +50,6 @@ object UriLaunch {
     /** Latest nostrconnect:// URI this process received but has not handled yet. */
     val pending = MutableStateFlow<String?>(null)
 
-    /** What a second launch without a URI sends: "show your window". */
     internal const val SHOW_MESSAGE = "amber:show"
 
     /** Emits when a second launch without a URI asked this instance to show its window. */
@@ -77,6 +76,7 @@ object UriLaunch {
      * from a running JVM, and a real runtime dir is exactly the live state
      * the suite must never touch. Production leaves it null.
      */
+    @Suppress("NoComments")
     internal var runtimeDirOverride: String? = null
 
     private fun xdgRuntimeDir(): String = runtimeDirOverride
@@ -179,7 +179,7 @@ object UriLaunch {
                             runCatching { client.close() }
                             continue
                         }
-                        readUri(client)
+                        readForwardedMessage(client)
                         runCatching { client.close() }
                     }
                 }
@@ -190,27 +190,23 @@ object UriLaunch {
         }.start()
     }
 
-    /** See [isSameUserPeer]: fails closed wherever peer credentials exist. */
     private fun isSameUser(client: SocketChannel): Boolean = isSameUserPeer(client, socketPath())
 
     /**
      * At most one accepted URI per this many milliseconds, on top of the
-     * uncollected-pending coalescing below: a local process hammering the
+     * uncollected-pending coalescing in [forward]: a local process hammering the
      * socket cannot churn the pending URI (and whatever UI reacts to it)
      * faster than this, however fast it connects.
      */
+    @Suppress("NoComments")
     private const val MIN_FORWARD_INTERVAL_MS = 500L
+
+    private const val MAX_FORWARDED_MESSAGE_BYTES = 64 * 1024
 
     @Volatile private var lastForwardAt = 0L
 
-    /**
-     * Reads at most one 64 KiB message from [client] and publishes it as
-     * [pending]. Flood-hardened: while a URI is still uncollected, later ones
-     * are coalesced away (the UI only ever sees the oldest unhandled link),
-     * and the min-interval caps the refresh rate after that.
-     */
-    private fun readUri(client: SocketChannel) {
-        val buffer = ByteBuffer.allocate(64 * 1024)
+    private fun readForwardedMessage(client: SocketChannel) {
+        val buffer = ByteBuffer.allocate(MAX_FORWARDED_MESSAGE_BYTES)
         while (runCatching { client.read(buffer) }.getOrDefault(-1) > 0) {
             if (buffer.position() >= buffer.capacity()) break
         }
@@ -221,7 +217,6 @@ object UriLaunch {
         }
     }
 
-    /** Publishes [uri] as [pending], unless one is still uncollected or the last one was too recent. */
     private fun forward(uri: String) {
         if (pending.value != null) {
             AmberLogger.d("UriLaunch", "Ignored a forwarded URI; one is already pending")
@@ -280,6 +275,7 @@ object UriLaunch {
      * second JVM picks it up via [readForwardedUri] and hands it to the
      * running instance over the socket.
      */
+    @Suppress("NoComments")
     internal fun handlerExecutable(): String? {
         val commandLine = currentCommandLine() ?: return null
         if (File(commandLine).name != "java") return commandLine
@@ -310,7 +306,6 @@ object UriLaunch {
         return File(dataHome, "applications")
     }
 
-    /** The desktop entry pointing at [exePath] (single binary, no args). */
     internal fun desktopEntry(exePath: String): String = """
         [Desktop Entry]
         Type=Application
@@ -321,6 +316,7 @@ object UriLaunch {
     """.trimIndent() + "\n"
 
     /** The AppImage file rather than its per-launch mount; see AutoStart.currentExecutable. */
+    @Suppress("NoComments")
     private fun currentCommandLine(): String? = System.getenv("APPIMAGE")?.takeIf { it.isNotBlank() } ?: runCatching {
         String(Files.readAllBytes(Path.of("/proc/self/cmdline")), Charsets.UTF_8)
             .split('\u0000')
@@ -332,11 +328,9 @@ object UriLaunch {
 
 /** Escapes desktop-entry values (Exec arguments and plain strings) the way the Desktop Entry spec reads them back. */
 object DesktopEntryEscaping {
-    /** Characters that make an Exec argument need quoting (Desktop Entry spec). */
-    private const val EXEC_RESERVED = " \t\"'\\><~|&;$*?#()`"
+    private const val EXEC_CHARS_REQUIRING_QUOTES = " \t\"'\\><~|&;$*?#()`"
 
-    /** Characters a quoted Exec argument escapes with a backslash. */
-    private const val EXEC_QUOTE_ESCAPED = "\"`$\\"
+    private const val EXEC_CHARS_BACKSLASHED_IN_QUOTES = "\"`$\\"
 
     /**
      * One Exec argument, written as the Desktop Entry spec reads it back: a
@@ -345,13 +339,14 @@ object DesktopEntryEscaping {
      * string-level escape that doubles every backslash. A line break cannot
      * be represented and would end the key, so it is refused.
      */
+    @Suppress("NoComments")
     internal fun quoteForDesktopEntry(value: String): String {
         val fields = value.replace("%", "%%")
-        if (value.none { it in EXEC_RESERVED }) return escapeDesktopEntryString(fields)
+        if (value.none { it in EXEC_CHARS_REQUIRING_QUOTES }) return escapeDesktopEntryString(fields)
         val quoted = buildString {
             append('"')
             fields.forEach { c ->
-                if (c in EXEC_QUOTE_ESCAPED) append('\\')
+                if (c in EXEC_CHARS_BACKSLASHED_IN_QUOTES) append('\\')
                 append(c)
             }
             append('"')
@@ -359,13 +354,11 @@ object DesktopEntryEscaping {
         return escapeDesktopEntryString(quoted)
     }
 
-    /** A desktop-entry string value (e.g. `Icon=`): backslashes doubled, line breaks refused. */
     internal fun escapeDesktopEntryString(value: String): String {
         require(value.none { it == '\n' || it == '\r' }) { "a desktop-entry value cannot contain a line break" }
         return value.replace("\\", "\\\\")
     }
 
-    /** The inverse of [quoteForDesktopEntry] for one argument. */
     internal fun unquoteDesktopEntryArg(raw: String): String {
         val string = raw.replace("\\\\", "\\")
         val unquoted = if (string.length >= 2 && string.startsWith('"') && string.endsWith('"')) {
@@ -373,7 +366,7 @@ object DesktopEntryEscaping {
                 var i = 1
                 while (i < string.length - 1) {
                     val c = string[i]
-                    if (c == '\\' && i + 1 < string.length - 1 && string[i + 1] in EXEC_QUOTE_ESCAPED) {
+                    if (c == '\\' && i + 1 < string.length - 1 && string[i + 1] in EXEC_CHARS_BACKSLASHED_IN_QUOTES) {
                         append(string[i + 1])
                         i += 2
                     } else {

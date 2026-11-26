@@ -39,19 +39,19 @@ object LocalSignerProtocol {
     /** Error text the engine answers a rejection with (see doReject in BunkerApproval.kt). */
     const val USER_REJECTED = "user rejected"
 
-    /** Method -> (type, number of params before the optional account). */
-    private val methods: Map<String, Pair<SignerType, Int>> = linkedMapOf(
-        "get_public_key" to (SignerType.GET_PUBLIC_KEY to 0),
-        "sign_event" to (SignerType.SIGN_EVENT to 1),
-        "nip04_encrypt" to (SignerType.NIP04_ENCRYPT to 2),
-        "nip04_decrypt" to (SignerType.NIP04_DECRYPT to 2),
-        "nip44_encrypt" to (SignerType.NIP44_ENCRYPT to 2),
-        "nip44_decrypt" to (SignerType.NIP44_DECRYPT to 2),
-        // NIP-44 v3, NIP-46 layout: [pubkey, kind, scope, base64 plaintext | ciphertext].
-        "nip44v3_encrypt" to (SignerType.NIP44_V3_ENCRYPT to 4),
-        "nip44v3_decrypt" to (SignerType.NIP44_V3_DECRYPT to 4),
-        "decrypt_zap_event" to (SignerType.DECRYPT_ZAP_EVENT to 1),
-        "ping" to (SignerType.PING to 0),
+    private data class MethodShape(val type: SignerType, val paramsBeforeAccount: Int)
+
+    private val methods: Map<String, MethodShape> = linkedMapOf(
+        "get_public_key" to MethodShape(SignerType.GET_PUBLIC_KEY, 0),
+        "sign_event" to MethodShape(SignerType.SIGN_EVENT, 1),
+        "nip04_encrypt" to MethodShape(SignerType.NIP04_ENCRYPT, 2),
+        "nip04_decrypt" to MethodShape(SignerType.NIP04_DECRYPT, 2),
+        "nip44_encrypt" to MethodShape(SignerType.NIP44_ENCRYPT, 2),
+        "nip44_decrypt" to MethodShape(SignerType.NIP44_DECRYPT, 2),
+        "nip44v3_encrypt" to MethodShape(SignerType.NIP44_V3_ENCRYPT, 4),
+        "nip44v3_decrypt" to MethodShape(SignerType.NIP44_V3_DECRYPT, 4),
+        "decrypt_zap_event" to MethodShape(SignerType.DECRYPT_ZAP_EVENT, 1),
+        "ping" to MethodShape(SignerType.PING, 0),
     )
 
     val supportedMethods: List<String> = methods.keys.toList()
@@ -123,10 +123,8 @@ object LocalSignerProtocol {
         val params = rpc.params.take(arity).map { param ->
             when {
                 param.isTextual -> param.asText()
-                // The v3 context kind may come as a JSON number.
                 param.isIntegralNumber && type in nip44v3SignerTypes -> param.asText()
-                // Events travel as objects here and as JSON strings in NIP-46.
-                param.isObject && type in eventParamTypes -> mapper.writeValueAsString(param)
+                param.isObject && type in eventObjectTypes -> mapper.writeValueAsString(param)
                 else -> throw RpcException(INVALID_PARAMS, "invalid params for ${rpc.method}")
             }
         }
@@ -137,7 +135,7 @@ object LocalSignerProtocol {
         return Call(type, rpc.method, params, account)
     }
 
-    private val eventParamTypes = setOf(SignerType.SIGN_EVENT, SignerType.DECRYPT_ZAP_EVENT)
+    private val eventObjectTypes = setOf(SignerType.SIGN_EVENT, SignerType.DECRYPT_ZAP_EVENT)
 
     /** The account [value] (hex pubkey or npub) refers to, as an npub; null when it is neither. */
     fun npubOf(value: String): String? = runCatching {
@@ -168,7 +166,7 @@ object LocalSignerProtocol {
     }
 
     /** Signed events (and decrypted zaps) go back as objects, everything else as a string. */
-    fun resultNode(type: SignerType, result: String): JsonNode = if (type in eventParamTypes) {
+    fun resultNode(type: SignerType, result: String): JsonNode = if (type in eventObjectTypes) {
         runCatching { mapper.readTree(result) }.getOrNull()?.takeIf { it.isObject } ?: nodes.textNode(result)
     } else {
         nodes.textNode(result)

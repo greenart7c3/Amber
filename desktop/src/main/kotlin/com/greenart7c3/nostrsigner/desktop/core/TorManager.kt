@@ -39,21 +39,18 @@ object TorManager {
     private const val TAG = "TorManager"
     private const val BOOTSTRAP_POLL_MS = 500L
     private const val SOCKS_BIND_ATTEMPTS = 5
+    private const val FAIL_CLOSED_SOCKS_PORT = 0
 
-    /** Serializes start/stop/restart. */
-    private val lifecycle = Mutex()
+    private val startStopLock = Mutex()
 
-    /** The bootstrap watcher; non-null while Tor is up or coming up. */
-    @Volatile private var job: Job? = null
+    @Volatile private var bootstrapWatcher: Job? = null
 
-    /** True once the native library loaded; native calls are skipped until then. */
-    @Volatile private var nativeReady = false
+    @Volatile private var nativeLibraryLoaded = false
 
     private val _isRunning = MutableStateFlow(false)
     val isRunning: StateFlow<Boolean> = _isRunning.asStateFlow()
 
-    /** 0 while there is no SOCKS listener: the fail-closed placeholder port. */
-    private val _socksPort = MutableStateFlow(0)
+    private val _socksPort = MutableStateFlow(FAIL_CLOSED_SOCKS_PORT)
     val socksPort: StateFlow<Int> = _socksPort.asStateFlow()
 
     private val _status = MutableStateFlow<TorStatus>(TorStatus.Stopped)
@@ -64,11 +61,11 @@ object TorManager {
     }
 
     fun start(scope: CoroutineScope) {
-        scope.launch(Dispatchers.IO) { lifecycle.withLock { startLocked(scope) } }
+        scope.launch(Dispatchers.IO) { startStopLock.withLock { startLocked(scope) } }
     }
 
     fun stop(scope: CoroutineScope) {
-        scope.launch(Dispatchers.IO) { lifecycle.withLock { stopLocked() } }
+        scope.launch(Dispatchers.IO) { startStopLock.withLock { stopLocked() } }
     }
 
     /**
@@ -77,10 +74,10 @@ object TorManager {
      */
     fun restart(scope: CoroutineScope) {
         scope.launch(Dispatchers.IO) {
-            lifecycle.withLock {
+            startStopLock.withLock {
                 AmberLogger.i(TAG, "Restarting built-in Tor")
                 stopLocked()
-                if (nativeReady) ArtiNative.destroy()
+                if (nativeLibraryLoaded) ArtiNative.destroy()
                 startLocked(scope)
             }
         }
@@ -88,16 +85,17 @@ object TorManager {
 
     /** Stops the SOCKS listener at application shutdown; Arti itself ends with the process. */
     fun shutdown() {
-        job?.cancel()
-        if (nativeReady) ArtiNative.stopSocksProxy()
+        bootstrapWatcher?.cancel()
+        if (nativeLibraryLoaded) ArtiNative.stopSocksProxy()
     }
 
+    @Suppress("NoComments")
     private fun startLocked(scope: CoroutineScope) {
-        if (job != null) return
+        if (bootstrapWatcher != null) return
         updateStatus(TorStatus.Connecting(0))
         try {
             ArtiNative.setLogCallback { line -> AmberLogger.d(TAG, line) }
-            nativeReady = true
+            nativeLibraryLoaded = true
             AmberLogger.i(TAG, "Starting built-in Tor: ${ArtiNative.getVersion()}")
 
             val dataDir = File(AppDirs.dataDir, "arti").apply { mkdirs() }
@@ -115,7 +113,7 @@ object TorManager {
             }
             AmberLogger.i(TAG, "Built-in Tor SOCKS proxy on port $port")
             _socksPort.value = port
-            job = scope.launch(Dispatchers.IO) { awaitBootstrap() }
+            bootstrapWatcher = scope.launch(Dispatchers.IO) { awaitBootstrap() }
         } catch (e: Throwable) {
             // Throwable: a missing/broken native library surfaces as an Error
             // (UnsatisfiedLinkError, ExceptionInInitializerError).
@@ -129,6 +127,7 @@ object TorManager {
      * circuit), but report Connected only once Arti can carry traffic, like
      * the C tor daemon's bootstrap did.
      */
+    @Suppress("NoComments")
     private suspend fun awaitBootstrap() {
         try {
             while (currentCoroutineContext().isActive) {
@@ -150,6 +149,7 @@ object TorManager {
         }
     }
 
+    @Suppress("NoComments")
     private fun bindSocksProxy(): Int? {
         TorSocksAuthenticator.install()
         repeat(SOCKS_BIND_ATTEMPTS) {
@@ -168,19 +168,19 @@ object TorManager {
 
     private fun fail(message: String?) {
         _isRunning.value = false
-        _socksPort.value = 0
+        _socksPort.value = FAIL_CLOSED_SOCKS_PORT
         TorSocksAuthenticator.clear()
         updateStatus(TorStatus.Failed(message))
     }
 
     private fun stopLocked() {
-        job?.cancel()
-        job = null
+        bootstrapWatcher?.cancel()
+        bootstrapWatcher = null
         _isRunning.value = false
-        _socksPort.value = 0
+        _socksPort.value = FAIL_CLOSED_SOCKS_PORT
         TorSocksAuthenticator.clear()
         updateStatus(TorStatus.Stopped)
-        if (!nativeReady) return
+        if (!nativeLibraryLoaded) return
         try {
             ArtiNative.stopSocksProxy()
             AmberLogger.i(TAG, "Built-in Tor stopped")

@@ -82,46 +82,6 @@
     <ID>NoComments:AutoStartTest.kt:hardening has to be relaxed for it.</ID>
     <ID>NoComments:AutoStartTest.kt:systemd(5): inside double quotes \ and " are escaped with a</ID>
     <ID>NoComments:AutoStartTest.kt:would kill the service instantly and must never be emitted.</ID>
-    <ID>NoComments:BunkerApproval.kt:A nostrconnect URI names the client key itself. Approving it</ID>
-    <ID>NoComments:BunkerApproval.kt:A rejected connect leaves nothing behind (socket connects are plain</ID>
-    <ID>NoComments:BunkerApproval.kt:An expired connection counts as gone: approving a card queued before</ID>
-    <ID>NoComments:BunkerApproval.kt:Answers [req] over its local socket, or else as a kind-24133 event on [relays].</ID>
-    <ID>NoComments:BunkerApproval.kt:Approving changes this list in place; kept to take the approval back.</ID>
-    <ID>NoComments:BunkerApproval.kt:Each connection gets its own signing key.</ID>
-    <ID>NoComments:BunkerApproval.kt:Like Android: what the client never heard of must not stay granted.</ID>
-    <ID>NoComments:BunkerApproval.kt:Mirrors the Android connect screen's account picker: the connection is</ID>
-    <ID>NoComments:BunkerApproval.kt:Only a connect may create an application. A non-connect request whose</ID>
-    <ID>NoComments:BunkerApproval.kt:Remembers the decision ([accepted]) on a request (the common `rememberedGrant`, as on</ID>
-    <ID>NoComments:BunkerApproval.kt:Takes back what approving [req] remembered when its reply did not reach the</ID>
-    <ID>NoComments:BunkerApproval.kt:The common revertedConnectKey / revertedGrants, as on Android.</ID>
-    <ID>NoComments:BunkerApproval.kt:The connection [req] is approved on in [acc]'s store, or null for a new one. A</ID>
-    <ID>NoComments:BunkerApproval.kt:The grants of [signPolicy] (the common `signPolicyGrants`, as on Android).</ID>
-    <ID>NoComments:BunkerApproval.kt:The record of a connection seen for the first time.</ID>
-    <ID>NoComments:BunkerApproval.kt:What approving a connect sets: the chosen sign policy and its grants, and the</ID>
-    <ID>NoComments:BunkerApproval.kt:What approving or rejecting a queued request does.</ID>
-    <ID>NoComments:BunkerApproval.kt:Where the approval is answered. A brand-new connection (bunker:// or a</ID>
-    <ID>NoComments:BunkerApproval.kt:`BunkerRequest`s, so check the type rather than the class), and a</ID>
-    <ID>NoComments:BunkerApproval.kt:app is gone (deleted, expired or logged out while the card was queued)</ID>
-    <ID>NoComments:BunkerApproval.kt:default relays, so clients on this machine work without any public relay; a</ID>
-    <ID>NoComments:BunkerApproval.kt:it expired must not sign for it (a new connect replaces it below).</ID>
-    <ID>NoComments:BunkerApproval.kt:local socket client never talks to relays.</ID>
-    <ID>NoComments:BunkerApproval.kt:must not resurrect the revoked connection: answer it like an unknown client.</ID>
-    <ID>NoComments:BunkerApproval.kt:nostrconnect:// that named no relays) gets the local WebSocket relay beside the</ID>
-    <ID>NoComments:BunkerApproval.kt:rejection never creates an application: if the app was deleted while</ID>
-    <ID>NoComments:BunkerApproval.kt:replaces the connection saved under that key (the card shows</ID>
-    <ID>NoComments:BunkerApproval.kt:saved under (and signs for) the chosen account.</ID>
-    <ID>NoComments:BunkerApproval.kt:silently merging into it and keeping its grants and relays.</ID>
-    <ID>NoComments:BunkerApproval.kt:the card was queued, there is nothing to record the rejection on.</ID>
-    <ID>NoComments:BunkerApproval.kt:which, like Android's "Replace connection" dialog) instead of</ID>
-    <ID>NoComments:BunkerConnections.kt:AmberDesktop.newBunkerRelays() (the local relay plus the defaults),</ID>
-    <ID>NoComments:BunkerConnections.kt:Client-chosen (sanitized by the parser): the card, the saved record and every notification show it.</ID>
-    <ID>NoComments:BunkerConnections.kt:Connections made from this side: a nostrconnect:// URI queued for approval, a new bunker:// URI, and</ID>
-    <ID>NoComments:BunkerConnections.kt:Exactly the relays the caller picked: the dialog seeds them with</ID>
-    <ID>NoComments:BunkerConnections.kt:The client's key becomes the connection's identity and a p tag</ID>
-    <ID>NoComments:BunkerConnections.kt:While locked the per-account databases can't be read (or would be</ID>
-    <ID>NoComments:BunkerConnections.kt:and any the user removed there must stay out of the URI.</ID>
-    <ID>NoComments:BunkerConnections.kt:cached empty); the next tick after unlocking catches up.</ID>
-    <ID>NoComments:BunkerConnections.kt:on every reply: the shared parser accepts only a well-formed one.</ID>
     <ID>NoComments:BunkerE2eTest.kt:1. connect — requires the user's approval in the UI.</ID>
     <ID>NoComments:BunkerE2eTest.kt:2. get_public_key — granted automatically on connect, no UI involved.</ID>
     <ID>NoComments:BunkerE2eTest.kt:A tag array is a different content type: it prompts. Approve for all methods.</ID>
@@ -150,85 +110,6 @@
     <ID>NoComments:BunkerE2eTest.kt:sign_event kind 1 was granted in the connect perms, so it must be</ID>
     <ID>NoComments:BunkerE2eTest.kt:signed automatically without landing in the approval queue.</ID>
     <ID>NoComments:BunkerE2eTest.kt:the granted perms (sign_event:1, get_public_key) are remembered.</ID>
-    <ID>NoComments:BunkerEngine.kt:60s, and resets after a quiet minute. A single job per engine replaces</ID>
-    <ID>NoComments:BunkerEngine.kt:A first-time `connect` always goes through the approval UI: approving</ID>
-    <ID>NoComments:BunkerEngine.kt:A stored connection is deleted once the client has the ack.</ID>
-    <ID>NoComments:BunkerEngine.kt:A stored connection moves to the default relays once the client has the answer.</ID>
-    <ID>NoComments:BunkerEngine.kt:A v3 request without a kind was refused up front (nip46Step).</ID>
-    <ID>NoComments:BunkerEngine.kt:Already-connected client re-sending `connect`: ack silently.</ID>
-    <ID>NoComments:BunkerEngine.kt:An approval whose reply never reached the client, and was taken back; the UI says so.</ID>
-    <ID>NoComments:BunkerEngine.kt:Android: classify the plaintext (the encrypt input, or the decrypt</ID>
-    <ID>NoComments:BunkerEngine.kt:Answers from the stored grants, else queues the request for the user's decision.</ID>
-    <ID>NoComments:BunkerEngine.kt:Auto-accept publishes a signed result: re-check the lock so</ID>
-    <ID>NoComments:BunkerEngine.kt:Bundles the request's context so the handlers take one argument.</ID>
-    <ID>NoComments:BunkerEngine.kt:Checked after verify() and keyed on the proven signer pubkey, so forged</ID>
-    <ID>NoComments:BunkerEngine.kt:Concurrent: mutated in updateFilterLocked while relay I/O threads read it</ID>
-    <ID>NoComments:BunkerEngine.kt:Counts the failure against the relay and only schedules a reconnect</ID>
-    <ID>NoComments:BunkerEngine.kt:Decided by the admission alone (the common Nip46Admission.reply), as on Android.</ID>
-    <ID>NoComments:BunkerEngine.kt:Every NIP-46 connection has its own key; the account key itself is</ID>
-    <ID>NoComments:BunkerEngine.kt:Mirrors Android's validateNip44v3Request errors; kept generic so</ID>
-    <ID>NoComments:BunkerEngine.kt:Mirrors EventNotificationConsumer: the user set a finite lifetime</ID>
-    <ID>NoComments:BunkerEngine.kt:Mirrors NotificationSubscription: make every endpoint routable before</ID>
-    <ID>NoComments:BunkerEngine.kt:Mirrors NotificationSubscription: one REQ per relay for every endpoint (#644).</ID>
-    <ID>NoComments:BunkerEngine.kt:Mirrors `NostrClientLoggerListener.saveLog`: every account's relay log.</ID>
-    <ID>NoComments:BunkerEngine.kt:Mirrors `NostrClientLoggerListener`: backoff starts at 5s, doubles up to</ID>
-    <ID>NoComments:BunkerEngine.kt:NIP-04/NIP-44 encrypt/decrypt grants are per content type, like</ID>
-    <ID>NoComments:BunkerEngine.kt:NIP-44 decrypt batches, rapid signing) and must never be silently dropped.</ID>
-    <ID>NoComments:BunkerEngine.kt:NIP-44 v3 carries its context kind/scope at params[1..2].</ID>
-    <ID>NoComments:BunkerEngine.kt:Oldest createdAt of a request deferred by a mid-request lock; guarded by [seenEvents].</ID>
-    <ID>NoComments:BunkerEngine.kt:Once per update: it also hands over (and clears) a lock-deferred `since`.</ID>
-    <ID>NoComments:BunkerEngine.kt:Only a connection's own key routes a request; one tagged to an</ID>
-    <ID>NoComments:BunkerEngine.kt:Per-sender token bucket: bounds the work (decrypt, log writes, signed</ID>
-    <ID>NoComments:BunkerEngine.kt:Reach back to a request a lock deferred, so the relays redeliver it.</ID>
-    <ID>NoComments:BunkerEngine.kt:Read like a nostrconnect:// URI's perms, so both ways of connecting ask for the same grants.</ID>
-    <ID>NoComments:BunkerEngine.kt:Recently processed event ids -&gt; createdAt, for dedup + `since` computation.</ID>
-    <ID>NoComments:BunkerEngine.kt:Refuses, before admission and before any key is used, a request that can never be</ID>
-    <ID>NoComments:BunkerEngine.kt:Refuses, without computing anything, what may never be signed (the common nip46Step).</ID>
-    <ID>NoComments:BunkerEngine.kt:Relay auth is granted per relay or for all relays, like Android.</ID>
-    <ID>NoComments:BunkerEngine.kt:Relay recovered: clear its failure streak so it is eligible for the</ID>
-    <ID>NoComments:BunkerEngine.kt:RelayHealthTracker also makes updateFilterLocked drop it from the</ID>
-    <ID>NoComments:BunkerEngine.kt:Saved names came from a client; older records were stored unsanitized.</ID>
-    <ID>NoComments:BunkerEngine.kt:The common first step, as on Android.</ID>
-    <ID>NoComments:BunkerEngine.kt:The key the reply is encrypted and signed with: the connection's own.</ID>
-    <ID>NoComments:BunkerEngine.kt:The one subscription every bunker endpoint shares, keyed in subIds.</ID>
-    <ID>NoComments:BunkerEngine.kt:The passphrase lock came down while [event] was being handled. Forget it</ID>
-    <ID>NoComments:BunkerEngine.kt:The request [event] carries, decrypted with the connection key, or null (logged) when it cannot be r</ID>
-    <ID>NoComments:BunkerEngine.kt:The response payload (also the approval preview), or null after answering that it can't be made.</ID>
-    <ID>NoComments:BunkerEngine.kt:The sender's own stored connection; [app] is it, or the one a connect secret names.</ID>
-    <ID>NoComments:BunkerEngine.kt:The stored grant that decides [type] for [appKey], with Android's fallbacks.</ID>
-    <ID>NoComments:BunkerEngine.kt:Unauthenticated error reply: publish once, no retry/backoff.</ID>
-    <ID>NoComments:BunkerEngine.kt:Unknown senders are rate-limited: their events force decrypt/log work and</ID>
-    <ID>NoComments:BunkerEngine.kt:What every handler of an admitted request needs.</ID>
-    <ID>NoComments:BunkerEngine.kt:Whether [event] is a request to process now: unlocked, a verified non-empty</ID>
-    <ID>NoComments:BunkerEngine.kt:Who an error reply to a not-admitted sender goes to, and under which key.</ID>
-    <ID>NoComments:BunkerEngine.kt:`since` past the real clock (relays would drop legitimate requests).</ID>
-    <ID>NoComments:BunkerEngine.kt:a failed decrypt doesn't leak the ciphertext's embedded context.</ID>
-    <ID>NoComments:BunkerEngine.kt:a network change / manual reconnect.</ID>
-    <ID>NoComments:BunkerEngine.kt:a signer locked mid-request never publishes.</ID>
-    <ID>NoComments:BunkerEngine.kt:account key is not addressed to any connection and is ignored.</ID>
-    <ID>NoComments:BunkerEngine.kt:any pending reconnect when a relay drops again.</ID>
-    <ID>NoComments:BunkerEngine.kt:any subscription can deliver a request, otherwise the first request</ID>
-    <ID>NoComments:BunkerEngine.kt:bypass the limiter entirely — an approved app legitimately bursts (bulk</ID>
-    <ID>NoComments:BunkerEngine.kt:consume() checked the lock on arrival; re-check before any signing</ID>
-    <ID>NoComments:BunkerEngine.kt:dropped. One reference swap, so consume() never sees a half-filled index.</ID>
-    <ID>NoComments:BunkerEngine.kt:events cannot drain a legitimate sender's budget.</ID>
-    <ID>NoComments:BunkerEngine.kt:in onIncomingMessage (containsValue).</ID>
-    <ID>NoComments:BunkerEngine.kt:is what migrates the bunker placeholder to the client key and grants</ID>
-    <ID>NoComments:BunkerEngine.kt:localPubKey -&gt; (npub, localPrivKey), mirrors `LocalKeyAccountIndex`.</ID>
-    <ID>NoComments:BunkerEngine.kt:never an endpoint, so nothing subscribes to it.</ID>
-    <ID>NoComments:BunkerEngine.kt:normal reconnect-with-backoff path (and the subscription) again.</ID>
-    <ID>NoComments:BunkerEngine.kt:of a new connection can arrive while its key is still unknown and is</ID>
-    <ID>NoComments:BunkerEngine.kt:on this connection, so answer as an unknown app even before the</ID>
-    <ID>NoComments:BunkerEngine.kt:prune loop deletes it.</ID>
-    <ID>NoComments:BunkerEngine.kt:refresh. The streak resets on a successful connection (onConnected) or</ID>
-    <ID>NoComments:BunkerEngine.kt:replies) one relay sender can force per window.</ID>
-    <ID>NoComments:BunkerEngine.kt:result) and try that grant, then the whole-NIP grant, then `nip:N`.</ID>
-    <ID>NoComments:BunkerEngine.kt:seenEvents holds sender-chosen created_at values; never let one push</ID>
-    <ID>NoComments:BunkerEngine.kt:signed error replies, so a flood must cost them silence. Stored connections</ID>
-    <ID>NoComments:BunkerEngine.kt:subscription relay set, so Quartz stops opening sockets to it on every</ID>
-    <ID>NoComments:BunkerEngine.kt:the default permissions. Reconnects were already acked above.</ID>
-    <ID>NoComments:BunkerEngine.kt:while it is still worth retrying. Once a relay is dead,</ID>
-    <ID>NoComments:BunkerEngine.kt:work, since the passphrase lock may have come down in between.</ID>
     <ID>NoComments:BunkerFreshnessTest.kt:Dropped before processing: never logged as a new request, app untouched.</ID>
     <ID>NoComments:BunkerOverLocalRelayTest.kt:1. connect — arrives at the engine through its subscription on the local relay.</ID>
     <ID>NoComments:BunkerOverLocalRelayTest.kt:2. get_public_key — granted automatically by the connect approval.</ID>
@@ -239,15 +120,8 @@
     <ID>NoComments:BunkerOverLocalRelayTest.kt:The client app: same production wiring as `BunkerE2eTest`, pointed at the local relay only.</ID>
     <ID>NoComments:BunkerOverLocalRelayTest.kt:The user removed the local relay and one default from the dialog.</ID>
     <ID>NoComments:BunkerOverLocalRelayTest.kt:compares saved connections against the configured relay URL.</ID>
-    <ID>NoComments:BunkerReplies.kt:Publishing a reply to a NIP-46 client; building and retrying it is the common publishNip46Reply.</ID>
-    <ID>NoComments:BunkerReplies.kt:The account key, for a connection from before per-connection keys.</ID>
     <ID>NoComments:Components.kt:Read straight from the classpath: the Compose resources library would need</ID>
     <ID>NoComments:Components.kt:a generated Res class for one image.</ID>
-    <ID>NoComments:ComputedResult.kt:NIP-46 layout: [pubkey, kind, scope, base64 plaintext or the v3 payload]</ID>
-    <ID>NoComments:ComputedResult.kt:The answer to [request] for [acc] (the NIP-46 and local socket paths share it) and</ID>
-    <ID>NoComments:ComputedResult.kt:[sealPreview]: a seal in an encrypt/decrypt payload, opened for the preview (openSealForPreview).</ID>
-    <ID>NoComments:ComputedResult.kt:params: [pubkey, ciphertext]</ID>
-    <ID>NoComments:ComputedResult.kt:params: [pubkey, plaintext]</ID>
     <ID>NoComments:ConnectionKeyBindingTest.kt:A connect is how a client attaches to a new key.</ID>
     <ID>NoComments:ConnectionKeyBindingTest.kt:App A addressing app B's connection key: dropped and logged, no card.</ID>
     <ID>NoComments:ConnectionKeyBindingTest.kt:Control: the same request on app A's own key reaches the approval queue.</ID>
@@ -270,7 +144,6 @@
     <ID>NoComments:CrashReporterTest.kt:A restart picks the saved report up again: at launch, or (stored</ID>
     <ID>NoComments:CrashReporterTest.kt:Out-of-memory errors are reported too, with the heap numbers.</ID>
     <ID>NoComments:CrashReporterTest.kt:encrypted when another test class has set a passphrase) at unlock.</ID>
-    <ID>NoComments:DateTimes.kt:java.text.DateFormat is not thread-safe, so build one per call.</ID>
     <ID>NoComments:DbusNotifications.kt:Actionable notifications over the session bus. The daemon delivers</ID>
     <ID>NoComments:DbusNotifications.kt:Post a notification with [actions] as (key, label) pairs and run</ID>
     <ID>NoComments:DbusNotifications.kt:Test hook: connect to this bus address instead of the session bus.</ID>
@@ -333,42 +206,6 @@
     <ID>NoComments:LocalBunkerRelayTest.kt:The subscription cap (20 per client) binds first; the rate limiter</ID>
     <ID>NoComments:LocalBunkerRelayTest.kt:catches the rest of the flood past 60 REQs per minute.</ID>
     <ID>NoComments:LocalBunkerRelayTest.kt:wildcard listener does not block a more specific 127.0.0.1 bind.</ID>
-    <ID>NoComments:LocalSigner.kt:An expired connection no longer authenticates the client.</ID>
-    <ID>NoComments:LocalSigner.kt:Apps approved on this very connection: known even if the tool ignores the secret.</ID>
-    <ID>NoComments:LocalSigner.kt:Asks the user to approve the tool behind [session] on [acc] (or, with</ID>
-    <ID>NoComments:LocalSigner.kt:Checked (and set to 0700) without following links, before anything touches it.</ID>
-    <ID>NoComments:LocalSigner.kt:Checked after queuing: either this sees the flag or serve's drop sees the request.</ID>
-    <ID>NoComments:LocalSigner.kt:EOF can be a half-close (`echo request | nc -U ...`): the client is</ID>
-    <ID>NoComments:LocalSigner.kt:It can't be told apart from a tool that exited, though, so prompts</ID>
-    <ID>NoComments:LocalSigner.kt:Malformed calls are reported as such before anything else.</ID>
-    <ID>NoComments:LocalSigner.kt:Mirrors BunkerEngine.handleRequest from the permission check on.</ID>
-    <ID>NoComments:LocalSigner.kt:No handshake reply: an unnamed client sending requests right away.</ID>
-    <ID>NoComments:LocalSigner.kt:Not toList(): it reads size, then next(), and a session ending in</ID>
-    <ID>NoComments:LocalSigner.kt:One secret per tool: a tool already holding one keeps it for further accounts.</ID>
-    <ID>NoComments:LocalSigner.kt:Queue id for a request: scoped to this connection, and unique even</ID>
-    <ID>NoComments:LocalSigner.kt:Queues [req] for the user and answers with their decision.</ID>
-    <ID>NoComments:LocalSigner.kt:Queues an approval; a client whose input already closed gets the error at once.</ID>
-    <ID>NoComments:LocalSigner.kt:Relay auth is granted per relay; a relay outside a non-empty auth</ID>
-    <ID>NoComments:LocalSigner.kt:See [isSameUserPeer]: fails closed wherever peer credentials exist.</ID>
-    <ID>NoComments:LocalSigner.kt:Serializes app resolution so overlapping requests ask for one connect, not several.</ID>
-    <ID>NoComments:LocalSigner.kt:Set at EOF: from then on nothing of this client may wait for a decision.</ID>
-    <ID>NoComments:LocalSigner.kt:The approval may have picked another account: find where the app landed.</ID>
-    <ID>NoComments:LocalSigner.kt:The documented 0600 socket: if it can't be set, don't serve.</ID>
-    <ID>NoComments:LocalSigner.kt:The kind a grant is keyed by: the event's for sign_event; NIP-44 v3 grants</ID>
-    <ID>NoComments:LocalSigner.kt:The result, plus the secret when this request got the tool approved.</ID>
-    <ID>NoComments:LocalSigner.kt:The secret this connection presented in its hello or was given on approval.</ID>
-    <ID>NoComments:LocalSigner.kt:The tool picks its own label; keep it to one plain line.</ID>
-    <ID>NoComments:LocalSigner.kt:Why [dir] can't hold the socket, or null when it can. On POSIX systems</ID>
-    <ID>NoComments:LocalSigner.kt:are per context kind, carried at params[1].</ID>
-    <ID>NoComments:LocalSigner.kt:between makes next() throw. The map's own iterator tolerates that.</ID>
-    <ID>NoComments:LocalSigner.kt:don't wait: they're dropped (and answered with an error) instead</ID>
-    <ID>NoComments:LocalSigner.kt:done sending but still reading, so answer what it already asked.</ID>
-    <ID>NoComments:LocalSigner.kt:of lingering in the approval list for a client that is gone.</ID>
-    <ID>NoComments:LocalSigner.kt:whitelist is rejected without asking (see BunkerEngine.handleRequest).</ID>
-    <ID>NoComments:LocalSignerProtocol.kt:Events travel as objects here and as JSON strings in NIP-46.</ID>
-    <ID>NoComments:LocalSignerProtocol.kt:Method -&gt; (type, number of params before the optional account).</ID>
-    <ID>NoComments:LocalSignerProtocol.kt:NIP-44 v3, NIP-46 layout: [pubkey, kind, scope, base64 plaintext | ciphertext].</ID>
-    <ID>NoComments:LocalSignerProtocol.kt:The v3 context kind may come as a JSON number.</ID>
     <ID>NoComments:LocalSignerProtocolTest.kt:A client that skips the handshake reply and sends a request straight away.</ID>
     <ID>NoComments:LocalSignerProtocolTest.kt:Hex and npub name the same account.</ID>
     <ID>NoComments:LocalSignerProtocolTest.kt:NIP-55 style: approval only through get_public_key.</ID>
@@ -424,17 +261,10 @@
     <ID>NoComments:MacNotifications.kt:macOS notifications with buttons, through `UNUserNotificationCenter` (JNA</ID>
     <ID>NoComments:MacNotifications.kt:quits is really gone before the process ends.</ID>
     <ID>NoComments:MacNotifications.kt:v@:@@@? — void, self, _cmd, two objects and a block.</ID>
-    <ID>NoComments:MdnsResolver.kt:A and AAAA records for [name] in a DNS response (answers and additional records).</ID>
-    <ID>NoComments:MdnsResolver.kt:A standard query (id 0, no flags) asking for both A and AAAA of [name].</ID>
-    <ID>NoComments:MdnsResolver.kt:Compression pointer; bounded so a looping message can't hang us.</ID>
-    <ID>NoComments:MdnsResolver.kt:TTL</ID>
-    <ID>NoComments:MdnsResolver.kt:The address length an A (IPv4) or AAAA (IPv6) record carries; a record of another length is skipped.</ID>
-    <ID>NoComments:MdnsResolver.kt:The top bit of the class is mDNS's cache-flush flag.</ID>
     <ID>NoComments:MdnsResolverTest.kt:A record name pointing at itself.</ID>
     <ID>NoComments:MdnsResolverTest.kt:A record whose name is a compression pointer to the question (offset 12).</ID>
     <ID>NoComments:MdnsResolverTest.kt:A response with one question, then [answers] encoded after it.</ID>
     <ID>NoComments:MdnsResolverTest.kt:Question at offset 12: nas.local A IN.</ID>
-    <ID>NoComments:Models.kt:An extension, not a member: Jackson would persist a member getter as a field.</ID>
     <ID>NoComments:NativeNotificationFormatTest.kt:The control character XML cannot carry is dropped; nothing becomes markup.</ID>
     <ID>NoComments:NativeNotificationFormatTest.kt:Title plus two lines: a generic toast shows three.</ID>
     <ID>NoComments:NativeTray.kt:(SNI) is the one waybar and the Wayland shells actually host.</ID>
@@ -461,12 +291,6 @@
     <ID>NoComments:NativeTrayTest.kt:gdbus returns GVariant text like "(&lt;true&gt;,)" when a tray host</ID>
     <ID>NoComments:NativeTrayTest.kt:returns null immediately — the contract under test is "returns at</ID>
     <ID>NoComments:NativeTrayTest.kt:the contract under test is "does not throw". Clean up if created.</ID>
-    <ID>NoComments:NetworkConnectivity.kt:Local relays keep working without internet: only drop</ID>
-    <ID>NoComments:NetworkConnectivity.kt:One probe socket per target; overridden in tests to dial a hermetic fake</ID>
-    <ID>NoComments:NetworkConnectivity.kt:TCP reachability of any probe target; false on any failure.</ID>
-    <ID>NoComments:NetworkConnectivity.kt:The SOCKS proxy for a probe target when Tor routing is on — exactly</ID>
-    <ID>NoComments:NetworkConnectivity.kt:and back off on their own).</ID>
-    <ID>NoComments:NetworkConnectivity.kt:everything when none are in use (remote ones then fail</ID>
     <ID>NoComments:NetworkConnectivityProbeTest.kt:Port 0 is the placeholder that refuses everything; the probe fails</ID>
     <ID>NoComments:NetworkConnectivityProbeTest.kt:Records the connect targets; never touches the network.</ID>
     <ID>NoComments:NetworkConnectivityProbeTest.kt:`any` stops at the first success: exactly one probe target dialed.</ID>
@@ -536,55 +360,6 @@
     <ID>NoComments:NotifierButtonsTest.kt:Read after [closeReceived] fires, which publishes the write.</ID>
     <ID>NoComments:NotifierDaemonTest.kt:The shell matches by substring: "ab" is in most summaries.</ID>
     <ID>NoComments:NotifierTest.kt:`true` exits 0 on any POSIX system; skip elsewhere (e.g. bare Windows).</ID>
-    <ID>NoComments:OkHttpWebSocket.kt:</ID>
-    <ID>NoComments:OkHttpWebSocket.kt:(connect() cancels it once OkHttp returns it), and its callbacks must find the session</ID>
-    <ID>NoComments:OkHttpWebSocket.kt:A bounded hand-off: `offer` never blocks, so the OkHttp</ID>
-    <ID>NoComments:OkHttpWebSocket.kt:A disconnect() that landed while dialing ended the session but had no socket to</ID>
-    <ID>NoComments:OkHttpWebSocket.kt:Always 1000 rather than echoing `code`: close() validates the code it is</ID>
-    <ID>NoComments:OkHttpWebSocket.kt:Bounded hand-off between OkHttp's reader thread and the consumer coroutine.</ID>
-    <ID>NoComments:OkHttpWebSocket.kt:Buffered relay messages before the oldest one is dropped. Deep</ID>
-    <ID>NoComments:OkHttpWebSocket.kt:Claim the session ourselves: OkHttp's cancel() raises no callback when no reader is</ID>
-    <ID>NoComments:OkHttpWebSocket.kt:Claimed even with no socket yet: a dial still in flight must not open after this</ID>
-    <ID>NoComments:OkHttpWebSocket.kt:Claims the session's single terminal report. False if it already ended.</ID>
-    <ID>NoComments:OkHttpWebSocket.kt:Ends the session side: no further offers accepted; receives drain, then return null.</ID>
-    <ID>NoComments:OkHttpWebSocket.kt:Exists to avoid exceptions stopping the coroutine</ID>
-    <ID>NoComments:OkHttpWebSocket.kt:Full: make room by dropping the oldest buffered message. A</ID>
-    <ID>NoComments:OkHttpWebSocket.kt:Launch a coroutine to process messages from the buffer.</ID>
-    <ID>NoComments:OkHttpWebSocket.kt:Never blocks (bounded buffer, drops the oldest on</ID>
-    <ID>NoComments:OkHttpWebSocket.kt:Never blocks: on a full buffer, drops the oldest message and retries.</ID>
-    <ID>NoComments:OkHttpWebSocket.kt:Next message, or null once the session ended and the buffer drained.</ID>
-    <ID>NoComments:OkHttpWebSocket.kt:OkHttp dials on its own thread, so this can run before newWebSocket()</ID>
-    <ID>NoComments:OkHttpWebSocket.kt:OkHttp reports onClosed at once, whether the relay still holds the</ID>
-    <ID>NoComments:OkHttpWebSocket.kt:REQs from onOpen: without this they went to a null socket and were</ID>
-    <ID>NoComments:OkHttpWebSocket.kt:RealWebSocket, and its own WebSocketEcho recipe) is that onClosed fires</ID>
-    <ID>NoComments:OkHttpWebSocket.kt:Set once, by whichever of `onClosed`, `onFailure` or [disconnect] ends the session first.</ID>
-    <ID>NoComments:OkHttpWebSocket.kt:TCP session open.</ID>
-    <ID>NoComments:OkHttpWebSocket.kt:The relay sent a CLOSE frame. OkHttp's contract (WebSocketListener KDoc,</ID>
-    <ID>NoComments:OkHttpWebSocket.kt:True from the start of [connect] until OkHttp hands back its socket. A dial in flight is not</ID>
-    <ID>NoComments:OkHttpWebSocket.kt:[RelayMessageBuffer].</ID>
-    <ID>NoComments:OkHttpWebSocket.kt:a later cancel() is silent too -- so the relay client kept believing it</ID>
-    <ID>NoComments:OkHttpWebSocket.kt:app, never on the relay's outbound buffers). But the queue</ID>
-    <ID>NoComments:OkHttpWebSocket.kt:application's job. Left unanswered, the socket sits half-closed: no</ID>
-    <ID>NoComments:OkHttpWebSocket.kt:asked to write and throws on the reserved ones (1005, 1006, 1015), and a</ID>
-    <ID>NoComments:OkHttpWebSocket.kt:cancel yet: cancel it now, or it opens and lives on beside the relay client's next one.</ID>
-    <ID>NoComments:OkHttpWebSocket.kt:closed-and-empty channel can never accept again, so give up.</ID>
-    <ID>NoComments:OkHttpWebSocket.kt:dropped, and the relay, never asked, never answered.</ID>
-    <ID>NoComments:OkHttpWebSocket.kt:ended. Nothing was open, so there is nothing to report.</ID>
-    <ID>NoComments:OkHttpWebSocket.kt:failed up to two intervals later. Answering completes the handshake and</ID>
-    <ID>NoComments:OkHttpWebSocket.kt:failure arrives later on its own thread. The relay client needs the answer now.</ID>
-    <ID>NoComments:OkHttpWebSocket.kt:itself is capped: an unbounded buffer under a flooded or</ID>
-    <ID>NoComments:OkHttpWebSocket.kt:keep draining the socket.</ID>
-    <ID>NoComments:OkHttpWebSocket.kt:left to fail (the state a relay-initiated close leaves behind), and when it does the</ID>
-    <ID>NoComments:OkHttpWebSocket.kt:onClosed, no onFailure, send() still accepted and silently discarded, and</ID>
-    <ID>NoComments:OkHttpWebSocket.kt:only once BOTH peers have sent a close, and sending ours is the</ID>
-    <ID>NoComments:OkHttpWebSocket.kt:overflow): the OkHttp reader thread must stay free to</ID>
-    <ID>NoComments:OkHttpWebSocket.kt:reader thread stays free to keep draining the socket (the</ID>
-    <ID>NoComments:OkHttpWebSocket.kt:reason this was UNLIMITED — backpressure must park on the</ID>
-    <ID>NoComments:OkHttpWebSocket.kt:relay may send anything.</ID>
-    <ID>NoComments:OkHttpWebSocket.kt:returns to connect() and stores the socket. The relay client sends its</ID>
-    <ID>NoComments:OkHttpWebSocket.kt:the oldest buffered message is dropped; see</ID>
-    <ID>NoComments:OkHttpWebSocket.kt:was connected, with its REQs live, until OkHttp's 120s ping path finally</ID>
-    <ID>NoComments:OkHttpWebSocket.kt:wedged consumer grew until the process OOMed. On overflow</ID>
     <ID>NoComments:OkHttpWebSocketTest.kt:And the terminal callback the relay client's bookkeeping depends on.</ID>
     <ID>NoComments:OkHttpWebSocketTest.kt:Asked by connect() itself, mid-dial: a concurrent reconnect pass</ID>
     <ID>NoComments:OkHttpWebSocketTest.kt:Client frames are masked; decode enough to spot a CLOSE and read its status code.</ID>
@@ -702,18 +477,7 @@
     <ID>NoComments:PassphraseLockTest.kt:themselves are wiped, not just dereferenced.</ID>
     <ID>NoComments:PassphraseLockTest.kt:verify() checks the passphrase without unlocking anything.</ID>
     <ID>NoComments:PassphraseLockTest.kt:waits for it instead of interleaving: it used to run straight through,</ID>
-    <ID>NoComments:PeerCredentials.kt:Whether the peer of a Unix-domain socket runs as the same OS user that owns</ID>
     <ID>NoComments:PeerCredentialsTest.kt:The socket's owner can no longer be read: this used to let the peer in.</ID>
-    <ID>NoComments:PendingQueue.kt:Atomic updates: socket clients queue from several threads at once, and a</ID>
-    <ID>NoComments:PendingQueue.kt:The approval queue: what is waiting for the user, and taking requests off it.</ID>
-    <ID>NoComments:PendingQueue.kt:plain read-then-write of `pending.value` loses one of two racing requests.</ID>
-    <ID>NoComments:ProfileFetcher.kt:A relay may answer a profile REQ with anything it likes: accept only</ID>
-    <ID>NoComments:ProfileFetcher.kt:Applies [event] unless an equal or newer kind-0 was already applied: a</ID>
-    <ID>NoComments:ProfileFetcher.kt:Default profile relays from the settings plus the account's own saved relay list.</ID>
-    <ID>NoComments:ProfileFetcher.kt:Keep a loaded account (sidebar, settings) in step with the record.</ID>
-    <ID>NoComments:ProfileFetcher.kt:Same as the Android default `ProfileFetchInterval.FIFTEEN_MINUTES`.</ID>
-    <ID>NoComments:ProfileFetcher.kt:Saves the newest kind-10002 write relays so later fetches also query them.</ID>
-    <ID>NoComments:ProfileFetcher.kt:Subscribes [filter] on [relays] and returns the newest verified event</ID>
     <ID>NoComments:ProfileFetcherTest.kt:A later fetch only reached a relay serving an older profile.</ID>
     <ID>NoComments:ProfileFetcherTest.kt:Checked a minute ago: wait for the 15-minute interval.</ID>
     <ID>NoComments:ProfileFetcherTest.kt:Metadata updated within the last day: no refetch.</ID>
@@ -722,19 +486,6 @@
     <ID>NoComments:RelayAuthTest.kt:Runs an approve/reject and waits until it is recorded (the grant is</ID>
     <ID>NoComments:RelayAuthTest.kt:Sends an auth request and returns how it was answered without a card</ID>
     <ID>NoComments:RelayAuthTest.kt:The basic sign policy stores a blank-relay grant, which covers every relay.</ID>
-    <ID>NoComments:RelayChecker.kt:Already used somewhere -&gt; it has proven itself; skip the round-trip.</ID>
-    <ID>NoComments:RelayChecker.kt:Relays already trusted by the user: defaults plus every connected app's.</ID>
-    <ID>NoComments:RelayNetwork.kt:100.64.0.0/10 — carrier-grade NAT range used by Tailscale and similar overlays.</ID>
-    <ID>NoComments:RelayNetwork.kt:An IP literal: getByName parses it without a DNS lookup.</ID>
-    <ID>NoComments:RelayNetwork.kt:An explicit proxy also means OkHttp never falls back to a direct</ID>
-    <ID>NoComments:RelayNetwork.kt:Bare IPv6 without brackets (no port possible to tell apart).</ID>
-    <ID>NoComments:RelayNetwork.kt:Direct client for local URLs, which skip Tor. It never follows redirects:</ID>
-    <ID>NoComments:RelayNetwork.kt:LocalNameDns); proxied clients hand hosts unresolved to Tor.</ID>
-    <ID>NoComments:RelayNetwork.kt:Loopback, private (RFC 1918), link-local or the wildcard address.</ID>
-    <ID>NoComments:RelayNetwork.kt:Tor circuits are slower to establish; triple the timeouts like Android.</ID>
-    <ID>NoComments:RelayNetwork.kt:`.localhost` and `.local` never reach the system resolver (see</ID>
-    <ID>NoComments:RelayNetwork.kt:fc00::/7 — IPv6 unique local addresses.</ID>
-    <ID>NoComments:RelayNetwork.kt:route, and SOCKS hosts are passed unresolved so DNS goes through Tor.</ID>
     <ID>NoComments:RelayNetworkTest.kt:A local URL skips Tor, so a redirect from it to a public host would be</ID>
     <ID>NoComments:RelayNetworkTest.kt:DNS-rebindable suffixes are not trusted: only mDNS `.local`</ID>
     <ID>NoComments:RelayNetworkTest.kt:DNS-rebindable suffixes are public hosts now: warned like the rest.</ID>
@@ -786,7 +537,6 @@
     <ID>NoComments:RequestNotificationPopup.kt:so host the card in one through a ComposePanel. AWT still types it</ID>
     <ID>NoComments:RequestNotificationPopup.kt:transparent margin there is no drop shadow; the shape rounds it.</ID>
     <ID>NoComments:RequestNotificationPopup.kt:window. A plain AWT POPUP JWindow is override-redirect instead —</ID>
-    <ID>NoComments:SealPreview.kt:What a seal (kind 13) in [plaintext] holds, opened with the account key for the approval</ID>
     <ID>NoComments:StaleRequestAfterDeleteTest.kt:Account default "fully trust" is the worst case: a recreated app would auto-sign.</ID>
     <ID>NoComments:StaleRequestAfterDeleteTest.kt:Queues a sign_event card for a connected app, deletes the app, and returns the stale card.</ID>
     <ID>NoComments:Storage.kt:(see writeSecure/readSecure).</ID>
@@ -828,7 +578,6 @@
     <ID>NoComments:Storage.kt:needed to check flushQueued.</ID>
     <ID>NoComments:Storage.kt:relay flood costs at most a couple of file writes per second.</ID>
     <ID>NoComments:Storage.kt:the lock path can flush before the key material is evicted.</ID>
-    <ID>NoComments:Strings.kt:forLanguageTag normalizes legacy codes ("in" is "id" on Java 17+).</ID>
     <ID>NoComments:StringsTest.kt:Includes the languages selected without their region (it, ko, vi)</ID>
     <ID>NoComments:StringsTest.kt:Kinds the old desktop copy of the table lacked resolve like on Android.</ID>
     <ID>NoComments:StringsTest.kt:Plain text (Compose resources): line breaks and apostrophes as written.</ID>
@@ -845,14 +594,6 @@
     <ID>NoComments:Theme.kt:primary buttons, selected chips, the selected sidebar row — must use dark</ID>
     <ID>NoComments:Theme.kt:text. The default dark scheme pairs these containers with light on-colors,</ID>
     <ID>NoComments:Theme.kt:which is what produced the unreadable light-on-amber elements.</ID>
-    <ID>NoComments:TorManager.kt:(UnsatisfiedLinkError, ExceptionInInitializerError).</ID>
-    <ID>NoComments:TorManager.kt:0 while there is no SOCKS listener: the fail-closed placeholder port.</ID>
-    <ID>NoComments:TorManager.kt:Published before the port, so no dial can reach the listener without them.</ID>
-    <ID>NoComments:TorManager.kt:Serializes start/stop/restart.</ID>
-    <ID>NoComments:TorManager.kt:The bootstrap watcher; non-null while Tor is up or coming up.</ID>
-    <ID>NoComments:TorManager.kt:The proxy accepts connections right away (each one waits for its</ID>
-    <ID>NoComments:TorManager.kt:Throwable: a missing/broken native library surfaces as an Error</ID>
-    <ID>NoComments:TorManager.kt:True once the native library loaded; native calls are skipped until then.</ID>
     <ID>NoComments:UiState.kt:A key with Ctrl/⌘ held.</ID>
     <ID>NoComments:UiState.kt:A key without Ctrl/⌘: Escape leaves the application detail screen, the rest drive the incoming-reque</ID>
     <ID>NoComments:UiState.kt:Ctrl/⌘ + M — minimize to tray (keep running in the background).</ID>
@@ -894,20 +635,6 @@
     <ID>NoComments:UnlockScreen.kt:Shared centered layout for the lock and first-run passphrase screens.</ID>
     <ID>NoComments:UnlockScreen.kt:The keys that run a lock screen's primary action.</ID>
     <ID>NoComments:UnlockScreen.kt:every password prompt behaves.</ID>
-    <ID>NoComments:UriLaunch.kt:A desktop-entry string value (e.g. `Icon=`): backslashes doubled, line breaks refused.</ID>
-    <ID>NoComments:UriLaunch.kt:At most one accepted URI per this many milliseconds, on top of the</ID>
-    <ID>NoComments:UriLaunch.kt:Characters a quoted Exec argument escapes with a backslash.</ID>
-    <ID>NoComments:UriLaunch.kt:Characters that make an Exec argument need quoting (Desktop Entry spec).</ID>
-    <ID>NoComments:UriLaunch.kt:One Exec argument, written as the Desktop Entry spec reads it back: a</ID>
-    <ID>NoComments:UriLaunch.kt:Publishes [uri] as [pending], unless one is still uncollected or the last one was too recent.</ID>
-    <ID>NoComments:UriLaunch.kt:Reads at most one 64 KiB message from [client] and publishes it as</ID>
-    <ID>NoComments:UriLaunch.kt:See [isSameUserPeer]: fails closed wherever peer credentials exist.</ID>
-    <ID>NoComments:UriLaunch.kt:Tests point this at a scratch dir: XDG_RUNTIME_DIR cannot be scrubbed</ID>
-    <ID>NoComments:UriLaunch.kt:The AppImage file rather than its per-launch mount; see AutoStart.currentExecutable.</ID>
-    <ID>NoComments:UriLaunch.kt:The desktop entry pointing at [exePath] (single binary, no args).</ID>
-    <ID>NoComments:UriLaunch.kt:The inverse of [quoteForDesktopEntry] for one argument.</ID>
-    <ID>NoComments:UriLaunch.kt:The stable launch target for the handler: the packaged binary, or a</ID>
-    <ID>NoComments:UriLaunch.kt:What a second launch without a URI sends: "show your window".</ID>
     <ID>NoComments:UriLaunchIpcTest.kt:Coalescing: while a URI is uncollected, later forwards are ignored</ID>
     <ID>NoComments:UriLaunchIpcTest.kt:Subscribed before the request is sent: the flow does not replay.</ID>
     <ID>NoComments:UriLaunchIpcTest.kt:instead of overwriting it (flood hardening on the socket).</ID>

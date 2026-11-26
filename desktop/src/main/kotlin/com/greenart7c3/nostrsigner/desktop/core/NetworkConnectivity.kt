@@ -44,6 +44,7 @@ object NetworkConnectivity {
      * and direct when Tor is disabled. Targets are IP literals, so nothing
      * inside the probe resolves DNS.
      */
+    @Suppress("NoComments")
     internal var newProbeSocket: (InetSocketAddress) -> Socket = { target ->
         val settings = SettingsStore.settings.value
         val proxy = probeProxy(target, settings.torMode, settings.proxyPort, TorManager.socksPort.value)
@@ -56,6 +57,7 @@ object NetworkConnectivity {
      * placeholder while built-in Tor is down (the probe then fails like the
      * relays do instead of leaking to the clearnet). Null dials directly.
      */
+    @Suppress("NoComments")
     internal fun probeProxy(
         target: InetSocketAddress,
         mode: TorMode,
@@ -90,9 +92,6 @@ object NetworkConnectivity {
                         }
                     }
 
-                    // Local relays keep working without internet: only drop
-                    // everything when none are in use (remote ones then fail
-                    // and back off on their own).
                     Transition.OFFLINE -> if (!usesLocalRelays()) RelayConnections.disconnectIntentionally()
 
                     Transition.OPENED, Transition.UNCHANGED -> {}
@@ -112,7 +111,6 @@ object NetworkConnectivity {
 
     private fun usesLocalRelays(): Boolean = AmberDesktop.client.availableRelaysFlow().value.any { LocalRelays.isLocal(it) }
 
-    /** TCP reachability of any probe target; false on any failure. */
     internal fun isOnline(): Boolean = probeTargets.any { target ->
         runCatching {
             newProbeSocket(target).use { socket ->

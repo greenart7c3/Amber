@@ -48,6 +48,7 @@ object Strings {
     }
 
     /** Best-effort match of [locale] (the OS one) to a shipped translation. */
+    @Suppress("NoComments")
     fun matchSystemLanguage(locale: Locale = systemLocale): String {
         // forLanguageTag normalizes legacy codes ("in" is "id" on Java 17+).
         fun Locale.matches(tag: String, withCountry: Boolean): Boolean {

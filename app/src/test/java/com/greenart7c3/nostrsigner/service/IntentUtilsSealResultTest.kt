@@ -66,8 +66,8 @@ class IntentUtilsSealResultTest {
     @Test
     fun `encrypt of a seal wrapping self-encrypted tags returns the ciphertext`() = runBlocking {
         val selfEncrypts: List<suspend (String) -> String> = listOf(
-            { account.nip44Encrypt(it, account.hexKey) },
-            { account.nip04Encrypt(it, account.hexKey) },
+            { account.crypto.nip44Encrypt(it, account.hexKey) },
+            { account.crypto.nip04Encrypt(it, account.hexKey) },
         )
         for (type in listOf(SignerType.NIP44_ENCRYPT, SignerType.NIP04_ENCRYPT)) {
             for (selfEncrypt in selfEncrypts) {
@@ -84,7 +84,7 @@ class IntentUtilsSealResultTest {
 
     @Test
     fun `decrypt of a seal wrapping self-encrypted tags returns the seal, not its contents`() = runBlocking {
-        val seal = sealOfPrivateTags { account.nip44Encrypt(it, account.hexKey) }
+        val seal = sealOfPrivateTags { account.crypto.nip44Encrypt(it, account.hexKey) }
         val ciphertext = NostrSignerInternal(callerKp).nip44Encrypt(seal, account.hexKey)
         val decrypted = AmberUtils.encryptOrDecryptData(ciphertext, SignerType.NIP44_DECRYPT, account, callerPub)!!
 

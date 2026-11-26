@@ -228,7 +228,7 @@ private fun SavedAccountBackupCard(
         launch(Dispatchers.IO) {
             localAccount = AccountStorage.load(appContext, npub)
             localAccount?.let { acc ->
-                seedWords = acc.seedWords()
+                seedWords = acc.keyExport.seedWords()
             }
         }
     }
@@ -536,7 +536,7 @@ private suspend fun exportNsec(
     account: Account,
     context: Context,
 ): String? = try {
-    account.getNsec()
+    account.keyExport.getNsec()
 } catch (e: Exception) {
     if (e is CancellationException) throw e
     AmberLog.e(Amber.TAG, "Failed to export secret key", e)
@@ -552,7 +552,7 @@ private suspend fun encryptForQr(
     password: String,
     context: Context,
 ): String? = try {
-    account.nip49Encrypt(password)
+    account.keyExport.nip49Encrypt(password)
 } catch (e: Exception) {
     if (e is CancellationException) throw e
     AmberLog.e(Amber.TAG, "Failed to encrypt secret key for QR", e)
@@ -918,7 +918,7 @@ private fun copyNSec(
     clipboardManager: Clipboard,
     onBackupFinish: () -> Unit,
 ) {
-    account.copyToClipboard(clipboardManager)
+    account.keyExport.copyToClipboard(clipboardManager)
     onBackupFinish()
 }
 
@@ -939,7 +939,7 @@ private fun encryptCopyNSec(
         appScope.launch(Dispatchers.IO) {
             onLoading(true)
             try {
-                val key = account.nip49Encrypt(password)
+                val key = account.keyExport.nip49Encrypt(password)
                 account.didBackup = true
                 onBackupFinish()
                 appScope.launch(Dispatchers.Main) {

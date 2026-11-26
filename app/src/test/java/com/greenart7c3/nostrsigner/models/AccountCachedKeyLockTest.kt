@@ -63,10 +63,10 @@ class AccountCachedKeyLockTest {
                 account.signSync<Event>(0, 1, emptyArray(), "synthetic-event")
             }
             assertThrows(SecurityException::class.java) {
-                runBlocking { account.nip44Decrypt("synthetic-ciphertext", "peer") }
+                runBlocking { account.crypto.nip44Decrypt("synthetic-ciphertext", "peer") }
             }
             assertThrows(SecurityException::class.java) {
-                runBlocking { account.seedWords() }
+                runBlocking { account.keyExport.seedWords() }
             }
             verify { signer wasNot Called }
         } finally {

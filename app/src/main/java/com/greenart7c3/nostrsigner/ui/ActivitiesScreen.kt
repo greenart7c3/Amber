@@ -201,14 +201,14 @@ suspend fun decryptHistoryContent(activity: ActivityEntry, account: Account): St
                 if (activity.encryptionPubKey.isBlank()) {
                     activity.content
                 } else {
-                    account.decrypt(activity.content, activity.encryptionPubKey)
+                    account.crypto.decrypt(activity.content, activity.encryptionPubKey)
                 }
             SignerType.NIP44_V3_ENCRYPT.name, SignerType.NIP44_V3_DECRYPT.name -> {
                 val kind = activity.kind
                 if (activity.encryptionPubKey.isBlank() || kind == null) {
                     activity.content
                 } else {
-                    account.nip44v3Decrypt(activity.content, activity.encryptionPubKey, kind, activity.encryptionScope).decodeToString()
+                    account.crypto.nip44v3Decrypt(activity.content, activity.encryptionPubKey, kind, activity.encryptionScope).decodeToString()
                 }
             }
             SignerType.DECRYPT_ZAP_EVENT.name -> account.decryptZapEvent(activity.content) ?: activity.content

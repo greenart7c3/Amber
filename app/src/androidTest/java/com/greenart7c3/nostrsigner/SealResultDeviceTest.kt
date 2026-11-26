@@ -48,7 +48,7 @@ class SealResultDeviceTest {
     private val peerHex = peer.keyPair.pubKey.toHexKey()
     private val privateTags = """[["word","device-private-bookmark"]]"""
 
-    private suspend fun sealOfPrivateTags(): String = """{"id":"","pubkey":"${account.hexKey}","created_at":1,"kind":13,"tags":[],"content":"${account.nip44Encrypt(privateTags, account.hexKey)}","sig":""}"""
+    private suspend fun sealOfPrivateTags(): String = """{"id":"","pubkey":"${account.hexKey}","created_at":1,"kind":13,"tags":[],"content":"${account.crypto.nip44Encrypt(privateTags, account.hexKey)}","sig":""}"""
 
     private suspend fun intentKind(type: SignerType, result: String, data: String): EncryptedDataKind {
         val fn = IntentUtils::class.java.getDeclaredMethod(

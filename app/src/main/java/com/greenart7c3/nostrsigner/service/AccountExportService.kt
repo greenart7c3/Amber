@@ -114,7 +114,7 @@ object AccountExportService {
         // Pre-fix builds could store NIP-44 ciphertext in SEED_WORDS, so a
         // backup exported from such an account decrypts to ciphertext here.
         val seedWords = try {
-            account.nip44Decrypt(encryptedSeedWords, account.hexKey)
+            account.crypto.nip44Decrypt(encryptedSeedWords, account.hexKey)
         } catch (e: Exception) {
             if (e is CancellationException) throw e
             AmberLog.e("Amber", "Backup seed words could not be decrypted; importing the account without them", e)
@@ -155,7 +155,7 @@ object AccountExportService {
             accountInfos.forEachIndexed { index, info ->
                 onProgress(index + 1, total)
                 val account = AccountStorage.load(context, info.npub)
-                account?.let { result.add(info.npub to it.nip49Encrypt(password)) }
+                account?.let { result.add(info.npub to it.keyExport.nip49Encrypt(password)) }
             }
             Result.success(result)
         } catch (e: Exception) {
@@ -248,12 +248,12 @@ object AccountExportService {
      * Convert an Account to exportable data with encrypted private key
      */
     private suspend fun accountToExportData(account: Account, password: String): AccountExportData {
-        val storedSeedWords = account.seedWords()
+        val storedSeedWords = account.keyExport.seedWords()
         // Pre-fix builds could store NIP-44 ciphertext in SEED_WORDS; never
         // re-export a non-mnemonic as if it were the recovery phrase.
         val seedWords = if (storedSeedWords.isNotBlank() && Nip06().isValidMnemonic(storedSeedWords)) storedSeedWords else ""
-        val encrypedSeedWords = if (seedWords.isNotBlank()) account.nip44Encrypt(seedWords, account.hexKey) else ""
-        val encryptedNsec = account.nip49Encrypt(password)
+        val encrypedSeedWords = if (seedWords.isNotBlank()) account.crypto.nip44Encrypt(seedWords, account.hexKey) else ""
+        val encryptedNsec = account.keyExport.nip49Encrypt(password)
 
         return AccountExportData(
             npub = account.npub,

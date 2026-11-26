@@ -1651,7 +1651,6 @@
     <ID>NoComments:ZapstoreVersionTest.kt:Not a -preN suffix: counts as a final release, as before.</ID>
     <ID>NoComments:ZapstoreVersionTest.kt:The old fallback compared the strings, where e.g. "x" or "v1.0" sort</ID>
     <ID>NoComments:ZapstoreVersionTest.kt:above "6.6.9", so an unparsable version was offered as an update.</ID>
-    <ID>TooManyFunctions:Account.kt:Account</ID>
     <ID>TooManyFunctions:ApplicationBackup.kt:ApplicationBackup</ID>
     <ID>TooManyFunctions:LocalPreferences.kt:LocalPreferences</ID>
   </CurrentIssues>

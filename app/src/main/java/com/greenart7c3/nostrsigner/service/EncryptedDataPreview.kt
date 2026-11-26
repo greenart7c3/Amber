@@ -62,7 +62,7 @@ internal suspend fun previewOf(
 /** The decrypted content of [seal]; the caller still gets the seal itself. */
 private suspend fun sealPreview(seal: AmberEvent, account: Account, onParseError: (String) -> Unit): EncryptedDataKind {
     val decrypted = try {
-        account.decrypt(seal.content, account.hexKey)
+        account.crypto.decrypt(seal.content, account.hexKey)
     } catch (_: Exception) {
         seal.content
     }

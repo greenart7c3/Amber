@@ -199,6 +199,8 @@ class EventNotificationConsumerTest {
         every { event.taggedUsers() } returns listOf(PTag(account.hexKey))
 
         val locked = spyk(account)
+        val lockedCrypto = spyk(locked.crypto)
+        every { locked.crypto } returns lockedCrypto
         every { locked.requirePrivateKeyAccess() } throws SecurityException("locked")
         coEvery { AccountStorage.loadSync(any(), any()) } returns locked
         coEvery { AccountStorage.load(any(), any()) } returns locked
@@ -208,7 +210,7 @@ class EventNotificationConsumerTest {
 
         // Unrecorded, so a re-delivery after unlock is processed.
         coVerify(exactly = 0) { bunkerEventDao.insert(any()) }
-        coVerify(exactly = 0) { locked.decrypt(any(), any()) }
+        coVerify(exactly = 0) { lockedCrypto.decrypt(any(), any()) }
     }
 
     /**
@@ -230,7 +232,9 @@ class EventNotificationConsumerTest {
                 keyAccessCheck = {},
             ),
         )
-        coEvery { acc.decrypt(any(), any()) } returns requestJson
+        val crypto = spyk(acc.crypto)
+        every { acc.crypto } returns crypto
+        coEvery { crypto.decrypt(any(), any()) } returns requestJson
         val sender = KeyPair().pubKey.toHexKey()
         val event = mockk<Event>(relaxed = true)
         every { event.id } returns "preauth-${requestJson.hashCode()}"
@@ -300,8 +304,9 @@ class EventNotificationConsumerTest {
             """{"id":"d1","method":"nip44_decrypt","params":["$peer","payload-ciphertext"]}""",
         ) { acc ->
             // Only the request itself was opened; the payload never was.
-            coVerify(exactly = 1) { acc.decrypt(any(), any()) }
-            coVerify(exactly = 0) { acc.nip44Decrypt(any(), any()) }
+            val crypto = acc.crypto
+            coVerify(exactly = 1) { crypto.decrypt(any(), any()) }
+            coVerify(exactly = 0) { crypto.nip44Decrypt(any(), any()) }
         }
         assertEquals("no permission", responses.single().error)
     }
@@ -393,7 +398,9 @@ class EventNotificationConsumerTest {
                 keyAccessCheck = {},
             ),
         )
-        coEvery { acc.decrypt(any(), any()) } returns requestJson
+        val crypto = spyk(acc.crypto)
+        every { acc.crypto } returns crypto
+        coEvery { crypto.decrypt(any(), any()) } returns requestJson
         val client = KeyPair().pubKey.toHexKey()
         val event = requestEvent("connected-${requestJson.hashCode()}", from = client, to = acc.hexKey)
         coEvery { AccountStorage.loadSync(any(), any()) } returns acc

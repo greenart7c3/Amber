@@ -254,9 +254,9 @@ class BunkerResponder(
 
     // The account key, for a connection from before per-connection keys; it checks key access first.
     private fun Account.replyKey(): Nip46ReplyKey = object : Nip46ReplyKey {
-        override suspend fun nip04Encrypt(plainText: String, toPubKey: String): String = this@replyKey.nip04Encrypt(plainText, toPubKey)
+        override suspend fun nip04Encrypt(plainText: String, toPubKey: String): String = this@replyKey.crypto.nip04Encrypt(plainText, toPubKey)
 
-        override suspend fun nip44Encrypt(plainText: String, toPubKey: String): String = this@replyKey.nip44Encrypt(plainText, toPubKey)
+        override suspend fun nip44Encrypt(plainText: String, toPubKey: String): String = this@replyKey.crypto.nip44Encrypt(plainText, toPubKey)
 
         override fun sign(createdAt: Long, kind: Int, tags: Array<Array<String>>, content: String): Event = signSync(createdAt, kind, tags, content)
     }

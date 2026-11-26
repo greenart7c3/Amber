@@ -59,7 +59,7 @@ class AccountExportSeedRestoreTest {
     fun `seed round trips through a real signer`() = runBlocking {
         val privKeyHex = Nip06().privateKeyFromMnemonic(words).toHexKey()
         val account = realAccount(privKeyHex)
-        val encrypted = account.nip44Encrypt(words, account.hexKey)
+        val encrypted = account.crypto.nip44Encrypt(words, account.hexKey)
 
         assertEquals(words, AccountExportService.decryptExportedSeedWords(account, encrypted, privKeyHex))
     }
@@ -73,7 +73,7 @@ class AccountExportSeedRestoreTest {
     fun `invalid decrypted words are dropped instead of failing the account`() {
         val account = mockk<Account>()
         every { account.hexKey } returns "owner"
-        coEvery { account.nip44Decrypt("encrypted-seed", "owner") } returns "not a mnemonic"
+        coEvery { account.crypto.nip44Decrypt("encrypted-seed", "owner") } returns "not a mnemonic"
         assertNull(runBlocking { AccountExportService.decryptExportedSeedWords(account, "encrypted-seed") })
     }
 
@@ -81,7 +81,7 @@ class AccountExportSeedRestoreTest {
     fun `undecryptable seed words are dropped instead of failing the account`() {
         val account = mockk<Account>()
         every { account.hexKey } returns "owner"
-        coEvery { account.nip44Decrypt("ciphertext-as-seed", "owner") } throws RuntimeException("bad envelope")
+        coEvery { account.crypto.nip44Decrypt("ciphertext-as-seed", "owner") } throws RuntimeException("bad envelope")
         assertNull(runBlocking { AccountExportService.decryptExportedSeedWords(account, "ciphertext-as-seed") })
     }
 
@@ -92,7 +92,7 @@ class AccountExportSeedRestoreTest {
         // otherWords is a valid mnemonic for a DIFFERENT identity, encrypted
         // under this account's key: storing it would let a later "recovery"
         // produce someone else's key.
-        val encryptedOther = account.nip44Encrypt(otherWords, account.hexKey)
+        val encryptedOther = account.crypto.nip44Encrypt(otherWords, account.hexKey)
 
         assertNull(AccountExportService.decryptExportedSeedWords(account, encryptedOther, privKeyHex))
     }

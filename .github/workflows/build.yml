@@ -54,7 +54,23 @@ jobs:
           path: build/reports/kover
 
       - name: Build APK (gradle)
-        run: ./gradlew assembleDebug --no-daemon
+        run: |
+          echo "=== before build"; free -m; nproc; ps -eo pid,rss,etime,args --sort=-rss | head -6 | cut -c1-220
+          (
+            sleep 240
+            while true; do
+              echo "=== watchdog $(date -u +%T)"; free -m
+              ps -eo pid,rss,pcpu,etime,args --sort=-rss | head -8 | cut -c1-220
+              for p in $(pgrep -f 'GradleDaemon|KotlinCompileDaemon'); do
+                echo "--- jvm $p"
+                jcmd $p GC.heap_info 2>&1 | head -12
+                jstat -gcutil $p 2>&1
+                jstack $p 2>&1 | grep -E -A14 '^"(Execution worker|.*WorkerExecutor|.*included builds|.*Daemon worker|ForkJoinPool)' | head -150
+              done
+              sleep 150
+            done
+          ) &
+          ./gradlew assembleDebug --no-daemon
 
       # Sole Linux cache writer: only saves on master after every build step succeeds.
       - name: Save Gradle cache

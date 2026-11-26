@@ -21,7 +21,13 @@ object Nip44v3 {
     const val VERSION: Byte = 0x03
     private const val NONCE_SIZE = 32
     private const val MAC_SIZE = 32
-    private const val MIN_DECODED_SIZE = 77 // 1 + 32 + 32 + 4 + 4 + 0 + 4
+    private const val VERSION_SIZE = 1
+    private const val KIND_SIZE = 4
+    private const val SCOPE_LENGTH_SIZE = 4
+    private const val EMPTY_SCOPE_SIZE = 0
+    private const val PLAINTEXT_LENGTH_PREFIX_SIZE = 4
+    private const val MIN_DECODED_SIZE =
+        VERSION_SIZE + NONCE_SIZE + MAC_SIZE + KIND_SIZE + SCOPE_LENGTH_SIZE + EMPTY_SCOPE_SIZE + PLAINTEXT_LENGTH_PREFIX_SIZE
     private const val MIN_PADDING = 32
     private const val PAD_CHUNK_THRESHOLD = 32768
     private const val PAD_SUBDIVS_SMALL = 4
@@ -173,6 +179,7 @@ object Nip44v3 {
         return out
     }
 
+    @Suppress("NoComments")
     fun unpad(padded: ByteArray): ByteArray {
         if (padded.size < 4) throw Nip44v3Exception("padded buffer too short")
         val plaintextLen = readU32BE(padded, 0)
@@ -187,13 +194,16 @@ object Nip44v3 {
         // produce. Validating against our own target size would reject those
         // otherwise-valid messages, so we only require that the padding region
         // is all zeroes.
-        // Constant-time zero check over the padding region.
-        var diff = 0
-        for (i in 4 + plaintextLen until padded.size) {
-            diff = diff or padded[i].toInt()
-        }
-        if (diff != 0) throw Nip44v3Exception("invalid padding: non-zero trailing bytes")
+        if (!isAllZeroesInConstantTime(padded, from = 4 + plaintextLen)) throw Nip44v3Exception("invalid padding: non-zero trailing bytes")
         return padded.copyOfRange(4, 4 + plaintextLen)
+    }
+
+    private fun isAllZeroesInConstantTime(bytes: ByteArray, from: Int): Boolean {
+        var diff = 0
+        for (i in from until bytes.size) {
+            diff = diff or bytes[i].toInt()
+        }
+        return diff == 0
     }
 
     fun targetSize(len: Int): Int {
@@ -205,7 +215,6 @@ object Nip44v3 {
     private fun targetSizeLong(len: Long): Long {
         require(len >= 0) { "negative length: $len" }
         if (len == 0L) return MIN_PADDING.toLong()
-        // next_power = 2 ** ceil(log2(len))
         val nextPower = if (len == 1L) 1L else 1L shl ceilLog2Long(len)
         val subdivs = if (nextPower >= PAD_CHUNK_THRESHOLD) PAD_SUBDIVS_LARGE.toLong() else PAD_SUBDIVS_SMALL.toLong()
         val chunk = maxOf(MIN_PADDING.toLong(), nextPower / subdivs)
@@ -213,7 +222,6 @@ object Nip44v3 {
     }
 
     private fun ceilLog2Long(n: Long): Int {
-        // For n >= 2; matches ceil(log2(n)).
         if (n <= 1) return 0
         var v = n - 1
         var bits = 0

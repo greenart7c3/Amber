@@ -30,19 +30,16 @@ object CrashReports {
      * cannot leak secrets.
      */
     fun redactKeys(input: String): String = input
-        .replace(BECH32_REDACT, "<bech32>")
-        .replace(HEXKEY_REDACT, "<hexkey>")
-        .replace(BASE64_REDACT, "<base64>")
+        .replace(NOSTR_BECH32_ENTITY, "<bech32>")
+        .replace(HEX_KEY_OR_EVENT_ID, "<hexkey>")
+        .replace(BASE64_CIPHERTEXT_OR_PAYLOAD, "<base64>")
 
-    // bech32 prefixes used by Nostr (npub, nsec, note, nprofile, nevent,
-    // naddr, nrelay, ncryptsec). Match the hrp + data part; bech32 uses
-    // the alphabet 023456789acdefghjklmnpqrstuvwxyz (no b, i, o, 1).
-    private val BECH32_REDACT =
-        Regex("\\b(npub|nsec|note|nprofile|nevent|naddr|nrelay|ncryptsec)1[023456789acdefghjklmnpqrstuvwxyz]{6,}\\b")
+    private const val BECH32_ALPHABET = "023456789acdefghjklmnpqrstuvwxyz"
+    private val NOSTR_BECH32_PREFIXES = listOf("npub", "nsec", "note", "nprofile", "nevent", "naddr", "nrelay", "ncryptsec")
+    private val NOSTR_BECH32_ENTITY =
+        Regex("\\b(${NOSTR_BECH32_PREFIXES.joinToString("|")})1[$BECH32_ALPHABET]{6,}\\b")
 
-    // 64-char lowercase hex keys (pubkeys/event ids/private keys).
-    private val HEXKEY_REDACT = Regex("\\b[0-9a-f]{64}\\b")
+    private val HEX_KEY_OR_EVENT_ID = Regex("\\b[0-9a-f]{64}\\b")
 
-    // Long base64 runs (>=32 chars): NIP-04/NIP-44/44v3 ciphertexts, payloads.
-    private val BASE64_REDACT = Regex("\\b[A-Za-z0-9+/]{32,}={0,2}\\b")
+    private val BASE64_CIPHERTEXT_OR_PAYLOAD = Regex("\\b[A-Za-z0-9+/]{32,}={0,2}\\b")
 }

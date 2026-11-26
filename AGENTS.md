@@ -132,7 +132,7 @@ In other words, the lock controls who can open and navigate the app UI; it does 
 
 ### The `requireUnlockedDevice` opt-in is a signing gate
 
-Separate from the UI-only lock above, the user can enable **`requireUnlockedDevice`** (SecurityScreen). When enabled, every `Account` private-key operation (`sign`, `signSync`, `nip04*`/`nip44*`, `decrypt`, `signPsbt`, `getNsec`, `seedWords`, `nip49Encrypt`, and the backup derived signer) calls `KeystorePolicy.requireAccess` (over `DeviceUnlockPolicy.requireAccess`) first and throws `SecurityException` while the device is locked. The flag is read synchronously from SharedPreferences (`KeystorePolicy.requireUnlockedDevice`), so the gate is correct even before the async settings load and in the offline flavor.
+Separate from the UI-only lock above, the user can enable **`requireUnlockedDevice`** (SecurityScreen). When enabled, every `Account` private-key operation (`sign`, `signSync`, `signPsbt`, `decryptZapEvent` on `Account`; `nip04*`/`nip44*`/`nip44v3*` and `decrypt` on `account.crypto` (`AccountCrypto`); `getNsec`, `seedWords`, `nip49Encrypt` on `account.keyExport` (`AccountKeyExport`); and the backup derived signer) calls `KeystorePolicy.requireAccess` (through `Account.requirePrivateKeyAccess`; a new private-key operation must do the same) (over `DeviceUnlockPolicy.requireAccess`) first and throws `SecurityException` while the device is locked. The flag is read synchronously from SharedPreferences (`KeystorePolicy.requireUnlockedDevice`), so the gate is correct even before the async settings load and in the offline flavor.
 
 Consequences to keep in mind when touching these paths:
 

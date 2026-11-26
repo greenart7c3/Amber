@@ -2,6 +2,7 @@ package com.greenart7c3.nostrsigner.desktop
 
 import com.greenart7c3.nostrsigner.common.SignerType
 import com.greenart7c3.nostrsigner.desktop.core.AmberDesktop
+import com.greenart7c3.nostrsigner.desktop.core.DesktopAccount
 import com.greenart7c3.nostrsigner.desktop.core.EncryptionScope
 import com.greenart7c3.nostrsigner.desktop.core.PendingBunkerRequest
 import com.greenart7c3.nostrsigner.desktop.core.RememberType
@@ -62,9 +63,8 @@ class UiStateTest {
         val sign = req("sign", SignerType.SIGN_EVENT)
         AmberDesktop.engine.pending.value = listOf(v2, v3, sign)
 
-        // Android defaults: NIP-04/44 all methods, NIP-44 v3 this kind only.
-        assertEquals(EncryptionScope.ALL, RequestChoices.scopeChoiceFor(v2))
-        assertEquals(EncryptionScope.SPECIFIC, RequestChoices.scopeChoiceFor(v3))
+        assertEquals("NIP-04 and NIP-44 default to all methods, as on Android", EncryptionScope.ALL, RequestChoices.scopeChoiceFor(v2))
+        assertEquals("NIP-44 v3 defaults to this kind only, as on Android", EncryptionScope.SPECIFIC, RequestChoices.scopeChoiceFor(v3))
 
         UiState.selectedRequestId.value = v2.queueKey
         assertTrue(RequestKeyboard.toggleSelectedScope())
@@ -76,9 +76,8 @@ class UiStateTest {
         assertTrue(RequestKeyboard.toggleSelectedScope())
         assertEquals(EncryptionScope.ALL, RequestChoices.scopeChoiceFor(v3))
 
-        // Not an encrypt/decrypt request: the key is left alone.
         UiState.selectedRequestId.value = sign.queueKey
-        assertFalse(RequestKeyboard.toggleSelectedScope())
+        assertFalse("the scope key leaves a request that is not encrypt or decrypt alone", RequestKeyboard.toggleSelectedScope())
     }
 
     @Test
@@ -98,13 +97,15 @@ class UiStateTest {
 
         AmberDesktop.engine.pruneExpired(now = 150)
 
-        // Expired relay request goes; unexpired and never-expiring (nostrconnect://) stay.
-        assertEquals(listOf("fresh", "uri"), AmberDesktop.engine.pending.value.map { it.request.id })
+        assertEquals(
+            "the expired relay request goes, the unexpired and the never-expiring nostrconnect one stay",
+            listOf("fresh", "uri"),
+            AmberDesktop.engine.pending.value.map { it.request.id },
+        )
     }
 
     @Test
     fun upDownSelectionClampsAtEnds() = runBlocking {
-        // Needs a real account for PendingBunkerRequest; create one.
         val account = com.greenart7c3.nostrsigner.desktop.core.AccountManager.addAccount(
             com.vitorpamplona.quartz.nip01Core.crypto.KeyPair(),
         )
@@ -124,10 +125,10 @@ class UiStateTest {
         assertEquals(reqs[1].queueKey, UiState.selectedRequestId.value)
         UiState.moveRequestSelection(1)
         assertEquals(reqs[2].queueKey, UiState.selectedRequestId.value)
-        UiState.moveRequestSelection(1) // clamps at the last item
-        assertEquals(reqs[2].queueKey, UiState.selectedRequestId.value)
-        UiState.moveRequestSelection(-5) // clamps at the first
-        assertEquals(reqs[0].queueKey, UiState.selectedRequestId.value)
+        UiState.moveRequestSelection(1)
+        assertEquals("clamps at the last item", reqs[2].queueKey, UiState.selectedRequestId.value)
+        UiState.moveRequestSelection(-5)
+        assertEquals("clamps at the first item", reqs[0].queueKey, UiState.selectedRequestId.value)
     }
 
     @Test
@@ -148,10 +149,9 @@ class UiStateTest {
         assertEquals(RememberType.NEVER, RequestChoices.rememberChoiceFor(req.queueKey))
         RequestKeyboard.cycleRememberChoice(1)
         assertEquals(RememberType.FIVE_MINUTES, RequestChoices.rememberChoiceFor(req.queueKey))
-        // Wrap backwards from the first entry to the last.
         RequestChoices.setRememberChoice(req.queueKey, RememberType.NEVER)
         RequestKeyboard.cycleRememberChoice(-1)
-        assertEquals(RememberType.ALWAYS, RequestChoices.rememberChoiceFor(req.queueKey))
+        assertEquals("wraps backwards from the first entry to the last", RememberType.ALWAYS, RequestChoices.rememberChoiceFor(req.queueKey))
     }
 
     @Test
@@ -170,15 +170,11 @@ class UiStateTest {
         UiState.selectedRequestId.value = req.queueKey
 
         RequestKeyboard.cycleRememberChoice(1)
-        assertEquals(RememberType.NEVER, RequestChoices.rememberChoiceFor(req.queueKey)) // unchanged
+        assertEquals("a connect's remember choice stays unchanged", RememberType.NEVER, RequestChoices.rememberChoiceFor(req.queueKey))
     }
 
-    @Test
-    fun connectOrOnlyRequestIsShownAloneElseBatched() = runBlocking {
-        val account = com.greenart7c3.nostrsigner.desktop.core.AccountManager.addAccount(
-            com.vitorpamplona.quartz.nip01Core.crypto.KeyPair(),
-        )
-        fun req(id: String, type: SignerType, localKey: String, kind: Int? = null) = PendingBunkerRequest(
+    private class BatchRequests(private val account: DesktopAccount) {
+        private fun req(id: String, type: SignerType, localKey: String, kind: Int? = null) = PendingBunkerRequest(
             request = BunkerRequest(id, type.name.lowercase(), arrayOf()),
             type = type,
             account = account,
@@ -186,54 +182,108 @@ class UiStateTest {
             relays = emptyList(),
             kind = kind,
         )
+
         val note = req("n1", SignerType.SIGN_EVENT, "app1", kind = 1)
         val decrypt = req("d1", SignerType.NIP44_DECRYPT, "app1")
         val note2 = req("n2", SignerType.SIGN_EVENT, "app1", kind = 1)
         val other = req("o1", SignerType.SIGN_EVENT, "app2", kind = 7)
         val connect = req("c1", SignerType.CONNECT, "app3")
 
-        assertTrue(com.greenart7c3.nostrsigner.desktop.ui.singleRequest(listOf(note)) === note)
-        assertNull(com.greenart7c3.nostrsigner.desktop.ui.singleRequest(listOf(note, decrypt)))
-        // A connect is never batched: it is shown alone first.
-        assertTrue(com.greenart7c3.nostrsigner.desktop.ui.singleRequest(listOf(note, connect, decrypt)) === connect)
+        fun queueWithoutConnect() {
+            AmberDesktop.engine.pending.value = listOf(decrypt, note, other, note2)
+        }
+    }
 
-        // Per app in arrival order, then per type (sign before decrypt), kinds kept together.
-        val apps = com.greenart7c3.nostrsigner.desktop.ui.batchApps(listOf(decrypt, note, other, note2, connect))
+    private suspend fun batchRequests() = BatchRequests(
+        com.greenart7c3.nostrsigner.desktop.core.AccountManager.addAccount(
+            com.vitorpamplona.quartz.nip01Core.crypto.KeyPair(),
+        ),
+    )
+
+    @Test
+    fun connectOrOnlyRequestIsShownAloneElseBatched() = runBlocking {
+        val r = batchRequests()
+
+        assertTrue(com.greenart7c3.nostrsigner.desktop.ui.singleRequest(listOf(r.note)) === r.note)
+        assertNull(com.greenart7c3.nostrsigner.desktop.ui.singleRequest(listOf(r.note, r.decrypt)))
+        assertTrue(
+            "a connect is never batched, it is shown alone first",
+            com.greenart7c3.nostrsigner.desktop.ui.singleRequest(listOf(r.note, r.connect, r.decrypt)) === r.connect,
+        )
+    }
+
+    @Test
+    fun `a batch groups per app in arrival order then per type with sign before decrypt and kinds together`() = runBlocking {
+        val r = batchRequests()
+
+        val apps = com.greenart7c3.nostrsigner.desktop.ui.batchApps(listOf(r.decrypt, r.note, r.other, r.note2, r.connect))
         assertEquals(2, apps.size)
-        assertEquals(listOf(listOf(note, note2), listOf(decrypt)), apps[0].groups.map { it.requests })
-        assertEquals(listOf(other), apps[1].requests)
+        assertEquals(listOf(listOf(r.note, r.note2), listOf(r.decrypt)), apps[0].groups.map { it.requests })
+        assertEquals(listOf(r.other), apps[1].requests)
+    }
 
-        // In a batch, ←/→ sets "Remember" for the selected request's whole group only.
-        AmberDesktop.engine.pending.value = listOf(decrypt, note, other, note2)
-        UiState.selectedRequestId.value = note2.queueKey
+    @Test
+    fun `in a batch the remember shortcut sets the selected request's whole group only`() = runBlocking {
+        val r = batchRequests()
+        r.queueWithoutConnect()
+        UiState.selectedRequestId.value = r.note2.queueKey
+
         RequestKeyboard.cycleRememberChoice(1)
-        assertEquals(RememberType.FIVE_MINUTES, RequestChoices.rememberChoiceFor(note.queueKey))
-        assertEquals(RememberType.FIVE_MINUTES, RequestChoices.rememberChoiceFor(note2.queueKey))
-        assertEquals(RememberType.NEVER, RequestChoices.rememberChoiceFor(decrypt.queueKey))
 
-        // ↓ follows the screen order: note, note2, decrypt, other.
+        assertEquals(RememberType.FIVE_MINUTES, RequestChoices.rememberChoiceFor(r.note.queueKey))
+        assertEquals(RememberType.FIVE_MINUTES, RequestChoices.rememberChoiceFor(r.note2.queueKey))
+        assertEquals(RememberType.NEVER, RequestChoices.rememberChoiceFor(r.decrypt.queueKey))
+    }
+
+    @Test
+    fun `moving down in a batch follows the screen order note note2 decrypt other`() = runBlocking {
+        val r = batchRequests()
+        r.queueWithoutConnect()
+        UiState.selectedRequestId.value = r.note2.queueKey
+
         UiState.moveRequestSelection(1)
-        assertEquals(decrypt.queueKey, UiState.selectedRequestId.value)
 
-        // Only shown requests get a decision; Space flips the selected one; prune drops answered ones.
-        BatchDecisions.batchApproved.value = emptyMap()
-        assertFalse(RequestKeyboard.toggleSelectedBatchApproval())
-        BatchDecisions.seedBatch(listOf(decrypt, note))
+        assertEquals(r.decrypt.queueKey, UiState.selectedRequestId.value)
+    }
+
+    @Test
+    fun `only shown batch requests get a decision and Space flips the selected one`() = runBlocking {
+        val r = batchRequests()
+        r.queueWithoutConnect()
+        UiState.selectedRequestId.value = r.decrypt.queueKey
+
+        assertFalse("a request the batch screen has not shown gets no decision", RequestKeyboard.toggleSelectedBatchApproval())
+        BatchDecisions.seedBatch(listOf(r.decrypt, r.note))
         assertTrue(RequestKeyboard.toggleSelectedBatchApproval())
-        assertEquals(mapOf(decrypt.queueKey to false, note.queueKey to true), BatchDecisions.batchApproved.value)
-        // Shift+Space flips the selected request's whole section: partly denied -> approve all, then deny all.
-        AmberDesktop.engine.pending.value = listOf(decrypt, note, other, note2)
-        BatchDecisions.seedBatch(listOf(decrypt, note, other, note2))
-        BatchDecisions.setBatchApproved(listOf(note), false)
-        UiState.selectedRequestId.value = note2.queueKey
-        assertTrue(RequestKeyboard.toggleSelectedBatchApproval(wholeGroup = true))
-        assertTrue(BatchDecisions.batchApproved.value[note.queueKey] == true && BatchDecisions.batchApproved.value[note2.queueKey] == true)
-        assertTrue(RequestKeyboard.toggleSelectedBatchApproval(wholeGroup = true))
-        assertTrue(BatchDecisions.batchApproved.value[note.queueKey] == false && BatchDecisions.batchApproved.value[note2.queueKey] == false)
-        assertEquals(false, BatchDecisions.batchApproved.value[decrypt.queueKey]) // other section untouched
+        assertEquals(mapOf(r.decrypt.queueKey to false, r.note.queueKey to true), BatchDecisions.batchApproved.value)
+    }
 
-        UiState.pruneRequestState(listOf(note))
-        assertEquals(mapOf(note.queueKey to false), BatchDecisions.batchApproved.value)
+    @Test
+    fun `Shift+Space approves a partly denied section, then denies it all, leaving other sections untouched`() = runBlocking {
+        val r = batchRequests()
+        r.queueWithoutConnect()
+        BatchDecisions.setBatchApproved(listOf(r.decrypt), false)
+        BatchDecisions.seedBatch(listOf(r.decrypt, r.note, r.other, r.note2))
+        BatchDecisions.setBatchApproved(listOf(r.note), false)
+        UiState.selectedRequestId.value = r.note2.queueKey
+
+        assertTrue(RequestKeyboard.toggleSelectedBatchApproval(wholeGroup = true))
+        assertTrue(BatchDecisions.batchApproved.value[r.note.queueKey] == true && BatchDecisions.batchApproved.value[r.note2.queueKey] == true)
+        assertTrue(RequestKeyboard.toggleSelectedBatchApproval(wholeGroup = true))
+        assertTrue(BatchDecisions.batchApproved.value[r.note.queueKey] == false && BatchDecisions.batchApproved.value[r.note2.queueKey] == false)
+        assertEquals("other section untouched", false, BatchDecisions.batchApproved.value[r.decrypt.queueKey])
+    }
+
+    @Test
+    fun `pruning drops the batch decisions of answered requests`() = runBlocking {
+        val r = batchRequests()
+        r.queueWithoutConnect()
+        BatchDecisions.seedBatch(listOf(r.decrypt, r.note, r.other, r.note2))
+        BatchDecisions.setBatchApproved(listOf(r.note), false)
+
+        UiState.pruneRequestState(listOf(r.note))
+
+        assertEquals(mapOf(r.note.queueKey to false), BatchDecisions.batchApproved.value)
     }
 
     @Test
@@ -247,9 +297,6 @@ class UiStateTest {
 
     @Test
     fun collidingClientIdsKeepSelectionAndChoicesSeparate() = runBlocking {
-        // Two connections queue the same client-chosen id. The UI keys on the
-        // queue entry (account, connection, id), so one card's selection and
-        // remember choice must never apply to the other.
         val account = com.greenart7c3.nostrsigner.desktop.core.AccountManager.addAccount(
             com.vitorpamplona.quartz.nip01Core.crypto.KeyPair(),
         )
@@ -267,22 +314,18 @@ class UiStateTest {
         assertTrue(clientA.queueKey.endsWith("|shared-id"))
         AmberDesktop.engine.pending.value = listOf(clientA, clientB)
 
-        // Both entries are addressable even though their request ids match.
         UiState.selectedRequestId.value = clientB.queueKey
-        assertTrue(UiState.selectedRequest() === clientB)
+        assertTrue("both entries are addressable even though their request ids match", UiState.selectedRequest() === clientB)
 
-        // A remember choice set on B's card never applies to A's.
         RequestChoices.setRememberChoice(clientB.queueKey, RememberType.ALWAYS)
-        assertEquals(RememberType.NEVER, RequestChoices.rememberChoiceFor(clientA.queueKey))
+        assertEquals("a remember choice set on B's card never applies to A's", RememberType.NEVER, RequestChoices.rememberChoiceFor(clientA.queueKey))
         assertEquals(RememberType.ALWAYS, RequestChoices.rememberChoiceFor(clientB.queueKey))
 
-        // Keyboard selection moves between the two distinct entries.
         UiState.moveRequestSelection(-1)
-        assertEquals(clientA.queueKey, UiState.selectedRequestId.value)
+        assertEquals("keyboard selection moves between the two distinct entries", clientA.queueKey, UiState.selectedRequestId.value)
         assertEquals(clientA, UiState.selectedRequest())
 
-        // Pruning keeps choices whose queue key still exists.
         UiState.pruneRequestState(listOf(clientA, clientB))
-        assertEquals(RememberType.ALWAYS, RequestChoices.rememberChoiceFor(clientB.queueKey))
+        assertEquals("pruning keeps choices whose queue key still exists", RememberType.ALWAYS, RequestChoices.rememberChoiceFor(clientB.queueKey))
     }
 }

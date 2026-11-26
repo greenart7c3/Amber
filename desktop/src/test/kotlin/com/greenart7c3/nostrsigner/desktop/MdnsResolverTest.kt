@@ -32,41 +32,42 @@ class MdnsResolverTest {
         assertArrayEquals(expected, query)
     }
 
-    /** A response with one question, then [answers] encoded after it. */
-    private fun response(vararg answers: ByteArray): ByteArray {
+    private val questionOffset: Byte = 12
+
+    private fun responseToNasLocalQuestion(vararg answers: ByteArray): ByteArray {
         val out = ByteArrayOutputStream()
-        out.write(byteArrayOf(0, 0, 0x84.toByte(), 0, 0, 1, 0, answers.size.toByte(), 0, 0, 0, 0))
-        // Question at offset 12: nas.local A IN.
-        out.write(byteArrayOf(3) + "nas".toByteArray() + byteArrayOf(5) + "local".toByteArray() + byteArrayOf(0, 0, 1, 0, 1))
+        val header = byteArrayOf(0, 0, 0x84.toByte(), 0, 0, 1, 0, answers.size.toByte(), 0, 0, 0, 0)
+        out.write(header)
+        check(out.size() == questionOffset.toInt())
+        val nasLocalAIn = byteArrayOf(3) + "nas".toByteArray() + byteArrayOf(5) + "local".toByteArray() + byteArrayOf(0, 0, 1, 0, 1)
+        out.write(nasLocalAIn)
         answers.forEach { out.write(it) }
         return out.toByteArray()
     }
 
-    /** A record whose name is a compression pointer to the question (offset 12). */
-    private fun record(type: Int, data: ByteArray, cacheFlush: Boolean = true) = byteArrayOf(0xC0.toByte(), 12, 0, type.toByte(), if (cacheFlush) 0x80.toByte() else 0, 1, 0, 0, 0, 120, 0, data.size.toByte()) + data
+    private fun recordNamedByPointerToTheQuestion(type: Int, data: ByteArray, cacheFlush: Boolean = true) = byteArrayOf(0xC0.toByte(), questionOffset, 0, type.toByte(), if (cacheFlush) 0x80.toByte() else 0, 1, 0, 0, 0, 120, 0, data.size.toByte()) + data
 
     @Test
     fun answersAreParsedThroughNameCompression() {
         val v4 = byteArrayOf(192.toByte(), 168.toByte(), 1, 20)
         val v6 = InetAddress.getByName("fe80::1").address
-        val found = MdnsResolver.parseAnswers(response(record(1, v4), record(28, v6)), "nas.local")
+        val found = MdnsResolver.parseAnswers(responseToNasLocalQuestion(recordNamedByPointerToTheQuestion(1, v4), recordNamedByPointerToTheQuestion(28, v6)), "nas.local")
         assertEquals(listOf("192.168.1.20", "fe80:0:0:0:0:0:0:1"), found.map { it.hostAddress })
     }
 
     @Test
     fun answersForOtherNamesAreIgnored() {
         val other = byteArrayOf(5) + "other".toByteArray() + byteArrayOf(5) + "local".toByteArray() + byteArrayOf(0, 0, 1, 0x80.toByte(), 1, 0, 0, 0, 120, 0, 4, 10, 0, 0, 9)
-        assertTrue(MdnsResolver.parseAnswers(response(other), "nas.local").isEmpty())
+        assertTrue(MdnsResolver.parseAnswers(responseToNasLocalQuestion(other), "nas.local").isEmpty())
     }
 
     @Test
     fun aCompressionLoopIsRejected() {
-        // A record name pointing at itself.
-        val loop = response(byteArrayOf(0xC0.toByte(), 0))
-        val looped = loop.copyOf().also {
+        val loop = responseToNasLocalQuestion(byteArrayOf(0xC0.toByte(), 0))
+        val recordNamePointingAtItself = loop.copyOf().also {
             val at = it.size - 2
             it[at + 1] = at.toByte()
         }
-        assertThrows(IllegalArgumentException::class.java) { MdnsResolver.parseAnswers(looped, "nas.local") }
+        assertThrows(IllegalArgumentException::class.java) { MdnsResolver.parseAnswers(recordNamePointingAtItself, "nas.local") }
     }
 }

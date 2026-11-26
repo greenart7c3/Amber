@@ -98,12 +98,10 @@ class LocalBunkerRelayTest {
                 },
             )
 
-        /** The next relay message, failing the test instead of hanging when the relay goes quiet. */
         fun next(timeoutMillis: Long = 5_000): String = messages.poll(timeoutMillis, TimeUnit.MILLISECONDS) ?: error("no relay message within ${timeoutMillis}ms")
 
-        /** Asserts nothing else arrives: filters must not leak events to non-matching subscribers. */
-        fun silence(timeoutMillis: Long = 400) {
-            assertNull(messages.poll(timeoutMillis, TimeUnit.MILLISECONDS))
+        fun assertNothingElseArrives(because: String, timeoutMillis: Long = 400) {
+            assertNull(because, messages.poll(timeoutMillis, TimeUnit.MILLISECONDS))
         }
 
         fun send(text: String): Boolean = socket.send(text)
@@ -163,14 +161,12 @@ class LocalBunkerRelayTest {
 
         val event = signedEvent(tags = arrayOf(arrayOf("p", target)))
         assertTrue(subscriber.send(eventMessage(event)))
-        // The publisher is subscribed itself, so it gets its OK ack first.
-        assertEquals(event.id, parse(subscriber.next()).get(1).asText())
+        assertEquals("the subscribed publisher gets its OK ack first", event.id, parse(subscriber.next()).get(1).asText())
         val delivered = parse(subscriber.next())
         assertEquals("EVENT", delivered.get(0).asText())
         assertEquals("live", delivered.get(1).asText())
         assertEquals(event.id, delivered.get(2).get("id").asText())
-        // The event does not match the other subscription's p tag.
-        other.silence()
+        other.assertNothingElseArrives("the event does not match the other subscription's p tag")
     }
 
     @Test
@@ -178,8 +174,7 @@ class LocalBunkerRelayTest {
         val publisher = WsClient(http, url)
         val events = List(3) { signedEvent(content = "counting $it") }
         events.forEach { event -> assertTrue(publisher.send(eventMessage(event))) }
-        // Consume the acks so nothing queues up behind the subscription replay.
-        repeat(events.size) { assertEquals("OK", parse(publisher.next()).get(0).asText()) }
+        repeat(events.size) { assertEquals("every publish is acked before the replay is requested", "OK", parse(publisher.next()).get(0).asText()) }
 
         val subscriber = WsClient(http, url)
         subscriber.send(req("last2", """{"kinds":[$NOSTR_CONNECT_TEST_KIND],"limit":2}"""))
@@ -203,15 +198,15 @@ class LocalBunkerRelayTest {
         assertEquals(event.id, parse(publisher.next()).get(1).asText())
         assertEquals(event.id, parse(publisher.next()).get(1).asText())
         assertEquals(event.id, parse(subscriber.next()).get(2).get("id").asText())
-        subscriber.silence()
+        subscriber.assertNothingElseArrives("a duplicate event is delivered once")
     }
 
     @Test
     fun tamperedEventIsRejected() {
         val client = WsClient(http, url)
         val node = parse(eventMessage(signedEvent())).get(1) as ObjectNode
-        // A signature that is no longer valid for the event's id.
-        node.put("sig", "0".repeat(128))
+        val signatureInvalidForTheId = "0".repeat(128)
+        node.put("sig", signatureInvalidForTheId)
         assertTrue(client.send(JacksonMapper.mapper.writeValueAsString(listOf("EVENT", node))))
         val ack = parse(client.next())
         assertEquals("OK", ack.get(0).asText())
@@ -226,10 +221,9 @@ class LocalBunkerRelayTest {
         assertEquals("NOTICE", parse(client.next()).get(0).asText())
         assertTrue(client.send("""["NOT_A_COMMAND"]"""))
         assertEquals("NOTICE", parse(client.next()).get(0).asText())
-        // The session stays usable afterwards.
         val event = signedEvent()
         assertTrue(client.send(eventMessage(event)))
-        assertEquals(event.id, parse(client.next()).get(1).asText())
+        assertEquals("the session stays usable after malformed commands", event.id, parse(client.next()).get(1).asText())
     }
 
     @Test
@@ -263,19 +257,15 @@ class LocalBunkerRelayTest {
                 else -> {}
             }
         }
-        // The subscription cap (20 per client) binds first; the rate limiter
-        // catches the rest of the flood past 60 REQs per minute.
-        assertEquals(20, eose)
-        assertEquals(40, tooMany)
-        assertEquals(5, limited)
+        assertEquals("the subscription cap of 20 per client binds first", 20, eose)
+        assertEquals("REQs past the cap and within 60 per minute are told too many subscriptions", 40, tooMany)
+        assertEquals("the rate limiter catches the REQs past 60 per minute", 5, limited)
     }
 
     @Test
     fun malformedFloodClosesTheConnection() {
         val client = WsClient(http, url)
         repeat(65) { client.send("garbage $it") }
-        // The first 60 stay within the per-connection budget; the 61st is told
-        // "rate limited" and the session is dropped right after it.
         var notices = 0
         var limited = 0
         repeat(61) {
@@ -286,8 +276,8 @@ class LocalBunkerRelayTest {
                 notices++
             }
         }
-        assertEquals(60, notices)
-        assertEquals(1, limited)
+        assertEquals("the first 60 stay within the per-connection budget", 60, notices)
+        assertEquals("the 61st is told rate limited", 1, limited)
         client.awaitClose()
     }
 
@@ -310,8 +300,7 @@ class LocalBunkerRelayTest {
                 ),
             ),
         )
-        // Both the client key and the engine's connection key are approved.
-        assertTrue(BunkerRelays.approvedRelaySenders().contains(connPub))
+        assertTrue("the engine's connection key is approved alongside the client key", BunkerRelays.approvedRelaySenders().contains(connPub))
 
         val client = WsClient(http, url)
         repeat(15) { i ->
@@ -322,8 +311,7 @@ class LocalBunkerRelayTest {
             val ev = connSigner.signerSync.sign<Event>(TimeUtils.now(), NOSTR_CONNECT_TEST_KIND, emptyArray(), "response $i")
             assertTrue(client.send(eventMessage(ev)))
         }
-        // All 30 acked as accepted: approved senders bypass the bucket.
-        repeat(30) { assertTrue(parse(client.next()).get(2).asBoolean()) }
+        repeat(30) { assertTrue("approved senders bypass the rate limit bucket", parse(client.next()).get(2).asBoolean()) }
     }
 
     @Test
@@ -345,12 +333,15 @@ class LocalBunkerRelayTest {
     @Test
     fun startWhileRunningKeepsTheCurrentServer() {
         val previousPort = LocalBunkerRelay.boundPort
-        // A second start must not rebind or reset the relay.
         assertEquals(Status.RUNNING, LocalBunkerRelay.start(0))
-        assertEquals(previousPort, LocalBunkerRelay.boundPort)
+        assertEquals("a second start does not rebind the relay", previousPort, LocalBunkerRelay.boundPort)
         assertNotNull(LocalBunkerRelay.relayUrl())
+    }
+
+    @Test
+    fun aStoppedRelayAcceptsAFreshStart() {
+        assertEquals(Status.RUNNING, LocalBunkerRelay.start(0))
         LocalBunkerRelay.stop()
-        // A stopped relay accepts a fresh start.
         assertEquals(Status.RUNNING, LocalBunkerRelay.start(0))
         assertTrue(LocalBunkerRelay.boundPort > 0)
     }
@@ -366,6 +357,7 @@ class LocalBunkerRelayTest {
         assertEquals("ws://127.0.0.1:$free/", LocalBunkerRelay.relayUrl()?.url)
     }
 
+    @Suppress("NoComments")
     @Test
     fun busyPortIsReportedAsInUse() {
         // Hold the port on the loopback address the relay binds: on macOS a

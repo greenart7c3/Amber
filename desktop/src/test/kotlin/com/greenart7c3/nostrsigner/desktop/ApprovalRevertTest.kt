@@ -40,8 +40,7 @@ import org.junit.Test
 class ApprovalRevertTest {
     private val nip44Grant = AppPermissionRecord("NIP44_ENCRYPT", null, true, RememberType.ALWAYS.screenCode, Long.MAX_VALUE / 1000, 0)
 
-    // A relay nothing listens on: every publish to it fails.
-    private fun deadRelay(): NormalizedRelayUrl {
+    private fun relayNothingListensOn(): NormalizedRelayUrl {
         val port = ServerSocket(0).use { it.localPort }
         return RelayUrlNormalizer.normalizeOrNull("ws://127.0.0.1:$port")!!
     }
@@ -53,8 +52,7 @@ class ApprovalRevertTest {
         return client.signerSync.sign(TimeUtils.now(), 24133, arrayOf(arrayOf("p", connectionHex)), client.nip44Encrypt(json, connectionHex))
     }
 
-    /** Approves, remembering it, a sign_event card from a connection on [relay]; returns the connection afterwards. */
-    private suspend fun CoroutineScope.approveSignEvent(relay: NormalizedRelayUrl, name: String): AppWithPermissions? {
+    private suspend fun CoroutineScope.approveAndRememberSignEventFrom(relay: NormalizedRelayUrl, name: String): AppWithPermissions? {
         val account = AccountManager.addAccount(KeyPair(), name = name, signPolicy = 1)
         val store = AmberDesktop.store(account.npub)
         val clientKp = KeyPair()
@@ -81,11 +79,10 @@ class ApprovalRevertTest {
 
     @Test
     fun aGrantIsTakenBackWhenTheReplyFails() = runBlocking {
-        val app = approveSignEvent(deadRelay(), "revert-failed")
+        val app = approveAndRememberSignEventFrom(relayNothingListensOn(), "revert-failed")
 
         assertTrue(!app.signsKind1())
-        // What the connection was granted before stays.
-        assertEquals(listOf(nip44Grant), app?.permissions)
+        assertEquals("what the connection was granted before stays", listOf(nip44Grant), app?.permissions)
     }
 
     @Test
@@ -94,7 +91,7 @@ class ApprovalRevertTest {
         assertEquals(Status.RUNNING, LocalBunkerRelay.start(0))
         try {
             AmberDesktop.engine.start()
-            val app = approveSignEvent(LocalBunkerRelay.relayUrl() ?: error("relay did not start"), "revert-delivered")
+            val app = approveAndRememberSignEventFrom(LocalBunkerRelay.relayUrl() ?: error("relay did not start"), "revert-delivered")
             assertTrue(app.signsKind1())
         } finally {
             LocalBunkerRelay.stop()
@@ -105,7 +102,7 @@ class ApprovalRevertTest {
     fun aNostrConnectConnectionIsDroppedWhenTheReplyFails() = runBlocking {
         val account = AccountManager.addAccount(KeyPair(), name = "revert-connect", signPolicy = 1)
         val clientHex = KeyPair().pubKey.toHexKey()
-        val relay = URLEncoder.encode(deadRelay().url, "utf-8")
+        val relay = URLEncoder.encode(relayNothingListensOn().url, "utf-8")
         assertNull(AmberDesktop.engine.addNostrConnect("nostrconnect://$clientHex?relay=$relay&name=revert-app", account))
         val card = withTimeout(20.seconds) {
             while (AmberDesktop.engine.pending.value.none { it.localKey == clientHex }) delay(50.milliseconds)

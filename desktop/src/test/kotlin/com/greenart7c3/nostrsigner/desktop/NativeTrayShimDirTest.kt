@@ -35,9 +35,8 @@ class NativeTrayShimDirTest {
         assertNotEquals("each call must create its own directory", first.absolutePath, second.absolutePath)
         assertTrue(first.isDirectory)
         assertTrue(second.isDirectory)
-        // Freshly created, not a pre-existing directory that was adopted.
-        assertEquals(0, first.listFiles()?.size)
-        assertEquals(0, second.listFiles()?.size)
+        assertEquals("freshly created, not a pre-existing directory that was adopted", 0, first.listFiles()?.size)
+        assertEquals("freshly created, not a pre-existing directory that was adopted", 0, second.listFiles()?.size)
     }
 
     @Test

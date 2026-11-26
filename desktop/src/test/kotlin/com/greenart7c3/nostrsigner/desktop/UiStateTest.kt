@@ -6,6 +6,9 @@ import com.greenart7c3.nostrsigner.desktop.core.EncryptionScope
 import com.greenart7c3.nostrsigner.desktop.core.PendingBunkerRequest
 import com.greenart7c3.nostrsigner.desktop.core.RememberType
 import com.greenart7c3.nostrsigner.desktop.core.pruneExpired
+import com.greenart7c3.nostrsigner.desktop.ui.BatchDecisions
+import com.greenart7c3.nostrsigner.desktop.ui.RequestChoices
+import com.greenart7c3.nostrsigner.desktop.ui.RequestKeyboard
 import com.greenart7c3.nostrsigner.desktop.ui.UiState
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequest
 import java.io.File
@@ -37,9 +40,9 @@ class UiStateTest {
     fun reset() {
         AmberDesktop.engine.pending.value = emptyList()
         UiState.selectedRequestId.value = null
-        UiState.rememberChoices.value = emptyMap()
-        UiState.scopeChoices.value = emptyMap()
-        UiState.batchApproved.value = emptyMap()
+        RequestChoices.rememberChoices.value = emptyMap()
+        RequestChoices.scopeChoices.value = emptyMap()
+        BatchDecisions.batchApproved.value = emptyMap()
     }
 
     @Test
@@ -60,22 +63,22 @@ class UiStateTest {
         AmberDesktop.engine.pending.value = listOf(v2, v3, sign)
 
         // Android defaults: NIP-04/44 all methods, NIP-44 v3 this kind only.
-        assertEquals(EncryptionScope.ALL, UiState.scopeChoiceFor(v2))
-        assertEquals(EncryptionScope.SPECIFIC, UiState.scopeChoiceFor(v3))
+        assertEquals(EncryptionScope.ALL, RequestChoices.scopeChoiceFor(v2))
+        assertEquals(EncryptionScope.SPECIFIC, RequestChoices.scopeChoiceFor(v3))
 
         UiState.selectedRequestId.value = v2.queueKey
-        assertTrue(UiState.toggleSelectedScope())
-        assertEquals(EncryptionScope.SPECIFIC, UiState.scopeChoiceFor(v2))
-        assertTrue(UiState.toggleSelectedScope())
-        assertEquals(EncryptionScope.ALL, UiState.scopeChoiceFor(v2))
+        assertTrue(RequestKeyboard.toggleSelectedScope())
+        assertEquals(EncryptionScope.SPECIFIC, RequestChoices.scopeChoiceFor(v2))
+        assertTrue(RequestKeyboard.toggleSelectedScope())
+        assertEquals(EncryptionScope.ALL, RequestChoices.scopeChoiceFor(v2))
 
         UiState.selectedRequestId.value = v3.queueKey
-        assertTrue(UiState.toggleSelectedScope())
-        assertEquals(EncryptionScope.ALL, UiState.scopeChoiceFor(v3))
+        assertTrue(RequestKeyboard.toggleSelectedScope())
+        assertEquals(EncryptionScope.ALL, RequestChoices.scopeChoiceFor(v3))
 
         // Not an encrypt/decrypt request: the key is left alone.
         UiState.selectedRequestId.value = sign.queueKey
-        assertFalse(UiState.toggleSelectedScope())
+        assertFalse(RequestKeyboard.toggleSelectedScope())
     }
 
     @Test
@@ -142,13 +145,13 @@ class UiStateTest {
         AmberDesktop.engine.pending.value = listOf(req)
         UiState.selectedRequestId.value = req.queueKey
 
-        assertEquals(RememberType.NEVER, UiState.rememberChoiceFor(req.queueKey))
-        UiState.cycleRememberChoice(1)
-        assertEquals(RememberType.FIVE_MINUTES, UiState.rememberChoiceFor(req.queueKey))
+        assertEquals(RememberType.NEVER, RequestChoices.rememberChoiceFor(req.queueKey))
+        RequestKeyboard.cycleRememberChoice(1)
+        assertEquals(RememberType.FIVE_MINUTES, RequestChoices.rememberChoiceFor(req.queueKey))
         // Wrap backwards from the first entry to the last.
-        UiState.setRememberChoice(req.queueKey, RememberType.NEVER)
-        UiState.cycleRememberChoice(-1)
-        assertEquals(RememberType.ALWAYS, UiState.rememberChoiceFor(req.queueKey))
+        RequestChoices.setRememberChoice(req.queueKey, RememberType.NEVER)
+        RequestKeyboard.cycleRememberChoice(-1)
+        assertEquals(RememberType.ALWAYS, RequestChoices.rememberChoiceFor(req.queueKey))
     }
 
     @Test
@@ -166,8 +169,8 @@ class UiStateTest {
         AmberDesktop.engine.pending.value = listOf(req)
         UiState.selectedRequestId.value = req.queueKey
 
-        UiState.cycleRememberChoice(1)
-        assertEquals(RememberType.NEVER, UiState.rememberChoiceFor(req.queueKey)) // unchanged
+        RequestKeyboard.cycleRememberChoice(1)
+        assertEquals(RememberType.NEVER, RequestChoices.rememberChoiceFor(req.queueKey)) // unchanged
     }
 
     @Test
@@ -203,43 +206,43 @@ class UiStateTest {
         // In a batch, ←/→ sets "Remember" for the selected request's whole group only.
         AmberDesktop.engine.pending.value = listOf(decrypt, note, other, note2)
         UiState.selectedRequestId.value = note2.queueKey
-        UiState.cycleRememberChoice(1)
-        assertEquals(RememberType.FIVE_MINUTES, UiState.rememberChoiceFor(note.queueKey))
-        assertEquals(RememberType.FIVE_MINUTES, UiState.rememberChoiceFor(note2.queueKey))
-        assertEquals(RememberType.NEVER, UiState.rememberChoiceFor(decrypt.queueKey))
+        RequestKeyboard.cycleRememberChoice(1)
+        assertEquals(RememberType.FIVE_MINUTES, RequestChoices.rememberChoiceFor(note.queueKey))
+        assertEquals(RememberType.FIVE_MINUTES, RequestChoices.rememberChoiceFor(note2.queueKey))
+        assertEquals(RememberType.NEVER, RequestChoices.rememberChoiceFor(decrypt.queueKey))
 
         // ↓ follows the screen order: note, note2, decrypt, other.
         UiState.moveRequestSelection(1)
         assertEquals(decrypt.queueKey, UiState.selectedRequestId.value)
 
         // Only shown requests get a decision; Space flips the selected one; prune drops answered ones.
-        UiState.batchApproved.value = emptyMap()
-        assertFalse(UiState.toggleSelectedBatchApproval())
-        UiState.seedBatch(listOf(decrypt, note))
-        assertTrue(UiState.toggleSelectedBatchApproval())
-        assertEquals(mapOf(decrypt.queueKey to false, note.queueKey to true), UiState.batchApproved.value)
+        BatchDecisions.batchApproved.value = emptyMap()
+        assertFalse(RequestKeyboard.toggleSelectedBatchApproval())
+        BatchDecisions.seedBatch(listOf(decrypt, note))
+        assertTrue(RequestKeyboard.toggleSelectedBatchApproval())
+        assertEquals(mapOf(decrypt.queueKey to false, note.queueKey to true), BatchDecisions.batchApproved.value)
         // Shift+Space flips the selected request's whole section: partly denied -> approve all, then deny all.
         AmberDesktop.engine.pending.value = listOf(decrypt, note, other, note2)
-        UiState.seedBatch(listOf(decrypt, note, other, note2))
-        UiState.setBatchApproved(listOf(note), false)
+        BatchDecisions.seedBatch(listOf(decrypt, note, other, note2))
+        BatchDecisions.setBatchApproved(listOf(note), false)
         UiState.selectedRequestId.value = note2.queueKey
-        assertTrue(UiState.toggleSelectedBatchApproval(wholeGroup = true))
-        assertTrue(UiState.batchApproved.value[note.queueKey] == true && UiState.batchApproved.value[note2.queueKey] == true)
-        assertTrue(UiState.toggleSelectedBatchApproval(wholeGroup = true))
-        assertTrue(UiState.batchApproved.value[note.queueKey] == false && UiState.batchApproved.value[note2.queueKey] == false)
-        assertEquals(false, UiState.batchApproved.value[decrypt.queueKey]) // other section untouched
+        assertTrue(RequestKeyboard.toggleSelectedBatchApproval(wholeGroup = true))
+        assertTrue(BatchDecisions.batchApproved.value[note.queueKey] == true && BatchDecisions.batchApproved.value[note2.queueKey] == true)
+        assertTrue(RequestKeyboard.toggleSelectedBatchApproval(wholeGroup = true))
+        assertTrue(BatchDecisions.batchApproved.value[note.queueKey] == false && BatchDecisions.batchApproved.value[note2.queueKey] == false)
+        assertEquals(false, BatchDecisions.batchApproved.value[decrypt.queueKey]) // other section untouched
 
         UiState.pruneRequestState(listOf(note))
-        assertEquals(mapOf(note.queueKey to false), UiState.batchApproved.value)
+        assertEquals(mapOf(note.queueKey to false), BatchDecisions.batchApproved.value)
     }
 
     @Test
     fun pruneDropsStaleSelectionAndChoices() {
         UiState.selectedRequestId.value = "gone"
-        UiState.rememberChoices.value = mapOf("gone" to RememberType.ALWAYS)
+        RequestChoices.rememberChoices.value = mapOf("gone" to RememberType.ALWAYS)
         UiState.pruneRequestState(emptyList())
         assertNull(UiState.selectedRequestId.value)
-        assertEquals(emptyMap<String, RememberType>(), UiState.rememberChoices.value)
+        assertEquals(emptyMap<String, RememberType>(), RequestChoices.rememberChoices.value)
     }
 
     @Test
@@ -269,9 +272,9 @@ class UiStateTest {
         assertTrue(UiState.selectedRequest() === clientB)
 
         // A remember choice set on B's card never applies to A's.
-        UiState.setRememberChoice(clientB.queueKey, RememberType.ALWAYS)
-        assertEquals(RememberType.NEVER, UiState.rememberChoiceFor(clientA.queueKey))
-        assertEquals(RememberType.ALWAYS, UiState.rememberChoiceFor(clientB.queueKey))
+        RequestChoices.setRememberChoice(clientB.queueKey, RememberType.ALWAYS)
+        assertEquals(RememberType.NEVER, RequestChoices.rememberChoiceFor(clientA.queueKey))
+        assertEquals(RememberType.ALWAYS, RequestChoices.rememberChoiceFor(clientB.queueKey))
 
         // Keyboard selection moves between the two distinct entries.
         UiState.moveRequestSelection(-1)
@@ -280,6 +283,6 @@ class UiStateTest {
 
         // Pruning keeps choices whose queue key still exists.
         UiState.pruneRequestState(listOf(clientA, clientB))
-        assertEquals(RememberType.ALWAYS, UiState.rememberChoiceFor(clientB.queueKey))
+        assertEquals(RememberType.ALWAYS, RequestChoices.rememberChoiceFor(clientB.queueKey))
     }
 }

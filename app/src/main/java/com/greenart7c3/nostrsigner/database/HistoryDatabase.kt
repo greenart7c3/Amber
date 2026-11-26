@@ -44,9 +44,10 @@ abstract class HistoryDatabase : RoomDatabase() {
 
     abstract fun statsDao(): HistoryStatsDao
 
-    // Set by getDatabase: HistoryDao.addHistory honors
-    // the privacy mode and refreshes the cached permission DAO.
+    /** Set by [getDatabase]: [HistoryDao.addHistory] honors its privacy mode. */
     lateinit var settingsStore: SettingsStore
+
+    /** Set by [getDatabase]: [HistoryDao.addHistory] refreshes the cached permission DAO through it. */
     lateinit var accountRepository: AccountRepository
 
     companion object {

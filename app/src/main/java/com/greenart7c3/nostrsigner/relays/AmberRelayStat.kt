@@ -69,10 +69,7 @@ class AmberRelayStats(
     // createNotificationChannel(), so a burst collapses into one notification
     // update. Connection-state changes keep their own (also debounced)
     // collectors so connect/disconnect still shows promptly.
-    // Unit events instead of a numeric counter: nothing to overflow or wrap no
-    // matter how long the app runs. DROP_OLDEST + capacity 1 keeps only the
-    // newest tick, so tryEmit never fails and the last event of a burst always
-    // renders.
+    @Suppress("NoComments")
     private val counterTick = MutableSharedFlow<Unit>(
         extraBufferCapacity = 1,
         onBufferOverflow = BufferOverflow.DROP_OLDEST,
@@ -147,9 +144,6 @@ class AmberRelayStats(
             }
         }
         scope.launch {
-            // Trailing-edge debounce for the counter path (addSent/addFailed):
-            // the last tick of a burst always renders, at most one notify per
-            // 300ms window.
             counterTick.debounce(300.milliseconds).collect {
                 updateNotification()
             }
@@ -205,16 +199,13 @@ class AmberRelayStats(
         null
     }
 
-    /** The relay status notification; null (and the shown one removed) without relays, or when nothing changed. */
     private fun statusNotification(
         connected: Set<NormalizedRelayUrl>,
         available: Set<NormalizedRelayUrl>,
         forceCreate: Boolean,
     ): Notification? {
         if (available.isEmpty() && connected.isEmpty() && !settingsStore.settings.killSwitch.value) {
-            AmberLog.d(Amber.TAG, "No relays available, removing relay notification")
-            val notificationManager = NotificationManagerCompat.from(appContext)
-            notificationManager.cancel(2)
+            removeShownStatusNotification()
             return null
         }
         val message = statusMessage(connected, available)
@@ -223,7 +214,12 @@ class AmberRelayStats(
         return buildStatusNotification(connected, available, message)
     }
 
-    /** One line per relay: `wss://relay.url ✓ 474ms | S:1 R:2`. */
+    private fun removeShownStatusNotification() {
+        AmberLog.d(Amber.TAG, "No relays available, removing relay notification")
+        val notificationManager = NotificationManagerCompat.from(appContext)
+        notificationManager.cancel(2)
+    }
+
     private fun statusMessage(
         connected: Set<NormalizedRelayUrl>,
         available: Set<NormalizedRelayUrl>,
@@ -234,7 +230,6 @@ class AmberRelayStats(
         val status = if (relay in connected) "✓" else "✗"
         val ping = "${stats.pingInMs}ms"
 
-        // Build a comma-separated list of stats to save vertical space
         val details = mutableListOf<String>()
         if (session.sent > 0) details.add("S:${session.sent}")
         if (session.received > 0) details.add("R:${session.received}")
@@ -243,7 +238,6 @@ class AmberRelayStats(
 
         val detailsStr = if (details.isNotEmpty()) " | ${details.joinToString(" ")}" else ""
 
-        // Result: wss://relay.url ✓ 474ms | S:1 R:2
         "${relay.displayUrl()} $status $ping$detailsStr"
     }.trim()
 

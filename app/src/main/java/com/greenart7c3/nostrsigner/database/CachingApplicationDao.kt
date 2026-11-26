@@ -76,7 +76,6 @@ class ApplicationDaoCache {
     private val cache = LruCache<Key, Value>(MAX_ENTRIES)
     private var cacheGeneration = 0L
 
-    // One entry per account (key = account pubKey); a handful at most.
     private val getAllCache = LruCache<String, List<ApplicationEntity>>(GET_ALL_MAX_ENTRIES)
     private var getAllGeneration = 0L
 
@@ -149,6 +148,11 @@ class ApplicationDaoCache {
 /**
  * [ApplicationDao] in front of Room that serves [getAll] from the shared
  * [ApplicationDaoCache] and hides connections past their `deleteAfter` lifetime.
+ *
+ * Its `*Raw` overrides (the Room-generated halves that read and write the encrypted
+ * [ApplicationEntity.secret] / [ApplicationEntity.localKey] column values) only forward to the
+ * delegate: the cache layer never calls them, the public wrappers that envelope-encrypt through
+ * [ApplicationEntity.encryptForStorage] are the entry points.
  */
 class CachingApplicationDao(
     private val delegate: ApplicationDao,
@@ -165,17 +169,6 @@ class CachingApplicationDao(
     override suspend fun getByName(name: String): ApplicationWithPermissions? = delegate.getByName(name)
 
     override suspend fun getBySecret(secret: String): ApplicationWithPermissions? = delegate.getBySecret(secret)?.takeUnless { it.application.isExpired() }
-
-    // -------- *Raw delegations (envelope-encrypted persistence boundary) --------
-    //
-    // ApplicationDao now splits methods that touch the [ApplicationEntity.secret]
-    // / [ApplicationEntity.localKey] columns into a Room-generated `*Raw`
-    // (encrypted column values) and a public default-method wrapper that
-    // envelope-encrypts/decrypts via [ApplicationEntity.encryptForStorage].
-    // CachingApplicationDao is a decorator over a Room-generated ApplicationDao,
-    // so its `*Raw` overrides simply forward to [delegate] — they are never
-    // invoked from the cache layer (the public wrappers above are the entry
-    // points), but Kotlin requires every interface member to be implemented.
 
     override suspend fun getAllRaw(pubKey: String): List<ApplicationEntity> = delegate.getAllRaw(pubKey)
 

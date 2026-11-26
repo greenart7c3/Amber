@@ -46,12 +46,9 @@ abstract class HistoryDao(private val database: HistoryDatabase) {
         try {
             val localEntities = entities.map { entity ->
                 val permission = Permission(entity.type.lowercase(), entity.kind)
-                // Ciphertext stored for encrypt/decrypt rows must be kept whole so it
-                // can still be decrypted on demand; only truncate plaintext content.
-                val isEncryptedContent = entity.type in encryptDecryptHistoryTypeNames
                 entity.copy(
                     translatedPermission = permission.localizedBlocking(true),
-                    content = if (!isEncryptedContent && entity.content.length > MAX_CONTENT_LENGTH) entity.content.take(MAX_CONTENT_LENGTH) else entity.content,
+                    content = contentToStore(entity),
                 )
             }
             innerAddHistory(localEntities)
@@ -59,13 +56,16 @@ abstract class HistoryDao(private val database: HistoryDatabase) {
                 val lastUsed = entities.maxByOrNull { it.time }?.time ?: TimeUtils.now()
                 val pkKey = entities.firstOrNull()?.pkKey
                 if (pkKey != null) {
-                    // Cached dao so the write invalidates CachingApplicationDao's
-                    // getAll entry (lastUsed is a column of that projection).
                     database.accountRepository.daos(npub).applicationWriteDao.updateLastUsed(pkKey, lastUsed)
                 }
             }
         } catch (e: Exception) {
             AmberLog.e(Amber.TAG, "Error adding history", e)
         }
+    }
+
+    private fun contentToStore(entity: HistoryEntity): String {
+        val isCiphertextKeptWholeForOnDemandDecryption = entity.type in encryptDecryptHistoryTypeNames
+        return if (!isCiphertextKeptWholeForOnDemandDecryption && entity.content.length > MAX_CONTENT_LENGTH) entity.content.take(MAX_CONTENT_LENGTH) else entity.content
     }
 }

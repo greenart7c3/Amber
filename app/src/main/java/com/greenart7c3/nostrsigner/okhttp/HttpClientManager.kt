@@ -30,6 +30,7 @@ import javax.net.SocketFactory
 import okhttp3.OkHttpClient
 
 object HttpClientManager {
+    @Suppress("NoComments")
     private val rootClient by lazy {
         OkHttpClient
             .Builder()
@@ -49,10 +50,14 @@ object HttpClientManager {
 
     /**
      * How often OkHttp should send WebSocket pings to detect half-closed connections.
-     * Kept relatively long to avoid waking the radio every few seconds on the
-     * always-on relay connection; it only needs to be short enough to surface a
-     * silent half-close as an explicit failure within a reasonable window.
+     * Without pings OkHttp accepts writes to a half-closed WebSocket (`send()` returns
+     * `true`) and only notices on a TCP write timeout ~40-60s later, leaving REQ/EVENT
+     * messages stranded; a ping turns the half-close into `onFailure`, so the reconnect
+     * path rebuilds the socket and `NostrClient.onConnected → syncFilters` re-issues the
+     * subscriptions. Kept relatively long to avoid waking the radio every few seconds on
+     * the always-on relay connection.
      */
+    @Suppress("NoComments")
     private val PING_INTERVAL: Duration = Duration.ofSeconds(90L)
 
     private var defaultTimeout = DEFAULT_TIMEOUT_ON_WIFI
@@ -69,6 +74,7 @@ object HttpClientManager {
      * stop or failure cannot leave OkHttp dialing a loopback port that another
      * app may then bind.
      */
+    @Suppress("NoComments")
     private val failClosedProxy: Proxy by lazy {
         Proxy(Proxy.Type.SOCKS, InetSocketAddress("127.0.0.1", 0))
     }
@@ -79,14 +85,21 @@ object HttpClientManager {
         if (currentProxy != proxy) {
             AmberLog.d(Amber.TAG, "Changing proxy to: ${proxy != null}")
             currentProxy = proxy
-
-            // Invalidate so the proxied client is rebuilt lazily on the next
-            // getHttpClient() call. Rebuilding here would force OkHttp to
-            // create the default SSLSocketFactory (a ~55ms StrictMode "slow
-            // call") on whatever thread mutates the proxy — often the main
-            // thread. getHttpClient() only runs on network/background threads.
             defaultHttpClient = null
         }
+    }
+
+    /**
+     * Drops every cached client so each is rebuilt lazily on its next get. Rebuilding
+     * eagerly would force OkHttp to create the default SSLSocketFactory (a ~55ms
+     * StrictMode "slow call") on whatever thread changes a setting — often the main
+     * thread — while the getters only run on network/background threads.
+     */
+    @Suppress("NoComments")
+    private fun invalidateAllClients() {
+        defaultHttpClient = null
+        defaultHttpClientWithoutProxy = null
+        localHttpClient = null
     }
 
     /**
@@ -106,11 +119,7 @@ object HttpClientManager {
         AmberLog.d(Amber.TAG, "Changing timeout to: $timeout")
         if (defaultTimeout.seconds != timeout.seconds) {
             defaultTimeout = timeout
-
-            // Invalidate; see setDefaultProxy for why we rebuild lazily.
-            defaultHttpClient = null
-            defaultHttpClientWithoutProxy = null
-            localHttpClient = null
+            invalidateAllClients()
         }
     }
 
@@ -118,14 +127,11 @@ object HttpClientManager {
         AmberLog.d(Amber.TAG, "Changing userAgent")
         if (userAgent != userAgentHeader) {
             userAgent = userAgentHeader
-
-            // Invalidate; see setDefaultProxy for why we rebuild lazily.
-            defaultHttpClient = null
-            defaultHttpClientWithoutProxy = null
-            localHttpClient = null
+            invalidateAllClients()
         }
     }
 
+    @Suppress("NoComments")
     private fun buildHttpClient(
         proxy: Proxy?,
         timeout: Duration,
@@ -139,16 +145,6 @@ object HttpClientManager {
             .readTimeout(duration)
             .connectTimeout(duration)
             .writeTimeout(duration)
-            // Send a WebSocket ping every 30s. Without this, OkHttp accepts
-            // writes to half-closed WebSockets (returning `true` from
-            // `send()`) without ever surfacing a failure, because the only
-            // detection is a TCP write timeout on the next queued frame —
-            // which can take ~40-60s and leaves REQ/EVENT messages stranded
-            // in the outbound buffer. The periodic ping turns silent
-            // half-closes into explicit `onFailure` callbacks, so Amber's
-            // reconnect-with-backoff path can rebuild the socket and
-            // `NostrClient.onConnected → syncFilters` can re-issue the
-            // stranded subscriptions.
             .pingInterval(PING_INTERVAL)
             .followRedirects(followRedirects)
             .followSslRedirects(followRedirects)
@@ -179,6 +175,7 @@ object HttpClientManager {
      * `fastFallback` and already connects sequentially — so doing nothing there
      * is correct.
      */
+    @Suppress("NoComments")
     private fun OkHttpClient.Builder.disableFastFallback() {
         runCatching {
             OkHttpClient.Builder::class.java

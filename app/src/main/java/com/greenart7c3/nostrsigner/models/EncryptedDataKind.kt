@@ -13,7 +13,7 @@ class TagArrayEncryptedDataKind(val tagArray: Array<Array<String>>, override val
 
 class EventEncryptedDataKind(val event: AmberEvent, val sealEncryptedDataKind: EncryptedDataKind?, override val result: String) : EncryptedDataKind
 
-// [result] is the decrypted zap request (JSON), what the client gets back.
+/** [result] is the decrypted zap request (JSON), what the client gets back. */
 class PrivateZapEncryptedDataKind(override val result: String) : EncryptedDataKind {
     /** The zap's private message, what the approval shows; [result] itself when it is not an event. */
     val message: String by lazy { runCatching { AmberEvent.fromJson(result).content }.getOrDefault(result) }

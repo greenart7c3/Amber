@@ -9,6 +9,9 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.mockkObject
+import io.mockk.unmockkObject
+import io.mockk.verify
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -129,6 +132,103 @@ class ExpiredConnectionAuthTest {
         coEvery { raw.applicationDao.getBySecret("secret") } returns live
 
         assertEquals(live, daos.applicationDao.getBySecret("secret"))
+    }
+
+    @Test
+    fun `repeated lookups on a live connection read deleteAfter once`() {
+        val deleteAfter = TimeUtils.now() + 3_600
+        every { delegate.getDeleteAfter("live") } returns deleteAfter
+        every { delegate.getSignPolicy("live") } returns 2
+        every { delegate.getPermission("live", "sign_event", 1) } returns null
+
+        repeat(3) {
+            assertEquals(2, dao.getSignPolicy("live"))
+            assertNull(dao.getPermission("live", "sign_event", 1))
+        }
+        assertEquals(deleteAfter, dao.getDeleteAfter("live"))
+
+        verify(exactly = 1) { delegate.getDeleteAfter("live") }
+        verify(exactly = 1) { delegate.getSignPolicy("live") }
+    }
+
+    @Test
+    fun `a cached live connection expires once the clock passes deleteAfter`() {
+        mockkObject(TimeUtils)
+        try {
+            every { TimeUtils.now() } returns 1_000L
+            every { delegate.getDeleteAfter("live") } returns 1_100L
+            every { delegate.getSignPolicy("live") } returns 2
+            assertEquals(2, dao.getSignPolicy("live"))
+
+            every { TimeUtils.now() } returns 1_099L
+            assertEquals(2, dao.getSignPolicy("live"))
+
+            every { TimeUtils.now() } returns 1_100L
+            assertNull(dao.getSignPolicy("live"))
+            assertNull(dao.getPermission("live", "sign_event"))
+
+            verify(exactly = 1) { delegate.getDeleteAfter("live") }
+        } finally {
+            unmockkObject(TimeUtils)
+        }
+    }
+
+    @Test
+    fun `re-inserting a connection with a past deleteAfter expires it on the next lookup`() = runBlocking {
+        every { delegate.getDeleteAfter("app") } returns 0L
+        every { delegate.getSignPolicy("app") } returns 2
+        assertEquals(2, dao.getSignPolicy("app"))
+
+        val past = TimeUtils.now() - 60
+        every { delegate.getDeleteAfter("app") } returns past
+        daos.applicationWriteDao.insertApplication(entity("app", past))
+
+        assertNull(dao.getSignPolicy("app"))
+        verify(exactly = 2) { delegate.getDeleteAfter("app") }
+    }
+
+    @Test
+    fun `saving a connection with its permissions refreshes the cached deleteAfter`() = runBlocking {
+        every { delegate.getDeleteAfter("app") } returns 0L
+        every { delegate.getSignPolicy("app") } returns 2
+        assertEquals(2, dao.getSignPolicy("app"))
+
+        val past = TimeUtils.now() - 60
+        every { delegate.getDeleteAfter("app") } returns past
+        daos.permissionWriteDao.insertApplicationWithPermissions(wrapper(entity("app", past)))
+
+        assertNull(dao.getSignPolicy("app"))
+        verify(exactly = 2) { delegate.getDeleteAfter("app") }
+    }
+
+    private fun assertWriteEvictsDeleteAfter(write: suspend () -> Unit) = runBlocking {
+        every { delegate.getDeleteAfter("app") } returns 0L
+        every { delegate.getSignPolicy("app") } returns 2
+        dao.getSignPolicy("app")
+
+        write()
+
+        every { delegate.getDeleteAfter("app") } returns null
+        every { delegate.getSignPolicy("app") } returns null
+        assertNull(dao.getDeleteAfter("app"))
+        assertNull(dao.getSignPolicy("app"))
+        verify(exactly = 2) { delegate.getDeleteAfter("app") }
+    }
+
+    @Test
+    fun `deleting a connection by key evicts its cached deleteAfter`() = assertWriteEvictsDeleteAfter {
+        daos.applicationWriteDao.delete("app")
+    }
+
+    @Test
+    fun `deleting a connection by entity evicts its cached deleteAfter`() = assertWriteEvictsDeleteAfter {
+        daos.applicationWriteDao.delete(entity("app", 0L))
+    }
+
+    @Test
+    fun `deleteOldApplications that removes rows evicts every cached deleteAfter`() = assertWriteEvictsDeleteAfter {
+        coEvery { raw.permissionMaintenanceDao.deleteOldApplications(any()) } returns 1
+        daos.permissionMaintenanceDao.deleteOldApplications(TimeUtils.now())
     }
 
     @Test

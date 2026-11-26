@@ -71,20 +71,16 @@ import org.jetbrains.compose.resources.stringResource
 
 private const val POPUP_TIMEOUT_MS = 60_000L
 
-/** Transparent margin around the card so its drop shadow isn't clipped by the window. */
 private val SHADOW_PADDING = 16.dp
 
-/** Distance between the card and the screen edges, like the OS's own notifications. */
 private val SCREEN_MARGIN = 4.dp
 
-/** Room left for a Wayland top bar (waybar, quickshell, …) the popup cannot see. */
-private val LINUX_TOP_BAR = 32.dp
+private val UNSEEN_WAYLAND_TOP_BAR_HEIGHT = 32.dp
 
 private val isMac = System.getProperty("os.name").lowercase().contains("mac")
 private val isWindows = System.getProperty("os.name").lowercase().contains("win")
 private val isLinux = !isMac && !isWindows
 
-/** One button on the popup. */
 private class PopupAction(val label: String, val onClick: () -> Unit)
 
 /**
@@ -160,6 +156,7 @@ fun RequestNotificationPopup(
     }
 }
 
+@Suppress("NoComments")
 private fun popupPosition(windowSize: DpSize): WindowPosition {
     val bounds = GraphicsEnvironment.getLocalGraphicsEnvironment().maximumWindowBounds
     val margin = SCREEN_MARGIN.value.toInt()
@@ -168,7 +165,7 @@ private fun popupPosition(windowSize: DpSize): WindowPosition {
     // Windows, under the menu bar / top panel on macOS and Linux.
     // Wayland compositors give XWayland no work area, so leave room for
     // a top bar when the reported one starts at the screen edge.
-    val top = if (isLinux && bounds.y == 0) LINUX_TOP_BAR.value.toInt() else bounds.y
+    val top = if (isLinux && bounds.y == 0) UNSEEN_WAYLAND_TOP_BAR_HEIGHT.value.toInt() else bounds.y
     val y = if (isWindows) bounds.y + bounds.height - windowSize.height.value.toInt() - margin else top + margin
     return WindowPosition(x.dp, y.dp)
 }
@@ -180,9 +177,7 @@ private fun DismissAfterTimeout(
     onDismiss: () -> Unit,
 ) {
     val hovered by hover.collectIsHoveredAsState()
-    // The timeout outlives recompositions; it must call the latest callback.
     val currentOnDismiss by rememberUpdatedState(onDismiss)
-    // Restarts while hovered, so the popup never vanishes under the pointer.
     LaunchedEffect(requestId, hovered) {
         if (!hovered) {
             delay(POPUP_TIMEOUT_MS.milliseconds)
@@ -191,6 +186,7 @@ private fun DismissAfterTimeout(
     }
 }
 
+@Suppress("NoComments")
 @Composable
 private fun LinuxPopupWindow(
     position: WindowPosition,
@@ -203,8 +199,7 @@ private fun LinuxPopupWindow(
     // never managed, framed or focused, like a real notification surface —
     // so host the card in one through a ComposePanel. AWT still types it
     // NORMAL, which Hyprland focuses on map, hence markAsX11Popup.
-    // Without a
-    // transparent margin there is no drop shadow; the shape rounds it.
+    // Without a transparent margin there is no drop shadow; the shape rounds it.
     val currentContent by rememberUpdatedState(content)
     DisposableEffect(Unit) {
         val pad = SHADOW_PADDING.value.toInt()
@@ -213,7 +208,6 @@ private fun LinuxPopupWindow(
         val popup = JWindow().apply {
             type = java.awt.Window.Type.POPUP
             focusableWindowState = false
-            // Never take keyboard focus from what the user is typing in.
             isAutoRequestFocus = false
             isAlwaysOnTop = true
             setBounds(position.x.value.toInt() + pad, position.y.value.toInt() + pad, width, height)
@@ -229,7 +223,6 @@ private fun LinuxPopupWindow(
     }
 }
 
-/** Windows 11 toast: app header with close button, title and body, then a row of equal-width buttons. */
 @Composable
 private fun WindowsToast(
     title: String,
@@ -291,11 +284,6 @@ private fun WindowsToast(
     }
 }
 
-/**
- * macOS alert-style notification: app icon, bold title and body on the left,
- * the actions stacked on the right behind a hairline, and the round close
- * button in the top-left corner while hovered.
- */
 @Composable
 private fun MacNotification(
     title: String,
@@ -383,6 +371,7 @@ private fun CloseGlyph(color: Color, label: String, onClick: () -> Unit, modifie
  * the middle of the screen. An override-redirect window owns its geometry, so
  * the compositor accepts the bounds it sets back.
  */
+@Suppress("NoComments")
 private fun keepBounds(window: java.awt.Window) {
     val wanted = window.bounds
     window.addComponentListener(
@@ -407,6 +396,7 @@ private fun keepBounds(window: java.awt.Window) {
  * `--add-opens=java.desktop/sun.awt.X11` (set in build.gradle.kts) and must
  * run after addNotify, before the window is shown.
  */
+@Suppress("NoComments")
 private fun markAsX11Popup(window: java.awt.Window) {
     runCatching {
         val toXWindow = Class.forName("sun.awt.X11.XToolkit").getDeclaredMethod("windowToXWindow", Long::class.javaPrimitiveType)

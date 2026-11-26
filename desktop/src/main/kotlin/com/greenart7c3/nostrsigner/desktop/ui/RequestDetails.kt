@@ -29,6 +29,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import com.fasterxml.jackson.databind.JsonNode
+import com.greenart7c3.nostrsigner.common.RELAY_AUTH_KIND
 import com.greenart7c3.nostrsigner.common.SignerType
 import com.greenart7c3.nostrsigner.common.contentScopedSignerTypes
 import com.greenart7c3.nostrsigner.common.nip44v3SignerTypes
@@ -64,7 +65,6 @@ import com.vitorpamplona.quartz.nip01Core.jackson.JacksonMapper
 import com.vitorpamplona.quartz.utils.Hex
 import org.jetbrains.compose.resources.stringResource
 
-/** The parts of an event the details dialog shows, read from any event JSON. */
 internal data class DetailEvent(
     val kind: Int,
     val pubKey: String,
@@ -89,24 +89,20 @@ internal data class DetailEvent(
     }
 }
 
-/**
- * The kind's name; for a kind Amber has no name for, the event's NIP-31 `alt` tag when it
- * has one, as the Android `EventDetailModal` shows.
- */
 internal fun DetailEvent.kindName(): String {
     val name = Permission("sign_event", kind).localizedBlocking()
-    val alt = tags.firstOrNull { it.size > 1 && it[0] == "alt" }?.getOrNull(1)
-    return if (alt != null && name == getStringBlocking(Res.string.event_kind, kind.toString())) alt else name
+    val nip31AltTag = tags.firstOrNull { it.size > 1 && it[0] == "alt" }?.getOrNull(1)
+    return if (nip31AltTag != null && isGenericKindLabel(name)) nip31AltTag else name
 }
+
+private fun DetailEvent.isGenericKindLabel(name: String) = name == getStringBlocking(Res.string.event_kind, kind.toString())
+
+private fun DetailEvent.authenticatedRelay(): String? = tags.firstOrNull { it.size > 1 && it[0] == "relay" }?.get(1)
 
 private fun JsonNode?.toTags(): List<List<String>> = this?.takeIf { it.isArray }?.map { tag -> tag.map { it.asText() } }.orEmpty()
 
 private fun List<List<String>>.format(): String = joinToString(", ") { tag -> tag.joinToString(", ", "[", "]") { "\"$it\"" } }
 
-/**
- * What a request card and its details dialog show, mirroring the Android
- * `BunkerRequestCard`: the event a sign/decrypt is about, a tag list, or text.
- */
 internal sealed interface RequestDetails {
     data class OfEvent(val event: DetailEvent) : RequestDetails
 
@@ -114,14 +110,11 @@ internal sealed interface RequestDetails {
 
     data class OfText(val text: String) : RequestDetails
 
-    /** A sign_psbt request: what the transaction pays, mirroring Android's `SignPsbt`. */
     data class OfPsbt(val decoded: DecodedPsbt, val psbt: String) : RequestDetails
 
-    /** The short text under the request's description on the card. */
     fun summary(): String = when (this) {
-        // An auth event says nothing in its content: show the relay instead.
-        is OfEvent -> if (event.kind == 22242) {
-            event.tags.firstOrNull { it.size > 1 && it[0] == "relay" }?.get(1) ?: event.content
+        is OfEvent -> if (event.kind == RELAY_AUTH_KIND) {
+            event.authenticatedRelay() ?: event.content
         } else {
             event.content
         }
@@ -136,7 +129,6 @@ internal sealed interface RequestDetails {
     }
 
     companion object {
-        /** Null when there is nothing to detail (connect, get_public_key, ping…). */
         fun of(req: PendingBunkerRequest): RequestDetails? = when (req.type) {
             SignerType.SIGN_EVENT ->
                 (DetailEvent.parse(req.result) ?: DetailEvent.parse(req.preview))?.let(::OfEvent)
@@ -145,7 +137,6 @@ internal sealed interface RequestDetails {
             in contentScopedSignerTypes, in nip44v3SignerTypes -> {
                 val content = req.encryptedContent ?: EncryptedContent.classify(req.preview)
                 when (content.type) {
-                    // A seal shows the event it holds, as on Android; else the event itself.
                     EncryptedContentType.EVENT -> (DetailEvent.parse(req.sealPreview) ?: DetailEvent.parse(req.preview))?.let(::OfEvent)
                     EncryptedContentType.TAG_ARRAY -> runCatching { JacksonMapper.mapper.readTree(req.preview).toTags() }.getOrNull()?.let(::OfTags)
                     EncryptedContentType.CLEAR_TEXT -> null
@@ -156,14 +147,16 @@ internal sealed interface RequestDetails {
     }
 }
 
-/** Mirrors the Android `EventDetailModal` / `EncryptDecryptDetailModal`. */
+private val DIALOG_TITLE_AND_BUTTONS_HEIGHT = 220.dp
+private val MIN_DETAILS_HEIGHT = 120.dp
+private val MAX_DETAILS_HEIGHT = 520.dp
+
 @Composable
 internal fun RequestDetailsDialog(
     req: PendingBunkerRequest,
     details: RequestDetails,
     onDismiss: () -> Unit,
 ) {
-    // Fill small windows (leaving room for the title and buttons), cap on large ones.
     val window = LocalWindowContentSize.current
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -173,7 +166,7 @@ internal fun RequestDetailsDialog(
         text = {
             val scroll = rememberScrollState()
             Column(
-                Modifier.heightIn(max = (window.height - 220.dp).coerceIn(120.dp, 520.dp)).verticalScroll(scroll),
+                Modifier.heightIn(max = (window.height - DIALOG_TITLE_AND_BUTTONS_HEIGHT).coerceIn(MIN_DETAILS_HEIGHT, MAX_DETAILS_HEIGHT)).verticalScroll(scroll),
                 verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
                 when (details) {
@@ -209,7 +202,6 @@ internal fun RequestDetailsDialog(
 
 private fun sats(amount: Long) = getStringBlocking(Res.string.psbt_amount_sats, amount)
 
-/** Mirrors Android's `PsbtBody`: sending and change outputs, the fee, then the raw PSBT. */
 @Composable
 private fun ColumnScope.PsbtSections(details: RequestDetails.OfPsbt) {
     val decoded = details.decoded
@@ -235,9 +227,8 @@ private fun ColumnScope.PsbtOutputs(title: String, totalSats: Long, outputs: Lis
     if (outputs.isEmpty()) return
     Text("$title: ${sats(totalSats)}", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
     outputs.forEach { output ->
-        // Non-segwit scripts have no bech32 address: show the script itself.
-        val destination = output.address ?: output.scriptPubKeyHex
-        DetailSection(sats(output.valueSats), destination, monospace = output.address == null)
+        val addressOrNonSegwitScript = output.address ?: output.scriptPubKeyHex
+        DetailSection(sats(output.valueSats), addressOrNonSegwitScript, monospace = output.address == null)
     }
 }
 

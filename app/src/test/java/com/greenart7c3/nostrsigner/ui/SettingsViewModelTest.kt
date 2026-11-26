@@ -11,7 +11,7 @@ import com.greenart7c3.nostrsigner.data.AccountRepository
 import com.greenart7c3.nostrsigner.data.RelayClient
 import com.greenart7c3.nostrsigner.data.SettingsStore
 import com.greenart7c3.nostrsigner.database.HistoryDao
-import com.greenart7c3.nostrsigner.database.LogDao
+import com.greenart7c3.nostrsigner.database.LogCleanupDao
 import com.greenart7c3.nostrsigner.models.AmberSettings
 import com.greenart7c3.nostrsigner.models.ThemeMode
 import com.greenart7c3.nostrsigner.models.TorMode
@@ -42,11 +42,11 @@ class SettingsViewModelTest {
     // Unconfined: the view model's launches run to completion on the calling thread.
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
     private val historyDao = mockk<HistoryDao>(relaxed = true)
-    private val logDao = mockk<LogDao>(relaxed = true)
+    private val logDao = mockk<LogCleanupDao>(relaxed = true)
     private val relayClient = mockk<RelayClient>(relaxed = true)
     private val accountRepository = mockk<AccountRepository> {
         every { getHistoryDatabase(any()).dao() } returns historyDao
-        every { getLogDatabase(any()).dao() } returns logDao
+        every { getLogDatabase(any()).cleanupDao() } returns logDao
     }
     private val settingsStore = object : SettingsStore {
         override var settings = AmberSettings(torMode = TorMode.ORBOT)

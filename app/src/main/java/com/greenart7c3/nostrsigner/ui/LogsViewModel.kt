@@ -37,17 +37,17 @@ class LogsViewModel(
     fun logs(npub: String, url: String? = null): Flow<PagingData<LogEntry>> = Pager(
         PagingConfig(pageSize = 20, enablePlaceholders = false),
     ) {
-        val dao = accountRepository.getLogDatabase(npub).dao()
+        val dao = accountRepository.getLogDatabase(npub).readDao()
         if (url == null) dao.getLogsPaging() else dao.getLogsByUrlPaging(url)
     }.flow.map { page -> page.map { it.toEntry() } }
 
     /** Every log line, for the export. */
     suspend fun allLogs(npub: String): List<LogEntry> = withContext(Dispatchers.IO) {
-        accountRepository.getLogDatabase(npub).dao().getLogs().first().map { it.toEntry() }
+        accountRepository.getLogDatabase(npub).readDao().getLogs().first().map { it.toEntry() }
     }
 
     fun clear(npub: String) {
-        viewModelScope.launch(Dispatchers.IO) { accountRepository.getLogDatabase(npub).dao().clearLogs() }
+        viewModelScope.launch(Dispatchers.IO) { accountRepository.getLogDatabase(npub).cleanupDao().clearLogs() }
     }
 
     companion object {

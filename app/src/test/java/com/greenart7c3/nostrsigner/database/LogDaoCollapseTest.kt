@@ -1,8 +1,6 @@
 package com.greenart7c3.nostrsigner.database
 
-import androidx.paging.PagingSource
 import io.mockk.mockk
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -30,18 +28,6 @@ class LogDaoCollapseTest {
             val row = rows[index]
             rows[index] = row.copy(repeatCount = row.repeatCount + 1, time = maxOf(row.time, time))
         }
-
-        override fun getLogs(): Flow<List<LogEntity>> = throw NotImplementedError()
-
-        override fun getLogsPaging(): PagingSource<Int, LogEntity> = throw NotImplementedError()
-
-        override fun getLogsByUrlPaging(url: String): PagingSource<Int, LogEntity> = throw NotImplementedError()
-
-        override suspend fun deleteOldestLogs(count: Int): Int = throw NotImplementedError()
-
-        override suspend fun clearLogs() = rows.clear()
-
-        override suspend fun deleteOldLog(time: Long): Int = throw NotImplementedError()
     }
 
     private fun log(time: Long, message: String = "Connected", url: String = "wss://relay.example/") = LogEntity(0, url, "onConnected", message, time)

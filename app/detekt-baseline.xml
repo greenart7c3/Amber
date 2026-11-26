@@ -1707,7 +1707,6 @@
     <ID>TooManyFunctions:CachingApplicationDao.kt:CachingApplicationDao : ApplicationDao</ID>
     <ID>TooManyFunctions:HistoryDao.kt:HistoryDao</ID>
     <ID>TooManyFunctions:LocalPreferences.kt:LocalPreferences</ID>
-    <ID>TooManyFunctions:LogDao.kt:LogDao</ID>
     <ID>ViewModelForwarding:AccountScreen.kt:MainLoginPage(accountStateViewModel, NavHostControllerWrapper(newNavController))</ID>
     <ID>ViewModelForwarding:AccountScreen.kt:MainScreen( account = state.account, accountStateViewModel = accountStateViewModel, requests = IncomingRequests( intents = intents, bunkerRequests = bunkerRequests, packageName = packageName, appName = appName, isExternalRequest = isExternalRequest || (intents.isEmpty() &amp;&amp; bunkerRequests.isNotEmpty() &amp;&amp; (packageName != null || intent.intent?.getStringExtra("route") == Route.IncomingRequest.route)), ), route = { localRoute.value }, onConsumeRoute = { localRoute.value = null }, navController = navController, onRemoveIntentData = { results, type -&gt; when (type) { IntentResultType.ADD -&gt; { IntentUtils.addAll(results) } IntentResultType.REMOVE -&gt; { IntentUtils.removeAll(results) } } }, )</ID>
   </CurrentIssues>

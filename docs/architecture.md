@@ -54,8 +54,10 @@ interfaces from the CompositionLocals the two activities provide
   `core/BunkerEngine.kt` 1502, `service/IntentUtils.kt` 1222,
   `service/EventNotificationConsumer.kt` 1087, `LocalPreferences.kt` 1016,
   `Amber.kt` 982). After steps 1–9 none is: the largest are the desktop
-  `ui/SettingsScreen.kt` 948, `ui/actions/AccountBackupScreen.kt` 899 and
-  `service/EventNotificationConsumer.kt` 846; `Amber.kt` is 393.
+  `ui/SettingsScreen.kt` 948 and `ui/actions/AccountBackupScreen.kt` 899;
+  `Amber.kt` is 393, and `service/EventNotificationConsumer.kt` (846) is split
+  into the consumer (315) and `Nip46RequestAdmission`, `Nip46AdmittedRequests`,
+  `Nip46RequestServices` and `DeviceLockedReply`.
 - The Android bunker flow (`BunkerRequestUtils` + `EventNotificationConsumer`)
   and the desktop one (`BunkerEngine`) implemented the same permission and
   response logic twice; step 1 moved the policy to `:common` and step 11 the rest
@@ -107,8 +109,10 @@ footprint small.
   cannot silently rot.
 - **Coverage** (Kover) — `./gradlew koverXmlReport koverHtmlReport` writes one
   merged report to `build/reports/kover` (generated code excluded);
-  `:common:koverVerify` enforces its minimum line bound. CI runs both and
-  uploads the HTML report.
+  every module (app, cli, common, commonsui, desktop) has a minimum line bound
+  that its `koverVerify` enforces, a ratchet set just below its measured
+  coverage. CI runs the reports and every `koverVerify` and uploads the HTML
+  report.
 
 ## Roadmap
 

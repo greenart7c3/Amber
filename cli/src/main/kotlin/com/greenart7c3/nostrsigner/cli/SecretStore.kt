@@ -63,7 +63,7 @@ class PinnedSecretStore(
     private val marker = directory.resolve("key-store")
     private val keyFile = directory.resolve("connection.key")
     private val workingKeyring by lazy { keyring() }
-    private val chosen by lazy { explicit() ?: recorded() ?: fromExistingStore() ?: if (workingKeyring != null) KEYRING else FILE }
+    private val chosen by lazy { explicit() ?: recorded() ?: backendOfStoreFromBeforeMarker() ?: if (workingKeyring != null) KEYRING else FILE }
     private val backend: SecretStore by lazy {
         if (chosen == FILE) {
             FileSecretStore(keyFile)
@@ -101,8 +101,7 @@ class PinnedSecretStore(
 
     private fun recorded(): String? = runCatching { Files.readString(marker).trim() }.getOrNull()?.takeIf { it == FILE || it == KEYRING }
 
-    // Before the marker existed only the file backend wrote connection.key.
-    private fun fromExistingStore(): String? = when {
+    private fun backendOfStoreFromBeforeMarker(): String? = when {
         Files.exists(keyFile) -> FILE
         Files.exists(directory.resolve("connections.json")) -> KEYRING
         else -> null
@@ -112,7 +111,6 @@ class PinnedSecretStore(
         if (recorded() == chosen) return
         Files.createDirectories(directory)
         Files.writeString(marker, chosen + "\n")
-        // No secret in it, but private like everything else in the directory.
         runCatching { Files.setPosixFilePermissions(marker, PosixFilePermissions.fromString("rw-------")) }
     }
 
@@ -122,10 +120,6 @@ class PinnedSecretStore(
     }
 }
 
-/**
- * How long a call to the OS credential store may take: the command's `--timeout`
- * (set once the arguments are parsed), 120 s before that, like `--timeout` itself.
- */
 @Volatile
 internal var keyringTimeoutSeconds: Long = 120
 
@@ -135,6 +129,7 @@ internal var keyringTimeoutSeconds: Long = 120
  * an unattended script would wait on forever; this fails with [Exit.TIMEOUT]
  * instead. It never falls back to a key file: a locked store still holds the key.
  */
+@Suppress("NoComments")
 internal fun <T> withKeyringTimeout(
     seconds: Long,
     what: String,
@@ -168,6 +163,7 @@ class KeyringSecretStore(
 ) : SecretStore {
     override val description: String = "the OS credential store"
 
+    @Suppress("NoComments")
     // Opening the freedesktop backend already unlocks the collection, which is where a locked keyring prompts.
     private val keyring: Keyring? by lazy {
         withKeyringTimeout(keyringTimeoutSeconds, "opening it") { runCatching { Keyring.create() }.getOrNull() }
@@ -178,6 +174,7 @@ class KeyringSecretStore(
      * Service cannot). One that does not answer in time is there but locked: that
      * fails, so a new store is not quietly put in a key file.
      */
+    @Suppress("NoComments")
     fun works(): Boolean {
         val ring = keyring ?: return false
         return withKeyringTimeout(keyringTimeoutSeconds, "checking it") {
@@ -185,7 +182,7 @@ class KeyringSecretStore(
                 ring.getPassword(service, account)
                 true
             } catch (_: PasswordAccessException) {
-                // The backend answered: there is simply no key saved yet.
+                // java-keyring reports a missing entry this way: the backend answered, no key is saved yet.
                 true
             } catch (_: Exception) {
                 false

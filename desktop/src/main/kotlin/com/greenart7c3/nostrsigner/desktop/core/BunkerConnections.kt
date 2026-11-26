@@ -12,16 +12,12 @@ import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequestConnect
 import com.vitorpamplona.quartz.utils.TimeUtils
 import java.util.UUID
 
-// Connections made from this side: a nostrconnect:// URI queued for approval, a new bunker:// URI, and expiry.
-
 /**
  * Drops connections whose "delete after" time has passed, in every
  * account, and refreshes the relay filter if any were removed. Mirrors
  * the Android `ClearLogsWorker` cleanup.
  */
 suspend fun BunkerEngine.pruneExpiredApplications(now: Long = TimeUtils.now()) {
-    // While locked the per-account databases can't be read (or would be
-    // cached empty); the next tick after unlocking catches up.
     if (PassphraseLock.isLocked()) return
     var removed = 0
     AccountsStore.accounts.value.forEach { record ->
@@ -34,11 +30,13 @@ suspend fun BunkerEngine.pruneExpiredApplications(now: Long = TimeUtils.now()) {
     if (removed > 0) checkForNewRelaysAndUpdateAllFilters()
 }
 
-/** Parses a `nostrconnect://` URI and queues it for approval. */
+/**
+ * Parses a `nostrconnect://` URI and queues it for approval. The client's key becomes
+ * the connection's identity and the p tag on every reply, so only a URI the shared
+ * parser accepts as well-formed is queued.
+ */
 fun BunkerEngine.addNostrConnect(uriString: String, account: DesktopAccount): String? {
     try {
-        // The client's key becomes the connection's identity and a p tag
-        // on every reply: the shared parser accepts only a well-formed one.
         val uri = try {
             NostrConnectUri.parse(uriString) { it.containsNip() }
         } catch (e: IllegalArgumentException) {
@@ -60,7 +58,6 @@ fun BunkerEngine.addNostrConnect(uriString: String, account: DesktopAccount): St
                 localKey = pubKey,
                 relays = uri.relays,
                 nostrConnectSecret = uri.secret,
-                // Client-chosen (sanitized by the parser): the card, the saved record and every notification show it.
                 appName = uri.name.ifBlank { pubKey.toShortenHex() },
                 appUrl = uri.url,
                 appIcon = uri.image,
@@ -89,9 +86,6 @@ suspend fun BunkerEngine.createBunkerConnection(
 ): String {
     val secret = UUID.randomUUID().toString()
     val connPrivKey = generateBunkerPrivKey()
-    // Exactly the relays the caller picked: the dialog seeds them with
-    // AmberDesktop.newBunkerRelays() (the local relay plus the defaults),
-    // and any the user removed there must stay out of the URI.
     val uriRelays = relays.distinct()
     val app = AppWithPermissions(
         app = AppRecord(

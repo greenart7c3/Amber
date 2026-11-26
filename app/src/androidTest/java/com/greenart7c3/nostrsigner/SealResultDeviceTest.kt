@@ -2,13 +2,12 @@ package com.greenart7c3.nostrsigner
 
 import android.util.Log
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import androidx.test.platform.app.InstrumentationRegistry
 import com.greenart7c3.nostrsigner.common.SignerType
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.EncryptedDataKind
 import com.greenart7c3.nostrsigner.service.AmberUtils
-import com.greenart7c3.nostrsigner.service.EventNotificationConsumer
 import com.greenart7c3.nostrsigner.service.IntentUtils
+import com.greenart7c3.nostrsigner.service.bunkerEncryptedDataKind
 import com.vitorpamplona.quartz.nip01Core.core.toHexKey
 import com.vitorpamplona.quartz.nip01Core.crypto.KeyPair
 import com.vitorpamplona.quartz.nip01Core.jackson.JacksonMapper
@@ -33,7 +32,6 @@ import org.junit.runner.RunWith
  */
 @RunWith(AndroidJUnit4::class)
 class SealResultDeviceTest {
-    private val context = InstrumentationRegistry.getInstrumentation().targetContext
     private val signer = NostrSignerInternal(KeyPair())
     private val account = Account(
         signer = signer,
@@ -65,16 +63,7 @@ class SealResultDeviceTest {
     private suspend fun bunkerKind(method: String, params: List<String>): EncryptedDataKind {
         val wire = JacksonMapper.mapper.writeValueAsString(mapOf("id" to "req", "method" to method, "params" to params))
         val request = JacksonMapper.mapper.readValue(wire, BunkerRequest::class.java)
-        val fn = EventNotificationConsumer::class.java.getDeclaredMethod(
-            "getEncryptedDataKind",
-            BunkerRequest::class.java,
-            Account::class.java,
-            String::class.java,
-            Continuation::class.java,
-        ).apply { isAccessible = true }
-        val amber = context.amber
-        val consumer = EventNotificationConsumer(context, amber, amber.accountDatabases, amber.applicationIOScope, amber.notificationCache, amber.bunkerResponder) { amber.notificationSubscription.updateFilter() }
-        return suspendCoroutineUninterceptedOrReturn<Any?> { c -> fn.invoke(consumer, request, account, "wss://relay.invalid", c) } as EncryptedDataKind
+        return bunkerEncryptedDataKind(request, account) { }!!
     }
 
     /**

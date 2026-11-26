@@ -391,4 +391,16 @@ kover {
             disabledForTestTasks.add("testBenchmarkDebugUnitTest")
         }
     }
+    reports {
+        total {
+            verify {
+                rule {
+                    // Just below the line coverage the app's unit tests reach (16.0%,
+                    // free, offline and offlinezapstore debug). A ratchet: raise it
+                    // when coverage improves, never lower it to make a change pass.
+                    minBound(15)
+                }
+            }
+        }
+    }
 }

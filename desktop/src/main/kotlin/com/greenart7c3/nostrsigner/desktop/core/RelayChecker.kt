@@ -59,8 +59,7 @@ object RelayChecker {
         }
     }
 
-    /** Relays already trusted by the user: defaults plus every connected app's. */
-    private fun savedRelays(): Set<NormalizedRelayUrl> {
+    private fun relaysAlreadyTrustedByUser(): Set<NormalizedRelayUrl> {
         val saved = mutableSetOf<NormalizedRelayUrl>()
         saved += SettingsStore.settings.value.normalizedDefaultRelays()
         AccountsStore.accounts.value.forEach { record ->
@@ -72,8 +71,7 @@ object RelayChecker {
     }
 
     suspend fun check(relay: NormalizedRelayUrl): Outcome {
-        // Already used somewhere -> it has proven itself; skip the round-trip.
-        if (relay in savedRelays()) return Outcome.OK
+        if (relay in relaysAlreadyTrustedByUser()) return Outcome.OK
 
         val client = AmberDesktop.newClient()
         val signer = NostrSignerInternal(KeyPair())

@@ -36,7 +36,6 @@ import kotlinx.coroutines.withTimeoutOrNull
 object ProfileFetcher {
     private const val EOSE_TIMEOUT_MS = 30_000L
 
-    /** Same as the Android default `ProfileFetchInterval.FIFTEEN_MINUTES`. */
     private const val FETCH_INTERVAL_SECONDS = 15 * 60L
 
     private val inFlight = ConcurrentHashMap.newKeySet<String>()
@@ -89,7 +88,6 @@ object ProfileFetcher {
         }
     }
 
-    /** Default profile relays from the settings plus the account's own saved relay list. */
     private fun profileRelays(npub: String): Set<NormalizedRelayUrl> {
         val defaults = SettingsStore.settings.value.normalizedProfileRelays()
         val userRelays = AccountsStore.get(npub)?.userRelays.orEmpty().mapNotNull {
@@ -98,7 +96,6 @@ object ProfileFetcher {
         return (defaults + userRelays).toSet()
     }
 
-    /** Saves the newest kind-10002 write relays so later fetches also query them. */
     private fun saveUserRelays(npub: String, event: AdvertisedRelayListEvent) {
         val relays = event.writeRelaysNorm() ?: event.relaysNorm()
         if (relays.isEmpty()) return
@@ -116,6 +113,7 @@ object ProfileFetcher {
      * later fetch may only reach relays that serve an older (still validly
      * signed) profile, which must not overwrite the newer one.
      */
+    @Suppress("NoComments")
     internal fun applyMetadata(npub: String, event: MetadataEvent) {
         val metadata = event.contactMetaData()
         val name = metadata?.let { (it.name ?: it.displayName)?.trim()?.takeIf { n -> n.isNotBlank() } }
@@ -134,14 +132,9 @@ object ProfileFetcher {
                 lastMetadataUpdate = if (changed) TimeUtils.now() else it.lastMetadataUpdate,
             )
         }
-        // Keep a loaded account (sidebar, settings) in step with the record.
         if (applied && name != null) AmberDesktop.loadedAccount(npub)?.name?.value = name
     }
 
-    /**
-     * Subscribes [filter] on [relays] and returns the newest verified event
-     * once every relay sent EOSE (or the timeout passed).
-     */
     private suspend fun queryNewest(
         client: NostrClient,
         relays: Set<NormalizedRelayUrl>,
@@ -196,6 +189,7 @@ object ProfileFetcher {
      * relay rewrite the account's name, picture and saved relay list, and a
      * far-future created_at would pin the saved relay list watermark forever.
      */
+    @Suppress("NoComments")
     internal fun matchesFilter(event: Event, filter: Filter): Boolean {
         val authors = filter.authors
         if (!authors.isNullOrEmpty() && event.pubKey !in authors) return false

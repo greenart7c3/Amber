@@ -17,7 +17,9 @@ import com.vitorpamplona.quartz.utils.TimeUtils
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
-// What approving or rejecting a queued request does.
+private val ALWAYS_GRANTED_ON_CONNECT = listOf(SignerType.GET_PUBLIC_KEY, SignerType.PING)
+
+private val PendingBunkerRequest.isConnect: Boolean get() = request is BunkerRequestConnect || type == SignerType.CONNECT
 
 /**
  * Mirrors `BunkerRequestUtils.sendResult`. Runs on the engine's
@@ -63,14 +65,11 @@ private suspend fun BunkerEngine.doApprove(
     val store = AmberDesktop.store(acc.npub)
     val key = req.localKey
     val savedApplication = savedConnection(req, acc, store)
-    // Approving changes this list in place; kept to take the approval back.
     val grantsBefore = savedApplication?.permissions?.toList().orEmpty()
     val relays = approvalRelays(req, savedApplication)
 
-    // Only a connect may create an application. A non-connect request whose
-    // app is gone (deleted, expired or logged out while the card was queued)
-    // must not resurrect the revoked connection: answer it like an unknown client.
-    if (savedApplication == null && req.request !is BunkerRequestConnect && req.type != SignerType.CONNECT) {
+    val connectionRevokedWhileQueued = savedApplication == null && !req.isConnect
+    if (connectionRevokedWhileQueued) {
         answer(req, acc, req.signerPrivKey, BunkerResponse(req.request.id, "", "no permission"), relays)
         return
     }
@@ -97,22 +96,13 @@ private suspend fun BunkerEngine.doApprove(
         BunkerResponse(req.request.id, response, null),
         application.app.normalizedRelays().ifEmpty { relays },
     )
-    // Like Android: what the client never heard of must not stay granted.
     if (!delivered && rememberType != RememberType.NEVER) revertApproval(req, store, application.app, grantsBefore, grantsAfter)
 }
 
-/**
- * Takes back what approving [req] remembered when its reply did not reach the
- * client, like Android's `revertApproval`: a connect drops the connection (a
- * bunker:// one goes back to waiting under its secret), any other request restores
- * the grants it replaced. The grants are re-read, so a change made while the reply
- * was retried survives.
- */
 private fun BunkerEngine.revertApproval(req: PendingBunkerRequest, store: AccountStore, approved: AppRecord, grantsBefore: List<AppPermissionRecord>, grantsAfter: List<AppPermissionRecord>) {
     val key = approved.key
     store.addLog(key, "bunker response", "The reply did not reach the client, so its approval was taken back")
     failedReplies.tryEmit(Unit)
-    // The common revertedConnectKey / revertedGrants, as on Android.
     if (req.type == SignerType.CONNECT) {
         store.delete(key)
         revertedConnectKey(req.isNostrConnectUri, approved.secret)?.let { secret ->
@@ -124,18 +114,12 @@ private fun BunkerEngine.revertApproval(req: PendingBunkerRequest, store: Accoun
     store.upsert(current.copy(permissions = revertedGrants(current.permissions, grantsBefore, grantsAfter).toMutableList()))
 }
 
-// Mirrors the Android connect screen's account picker: the connection is
-// saved under (and signs for) the chosen account.
 private suspend fun approvingAccount(req: PendingBunkerRequest, accountNpub: String?): DesktopAccount = accountNpub
     ?.takeIf { it != req.account.npub && req.canSwitchAccount }
     ?.let { AmberDesktop.account(it) }
     ?: req.account
 
-/**
- * The connection [req] is approved on in [acc]'s store, or null for a new one. A
- * bunker:// connection is saved under its secret until a client connects with it:
- * that placeholder is moved to the chosen account and re-keyed to the client.
- */
+@Suppress("NoComments")
 private fun savedConnection(req: PendingBunkerRequest, acc: DesktopAccount, store: AccountStore): AppWithPermissions? {
     val key = req.localKey
     val secret = (req.request as? BunkerRequestConnect)?.secret?.takeIf { it.isNotBlank() }
@@ -147,14 +131,10 @@ private fun savedConnection(req: PendingBunkerRequest, acc: DesktopAccount, stor
         }
     }
 
-    // An expired connection counts as gone: approving a card queued before
-    // it expired must not sign for it (a new connect replaces it below).
+    // Expired counts as gone: approving a card queued before it expired must not sign for it.
     var savedApplication = store.lookup.getByKey(key)?.takeUnless { it.app.isExpired() }
     if (connectionToReplace(req, acc.npub) != null) {
-        // A nostrconnect URI names the client key itself. Approving it
-        // replaces the connection saved under that key (the card shows
-        // which, like Android's "Replace connection" dialog) instead of
-        // silently merging into it and keeping its grants and relays.
+        // Replaced, not merged: the old connection's grants and relays must not carry over.
         store.delete(key)
         savedApplication = null
     }
@@ -168,17 +148,12 @@ private fun savedConnection(req: PendingBunkerRequest, acc: DesktopAccount, stor
     return savedApplication
 }
 
-// Where the approval is answered. A brand-new connection (bunker:// or a
-// nostrconnect:// that named no relays) gets the local WebSocket relay beside the
-// default relays, so clients on this machine work without any public relay; a
-// local socket client never talks to relays.
 private fun approvalRelays(req: PendingBunkerRequest, savedApplication: AppWithPermissions?): List<NormalizedRelayUrl> {
     if (req.isLocalSocket) return emptyList()
     val newConnectionRelays = if (req.isNostrConnectUri) req.relays.ifEmpty { AmberDesktop.newBunkerRelays() } else AmberDesktop.newBunkerRelays()
     return savedApplication?.app?.normalizedRelays()?.ifEmpty { BunkerRelays.defaultRelays() } ?: newConnectionRelays
 }
 
-// The record of a connection seen for the first time.
 private fun newApplication(
     req: PendingBunkerRequest,
     acc: DesktopAccount,
@@ -203,18 +178,11 @@ private fun newApplication(
             lastUsed = TimeUtils.now(),
             transport = if (req.isLocalSocket) TRANSPORT_SOCKET else TRANSPORT_NIP46,
             socketSecretHash = req.socketSecretHash,
-            // Each connection gets its own signing key.
             localKey = if (req.request is BunkerRequestConnect && !req.isLocalSocket) generateBunkerPrivKey() else "",
         ),
     )
 }
 
-/**
- * What approving a connect sets: the chosen sign policy and its grants, and the
- * "delete after" choice, which like Android's also applies to an existing (e.g.
- * bunker:// placeholder) connection. A connection may always ask for the public
- * key and ping.
- */
 private fun applyConnect(
     application: AppWithPermissions,
     signPolicy: Int,
@@ -223,7 +191,7 @@ private fun applyConnect(
 ): AppWithPermissions {
     val result = application.copy(app = application.app.copy(signPolicy = signPolicy, deleteAfter = deleteAfter))
     applySignPolicy(result, signPolicy, grantedPermissions)
-    listOf(SignerType.GET_PUBLIC_KEY, SignerType.PING).forEach { type ->
+    ALWAYS_GRANTED_ON_CONNECT.forEach { type ->
         if (result.permissions.none { it.type == type.toString() }) {
             result.permissions.add(AppPermissionRecord(type.toString(), null, true, RememberType.ALWAYS.screenCode, Long.MAX_VALUE / 1000, 0))
         }
@@ -231,11 +199,6 @@ private fun applyConnect(
     return result
 }
 
-/**
- * Answers [req] over its local socket, or else as a kind-24133 event on [relays].
- * False only when a relay reply failed to publish; with no relay to send to there
- * is nothing to fail, as on Android.
- */
 private suspend fun BunkerEngine.answer(
     req: PendingBunkerRequest,
     acc: DesktopAccount,
@@ -271,11 +234,7 @@ private suspend fun BunkerEngine.doReject(
         savedApplication?.app?.normalizedRelays()?.ifEmpty { defaultRelays } ?: newConnectionRelays
     }
 
-    // A rejected connect leaves nothing behind (socket connects are plain
-    // `BunkerRequest`s, so check the type rather than the class), and a
-    // rejection never creates an application: if the app was deleted while
-    // the card was queued, there is nothing to record the rejection on.
-    if (savedApplication != null && req.request !is BunkerRequestConnect && req.type != SignerType.CONNECT) {
+    if (savedApplication != null && !req.isConnect) {
         if (rememberType != RememberType.NEVER && req.canRemember(encryptionScope)) {
             acceptOrRejectPermission(savedApplication, req.type, req.permissionKind(encryptionScope), false, rememberType, req.encryptedContent, encryptionScope, req.permissionRelay(encryptionScope))
         }
@@ -299,7 +258,6 @@ private suspend fun BunkerEngine.doReject(
     )
 }
 
-/** The grants of [signPolicy] (the common `signPolicyGrants`, as on Android). */
 private fun applySignPolicy(
     application: AppWithPermissions,
     signPolicy: Int,
@@ -315,11 +273,6 @@ private fun Permission.requested() = RequestedPermission(type, kind)
 
 private fun Grant.toRecord() = AppPermissionRecord(type, kind, acceptable, rememberType, acceptUntil, rejectUntil, relay)
 
-/**
- * Remembers the decision ([accepted]) on a request (the common `rememberedGrant`, as on
- * Android): for NIP-04/NIP-44 encrypt and decrypt, [scope] ALL stores the whole-NIP type
- * (NIP44_DECRYPT), SPECIFIC the content type (DECRYPT_CLEAR_TEXT), each replacing the other.
- */
 private fun acceptOrRejectPermission(
     application: AppWithPermissions,
     type: SignerType,

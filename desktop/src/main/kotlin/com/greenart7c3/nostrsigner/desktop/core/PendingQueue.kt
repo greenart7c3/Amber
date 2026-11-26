@@ -5,10 +5,6 @@ import com.vitorpamplona.quartz.utils.TimeUtils
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-// The approval queue: what is waiting for the user, and taking requests off it.
-
-// Atomic updates: socket clients queue from several threads at once, and a
-// plain read-then-write of `pending.value` loses one of two racing requests.
 internal fun BunkerEngine.addPending(request: PendingBunkerRequest) {
     pending.update { list -> if (list.any { it.isSameEntry(request) }) list else list + request }
 }

@@ -1,6 +1,7 @@
 package com.greenart7c3.nostrsigner.ui.components
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -94,72 +95,36 @@ fun Nip44v3ApprovalData(
     val displayContent = encryptedData.nip44v3Plaintext()
 
     Column(modifier) {
-        if (isBunker) {
-            RemoteAppIcon(iconUrl, appName)
-            Text(
-                buildAnnotatedString {
-                    withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
-                        append(appName)
-                    }
-                    append(" ")
-                    append(stringResource(messageRes))
-                },
-                fontSize = 18.sp,
-            )
-        } else {
-            LocalAppIcon(packageName)
-            Text(
-                stringResource(messageRes),
-                fontSize = 18.sp,
-            )
-        }
+        Nip44v3RequestHeader(
+            isBunker = isBunker,
+            appName = appName,
+            packageName = packageName,
+            message = stringResource(messageRes),
+            iconUrl = iconUrl,
+        )
 
         Spacer(Modifier.size(8.dp))
         Nip44v3ContextBox(kind = kind, scope = scope)
 
-        Card(
+        Nip44v3ContentCard(
+            displayContent = displayContent,
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f),
-            colors = CardDefaults.cardColors().copy(
-                containerColor = MaterialTheme.colorScheme.background,
-            ),
-        ) {
-            Column(Modifier.verticalScroll(rememberScrollState())) {
-                Text(
-                    displayContent,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 8.dp),
-                )
-            }
-        }
+        )
 
         Spacer(Modifier.size(16.dp))
         SigningAs(account)
         Spacer(modifier = Modifier.weight(1f))
 
         Spacer(Modifier.size(8.dp))
-        LabeledBorderBox(
-            label = stringResource(Res.string.encryption_scope),
+        Nip44v3GrantScopeBox(
+            grantScope = grantScope,
+            onSelect = { grantScope = it },
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp),
-        ) {
-            AmberToggles(
-                selected = grantScope,
-                options = listOf(DecryptTypeScope.SPECIFIC, DecryptTypeScope.ALL),
-                onSelect = { grantScope = it },
-                label = {
-                    stringResource(
-                        when (it) {
-                            DecryptTypeScope.SPECIFIC -> Res.string.for_this_kind_only
-                            DecryptTypeScope.ALL -> Res.string.for_all_kinds
-                        },
-                    )
-                },
-            )
-        }
+        )
         Spacer(Modifier.size(8.dp))
 
         RememberMyChoice(
@@ -174,6 +139,83 @@ fun Nip44v3ApprovalData(
         AcceptRejectButtons(
             onAccept = { onAccept(rememberType, grantScope) },
             onReject = { onReject(rememberType, grantScope) },
+        )
+    }
+}
+
+@Composable
+private fun ColumnScope.Nip44v3RequestHeader(
+    isBunker: Boolean,
+    appName: String,
+    packageName: String?,
+    message: String,
+    iconUrl: String,
+) {
+    if (isBunker) {
+        RemoteAppIcon(iconUrl, appName)
+        Text(
+            buildAnnotatedString {
+                withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
+                    append(appName)
+                }
+                append(" ")
+                append(message)
+            },
+            fontSize = 18.sp,
+        )
+    } else {
+        LocalAppIcon(packageName)
+        Text(
+            message,
+            fontSize = 18.sp,
+        )
+    }
+}
+
+@Composable
+private fun Nip44v3ContentCard(
+    displayContent: String,
+    modifier: Modifier = Modifier,
+) {
+    Card(
+        modifier = modifier,
+        colors = CardDefaults.cardColors().copy(
+            containerColor = MaterialTheme.colorScheme.background,
+        ),
+    ) {
+        Column(Modifier.verticalScroll(rememberScrollState())) {
+            Text(
+                displayContent,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 8.dp),
+            )
+        }
+    }
+}
+
+@Composable
+private fun Nip44v3GrantScopeBox(
+    grantScope: DecryptTypeScope,
+    onSelect: (DecryptTypeScope) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    LabeledBorderBox(
+        label = stringResource(Res.string.encryption_scope),
+        modifier = modifier,
+    ) {
+        AmberToggles(
+            selected = grantScope,
+            options = listOf(DecryptTypeScope.SPECIFIC, DecryptTypeScope.ALL),
+            onSelect = onSelect,
+            label = {
+                stringResource(
+                    when (it) {
+                        DecryptTypeScope.SPECIFIC -> Res.string.for_this_kind_only
+                        DecryptTypeScope.ALL -> Res.string.for_all_kinds
+                    },
+                )
+            },
         )
     }
 }

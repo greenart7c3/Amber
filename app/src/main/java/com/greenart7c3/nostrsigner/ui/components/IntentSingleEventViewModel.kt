@@ -39,6 +39,7 @@ class IntentSingleEventViewModel(
     private val _loaded = MutableStateFlow<LoadedIntentApplication?>(null)
     val loaded: StateFlow<LoadedIntentApplication?> = _loaded.asStateFlow()
 
+    @Suppress("NoComments")
     fun load(intentData: IntentData, npub: String, packageName: String?) {
         // Browser deep-links (nostrsigner://) arrive with no calling package, so
         // every web caller would otherwise share the single "null" key. Honoring a

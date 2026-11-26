@@ -40,12 +40,10 @@ fun parseLoginKey(key: String, password: String, accountIndex: Long = 0): Pair<K
     Pair(null, e.message ?: "Unknown error")
 }
 
-/** A pasted or scanned key without the invisible and control characters that come along with it. */
 internal fun normalizeKeyInput(text: String): String = text.filter { it.code in 33..126 || it.code == 32 }.lowercase().trim()
 
 /** The "add a key" page: checks the typed key or recovery phrase and logs in with it. */
 class AddKeyViewModel(
-    // Logging in finishes even if the page goes away.
     private val appScope: CoroutineScope,
 ) : ViewModel() {
     private val _isLoading = MutableStateFlow(false)
@@ -54,8 +52,7 @@ class AddKeyViewModel(
     private val _error = MutableStateFlow("")
     val error: StateFlow<String> = _error.asStateFlow()
 
-    // The checked key, kept only until the account is created from it.
-    private var keyPair: KeyPair? = null
+    private var checkedKeyUntilLogin: KeyPair? = null
 
     fun showError(message: String) {
         _error.value = message
@@ -73,18 +70,18 @@ class AddKeyViewModel(
             if (parsed == null) {
                 _error.value = reason
             } else {
-                keyPair = parsed
+                checkedKeyUntilLogin = parsed
                 withContext(Dispatchers.Main) { onValid() }
             }
         }
     }
 
     fun login(setup: ConnectionSetup, onLogin: suspend (KeyPair, ConnectionSetup) -> Unit, onFinish: () -> Unit) {
-        val checked = keyPair ?: return
+        val checked = checkedKeyUntilLogin ?: return
         _isLoading.value = true
         appScope.launch {
             onLogin(checked, setup)
-            keyPair = null
+            checkedKeyUntilLogin = null
             _isLoading.value = false
             withContext(Dispatchers.Main) { onFinish() }
         }
@@ -100,7 +97,6 @@ class AddKeyViewModel(
 /** A freshly generated account: its recovery phrase and the key pair derived from it. */
 class NewKey(val seedWords: Set<String>, val keyPair: KeyPair)
 
-/** Twelve distinct recovery words (a phrase with a repeated word is drawn again) and their key. */
 internal fun generateNewKey(): NewKey {
     var seedWords = setOf<String>()
     while (seedWords.size < 12) {
@@ -111,11 +107,11 @@ internal fun generateNewKey(): NewKey {
 
 /** The "generate a new key" page: draws the new account's key and creates the account. */
 class SignUpViewModel(
-    // Creating the account finishes even if the page goes away.
     private val appScope: CoroutineScope,
 ) : ViewModel() {
-    // Null while the key is being drawn, and again once the account holds it.
     private val _newKey = MutableStateFlow<NewKey?>(null)
+
+    /** Null while the key is being drawn, and again once the account holds it. */
     val newKey: StateFlow<NewKey?> = _newKey.asStateFlow()
 
     init {
@@ -149,11 +145,11 @@ class AccountImportViewModel(
     private val _progress = MutableStateFlow("")
     val progress: StateFlow<String> = _progress.asStateFlow()
 
-    // The backup lines that could not be restored; the error dialog shows while non-empty.
     private val _failedLines = MutableStateFlow<List<Int>>(emptyList())
+
+    /** The backup lines that could not be restored; the error dialog shows while non-empty. */
     val failedLines: StateFlow<List<Int>> = _failedLines.asStateFlow()
 
-    // Set when some accounts were restored but not all: they are opened once the error is dismissed.
     private var finishAfterError: (() -> Unit)? = null
 
     /** Restores the backup at [uri]; [onImported] gets whether Amber had accounts before. */
@@ -176,9 +172,8 @@ class AccountImportViewModel(
         if (failedLines.isEmpty()) {
             finish()
         } else {
-            // When nothing was imported, stay here so the user can retry instead of
-            // landing on a "your account is ready" screen.
-            finishAfterError = finish.takeIf { importedCount > 0 }
+            val someAccountsRestored = importedCount > 0
+            finishAfterError = finish.takeIf { someAccountsRestored }
             _failedLines.value = failedLines
         }
     }

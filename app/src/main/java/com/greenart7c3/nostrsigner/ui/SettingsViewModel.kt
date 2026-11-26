@@ -47,9 +47,9 @@ data class SettingsUiState(
     val torMode: TorMode,
     val killSwitch: Boolean = false,
     val themeMode: ThemeMode = ThemeMode.SYSTEM,
-    // False on builds without the updater (offline, F-Droid).
+    /** False on builds without the updater (offline, F-Droid). */
     val canUpdate: Boolean = false,
-    // The newer release, when there is one.
+    /** The newer release, when there is one. */
     val availableVersion: String? = null,
     val isLoading: Boolean = true,
     val status: String = "",
@@ -57,15 +57,13 @@ data class SettingsUiState(
 )
 
 /** The Settings home: database size, clearing old entries, Tor, theme and the kill switch. */
-@Suppress("LongParameterList") // Constructor injection: one parameter per dependency.
+@Suppress("LongParameterList")
 @OptIn(ExperimentalCoroutinesApi::class)
 class SettingsViewModel(
-    // The Application context: database files, preferences and the kill-switch broadcast.
     private val appContext: Context,
     private val settingsStore: SettingsStore,
     private val accountRepository: AccountRepository,
     private val relayClient: RelayClient,
-    // Clearing entries finishes even if the user leaves the screen.
     private val appScope: CoroutineScope,
     private val npub: String,
     themeMode: StateFlow<ThemeMode>,
@@ -81,12 +79,10 @@ class SettingsViewModel(
         ),
     )
 
-    // Settings reloads (Tor, the service start) replace the settings object and its kill-switch
-    // flow, so follow the current one instead of the one seen at construction.
-    private val currentSettings = MutableStateFlow(settingsStore.settings)
+    private val settingsReplacedByReloads = MutableStateFlow(settingsStore.settings)
     val state: StateFlow<SettingsUiState> = combine(
         _state,
-        currentSettings.flatMapLatest { it.killSwitch },
+        settingsReplacedByReloads.flatMapLatest { it.killSwitch },
         themeMode,
         updater?.latestRelease?.map { it?.version } ?: flowOf(null),
     ) { state, killSwitch, theme, version ->
@@ -102,7 +98,7 @@ class SettingsViewModel(
 
     /** Re-reads what other screens may have changed while this one sat in the back stack. */
     fun refresh() {
-        currentSettings.value = settingsStore.settings
+        settingsReplacedByReloads.value = settingsStore.settings
         _state.update { it.copy(torMode = settingsStore.settings.torMode) }
         viewModelScope.launch(Dispatchers.IO) {
             val size = databaseSizeMb()
@@ -155,7 +151,7 @@ class SettingsViewModel(
     }
 
     companion object {
-        @Suppress("LongParameterList") // Mirrors the constructor.
+        @Suppress("LongParameterList")
         fun factory(
             appContext: Context,
             settingsStore: SettingsStore,

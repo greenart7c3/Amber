@@ -246,16 +246,14 @@ private fun AccountPickerList(
             .verticalScroll(scrollState)
             .padding(horizontal = 12.dp, vertical = 8.dp),
     ) {
-        // Sorted and filtered for display only: each row keeps its index into [accounts],
-        // which is what the caller selects by, so neither changes the signing account.
         val favorites by SavedAccounts.favorites(LocalContext.current).collectAsStateWithLifecycle()
-        val shown = accounts.withIndex().toList()
+        val shownWithSelectableIndex = accounts.withIndex().toList()
             .filter { (_, acc) -> accountMatchesSearch(query, acc.npub, names[acc.npub].orEmpty()) }
             .favoritesFirst(favorites) { it.value.npub }
-        if (shown.isEmpty()) {
+        if (shownWithSelectableIndex.isEmpty()) {
             NoAccountsFound()
         }
-        shown.forEach { (index, acc) ->
+        shownWithSelectableIndex.forEach { (index, acc) ->
             key(acc.npub) {
                 AccountPickerItem(
                     account = acc,
@@ -269,6 +267,7 @@ private fun AccountPickerList(
     }
 }
 
+@Suppress("NoComments")
 @Composable
 private fun AccountPickerItem(
     account: Account,

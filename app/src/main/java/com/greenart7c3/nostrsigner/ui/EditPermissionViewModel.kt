@@ -15,7 +15,7 @@ import kotlinx.coroutines.withContext
 
 /** One remembered permission of an app, as the permissions screen shows and edits it. */
 data class PermissionGrant(
-    // The stored row; null for one not saved yet.
+    /** The stored row; null for one not saved yet. */
     val id: Int?,
     val type: String,
     val kind: Int?,
@@ -33,7 +33,7 @@ data class PermissionsApp(
     val relays: List<NormalizedRelayUrl> = emptyList(),
     val useSecret: Boolean = false,
     val secret: String = "",
-    // The connection's own key, or "" when it signs with the account key.
+    /** The connection's own key, or "" when it signs with the account key. */
     val localPubKey: String = "",
 )
 

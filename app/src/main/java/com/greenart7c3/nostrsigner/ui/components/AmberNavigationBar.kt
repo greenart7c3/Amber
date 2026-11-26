@@ -64,7 +64,6 @@ fun AmberNavigationBar(
     }
 }
 
-/** The Accounts tab shows the current account's picture, or its placeholder. */
 @Composable
 private fun AccountTabIcon(
     account: Account,

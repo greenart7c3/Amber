@@ -95,15 +95,13 @@ data class SavedAppInfo(val name: String?, val icon: String?)
  * relay and decryption scope) and confirming every request at once, each under its
  * own account. The requests are passed in: more can join while the screen is open.
  */
-@Suppress("LongParameterList") // Constructor injection: one parameter per dependency.
+@Suppress("LongParameterList")
 class BunkerMultiEventViewModel(
-    // The Application context: loads the other accounts a batch signs as, cancels notifications.
     private val appContext: Context,
     private val settingsStore: SettingsStore,
     private val accountRepository: AccountRepository,
     private val relayClient: RelayClient,
     private val bunkerResponder: BunkerResponder,
-    // Confirming publishes the replies even if the screen goes away.
     private val appScope: CoroutineScope,
     private val account: Account,
 ) : ViewModel() {
@@ -112,9 +110,6 @@ class BunkerMultiEventViewModel(
     /** Approves every request except relays outside the auth whitelist. */
     fun initChoices(batchRequests: List<AmberBunkerRequest>) {
         MultiEventScreenIntents.rememberType = RememberType.NEVER
-        // checkedStates holds the per-request decision: true = Approve, false = Deny.
-        // It is shared by every open Amber screen, so set only this batch's keys
-        // instead of clearing an intent batch's choices on another screen.
         batchRequests.forEach { MultiEventScreenIntents.checkedStates[it.queueKey] = !isBlocked(it) }
     }
 
@@ -142,8 +137,6 @@ class BunkerMultiEventViewModel(
             try {
                 relayClient.checkForNewRelaysAndUpdateAllFilters()
                 val closeApp = batchRequests.any { it.closeApplication }
-                // Only this batch's requests: a connect queued meanwhile stays
-                // pending, with its notification, for the connect screen.
                 val notificationManager = appContext.getSystemService(NotificationManager::class.java)
                 batchRequests.forEach {
                     BunkerRequestUtils.remove(it)
@@ -168,8 +161,6 @@ class BunkerMultiEventViewModel(
 
         val savedApplication = accountRepository.daos(thisAccount.npub).applicationDao.getByKey(request.localKey)
 
-        // A queued request whose app row is gone was revoked while it waited:
-        // answer with an error instead of recreating the connection.
         if (savedApplication == null) {
             BunkerRequestUtils.remove(request)
             AmberUtils.sendBunkerError(
@@ -183,8 +174,6 @@ class BunkerMultiEventViewModel(
             return
         }
 
-        // A relay outside the auth whitelist is rejected without remembering it,
-        // as on the single screen.
         val blockedByWhitelist = isBlocked(request)
         val isApproved = !blockedByWhitelist && (MultiEventScreenIntents.checkedStates[request.queueKey] ?: true)
         val requestType = nip46SignerType(request.request.method)
@@ -322,7 +311,6 @@ class BunkerMultiEventViewModel(
         respondEncryptDecrypt(request, thisAccount, savedApplication, isApproved)
     }
 
-    /** An encryption only has a result once it ran: no value means nothing to answer with. */
     private suspend fun respondEncryptDecrypt(
         request: AmberBunkerRequest,
         thisAccount: Account,
@@ -330,13 +318,13 @@ class BunkerMultiEventViewModel(
         isApproved: Boolean,
     ) {
         if (isApproved) {
-            val signature = request.encryptedData?.result
-            if (signature != null) {
+            val resultOnceEncryptionRan = request.encryptedData?.result
+            if (resultOnceEncryptionRan != null) {
                 BunkerRequestUtils.remove(request)
                 bunkerResponder.sendBunkerResponse(
                     thisAccount,
                     request,
-                    BunkerResponse(request.request.id, signature, null),
+                    BunkerResponse(request.request.id, resultOnceEncryptionRan, null),
                     savedApplication.application.relays,
                     onLoading = {},
                     onDone = {},
@@ -358,7 +346,7 @@ class BunkerMultiEventViewModel(
     private fun isBlocked(request: AmberBunkerRequest) = isBlockedByAuthWhitelist(request.signedEvent, settingsStore.settings.authWhitelist)
 
     companion object {
-        @Suppress("LongParameterList") // Mirrors the constructor.
+        @Suppress("LongParameterList")
         fun factory(
             appContext: Context,
             settingsStore: SettingsStore,

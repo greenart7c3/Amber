@@ -26,6 +26,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.greenart7c3.nostrsigner.AccountInfo
 import com.greenart7c3.nostrsigner.SavedAccounts
+import com.greenart7c3.nostrsigner.common.RELAY_AUTH_KIND
 import com.greenart7c3.nostrsigner.common.SignerType
 import com.greenart7c3.nostrsigner.common.psbt.PsbtDecoder
 import com.greenart7c3.nostrsigner.common.sanitizeAppName
@@ -63,17 +64,13 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 
-/** What every request type's composable needs about the request and its app. */
 @Immutable
 private data class IntentRequest(
     val intentData: IntentData,
     val account: Account,
     val packageName: String?,
-    // The app name shown on the screen and stored with a rejection.
     val appName: String,
-    // The name stored with an approval: the caller's own label when it has one.
-    val resultAppName: String,
-    // The caller's saved app as loaded for this request, or null (none, or not loaded yet).
+    val approvalAppName: String,
     val saved: LoadedIntentApplication?,
 ) {
     val key: String get() = "$packageName"
@@ -101,10 +98,9 @@ fun IntentSingleEventHomeScreen(
 ) {
     LaunchedEffect(intentData, account.npub, packageName) { viewModel.load(intentData, account.npub, packageName) }
     val loaded by viewModel.loaded.collectAsStateWithLifecycle()
-    // Only what was loaded for this very request: another one under the same key may have other grants.
-    val saved = loaded?.takeIf { it.intentData === intentData }
-    val appName = sanitizeAppName(saved?.name ?: packageName ?: intentData.name).ifBlank { "$packageName".toShortenHex() }
-    val request = IntentRequest(intentData, account, packageName, appName, applicationName ?: appName, saved)
+    val loadedForThisRequest = loaded?.takeIf { it.intentData === intentData }
+    val appName = sanitizeAppName(loadedForThisRequest?.name ?: packageName ?: intentData.name).ifBlank { "$packageName".toShortenHex() }
+    val request = IntentRequest(intentData, account, packageName, appName, applicationName ?: appName, loadedForThisRequest)
 
     when (intentData.type) {
         SignerType.GET_PUBLIC_KEY -> GetPublicKeyRequest(request, horizontalPadding, scaffoldPadding, onRemoveIntentData, onLoading)
@@ -142,7 +138,7 @@ private fun GetPublicKeyRequest(
                     rememberType = rememberType,
                     signPolicy = signPolicy,
                     permissions = permissions,
-                    appName = request.resultAppName,
+                    appName = request.approvalAppName,
                     shouldCloseApplication = closeApplication,
                 ),
                 copyToClipboard,
@@ -234,7 +230,6 @@ private fun Nip44v3Request(
         shouldRunOnAccept = request.remembered(),
         onAccept = { rememberType, scope ->
             val result = intentData.encryptedData?.result ?: ""
-            // SPECIFIC ⇒ kind-scoped grant; ALL ⇒ all-kinds grant (kind=null).
             val v3Kind = if (scope == DecryptTypeScope.SPECIFIC) intentData.nip44v3Kind else null
             IntentUtils.sendResult(
                 context,
@@ -326,8 +321,7 @@ private fun SignEventRequest(
 
     when {
         accounts.isEmpty() && !isPrivateEvent(event.kind, event.tags) -> NotLoggedIn(event.pubKey, modifier)
-        // Kind 22242 = relay client authentication (NIP-42), granted per relay host.
-        event.kind == 22242 -> RelayAuthRequest(request, onRemoveIntentData, onLoading, modifier)
+        event.kind == RELAY_AUTH_KIND -> RelayAuthRequest(request, onRemoveIntentData, onLoading, modifier)
         else -> EventRequest(request, onRemoveIntentData, onLoading, modifier)
     }
 }
@@ -362,8 +356,7 @@ private fun RelayAuthRequest(
     val intentData = request.intentData
     val event = intentData.event!!
     val relayUrl = RelayUrlUtils.extractHostAndPort(AmberEvent.relay(event))
-    // A non-empty auth whitelist refuses every relay outside it, without asking.
-    val blockedByWhitelist = isBlockedByAuthWhitelist(22242, relayUrl, settingsStore.settings.authWhitelist)
+    val blockedByWhitelist = isBlockedByAuthWhitelist(RELAY_AUTH_KIND, relayUrl, settingsStore.settings.authWhitelist)
 
     BunkerRelayAuthScreen(
         modifier = modifier,
@@ -379,7 +372,7 @@ private fun RelayAuthRequest(
                 context,
                 request.account,
                 request.reply(event.toJson(), event.sig),
-                IntentApproval(relayRemember, kind = event.kind, appName = request.resultAppName, relay = relayPermission),
+                IntentApproval(relayRemember, kind = event.kind, appName = request.approvalAppName, relay = relayPermission),
                 copyToClipboard,
                 onLoading,
                 onRemoveIntentData,
@@ -422,13 +415,12 @@ private fun EventRequest(
         onAccept = {
             if (refuseCrossAccount(context, request)) return@EventData
 
-            // An anonymous zap request answers with the whole event instead of a signature.
             val isAnonZap = event is ZapRequestEvent && event.tags.any { tag -> tag.any { t -> t == "anon" } }
             IntentUtils.sendResult(
                 context,
                 request.account,
                 request.reply(event.toJson(), if (isAnonZap) event.toJson() else event.sig),
-                IntentApproval(it, kind = event.kind, appName = request.resultAppName),
+                IntentApproval(it, kind = event.kind, appName = request.approvalAppName),
                 copyToClipboard,
                 onLoading,
                 onRemoveIntentData,
@@ -449,7 +441,6 @@ private fun EventRequest(
     )
 }
 
-// An event naming another stored account is never signed by this one; warns instead.
 private fun refuseCrossAccount(context: Context, request: IntentRequest): Boolean {
     val event = request.intentData.event!!
     val crossAccount = isCrossAccountSignEvent(
@@ -468,7 +459,6 @@ private fun refuseCrossAccount(context: Context, request: IntentRequest): Boolea
     return crossAccount
 }
 
-// The relay a NIP-42 grant covers ("*" for all) and how long it is remembered.
 private fun relayGrant(scope: RelayAuthScope, relayUrl: String, rememberType: RememberType): Pair<String, RememberType> = Pair(
     if (scope == RelayAuthScope.ALL) "*" else relayUrl,
     relayAuthRememberType(allRelays = scope == RelayAuthScope.ALL, relayUrl = relayUrl, rememberType = rememberType),

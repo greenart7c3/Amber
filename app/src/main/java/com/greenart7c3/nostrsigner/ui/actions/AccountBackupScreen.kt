@@ -165,13 +165,11 @@ fun AccountBackupScreen(
             if (isLoading) {
                 CenterCircularProgressIndicator(Modifier, text = stringResource(Res.string.do_not_leave_the_app_until_the_key_is_generated))
             } else {
-                // Collapsible tips section
                 var tipsExpanded by remember { mutableStateOf(false) }
                 TipsCard(expanded = tipsExpanded, onToggle = { tipsExpanded = !tipsExpanded })
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Password section
                 val password = remember { mutableStateOf(TextFieldValue("")) }
                 var errorMessage by remember { mutableStateOf("") }
                 var showCharsPassword by remember { mutableStateOf(false) }
@@ -213,7 +211,6 @@ fun AccountBackupScreen(
     }
 }
 
-/** The backup card of the saved account [npub], once its key (and seed words) are loaded. */
 @Composable
 private fun SavedAccountBackupCard(
     npub: String,
@@ -245,7 +242,6 @@ private fun SavedAccountBackupCard(
     }
 }
 
-/** Exporting every account at once, and the cloud backup (online flavors only). */
 @Composable
 private fun OtherBackupOptions(navController: NavController) {
     IconRow(
@@ -423,7 +419,6 @@ private fun AccountBackupCard(
 
             HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
 
-            // Copy and QR buttons side by side
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -445,7 +440,6 @@ private fun AccountBackupCard(
                 )
             }
 
-            // Seed words button (full width, shown only if valid mnemonic)
             if (Nip06().isValidMnemonic(seedWords)) {
                 Spacer(modifier = Modifier.height(4.dp))
                 SeedWordsButton(
@@ -458,7 +452,6 @@ private fun AccountBackupCard(
     }
 }
 
-/** The account's picture, its name (or short key) and whether it is backed up. */
 @Composable
 private fun AccountBackupHeader(
     account: Account,
@@ -532,6 +525,7 @@ private fun AccountBackupHeader(
  * because a throw here (device locked, or a WorkManager cold start before settings
  * load) would cancel the composition scope and crash the app.
  */
+@Suppress("NoComments")
 private suspend fun exportNsec(
     account: Account,
     context: Context,
@@ -546,7 +540,6 @@ private suspend fun exportNsec(
     null
 }
 
-/** The ncryptsec of the key under [password], or null after telling the user it could not be made. */
 private suspend fun encryptForQr(
     account: Account,
     password: String,
@@ -584,7 +577,6 @@ private fun NSecQrButton(
         )
     }
 
-    // Once the user is authenticated: the ncryptsec under the password, or the plain nsec without one.
     val showQr: () -> Unit = {
         if (password.isNotBlank()) {
             appScope.launch {
@@ -630,7 +622,6 @@ private fun NSecQrButton(
     )
 }
 
-/** The plain nsec as a QR code; closing it marks the account as backed up. */
 @Composable
 private fun NsecQrDialog(
     account: Account,
@@ -658,14 +649,15 @@ private fun NsecQrDialog(
     }
 }
 
+/**
+ * Shows [content] (the raw nsec or ncryptsec, via Route.QrCode) as a QR code. Defense-in-depth
+ * (GHSA-8844-q5vh-9j8f, L4): screenshots and screen recording are prevented for the lifetime of the screen.
+ */
 @Composable
 fun QrCodeScreen(
     content: String,
     modifier: Modifier = Modifier,
 ) {
-    // Defense-in-depth (GHSA-8844-q5vh-9j8f, L4): this screen renders the
-    // raw nsec/ncryptsec as a QR code (via Route.QrCode). Prevent
-    // screenshots/screen recording for the lifetime of the screen.
     val context = LocalContext.current
     DisposableEffect(Unit) {
         val window = (context as? Activity)?.window
@@ -697,6 +689,11 @@ fun QrCodeScreen(
     }
 }
 
+/**
+ * Shows [content] (the raw nsec) as a QR code at full brightness. Defense-in-depth (GHSA-8844-q5vh-9j8f, L4):
+ * screenshots and screen recording are prevented for the lifetime of the dialog, as SeedWordsPage and
+ * RandomPinInput do.
+ */
 @Composable
 fun QrCodeDialog(
     content: String,
@@ -711,9 +708,6 @@ fun QrCodeDialog(
         window?.attributes = window.attributes?.apply {
             screenBrightness = 1f
         }
-        // Defense-in-depth (GHSA-8844-q5vh-9j8f, L4): this dialog renders the
-        // raw nsec as a QR code. Prevent screenshots/screen recording for the
-        // lifetime of the dialog. Mirrors SeedWordsPage/RandomPinInput.
         window?.setFlags(
             WindowManager.LayoutParams.FLAG_SECURE,
             WindowManager.LayoutParams.FLAG_SECURE,

@@ -54,7 +54,6 @@ class NewBunkerViewModel(
      */
     suspend fun prepareUri(account: Account, key: String): String = withContext(Dispatchers.IO) {
         val saved = checkNotNull(accountRepository.daos(account.npub).applicationDao.getByKey(key)?.application)
-        // Prepare local endpoint routing before exposing the ephemeral-request URI.
         relayClient.checkForNewRelaysAndUpdateAllFilters(shouldReconnect = true)
         if (saved.localPubKey.isNotEmpty()) {
             check(LocalKeyAccountIndex.lookup(saved.localPubKey)?.npub == account.npub)

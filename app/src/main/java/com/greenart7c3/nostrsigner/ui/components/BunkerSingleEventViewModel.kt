@@ -42,8 +42,10 @@ data class BunkerSingleRequest(
 
     val appName: String get() = sanitizeAppName(application?.application?.name ?: bunkerRequest.name).ifBlank { key.toShortenHex() }
 
-    // Prefer the persisted application icon, falling back to the icon carried by
-    // the connect request's client metadata (nostr-protocol/nips#2381).
+    /**
+     * Prefers the persisted application icon, falling back to the icon carried by
+     * the connect request's client metadata (nostr-protocol/nips#2381).
+     */
     val appIcon: String get() = (application?.application?.icon ?: "").ifBlank { bunkerRequest.clientMetadata?.image ?: "" }
 
     val closeApplication: Boolean get() = application?.application?.closeApplication ?: bunkerRequest.closeApplication
@@ -87,7 +89,6 @@ data class ReplaceConnectionPrompt(
 class BunkerSingleEventViewModel(
     private val accountRepository: AccountRepository,
     private val bunkerResponder: BunkerResponder,
-    // The connect reply is published even if the screen goes away.
     private val appScope: CoroutineScope,
 ) : ViewModel() {
     private val _loaded = MutableStateFlow<LoadedApplication?>(null)
@@ -173,11 +174,8 @@ class BunkerSingleEventViewModel(
     }
 }
 
-/** An existing connection a connect approval would replace or merge into. */
 internal data class ExistingConnection(
     val app: ApplicationWithPermissions,
-    // False when the request reuses the saved app's key: the key is the row's
-    // identity, so a second connection can't be created alongside it.
     val canCreateNew: Boolean,
 )
 
@@ -189,6 +187,7 @@ internal data class ExistingConnection(
  * grants while taking the URI's relays, name and icon. A bunker:// reconnect
  * under the same key is the normal flow and is not prompted.
  */
+@Suppress("NoComments")
 internal suspend fun connectionToReplace(
     dao: ApplicationDao,
     bunkerRequest: AmberBunkerRequest,

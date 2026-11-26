@@ -39,13 +39,11 @@ import kotlinx.coroutines.launch
  * decryption scope) and confirming every request at once, each under its own account.
  * The requests themselves are passed in: more can join while the screen is open.
  */
-@Suppress("LongParameterList") // Constructor injection: one parameter per dependency.
+@Suppress("LongParameterList")
 class IntentMultiEventViewModel(
-    // The Application context: loads the other accounts a batch signs as.
     private val appContext: Context,
     private val settingsStore: SettingsStore,
     private val accountRepository: AccountRepository,
-    // Confirming finishes even if the screen goes away.
     private val appScope: CoroutineScope,
     private val packageName: String?,
     private val account: Account,
@@ -55,9 +53,6 @@ class IntentMultiEventViewModel(
     /** Approves every request except relays outside the auth whitelist. */
     fun initChoices(intents: List<IntentData>) {
         MultiEventScreenIntents.rememberType = RememberType.NEVER
-        // checkedStates holds the per-request decision: true = Approve, false = Deny.
-        // It is shared by every open Amber screen, so set only this screen's keys
-        // (owner-scoped queueKeys) instead of clearing another screen's choices.
         intents.forEach { MultiEventScreenIntents.checkedStates[it.queueKey] = !isBlocked(it) }
     }
 
@@ -78,7 +73,6 @@ class IntentMultiEventViewModel(
                 val localKey = packageName ?: return@launch
                 val results = mutableListOf<Result>()
                 var closeApp = true
-                // Each request is signed under its own account.
                 for ((npub, accountIntents) in intents.groupBy { batchAccountNpub(it.currentAccount, account.npub) }) {
                     val thisAccount = if (npub == account.npub) account else AccountStorage.load(appContext, npub)
                     if (thisAccount != null && !confirmForAccount(thisAccount, localKey, accountIntents, results)) {
@@ -93,13 +87,11 @@ class IntentMultiEventViewModel(
         }
     }
 
-    /** Saves the remembered choices and the history of [account]'s requests; returns whether its app closes Amber afterwards. */
     private suspend fun confirmForAccount(account: Account, localKey: String, intents: List<IntentData>, results: MutableList<Result>): Boolean {
         val daos = accountRepository.daos(account.npub)
         val application = daos.applicationDao.getByKey(localKey) ?: newApplication(localKey, account)
         var permissionsChanged = false
         val history = intents.map { intentData ->
-            // A relay outside the auth whitelist is rejected without remembering it, as on the single screen.
             val blocked = isBlocked(intentData)
             val approved = !blocked && (MultiEventScreenIntents.checkedStates[intentData.queueKey] ?: true)
             val groupKey = requestGroupKey(intentData.type, intentData.event?.kind, intentData.encryptedData, intentData.nip44v3Kind)
@@ -164,7 +156,7 @@ class IntentMultiEventViewModel(
     private fun isBlocked(intentData: IntentData) = isBlockedByAuthWhitelist(intentData.event, settingsStore.settings.authWhitelist)
 
     companion object {
-        @Suppress("LongParameterList") // Mirrors the constructor.
+        @Suppress("LongParameterList")
         fun factory(
             appContext: Context,
             settingsStore: SettingsStore,
@@ -206,13 +198,12 @@ class RequestGroupChoices {
     }
 }
 
-/** What the caller gets back for one request: the signature or result, a rejection, or nothing (an encryption that failed). */
 internal fun batchResult(intentData: IntentData, approved: Boolean): Result? {
     if (!approved) return Result(null, signature = null, result = null, id = intentData.id, rejected = true)
     val value = if (intentData.type == SignerType.SIGN_EVENT) {
         val event = intentData.event!!
-        // An anonymous zap request is returned whole: its signer is a throwaway key.
-        if (event is ZapRequestEvent && event.tags.any { tag -> tag.any { it == "anon" } }) event.toJson() else event.sig
+        val isAnonymousZapSignedByThrowawayKey = event is ZapRequestEvent && event.tags.any { tag -> tag.any { it == "anon" } }
+        if (isAnonymousZapSignedByThrowawayKey) event.toJson() else event.sig
     } else {
         intentData.encryptedData?.result ?: return null
     }

@@ -236,15 +236,12 @@ private fun AuthWhitelistEntries(
     ) {
         items(whitelist.size) { index ->
             val hostname = whitelist[index]
+            val urlTheScoringFetchUses = "wss://$hostname"
             RelayCard(
                 relay = hostname,
                 trustScore = trustScores[hostname],
                 isLoadingScore = loadingScores[hostname] == true,
-                // The whitelist stores bare hostnames; the scoring fetch
-                // normalizes "wss://$hostname", so check exclusion on
-                // the same constructed URL — a scheme-less hostname
-                // would be treated as excluded and hide every badge.
-                showTrustScore = !TrustScoreService.isExcludedFromScoring("wss://$hostname"),
+                showTrustScore = !TrustScoreService.isExcludedFromScoring(urlTheScoringFetchUses),
                 onClick = { onRemove(index) },
             )
         }

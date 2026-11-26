@@ -70,126 +70,198 @@ fun FeedbackScreen(
             .padding(horizontal = 16.dp, vertical = 8.dp),
         verticalArrangement = Arrangement.SpaceBetween,
     ) {
-        Column(
-            modifier = Modifier
-                .weight(1f)
-                .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-        ) {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(
-                    text = stringResource(Res.string.feedback_type),
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                FlowRow(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    FeedbackType.entries.forEach { type ->
-                        val selected = feedbackType == type
-                        FilterChip(
-                            selected = selected,
-                            onClick = { feedbackType = type },
-                            label = {
-                                Text(
-                                    text = stringResource(
-                                        when (type) {
-                                            FeedbackType.BUG_REPORT -> Res.string.bug_report
-                                            FeedbackType.ENHANCEMENT_REQUEST -> Res.string.enhancement_request
-                                        },
-                                    ),
-                                )
-                            },
-                            leadingIcon = if (selected) {
-                                {
-                                    Icon(
-                                        imageVector = Icons.Filled.Check,
-                                        contentDescription = null,
-                                        modifier = Modifier.size(FilterChipDefaults.IconSize),
-                                    )
-                                }
-                            } else {
-                                null
-                            },
-                        )
-                    }
-                }
-            }
+        FeedbackForm(
+            feedbackType = feedbackType,
+            onFeedbackTypeSelect = { feedbackType = it },
+            header = header,
+            onHeaderChange = { header = it },
+            body = body,
+            onBodyChange = { body = it },
+            modifier = Modifier.weight(1f),
+        )
 
-            HorizontalDivider()
-
-            OutlinedTextField(
-                value = header,
-                onValueChange = { header = it },
-                modifier = Modifier.fillMaxWidth(),
-                maxLines = 3,
-                label = {
-                    Text(stringResource(Res.string.subject))
-                },
-                textStyle = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium),
-                isError = header.text.isBlank(),
-                supportingText = if (header.text.isBlank()) {
-                    { Text(stringResource(Res.string.required)) }
-                } else {
-                    null
-                },
-            )
-
-            OutlinedTextField(
-                value = body,
-                onValueChange = { body = it },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(200.dp),
-                label = {
-                    Text(stringResource(Res.string.body_text_optional))
-                },
-                textStyle = MaterialTheme.typography.bodyLarge,
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-        }
-
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 8.dp),
-        ) {
-            AmberButton(
-                enabled = header.text.isNotBlank(),
-                text = stringResource(Res.string.send),
-                onClick = {
-                    appScope.launch {
-                        try {
-                            onLoading(true)
-                            val result = FeedbackSender(relayClient, settingsStore).send(
+        FeedbackSendRow(
+            enabled = header.text.isNotBlank(),
+            onSend = {
+                appScope.launch {
+                    sendFeedback(
+                        onLoading = onLoading,
+                        onDismiss = onDismiss,
+                        send = {
+                            FeedbackSender(relayClient, settingsStore).send(
                                 header.text,
                                 body.text,
                                 feedbackType,
                                 account,
                             )
-                            if (result) {
-                                ToastManager.toast(
-                                    getStringBlocking(Res.string.warning),
-                                    getStringBlocking(Res.string.feedback_sent),
-                                )
-                                onLoading(false)
-                                onDismiss()
-                            } else {
-                                ToastManager.toast(
-                                    getStringBlocking(Res.string.warning),
-                                    getStringBlocking(Res.string.failed_to_send_event),
-                                )
-                                onLoading(false)
-                            }
-                        } catch (e: Exception) {
-                            onLoading(false)
-                            if (e is CancellationException) throw e
-                        }
-                    }
-                },
+                        },
+                    )
+                }
+            },
+        )
+    }
+}
+
+private suspend fun sendFeedback(
+    onLoading: (Boolean) -> Unit,
+    onDismiss: () -> Unit,
+    send: suspend () -> Boolean,
+) {
+    try {
+        onLoading(true)
+        val result = send()
+        if (result) {
+            ToastManager.toast(
+                getStringBlocking(Res.string.warning),
+                getStringBlocking(Res.string.feedback_sent),
             )
+            onLoading(false)
+            onDismiss()
+        } else {
+            ToastManager.toast(
+                getStringBlocking(Res.string.warning),
+                getStringBlocking(Res.string.failed_to_send_event),
+            )
+            onLoading(false)
         }
+    } catch (e: Exception) {
+        onLoading(false)
+        if (e is CancellationException) throw e
+    }
+}
+
+@Composable
+private fun FeedbackForm(
+    feedbackType: FeedbackType,
+    onFeedbackTypeSelect: (FeedbackType) -> Unit,
+    header: TextFieldValue,
+    onHeaderChange: (TextFieldValue) -> Unit,
+    body: TextFieldValue,
+    onBodyChange: (TextFieldValue) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier
+            .verticalScroll(rememberScrollState()),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+        FeedbackTypePicker(
+            selected = feedbackType,
+            onSelect = onFeedbackTypeSelect,
+        )
+
+        HorizontalDivider()
+
+        OutlinedTextField(
+            value = header,
+            onValueChange = onHeaderChange,
+            modifier = Modifier.fillMaxWidth(),
+            maxLines = 3,
+            label = {
+                Text(stringResource(Res.string.subject))
+            },
+            textStyle = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium),
+            isError = header.text.isBlank(),
+            supportingText = if (header.text.isBlank()) {
+                { Text(stringResource(Res.string.required)) }
+            } else {
+                null
+            },
+        )
+
+        OutlinedTextField(
+            value = body,
+            onValueChange = onBodyChange,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(200.dp),
+            label = {
+                Text(stringResource(Res.string.body_text_optional))
+            },
+            textStyle = MaterialTheme.typography.bodyLarge,
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+    }
+}
+
+@Composable
+private fun FeedbackTypePicker(
+    selected: FeedbackType,
+    onSelect: (FeedbackType) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(
+            text = stringResource(Res.string.feedback_type),
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        FlowRow(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            FeedbackType.entries.forEach { type ->
+                FeedbackTypeChip(
+                    type = type,
+                    selected = selected == type,
+                    onClick = { onSelect(type) },
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun FeedbackTypeChip(
+    type: FeedbackType,
+    selected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    FilterChip(
+        selected = selected,
+        onClick = onClick,
+        modifier = modifier,
+        label = {
+            Text(
+                text = stringResource(
+                    when (type) {
+                        FeedbackType.BUG_REPORT -> Res.string.bug_report
+                        FeedbackType.ENHANCEMENT_REQUEST -> Res.string.enhancement_request
+                    },
+                ),
+            )
+        },
+        leadingIcon = if (selected) {
+            {
+                Icon(
+                    imageVector = Icons.Filled.Check,
+                    contentDescription = null,
+                    modifier = Modifier.size(FilterChipDefaults.IconSize),
+                )
+            }
+        } else {
+            null
+        },
+    )
+}
+
+@Composable
+private fun FeedbackSendRow(
+    enabled: Boolean,
+    onSend: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(top = 8.dp),
+    ) {
+        AmberButton(
+            enabled = enabled,
+            text = stringResource(Res.string.send),
+            onClick = onSend,
+        )
     }
 }

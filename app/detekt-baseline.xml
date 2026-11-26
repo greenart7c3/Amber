@@ -9,13 +9,11 @@
     <ID>LongMethod:BunkerRelayAuthScreen.kt:@Composable fun BunkerRelayAuthScreen</ID>
     <ID>LongMethod:EditRelaysDialog.kt:@Composable fun DefaultRelaysScreen</ID>
     <ID>LongMethod:EditRelaysDialog.kt:@SuppressLint("StateFlowValueCalledInComposition") @Composable private fun ActiveRelayRow</ID>
-    <ID>LongMethod:LoginWithPubKey.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun LoginWithPubKey</ID>
     <ID>LongMethod:Nip44v3ApprovalData.kt:@Composable fun Nip44v3ApprovalData</ID>
     <ID>LongMethod:QrCodeScanner.kt:@Composable fun SimpleQrCodeScanner</ID>
     <ID>LongMethod:RandomPinInput.kt:@Composable fun RandomPinInput</ID>
     <ID>LongMethod:SeedWordsPage.kt:@Composable fun SeedWordsPage</ID>
     <ID>LongMethod:TranslationReportScreen.kt:@Composable fun TranslationReportScreen</ID>
-    <ID>ModifierNotUsedAtRoot:LoginWithPubKey.kt:modifier = modifier .weight(1f)</ID>
     <ID>NoComments:Account.kt:Gate before reading: the repair below swallows decrypt failures and</ID>
     <ID>NoComments:Account.kt:Lazy repair for accounts restored by pre-fix builds, which stored the</ID>
     <ID>NoComments:Account.kt:NIP-44 ciphertext in SEED_WORDS. If the stored value is not a valid</ID>
@@ -1033,8 +1031,6 @@
     <ID>NoComments:LoginViewModels.kt:When nothing was imported, stay here so the user can retry instead of</ID>
     <ID>NoComments:LoginViewModels.kt:landing on a "your account is ready" screen.</ID>
     <ID>NoComments:LoginViewModelsTest.kt:Nothing restored: stay on the first page so the user can retry.</ID>
-    <ID>NoComments:LoginWithPubKey.kt:Account section</ID>
-    <ID>NoComments:LoginWithPubKey.kt:Permissions section</ID>
     <ID>NoComments:LogoutButton.kt:The logout deletes the account's databases, its saved apps included.</ID>
     <ID>NoComments:LogoutDeletesDatabasesTest.kt:File and DataStore cleanup is out of scope here.</ID>
     <ID>NoComments:MainActivity.kt:Read once here: getReferrer() crashes on OEM builds (Samsung/Android 12) when</ID>

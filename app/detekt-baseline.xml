@@ -8,7 +8,6 @@
     <ID>LongMethod:AddPermissionsSheet.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun AddPermissionsSheet</ID>
     <ID>LongMethod:BiometricAuthScreen.kt:@Composable fun BiometricAuthScreen</ID>
     <ID>LongMethod:BunkerRelayAuthScreen.kt:@Composable fun BunkerRelayAuthScreen</ID>
-    <ID>LongMethod:DefaultProfileRelaysScreen.kt:@Composable fun DefaultProfileRelaysScreen</ID>
     <ID>LongMethod:EditConfigurationScreen.kt:@Composable fun EditConfigurationScreen</ID>
     <ID>LongMethod:EditRelaysDialog.kt:@Composable fun DefaultRelaysScreen</ID>
     <ID>LongMethod:EditRelaysDialog.kt:@SuppressLint("StateFlowValueCalledInComposition") @Composable private fun ActiveRelayRow</ID>
@@ -555,7 +554,6 @@
     <ID>NoComments:CrossAccountSignEventTest.kt:pubkey is neither account; what matters is that B's key is unused.</ID>
     <ID>NoComments:CrossAccountSignEventTest.kt:switched the signing key to it.</ID>
     <ID>NoComments:DecryptSignerTypesTest.kt:Ciphertext, signatures and public keys stay ordinary clips.</ID>
-    <ID>NoComments:DefaultProfileRelaysScreen.kt:Fetch trust scores for all relays</ID>
     <ID>NoComments:DeviceUnlockPolicy.kt:isDeviceLocked is a supplier so callers only pay for the KeyguardManager</ID>
     <ID>NoComments:DeviceUnlockPolicy.kt:lookup when the opt-in flag is actually set.</ID>
     <ID>NoComments:DisplayCrashMessages.kt:ANRs, low-memory kills and native crashes only appear in the exit records.</ID>

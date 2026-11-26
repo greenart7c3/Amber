@@ -56,8 +56,8 @@ class Nip46RequestsTest {
     @Test
     fun `a decrypt_zap_event carries its zap request second, after the pubkey`() {
         assertEquals("{zap}", BunkerRequest("id", "decrypt_zap_event", arrayOf("pk", "{zap}")).zapRequestParam())
-        // A request with only the zap request is missing it.
-        assertNull(BunkerRequest("id", "decrypt_zap_event", arrayOf("{zap}")).zapRequestParam())
+        val onlyTheZapRequest = arrayOf("{zap}")
+        assertNull(BunkerRequest("id", "decrypt_zap_event", onlyTheZapRequest).zapRequestParam())
     }
 
     @Test
@@ -73,8 +73,9 @@ class Nip46RequestsTest {
 
     @Test
     fun `a first connect or a non-connect request is not a repeat`() {
-        // secret == key is a bunker placeholder no client has attached to yet.
-        assertFalse(isRepeatedConnect(SignerType.CONNECT, "key", "key", appUsesSecret = true, appConnected = false))
+        val appKey = "key"
+        val unattachedBunkerPlaceholderSecret = appKey
+        assertFalse(isRepeatedConnect(SignerType.CONNECT, appKey, unattachedBunkerPlaceholderSecret, appUsesSecret = true, appConnected = false))
         assertFalse(isRepeatedConnect(SignerType.CONNECT, "key", "secret", appUsesSecret = false, appConnected = false))
         assertFalse(isRepeatedConnect(SignerType.SIGN_EVENT, "key", "secret", appUsesSecret = true, appConnected = true))
     }
@@ -88,7 +89,6 @@ class Nip46RequestsTest {
         assertNull(connectSecretRejection("s", appFound = true, appConnected = false, appUsesSecret = true))
     }
 
-    // Parsed the way both apps read a decrypted request.
     private fun request(method: String, params: String) = JacksonMapper.mapper.readValue("""{"id":"1","method":"$method","params":$params}""", BunkerRequest::class.java)
 
     private val event = JacksonMapper.mapper.writeValueAsString("""{"kind":1,"content":"hi","tags":[],"created_at":1}""")
@@ -100,7 +100,10 @@ class Nip46RequestsTest {
         assertTrue(request("nip44v3_decrypt", """["pk","1","","payload"]""").hasRequiredParams())
         assertTrue(request("decrypt_zap_event", """["pk","{}"]""").hasRequiredParams())
         assertTrue(request("sign_psbt", """["psbt"]""").hasRequiredParams())
-        // Methods without params, and connect, whose checks are its own.
+    }
+
+    @Test
+    fun `a request whose method takes no params is well formed`() {
         assertTrue(request("get_public_key", "[]").hasRequiredParams())
         assertTrue(request("ping", "[]").hasRequiredParams())
     }
@@ -124,7 +127,6 @@ class Nip46RequestsTest {
         assertNull(request("sign_event", "[]").eventParam())
     }
 
-    // The desktop used to admit these and fail computing them ("could not process the request").
     @Test
     fun `a request missing a param its method needs is not`() {
         assertFalse(request("sign_event", "[]").hasRequiredParams())

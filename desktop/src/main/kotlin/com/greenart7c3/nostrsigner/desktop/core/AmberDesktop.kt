@@ -39,8 +39,11 @@ object AmberDesktop {
 
     val applicationIOScope = CoroutineScope(Dispatchers.IO + SupervisorJob() + exceptionHandler)
 
-    // The client is picked per dial, so Tor routing (and the local-relay
-    // bypass) applies to every socket opened after a settings change.
+    /**
+     * The client is picked per dial, so Tor routing (and the local-relay
+     * bypass) applies to every socket opened after a settings change.
+     */
+    @Suppress("NoComments")
     private val socketBuilder = object : WebsocketBuilder {
         override fun build(url: NormalizedRelayUrl, out: WebSocketListener) = OkHttpWebSocket(url, RelayHttpClients::clientFor, out)
     }
@@ -50,11 +53,13 @@ object AmberDesktop {
     /** A fresh, throwaway relay client (e.g. to probe a relay before adding it). */
     fun newClient(): NostrClient = NostrClient(socketBuilder, applicationIOScope)
 
-    // Authenticates with relays that request NIP-42 AUTH.
+    /**
+     * Like Android: one account failing to sign (e.g. its key was wiped by
+     * the lock mid-AUTH) must not abort AUTH for the others.
+     */
+    @Suppress("NoComments")
     private val authCoordinator by lazy {
         RelayAuthenticator(client, applicationIOScope) { _, event, _ ->
-            // Like Android: one account failing to sign (e.g. its key was
-            // wiped by the lock mid-AUTH) must not abort AUTH for the others.
             accounts().mapNotNull { account ->
                 runCatching { account.signer.sign(event) }.onFailure { e ->
                     AmberLogger.e("AmberDesktop", "NIP-42 auth signing failed for ${account.npub}", e)
@@ -90,11 +95,13 @@ object AmberDesktop {
         evicted?.let { wipe(listOf(it)) }
     }
 
-    /** Drops every decrypted account key from memory and wipes it (passphrase lock). */
+    /**
+     * Drops every decrypted account key from memory and wipes it (passphrase lock).
+     * Debounced log/history writes are persisted first: once locked, the stores
+     * refuse to touch the encrypted files, so anything still volatile would sit
+     * in memory only until the next unlock.
+     */
     fun evictAllAccounts() {
-        // Persist debounced log/history writes first: once locked, writeSecure
-        // refuses to touch the encrypted files, so anything still volatile
-        // would sit in memory only until the next unlock.
         stores.values.forEach { it.flushVolatile() }
         val evicted = accountCache.values.toList()
         accountCache.clear()
@@ -108,6 +115,7 @@ object AmberDesktop {
      * signing call still in flight on an evicted account fails instead of
      * signing.
      */
+    @Suppress("NoComments")
     private fun wipe(accounts: List<DesktopAccount>) {
         Nip44.clearCache()
         Nip04.clearCache()
@@ -159,7 +167,8 @@ object BunkerRelays {
      * Changes the local relay's port, refused while any saved connection still
      * lists the relay: its bunker:// URI (and its subscription) would keep
      * pointing at the old port. Returns the string for the refusal, or null
-     * when the port was applied.
+     * when the port was applied. A running relay comes down first, since
+     * starting it never rebinds a live one.
      */
     fun changeLocalBunkerPort(newPort: Int): StringResource? {
         val current = RelayUrlNormalizer.normalizeOrNull("ws://127.0.0.1:${localBunkerPort()}/") ?: return null
@@ -168,7 +177,6 @@ object BunkerRelays {
         }
         if (inUse) return Res.string.d_local_bunker_port_in_use
         SettingsStore.update { it.copy(localBunkerPort = newPort) }
-        // A running relay must come down first: start() never rebinds a live one.
         LocalBunkerRelay.stop()
         applyLocalBunkerServerSetting()
         return null
@@ -304,13 +312,15 @@ object RelayConnections {
         Runtime.getRuntime().addShutdownHook(Thread { runCatching { TorManager.shutdown() } })
     }
 
-    /** Mirrors `Amber.reconnect`: connect retries failed relays directly. */
+    /**
+     * Mirrors `Amber.reconnect`: connect retries failed relays directly. It
+     * always calls connect() so that failed relays (socket == null) are
+     * retried at once, bypassing the relay client's internal backoff delay;
+     * for relays already connected, connect() is a safe no-op.
+     */
     fun reconnect() {
         if (PassphraseLock.isLocked()) return
         val wasActive = client.isActive()
-        // Always call connect() so that failed relays (socket == null) are
-        // retried directly, bypassing the relay client's internal backoff
-        // delay. For relays already connected, connect() is a safe no-op.
         client.connect()
         client.reconnect(wasActive)
     }

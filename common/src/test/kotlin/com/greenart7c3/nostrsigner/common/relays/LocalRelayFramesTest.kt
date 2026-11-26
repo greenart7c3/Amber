@@ -51,8 +51,7 @@ class LocalRelayFramesTest {
         sockets += it
     }
 
-    /** Sends a request head and returns the response head (status line and headers). */
-    private fun Socket.request(head: String): String {
+    private fun Socket.responseHeadTo(head: String): String {
         getOutputStream().write("$head\r\n\r\n".toByteArray(Charsets.UTF_8))
         val bytes = ByteArrayOutputStream()
         val input = getInputStream()
@@ -78,10 +77,9 @@ class LocalRelayFramesTest {
     }.joinToString("\r\n")
 
     private fun upgraded(): Socket = open().also {
-        assertTrue(it.request(upgradeHead()).startsWith("HTTP/1.1 101"))
+        assertTrue(it.responseHeadTo(upgradeHead()).startsWith("HTTP/1.1 101"))
     }
 
-    /** One client frame: masked unless told otherwise, with the 7-, 16- or 64-bit length its size needs. */
     private fun Socket.sendFrame(
         opcode: Int,
         payload: ByteArray,
@@ -140,10 +138,9 @@ class LocalRelayFramesTest {
 
     private fun InputStream.atEnd(): Boolean = read() < 0
 
-    /** A REQ the relay answers with EOSE, padded with JSON whitespace to [size] bytes. */
-    private fun req(size: Int = 0): String {
+    private fun eoseAnsweredReq(whitespacePaddedToBytes: Int = 0): String {
         val start = "[\"REQ\",\"s\",{\"kinds\":[1]}"
-        return start + " ".repeat((size - start.length - 1).coerceAtLeast(0)) + "]"
+        return start + " ".repeat((whitespacePaddedToBytes - start.length - 1).coerceAtLeast(0)) + "]"
     }
 
     private fun Socket.assertEose() {
@@ -154,7 +151,7 @@ class LocalRelayFramesTest {
 
     @Test
     fun upgradeAnswersTheRfcAcceptKey() {
-        val response = open().request(upgradeHead())
+        val response = open().responseHeadTo(upgradeHead())
         assertTrue(response, response.startsWith("HTTP/1.1 101 Switching Protocols\r\n"))
         assertTrue(response, response.contains("Sec-WebSocket-Accept: s3pPLMBiTxaQ9kYGzzhZRbK+xOo=\r\n"))
     }
@@ -163,7 +160,7 @@ class LocalRelayFramesTest {
     fun requestsThatAreNotAnUpgradeAreRefused() {
         for (head in listOf(upgradeHead(method = "POST"), upgradeHead(key = null), "GET / HTTP/1.1\r\nHost: 127.0.0.1", "GET /")) {
             val socket = open()
-            val response = socket.request(head)
+            val response = socket.responseHeadTo(head)
             assertTrue(response, response.startsWith("HTTP/1.1 400 Bad Request\r\n"))
             assertTrue(socket.getInputStream().atEnd())
         }
@@ -171,13 +168,13 @@ class LocalRelayFramesTest {
 
     @Test
     fun anotherWebSocketVersionGetsUpgradeRequired() {
-        val response = open().request(upgradeHead(version = "12"))
+        val response = open().responseHeadTo(upgradeHead(version = "12"))
         assertTrue(response, response.startsWith("HTTP/1.1 426 Upgrade Required\r\nSec-WebSocket-Version: 13\r\n"))
     }
 
     @Test
     fun preflightIsAnsweredWithTheOrigin() {
-        val response = open().request("OPTIONS / HTTP/1.1\r\nOrigin: https://coracle.social")
+        val response = open().responseHeadTo("OPTIONS / HTTP/1.1\r\nOrigin: https://coracle.social")
         assertTrue(response, response.startsWith("HTTP/1.1 204 No Content\r\n"))
         assertTrue(response, response.contains("Access-Control-Allow-Origin: https://coracle.social\r\n"))
     }
@@ -186,7 +183,7 @@ class LocalRelayFramesTest {
     fun messagesOfEveryLengthEncodingArrive() {
         val socket = upgraded()
         for (size in listOf(0, 200, 70_000)) {
-            socket.sendText(req(size))
+            socket.sendText(eoseAnsweredReq(size))
             socket.assertEose()
         }
     }
@@ -194,7 +191,7 @@ class LocalRelayFramesTest {
     @Test
     fun fragmentedMessageIsAssembledAroundAPing() {
         val socket = upgraded()
-        val message = req()
+        val message = eoseAnsweredReq()
         socket.sendText(message.substring(0, 10), fin = false)
         socket.sendFrame(OP_PING, "hi".toByteArray())
         val pong = socket.readFrame()
@@ -214,13 +211,13 @@ class LocalRelayFramesTest {
     @Test
     fun malformedFramesCloseWithProtocolError() {
         val cases: List<Socket.() -> Unit> = listOf(
-            { sendFrame(OP_TEXT, req().toByteArray(), masked = false) },
-            { sendFrame(OP_TEXT, req().toByteArray(), firstByteExtra = 0x40) },
+            { sendFrame(OP_TEXT, eoseAnsweredReq().toByteArray(), masked = false) },
+            { sendFrame(OP_TEXT, eoseAnsweredReq().toByteArray(), firstByteExtra = 0x40) },
             { sendFrame(OP_BINARY, byteArrayOf(1, 2, 3)) },
             { sendFrame(OP_CONTINUATION, "x".toByteArray()) },
             {
                 sendText("[\"REQ\"", fin = false)
-                sendText(req())
+                sendText(eoseAnsweredReq())
             },
             { sendFrame(OP_PING, "x".toByteArray(), fin = false) },
             { sendFrame(OP_PING, ByteArray(126)) },
@@ -235,14 +232,14 @@ class LocalRelayFramesTest {
     @Test
     fun oversizedFrameClosesWithMessageTooBig() {
         val socket = upgraded()
-        socket.sendFrame(OP_TEXT, ByteArray(0), declaredLength = MAX_MESSAGE_BYTES + 1L)
+        socket.sendFrame(OP_TEXT, ByteArray(0), declaredLength = RELAY_MAX_MESSAGE_BYTES + 1L)
         socket.assertClosedWith(1009)
     }
 
     @Test
     fun oversizedFragmentedMessageClosesWithMessageTooBig() {
         val socket = upgraded()
-        val half = ByteArray(MAX_MESSAGE_BYTES / 2 + 1) { ' '.code.toByte() }
+        val half = ByteArray(RELAY_MAX_MESSAGE_BYTES / 2 + 1) { ' '.code.toByte() }
         socket.sendFrame(OP_TEXT, half, fin = false)
         socket.sendFrame(OP_CONTINUATION, half)
         socket.assertClosedWith(1009)
@@ -256,7 +253,6 @@ class LocalRelayFramesTest {
         const val OP_PING = 0x9
         const val OP_PONG = 0xA
 
-        /** The relay's per-message cap (`RelayCore.MAX_MESSAGE_BYTES`). */
-        const val MAX_MESSAGE_BYTES = 1024 * 1024
+        const val RELAY_MAX_MESSAGE_BYTES = 1024 * 1024
     }
 }

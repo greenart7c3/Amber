@@ -4,7 +4,7 @@ import com.vitorpamplona.quartz.nip01Core.relay.filters.Filter
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
 import com.vitorpamplona.quartz.nip46RemoteSigner.NostrConnectEvent
 
-// shortcut: 100 is a guess at what relays accept as #p values per filter; lower it if a relay rejects the filter.
+/** A guess at how many #p values relays accept per filter; lower it if a relay rejects the filter. */
 const val BUNKER_P_TAGS_PER_FILTER = 100
 
 /**

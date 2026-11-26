@@ -76,8 +76,7 @@ class NotificationPolicyTest {
             SignerType.CONNECT,
             SignerType.SWITCH_RELAYS,
         ).forEach { assertFalse(it.name, req(it).allowsQuickApprove()) }
-        // A sign_event whose kind could not be read is not low-risk either.
-        assertFalse(req(SignerType.SIGN_EVENT, kind = null).allowsQuickApprove())
+        assertFalse("a sign_event whose kind could not be read is not low-risk either", req(SignerType.SIGN_EVENT, kind = null).allowsQuickApprove())
     }
 
     @Test
@@ -94,14 +93,11 @@ class NotificationPolicyTest {
 
     @Test
     fun aClientChosenNameCannotFakeLinesOrDirection() {
-        // Line breaks and tabs become single spaces: no fake second line.
-        assertEquals("Wallet Amber: approve to continue", sanitizeAppName("Wallet\nAmber:\tapprove  to continue"))
-        // Bidi overrides and zero-width characters are dropped.
-        assertEquals("evilgpj.exe", sanitizeAppName("evil\u202Egpj.exe\u200B"))
+        assertEquals("line breaks and tabs become single spaces", "Wallet Amber: approve to continue", sanitizeAppName("Wallet\nAmber:\tapprove  to continue"))
+        assertEquals("bidi overrides and zero-width characters are dropped", "evilgpj.exe", sanitizeAppName("evil\u202Egpj.exe\u200B"))
         assertEquals("ab", sanitizeAppName("a\u0000\u0007b"))
-        // Ordinary names, including non-Latin ones, are kept as they are.
-        assertEquals("Amethyst", sanitizeAppName("  Amethyst  "))
-        assertEquals("ノストラ 🟣", sanitizeAppName("ノストラ 🟣"))
+        assertEquals("an ordinary name is only trimmed", "Amethyst", sanitizeAppName("  Amethyst  "))
+        assertEquals("a non-Latin name is kept as it is", "ノストラ 🟣", sanitizeAppName("ノストラ 🟣"))
     }
 
     @Test

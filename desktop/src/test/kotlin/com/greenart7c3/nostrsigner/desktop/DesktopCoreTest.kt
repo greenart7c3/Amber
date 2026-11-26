@@ -37,9 +37,7 @@ class DesktopCoreTest {
     companion object {
         @JvmStatic
         @BeforeClass
-        fun isolateDataDir() {
-            // Point the app data dir at a scratch location so tests never touch
-            // a real install.
+        fun isolateDataDirFromARealInstall() {
             val tmp = File.createTempFile("amber-test", "").apply {
                 delete()
                 mkdirs()
@@ -64,8 +62,8 @@ class DesktopCoreTest {
 
     @Test
     fun defaultRelaysMatchTheAndroidApp() {
-        // Keep in sync with `defaultAppRelays` in the Android AmberSettings.kt.
         assertEquals(
+            "must match defaultAppRelays in the Android AmberSettings.kt",
             listOf(
                 "wss://auth.nostr1.com/",
                 "wss://bucket.coracle.social/",
@@ -110,32 +108,34 @@ class DesktopCoreTest {
 
     @Test
     fun isRememberedMirrorsAndroidBehavior() {
-        // Sign policy 2 always auto-accepts.
-        assertEquals(true, isRemembered(2, null))
-        // No stored permission -> ask the user.
-        assertNull(isRemembered(1, null))
+        assertEquals("sign policy 2 always auto-accepts", true, isRemembered(2, null))
+        assertNull("no stored permission asks the user", isRemembered(1, null))
 
         val accepted = AppPermissionRecord("SIGN_EVENT", 1, true, RememberType.ALWAYS.screenCode, Long.MAX_VALUE / 1000, 0)
         assertEquals(true, isRemembered(1, accepted))
 
-        val rejected = AppPermissionRecord("SIGN_EVENT", 1, false, RememberType.ALWAYS.screenCode, 0, Long.MAX_VALUE / 1000)
-        assertEquals(false, isRemembered(1, rejected))
+        assertEquals(false, isRemembered(1, rejectedAlways))
 
         val expired = AppPermissionRecord("SIGN_EVENT", 1, true, RememberType.FIVE_MINUTES.screenCode, TimeUtils.now() - 10, 0)
         assertNull(isRemembered(1, expired))
+    }
 
-        // An active rejection wins over the "fully trust" sign policy.
-        assertEquals(false, isRemembered(2, rejected))
+    private val rejectedAlways = AppPermissionRecord("SIGN_EVENT", 1, false, RememberType.ALWAYS.screenCode, 0, Long.MAX_VALUE / 1000)
 
-        // A stale timestamp on the side acceptable does not select never decides.
+    @Test
+    fun `an active rejection wins over the fully trust sign policy`() {
+        assertEquals(false, isRemembered(2, rejectedAlways))
+    }
+
+    @Test
+    fun `a leftover timestamp on the side the grant did not choose decides nothing`() {
         val denialWithLeftoverAccept = AppPermissionRecord("SIGN_EVENT", 1, false, RememberType.ALWAYS.screenCode, Long.MAX_VALUE / 1000, 0)
         assertNull(isRemembered(1, denialWithLeftoverAccept))
         val acceptWithLeftoverReject = AppPermissionRecord("SIGN_EVENT", 1, true, RememberType.ALWAYS.screenCode, 0, Long.MAX_VALUE / 1000)
         assertNull(isRemembered(1, acceptWithLeftoverReject))
     }
 
-    /** A ping on [localKey]; every entry reuses the client-chosen request id "X". */
-    private fun pendingEntry(localKey: String, account: DesktopAccount) = PendingBunkerRequest(
+    private fun pingReusingRequestIdX(localKey: String, account: DesktopAccount) = PendingBunkerRequest(
         request = BunkerRequest("X", "ping", emptyArray()),
         type = SignerType.PING,
         account = account,
@@ -148,24 +148,24 @@ class DesktopCoreTest {
         val engine = AmberDesktop.engine
         val accountA = AccountManager.addAccount(KeyPair(), name = "dedup-a")
         val accountB = AccountManager.addAccount(KeyPair(), name = "dedup-b")
-        val first = pendingEntry("conn-one", accountA)
+        val first = pingReusingRequestIdX("conn-one", accountA)
 
         engine.addPending(first)
-        // Relay clients choose their own request ids: the same id arriving for
-        // another connection (or account) must not be swallowed by the first.
-        engine.addPending(pendingEntry("conn-two", accountA))
-        engine.addPending(pendingEntry("conn-one", accountB))
-        assertEquals(3, engine.pending.value.count { it.request.id == "X" })
+        engine.addPending(pingReusingRequestIdX("conn-two", accountA))
+        engine.addPending(pingReusingRequestIdX("conn-one", accountB))
+        assertEquals(
+            "a client-chosen id arriving for another connection or account must not be swallowed by the first",
+            3,
+            engine.pending.value.count { it.request.id == "X" },
+        )
 
-        // The very same (account, connection, id) is still collapsed.
         engine.addPending(first.copy())
-        assertEquals(3, engine.pending.value.count { it.request.id == "X" })
+        assertEquals("the very same account, connection and id is still collapsed", 3, engine.pending.value.count { it.request.id == "X" })
 
-        // Removal matches the full key, not the bare client id.
         engine.removePending(first)
-        assertEquals(2, engine.pending.value.count { it.request.id == "X" })
-        engine.removePending(pendingEntry("conn-two", accountA))
-        engine.removePending(pendingEntry("conn-one", accountB))
+        assertEquals("removal matches the full key, not the bare client id", 2, engine.pending.value.count { it.request.id == "X" })
+        engine.removePending(pingReusingRequestIdX("conn-two", accountA))
+        engine.removePending(pingReusingRequestIdX("conn-one", accountB))
         assertEquals(0, engine.pending.value.count { it.request.id == "X" })
     }
 
@@ -175,31 +175,29 @@ class DesktopCoreTest {
         val start = 1_000_000L
         val sender = "wss://relay|senderpubkey"
 
-        // A fresh sender gets its whole budget at once, then drops the excess.
-        repeat(3) { assertTrue("within budget", limiter.allow(sender, start)) }
+        repeat(3) { assertTrue("a fresh sender gets its whole budget at once", limiter.allow(sender, start)) }
         assertFalse("burst beyond budget dropped", limiter.allow(sender, start))
 
-        // Steady refill: half a window later exactly one token is back.
-        assertTrue(limiter.allow(sender, start + 30_000))
-        assertFalse(limiter.allow(sender, start + 30_000))
+        assertTrue("half a window later one token is back", limiter.allow(sender, start + 30_000))
+        assertFalse("half a window later only one token is back", limiter.allow(sender, start + 30_000))
 
-        // A full window restores the whole budget.
-        assertTrue(limiter.allow(sender, start + 90_000))
+        assertTrue("a full window restores the whole budget", limiter.allow(sender, start + 90_000))
 
-        // Senders are evicted oldest-first, so the map cannot grow unbounded.
         repeat(6) { limiter.allow("wss://relay|sender-$it", start) }
-        assertTrue("map bounded", limiter.trackedSenders <= 4)
+        assertTrue("senders are evicted oldest-first, so the map stays bounded", limiter.trackedSenders <= 4)
     }
 
     @Test
-    fun rateLimiterCapsFreshKeysInTotal() {
+    fun `a fresh key per event does not evade the aggregate rate limit`() {
         val limiter = SenderRateLimiter(capacity = 10, windowSeconds = 60, aggregateCapacity = 20)
         val start = 1_000_000L
 
-        // A fresh key per event no longer evades the limit.
         assertEquals(20, (0 until 500).count { limiter.allow("wss://relay|fresh-$it", start) })
+    }
 
-        // One noisy sender only spends its own budget of the shared one.
+    @Test
+    fun `one noisy sender only spends its own share of the aggregate rate limit`() {
+        val start = 1_000_000L
         val other = SenderRateLimiter(capacity = 10, windowSeconds = 60, aggregateCapacity = 20)
         repeat(1000) { other.allow("wss://relay|noisy", start) }
         assertEquals(10, (0 until 10).count { other.allow("wss://relay|newcomer-$it", start) })
@@ -221,9 +219,8 @@ class DesktopCoreTest {
         store.addLog("wss://relay", "bunker", "volatile line")
         store.addHistory(HistoryRecord("app-key", "ping", null, TimeUtils.now(), true))
 
-        // Nothing hit the disk yet: the writes are debounced.
-        assertTrue(AccountStore(account.npub).logs.value.isEmpty())
-        assertTrue(AccountStore(account.npub).history.value.isEmpty())
+        assertTrue("debounced logs must not hit the disk before the flush", AccountStore(account.npub).logs.value.isEmpty())
+        assertTrue("debounced history must not hit the disk before the flush", AccountStore(account.npub).history.value.isEmpty())
 
         store.flushVolatile()
         assertEquals(listOf("volatile line"), AccountStore(account.npub).logs.value.map { it.message })

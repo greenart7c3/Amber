@@ -112,7 +112,6 @@ fun App(modifier: Modifier = Modifier) {
         AmberDesktop.engine.failedReplies.collect { Toaster.toast(getString(Res.string.failed_to_send_event)) }
     }
 
-    // Jump to the approval screen whenever a new request arrives.
     LaunchedEffect(pending.size) {
         if (pending.isNotEmpty()) {
             UiState.navigate(Route.IncomingRequest)
@@ -121,7 +120,7 @@ fun App(modifier: Modifier = Modifier) {
 
     val acc = account
     val lockStatus by PassphraseLock.state.collectAsState()
-    val ready by Session.ready.collectAsState()
+    val accountLoaded by Session.ready.collectAsState()
     MeasuredLayout(modifier.fillMaxSize()) {
         when {
             loading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -130,11 +129,9 @@ fun App(modifier: Modifier = Modifier) {
 
             lockStatus == PassphraseLock.Status.LOCKED -> UnlockScreen()
 
-            // First run: no passphrase yet. Nothing else may load until it is set.
             lockStatus == PassphraseLock.Status.DISABLED -> PassphraseSetupScreen()
 
-            // Unlocked, but the account is still being loaded: don't flash the login screen.
-            !ready -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            !accountLoaded -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator()
             }
 
@@ -148,7 +145,6 @@ fun App(modifier: Modifier = Modifier) {
     }
 }
 
-/** The app once it is unlocked and [acc] is loaded: the navigation and the current screen. */
 @Composable
 private fun SignedInApp(
     acc: DesktopAccount,
@@ -157,12 +153,9 @@ private fun SignedInApp(
     selectedApplication: String?,
     pendingCount: Int,
 ) {
-    // A nostrconnect:// link opened Amber (launch argument, or forwarded by
-    // a second launch). Process it here — after the gates — so a link
-    // clicked while locked or before an account exists waits for unlock.
-    val launchUri by UriLaunch.pending.collectAsState()
-    LaunchedEffect(launchUri, acc) {
-        val uri = launchUri ?: return@LaunchedEffect
+    val nostrConnectUriHeldUntilUnlock by UriLaunch.pending.collectAsState()
+    LaunchedEffect(nostrConnectUriHeldUntilUnlock, acc) {
+        val uri = nostrConnectUriHeldUntilUnlock ?: return@LaunchedEffect
         UriLaunch.pending.value = null
         val error = AmberDesktop.engine.addNostrConnect(uri, acc)
         if (error != null) {
@@ -170,8 +163,6 @@ private fun SignedInApp(
         }
     }
 
-    // A crash report from this or a previous run, offered once an account
-    // can send it (as on Android, after unlock).
     val crashReport by CrashReporter.pending.collectAsState()
     crashReport?.let { CrashReportDialog(it, acc) }
 
@@ -179,8 +170,6 @@ private fun SignedInApp(
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { padding ->
-        // Expanded: full sidebar. Medium: icon rail. Compact: the
-        // navigation moves to a bottom bar under a slim top bar.
         MeasuredLayout(Modifier.fillMaxSize().padding(padding)) { layoutWidth ->
             if (layoutWidth == LayoutWidth.COMPACT) {
                 Column(Modifier.fillMaxSize()) {
@@ -217,7 +206,6 @@ private fun MainContent(
             .fillMaxHeight()
             .background(MaterialTheme.colorScheme.background)
             .padding(horizontal = if (compact) 16.dp else 28.dp, vertical = if (compact) 12.dp else 20.dp),
-        // On wide windows the capped content column sits centered rather than hugging the sidebar.
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Column(Modifier.widthIn(max = 880.dp).fillMaxWidth()) {
@@ -257,7 +245,6 @@ private fun MainContent(
     }
 }
 
-/** Compact-width header: app name, relay status and the account switcher. */
 @Composable
 private fun CompactTopBar(account: DesktopAccount) {
     Row(
@@ -281,7 +268,6 @@ private fun CompactTopBar(account: DesktopAccount) {
     }
 }
 
-/** Compact-width navigation: the sidebar routes as a bottom bar. */
 @Composable
 private fun BottomNavigation(
     currentRoute: Route,
@@ -301,7 +287,6 @@ private fun BottomNavigation(
     }
 }
 
-/** Medium-width navigation: the sidebar collapsed to icons, titles in tooltips. */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun NavigationRail(
@@ -453,8 +438,6 @@ private fun SidebarItem(
                 Text(
                     shortcut,
                     style = MaterialTheme.typography.labelSmall,
-                    // On the selected (amber) row inherit the container's dark
-                    // on-color; otherwise use the muted variant.
                     color = if (selected) {
                         MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f)
                     } else {
@@ -468,11 +451,6 @@ private fun SidebarItem(
     }
 }
 
-/**
- * The account chip at the bottom of the sidebar: shows the active account and
- * opens a menu to switch between accounts or add a new one — the desktop
- * equivalent of the mobile account switcher sheet.
- */
 @Composable
 private fun AccountSwitcher(
     account: DesktopAccount,

@@ -88,10 +88,9 @@ class PsbtDecoderTest {
     }
 
     @Test
-    fun `scriptPubKeyToAddress returns null for P2PKH script`() {
-        // OP_DUP OP_HASH160 <20> ... OP_EQUALVERIFY OP_CHECKSIG  -- legacy P2PKH, not supported
-        val script = Hex.decode("76a914751e76e8199196d454941c45d1b3a323f1433bd688ac")
-        assertNull(PsbtDecoder.scriptPubKeyToAddress(script))
+    fun `scriptPubKeyToAddress returns null for legacy P2PKH script`() {
+        val opDupOpHash160Push20KeyHashOpEqualVerifyOpCheckSig = Hex.decode("76a914751e76e8199196d454941c45d1b3a323f1433bd688ac")
+        assertNull(PsbtDecoder.scriptPubKeyToAddress(opDupOpHash160Push20KeyHashOpEqualVerifyOpCheckSig))
     }
 
     @Test
@@ -106,10 +105,9 @@ class PsbtDecoderTest {
     }
 
     @Test
-    fun `scriptPubKeyToAddress returns null for wrong-length witness program`() {
-        // OP_0 with 21 bytes (not 20 or 32) is not a valid v0 witness program
-        val script = Hex.decode("0015751e76e8199196d454941c45d1b3a323f1433bd600")
-        assertNull(PsbtDecoder.scriptPubKeyToAddress(script))
+    fun `scriptPubKeyToAddress returns null for a v0 witness program of 21 bytes rather than 20 or 32`() {
+        val opZeroPush21Bytes = Hex.decode("0015751e76e8199196d454941c45d1b3a323f1433bd600")
+        assertNull(PsbtDecoder.scriptPubKeyToAddress(opZeroPush21Bytes))
     }
 
     @Test

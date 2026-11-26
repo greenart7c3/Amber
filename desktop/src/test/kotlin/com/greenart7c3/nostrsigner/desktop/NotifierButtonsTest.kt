@@ -30,8 +30,7 @@ class NotifierButtonsTest {
     private class FakeDaemon : FreedesktopNotifications {
         @Volatile var actions: List<String> = emptyList()
 
-        // Read after [closeReceived] fires, which publishes the write.
-        var closed = -1L
+        @Volatile var closed = -1L
 
         val posted = CountDownLatch(1)
         val closeReceived = CountDownLatch(1)

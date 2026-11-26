@@ -40,7 +40,7 @@ class ConnectionKeyBindingTest {
     }
 
     @Test
-    fun aRequestToAnotherConnectionsKeyIsDropped() = runBlocking {
+    fun `a request to another connection's key is dropped while the same request on the app's own key is queued`() = runBlocking {
         val account = AccountManager.addAccount(KeyPair(), name = "binding", signPolicy = 1)
         val store = AmberDesktop.store(account.npub)
         val clientA = KeyPair()
@@ -52,13 +52,11 @@ class ConnectionKeyBindingTest {
         AmberDesktop.engine.updateFilter()
         val signer = NostrSignerInternal(clientA)
 
-        // App A addressing app B's connection key: dropped and logged, no card.
         AmberDesktop.engine.consume(signRequest(signer, localPubKeyFromPrivKey(privB), "cross"), relay)
         delay(1.seconds)
-        assertFalse(AmberDesktop.engine.pending.value.any { it.request.id == "cross" })
-        assertTrue(store.logs.value.any { it.message.contains("reached another connection's key") })
+        assertFalse("app A addressing app B's connection key gets no card", AmberDesktop.engine.pending.value.any { it.request.id == "cross" })
+        assertTrue("app A addressing app B's connection key is logged", store.logs.value.any { it.message.contains("reached another connection's key") })
 
-        // Control: the same request on app A's own key reaches the approval queue.
         AmberDesktop.engine.consume(signRequest(signer, localPubKeyFromPrivKey(privA), "own"), relay)
         withTimeout(20.seconds) {
             while (AmberDesktop.engine.pending.value.none { it.request.id == "own" }) delay(50.milliseconds)
@@ -66,10 +64,7 @@ class ConnectionKeyBindingTest {
     }
 
     @Test
-    fun aRequestToTheAccountKeyItselfIsIgnored() = runBlocking {
-        // Desktop never hands out the account key as an endpoint: every
-        // connection has its own key, so a request to the account key is not
-        // addressed to any connection.
+    fun `a request to the account key itself is ignored, as every desktop connection has its own key`() = runBlocking {
         val account = AccountManager.addAccount(KeyPair(), name = "account-key", signPolicy = 1)
         val store = AmberDesktop.store(account.npub)
         val client = KeyPair()
@@ -86,10 +81,8 @@ class ConnectionKeyBindingTest {
     @Test
     fun onlyNonConnectRequestsOnAnotherKeyAreRefused() {
         assertTrue(connectsThroughOtherKey(appLocalKey = "a", routedPrivKey = "b", type = SignerType.SIGN_EVENT))
-        // Its own key, or the account key (no per-connection key): allowed.
-        assertFalse(connectsThroughOtherKey(appLocalKey = "a", routedPrivKey = "a", type = SignerType.SIGN_EVENT))
-        assertFalse(connectsThroughOtherKey(appLocalKey = "a", routedPrivKey = "", type = SignerType.SIGN_EVENT))
-        // A connect is how a client attaches to a new key.
-        assertFalse(connectsThroughOtherKey(appLocalKey = "a", routedPrivKey = "b", type = SignerType.CONNECT))
+        assertFalse("its own key is allowed", connectsThroughOtherKey(appLocalKey = "a", routedPrivKey = "a", type = SignerType.SIGN_EVENT))
+        assertFalse("the account key, with no per-connection key, is allowed", connectsThroughOtherKey(appLocalKey = "a", routedPrivKey = "", type = SignerType.SIGN_EVENT))
+        assertFalse("a connect is how a client attaches to a new key", connectsThroughOtherKey(appLocalKey = "a", routedPrivKey = "b", type = SignerType.CONNECT))
     }
 }

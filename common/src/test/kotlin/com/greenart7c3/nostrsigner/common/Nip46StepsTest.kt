@@ -6,7 +6,6 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 
 class Nip46StepsTest {
-    // Parsed the way both apps read a decrypted request.
     private fun request(method: String, params: String) = JacksonMapper.mapper.readValue("""{"id":"r1","method":"$method","params":$params}""", BunkerRequest::class.java)
 
     private fun authEvent(vararg relays: String): BunkerRequest {
@@ -38,7 +37,10 @@ class Nip46StepsTest {
             Nip46Step.Refuse(NIP46_USER_REJECTED, "Relay auth for other.example is not in the auth whitelist", recordRejected = true),
             step(authEvent("wss://other.example"), whitelist = listOf("good.example")),
         )
-        // In the whitelist, or no whitelist at all: decided on the grants.
+    }
+
+    @Test
+    fun `a relay auth event in the whitelist or with no whitelist at all is decided on the grants`() {
         assertEquals(Nip46Step.Decide, step(authEvent("wss://good.example"), whitelist = listOf("good.example")))
         assertEquals(Nip46Step.Decide, step(authEvent("wss://other.example")))
     }

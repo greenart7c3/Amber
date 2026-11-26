@@ -66,18 +66,26 @@ class CrashReporterTest {
         assertTrue(file.exists())
         assertTrue(CrashReporter.pending.value!!.contains("boom"))
 
-        // A restart picks the saved report up again: at launch, or (stored
-        // encrypted when another test class has set a passphrase) at unlock.
-        CrashReporter.pending.value = null
-        CrashReporter.install()
-        CrashReporter.loadAfterUnlock()
-        assertTrue(CrashReporter.pending.value!!.contains("boom"))
+        restartAndUnlock()
+        assertTrue(
+            "a restart picks the saved report up again, at launch or, stored encrypted, at unlock",
+            CrashReporter.pending.value!!.contains("boom"),
+        )
 
         CrashReporter.dismiss()
         assertFalse(file.exists())
         assertNull(CrashReporter.pending.value)
+    }
 
-        // Out-of-memory errors are reported too, with the heap numbers.
+    private fun restartAndUnlock() {
+        CrashReporter.pending.value = null
+        CrashReporter.install()
+        CrashReporter.loadAfterUnlock()
+    }
+
+    @Test
+    fun anOutOfMemoryErrorIsReportedWithTheHeapNumbers() {
+        val file = File(AppDirs.dataDir, "crash.trace")
         CrashReporter.save(OutOfMemoryError("Java heap space"))
         assertTrue(file.exists())
         assertTrue(CrashReporter.pending.value!!.contains("OutOfMemoryError"))

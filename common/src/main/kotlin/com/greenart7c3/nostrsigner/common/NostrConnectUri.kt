@@ -10,12 +10,11 @@ data class RequestedPermission(val type: String, val kind: Int?)
 /**
  * What a `nostrconnect://` URI asks for, the same on Android and desktop. The URI is
  * untrusted input: [clientPubKey] becomes the connection's identity and [secret] must go
- * back to the client byte for byte.
+ * back to the client byte for byte. [name] is client-chosen, sanitized for display.
  */
 data class NostrConnectUri(
     val clientPubKey: String,
     val relays: List<NormalizedRelayUrl>,
-    // Client-chosen, sanitized for display.
     val name: String,
     val url: String,
     val image: String,
@@ -37,8 +36,7 @@ data class NostrConnectUri(
             require(clientPubKey.matches(HEX_PUBKEY)) { "Invalid public key in URI" }
 
             val query = readQuery(data.substringAfter("?", ""))
-            // The metadata JSON only overrides what it sets; malformed metadata is ignored.
-            query.metadata?.let { applyMetadata(it, query) }
+            query.metadata?.let { overrideWithWellFormedMetadata(it, query) }
             return NostrConnectUri(
                 clientPubKey = clientPubKey,
                 relays = query.relays,
@@ -57,11 +55,12 @@ data class NostrConnectUri(
             var metadata: String? = null
         }
 
-        // Split the RAW query and form-decode each value exactly once: a client that
-        // encodes spaces as '+' then shows "My App", while a literal '+' arrives as
-        // '%2B'. A value is split from its name on the first '=' only, so base64
-        // padding in a secret ("…yg==") survives.
+        @Suppress("NoComments")
         private fun readQuery(rawQuery: String): Query = Query().apply {
+            // Split the RAW query and form-decode each value exactly once: a client that
+            // encodes spaces as '+' then shows "My App", while a literal '+' arrives as
+            // '%2B'. A value is split from its name on the first '=' only, so base64
+            // padding in a secret ("…yg==") survives.
             rawQuery.split("&").forEach { param ->
                 val value = decodeQueryParamValue(param.substringAfter("=", ""))
                 when (val name = param.substringBefore("=")) {
@@ -73,7 +72,7 @@ data class NostrConnectUri(
             }
         }
 
-        private fun applyMetadata(json: String, query: Query) {
+        private fun overrideWithWellFormedMetadata(json: String, query: Query) {
             val node = runCatching { JacksonMapper.mapper.readTree(json) }.getOrNull() ?: return
             listOf("name", "url", "image").forEach { key ->
                 node.get(key)?.asText()?.trim()?.takeIf { it.isNotEmpty() }?.let { query.fields[key] = it }
@@ -92,7 +91,6 @@ data class NostrConnectUri(
  */
 fun parseRequestedPermissions(value: String, isKnownNip: (Int) -> Boolean): List<RequestedPermission> = parsePermissionEntries(value).filter { it.grantsSomething(isKnownNip) }
 
-// "type:kind,type,…"; an empty entry and one with a non-numeric kind are skipped.
 private fun parsePermissionEntries(value: String): List<RequestedPermission> = value.split(",").mapNotNull { entry ->
     val type = entry.substringBefore(":").trim()
     val kindText = entry.substringAfter(":", "").trim()
@@ -100,7 +98,6 @@ private fun parsePermissionEntries(value: String): List<RequestedPermission> = v
     if (type.isEmpty() || (kindText.isNotEmpty() && kind == null)) null else RequestedPermission(type, kind)
 }
 
-// A sign_event or nip permission needs a kind, and a nip one a NIP Amber knows.
 private fun RequestedPermission.grantsSomething(isKnownNip: (Int) -> Boolean): Boolean = when (type) {
     "sign_event" -> kind != null
     "nip" -> kind?.let(isKnownNip) == true

@@ -79,11 +79,9 @@ class UriLaunchIpcTest {
         assertTrue("forwarding to the running instance failed", UriLaunch.forwardToRunningInstance(uri))
         assertTrue("the forwarded URI never reached pending", await { UriLaunch.pending.value == uri })
 
-        // Coalescing: while a URI is uncollected, later forwards are ignored
-        // instead of overwriting it (flood hardening on the socket).
         assertTrue(UriLaunch.forwardToRunningInstance("nostrconnect://second"))
         assertFalse("a forwarded URI overwrote the uncollected one", await(600) { UriLaunch.pending.value != uri })
-        assertEquals(uri, UriLaunch.pending.value)
+        assertEquals("later forwards are ignored while a URI is uncollected", uri, UriLaunch.pending.value)
     }
 
     @Test
@@ -106,10 +104,9 @@ class UriLaunchIpcTest {
 
         runBlocking {
             withTimeout(5_000) {
-                // Subscribed before the request is sent: the flow does not replay.
-                val shown = async(start = CoroutineStart.UNDISPATCHED) { UriLaunch.showRequests.first() }
+                val shownSubscribedBeforeSendingAsTheFlowDoesNotReplay = async(start = CoroutineStart.UNDISPATCHED) { UriLaunch.showRequests.first() }
                 assertTrue(UriLaunch.askRunningInstanceToShow())
-                shown.await()
+                shownSubscribedBeforeSendingAsTheFlowDoesNotReplay.await()
             }
         }
         assertEquals("a show request is not a URI", null, UriLaunch.pending.value)

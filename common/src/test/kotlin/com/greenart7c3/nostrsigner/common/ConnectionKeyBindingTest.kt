@@ -16,11 +16,17 @@ class ConnectionKeyBindingTest {
     }
 
     @Test
-    fun `its own key, the account key and a connect are allowed`() {
+    fun `its own key is allowed`() {
         assertFalse(connectsThroughOtherKey(appLocalKey = "a", routedPrivKey = "a", type = SignerType.SIGN_EVENT))
-        // Addressed to the account key: there is no per-connection key to bind.
+    }
+
+    @Test
+    fun `the account key is allowed since there is no per-connection key to bind`() {
         assertFalse(connectsThroughOtherKey(appLocalKey = "a", routedPrivKey = "", type = SignerType.SIGN_EVENT))
-        // A connect is how a client attaches to a new connection key.
+    }
+
+    @Test
+    fun `a connect is allowed since it is how a client attaches to a new connection key`() {
         assertFalse(connectsThroughOtherKey(appLocalKey = "a", routedPrivKey = "b", type = SignerType.CONNECT))
     }
 }

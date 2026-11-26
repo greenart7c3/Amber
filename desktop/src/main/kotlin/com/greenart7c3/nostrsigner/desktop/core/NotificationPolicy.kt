@@ -12,24 +12,42 @@ import com.greenart7c3.nostrsigner.commonsui.getStringBlocking
  * from a notification shows nothing but the client-chosen app name, so they
  * are approved on the request card instead, where the details are visible.
  */
+@Suppress("NoComments")
 internal val QUICK_APPROVE_EXCLUDED_KINDS = setOf(
-    0, // profile metadata
-    3, // contact list
-    5, // deletion
-    13, // seal
-    1059, // gift wrap
-    10000, // mute list
-    10002, // relay list
-    10050, // DM relays
-    13194, // NWC wallet info
-    22242, // NIP-42 relay auth
-    23194, // NWC request
-    23195, // NWC response
-    24133, // NIP-46 message
-    24242, // Blossom auth
-    27235, // HTTP auth
-    30078, // app-specific data (Amber's own backups use it)
+    PROFILE_METADATA_KIND,
+    CONTACT_LIST_KIND,
+    DELETION_KIND,
+    SEAL_KIND,
+    GIFT_WRAP_KIND,
+    MUTE_LIST_KIND,
+    RELAY_LIST_KIND,
+    DM_RELAYS_KIND,
+    NWC_WALLET_INFO_KIND,
+    NIP42_RELAY_AUTH_KIND,
+    NWC_REQUEST_KIND,
+    NWC_RESPONSE_KIND,
+    NIP46_MESSAGE_KIND,
+    BLOSSOM_AUTH_KIND,
+    HTTP_AUTH_KIND,
+    APP_SPECIFIC_DATA_KIND_USED_BY_AMBER_BACKUPS,
 )
+
+private const val PROFILE_METADATA_KIND = 0
+private const val CONTACT_LIST_KIND = 3
+private const val DELETION_KIND = 5
+private const val SEAL_KIND = 13
+private const val GIFT_WRAP_KIND = 1059
+private const val MUTE_LIST_KIND = 10000
+private const val RELAY_LIST_KIND = 10002
+private const val DM_RELAYS_KIND = 10050
+private const val NWC_WALLET_INFO_KIND = 13194
+private const val NIP42_RELAY_AUTH_KIND = 22242
+private const val NWC_REQUEST_KIND = 23194
+private const val NWC_RESPONSE_KIND = 23195
+private const val NIP46_MESSAGE_KIND = 24133
+private const val BLOSSOM_AUTH_KIND = 24242
+private const val HTTP_AUTH_KIND = 27235
+private const val APP_SPECIFIC_DATA_KIND_USED_BY_AMBER_BACKUPS = 30078
 
 /**
  * Whether a notification or popup may offer one-click Approve for [this]

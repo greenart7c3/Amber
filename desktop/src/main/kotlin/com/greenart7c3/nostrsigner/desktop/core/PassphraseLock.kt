@@ -75,10 +75,11 @@ object PassphraseLock {
     /**
      * Argon2id cost parameters, persisted per blob so they can evolve safely:
      * a blob written with weaker parameters than [targetKdfParams] is rewrapped
-     * at the next unlock.
+     * at the next unlock. The default memory cost, 256 MB, takes about 1 s on
+     * a current desktop CPU.
      */
     data class KdfParams(
-        val memoryKb: Int = 262144, // 256 MB, about 1 s on a current desktop CPU
+        val memoryKb: Int = 262144,
         val iterations: Int = 3,
         val parallelism: Int = 4,
     ) {
@@ -101,7 +102,6 @@ object PassphraseLock {
         }
     }
 
-    /** Cost new and rehashed blobs get; tests lower it to keep Argon2 fast. */
     internal var targetKdfParams: KdfParams = KdfParams.recommended()
 
     /**
@@ -110,6 +110,7 @@ object PassphraseLock {
      * data, so it cannot be downgraded, and every ciphertext the master key
      * protects must be context-bound.
      */
+    @Suppress("NoComments")
     private data class WrappedKeyBlob(
         val version: Int = CURRENT_VERSION,
         val salt: String,
@@ -133,7 +134,6 @@ object PassphraseLock {
 
     private val blobFile: File get() = File(AppDirs.dataDir, "master.key.enc")
 
-    /** Holds the second unlock factor; tests swap in an in-memory store. */
     internal var osSecretStore: PasswordStore = OsCredentialStore(account = OS_SECRET_ACCOUNT)
 
     fun isEnabled(): Boolean = blobFile.exists()
@@ -144,18 +144,19 @@ object PassphraseLock {
      * Turns the lock on: wraps the current master key (creating one if this
      * is a fresh install) under the passphrase and deletes every unprotected
      * copy. The app stays unlocked afterward.
+     *
+     * Every account database is loaded before the blob exists: from then on
+     * writes are strict, and the stores are re-encrypted from memory once
+     * [isEnabled] is true.
      */
     suspend fun enable(passphrase: CharArray, params: KdfParams = targetKdfParams) = mutex.withLock {
         check(!isEnabled()) { "A passphrase is already set" }
         val key = DesktopMasterKey.masterKeyForWrapping()
-        // Load every account database before the blob exists: from then on
-        // writes are strict, and the stores are re-encrypted from memory.
         AmberDesktop.loadAllStores()
         val osSecret = obtainOsSecret()
         writeBlob(key, passphrase, params, osSecret)
         DesktopMasterKey.removeUnprotectedCopies()
         DesktopMasterKey.installMasterKey(key, sourceDescription(osSecret != null))
-        // isEnabled() is now true, so re-encrypt every account's database at rest.
         AmberDesktop.rewriteAllStores()
         state.value = Status.UNLOCKED
         scheduleAutoLock()
@@ -194,13 +195,14 @@ object PassphraseLock {
      * Evicts all key material from memory and disconnects from the relays.
      * Incoming NIP-46 requests cannot be decrypted (let alone signed) until
      * the next unlock.
+     *
+     * Blocks on purpose, so the lock has happened when this returns: it waits
+     * for an unlock or passphrase change in flight (at most its Argon2 run)
+     * instead of interleaving with it.
      */
-    // Blocks on purpose: the lock must have happened when this returns.
     @Suppress("RunBlocking")
     fun lock() {
         if (!isEnabled()) return
-        // Waits for an unlock or passphrase change in flight (at most its
-        // Argon2 run) instead of interleaving with it.
         runBlocking { lockUnderMutex() }
     }
 
@@ -209,6 +211,7 @@ object PassphraseLock {
      * neither be undone by an unlock that was mid-way (state set back to
      * UNLOCKED, key reinstalled) nor wipe the key from under one.
      */
+    @Suppress("NoComments")
     private suspend fun lockUnderMutex() = mutex.withLock {
         if (!isEnabled()) return@withLock
         autoLockJob?.cancel()
@@ -219,13 +222,15 @@ object PassphraseLock {
         state.value = Status.LOCKED
     }
 
-    /** Rewraps the master key under a new passphrase; false when [old] is wrong. */
+    /**
+     * Rewraps the master key under a new passphrase; false when [old] is wrong.
+     * It rewraps with the very secret that just unwrapped the blob: reading the
+     * store again could fail now and silently drop the second factor, or
+     * replace the secret the current blob still needs.
+     */
     suspend fun changePassphrase(old: CharArray, new: CharArray, params: KdfParams = targetKdfParams): Boolean = mutex.withLock {
         val blob = readBlob() ?: return false
         val (key, unwrapSecret) = unwrap(blob, old) ?: return false
-        // Rewrap with the very secret that just unwrapped the blob: reading the
-        // store again could fail now and silently drop the second factor, or
-        // replace the secret the current blob still needs.
         val osSecret = unwrapSecret ?: obtainOsSecret()
         try {
             writeBlob(key, new, params, osSecret)
@@ -243,6 +248,11 @@ object PassphraseLock {
         if (state.value == Status.UNLOCKED) scheduleAutoLock()
     }
 
+    /**
+     * The timer suspends on the mutex, so an unlock that reschedules (and so
+     * cancels) it meanwhile also cancels the stale lock.
+     */
+    @Suppress("NoComments")
     private fun scheduleAutoLock() {
         autoLockJob?.cancel()
         val minutes = SettingsStore.settings.value.autoLockMinutes
@@ -250,14 +260,11 @@ object PassphraseLock {
         autoLockJob = AmberDesktop.applicationIOScope.launch {
             delay(minutes.minutes)
             AmberLogger.d("PassphraseLock", "Auto-locking after $minutes minutes")
-            // Suspends on the mutex, so an unlock that reschedules (and so
-            // cancels) this timer meanwhile also cancels the stale lock.
             lockUnderMutex()
         }
     }
 
-    // ----- wrapping crypto -----
-
+    @Suppress("NoComments")
     private fun deriveKey(passphrase: CharArray, salt: ByteArray, params: KdfParams): ByteArray {
         val generator = Argon2BytesGenerator()
         generator.init(
@@ -298,6 +305,7 @@ object PassphraseLock {
      * Never blocks the unlock — on failure the old blob stays valid and the
      * next unlock retries.
      */
+    @Suppress("NoComments")
     private fun upgrade(blob: WrappedKeyBlob, key: SecretKey, passphrase: CharArray, unwrapSecret: ByteArray?) {
         try {
             val weakKdf = blob.params.isWeakerThan(targetKdfParams)
@@ -326,6 +334,7 @@ object PassphraseLock {
      * reads back, so a store that accepts writes it cannot return never
      * locks the user out.
      */
+    @Suppress("NoComments")
     private fun obtainOsSecret(): ByteArray? {
         loadOsSecret()?.let { return it }
         val fresh = ByteArray(OS_SECRET_SIZE).also { SecureRandom().nextBytes(it) }
@@ -345,6 +354,7 @@ object PassphraseLock {
         SOURCE_DESCRIPTION
     }
 
+    @Suppress("NoComments")
     private fun readBlob(): WrappedKeyBlob? = if (!blobFile.exists()) {
         null
     } else {
@@ -365,9 +375,11 @@ object PassphraseLock {
     }
 
     /** Authenticates the blob header, so neither the version nor the factors can be downgraded. */
+    @Suppress("NoComments")
     private fun headerAad(version: Int, params: KdfParams, osSecret: Boolean): ByteArray = "amber-master-key:v$version:${params.memoryKb}:${params.iterations}:${params.parallelism}:$osSecret".toByteArray(Charsets.UTF_8)
 
     /** Argon2id(passphrase), combined with the credential-store secret via HKDF-SHA256 when present. */
+    @Suppress("NoComments")
     private fun deriveKek(passphrase: CharArray, salt: ByteArray, params: KdfParams, osSecret: ByteArray?): ByteArray {
         val stretched = deriveKey(passphrase, salt, params)
         if (osSecret == null) return stretched
@@ -410,6 +422,7 @@ object PassphraseLock {
      * for a blob without the second factor), so a rewrap reuses that exact
      * secret; the caller wipes it.
      */
+    @Suppress("NoComments")
     private fun unwrap(blob: WrappedKeyBlob, passphrase: CharArray): Pair<WipeableAesKey, ByteArray?>? {
         // Checked before the (slow) Argon2 run, and reported separately from a
         // wrong passphrase.
@@ -437,6 +450,7 @@ object PassphraseLock {
     }
 
     /** Moves derived key bytes into a [WipeableAesKey] (SecretKeySpec would keep an unwipeable copy). */
+    @Suppress("NoComments")
     private fun wipeableKek(derived: ByteArray): WipeableAesKey = try {
         WipeableAesKey(derived)
     } finally {

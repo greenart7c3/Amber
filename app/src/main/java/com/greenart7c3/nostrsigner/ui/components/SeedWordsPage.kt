@@ -4,6 +4,7 @@ import android.view.WindowManager
 import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -63,87 +64,15 @@ fun SeedWordsPage(
                 .padding(16.dp),
             verticalArrangement = Arrangement.Center,
         ) {
-            Text(
-                modifier = Modifier.fillMaxWidth(),
-                text = stringResource(Res.string.seed_words_title),
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center,
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-
-            Text(
-                text = stringResource(Res.string.seed_words_explainer),
-                textAlign = TextAlign.Center,
-            )
-
-            Spacer(modifier = Modifier.height(20.dp))
-
-            AmberButton(
-                onClick = {
+            SeedWordsIntro(
+                onCopy = {
                     scope.launch {
                         clipboardManager.setSensitiveClip(context, seedWords.joinToString(" "))
                     }
                 },
-                text = stringResource(Res.string.copy_to_clipboard),
             )
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Center,
-            ) {
-                val size = seedWords.size
-                val count = size / 2
-
-                val firstColumnWords = seedWords.mapIndexedNotNull { index, word ->
-                    if (index < count) {
-                        word
-                    } else {
-                        null
-                    }
-                }
-                val secondColumnWords = seedWords.mapIndexedNotNull { index, word ->
-                    if (index >= count) {
-                        word
-                    } else {
-                        null
-                    }
-                }
-
-                Column(
-                    modifier = Modifier.weight(1f),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                ) {
-                    firstColumnWords.forEachIndexed { index, word ->
-                        OutlinedTextField(
-                            word,
-                            onValueChange = {},
-                            modifier = Modifier.padding(8.dp),
-                            readOnly = true,
-                            prefix = {
-                                Text("${index + 1} - ")
-                            },
-                        )
-                    }
-                }
-
-                Column(
-                    modifier = Modifier.weight(1f),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                ) {
-                    secondColumnWords.forEachIndexed { index, word ->
-                        OutlinedTextField(
-                            word,
-                            onValueChange = {},
-                            readOnly = true,
-                            prefix = {
-                                Text("${index + 1 + firstColumnWords.size} - ")
-                            },
-                            modifier = Modifier.padding(8.dp),
-                        )
-                    }
-                }
-            }
+            SeedWordsGrid(seedWords = seedWords)
             if (showNextButton) {
                 AmberButton(
                     onClick = onNextPage,
@@ -152,6 +81,100 @@ fun SeedWordsPage(
             }
         }
     }
+    SecureWindowEffect()
+}
+
+@Composable
+private fun ColumnScope.SeedWordsIntro(onCopy: () -> Unit) {
+    Text(
+        modifier = Modifier.fillMaxWidth(),
+        text = stringResource(Res.string.seed_words_title),
+        fontSize = 24.sp,
+        fontWeight = FontWeight.Bold,
+        textAlign = TextAlign.Center,
+    )
+    Spacer(modifier = Modifier.height(4.dp))
+
+    Text(
+        text = stringResource(Res.string.seed_words_explainer),
+        textAlign = TextAlign.Center,
+    )
+
+    Spacer(modifier = Modifier.height(20.dp))
+
+    AmberButton(
+        onClick = onCopy,
+        text = stringResource(Res.string.copy_to_clipboard),
+    )
+}
+
+@Composable
+private fun SeedWordsGrid(
+    seedWords: Set<String>,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.Center,
+    ) {
+        val size = seedWords.size
+        val count = size / 2
+
+        val firstColumnWords = seedWords.mapIndexedNotNull { index, word ->
+            if (index < count) {
+                word
+            } else {
+                null
+            }
+        }
+        val secondColumnWords = seedWords.mapIndexedNotNull { index, word ->
+            if (index >= count) {
+                word
+            } else {
+                null
+            }
+        }
+
+        SeedWordsColumn(
+            words = firstColumnWords,
+            firstNumber = 1,
+            modifier = Modifier.weight(1f),
+        )
+
+        SeedWordsColumn(
+            words = secondColumnWords,
+            firstNumber = 1 + firstColumnWords.size,
+            modifier = Modifier.weight(1f),
+        )
+    }
+}
+
+@Composable
+private fun SeedWordsColumn(
+    words: List<String>,
+    firstNumber: Int,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier,
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        words.forEachIndexed { index, word ->
+            OutlinedTextField(
+                word,
+                onValueChange = {},
+                modifier = Modifier.padding(8.dp),
+                readOnly = true,
+                prefix = {
+                    Text("${index + firstNumber} - ")
+                },
+            )
+        }
+    }
+}
+
+@Composable
+private fun SecureWindowEffect() {
     val lifecycleOwner = LocalLifecycleOwner.current
     val activity = LocalActivity.current
     DisposableEffect(key1 = lifecycleOwner) {

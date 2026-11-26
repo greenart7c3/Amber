@@ -6,6 +6,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -29,6 +30,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
@@ -39,6 +41,7 @@ import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.Clipboard
 import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.ImeAction
@@ -73,6 +76,8 @@ import com.greenart7c3.nostrsigner.commonsui.relay_filter_failed
 import com.greenart7c3.nostrsigner.commonsui.relays_used_by_connections
 import com.greenart7c3.nostrsigner.commonsui.testing_relay
 import com.greenart7c3.nostrsigner.commonsui.wss
+import com.greenart7c3.nostrsigner.data.RelayClient
+import com.greenart7c3.nostrsigner.data.SettingsStore
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.TimeUtils as AmberTimeUtils
 import com.greenart7c3.nostrsigner.models.defaultAppRelays
@@ -132,16 +137,70 @@ fun DefaultRelaysScreen(
     val accountRepository = LocalAccountRepository.current
     val scope = rememberCoroutineScope()
     val clipboardManager = LocalClipboard.current
-    val textFieldRelay = remember { mutableStateOf(TextFieldValue("")) }
-    val isLoading = remember { mutableStateOf(false) }
-    val relays2 = remember { mutableStateListOf(*settingsStore.settings.defaultRelays.toTypedArray()) }
-    val trustScores = remember { mutableStateMapOf<String, Int?>() }
-    val loadingScores = remember { mutableStateMapOf<String, Boolean>() }
+    val state = remember { DefaultRelaysState(settingsStore.settings.defaultRelays) }
 
     // Fetch trust scores for all relays
-    LaunchedEffect(relays2.toList()) {
+    LaunchedEffect(state.relays.toList()) {
+        state.fetchMissingTrustScores(scope, settingsStore)
+    }
+    val actions = DefaultRelaysActions(state, context, settingsStore, relayClient, scope, savedRelays = { accountRepository.getSavedRelays(account) })
+
+    Surface(
+        color = MaterialTheme.colorScheme.background,
+        modifier = modifier
+            .fillMaxSize(),
+    ) {
+        if (state.isLoading.value) {
+            CenterCircularProgressIndicator(
+                Modifier,
+                text = stringResource(Res.string.testing_relay),
+            )
+        } else {
+            Column(
+                modifier = Modifier
+                    .background(MaterialTheme.colorScheme.background)
+                    .fillMaxSize(),
+            ) {
+                DefaultRelaysHeader(onReset = actions::reset)
+
+                RelayAddressField(
+                    text = state.relayText.value.text,
+                    onTextChange = { state.relayText.value = TextFieldValue(it) },
+                    onAdd = actions::add,
+                    onPaste = { actions.paste(clipboardManager) },
+                    modifier = Modifier
+                        .fillMaxWidth(),
+                )
+
+                InsecureRelayWarning(text = state.relayText.value.text)
+
+                DefaultRelayList(
+                    relays = state.relays,
+                    trustScores = state.trustScores,
+                    loadingScores = state.loadingScores,
+                    onRemove = actions::remove,
+                    modifier = Modifier
+                        .weight(1f),
+                )
+            }
+        }
+    }
+}
+
+@Stable
+private class DefaultRelaysState(initialRelays: List<NormalizedRelayUrl>) {
+    val relayText = mutableStateOf(TextFieldValue(""))
+    val isLoading = mutableStateOf(false)
+    val relays = mutableStateListOf(*initialRelays.toTypedArray())
+    val trustScores = mutableStateMapOf<String, Int?>()
+    val loadingScores = mutableStateMapOf<String, Boolean>()
+
+    fun fetchMissingTrustScores(
+        scope: CoroutineScope,
+        settingsStore: SettingsStore,
+    ) {
         if (TrustScoreService.isEnabled(settingsStore.settings)) {
-            relays2.forEach { relay ->
+            relays.forEach { relay ->
                 val url = relay.url
                 if (!trustScores.containsKey(url)) {
                     loadingScores[url] = true
@@ -154,210 +213,187 @@ fun DefaultRelaysScreen(
             }
         }
     }
+}
 
-    Surface(
-        color = MaterialTheme.colorScheme.background,
-        modifier = modifier
-            .fillMaxSize(),
-    ) {
-        if (isLoading.value) {
-            CenterCircularProgressIndicator(
-                Modifier,
-                text = stringResource(Res.string.testing_relay),
+private class DefaultRelaysActions(
+    private val state: DefaultRelaysState,
+    private val context: Context,
+    private val settingsStore: SettingsStore,
+    private val relayClient: RelayClient,
+    private val scope: CoroutineScope,
+    private val savedRelays: suspend () -> Set<NormalizedRelayUrl>,
+) {
+    fun reset() {
+        state.relays.clear()
+        state.relays.addAll(defaultAppRelays)
+        save(reconnect = true)
+    }
+
+    fun add() {
+        scope.launch(Dispatchers.IO) {
+            onAddRelay(
+                state.relayText,
+                state.isLoading,
+                state.relays,
+                scope,
+                savedRelays = savedRelays,
+                factory = relayClient.factory,
+                context = context,
+                onDone = { save(reconnect = false) },
             )
-        } else {
-            Column(
-                modifier = Modifier
-                    .background(MaterialTheme.colorScheme.background)
-                    .fillMaxSize(),
-            ) {
-                Row(
-                    horizontalArrangement = Arrangement.End,
-                ) {
-                    AmberButton(
-                        onClick = {
-                            relays2.clear()
-                            relays2.addAll(defaultAppRelays)
-                            settingsStore.settings = settingsStore.settings.copy(
-                                defaultRelays = relays2,
-                            )
-                            LocalPreferences.saveSettingsToEncryptedStorage(context, settingsStore.settings)
-                            scope.launch(Dispatchers.IO) {
-                                if (!BuildFlavorChecker.isOfflineFlavor()) {
-                                    relayClient.checkForNewRelaysAndUpdateAllFilters()
-                                    delay(2.seconds)
-                                    relayClient.client.reconnect()
-                                    isLoading.value = false
-                                } else {
-                                    isLoading.value = false
-                                }
-                            }
-                        },
-                        text = stringResource(Res.string.default_relay_text),
-                    )
-                }
+        }
+    }
 
-                Text(
-                    text = stringResource(Res.string.manage_the_relays_used_for_communicating_with_external_applications),
-                    modifier = Modifier.padding(bottom = 8.dp),
-                )
+    fun paste(clipboard: Clipboard) {
+        scope.launch {
+            val text = clipboard.getClipEntry()?.clipData?.getItemAt(0)?.text?.toString()
+            if (!text.isNullOrBlank()) {
+                state.relayText.value = TextFieldValue(text)
+            }
+        }
+    }
 
-                OutlinedTextField(
-                    modifier = Modifier
-                        .fillMaxWidth(),
-                    value = textFieldRelay.value.text,
-                    keyboardOptions = KeyboardOptions(
-                        capitalization = KeyboardCapitalization.None,
-                        autoCorrectEnabled = false,
-                        imeAction = ImeAction.Done,
-                    ),
-                    onValueChange = {
-                        textFieldRelay.value = TextFieldValue(it)
-                    },
-                    keyboardActions = KeyboardActions(
-                        onDone = {
-                            scope.launch(Dispatchers.IO) {
-                                onAddRelay(
-                                    textFieldRelay,
-                                    isLoading,
-                                    relays2,
-                                    scope,
-                                    savedRelays = { accountRepository.getSavedRelays(account) },
-                                    factory = relayClient.factory,
-                                    context = context,
-                                    onDone = {
-                                        settingsStore.settings = settingsStore.settings.copy(
-                                            defaultRelays = relays2,
-                                        )
-                                        LocalPreferences.saveSettingsToEncryptedStorage(context, settingsStore.settings)
-                                        scope.launch(Dispatchers.IO) {
-                                            if (!BuildFlavorChecker.isOfflineFlavor()) {
-                                                relayClient.checkForNewRelaysAndUpdateAllFilters()
-                                                isLoading.value = false
-                                            } else {
-                                                isLoading.value = false
-                                            }
-                                        }
-                                    },
-                                )
-                            }
-                        },
-                    ),
-                    label = {
-                        Text(stringResource(Res.string.wss))
-                    },
-                    leadingIcon = {
-                        IconButton(
-                            onClick = {
-                                scope.launch {
-                                    val text = clipboardManager.getClipEntry()?.clipData?.getItemAt(0)?.text?.toString()
-                                    if (!text.isNullOrBlank()) {
-                                        textFieldRelay.value = TextFieldValue(text)
-                                    }
-                                }
-                            },
-                        ) {
-                            Icon(
-                                Icons.Default.ContentPaste,
-                                contentDescription = stringResource(Res.string.paste_from_clipboard),
-                            )
-                        }
-                    },
-                    trailingIcon = {
-                        IconButton(
-                            colors = IconButtonDefaults.iconButtonColors().copy(
-                                containerColor = MaterialTheme.colorScheme.primary,
-                                contentColor = MaterialTheme.colorScheme.onPrimary,
-                            ),
-                            onClick = {
-                                scope.launch(Dispatchers.IO) {
-                                    onAddRelay(
-                                        textFieldRelay,
-                                        isLoading,
-                                        relays2,
-                                        scope,
-                                        savedRelays = { accountRepository.getSavedRelays(account) },
-                                        factory = relayClient.factory,
-                                        context = context,
-                                        onDone = {
-                                            settingsStore.settings = settingsStore.settings.copy(
-                                                defaultRelays = relays2,
-                                            )
-                                            LocalPreferences.saveSettingsToEncryptedStorage(context, settingsStore.settings)
-                                            scope.launch(Dispatchers.IO) {
-                                                if (!BuildFlavorChecker.isOfflineFlavor()) {
-                                                    relayClient.checkForNewRelaysAndUpdateAllFilters()
-                                                    isLoading.value = false
-                                                } else {
-                                                    isLoading.value = false
-                                                }
-                                            }
-                                        },
-                                    )
-                                }
-                            },
-                        ) {
-                            Icon(
-                                Icons.Default.Add,
-                                contentDescription = stringResource(Res.string.add),
-                            )
-                        }
-                    },
-                )
+    fun remove(
+        index: Int,
+        relayUrl: String,
+    ) {
+        state.isLoading.value = true
+        state.trustScores.remove(relayUrl)
+        state.loadingScores.remove(relayUrl)
+        state.relays.removeAt(index)
+        save(reconnect = false)
+    }
 
-                // Defense-in-depth (GHSA-8844-q5vh-9j8f, I4): warn when the
-                // user explicitly types a ws:// URL for a non-onion /
-                // non-private-network relay, since NIP-46 traffic over
-                // cleartext exposes metadata + ciphertext to network
-                // observers. wss:// is the default; ws:// is auto-prefixed
-                // only for .onion / private IPs in onAddRelay.
-                val text = textFieldRelay.value.text
-                val showInsecureWarning = text.startsWith("ws://") &&
-                    !text.endsWith(".onion") &&
-                    !text.endsWith(".onion/") &&
-                    !PrivateAddress.isPrivate(text)
-                if (showInsecureWarning) {
-                    Text(
-                        text = stringResource(Res.string.insecure_relay_warning),
-                        color = MaterialTheme.colorScheme.error,
-                        modifier = Modifier.padding(vertical = 8.dp),
-                        fontSize = 12.sp,
-                    )
-                }
-
-                LazyColumn(
-                    Modifier
-                        .weight(1f),
-                ) {
-                    items(relays2.size) {
-                        val relayUrl = relays2[it].url
-                        RelayCard(
-                            relay = relayUrl,
-                            trustScore = trustScores[relayUrl],
-                            isLoadingScore = loadingScores[relayUrl] == true,
-                            showTrustScore = !TrustScoreService.isExcludedFromScoring(relayUrl),
-                            onClick = {
-                                isLoading.value = true
-                                trustScores.remove(relayUrl)
-                                loadingScores.remove(relayUrl)
-                                relays2.removeAt(it)
-                                settingsStore.settings = settingsStore.settings.copy(
-                                    defaultRelays = relays2,
-                                )
-                                LocalPreferences.saveSettingsToEncryptedStorage(context, settingsStore.settings)
-                                scope.launch(Dispatchers.IO) {
-                                    if (!BuildFlavorChecker.isOfflineFlavor()) {
-                                        relayClient.checkForNewRelaysAndUpdateAllFilters()
-                                        isLoading.value = false
-                                    } else {
-                                        isLoading.value = false
-                                    }
-                                }
-                            },
-                        )
-                    }
+    private fun save(reconnect: Boolean) {
+        settingsStore.settings = settingsStore.settings.copy(
+            defaultRelays = state.relays,
+        )
+        LocalPreferences.saveSettingsToEncryptedStorage(context, settingsStore.settings)
+        scope.launch(Dispatchers.IO) {
+            if (!BuildFlavorChecker.isOfflineFlavor()) {
+                relayClient.checkForNewRelaysAndUpdateAllFilters()
+                if (reconnect) {
+                    delay(2.seconds)
+                    relayClient.client.reconnect()
                 }
             }
+            state.isLoading.value = false
+        }
+    }
+}
+
+@Composable
+private fun ColumnScope.DefaultRelaysHeader(onReset: () -> Unit) {
+    Row(
+        horizontalArrangement = Arrangement.End,
+    ) {
+        AmberButton(
+            onClick = onReset,
+            text = stringResource(Res.string.default_relay_text),
+        )
+    }
+
+    Text(
+        text = stringResource(Res.string.manage_the_relays_used_for_communicating_with_external_applications),
+        modifier = Modifier.padding(bottom = 8.dp),
+    )
+}
+
+@Composable
+private fun RelayAddressField(
+    text: String,
+    onTextChange: (String) -> Unit,
+    onAdd: () -> Unit,
+    onPaste: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    OutlinedTextField(
+        modifier = modifier,
+        value = text,
+        keyboardOptions = KeyboardOptions(
+            capitalization = KeyboardCapitalization.None,
+            autoCorrectEnabled = false,
+            imeAction = ImeAction.Done,
+        ),
+        onValueChange = onTextChange,
+        keyboardActions = KeyboardActions(
+            onDone = { onAdd() },
+        ),
+        label = {
+            Text(stringResource(Res.string.wss))
+        },
+        leadingIcon = {
+            IconButton(
+                onClick = onPaste,
+            ) {
+                Icon(
+                    Icons.Default.ContentPaste,
+                    contentDescription = stringResource(Res.string.paste_from_clipboard),
+                )
+            }
+        },
+        trailingIcon = {
+            IconButton(
+                colors = IconButtonDefaults.iconButtonColors().copy(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary,
+                ),
+                onClick = onAdd,
+            ) {
+                Icon(
+                    Icons.Default.Add,
+                    contentDescription = stringResource(Res.string.add),
+                )
+            }
+        },
+    )
+}
+
+@Composable
+private fun InsecureRelayWarning(
+    text: String,
+    modifier: Modifier = Modifier,
+) {
+    // Defense-in-depth (GHSA-8844-q5vh-9j8f, I4): warn when the
+    // user explicitly types a ws:// URL for a non-onion /
+    // non-private-network relay, since NIP-46 traffic over
+    // cleartext exposes metadata + ciphertext to network
+    // observers. wss:// is the default; ws:// is auto-prefixed
+    // only for .onion / private IPs in onAddRelay.
+    val showInsecureWarning = text.startsWith("ws://") &&
+        !text.endsWith(".onion") &&
+        !text.endsWith(".onion/") &&
+        !PrivateAddress.isPrivate(text)
+    if (showInsecureWarning) {
+        Text(
+            text = stringResource(Res.string.insecure_relay_warning),
+            color = MaterialTheme.colorScheme.error,
+            modifier = modifier.padding(vertical = 8.dp),
+            fontSize = 12.sp,
+        )
+    }
+}
+
+@Composable
+private fun DefaultRelayList(
+    relays: List<NormalizedRelayUrl>,
+    trustScores: Map<String, Int?>,
+    loadingScores: Map<String, Boolean>,
+    onRemove: (index: Int, relayUrl: String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    LazyColumn(
+        modifier,
+    ) {
+        items(relays.size) {
+            val relayUrl = relays[it].url
+            RelayCard(
+                relay = relayUrl,
+                trustScore = trustScores[relayUrl],
+                isLoadingScore = loadingScores[relayUrl] == true,
+                showTrustScore = !TrustScoreService.isExcludedFromScoring(relayUrl),
+                onClick = { onRemove(it, relayUrl) },
+            )
         }
     }
 }
@@ -722,46 +758,76 @@ private fun ActiveRelayRow(
                 }
             }.collectAsStateWithLifecycle(relay in relayClient.client.connectedRelaysFlow().value)
 
-            Row(
+            ActiveRelayNameRow(
+                url = relay.url,
+                isConnected = isConnected,
+                trustScore = trustScores[relay.url],
+                isLoadingScore = loadingScores[relay.url] == true,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = 16.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(
-                    modifier = Modifier.weight(1f),
-                    text = relay.url,
-                    fontSize = 24.sp,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    color = if (isConnected) Color.Unspecified else Color.Gray,
-                )
-                if (!TrustScoreService.isExcludedFromScoring(relay.url)) {
-                    TrustScoreBadge(
-                        score = trustScores[relay.url],
-                        isLoading = loadingScores[relay.url] == true,
-                    )
-                }
-            }
-            Row(
+            )
+            ActiveRelayStatusRow(
+                status = if (isConnected) "${relayClient.relayStats.get(relay).pingInMs}ms ping" else "Unavailable",
+                isConnected = isConnected,
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-            ) {
-                Text(
-                    modifier = Modifier.padding(top = 4.dp, bottom = 16.dp),
-                    text = if (isConnected) "${relayClient.relayStats.get(relay).pingInMs}ms ping" else "Unavailable",
-                    fontSize = 16.sp,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    color = if (isConnected) Color.Unspecified else Color.Gray,
-                )
-            }
+            )
 
             Spacer(Modifier.weight(1f))
             HorizontalDivider(
                 color = MaterialTheme.colorScheme.primary,
             )
         }
+    }
+}
+
+@Composable
+private fun ActiveRelayNameRow(
+    url: String,
+    isConnected: Boolean,
+    trustScore: Int?,
+    isLoadingScore: Boolean,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            modifier = Modifier.weight(1f),
+            text = url,
+            fontSize = 24.sp,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            color = if (isConnected) Color.Unspecified else Color.Gray,
+        )
+        if (!TrustScoreService.isExcludedFromScoring(url)) {
+            TrustScoreBadge(
+                score = trustScore,
+                isLoading = isLoadingScore,
+            )
+        }
+    }
+}
+
+@Composable
+private fun ActiveRelayStatusRow(
+    status: String,
+    isConnected: Boolean,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.SpaceBetween,
+    ) {
+        Text(
+            modifier = Modifier.padding(top = 4.dp, bottom = 16.dp),
+            text = status,
+            fontSize = 16.sp,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            color = if (isConnected) Color.Unspecified else Color.Gray,
+        )
     }
 }

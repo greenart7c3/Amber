@@ -53,8 +53,7 @@ class BunkerFreshnessTest {
 
         AmberDesktop.engine.consume(oldLogout, relay)
 
-        // Dropped before processing: never logged as a new request, app untouched.
-        assertFalse(store.logs.value.any { oldLogout.id in it.message })
-        assertNotNull(store.lookup.getByKey(clientHex))
+        assertFalse("dropped before processing, never logged as a new request", store.logs.value.any { oldLogout.id in it.message })
+        assertNotNull("dropped before processing, the app is untouched", store.lookup.getByKey(clientHex))
     }
 }

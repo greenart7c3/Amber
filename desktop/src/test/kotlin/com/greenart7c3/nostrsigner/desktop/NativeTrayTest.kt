@@ -12,7 +12,7 @@ import org.junit.Test
  */
 class NativeTrayTest {
     @Test
-    fun createNeverThrowsAndReturnsNullWhenNoBackend() {
+    fun `create does not throw whether or not a tray host exists`() {
         val tray = NativeTray.create(
             iconStream = { null },
             tooltip = "Amber",
@@ -23,19 +23,17 @@ class NativeTrayTest {
             onLock = {},
             onQuit = {},
         )
-        // Either null (headless / no tray host) or a real tray; both are fine —
-        // the contract under test is "does not throw". Clean up if created.
         tray?.shutdown()
     }
 
     @Test
-    fun sniHostReplyParsing() {
-        // gdbus returns GVariant text like "(<true>,)" when a tray host
-        // (waybar's tray module, GNOME Shell, …) is registered.
+    fun `a gdbus GVariant true reply means a tray host is registered`() {
         assertTrue(NativeTray.parseSniHostReply("(<true>,)"))
         assertTrue(NativeTray.parseSniHostReply("(<TRUE>,)"))
-        // Errors ("The name … was not provided by any .service files") and
-        // an unregistered host must not be mistaken for a host.
+    }
+
+    @Test
+    fun `a gdbus error or false reply is not mistaken for a tray host`() {
         assertFalse(NativeTray.parseSniHostReply("(<false>,)"))
         assertFalse(
             NativeTray.parseSniHostReply(
@@ -46,22 +44,21 @@ class NativeTrayTest {
     }
 
     @Test
-    fun awaitSniHostKeepsProbingUntilTheBarRegistersOne() {
-        // At login the bar's tray host can come up after Amber.
+    fun `awaitSniHost keeps probing until a bar that starts after Amber registers its host`() {
         val replies = ArrayDeque(listOf(false, false, true))
         assertTrue(NativeTray.awaitSniHost(attempts = 5, intervalMs = 0) { replies.removeFirst() })
         assertTrue("stops probing once a host is there", replies.isEmpty())
+    }
 
+    @Test
+    fun `awaitSniHost gives up after the last attempt`() {
         var probes = 0
         assertFalse(NativeTray.awaitSniHost(attempts = 3, intervalMs = 0) { probes++ > 99 })
         assertEquals("gives up after the last attempt", 3, probes)
     }
 
     @Test
-    fun createBoundedGivesUpInsteadOfBlockingForever() {
-        // No SNI host exists under Gradle test workers, so the probe path
-        // returns null immediately — the contract under test is "returns at
-        // all, quickly, without throwing" (the pre-fix hang lived in create()).
+    fun `createBounded returns quickly without throwing instead of blocking forever`() {
         val start = System.nanoTime()
         val tray = NativeTray.createBounded(
             timeoutMs = 1_000,

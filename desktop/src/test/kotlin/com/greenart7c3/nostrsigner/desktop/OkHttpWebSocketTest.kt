@@ -54,7 +54,6 @@ import org.junit.Test
  * server library, so the test needs no new dependency and controls the exact frames on the wire.
  */
 class OkHttpWebSocketTest {
-    /** Handshakes one client, sends it a CLOSE frame on demand, and records the frames it sends back. */
     private class TinyRelay : AutoCloseable {
         private val server = ServerSocket(0)
         val url = NormalizedRelayUrl(url = "ws://127.0.0.1:${server.localPort}/")
@@ -76,7 +75,7 @@ class OkHttpWebSocketTest {
                     out = output
                     handshake(input, output)
                     handshaken.countDown()
-                    readFrames(input)
+                    recordCloseFromMaskedClientFrames(input)
                 }
             }
 
@@ -113,8 +112,7 @@ class OkHttpWebSocketTest {
             output.flush()
         }
 
-        /** Client frames are masked; decode enough to spot a CLOSE and read its status code. */
-        private fun readFrames(input: InputStream) {
+        private fun recordCloseFromMaskedClientFrames(input: InputStream) {
             while (true) {
                 val b0 = input.read()
                 if (b0 == -1) return
@@ -144,10 +142,10 @@ class OkHttpWebSocketTest {
 
         fun awaitClientBriefly() = handshaken.await(300, TimeUnit.MILLISECONDS)
 
-        /** Server-initiated CLOSE, status 1000, unmasked as servers send it. The TCP session stays open. */
-        fun sendClose() {
+        fun sendCloseKeepingTcpOpen() {
             val output = checkNotNull(out) { "no client yet" }
-            output.write(byteArrayOf(0x88.toByte(), 0x02, 0x03, 0xE8.toByte()))
+            val unmaskedServerClose1000 = byteArrayOf(0x88.toByte(), 0x02, 0x03, 0xE8.toByte())
+            output.write(unmaskedServerClose1000)
             output.flush()
         }
 
@@ -201,18 +199,15 @@ class OkHttpWebSocketTest {
             assertTrue("relay never saw the client", relay.awaitClient())
             assertTrue("no onOpen", recorder.opened.await(5, TimeUnit.SECONDS))
 
-            relay.sendClose()
+            relay.sendCloseKeepingTcpOpen()
 
-            // The half of the handshake that is ours to send.
             assertTrue("client never answered the relay's CLOSE frame", relay.clientCloseFrame.await(5, TimeUnit.SECONDS))
             assertEquals(1000, relay.clientCloseCode.get())
 
-            // And the terminal callback the relay client's bookkeeping depends on.
             assertTrue("onClosed never fired", recorder.closed.await(5, TimeUnit.SECONDS))
             assertEquals("the relay's status code is what gets reported", 1000, recorder.closedCode.get())
             assertNull("a clean handshake is not a failure", recorder.failure.get())
 
-            // The session already ended; the usual teardown afterward must not report it twice.
             socket.disconnect()
             assertEquals("one terminal report per session", 1, recorder.closedCount.get())
             assertTrue("a closed socket needs a fresh dial", socket.needsReconnect())
@@ -234,16 +229,20 @@ class OkHttpWebSocketTest {
 
             socket.disconnect()
 
-            // Reported before disconnect() returned: the relay client dials the replacement
-            // right after this call and must not hear from the old socket later.
-            assertEquals("disconnect() must report synchronously", 1, recorder.closedCount.get())
+            assertEquals(
+                "disconnect() must report synchronously, since the replacement is dialed right after it",
+                1,
+                recorder.closedCount.get(),
+            )
             assertEquals(1000, recorder.closedCode.get())
             assertTrue(socket.needsReconnect())
 
-            // OkHttp's own reaction to cancel() -- a failure on its reader thread -- and the relay's
-            // reaction to the dropped TCP session must both be swallowed.
             Thread.sleep(500)
-            assertEquals("no second report", 1, recorder.closedCount.get())
+            assertEquals(
+                "no second report from OkHttp's cancel failure or the relay dropping the TCP session",
+                1,
+                recorder.closedCount.get(),
+            )
             assertNull("the cancel's failure must not surface", recorder.failure.get())
 
             client.dispatcher.executorService.shutdown()
@@ -261,8 +260,6 @@ class OkHttpWebSocketTest {
                 OkHttpWebSocket(
                     relay.url,
                     {
-                        // Asked by connect() itself, mid-dial: a concurrent reconnect pass
-                        // asking now must not tear this dial down and start a second one.
                         if (duringDial.get() == null) duringDial.set(socket.needsReconnect())
                         client
                     },
@@ -270,7 +267,11 @@ class OkHttpWebSocketTest {
                 )
 
             socket.connect()
-            assertEquals("a dial in flight was reported as dead", false, duringDial.get())
+            assertEquals(
+                "a dial in flight was reported as dead, so a concurrent reconnect pass would start a second one",
+                false,
+                duringDial.get(),
+            )
             assertTrue("relay never saw the client", relay.awaitClient())
             assertTrue("no onOpen", recorder.opened.await(5, TimeUnit.SECONDS))
 
@@ -280,7 +281,7 @@ class OkHttpWebSocketTest {
     }
 
     @Test
-    fun `a send from onOpen reaches the socket`() {
+    fun `a send from onOpen reaches the socket even before newWebSocket returns to connect`() {
         TinyRelay().use { relay ->
             val client = OkHttpClient()
             val sentFromOnOpen = AtomicReference<Boolean?>(null)
@@ -292,8 +293,6 @@ class OkHttpWebSocketTest {
                         pingMillis: Int,
                         compression: Boolean,
                     ) {
-                        // The relay client sends its REQs from here, possibly before
-                        // newWebSocket() has returned to connect().
                         sentFromOnOpen.set(socket.send("[\"REQ\",\"x\",{}]"))
                         opened.countDown()
                     }

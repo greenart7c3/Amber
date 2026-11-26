@@ -955,7 +955,6 @@
     <ID>NoComments:WindowsToasts.kt:`ToastActivatedEventArgs.Arguments`: the clicked button's argument, or the toast's `launch`.</ID>
     <ID>NoComments:WindowsToasts.kt:first toast, so only a setting Windows does report counts.</ID>
     <ID>NoComments:WindowsToasts.kt:quits is really taken down before the process ends.</ID>
-    <ID>TooManyFunctions:AmberDesktop.kt:AmberDesktop</ID>
     <ID>TooManyFunctions:DesktopKeyStore.kt:DesktopKeyStore</ID>
   </CurrentIssues>
 </SmellBaseline>

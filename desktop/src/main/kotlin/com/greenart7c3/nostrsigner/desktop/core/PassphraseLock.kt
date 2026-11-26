@@ -215,7 +215,7 @@ object PassphraseLock {
         DesktopKeyStore.clearMasterKey()
         AmberDesktop.evictAllAccounts()
         AmberDesktop.engine.dropPending("signer locked") { true }
-        AmberDesktop.disconnectIntentionally()
+        RelayConnections.disconnectIntentionally()
         state.value = Status.LOCKED
     }
 

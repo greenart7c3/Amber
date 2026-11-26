@@ -251,7 +251,7 @@ class BunkerEngine(
         AmberLogger.d("BunkerEngine", "onCannotConnect: ${relay.url.url} error: $errorMessage")
         logAll(relay, "onCannotConnect", errorMessage)
 
-        if (System.currentTimeMillis() - AmberDesktop.intentionalDisconnectTime < 2_000) {
+        if (System.currentTimeMillis() - RelayConnections.intentionalDisconnectTime < 2_000) {
             return super.onCannotConnect(relay, errorMessage)
         }
 
@@ -263,7 +263,7 @@ class BunkerEngine(
         AmberLogger.d("BunkerEngine", "onDisconnected: ${relay.url.url}")
         logAll(relay, "onDisconnected", "Disconnected")
 
-        if (System.currentTimeMillis() - AmberDesktop.intentionalDisconnectTime < 2_000) {
+        if (System.currentTimeMillis() - RelayConnections.intentionalDisconnectTime < 2_000) {
             return super.onDisconnected(relay)
         }
 
@@ -306,7 +306,7 @@ class BunkerEngine(
             AmberLogger.d("BunkerEngine", "Reconnecting in ${reconnectDelay.inWholeSeconds}s...")
             delay(reconnectDelay)
             reconnectDelay = (reconnectDelay * 2).coerceAtMost(60.seconds)
-            AmberDesktop.reconnect()
+            RelayConnections.reconnect()
         }
     }
 
@@ -364,7 +364,7 @@ class BunkerEngine(
                 val connPubKey = conn.localPubKey()
                 indexEntries[connPubKey] = account.npub to conn.localKey
 
-                conn.normalizedRelays().ifEmpty { AmberDesktop.savedRelays(account.npub).toList() }
+                conn.normalizedRelays().ifEmpty { BunkerRelays.savedRelays(account.npub).toList() }
                     .filterNot { RelayHealthTracker.isDead(it) }
                     .forEach { keysByRelay.getOrPut(it) { linkedSetOf() }.add(connPubKey) }
             }
@@ -573,7 +573,7 @@ class BunkerEngine(
     ) {
         val a = AdmittedRequest(bunkerRequest, event, acc, relay, connectionPrivKey, permission, app = permission ?: applicationWithSecret)
         // The common first step, as on Android.
-        when (val step = nip46Step(bunkerRequest, a.type, AmberDesktop.settings.authWhitelist, AmberDesktop.defaultRelays().map { it.url })) {
+        when (val step = nip46Step(bunkerRequest, a.type, AmberDesktop.settings.authWhitelist, BunkerRelays.defaultRelays().map { it.url })) {
             is Nip46Step.SwitchRelays -> switchRelays(a, step.result)
             Nip46Step.Logout -> logout(a)
             is Nip46Step.Refuse -> refuseUpFront(a, step)
@@ -616,7 +616,7 @@ class BunkerEngine(
     private suspend fun switchRelays(a: AdmittedRequest, result: String?) {
         val current = a.permission ?: return
         if (reply(a, result)) {
-            a.store.upsert(current.copy(app = current.app.copy(relays = AmberDesktop.defaultRelays().map { it.url })))
+            a.store.upsert(current.copy(app = current.app.copy(relays = BunkerRelays.defaultRelays().map { it.url })))
             checkForNewRelaysAndUpdateAllFilters(shouldReconnect = true)
         }
     }

@@ -33,16 +33,17 @@ object CrashReporter {
 
     private val file: File get() = File(AppDirs.dataDir, "crash.trace")
 
-    /** Marks a report encrypted with the master key; its plaintext is only readable after unlock. */
     internal const val ENCRYPTED_HEADER = "AMBERCRASH1:"
     private const val CONTEXT = "crash.trace"
 
     /** The report waiting for the user's decision, if any. */
     val pending = MutableStateFlow<String?>(null)
 
-    /** Installs the uncaught-exception handler and loads a report left by a previous run. */
+    /**
+     * Installs the uncaught-exception handler and loads a report left by a
+     * previous run; an encrypted one waits for the unlock (see [loadAfterUnlock]).
+     */
     fun install() {
-        // An encrypted report waits for the unlock (see [loadAfterUnlock]).
         pending.value = runCatching { file.takeIf { it.exists() }?.readText()?.ifBlank { null }?.takeUnless { it.startsWith(ENCRYPTED_HEADER) } }.getOrNull()
         val previous = Thread.getDefaultUncaughtExceptionHandler()
         Thread.setDefaultUncaughtExceptionHandler { thread, e ->
@@ -71,6 +72,7 @@ object CrashReporter {
      * not available (locked) only exception types and stack frames are kept.
      * Before a passphrase exists there is no key to encrypt with.
      */
+    @Suppress("NoComments")
     private fun storedForm(e: Throwable, report: String): String {
         if (!PassphraseLock.isEnabled()) return report
         return runCatching { ENCRYPTED_HEADER + DesktopKeyStore.encryptString(report, CONTEXT) }
@@ -80,10 +82,10 @@ object CrashReporter {
     /**
      * Called once the passphrase lock is unlocked: decrypts a report saved
      * encrypted by a previous run and offers it. One that cannot be decrypted
-     * (another master key, tampered) is discarded.
+     * (another master key, tampered) is discarded. While still locked, the
+     * report is left for the next unlock rather than lost.
      */
     fun loadAfterUnlock() {
-        // Still locked: leave the report for the next unlock rather than lose it.
         if (pending.value != null || !DesktopMasterKey.isMasterKeyAvailable()) return
         val stored = runCatching { file.takeIf { it.exists() }?.readText() }.getOrNull() ?: return
         if (!stored.startsWith(ENCRYPTED_HEADER)) return
@@ -107,6 +109,10 @@ object CrashReporter {
      * [account], so the developer does not see the user's public key (and
      * cannot reply). Returns whether any relay accepted it; the pending report
      * is cleared only then.
+     *
+     * Every wrap is published (the developer's and the sender's own copy), as
+     * on Android, except that an anonymous report drops the sender's copy: it
+     * would be wrapped to the throwaway key, which nobody keeps.
      */
     suspend fun send(account: DesktopAccount, report: String, anonymous: Boolean = false): Boolean {
         if (report.isBlank()) return false
@@ -115,12 +121,10 @@ object CrashReporter {
         }
         val signer = if (anonymous) NostrSignerInternal(KeyPair()) else account.signer
         val wraps = NIP17Factory().createMessageNIP17(template, signer).wraps
-            // The sender's own copy would be wrapped to the throwaway key, which nobody keeps.
             .filter { !anonymous || it.recipientPubKey() == DEVELOPER_HEX_KEY }
         val client = AmberDesktop.newClient()
         return try {
             client.connect()
-            // Every wrap (the developer's and the sender's own copy), as on Android.
             val accepted = wraps.map { client.publishAndConfirm(it, REPORT_RELAYS, untilFirstAccept = true) }.any { it }
             if (accepted) dismiss()
             accepted
@@ -137,6 +141,13 @@ object ReportAssembler {
     /**
      * The report for [e]. Without [includeMessages] it holds exception types
      * and stack frames only, never a message (which can quote request data).
+     *
+     * The heap row says, for an OutOfMemoryError, how close the heap was to
+     * its limit. Exception messages and stack traces can embed request data
+     * (parser or crypto exceptions quoting bad input) and file paths, so key
+     * material, long base64 blobs and the home directory are redacted, as on
+     * Android. The whole cause chain is included (Android stops at the first
+     * cause).
      */
     fun buildReport(e: Throwable, includeMessages: Boolean = true): String = buildString {
         append(e.javaClass.simpleName)
@@ -152,16 +163,12 @@ object ReportAssembler {
         System.getenv("XDG_CURRENT_DESKTOP")?.takeIf { it.isNotBlank() }?.let { row("Desktop", it) }
         System.getenv("XDG_SESSION_TYPE")?.takeIf { it.isNotBlank() }?.let { row("Session", it) }
         row("Thread", Thread.currentThread().name)
-        // For an OutOfMemoryError these say how close the heap was to its limit.
         val runtime = Runtime.getRuntime()
         row("Java heap", "max=${mb(runtime.maxMemory())}MB total=${mb(runtime.totalMemory())}MB free=${mb(runtime.freeMemory())}MB")
         appendLine()
 
-        // Exception messages and stack traces can embed request data (parser
-        // or crypto exceptions quoting bad input) and file paths: redact key
-        // material, long base64 blobs and the home directory, as on Android.
         appendLine("```")
-        appendThrowable(e, includeMessages)
+        appendCauseChain(e, includeMessages)
         appendLine("```")
     }
 
@@ -171,13 +178,11 @@ object ReportAssembler {
         append("| ").append(name).append(" | ").append(redact(value ?: "")).appendLine(" |")
     }
 
-    // The whole cause chain (Android stops at the first cause); identity set
-    // guards against cyclic causes.
-    private fun StringBuilder.appendThrowable(e: Throwable, includeMessages: Boolean) {
-        val seen = Collections.newSetFromMap(IdentityHashMap<Throwable, Boolean>())
+    private fun StringBuilder.appendCauseChain(e: Throwable, includeMessages: Boolean) {
+        val seenCausesByIdentity = Collections.newSetFromMap(IdentityHashMap<Throwable, Boolean>())
         var current: Throwable? = e
         var depth = 0
-        while (current != null && seen.add(current)) {
+        while (current != null && seenCausesByIdentity.add(current)) {
             val pad = "    ".repeat(depth)
             if (depth > 0) {
                 appendLine()

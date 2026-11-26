@@ -3,7 +3,6 @@
   <ManuallySuppressedIssues/>
   <CurrentIssues>
     <ID>LongMethod:BiometricAuthScreen.kt:@Composable fun BiometricAuthScreen</ID>
-    <ID>LongMethod:BunkerRelayAuthScreen.kt:@Composable fun BunkerRelayAuthScreen</ID>
     <ID>LongMethod:Nip44v3ApprovalData.kt:@Composable fun Nip44v3ApprovalData</ID>
     <ID>LongMethod:TranslationReportScreen.kt:@Composable fun TranslationReportScreen</ID>
     <ID>NoComments:Account.kt:Gate before reading: the repair below swallows decrypt failures and</ID>

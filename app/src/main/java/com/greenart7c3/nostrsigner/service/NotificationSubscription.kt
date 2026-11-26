@@ -29,6 +29,8 @@ import com.greenart7c3.nostrsigner.common.bunkerFilters
 import com.greenart7c3.nostrsigner.common.relays.RelayHealthTracker
 import com.greenart7c3.nostrsigner.data.AccountRepository
 import com.greenart7c3.nostrsigner.data.SettingsStore
+import com.greenart7c3.nostrsigner.database.ApplicationEntity
+import com.greenart7c3.nostrsigner.models.Account
 import com.vitorpamplona.quartz.nip01Core.relay.client.NostrClient
 import com.vitorpamplona.quartz.nip01Core.relay.client.listeners.RelayConnectionListener
 import com.vitorpamplona.quartz.nip01Core.relay.client.single.IRelayClient
@@ -44,10 +46,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
-// The one subscription every bunker endpoint shares, keyed in subIds.
 private const val BUNKER_SUB_KEY = "bunker"
 
-// Constructor injection: one parameter per dependency.
 @Suppress("LongParameterList")
 class NotificationSubscription(
     val client: NostrClient,
@@ -61,14 +61,11 @@ class NotificationSubscription(
     private val eventNotificationConsumer =
         EventNotificationConsumer(appContext, settingsStore, accountRepository, scope, notificationCache, bunkerResponder) { updateFilter() }
 
-    // Concurrent: mutated in updateFilter/closeAllSubs (coroutines) while relay I/O
-    // threads iterate it in onIncomingMessage (containsValue).
     private val subIds = ConcurrentHashMap<String, String>()
     private val refreshMutex = Mutex()
     private var closeGeneration = 0L
 
     init {
-        // listens until the app crashes.
         client.addConnectionListener(this)
     }
 
@@ -98,59 +95,39 @@ class NotificationSubscription(
      * ones deaf (#644). Requests are routed to their account by the tagged key.
      */
     suspend fun updateFilter() {
-        // Calls queued before a close belong to the old lifecycle too.
-        val generation = synchronized(subIds) { closeGeneration }
+        val generationAtCall = synchronized(subIds) { closeGeneration }
         refreshMutex.withLock {
             if (BuildFlavorChecker.isOfflineFlavor()) return@withLock
-            if (generation != synchronized(subIds) { closeGeneration }) return@withLock
+            if (generationAtCall != synchronized(subIds) { closeGeneration }) return@withLock
             val keysByRelay = linkedMapOf<NormalizedRelayUrl, MutableSet<String>>()
             val indexEntries = mutableMapOf<String, LocalKeyAccountIndex.Match>()
             val since = computeSince()
 
             AccountStorage.all(appContext).forEach { account ->
-                // Cached dao: getAll() is served from CachingApplicationDao's per-account
-                // LRU. updateFilter re-runs on every relay refresh (explicit refreshes
-                // plus the periodic ConnectivityService safety net), and an uncached
-                // getAll re-decrypts every application row through AndroidKeyStore
-                // (a keystore2 binder round-trip per encrypted field) each cycle —
-                // previously the app's dominant native allocator.
-                val allConnections = accountRepository.daos(account.npub).applicationDao.getAll(account.hexKey)
+                val allConnections = cachedConnections(account)
                 val connectionsWithLocalKey = allConnections.filter { it.localKey.isNotEmpty() }
                 val hasLegacyConnections = allConnections.any { it.localKey.isEmpty() && it.relays.isNotEmpty() }
 
-                // Each connection listens on its own relays
                 for (conn in connectionsWithLocalKey) {
                     val connPubKey = conn.localPubKey
                     indexEntries[connPubKey] = LocalKeyAccountIndex.Match(account.npub, conn.localKey)
 
-                    // Exclude relays that have been declared dead so Quartz stops opening
-                    // a socket to them on every refresh. They are re-added once
-                    // RelayHealthTracker is reset (network change / manual reconnect) or
-                    // they connect successfully again.
-                    val connRelays = conn.relays.ifEmpty { accountRepository.getSavedRelays(account) }
-                        .filterNot { RelayHealthTracker.isDead(it) }
+                    val connRelays = conn.relays.ifEmpty { accountRepository.getSavedRelays(account) }.withoutDeadRelays()
                     connRelays.forEach { keysByRelay.getOrPut(it) { linkedSetOf() }.add(connPubKey) }
                 }
 
-                // The account key itself only listens for legacy connections (no localKey)
                 if (hasLegacyConnections) {
                     accountRepository.getSavedRelays(account)
-                        .filterNot { RelayHealthTracker.isDead(it) }
+                        .withoutDeadRelays()
                         .forEach { keysByRelay.getOrPut(it) { linkedSetOf() }.add(account.hexKey) }
                 }
             }
 
             synchronized(subIds) {
-                if (generation != closeGeneration) return@withLock
-                // Make every endpoint routable before any subscription can deliver a request.
-                LocalKeyAccountIndex.replaceAll(indexEntries)
+                if (generationAtCall != closeGeneration) return@withLock
+                makeRoutableThenSubscribe(indexEntries, keysByRelay, since)
                 val activeSubKeys = if (keysByRelay.isEmpty()) emptySet() else setOf(BUNKER_SUB_KEY)
-                if (keysByRelay.isNotEmpty()) {
-                    val subId = subIds.getOrPut(BUNKER_SUB_KEY) { UUID.randomUUID().toString() }
-                    client.subscribe(subId, bunkerFilters(keysByRelay, since))
-                }
 
-                // Unsubscribe once no application listens any more.
                 val staleSubKeys = subIds.keys.filter { it !in activeSubKeys }
                 for (subKey in staleSubKeys) {
                     subIds.remove(subKey)?.let { subId ->
@@ -158,6 +135,18 @@ class NotificationSubscription(
                     }
                 }
             }
+        }
+    }
+
+    private fun makeRoutableThenSubscribe(
+        indexEntries: Map<String, LocalKeyAccountIndex.Match>,
+        keysByRelay: Map<NormalizedRelayUrl, Set<String>>,
+        since: Long,
+    ) {
+        LocalKeyAccountIndex.replaceAll(indexEntries)
+        if (keysByRelay.isNotEmpty()) {
+            val subId = subIds.getOrPut(BUNKER_SUB_KEY) { UUID.randomUUID().toString() }
+            client.subscribe(subId, bunkerFilters(keysByRelay, since))
         }
     }
 
@@ -170,6 +159,25 @@ class NotificationSubscription(
         }
     }
 
+    /**
+     * Served from CachingApplicationDao's per-account LRU. updateFilter re-runs on every
+     * relay refresh (explicit refreshes plus the periodic ConnectivityService safety net),
+     * and an uncached getAll re-decrypts every application row through AndroidKeyStore
+     * (a keystore2 binder round-trip per encrypted field) each cycle — previously the
+     * app's dominant native allocator.
+     */
+    @Suppress("NoComments")
+    private suspend fun cachedConnections(account: Account): List<ApplicationEntity> = accountRepository.daos(account.npub).applicationDao.getAll(account.hexKey)
+
+    /**
+     * Dead relays are left out so Quartz stops opening a socket to them on every refresh;
+     * they come back once RelayHealthTracker is reset (network change / manual reconnect)
+     * or they connect successfully again.
+     */
+    @Suppress("NoComments")
+    private fun Iterable<NormalizedRelayUrl>.withoutDeadRelays(): List<NormalizedRelayUrl> = filterNot { RelayHealthTracker.isDead(it) }
+
+    @Suppress("NoComments")
     private fun computeSince(): Long {
         val now = TimeUtils.now()
         val latest = if (notificationCache.size() > 0) notificationCache.snapshot().maxOf { it.value } else 0L

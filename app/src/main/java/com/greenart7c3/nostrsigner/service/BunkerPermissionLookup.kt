@@ -10,7 +10,9 @@ import com.greenart7c3.nostrsigner.models.AmberBunkerRequest
 /**
  * The saved grant of the client [key] that answers [bunkerRequest] on the single-request
  * screen, or null when none does (the user is asked). [relayUrl] is the relay host of a
- * NIP-42 auth event (kind 22242). Same order as [intentPermission].
+ * NIP-42 auth event (kind 22242). Same order as [intentPermission], except that ping,
+ * zap decryption and PSBT signing match only a grant of their own type: unlike an
+ * intent's zap decryption, a bunker one never matches an encryption-type grant.
  */
 fun bunkerPermission(
     application: ApplicationWithPermissions?,
@@ -28,8 +30,6 @@ fun bunkerPermission(
         SignerType.SIGN_EVENT -> bunkerRequest.signedEvent?.let { event ->
             if (event.kind == RELAY_AUTH_KIND) relayAuthGrant(grants, type.toString(), relayUrl) else eventGrant(grants, type.toString(), event.kind)
         }
-        // Ping, zap decryption and PSBT signing: only a grant of the request type (unlike
-        // an intent's zap decryption, a bunker one never matches an encryption-type grant).
         else -> grants.firstOrNull { it.type == type.toString() }
     }
 }

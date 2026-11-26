@@ -108,7 +108,6 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
-// Constructor injection: one parameter per dependency.
 @Suppress("LongParameterList")
 class EventNotificationConsumer(
     private val applicationContext: Context,
@@ -117,7 +116,6 @@ class EventNotificationConsumer(
     private val scope: CoroutineScope,
     private val notificationCache: LruCache<String, Long>,
     private val bunkerResponder: BunkerResponder,
-    // Refreshes the NIP-46 subscription after a connection is added or removed.
     private val onConnectionsChanged: suspend () -> Unit,
 ) {
     internal fun saveLog(
@@ -158,6 +156,7 @@ class EventNotificationConsumer(
         }
     }
 
+    @Suppress("NoComments")
     suspend fun consume(
         event: Event,
         relay: NormalizedRelayUrl,
@@ -185,12 +184,7 @@ class EventNotificationConsumer(
         }
     }
 
-    /**
-     * The account a verified kind-24133 [event] is for, with the private key of the
-     * connection it came through ("" when tagged to the account key), or null when
-     * it is not a bunker request for a logged-in account.
-     */
-    private suspend fun recipient(event: Event, relay: NormalizedRelayUrl): Pair<Account, String>? {
+    private suspend fun recipient(event: Event, relay: NormalizedRelayUrl): Recipient? {
         if (!notificationManager().areNotificationsEnabled()) {
             saveLog("notifications disabled", relay.url)
             return null
@@ -212,7 +206,7 @@ class EventNotificationConsumer(
             ?: null.also { saveLog("Tagged account ${taggedKey.toNPub()} not logged in", relay.url) }
     }
 
-    /** Whether [event] is within the sender's rate limit, fresh and not seen before. */
+    @Suppress("NoComments")
     private suspend fun isNewRequest(event: Event, acc: Account, relay: NormalizedRelayUrl): Boolean {
         // Senders that are not a stored connection are rate-limited before any
         // per-event write, decrypt or signed reply, so a flood costs them
@@ -241,26 +235,20 @@ class EventNotificationConsumer(
         return !seen
     }
 
-    /**
-     * The account a request tagged to [taggedHex] is for, with the private key of the
-     * connection it came through ("" when tagged to the account key itself), or null.
-     */
-    private suspend fun addressee(taggedNpub: String, taggedHex: String, relay: NormalizedRelayUrl): Pair<Account, String>? {
-        // First try to match the tagged key to a logged-in account (real pubkey)
+    private suspend fun addressee(taggedNpub: String, taggedHex: String, relay: NormalizedRelayUrl): Recipient? {
         AccountStorage.load(applicationContext, taggedNpub)?.let {
             saveLog("Direct account match for ${it.npub}", relay.url)
-            return it to ""
+            return Recipient(it, connectionPrivKey = "")
         }
-        // Connection-based match via the in-memory index populated by
-        // NotificationSubscription.updateFilter. This replaces an O(accounts × connections)
-        // synchronous scan that previously ran inside runBlocking on the relay event thread.
         val match = LocalKeyAccountIndex.lookup(taggedHex)
         val acc = match?.let { AccountStorage.load(applicationContext, it.npub) }
         return acc?.let {
             saveLog("Found connection for ${it.npub} with local pubkey $taggedHex", relay.url)
-            it to match.localPrivKey
+            Recipient(it, match.localPrivKey)
         }
     }
+
+    private data class Recipient(val account: Account, val connectionPrivKey: String)
 
     private fun isAccountKeyLocked(acc: Account): Boolean = try {
         acc.requirePrivateKeyAccess()
@@ -273,6 +261,7 @@ class EventNotificationConsumer(
      * Answers a request with a "locked" error instead of letting the client time
      * out. Only the connection key is used, never the account key.
      */
+    @Suppress("NoComments")
     private fun replyDeviceLocked(
         event: Event,
         acc: Account,
@@ -354,6 +343,7 @@ class EventNotificationConsumer(
         }
     }
 
+    @Suppress("NoComments")
     private suspend fun notify(
         event: Event,
         acc: Account,
@@ -408,14 +398,8 @@ class EventNotificationConsumer(
         }
     }
 
-    // The key a request acts on (empty when none) and, for sign_event, its event.
     private class RequestParams(val pubKey: String, val amberEvent: AmberEvent?)
 
-    /**
-     * The params of [request], or null when it was refused before any key is used:
-     * an unknown method, or a missing or unparsable param. The client gets an error
-     * instead of waiting for an answer.
-     */
     private suspend fun readParams(acc: Account, request: AmberBunkerRequest, type: SignerType, relay: NormalizedRelayUrl): RequestParams? {
         val bunkerRequest = request.request
         if (type == SignerType.INVALID) {
@@ -423,7 +407,6 @@ class EventNotificationConsumer(
             refuse(acc, request, "Unrecognized method: ${bunkerRequest.method}")
             return null
         }
-        // The shared check decides, as on the desktop; requestParams reads the values.
         val params = requestParams(bunkerRequest)?.takeIf { bunkerRequest.hasRequiredParams() }
         if (params == null) {
             saveLog("Invalid params for request ${bunkerRequest.id} method ${bunkerRequest.method}", relay.url, acc.npub)
@@ -432,7 +415,6 @@ class EventNotificationConsumer(
         return params
     }
 
-    // Params come straight from the client: a missing one or an unparsable event is null.
     private fun requestParams(bunkerRequest: BunkerRequest): RequestParams? {
         val method = bunkerRequest.method
         val amberEvent = if (method == "sign_event") bunkerRequest.eventParam()?.let { runCatching { AmberEvent.fromJson(it) }.getOrNull() } else null
@@ -458,11 +440,10 @@ class EventNotificationConsumer(
     }
 
     /**
-     * Admits [request] (see the common `admitNip46Request`): a repeated connect is
-     * acknowledged and anything not admitted refused, both returning null. Only for an
-     * authorized sender — a stored connection or a valid connect secret — is the
-     * account key used, to sign the event or read the data the request carries.
+     * Only for an authorized sender — a stored connection or a valid connect secret — is
+     * the account key used, to sign the event or read the data the request carries.
      */
+    @Suppress("NoComments")
     private suspend fun admit(
         event: Event,
         acc: Account,
@@ -475,8 +456,6 @@ class EventNotificationConsumer(
         val bunkerRequest = request.request
         val stored = dao.getByKey(event.pubKey)
         if (stored != null && stored.application.isExpired()) {
-            // The user set a finite lifetime on this connection: answer as an
-            // unknown app even before the periodic cleanup deletes the row.
             saveLog("Connection expired for ${event.pubKey}", relay.url, acc.npub)
         }
         val connectSecret = (bunkerRequest as? BunkerRequestConnect)?.let { it.secret ?: UUID.randomUUID().toString() }
@@ -505,8 +484,7 @@ class EventNotificationConsumer(
         return Admitted(acc, authorized, relays, event, type, params.amberEvent, permission, applicationWithSecret, step)
     }
 
-    // What every handler of an admitted request needs.
-    @Suppress("LongParameterList") // Bundles the request's context so the handlers take one argument.
+    @Suppress("LongParameterList")
     private class Admitted(
         val acc: Account,
         val request: AmberBunkerRequest,
@@ -516,7 +494,6 @@ class EventNotificationConsumer(
         val amberEvent: AmberEvent?,
         val permission: ApplicationWithPermissions?,
         val applicationWithSecret: ApplicationWithPermissions?,
-        // What it does first (the common nip46Step); never a refusal, those are answered in admit.
         val step: Nip46Step,
     ) {
         val id: String get() = request.request.id
@@ -533,13 +510,11 @@ class EventNotificationConsumer(
         )
     }
 
-    // Leaves the decision to the user: the request notification opens the approval screen.
     private fun askUser(a: Admitted) {
         val message = generateMessage(a.type, a.amberEvent, a.request, a.event, a.permission, a.applicationWithSecret)
         notificationManager().sendNotification(message, "Bunker", "BunkerID", applicationContext, a.request)
     }
 
-    // A stored connection moves to the default relays once the client has the answer.
     private suspend fun switchRelays(a: Admitted, result: String?) {
         val permission = a.permission ?: return
         val defaultRelays = settingsStore.settings.defaultRelays
@@ -555,7 +530,6 @@ class EventNotificationConsumer(
         }
     }
 
-    // A stored connection is deleted, with its history and queued requests, once the client has the ack.
     private suspend fun logout(a: Admitted) {
         val permission = a.permission ?: return
         reply(a, Nip46Step.Logout.RESULT) { published ->
@@ -586,7 +560,6 @@ class EventNotificationConsumer(
         if (accepted) reply(a, a.acc.hexKey) else reply(a, "", "user rejected")
     }
 
-    // Answers from the stored grants (through SignerProviderQuery, like an intent), else asks.
     private suspend fun answerFromGrants(a: Admitted, pubKey: String, relayUrl: String) {
         val bunkerRequest = a.request.request
         val data = BunkerRequestUtils.getDataFromBunker(bunkerRequest)
@@ -595,10 +568,6 @@ class EventNotificationConsumer(
             SignerType.NIP44_V3_ENCRYPT, SignerType.NIP44_V3_DECRYPT -> {
                 val kind = bunkerRequest.nip44v3Kind()
                 val scope = bunkerRequest.nip44v3Scope()
-                // A v3 request that can never succeed — missing/invalid kind, a
-                // decrypt whose context (kind/scope) does not match the
-                // ciphertext, a bad MAC/padding, or a non-base64 encrypt payload
-                // — is rejected here, before any approval screen is shown.
                 validateNip44v3Request(a.type, kind, scope, data, pubKey, a.acc)?.let {
                     saveLog("Rejecting invalid NIP-44 v3 request: $it", relayUrl, a.acc.npub)
                     reply(a, "", it)
@@ -610,8 +579,6 @@ class EventNotificationConsumer(
         }
         val cursor = SignerProviderQuery(settingsStore, accountRepository, scope).query(
             context = applicationContext,
-            // NIP-46 requests are attributed to the client's pubkey, not an
-            // installed app. There is no installed caller, so nothing to capture.
             requesterId = a.event.pubKey,
             callerPackageName = null,
             operationUri = "content://${BuildConfig.APPLICATION_ID}.${a.type}".toUri(),
@@ -632,11 +599,6 @@ class EventNotificationConsumer(
         }
     }
 
-    /**
-     * Refuses an admitted request before anything is signed or decrypted (the common
-     * `nip46Step`): a multi-relay auth event, a relay outside the auth whitelist (kept in
-     * the history as rejected) or a NIP-44 v3 request without a kind.
-     */
     private suspend fun refuseUpFront(
         acc: Account,
         request: AmberBunkerRequest,
@@ -657,12 +619,8 @@ class EventNotificationConsumer(
         refuse(acc, request, step.error, attempts = BUNKER_REPLY_ATTEMPTS)
     }
 
-    /**
-     * Sends what the admission alone decided (the common `Nip46Admission.reply`): an
-     * already connected client's repeated connect is acknowledged without asking and
-     * recorded; a refusal is published once; a dropped request only logged. The account
-     * key is not used to read anything.
-     */
+    /** Sends what the admission alone decided; the account key is not used to read anything. */
+    @Suppress("NoComments")
     private suspend fun sendAdmissionReply(
         reply: Nip46AdmissionReply,
         acc: Account,
@@ -702,9 +660,8 @@ class EventNotificationConsumer(
         permission: ApplicationWithPermissions?,
         applicationWithSecret: ApplicationWithPermissions?,
     ): String {
-        // Saved names may predate sanitizing at entry.
         val name = sequenceOf(permission, applicationWithSecret)
-            .map { sanitizeAppName(it?.application?.name ?: "") }
+            .map { savedNameSanitizedAgain(it) }
             .firstOrNull { it.isNotBlank() } ?: event.pubKey.toShortenHex()
 
         val bunkerPermission = Permission(type.toString().lowercase(), amberEvent?.kind)
@@ -746,19 +703,20 @@ class EventNotificationConsumer(
         return message
     }
 
+    private fun savedNameSanitizedAgain(application: ApplicationWithPermissions?): String = sanitizeAppName(application?.application?.name ?: "")
+
+    @Suppress("NoComments")
     private suspend fun getEncryptedDataKind(
         bunkerRequest: BunkerRequest?,
         acc: Account,
         url: String,
     ): EncryptedDataKind? {
         if (bunkerRequest == null) return null
-        // V3 arrives as a generic BunkerRequest; build the preview the dedicated
-        // approval screen renders (plaintext, like the v2 path).
+        // V3 arrives as a generic BunkerRequest (Quartz has no dedicated type), so it
+        // is matched by method name.
         if (bunkerRequest.method == "nip44v3_encrypt" || bunkerRequest.method == "nip44v3_decrypt") return nip44v3EncryptedDataKind(bunkerRequest, acc)
-        // The approval screen answers with the preview's result, as on the intent path.
         if (bunkerRequest.method == "decrypt_zap_event") return privateZapPreview(bunkerRequest.zapRequestParam(), acc)
         val onParseError: (String) -> Unit = { saveLog(it, url, acc.npub) }
-        // The plaintext side is what the user reads: the message of an encrypt, the result of a decrypt.
         return when (bunkerRequest) {
             is BunkerRequestNip44Decrypt -> acc.crypto.nip44Decrypt(bunkerRequest.ciphertext, bunkerRequest.pubKey).let {
                 previewOf(it, bunkerRequest.ciphertext, it, acc, onParseError)
@@ -772,14 +730,6 @@ class EventNotificationConsumer(
         }
     }
 
-    /**
-     * Builds the preview [EncryptedDataKind] for a NIP-44 v3 bunker request,
-     * mirroring v2: encrypt stores the plaintext as `text` and the ciphertext
-     * as `result`; decrypt stores the ciphertext as `text` and the decrypted
-     * plaintext as `result`. The Base64 wire payload is decoded here once so
-     * history/display can use the readable plaintext. Returns null if it can't
-     * be produced (the request is auto-rejected elsewhere in that case).
-     */
     private fun nip44v3EncryptedDataKind(
         bunkerRequest: BunkerRequest,
         acc: Account,
@@ -789,7 +739,6 @@ class EventNotificationConsumer(
         val data = BunkerRequestUtils.getDataFromBunker(bunkerRequest)
         val pubKey = bunkerRequest.peerPubKeyParam() ?: return null
         return try {
-            // text = readable plaintext (for display/history); result = wire value.
             if (bunkerRequest.method == "nip44v3_encrypt") {
                 val plainBytes = Base64.decode(data)
                 val ciphertext = acc.crypto.nip44v3Encrypt(plainBytes, pubKey, kind, scope)
@@ -804,12 +753,7 @@ class EventNotificationConsumer(
         }
     }
 
-    /**
-     * Validates a NIP-44 v3 bunker request. Returns null when it can proceed, or
-     * a generic error when it is malformed and must be rejected without
-     * prompting the user (missing kind, or a decrypt whose context/MAC/padding
-     * doesn't check out).
-     */
+    @Suppress("NoComments")
     private fun validateNip44v3Request(
         type: SignerType,
         kind: Int?,
@@ -836,7 +780,6 @@ class EventNotificationConsumer(
     fun notificationManager(): NotificationManager = ContextCompat.getSystemService(applicationContext, NotificationManager::class.java) as NotificationManager
 
     companion object {
-        // One budget per process: several call sites construct their own consumer.
         internal val senderRateLimiter = SenderRateLimiter()
     }
 }

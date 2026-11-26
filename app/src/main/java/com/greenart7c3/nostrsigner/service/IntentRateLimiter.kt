@@ -21,9 +21,6 @@ class IntentRateLimiter(
     companion object {
         const val UNKNOWN_PACKAGE = "<unknown>"
         private const val UNKNOWN_PACKAGE_LIMIT = 3
-
-        // Cleanup runs at every checkAndRecord; tighter bounds make it harder for a
-        // misbehaving caller to balloon the bucket map before reclamation kicks in.
         private const val CLEANUP_WHEN_SIZE_EXCEEDS = 64
         private const val CLEANUP_STALE_MS = 5L * 60L * 1000L
     }
@@ -104,7 +101,6 @@ object IntentRateLimitInspector {
         val pkg = callingPackage?.takeIf { it.isNotBlank() } ?: IntentRateLimiter.UNKNOWN_PACKAGE
 
         val typeStr = intent.extras?.getString("type") ?: extractTypeFromUrl(intent)
-        // The parser IntentUtils uses, so every type it accepts is rate limited.
         val type = NostrSignerRequestParser.parseSignerType(typeStr).takeIf { it != SignerType.INVALID } ?: return null
 
         val kind = if (type == SignerType.SIGN_EVENT) extractEventKind(intent) else null

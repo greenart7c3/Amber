@@ -1,16 +1,12 @@
 package com.greenart7c3.nostrsigner.desktop.core
 
-import java.io.ByteArrayOutputStream
-import java.io.File
+import com.greenart7c3.nostrsigner.desktop.core.DesktopMasterKey.getOrCreateSecretKey
+import com.greenart7c3.nostrsigner.desktop.core.DesktopMasterKey.mutex
 import java.nio.ByteBuffer
-import java.security.KeyStore
 import java.util.Base64
 import javax.crypto.Cipher
-import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
 import javax.crypto.spec.GCMParameterSpec
-import javax.crypto.spec.SecretKeySpec
-import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
 /**
@@ -24,27 +20,15 @@ import kotlinx.coroutines.sync.withLock
  *   owner-only password file (see [KeystorePassword]).
  * - Passphrase lock enabled ([PassphraseLock]): the master key exists on
  *   disk only wrapped under a key derived from the user's passphrase; it is
- *   installed here at unlock time and evicted on lock.
+ *   installed in [DesktopMasterKey] at unlock time and evicted on lock.
  */
 object DesktopKeyStore {
-    private const val KEY_ALIAS = "AMBER_AES_KEY"
     private const val TRANSFORMATION = "AES/GCM/NoPadding"
     private const val IV_SIZE = 12 // 96 bits
     private const val TAG_SIZE = 128 // bits
 
     // ':' is outside the Base64 alphabet, so legacy values can never match.
     private const val BOUND_PREFIX = "v2:"
-    private val mutex = Mutex()
-
-    private val keyStoreFile: File get() = File(AppDirs.dataDir, "amber.keystore")
-    private val passwordFile: File get() = File(AppDirs.dataDir, "keystore.pass")
-
-    private var cachedKey: SecretKey? = null
-    private var sourceDescription: String? = null
-
-    /** Where the master key/its password is kept, for display in Settings. */
-    val passwordSourceDescription: String?
-        get() = sourceDescription
 
     class LockedException : IllegalStateException("The key store is locked. Unlock it with your passphrase first.")
 
@@ -126,143 +110,6 @@ object DesktopKeyStore {
     fun isBound(encryptedText: String): Boolean = encryptedText.startsWith(BOUND_PREFIX)
 
     private fun aad(context: String): ByteArray = "amber-desktop:v2:$context".toByteArray(Charsets.UTF_8)
-
-    // ----- master key management (used by PassphraseLock) -----
-
-    /** Installs an unwrapped master key (unlock, or right after enabling the lock). */
-    internal fun installMasterKey(key: SecretKey, source: String) {
-        cachedKey = key
-        sourceDescription = source
-    }
-
-    /** Evicts the in-memory master key (lock), wiping its bytes. */
-    internal fun clearMasterKey() {
-        runCatching { (cachedKey as? WipeableAesKey)?.destroy() }
-        cachedKey = null
-        sourceDescription = null
-    }
-
-    /**
-     * Returns the master key for wrapping under a passphrase, creating it
-     * through the regular keystore path when it does not exist yet. Must only
-     * be called while the passphrase lock is disabled or unlocked.
-     */
-    internal suspend fun masterKeyForWrapping(): SecretKey = mutex.withLock {
-        cachedKey ?: loadOrCreateFromKeystore()
-    }
-
-    /**
-     * Deletes the unprotected key copies (PKCS12 keystore + its password in
-     * the OS credential store / password file) after the passphrase lock has
-     * taken ownership of the master key.
-     */
-    internal fun removeUnprotectedCopies() {
-        keyStoreFile.delete()
-        FilePasswordStore(passwordFile).delete()
-        OsCredentialStore().delete()
-    }
-
-    /**
-     * Crash recovery for [PassphraseLock.enable]: the wrapped-key blob is
-     * written before the unprotected copies are deleted, so a crash in
-     * between leaves both on disk with no recovery path. The blob's presence
-     * means the lock was enabled, so any remaining unprotected copy (keystore
-     * file, password file, OS credential entry) is stale and gets deleted.
-     * Runs opportunistically whenever key storage initializes.
-     */
-    internal fun cleanupUnprotectedCopiesIfWrapped() {
-        if (!PassphraseLock.isEnabled()) return
-        if (keyStoreFile.exists() || passwordFile.exists() || OsCredentialStore().load() != null) {
-            AmberLogger.d("DesktopKeyStore", "Deleting unprotected key copies left behind by an interrupted passphrase setup")
-            removeUnprotectedCopies()
-        }
-    }
-
-    // ----- keystore-backed path (before the first passphrase is set) -----
-
-    private fun loadKeyStore(password: CharArray): KeyStore {
-        val keyStore = KeyStore.getInstance("PKCS12")
-        keyStoreFile.inputStream().use { keyStore.load(it, password) }
-        return keyStore
-    }
-
-    private fun canOpen(password: String): Boolean = try {
-        loadKeyStore(password.toCharArray())
-        true
-    } catch (_: Exception) {
-        false
-    }
-
-    private fun writeKeystore(key: SecretKey, password: CharArray) {
-        val keyStore = KeyStore.getInstance("PKCS12")
-        keyStore.load(null, password)
-        keyStore.setEntry(KEY_ALIAS, KeyStore.SecretKeyEntry(SecretKeySpec(key.encoded, "AES")), KeyStore.PasswordProtection(password))
-        storeKeystoreAtomically(keyStore, password)
-    }
-
-    /**
-     * Replaces the keystore atomically (see [AppDirs.writeAtomically]) so a
-     * crash mid-write can never corrupt the only keystore (which would mean
-     * total key loss).
-     */
-    private fun storeKeystoreAtomically(keyStore: KeyStore, password: CharArray) {
-        val bytes = ByteArrayOutputStream().also { keyStore.store(it, password) }.toByteArray()
-        AppDirs.writeAtomically(keyStoreFile, bytes)
-    }
-
-    @Synchronized
-    private fun getOrCreateSecretKey(): SecretKey {
-        cachedKey?.let { return it }
-        // First key-storage access in this process: reap unprotected copies
-        // an interrupted passphrase setup may have left behind.
-        cleanupUnprotectedCopiesIfWrapped()
-        if (PassphraseLock.isEnabled()) {
-            throw LockedException()
-        }
-        return loadOrCreateFromKeystore()
-    }
-
-    /** True when the master key is in memory (or loadable without a passphrase). */
-    fun isMasterKeyAvailable(): Boolean = cachedKey != null || !PassphraseLock.isEnabled()
-
-    private fun loadOrCreateFromKeystore(): SecretKey {
-        cachedKey?.let { return it }
-
-        val resolved = KeystorePassword.resolve(
-            osStore = OsCredentialStore(),
-            fileStore = FilePasswordStore(passwordFile),
-            keystoreExists = keyStoreFile.exists(),
-            opens = ::canOpen,
-        )
-        sourceDescription = resolved.source.description
-        AmberLogger.d("DesktopKeyStore", "Keystore password source: ${resolved.source.description}")
-        val password = resolved.password.toCharArray()
-
-        val key = if (keyStoreFile.exists()) {
-            loadOrAddKey(password)
-        } else {
-            generateKey().also { writeKeystore(it, password) }
-        }
-        cachedKey = key
-        return key
-    }
-
-    /** The master key in the existing keystore, or a fresh one added to it when its entry is missing (should not happen). */
-    private fun loadOrAddKey(password: CharArray): SecretKey {
-        val keyStore = loadKeyStore(password)
-        val entry = keyStore.getEntry(KEY_ALIAS, KeyStore.PasswordProtection(password)) as? KeyStore.SecretKeyEntry
-        if (entry != null) return WipeableAesKey.copyOf(entry.secretKey)
-        val key = generateKey()
-        keyStore.setEntry(KEY_ALIAS, KeyStore.SecretKeyEntry(SecretKeySpec(key.encoded, "AES")), KeyStore.PasswordProtection(password))
-        storeKeystoreAtomically(keyStore, password)
-        return key
-    }
-
-    private fun generateKey(): SecretKey {
-        val keyGenerator = KeyGenerator.getInstance("AES")
-        keyGenerator.init(256)
-        return WipeableAesKey.copyOf(keyGenerator.generateKey())
-    }
 }
 
 /**

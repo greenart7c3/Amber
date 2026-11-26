@@ -147,14 +147,14 @@ object PassphraseLock {
      */
     suspend fun enable(passphrase: CharArray, params: KdfParams = targetKdfParams) = mutex.withLock {
         check(!isEnabled()) { "A passphrase is already set" }
-        val key = DesktopKeyStore.masterKeyForWrapping()
+        val key = DesktopMasterKey.masterKeyForWrapping()
         // Load every account database before the blob exists: from then on
         // writes are strict, and the stores are re-encrypted from memory.
         AmberDesktop.loadAllStores()
         val osSecret = obtainOsSecret()
         writeBlob(key, passphrase, params, osSecret)
-        DesktopKeyStore.removeUnprotectedCopies()
-        DesktopKeyStore.installMasterKey(key, sourceDescription(osSecret != null))
+        DesktopMasterKey.removeUnprotectedCopies()
+        DesktopMasterKey.installMasterKey(key, sourceDescription(osSecret != null))
         // isEnabled() is now true, so re-encrypt every account's database at rest.
         AmberDesktop.rewriteAllStores()
         state.value = Status.UNLOCKED
@@ -170,7 +170,7 @@ object PassphraseLock {
         if (!isEnabled()) return true
         val blob = readBlob() ?: return false
         val (key, osSecret) = unwrap(blob, passphrase) ?: return false
-        DesktopKeyStore.installMasterKey(key, sourceDescription(blob.osSecret))
+        DesktopMasterKey.installMasterKey(key, sourceDescription(blob.osSecret))
         try {
             upgrade(blob, key, passphrase, osSecret)
         } finally {
@@ -212,7 +212,7 @@ object PassphraseLock {
     private suspend fun lockUnderMutex() = mutex.withLock {
         if (!isEnabled()) return@withLock
         autoLockJob?.cancel()
-        DesktopKeyStore.clearMasterKey()
+        DesktopMasterKey.clearMasterKey()
         AmberDesktop.evictAllAccounts()
         AmberDesktop.engine.dropPending("signer locked") { true }
         AmberDesktop.disconnectIntentionally()
@@ -232,7 +232,7 @@ object PassphraseLock {
         } finally {
             osSecret?.fill(0)
         }
-        DesktopKeyStore.installMasterKey(key, sourceDescription(osSecret != null))
+        DesktopMasterKey.installMasterKey(key, sourceDescription(osSecret != null))
         state.value = Status.UNLOCKED
         scheduleAutoLock()
         return true
@@ -311,7 +311,7 @@ object PassphraseLock {
             } finally {
                 osSecret?.fill(0)
             }
-            DesktopKeyStore.installMasterKey(key, sourceDescription(osSecret != null))
+            DesktopMasterKey.installMasterKey(key, sourceDescription(osSecret != null))
             AmberLogger.i("PassphraseLock", "Rehashed the wrapped master key (second factor: ${osSecret != null})")
         } catch (e: Exception) {
             AmberLogger.e("PassphraseLock", "Failed to rehash the wrapped master key", e)

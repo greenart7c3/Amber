@@ -84,7 +84,7 @@ object CrashReporter {
      */
     fun loadAfterUnlock() {
         // Still locked: leave the report for the next unlock rather than lose it.
-        if (pending.value != null || !DesktopKeyStore.isMasterKeyAvailable()) return
+        if (pending.value != null || !DesktopMasterKey.isMasterKeyAvailable()) return
         val stored = runCatching { file.takeIf { it.exists() }?.readText() }.getOrNull() ?: return
         if (!stored.startsWith(ENCRYPTED_HEADER)) return
         pending.value = runCatching { DesktopKeyStore.decryptString(stored.removePrefix(ENCRYPTED_HEADER), CONTEXT) }

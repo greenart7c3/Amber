@@ -8,7 +8,6 @@
     <ID>LongMethod:AddPermissionsSheet.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun AddPermissionsSheet</ID>
     <ID>LongMethod:BiometricAuthScreen.kt:@Composable fun BiometricAuthScreen</ID>
     <ID>LongMethod:BunkerRelayAuthScreen.kt:@Composable fun BunkerRelayAuthScreen</ID>
-    <ID>LongMethod:EditConfigurationScreen.kt:@Composable fun EditConfigurationScreen</ID>
     <ID>LongMethod:EditRelaysDialog.kt:@Composable fun DefaultRelaysScreen</ID>
     <ID>LongMethod:EditRelaysDialog.kt:@SuppressLint("StateFlowValueCalledInComposition") @Composable private fun ActiveRelayRow</ID>
     <ID>LongMethod:LoginWithPubKey.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun LoginWithPubKey</ID>

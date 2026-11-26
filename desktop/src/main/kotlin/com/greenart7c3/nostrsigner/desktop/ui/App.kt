@@ -5,7 +5,6 @@ import androidx.compose.foundation.TooltipArea
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -43,7 +42,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -57,7 +55,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import com.greenart7c3.nostrsigner.commonsui.Res
 import com.greenart7c3.nostrsigner.commonsui.account
@@ -125,27 +122,29 @@ fun App(modifier: Modifier = Modifier) {
     val acc = account
     val lockStatus by PassphraseLock.state.collectAsState()
     val ready by Session.ready.collectAsState()
-    when {
-        loading -> Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            CircularProgressIndicator()
+    MeasuredLayout(modifier.fillMaxSize()) {
+        when {
+            loading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
+            }
+
+            lockStatus == PassphraseLock.Status.LOCKED -> UnlockScreen()
+
+            // First run: no passphrase yet. Nothing else may load until it is set.
+            lockStatus == PassphraseLock.Status.DISABLED -> PassphraseSetupScreen()
+
+            // Unlocked, but the account is still being loaded: don't flash the login screen.
+            !ready -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
+            }
+
+            acc == null || addingAccount -> LoginScreen(
+                hasAccounts = acc != null,
+                snackbarHostState = snackbarHostState,
+            )
+
+            else -> SignedInApp(acc, snackbarHostState, currentRoute, selectedApplication, pending.size)
         }
-
-        lockStatus == PassphraseLock.Status.LOCKED -> UnlockScreen()
-
-        // First run: no passphrase yet. Nothing else may load until it is set.
-        lockStatus == PassphraseLock.Status.DISABLED -> PassphraseSetupScreen()
-
-        // Unlocked, but the account is still being loaded: don't flash the login screen.
-        !ready -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            CircularProgressIndicator()
-        }
-
-        acc == null || addingAccount -> LoginScreen(
-            hasAccounts = acc != null,
-            snackbarHostState = snackbarHostState,
-        )
-
-        else -> SignedInApp(acc, snackbarHostState, currentRoute, selectedApplication, pending.size)
     }
 }
 
@@ -180,31 +179,25 @@ private fun SignedInApp(
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { padding ->
-        BoxWithConstraints(Modifier.fillMaxSize().padding(padding)) {
-            // Expanded: full sidebar. Medium: icon rail. Compact: the
-            // navigation moves to a bottom bar under a slim top bar.
-            val layoutWidth = LayoutWidth.of(maxWidth)
-            CompositionLocalProvider(
-                LocalLayoutWidth provides layoutWidth,
-                LocalWindowContentSize provides DpSize(maxWidth, maxHeight),
-            ) {
-                if (layoutWidth == LayoutWidth.COMPACT) {
-                    Column(Modifier.fillMaxSize()) {
-                        CompactTopBar(acc)
-                        HorizontalDivider()
-                        MainContent(acc, currentRoute, selectedApplication, Modifier.weight(1f))
-                        BottomNavigation(currentRoute, pendingCount, onSelect)
+        // Expanded: full sidebar. Medium: icon rail. Compact: the
+        // navigation moves to a bottom bar under a slim top bar.
+        MeasuredLayout(Modifier.fillMaxSize().padding(padding)) { layoutWidth ->
+            if (layoutWidth == LayoutWidth.COMPACT) {
+                Column(Modifier.fillMaxSize()) {
+                    CompactTopBar(acc)
+                    HorizontalDivider()
+                    MainContent(acc, currentRoute, selectedApplication, Modifier.weight(1f))
+                    BottomNavigation(currentRoute, pendingCount, onSelect)
+                }
+            } else {
+                Row(Modifier.fillMaxSize()) {
+                    if (layoutWidth == LayoutWidth.EXPANDED) {
+                        Sidebar(acc, currentRoute, pendingCount, onSelect)
+                    } else {
+                        NavigationRail(acc, currentRoute, pendingCount, onSelect)
                     }
-                } else {
-                    Row(Modifier.fillMaxSize()) {
-                        if (layoutWidth == LayoutWidth.EXPANDED) {
-                            Sidebar(acc, currentRoute, pendingCount, onSelect)
-                        } else {
-                            NavigationRail(acc, currentRoute, pendingCount, onSelect)
-                        }
-                        VerticalDivider()
-                        MainContent(acc, currentRoute, selectedApplication, Modifier.weight(1f))
-                    }
+                    VerticalDivider()
+                    MainContent(acc, currentRoute, selectedApplication, Modifier.weight(1f))
                 }
             }
         }

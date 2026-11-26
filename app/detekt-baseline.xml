@@ -7,7 +7,6 @@
     <ID>LongMethod:EditRelaysDialog.kt:@Composable fun DefaultRelaysScreen</ID>
     <ID>LongMethod:EditRelaysDialog.kt:@SuppressLint("StateFlowValueCalledInComposition") @Composable private fun ActiveRelayRow</ID>
     <ID>LongMethod:Nip44v3ApprovalData.kt:@Composable fun Nip44v3ApprovalData</ID>
-    <ID>LongMethod:QrCodeScanner.kt:@Composable fun SimpleQrCodeScanner</ID>
     <ID>LongMethod:SeedWordsPage.kt:@Composable fun SeedWordsPage</ID>
     <ID>LongMethod:TranslationReportScreen.kt:@Composable fun TranslationReportScreen</ID>
     <ID>NoComments:Account.kt:Gate before reading: the repair below swallows decrypt failures and</ID>

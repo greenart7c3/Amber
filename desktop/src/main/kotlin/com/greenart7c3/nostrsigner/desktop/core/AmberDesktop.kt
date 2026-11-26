@@ -133,8 +133,6 @@ object AmberDesktop {
 
     val settings: DesktopSettings get() = SettingsStore.settings.value
 
-    fun defaultRelays(): List<NormalizedRelayUrl> = settings.normalizedDefaultRelays()
-
     /**
      * Relays a NEW bunker connection uses: the local WebSocket relay (when the
      * opt-out setting is on and the server is actually serving) followed by
@@ -144,8 +142,15 @@ object AmberDesktop {
     fun newBunkerRelays(): List<NormalizedRelayUrl> = buildList {
         val local = if (settings.localBunkerServer) LocalBunkerRelay.relayUrl() else null
         if (local != null) add(local)
-        addAll(defaultRelays())
+        addAll(BunkerRelays.defaultRelays())
     }.distinct()
+}
+
+/** Which relays the bunker connections use, and the local bunker relay's port and on/off setting. */
+object BunkerRelays {
+    private val settings: DesktopSettings get() = AmberDesktop.settings
+
+    fun defaultRelays(): List<NormalizedRelayUrl> = settings.normalizedDefaultRelays()
 
     /** The relay port: the user's choice, or the automatic default for this build. */
     fun localBunkerPort(): Int = settings.localBunkerPort ?: if (BuildVariant.isDebug) LocalRelayServer.DEBUG_PORT else LocalRelayServer.DEFAULT_PORT
@@ -197,12 +202,12 @@ object AmberDesktop {
         } else {
             LocalBunkerRelay.stop()
         }
-        redialRelays()
+        RelayConnections.redialRelays()
     }
 
     /** Union of every connection's relays, mirroring `Amber.getSavedRelays`. */
     fun savedRelays(npub: String): Set<NormalizedRelayUrl> = buildSet {
-        store(npub).apps.value.forEach { addAll(it.app.normalizedRelays()) }
+        AmberDesktop.store(npub).apps.value.forEach { addAll(it.app.normalizedRelays()) }
         if (isEmpty()) addAll(defaultRelays())
     }
 
@@ -216,13 +221,21 @@ object AmberDesktop {
         if (records.isEmpty()) {
             flowOf(emptySet())
         } else {
-            combine(records.map { store(it.npub).apps }) { perAccount ->
+            combine(records.map { AmberDesktop.store(it.npub).apps }) { perAccount ->
                 perAccount.flatMap { apps ->
                     apps.filter { it.app.localKey.isNotEmpty() }.flatMap { it.app.normalizedRelays() }
                 }.toSet()
             }
         }
     }
+}
+
+/** The relay client's connection lifecycle: intentional disconnects, redials, reconnects and the Tor route. */
+object RelayConnections {
+    private val settings: DesktopSettings get() = AmberDesktop.settings
+    private val client: NostrClient get() = AmberDesktop.client
+    private val engine: BunkerEngine get() = AmberDesktop.engine
+    private val applicationIOScope: CoroutineScope get() = AmberDesktop.applicationIOScope
 
     /**
      * When the client was disconnected on purpose (network lost, passphrase
@@ -279,7 +292,7 @@ object AmberDesktop {
             var wasRunning = TorManager.isRunning.value
             TorManager.isRunning.collect { running ->
                 if (running && !wasRunning && settings.torMode == TorMode.BUILTIN) {
-                    AmberLogger.d(TAG, "Built-in Tor is up; refreshing relay connections")
+                    AmberLogger.d(AmberDesktop.TAG, "Built-in Tor is up; refreshing relay connections")
                     redialRelays()
                 }
                 wasRunning = running

@@ -1,5 +1,6 @@
 package com.greenart7c3.nostrsigner.desktop
 
+import com.greenart7c3.nostrsigner.desktop.core.DesktopEntryEscaping
 import com.greenart7c3.nostrsigner.desktop.core.UriLaunch
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -46,18 +47,18 @@ class UriLaunchTest {
     @Test
     fun desktopEntryEscapesFieldCodesAndShellCharacters() {
         // A literal % would be read as a field code; $ and ` are escaped in quotes.
-        assertEquals("/opt/100%%/Amber", UriLaunch.quoteForDesktopEntry("/opt/100%/Amber"))
+        assertEquals("/opt/100%%/Amber", DesktopEntryEscaping.quoteForDesktopEntry("/opt/100%/Amber"))
         // In the file: quote, the escaped char preceded by two backslashes (quoting + string level).
-        assertEquals($$"\"/opt/\\\\$HOME/Amber\"", UriLaunch.quoteForDesktopEntry($$"/opt/$HOME/Amber"))
-        assertEquals("\"/opt/\\\\`id\\\\`/Amber\"", UriLaunch.quoteForDesktopEntry("/opt/`id`/Amber"))
+        assertEquals($$"\"/opt/\\\\$HOME/Amber\"", DesktopEntryEscaping.quoteForDesktopEntry($$"/opt/$HOME/Amber"))
+        assertEquals("\"/opt/\\\\`id\\\\`/Amber\"", DesktopEntryEscaping.quoteForDesktopEntry("/opt/`id`/Amber"))
         // A literal backslash needs four in the file.
-        assertEquals("\"C:\\\\\\\\Amber\"", UriLaunch.quoteForDesktopEntry("C:\\Amber"))
+        assertEquals("\"C:\\\\\\\\Amber\"", DesktopEntryEscaping.quoteForDesktopEntry("C:\\Amber"))
     }
 
     @Test
     fun aLineBreakCannotEnterADesktopEntry() {
-        assertThrows(IllegalArgumentException::class.java) { UriLaunch.quoteForDesktopEntry("/opt/Amber\nMimeType=evil") }
-        assertThrows(IllegalArgumentException::class.java) { UriLaunch.escapeDesktopEntryString("/icon.png\rX=1") }
+        assertThrows(IllegalArgumentException::class.java) { DesktopEntryEscaping.quoteForDesktopEntry("/opt/Amber\nMimeType=evil") }
+        assertThrows(IllegalArgumentException::class.java) { DesktopEntryEscaping.escapeDesktopEntryString("/icon.png\rX=1") }
     }
 
     @Test
@@ -70,6 +71,6 @@ class UriLaunchTest {
             $$"/opt/$HOME/`id`/Amber",
             "/opt/back\\slash/Amber",
             "/opt/it's (new) & <odd> ~ | ; * ? #/Amber",
-        ).forEach { assertEquals(it, UriLaunch.unquoteDesktopEntryArg(UriLaunch.quoteForDesktopEntry(it))) }
+        ).forEach { assertEquals(it, DesktopEntryEscaping.unquoteDesktopEntryArg(DesktopEntryEscaping.quoteForDesktopEntry(it))) }
     }
 }

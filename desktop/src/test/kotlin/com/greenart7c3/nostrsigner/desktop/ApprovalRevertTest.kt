@@ -74,7 +74,7 @@ class ApprovalRevertTest {
             AmberDesktop.engine.pending.value.first { it.localKey == clientHex }
         }
         withTimeout(90.seconds) { AmberDesktop.engine.approve(card, RememberType.ALWAYS).join() }
-        return store.getByKey(clientHex)
+        return store.lookup.getByKey(clientHex)
     }
 
     private fun AppWithPermissions?.signsKind1() = this?.permissions.orEmpty().any { it.type == "SIGN_EVENT" && it.kind == 1 && it.acceptable }
@@ -114,6 +114,6 @@ class ApprovalRevertTest {
 
         withTimeout(90.seconds) { AmberDesktop.engine.approve(card, RememberType.ALWAYS, signPolicy = 1).join() }
 
-        assertNull(AmberDesktop.store(account.npub).getByKey(clientHex))
+        assertNull(AmberDesktop.store(account.npub).lookup.getByKey(clientHex))
     }
 }

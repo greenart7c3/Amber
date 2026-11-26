@@ -296,20 +296,9 @@
     <ID>NoComments:DesktopCoreTest.kt:a real install.</ID>
     <ID>NoComments:DesktopCoreTest.kt:another connection (or account) must not be swallowed by the first.</ID>
     <ID>NoComments:DesktopKeyStore.kt:':' is outside the Base64 alphabet, so legacy values can never match.</ID>
-    <ID>NoComments:DesktopKeyStore.kt:----- keystore-backed path (before the first passphrase is set) -----</ID>
-    <ID>NoComments:DesktopKeyStore.kt:----- master key management (used by PassphraseLock) -----</ID>
     <ID>NoComments:DesktopKeyStore.kt:96 bits</ID>
     <ID>NoComments:DesktopKeyStore.kt:An AES key whose bytes can actually be wiped: the JDK's SecretKeySpec does</ID>
     <ID>NoComments:DesktopKeyStore.kt:Copies [source] (and wipes the intermediate encoding).</ID>
-    <ID>NoComments:DesktopKeyStore.kt:Crash recovery for [PassphraseLock.enable]: the wrapped-key blob is</ID>
-    <ID>NoComments:DesktopKeyStore.kt:Deletes the unprotected key copies (PKCS12 keystore + its password in</ID>
-    <ID>NoComments:DesktopKeyStore.kt:Evicts the in-memory master key (lock), wiping its bytes.</ID>
-    <ID>NoComments:DesktopKeyStore.kt:First key-storage access in this process: reap unprotected copies</ID>
-    <ID>NoComments:DesktopKeyStore.kt:Installs an unwrapped master key (unlock, or right after enabling the lock).</ID>
-    <ID>NoComments:DesktopKeyStore.kt:Replaces the keystore atomically (see [AppDirs.writeAtomically]) so a</ID>
-    <ID>NoComments:DesktopKeyStore.kt:Returns the master key for wrapping under a passphrase, creating it</ID>
-    <ID>NoComments:DesktopKeyStore.kt:The master key in the existing keystore, or a fresh one added to it when its entry is missing (shoul</ID>
-    <ID>NoComments:DesktopKeyStore.kt:an interrupted passphrase setup may have left behind.</ID>
     <ID>NoComments:DesktopKeyStore.kt:bits</ID>
     <ID>NoComments:EncryptedContentTest.kt:Broken JSON (or JSON that is not an event / tag array) is just text.</ID>
     <ID>NoComments:ExpiredConnectionTest.kt:A fully trusted connection (signs everything unasked) expiring at [deleteAfter].</ID>
@@ -955,10 +944,5 @@
     <ID>NoComments:WindowsToasts.kt:`ToastActivatedEventArgs.Arguments`: the clicked button's argument, or the toast's `launch`.</ID>
     <ID>NoComments:WindowsToasts.kt:first toast, so only a setting Windows does report counts.</ID>
     <ID>NoComments:WindowsToasts.kt:quits is really taken down before the process ends.</ID>
-    <ID>TooManyFunctions:AmberDesktop.kt:AmberDesktop</ID>
-    <ID>TooManyFunctions:DesktopKeyStore.kt:DesktopKeyStore</ID>
-    <ID>TooManyFunctions:Storage.kt:AccountStore</ID>
-    <ID>TooManyFunctions:UiState.kt:UiState</ID>
-    <ID>TooManyFunctions:UriLaunch.kt:UriLaunch</ID>
   </CurrentIssues>
 </SmellBaseline>

@@ -17,5 +17,5 @@ object LocalBunkerRelay : LocalRelayServer(
 
         override fun e(message: String, throwable: Throwable?) = AmberLogger.e(LocalRelayServer.TAG, message, throwable)
     },
-    approvedSenders = { AmberDesktop.approvedRelaySenders() },
+    approvedSenders = { BunkerRelays.approvedRelaySenders() },
 )

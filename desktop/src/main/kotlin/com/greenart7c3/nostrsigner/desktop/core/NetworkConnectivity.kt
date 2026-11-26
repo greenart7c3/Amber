@@ -93,7 +93,7 @@ object NetworkConnectivity {
                     // Local relays keep working without internet: only drop
                     // everything when none are in use (remote ones then fail
                     // and back off on their own).
-                    Transition.OFFLINE -> if (!usesLocalRelays()) AmberDesktop.disconnectIntentionally()
+                    Transition.OFFLINE -> if (!usesLocalRelays()) RelayConnections.disconnectIntentionally()
 
                     Transition.OPENED, Transition.UNCHANGED -> {}
                 }

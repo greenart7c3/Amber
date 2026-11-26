@@ -55,6 +55,6 @@ class BunkerFreshnessTest {
 
         // Dropped before processing: never logged as a new request, app untouched.
         assertFalse(store.logs.value.any { oldLogout.id in it.message })
-        assertNotNull(store.getByKey(clientHex))
+        assertNotNull(store.lookup.getByKey(clientHex))
     }
 }

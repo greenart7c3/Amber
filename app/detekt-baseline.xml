@@ -16,7 +16,6 @@
     <ID>LongMethod:EditRelaysDialog.kt:@SuppressLint("StateFlowValueCalledInComposition") @Composable private fun ActiveRelayRow</ID>
     <ID>LongMethod:FeedbackScreen.kt:@Composable fun FeedbackScreen</ID>
     <ID>LongMethod:LoginWithPubKey.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun LoginWithPubKey</ID>
-    <ID>LongMethod:NewApplicationScreen.kt:@Composable fun NewApplicationScreen</ID>
     <ID>LongMethod:Nip44v3ApprovalData.kt:@Composable fun Nip44v3ApprovalData</ID>
     <ID>LongMethod:QrCodeScanner.kt:@Composable fun SimpleQrCodeScanner</ID>
     <ID>LongMethod:RandomPinInput.kt:@Composable fun RandomPinInput</ID>

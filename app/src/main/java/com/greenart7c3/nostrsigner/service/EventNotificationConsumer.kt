@@ -341,7 +341,7 @@ class EventNotificationConsumer(
                     val connSigner = NostrSignerInternal(KeyPair(privKey = connectionPrivKey.hexToByteArray()))
                     connSigner.decrypt(event.content, event.pubKey)
                 } else {
-                    acc.decrypt(event.content, event.pubKey)
+                    acc.crypto.decrypt(event.content, event.pubKey)
                 }
             } catch (e: Exception) {
                 saveLog("Decryption failed for event ${event.id}: ${e.message}", relay.url, acc.npub)
@@ -760,14 +760,14 @@ class EventNotificationConsumer(
         val onParseError: (String) -> Unit = { saveLog(it, url, acc.npub) }
         // The plaintext side is what the user reads: the message of an encrypt, the result of a decrypt.
         return when (bunkerRequest) {
-            is BunkerRequestNip44Decrypt -> acc.nip44Decrypt(bunkerRequest.ciphertext, bunkerRequest.pubKey).let {
+            is BunkerRequestNip44Decrypt -> acc.crypto.nip44Decrypt(bunkerRequest.ciphertext, bunkerRequest.pubKey).let {
                 previewOf(it, bunkerRequest.ciphertext, it, acc, onParseError)
             }
-            is BunkerRequestNip44Encrypt -> previewOf(bunkerRequest.message, bunkerRequest.message, acc.nip44Encrypt(bunkerRequest.message, bunkerRequest.pubKey), acc, onParseError)
-            is BunkerRequestNip04Decrypt -> acc.nip04Decrypt(bunkerRequest.ciphertext, bunkerRequest.pubKey).let {
+            is BunkerRequestNip44Encrypt -> previewOf(bunkerRequest.message, bunkerRequest.message, acc.crypto.nip44Encrypt(bunkerRequest.message, bunkerRequest.pubKey), acc, onParseError)
+            is BunkerRequestNip04Decrypt -> acc.crypto.nip04Decrypt(bunkerRequest.ciphertext, bunkerRequest.pubKey).let {
                 previewOf(it, bunkerRequest.ciphertext, it, acc, onParseError)
             }
-            is BunkerRequestNip04Encrypt -> previewOf(bunkerRequest.message, bunkerRequest.message, acc.nip04Encrypt(bunkerRequest.message, bunkerRequest.pubKey), acc, onParseError)
+            is BunkerRequestNip04Encrypt -> previewOf(bunkerRequest.message, bunkerRequest.message, acc.crypto.nip04Encrypt(bunkerRequest.message, bunkerRequest.pubKey), acc, onParseError)
             else -> null
         }
     }
@@ -792,10 +792,10 @@ class EventNotificationConsumer(
             // text = readable plaintext (for display/history); result = wire value.
             if (bunkerRequest.method == "nip44v3_encrypt") {
                 val plainBytes = Base64.decode(data)
-                val ciphertext = acc.nip44v3Encrypt(plainBytes, pubKey, kind, scope)
+                val ciphertext = acc.crypto.nip44v3Encrypt(plainBytes, pubKey, kind, scope)
                 ClearTextEncryptedDataKind(plainBytes.toString(Charsets.UTF_8), ciphertext)
             } else {
-                val plainBytes = acc.nip44v3Decrypt(data, pubKey, kind, scope)
+                val plainBytes = acc.crypto.nip44v3Decrypt(data, pubKey, kind, scope)
                 ClearTextEncryptedDataKind(plainBytes.toString(Charsets.UTF_8), Base64.encode(plainBytes))
             }
         } catch (e: Exception) {
@@ -821,7 +821,7 @@ class EventNotificationConsumer(
         if (kind == null) return NIP44V3_KIND_REQUIRED
         if (type != SignerType.NIP44_V3_DECRYPT) return null
         return try {
-            acc.nip44v3Decrypt(data, pubKey, kind, scope)
+            acc.crypto.nip44v3Decrypt(data, pubKey, kind, scope)
             null
         } catch (e: Exception) {
             if (e is CancellationException) throw e

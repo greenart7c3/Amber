@@ -47,7 +47,7 @@ class EncryptedDataPreviewTest {
 
     @Test
     fun `a seal is opened for the preview`() {
-        coEvery { account.decrypt("sealed", any()) } returns event(14, "dm")
+        coEvery { account.crypto.decrypt("sealed", any()) } returns event(14, "dm")
 
         val preview = preview(event(13, "sealed")) as EventEncryptedDataKind
 

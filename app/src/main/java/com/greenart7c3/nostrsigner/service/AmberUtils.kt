@@ -48,24 +48,24 @@ object AmberUtils {
             account.decryptZapEvent(data)
         }
         SignerType.NIP04_DECRYPT -> {
-            account.nip04Decrypt(data, pubKey)
+            account.crypto.nip04Decrypt(data, pubKey)
         }
         SignerType.NIP04_ENCRYPT -> {
-            account.nip04Encrypt(data, pubKey)
+            account.crypto.nip04Encrypt(data, pubKey)
         }
         SignerType.NIP44_ENCRYPT -> {
-            account.nip44Encrypt(data, pubKey)
+            account.crypto.nip44Encrypt(data, pubKey)
         }
         SignerType.NIP44_V3_ENCRYPT -> {
             requireNotNull(nip44v3Kind) { "kind is required for NIP44_V3_ENCRYPT" }
-            account.nip44v3Encrypt(Base64.decode(data), pubKey, nip44v3Kind, nip44v3Scope)
+            account.crypto.nip44v3Encrypt(Base64.decode(data), pubKey, nip44v3Kind, nip44v3Scope)
         }
         SignerType.NIP44_V3_DECRYPT -> {
             requireNotNull(nip44v3Kind) { "kind is required for NIP44_V3_DECRYPT" }
-            Base64.encode(account.nip44v3Decrypt(data, pubKey, nip44v3Kind, nip44v3Scope))
+            Base64.encode(account.crypto.nip44v3Decrypt(data, pubKey, nip44v3Kind, nip44v3Scope))
         }
         else -> {
-            account.nip44Decrypt(data, pubKey)
+            account.crypto.nip44Decrypt(data, pubKey)
         }
     }
 

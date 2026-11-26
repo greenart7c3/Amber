@@ -112,7 +112,7 @@ class ApplicationBackupCryptoTest {
         val newCiphertext = backupSigner.nip44Encrypt(payload, backupSigner.keyPair.pubKey.toHexKey())
         // Any client with an encrypt grant can get this from Amber's nip44_encrypt
         // to the user's own pubkey, so it must not be restorable as a backup.
-        val legacyCiphertext = account.nip44Encrypt(payload, account.hexKey)
+        val legacyCiphertext = account.crypto.nip44Encrypt(payload, account.hexKey)
 
         assertEquals(payload, ApplicationBackup.decryptContent(newCiphertext, account))
         assertNull(ApplicationBackup.decryptContent(legacyCiphertext, account))

@@ -94,7 +94,7 @@ class EventNotificationConsumerSealResultTest {
         return suspendCoroutineUninterceptedOrReturn<Any?> { c -> fn.invoke(consumer, request, account, "wss://relay.invalid", c) } as EncryptedDataKind
     }
 
-    private suspend fun sealOfPrivateTags(): String = """{"kind":13,"content":"${account.nip44Encrypt(privateTags, account.hexKey)}","tags":[],"created_at":1,"pubkey":"${account.hexKey}"}"""
+    private suspend fun sealOfPrivateTags(): String = """{"kind":13,"content":"${account.crypto.nip44Encrypt(privateTags, account.hexKey)}","tags":[],"created_at":1,"pubkey":"${account.hexKey}"}"""
 
     @Test
     fun `encrypt of a seal wrapping self-encrypted tags returns ciphertext`() = runBlocking {

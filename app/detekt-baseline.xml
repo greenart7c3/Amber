@@ -9,7 +9,6 @@
     <ID>LongMethod:EditRelaysDialog.kt:@SuppressLint("StateFlowValueCalledInComposition") @Composable private fun ActiveRelayRow</ID>
     <ID>LongMethod:Nip44v3ApprovalData.kt:@Composable fun Nip44v3ApprovalData</ID>
     <ID>LongMethod:QrCodeScanner.kt:@Composable fun SimpleQrCodeScanner</ID>
-    <ID>LongMethod:RandomPinInput.kt:@Composable fun RandomPinInput</ID>
     <ID>LongMethod:SeedWordsPage.kt:@Composable fun SeedWordsPage</ID>
     <ID>LongMethod:TranslationReportScreen.kt:@Composable fun TranslationReportScreen</ID>
     <ID>NoComments:Account.kt:Gate before reading: the repair below swallows decrypt failures and</ID>
@@ -1259,8 +1258,6 @@
     <ID>NoComments:QrCodeDrawer.kt:data bits between top left finder pattern and top right finder pattern.</ID>
     <ID>NoComments:QrCodeDrawer.kt:data bits to the right of the bottom left finder pattern.</ID>
     <ID>NoComments:QrCodeDrawer.kt:of the number of rows/columns to the width and height</ID>
-    <ID>NoComments:RandomPinInput.kt:Confirm the PIN</ID>
-    <ID>NoComments:RandomPinInput.kt:Remove last digit</ID>
     <ID>NoComments:ReconnectReceiver.kt:Manual reconnect: redial every relay now, ignoring dead-relay state and</ID>
     <ID>NoComments:ReconnectReceiver.kt:reconnect backoff, and re-add any relay previously dropped from the pool.</ID>
     <ID>NoComments:RelayUrlToAddTest.kt:Quartz logs a URL it cannot normalize; android.util.Log is not mocked on the JVM.</ID>

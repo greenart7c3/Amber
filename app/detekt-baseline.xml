@@ -9,7 +9,6 @@
     <ID>LongMethod:ApplicationsBackupScreen.kt:@Composable fun ApplicationsBackupScreen</ID>
     <ID>LongMethod:ApplicationsBackupScreen.kt:@Composable private fun AccountBackupRow</ID>
     <ID>LongMethod:ApplicationsScreen.kt:@Composable fun ApplicationsScreen</ID>
-    <ID>LongMethod:AuthWhitelistScreen.kt:@Composable fun AuthWhitelistScreen</ID>
     <ID>LongMethod:BiometricAuthScreen.kt:@Composable fun BiometricAuthScreen</ID>
     <ID>LongMethod:BunkerRelayAuthScreen.kt:@Composable fun BunkerRelayAuthScreen</ID>
     <ID>LongMethod:CrashReportScreen.kt:@Composable fun CrashReportScreen</ID>

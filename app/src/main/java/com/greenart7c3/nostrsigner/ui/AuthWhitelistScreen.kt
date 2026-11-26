@@ -38,9 +38,11 @@ import com.greenart7c3.nostrsigner.commonsui.add
 import com.greenart7c3.nostrsigner.commonsui.add_relay_to_whitelist
 import com.greenart7c3.nostrsigner.commonsui.auth_whitelist_description
 import com.greenart7c3.nostrsigner.commonsui.paste_from_clipboard
+import com.greenart7c3.nostrsigner.data.SettingsStore
 import com.greenart7c3.nostrsigner.service.RelayUrlUtils
 import com.greenart7c3.nostrsigner.service.TrustScoreService
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.RelayUrlNormalizer
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
@@ -61,19 +63,7 @@ fun AuthWhitelistScreen(
     val loadingScores = remember { mutableStateMapOf<String, Boolean>() }
 
     LaunchedEffect(whitelist.toList()) {
-        if (TrustScoreService.isEnabled(settingsStore.settings)) {
-            whitelist.forEach { hostname ->
-                if (!trustScores.containsKey(hostname)) {
-                    loadingScores[hostname] = true
-                    scope.launch(Dispatchers.IO) {
-                        val normalizedUrl = RelayUrlNormalizer.normalizeOrNull("wss://$hostname")
-                        val score = normalizedUrl?.let { TrustScoreService.getScore(it.url, settingsStore.settings) }
-                        trustScores[hostname] = score
-                        loadingScores[hostname] = false
-                    }
-                }
-            }
-        }
+        loadMissingTrustScores(whitelist, trustScores, loadingScores, settingsStore, scope)
     }
 
     fun addEntry() {
@@ -87,6 +77,70 @@ fun AuthWhitelistScreen(
         }
     }
 
+    AuthWhitelistContent(
+        value = textFieldRelay.value.text,
+        onValueChange = {
+            textFieldRelay.value = TextFieldValue(it)
+        },
+        onPaste = {
+            scope.launch {
+                val text = clipboardManager.getClipEntry()?.clipData?.getItemAt(0)?.text?.toString()
+                if (!text.isNullOrBlank()) {
+                    textFieldRelay.value = TextFieldValue(text)
+                }
+            }
+        },
+        onAdd = { addEntry() },
+        whitelist = whitelist,
+        trustScores = trustScores,
+        loadingScores = loadingScores,
+        onRemove = { index ->
+            whitelist.removeAt(index)
+            settingsStore.settings = settingsStore.settings.copy(
+                authWhitelist = whitelist.toList(),
+            )
+            scope.launch(Dispatchers.IO) {
+                LocalPreferences.saveSettingsToEncryptedStorage(context, settingsStore.settings)
+            }
+        },
+        modifier = modifier,
+    )
+}
+
+private fun loadMissingTrustScores(
+    whitelist: List<String>,
+    trustScores: MutableMap<String, Int?>,
+    loadingScores: MutableMap<String, Boolean>,
+    settingsStore: SettingsStore,
+    scope: CoroutineScope,
+) {
+    if (TrustScoreService.isEnabled(settingsStore.settings)) {
+        whitelist.forEach { hostname ->
+            if (!trustScores.containsKey(hostname)) {
+                loadingScores[hostname] = true
+                scope.launch(Dispatchers.IO) {
+                    val normalizedUrl = RelayUrlNormalizer.normalizeOrNull("wss://$hostname")
+                    val score = normalizedUrl?.let { TrustScoreService.getScore(it.url, settingsStore.settings) }
+                    trustScores[hostname] = score
+                    loadingScores[hostname] = false
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun AuthWhitelistContent(
+    value: String,
+    onValueChange: (String) -> Unit,
+    onPaste: () -> Unit,
+    onAdd: () -> Unit,
+    whitelist: List<String>,
+    trustScores: Map<String, Int?>,
+    loadingScores: Map<String, Boolean>,
+    onRemove: (Int) -> Unit,
+    modifier: Modifier = Modifier,
+) {
     Surface(
         color = MaterialTheme.colorScheme.background,
         modifier = modifier.fillMaxSize(),
@@ -101,82 +155,98 @@ fun AuthWhitelistScreen(
                 modifier = Modifier.padding(bottom = 8.dp),
             )
 
-            OutlinedTextField(
-                modifier = Modifier.fillMaxWidth(),
-                value = textFieldRelay.value.text,
-                keyboardOptions = KeyboardOptions(
-                    capitalization = KeyboardCapitalization.None,
-                    autoCorrectEnabled = false,
-                    imeAction = ImeAction.Done,
-                ),
-                onValueChange = {
-                    textFieldRelay.value = TextFieldValue(it)
-                },
-                keyboardActions = KeyboardActions(
-                    onDone = { addEntry() },
-                ),
-                label = {
-                    Text(stringResource(Res.string.add_relay_to_whitelist))
-                },
-                leadingIcon = {
-                    IconButton(
-                        onClick = {
-                            scope.launch {
-                                val text = clipboardManager.getClipEntry()?.clipData?.getItemAt(0)?.text?.toString()
-                                if (!text.isNullOrBlank()) {
-                                    textFieldRelay.value = TextFieldValue(text)
-                                }
-                            }
-                        },
-                    ) {
-                        Icon(
-                            Icons.Default.ContentPaste,
-                            contentDescription = stringResource(Res.string.paste_from_clipboard),
-                        )
-                    }
-                },
-                trailingIcon = {
-                    IconButton(
-                        colors = IconButtonDefaults.iconButtonColors().copy(
-                            containerColor = MaterialTheme.colorScheme.primary,
-                            contentColor = MaterialTheme.colorScheme.onPrimary,
-                        ),
-                        onClick = { addEntry() },
-                    ) {
-                        Icon(
-                            Icons.Default.Add,
-                            contentDescription = stringResource(Res.string.add),
-                        )
-                    }
-                },
+            AuthWhitelistInput(
+                value = value,
+                onValueChange = onValueChange,
+                onPaste = onPaste,
+                onAdd = onAdd,
             )
 
-            LazyColumn(
-                Modifier.weight(1f),
+            AuthWhitelistEntries(
+                whitelist = whitelist,
+                trustScores = trustScores,
+                loadingScores = loadingScores,
+                onRemove = onRemove,
+                modifier = Modifier.weight(1f),
+            )
+        }
+    }
+}
+
+@Composable
+private fun AuthWhitelistInput(
+    value: String,
+    onValueChange: (String) -> Unit,
+    onPaste: () -> Unit,
+    onAdd: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    OutlinedTextField(
+        modifier = modifier.fillMaxWidth(),
+        value = value,
+        keyboardOptions = KeyboardOptions(
+            capitalization = KeyboardCapitalization.None,
+            autoCorrectEnabled = false,
+            imeAction = ImeAction.Done,
+        ),
+        onValueChange = onValueChange,
+        keyboardActions = KeyboardActions(
+            onDone = { onAdd() },
+        ),
+        label = {
+            Text(stringResource(Res.string.add_relay_to_whitelist))
+        },
+        leadingIcon = {
+            IconButton(
+                onClick = onPaste,
             ) {
-                items(whitelist.size) { index ->
-                    val hostname = whitelist[index]
-                    RelayCard(
-                        relay = hostname,
-                        trustScore = trustScores[hostname],
-                        isLoadingScore = loadingScores[hostname] == true,
-                        // The whitelist stores bare hostnames; the scoring fetch
-                        // normalizes "wss://$hostname", so check exclusion on
-                        // the same constructed URL — a scheme-less hostname
-                        // would be treated as excluded and hide every badge.
-                        showTrustScore = !TrustScoreService.isExcludedFromScoring("wss://$hostname"),
-                        onClick = {
-                            whitelist.removeAt(index)
-                            settingsStore.settings = settingsStore.settings.copy(
-                                authWhitelist = whitelist.toList(),
-                            )
-                            scope.launch(Dispatchers.IO) {
-                                LocalPreferences.saveSettingsToEncryptedStorage(context, settingsStore.settings)
-                            }
-                        },
-                    )
-                }
+                Icon(
+                    Icons.Default.ContentPaste,
+                    contentDescription = stringResource(Res.string.paste_from_clipboard),
+                )
             }
+        },
+        trailingIcon = {
+            IconButton(
+                colors = IconButtonDefaults.iconButtonColors().copy(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary,
+                ),
+                onClick = onAdd,
+            ) {
+                Icon(
+                    Icons.Default.Add,
+                    contentDescription = stringResource(Res.string.add),
+                )
+            }
+        },
+    )
+}
+
+@Composable
+private fun AuthWhitelistEntries(
+    whitelist: List<String>,
+    trustScores: Map<String, Int?>,
+    loadingScores: Map<String, Boolean>,
+    onRemove: (Int) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    LazyColumn(
+        modifier,
+    ) {
+        items(whitelist.size) { index ->
+            val hostname = whitelist[index]
+            RelayCard(
+                relay = hostname,
+                trustScore = trustScores[hostname],
+                isLoadingScore = loadingScores[hostname] == true,
+                // The whitelist stores bare hostnames; the scoring fetch
+                // normalizes "wss://$hostname", so check exclusion on
+                // the same constructed URL — a scheme-less hostname
+                // would be treated as excluded and hide every badge.
+                showTrustScore = !TrustScoreService.isExcludedFromScoring("wss://$hostname"),
+                onClick = { onRemove(index) },
+            )
         }
     }
 }

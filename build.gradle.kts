@@ -261,7 +261,7 @@ subprojects {
             )
         }
         // The type-resolving tasks also read each source set's generated sources
-        // (the Compose resource accessors, BuildConfig, …) under build/. They are
+        // (the Compose resource accessors, …) under build/. They are
         // not ours to split, so neither the checks nor the baselines see them.
         val generatedSources = project.layout.buildDirectory.get().asFile
         tasks.withType<Detekt>().configureEach {

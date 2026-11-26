@@ -258,6 +258,31 @@ androidComponents {
     }
 }
 
+// AGP generates BuildConfig as Java, which detekt cannot read (it parses only
+// Kotlin sources), so its type resolution saw every BuildConfig reference in
+// src/main as unresolved. Give each variant's detekt and baseline task the
+// compiled BuildConfig (that variant's javac output) on its classpath. Adding to
+// the classpath would drop the plugin's convention (the variant's libraries), so
+// it is set again in full.
+fun detektVariantClasspath(detektTaskName: String): List<Any>? {
+    val variant = detektTaskName.removePrefix("detekt").removePrefix("Baseline")
+    val kotlinCompile = "compile${variant}Kotlin"
+    val javaCompile = "compile${variant}JavaWithJavac"
+    if (kotlinCompile !in tasks.names || javaCompile !in tasks.names) return null
+    val kotlin = tasks.named<org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile>(kotlinCompile)
+    return listOf(
+        kotlin.map { it.libraries },
+        tasks.named<JavaCompile>(javaCompile).flatMap { it.destinationDirectory },
+    )
+}
+
+tasks.withType<dev.detekt.gradle.Detekt>().configureEach {
+    detektVariantClasspath(name)?.let { classpath.setFrom(it) }
+}
+tasks.withType<dev.detekt.gradle.DetektCreateBaselineTask>().configureEach {
+    detektVariantClasspath(name)?.let { classpath.setFrom(it) }
+}
+
 composeCompiler {
     reportsDestination.set(layout.buildDirectory.dir("compose_compiler"))
 }

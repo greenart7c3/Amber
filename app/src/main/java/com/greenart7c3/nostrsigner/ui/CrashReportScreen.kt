@@ -82,31 +82,13 @@ fun CrashReportScreen(
             .padding(horizontal = 16.dp, vertical = 8.dp),
         verticalArrangement = Arrangement.SpaceBetween,
     ) {
-        Column(
+        CrashReportEditor(
+            report = editedStack,
+            onReportChange = { editedStack = it },
             modifier = Modifier
                 .weight(1f)
                 .padding(bottom = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            Text(
-                text = if (BuildFlavorChecker.isOfflineFlavor()) {
-                    stringResource(Res.string.copy_crash_report_to_clipboard)
-                } else {
-                    stringResource(Res.string.crash_report_send_prompt)
-                },
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-
-            OutlinedTextField(
-                value = editedStack,
-                onValueChange = { editedStack = it },
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth(),
-                textStyle = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace),
-            )
-        }
+        )
 
         val send = { anonymous: Boolean ->
             if (editedStack.isNotBlank()) {
@@ -137,37 +119,81 @@ fun CrashReportScreen(
             }
         }
 
-        Row(
+        CrashReportButtons(
+            onCancel = {
+                pendingReports.clearPendingCrashReport()
+                onDismiss()
+            },
+            onSend = { send(false) },
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(top = 8.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            OutlinedButton(
-                modifier = Modifier.weight(1f),
-                onClick = {
-                    pendingReports.clearPendingCrashReport()
-                    onDismiss()
-                },
-            ) {
-                Text(stringResource(Res.string.cancel))
-            }
+        )
+    }
+}
 
-            Button(
-                modifier = Modifier.weight(1f),
-                onClick = { send(false) },
+@Composable
+private fun CrashReportEditor(
+    report: String,
+    onReportChange: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Text(
+            text = if (BuildFlavorChecker.isOfflineFlavor()) {
+                stringResource(Res.string.copy_crash_report_to_clipboard)
+            } else {
+                stringResource(Res.string.crash_report_send_prompt)
+            },
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+
+        OutlinedTextField(
+            value = report,
+            onValueChange = onReportChange,
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth(),
+            textStyle = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace),
+        )
+    }
+}
+
+@Composable
+private fun CrashReportButtons(
+    onCancel: () -> Unit,
+    onSend: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        OutlinedButton(
+            modifier = Modifier.weight(1f),
+            onClick = onCancel,
+        ) {
+            Text(stringResource(Res.string.cancel))
+        }
+
+        Button(
+            modifier = Modifier.weight(1f),
+            onClick = onSend,
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Icon(
-                        imageVector = Icons.Outlined.Done,
-                        tint = Color.Black,
-                        contentDescription = stringResource(Res.string.crashreport_found_send),
-                    )
-                    Spacer(Modifier.size(4.dp))
-                    Text(stringResource(Res.string.crashreport_found_send), color = Color.Black)
-                }
+                Icon(
+                    imageVector = Icons.Outlined.Done,
+                    tint = Color.Black,
+                    contentDescription = stringResource(Res.string.crashreport_found_send),
+                )
+                Spacer(Modifier.size(4.dp))
+                Text(stringResource(Res.string.crashreport_found_send), color = Color.Black)
             }
         }
     }

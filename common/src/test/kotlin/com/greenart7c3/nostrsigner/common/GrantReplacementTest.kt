@@ -6,8 +6,7 @@ import org.junit.Test
 class GrantReplacementTest {
     private data class Grant(val type: String, val kind: Int? = null, val relay: String = "")
 
-    // The grants an app may hold, and which of them remembering a new decision removes.
-    private val stored = listOf(
+    private val grantsAnAppMayHold = listOf(
         Grant("SIGN_EVENT", 1),
         Grant("SIGN_EVENT", 7),
         Grant("SIGN_EVENT", 22242, "wss://a.example"),
@@ -24,7 +23,7 @@ class GrantReplacementTest {
         Grant("GET_PUBLIC_KEY"),
     )
 
-    private fun replaced(type: String, kind: Int? = null, relay: String = "", otherScopeType: String? = null) = stored.filter { replacesGrant(type, kind, relay, otherScopeType, it.type, it.kind, it.relay) }
+    private fun replaced(type: String, kind: Int? = null, relay: String = "", otherScopeType: String? = null) = grantsAnAppMayHold.filter { replacesGrant(type, kind, relay, otherScopeType, it.type, it.kind, it.relay) }
 
     @Test
     fun `a sign grant replaces only its own kind`() {

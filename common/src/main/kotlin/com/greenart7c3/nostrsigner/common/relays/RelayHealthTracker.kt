@@ -34,7 +34,6 @@ object RelayHealthTracker {
 
     private val health = ConcurrentHashMap<NormalizedRelayUrl, Health>()
 
-    /** Injectable for tests. */
     internal var clock: () -> Long = System::currentTimeMillis
 
     /** Records a failed connection attempt. Returns true while the relay is still worth retrying. */

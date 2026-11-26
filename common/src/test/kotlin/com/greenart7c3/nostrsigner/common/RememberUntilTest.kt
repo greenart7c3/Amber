@@ -8,13 +8,18 @@ class RememberUntilTest {
 
     @Test
     fun `each remember choice lasts as long as its label says`() {
-        // Screen codes: 1 one minute, 2 five minutes, 3 ten minutes, 5 one hour, 6 one day, 7 one week.
-        assertEquals(now + 60, rememberUntil(1, now))
-        assertEquals(now + 300, rememberUntil(2, now))
-        assertEquals(now + 600, rememberUntil(3, now))
-        assertEquals(now + 3600, rememberUntil(5, now))
-        assertEquals(now + 86_400, rememberUntil(6, now))
-        assertEquals(now + 604_800, rememberUntil(7, now))
+        val oneMinute = 1
+        val fiveMinutes = 2
+        val tenMinutes = 3
+        val oneHour = 5
+        val oneDay = 6
+        val oneWeek = 7
+        assertEquals(now + 60, rememberUntil(oneMinute, now))
+        assertEquals(now + 300, rememberUntil(fiveMinutes, now))
+        assertEquals(now + 600, rememberUntil(tenMinutes, now))
+        assertEquals(now + 3600, rememberUntil(oneHour, now))
+        assertEquals(now + 86_400, rememberUntil(oneDay, now))
+        assertEquals(now + 604_800, rememberUntil(oneWeek, now))
     }
 
     @Test

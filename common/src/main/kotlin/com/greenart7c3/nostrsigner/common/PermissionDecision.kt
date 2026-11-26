@@ -89,12 +89,12 @@ data class PermissionKey(val type: String, val kind: Int? = null)
  * [kind] is the event kind of a sign request or the NIP-44 v3 context kind,
  * [contentType] the content-classified type of a NIP-04/NIP-44 request
  * (`DECRYPT_CLEAR_TEXT`, …) and [signNip] the NIP the signed kind belongs to.
- * Relay auth (kind 22242) is not covered: it is granted per relay.
+ * Relay auth (kind 22242) is not covered: it is granted per relay. NIP-44 v3 grants
+ * are kind-scoped and fall back only to the explicit "all kinds" grant, never to
+ * another kind's, so a kind-A reject cannot leak to kind B.
  */
 fun permissionLookupOrder(type: SignerType, kind: Int?, contentType: String? = null, signNip: Int? = null): List<PermissionKey> = when (type) {
     SignerType.SIGN_EVENT -> listOfNotNull(PermissionKey(type.name, kind), signNip?.let { PermissionKey("NIP", it) })
-    // v3 grants are kind-scoped and fall back only to the explicit "all kinds"
-    // grant, never to another kind's, so a kind-A reject cannot leak to kind B.
     SignerType.NIP44_V3_ENCRYPT, SignerType.NIP44_V3_DECRYPT -> listOf(PermissionKey(type.name, kind), PermissionKey(type.name)).distinct()
     SignerType.NIP04_ENCRYPT, SignerType.NIP04_DECRYPT -> contentScopedLookup(type, contentType, nip = 4)
     SignerType.NIP44_ENCRYPT, SignerType.NIP44_DECRYPT -> contentScopedLookup(type, contentType, nip = 44)

@@ -1,5 +1,7 @@
 import dev.detekt.gradle.Detekt
 import dev.detekt.gradle.DetektCreateBaselineTask
+import kotlinx.kover.gradle.plugin.dsl.KoverProjectExtension
+import kotlinx.kover.gradle.plugin.dsl.KoverReportFiltersConfig
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 // Top-level build file where you can add configuration options common to all subprojects/modules.
@@ -302,25 +304,44 @@ subprojects {
 }
 
 // Coverage: one merged report for every module (see the kover(project(...))
-// dependencies above). Generated code is excluded; the minimum coverage bound
-// for :common lives in common/build.gradle.kts, so it is checked against that
-// module alone (`:common:koverVerify`).
+// dependencies above). Generated code is excluded, in the merged report and in
+// every module's own report alike, so each module's minimum line bound (in its
+// build.gradle.kts, checked by `:<module>:koverVerify`) measures the same classes
+// the merged report shows.
+fun KoverReportFiltersConfig.excludeGeneratedCode() {
+    excludes {
+        // R, BuildConfig, Manifest and friends.
+        androidGeneratedClasses()
+        // Room, Compose and the Compose resources plugin generate these.
+        classes(
+            "*_Impl",
+            "*_Impl\$*",
+            "*BuildConfig*",
+            "*ComposableSingletons*",
+            "*Preview*",
+            "com.greenart7c3.nostrsigner.commonsui.Res*",
+            "com.greenart7c3.nostrsigner.commonsui.*_commonMainKt",
+            "com.greenart7c3.nostrsigner.commonsui.ActualResourceCollectorsKt",
+        )
+    }
+}
+
+subprojects {
+    pluginManager.withPlugin("org.jetbrains.kotlinx.kover") {
+        extensions.configure<KoverProjectExtension> {
+            reports {
+                filters {
+                    excludeGeneratedCode()
+                }
+            }
+        }
+    }
+}
+
 kover {
     reports {
         filters {
-            excludes {
-                // R, BuildConfig, Manifest and friends.
-                androidGeneratedClasses()
-                // Room, Compose and the Compose resources plugin generate these.
-                classes(
-                    "*_Impl",
-                    "*_Impl\$*",
-                    "*BuildConfig*",
-                    "*ComposableSingletons*",
-                    "*Preview*",
-                    "com.greenart7c3.nostrsigner.commonsui.Res*",
-                )
-            }
+            excludeGeneratedCode()
         }
         total {
             html {

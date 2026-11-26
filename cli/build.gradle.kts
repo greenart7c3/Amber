@@ -66,6 +66,21 @@ dependencies {
     testImplementation(libs.junit)
 }
 
+kover {
+    reports {
+        total {
+            verify {
+                rule {
+                    // Just below the line coverage :cli's own tests reach (84.8%).
+                    // A ratchet: raise it when coverage improves, never lower it to
+                    // make a change pass.
+                    minBound(83)
+                }
+            }
+        }
+    }
+}
+
 // The version `amber --version` prints, the amberVersionName the Android app
 // and the desktop app ship.
 val appVersion: String = libs.versions.amberVersionName.get()

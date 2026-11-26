@@ -25,14 +25,11 @@ jobs:
           distribution: 'temurin'
           java-version: 21
 
-      - name: Restore Gradle cache
-        id: gradle-cache
-        uses: ./.github/actions/restore-gradle-cache
-
+      # Sole Linux cache writer (on master); PRs are read-only by default.
+      # Uses default cache-cleanup: on-success so stale build-cache and transform
+      # entries are pruned after each successful master build.
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
-        with:
-          cache-provider: external
 
       - name: Create keystore.properties
         run: touch keystore.properties
@@ -55,14 +52,6 @@ jobs:
 
       - name: Build APK (gradle)
         run: ./gradlew assembleDebug --no-daemon
-
-      # Sole Linux cache writer: only saves on master after every build step succeeds.
-      - name: Save Gradle cache
-        if: success() && github.ref == 'refs/heads/master' && steps.gradle-cache.outputs.cache-hit != 'true'
-        uses: ./.github/actions/save-gradle-cache
-        with:
-          key: ${{ steps.gradle-cache.outputs.cache-key }}
-          cache-hit: ${{ steps.gradle-cache.outputs.cache-hit }}
 
       - name: Upload APK
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7

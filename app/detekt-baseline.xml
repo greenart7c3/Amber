@@ -5,8 +5,6 @@
     <ID>LongMethod:AccountPickerRow.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun AccountPickerRow</ID>
     <ID>LongMethod:BiometricAuthScreen.kt:@Composable fun BiometricAuthScreen</ID>
     <ID>LongMethod:BunkerRelayAuthScreen.kt:@Composable fun BunkerRelayAuthScreen</ID>
-    <ID>LongMethod:EditRelaysDialog.kt:@Composable fun DefaultRelaysScreen</ID>
-    <ID>LongMethod:EditRelaysDialog.kt:@SuppressLint("StateFlowValueCalledInComposition") @Composable private fun ActiveRelayRow</ID>
     <ID>LongMethod:Nip44v3ApprovalData.kt:@Composable fun Nip44v3ApprovalData</ID>
     <ID>LongMethod:QrCodeScanner.kt:@Composable fun SimpleQrCodeScanner</ID>
     <ID>LongMethod:SeedWordsPage.kt:@Composable fun SeedWordsPage</ID>

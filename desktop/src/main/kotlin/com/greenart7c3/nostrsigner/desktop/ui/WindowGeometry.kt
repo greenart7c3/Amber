@@ -1,6 +1,10 @@
 package com.greenart7c3.nostrsigner.desktop.ui
 
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
@@ -61,8 +65,25 @@ enum class LayoutWidth {
     }
 }
 
-/** The current window's content size, provided by [App]. */
+/** The current window's content size, provided by [MeasuredLayout]. */
 val LocalWindowContentSize = staticCompositionLocalOf { DEFAULT_WINDOW_SIZE }
 
-/** The width bucket of the current window, provided by [App]. */
+/** The width bucket of the current window, provided by [MeasuredLayout]. */
 val LocalLayoutWidth = staticCompositionLocalOf { LayoutWidth.EXPANDED }
+
+/**
+ * Measures the space [modifier] gives it and provides that size as
+ * [LocalWindowContentSize] and its bucket as [LocalLayoutWidth] to [content].
+ */
+@Composable
+fun MeasuredLayout(modifier: Modifier = Modifier, content: @Composable (LayoutWidth) -> Unit) {
+    BoxWithConstraints(modifier) {
+        val layoutWidth = LayoutWidth.of(maxWidth)
+        CompositionLocalProvider(
+            LocalLayoutWidth provides layoutWidth,
+            LocalWindowContentSize provides DpSize(maxWidth, maxHeight),
+        ) {
+            content(layoutWidth)
+        }
+    }
+}

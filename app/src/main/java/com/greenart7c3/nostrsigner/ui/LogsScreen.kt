@@ -1,5 +1,6 @@
 package com.greenart7c3.nostrsigner.ui
 
+import android.content.Context
 import android.content.Intent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -61,102 +62,127 @@ fun LogsScreen(
         contentPadding = paddingValues,
     ) {
         item {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                AmberButton(
-                    modifier = Modifier.weight(1f),
-                    onClick = {
-                        scope.launch(Dispatchers.IO) {
-                            val logsText =
-                                viewModel.allLogs(account.npub).joinToString("\n") { log ->
-                                    val time =
-                                        TimeUtils.formatDateTime(context, log.time, withSeconds = true)
-                                    val repeats = if (log.repeatCount > 1) " (x${log.repeatCount})" else ""
-                                    "$time | ${log.url} | ${log.type} | ${log.message}$repeats"
-                                }
-                            val logsFile = File(SharedFiles.freshShareDir(context), "amber-logs.txt")
-                            logsFile.writeText(logsText)
-                            val logsUri =
-                                FileProvider.getUriForFile(
-                                    context,
-                                    "${context.packageName}.fileprovider",
-                                    logsFile,
-                                )
-
-                            withContext(Dispatchers.Main) {
-                                val shareIntent =
-                                    Intent(Intent.ACTION_SEND).apply {
-                                        type = "text/plain"
-                                        putExtra(Intent.EXTRA_STREAM, logsUri)
-                                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                                    }
-
-                                context.startActivity(
-                                    Intent.createChooser(
-                                        shareIntent,
-                                        getStringBlocking(Res.string.export_logs),
-                                    ),
-                                )
-                            }
-                        }
-                    },
-                    text = stringResource(Res.string.export_logs),
-                )
-                AmberButton(
-                    modifier = Modifier.weight(1f),
-                    onClick = { viewModel.clear(account.npub) },
-                    text = stringResource(Res.string.clear_logs),
-                )
-            }
+            LogsActions(
+                onExport = {
+                    scope.launch(Dispatchers.IO) {
+                        shareLogs(context, viewModel.allLogs(account.npub))
+                    }
+                },
+                onClear = { viewModel.clear(account.npub) },
+            )
         }
         items(lazyPagingItems.itemCount) { index ->
             val log = lazyPagingItems[index]
             log?.let {
-                Row(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(vertical = 4.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Column(
-                        verticalArrangement = Arrangement.Center,
-                    ) {
-                        Text(
-                            modifier = Modifier.padding(top = 16.dp),
-                            text = TimeUtils.formatDateTime(context, log.time, withSeconds = true),
-                            fontSize = 14.sp,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                        )
-                        Text(
-                            modifier = Modifier.padding(top = 4.dp),
-                            text = log.url,
-                            fontSize = 20.sp,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                        )
-                        Text(
-                            modifier = Modifier.padding(top = 4.dp),
-                            text = log.type,
-                            fontSize = 20.sp,
-                        )
-                        Text(
-                            modifier = Modifier.padding(top = 4.dp, bottom = 16.dp),
-                            text = if (log.repeatCount > 1) stringResource(Res.string.log_repeated, log.message, log.repeatCount) else log.message,
-                            fontSize = 20.sp,
-                        )
-
-                        Spacer(Modifier.weight(1f))
-                        HorizontalDivider(
-                            color = MaterialTheme.colorScheme.primary,
-                        )
-                    }
-                }
+                LogRow(log = log)
             }
+        }
+    }
+}
+
+private suspend fun shareLogs(context: Context, logs: List<LogEntry>) {
+    val logsText =
+        logs.joinToString("\n") { log ->
+            val time =
+                TimeUtils.formatDateTime(context, log.time, withSeconds = true)
+            val repeats = if (log.repeatCount > 1) " (x${log.repeatCount})" else ""
+            "$time | ${log.url} | ${log.type} | ${log.message}$repeats"
+        }
+    val logsFile = File(SharedFiles.freshShareDir(context), "amber-logs.txt")
+    logsFile.writeText(logsText)
+    val logsUri =
+        FileProvider.getUriForFile(
+            context,
+            "${context.packageName}.fileprovider",
+            logsFile,
+        )
+
+    withContext(Dispatchers.Main) {
+        val shareIntent =
+            Intent(Intent.ACTION_SEND).apply {
+                type = "text/plain"
+                putExtra(Intent.EXTRA_STREAM, logsUri)
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+
+        context.startActivity(
+            Intent.createChooser(
+                shareIntent,
+                getStringBlocking(Res.string.export_logs),
+            ),
+        )
+    }
+}
+
+@Composable
+private fun LogsActions(
+    onExport: () -> Unit,
+    onClear: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(bottom = 8.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        AmberButton(
+            modifier = Modifier.weight(1f),
+            onClick = onExport,
+            text = stringResource(Res.string.export_logs),
+        )
+        AmberButton(
+            modifier = Modifier.weight(1f),
+            onClick = onClear,
+            text = stringResource(Res.string.clear_logs),
+        )
+    }
+}
+
+@Composable
+private fun LogRow(
+    log: LogEntry,
+    modifier: Modifier = Modifier,
+) {
+    val context = LocalContext.current
+    Row(
+        modifier = modifier
+            .fillMaxSize()
+            .padding(vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(
+            verticalArrangement = Arrangement.Center,
+        ) {
+            Text(
+                modifier = Modifier.padding(top = 16.dp),
+                text = TimeUtils.formatDateTime(context, log.time, withSeconds = true),
+                fontSize = 14.sp,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Text(
+                modifier = Modifier.padding(top = 4.dp),
+                text = log.url,
+                fontSize = 20.sp,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Text(
+                modifier = Modifier.padding(top = 4.dp),
+                text = log.type,
+                fontSize = 20.sp,
+            )
+            Text(
+                modifier = Modifier.padding(top = 4.dp, bottom = 16.dp),
+                text = if (log.repeatCount > 1) stringResource(Res.string.log_repeated, log.message, log.repeatCount) else log.message,
+                fontSize = 20.sp,
+            )
+
+            Spacer(Modifier.weight(1f))
+            HorizontalDivider(
+                color = MaterialTheme.colorScheme.primary,
+            )
         }
     }
 }

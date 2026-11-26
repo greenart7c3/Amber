@@ -63,8 +63,8 @@ import com.greenart7c3.nostrsigner.desktop.core.pruneExpiredApplications
 import com.greenart7c3.nostrsigner.desktop.ui.App
 import com.greenart7c3.nostrsigner.desktop.ui.MIN_WINDOW_SIZE
 import com.greenart7c3.nostrsigner.desktop.ui.NostrSignerTheme
+import com.greenart7c3.nostrsigner.desktop.ui.RequestChoices
 import com.greenart7c3.nostrsigner.desktop.ui.RequestNotificationPopup
-import com.greenart7c3.nostrsigner.desktop.ui.UiState
 import com.greenart7c3.nostrsigner.desktop.ui.amberIconPainter
 import com.greenart7c3.nostrsigner.desktop.ui.handleShortcut
 import com.greenart7c3.nostrsigner.desktop.ui.initialWindowSize
@@ -549,5 +549,5 @@ private fun ApplicationScope.AmberMainWindow(
 
 private fun answerFromNotification(request: PendingBunkerRequest, approve: Boolean) {
     if (AmberDesktop.engine.pending.value.none { it.isSameEntry(request) }) return
-    if (approve) UiState.approve(request) else UiState.reject(request)
+    if (approve) RequestChoices.approve(request) else RequestChoices.reject(request)
 }

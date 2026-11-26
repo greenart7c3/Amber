@@ -16,6 +16,8 @@ import kotlinx.coroutines.sync.withLock
  * Invariants:
  * - `masterKeyForWrapping` (which creates the key through the keystore path when none exists)
  *   must only be called while the passphrase lock is disabled or unlocked.
+ * - `removeUnprotectedCopies` must only run after the passphrase lock has taken ownership of the
+ *   master key (its wrapped blob is written); deleting the copies before that loses every key.
  * - [PassphraseLock.enable] writes the wrapped-key blob before deleting the unprotected copies,
  *   so a crash in between leaves both on disk. The blob's presence means the lock is enabled,
  *   so `cleanupUnprotectedCopiesIfWrapped` deletes any remaining unprotected copy (keystore file,

@@ -99,7 +99,8 @@ footprint small.
   `ViewModel`, and the permission cache cannot be bypassed: only the three write
   DAOs (and the migrations) write the `application` tables, each write evicts the
   application in its `Caching…` wrapper, and nothing outside that layer reaches the
-  uncached DAOs or the `*Raw` writes the wrappers pass through. Since the signing
+  uncached DAOs or the `*Raw` writes the wrappers pass through, and raw SQLite
+  handles stay in the Room migrations. Since the signing
   decision reads grants and the connection's expiry from that cache, a write that
   skipped it would keep a revoked grant or an expired connection alive. The allow-lists at the bottom of `ArchitectureTest.kt` are
   ratchets too: they fail when an entry no longer violates the rule, so they

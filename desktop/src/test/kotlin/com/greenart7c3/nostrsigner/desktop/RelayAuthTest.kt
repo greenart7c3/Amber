@@ -118,7 +118,7 @@ class RelayAuthTest {
         assertEquals(EncryptionScope.SPECIFIC, card.defaultScope)
 
         decide(client) { AmberDesktop.engine.approve(card, RememberType.ALWAYS) }
-        val grant = AmberDesktop.store(client.npub).getByKey(client.appKey)!!.permissions.single { it.kind == 22242 }
+        val grant = AmberDesktop.store(client.npub).lookup.getByKey(client.appKey)!!.permissions.single { it.kind == 22242 }
         assertEquals("relay-a.example", grant.relay)
 
         assertEquals(true, answeredWithoutCard(client, "a2", "wss://relay-a.example"))
@@ -138,7 +138,7 @@ class RelayAuthTest {
         val second = awaitCard(client, "b1")
         decide(client) { AmberDesktop.engine.approve(second, RememberType.ALWAYS, encryptionScope = EncryptionScope.ALL) }
 
-        val grants = AmberDesktop.store(client.npub).getByKey(client.appKey)!!.permissions.filter { it.kind == 22242 }
+        val grants = AmberDesktop.store(client.npub).lookup.getByKey(client.appKey)!!.permissions.filter { it.kind == 22242 }
         assertEquals(listOf("*"), grants.map { it.relay })
         assertEquals(true, answeredWithoutCard(client, "a3", "wss://relay-a.example/"))
         assertEquals(true, answeredWithoutCard(client, "c1", "wss://relay-c.example/"))
@@ -174,6 +174,6 @@ class RelayAuthTest {
         send(client, "x1", "")
         val card = awaitCard(client, "x1")
         decide(client) { AmberDesktop.engine.approve(card, RememberType.ALWAYS) }
-        assertFalse(AmberDesktop.store(client.npub).getByKey(client.appKey)!!.permissions.any { it.kind == 22242 })
+        assertFalse(AmberDesktop.store(client.npub).lookup.getByKey(client.appKey)!!.permissions.any { it.kind == 22242 })
     }
 }

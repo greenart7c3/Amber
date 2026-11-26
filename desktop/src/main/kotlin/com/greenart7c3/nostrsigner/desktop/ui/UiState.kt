@@ -22,9 +22,6 @@ import com.greenart7c3.nostrsigner.desktop.core.EncryptedContent
 import com.greenart7c3.nostrsigner.desktop.core.EncryptionScope
 import com.greenart7c3.nostrsigner.desktop.core.PassphraseLock
 import com.greenart7c3.nostrsigner.desktop.core.PendingBunkerRequest
-import com.greenart7c3.nostrsigner.desktop.core.RememberType
-import com.greenart7c3.nostrsigner.desktop.core.approve
-import com.greenart7c3.nostrsigner.desktop.core.reject
 import com.greenart7c3.nostrsigner.desktop.core.rememberTypeDisplayOrder
 import kotlinx.coroutines.flow.MutableStateFlow
 
@@ -91,123 +88,6 @@ object UiState {
     /** Request whose "See details" dialog is open; shortcuts pause meanwhile. */
     val detailsRequestId = MutableStateFlow<String?>(null)
 
-    /** Per-request "Remember" choice, shared by the dropdown and the shortcuts. */
-    val rememberChoices = MutableStateFlow<Map<String, RememberType>>(emptyMap())
-
-    /**
-     * Per-request encrypt/decrypt "Encryption scope". Android defaults NIP-04/44
-     * to all methods and NIP-44 v3 to this kind only.
-     */
-    val scopeChoices = MutableStateFlow<Map<String, EncryptionScope>>(emptyMap())
-
-    fun scopeChoiceFor(request: PendingBunkerRequest): EncryptionScope = scopeChoices.value[request.queueKey] ?: request.defaultScope
-
-    fun setScopeChoice(requestId: String, scope: EncryptionScope) {
-        scopeChoices.value += (requestId to scope)
-    }
-
-    /**
-     * Per-connect-request choices (sign policy, granted permissions, delete
-     * after), shared by the request card and the approve shortcut.
-     */
-    val connectChoices = MutableStateFlow<Map<String, ConnectChoice>>(emptyMap())
-
-    fun connectChoiceFor(request: PendingBunkerRequest): ConnectChoice = connectChoices.value[request.queueKey] ?: ConnectChoice(
-        signPolicy = request.account.signPolicy,
-        granted = request.requestedPermissions.map { it.copy() },
-        accountNpub = request.account.npub,
-    )
-
-    fun setConnectChoice(requestId: String, choice: ConnectChoice) {
-        connectChoices.value += (requestId to choice)
-    }
-
-    /** Approves [request] with the choices made on its card. */
-    fun approve(request: PendingBunkerRequest) {
-        if (request.type == SignerType.CONNECT) {
-            val choice = connectChoiceFor(request)
-            AmberDesktop.engine.approve(
-                request,
-                RememberType.ALWAYS,
-                choice.granted,
-                signPolicy = choice.signPolicy,
-                deleteAfter = choice.deleteAfter.deleteAt(),
-                accountNpub = choice.accountNpub,
-            )
-        } else {
-            AmberDesktop.engine.approve(
-                request,
-                rememberChoiceFor(request.queueKey),
-                encryptionScope = scopeChoiceFor(request),
-            )
-        }
-    }
-
-    /** Rejects [request] with the "Remember" and scope choices made on its card. */
-    fun reject(request: PendingBunkerRequest) {
-        AmberDesktop.engine.reject(request, rememberChoiceFor(request.queueKey), scopeChoiceFor(request))
-    }
-
-    /**
-     * Approve (true) / Deny (false) per request on the batch screen. Only keys
-     * the screen has shown are present, so Confirm never answers a request
-     * that arrived after the user last looked.
-     */
-    val batchApproved = MutableStateFlow<Map<String, Boolean>>(emptyMap())
-
-    /** Marks newly shown batch requests as approved, like Android's default. */
-    fun seedBatch(requests: List<PendingBunkerRequest>) {
-        val missing = requests.filter { it.queueKey !in batchApproved.value }
-        if (missing.isNotEmpty()) batchApproved.value += missing.associate { it.queueKey to true }
-    }
-
-    fun setBatchApproved(requests: List<PendingBunkerRequest>, approved: Boolean) {
-        batchApproved.value += requests.associate { it.queueKey to approved }
-    }
-
-    /**
-     * Space on the batch screen: flips the selected request between Approve and
-     * Deny. With [wholeGroup] (Shift+Space) the selected request's section, like
-     * its checkbox: all approved -> deny all, otherwise approve all.
-     */
-    fun toggleSelectedBatchApproval(wholeGroup: Boolean = false): Boolean {
-        if (singleRequest(AmberDesktop.engine.pending.value) != null) return false
-        val request = selectedRequest()?.takeIf { it.queueKey in batchApproved.value } ?: return false
-        val targets = if (wholeGroup) choiceTargets(request) else listOf(request)
-        setBatchApproved(targets, !targets.all { batchApproved.value[it.queueKey] != false })
-        return true
-    }
-
-    /** Confirm on the batch screen: answers every shown request by its checkbox, with its group's choices. */
-    fun confirmBatch(): Boolean {
-        val pending = AmberDesktop.engine.pending.value
-        if (singleRequest(pending) != null) return false
-        val decisions = batchApproved.value
-        batchApps(pending).flatMap { it.requests }.forEach { request ->
-            when (decisions[request.queueKey]) {
-                true -> approve(request)
-                false -> reject(request)
-                null -> Unit
-            }
-        }
-        return true
-    }
-
-    /** The requests a "Remember"/scope pick applies to: the request's batch group, or just itself. */
-    private fun choiceTargets(request: PendingBunkerRequest): List<PendingBunkerRequest> {
-        val pending = AmberDesktop.engine.pending.value
-        if (singleRequest(pending) != null) return listOf(request)
-        return batchApps(pending).flatMap { it.groups }.firstOrNull { request in it.requests }?.requests ?: listOf(request)
-    }
-
-    fun setGroupRemember(requests: List<PendingBunkerRequest>, type: RememberType) {
-        rememberChoices.value += requests.associate { it.queueKey to type }
-    }
-
-    fun setGroupScope(requests: List<PendingBunkerRequest>, scope: EncryptionScope) {
-        scopeChoices.value += requests.associate { it.queueKey to scope }
-    }
-
     fun navigate(route: Route) {
         selectedApplication.value = null
         currentRoute.value = route
@@ -226,10 +106,50 @@ object UiState {
         selectedRequestId.value = pending[(current + delta).coerceIn(0, pending.size - 1)].queueKey
     }
 
-    fun rememberChoiceFor(requestId: String): RememberType = rememberChoices.value[requestId] ?: RememberType.NEVER
+    /** Drops selection/remember state for requests that no longer exist. */
+    fun pruneRequestState(pending: List<PendingBunkerRequest>) {
+        val ids = pending.map { it.queueKey }.toSet()
+        if (selectedRequestId.value !in ids) {
+            selectedRequestId.value = displayedRequests(pending).firstOrNull()?.queueKey
+        }
+        if (RequestChoices.rememberChoices.value.keys.any { it !in ids }) {
+            RequestChoices.rememberChoices.value = RequestChoices.rememberChoices.value.filterKeys { it in ids }
+        }
+        if (RequestChoices.connectChoices.value.keys.any { it !in ids }) {
+            RequestChoices.connectChoices.value = RequestChoices.connectChoices.value.filterKeys { it in ids }
+        }
+        if (RequestChoices.scopeChoices.value.keys.any { it !in ids }) {
+            RequestChoices.scopeChoices.value = RequestChoices.scopeChoices.value.filterKeys { it in ids }
+        }
+        if (BatchDecisions.batchApproved.value.keys.any { it !in ids }) {
+            BatchDecisions.batchApproved.value = BatchDecisions.batchApproved.value.filterKeys { it in ids }
+        }
+        if (detailsRequestId.value != null && detailsRequestId.value !in ids) {
+            detailsRequestId.value = null
+        }
+    }
+}
 
-    fun setRememberChoice(requestId: String, type: RememberType) {
-        rememberChoices.value += (requestId to type)
+/** The keys that edit the selected request on the incoming-requests screen, applied to its batch group where one exists. */
+object RequestKeyboard {
+    /**
+     * Space on the batch screen: flips the selected request between Approve and
+     * Deny. With [wholeGroup] (Shift+Space) the selected request's section, like
+     * its checkbox: all approved -> deny all, otherwise approve all.
+     */
+    fun toggleSelectedBatchApproval(wholeGroup: Boolean = false): Boolean {
+        if (singleRequest(AmberDesktop.engine.pending.value) != null) return false
+        val request = UiState.selectedRequest()?.takeIf { it.queueKey in BatchDecisions.batchApproved.value } ?: return false
+        val targets = if (wholeGroup) choiceTargets(request) else listOf(request)
+        BatchDecisions.setBatchApproved(targets, !targets.all { BatchDecisions.batchApproved.value[it.queueKey] != false })
+        return true
+    }
+
+    /** The requests a "Remember"/scope pick applies to: the request's batch group, or just itself. */
+    private fun choiceTargets(request: PendingBunkerRequest): List<PendingBunkerRequest> {
+        val pending = AmberDesktop.engine.pending.value
+        if (singleRequest(pending) != null) return listOf(request)
+        return batchApps(pending).flatMap { it.groups }.firstOrNull { request in it.requests }?.requests ?: listOf(request)
     }
 
     /**
@@ -237,23 +157,23 @@ object UiState {
      * (connect approvals are always remembered), else the "Remember" duration.
      */
     fun cycleRememberChoice(delta: Int) {
-        val request = selectedRequest() ?: return
+        val request = UiState.selectedRequest() ?: return
         if (request.type == SignerType.CONNECT) {
-            val choice = connectChoiceFor(request)
+            val choice = RequestChoices.connectChoiceFor(request)
             val order = DeleteAfterType.entries
-            setConnectChoice(request.queueKey, choice.copy(deleteAfter = order[(order.indexOf(choice.deleteAfter) + delta).mod(order.size)]))
+            RequestChoices.setConnectChoice(request.queueKey, choice.copy(deleteAfter = order[(order.indexOf(choice.deleteAfter) + delta).mod(order.size)]))
             return
         }
         val order = rememberTypeDisplayOrder
-        val current = order.indexOf(rememberChoiceFor(request.queueKey)).coerceAtLeast(0)
+        val current = order.indexOf(RequestChoices.rememberChoiceFor(request.queueKey)).coerceAtLeast(0)
         val next = (current + delta).mod(order.size)
-        setGroupRemember(choiceTargets(request), order[next])
+        RequestChoices.setGroupRemember(choiceTargets(request), order[next])
     }
 
     /** 1–3 on a selected connect request: picks the sign policy (0 basic, 1 manual, 2 full trust). */
     fun setSelectedSignPolicy(policy: Int): Boolean {
-        val request = selectedRequest()?.takeIf { it.type == SignerType.CONNECT } ?: return false
-        setConnectChoice(request.queueKey, connectChoiceFor(request).copy(signPolicy = policy))
+        val request = UiState.selectedRequest()?.takeIf { it.type == SignerType.CONNECT } ?: return false
+        RequestChoices.setConnectChoice(request.queueKey, RequestChoices.connectChoiceFor(request).copy(signPolicy = policy))
         return true
     }
 
@@ -263,50 +183,27 @@ object UiState {
      */
     /** D on a selected request: opens its details, when it has any. */
     fun showSelectedDetails(): Boolean {
-        val request = selectedRequest()?.takeIf { RequestDetails.of(it) != null } ?: return false
-        detailsRequestId.value = request.queueKey
+        val request = UiState.selectedRequest()?.takeIf { RequestDetails.of(it) != null } ?: return false
+        UiState.detailsRequestId.value = request.queueKey
         return true
     }
 
     fun toggleSelectedScope(): Boolean {
-        val request = selectedRequest()?.takeIf { it.hasScopeChoice } ?: return false
-        val next = if (scopeChoiceFor(request) == EncryptionScope.ALL) EncryptionScope.SPECIFIC else EncryptionScope.ALL
-        setGroupScope(choiceTargets(request), next)
+        val request = UiState.selectedRequest()?.takeIf { it.hasScopeChoice } ?: return false
+        val next = if (RequestChoices.scopeChoiceFor(request) == EncryptionScope.ALL) EncryptionScope.SPECIFIC else EncryptionScope.ALL
+        RequestChoices.setGroupScope(choiceTargets(request), next)
         return true
     }
 
     /** The A key on a selected connect request: cycles the account it will be saved under. */
     fun cycleSelectedAccount(): Boolean {
-        val request = selectedRequest()?.takeIf { it.canSwitchAccount } ?: return false
+        val request = UiState.selectedRequest()?.takeIf { it.canSwitchAccount } ?: return false
         val npubs = AccountsStore.accounts.value.map { it.npub }
         if (npubs.size < 2) return false
-        val choice = connectChoiceFor(request)
+        val choice = RequestChoices.connectChoiceFor(request)
         val next = npubs[(npubs.indexOf(choice.accountNpub) + 1).mod(npubs.size)]
-        setConnectChoice(request.queueKey, choice.copy(accountNpub = next))
+        RequestChoices.setConnectChoice(request.queueKey, choice.copy(accountNpub = next))
         return true
-    }
-
-    /** Drops selection/remember state for requests that no longer exist. */
-    fun pruneRequestState(pending: List<PendingBunkerRequest>) {
-        val ids = pending.map { it.queueKey }.toSet()
-        if (selectedRequestId.value !in ids) {
-            selectedRequestId.value = displayedRequests(pending).firstOrNull()?.queueKey
-        }
-        if (rememberChoices.value.keys.any { it !in ids }) {
-            rememberChoices.value = rememberChoices.value.filterKeys { it in ids }
-        }
-        if (connectChoices.value.keys.any { it !in ids }) {
-            connectChoices.value = connectChoices.value.filterKeys { it in ids }
-        }
-        if (scopeChoices.value.keys.any { it !in ids }) {
-            scopeChoices.value = scopeChoices.value.filterKeys { it in ids }
-        }
-        if (batchApproved.value.keys.any { it !in ids }) {
-            batchApproved.value = batchApproved.value.filterKeys { it in ids }
-        }
-        if (detailsRequestId.value != null && detailsRequestId.value !in ids) {
-            detailsRequestId.value = null
-        }
     }
 }
 
@@ -393,15 +290,15 @@ private fun plainShortcut(
 private fun incomingRequestKey(event: KeyEvent): Boolean = when (event.key) {
     Key.DirectionUp -> consumed { UiState.moveRequestSelection(-1) }
     Key.DirectionDown -> consumed { UiState.moveRequestSelection(1) }
-    Key.DirectionLeft -> consumed { UiState.cycleRememberChoice(-1) }
-    Key.DirectionRight -> consumed { UiState.cycleRememberChoice(1) }
-    Key.One -> UiState.setSelectedSignPolicy(0)
-    Key.Two -> UiState.setSelectedSignPolicy(1)
-    Key.Three -> UiState.setSelectedSignPolicy(2)
-    Key.A -> UiState.cycleSelectedAccount()
-    Key.S -> UiState.toggleSelectedScope()
-    Key.D -> UiState.showSelectedDetails()
-    Key.Spacebar -> UiState.toggleSelectedBatchApproval(wholeGroup = event.isShiftPressed)
+    Key.DirectionLeft -> consumed { RequestKeyboard.cycleRememberChoice(-1) }
+    Key.DirectionRight -> consumed { RequestKeyboard.cycleRememberChoice(1) }
+    Key.One -> RequestKeyboard.setSelectedSignPolicy(0)
+    Key.Two -> RequestKeyboard.setSelectedSignPolicy(1)
+    Key.Three -> RequestKeyboard.setSelectedSignPolicy(2)
+    Key.A -> RequestKeyboard.cycleSelectedAccount()
+    Key.S -> RequestKeyboard.toggleSelectedScope()
+    Key.D -> RequestKeyboard.showSelectedDetails()
+    Key.Spacebar -> RequestKeyboard.toggleSelectedBatchApproval(wholeGroup = event.isShiftPressed)
     else -> false
 }
 
@@ -444,13 +341,13 @@ private fun otherModifiedShortcut(
 /** Ctrl/⌘ Enter approves the selected request, with Shift it rejects it; with several requests Enter confirms the batch. */
 private fun answerSelectedRequest(reject: Boolean): Boolean {
     // Several requests: Confirm answers the batch; there is no reject-all.
-    if (singleRequest(AmberDesktop.engine.pending.value) == null) return !reject && UiState.confirmBatch()
+    if (singleRequest(AmberDesktop.engine.pending.value) == null) return !reject && BatchDecisions.confirmBatch()
     val request = UiState.selectedRequest() ?: return false
     if (reject) {
-        UiState.reject(request)
+        RequestChoices.reject(request)
         Toaster.toast(getStringBlocking(Res.string.d_request_rejected))
     } else {
-        UiState.approve(request)
+        RequestChoices.approve(request)
         Toaster.toast(getStringBlocking(Res.string.d_request_approved))
     }
     return true

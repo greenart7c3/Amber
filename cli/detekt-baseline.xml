@@ -83,6 +83,5 @@
     <ID>NoComments:UrisTest.kt:Amber decodes each query value with URLDecoder ('+' is a space).</ID>
     <ID>NoComments:UrisTest.kt:Quartz parses what it builds, so the CLI and an Amber reading the URI</ID>
     <ID>NoComments:UrisTest.kt:agree on every value.</ID>
-    <ID>TooManyFunctions:Nip46Client.kt:Nip46Client : AutoCloseable</ID>
   </CurrentIssues>
 </SmellBaseline>

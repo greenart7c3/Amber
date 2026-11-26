@@ -88,6 +88,21 @@ dependencies {
     testImplementation(libs.junit)
 }
 
+kover {
+    reports {
+        total {
+            verify {
+                rule {
+                    // Just below the line coverage :desktop's own tests reach on Linux
+                    // (35.5%), where CI measures it. A ratchet: raise it when coverage
+                    // improves, never lower it to make a change pass.
+                    minBound(34)
+                }
+            }
+        }
+    }
+}
+
 // Skiko's native library ships as plain files next to the app's jars
 // instead of through skiko-awt-runtime-<os>-<arch>.jar. Compose 1.12 unpacks
 // that jar itself and rewrites what is left of it with the build time as

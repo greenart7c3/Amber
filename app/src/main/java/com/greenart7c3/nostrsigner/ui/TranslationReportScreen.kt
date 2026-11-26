@@ -21,6 +21,7 @@
 package com.greenart7c3.nostrsigner.ui
 
 import android.content.ClipData
+import android.content.Context
 import android.content.Intent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -47,6 +48,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.ClipEntry
+import androidx.compose.ui.platform.Clipboard
 import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
@@ -58,6 +60,7 @@ import com.greenart7c3.nostrsigner.commonsui.cancel
 import com.greenart7c3.nostrsigner.commonsui.copy_translation_report_to_clipboard
 import com.greenart7c3.nostrsigner.commonsui.translation_report_send
 import com.greenart7c3.nostrsigner.commonsui.would_you_like_to_send_the_translation_report_to_amber_in_a_dm
+import com.greenart7c3.nostrsigner.data.RelayClient
 import com.greenart7c3.nostrsigner.models.Account
 import com.vitorpamplona.quartz.nip01Core.relay.client.NostrClient
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
@@ -68,6 +71,7 @@ import com.vitorpamplona.quartz.nip40Expiration.expiration
 import com.vitorpamplona.quartz.utils.Hex
 import com.vitorpamplona.quartz.utils.TimeUtils
 import kotlin.time.Duration.Companion.seconds
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -94,117 +98,159 @@ fun TranslationReportScreen(
             .padding(horizontal = 16.dp, vertical = 8.dp),
         verticalArrangement = Arrangement.SpaceBetween,
     ) {
-        Column(
+        TranslationReportEditor(
+            message = editedMessage,
+            onMessageChange = { editedMessage = it },
+            modifier = Modifier.weight(1f),
+        )
+
+        TranslationReportButtons(
+            onCancel = {
+                pendingReports.pendingTranslationReport.value = null
+                onDismiss()
+            },
+            onSend = {
+                val report = editedMessage.ifBlank { return@TranslationReportButtons }
+                onLoading(true)
+                val finish = {
+                    pendingReports.pendingTranslationReport.value = null
+                    onLoading(false)
+                    onDismiss()
+                }
+                if (BuildFlavorChecker.isOfflineFlavor()) {
+                    appScope.launch(Dispatchers.Main) {
+                        copyReportAndOpenDeveloperProfile(report, clipboardManager, appContext, finish)
+                    }
+                } else {
+                    appScope.launch {
+                        sendReportAsDm(report, account, relayClient, appScope, finish)
+                    }
+                }
+            },
+        )
+    }
+}
+
+@Composable
+private fun TranslationReportEditor(
+    message: String,
+    onMessageChange: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier
+            .padding(bottom = 8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Text(
+            text = if (BuildFlavorChecker.isOfflineFlavor()) {
+                stringResource(Res.string.copy_translation_report_to_clipboard)
+            } else {
+                stringResource(Res.string.would_you_like_to_send_the_translation_report_to_amber_in_a_dm)
+            },
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+
+        OutlinedTextField(
+            value = message,
+            onValueChange = onMessageChange,
             modifier = Modifier
                 .weight(1f)
-                .padding(bottom = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            Text(
-                text = if (BuildFlavorChecker.isOfflineFlavor()) {
-                    stringResource(Res.string.copy_translation_report_to_clipboard)
-                } else {
-                    stringResource(Res.string.would_you_like_to_send_the_translation_report_to_amber_in_a_dm)
-                },
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+                .fillMaxWidth(),
+            textStyle = MaterialTheme.typography.bodyMedium,
+        )
+    }
+}
 
-            OutlinedTextField(
-                value = editedMessage,
-                onValueChange = { editedMessage = it },
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth(),
-                textStyle = MaterialTheme.typography.bodyMedium,
-            )
+@Composable
+private fun TranslationReportButtons(
+    onCancel: () -> Unit,
+    onSend: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(top = 8.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        OutlinedButton(
+            modifier = Modifier.weight(1f),
+            onClick = onCancel,
+        ) {
+            Text(stringResource(Res.string.cancel))
         }
 
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 8.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        Button(
+            modifier = Modifier.weight(1f),
+            onClick = onSend,
         ) {
-            OutlinedButton(
-                modifier = Modifier.weight(1f),
-                onClick = {
-                    pendingReports.pendingTranslationReport.value = null
-                    onDismiss()
-                },
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text(stringResource(Res.string.cancel))
-            }
-
-            Button(
-                modifier = Modifier.weight(1f),
-                onClick = {
-                    val report = editedMessage.ifBlank { return@Button }
-                    onLoading(true)
-                    if (BuildFlavorChecker.isOfflineFlavor()) {
-                        appScope.launch(Dispatchers.Main) {
-                            try {
-                                clipboardManager.setClipEntry(
-                                    ClipEntry(ClipData.newPlainText("", report)),
-                                )
-                                val intent = Intent(Intent.ACTION_VIEW)
-                                val npub = Hex.decode(Amber.DEVELOPER_HEX_KEY).toNpub()
-                                intent.data = "nostr:$npub".toUri()
-                                intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
-                                appContext.startActivity(intent)
-                                pendingReports.pendingTranslationReport.value = null
-                                onLoading(false)
-                                onDismiss()
-                            } catch (_: Exception) {
-                                pendingReports.pendingTranslationReport.value = null
-                                onLoading(false)
-                                onDismiss()
-                            }
-                        }
-                    } else {
-                        appScope.launch {
-                            val client = NostrClient(relayClient.factory, appScope)
-                            client.connect()
-
-                            val template = ChatMessageEvent.build(
-                                msg = report,
-                                to = listOf(PTag(Amber.DEVELOPER_HEX_KEY)),
-                                createdAt = System.currentTimeMillis() / 1000,
-                            ) {
-                                val tenDaysInSeconds = 10L * 86_400
-                                expiration(TimeUtils.now() + tenDaysInSeconds)
-                            }
-                            val signedEvents = account.createMessageNIP17(template)
-                            signedEvents.wraps.forEach { wrap ->
-                                client.publish(
-                                    event = wrap,
-                                    relayList = setOf(
-                                        NormalizedRelayUrl(url = "wss://inbox.nostr.wine"),
-                                        NormalizedRelayUrl(url = "wss://nostr.land"),
-                                    ),
-                                )
-                            }
-                            pendingReports.pendingTranslationReport.value = null
-                            onLoading(false)
-                            onDismiss()
-                            delay(10.seconds)
-                            client.disconnect()
-                        }
-                    }
-                },
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Icon(
-                        imageVector = Icons.Outlined.Done,
-                        tint = Color.Black,
-                        contentDescription = stringResource(Res.string.translation_report_send),
-                    )
-                    Spacer(Modifier.size(4.dp))
-                    Text(stringResource(Res.string.translation_report_send), color = Color.Black)
-                }
+                Icon(
+                    imageVector = Icons.Outlined.Done,
+                    tint = Color.Black,
+                    contentDescription = stringResource(Res.string.translation_report_send),
+                )
+                Spacer(Modifier.size(4.dp))
+                Text(stringResource(Res.string.translation_report_send), color = Color.Black)
             }
         }
     }
+}
+
+private suspend fun copyReportAndOpenDeveloperProfile(
+    report: String,
+    clipboard: Clipboard,
+    appContext: Context,
+    onFinish: () -> Unit,
+) {
+    try {
+        clipboard.setClipEntry(
+            ClipEntry(ClipData.newPlainText("", report)),
+        )
+        val intent = Intent(Intent.ACTION_VIEW)
+        val npub = Hex.decode(Amber.DEVELOPER_HEX_KEY).toNpub()
+        intent.data = "nostr:$npub".toUri()
+        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+        appContext.startActivity(intent)
+        onFinish()
+    } catch (_: Exception) {
+        onFinish()
+    }
+}
+
+private suspend fun sendReportAsDm(
+    report: String,
+    account: Account,
+    relayClient: RelayClient,
+    appScope: CoroutineScope,
+    onFinish: () -> Unit,
+) {
+    val client = NostrClient(relayClient.factory, appScope)
+    client.connect()
+
+    val template = ChatMessageEvent.build(
+        msg = report,
+        to = listOf(PTag(Amber.DEVELOPER_HEX_KEY)),
+        createdAt = System.currentTimeMillis() / 1000,
+    ) {
+        val tenDaysInSeconds = 10L * 86_400
+        expiration(TimeUtils.now() + tenDaysInSeconds)
+    }
+    val signedEvents = account.createMessageNIP17(template)
+    signedEvents.wraps.forEach { wrap ->
+        client.publish(
+            event = wrap,
+            relayList = setOf(
+                NormalizedRelayUrl(url = "wss://inbox.nostr.wine"),
+                NormalizedRelayUrl(url = "wss://nostr.land"),
+            ),
+        )
+    }
+    onFinish()
+    delay(10.seconds)
+    client.disconnect()
 }

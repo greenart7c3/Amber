@@ -959,6 +959,5 @@
     <ID>TooManyFunctions:DesktopKeyStore.kt:DesktopKeyStore</ID>
     <ID>TooManyFunctions:Storage.kt:AccountStore</ID>
     <ID>TooManyFunctions:UiState.kt:UiState</ID>
-    <ID>TooManyFunctions:UriLaunch.kt:UriLaunch</ID>
   </CurrentIssues>
 </SmellBaseline>

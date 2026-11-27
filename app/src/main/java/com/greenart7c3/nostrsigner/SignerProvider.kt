@@ -33,19 +33,16 @@ class SignerProvider : ContentProvider() {
             AmberLog.d(Amber.TAG, "No context")
             return null
         }
-        // External apps are always attributed to their own Android package. The
-        // requester identity is taken from the binder's calling package, never from
-        // caller-supplied query arguments, so an app cannot impersonate another one.
-        val caller = callingPackage
-        if (caller == null) {
+        val binderCallingPackage = callingPackage
+        if (binderCallingPackage == null) {
             AmberLog.d(Amber.TAG, "No calling package")
             return null
         }
         val amber = ctx.amber
         return SignerProviderQuery(amber, amber.accountDatabases, amber.applicationIOScope).query(
             context = ctx,
-            requesterId = caller,
-            callerPackageName = caller,
+            requesterId = binderCallingPackage,
+            callerPackageName = binderCallingPackage,
             operationUri = uri,
             arguments = projection,
         )

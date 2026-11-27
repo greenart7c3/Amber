@@ -5,6 +5,7 @@ import android.database.Cursor
 import android.database.MatrixCursor
 import android.net.Uri
 import com.greenart7c3.nostrsigner.common.PermissionKey
+import com.greenart7c3.nostrsigner.common.RELAY_AUTH_KIND
 import com.greenart7c3.nostrsigner.common.SignerType
 import com.greenart7c3.nostrsigner.common.hasAmbiguousRelayTags
 import com.greenart7c3.nostrsigner.common.permissionLookupOrder
@@ -40,6 +41,9 @@ import kotlinx.coroutines.runBlocking
  *  - in-process callers such as [com.greenart7c3.nostrsigner.service.EventNotificationConsumer]
  *    (the NIP-46 relay path), which call [query] directly instead of going through
  *    a same-app [android.content.ContentResolver] round-trip.
+ *
+ * A ContentProvider query answers synchronously, so the crypto and PSBT operations
+ * block on the signer.
  */
 class SignerProviderQuery(
     private val settingsStore: SettingsStore,
@@ -49,18 +53,12 @@ class SignerProviderQuery(
 
     private fun rejectedCursor(): Cursor = MatrixCursor(arrayOf("rejected")).also { it.addRow(arrayOf("true")) }
 
-    /** A performed operation's answer: [result] in the signature and result columns, [event] in the event column. */
     private fun resultCursor(
         result: String,
         event: String = result,
     ): Cursor = MatrixCursor(arrayOf("signature", "event", "result")).also { it.addRow(arrayOf<Any>(result, event, result)) }
 
-    /**
-     * Capture the calling app's launcher icon/name onto its saved app while it is
-     * visible to us. Dispatched off the binder thread so it adds no latency to the
-     * signing response, and gated to run once per app (see [IntentUtils.persistNativeAppMetadata]).
-     */
-    private fun captureCallerMetadata(
+    private fun captureCallerMetadataOffBinderThread(
         context: Context,
         callerPackageName: String?,
         account: Account,
@@ -86,7 +84,11 @@ class SignerProviderQuery(
      *   caller (e.g. NIP-46 relay requests).
      * @param operationUri identifies the operation to run, e.g. `content://<appId>.SIGN_EVENT`.
      * @param arguments the operation's input values; their meaning depends on
-     *   [operationUri] (e.g. for SIGN_EVENT: [0] = event JSON, [2] = npub). See callers.
+     *   [operationUri]: SIGN_EVENT [0] = event JSON, [2] = npub; SIGN_PSBT [0] = PSBT
+     *   hex, [2] = npub; the NIP-04 / NIP-44 encrypt and decrypt operations and
+     *   DECRYPT_ZAP_EVENT [0] = content, [1] = peer pubkey, [2] = npub, and for NIP-44
+     *   v3 also [3] = kind, [4] = scope; PING [0] = npub, optional (without it, the
+     *   first account that knows the requester).
      */
     fun query(
         context: Context,
@@ -99,7 +101,6 @@ class SignerProviderQuery(
 
         val appId = BuildConfig.APPLICATION_ID
         val uriString = operationUri.toString()
-        // The operation name history and logs record, e.g. SIGN_EVENT.
         val operation = uriString.replace("content://$appId.", "")
         val caller = Caller(context, requesterId, callerPackageName, operation)
         return try {
@@ -140,7 +141,6 @@ class SignerProviderQuery(
         }
     }
 
-    /** Who asked for [operation] (see [query]'s parameters). */
     private class Caller(
         val context: Context,
         val requesterId: String,
@@ -148,7 +148,6 @@ class SignerProviderQuery(
         val operation: String,
     )
 
-    /** The saved account [npubArgument] names, with the caller's icon and name captured for it; null when there is none. */
     private fun requestAccount(
         caller: Caller,
         npubArgument: String,
@@ -163,12 +162,11 @@ class SignerProviderQuery(
             AmberLog.d(Amber.TAG, "No account from storage")
             return null
         }
-        captureCallerMetadata(caller.context, caller.packageName, account)
+        captureCallerMetadataOffBinderThread(caller.context, caller.packageName, account)
         return account
     }
 
-    /** The remembered decision on the requester's [type] grant: true performs it silently, false refuses it, null leaves it to the user. */
-    private fun isAllowed(
+    private fun rememberedDecision(
         account: Account,
         caller: Caller,
         type: String,
@@ -195,7 +193,6 @@ class SignerProviderQuery(
         }
     }
 
-    /** Records the refused request and answers "rejected". */
     private fun rejected(
         account: Account,
         entry: HistoryEntity,
@@ -215,7 +212,6 @@ class SignerProviderQuery(
         }
     }
 
-    /** SIGN_EVENT: [arguments] [0] = event JSON, [2] = npub. */
     private fun signEvent(
         caller: Caller,
         arguments: Array<String>?,
@@ -231,26 +227,26 @@ class SignerProviderQuery(
             AmberLog.d(Amber.TAG, "Failed to parse event from ${caller.requesterId}", e)
             return null
         }
-        val allowed = isSignAllowed(caller, account, event) ?: return null
+        val allowed = rememberedSignDecision(caller, account, event) ?: return null
         if (!allowed) return rejected(account, history(caller, event.kind, accepted = false, content = event.toJson()))
 
         val signedEvent = account.signSync<Event>(event.createdAt, event.kind, event.tags, event.content)
         recordHistory(account, history(caller, event.kind, accepted = true, content = signedEvent.toJson()))
-        // An anonymous zap request is answered with the whole event: the client cannot rebuild it from the signature.
-        val isAnonymousZap = event.kind == ZapRequestEvent.KIND && event.tags.any { tag -> tag.any { it == "anon" } }
-        val signature = if (isAnonymousZap) signedEvent.toJson() else signedEvent.sig
+        val clientCanRebuildFromSignature = !event.isAnonymousZapRequest()
+        val signature = if (clientCanRebuildFromSignature) signedEvent.sig else signedEvent.toJson()
         return resultCursor(signature, event = signedEvent.toJson())
     }
 
-    /** Whether [event] may be signed silently: false refuses it, null leaves it to the user. */
-    private fun isSignAllowed(
+    private fun Event.isAnonymousZapRequest(): Boolean = kind == ZapRequestEvent.KIND && tags.any { tag -> tag.any { it == "anon" } }
+
+    @Suppress("NoComments")
+    private fun rememberedSignDecision(
         caller: Caller,
         account: Account,
         event: Event,
     ): Boolean? {
-        // For kind 22242 (NIP-42 relay auth), extract relay host once for the
-        // whitelist gate and the requester-scoped permission checks below.
-        val relayHost = if (event.kind == 22242) {
+        val isRelayAuth = event.kind == RELAY_AUTH_KIND
+        val relayHost = if (isRelayAuth) {
             RelayUrlUtils.extractHostAndPort(AmberEvent.relay(event))
         } else {
             ""
@@ -266,21 +262,19 @@ class SignerProviderQuery(
         // by itself — a requester-scoped permission (or user prompt) is still
         // required, otherwise any app/NIP-46 client could silently obtain
         // relay-auth signatures (GHSA-vx4h-56qj-wcp7).
-        if (event.kind == 22242 && isBlockedByAuthWhitelist(event.kind, relayHost, settingsStore.settings.authWhitelist)) return false
+        if (isRelayAuth && isBlockedByAuthWhitelist(event.kind, relayHost, settingsStore.settings.authWhitelist)) return false
 
         val requesterId = caller.requesterId
         val permDao = accountRepository.daos(account.npub).permissionLookupDao
-        val permission = if (event.kind == 22242) {
-            // Kind 22242 = relay client auth (NIP-42): check relay-specific permission first
-            permDao.getPermissionForRelay(requesterId, "SIGN_EVENT", 22242, relayHost)
-                ?: permDao.getWildcardRelayPermission(requesterId, "SIGN_EVENT", 22242)
+        val permission = if (isRelayAuth) {
+            permDao.getPermissionForRelay(requesterId, "SIGN_EVENT", RELAY_AUTH_KIND, relayHost)
+                ?: permDao.getWildcardRelayPermission(requesterId, "SIGN_EVENT", RELAY_AUTH_KIND)
         } else {
             permDao.firstGrant(requesterId, permissionLookupOrder(SignerType.SIGN_EVENT, event.kind, signNip = event.kind.kindToNip()?.toIntOrNull()))
         }
         return isRemembered(permDao.getSignPolicy(requesterId), permission)
     }
 
-    /** One encrypt or decrypt request; [v3Kind] and [v3Scope] are the NIP-44 v3 context (null and empty otherwise). */
     private class CryptoRequest(
         val type: SignerType,
         val content: String,
@@ -291,21 +285,14 @@ class SignerProviderQuery(
         val isV3 get() = type == SignerType.NIP44_V3_ENCRYPT || type == SignerType.NIP44_V3_DECRYPT
     }
 
-    /**
-     * The NIP-04 / NIP-44 (v2 and v3) encrypt and decrypt operations and DECRYPT_ZAP_EVENT:
-     * [arguments] [0] = content, [1] = peer pubkey, [2] = npub; for v3 also [3] = kind, [4] = scope.
-     */
     private fun encryptOrDecrypt(
         caller: Caller,
         arguments: Array<String>?,
     ): Cursor? {
         val content = arguments?.first() ?: return null
         val account = requestAccount(caller, arguments[2]) ?: return null
-        val type = cryptoSignerTypes[caller.operation] ?: return null
+        val type = cryptoSignerTypesByName[caller.operation] ?: return null
         val isV3 = type == SignerType.NIP44_V3_ENCRYPT || type == SignerType.NIP44_V3_DECRYPT
-        // V3 carries kind and scope as arguments[3] and arguments[4].
-        // A missing/invalid kind is a malformed request: auto-reject
-        // instead of prompting the user.
         val v3Kind = if (isV3) arguments.getOrNull(3)?.toIntOrNull() else null
         if (isV3 && v3Kind == null) {
             AmberLog.d(Amber.TAG, "NIP-44 v3 request missing/invalid kind")
@@ -321,16 +308,10 @@ class SignerProviderQuery(
         account: Account,
         request: CryptoRequest,
     ): Cursor? {
-        // Encrypt requests are classified by their plaintext input.
-        val allowed = isCryptoAllowed(caller, account, request, plaintext = request.content, isEncrypt = true) ?: return null
-        // A rejected encrypt request was never performed, so no
-        // ciphertext exists — store nothing rather than leaking the
-        // plaintext input.
-        if (!allowed) return rejected(account, cryptoHistory(caller, request, accepted = false, content = ""))
-        // Performed only now that the permission is confirmed.
+        val allowed = rememberedCryptoDecision(caller, account, request, plaintext = request.content, isEncrypt = true) ?: return null
+        if (!allowed) return rejected(account, cryptoHistory(caller, request, accepted = false, ciphertext = NO_CIPHERTEXT_WAS_MADE))
         val ciphertext = runCrypto(caller, account, request) ?: COULD_NOT_DECRYPT
-        // Persist the encrypted form (the ciphertext output), never the plaintext.
-        recordHistory(account, cryptoHistory(caller, request, accepted = true, content = ciphertext))
+        recordHistory(account, cryptoHistory(caller, request, accepted = true, ciphertext = ciphertext))
         return resultCursor(ciphertext)
     }
 
@@ -340,15 +321,9 @@ class SignerProviderQuery(
         request: CryptoRequest,
     ): Cursor? {
         if (!isDecryptPreAuthorized(caller, account, request)) return null
-        // Decrypt requests are performed first, then classified by their result.
-        // A V3 decrypt that throws cannot succeed (wrong
-        // version/context, bad MAC, corrupt padding, ...):
-        // reject it rather than prompting the user.
         val plaintext = runCrypto(caller, account, request) ?: if (request.isV3) return rejectedCursor() else COULD_NOT_DECRYPT
-        val allowed = isCryptoAllowed(caller, account, request, plaintext, isEncrypt = false) ?: return null
-        // Decrypt requests carry their ciphertext as input: persist it (accepted
-        // or not) and decrypt on demand in the activity/history UI.
-        val entry = cryptoHistory(caller, request, accepted = allowed, content = request.content)
+        val allowed = rememberedCryptoDecision(caller, account, request, plaintext, isEncrypt = false) ?: return null
+        val entry = cryptoHistory(caller, request, accepted = allowed, ciphertext = request.content)
         return if (allowed) {
             recordHistory(account, entry)
             resultCursor(plaintext)
@@ -363,7 +338,7 @@ class SignerProviderQuery(
      * relevant permission, otherwise an unauthorized caller
      * triggers a key-use / timing / error oracle even though
      * the result is withheld. If no relevant grant exists and
-     * the per-app signPolicy is not "accept all" (== 2),
+     * the per-app signPolicy is not "accept all",
      * short-circuit: the existing no-permission behavior is to
      * return null (relay path → prompt; IPC path → caller
      * surfaces its own approval flow), so returning null here
@@ -379,13 +354,14 @@ class SignerProviderQuery(
      * classified. Returning null without decrypting keeps that
      * hidden; the intent flow still applies the rejection.
      */
+    @Suppress("NoComments")
     private fun isDecryptPreAuthorized(
         caller: Caller,
         account: Account,
         request: CryptoRequest,
     ): Boolean {
         val permDao = accountRepository.daos(account.npub).permissionLookupDao
-        val preAuthorized = permDao.getSignPolicy(caller.requesterId) == 2 ||
+        val preAuthorized = permDao.getSignPolicy(caller.requesterId) == ACCEPT_ALL_SIGN_POLICY ||
             hasAnyAcceptingDecryptPermission(permDao, caller.requesterId, request.type, request.v3Kind, caller.operation)
         if (!preAuthorized) {
             AmberLog.d(
@@ -396,14 +372,7 @@ class SignerProviderQuery(
         return preAuthorized
     }
 
-    /**
-     * The remembered decision for [request] (see [isAllowed]). V3 grants do NOT
-     * satisfy V2 requests and vice versa. The v3 context scope is shown in the
-     * prompt but is not part of a grant: a remembered kind-K grant covers every
-     * scope. V2 grants are per content type, classified from [plaintext] (the
-     * encrypt input or the decrypt result).
-     */
-    private fun isCryptoAllowed(
+    private fun rememberedCryptoDecision(
         caller: Caller,
         account: Account,
         request: CryptoRequest,
@@ -416,8 +385,6 @@ class SignerProviderQuery(
         return isRemembered(permDao.getSignPolicy(caller.requesterId), permission)
     }
 
-    /** Encrypts or decrypts [request]'s content; null (logged) when that throws. */
-    // A ContentProvider query answers synchronously, so it blocks on the signer.
     @Suppress("RunBlocking")
     private fun runCrypto(
         caller: Caller,
@@ -439,18 +406,13 @@ class SignerProviderQuery(
         null
     }
 
-    /**
-     * The history entry of an encrypt or decrypt request. [content] is always the
-     * ciphertext; the counterparty key (for decrypting it on demand) is kept with
-     * it, except for zap events and an empty rejected entry.
-     */
     private fun cryptoHistory(
         caller: Caller,
         request: CryptoRequest,
         accepted: Boolean,
-        content: String,
+        ciphertext: String,
     ): HistoryEntity {
-        val keepsPeerKey = (accepted || content.isNotEmpty()) && request.type in encryptDecryptSignerTypes && request.type != SignerType.DECRYPT_ZAP_EVENT
+        val keepsPeerKeyToDecryptOnDemand = (accepted || ciphertext.isNotEmpty()) && request.type in encryptDecryptSignerTypes && request.type != SignerType.DECRYPT_ZAP_EVENT
         return HistoryEntity(
             0,
             caller.requesterId,
@@ -458,14 +420,12 @@ class SignerProviderQuery(
             request.v3Kind,
             TimeUtils.now(),
             accepted,
-            content = content,
-            encryptionPubKey = if (keepsPeerKey) request.peerPubKey else "",
+            content = ciphertext,
+            encryptionPubKey = if (keepsPeerKeyToDecryptOnDemand) request.peerPubKey else "",
             encryptionScope = if (request.isV3) request.v3Scope else "",
         )
     }
 
-    /** SIGN_PSBT: [arguments] [0] = PSBT hex, [2] = npub. */
-    // A ContentProvider query answers synchronously, so it blocks on the signer.
     @Suppress("RunBlocking")
     private fun signPsbt(
         caller: Caller,
@@ -476,7 +436,7 @@ class SignerProviderQuery(
             return null
         }
         val account = requestAccount(caller, arguments[2]) ?: return null
-        val allowed = isAllowed(account, caller, "SIGN_PSBT") ?: return null
+        val allowed = rememberedDecision(account, caller, "SIGN_PSBT") ?: return null
         if (!allowed) return rejected(account, history(caller, null, accepted = false, content = psbtHex))
 
         val result = try {
@@ -490,14 +450,13 @@ class SignerProviderQuery(
         return resultCursor(result)
     }
 
-    /** PING: [arguments] [0] = npub, optional; without it, the first account that knows the requester. */
     private fun ping(
         caller: Caller,
         arguments: Array<String>?,
     ): Cursor? {
         val account = pingAccount(caller, arguments) ?: return null
-        captureCallerMetadata(caller.context, caller.packageName, account)
-        val allowed = isAllowed(account, caller, "PING") ?: return null
+        captureCallerMetadataOffBinderThread(caller.context, caller.packageName, account)
+        val allowed = rememberedDecision(account, caller, "PING") ?: return null
         recordHistory(account, history(caller, null, accepted = allowed))
         return if (allowed) MatrixCursor(arrayOf("signature", "result")).also { it.addRow(arrayOf<Any>("pong", "pong")) } else rejectedCursor()
     }
@@ -527,6 +486,7 @@ class SignerProviderQuery(
      * decrypting for it would reveal the plaintext's classification through
      * the rejected-versus-null response.
      */
+    @Suppress("NoComments")
     private fun hasAnyAcceptingDecryptPermission(
         permDao: PermissionLookupDao,
         requesterId: String,
@@ -535,8 +495,7 @@ class SignerProviderQuery(
         stringType: String,
     ): Boolean {
         val now = TimeUtils.now()
-        // Looked up lazily, in this order, until one accepts.
-        val lookups: List<() -> ApplicationPermissionsEntity?> = if (v3Kind != null) {
+        val lazyLookupsUntilOneAccepts: List<() -> ApplicationPermissionsEntity?> = if (v3Kind != null) {
             // Kind-scoped like the final V3 lookup: the kind-agnostic
             // getPermission(key, type) would match a grant for any other kind,
             // and a kind-B request then decrypted only to answer "rejected" on
@@ -562,15 +521,17 @@ class SignerProviderQuery(
                 { permDao.getPermission(requesterId, "DECRYPT_ZAP_EVENT") },
             ) + listOfNotNull(nip?.let { { permDao.getPermission(requesterId, "NIP", it) } })
         }
-        return lookups.any { it()?.activeDecision(now) == true }
+        return lazyLookupsUntilOneAccepts.any { it()?.activeDecision(now) == true }
     }
 
     private companion object {
-        /** The answer to an encrypt or decrypt that produced nothing. */
         const val COULD_NOT_DECRYPT = "Could not decrypt the message"
 
-        /** The encrypt and decrypt operations by name. */
-        val cryptoSignerTypes = listOf(
+        const val NO_CIPHERTEXT_WAS_MADE = ""
+
+        const val ACCEPT_ALL_SIGN_POLICY = 2
+
+        val cryptoSignerTypesByName = listOf(
             SignerType.NIP04_DECRYPT,
             SignerType.NIP44_DECRYPT,
             SignerType.NIP04_ENCRYPT,
@@ -582,10 +543,6 @@ class SignerProviderQuery(
     }
 }
 
-/**
- * The first stored grant of [order] (`permissionLookupOrder`). A kind-less key
- * is the kind IS NULL row: for NIP-44 v3 that is the "all kinds" grant.
- */
 private fun PermissionLookupDao.firstGrant(requesterId: String, order: List<PermissionKey>): ApplicationPermissionsEntity? = order.firstNotNullOfOrNull { (type, kind) ->
     when {
         kind != null -> getPermission(requesterId, type, kind)

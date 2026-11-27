@@ -3,6 +3,7 @@ package com.greenart7c3.nostrsigner
 import android.content.Context
 import android.content.SharedPreferences
 import androidx.core.content.edit
+import androidx.datastore.preferences.core.Preferences
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
 import java.io.File
@@ -10,18 +11,17 @@ import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-// `secret_keeper.xml` holds the account list and the settings,
-// `secret_keeper_<npub>.xml` the keys and preferences of one account.
 private const val LEGACY_FILE_PREFIX = "secret_keeper"
 private const val SETTINGS_FILE_NAME = "$LEGACY_FILE_PREFIX.xml"
 
 /**
  * Brings the storage Amber used up to 3.3.0 back into the app: the account
- * list, every setting and every private key lived in the
- * `EncryptedSharedPreferences` files `secret_keeper.xml` and
+ * list and every setting lived in the `EncryptedSharedPreferences` file
+ * `secret_keeper.xml`, the keys and preferences of each account in
  * `secret_keeper_<npub>.xml`. 3.4.0 moved to plain `prefs*` files plus an
  * encrypted DataStore per account, with a migration that 4.1.0 deleted while
- * the old files stayed on the device.
+ * the old files stayed on the device. The private key, the seed words and the
+ * PIN go only to the encrypted DataStore, never to a plain preference file.
  *
  * Without this, an install that jumps from 3.3.0 or older to a current build
  * finds an empty `prefs`, reports that nobody is logged in and shows the
@@ -40,14 +40,9 @@ object LegacyStorageMigration {
     private const val USE_PROXY = "use_proxy"
     private const val PROXY_PORT = "proxy_port"
 
-    /** Moved to the encrypted DataStore, so they must never reach a plain preference file. */
     internal val SECRET_KEYS = setOf("nostr_privkey", "seed_words")
 
-    // Handled one by one instead of the generic settings copy: the account list
-    // is merged with the one this install may have built already (in a different
-    // order), the current account is only filled in when there is none, and the
-    // PIN goes straight to the encrypted store rather than through `prefs`.
-    private val HANDLED_SETTINGS_KEYS = setOf(SAVED_ACCOUNTS, CURRENT_ACCOUNT, PIN)
+    private val SETTINGS_KEYS_MIGRATED_ONE_BY_ONE = setOf(SAVED_ACCOUNTS, CURRENT_ACCOUNT, PIN)
 
     /**
      * One directory read, no Keystore access: every current install returns
@@ -81,7 +76,6 @@ object LegacyStorageMigration {
             AmberLog.w(TAG, "The legacy preferences hold no account file left to restore")
         }
 
-        // The caches may hold the empty list that sent the user to onboarding.
         AccountStorage.invalidateCaches()
         val hadCurrentAccount = !SavedAccounts.current(context).isNullOrBlank()
 
@@ -96,8 +90,6 @@ object LegacyStorageMigration {
         }
 
         if (restored.isNotEmpty()) {
-            // Union, never replace: the user may have created or imported an
-            // account in this build after landing on the onboarding screen.
             SavedAccounts.replace(
                 context,
                 mergeAccountLists(SavedAccounts.list(context), restored),
@@ -110,35 +102,32 @@ object LegacyStorageMigration {
             }
         }
 
-        // Only where this install has no value: the user's choices here win.
         copyPreferences(
             from = legacySettings,
             to = appPreferences(context),
-            skipped = HANDLED_SETTINGS_KEYS,
+            skipped = SETTINGS_KEYS_MIGRATED_ONE_BY_ONE,
             onlyMissing = true,
         )
-        restorePin(context, legacySettings)
+        restorePinIntoEncryptedStore(context, legacySettings)
         restoreTorSettings(context)
 
-        // An account only counts as restored when it opens again; everything else
-        // keeps its file (and the settings file) for another attempt.
-        val verified = restored.filter { npub ->
-            try {
-                AccountStorage.load(context, npub) != null
-            } catch (e: Exception) {
-                if (e is CancellationException) throw e
-                AmberLog.e(TAG, "The migrated account $npub does not open yet", e)
-                false
-            }
-        }
-        if (verified.size < restored.size) {
-            AmberLog.w(TAG, "Only ${verified.size} of ${restored.size} legacy accounts could be opened")
+        val reopened = restored.filter { npub -> opensAgain(context, npub) }
+        if (reopened.size < restored.size) {
+            AmberLog.w(TAG, "Only ${reopened.size} of ${restored.size} legacy accounts could be opened")
         }
 
-        deleteLegacyFiles(context, legacyFilesToDelete(candidates, verified))
+        deleteLegacyFiles(context, legacyFilesToDelete(candidates, reopened))
     }
 
-    @Suppress("DEPRECATION")
+    private suspend fun opensAgain(context: Context, npub: String): Boolean = try {
+        AccountStorage.load(context, npub) != null
+    } catch (e: Exception) {
+        if (e is CancellationException) throw e
+        AmberLog.e(TAG, "The migrated account $npub does not open yet", e)
+        false
+    }
+
+    @Suppress("DEPRECATION", "NoComments")
     private fun openLegacyPreferences(context: Context, npub: String?): SharedPreferences? {
         // Opening a missing EncryptedSharedPreferences creates it, so a stale
         // empty file would be left behind for every account that is gone.
@@ -157,38 +146,24 @@ object LegacyStorageMigration {
         )
     }
 
-    /**
-     * The npubs that can still be restored: the settings file's list in its own
-     * order, then every account file on disk it does not mention (a truncated
-     * settings file must not strand an account). An account listed without a
-     * file has nothing left to restore and is left out.
-     */
     private fun legacyAccounts(context: Context, legacySettings: SharedPreferences): List<String> {
         val listed = legacySettings.getString(SAVED_ACCOUNTS, null)?.split(",")?.filter { it.isNotBlank() }.orEmpty()
-        val onDisk = legacyDirectory(context).list().orEmpty()
+        val accountFilesOnDisk = legacyDirectory(context).list().orEmpty()
             .filter { it.startsWith("${LEGACY_FILE_PREFIX}_") && it.endsWith(".xml") }
             .map { it.removePrefix("${LEGACY_FILE_PREFIX}_").removeSuffix(".xml") }
-        return (listed.filter { it in onDisk } + onDisk).distinct()
+        return (listed.filter { it in accountFilesOnDisk } + accountFilesOnDisk).distinct()
     }
 
-    /**
-     * Copies the private key and the seed words into the encrypted DataStore and
-     * everything else into `prefs_<npub>`. Returns false when nothing could be
-     * read out of the file, so its file is kept for another attempt.
-     */
     private suspend fun migrateAccount(context: Context, npub: String): Boolean {
         val legacy = openLegacyPreferences(context, npub) ?: return false
         val privateKey = legacy.getString("nostr_privkey", null)
         if (privateKey.isNullOrBlank()) return false
 
-        // getEncryptedRaw is the non-throwing existence check: getEncryptedKey
-        // fails with FailedMigrationException on an empty store, and a key the
-        // user re-imported in this build must not be overwritten with the old one.
-        if (DataStoreAccess.getEncryptedRaw(context, npub, DataStoreAccess.NOSTR_PRIVKEY) == null) {
+        if (!hasStoredSecret(context, npub, DataStoreAccess.NOSTR_PRIVKEY)) {
             DataStoreAccess.saveEncryptedKey(context, npub, DataStoreAccess.NOSTR_PRIVKEY, privateKey)
         }
         val seedWords = legacy.getString("seed_words", null)
-        if (!seedWords.isNullOrBlank() && DataStoreAccess.getEncryptedRaw(context, npub, DataStoreAccess.SEED_WORDS) == null) {
+        if (!seedWords.isNullOrBlank() && !hasStoredSecret(context, npub, DataStoreAccess.SEED_WORDS)) {
             DataStoreAccess.saveEncryptedKey(context, npub, DataStoreAccess.SEED_WORDS, seedWords)
         }
 
@@ -201,13 +176,9 @@ object LegacyStorageMigration {
         return true
     }
 
-    /**
-     * The PIN goes into the encrypted store directly: the settings file is only
-     * encrypted by its own format, and copying it to `prefs` (as the 3.4.0
-     * migration did, leaving [LockSettings.loadPinFromEncryptedStorage] to
-     * move it later) would leave it in a plain file until the next unlock.
-     */
-    private suspend fun restorePin(context: Context, legacySettings: SharedPreferences) {
+    private suspend fun hasStoredSecret(context: Context, npub: String, key: Preferences.Key<String>): Boolean = DataStoreAccess.getEncryptedRaw(context, npub, key) != null
+
+    private suspend fun restorePinIntoEncryptedStore(context: Context, legacySettings: SharedPreferences) {
         val pin = legacySettings.getString(PIN, null)
         if (!pin.isNullOrBlank() && DataStoreAccess.getPinRaw(context) == null) {
             DataStoreAccess.savePin(context, pin)
@@ -219,6 +190,7 @@ object LegacyStorageMigration {
      * in the account files; both are read from `prefs` now. Restoring it keeps a
      * user who routed every connection through their Orbot off the clearnet.
      */
+    @Suppress("NoComments")
     private fun restoreTorSettings(context: Context) {
         val settings = appPreferences(context)
         if (settings.contains(USE_PROXY)) return
@@ -250,29 +222,14 @@ object LegacyStorageMigration {
     private fun legacyDirectory(context: Context): File = File("${context.filesDir.parent}/shared_prefs/")
 }
 
-/**
- * The saved account list with [legacy] appended, keeping the order and dropping
- * duplicates, so an account created in this build stays and the migrated ones
- * are added after it.
- */
 internal fun mergeAccountLists(current: List<String>, legacy: List<String>): List<String> = (current + legacy).distinct()
 
-/**
- * The legacy files the migration may delete: the account file of every npub in
- * [restored], and the settings file only once every account in [accounts] was
- * restored, because it also holds the account list and the settings.
- */
 internal fun legacyFilesToDelete(accounts: Collection<String>, restored: Collection<String>): List<String> {
     val accountFiles = restored.map { "${LEGACY_FILE_PREFIX}_$it.xml" }
-    return if (accounts.all { it in restored }) accountFiles + SETTINGS_FILE_NAME else accountFiles
+    val everyAccountRestored = accounts.all { it in restored }
+    return if (everyAccountRestored) accountFiles + SETTINGS_FILE_NAME else accountFiles
 }
 
-/**
- * Copies every entry of [from] into [to]: [skipped] keys never leave [from], and
- * with [onlyMissing] a value [to] already has is kept. [from] and [to] are
- * parameters instead of a [Context] so the copy stays testable without the
- * AndroidKeyStore.
- */
 internal fun copyPreferences(
     from: SharedPreferences,
     to: SharedPreferences,
@@ -289,11 +246,6 @@ internal fun copyPreferences(
     if (changed) editor.apply()
 }
 
-/**
- * Copies one preference value, returning false for types `SharedPreferences`
- * cannot hold (nothing else is ever stored, so this only guards against a file
- * written by an older version).
- */
 private fun SharedPreferences.Editor.putValue(key: String, value: Any?): Boolean = when (value) {
     is String -> {
         putString(key, value)

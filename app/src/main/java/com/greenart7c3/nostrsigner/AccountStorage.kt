@@ -28,10 +28,10 @@ import kotlinx.coroutines.runBlocking
 object AccountStorage {
     private val accountCache = LargeCache<String, Account>()
 
-    // Installed by Amber at construction, before any ContentProvider or component runs.
     private lateinit var accountRepository: AccountRepository
     private lateinit var appScope: CoroutineScope
 
+    /** Called from Amber's constructor, before any ContentProvider or component runs. */
     fun install(accountRepository: AccountRepository, appScope: CoroutineScope) {
         this.accountRepository = accountRepository
         this.appScope = appScope
@@ -80,24 +80,19 @@ object AccountStorage {
      * We need to use `commit()` to write changes to disk and release the file
      * lock so that it can be deleted. If we use `apply()` there is a race
      * condition and the file will probably not be deleted
+     *
+     * The cached account's private-key bytes are zeroed in place before it leaves the
+     * cache (GHSA-8844-q5vh-9j8f, I3), so the key does not linger in the heap until GC.
+     * The Room handles are closed before any file is deleted, releasing their file locks
+     * and worker threads. Logout deletes all local information for the account, as the
+     * logout dialog says: the databases go with their -wal/-shm/-journal files, so
+     * re-importing the key starts with no connections, grants, history or logs.
      */
     @SuppressLint("ApplySharedPref")
     suspend fun logout(npub: String, context: Context): Boolean {
-        // Defense-in-depth (GHSA-8844-q5vh-9j8f, I3): best-effort zeroize the
-        // private-key byte array of the logging-out account before dropping
-        // the reference from the cache, so the key material does not linger
-        // in heap until GC. KeyPair.privKey is a `val` referencing a mutable
-        // ByteArray, so we overwrite its contents in place.
         accountCache.get(npub)?.signer?.keyPair?.privKey?.fill(0)
         accountCache.remove(npub)
-        // Close Room handles BEFORE deleting on-disk preference/data files so
-        // we release file locks and worker-pool threads instead of leaking
-        // them for the lifetime of the process.
         accountRepository.closeDatabasesFor(npub)
-        // Logout deletes all local information for the account, as the logout
-        // dialog says: dropping the databases (with their -wal/-shm/-journal
-        // files) means re-importing the key starts with no connections, grants,
-        // history or logs instead of silently restoring them.
         deleteAccountDatabases(context, npub)
         accountPreferences(context, npub).edit(commit = true) { clear() }
         SavedAccounts.remove(context, npub)
@@ -122,7 +117,6 @@ object AccountStorage {
         }
     }
 
-    /** Deletes the npub-specific shared preference file. */
     private fun deleteUserPreferenceFile(context: Context, npub: String) {
         val prefsDir = File("${context.filesDir.parent}/shared_prefs/")
         prefsDir.list()?.forEach {
@@ -158,17 +152,14 @@ object AccountStorage {
      */
     suspend fun all(context: Context): List<Account> = SavedAccounts.all(context).mapNotNull { load(context, it.npub) }
 
-    // For synchronous callers (the ContentProvider); coroutines use load.
+    /**
+     * [load] for synchronous callers (the ContentProvider). It decrypts only the requested
+     * account (GHSA-8844-q5vh-9j8f, I3): warming the whole cache here decrypted every
+     * account's private key on the first IPC or relay lookup. The account switcher's
+     * [cached] list is filled by [all] at app start instead.
+     */
     @Suppress("RunBlocking")
     fun loadSync(context: Context, npub: String? = null): Account? {
-        // Defense-in-depth (GHSA-8844-q5vh-9j8f, I3): previously this warmed
-        // the entire cache (runBlocking over all saved accounts) on any cold
-        // cache / size mismatch, decrypting every account's private key
-        // process-wide on the first IPC/relay lookup. Lazy-load only the
-        // requested account. The UI account switcher relies on cached()
-        // being populated, which all() handles at app start (called from
-        // AccountStateViewModel); this path is for direct lookups
-        // (SignerProvider / NIP-46) that always know which npub they want.
         val targetNpub = npub ?: SavedAccounts.current(context) ?: return null
         accountCache.get(targetNpub)?.let { return it }
         if (!SavedAccounts.contains(context, targetNpub)) return null
@@ -186,12 +177,6 @@ object AccountStorage {
 
     fun getName(context: Context, npub: String): String = accountPreferences(context, npub).getString(AccountPrefKeys.ACCOUNT_NAME.key, "") ?: ""
 
-    /**
-     * Forgets the cached account list, current account and decrypted accounts,
-     * so the next read sees what was written straight to the preference files.
-     * [LegacyStorageMigration] runs it because it cannot use LocalPreferences.reloadApp:
-     * that one reloads the settings, which is only allowed off the main thread.
-     */
     internal fun invalidateCaches() {
         SavedAccounts.invalidate()
         accountCache.clear()
@@ -210,12 +195,11 @@ object AccountStorage {
         }
     }
 
-    // The saved account [npub] with its decrypted key, or null when the key or the public key is missing.
     private suspend fun decrypt(context: Context, npub: String): Account? {
         val privKey = decryptPrivateKey(context, npub) ?: return null
         val prefs = accountPreferences(context, npub)
-        // A saved account always has its public key stored; without it the save is incomplete.
-        if (prefs.getString(AccountPrefKeys.NOSTR_PUBKEY.key, null) == null) return null
+        val saveIsIncomplete = prefs.getString(AccountPrefKeys.NOSTR_PUBKEY.key, null) == null
+        if (saveIsIncomplete) return null
         return Account(
             signer = NostrSignerInternal(KeyPair(privKey.hexToByteArray())),
             name = MutableStateFlow(prefs.getString(AccountPrefKeys.ACCOUNT_NAME.key, "") ?: ""),
@@ -227,8 +211,6 @@ object AccountStorage {
         )
     }
 
-    // The account's private key, or null when the Keystore refuses: while the device is
-    // locked under the policy (loads after unlock), or broken (reported, account skipped).
     private suspend fun decryptPrivateKey(context: Context, npub: String): String? = try {
         DataStoreAccess.getEncryptedKey(context, npub, DataStoreAccess.NOSTR_PRIVKEY)
     } catch (e: InvalidKeyException) {

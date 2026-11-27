@@ -33,9 +33,8 @@ class IntentSingleEventViewModelTest {
     @After
     fun tearDown() = Dispatchers.resetMain()
 
-    // Browser deep links share the "null" key: a grant given to one site must not answer another.
     @Test
-    fun `a request without a calling package never loads the shared application`() {
+    fun `a browser deep link without a calling package never loads the application every site shares`() {
         val viewModel = IntentSingleEventViewModel(accountRepository)
 
         viewModel.load(mockk<IntentData>(), "npub1", packageName = null)
@@ -52,16 +51,13 @@ class IntentSingleEventViewModelTest {
 
         viewModel.load(request, "npub1", packageName = "com.example.app")
 
-        // The load runs on Dispatchers.IO.
         coVerify(timeout = 5_000) { dao.getByKey("com.example.app") }
         Thread.sleep(100)
         assertEquals(LoadedIntentApplication(request, saved), viewModel.loaded.value)
     }
 
-    // The calling app picks the request id: a later request reusing it gets this ViewModel
-    // back, and must be judged on the grants saved now, not on the first request's load.
     @Test
-    fun `a later request under the same key is loaded again`() {
+    fun `a later request reusing the request id is judged on the grants saved now, not on the first load`() {
         val viewModel = IntentSingleEventViewModel(accountRepository)
         viewModel.load(mockk<IntentData>(), "npub1", packageName = "com.example.app")
         coVerify(timeout = 5_000) { dao.getByKey("com.example.app") }

@@ -13,9 +13,8 @@ class WindowGeometryTest {
 
     @Test
     fun shrinksToUsableAreaAboveTaskbar() {
-        // 1280x800 display with a 48px Windows taskbar: the 780dp default used
-        // to hide the window's bottom (and the account switcher) under it.
-        assertEquals(DpSize(1100.dp, 720.dp), fitWindowSize(DEFAULT_WINDOW_SIZE, 1280, 752))
+        val usableHeightOf800pxDisplayWith48pxTaskbar = 752
+        assertEquals(DpSize(1100.dp, 720.dp), fitWindowSize(DEFAULT_WINDOW_SIZE, 1280, usableHeightOf800pxDisplayWith48pxTaskbar))
     }
 
     @Test

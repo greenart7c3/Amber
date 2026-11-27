@@ -9,10 +9,10 @@ import com.greenart7c3.nostrsigner.service.DeviceUnlockPolicy
  * The opt-in "require unlocked device" key policy (GHSA-8844-q5vh-9j8f, L1) and the
  * Keystore alias it belongs to, stored in the app-wide preference file. Both are
  * plain synchronous reads, so the gate is right before the async settings load
- * (offline flavor, WorkManager or ContentProvider cold start).
+ * (offline flavor, WorkManager or ContentProvider cold start). Renaming one of
+ * its preference keys loses the stored value.
  */
 object KeystorePolicy {
-    // Keys in the app-wide preference file; renaming one loses the stored value.
     private const val REQUIRE_UNLOCKED_DEVICE = "require_unlocked_device"
     private const val ACTIVE_KEYSTORE_ALIAS = "active_keystore_alias"
 

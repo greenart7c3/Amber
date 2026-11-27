@@ -41,8 +41,7 @@ class NetworkStateTest {
         assertTrue(state.isOnMobileData && state.isOnVpn)
         assertFalse(state.isOnWifi)
 
-        // No network at all: offline, so a change.
-        assertTrue(state.update(null))
+        assertTrue("losing every network goes offline, which is a change", state.update(null))
         assertFalse(state.update(null))
     }
 }

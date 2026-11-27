@@ -72,9 +72,12 @@ import kotlinx.coroutines.launch
 object BunkerRequestUtils {
     val state = MutableStateFlow<ImmutableList<AmberBunkerRequest>>(persistentListOf())
 
-    // Queued requests are identified by [AmberBunkerRequest.queueKey], never by
-    // the client-chosen JSON-RPC id alone: clients using the same (e.g.
-    // sequential) ids must not drop or replace each other's requests.
+    /**
+     * Queues [request] unless it is already queued. Queued requests are identified by
+     * [AmberBunkerRequest.queueKey], never by the client-chosen JSON-RPC id alone:
+     * clients using the same (e.g. sequential) ids must not drop or replace each
+     * other's requests.
+     */
     fun addRequest(request: AmberBunkerRequest) {
         state.update { current ->
             if (current.any { it.queueKey == request.queueKey }) {
@@ -132,15 +135,17 @@ object BunkerRequestUtils {
         return savedRelays?.ifEmpty { defaultRelays } ?: defaultRelays
     }
 
+    /**
+     * The data [bunkerRequest] carries. The params are client-supplied: a missing or
+     * unparsable one yields "" rather than throwing. NIP-44 v3 requests use the NIP-46
+     * layout `[pubkey, kind, scope, payload]`: for `nip44v3_encrypt` the payload is
+     * base64-encoded plaintext, for `nip44v3_decrypt` the v3 ciphertext.
+     */
     fun getDataFromBunker(bunkerRequest: BunkerRequest): String = when (bunkerRequest.method) {
         "connect" -> "ack"
-        // Client-supplied: a missing or unparsable param yields "" rather than throwing.
         "sign_event" -> bunkerRequest.eventParam()?.let { runCatching { AmberEvent.fromJson(it).toEvent().toJson() }.getOrNull() } ?: ""
         "nip04_encrypt", "nip04_decrypt", "nip44_encrypt", "nip44_decrypt" -> bunkerRequest.encryptionTextParam()
         "decrypt_zap_event" -> bunkerRequest.zapRequestParam() ?: ""
-        // NIP-44 v3 NIP-46 layout: [pubkey, kind, scope, payload]. For
-        // `nip44v3_encrypt` the payload is base64-encoded plaintext; for
-        // `nip44v3_decrypt` it is the v3 ciphertext.
         "nip44v3_encrypt", "nip44v3_decrypt" -> bunkerRequest.nip44v3Payload()
         "ping" -> "pong"
         "sign_psbt" -> bunkerRequest.psbtParam() ?: ""
@@ -154,17 +159,14 @@ object BunkerRequestUtils {
  * logs, and publishes the reply. Built from the app dependencies; the request queue
  * itself stays in [BunkerRequestUtils].
  */
-// Constructor injection: one parameter per dependency.
 @Suppress("LongParameterList")
 class BunkerResponder(
-    // The Application context: notifications and the error notification.
     private val appContext: Context,
     private val settingsStore: SettingsStore,
     private val accountRepository: AccountRepository,
     private val relayClient: RelayClient,
     private val scope: CoroutineScope,
     private val localBunkerRelay: LocalBunkerRelayServer,
-    // The activity showing the requests, if any; finished once the queue empties.
     private val currentActivity: () -> Activity?,
 ) {
     /**
@@ -219,15 +221,14 @@ class BunkerResponder(
         }
 
         scope.launch {
-            // Never the result: for a decrypt request it is the plaintext.
-            val sanitizedResponse = nip46ReplyLog(bunkerResponse)
+            val responseWithoutResult = nip46ReplyLog(bunkerResponse)
             relays.forEach { relay ->
                 accountRepository.getLogDatabase(account.npub).dao().insertLogIfEnabled(
                     LogEntity(
                         id = 0,
                         url = relay.url,
                         type = "bunker response",
-                        message = sanitizedResponse,
+                        message = responseWithoutResult,
                         time = System.currentTimeMillis(),
                     ),
                 )
@@ -235,8 +236,7 @@ class BunkerResponder(
         }
 
         AmberLog.d(Amber.TAG, "Sending response to relays ${relays.map { relay -> relay.url }} type ${bunkerRequest.request.method}")
-        // The connection's own key when the request has one, else the account key.
-        val key = bunkerRequest.signerPrivKey.takeIf { it.isNotEmpty() }?.let { runCatching { ConnectionReplyKey(it) }.getOrNull() } ?: account.replyKey()
+        val key = connectionKeyOrAccountKey(bunkerRequest, account)
         val success = publishNip46Reply(bunkerResponse, bunkerRequest.localKey, bunkerRequest.encryptionType, key, attempts) { event ->
             relayClient.client.publishAndConfirm(event = event, relayList = relays.toSet(), timeoutInSeconds = 5, untilFirstAccept = true)
         }
@@ -252,11 +252,12 @@ class BunkerResponder(
         onLoading(false)
     }
 
-    // The account key, for a connection from before per-connection keys; it checks key access first.
-    private fun Account.replyKey(): Nip46ReplyKey = object : Nip46ReplyKey {
-        override suspend fun nip04Encrypt(plainText: String, toPubKey: String): String = this@replyKey.crypto.nip04Encrypt(plainText, toPubKey)
+    private fun connectionKeyOrAccountKey(bunkerRequest: AmberBunkerRequest, account: Account): Nip46ReplyKey = bunkerRequest.signerPrivKey.takeIf { it.isNotEmpty() }?.let { runCatching { ConnectionReplyKey(it) }.getOrNull() } ?: account.legacyConnectionReplyKey()
 
-        override suspend fun nip44Encrypt(plainText: String, toPubKey: String): String = this@replyKey.crypto.nip44Encrypt(plainText, toPubKey)
+    private fun Account.legacyConnectionReplyKey(): Nip46ReplyKey = object : Nip46ReplyKey {
+        override suspend fun nip04Encrypt(plainText: String, toPubKey: String): String = this@legacyConnectionReplyKey.crypto.nip04Encrypt(plainText, toPubKey)
+
+        override suspend fun nip44Encrypt(plainText: String, toPubKey: String): String = this@legacyConnectionReplyKey.crypto.nip44Encrypt(plainText, toPubKey)
 
         override fun sign(createdAt: Long, kind: Int, tags: Array<Array<String>>, content: String): Event = signSync(createdAt, kind, tags, content)
     }
@@ -284,13 +285,9 @@ class BunkerResponder(
             val dao = accountRepository.daos(account.npub).permissionWriteDao
             val savedApplication = savedConnection(account, key, bunkerRequest, oldKey, deleteAfter)
             val relays = replyRelays(savedApplication, bunkerRequest)
-            // Approving changes the grants in place; kept to take the approval back.
-            val grantsBefore = savedApplication?.permissions?.map { it.toGrant() }.orEmpty()
+            val grantsBeforeApproval = savedApplication?.permissions?.map { it.toGrant() }.orEmpty()
 
-            if (savedApplication == null && bunkerRequest.request !is BunkerRequestConnect) {
-                // A queued request whose app row is gone was revoked while it
-                // waited: answer with an error instead of recreating the
-                // revoked connection with fresh grants.
+            if (wasRevokedWhileQueued(savedApplication, bunkerRequest)) {
                 finishRequest(bunkerRequest, bunkerRequest.closeApplication)
                 AmberUtils.sendBunkerError(this@BunkerResponder, account, bunkerRequest, relays, closeApplication = true, onLoading = onLoading)
                 return@launch
@@ -330,16 +327,15 @@ class BunkerResponder(
                 )
             }
 
-            val didChangeRelays = type == SignerType.CONNECT && applyConnect(account, application, key, shouldCloseApplication, relays)
+            val didChangeRelays = type == SignerType.CONNECT && applyConnectBringingNewRelays(account, application, key, shouldCloseApplication, relays)
 
-            // assume that everything worked and try to revert it if it fails
             val grantsAfter = application.permissions.map { it.toGrant() }
             dao.insertApplicationWithPermissions(application)
             recordApproval(account, key, type, kind, response, bunkerRequest)
             publishApproval(account, application, bunkerRequest, BunkerResponse(bunkerRequest.request.id, response, null), relays, didChangeRelays, onLoading) { published ->
                 if (!published) {
                     scope.launch {
-                        if (rememberType != RememberType.NEVER) revertApproval(account, application, bunkerRequest, grantsBefore, grantsAfter)
+                        if (rememberType != RememberType.NEVER) revertApproval(account, application, bunkerRequest, grantsBeforeApproval, grantsAfter)
                         onLoading(false)
                     }
                 }
@@ -347,8 +343,8 @@ class BunkerResponder(
         }
     }
 
-    // The saved connection an approval of [bunkerRequest] updates, after dropping the one it
-    // replaces ([oldKey]) and attaching a bunker:// connection to the client's key.
+    private fun wasRevokedWhileQueued(savedApplication: ApplicationWithPermissions?, bunkerRequest: AmberBunkerRequest): Boolean = savedApplication == null && bunkerRequest.request !is BunkerRequestConnect
+
     private suspend fun savedConnection(
         account: Account,
         key: String,
@@ -369,11 +365,9 @@ class BunkerResponder(
         return saved
     }
 
-    // Where the reply goes. A brand-new connection that names no relays of its own also
-    // gets the local relay beside the default relays (desktop BunkerEngine does the
-    // same), so clients on this device need no public relay.
     private fun replyRelays(saved: ApplicationWithPermissions?, bunkerRequest: AmberBunkerRequest): List<NormalizedRelayUrl> {
-        val fallbackRelays = if (saved == null && bunkerRequest.request is BunkerRequestConnect) {
+        val isBrandNewConnection = saved == null && bunkerRequest.request is BunkerRequestConnect
+        val fallbackRelays = if (isBrandNewConnection) {
             localBunkerRelay.newBunkerRelays()
         } else {
             settingsStore.settings.defaultRelays
@@ -381,9 +375,7 @@ class BunkerResponder(
         return BunkerRequestUtils.responseRelays(bunkerRequest, saved?.application?.relays, fallbackRelays)
     }
 
-    // What approving a connect sets: the default grants, connected, and the close-app choice.
-    // Returns whether the connection brings relays Amber does not listen on yet.
-    private suspend fun applyConnect(
+    private suspend fun applyConnectBringingNewRelays(
         account: Account,
         application: ApplicationWithPermissions,
         key: String,
@@ -396,12 +388,11 @@ class BunkerResponder(
             application.application.closeApplication = it
         }
         addConnectDefaults(application, key)
-        // check if application has any relay not in saved relays
         val savedRelays = accountRepository.getSavedRelays(account)
         return relays.any { !savedRelays.contains(it) }
     }
 
-    @Suppress("LongParameterList") // The approved reply and where it goes, passed through from sendResult.
+    @Suppress("LongParameterList", "NoComments")
     private suspend fun publishApproval(
         account: Account,
         application: ApplicationWithPermissions,
@@ -440,8 +431,6 @@ class BunkerResponder(
         sendBunkerResponse(account, bunkerRequestWithKey, response, application.application.relays.ifEmpty { relays }, onLoading, onDone)
     }
 
-    // A bunker:// connection is saved under its secret until a client connects with
-    // it: move that row (and its grants) to the client's key.
     private suspend fun attachBunkerConnection(account: Account, key: String, bunkerRequest: AmberBunkerRequest) {
         val daos = accountRepository.daos(account.npub)
         if (daos.applicationDao.getByKey(key) != null) return
@@ -455,7 +444,6 @@ class BunkerResponder(
         daos.permissionWriteDao.insertApplicationWithPermissions(attached)
     }
 
-    // The row of a connection seen for the first time.
     private fun newApplication(
         key: String,
         name: String,
@@ -489,13 +477,7 @@ class BunkerResponder(
         )
     }
 
-    /**
-     * What a `connect` sets on [application]: its own signing key when it is [isNew],
-     * the relays a nostrconnect URI listens on, and the client metadata
-     * (nostr-protocol/nips#2381). The bunker:// application is created up-front when
-     * its URI is generated, so it is usually not new here: the metadata is updated in
-     * place so it is stored on every connect.
-     */
+    /** Client metadata on connect: https://github.com/nostr-protocol/nips/pull/2381 */
     private fun withConnectDetails(
         application: ApplicationWithPermissions,
         bunkerRequest: AmberBunkerRequest,
@@ -504,12 +486,9 @@ class BunkerResponder(
     ): ApplicationWithPermissions {
         if (bunkerRequest.request !is BunkerRequestConnect) return application
         var result = application
-        // Ensure each connection has its own unique signing key
         if (result.application.localKey.isBlank() && isNew) {
             result = result.copy(application = result.application.copy(localKey = generateBunkerPrivKey()))
         }
-        // The client only listens on the relays in its URI; an app saved
-        // earlier with empty or stale relays must not send the reply elsewhere.
         if (bunkerRequest.isNostrConnectUri && result.application.relays != relays) {
             result = result.copy(application = result.application.copy(relays = relays))
         }
@@ -525,7 +504,6 @@ class BunkerResponder(
         return result
     }
 
-    // A connection may always ask for the public key and ping.
     private fun addConnectDefaults(application: ApplicationWithPermissions, key: String) {
         listOf(SignerType.GET_PUBLIC_KEY, SignerType.PING).forEach { type ->
             if (application.permissions.none { it.type == type.toString() }) {
@@ -536,6 +514,7 @@ class BunkerResponder(
         }
     }
 
+    @Suppress("NoComments")
     private suspend fun recordApproval(
         account: Account,
         key: String,
@@ -579,15 +558,6 @@ class BunkerResponder(
         )
     }
 
-    /**
-     * The reply did not reach the client: take back what approving it remembered (the
-     * common `revertedConnectKey` / `revertedGrants`, as on the desktop). A connect drops
-     * the connection (a bunker:// one waits again under its secret); any other request
-     * removes exactly the grants it added and restores the ones it replaced, re-reading
-     * them so a change made while the reply was retried survives. It used to delete every
-     * grant of the request's type, which could remove a grant from before the approval
-     * and keep the content-type one it had just added.
-     */
     private suspend fun revertApproval(
         account: Account,
         application: ApplicationWithPermissions,
@@ -627,9 +597,7 @@ class BunkerResponder(
             val defaultRelays = settingsStore.settings.defaultRelays
             val relays = BunkerRequestUtils.responseRelays(bunkerRequest, savedApplication?.application?.relays, defaultRelays)
 
-            if (savedApplication == null && bunkerRequest.request !is BunkerRequestConnect) {
-                // A queued request whose app row is gone was revoked while it
-                // waited: reject it without recreating the connection.
+            if (wasRevokedWhileQueued(savedApplication, bunkerRequest)) {
                 finishRequest(bunkerRequest, closeApplication = true)
                 AmberUtils.sendBunkerError(this@BunkerResponder, account, bunkerRequest, relays, closeApplication = true, onLoading = onLoading)
                 return@launch
@@ -638,7 +606,6 @@ class BunkerResponder(
             val application = savedApplication
                 ?: newApplication(key, appName, relays, account, bunkerRequest, bunkerRequest.closeApplication, 0L, withClientMetadata = false)
 
-            // Use connection-specific key if available; fall back to what's in the request
             val effectiveSignerPrivKey = application.application.localKey.ifEmpty { bunkerRequest.signerPrivKey }
             val effectiveBunkerRequest = if (effectiveSignerPrivKey.isNotEmpty() && bunkerRequest.signerPrivKey != effectiveSignerPrivKey) {
                 bunkerRequest.copy(signerPrivKey = effectiveSignerPrivKey)
@@ -648,13 +615,8 @@ class BunkerResponder(
 
             finishRequest(effectiveBunkerRequest, application.application.closeApplication)
 
-            // Bookkeeping must not cost the client its answer: a failure here
-            // (e.g. a malformed request) used to skip the error reply below.
-            try {
+            replyEvenIfBookkeepingFails(bunkerRequest) {
                 recordRejection(account, application, key, bunkerRequest, rememberType, signerType, kind, relay, decryptTypeScope)
-            } catch (e: Exception) {
-                if (e is CancellationException) throw e
-                AmberLog.e(Amber.TAG, "Could not record the rejection of ${bunkerRequest.request.id}", e)
             }
 
             AmberUtils.sendBunkerError(
@@ -668,7 +630,16 @@ class BunkerResponder(
         }
     }
 
-    @Suppress("LongParameterList") // The rejection's whole context, passed through from sendRejection.
+    private suspend fun replyEvenIfBookkeepingFails(bunkerRequest: AmberBunkerRequest, bookkeeping: suspend () -> Unit) {
+        try {
+            bookkeeping()
+        } catch (e: Exception) {
+            if (e is CancellationException) throw e
+            AmberLog.e(Amber.TAG, "Could not record the rejection of ${bunkerRequest.request.id}", e)
+        }
+    }
+
+    @Suppress("LongParameterList", "NoComments")
     private suspend fun recordRejection(
         account: Account,
         application: ApplicationWithPermissions,

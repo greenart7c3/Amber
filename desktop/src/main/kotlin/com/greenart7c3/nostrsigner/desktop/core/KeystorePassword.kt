@@ -45,6 +45,7 @@ class OsCredentialStore(
         else -> "Secret Service (GNOME Keyring / KWallet)"
     }
 
+    @Suppress("NoComments")
     override fun load(): String? = try {
         keyring?.getPassword(service, account)
     } catch (_: PasswordAccessException) {
@@ -71,7 +72,7 @@ class OsCredentialStore(
     }
 
     companion object {
-        // Debug runs get their own entry: a reset there deletes it (see DesktopKeyStore).
+        /** Debug runs get their own entry: a reset there deletes it (see [DesktopKeyStore]). */
         val SERVICE = "com.greenart7c3.nostrsigner" + if (BuildVariant.isDebug) ".debug" else ""
         const val ACCOUNT = "keystore-password"
     }
@@ -97,7 +98,9 @@ class FilePasswordStore(private val file: File) : PasswordStore {
 /**
  * Resolves the keystore password, preferring the OS credential store and
  * migrating any legacy password file into it. The file remains the fallback
- * on systems without a secret daemon.
+ * on systems without a secret daemon. Whenever the OS store holds the working
+ * password, any file copy is deleted, so the data directory alone is no longer
+ * enough to unlock the keys.
  */
 object KeystorePassword {
     data class Resolved(val password: String, val source: PasswordStore)
@@ -129,14 +132,12 @@ object KeystorePassword {
             )
     }
 
-    /** A new password for a new keystore, kept in the OS store when it works, else in the file. */
     private fun storeFresh(
         osStore: PasswordStore,
         fileStore: PasswordStore,
     ): Resolved {
         val fresh = generate()
         if (osStore.store(fresh)) {
-            // Never leave a stale file copy behind once the OS store owns it.
             fileStore.delete()
             return Resolved(fresh, osStore)
         }
@@ -144,20 +145,16 @@ object KeystorePassword {
         return Resolved(fresh, fileStore)
     }
 
-    /** The OS store's password when it opens the keystore. */
     private fun fromOsStore(
         osStore: PasswordStore,
         fileStore: PasswordStore,
         opens: (String) -> Boolean,
     ): Resolved? {
         val osValue = osStore.load()?.takeIf(opens) ?: return null
-        // The OS store is authoritative; drop any file copy so the data
-        // directory alone is no longer enough to unlock the keys.
         fileStore.delete()
         return Resolved(osValue, osStore)
     }
 
-    /** The password file's password when it opens the keystore, migrated into the OS store when possible. */
     private fun fromFileStore(
         osStore: PasswordStore,
         fileStore: PasswordStore,

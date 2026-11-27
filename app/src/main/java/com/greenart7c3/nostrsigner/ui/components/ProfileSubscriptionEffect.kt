@@ -12,11 +12,10 @@ import kotlinx.coroutines.launch
  * Drives the per-account profile metadata fetch from whichever composable is displaying
  * [account]. Starts (or refreshes) the throttled, one-shot subscription when the composable
  * enters composition and closes it on dispose, replacing the old app-wide, current-account-only
- * subscription.
+ * subscription. Does nothing in previews: the preview renderer has no Application.
  */
 @Composable
 fun ProfileSubscriptionEffect(account: Account) {
-    // No relay subscriptions in previews: the preview renderer has no Application.
     if (LocalInspectionMode.current) return
     val sub = LocalProfileSubscription.current
     val appScope = LocalAppScope.current

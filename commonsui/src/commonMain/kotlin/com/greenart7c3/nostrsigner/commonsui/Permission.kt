@@ -104,17 +104,16 @@ data class Permission(
      * [localized] / [localizedBlocking]). With [shouldTranslateConnect], `connect` is the short
      * "Connect" label instead of the full sentence.
      */
-    // LAST_COMMIT_CHECKED = "14ec14dac92d891715239bfb83ed1c9bdf2ac382"
+    // Kinds last checked against https://github.com/nostr-protocol/nips/tree/14ec14dac92d891715239bfb83ed1c9bdf2ac382
     fun description(shouldTranslateConnect: Boolean = false): PermissionText = when (val normalized = type.trim().lowercase()) {
         "sign_event" -> eventKindDescription(kind)
         "connect" -> if (shouldTranslateConnect) PermissionText.Resource(Res.string.connect) else PermissionText.Resource(Res.string.would_like_your_permission_to_read_your_public_key_and_sign_events_on_your_behalf)
         "nip" -> nipDescription(kind) ?: PermissionText.Resource(Res.string.nip_kind, kind.toString())
-        else -> typeStrings[normalized]?.let { PermissionText.Resource(it) } ?: PermissionText.Literal(type)
+        else -> kindIndependentTypeStrings[normalized]?.let { PermissionText.Resource(it) } ?: PermissionText.Literal(type)
     }
 }
 
-/** The permission types described by one string, whatever their kind. */
-private val typeStrings: Map<String, StringResource> = mapOf(
+private val kindIndependentTypeStrings: Map<String, StringResource> = mapOf(
     "get_public_key" to Res.string.read_your_public_key,
     "nip04_encrypt" to Res.string.encrypt_data_using_nip_4,
     "nip04_decrypt" to Res.string.decrypt_data_using_nip_4,
@@ -138,7 +137,6 @@ private val typeStrings: Map<String, StringResource> = mapOf(
 /** The NIP that defines [kind], when Amber has a description for it. */
 fun nipDescription(kind: Int?): PermissionText.Resource? = kind?.let { nipStrings[it] }?.let { PermissionText.Resource(it) }
 
-/** The label of a `sign_event` permission for [kind]: the kind's own, its range's, its NIP's, or "kind N". */
 private fun eventKindDescription(kind: Int?): PermissionText {
     val resource = kind?.let { eventKindStrings[it] ?: eventKindRangeString(it) }
     return resource?.let { PermissionText.Resource(it) }
@@ -146,7 +144,6 @@ private fun eventKindDescription(kind: Int?): PermissionText {
         ?: PermissionText.Resource(Res.string.event_kind, kind.toString())
 }
 
-/** The kinds labelled as a range; a kind with its own label in [eventKindStrings] is looked up first. */
 private fun eventKindRangeString(kind: Int): StringResource? = when (kind) {
     in 1630..1633 -> Res.string.event_kind_1630_1633
     in 5000..5999 -> Res.string.event_kind_5000_5999
@@ -156,7 +153,6 @@ private fun eventKindRangeString(kind: Int): StringResource? = when (kind) {
     else -> null
 }
 
-/** The NIPs Amber describes, by number. */
 private val nipStrings: Map<Int, StringResource> = mapOf(
     1 to Res.string.nip_01,
     2 to Res.string.nip_02,
@@ -225,7 +221,6 @@ private val nipStrings: Map<Int, StringResource> = mapOf(
     99 to Res.string.nip_99,
 )
 
-/** The event kinds with a label of their own (the ranges are in [eventKindRangeString]). */
 private val eventKindStrings: Map<Int, StringResource> = mapOf(
     0 to Res.string.event_kind_0, 1 to Res.string.event_kind_1, 3 to Res.string.event_kind_3, 4 to Res.string.event_kind_4, 5 to Res.string.event_kind_5, 6 to Res.string.event_kind_6,
     7 to Res.string.event_kind_7, 8 to Res.string.event_kind_8, 9 to Res.string.event_kind_9, 10 to Res.string.event_kind_10, 11 to Res.string.event_kind_11, 12 to Res.string.event_kind_12,

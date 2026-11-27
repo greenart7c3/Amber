@@ -40,11 +40,10 @@ class ConnectionToReplaceTest {
     )
 
     @Test
-    fun nostrConnectUriReusingASavedKeyMustBeConfirmed() = runBlocking {
+    fun nostrConnectUriReusingASavedKeyUnderADifferentNameMustBeConfirmed() = runBlocking {
         coEvery { dao.getByKey(clientKey) } returns damus
         coEvery { dao.getByName(any()) } returns null
 
-        // The URI claims a different name, so the same-name check alone missed it.
         val existing = connectionToReplace(dao, connect("Totally New App", isNostrConnectUri = true), clientKey)
 
         assertEquals("Damus", existing?.app?.application?.name)

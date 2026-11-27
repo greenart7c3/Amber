@@ -44,12 +44,11 @@ class ConnectionStoreTest {
         store.put("default", connection())
         store.put("work", connection("work scripts"))
 
-        // A second instance sees what the first wrote.
-        val reopened = store()
-        assertEquals(connection(), reopened.get("default"))
-        assertEquals("work scripts", reopened.get("work")?.name)
+        val secondInstance = store()
+        assertEquals(connection(), secondInstance.get("default"))
+        assertEquals("work scripts", secondInstance.get("work")?.name)
 
-        assertTrue(reopened.remove("work"))
+        assertTrue(secondInstance.remove("work"))
         assertNull(store().get("work"))
         assertEquals(false, store().remove("work"))
     }
@@ -78,9 +77,8 @@ class ConnectionStoreTest {
         store().put("default", connection())
         val text = Files.readString(directory.resolve("connections.json"))
         assertTrue(text.startsWith("amber-cli-1:"))
-        // Nothing of the connection is readable in the file itself.
-        assertTrue(!text.contains("a".repeat(64)))
-        assertTrue(!text.contains("wss://relay.nip46.com/"))
+        assertTrue("the client key is readable in the file", !text.contains("a".repeat(64)))
+        assertTrue("the relay is readable in the file", !text.contains("wss://relay.nip46.com/"))
         assertEquals("default", store().read().profiles.keys.first())
     }
 

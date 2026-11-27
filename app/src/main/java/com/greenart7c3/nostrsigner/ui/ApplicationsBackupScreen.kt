@@ -116,8 +116,6 @@ fun ApplicationsBackupScreen(
         onRequestRestore = { account ->
             isBusy = true
             appScope.launch {
-                // Fetch first and let the user review what the backup
-                // contains; nothing is written until they confirm.
                 val fetched = ApplicationBackup.fetchLatestPayload(account, relayClient.client, settingsStore)
                 withContext(Dispatchers.Main) {
                     isBusy = false
@@ -426,6 +424,7 @@ fun RestoreBackupDialog(
  * delete them; the rest start selected. Indexed by position rather than key:
  * a backup is untrusted input and may repeat a key.
  */
+@Suppress("NoComments")
 private class BackupSelection(val applications: List<BackupApplication>) {
     val checked = mutableStateListOf<Boolean>().apply { repeat(applications.size) { add(true) } }
 
@@ -440,12 +439,6 @@ private fun rememberBackupSelection(payload: BackupPayload): BackupSelection = r
     BackupSelection(payload.applications.filterNot { ApplicationBackupRestore.isExpired(it, now) })
 }
 
-/**
- * Lists what a backup would restore (name, key, relays and permission count
- * per application), each with a checkbox, so the user can leave out entries
- * they don't want or don't recognize. Applications set to sign every request
- * are flagged.
- */
 @Composable
 private fun BackupContents(
     selection: BackupSelection,
@@ -457,8 +450,6 @@ private fun BackupContents(
     ) {
         item { header() }
         itemsIndexed(selection.applications) { index, app ->
-            // NIP-46 apps are keyed by a pubkey; NIP-55 apps (no relays) by
-            // their package name, which is shown in full.
             val key = if (app.relays.isEmpty()) app.key else app.key.toShortenHex()
             Row(
                 verticalAlignment = Alignment.CenterVertically,

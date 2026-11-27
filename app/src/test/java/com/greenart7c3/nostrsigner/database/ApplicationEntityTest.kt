@@ -15,16 +15,15 @@ class ApplicationEntityTest {
     }
 
     @Test
-    fun `localPubKey returns empty string for invalid localKey`() {
-        // "invalid-key" is not valid hex and not 32 bytes
+    fun `localPubKey returns empty string for a localKey that is neither hex nor 32 bytes`() {
         val app = ApplicationEntity.empty().copy(localKey = "invalid-key")
         assertEquals("", app.localPubKey)
     }
 
     @Test
     fun `localPubKey returns empty string for wrong sized hex localKey`() {
-        // 31 bytes instead of 32
-        val app = ApplicationEntity.empty().copy(localKey = "00".repeat(31))
+        val thirtyOneBytesOfHex = "00".repeat(31)
+        val app = ApplicationEntity.empty().copy(localKey = thirtyOneBytesOfHex)
         assertEquals("", app.localPubKey)
     }
 

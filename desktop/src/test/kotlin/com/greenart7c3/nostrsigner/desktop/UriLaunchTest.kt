@@ -30,15 +30,13 @@ class UriLaunchTest {
 
     @Test
     fun desktopEntryQuotesPathsSafely() {
-        // Paths without separators stay bare; spaces and quotes get the
-        // desktop-entry double-quote treatment.
         assertEquals(
+            "a path with a space gets the desktop-entry double quotes",
             "Exec=\"/opt/My Apps/Amber\" %u",
             UriLaunch.desktopEntry("/opt/My Apps/Amber").lineSequence().first { it.startsWith("Exec=") },
         )
-        // A quote is escaped for the quoting (\") and that backslash again
-        // at the string level (\\"), as the Desktop Entry spec reads it back.
         assertEquals(
+            "a quote is escaped for the quoting and that backslash again at the string level, as the Desktop Entry spec reads it back",
             "Exec=\"/opt/a\\\\\"b/Amber\" %u",
             UriLaunch.desktopEntry("/opt/a\"b/Amber").lineSequence().first { it.startsWith("Exec=") },
         )
@@ -46,13 +44,11 @@ class UriLaunchTest {
 
     @Test
     fun desktopEntryEscapesFieldCodesAndShellCharacters() {
-        // A literal % would be read as a field code; $ and ` are escaped in quotes.
-        assertEquals("/opt/100%%/Amber", DesktopEntryEscaping.quoteForDesktopEntry("/opt/100%/Amber"))
-        // In the file: quote, the escaped char preceded by two backslashes (quoting + string level).
-        assertEquals($$"\"/opt/\\\\$HOME/Amber\"", DesktopEntryEscaping.quoteForDesktopEntry($$"/opt/$HOME/Amber"))
-        assertEquals("\"/opt/\\\\`id\\\\`/Amber\"", DesktopEntryEscaping.quoteForDesktopEntry("/opt/`id`/Amber"))
-        // A literal backslash needs four in the file.
-        assertEquals("\"C:\\\\\\\\Amber\"", DesktopEntryEscaping.quoteForDesktopEntry("C:\\Amber"))
+        assertEquals("a literal % would be read as a field code", "/opt/100%%/Amber", DesktopEntryEscaping.quoteForDesktopEntry("/opt/100%/Amber"))
+        val quotedShellCharacter = "a shell character is quoted and preceded by two backslashes, for the quoting and the string level"
+        assertEquals(quotedShellCharacter, $$"\"/opt/\\\\$HOME/Amber\"", DesktopEntryEscaping.quoteForDesktopEntry($$"/opt/$HOME/Amber"))
+        assertEquals(quotedShellCharacter, "\"/opt/\\\\`id\\\\`/Amber\"", DesktopEntryEscaping.quoteForDesktopEntry("/opt/`id`/Amber"))
+        assertEquals("a literal backslash needs four in the file", "\"C:\\\\\\\\Amber\"", DesktopEntryEscaping.quoteForDesktopEntry("C:\\Amber"))
     }
 
     @Test

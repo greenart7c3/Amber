@@ -27,62 +27,43 @@ import kotlinx.coroutines.sync.withLock
 object SecureCryptoHelper {
     private const val ANDROID_KEYSTORE = "AndroidKeyStore"
 
-    // Room converters and DAOs encrypt without a context at hand, so Amber's constructor
-    // installs the application context before anything can reach the key.
     private lateinit var appContext: Context
 
-    // The per-account databases, for re-encrypting the application rows when the key rotates.
     private lateinit var accountRepository: AccountRepository
 
-    // The Application itself: install runs in its constructor, before its base context (and applicationContext) is attached.
+    /**
+     * Called from Amber's constructor, before anything can reach the key: Room converters
+     * and DAOs encrypt without a context at hand. [application] is the Application itself,
+     * whose base context (and so its applicationContext) is not attached yet at that point.
+     */
     fun install(application: Context, accounts: AccountRepository) {
         appContext = application
         accountRepository = accounts
     }
 
-    // The wrapping key alternates between two aliases. Rotation creates the
-    // new key under whichever alias is free, so the key that protects the
-    // existing ciphertext is never deleted until every secret has been
-    // durably re-encrypted (GHSA-wv7c-hq2j-ppc5). The alias in use is
-    // recorded by KeystorePolicy.commitActiveAlias; installs that
-    // predate it have never rotated and use KEY_ALIAS.
-    private const val KEY_ALIAS = "AMBER_AES_KEY"
-    private const val ALT_KEY_ALIAS = "AMBER_AES_KEY_B"
+    private const val FIRST_KEY_ALIAS = "AMBER_AES_KEY"
+    private const val SECOND_KEY_ALIAS = "AMBER_AES_KEY_B"
     private const val TAG = "SecureCryptoHelper"
     private const val TRANSFORMATION = "AES/GCM/NoPadding"
-    private const val IV_SIZE = 12 // 96 bits
-    private const val TAG_SIZE = 128 // bits
+    private const val IV_SIZE_BYTES = 12
+    private const val TAG_SIZE_BITS = 128
     private const val KEY_CHECK_PROBE = "amber-key-check"
 
-    // A sweep that rewrote anything is repeated, so a value written with the
-    // previous key while the sweep was running is still picked up.
     private const val MAX_SWEEP_PASSES = 3
 
-    // keystore2 runs out of operation slots device-wide, not per app, so a
-    // single pruning can be followed by another while it clears.
     private const val MAX_CIPHER_ATTEMPTS = 3
     private const val PRUNED_RETRY_DELAY_MS = 10L
     private val mutex = Mutex()
 
-    /**
-     * The key new ciphertext is written with ([key], stored under [alias]),
-     * plus the other alias's key as a decrypt-only [fallback]. The fallback is
-     * only non-null while a rotation is unfinished: values not yet moved to
-     * the new key stay readable through it.
-     */
-    private class KeyHandle(val alias: String, val key: SecretKey, val fallback: SecretKey?)
+    private class KeyHandle(val alias: String, val key: SecretKey, val previousKeyWhileRotating: SecretKey?)
 
     /**
-     * Cached [KeyHandle]. An AndroidKeyStore [SecretKey] is a lightweight
-     * reference (the material never leaves the TEE/StrongBox), but fetching
-     * it costs a fresh KeyStore load plus `containsAlias`/`getEntry`
-     * binder round-trips to the keystore daemon — milliseconds each,
-     * sequential. Re-fetching it per cipher operation made every
-     * envelope-encrypted DAO read pay a keystore lookup per field
-     * (see ApplicationEntityCrypto.kt), which dominated load times.
-     * Replaced by [rotateKey] and invalidated by [withFreshKeyRetry] when a
-     * cached handle is found unusable.
+     * An AndroidKeyStore [SecretKey] is only a reference (the material stays in the
+     * TEE/StrongBox), but fetching it costs a KeyStore load plus binder round-trips to the
+     * keystore daemon, milliseconds each. Fetched per cipher operation, that lookup per
+     * envelope-encrypted field dominated DAO load times.
      */
+    @Suppress("NoComments")
     @Volatile
     private var cachedHandle: KeyHandle? = null
 
@@ -128,21 +109,19 @@ object SecureCryptoHelper {
     private fun decryptWithHandle(handle: KeyHandle, encryptedText: String): String = try {
         decryptWithKey(handle.key, encryptedText)
     } catch (e: AEADBadTagException) {
-        // Not written with the active key; during an unfinished rotation it
-        // may still be under the previous one.
-        decryptWithKey(handle.fallback ?: throw e, encryptedText)
+        decryptWithKey(handle.previousKeyWhileRotating ?: throw e, encryptedText)
     }
 
     private fun decryptWithKey(key: SecretKey, encryptedText: String): String {
         val data = Base64.decode(encryptedText, Base64.NO_WRAP)
         val buffer = ByteBuffer.wrap(data)
 
-        val iv = ByteArray(IV_SIZE).also { buffer.get(it) }
+        val iv = ByteArray(IV_SIZE_BYTES).also { buffer.get(it) }
         val cipherText = ByteArray(buffer.remaining()).also { buffer.get(it) }
 
         return retryPrunedOperation {
             val cipher = Cipher.getInstance(TRANSFORMATION)
-            val spec = GCMParameterSpec(TAG_SIZE, iv)
+            val spec = GCMParameterSpec(TAG_SIZE_BITS, iv)
             cipher.init(Cipher.DECRYPT_MODE, key, spec)
 
             String(cipher.doFinal(cipherText), Charsets.UTF_8)
@@ -152,19 +131,17 @@ object SecureCryptoHelper {
     /**
      * Runs [block] again when keystore2 finalized the operation underneath
      * it. The daemon caps how many cipher operations can be open at once
-     * across every app on the device and prunes an open one when it runs out,
+     * across every app on the device (so one pruning can be followed by
+     * another while it clears) and prunes an open one when it runs out,
      * after which `doFinal` fails with `INVALID_OPERATION_HANDLE` ("Call on
      * finalized operation with outcome: Pruned", public code 15 /
      * `ERROR_KEY_OPERATION_EXPIRED`). The key and the ciphertext are
-     * untouched, so a fresh [Cipher] — built by every attempt of [block] —
+     * untouched, so a fresh [Cipher], built by every attempt of [block],
      * succeeds. Every other failure, including the last attempt's, propagates
-     * unchanged, which keeps the `AEADBadTagException` fallback in
-     * [decryptWithHandle] and the failure handling of [migrateCiphertext] as
-     * they were.
-     *
-     * Retries are not logged: this is an expected, self-healing race, and a
-     * failure that survives them still surfaces through the caller.
+     * unchanged. Retries are not logged: a failure that survives them still
+     * surfaces through the caller.
      */
+    @Suppress("NoComments")
     internal fun <T> retryPrunedOperation(
         isPruned: (Throwable) -> Boolean = { it.isPrunedKeystoreOperation() },
         block: () -> T,
@@ -181,17 +158,6 @@ object SecureCryptoHelper {
         }
     }
 
-    /**
-     * Runs [block] with the current key handle, retrying exactly once with a
-     * re-fetched handle when the cached one has gone stale (the entry was
-     * deleted or invalidated underneath us — e.g. a concurrent [rotateKey]
-     * removing the previous key, or the opt-in unlocked-device policy
-     * refusing key use while locked).
-     * Data errors — chiefly GCM's AEADBadTagException for corrupt or
-     * wrong-key ciphertext — are not stale-handle errors and propagate to the
-     * caller on the first attempt, preserving the decryptField failure
-     * contract in ApplicationEntityCrypto.kt.
-     */
     private inline fun <T> withFreshKeyRetry(block: (KeyHandle) -> T): T {
         try {
             return block(getOrLoadHandle())
@@ -226,14 +192,8 @@ object SecureCryptoHelper {
         return KeyHandle(alias, key, keyStore.secretKey(otherAlias(alias)))
     }
 
-    /**
-     * The alias new ciphertext must be written with. Normally the recorded
-     * one; if that key is gone but the other alias still holds a key, adopt
-     * the survivor rather than letting [loadHandle] mint a fresh key, which
-     * would strand everything encrypted under the survivor.
-     */
     private fun resolveActiveAlias(context: Context, keyStore: KeyStore): String {
-        val recorded = if (KeystorePolicy.activeAlias(context) == ALT_KEY_ALIAS) ALT_KEY_ALIAS else KEY_ALIAS
+        val recorded = if (KeystorePolicy.activeAlias(context) == SECOND_KEY_ALIAS) SECOND_KEY_ALIAS else FIRST_KEY_ALIAS
         val other = otherAlias(recorded)
         if (!keyStore.containsAlias(recorded) && keyStore.containsAlias(other)) {
             AmberLog.w(TAG, "Active Keystore alias $recorded is missing, adopting $other")
@@ -245,12 +205,13 @@ object SecureCryptoHelper {
         return recorded
     }
 
-    private fun otherAlias(alias: String): String = if (alias == ALT_KEY_ALIAS) KEY_ALIAS else ALT_KEY_ALIAS
+    private fun otherAlias(alias: String): String = if (alias == SECOND_KEY_ALIAS) FIRST_KEY_ALIAS else SECOND_KEY_ALIAS
 
     private fun KeyStore.secretKey(alias: String): SecretKey? = (getEntry(alias, null) as? KeyStore.SecretKeyEntry)?.secretKey
 
     private fun getKeyStore(): KeyStore = KeyStore.getInstance(ANDROID_KEYSTORE).apply { load(null) }
 
+    @Suppress("NoComments")
     private fun generateSecretKey(context: Context, alias: String, requireUnlockedDevice: Boolean): SecretKey {
         val keyGenerator = KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_AES, ANDROID_KEYSTORE)
         val paramsBuilder = KeyGenParameterSpec.Builder(
@@ -261,13 +222,10 @@ object SecureCryptoHelper {
             .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
             .setKeySize(256)
 
-        // Defense-in-depth (GHSA-8844-q5vh-9j8f, L1): opt-in toggle — when
-        // enabled, require the device to be unlocked at the time the key
-        // material is used, so a process that runs while the screen is
-        // locked cannot decrypt stored account keys. Does not prompt for
-        // biometrics per operation (which would break background NIP-46
-        // signing); it only refuses key use while the device is locked.
-        // Available from API 28 (KeyGenParameterSpec.Builder).
+        // GHSA-8844-q5vh-9j8f, L1: the opt-in policy makes the Keystore refuse key use
+        // while the device is locked, so a process running behind the lock screen cannot
+        // decrypt stored account keys. It never prompts per operation (that would break
+        // background NIP-46 signing). setUnlockedDeviceRequired exists from API 28.
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P && requireUnlockedDevice) {
             paramsBuilder.setUnlockedDeviceRequired(true)
             try {
@@ -292,20 +250,32 @@ object SecureCryptoHelper {
      * Replaces the wrapping key with one generated under the requested
      * policy, re-encrypting every stored secret (per-account DataStore keys,
      * app DataStore PIN, WebDAV password, and the per-account Room
-     * `application` tables' envelope-encrypted `secret` / `localKey` columns —
-     * see `ApplicationEntityCrypto.kt`).
+     * `application` tables' envelope-encrypted `secret` / `localKey` columns,
+     * GHSA-5fjp-ghh8-wch8 — see `ApplicationEntityCrypto.kt`).
      *
      * The Keystore `setUnlockedDeviceRequired` flag is set at key-generation
      * time, so changing the opt-in policy needs a new key. No step deletes a
      * key that still protects data (GHSA-wv7c-hq2j-ppc5):
      *
-     * 1. The new key is generated under the free alias; the old one is untouched.
+     * 1. The new key is generated under the free one of the two aliases, and
+     *    proven by a round trip; the old one is untouched. An install that never
+     *    rotated has no recorded alias and uses the first.
      * 2. One synchronous preferences commit makes the new alias active and
      *    records the policy. Before it lands nothing has changed; after it,
-     *    new writes use the new key and reads fall back to the old one.
+     *    new writes use the new key and reads fall back to the old one. A
+     *    failed commit still updates the in-memory values, so they are
+     *    restored before the new key is discarded.
      * 3. [finishRotation] moves each value to the new key with
      *    compare-and-set writes, and deletes the old key only after a full
      *    pass finds nothing left to move and nothing it failed to read.
+     *
+     * Only a value neither key can read (a GCM tag mismatch or malformed data)
+     * lets a sweep move past it; any other failure, such as the device being
+     * locked under the policy or a keystore error, keeps the previous key. If the
+     * recorded alias has lost its key while the other still holds one, the
+     * survivor is adopted rather than a fresh key minted, which would strand
+     * everything encrypted under it. A cached key found unusable is re-fetched
+     * once; an `AEADBadTagException` is a data error, never a stale key.
      *
      * If step 3 cannot finish (process death, the keystore refusing a key),
      * both keys remain and [completePendingRotation] resumes at next start.
@@ -321,7 +291,6 @@ object SecureCryptoHelper {
         val newAlias = otherAlias(oldAlias)
         val oldKey = keyStore.secretKey(oldAlias)
         if (oldKey == null) {
-            // No key under either alias, so nothing is encrypted yet.
             val key = generateSecretKey(context, oldAlias, requireUnlockedDevice)
             if (!KeystorePolicy.commitActiveAlias(context, oldAlias, requireUnlockedDevice)) {
                 throw IOException("Failed to persist the key policy")
@@ -330,15 +299,12 @@ object SecureCryptoHelper {
             return@withLock
         }
 
-        // An earlier rotation never finished, so the free alias may still hold
-        // the key for some values. It can only be replaced once nothing needs it.
         if (keyStore.containsAlias(newAlias)) {
             check(finishRotation(context, keyStore, oldAlias, oldKey, newAlias)) {
                 "A previous key rotation is still incomplete"
             }
         }
 
-        // 1. Generate the replacement and prove it works before relying on it.
         val newKey = try {
             generateSecretKey(context, newAlias, requireUnlockedDevice).also { key ->
                 check(decryptWithKey(key, encryptWithKey(key, KEY_CHECK_PROBE)) == KEY_CHECK_PROBE) { "New key failed a round trip" }
@@ -348,8 +314,6 @@ object SecureCryptoHelper {
             throw e
         }
 
-        // 2. Switch. commit() updates the in-memory values even when the disk
-        // write fails, so restore them before discarding the new key.
         val previousPolicy = KeystorePolicy.requireUnlockedDevice(context)
         if (!KeystorePolicy.commitActiveAlias(context, newAlias, requireUnlockedDevice)) {
             KeystorePolicy.commitActiveAlias(context, oldAlias, previousPolicy)
@@ -358,7 +322,6 @@ object SecureCryptoHelper {
         }
         cachedHandle = KeyHandle(newAlias, newKey, oldKey)
 
-        // 3. Move everything over and drop the old key.
         if (finishRotation(context, keyStore, newAlias, newKey, oldAlias)) {
             AmberLog.d(TAG, "Key rotation complete (requireUnlockedDevice=$requireUnlockedDevice)")
         } else {
@@ -384,12 +347,6 @@ object SecureCryptoHelper {
         }
     }
 
-    /**
-     * Moves every value still encrypted under [previousAlias] onto
-     * [activeKey], then deletes [previousAlias]. Returns true once it is
-     * deleted; false (deleting nothing) if any value could not be checked or
-     * moved, or values kept moving for [MAX_SWEEP_PASSES] passes.
-     */
     private suspend fun finishRotation(
         context: Context,
         keyStore: KeyStore,
@@ -405,17 +362,11 @@ object SecureCryptoHelper {
     }
 
     private enum class SweepOutcome {
-        /** The pass changed nothing: every value is on the current key. */
         SETTLED,
-
-        /** The pass moved values, so another pass must re-check them. */
         CHANGED,
-
-        /** A value could not be checked or moved; the previous key must be kept. */
         FAILED,
     }
 
-    /** Sweeps until a pass changes nothing; false when a pass failed or values kept moving for [MAX_SWEEP_PASSES] passes. */
     private suspend fun sweepUntilSettled(
         context: Context,
         current: SecretKey,
@@ -448,18 +399,17 @@ object SecureCryptoHelper {
                 SweepOutcome.FAILED
             }
 
-            result.changed == 0 -> SweepOutcome.SETTLED
+            result.rewritesAttempted == 0 -> SweepOutcome.SETTLED
 
             else -> SweepOutcome.CHANGED
         }
     }
 
     private class SweepResult {
-        var changed = 0
+        var rewritesAttempted = 0
         var failed = 0
     }
 
-    /** One pass over every stored ciphertext; see [migrateCiphertext]. */
     private suspend fun sweep(context: Context, current: SecretKey, previous: SecretKey): SweepResult {
         val result = SweepResult()
 
@@ -479,9 +429,7 @@ object SecureCryptoHelper {
                     AmberLog.w(TAG, "Key rotation: could not check a value", migration.error)
                 }
                 is CiphertextMigration.Rewrite -> {
-                    // Counted even when the compare-and-set loses to a
-                    // concurrent write, so another pass re-checks that value.
-                    result.changed++
+                    result.rewritesAttempted++
                     try {
                         replace(raw, migration.ciphertext)
                     } catch (e: Exception) {
@@ -506,7 +454,6 @@ object SecureCryptoHelper {
         move(WebDavSettings.encryptedPassword(context)) { expected, ciphertext ->
             WebDavSettings.replaceEncryptedPassword(context, expected, ciphertext)
         }
-        // Per-account Room `application` tables (GHSA-5fjp-ghh8-wch8).
         for ((npub) in accounts) {
             val daos = accountRepository.daos(npub)
             for (row in daos.applicationDao.getAllApplicationsRaw()) {
@@ -518,25 +465,15 @@ object SecureCryptoHelper {
     }
 
     internal sealed interface CiphertextMigration {
-        /** Already readable with the current key. */
         data object Current : CiphertextMigration
 
-        /** Neither key can decrypt it, so deleting the previous key loses nothing. */
         data object Unreadable : CiphertextMigration
 
         data class Rewrite(val ciphertext: String) : CiphertextMigration
 
-        /** A key could not be used right now; the previous key must be kept. */
         data class Failed(val error: Exception) : CiphertextMigration
     }
 
-    /**
-     * Decides what one stored value needs during a rotation. Only an error
-     * that proves the ciphertext does not belong to a key (GCM tag mismatch,
-     * malformed data) lets the sweep move on; any other failure — the device
-     * is locked under the unlocked-device policy, a keystore error — is
-     * [CiphertextMigration.Failed], which keeps the previous key alive.
-     */
     internal fun migrateCiphertext(
         raw: String,
         decryptCurrent: (String) -> String,
@@ -556,7 +493,6 @@ object SecureCryptoHelper {
         }
     }
 
-    /** [raw] does not belong to the current key: decrypt it with the previous one and re-encrypt it. */
     private fun migrateFromPreviousKey(
         raw: String,
         decryptPrevious: (String) -> String,
@@ -595,6 +531,7 @@ object SecureCryptoHelper {
  * itself: `android.security.KeyStoreException` has no public constructor and
  * is missing from the stub `android.jar` JVM tests compile against.
  */
+@Suppress("NoComments")
 internal fun Throwable.isPrunedKeystoreOperation(
     isExpiredKeystoreError: (Throwable) -> Boolean = { it.isExpiredKeystoreError() },
 ): Boolean {
@@ -608,6 +545,7 @@ internal fun Throwable.isPrunedKeystoreOperation(
     return false
 }
 
+@Suppress("NoComments")
 private fun Throwable.isExpiredKeystoreError(): Boolean {
     // android.security.KeyStoreException arrived with the keystore2 API
     // (API 33), which is also where pruning open operations began.
@@ -618,11 +556,11 @@ private fun Throwable.isExpiredKeystoreError(): Boolean {
 }
 
 fun Context.hasStrongBox(): Boolean {
-    val isMediaTek = Build.HARDWARE.lowercase().contains("mt") ||
+    val isMediaTekWithBrokenStrongBox = Build.HARDWARE.lowercase().contains("mt") ||
         Build.BOARD.lowercase().contains("mt") ||
-        (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && Build.SOC_MANUFACTURER.lowercase().contains("mediatek")) // usually mediatek contains broken strongbox support
+        (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && Build.SOC_MANUFACTURER.lowercase().contains("mediatek"))
 
-    return !isMediaTek &&
+    return !isMediaTekWithBrokenStrongBox &&
         Build.VERSION.SDK_INT >= Build.VERSION_CODES.P &&
         packageManager.hasSystemFeature(PackageManager.FEATURE_STRONGBOX_KEYSTORE)
 }

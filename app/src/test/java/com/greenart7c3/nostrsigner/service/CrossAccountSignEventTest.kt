@@ -42,8 +42,6 @@ import org.junit.Test
  * anonymous zap requests (kind 9734 with an "anon" tag).
  */
 class CrossAccountSignEventTest {
-    // A context whose Application is a relaxed mock: parsing logs failures through it.
-
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     private val kpA = KeyPair()
@@ -59,8 +57,6 @@ class CrossAccountSignEventTest {
 
     private val kpB = KeyPair()
 
-    // Spied signer: the test must prove B's key never performs a signature.
-    // Reading the public key is not key use: wasNot Called ignores it.
     private val signerB = mockk<NostrSignerInternal>(relaxed = true) {
         every { keyPair } returns kpB
         excludeRecords { keyPair }
@@ -80,8 +76,6 @@ class CrossAccountSignEventTest {
         mockkObject(AmberLog)
         every { AmberLog.e(any(), any(), any()) } returns Unit
         every { AmberLog.e(any(), any()) } returns Unit
-        // accountB is stored on this device; the old code loaded it here and
-        // switched the signing key to it.
         mockkObject(LocalPreferences, AccountStorage)
         every { AccountStorage.loadSync(any(), any()) } returns null
         coEvery { AccountStorage.load(any(), any()) } returns null
@@ -131,10 +125,8 @@ class CrossAccountSignEventTest {
 
         assertNotNull(result)
         assertNotNull(result!!.event)
-        // Quartz gift-wraps anon zaps under an ephemeral key, so the wrapper
-        // pubkey is neither account; what matters is that B's key is unused.
         verify { signerB wasNot Called }
-        assertTrue(result.event!!.pubKey != accountB.hexKey)
+        assertTrue("an anon zap is signed under an ephemeral key, never B's", result.event!!.pubKey != accountB.hexKey)
     }
 
     @Test

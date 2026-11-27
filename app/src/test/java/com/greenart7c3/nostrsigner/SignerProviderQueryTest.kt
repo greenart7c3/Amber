@@ -129,8 +129,7 @@ class SignerProviderQueryTest {
 
         val cursor = queryRelayAuth(WHITELISTED_URL)
 
-        // null = no silent signing; the caller must surface a user prompt.
-        assertNull(cursor)
+        assertNull("no silent signing: the caller must surface a user prompt", cursor)
         verify { dao.getPermissionForRelay(REQUESTER, "SIGN_EVENT", 22242, WHITELISTED_HOST) }
         verify(exactly = 0) { account.signSync<Event>(any(), any(), any(), any()) }
     }
@@ -208,8 +207,7 @@ class SignerProviderQueryTest {
         rejectUntil = if (accept) 0 else TimeUtils.now() + 3600,
     )
 
-    /** Only [rows] exist for the requester; every other decrypt lookup is empty. */
-    private fun stubDecryptGrants(vararg rows: ApplicationPermissionsEntity) {
+    private fun stubOnlyDecryptGrants(vararg rows: ApplicationPermissionsEntity) {
         every { amber.accountDatabases.getLogDatabase(any()) } returns mockk(relaxed = true)
         every { dao.getSignPolicy(REQUESTER) } returns null
         every { dao.getPermission(REQUESTER, any<String>()) } answers { rows.firstOrNull { it.type == secondArg<String>() } }
@@ -218,12 +216,9 @@ class SignerProviderQueryTest {
         coEvery { AmberUtils.encryptOrDecryptData(any(), any(), any(), any(), any(), any()) } returns "plaintext"
     }
 
-    // A reject-only caller used to pass the pre-check: Amber decrypted, and the
-    // response (rejected for an event, null for anything else) told the caller
-    // how the plaintext classified.
     @Test
     fun `a caller holding only rejections is answered without decrypting`() {
-        stubDecryptGrants(decryptRow("DECRYPT_EVENT", accept = false))
+        stubOnlyDecryptGrants(decryptRow("DECRYPT_EVENT", accept = false))
         try {
             assertNull(queryDecrypt())
             coVerify(exactly = 0) { AmberUtils.encryptOrDecryptData(any(), any(), any(), any(), any(), any()) }
@@ -234,7 +229,7 @@ class SignerProviderQueryTest {
 
     @Test
     fun `a caller with an accepting grant still gets its request decrypted`() {
-        stubDecryptGrants(decryptRow("DECRYPT_CLEAR_TEXT", accept = true))
+        stubOnlyDecryptGrants(decryptRow("DECRYPT_CLEAR_TEXT", accept = true))
         try {
             queryDecrypt()
             coVerify(exactly = 1) { AmberUtils.encryptOrDecryptData("ciphertext", SignerType.NIP44_DECRYPT, any(), any(), any(), any()) }
@@ -243,14 +238,12 @@ class SignerProviderQueryTest {
         }
     }
 
-    // The pre-check must let through every grant the final lookup can decide on:
-    // the generic one, each classified content type and the NIP-level grant.
     @Test
     fun `every grant the decrypt lookup consults passes the pre-check on its own`() {
         val grants = listOf("NIP44_DECRYPT", "DECRYPT_CLEAR_TEXT", "DECRYPT_EVENT", "DECRYPT_TAG_ARRAY", "DECRYPT_ZAP_EVENT").map { decryptRow(it, accept = true) } +
             decryptRow("NIP", accept = true).copy(kind = 44)
         for (grant in grants) {
-            stubDecryptGrants(grant.takeIf { it.kind == null } ?: decryptRow("none", accept = false))
+            stubOnlyDecryptGrants(grant.takeIf { it.kind == null } ?: decryptRow("none", accept = false))
             if (grant.kind != null) {
                 every { dao.getPermission(REQUESTER, "NIP", 44) } returns grant
             }
@@ -265,7 +258,7 @@ class SignerProviderQueryTest {
 
     @Test
     fun `a caller without any decrypt grant is answered without decrypting`() {
-        stubDecryptGrants()
+        stubOnlyDecryptGrants()
         try {
             assertNull(queryDecrypt())
             coVerify(exactly = 0) { AmberUtils.encryptOrDecryptData(any(), any(), any(), any(), any(), any()) }
@@ -282,12 +275,10 @@ class SignerProviderQueryTest {
         arguments = arrayOf("ciphertext", "cd".repeat(32), NPUB, kind.toString(), "scope"),
     )
 
-    /** A remembered NIP-44 v3 decrypt grant for kind 30000. */
-    private fun stubV3Grant() {
+    private fun stubRememberedV3DecryptGrantForKind30000() {
         val grant = decryptRow("NIP44_V3_DECRYPT", accept = true).copy(kind = 30_000)
         every { amber.accountDatabases.getLogDatabase(any()) } returns mockk(relaxed = true)
         every { dao.getSignPolicy(REQUESTER) } returns null
-        // The kind-agnostic lookup has no kind filter, so it finds the grant for any kind.
         every { dao.getPermission(REQUESTER, any<String>()) } answers { grant.takeIf { it.type == secondArg<String>() } }
         every { dao.getPermission(REQUESTER, any<String>(), any<Int>()) } answers { grant.takeIf { it.type == secondArg<String>() && it.kind == thirdArg<Int>() } }
         every { dao.getPermissionAllKinds(REQUESTER, any()) } returns null
@@ -297,7 +288,7 @@ class SignerProviderQueryTest {
 
     @Test
     fun `a v3 grant for one kind does not let another kind be decrypted`() {
-        stubV3Grant()
+        stubRememberedV3DecryptGrantForKind30000()
         try {
             assertNull(queryV3Decrypt(kind = 1))
             coVerify(exactly = 0) { AmberUtils.encryptOrDecryptData(any(), any(), any(), any(), any(), any()) }
@@ -308,7 +299,7 @@ class SignerProviderQueryTest {
 
     @Test
     fun `a v3 grant still decrypts its own kind`() {
-        stubV3Grant()
+        stubRememberedV3DecryptGrantForKind30000()
         try {
             queryV3Decrypt(kind = 30_000)
             coVerify(exactly = 1) { AmberUtils.encryptOrDecryptData(any(), SignerType.NIP44_V3_DECRYPT, any(), any(), 30_000, "scope") }

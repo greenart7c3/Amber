@@ -31,7 +31,7 @@ class KeyRotationTest {
     }
 
     @Test
-    fun rotationKeepsSecretsReadableAndLeavesOneKey() = runBlocking {
+    fun rotatingAwayAndBackKeepsSecretsReadableAndLeavesOneKey() = runBlocking {
         val originalPolicy = KeystorePolicy.requireUnlockedDevice(context)
         DataStoreAccess.savePin(context, "synthetic-pin-1234")
         val startAliases = presentAliases()
@@ -45,7 +45,6 @@ class KeyRotationTest {
         assertEquals(1, rotatedAliases.size)
         assertNotEquals(startAliases, rotatedAliases)
 
-        // Rotate back: exercises the other direction and restores the policy.
         LockSettings.updateRequireUnlockedDevice(context, originalPolicy)
 
         assertEquals("synthetic-pin-1234", DataStoreAccess.loadPin(context))
@@ -54,10 +53,9 @@ class KeyRotationTest {
     }
 
     @Test
-    fun pendingRotationIsCompletedWithoutLosingData() = runBlocking {
+    fun completingWithNoRotationPendingIsANoOpThatKeepsDataReadable() = runBlocking {
         DataStoreAccess.savePin(context, "synthetic-pin-5678")
 
-        // Nothing pending: must be a no-op that keeps the data readable.
         SecureCryptoHelper.completePendingRotation(context)
 
         assertEquals("synthetic-pin-5678", DataStoreAccess.loadPin(context))

@@ -98,12 +98,10 @@ class ApplicationEntityCryptoTest {
             val rawLocalKey = c.getString(1)
             assertNotEquals("stored secret must not be plaintext", sampleSecret, rawSecret)
             assertNotEquals("stored localKey must not be plaintext", sampleLocalKey, rawLocalKey)
-            // Sentinel format: Base64 NO_WRAP of IV(12) ‖ ciphertext+tag (>= 16 bytes)
             assertTrue("raw secret looks like Base64", rawSecret.matches(Regex("^[A-Za-z0-9+/=]+$")))
             assertTrue("raw localKey looks like Base64", rawLocalKey.matches(Regex("^[A-Za-z0-9+/=]+$")))
-            // Round-trips through SecureCryptoHelper to the original plaintext.
-            assertEquals(sampleSecret, SecureCryptoHelper.decryptBlocking(rawSecret))
-            assertEquals(sampleLocalKey, SecureCryptoHelper.decryptBlocking(rawLocalKey))
+            assertEquals("raw secret decrypts to the plaintext", sampleSecret, SecureCryptoHelper.decryptBlocking(rawSecret))
+            assertEquals("raw localKey decrypts to the plaintext", sampleLocalKey, SecureCryptoHelper.decryptBlocking(rawLocalKey))
         }
     }
 
@@ -116,15 +114,14 @@ class ApplicationEntityCryptoTest {
         assertEquals("", read?.secret)
         assertEquals("", read?.localKey)
 
-        // Raw column should also be empty (not encrypted to a Base64 token).
         val rawCursor = db.openHelper.readableDatabase.query(
             "SELECT `secret`, `localKey` FROM application WHERE `key` = ?",
             arrayOf("app1"),
         )
         rawCursor.use { c ->
             assertTrue(c.moveToFirst())
-            assertEquals("", c.getString(0))
-            assertEquals("", c.getString(1))
+            assertEquals("raw secret column stays empty, not an encrypted token", "", c.getString(0))
+            assertEquals("raw localKey column stays empty, not an encrypted token", "", c.getString(1))
         }
     }
 
@@ -197,7 +194,6 @@ class ApplicationEntityCryptoTest {
         assertNotNull(read)
         assertEquals(newSecret, read?.secret)
         assertEquals(newLocalKey, read?.localKey)
-        // Raw columns were replaced, not duplicated/concatenated.
         val rawCursor = db.openHelper.readableDatabase.query(
             "SELECT `secret` FROM application WHERE `key` = ?",
             arrayOf("rot"),
@@ -205,7 +201,7 @@ class ApplicationEntityCryptoTest {
         rawCursor.use { c ->
             assertTrue(c.moveToFirst())
             assertNotEquals(newSecret, c.getString(0))
-            assertEquals(newSecret, SecureCryptoHelper.decryptBlocking(c.getString(0)))
+            assertEquals("raw secret was replaced, not concatenated", newSecret, SecureCryptoHelper.decryptBlocking(c.getString(0)))
         }
     }
 
@@ -293,19 +289,16 @@ class ApplicationEntityCryptoTest {
         v19.close()
 
         val migrated = migrationHelper.runMigrationsAndValidate(dbName, 20, false, MIGRATION_19_20)
-        // After migration the raw columns must be ciphertext for non-empty values
-        // and "" for the empty-sentinel row.
         val (rawSecret, rawLocalKey) = migrated.rawSecrets("migApp")
-        assertNotEquals(sampleSecret, rawSecret)
-        assertNotEquals(sampleLocalKey, rawLocalKey)
+        assertNotEquals("migrated secret is ciphertext", sampleSecret, rawSecret)
+        assertNotEquals("migrated localKey is ciphertext", sampleLocalKey, rawLocalKey)
         assertEquals(sampleSecret, SecureCryptoHelper.decryptBlocking(rawSecret))
         assertEquals(sampleLocalKey, SecureCryptoHelper.decryptBlocking(rawLocalKey))
-        assertEquals("" to "", migrated.rawSecrets("migAppEmpty"))
+        assertEquals("the empty-sentinel row stays empty", "" to "", migrated.rawSecrets("migAppEmpty"))
         migrated.close()
         context.deleteDatabase(dbName)
     }
 
-    /** A row in the pre-encryption (v19) `application` table, whose `secret` and `localKey` TEXT columns hold plaintext. */
     private fun SupportSQLiteDatabase.insertPlaintextApp(
         key: String,
         name: String,
@@ -322,7 +315,6 @@ class ApplicationEntityCryptoTest {
         )
     }
 
-    /** The raw `secret` and `localKey` columns of the application [key]. */
     private fun SupportSQLiteDatabase.rawSecrets(key: String): Pair<String, String> = query(
         "SELECT `secret`, `localKey` FROM application WHERE `key` = ?",
         arrayOf(key),

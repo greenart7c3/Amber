@@ -77,32 +77,22 @@ class RelayAuthTest {
 
     private fun authHistory(client: Client) = AmberDesktop.store(client.npub).history.value.filter { it.appKey == client.appKey && it.kind == 22242 }
 
-    /**
-     * Sends an auth request and returns how it was answered without a card
-     * (accepted or rejected, from the history it records), or null when it
-     * was queued for approval. The reply itself goes to an unreachable relay,
-     * so consume runs in the background.
-     */
     private suspend fun answeredWithoutCard(client: Client, id: String, authRelay: String): Boolean? {
         val before = authHistory(client).size
-        send(client, id, authRelay)
+        sendWithoutAwaitingReply(client, id, authRelay)
         return withTimeout(20.seconds) {
             while (pendingFor(client, id) == null && authHistory(client).size <= before) delay(50.milliseconds)
-            if (pendingFor(client, id) != null) null else authHistory(client).last().accepted
+            val queuedForApproval = pendingFor(client, id) != null
+            if (queuedForApproval) null else authHistory(client).last().accepted
         }
     }
 
-    /** Hands an auth request to the engine without waiting for its reply to be published. */
-    private suspend fun send(client: Client, id: String, authRelay: String) {
+    private suspend fun sendWithoutAwaitingReply(client: Client, id: String, authRelay: String) {
         val event = authRequest(client, id, authRelay)
         background.launch { AmberDesktop.engine.consume(event, relay) }
     }
 
-    /**
-     * Runs an approve/reject and waits until it is recorded (the grant is
-     * saved before that), not until its reply to the unreachable relay gives up.
-     */
-    private suspend fun decide(client: Client, action: () -> Unit) {
+    private suspend fun decideAndAwaitItsRecord(client: Client, action: () -> Unit) {
         val before = authHistory(client).size
         action()
         withTimeout(20.seconds) { while (authHistory(client).size <= before) delay(50.milliseconds) }
@@ -111,32 +101,32 @@ class RelayAuthTest {
     @Test
     fun thisRelayOnlyGrantCoversOnlyThatRelay(): Unit = runBlocking {
         val client = connectedClient("relay-auth-specific")
-        send(client, "a1", "wss://relay-a.example/")
+        sendWithoutAwaitingReply(client, "a1", "wss://relay-a.example/")
         val card = awaitCard(client, "a1")
         assertTrue(card.isRelayAuth)
         assertEquals("relay-a.example", card.relayHost)
         assertEquals(EncryptionScope.SPECIFIC, card.defaultScope)
 
-        decide(client) { AmberDesktop.engine.approve(card, RememberType.ALWAYS) }
+        decideAndAwaitItsRecord(client) { AmberDesktop.engine.approve(card, RememberType.ALWAYS) }
         val grant = AmberDesktop.store(client.npub).lookup.getByKey(client.appKey)!!.permissions.single { it.kind == 22242 }
         assertEquals("relay-a.example", grant.relay)
 
         assertEquals(true, answeredWithoutCard(client, "a2", "wss://relay-a.example"))
-        send(client, "b1", "wss://relay-b.example/")
+        sendWithoutAwaitingReply(client, "b1", "wss://relay-b.example/")
         awaitCard(client, "b1")
     }
 
     @Test
     fun allRelaysGrantReplacesPerRelayGrants(): Unit = runBlocking {
         val client = connectedClient("relay-auth-all")
-        send(client, "a1", "wss://relay-a.example/")
+        sendWithoutAwaitingReply(client, "a1", "wss://relay-a.example/")
         val first = awaitCard(client, "a1")
-        decide(client) { AmberDesktop.engine.reject(first, RememberType.ALWAYS) }
+        decideAndAwaitItsRecord(client) { AmberDesktop.engine.reject(first, RememberType.ALWAYS) }
         assertEquals(false, answeredWithoutCard(client, "a2", "wss://relay-a.example/"))
 
-        send(client, "b1", "wss://relay-b.example/")
+        sendWithoutAwaitingReply(client, "b1", "wss://relay-b.example/")
         val second = awaitCard(client, "b1")
-        decide(client) { AmberDesktop.engine.approve(second, RememberType.ALWAYS, encryptionScope = EncryptionScope.ALL) }
+        decideAndAwaitItsRecord(client) { AmberDesktop.engine.approve(second, RememberType.ALWAYS, encryptionScope = EncryptionScope.ALL) }
 
         val grants = AmberDesktop.store(client.npub).lookup.getByKey(client.appKey)!!.permissions.filter { it.kind == 22242 }
         assertEquals(listOf("*"), grants.map { it.relay })
@@ -146,10 +136,9 @@ class RelayAuthTest {
 
     @Test
     fun perRelayGrantWinsOverTheBasicAllRelaysGrant(): Unit = runBlocking {
-        // The basic sign policy stores a blank-relay grant, which covers every relay.
-        val basic = AppPermissionRecord(SignerType.SIGN_EVENT.toString(), 22242, true, RememberType.ALWAYS.screenCode, Long.MAX_VALUE / 1000, 0)
+        val basicPolicyBlankRelayGrantForEveryRelay = AppPermissionRecord(SignerType.SIGN_EVENT.toString(), 22242, true, RememberType.ALWAYS.screenCode, Long.MAX_VALUE / 1000, 0)
         val rejectA = AppPermissionRecord(SignerType.SIGN_EVENT.toString(), 22242, false, RememberType.ALWAYS.screenCode, 0, Long.MAX_VALUE / 1000, relay = "relay-a.example")
-        val client = connectedClient("relay-auth-basic", listOf(basic, rejectA))
+        val client = connectedClient("relay-auth-basic", listOf(basicPolicyBlankRelayGrantForEveryRelay, rejectA))
 
         assertEquals(false, answeredWithoutCard(client, "a1", "wss://relay-a.example/"))
         assertEquals(true, answeredWithoutCard(client, "b1", "wss://relay-b.example/"))
@@ -171,9 +160,9 @@ class RelayAuthTest {
     @Test
     fun thisRelayOnlyChoiceForAnEventWithoutRelayIsNotRemembered(): Unit = runBlocking {
         val client = connectedClient("relay-auth-blank")
-        send(client, "x1", "")
+        sendWithoutAwaitingReply(client, "x1", "")
         val card = awaitCard(client, "x1")
-        decide(client) { AmberDesktop.engine.approve(card, RememberType.ALWAYS) }
+        decideAndAwaitItsRecord(client) { AmberDesktop.engine.approve(card, RememberType.ALWAYS) }
         assertFalse(AmberDesktop.store(client.npub).lookup.getByKey(client.appKey)!!.permissions.any { it.kind == 22242 })
     }
 }

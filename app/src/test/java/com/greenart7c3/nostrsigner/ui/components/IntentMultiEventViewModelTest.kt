@@ -77,10 +77,13 @@ class IntentMultiEventViewModelTest {
 
     @Before
     fun setUp() {
-        // The result list goes back in an Intent; the JVM test stubs do not implement putExtra.
+        stubResultIntentPutExtraTheJvmAndroidStubsLack()
+        MultiEventScreenIntents.checkedStates.clear()
+    }
+
+    private fun stubResultIntentPutExtraTheJvmAndroidStubsLack() {
         mockkConstructor(Intent::class)
         every { anyConstructed<Intent>().putExtra(any<String>(), any<String>()) } answers { self as Intent }
-        MultiEventScreenIntents.checkedStates.clear()
     }
 
     @After
@@ -111,14 +114,17 @@ class IntentMultiEventViewModelTest {
 
         viewModel.confirm(listOf(approved, denied), activity, { _, type -> removed += type }, {})
 
-        // Confirming runs on Dispatchers.IO; closing the activity is its last step.
-        verify(timeout = 5_000) { activity.finishAndRemoveTask() }
+        awaitTheActivityCloseThatEndsConfirming()
         coVerify { permissionWriteDao.insertApplicationWithPermissions(capture(saved)) }
         assertTrue(saved.captured.permissions.any { it.type == "NIP44_DECRYPT" && it.acceptable })
         coVerify { historyDao.addHistory(capture(history), account.npub) }
         assertEquals(listOf(true, false), history.captured.map { it.accepted })
         verify { activity.setResult(Activity.RESULT_OK, any()) }
         assertEquals(listOf(IntentResultType.REMOVE), removed)
+    }
+
+    private fun awaitTheActivityCloseThatEndsConfirming() {
+        verify(timeout = 5_000) { activity.finishAndRemoveTask() }
     }
 
     @Test

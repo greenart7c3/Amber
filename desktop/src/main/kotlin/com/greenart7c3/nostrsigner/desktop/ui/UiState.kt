@@ -145,7 +145,6 @@ object RequestKeyboard {
         return true
     }
 
-    /** The requests a "Remember"/scope pick applies to: the request's batch group, or just itself. */
     private fun choiceTargets(request: PendingBunkerRequest): List<PendingBunkerRequest> {
         val pending = AmberDesktop.engine.pending.value
         if (singleRequest(pending) != null) return listOf(request)
@@ -177,10 +176,6 @@ object RequestKeyboard {
         return true
     }
 
-    /**
-     * S on a selected encrypt/decrypt request: toggles its "Encryption scope"
-     * (this method / kind only <-> all methods / kinds).
-     */
     /** D on a selected request: opens its details, when it has any. */
     fun showSelectedDetails(): Boolean {
         val request = UiState.selectedRequest()?.takeIf { RequestDetails.of(it) != null } ?: return false
@@ -188,6 +183,10 @@ object RequestKeyboard {
         return true
     }
 
+    /**
+     * S on a selected encrypt/decrypt request: toggles its "Encryption scope"
+     * (this method / kind only <-> all methods / kinds).
+     */
     fun toggleSelectedScope(): Boolean {
         val request = UiState.selectedRequest()?.takeIf { it.hasScopeChoice } ?: return false
         val next = if (RequestChoices.scopeChoiceFor(request) == EncryptionScope.ALL) EncryptionScope.SPECIFIC else EncryptionScope.ALL
@@ -233,7 +232,7 @@ fun shortcutLabel(key: String, shift: Boolean = false): String = buildString {
  *   (several requests: Confirm the batch; ←/→ and S then set the whole group)
  * - Ctrl/⌘ Shift Enter: reject the selected request
  * - Ctrl/⌘ L: lock (when a passphrase is set)
- * - Ctrl/⌘ W: hide the window (to the tray when enabled)
+ * - Ctrl/⌘ M or W: hide the window (to the tray when enabled)
  * - Ctrl/⌘ Q: quit
  * - Escape: leave the application detail screen
  *
@@ -248,25 +247,21 @@ fun handleShortcut(
 
     val loggedIn = Session.account.value != null && !PassphraseLock.isLocked()
 
-    // The details dialog is read-only: keep ⌘↵ and the list keys from acting
-    // on the requests behind it. Esc (handled by the dialog) closes it.
-    val detailsOpen = UiState.detailsRequestId.value != null
+    val readOnlyDetailsDialogOpen = UiState.detailsRequestId.value != null
 
-    val modifier = if (isMacOs) event.isMetaPressed else event.isCtrlPressed
-    return if (modifier) {
-        modifiedShortcut(event, loggedIn, detailsOpen, hideWindow, quit)
+    val ctrlOrCmdHeld = if (isMacOs) event.isMetaPressed else event.isCtrlPressed
+    return if (ctrlOrCmdHeld) {
+        ctrlOrCmdShortcut(event, loggedIn, readOnlyDetailsDialogOpen, hideWindow, quit)
     } else {
-        plainShortcut(event, loggedIn, detailsOpen)
+        plainShortcut(event, loggedIn, readOnlyDetailsDialogOpen)
     }
 }
 
-/** Runs [action]; the key was consumed. */
 private inline fun consumed(action: () -> Unit): Boolean {
     action()
     return true
 }
 
-/** A key without Ctrl/⌘: Escape leaves the application detail screen, the rest drive the incoming-requests list. */
 private fun plainShortcut(
     event: KeyEvent,
     loggedIn: Boolean,
@@ -276,15 +271,12 @@ private fun plainShortcut(
         UiState.selectedApplication.value = null
         return true
     }
-    // Plain arrows drive the incoming-requests list: ↑/↓ selects a card,
-    // ←/→ cycles its "Remember" duration. Only consumed on that screen so
-    // arrow keys elsewhere (text fields, scrolling) keep working.
-    val onIncoming = loggedIn &&
+    val incomingRequestsListShown = loggedIn &&
         UiState.currentRoute.value == Route.IncomingRequest &&
         UiState.selectedApplication.value == null &&
         !detailsOpen &&
         AmberDesktop.engine.pending.value.isNotEmpty()
-    return onIncoming && incomingRequestKey(event)
+    return incomingRequestsListShown && incomingRequestKey(event)
 }
 
 private fun incomingRequestKey(event: KeyEvent): Boolean = when (event.key) {
@@ -302,27 +294,25 @@ private fun incomingRequestKey(event: KeyEvent): Boolean = when (event.key) {
     else -> false
 }
 
-/** A key with Ctrl/⌘ held. */
-private fun modifiedShortcut(
+private fun ctrlOrCmdShortcut(
     event: KeyEvent,
     loggedIn: Boolean,
     detailsOpen: Boolean,
     hideWindow: () -> Unit,
     quit: () -> Unit,
 ): Boolean {
-    navigationKeys[event.key]?.let { route -> return loggedIn && consumed { UiState.navigate(route) } }
-    return otherModifiedShortcut(event, loggedIn, detailsOpen, hideWindow, quit)
+    sidebarOrderNavigationKeys[event.key]?.let { route -> return loggedIn && consumed { UiState.navigate(route) } }
+    return otherCtrlOrCmdShortcut(event, loggedIn, detailsOpen, hideWindow, quit)
 }
 
-/** Ctrl/⌘ 1–4 open the screens in sidebar order. */
-private val navigationKeys = mapOf(
+private val sidebarOrderNavigationKeys = mapOf(
     Key.One to Route.IncomingRequest,
     Key.Two to Route.Applications,
     Key.Three to Route.Relays,
     Key.Four to Route.Settings,
 )
 
-private fun otherModifiedShortcut(
+private fun otherCtrlOrCmdShortcut(
     event: KeyEvent,
     loggedIn: Boolean,
     detailsOpen: Boolean,
@@ -331,17 +321,14 @@ private fun otherModifiedShortcut(
 ): Boolean = when (event.key) {
     Key.Enter -> loggedIn && !detailsOpen && answerSelectedRequest(reject = event.isShiftPressed)
     Key.L -> PassphraseLock.isEnabled() && !PassphraseLock.isLocked() && consumed { PassphraseLock.lock() }
-    // Ctrl/⌘ + M — minimize to tray (keep running in the background).
-    // Ctrl/⌘ + W stays as an alias.
     Key.M, Key.W -> consumed(hideWindow)
     Key.Q -> consumed(quit)
     else -> false
 }
 
-/** Ctrl/⌘ Enter approves the selected request, with Shift it rejects it; with several requests Enter confirms the batch. */
 private fun answerSelectedRequest(reject: Boolean): Boolean {
-    // Several requests: Confirm answers the batch; there is no reject-all.
-    if (singleRequest(AmberDesktop.engine.pending.value) == null) return !reject && BatchDecisions.confirmBatch()
+    val batchShown = singleRequest(AmberDesktop.engine.pending.value) == null
+    if (batchShown) return !reject && BatchDecisions.confirmBatch()
     val request = UiState.selectedRequest() ?: return false
     if (reject) {
         RequestChoices.reject(request)

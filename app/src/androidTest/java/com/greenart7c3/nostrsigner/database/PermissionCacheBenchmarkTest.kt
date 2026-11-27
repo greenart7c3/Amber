@@ -101,9 +101,7 @@ class PermissionCacheBenchmarkTest {
         db.close()
     }
 
-    private fun queryMix(dao: PermissionLookupDao) {
-        // Mirrors SignerProvider.kt SIGN_EVENT path: sign policy + kind-specific
-        // permission + NIP fallback for an unseeded kind.
+    private fun signerProviderSignEventLookups(dao: PermissionLookupDao) {
         dao.getSignPolicy(pkKey)
         dao.getPermission(pkKey, "SIGN_EVENT", seededKind)
         dao.getPermission(pkKey, "SIGN_EVENT", unseededKind)
@@ -112,32 +110,32 @@ class PermissionCacheBenchmarkTest {
 
     @Test
     fun benchmark_signEvent_query_mix() {
-        // Correctness: cached must return the same data as raw.
-        assertEquals(raw.permissionLookupDao.getSignPolicy(pkKey), cached.permissionLookupDao.getSignPolicy(pkKey))
+        assertEquals("cached sign policy matches raw", raw.permissionLookupDao.getSignPolicy(pkKey), cached.permissionLookupDao.getSignPolicy(pkKey))
         assertEquals(
+            "cached seeded-kind permission matches raw",
             raw.permissionLookupDao.getPermission(pkKey, "SIGN_EVENT", seededKind)?.id,
             cached.permissionLookupDao.getPermission(pkKey, "SIGN_EVENT", seededKind)?.id,
         )
         assertEquals(
+            "cached unseeded-kind permission matches raw",
             raw.permissionLookupDao.getPermission(pkKey, "SIGN_EVENT", unseededKind),
             cached.permissionLookupDao.getPermission(pkKey, "SIGN_EVENT", unseededKind),
         )
 
-        val warmupIters = 1_000
+        val jitAndStatementCacheWarmupIters = 1_000
         val measureIters = 10_000
 
-        // Warmup so JIT and SQLite statement caches are primed for both paths.
-        repeat(warmupIters) {
-            queryMix(raw.permissionLookupDao)
-            queryMix(cached.permissionLookupDao)
+        repeat(jitAndStatementCacheWarmupIters) {
+            signerProviderSignEventLookups(raw.permissionLookupDao)
+            signerProviderSignEventLookups(cached.permissionLookupDao)
         }
 
         val rawNanos = measureNanoTime {
-            repeat(measureIters) { queryMix(raw.permissionLookupDao) }
+            repeat(measureIters) { signerProviderSignEventLookups(raw.permissionLookupDao) }
         }
 
         val warmNanos = measureNanoTime {
-            repeat(measureIters) { queryMix(cached.permissionLookupDao) }
+            repeat(measureIters) { signerProviderSignEventLookups(cached.permissionLookupDao) }
         }
 
         val rawMs = rawNanos / 1_000_000.0
@@ -157,19 +155,21 @@ class PermissionCacheBenchmarkTest {
     }
 
     @Test
-    fun benchmark_invalidation_correctness() {
-        // After a write that touches this app, the next read must NOT return a
-        // stale cached value. This is the regression we'd care about more than
-        // raw speed — caching is worthless if it returns wrong answers.
-        cached.permissionLookupDao.getPermission(pkKey, "SIGN_EVENT", seededKind) // prime
+    fun benchmark_writeToApp_readAfterIsNotStaleCachedValue() {
+        primeCachedSignEventPermission()
 
         runBlocking {
             cached.permissionWriteDao.deletePermissions(pkKey, "SIGN_EVENT", seededKind)
         }
 
         assertEquals(
+            "a deleted permission must not be served from the cache",
             null,
             cached.permissionLookupDao.getPermission(pkKey, "SIGN_EVENT", seededKind),
         )
+    }
+
+    private fun primeCachedSignEventPermission() {
+        cached.permissionLookupDao.getPermission(pkKey, "SIGN_EVENT", seededKind)
     }
 }

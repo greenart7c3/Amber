@@ -57,9 +57,7 @@ class ExpiredConnectionAuthTest {
         every { delegate.getSignPolicy("expired") } returns 2
 
         assertNull(dao.getSignPolicy("expired"))
-        // The gate is consulted on every read, so a cached pre-expiry answer
-        // is never served even when the delegate still returns the row.
-        assertNull(dao.getSignPolicy("expired"))
+        assertNull("a repeated read must not serve a cached pre-expiry answer", dao.getSignPolicy("expired"))
     }
 
     @Test
@@ -105,8 +103,7 @@ class ExpiredConnectionAuthTest {
         coEvery { raw.applicationDao.getAll("account-hex") } returns listOf(expired, live)
 
         assertEquals(listOf(live), daos.applicationDao.getAll("account-hex"))
-        // Cached value must be the filtered one, not a re-read of the delegate.
-        assertEquals(listOf(live), daos.applicationDao.getAll("account-hex"))
+        assertEquals("the cached list is the filtered one", listOf(live), daos.applicationDao.getAll("account-hex"))
         coVerify(exactly = 1) { raw.applicationDao.getAll("account-hex") }
     }
 

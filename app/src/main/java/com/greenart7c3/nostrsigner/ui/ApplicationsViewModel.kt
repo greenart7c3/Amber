@@ -15,13 +15,14 @@ import kotlinx.coroutines.flow.Flow
 class ApplicationsViewModel(
     private val accountRepository: AccountRepository,
 ) : ViewModel() {
-    /** The account's apps, 20 per page, by name or by last use. */
+    /**
+     * The account's apps, 20 per page, by name or by last use. The projection excludes the
+     * envelope-encrypted secret/localKey columns: the list renders neither, and each Keystore
+     * decrypt is a binder + TEE round trip (2 x rows per page).
+     */
     fun applications(npub: String, hexKey: String, sortAlphabetically: Boolean): Flow<PagingData<ApplicationListItem>> = Pager(
         PagingConfig(pageSize = 20, enablePlaceholders = false),
     ) {
-        // Projection excludes the envelope-encrypted secret/localKey
-        // columns: the list renders neither, and each Keystore decrypt
-        // is a binder + TEE round trip (2 x rows per page).
         val dao = accountRepository.getDatabase(npub).applicationListDao()
         if (sortAlphabetically) dao.getApplicationListItemsPagingByName(hexKey) else dao.getApplicationListItemsPaging(hexKey)
     }.flow

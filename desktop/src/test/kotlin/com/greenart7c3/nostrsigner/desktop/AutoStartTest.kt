@@ -22,9 +22,10 @@ class AutoStartTest {
         assertTrue(unit.contains("LimitCORE=0"))
         assertTrue(unit.contains("ReadWritePaths=-%h/.local/share/amber -%h/.local/share/applications -%h/.local/share/nostr %t"))
         assertTrue(unit.contains("BindPaths=-/tmp/.X11-unix"))
-        // The JVM's JIT needs writable executable memory: this hardening flag
-        // would kill the service instantly and must never be emitted.
-        assertFalse(unit.contains("MemoryDenyWriteExecute=yes"))
+        assertFalse(
+            "the JVM's JIT needs writable executable memory, so MemoryDenyWriteExecute would kill the service instantly",
+            unit.contains("MemoryDenyWriteExecute=yes"),
+        )
     }
 
     @Test
@@ -33,10 +34,8 @@ class AutoStartTest {
         assertTrue(unit.contains("ExecStart=/home/u/Apps/Amber.AppImage"))
         assertTrue(unit.contains("Environment=APPIMAGE_EXTRACT_AND_RUN=1 NO_CLEANUP=1 TMPDIR=/home/u/.cache/amber/appimage\n"))
         assertTrue(unit.contains("ReadWritePaths=/home/u/.cache/amber/appimage\n"))
-        // The extraction replaces the FUSE mount precisely so none of the
-        // hardening has to be relaxed for it.
         val plain = AutoStart.unitContent("/home/u/Apps/Amber.AppImage")
-        plain.lines().filter { it.isNotBlank() }.forEach { assertTrue("missing: $it", unit.lines().contains(it)) }
+        plain.lines().filter { it.isNotBlank() }.forEach { assertTrue("hardening relaxed for the AppImage, missing: $it", unit.lines().contains(it)) }
     }
 
     @Test
@@ -50,13 +49,17 @@ class AutoStartTest {
         assertTrue(unit.contains("ExecStart=\"/opt/My Apps/Amber/bin/Amber\""))
     }
 
+    @Suppress("NoComments")
     @Test
-    fun unitEscapesSystemdSpecialsInPaths() {
+    fun unitEscapesSystemdSpecialsInQuotedPaths() {
         // systemd(5): inside double quotes \ and " are escaped with a
         // backslash; $ would start variable expansion and % a specifier.
         val unit = AutoStart.unitContent($$"/opt/My \"Apps\"/Am\\ber$1/bin/Amber")
         assertTrue(unit.contains($$"ExecStart=\"/opt/My \\\"Apps\\\"/Am\\\\ber\\$1/bin/Amber\""))
-        // Even unquoted values must not leak a specifier.
+    }
+
+    @Test
+    fun `unit escapes the percent specifier in unquoted paths too`() {
         val percent = AutoStart.unitContent("/opt/Amber%h/bin/Amber")
         assertTrue(percent.contains("ExecStart=/opt/Amber%%h/bin/Amber"))
     }
@@ -70,9 +73,11 @@ class AutoStartTest {
 
     @Test
     fun windowsRunCommandQuotesPath() {
-        // The Run value is parsed as a command line: an unquoted
-        // "C:\Program Files\..." would try to launch "C:\Program".
-        assertEquals("\"C:\\Program Files\\Amber\\Amber.exe\"", AutoStart.windowsRunCommand("C:\\Program Files\\Amber\\Amber.exe"))
+        assertEquals(
+            "Windows parses the Run value as a command line, so an unquoted path with a space launches its first word",
+            "\"C:\\Program Files\\Amber\\Amber.exe\"",
+            AutoStart.windowsRunCommand("C:\\Program Files\\Amber\\Amber.exe"),
+        )
     }
 
     @Test
@@ -83,8 +88,7 @@ class AutoStartTest {
         assertTrue(plist.contains("<string>/Applications/Amber.app/Contents/MacOS/Amber</string>"))
         assertTrue(plist.contains("<key>RunAtLoad</key>\n    <true/>"))
         assertTrue(plist.contains("<string>Aqua</string>"))
-        // Quitting Amber must stick: launchd must not relaunch it.
-        assertFalse(plist.contains("KeepAlive"))
+        assertFalse("quitting Amber must stick, launchd must not relaunch it", plist.contains("KeepAlive"))
     }
 
     @Test

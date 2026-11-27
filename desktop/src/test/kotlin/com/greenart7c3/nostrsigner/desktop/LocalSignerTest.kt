@@ -140,6 +140,7 @@ class LocalSignerTest {
         LocalSigner.stop()
     }
 
+    @Suppress("NoComments")
     @Test
     fun socketIsOwnerOnlyAndGreetsWithTheMethods() {
         // Windows has no POSIX permissions; the user-profile ACLs guard the socket there.
@@ -159,10 +160,9 @@ class LocalSignerTest {
         val name = uniqueName()
         val c = connected(name, account)
 
-        // Saved as a local socket app with no relays.
         val app = AmberDesktop.store(account.npub).apps.value.first { it.app.name == name }.app
-        assertEquals(TRANSPORT_SOCKET, app.transport)
-        assertTrue(app.relays.isEmpty() && app.localKey.isEmpty())
+        assertEquals("saved as a local socket app", TRANSPORT_SOCKET, app.transport)
+        assertTrue("a socket app has no relays", app.relays.isEmpty() && app.localKey.isEmpty())
 
         val template = JacksonMapper.mapper.readTree("""{"kind":1,"content":"hello","tags":[],"created_at":1700000000}""")
         c.call("s1", "sign_event", template, account.hexKey)
@@ -172,11 +172,10 @@ class LocalSignerTest {
         assertTrue(event.verify())
         assertEquals(account.hexKey, event.pubKey)
 
-        // Remembered: the second one is signed without a prompt.
         c.call("s2", "sign_event", template, account.hexKey)
         val second = c.reply()
         assertTrue(Event.fromJson(second.get("result").toString()).verify())
-        assertTrue(AmberDesktop.engine.pending.value.none { it.appName == name })
+        assertTrue("the remembered permission signs the second one without a prompt", AmberDesktop.engine.pending.value.none { it.appName == name })
     }
 
     @Test
@@ -218,27 +217,23 @@ class LocalSignerTest {
         val app = AmberDesktop.store(account.npub).apps.value.first { it.app.name == name }.app
         assertTrue("only the hash is stored", app.socketSecretHash.length == 64 && app.socketSecretHash != secret)
 
-        // Still recognized on the same connection; no second secret.
         first.call("pk2", "get_public_key", account.hexKey)
-        assertTrue(first.reply().get("secret") == null)
+        assertTrue("the same connection stays recognized without a second secret", first.reply().get("secret") == null)
 
-        // A new connection with the secret: matched, no prompt, whatever name it uses.
         val again = client("renamed", secret)
         again.call("pk", "get_public_key", account.hexKey)
-        assertEquals(account.hexKey, again.reply().get("result").asText())
+        assertEquals("a new connection with the secret is matched under any name, without a prompt", account.hexKey, again.reply().get("result").asText())
 
-        // The same name without the secret is a stranger: refused, and only a new approval helps.
         val impostor = client(name)
         impostor.call("s", "sign_event", JacksonMapper.mapper.readTree("""{"kind":1,"content":"x","tags":[],"created_at":1700000000}"""), account.hexKey)
-        assertEquals(LocalSignerProtocol.USER_DECLINED, impostor.reply().get("error").get("code").asInt())
+        assertEquals("the same name without the secret is a stranger", LocalSignerProtocol.USER_DECLINED, impostor.reply().get("error").get("code").asInt())
         impostor.call("pk", "get_public_key", account.hexKey)
         AmberDesktop.engine.reject(awaitPending(SignerType.CONNECT, name), RememberType.NEVER).join()
-        assertEquals(LocalSignerProtocol.USER_DECLINED, impostor.reply().get("error").get("code").asInt())
+        assertEquals("only a new approval admits the stranger", LocalSignerProtocol.USER_DECLINED, impostor.reply().get("error").get("code").asInt())
 
-        // A made-up secret doesn't help either.
         val guesser = client(name, "0".repeat(64))
         guesser.call("s", "sign_event", JacksonMapper.mapper.readTree("""{"kind":1,"content":"x","tags":[],"created_at":1700000000}"""), account.hexKey)
-        assertEquals(LocalSignerProtocol.USER_DECLINED, guesser.reply().get("error").get("code").asInt())
+        assertEquals("a made-up secret is refused", LocalSignerProtocol.USER_DECLINED, guesser.reply().get("error").get("code").asInt())
     }
 
     @Test
@@ -249,11 +244,10 @@ class LocalSignerTest {
         val plain = "hello v3"
         val plainB64 = java.util.Base64.getEncoder().encodeToString(plain.toByteArray())
 
-        // The kind may be a JSON number; the scope travels as text.
         c.call("e", "nip44v3_encrypt", account.hexKey, com.fasterxml.jackson.databind.node.IntNode(1059), "dm", plainB64, account.hexKey)
         val encrypt = awaitPending(SignerType.NIP44_V3_ENCRYPT, name)
-        assertEquals(1059, encrypt.kind)
-        assertEquals("dm", encrypt.nip44v3Scope)
+        assertEquals("the kind may be a JSON number", 1059, encrypt.kind)
+        assertEquals("the scope travels as text", "dm", encrypt.nip44v3Scope)
         assertEquals(plain, encrypt.preview)
         AmberDesktop.engine.approve(encrypt, RememberType.NEVER).join()
         val cipher = c.reply().get("result").asText()
@@ -262,9 +256,8 @@ class LocalSignerTest {
         AmberDesktop.engine.approve(awaitPending(SignerType.NIP44_V3_DECRYPT, name), RememberType.NEVER).join()
         assertEquals(plainB64, c.reply().get("result").asText())
 
-        // Without a usable kind the request is refused as invalid, with no prompt.
         c.call("bad", "nip44v3_encrypt", account.hexKey, "dm", "dm", plainB64, account.hexKey)
-        assertEquals(LocalSignerProtocol.INVALID_PARAMS, c.reply().get("error").get("code").asInt())
+        assertEquals("without a usable kind the request is refused as invalid, with no prompt", LocalSignerProtocol.INVALID_PARAMS, c.reply().get("error").get("code").asInt())
     }
 
     @Test
@@ -274,11 +267,10 @@ class LocalSignerTest {
         val name = uniqueName()
         val c = connected(name, a)
 
-        // Not approved for b yet: a connect for exactly that account (no switching).
         c.call("pk-b", "get_public_key", b.npub)
         val connect = awaitPending(SignerType.CONNECT, name)
-        assertEquals(b.npub, connect.account.npub)
-        assertTrue(!connect.canSwitchAccount)
+        assertEquals("a key not approved yet asks to connect exactly that account", b.npub, connect.account.npub)
+        assertTrue("the connect for a named account cannot switch accounts", !connect.canSwitchAccount)
         AmberDesktop.engine.approve(connect, RememberType.NEVER).join()
         assertEquals(b.hexKey, c.reply().get("result").asText())
 
@@ -293,9 +285,12 @@ class LocalSignerTest {
         val c = connected(name, account)
         c.call("s", "sign_event", JacksonMapper.mapper.readTree("""{"kind":1,"content":"x","tags":[],"created_at":1700000000}"""), account.hexKey)
         awaitPending(SignerType.SIGN_EVENT, name)
-        // What PassphraseLock.lock() does to the queue.
-        AmberDesktop.engine.dropPending("signer locked") { it.appName == name }
+        dropPendingLikeThePassphraseLock(name)
         assertEquals(LocalSignerProtocol.INTERNAL_ERROR, c.reply().get("error").get("code").asInt())
+    }
+
+    private fun dropPendingLikeThePassphraseLock(appName: String) {
+        AmberDesktop.engine.dropPending("signer locked") { it.appName == appName }
     }
 
     @Test
@@ -303,11 +298,10 @@ class LocalSignerTest {
         val account = newAccount()
         val name = uniqueName()
         val c = connected(name, account)
-        // The sign waits for approval; the ping behind it must not.
         c.call("slow", "sign_event", JacksonMapper.mapper.readTree("""{"kind":1,"content":"x","tags":[],"created_at":1700000000}"""), account.hexKey)
         awaitPending(SignerType.SIGN_EVENT, name)
         c.call("fast", "get_public_key", account.hexKey)
-        assertEquals("fast", c.reply().get("id").asText())
+        assertEquals("a request behind one waiting for approval does not wait", "fast", c.reply().get("id").asText())
         AmberDesktop.engine.approve(awaitPending(SignerType.SIGN_EVENT, name), RememberType.NEVER).join()
         assertEquals("slow", c.reply().get("id").asText())
     }
@@ -317,7 +311,6 @@ class LocalSignerTest {
         val account = newAccount()
         val name = uniqueName()
         val c = connected(name, account)
-        // `echo request | nc -U ...`: write, then close the sending side.
         c.call("pk", "get_public_key", account.hexKey)
         c.call("bad", "no_such_method")
         c.channel.shutdownOutput()
@@ -358,11 +351,10 @@ class LocalSignerTest {
         }
         start.countDown()
         senders.forEach { it.join() }
-        // Approve in reverse order: each answer must still reach its own connection.
         names.indices.reversed().forEach { i ->
             AmberDesktop.engine.approve(awaitPending(SignerType.SIGN_EVENT, names[i]), RememberType.NEVER).join()
             val reply = tools[i].reply()
-            assertEquals("s$i", reply.get("id").asText())
+            assertEquals("approved in reverse order, the answer still reaches its own connection", "s$i", reply.get("id").asText())
             assertEquals("$i", reply.get("result").get("content").asText())
         }
     }
@@ -386,10 +378,9 @@ class LocalSignerTest {
         assumeTrue("posix" in FileSystems.getDefault().supportedFileAttributeViews())
         val dir = LocalSigner.socketPath().parent
         LocalSigner.stop()
-        // A directory left group/world-readable is tightened back to 0700 on start.
         Files.setPosixFilePermissions(dir, java.nio.file.attribute.PosixFilePermissions.fromString("rwxr-xr-x"))
         assertEquals(LocalSigner.Status.RUNNING, LocalSigner.start())
-        assertEquals("rwx------", java.nio.file.attribute.PosixFilePermissions.toString(Files.getPosixFilePermissions(dir)))
+        assertEquals("a group or world-readable directory is tightened back to 0700 on start", "rwx------", java.nio.file.attribute.PosixFilePermissions.toString(Files.getPosixFilePermissions(dir)))
     }
 
     @Test
@@ -400,9 +391,9 @@ class LocalSignerTest {
         val moved = dir.resolveSibling("nostr-real")
         Files.move(dir, moved)
         try {
-            // Someone else's directory behind a link must not receive the socket.
-            Files.createSymbolicLink(dir, Files.createTempDirectory("amber-elsewhere"))
-            assertEquals(LocalSigner.Status.FAILED, LocalSigner.start())
+            val someoneElsesDirectory = Files.createTempDirectory("amber-elsewhere")
+            Files.createSymbolicLink(dir, someoneElsesDirectory)
+            assertEquals("the socket is not bound in a directory behind a link", LocalSigner.Status.FAILED, LocalSigner.start())
             assertEquals("is a symbolic link", LocalSigner.privateDirProblem(dir))
         } finally {
             Files.deleteIfExists(dir)
@@ -437,8 +428,6 @@ class LocalSignerTest {
 
     @Test
     fun getPublicKeyLogsInWithTheAccountPickedInTheApproval() = runBlocking {
-        // Like NIP-55: an unknown tool asks for the key without naming an
-        // account, and whichever account the user picks is the answer.
         val current = newAccount()
         val picked = newAccount()
         SettingsStore.update { it.copy(currentAccount = current.npub) }
@@ -449,10 +438,9 @@ class LocalSignerTest {
         assertEquals("the picker starts on the current account", current.npub, connect.account.npub)
         assertTrue(connect.canSwitchAccount)
         AmberDesktop.engine.approve(connect, RememberType.NEVER, accountNpub = picked.npub).join()
-        assertEquals(picked.hexKey, c.reply().get("result").asText())
+        assertEquals("an unnamed get_public_key answers with the account the user picked", picked.hexKey, c.reply().get("result").asText())
 
-        // From then on the tool's requests default to that account.
         c.call("pk2", "get_public_key")
-        assertEquals(picked.hexKey, c.reply().get("result").asText())
+        assertEquals("the tool's later requests default to the picked account", picked.hexKey, c.reply().get("result").asText())
     }
 }

@@ -17,10 +17,8 @@ class Args internal constructor(
     fun has(name: String): Boolean = name in flags
 
     companion object {
-        /** Flags that take a value, either `--flag value` or `--flag=value`. */
         private val VALUE_FLAGS = setOf("profile", "timeout", "relay", "name", "perms")
 
-        /** Flags that stand alone. */
         private val BOOLEAN_FLAGS = setOf("json", "qr", "open", "force", "all", "help", "version", "verbose")
 
         fun parse(arguments: List<String>): Args {
@@ -61,14 +59,13 @@ class Args internal constructor(
             return Args(positionals.firstOrNull(), positionals.drop(1), flags)
         }
 
-        /** Why `--[name]` (with its `=`[inline] value, or the [next] argument) is not a valid option, or null when it is. */
         private fun optionError(
             name: String,
-            inline: String?,
-            next: String?,
+            inlineValue: String?,
+            nextArgument: String?,
         ): String? = when (name) {
-            in VALUE_FLAGS -> if (inline == null && next == null) "--$name needs a value" else null
-            in BOOLEAN_FLAGS -> if (inline != null) "--$name takes no value" else null
+            in VALUE_FLAGS -> if (inlineValue == null && nextArgument == null) "--$name needs a value" else null
+            in BOOLEAN_FLAGS -> if (inlineValue != null) "--$name takes no value" else null
             else -> "unknown option --$name (run `amber help`)"
         }
     }

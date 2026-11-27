@@ -44,12 +44,16 @@ class DesktopAccount(
 
     fun nip49Encrypt(password: String): String = Nip49().encrypt(signer.keyPair.privKey!!.toHexKey(), password)
 
-    /** Zeroes the private key bytes; the account cannot sign afterward. */
     internal fun wipe() {
         signer.keyPair.privKey?.fill(0)
     }
 }
 
+/**
+ * Creates, stores and loads accounts. The private key is stored as hex text
+ * (the original format), converted between raw bytes and hex bytes without an
+ * intermediate String, so every copy of the key can be wiped.
+ */
 object AccountManager {
     /**
      * Parses a user-supplied key: nsec, ncryptsec (with [password]),
@@ -105,6 +109,11 @@ object AccountManager {
         return AmberDesktop.account(npub)!!
     }
 
+    /**
+     * The account stored for [npub], or null when its key cannot be decrypted
+     * or belongs to a different account: never sign as one identity under
+     * another account's name and permissions.
+     */
     suspend fun loadAccount(npub: String): DesktopAccount? {
         val record = AccountsStore.get(npub) ?: return null
         val privKey = try {
@@ -114,7 +123,6 @@ object AccountManager {
             return null
         }
         val keyPair = KeyPair(privKey = privKey)
-        // Never sign as one identity under another account's name and permissions.
         if (keyPair.pubKey.toNpub() != npub) {
             privKey.fill(0)
             AmberLogger.e("AccountManager", "The stored key for $npub belongs to a different account; refusing to load it")
@@ -136,10 +144,6 @@ object AccountManager {
         return runCatching { DesktopKeyStore.decrypt(record.encryptedSeedWords, seedContext(npub)) }.getOrDefault("")
     }
 
-    // The private key is stored as hex text (the original format). These
-    // helpers convert between raw bytes and hex bytes without an intermediate
-    // String, so every copy of the key can be wiped.
-
     private suspend fun encryptPrivKey(raw: ByteArray, npub: String): String {
         val hex = bytesToHex(raw)
         return try {
@@ -149,7 +153,7 @@ object AccountManager {
         }
     }
 
-    private suspend fun decryptPrivKey(encrypted: String, npub: String): ByteArray = hexToBytes(DesktopKeyStore.decryptToBytes(encrypted, privKeyContext(npub)))
+    private suspend fun decryptPrivKey(encrypted: String, npub: String): ByteArray = hexToBytesWipingHex(DesktopKeyStore.decryptToBytes(encrypted, privKeyContext(npub)))
 
     private const val HEX_DIGITS = "0123456789abcdef"
 
@@ -162,8 +166,7 @@ object AccountManager {
         return out
     }
 
-    /** Decodes ASCII hex and wipes [hex]. */
-    private fun hexToBytes(hex: ByteArray): ByteArray {
+    private fun hexToBytesWipingHex(hex: ByteArray): ByteArray {
         try {
             require(hex.size % 2 == 0) { "Odd-length hex key" }
             val out = ByteArray(hex.size / 2)

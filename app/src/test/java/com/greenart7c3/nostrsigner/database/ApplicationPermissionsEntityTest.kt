@@ -28,8 +28,6 @@ class ApplicationPermissionsEntityTest {
 
     @Test
     fun `a stale timestamp on the unselected side never decides`() {
-        // A denial row with a leftover future acceptUntil used to auto-accept
-        // on the NIP-46 path.
         assertNull(permission(acceptable = false, acceptUntil = now + 3600).activeDecision(now))
         assertNull(permission(acceptable = true, rejectUntil = now + 3600).activeDecision(now))
     }

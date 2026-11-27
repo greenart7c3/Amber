@@ -68,8 +68,6 @@ class BunkerRequestUtilsTest {
         isNostrConnectUri = false,
     )
 
-    // ===== getDataFromBunker =====
-
     @Test
     fun `getDataFromBunker returns empty string for sign_message`() {
         val request = mockBunkerRequest("sign_message", arrayOf("hello world"))
@@ -160,8 +158,6 @@ class BunkerRequestUtilsTest {
         assertEquals("", BunkerRequestUtils.getDataFromBunker(mockBunkerRequest("unknown_method")))
     }
 
-    // ===== State management =====
-
     @Test
     fun `addRequest adds a new request to state`() {
         val request = createAmberBunkerRequest("id1")
@@ -181,9 +177,6 @@ class BunkerRequestUtilsTest {
 
     @Test
     fun `addRequest is safe under concurrent duplicate ids`() = runBlocking {
-        // The same NIP-46 request id can be delivered concurrently by multiple
-        // relays. A TOCTOU race in addRequest used to let duplicates through,
-        // producing duplicate LazyColumn keys and crashing the UI.
         val request = createAmberBunkerRequest("17856")
         (1..200).map {
             launch(Dispatchers.Default) { BunkerRequestUtils.addRequest(request) }
@@ -231,10 +224,8 @@ class BunkerRequestUtilsTest {
         assertEquals(1, BunkerRequestUtils.getBunkerRequests().size)
     }
 
-    // Clients choose their own JSON-RPC ids (often sequential), so the id is
-    // only unique per (account, client key).
     @Test
-    fun `requests from different clients with the same id are all queued`() {
+    fun `requests from different clients or accounts with the same id are all queued`() {
         BunkerRequestUtils.addRequest(createAmberBunkerRequest("1", localKey = "clientA"))
         BunkerRequestUtils.addRequest(createAmberBunkerRequest("1", localKey = "clientB"))
         BunkerRequestUtils.addRequest(createAmberBunkerRequest("1", localKey = "clientA", account = "npub1other"))
@@ -267,8 +258,6 @@ class BunkerRequestUtilsTest {
         BunkerRequestUtils.remove(request)
         assertTrue(BunkerRequestUtils.getBunkerRequests().isEmpty())
     }
-
-    // ===== responseRelays =====
 
     private val uriRelay = NormalizedRelayUrl("wss://relay.nip46.com/")
     private val savedRelay = NormalizedRelayUrl("wss://saved.relay/")
@@ -309,8 +298,6 @@ class BunkerRequestUtilsTest {
         assertEquals(listOf(savedRelay), BunkerRequestUtils.responseRelays(request, listOf(savedRelay), listOf(defaultRelay)))
     }
 
-    // ===== finishRequest =====
-
     @Test
     fun `finishRequest keeps other pending requests in the queue`() {
         val connect = createAmberBunkerRequest(id = "connect-id", method = "connect")
@@ -323,8 +310,6 @@ class BunkerRequestUtilsTest {
         assertEquals(listOf("sign-id"), BunkerRequestUtils.getBunkerRequests().map { it.request.id })
     }
 
-    // ===== stale queued requests for a deleted app (F-14) =====
-
     private fun responder(amber: Amber) = BunkerResponder(amber, amber, amber.accountDatabases, amber.relayClient, amber.applicationIOScope, mockk(relaxed = true)) { null }
 
     private fun amberWithDao(getByKeyReturnsNull: Boolean): Pair<Amber, ApplicationDaos> {
@@ -332,13 +317,11 @@ class BunkerRequestUtilsTest {
         if (getByKeyReturnsNull) {
             coEvery { daos.applicationDao.getByKey(any()) } returns null
         }
-        // finishRequest() cancels notifications through the application context.
         val nm = mockk<android.app.NotificationManager>(relaxed = true)
         val appContext = mockk<android.content.Context>(relaxed = true)
         every { appContext.getSystemService(android.content.Context.NOTIFICATION_SERVICE) } returns nm
         every { appContext.getSystemService(android.app.NotificationManager::class.java) } returns nm
         val amber = mockk<Amber>(relaxed = true)
-        // The responder built from this Application cancels notifications through it.
         every { amber.getSystemService(android.content.Context.NOTIFICATION_SERVICE) } returns nm
         every { amber.getSystemService(android.app.NotificationManager::class.java) } returns nm
         every { amber.accountDatabases.daos(any()) } returns daos
@@ -371,7 +354,6 @@ class BunkerRequestUtilsTest {
                 onLoading = {},
             )
 
-            // sendRejection launches on Dispatchers.IO: wait for it to finish.
             coVerify(timeout = 5_000) {
                 AmberUtils.sendBunkerError(any(), any(), any(), any(), any(), any())
             }
@@ -410,7 +392,6 @@ class BunkerRequestUtilsTest {
                 rememberType = RememberType.ALWAYS,
             )
 
-            // sendResult launches on Dispatchers.IO: wait for it to finish.
             coVerify(timeout = 5_000) {
                 AmberUtils.sendBunkerError(any(), any(), any(), any(), any(), any())
             }
@@ -422,8 +403,6 @@ class BunkerRequestUtilsTest {
         }
     }
 
-    // The reply came after the bookkeeping, so a failure there (seen with a
-    // malformed sign_event in getDataFromBunker) left the client unanswered.
     @Test
     fun `a rejection is answered even when recording it fails`() = runBlocking {
         val (amber, daos) = amberWithDao(getByKeyReturnsNull = false)
@@ -485,7 +464,6 @@ class BunkerRequestUtilsTest {
             )
 
             coVerify(timeout = 5_000, exactly = 1) { daos.permissionWriteDao.insertApplicationWithPermissions(any()) }
-            // The client still gets its rejection reply from the tail of sendRejection.
             coVerify(timeout = 5_000, exactly = 1) { AmberUtils.sendBunkerError(any(), any(), any(), any(), any(), any()) }
         } finally {
             unmockkObject(AmberUtils)

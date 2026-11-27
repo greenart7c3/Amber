@@ -25,15 +25,13 @@ import org.junit.Assert.assertThrows
 import org.junit.Test
 
 class AccountCachedKeyLockTest {
-    // The account reads its public key from the signer's key pair. That is not key
-    // use, so wasNot Called ignores it.
-    private fun NostrSignerInternal.withKeyPair(): NostrSignerInternal = apply {
+    private fun NostrSignerInternal.withKeyPairReadsNotCountedAsKeyUse(): NostrSignerInternal = apply {
         every { keyPair } returns KeyPair()
         excludeRecords { keyPair }
     }
 
     private fun newAccount(signer: NostrSignerInternal, scope: CoroutineScope, appContext: Context? = null): Account = Account(
-        signer = signer.withKeyPair(),
+        signer = signer.withKeyPairReadsNotCountedAsKeyUse(),
         name = MutableStateFlow(""),
         picture = MutableStateFlow(""),
         signPolicy = 1,
@@ -48,7 +46,7 @@ class AccountCachedKeyLockTest {
         val signer = mockk<NostrSignerInternal>()
         var locked = false
         val account = Account(
-            signer = signer.withKeyPair(),
+            signer = signer.withKeyPairReadsNotCountedAsKeyUse(),
             name = MutableStateFlow(""),
             picture = MutableStateFlow(""),
             signPolicy = 1,
@@ -86,32 +84,36 @@ class AccountCachedKeyLockTest {
         }
     }
 
-    @Test
-    fun `default gate reads the stored preference and the keyguard state`() {
+    private fun withDefaultGate(requireUnlockedDevice: Boolean, deviceLocked: Boolean, onAccount: (Account) -> Unit) {
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
         val amber = mockk<Amber>()
         val keyguard = mockk<KeyguardManager>()
         every { amber.getSystemService(KeyguardManager::class.java) } returns keyguard
         mockkObject(KeystorePolicy)
         try {
-            // Opt-in off: allowed regardless of lock state, keyguard untouched.
-            every { KeystorePolicy.requireUnlockedDevice(any()) } returns false
-            every { keyguard.isDeviceLocked } returns true
-            newAccount(mockk<NostrSignerInternal>(), scope, amber).requirePrivateKeyAccess()
-
-            // Opt-in on, device unlocked: allowed.
-            every { KeystorePolicy.requireUnlockedDevice(any()) } returns true
-            every { keyguard.isDeviceLocked } returns false
-            newAccount(mockk<NostrSignerInternal>(), scope, amber).requirePrivateKeyAccess()
-
-            // Opt-in on, device locked: refused.
-            every { keyguard.isDeviceLocked } returns true
-            assertThrows(SecurityException::class.java) {
-                newAccount(mockk<NostrSignerInternal>(), scope, amber).requirePrivateKeyAccess()
-            }
+            every { KeystorePolicy.requireUnlockedDevice(any()) } returns requireUnlockedDevice
+            every { keyguard.isDeviceLocked } returns deviceLocked
+            onAccount(newAccount(mockk<NostrSignerInternal>(), scope, amber))
         } finally {
             scope.cancel()
             unmockkAll()
+        }
+    }
+
+    @Test
+    fun `default gate with the stored preference off allows a locked device`() {
+        withDefaultGate(requireUnlockedDevice = false, deviceLocked = true) { it.requirePrivateKeyAccess() }
+    }
+
+    @Test
+    fun `default gate with the stored preference on allows an unlocked device`() {
+        withDefaultGate(requireUnlockedDevice = true, deviceLocked = false) { it.requirePrivateKeyAccess() }
+    }
+
+    @Test
+    fun `default gate with the stored preference on refuses a locked device`() {
+        withDefaultGate(requireUnlockedDevice = true, deviceLocked = true) { account ->
+            assertThrows(SecurityException::class.java) { account.requirePrivateKeyAccess() }
         }
     }
 }

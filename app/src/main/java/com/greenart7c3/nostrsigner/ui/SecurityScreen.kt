@@ -183,6 +183,7 @@ private class SecurityActions(
         }
     }
 
+    @Suppress("NoComments")
     fun toggleRequireUnlockedDevice(enabled: Boolean) {
         state.requireUnlockedDevice = enabled
         state.requireUnlockedDeviceUpdating = true
@@ -196,7 +197,6 @@ private class SecurityActions(
             } catch (e: Exception) {
                 AmberLog.e(Amber.TAG, "Error toggling require unlocked device", e)
             } finally {
-                // Re-sync the toggle with the persisted setting (reverts on failure)
                 state.requireUnlockedDevice = KeystorePolicy.requireUnlockedDevice(context)
                 state.requireUnlockedDeviceUpdating = false
             }
@@ -272,7 +272,6 @@ private fun SecuritySettings(
             )
         }
 
-        // GHSA-8844-q5vh-9j8f, L1: opt-in toggle
         DescribedSwitchRow(
             title = Res.string.require_unlocked_device,
             description = Res.string.require_unlocked_device_description,
@@ -389,6 +388,7 @@ private fun DescribedSwitchRow(
     }
 }
 
+@Suppress("NoComments")
 @Composable
 private fun ColumnScope.RequireUnlockedDeviceNotes(updating: Boolean) {
     // setUnlockedDeviceRequired needs API 28 (SecureCryptoHelper), so

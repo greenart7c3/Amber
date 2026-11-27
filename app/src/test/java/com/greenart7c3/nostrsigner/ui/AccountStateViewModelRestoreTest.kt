@@ -35,14 +35,11 @@ import org.junit.Test
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class AccountStateViewModelRestoreTest {
-    // Unconfined so maybeOfferRestore's internal launch runs to completion on the
-    // calling thread; every ApplicationBackup call it makes is a mocked immediate.
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
+    private val callingThreadScope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
     private val amber = mockk<Amber>(relaxed = true)
 
     @Before
     fun setUp() {
-        // acceptRestore reports its result on Main.
         Dispatchers.setMain(Dispatchers.Unconfined)
         mockkObject(BuildFlavorChecker)
         every { BuildFlavorChecker.isOfflineFlavor() } returns false
@@ -53,13 +50,12 @@ class AccountStateViewModelRestoreTest {
         coEvery { AccountStorage.all(any()) } returns emptyList()
         every { AccountStorage.loadSync(any(), any()) } returns null
         coEvery { AccountStorage.load(any(), any()) } returns null
-        // Post-logout state: AccountStorage.logout wipes prefs_<npub>, so the
-        // publish-consent flag reads false on relogin.
-        every { AccountPreferences.getBackupApplications(any(), any()) } returns false
+        val publishConsentAfterLogoutWipedThePrefs = false
+        every { AccountPreferences.getBackupApplications(any(), any()) } returns publishConsentAfterLogoutWipedThePrefs
 
         val dao = mockk<ApplicationDao>(relaxed = true)
         coEvery { dao.getAll(any()) } returns emptyList()
-        every { amber.applicationIOScope } returns scope
+        every { amber.applicationIOScope } returns callingThreadScope
         every { amber.accountDatabases.daos(any()) } returns relaxedApplicationDaos(applicationDao = dao)
 
         mockkObject(ApplicationBackup, ApplicationBackupRestore)
@@ -78,7 +74,7 @@ class AccountStateViewModelRestoreTest {
     @Test
     fun `maybeOfferRestore reaches relay fetch even with backup publishing disabled`() {
         val viewModel = newViewModel()
-        val account = newTestAccount(scope)
+        val account = newTestAccount(callingThreadScope)
 
         viewModel.maybeOfferRestore(account)
 
@@ -92,7 +88,7 @@ class AccountStateViewModelRestoreTest {
     @Test
     fun `acceptRestore restores only the selected applications`() {
         val viewModel = newViewModel()
-        val account = newTestAccount(scope)
+        val account = newTestAccount(callingThreadScope)
         val kept = backupApp("kept")
         val payload = BackupPayload(applications = listOf(kept, backupApp("unchecked")))
         viewModel.restorePrompt.value = RestorePromptState.Found(account, payload, createdAt = 0)
@@ -111,7 +107,7 @@ class AccountStateViewModelRestoreTest {
         settingsStore = amber,
         accountRepository = amber.accountDatabases,
         relayClient = amber.relayClient,
-        appScope = scope,
+        appScope = callingThreadScope,
     )
 
     private fun backupApp(key: String) = BackupApplication(

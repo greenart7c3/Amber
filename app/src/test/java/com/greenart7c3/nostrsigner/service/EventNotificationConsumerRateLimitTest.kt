@@ -47,7 +47,6 @@ import org.junit.Test
 class EventNotificationConsumerRateLimitTest {
     private val amber = mockk<Amber>(relaxed = true)
 
-    // A real responder over the mocked Application, spied so tests can stub its replies.
     private val bunkerResponder by lazy {
         spyk(
             BunkerResponder(
@@ -115,39 +114,29 @@ class EventNotificationConsumerRateLimitTest {
         scope.cancel()
     }
 
-    // Empty content: the event is fully admitted (recorded in the persistent
-    // cache) but notify() stops before decrypting, which keeps the test to
-    // the gate itself. A distinct created_at gives each event its own id.
-    private fun eventFrom(sender: NostrSignerInternal, i: Int): Event = sender.signerSync.sign(TimeUtils.now() - i, NostrConnectEvent.KIND, arrayOf(arrayOf("p", accountHex)), "")
+    private fun emptyContentEventFrom(sender: NostrSignerInternal, secondsAgo: Int): Event = sender.signerSync.sign(TimeUtils.now() - secondsAgo, NostrConnectEvent.KIND, arrayOf(arrayOf("p", accountHex)), "")
 
-    /**
-     * Feeds pre-signed [events] and checks that exactly the [capacity] budget
-     * got through, plus whatever the bucket legitimately refilled while the
-     * loop ran (signature checks are slow on a loaded test machine).
-     */
     private suspend fun assertAdmitted(events: List<Event>, capacity: Int) {
         val started = System.currentTimeMillis()
         events.forEach { consumer.consume(it, relay) }
         val elapsedMs = System.currentTimeMillis() - started
-        val refill = (elapsedMs * capacity / (SenderRateLimiter.DEFAULT_WINDOW_SECONDS * 1000)).toInt() + 1
-        coVerify(atLeast = capacity, atMost = capacity + refill) { bunkerEventDao.insert(any()) }
+        val refilledWhileFeeding = (elapsedMs * capacity / (SenderRateLimiter.DEFAULT_WINDOW_SECONDS * 1000)).toInt() + 1
+        coVerify(atLeast = capacity, atMost = capacity + refilledWhileFeeding) { bunkerEventDao.insert(any()) }
     }
 
     @Test
     fun unknownSenderFloodIsDroppedBeforeAnyPerEventWork() = runBlocking {
         val attacker = NostrSignerInternal(KeyPair())
-        assertAdmitted(List(50) { eventFrom(attacker, it) }, SenderRateLimiter.DEFAULT_CAPACITY)
+        assertAdmitted(List(50) { emptyContentEventFrom(attacker, it) }, SenderRateLimiter.DEFAULT_CAPACITY)
     }
 
     @Test
     fun freshKeyFloodIsCappedInTotal() = runBlocking {
-        assertAdmitted(List(200) { eventFrom(NostrSignerInternal(KeyPair()), 0) }, SenderRateLimiter.DEFAULT_AGGREGATE_CAPACITY)
+        assertAdmitted(List(200) { emptyContentEventFrom(NostrSignerInternal(KeyPair()), 0) }, SenderRateLimiter.DEFAULT_AGGREGATE_CAPACITY)
     }
 
     @Test
     fun staleEventFloodOnlyLogsWithinTheBudget() = runBlocking {
-        // Signed but outside the freshness window: each rejection logs the
-        // event id, so they must be budgeted like any other event.
         val attacker = NostrSignerInternal(KeyPair())
         val stale = List(50) { attacker.signerSync.sign<Event>(TimeUtils.now() - 3600 - it, NostrConnectEvent.KIND, arrayOf(arrayOf("p", accountHex)), "") }
         val started = System.currentTimeMillis()
@@ -164,7 +153,7 @@ class EventNotificationConsumerRateLimitTest {
     fun storedConnectionIsNeverLimited() = runBlocking {
         val app = NostrSignerInternal(KeyPair())
         coEvery { appDao.getByKeyRaw(app.keyPair.pubKey.toHexKey()) } returns mockk(relaxed = true)
-        repeat(100) { consumer.consume(eventFrom(app, it), relay) }
+        repeat(100) { consumer.consume(emptyContentEventFrom(app, it), relay) }
 
         coVerify(exactly = 100) { bunkerEventDao.insert(any()) }
     }

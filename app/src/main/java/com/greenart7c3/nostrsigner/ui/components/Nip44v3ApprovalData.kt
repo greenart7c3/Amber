@@ -237,10 +237,8 @@ fun Nip44v3ContextBox(
         Column {
             val kindLabel = if (kind != null) {
                 val translation = Permission("sign_event", kind).localizedBlocking()
-                val unknown = stringResource(Res.string.event_kind, kind.toString())
-                // toLocalizedString returns the "Event kind N" fallback when the
-                // kind has no translation; only append the name when one exists.
-                if (translation != unknown) "$kind ($translation)" else kind.toString()
+                val untranslatedKindFallback = stringResource(Res.string.event_kind, kind.toString())
+                if (translation != untranslatedKindFallback) "$kind ($translation)" else kind.toString()
             } else {
                 "?"
             }

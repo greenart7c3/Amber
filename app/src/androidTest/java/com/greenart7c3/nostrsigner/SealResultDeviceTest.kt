@@ -2,13 +2,12 @@ package com.greenart7c3.nostrsigner
 
 import android.util.Log
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import androidx.test.platform.app.InstrumentationRegistry
 import com.greenart7c3.nostrsigner.common.SignerType
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.EncryptedDataKind
 import com.greenart7c3.nostrsigner.service.AmberUtils
-import com.greenart7c3.nostrsigner.service.EventNotificationConsumer
 import com.greenart7c3.nostrsigner.service.IntentUtils
+import com.greenart7c3.nostrsigner.service.bunkerEncryptedDataKind
 import com.vitorpamplona.quartz.nip01Core.core.toHexKey
 import com.vitorpamplona.quartz.nip01Core.crypto.KeyPair
 import com.vitorpamplona.quartz.nip01Core.jackson.JacksonMapper
@@ -33,7 +32,6 @@ import org.junit.runner.RunWith
  */
 @RunWith(AndroidJUnit4::class)
 class SealResultDeviceTest {
-    private val context = InstrumentationRegistry.getInstrumentation().targetContext
     private val signer = NostrSignerInternal(KeyPair())
     private val account = Account(
         signer = signer,
@@ -65,24 +63,10 @@ class SealResultDeviceTest {
     private suspend fun bunkerKind(method: String, params: List<String>): EncryptedDataKind {
         val wire = JacksonMapper.mapper.writeValueAsString(mapOf("id" to "req", "method" to method, "params" to params))
         val request = JacksonMapper.mapper.readValue(wire, BunkerRequest::class.java)
-        val fn = EventNotificationConsumer::class.java.getDeclaredMethod(
-            "getEncryptedDataKind",
-            BunkerRequest::class.java,
-            Account::class.java,
-            String::class.java,
-            Continuation::class.java,
-        ).apply { isAccessible = true }
-        val amber = context.amber
-        val consumer = EventNotificationConsumer(context, amber, amber.accountDatabases, amber.applicationIOScope, amber.notificationCache, amber.bunkerResponder) { amber.notificationSubscription.updateFilter() }
-        return suspendCoroutineUninterceptedOrReturn<Any?> { c -> fn.invoke(consumer, request, account, "wss://relay.invalid", c) } as EncryptedDataKind
+        return bunkerEncryptedDataKind(request, account) { }!!
     }
 
-    /**
-     * Logs what the caller would receive for one request, then returns whether it
-     * is the right value. Every case is logged before anything is asserted, so a
-     * run shows all of them.
-     */
-    private fun check(path: String, method: String, returned: String, expected: String, expectedLabel: String): Boolean {
+    private fun logReturnedAndCheckItIsExpected(path: String, method: String, returned: String, expected: String, expectedLabel: String): Boolean {
         val leaked = returned == privateTags
         val ok = returned == expected
         Log.i(TAG, "$path $method -> returned=${returned.take(90)} | expected $expectedLabel | ${if (ok) "OK" else "WRONG"}${if (leaked) " (LEAKED self-encrypted plaintext)" else ""}")
@@ -96,11 +80,11 @@ class SealResultDeviceTest {
         for (type in listOf(SignerType.NIP44_ENCRYPT, SignerType.NIP04_ENCRYPT)) {
             val ciphertext = AmberUtils.encryptOrDecryptData(seal, type, account, peerHex)!!
             val kind = intentKind(type, ciphertext, seal)
-            results += check("NIP-55 intent", type.name, kind.result, ciphertext, "ciphertext")
+            results += logReturnedAndCheckItIsExpected("NIP-55 intent", type.name, kind.result, ciphertext, "ciphertext")
         }
         val incoming = peer.nip44Encrypt(seal, account.hexKey)
         val decrypted = AmberUtils.encryptOrDecryptData(incoming, SignerType.NIP44_DECRYPT, account, peerHex)!!
-        results += check("NIP-55 intent", "NIP44_DECRYPT", intentKind(SignerType.NIP44_DECRYPT, decrypted, incoming).result, seal, "the seal")
+        results += logReturnedAndCheckItIsExpected("NIP-55 intent", "NIP44_DECRYPT", intentKind(SignerType.NIP44_DECRYPT, decrypted, incoming).result, seal, "the seal")
         assertTrue("see logcat tag $TAG", results.all { it })
     }
 
@@ -111,15 +95,15 @@ class SealResultDeviceTest {
         for (method in listOf("nip44_encrypt", "nip04_encrypt")) {
             val returned = bunkerKind(method, listOf(peerHex, seal)).result
             val peerView = runCatching { peer.decrypt(returned, account.hexKey) }.getOrDefault("")
-            // An encrypt result is right when it is ciphertext the peer can open back to the seal.
-            results += check("NIP-46 bunker", method, returned, if (peerView == seal) returned else "<ciphertext of the seal>", "ciphertext")
+            val expectedCiphertextThePeerOpensToTheSeal = if (peerView == seal) returned else "<ciphertext of the seal>"
+            results += logReturnedAndCheckItIsExpected("NIP-46 bunker", method, returned, expectedCiphertextThePeerOpensToTheSeal, "ciphertext")
         }
         val incoming = mapOf(
             "nip44_decrypt" to peer.nip44Encrypt(seal, account.hexKey),
             "nip04_decrypt" to peer.nip04Encrypt(seal, account.hexKey),
         )
         for ((method, ciphertext) in incoming) {
-            results += check("NIP-46 bunker", method, bunkerKind(method, listOf(peerHex, ciphertext)).result, seal, "the seal")
+            results += logReturnedAndCheckItIsExpected("NIP-46 bunker", method, bunkerKind(method, listOf(peerHex, ciphertext)).result, seal, "the seal")
         }
         assertTrue("see logcat tag $TAG", results.all { it })
     }

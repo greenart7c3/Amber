@@ -53,7 +53,6 @@ fun SigningAs(account: Account, modifier: Modifier = Modifier) {
     }
 }
 
-/** The account's picture, or its placeholder when it has none (always in the offline flavor) or it fails to load. */
 @Composable
 private fun SigningAsAvatar(account: Account) {
     val profileUrl by account.picture.collectAsStateWithLifecycle()
@@ -75,7 +74,6 @@ private fun SigningAsAvatar(account: Account) {
     }
 }
 
-/** The account's name over its short npub; without a name, the npub alone in bold. */
 @Composable
 private fun AccountNameLabel(
     account: Account,

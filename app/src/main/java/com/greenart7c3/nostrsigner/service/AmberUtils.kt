@@ -93,6 +93,11 @@ object AmberUtils {
         )
     }
 
+    /**
+     * The common rememberedGrant, as on the desktop: for NIP-04/NIP-44 ALL stores the
+     * whole NIP (NIP44_DECRYPT), SPECIFIC the content type (DECRYPT_CLEAR_TEXT), each
+     * replacing the other.
+     */
     fun updatePermission(
         application: ApplicationWithPermissions,
         key: String,
@@ -104,9 +109,6 @@ object AmberUtils {
         encryptedData: EncryptedDataKind?,
         decryptTypeScope: DecryptTypeScope = DecryptTypeScope.ALL,
     ) {
-        // The common rememberedGrant, as on the desktop: for NIP-04/NIP-44 ALL stores the
-        // whole NIP (NIP44_DECRYPT), SPECIFIC the content type (DECRYPT_CLEAR_TEXT), each
-        // replacing the other.
         val remembered = rememberedGrant(
             signerType,
             signerType.toPermissionTypeString(encryptedData),
@@ -149,13 +151,13 @@ object AmberUtils {
             .insertApplicationWithPermissions(application)
     }
 
+    /** The common signPolicyGrants, as on the desktop; an unknown policy changes nothing. */
     fun configureSignPolicy(
         application: ApplicationWithPermissions,
         signPolicy: Int,
         key: String,
         permissions: List<Permission>?,
     ) {
-        // The common signPolicyGrants, as on the desktop; an unknown policy changes nothing.
         val checked = permissions?.filter { it.checked }.orEmpty().map { RequestedPermission(it.type, it.kind) }
         val grants = signPolicyGrants(signPolicy, basicPermissions.map { RequestedPermission(it.type, it.kind) }, checked) { type, kind ->
             application.permissions.any { it.type == type && it.kind == kind }
@@ -176,10 +178,8 @@ object AmberUtils {
     ) = updatePermission(application, key, type, kind, true, rememberType, relay, encryptedData, decryptTypeScope)
 }
 
-// A shared Grant as the app stores it, under the connection [key].
 internal fun Grant.toEntity(key: String) = ApplicationPermissionsEntity(null, key, type, kind, acceptable, rememberType, acceptUntil, rejectUntil, relay)
 
-// A stored permission as a shared Grant, without its row id, so two reads compare equal.
 internal fun ApplicationPermissionsEntity.toGrant() = Grant(type, kind, acceptable, rememberType, acceptUntil, rejectUntil, relay)
 
 fun String.toShortenHex(): String {

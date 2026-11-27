@@ -45,7 +45,6 @@ class NotificationSinceClampTest {
 
     @Test
     fun `future-dated cached event does not push since past now`() = runBlocking {
-        // The offline flavor never subscribes to relays.
         assumeFalse(BuildFlavorChecker.isOfflineFlavor())
         val client = mockk<NostrClient>(relaxed = true)
         val captured = mutableListOf<Map<NormalizedRelayUrl, List<Filter>>>()

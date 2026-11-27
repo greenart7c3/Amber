@@ -59,7 +59,6 @@ class ZapstoreUpdaterHashTest {
 
         assertNull(downloadApk(release))
 
-        // Refused before the download setup: no settings load, no cache file.
         coVerify(exactly = 0) { LocalPreferences.loadSettingsFromEncryptedStorage(any()) }
         verify(exactly = 0) { context.cacheDir }
     }

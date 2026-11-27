@@ -36,20 +36,14 @@ class CliEnvironment(
     val onPairingUri: (String) -> Unit = {},
 )
 
-/**
- * The same four relays Amber itself uses for new connections: `defaultAppRelays`
- * in the Android app (`app/models/AmberSettings.kt`) and `DesktopSettings.defaultRelays`
- * in the desktop app. Keep them in step.
- */
-private val DEFAULT_RELAYS = listOf(
+private val AMBER_APPS_DEFAULT_RELAYS = listOf(
     "wss://auth.nostr1.com/",
     "wss://bucket.coracle.social/",
     "wss://nrs.primal.net/",
     "wss://relay.nip46.com/",
 )
 
-/** The release local relay, and the debug build's one, when a running Amber listens there. */
-private val LOCAL_RELAY_PORTS = listOf(LocalRelayServer.DEFAULT_PORT, LocalRelayServer.DEBUG_PORT)
+private val RELEASE_AND_DEBUG_LOCAL_RELAY_PORTS = listOf(LocalRelayServer.DEFAULT_PORT, LocalRelayServer.DEBUG_PORT)
 
 private val HEX_PUB_KEY = Regex("^[0-9a-f]{64}$")
 
@@ -62,12 +56,11 @@ object AmberCli {
         arguments: List<String>,
         environment: CliEnvironment = CliEnvironment(),
     ): Int {
-        // Also for the parse errors below, which happen before Args exists.
-        val json = arguments.any { it == "--json" || it.startsWith("--json=") }
+        val jsonForParseErrors = arguments.any { it == "--json" || it.startsWith("--json=") }
         val args = try {
             Args.parse(arguments)
         } catch (e: CliError) {
-            return fail(environment, json, e)
+            return fail(environment, jsonForParseErrors, e)
         }
         return Session(environment).run(args)
     }
@@ -83,8 +76,7 @@ internal class Session(
 
     fun run(args: Args): Int {
         QuartzLogs.install(err, args.has("verbose"))
-        // The OS credential store (a locked keyring waits for its unlock prompt) gets the same bound.
-        args.value("timeout")?.toLongOrNull()?.takeIf { it in 1..86_400 }?.let { keyringTimeoutSeconds = it }
+        boundKeyringCallsByTimeout(args)
         if (args.has("version")) {
             out.println("amber ${BuildInfo.version}")
             return Exit.OK
@@ -108,6 +100,10 @@ internal class Session(
         }
     }
 
+    private fun boundKeyringCallsByTimeout(args: Args) {
+        args.value("timeout")?.toLongOrNull()?.takeIf { it in 1..86_400 }?.let { keyringTimeoutSeconds = it }
+    }
+
     private fun runCommand(
         command: String,
         args: Args,
@@ -127,13 +123,6 @@ internal class Session(
         else -> throw CliError("unknown command \"$command\" (run `amber help`)", Exit.USAGE)
     }
 
-    // ---- commands ---------------------------------------------------------
-
-    /**
-     * Pairing from a `bunker://` URI Amber created for a new connection. Amber
-     * asks the user to approve a first-time client; after that the connection
-     * is saved here and every command goes straight through it.
-     */
     private fun login(args: Args): Int {
         val missing = CliError(
             "login needs the bunker:// URI Amber shows for a connection: " +
@@ -141,14 +130,13 @@ internal class Session(
             Exit.USAGE,
         )
         val input = args.positionals.firstOrNull() ?: throw missing
-        // "-" keeps the URI's secret out of the process list and the shell history.
-        val uri = if (input == "-") readInput().trim().ifEmpty { throw missing } else input
+        val uri = if (input == "-") readStdinWithoutTrailingNewline().trim().ifEmpty { throw missing } else input
         val profile = profile(args)
         replaceableConnection(args, profile)
         val seconds = timeout(args)
         val keyPair = KeyPair()
-        // The relays come from the URI, which Quartz parses: none are needed up front.
-        val login = Nip46Client(keyPair, emptyList(), seconds, err, environment.openUri).use { client ->
+        val relaysTakenFromUri = emptyList<NormalizedRelayUrl>()
+        val login = Nip46Client(keyPair, relaysTakenFromUri, seconds, err, environment.openUri).use { client ->
             client.login(uri)
         }
         val connection = SavedConnection(
@@ -165,7 +153,6 @@ internal class Session(
         return Exit.OK
     }
 
-    /** The connection saved under [profile], if any; refuses to replace a paired one without --force. */
     private fun replaceableConnection(
         args: Args,
         profile: String,
@@ -190,18 +177,12 @@ internal class Session(
         )
     }
 
-    /**
-     * Pairing by URI: prints a `nostrconnect://` link (and QR) that a human
-     * pastes or scans into Amber, then waits for the approval. The connection
-     * is saved as soon as it is printed, so a timed-out pairing resumes with
-     * the same URI instead of stranding the key and secret.
-     */
     private fun connect(args: Args): Int {
         val profile = profile(args)
         val existing = replaceableConnection(args, profile)
         val seconds = timeout(args)
-        val pairing = nostrConnectPairing(args, existing)
-        store.put(profile, pairing.pendingConnection())
+        val pairing = resumeOrStartPairing(args, existing)
+        store.put(profile, pairing.resumableConnection())
         val paired = awaitApproval(args, pairing, seconds)
         if (paired.signerPubKey.isEmpty()) throw CliError("Amber approved without naming a connection key", Exit.ERROR)
         store.put(profile, paired)
@@ -221,7 +202,6 @@ internal class Session(
         return Exit.OK
     }
 
-    /** A `nostrconnect://` pairing: its client key, relays, secret and name, and the URI built from them. */
     private class NostrConnectPairing(
         val keyPair: KeyPair,
         val relays: List<NormalizedRelayUrl>,
@@ -231,12 +211,10 @@ internal class Session(
     ) {
         val clientPrivKey: String get() = keyPair.privKey!!.toHexKey()
 
-        /** What is saved while the pairing waits, so a timed-out one resumes with the same URI. */
-        fun pendingConnection() = SavedConnection(clientPrivKey = clientPrivKey, relays = relays.map { it.url }, name = name, pendingSecret = secret)
+        fun resumableConnection() = SavedConnection(clientPrivKey = clientPrivKey, relays = relays.map { it.url }, name = name, pendingSecret = secret)
     }
 
-    /** Resumes [existing] when it is a pending pairing for the same relays (or no --relay was given), else starts a new one. */
-    private fun nostrConnectPairing(
+    private fun resumeOrStartPairing(
         args: Args,
         existing: SavedConnection?,
     ): NostrConnectPairing {
@@ -246,7 +224,7 @@ internal class Session(
                 pending.pendingSecret.isNotEmpty() &&
                 (requestedRelays == null || pending.relays == requestedRelays.map { it.url })
         }
-        val relays = requestedRelays ?: resumable?.relays?.let { normalizeRelays(it) } ?: defaultRelays()
+        val relays = requestedRelays ?: resumable?.relays?.let { normalizeRelays(it) } ?: runningLocalAmberAndDefaultRelays()
         val keyPair = resumable?.let { clientKeyPair(it.clientPrivKey) } ?: KeyPair()
         val secret = resumable?.pendingSecret?.takeIf { it.isNotEmpty() } ?: randomSecret()
         val name = args.value("name") ?: resumable?.name?.takeIf { it.isNotBlank() } ?: "amber-cli"
@@ -254,7 +232,6 @@ internal class Session(
         return NostrConnectPairing(keyPair, relays, secret, name, uri)
     }
 
-    /** Shows the pairing URI once the relays hold the subscription for the answer, then waits for Amber's approval. */
     private fun awaitApproval(
         args: Args,
         pairing: NostrConnectPairing,
@@ -265,9 +242,7 @@ internal class Session(
         val relays = pairing.relays
         val secret = pairing.secret
         return Nip46Client(pairing.keyPair, relays, seconds, err, environment.openUri).use { client ->
-            // The URI leaves the process only once the relays hold the subscription
-            // for the answer: they do not replay an approval that came before it.
-            val signerPubKey = client.awaitNostrConnectApproval(secret) {
+            val signerPubKey = client.awaitNostrConnectApproval(secret, onListening = {
                 emit(
                     args,
                     mapper.createObjectNode().put("uri", uri).put("state", "waiting-for-approval"),
@@ -278,7 +253,7 @@ internal class Session(
                 err.println("In Amber: paste the URI into \"New connection\" (or scan the QR), then approve it.")
                 if (args.has("open")) environment.openUri(uri)
                 environment.onPairingUri(uri)
-            }
+            })
             client.open(signerPubKey, userPubKey = "")
             SavedConnection(
                 clientPrivKey = pairing.clientPrivKey,
@@ -299,7 +274,7 @@ internal class Session(
                     "amber sign-event '{\"kind\":1,\"content\":\"hello\",\"tags\":[]}'",
                 Exit.USAGE,
             )
-        val template = eventTemplate(if (input == "-") readInput() else input)
+        val template = eventTemplate(if (input == "-") readStdinWithoutTrailingNewline() else input)
         val event = session(connection, timeout(args)).use { it.requests.signEvent(template) }
         if (!event.verify()) {
             throw CliError("Amber returned an event whose id or signature does not verify", Exit.ERROR)
@@ -340,7 +315,7 @@ internal class Session(
         val connection = requireConnection(profile(args))
         val input = args.positionals.getOrNull(1)
             ?: throw CliError("$command needs the ${if (encrypt) "plaintext" else "ciphertext"}, or - to read it from stdin", Exit.USAGE)
-        val text = if (input == "-") readInput() else input
+        val text = if (input == "-") readStdinWithoutTrailingNewline() else input
         val result = session(connection, timeout(args)).use { client ->
             when {
                 nip44 && encrypt -> client.requests.nip44Encrypt(pubKey, text)
@@ -360,10 +335,6 @@ internal class Session(
         return Exit.OK
     }
 
-    /**
-     * What is saved and whether the signer answers right now: the first thing
-     * an agent should run before a batch of requests.
-     */
     private fun status(args: Args): Int {
         val profile = profile(args)
         val connection = store.get(profile)
@@ -388,14 +359,13 @@ internal class Session(
             )
             return waiting.code
         }
-        // Kept whole: the exit code says why it is offline (5 silent, 6 unreachable, 4 refused).
-        val failure = try {
+        val offlineReason: CliError? = try {
             session(connection, timeout(args, defaultSeconds = 15)).use { it.requests.ping() }
             null
         } catch (e: CliError) {
             e
         }
-        val online = failure == null
+        val online = offlineReason == null
         val node = mapper.createObjectNode()
             .put("profile", profile)
             .put("name", connection.name)
@@ -416,13 +386,12 @@ internal class Session(
                 appendLine("relays: ${connection.relays.joinToString(", ")}")
                 append("state: " + if (online) "online" else "offline")
             },
-            failure,
+            offlineReason,
         )
-        failure?.let { err.println(it.message) }
-        return failure?.code ?: Exit.OK
+        offlineReason?.let { err.println(it.message) }
+        return offlineReason?.code ?: Exit.OK
     }
 
-    /** Tells Amber to forget the connection and deletes the local profile. */
     private fun logout(args: Args): Int {
         val profile = profile(args)
         val connection = store.get(profile)
@@ -520,8 +489,6 @@ internal class Session(
         }
     }
 
-    // ---- helpers ----------------------------------------------------------
-
     private fun profile(args: Args): String = args.value("profile")?.takeIf { it.isNotBlank() }
         ?: environment.env("AMBER_PROFILE")?.takeIf { it.isNotBlank() }
         ?: "default"
@@ -576,14 +543,9 @@ internal class Session(
             ?: throw CliError("\"$url\" is not a relay URL (use wss://... or ws://...)", Exit.USAGE)
     }.distinct()
 
-    /**
-     * The relays a new nostrconnect URI names: Amber's own defaults, plus the
-     * local relay of a running Amber on this machine so pairing works without
-     * any public relay at all.
-     */
-    private fun defaultRelays(): List<NormalizedRelayUrl> {
-        val local = LOCAL_RELAY_PORTS.filter { isListening(it) }.map { "ws://127.0.0.1:$it/" }
-        return normalizeRelays(local + DEFAULT_RELAYS)
+    private fun runningLocalAmberAndDefaultRelays(): List<NormalizedRelayUrl> {
+        val local = RELEASE_AND_DEBUG_LOCAL_RELAY_PORTS.filter { isListening(it) }.map { "ws://127.0.0.1:$it/" }
+        return normalizeRelays(local + AMBER_APPS_DEFAULT_RELAYS)
     }
 
     private fun isListening(port: Int): Boolean = runCatching {
@@ -593,7 +555,6 @@ internal class Session(
         }
     }.getOrDefault(false)
 
-    /** The unsigned event as Amber's `sign_event` expects it: created_at filled in when absent. */
     private fun eventTemplate(text: String): EventTemplate<Event> {
         val node = runCatching { mapper.readTree(text) }.getOrNull()
         if (node == null || !node.isObject) throw CliError("the event must be a JSON object", Exit.USAGE)
@@ -623,18 +584,11 @@ internal class Session(
         }.toTypedArray()
     }
 
-    /** stdin, minus the newline a shell (`echo`) adds. */
-    private fun readInput(): String = environment.stdin.readBytes()
+    private fun readStdinWithoutTrailingNewline(): String = environment.stdin.readBytes()
         .toString(Charsets.UTF_8)
         .removeSuffix("\r\n")
         .removeSuffix("\n")
 
-    /** The command's result on stdout: the plain value, or one `{"ok":…}` object with --json. */
-    /**
-     * With [error], the command still has a [result] to show but exits with the
-     * error's code: the JSON then says `"ok":false` and carries `error` and
-     * `code` beside the result, like the failure envelope.
-     */
     private fun emit(
         args: Args,
         result: JsonNode,

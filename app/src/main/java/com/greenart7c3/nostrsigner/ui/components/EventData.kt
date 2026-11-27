@@ -83,16 +83,11 @@ fun EventData(
     }
 }
 
-/** Amber has no name for [event]'s kind, and the event has no alt tag to name it either. */
 private fun isUnnamedKind(event: Event): Boolean {
     val unnamed = Permission("sign_event", event.kind).localizedBlocking() == getStringBlocking(Res.string.event_kind, event.kind.toString())
     return unnamed && event.tags.none { it.size > 1 && it[0] == "alt" }
 }
 
-/**
- * The rest of a sign screen: Show Details, the signing account, the remember choice
- * ([alwaysShowRemember] for a bunker client) and accept or reject.
- */
 @Composable
 private fun ColumnScope.SignEventActions(
     event: Event,

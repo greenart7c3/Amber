@@ -68,7 +68,6 @@ class BunkerSingleEventViewModelTest {
 
         viewModel.load(request, "npub1")
 
-        // The load runs on Dispatchers.IO.
         coVerify(timeout = 5_000) { dao.getBySecret("s3cret") }
         Thread.sleep(100)
         assertSame(request, viewModel.loaded.value?.request)
@@ -76,10 +75,8 @@ class BunkerSingleEventViewModelTest {
         coVerify(exactly = 0) { dao.getByKey(any()) }
     }
 
-    // A client picks the JSON-RPC id: a later request reusing it gets this ViewModel back,
-    // and must be judged on the grants saved now, not on the first request's load.
     @Test
-    fun `a later request under the same key is loaded again`() {
+    fun `a later request reusing the JSON-RPC id is judged on the grants saved now, not on the first load`() {
         coEvery { dao.getByKey(clientKey) } returns saved
         val first = connect(isNostrConnectUri = false)
         val viewModel = viewModel()

@@ -46,9 +46,8 @@ class Nip46RepliesTest {
         }
     }
 
-    // A relay that refused one event may take the next, so each try builds a new one.
     @Test
-    fun `each try publishes a freshly built reply until one is accepted`() = runBlocking {
+    fun `each try publishes a freshly built reply until one is accepted, as a relay that refused one event may take the next`() = runBlocking {
         val tried = mutableListOf<Event>()
         val published = publishNip46Reply(response, client.pubKey, EncryptionType.NIP44, key, attempts = 3) { event ->
             tried += event

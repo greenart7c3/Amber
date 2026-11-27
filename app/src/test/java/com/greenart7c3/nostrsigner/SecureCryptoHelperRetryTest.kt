@@ -17,13 +17,12 @@ import org.junit.Test
  * in for it; the cause chain is walked exactly as it is on a device.
  */
 class SecureCryptoHelperRetryTest {
-    /** Stands in for the keystore's `INVALID_OPERATION_HANDLE` cause. */
-    private class PrunedOperation : Exception()
+    private class KeystoreInvalidOperationHandle : Exception()
 
-    private val isPrunedCause: (Throwable) -> Boolean = { it is PrunedOperation }
+    private val isPrunedCause: (Throwable) -> Boolean = { it is KeystoreInvalidOperationHandle }
 
     private fun prunedOperation(): IllegalBlockSizeException = IllegalBlockSizeException().apply {
-        initCause(PrunedOperation())
+        initCause(KeystoreInvalidOperationHandle())
     }
 
     private fun retry(block: () -> String): String = SecureCryptoHelper.retryPrunedOperation(
@@ -56,7 +55,7 @@ class SecureCryptoHelperRetryTest {
 
         assertEquals(3, attempts)
         assertTrue(failure is IllegalBlockSizeException)
-        assertTrue(failure?.cause is PrunedOperation)
+        assertTrue(failure?.cause is KeystoreInvalidOperationHandle)
     }
 
     @Test
@@ -74,11 +73,9 @@ class SecureCryptoHelperRetryTest {
     }
 
     @Test
-    fun `a block size failure without a keystore cause is not retried`() {
+    fun `the default classifier does not retry a block size failure without the keystore's own cause`() {
         var attempts = 0
         val failure = runCatching {
-            // The default classifier only recognises the keystore's own cause,
-            // which this exception does not carry.
             SecureCryptoHelper.retryPrunedOperation<Unit> {
                 attempts++
                 throw IllegalBlockSizeException("block size mismatch")

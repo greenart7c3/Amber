@@ -35,11 +35,8 @@ fun intentPermission(
     }
 }
 
-// V3 grants are scoped by (app, type, kind), with a kind-less "all kinds" fallback.
-// They never satisfy v2/v4 requests.
 internal fun nip44v3Grant(grants: List<ApplicationPermissionsEntity>, type: String, kind: Int?) = grants.firstOrNull { it.type == type && it.kind == kind } ?: grants.firstOrNull { it.type == type && it.kind == null }
 
-// The encryption-specific type first, then the request type, then a whole-NIP grant.
 internal fun encryptionGrant(grants: List<ApplicationPermissionsEntity>, type: SignerType, encryptedData: EncryptedDataKind?): ApplicationPermissionsEntity? {
     val nip = when (type) {
         SignerType.NIP04_DECRYPT, SignerType.NIP04_ENCRYPT -> 4
@@ -53,7 +50,6 @@ internal fun encryptionGrant(grants: List<ApplicationPermissionsEntity>, type: S
         ?: nip?.let { n -> grants.firstOrNull { it.type == "NIP" && it.kind == n } }
 }
 
-// Per relay host first, then an all-relays grant ("*" or blank).
 internal fun relayAuthGrant(grants: List<ApplicationPermissionsEntity>, type: String, relayUrl: String?) = grants.firstOrNull { it.type == type && it.kind == RELAY_AUTH_KIND && it.relay == relayUrl }
     ?: grants.firstOrNull { it.type == type && it.kind == RELAY_AUTH_KIND && isAllRelaysGrant(it.relay) }
 

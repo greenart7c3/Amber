@@ -61,7 +61,6 @@ fun BunkerRelayAuthScreen(
 ) {
     var rememberType by remember { mutableStateOf(RememberType.NEVER) }
     var scope by remember { mutableStateOf(defaultScope) }
-    // The effect below runs once; it must call the latest callbacks, not the first ones.
     val currentOnAccept by rememberUpdatedState(onAccept)
     val currentOnReject by rememberUpdatedState(onReject)
 

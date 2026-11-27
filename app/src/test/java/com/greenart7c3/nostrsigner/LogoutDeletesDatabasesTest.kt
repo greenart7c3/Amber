@@ -36,14 +36,17 @@ class LogoutDeletesDatabasesTest {
         every { AmberLog.d(any(), any(), any()) } returns Unit
         every { AmberLog.e(any(), any<String>()) } returns Unit
         every { AmberLog.e(any(), any(), any()) } returns Unit
-        // File and DataStore cleanup is out of scope here.
-        every { SavedAccounts.remove(any(), any()) } returns Unit
-        every { AccountStorage["deleteUserPreferenceFile"](any<Context>(), any<String>()) } returns Unit
-        coEvery { AccountStorage["deleteUserDataStoreFile"](any<Context>(), any<String>()) } returns Unit
+        skipFileAndDataStoreCleanup()
         every { SavedAccounts.list(any()) } returns listOf("npub1other")
         every { SavedAccounts.current(any()) } returns "npub1other"
         every { context.deleteDatabase(any()) } returns true
         every { amber.accountDatabases.closeDatabasesFor(any()) } just runs
+    }
+
+    private fun skipFileAndDataStoreCleanup() {
+        every { SavedAccounts.remove(any(), any()) } returns Unit
+        every { AccountStorage["deleteUserPreferenceFile"](any<Context>(), any<String>()) } returns Unit
+        coEvery { AccountStorage["deleteUserDataStoreFile"](any<Context>(), any<String>()) } returns Unit
     }
 
     @After

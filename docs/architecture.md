@@ -681,5 +681,7 @@ what their callers use together, with the same bodies.
   `BunkerRelays` and `RelayConnections`; desktop-entry escaping is `DesktopEntryEscaping`.
 - `LocalPreferences`' per-setting updaters by area (step 5).
 
-What remains in the baselines is the `NoComments` grandfathering (deleting a comment drops
-its entry).
+The `NoComments` grandfathering (2,848 comments) was cleared afterwards, module by module:
+each comment was deleted, said through a name or type, moved into public KDoc, or kept under
+`@Suppress("NoComments")` when it documents a constraint outside our code. Every module's
+baseline is now empty.

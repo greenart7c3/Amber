@@ -85,6 +85,9 @@ open class LocalRelayServer(
         const val DEFAULT_PORT = 7777
         const val DEBUG_PORT = 7778
 
+        /** Largest message a local client may send, to this relay or to the desktop's local socket signer. */
+        const val LOCAL_CLIENT_MAX_MESSAGE_BYTES = 1024 * 1024
+
         /**
          * 127.0.0.1, the address every relay URL and bunker URI names. Not
          * `InetAddress.getLoopbackAddress()`: that is ::1 on Android, where an
@@ -157,7 +160,7 @@ private class RelayCore(
         const val MAX_EVENTS = 512
         const val MAX_SUBSCRIPTIONS_PER_CLIENT = 20
 
-        const val MAX_MESSAGE_BYTES = 1024 * 1024
+        const val MAX_MESSAGE_BYTES = LocalRelayServer.LOCAL_CLIENT_MAX_MESSAGE_BYTES
         const val MAX_HANDSHAKE_BYTES = 8 * 1024
 
         private const val WS_GUID = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"

@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.greenart7c3.nostrsigner.common.SignerType
 import com.greenart7c3.nostrsigner.common.nip44v3SignerTypes
+import com.greenart7c3.nostrsigner.common.relays.LocalRelayServer
 import com.vitorpamplona.quartz.nip01Core.core.hexToByteArray
 import com.vitorpamplona.quartz.nip01Core.jackson.JacksonMapper
 import com.vitorpamplona.quartz.nip19Bech32.bech32.bechToBytes
@@ -34,7 +35,7 @@ object LocalSignerProtocol {
     const val INTERNAL_ERROR = 10
 
     /** Longest line accepted from a client. */
-    const val MAX_LINE_BYTES = 1 shl 20
+    const val MAX_LINE_BYTES = LocalRelayServer.LOCAL_CLIENT_MAX_MESSAGE_BYTES
 
     /** Error text the engine answers a rejection with (see doReject in BunkerApproval.kt). */
     const val USER_REJECTED = "user rejected"

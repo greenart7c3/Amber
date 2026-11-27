@@ -88,8 +88,8 @@ class TorStartup(
     private fun reconnectRelaysWheneverTorComesBack() {
         if (recoveryObserverStartedInThisProcess) return
         recoveryObserverStartedInThisProcess = true
+        var wasRunning = TorManager.isRunning.value
         scope.launch {
-            var wasRunning = TorManager.isRunning.value
             TorManager.isRunning.collect { running ->
                 if (running && !wasRunning && usesBuiltInTor) {
                     AmberLog.d(Amber.TAG, "Built-in Tor is up; refreshing relay connections")

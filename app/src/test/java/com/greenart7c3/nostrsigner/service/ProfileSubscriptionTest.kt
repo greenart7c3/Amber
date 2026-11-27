@@ -65,7 +65,6 @@ class ProfileSubscriptionTest {
         every { AccountPreferences.getLastCheck(any(), any()) } returns 0L
         every { AccountPreferences.setLastCheck(any(), any(), any()) } just Runs
         every { AccountPreferences.setLastMetadataUpdate(any(), any(), any()) } just Runs
-        // In-memory stand-in for the per-account metadata created_at preference.
         val metadataCreatedAt = mutableMapOf<String, Long>()
         every { AccountPreferences.getMetadataCreatedAt(any(), any()) } answers { metadataCreatedAt[secondArg()] ?: 0L }
         every { AccountPreferences.setMetadataCreatedAt(any(), any(), any()) } answers { metadataCreatedAt[secondArg()] = thirdArg() }
@@ -87,7 +86,6 @@ class ProfileSubscriptionTest {
 
     @Test
     fun `updateFilter subscribes to the user relay list when interval is ALWAYS`() = runBlocking {
-        // updateFilter is a no-op on the offline flavor by design
         assumeFalse(BuildFlavorChecker.isOfflineFlavor())
         subscription.updateFilter(newTestAccount(scope))
         verify(exactly = 1) { client.subscribe(any(), any()) }
@@ -144,8 +142,6 @@ class ProfileSubscriptionTest {
                 }
             }
         }
-        // Churn threads recycle the existing pool: closeSub + updateFilter on the same
-        // accounts gives endless structural map mutations without allocating new objects.
         repeat(2) {
             threads += Thread {
                 repeat(400) {
@@ -253,8 +249,6 @@ class ProfileSubscriptionTest {
 
     private fun profile(signer: NostrSignerInternal, createdAt: Long, name: String): MetadataEvent = signer.signerSync.sign(createdAt, MetadataEvent.KIND, emptyArray(), """{"name":"$name","picture":"https://example.com/$name.png"}""")
 
-    // Every queried relay answers, in any order, and any of them may still
-    // serve an older (validly self-signed) profile.
     @Test
     fun `an older profile does not overwrite a newer one`() {
         val signer = NostrSignerInternal(KeyPair())

@@ -16,10 +16,6 @@ import org.junit.Test
  */
 class IntentUtilsBenchmarkTest {
 
-    // -------------------------------------------------------------------------
-    // isUrlEncoded — regex match on a cached Regex vs. per-call compilation
-    // -------------------------------------------------------------------------
-
     @Test
     fun `benchmark isUrlEncoded - percent-encoded input`() {
         val input = "nostrsigner%3Ahello%20world%26param%3Dvalue%3D1"
@@ -68,10 +64,6 @@ class IntentUtilsBenchmarkTest {
         printResult("isUrlEncoded (long encoded, 1003 chars)", iterations, elapsed)
     }
 
-    // -------------------------------------------------------------------------
-    // decodeData — URL-decoding and prefix stripping
-    // -------------------------------------------------------------------------
-
     @Test
     fun `benchmark decodeData - default args with percent-encoded input`() {
         val input = "nostrsigner:hello%20world%26param%3Dvalue"
@@ -110,9 +102,8 @@ class IntentUtilsBenchmarkTest {
 
     @Test
     fun `benchmark decodeData - long encoded URL`() {
-        // Simulate a realistic nostrsigner URI with a long encoded JSON payload
-        val jsonFragment = "%7B%22kind%22%3A1%2C%22content%22%3A%22hello+world%22%7D"
-        val input = "nostrsigner:$jsonFragment"
+        val encodedJsonPayload = "%7B%22kind%22%3A1%2C%22content%22%3A%22hello+world%22%7D"
+        val input = "nostrsigner:$encodedJsonPayload"
         val iterations = 100_000
         val elapsed = measureNanoTime {
             repeat(iterations) {
@@ -121,10 +112,6 @@ class IntentUtilsBenchmarkTest {
         }
         printResult("decodeData (long encoded JSON fragment)", iterations, elapsed)
     }
-
-    // -------------------------------------------------------------------------
-    // parsePubKey — hex-to-npub conversion and npub passthrough
-    // -------------------------------------------------------------------------
 
     @Test
     fun `benchmark parsePubKey - already npub`() {
@@ -161,10 +148,6 @@ class IntentUtilsBenchmarkTest {
         }
         printResult("parsePubKey (invalid, returns null)", iterations, elapsed)
     }
-
-    // -------------------------------------------------------------------------
-    // isRemembered — permission timestamp checks
-    // -------------------------------------------------------------------------
 
     @Test
     fun `benchmark isRemembered - signPolicy 2 shortcircuit`() {
@@ -223,10 +206,6 @@ class IntentUtilsBenchmarkTest {
         }
         printResult("isRemembered (null permission, null policy)", iterations, elapsed)
     }
-
-    // -------------------------------------------------------------------------
-    // Helpers
-    // -------------------------------------------------------------------------
 
     private fun printResult(label: String, iterations: Int, elapsedNs: Long) {
         val totalMs = elapsedNs / 1_000_000.0

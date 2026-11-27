@@ -32,8 +32,6 @@ import org.junit.Test
  * confirm could not resolve it and skipped the request.
  */
 class EncryptIntentAccountTest {
-    // A context whose Application is a relaxed mock: parsing logs failures through it.
-
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private val kp = KeyPair()
     private val account = Account(

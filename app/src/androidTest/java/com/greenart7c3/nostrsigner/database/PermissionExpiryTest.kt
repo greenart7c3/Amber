@@ -38,8 +38,7 @@ class PermissionExpiryTest {
         assertEquals(2, daos.permissionMaintenanceDao.updateExpiredPermissions(200))
         assertEquals(0L, daos.permissionLookupDao.getPermission("caller", "SIGN_EVENT", 1)?.acceptUntil)
         assertEquals(0L, daos.permissionLookupDao.getPermission("caller", "SIGN_EVENT", 2)?.rejectUntil)
-        // Already reset rows are not counted again.
-        assertEquals(0, daos.permissionMaintenanceDao.updateExpiredPermissions(300))
+        assertEquals("already reset rows are not counted again", 0, daos.permissionMaintenanceDao.updateExpiredPermissions(300))
     }
 
     @Test
@@ -53,13 +52,10 @@ class PermissionExpiryTest {
 
     @Test
     fun staleTimestampsOnTheUnselectedSideAreCleared() = withDao { daos ->
+        val denialWithLeftoverFutureAcceptUntil = ApplicationPermissionsEntity(1, "caller", "SIGN_EVENT", 1, false, 7, 500, 0)
+        val grantWithLeftoverFutureRejectUntil = ApplicationPermissionsEntity(2, "caller", "SIGN_EVENT", 2, true, 7, 0, 500)
         daos.permissionMaintenanceDao.insertPermissionsRaw(
-            listOf(
-                // Denial with a leftover future acceptUntil: must not stay acceptable-looking.
-                ApplicationPermissionsEntity(1, "caller", "SIGN_EVENT", 1, false, 7, 500, 0),
-                // Grant with a leftover future rejectUntil.
-                ApplicationPermissionsEntity(2, "caller", "SIGN_EVENT", 2, true, 7, 0, 500),
-            ),
+            listOf(denialWithLeftoverFutureAcceptUntil, grantWithLeftoverFutureRejectUntil),
         )
         assertEquals(2, daos.permissionMaintenanceDao.updateExpiredPermissions(100))
         listOf(1, 2).forEach { kind ->

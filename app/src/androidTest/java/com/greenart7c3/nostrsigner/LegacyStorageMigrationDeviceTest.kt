@@ -112,7 +112,6 @@ class LegacyStorageMigrationDeviceTest {
     fun anAccountWithoutAKeyKeepsEveryLegacyFile() = runBlocking {
         writeLegacySettings(SAVED_ACCOUNTS to npubs.joinToString(","))
         writeLegacyAccount(npubs[0], keyPairs[0], privateKeys[0])
-        // The second account file exists but holds no key, so it cannot be restored.
         writeLegacyAccount(npubs[1], keyPairs[1], privateKeys[1], withKey = false)
 
         LegacyStorageMigration.run(context)

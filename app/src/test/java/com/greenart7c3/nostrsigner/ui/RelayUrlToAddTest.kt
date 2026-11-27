@@ -11,6 +11,7 @@ import org.junit.Before
 import org.junit.Test
 
 class RelayUrlToAddTest {
+    @Suppress("NoComments")
     @Before
     fun setUp() {
         // Quartz logs a URL it cannot normalize; android.util.Log is not mocked on the JVM.

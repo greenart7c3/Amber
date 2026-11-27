@@ -86,8 +86,7 @@ class IntentPermissionLookupTest {
     @Test
     fun `an event is answered by its kind or by its NIP`() {
         assertEquals(1, intentPermission(app(grant(1, "SIGN_EVENT", kind = 1)), key, request(SignerType.SIGN_EVENT, eventKind = 1))?.id)
-        // Kind 1 belongs to NIP-01.
-        assertEquals(2, intentPermission(app(grant(2, "NIP", kind = 1)), key, request(SignerType.SIGN_EVENT, eventKind = 1))?.id)
+        assertEquals("kind 1 belongs to NIP-01", 2, intentPermission(app(grant(2, "NIP", kind = 1)), key, request(SignerType.SIGN_EVENT, eventKind = 1))?.id)
         assertNull(intentPermission(app(grant(1, "SIGN_EVENT", kind = 7)), key, request(SignerType.SIGN_EVENT, eventKind = 1)))
     }
 }

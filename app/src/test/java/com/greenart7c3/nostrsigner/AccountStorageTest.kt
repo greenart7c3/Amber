@@ -72,7 +72,6 @@ class AccountStorageTest {
         assertEquals(listOf(npub), failed.value)
     }
 
-    // The policy refusing while locked is the setting working: reporting it would tell the user to log out.
     @Test
     fun `a key refused while the device is locked under the policy is not reported`() = runBlocking {
         keyIsRefused()
@@ -80,7 +79,7 @@ class AccountStorageTest {
         every { keyguard.isDeviceLocked } returns true
 
         assertNull(AccountStorage.load(context, npub))
-        assertTrue(failed.value.isEmpty())
+        assertTrue("the policy working must not tell the user to log out", failed.value.isEmpty())
     }
 
     @Test

@@ -20,8 +20,7 @@ class DecryptSignerTypesTest {
     }
 
     @Test
-    fun nonSecretResultsAreNot() {
-        // Ciphertext, signatures and public keys stay ordinary clips.
+    fun ciphertextSignaturesAndPublicKeysStayOrdinaryClips() {
         (encryptSignerTypes + SignerType.SIGN_EVENT + SignerType.GET_PUBLIC_KEY).forEach {
             assertFalse(it.name, it in decryptSignerTypes)
         }

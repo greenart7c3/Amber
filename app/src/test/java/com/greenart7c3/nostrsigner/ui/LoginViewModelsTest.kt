@@ -88,9 +88,8 @@ class LoginViewModelsTest {
         assertTrue(viewModel.failedLines.value.isEmpty())
     }
 
-    // Nothing restored: stay on the first page so the user can retry.
     @Test
-    fun `an import that restored nothing never finishes`() {
+    fun `an import that restored nothing never finishes, so the user can retry from the first page`() {
         val viewModel = importViewModel()
         var finished = false
         viewModel.onImportFinished(0, listOf(1, 2)) { finished = true }

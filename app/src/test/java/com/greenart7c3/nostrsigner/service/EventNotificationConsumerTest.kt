@@ -45,7 +45,6 @@ import org.junit.Before
 import org.junit.Test
 
 class EventNotificationConsumerTest {
-    // A real responder over the mocked Application, spied so tests can stub its replies.
     private val bunkerResponder by lazy {
         spyk(
             BunkerResponder(
@@ -97,7 +96,6 @@ class EventNotificationConsumerTest {
                 mockk(relaxed = true),
                 settingsStore = amber,
                 accountRepository = amber.accountDatabases,
-                // Read on use: tests swap the stubbed scope after setUp.
                 scope = object : CoroutineScope {
                     override val coroutineContext get() = amber.applicationIOScope.coroutineContext
                 },
@@ -125,7 +123,6 @@ class EventNotificationConsumerTest {
         unmockkStatic("com.vitorpamplona.quartz.nip40Expiration.EventExtKt")
     }
 
-    /** A verified bunker event addressed to [account], so it reaches the freshness checks. */
     private fun eventForAccount(createdAt: Long, tags: Array<Array<String>> = arrayOf(arrayOf("p", account.hexKey))): Event {
         val event = mockk<Event>(relaxed = true)
         every { event.id } returns "stale"
@@ -139,7 +136,6 @@ class EventNotificationConsumerTest {
         return event
     }
 
-    // A rejected event is never looked up in, or written to, the persistent cache.
     private fun assertRejectedBeforeProcessing() {
         coVerify(exactly = 0) { bunkerEventDao.exists(any()) }
         coVerify(exactly = 0) { bunkerEventDao.insert(any()) }
@@ -208,16 +204,10 @@ class EventNotificationConsumerTest {
 
         consumer.consume(event, NormalizedRelayUrl("wss://relay.com"))
 
-        // Unrecorded, so a re-delivery after unlock is processed.
         coVerify(exactly = 0) { bunkerEventDao.insert(any()) }
         coVerify(exactly = 0) { lockedCrypto.decrypt(any(), any()) }
     }
 
-    /**
-     * Consumes [requestJson] from a sender with no stored connection and returns
-     * the replies; the account is a spy so key use can be verified. Each reply to
-     * this unverified sender must be published once ([UNVERIFIED_REPLY_ATTEMPTS]).
-     */
     private suspend fun consumeFromUnknownSender(requestJson: String, onAccount: (Account) -> Unit): List<BunkerResponse> {
         val kp = KeyPair()
         val signer = mockk<NostrSignerInternal>(relaxed = true) { every { keyPair } returns kp }
@@ -264,15 +254,13 @@ class EventNotificationConsumerTest {
             }
             consumer.consume(event, NormalizedRelayUrl("wss://relay.com"))
             onAccount(acc)
-            assertEquals(List(responses.size) { UNVERIFIED_REPLY_ATTEMPTS }, attempts)
+            assertEquals("each reply to an unverified sender is published once", List(responses.size) { UNVERIFIED_REPLY_ATTEMPTS }, attempts)
             return responses
         } finally {
             unmockkObject(BunkerRequestUtils)
         }
     }
 
-    // An unknown sender's request used to be signed (sign_event) or decrypted,
-    // including the nested seal, before the permission lookup refused it.
     @Test
     fun `an unknown sender's sign_event is refused without signing`() = runBlocking {
         val unsigned = """{"id":"","pubkey":"","created_at":1,"kind":1,"tags":[],"content":"hi","sig":""}"""
@@ -284,8 +272,6 @@ class EventNotificationConsumerTest {
         assertEquals("no permission", responses.single().error)
     }
 
-    // The multi-relay check used to run before admission and answer any sender
-    // with the retried refusal; now an unknown one gets the single "no permission".
     @Test
     fun `an unknown sender's multi-relay auth event is refused as unknown, once`() = runBlocking {
         val unsigned = """{"id":"","pubkey":"","created_at":1,"kind":22242,"tags":[["relay","wss://a.com"],["relay","wss://b.com"]],"content":"","sig":""}"""
@@ -303,7 +289,6 @@ class EventNotificationConsumerTest {
         val responses = consumeFromUnknownSender(
             """{"id":"d1","method":"nip44_decrypt","params":["$peer","payload-ciphertext"]}""",
         ) { acc ->
-            // Only the request itself was opened; the payload never was.
             val crypto = acc.crypto
             coVerify(exactly = 1) { crypto.decrypt(any(), any()) }
             coVerify(exactly = 0) { crypto.nip44Decrypt(any(), any()) }
@@ -311,15 +296,12 @@ class EventNotificationConsumerTest {
         assertEquals("no permission", responses.single().error)
     }
 
-    // Missing params or an unparsable event used to throw inside the
-    // coroutine, leaving the client waiting for an answer that never came.
     @Test
     fun `malformed params are answered with an error`() = runBlocking {
         for (request in listOf(
             """{"id":"z1","method":"decrypt_zap_event","params":["only-one"]}""",
             """{"id":"s2","method":"sign_event","params":["not json"]}""",
             """{"id":"s3","method":"sign_event","params":[]}""",
-            // The shared check (hasRequiredParams) also refuses these up front.
             """{"id":"p1","method":"sign_psbt","params":[]}""",
             """{"id":"n1","method":"nip44_decrypt","params":[]}""",
         )) {
@@ -349,18 +331,15 @@ class EventNotificationConsumerTest {
         coEvery { AccountStorage.load(any(), any()) } returns expiredAccount
         coEvery { bunkerEventDao.exists("event3") } returns false
 
-        // Deleted an hour ago (its "delete after" has passed).
-        val expiredRow = legacyConnection(expiredAccount.hexKey, expiredAccount.hexKey).copy(name = "expired-client", deleteAfter = TimeUtils.now() - 3_600)
+        val anHourAgo = TimeUtils.now() - 3_600
+        val expiredRow = legacyConnection(expiredAccount.hexKey, expiredAccount.hexKey).copy(name = "expired-client", deleteAfter = anHourAgo)
         coEvery { dao.getByKey(expiredAccount.hexKey) } returns mockk {
             every { application } returns expiredRow
         }
 
         mockkObject(BunkerRequestUtils)
         try {
-            // notify() decrypts inside applicationIOScope.launch; run that inline.
             every { amber.applicationIOScope } returns CoroutineScope(Dispatchers.Unconfined + SupervisorJob())
-            // The relaxed mock returns 0L (non-null) from the dedup cache, which
-            // makes notify() treat the request as already processed.
             every { amber.notificationCache[any()] } returns null
             val responses = mutableListOf<BunkerResponse>()
             coEvery {
@@ -378,14 +357,8 @@ class EventNotificationConsumerTest {
         }
     }
 
-    // A reply the consumer sent: the response, the relays it went to and its attempts.
     private data class SentReply(val response: BunkerResponse, val relays: List<NormalizedRelayUrl>, val attempts: Int)
 
-    /**
-     * Consumes [requestJson] from a client with a stored connection without relays (one
-     * from before per-connection keys) and returns the replies; [onAccount] can verify
-     * how the account key was used.
-     */
     private suspend fun consumeFromConnectedApp(requestJson: String, onAccount: (Account) -> Unit = {}): List<SentReply> {
         val acc = spyk(
             Account(
@@ -441,7 +414,6 @@ class EventNotificationConsumerTest {
         assertEquals(BUNKER_REPLY_ATTEMPTS, sent.single().attempts)
     }
 
-    // Refused by the common nip46Step, where SignerProviderQuery used to refuse it.
     @Test
     fun `a connected app's auth event for a relay outside the whitelist is refused without signing`() = runBlocking {
         every { amber.settings } returns AmberSettings(authWhitelist = listOf("good.example"))
@@ -455,8 +427,6 @@ class EventNotificationConsumerTest {
         assertEquals(BUNKER_REPLY_ATTEMPTS, sent.single().attempts)
     }
 
-    // The ack used to go to the connection's saved relays even when there were none, so
-    // nothing was sent; it now goes where the connect arrived, as on the desktop.
     @Test
     fun `a repeated connect from a connection without relays is acknowledged where it arrived`() = runBlocking {
         val sent = consumeFromConnectedApp("""{"id":"c2","method":"connect","params":["signer","secret"]}""").single()
@@ -466,7 +436,6 @@ class EventNotificationConsumerTest {
         assertEquals(BUNKER_REPLY_ATTEMPTS, sent.attempts)
     }
 
-    // A verified, fresh bunker event [from] a client, tagged [to] a key.
     private fun requestEvent(id: String, from: String, to: String): Event {
         val event = mockk<Event>(relaxed = true)
         every { event.id } returns id
@@ -480,7 +449,6 @@ class EventNotificationConsumerTest {
         return event
     }
 
-    // A connection from before per-connection keys: its requests reach the account key.
     private fun legacyConnection(client: String, accountHex: String) = ApplicationEntity(
         key = client,
         name = "client",

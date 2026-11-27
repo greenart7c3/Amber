@@ -29,7 +29,6 @@ class TorProxyReleaseTest {
 
     @Before
     fun setUp() {
-        // The offline flavor ships a no-op TorManager with no fail() at all.
         assumeFalse(BuildFlavorChecker.isOfflineFlavor())
         mockkObject(AmberLog)
         every { AmberLog.d(any(), any()) } returns Unit
@@ -85,13 +84,13 @@ class TorProxyReleaseTest {
 
     @Test
     fun `a proxy that moved on to another port is not overwritten`() {
-        // Tor is torn down after the user already switched to Orbot on 9050.
-        HttpClientManager.setDefaultProxyOnPort(9050)
+        val orbotPort = 9050
+        HttpClientManager.setDefaultProxyOnPort(orbotPort)
         socksPortFlow().value = releasedPort
 
         TorManager.stop()
 
-        assertEquals(9050, proxyPort())
+        assertEquals(orbotPort, proxyPort())
     }
 
     @Test

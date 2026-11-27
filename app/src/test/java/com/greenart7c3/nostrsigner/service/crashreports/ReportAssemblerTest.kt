@@ -19,7 +19,6 @@ class ReportAssemblerTest {
 
     @Test
     fun `redacts npub bech32 from exception messages`() {
-        // npub1... derived from the hex key above
         val npub = "npub10qp7qrzdrqmax40ayhxm2vp6d8yurfr3lwxyh4df0sf5r8cjnrms2cv7aj"
         val e = IllegalArgumentException("could not parse $npub")
 

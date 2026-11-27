@@ -27,6 +27,7 @@ class AccountExportSeedRestoreTest {
     private val words = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about"
     private val otherWords = "legal winner thank year wave sausage worth useful legal winner thank yellow"
 
+    @Suppress("NoComments")
     @Before
     fun setUp() {
         // The dropped-seed paths log through android.util.Log, which is not
@@ -43,14 +44,14 @@ class AccountExportSeedRestoreTest {
 
     private fun realAccount(privKeyHex: String): Account {
         val privKey = privKeyHex.hexToByteArray()
+        val noDeviceLockGateWithoutAContext: () -> Unit = {}
         return Account(
             name = MutableStateFlow(""),
             picture = MutableStateFlow(""),
             signPolicy = 1,
             didBackup = false,
             scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined),
-            // The default device-lock gate needs a context; this test has none.
-            keyAccessCheck = {},
+            keyAccessCheck = noDeviceLockGateWithoutAContext,
             signer = NostrSignerInternal(KeyPair(privKey)),
         )
     }
@@ -89,11 +90,11 @@ class AccountExportSeedRestoreTest {
     fun `a valid mnemonic deriving a different key is dropped`() = runBlocking {
         val privKeyHex = Nip06().privateKeyFromMnemonic(words).toHexKey()
         val account = realAccount(privKeyHex)
-        // otherWords is a valid mnemonic for a DIFFERENT identity, encrypted
-        // under this account's key: storing it would let a later "recovery"
-        // produce someone else's key.
-        val encryptedOther = account.crypto.nip44Encrypt(otherWords, account.hexKey)
+        val otherIdentityWordsUnderThisKey = account.crypto.nip44Encrypt(otherWords, account.hexKey)
 
-        assertNull(AccountExportService.decryptExportedSeedWords(account, encryptedOther, privKeyHex))
+        assertNull(
+            "storing another identity's mnemonic would let a later recovery produce someone else's key",
+            AccountExportService.decryptExportedSeedWords(account, otherIdentityWordsUnderThisKey, privKeyHex),
+        )
     }
 }

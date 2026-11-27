@@ -2,7 +2,6 @@ package com.greenart7c3.nostrsigner
 
 import android.content.SharedPreferences
 
-/** An in-memory [SharedPreferences] for unit tests. */
 internal class FakePreferences(
     initial: Map<String, Any> = emptyMap(),
 ) : SharedPreferences {

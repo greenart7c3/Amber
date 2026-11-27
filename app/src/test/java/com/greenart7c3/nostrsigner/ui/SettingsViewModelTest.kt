@@ -39,8 +39,7 @@ import org.junit.Test
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class SettingsViewModelTest {
-    // Unconfined: the view model's launches run to completion on the calling thread.
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
+    private val callingThreadScope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
     private val historyDao = mockk<HistoryDao>(relaxed = true)
     private val logDao = mockk<LogCleanupDao>(relaxed = true)
     private val relayClient = mockk<RelayClient>(relaxed = true)
@@ -60,16 +59,18 @@ class SettingsViewModelTest {
     fun setUp() {
         Dispatchers.setMain(Dispatchers.Unconfined)
         mockkObject(LocalPreferences, SavedAccounts, AccountPreferences, AmberLog)
-        // updateTorMode's default port reads the installed settings.
         LocalPreferences.install(settingsStore, accountRepository)
         mockkStatic("com.greenart7c3.nostrsigner.commonsui.StringsKt")
         every { getStringBlocking(any(), *anyVararg()) } returns ""
         every { AmberLog.d(any(), any<String>()) } returns Unit
         every { SavedAccounts.all(any()) } returns listOf(AccountInfo("npub-a", true), AccountInfo("npub-b", true))
-        // Like the real one: it stores the mode and reloads the settings.
-        every { LocalPreferences.updateTorMode(any(), any(), any()) } answers { settingsStore.settings = settingsStore.settings.copy(torMode = secondArg()) }
+        updateTorModeStoresTheModeAndReloadsTheSettings()
         coEvery { historyDao.deleteOldHistory(any()) } returns 1
         coEvery { logDao.deleteOldLog(any()) } returns 1
+    }
+
+    private fun updateTorModeStoresTheModeAndReloadsTheSettings() {
+        every { LocalPreferences.updateTorMode(any(), any(), any()) } answers { settingsStore.settings = settingsStore.settings.copy(torMode = secondArg()) }
     }
 
     @After
@@ -83,7 +84,7 @@ class SettingsViewModelTest {
         settingsStore = settingsStore,
         accountRepository = accountRepository,
         relayClient = relayClient,
-        appScope = scope,
+        appScope = callingThreadScope,
         npub = "npub-a",
         themeMode = MutableStateFlow(ThemeMode.SYSTEM),
         updater = null,
@@ -109,16 +110,17 @@ class SettingsViewModelTest {
 
         viewModel.disableTor()
 
-        // The write runs on Dispatchers.IO; reconnecting is its last step.
-        coVerify(timeout = 5_000) { relayClient.checkForNewRelaysAndUpdateAllFilters(any()) }
+        awaitTheReconnectThatEndsTheIoWrite()
         coVerify { LocalPreferences.updateTorMode(appContext, TorMode.DISABLED, any()) }
         assertEquals(TorMode.DISABLED, viewModel.state.value.torMode)
     }
 
-    // Settings reloads replace the settings object, kill-switch flow included; the screen
-    // used to keep showing the flow it saw first.
+    private fun awaitTheReconnectThatEndsTheIoWrite() {
+        coVerify(timeout = 5_000) { relayClient.checkForNewRelaysAndUpdateAllFilters(any()) }
+    }
+
     @Test
-    fun `refresh follows a reloaded settings object`() {
+    fun `refresh follows a reloaded settings object, kill-switch flow included`() {
         val viewModel = newViewModel()
 
         settingsStore.settings = AmberSettings(torMode = TorMode.BUILTIN, killSwitch = MutableStateFlow(true))

@@ -43,7 +43,6 @@ class ZapstoreUpdaterFileTest {
         unmockkStatic(android.util.Log::class)
     }
 
-    /** The URL the updater offers after one file event with [tags], or null when it skips it. */
     private fun offeredUrl(vararg tags: Array<String>): String? = runBlocking {
         val updater = ZapstoreUpdater(mockk<NostrClient>(relaxed = true), scope, relayClient = mockk(relaxed = true), appContext = mockk(relaxed = true))
         val file: Event = NostrSignerSync(KeyPair()).signNormal(1_700_000_000L, 1063, arrayOf(*tags), "")
@@ -54,8 +53,8 @@ class ZapstoreUpdaterFileTest {
         val fileSubId = ZapstoreUpdater::class.java.getDeclaredField("fileSubId").apply { isAccessible = true }.get(updater) as String
 
         updater.onIncomingMessage(mockk<IRelayClient>(relaxed = true), file.toJson(), EventMessage(fileSubId, file))
-        // Messages are handled on the updater's own coroutine; give it time to act.
-        delay(1_000.milliseconds)
+        val updaterCoroutineGrace = 1_000.milliseconds
+        delay(updaterCoroutineGrace)
         updater.latestRelease.value?.url
     }
 

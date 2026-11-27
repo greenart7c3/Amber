@@ -2,17 +2,6 @@
 <SmellBaseline>
   <ManuallySuppressedIssues/>
   <CurrentIssues>
-    <ID>NoComments:AccountCachedKeyLockTest.kt:Opt-in off: allowed regardless of lock state, keyguard untouched.</ID>
-    <ID>NoComments:AccountCachedKeyLockTest.kt:Opt-in on, device locked: refused.</ID>
-    <ID>NoComments:AccountCachedKeyLockTest.kt:Opt-in on, device unlocked: allowed.</ID>
-    <ID>NoComments:AccountCachedKeyLockTest.kt:The account reads its public key from the signer's key pair. That is not key</ID>
-    <ID>NoComments:AccountCachedKeyLockTest.kt:use, so wasNot Called ignores it.</ID>
-    <ID>NoComments:AccountExportSeedRestoreTest.kt:The default device-lock gate needs a context; this test has none.</ID>
-    <ID>NoComments:AccountExportSeedRestoreTest.kt:The dropped-seed paths log through android.util.Log, which is not</ID>
-    <ID>NoComments:AccountExportSeedRestoreTest.kt:available in JVM tests.</ID>
-    <ID>NoComments:AccountExportSeedRestoreTest.kt:otherWords is a valid mnemonic for a DIFFERENT identity, encrypted</ID>
-    <ID>NoComments:AccountExportSeedRestoreTest.kt:produce someone else's key.</ID>
-    <ID>NoComments:AccountExportSeedRestoreTest.kt:under this account's key: storing it would let a later "recovery"</ID>
     <ID>NoComments:AccountExportService.kt:"recovery" produce someone else's key.</ID>
     <ID>NoComments:AccountExportService.kt:A stale or hand-edited npub in the metadata must</ID>
     <ID>NoComments:AccountExportService.kt:A valid mnemonic that derives a different identity is not this</ID>
@@ -28,18 +17,8 @@
     <ID>NoComments:AccountExportService.kt:re-export a non-mnemonic as if it were the recovery phrase.</ID>
     <ID>NoComments:AccountExportService.kt:recovered, and a bad seed must never fail the import of a valid key.</ID>
     <ID>NoComments:AccountExportService.kt:the password and account.npub is derived from it.</ID>
-    <ID>NoComments:AccountStateViewModelRestoreTest.kt:Post-logout state: AccountStorage.logout wipes prefs_&lt;npub&gt;, so the</ID>
-    <ID>NoComments:AccountStateViewModelRestoreTest.kt:Unconfined so maybeOfferRestore's internal launch runs to completion on the</ID>
-    <ID>NoComments:AccountStateViewModelRestoreTest.kt:acceptRestore reports its result on Main.</ID>
-    <ID>NoComments:AccountStateViewModelRestoreTest.kt:calling thread; every ApplicationBackup call it makes is a mocked immediate.</ID>
-    <ID>NoComments:AccountStateViewModelRestoreTest.kt:publish-consent flag reads false on relogin.</ID>
-    <ID>NoComments:AccountStorageTest.kt:The policy refusing while locked is the setting working: reporting it would tell the user to log out</ID>
     <ID>NoComments:AmberEvent.kt:The seven fields are the NIP-01 event, in its order; grouping them would hide the wire format.</ID>
     <ID>NoComments:AppIconStore.kt:Canonical paths resolve `..` and symlinks before the comparison.</ID>
-    <ID>NoComments:AppNameSanitizerTest.kt:Bidi overrides and zero-width characters are dropped.</ID>
-    <ID>NoComments:AppNameSanitizerTest.kt:Cutting never splits a surrogate pair.</ID>
-    <ID>NoComments:AppNameSanitizerTest.kt:Line breaks and tabs become single spaces: no fake second line.</ID>
-    <ID>NoComments:AppNameSanitizerTest.kt:Ordinary names, including non-Latin ones, are kept as they are.</ID>
     <ID>NoComments:AppPendingReports.kt:The Application context: the exit records live in its preferences.</ID>
     <ID>NoComments:ApplicationBackup.kt:A device-lock refusal is not a decrypt failure: treating it as one</ID>
     <ID>NoComments:ApplicationBackup.kt:Decrypts backup content with the derived backup key. Legacy backups</ID>
@@ -55,61 +34,10 @@
     <ID>NoComments:ApplicationBackup.kt:the backup nonce must never land on the backup key.</ID>
     <ID>NoComments:ApplicationBackup.kt:the real one. Rethrow so it surfaces as its own condition.</ID>
     <ID>NoComments:ApplicationBackup.kt:to a keypair derived from the account key, so a client app holding only a</ID>
-    <ID>NoComments:ApplicationBackupCryptoTest.kt:Any client with an encrypt grant can get this from Amber's nip44_encrypt</ID>
-    <ID>NoComments:ApplicationBackupCryptoTest.kt:Nonces a client could pass to a future NIP-55/NIP-46 derive_key: the</ID>
-    <ID>NoComments:ApplicationBackupCryptoTest.kt:The pre-fix scheme encrypted to the identity key itself (encrypt-to-self);</ID>
-    <ID>NoComments:ApplicationBackupCryptoTest.kt:backup labels themselves, the scheme prefix, and empty. None may land</ID>
-    <ID>NoComments:ApplicationBackupCryptoTest.kt:decryptContent's failure path logs; android.util.Log is not mocked on the JVM.</ID>
-    <ID>NoComments:ApplicationBackupCryptoTest.kt:derive_key later cannot expose backup key material.</ID>
-    <ID>NoComments:ApplicationBackupCryptoTest.kt:on the backup key — the derivations must stay independent so shipping</ID>
-    <ID>NoComments:ApplicationBackupCryptoTest.kt:that content IS readable by any decrypt-capable client, which is the leak</ID>
-    <ID>NoComments:ApplicationBackupCryptoTest.kt:the derived key removes.</ID>
-    <ID>NoComments:ApplicationBackupCryptoTest.kt:to the user's own pubkey, so it must not be restorable as a backup.</ID>
-    <ID>NoComments:ApplicationEntityCryptoTest.kt:A row in the pre-encryption (v19) `application` table, whose `secret` and `localKey` TEXT columns ho</ID>
-    <ID>NoComments:ApplicationEntityCryptoTest.kt:After migration the raw columns must be ciphertext for non-empty values</ID>
-    <ID>NoComments:ApplicationEntityCryptoTest.kt:Raw column should also be empty (not encrypted to a Base64 token).</ID>
-    <ID>NoComments:ApplicationEntityCryptoTest.kt:Raw columns were replaced, not duplicated/concatenated.</ID>
-    <ID>NoComments:ApplicationEntityCryptoTest.kt:Round-trips through SecureCryptoHelper to the original plaintext.</ID>
-    <ID>NoComments:ApplicationEntityCryptoTest.kt:Sentinel format: Base64 NO_WRAP of IV(12) ‖ ciphertext+tag (&gt;= 16 bytes)</ID>
-    <ID>NoComments:ApplicationEntityCryptoTest.kt:The raw `secret` and `localKey` columns of the application [key].</ID>
-    <ID>NoComments:ApplicationEntityCryptoTest.kt:and "" for the empty-sentinel row.</ID>
-    <ID>NoComments:ApplicationEntityTest.kt:"invalid-key" is not valid hex and not 32 bytes</ID>
-    <ID>NoComments:ApplicationEntityTest.kt:31 bytes instead of 32</ID>
-    <ID>NoComments:ApplicationPermissionsEntityTest.kt:A denial row with a leftover future acceptUntil used to auto-accept</ID>
-    <ID>NoComments:ApplicationPermissionsEntityTest.kt:on the NIP-46 path.</ID>
     <ID>NoComments:BackupApplicationsWorker.kt:With requireUnlockedDevice enabled the gate refuses signing</ID>
     <ID>NoComments:BackupApplicationsWorker.kt:background worker. Retry later instead of silently skipping</ID>
     <ID>NoComments:BackupApplicationsWorker.kt:the day's backup.</ID>
     <ID>NoComments:BackupApplicationsWorker.kt:while the device is locked — usually the case for a daily</ID>
-    <ID>NoComments:BunkerMultiEventViewModelTest.kt:A blank relay-auth relay reads as the all-relays wildcard in the DAO:</ID>
-    <ID>NoComments:BunkerMultiEventViewModelTest.kt:Capture after the wait: a timeout verify re-captures on every poll.</ID>
-    <ID>NoComments:BunkerMultiEventViewModelTest.kt:Each remembered request saves twice: the app row, then its grant.</ID>
-    <ID>NoComments:BunkerMultiEventViewModelTest.kt:Remember my choice defaults to NEVER: only the app row is saved, once.</ID>
-    <ID>NoComments:BunkerMultiEventViewModelTest.kt:remembering it would silently grant every relay.</ID>
-    <ID>NoComments:BunkerRequestUtilsTest.kt:===== State management =====</ID>
-    <ID>NoComments:BunkerRequestUtilsTest.kt:===== finishRequest =====</ID>
-    <ID>NoComments:BunkerRequestUtilsTest.kt:===== getDataFromBunker =====</ID>
-    <ID>NoComments:BunkerRequestUtilsTest.kt:===== responseRelays =====</ID>
-    <ID>NoComments:BunkerRequestUtilsTest.kt:===== stale queued requests for a deleted app (F-14) =====</ID>
-    <ID>NoComments:BunkerRequestUtilsTest.kt:Clients choose their own JSON-RPC ids (often sequential), so the id is</ID>
-    <ID>NoComments:BunkerRequestUtilsTest.kt:The client still gets its rejection reply from the tail of sendRejection.</ID>
-    <ID>NoComments:BunkerRequestUtilsTest.kt:The reply came after the bookkeeping, so a failure there (seen with a</ID>
-    <ID>NoComments:BunkerRequestUtilsTest.kt:The responder built from this Application cancels notifications through it.</ID>
-    <ID>NoComments:BunkerRequestUtilsTest.kt:The same NIP-46 request id can be delivered concurrently by multiple</ID>
-    <ID>NoComments:BunkerRequestUtilsTest.kt:finishRequest() cancels notifications through the application context.</ID>
-    <ID>NoComments:BunkerRequestUtilsTest.kt:malformed sign_event in getDataFromBunker) left the client unanswered.</ID>
-    <ID>NoComments:BunkerRequestUtilsTest.kt:only unique per (account, client key).</ID>
-    <ID>NoComments:BunkerRequestUtilsTest.kt:producing duplicate LazyColumn keys and crashing the UI.</ID>
-    <ID>NoComments:BunkerRequestUtilsTest.kt:relays. A TOCTOU race in addRequest used to let duplicates through,</ID>
-    <ID>NoComments:BunkerRequestUtilsTest.kt:sendRejection launches on Dispatchers.IO: wait for it to finish.</ID>
-    <ID>NoComments:BunkerRequestUtilsTest.kt:sendResult launches on Dispatchers.IO: wait for it to finish.</ID>
-    <ID>NoComments:BunkerSingleEventViewModelTest.kt:A client picks the JSON-RPC id: a later request reusing it gets this ViewModel back,</ID>
-    <ID>NoComments:BunkerSingleEventViewModelTest.kt:The load runs on Dispatchers.IO.</ID>
-    <ID>NoComments:BunkerSingleEventViewModelTest.kt:and must be judged on the grants saved now, not on the first request's load.</ID>
-    <ID>NoComments:CachingApplicationDaoTest.kt:Cache hits must not hand out the same mutable list instance callers</ID>
-    <ID>NoComments:CachingApplicationDaoTest.kt:Runs [read] on another thread, blocks it inside the delegate until [revoke]</ID>
-    <ID>NoComments:CachingApplicationDaoTest.kt:could alias; equality stays intact.</ID>
-    <ID>NoComments:ConnectionToReplaceTest.kt:The URI claims a different name, so the same-name check alone missed it.</ID>
     <ID>NoComments:ConnectivityService.kt:Always tracked (also under the kill switch) so the detector's baseline is</ID>
     <ID>NoComments:ConnectivityService.kt:Android 12+ can refuse a background FGS start with ForegroundServiceStartNotAllowedException;</ID>
     <ID>NoComments:ConnectivityService.kt:Built-in Tor gave up earlier (bounded startup retries</ID>
@@ -131,53 +59,11 @@
     <ID>NoComments:ConnectivityService.kt:swallow it and let the next foreground start (startService) retry.</ID>
     <ID>NoComments:ConnectivityService.kt:that way. Rebuild it as soon as the user unlocks.</ID>
     <ID>NoComments:ConnectivityService.kt:update, or the system restarting the process) can't decrypt the stored</ID>
-    <ID>NoComments:CrossAccountSignEventTest.kt:A context whose Application is a relaxed mock: parsing logs failures through it.</ID>
-    <ID>NoComments:CrossAccountSignEventTest.kt:Quartz gift-wraps anon zaps under an ephemeral key, so the wrapper</ID>
-    <ID>NoComments:CrossAccountSignEventTest.kt:Reading the public key is not key use: wasNot Called ignores it.</ID>
-    <ID>NoComments:CrossAccountSignEventTest.kt:Spied signer: the test must prove B's key never performs a signature.</ID>
-    <ID>NoComments:CrossAccountSignEventTest.kt:accountB is stored on this device; the old code loaded it here and</ID>
-    <ID>NoComments:CrossAccountSignEventTest.kt:pubkey is neither account; what matters is that B's key is unused.</ID>
-    <ID>NoComments:CrossAccountSignEventTest.kt:switched the signing key to it.</ID>
-    <ID>NoComments:DecryptSignerTypesTest.kt:Ciphertext, signatures and public keys stay ordinary clips.</ID>
     <ID>NoComments:DisplayCrashMessages.kt:ANRs, low-memory kills and native crashes only appear in the exit records.</ID>
     <ID>NoComments:DisplayCrashMessages.kt:The Application context: the crash report file and the exit records live under it.</ID>
     <ID>NoComments:DisplayCrashMessages.kt:The exception report already starts with the version and device table.</ID>
     <ID>NoComments:DisplayCrashMessages.kt:The startup detection may still be running: finish it first, or a dismiss</ID>
     <ID>NoComments:DisplayCrashMessages.kt:would clear records written after this read, unseen.</ID>
-    <ID>NoComments:EncryptIntentAccountTest.kt:A context whose Application is a relaxed mock: parsing logs failures through it.</ID>
-    <ID>NoComments:EncryptedDataPreviewTest.kt:A bunker decrypt_zap_event approved on screen used to answer "": it had no preview.</ID>
-    <ID>NoComments:EventNotificationConsumerRateLimitTest.kt:A real responder over the mocked Application, spied so tests can stub its replies.</ID>
-    <ID>NoComments:EventNotificationConsumerRateLimitTest.kt:Empty content: the event is fully admitted (recorded in the persistent</ID>
-    <ID>NoComments:EventNotificationConsumerRateLimitTest.kt:Feeds pre-signed [events] and checks that exactly the [capacity] budget</ID>
-    <ID>NoComments:EventNotificationConsumerRateLimitTest.kt:Signed but outside the freshness window: each rejection logs the</ID>
-    <ID>NoComments:EventNotificationConsumerRateLimitTest.kt:cache) but notify() stops before decrypting, which keeps the test to</ID>
-    <ID>NoComments:EventNotificationConsumerRateLimitTest.kt:event id, so they must be budgeted like any other event.</ID>
-    <ID>NoComments:EventNotificationConsumerRateLimitTest.kt:the gate itself. A distinct created_at gives each event its own id.</ID>
-    <ID>NoComments:EventNotificationConsumerTest.kt:A connection from before per-connection keys: its requests reach the account key.</ID>
-    <ID>NoComments:EventNotificationConsumerTest.kt:A real responder over the mocked Application, spied so tests can stub its replies.</ID>
-    <ID>NoComments:EventNotificationConsumerTest.kt:A rejected event is never looked up in, or written to, the persistent cache.</ID>
-    <ID>NoComments:EventNotificationConsumerTest.kt:A reply the consumer sent: the response, the relays it went to and its attempts.</ID>
-    <ID>NoComments:EventNotificationConsumerTest.kt:A verified bunker event addressed to [account], so it reaches the freshness checks.</ID>
-    <ID>NoComments:EventNotificationConsumerTest.kt:A verified, fresh bunker event [from] a client, tagged [to] a key.</ID>
-    <ID>NoComments:EventNotificationConsumerTest.kt:An unknown sender's request used to be signed (sign_event) or decrypted,</ID>
-    <ID>NoComments:EventNotificationConsumerTest.kt:Consumes [requestJson] from a client with a stored connection without relays (one</ID>
-    <ID>NoComments:EventNotificationConsumerTest.kt:Consumes [requestJson] from a sender with no stored connection and returns</ID>
-    <ID>NoComments:EventNotificationConsumerTest.kt:Deleted an hour ago (its "delete after" has passed).</ID>
-    <ID>NoComments:EventNotificationConsumerTest.kt:Missing params or an unparsable event used to throw inside the</ID>
-    <ID>NoComments:EventNotificationConsumerTest.kt:Only the request itself was opened; the payload never was.</ID>
-    <ID>NoComments:EventNotificationConsumerTest.kt:Read on use: tests swap the stubbed scope after setUp.</ID>
-    <ID>NoComments:EventNotificationConsumerTest.kt:Refused by the common nip46Step, where SignerProviderQuery used to refuse it.</ID>
-    <ID>NoComments:EventNotificationConsumerTest.kt:The ack used to go to the connection's saved relays even when there were none, so</ID>
-    <ID>NoComments:EventNotificationConsumerTest.kt:The multi-relay check used to run before admission and answer any sender</ID>
-    <ID>NoComments:EventNotificationConsumerTest.kt:The relaxed mock returns 0L (non-null) from the dedup cache, which</ID>
-    <ID>NoComments:EventNotificationConsumerTest.kt:The shared check (hasRequiredParams) also refuses these up front.</ID>
-    <ID>NoComments:EventNotificationConsumerTest.kt:Unrecorded, so a re-delivery after unlock is processed.</ID>
-    <ID>NoComments:EventNotificationConsumerTest.kt:coroutine, leaving the client waiting for an answer that never came.</ID>
-    <ID>NoComments:EventNotificationConsumerTest.kt:including the nested seal, before the permission lookup refused it.</ID>
-    <ID>NoComments:EventNotificationConsumerTest.kt:makes notify() treat the request as already processed.</ID>
-    <ID>NoComments:EventNotificationConsumerTest.kt:nothing was sent; it now goes where the connect arrived, as on the desktop.</ID>
-    <ID>NoComments:EventNotificationConsumerTest.kt:notify() decrypts inside applicationIOScope.launch; run that inline.</ID>
-    <ID>NoComments:EventNotificationConsumerTest.kt:with the retried refusal; now an unknown one gets the single "no permission".</ID>
     <ID>NoComments:ExitReasons.kt:ANRs ship the full traces file; only its first lines are useful in a chat message.</ID>
     <ID>NoComments:ExitReasons.kt:API check.</ID>
     <ID>NoComments:ExitReasons.kt:Exit reasons worth showing to a user: all of them mean the process was killed without</ID>
@@ -185,10 +71,6 @@
     <ID>NoComments:ExitReasons.kt:reaching the uncaught-exception handler. The constants are compile-time ints copied into</ID>
     <ID>NoComments:ExitReasons.kt:that happened before it.</ID>
     <ID>NoComments:ExitReasons.kt:this class, so building the set is safe below API 30; it is only consulted after [detect]'s</ID>
-    <ID>NoComments:ExpiredConnectionAuthTest.kt:Cached value must be the filtered one, not a re-read of the delegate.</ID>
-    <ID>NoComments:ExpiredConnectionAuthTest.kt:The gate is consulted on every read, so a cached pre-expiry answer</ID>
-    <ID>NoComments:ExpiredConnectionAuthTest.kt:is never served even when the delegate still returns the row.</ID>
-    <ID>NoComments:FakePreferences.kt:An in-memory [SharedPreferences] for unit tests.</ID>
     <ID>NoComments:FeedbackSender.kt:NIP-34: a repository announcement's `relays` tag lists the relays its</ID>
     <ID>NoComments:FeedbackSender.kt:Stand-in used for the issue's `a` tag hint when no announcement was found.</ID>
     <ID>NoComments:FeedbackSender.kt:This will automatically connect to these relays even if they are not in the list</ID>
@@ -203,79 +85,8 @@
     <ID>NoComments:ImageLoaderFactory.kt:The cache rebuilds lazily on the next image load.</ID>
     <ID>NoComments:ImageLoaderFactory.kt:memory cache (32 MB cap) would otherwise stay fully resident in</ID>
     <ID>NoComments:ImageLoaderFactory.kt:this long-lived signer process even while its UI is not visible.</ID>
-    <ID>NoComments:IntentMultiEventViewModelTest.kt:Confirming runs on Dispatchers.IO; closing the activity is its last step.</ID>
-    <ID>NoComments:IntentMultiEventViewModelTest.kt:The result list goes back in an Intent; the JVM test stubs do not implement putExtra.</ID>
-    <ID>NoComments:IntentPermissionLookupTest.kt:Kind 1 belongs to NIP-01.</ID>
-    <ID>NoComments:IntentRejectionTest.kt:A web request (no calling package) could not be rejected: Reject left the sheet open.</ID>
-    <ID>NoComments:IntentRejectionTest.kt:Filled on the rejection's coroutine, read by the test thread.</ID>
-    <ID>NoComments:IntentRejectionTest.kt:The rejection result is an Intent; the JVM test stubs do not implement putExtra.</ID>
-    <ID>NoComments:IntentRejectionTest.kt:onRemoveIntentData runs after finishAndRemoveTask, so waiting for the finish is not enough.</ID>
-    <ID>NoComments:IntentResponseTest.kt:--- callbackPayload ---</ID>
-    <ID>NoComments:IntentResponseTest.kt:--- historyContent: never the plaintext ---</ID>
-    <ID>NoComments:IntentResponseTest.kt:--- historyEntry ---</ID>
-    <ID>NoComments:IntentSingleEventViewModelTest.kt:Browser deep links share the "null" key: a grant given to one site must not answer another.</ID>
-    <ID>NoComments:IntentSingleEventViewModelTest.kt:The calling app picks the request id: a later request reusing it gets this ViewModel</ID>
-    <ID>NoComments:IntentSingleEventViewModelTest.kt:The load runs on Dispatchers.IO.</ID>
-    <ID>NoComments:IntentSingleEventViewModelTest.kt:back, and must be judged on the grants saved now, not on the first request's load.</ID>
-    <ID>NoComments:IntentUtilsBeforeAfterTest.kt:(Measures the when-dispatch itself; the function call overhead is</ID>
-    <ID>NoComments:IntentUtilsBeforeAfterTest.kt:1. isUrlEncoded — per-call Regex compilation vs. cached Regex</ID>
-    <ID>NoComments:IntentUtilsBeforeAfterTest.kt:2. parseSignerType — duplicated when vs. single shared function</ID>
-    <ID>NoComments:IntentUtilsBeforeAfterTest.kt:3. Parameter dispatch — sequential ifs vs. when { }</ID>
-    <ID>NoComments:IntentUtilsBeforeAfterTest.kt:4. flatMap vs joinToString+split for query-param splitting</ID>
-    <ID>NoComments:IntentUtilsBeforeAfterTest.kt:5. locale lowercase — Compose Locale.current vs stdlib lowercase()</ID>
-    <ID>NoComments:IntentUtilsBeforeAfterTest.kt:6. isRemembered — no functional change, confirm no regression</ID>
-    <ID>NoComments:IntentUtilsBeforeAfterTest.kt:Both before and after are identical; just confirm timing didn't regress</ID>
-    <ID>NoComments:IntentUtilsBeforeAfterTest.kt:Helpers</ID>
-    <ID>NoComments:IntentUtilsBeforeAfterTest.kt:In the old code this was the 8th branch checked sequentially in two</ID>
-    <ID>NoComments:IntentUtilsBeforeAfterTest.kt:NEW: flatMap splits each chunk independently — no intermediate string</ID>
-    <ID>NoComments:IntentUtilsBeforeAfterTest.kt:NEW: stdlib lowercase() — no Locale object passed</ID>
-    <ID>NoComments:IntentUtilsBeforeAfterTest.kt:NEW: uses the cached URL_ENCODED_REGEX compiled at object init</ID>
-    <ID>NoComments:IntentUtilsBeforeAfterTest.kt:NEW: when short-circuits after the first matching branch</ID>
-    <ID>NoComments:IntentUtilsBeforeAfterTest.kt:OLD equivalent: toLowerCase(Locale.current) — uses java.util.Locale lookup</ID>
-    <ID>NoComments:IntentUtilsBeforeAfterTest.kt:OLD: compiles a new Regex object on every call</ID>
-    <ID>NoComments:IntentUtilsBeforeAfterTest.kt:OLD: every key checks all 6 conditions regardless of match</ID>
-    <ID>NoComments:IntentUtilsBeforeAfterTest.kt:OLD: join all chunks into one big string, then split — creates a temp string</ID>
-    <ID>NoComments:IntentUtilsBeforeAfterTest.kt:Replicates the OLD getIntentDataFromIntent type-parsing when-expression</ID>
-    <ID>NoComments:IntentUtilsBeforeAfterTest.kt:Simulate what getIntentDataWithoutExtras receives after decoded.split("?")</ID>
-    <ID>NoComments:IntentUtilsBeforeAfterTest.kt:Warm up</ID>
-    <ID>NoComments:IntentUtilsBeforeAfterTest.kt:Warm up both paths</ID>
-    <ID>NoComments:IntentUtilsBeforeAfterTest.kt:separate when-expressions. With the shared function it's the same path.</ID>
-    <ID>NoComments:IntentUtilsBeforeAfterTest.kt:the same either way so this isolates the expression cost.)</ID>
-    <ID>NoComments:IntentUtilsBeforeAfterTest.kt:─────────────────────────────────────────────────────────────────────────</ID>
-    <ID>NoComments:IntentUtilsBenchmarkTest.kt:-------------------------------------------------------------------------</ID>
-    <ID>NoComments:IntentUtilsBenchmarkTest.kt:Helpers</ID>
-    <ID>NoComments:IntentUtilsBenchmarkTest.kt:Simulate a realistic nostrsigner URI with a long encoded JSON payload</ID>
-    <ID>NoComments:IntentUtilsBenchmarkTest.kt:decodeData — URL-decoding and prefix stripping</ID>
-    <ID>NoComments:IntentUtilsBenchmarkTest.kt:isRemembered — permission timestamp checks</ID>
-    <ID>NoComments:IntentUtilsBenchmarkTest.kt:isUrlEncoded — regex match on a cached Regex vs. per-call compilation</ID>
-    <ID>NoComments:IntentUtilsBenchmarkTest.kt:parsePubKey — hex-to-npub conversion and npub passthrough</ID>
-    <ID>NoComments:IntentUtilsTest.kt:--- decodeData ---</ID>
-    <ID>NoComments:IntentUtilsTest.kt:--- isRemembered ---</ID>
-    <ID>NoComments:IntentUtilsTest.kt:--- isUrlEncoded ---</ID>
-    <ID>NoComments:IntentUtilsTest.kt:--- parsePubKey ---</ID>
-    <ID>NoComments:IntentUtilsTest.kt:Helper to build a minimal ApplicationPermissionsEntity for isRemembered tests</ID>
-    <ID>NoComments:IntentUtilsTest.kt:Odd-length strings cannot represent whole bytes</ID>
-    <ID>NoComments:IntentUtilsTest.kt:replace=false lets URLDecoder treat '+' as a space (standard form-encoding)</ID>
-    <ID>NoComments:IntentUtilsTest.kt:replace=true swaps '+' → '%2b' before URLDecoder runs, so '+' is kept</ID>
-    <ID>NoComments:IntentUtilsTest.kt:x-coordinate of secp256k1 generator point — a well-known 32-byte value</ID>
-    <ID>NoComments:KeyRotationTest.kt:Nothing pending: must be a no-op that keeps the data readable.</ID>
-    <ID>NoComments:KeyRotationTest.kt:Rotate back: exercises the other direction and restores the policy.</ID>
-    <ID>NoComments:KeystorePolicyTest.kt:The gate fails closed; a key failure without a keyguard is still reported as broken.</ID>
-    <ID>NoComments:LegacyStorageMigrationDeviceTest.kt:The second account file exists but holds no key, so it cannot be restored.</ID>
-    <ID>NoComments:LogRetentionManagerTest.kt:350 -&gt; 250 -&gt; 150 -&gt; 50</ID>
-    <ID>NoComments:LoginViewModelsTest.kt:Nothing restored: stay on the first page so the user can retry.</ID>
-    <ID>NoComments:LogoutDeletesDatabasesTest.kt:File and DataStore cleanup is out of scope here.</ID>
     <ID>NoComments:NetworkChangeDetector.kt:The first report after registering the callback is the network the</ID>
     <ID>NoComments:NetworkChangeDetector.kt:relays are already connecting on; only a return after a loss is a change.</ID>
-    <ID>NoComments:NetworkStateTest.kt:No network at all: offline, so a change.</ID>
-    <ID>NoComments:NostrSignerRequestTest.kt:--- fromExtras (native apps) ---</ID>
-    <ID>NoComments:NostrSignerRequestTest.kt:--- fromUri (web apps) ---</ID>
-    <ID>NoComments:NostrSignerRequestTest.kt:--- rejection ---</ID>
-    <ID>NoComments:NotificationSinceClampTest.kt:The offline flavor never subscribes to relays.</ID>
-    <ID>NoComments:NotificationSubscriptionTest.kt:A deliberate fresh refresh after close still restores the connection.</ID>
-    <ID>NoComments:NotificationSubscriptionTest.kt:mirrors per-test dao state without cross-test cache leakage.</ID>
-    <ID>NoComments:NotificationSubscriptionTest.kt:updateFilter is a no-op on the offline flavor by design</ID>
-    <ID>NoComments:NotificationSubscriptionTest.kt:updateFilter reads through the caching wrapper; a fresh wrapper per call</ID>
     <ID>NoComments:NotificationUtils.kt:.setGroup(notificationGroupKey) //-&gt; Might need a Group summary as well before we</ID>
     <ID>NoComments:NotificationUtils.kt:Build the notification</ID>
     <ID>NoComments:NotificationUtils.kt:One notification per queued request: keyed like the queue, not by the</ID>
@@ -285,32 +96,6 @@
     <ID>NoComments:NotificationUtils.kt:before it is ever queued.</ID>
     <ID>NoComments:NotificationUtils.kt:carries the same request description as the full notification.</ID>
     <ID>NoComments:NotificationUtils.kt:client-chosen id, or a second client reusing an id would be dropped here</ID>
-    <ID>NoComments:OkHttpWebSocketCloseHandshakeTest.kt:And the terminal callback the relay client's bookkeeping depends on.</ID>
-    <ID>NoComments:OkHttpWebSocketCloseHandshakeTest.kt:Asked by connect() itself, mid-dial: a concurrent reconnect pass</ID>
-    <ID>NoComments:OkHttpWebSocketCloseHandshakeTest.kt:Client frames are masked; decode enough to spot a CLOSE and read its status code.</ID>
-    <ID>NoComments:OkHttpWebSocketCloseHandshakeTest.kt:Handshakes one client, sends it a CLOSE frame on demand, and records the frames it sends back.</ID>
-    <ID>NoComments:OkHttpWebSocketCloseHandshakeTest.kt:OkHttp's own reaction to cancel() -- a failure on its reader thread -- and the relay's</ID>
-    <ID>NoComments:OkHttpWebSocketCloseHandshakeTest.kt:Reported before disconnect() returned: the relay client dials the replacement</ID>
-    <ID>NoComments:OkHttpWebSocketCloseHandshakeTest.kt:Server-initiated CLOSE, status 1000, unmasked as servers send it. The TCP session stays open.</ID>
-    <ID>NoComments:OkHttpWebSocketCloseHandshakeTest.kt:The half of the handshake that is ours to send.</ID>
-    <ID>NoComments:OkHttpWebSocketCloseHandshakeTest.kt:The relay client sends its REQs from here, possibly before</ID>
-    <ID>NoComments:OkHttpWebSocketCloseHandshakeTest.kt:The session already ended; the usual teardown afterward must not report it twice.</ID>
-    <ID>NoComments:OkHttpWebSocketCloseHandshakeTest.kt:asking now must not tear this dial down and start a second one.</ID>
-    <ID>NoComments:OkHttpWebSocketCloseHandshakeTest.kt:newWebSocket() has returned to connect().</ID>
-    <ID>NoComments:OkHttpWebSocketCloseHandshakeTest.kt:reaction to the dropped TCP session must both be swallowed.</ID>
-    <ID>NoComments:OkHttpWebSocketCloseHandshakeTest.kt:right after this call and must not hear from the old socket later.</ID>
-    <ID>NoComments:PermissionCacheBenchmarkTest.kt:After a write that touches this app, the next read must NOT return a</ID>
-    <ID>NoComments:PermissionCacheBenchmarkTest.kt:Correctness: cached must return the same data as raw.</ID>
-    <ID>NoComments:PermissionCacheBenchmarkTest.kt:Mirrors SignerProvider.kt SIGN_EVENT path: sign policy + kind-specific</ID>
-    <ID>NoComments:PermissionCacheBenchmarkTest.kt:Warmup so JIT and SQLite statement caches are primed for both paths.</ID>
-    <ID>NoComments:PermissionCacheBenchmarkTest.kt:permission + NIP fallback for an unseeded kind.</ID>
-    <ID>NoComments:PermissionCacheBenchmarkTest.kt:prime</ID>
-    <ID>NoComments:PermissionCacheBenchmarkTest.kt:raw speed — caching is worthless if it returns wrong answers.</ID>
-    <ID>NoComments:PermissionCacheBenchmarkTest.kt:stale cached value. This is the regression we'd care about more than</ID>
-    <ID>NoComments:PermissionExpiryTest.kt:Already reset rows are not counted again.</ID>
-    <ID>NoComments:PermissionExpiryTest.kt:Denial with a leftover future acceptUntil: must not stay acceptable-looking.</ID>
-    <ID>NoComments:PermissionExpiryTest.kt:Grant with a leftover future rejectUntil.</ID>
-    <ID>NoComments:PlainCardTextTest.kt:The card used to show the whole decrypted zap request as JSON.</ID>
     <ID>NoComments:ProfileSubscription.kt:(put/remove/clear) takes the same monitor, so the weakly-consistent CHM iterator</ID>
     <ID>NoComments:ProfileSubscription.kt:A metadata event for an account no longer watched ends here, as it always did.</ID>
     <ID>NoComments:ProfileSubscription.kt:All maps are concurrent: mutated from UI/coroutine threads (updateFilter, closeSub)</ID>
@@ -331,28 +116,8 @@
     <ID>NoComments:ProfileSubscription.kt:listens until the app crashes.</ID>
     <ID>NoComments:ProfileSubscription.kt:mid-iteration. Single-key reads stay lock-free.</ID>
     <ID>NoComments:ProfileSubscription.kt:still fetch the profile with whatever relay list we have saved</ID>
-    <ID>NoComments:ProfileSubscriptionTest.kt:Churn threads recycle the existing pool: closeSub + updateFilter on the same</ID>
-    <ID>NoComments:ProfileSubscriptionTest.kt:Every queried relay answers, in any order, and any of them may still</ID>
-    <ID>NoComments:ProfileSubscriptionTest.kt:In-memory stand-in for the per-account metadata created_at preference.</ID>
-    <ID>NoComments:ProfileSubscriptionTest.kt:accounts gives endless structural map mutations without allocating new objects.</ID>
-    <ID>NoComments:ProfileSubscriptionTest.kt:serve an older (validly self-signed) profile.</ID>
-    <ID>NoComments:ProfileSubscriptionTest.kt:updateFilter is a no-op on the offline flavor by design</ID>
-    <ID>NoComments:PsbtSighashPolicyTest.kt:Another signer's input may use any sighash; Amber leaves it untouched.</ID>
     <ID>NoComments:ReconnectReceiver.kt:Manual reconnect: redial every relay now, ignoring dead-relay state and</ID>
     <ID>NoComments:ReconnectReceiver.kt:reconnect backoff, and re-add any relay previously dropped from the pool.</ID>
-    <ID>NoComments:RelayUrlToAddTest.kt:Quartz logs a URL it cannot normalize; android.util.Log is not mocked on the JVM.</ID>
-    <ID>NoComments:RelayUrlUtilsTest.kt:--- bare host inputs (no scheme) ---</ID>
-    <ID>NoComments:RelayUrlUtilsTest.kt:--- edge cases ---</ID>
-    <ID>NoComments:RelayUrlUtilsTest.kt:--- equivalence: the whitelist check (uses `in`) is essentially a string compare ---</ID>
-    <ID>NoComments:RelayUrlUtilsTest.kt:--- inputs with scheme ---</ID>
-    <ID>NoComments:RelayUrlUtilsTest.kt:Both must normalize to the same string for `relayHost in authWhitelist` to pass.</ID>
-    <ID>NoComments:RelayUrlUtilsTest.kt:Garbage that URI cannot parse should fall through to the trimmed input</ID>
-    <ID>NoComments:RelayUrlUtilsTest.kt:Regression: URI("relay.example.com:8080") treats the host as a scheme,</ID>
-    <ID>NoComments:RelayUrlUtilsTest.kt:This is the core whitelist regression: a user adds "relay.example.com:8080"</ID>
-    <ID>NoComments:RelayUrlUtilsTest.kt:prepends "wss://" so the port is preserved.</ID>
-    <ID>NoComments:RelayUrlUtilsTest.kt:rather than throw.</ID>
-    <ID>NoComments:RelayUrlUtilsTest.kt:so a naive URI.host call returns null and drops the port. The helper</ID>
-    <ID>NoComments:RelayUrlUtilsTest.kt:to the whitelist; the event's "relay" tag is "wss://relay.example.com:8080".</ID>
     <ID>NoComments:ReportAssembler.kt:(bech32 npub/nsec/etc, 64-char hex keys) and long base64 blobs</ID>
     <ID>NoComments:ReportAssembler.kt:A report must not fail on a statistic (and this is unmocked in JVM tests).</ID>
     <ID>NoComments:ReportAssembler.kt:Defense-in-depth (GHSA-8844-q5vh-9j8f, L3): exception messages and</ID>
@@ -365,75 +130,10 @@
     <ID>NoComments:ReportAssembler.kt:before persistence so the crash report cannot leak secrets.</ID>
     <ID>NoComments:ReportAssembler.kt:crypto exceptions quoting bad input). Redact Nostr key material</ID>
     <ID>NoComments:ReportAssembler.kt:stack traces can embed attacker-controlled request data (parser/</ID>
-    <ID>NoComments:ReportAssemblerTest.kt:npub1... derived from the hex key above</ID>
     <ID>NoComments:ReportSender.kt:Puts the report on the clipboard, for the offline flavor (and no account) to paste it into a DM.</ID>
     <ID>NoComments:ReportSender.kt:The Application context: it opens the nostr: link outside any activity.</ID>
     <ID>NoComments:ReportSender.kt:The sender's own copy would be wrapped to the throwaway key, which nobody keeps.</ID>
-    <ID>NoComments:SealResultDeviceTest.kt:An encrypt result is right when it is ciphertext the peer can open back to the seal.</ID>
-    <ID>NoComments:SealResultDeviceTest.kt:Logs what the caller would receive for one request, then returns whether it</ID>
-    <ID>NoComments:SecureCryptoHelperRetryTest.kt:Stands in for the keystore's `INVALID_OPERATION_HANDLE` cause.</ID>
-    <ID>NoComments:SecureCryptoHelperRetryTest.kt:The default classifier only recognises the keystore's own cause,</ID>
-    <ID>NoComments:SecureCryptoHelperRetryTest.kt:which this exception does not carry.</ID>
-    <ID>NoComments:SensitiveClipboardTest.kt:Hidden system permission held by the shell, not in the public SDK.</ID>
-    <ID>NoComments:SettingsReadTest.kt:Installs from before TorMode only have the use_proxy boolean.</ID>
-    <ID>NoComments:SettingsViewModelTest.kt:Like the real one: it stores the mode and reloads the settings.</ID>
-    <ID>NoComments:SettingsViewModelTest.kt:Settings reloads replace the settings object, kill-switch flow included; the screen</ID>
-    <ID>NoComments:SettingsViewModelTest.kt:The write runs on Dispatchers.IO; reconnecting is its last step.</ID>
-    <ID>NoComments:SettingsViewModelTest.kt:Unconfined: the view model's launches run to completion on the calling thread.</ID>
-    <ID>NoComments:SettingsViewModelTest.kt:updateTorMode's default port reads the installed settings.</ID>
-    <ID>NoComments:SettingsViewModelTest.kt:used to keep showing the flow it saw first.</ID>
     <ID>NoComments:SharedFiles.kt:Earlier versions wrote these to the cache root, which the provider served whole.</ID>
-    <ID>NoComments:SharedStringsDeviceTest.kt:Folders without a region (values-it) match a regional locale too.</ID>
-    <ID>NoComments:SharedStringsDeviceTest.kt:Indonesian: Java and Android 15+ call it "id" (values-id).</ID>
-    <ID>NoComments:SignerProviderBenchmarkTest.kt:(twiceNs, onceNs) per attempt, kept for the failure message.</ID>
-    <ID>NoComments:SignerProviderBenchmarkTest.kt:-------------------------------------------------------------------------</ID>
-    <ID>NoComments:SignerProviderBenchmarkTest.kt:1. Startup wait: Thread.sleep poll vs StateFlow.first { !it }</ID>
-    <ID>NoComments:SignerProviderBenchmarkTest.kt:2. URI string caching: repeated toString() vs cache once</ID>
-    <ID>NoComments:SignerProviderBenchmarkTest.kt:3. Relay URL parsing: parse host twice vs parse once and reuse</ID>
-    <ID>NoComments:SignerProviderBenchmarkTest.kt:4. Composite: end-to-end query path cost model</ID>
-    <ID>NoComments:SignerProviderBenchmarkTest.kt:Allow generous headroom (150 ms) for slow CI machines.</ID>
-    <ID>NoComments:SignerProviderBenchmarkTest.kt:For kind-22242 (NIP-42) events the old code called AmberEvent.relay() and</ID>
-    <ID>NoComments:SignerProviderBenchmarkTest.kt:JIT can optimize either path differently depending on prior compilations</ID>
-    <ID>NoComments:SignerProviderBenchmarkTest.kt:Let the machine settle briefly so the next attempt is not</ID>
-    <ID>NoComments:SignerProviderBenchmarkTest.kt:New pattern: cache uri string once, relay URL extracted once.</ID>
-    <ID>NoComments:SignerProviderBenchmarkTest.kt:New: extracted once, shared between whitelist and permission check.</ID>
-    <ID>NoComments:SignerProviderBenchmarkTest.kt:New: one toString() call, result reused.</ID>
-    <ID>NoComments:SignerProviderBenchmarkTest.kt:Old pattern: uri.toString() at each call site, relay URL parsed twice.</ID>
-    <ID>NoComments:SignerProviderBenchmarkTest.kt:Old: host extracted in two separate blocks.</ID>
-    <ID>NoComments:SignerProviderBenchmarkTest.kt:Old: uri.toString() called separately at each use site.</ID>
-    <ID>NoComments:SignerProviderBenchmarkTest.kt:Reporting-only: JIT variance across test ordering makes strict assertion</ID>
-    <ID>NoComments:SignerProviderBenchmarkTest.kt:Runs a simplified simulation of the full query() hot path with and</ID>
-    <ID>NoComments:SignerProviderBenchmarkTest.kt:Should complete near releaseAfterMs, not after an extra sleep interval.</ID>
-    <ID>NoComments:SignerProviderBenchmarkTest.kt:The poll does not notice the flip until the sleep returns, so elapsed</ID>
-    <ID>NoComments:SignerProviderBenchmarkTest.kt:Use StringBuilder so toString() allocates a new String each call,</ID>
-    <ID>NoComments:SignerProviderBenchmarkTest.kt:Warmup</ID>
-    <ID>NoComments:SignerProviderBenchmarkTest.kt:Warmup before every attempt so JIT state does not carry over bias.</ID>
-    <ID>NoComments:SignerProviderBenchmarkTest.kt:Warmup – let JIT settle before timing.</ID>
-    <ID>NoComments:SignerProviderBenchmarkTest.kt:Warmup: initialize coroutine runtime so it doesn't inflate the timed run.</ID>
-    <ID>NoComments:SignerProviderBenchmarkTest.kt:algorithmic assertions; this benchmark provides the combined picture.</ID>
-    <ID>NoComments:SignerProviderBenchmarkTest.kt:conditions (confirmed by the composite benchmark below).</ID>
-    <ID>NoComments:SignerProviderBenchmarkTest.kt:figure in the output demonstrates the expected gain under steady-state</ID>
-    <ID>NoComments:SignerProviderBenchmarkTest.kt:history write (accepted)</ID>
-    <ID>NoComments:SignerProviderBenchmarkTest.kt:history write (rejected)</ID>
-    <ID>NoComments:SignerProviderBenchmarkTest.kt:in the same JVM process, so no strict assertion here. The speedup</ID>
-    <ID>NoComments:SignerProviderBenchmarkTest.kt:mirroring android.net.Uri which reconstructs from components.</ID>
-    <ID>NoComments:SignerProviderBenchmarkTest.kt:must be at least one full sleep interval.</ID>
-    <ID>NoComments:SignerProviderBenchmarkTest.kt:permission lookup</ID>
-    <ID>NoComments:SignerProviderBenchmarkTest.kt:polluted by whichever background task skewed this one.</ID>
-    <ID>NoComments:SignerProviderBenchmarkTest.kt:prevent dead-code elimination</ID>
-    <ID>NoComments:SignerProviderBenchmarkTest.kt:unreliable here. The startup-wait and relay-url tests carry the</ID>
-    <ID>NoComments:SignerProviderBenchmarkTest.kt:used for both checks</ID>
-    <ID>NoComments:SignerProviderBenchmarkTest.kt:whitelist check</ID>
-    <ID>NoComments:SignerProviderBenchmarkTest.kt:without all optimisations applied to confirm the cumulative gain.</ID>
-    <ID>NoComments:SignerProviderQueryTest.kt:A reject-only caller used to pass the pre-check: Amber decrypted, and the</ID>
-    <ID>NoComments:SignerProviderQueryTest.kt:A remembered NIP-44 v3 decrypt grant for kind 30000.</ID>
-    <ID>NoComments:SignerProviderQueryTest.kt:Only [rows] exist for the requester; every other decrypt lookup is empty.</ID>
-    <ID>NoComments:SignerProviderQueryTest.kt:The kind-agnostic lookup has no kind filter, so it finds the grant for any kind.</ID>
-    <ID>NoComments:SignerProviderQueryTest.kt:The pre-check must let through every grant the final lookup can decide on:</ID>
-    <ID>NoComments:SignerProviderQueryTest.kt:how the plaintext classified.</ID>
-    <ID>NoComments:SignerProviderQueryTest.kt:null = no silent signing; the caller must surface a user prompt.</ID>
-    <ID>NoComments:SignerProviderQueryTest.kt:response (rejected for an event, null for anything else) told the caller</ID>
-    <ID>NoComments:SignerProviderQueryTest.kt:the generic one, each classified content type and the NIP-level grant.</ID>
     <ID>NoComments:TorManager.kt:(UnsatisfiedLinkError, ExceptionInInitializerError).</ID>
     <ID>NoComments:TorManager.kt:Binds the SOCKS listener on a free loopback port; null (and Failed) when none could be bound.</ID>
     <ID>NoComments:TorManager.kt:Drops the SOCKS port and, while OkHttp still dials through it, replaces</ID>
@@ -449,8 +149,6 @@
     <ID>NoComments:TorManager.kt:kmp-tor's working directories from before the switch to Arti.</ID>
     <ID>NoComments:TorManager.kt:like the C tor daemon's bootstrap did.</ID>
     <ID>NoComments:TorManager.kt:stop() may have run while initialize() was blocking.</ID>
-    <ID>NoComments:TorProxyReleaseTest.kt:The offline flavor ships a no-op TorManager with no fail() at all.</ID>
-    <ID>NoComments:TorProxyReleaseTest.kt:Tor is torn down after the user already switched to Orbot on 9050.</ID>
     <ID>NoComments:TorStartup.kt:(ConnectivityService.onCreate) can run again after the service is</ID>
     <ID>NoComments:TorStartup.kt:Bounded Tor startup: at most [MAX_TOR_START_ATTEMPTS] full daemon starts,</ID>
     <ID>NoComments:TorStartup.kt:Bounded: when Tor cannot bootstrap (airplane mode, censored</ID>
@@ -511,16 +209,6 @@
     <ID>NoComments:WebDavService.kt:server doesn't support PROPFIND but is reachable</ID>
     <ID>NoComments:WebDavService.kt:so a new WebDAV method cannot skip it and send Basic auth cleartext.</ID>
     <ID>NoComments:WebDavService.kt:would resend the backup body in cleartext. The 3xx is returned as an</ID>
-    <ID>NoComments:WebDavSettingsTest.kt:Key rotation re-encrypts the password; a save made meanwhile must not be overwritten.</ID>
-    <ID>NoComments:WebDavTransportPolicyTest.kt:"requires an HTTPS server URL" error even though requests worked.</ID>
-    <ID>NoComments:WebDavTransportPolicyTest.kt:(and whitespace, quotes, brackets) but leaves '=' alone.</ID>
-    <ID>NoComments:WebDavTransportPolicyTest.kt:Query/fragment injection via the restore text field must be encoded,</ID>
-    <ID>NoComments:WebDavTransportPolicyTest.kt:Same-scheme redirects (e.g. a collection's trailing-slash 301) still</ID>
-    <ID>NoComments:WebDavTransportPolicyTest.kt:The java.net.URI-based check rejected all of these with a misleading</ID>
-    <ID>NoComments:WebDavTransportPolicyTest.kt:Tor off: the client is direct, so no proxy has to be reachable.</ID>
-    <ID>NoComments:WebDavTransportPolicyTest.kt:cannot resend the backup body in cleartext.</ID>
-    <ID>NoComments:WebDavTransportPolicyTest.kt:not interpreted. OkHttp's PATH_SEGMENT_ENCODE_SET covers ? and #</ID>
-    <ID>NoComments:WebDavTransportPolicyTest.kt:work; an https -&gt; http hop is returned as an error, so a 307/308</ID>
     <ID>NoComments:ZapstoreUpdater.kt:Channel filter: stable users skip events tagged c=beta (the relay may ignore</ID>
     <ID>NoComments:ZapstoreUpdater.kt:Collect file event IDs from e-tags for second subscription</ID>
     <ID>NoComments:ZapstoreUpdater.kt:EOSE must not end the check before the other relays answer.</ID>
@@ -544,12 +232,5 @@
     <ID>NoComments:ZapstoreUpdater.kt:the download; without it, fail closed rather than install unverified bytes.</ID>
     <ID>NoComments:ZapstoreUpdater.kt:would otherwise return a newer pre-release that processReleaseEvent then drops.</ID>
     <ID>NoComments:ZapstoreUpdater.kt:zapstore one. Stable asks for the main channel only: with limit 1, the others</ID>
-    <ID>NoComments:ZapstoreUpdaterAuthorTest.kt:Release processing runs on the updater's own coroutine; give it time to act.</ID>
-    <ID>NoComments:ZapstoreUpdaterFileTest.kt:Messages are handled on the updater's own coroutine; give it time to act.</ID>
-    <ID>NoComments:ZapstoreUpdaterFileTest.kt:The URL the updater offers after one file event with [tags], or null when it skips it.</ID>
-    <ID>NoComments:ZapstoreUpdaterHashTest.kt:Refused before the download setup: no settings load, no cache file.</ID>
-    <ID>NoComments:ZapstoreVersionTest.kt:Not a -preN suffix: counts as a final release, as before.</ID>
-    <ID>NoComments:ZapstoreVersionTest.kt:The old fallback compared the strings, where e.g. "x" or "v1.0" sort</ID>
-    <ID>NoComments:ZapstoreVersionTest.kt:above "6.6.9", so an unparsable version was offered as an update.</ID>
   </CurrentIssues>
 </SmellBaseline>

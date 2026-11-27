@@ -1,18 +1,40 @@
 # Changelog
 
-## Amber 7.0.0-pre5
+## Amber 7.0.0-pre6
 
-- New: let `amber login -` read the bunker URI from stdin, so the connection secret stays out of the process list and shell history
-- New: send crash reports anonymously if you prefer, and report out-of-memory crashes and silent deaths that were lost before
-- Make `amber status` exit with the real cause when it cannot reach the signer or is refused, and write `"ok":false` in `--json` while offline or waiting for approval
-- Keep the CLI's key store backend once chosen, so a Secret Service starting later no longer locks out saved connections, and let it be set explicitly
-- Publish error replies to NIP-46 senders Amber has not verified only once
-- Fix `amber connect` timing out when the signer approves before it subscribed for the answer
-- Fix the desktop local bunker relay forwarding duplicate ephemeral events twice
-- Rate limit `nip44v3_encrypt`, `nip44v3_decrypt` and `sign_psbt` intents like the other request types
-- Keep the CLI's key store marker file private (0600)
+- New: show several pending desktop requests on one batch screen, grouped by app and request type, with Approve/Deny per request and per section, one Remember choice per section and keyboard shortcuts
+- New: add `amber switch-relays` to the CLI, which saves the relays Amber returns for a paired profile (`--all` for every profile)
+- New: add a Fetch profiles switch to the desktop settings to stop fetching profiles from relays
+- Show a private zap's message on the decrypt approval card instead of the raw zap request, and word the bunker prompt like the intent one
+- Name event kinds Amber has no label for by their alt tag in bunker batches
+- Show the sealed event in the desktop request details, as Android does
+- Drop permissions for NIPs Amber does not know from desktop nostrconnect requests, as Android does
+- Show the app version and device in ANR, low-memory and native-crash reports
+- Translate the last English-only texts on the app's screens (search, loading, error and "Not logged in")
+- Remove the "every app start" update check frequency; a saved one falls back to daily
+- Refuse NIP-46 requests that lack the parameters their method needs with "invalid params", before any key is used
+- Send an Amber User-Agent from every HTTP client, WebDAV backups and the desktop app included
+- Fix the background battery drain caused by relay reconnect storms and leaked Tor clients on Android and desktop, and stop relay checks from waking the CPU after they finish
+- Fix newer bunker connections going deaf on relays that cap subscriptions per socket (relay.primal.net), by sharing one subscription per relay
+- Fix the Android local bunker relay accepting no connections
+- Fix approving a bunker `decrypt_zap_event` on screen replying with an empty result
+- Fix the desktop refusing `decrypt_zap_event` requests in the layout Android reads
+- Fix permissions granted on connect being stored under names later requests never matched, so apps were asked again
+- Fix permission labels and recovery words breaking on a Turkish phone
+- Fix "remember for 10 minutes" lasting 15 minutes on Android
+- Fix sign grants remembered on a batch screen being stored as "just this time"
+- Fix rejecting a request from a website leaving the approval sheet open
+- Fix an ANR when the log cleanup hung
+- Fix the spinner staying on after typing an address that is not a relay URL in the relays screen
+- Fix the swapped label of the show/hide button on the backup password and the login key fields
+- Fix the desktop tray not showing when the bar's tray host starts after Amber, and tray setup stalling on a busy desktop
+- Fix a link opened right after the desktop app starts being lost
+- Fix the CLI hanging on a locked OS keyring; it now fails after `--timeout` with exit code 5
+- Fix `amber connect` waiting about 20 s for a relay that never answers
+- Take back exactly the grants an approval added when its reply never reaches the client, so the client is not auto-approved later, on Android and desktop
+- Answer a multi-relay auth event from an unknown sender with a single "no permission" reply
 
-Download it with [Zapstore](https://zapstore.dev/apps/com.greenart7c3.nostrsigner), [Obtainium](https://github.com/ImranR98/Obtainium), [f-droid](https://f-droid.org/packages/com.greenart7c3.nostrsigner) or download it directly in the [releases page](https://github.com/greenart7c3/Amber/releases/tag/v7.0.0-pre5)
+Download it with [Zapstore](https://zapstore.dev/apps/com.greenart7c3.nostrsigner), [Obtainium](https://github.com/ImranR98/Obtainium), [f-droid](https://f-droid.org/packages/com.greenart7c3.nostrsigner) or download it directly in the [releases page](https://github.com/greenart7c3/Amber/releases/tag/v7.0.0-pre6)
 
 If you like my work consider making a [donation](https://greenart7c3.com)
 
@@ -24,10 +46,10 @@ In order to verify the release, you'll need to have `gpg` or `gpg2` installed on
 gpg --keyserver hkps://keys.openpgp.org --recv-keys 44F0AAEB77F373747E3D5444885822EED3A26A6D
 ```
 
-Once you have his PGP key you can verify the release (assuming `manifest-v7.0.0-pre5.txt` and `manifest-v7.0.0-pre5.txt.sig` are in the current directory) with:
+Once you have his PGP key you can verify the release (assuming `manifest-v7.0.0-pre6.txt` and `manifest-v7.0.0-pre6.txt.sig` are in the current directory) with:
 
 ``` bash
-gpg --verify manifest-v7.0.0-pre5.txt.sig manifest-v7.0.0-pre5.txt
+gpg --verify manifest-v7.0.0-pre6.txt.sig manifest-v7.0.0-pre6.txt
 ```
 
 You should see the following if the verification was successful:
@@ -41,7 +63,7 @@ gpg: Good signature from "greenart7c3 <greenart7c3@proton.me>"
 That will verify the signature on the main manifest page which ensures integrity and authenticity of the binaries you've downloaded locally. Next, depending on your operating system you should then re-calculate the sha256 sum of the binary, and compare that with the following hashes:
 
 ``` bash
-cat manifest-v7.0.0-pre5.txt
+cat manifest-v7.0.0-pre6.txt
 ```
 
 ## Older versions

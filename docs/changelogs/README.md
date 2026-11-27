@@ -4,6 +4,7 @@ Release notes for Amber, one file per version (pre-releases included). The most 
 
 | Version     | Changelog                        |
 | ----------- | -------------------------------- |
+| 7.0.0-pre6  | [7.0.0-pre6.md](7.0.0-pre6.md)   |
 | 7.0.0-pre5  | [7.0.0-pre5.md](7.0.0-pre5.md)   |
 | 7.0.0-pre4  | [7.0.0-pre4.md](7.0.0-pre4.md)   |
 | 7.0.0-pre3  | [7.0.0-pre3.md](7.0.0-pre3.md)   |

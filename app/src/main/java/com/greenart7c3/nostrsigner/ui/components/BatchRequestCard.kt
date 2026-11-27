@@ -103,7 +103,6 @@ fun eventKindLabel(
     return tags.firstOrNull { it.size > 1 && it[0] == "alt" }?.getOrNull(1) ?: kindName
 }
 
-/** The request's label and short content, and Show Details when [onShowDetails] is given. */
 @Composable
 private fun RequestSummary(
     label: String,
@@ -137,7 +136,6 @@ private fun RequestSummary(
     }
 }
 
-/** The raw event to sign, or the data to encrypt or decrypt. */
 @Composable
 private fun BatchRequestDetails(
     type: SignerType,

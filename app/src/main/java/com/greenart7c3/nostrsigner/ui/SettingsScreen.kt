@@ -167,7 +167,6 @@ fun SettingsScreen(
         ),
     ),
 ) {
-    // Each visit: another screen may have changed Tor or reloaded the settings meanwhile.
     LaunchedEffect(settingsViewModel) { settingsViewModel.refresh() }
     val state by settingsViewModel.state.collectAsStateWithLifecycle()
     SettingsContent(
@@ -642,6 +641,11 @@ val rememberTypeDisplayOrder: List<RememberType> = listOf(
     RememberType.ALWAYS,
 )
 
+/**
+ * The remembered choice stored as [screenCode]. Defense-in-depth (GHSA-8844-q5vh-9j8f, I2):
+ * unknown values previously failed open to ALWAYS; they fail closed to NEVER so a corrupted
+ * or unrecognized stored policy cannot grant indefinite auto-accept.
+ */
 fun parseRememberType(screenCode: Int): RememberType = when (screenCode) {
     RememberType.NEVER.screenCode -> RememberType.NEVER
     RememberType.ONE_MINUTE.screenCode -> RememberType.ONE_MINUTE
@@ -651,9 +655,6 @@ fun parseRememberType(screenCode: Int): RememberType = when (screenCode) {
     RememberType.ONE_DAY.screenCode -> RememberType.ONE_DAY
     RememberType.ONE_WEEK.screenCode -> RememberType.ONE_WEEK
     RememberType.ALWAYS.screenCode -> RememberType.ALWAYS
-    // Defense-in-depth (GHSA-8844-q5vh-9j8f, I2): unknown screenCode values
-    // previously failed open to ALWAYS. Fail closed to NEVER so a corrupted
-    // or unrecognized stored policy cannot grant indefinite auto-accept.
     else -> RememberType.NEVER
 }
 

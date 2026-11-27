@@ -1,5 +1,6 @@
 package com.greenart7c3.nostrsigner.ui
 
+import android.content.Context
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -58,7 +59,6 @@ fun UpdateSettingsScreen(modifier: Modifier = Modifier) {
     val zapstoreUpdater = LocalZapstoreUpdater.current
 
     Column(modifier = modifier) {
-        // Current version
         Text(
             text = stringResource(Res.string.current_version, BuildConfig.VERSION_NAME),
             style = MaterialTheme.typography.bodyMedium,
@@ -85,7 +85,6 @@ fun UpdateSettingsScreen(modifier: Modifier = Modifier) {
     }
 }
 
-/** Whether an update is available (or downloading), and the button to check for one or install it. */
 @Composable
 private fun UpdateStatus(updater: ZapstoreUpdater) {
     val context = LocalContext.current
@@ -112,7 +111,6 @@ private fun UpdateStatus(updater: ZapstoreUpdater) {
             )
         }
 
-        // Installs the release when one is available, else checks again.
         val release = latestRelease?.takeIf { dlState == DownloadState.IDLE }
         Button(
             onClick = {
@@ -157,7 +155,6 @@ private fun updateStatusColor(
     else -> Color.Gray
 }
 
-/** Whether and how often to check for updates, and on which channel. */
 @Composable
 private fun AutoUpdateSettings() {
     val context = LocalContext.current
@@ -177,7 +174,6 @@ private fun AutoUpdateSettings() {
             },
         )
 
-        // Frequency selector (only when auto-check is on)
         if (autoCheck) {
             Spacer(modifier = Modifier.height(8.dp))
 
@@ -229,7 +225,6 @@ private fun AutoCheckRow(
     }
 }
 
-/** Stable or beta releases; changing it makes the next check run at once. */
 @Composable
 private fun UpdateChannelSetting() {
     val context = LocalContext.current
@@ -251,11 +246,11 @@ private fun UpdateChannelSetting() {
                 channel = selected
                 scope.launch(Dispatchers.IO) {
                     UpdateCheckSettings.updateUpdateChannel(context, selected)
-                    // Reset last-check timestamp so the next check actually runs
-                    // and surfaces a release on the newly selected channel.
-                    UpdateCheckSettings.setLastUpdateCheckTime(context, 0L)
+                    makeNextUpdateCheckRunAtOnce(context)
                 }
             }
         },
     )
 }
+
+private fun makeNextUpdateCheckRunAtOnce(context: Context) = UpdateCheckSettings.setLastUpdateCheckTime(context, 0L)

@@ -64,6 +64,7 @@ fun ChooseSignPolicy(
     }
 }
 
+@Suppress("NoComments")
 @Composable
 private fun SignPolicyOption(
     option: TitleExplainer,

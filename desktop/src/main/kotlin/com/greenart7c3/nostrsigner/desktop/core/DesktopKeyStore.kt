@@ -24,10 +24,11 @@ import kotlinx.coroutines.sync.withLock
  */
 object DesktopKeyStore {
     private const val TRANSFORMATION = "AES/GCM/NoPadding"
-    private const val IV_SIZE = 12 // 96 bits
-    private const val TAG_SIZE = 128 // bits
+    private const val IV_BYTES = 12
+    private const val TAG_BITS = 128
 
-    // ':' is outside the Base64 alphabet, so legacy values can never match.
+    /** ':' is outside the Base64 alphabet, so legacy values can never match. */
+    @Suppress("NoComments")
     private const val BOUND_PREFIX = "v2:"
 
     class LockedException : IllegalStateException("The key store is locked. Unlock it with your passphrase first.")
@@ -98,10 +99,10 @@ object DesktopKeyStore {
         val key = getOrCreateSecretKey()
         val data = Base64.getDecoder().decode(encryptedText.substring(BOUND_PREFIX.length))
         val buffer = ByteBuffer.wrap(data)
-        val iv = ByteArray(IV_SIZE).also { buffer.get(it) }
+        val iv = ByteArray(IV_BYTES).also { buffer.get(it) }
         val cipherText = ByteArray(buffer.remaining()).also { buffer.get(it) }
         val cipher = Cipher.getInstance(TRANSFORMATION)
-        cipher.init(Cipher.DECRYPT_MODE, key, GCMParameterSpec(TAG_SIZE, iv))
+        cipher.init(Cipher.DECRYPT_MODE, key, GCMParameterSpec(TAG_BITS, iv))
         cipher.updateAAD(aad(context))
         return cipher.doFinal(cipherText)
     }
@@ -118,6 +119,7 @@ object DesktopKeyStore {
  * held in one would stay readable in memory after a lock until the GC reuses
  * the space. [getEncoded] hands out copies, as the SecretKey contract requires.
  */
+@Suppress("NoComments")
 internal class WipeableAesKey(raw: ByteArray) : SecretKey {
     private val key = raw.copyOf()
 

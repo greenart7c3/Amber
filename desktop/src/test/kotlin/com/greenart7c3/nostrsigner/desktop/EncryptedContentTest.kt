@@ -15,10 +15,9 @@ class EncryptedContentTest {
         assertEquals(EncryptedContent(EncryptedContentType.CLEAR_TEXT), EncryptedContent.classify("hello"))
         assertEquals(EncryptedContent(EncryptedContentType.EVENT, 14), EncryptedContent.classify("""{"kind":14,"content":"hi","tags":[]}"""))
         assertEquals(EncryptedContent(EncryptedContentType.TAG_ARRAY), EncryptedContent.classify("""[["p","abc"],["e","def"]]"""))
-        // Broken JSON (or JSON that is not an event / tag array) is just text.
-        assertEquals(EncryptedContentType.CLEAR_TEXT, EncryptedContent.classify("{not json").type)
-        assertEquals(EncryptedContentType.CLEAR_TEXT, EncryptedContent.classify("""{"a":1}""").type)
-        assertEquals(EncryptedContentType.CLEAR_TEXT, EncryptedContent.classify("[1,2]").type)
+        assertEquals("broken JSON is just text", EncryptedContentType.CLEAR_TEXT, EncryptedContent.classify("{not json").type)
+        assertEquals("JSON that is not an event is just text", EncryptedContentType.CLEAR_TEXT, EncryptedContent.classify("""{"a":1}""").type)
+        assertEquals("JSON that is not a tag array is just text", EncryptedContentType.CLEAR_TEXT, EncryptedContent.classify("[1,2]").type)
     }
 
     @Test

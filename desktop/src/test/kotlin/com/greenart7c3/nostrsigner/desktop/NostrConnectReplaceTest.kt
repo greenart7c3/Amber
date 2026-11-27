@@ -49,10 +49,8 @@ class NostrConnectReplaceTest {
             AmberDesktop.engine.pending.value.first { it.localKey == clientHex }
         }
 
-        // The card can name the connection it will replace...
-        assertEquals("old-app", connectionToReplace(card, account.npub)?.app?.name)
-        // ...but a bunker:// reconnect under the same key is not a replacement.
-        assertNull(connectionToReplace(card.copy(isNostrConnectUri = false), account.npub))
+        assertEquals("the card names the connection it will replace", "old-app", connectionToReplace(card, account.npub)?.app?.name)
+        assertNull("a bunker URI reconnect under the same key is not a replacement", connectionToReplace(card.copy(isNostrConnectUri = false), account.npub))
 
         withTimeoutOrNull(20.seconds) { AmberDesktop.engine.approve(card, RememberType.NEVER, signPolicy = 1).join() }
 
@@ -70,8 +68,8 @@ class NostrConnectReplaceTest {
         val account = AccountManager.addAccount(KeyPair(), name = "nc-name", signPolicy = 1)
         val clientHex = KeyPair().pubKey.toHexKey()
 
-        // A line break and a right-to-left override in the client-chosen name.
-        assertNull(AmberDesktop.engine.addNostrConnect("nostrconnect://$clientHex?relay=wss%3A%2F%2Fnew.invalid&name=Amber%0AApprove%20now%E2%80%AEevil", account))
+        val nameWithLineBreakAndRightToLeftOverride = "Amber%0AApprove%20now%E2%80%AEevil"
+        assertNull(AmberDesktop.engine.addNostrConnect("nostrconnect://$clientHex?relay=wss%3A%2F%2Fnew.invalid&name=$nameWithLineBreakAndRightToLeftOverride", account))
         val card = withTimeout(20.seconds) {
             while (AmberDesktop.engine.pending.value.none { it.localKey == clientHex }) delay(50.milliseconds)
             AmberDesktop.engine.pending.value.first { it.localKey == clientHex }
@@ -95,9 +93,8 @@ class NostrConnectReplaceTest {
         assertNull(AmberDesktop.engine.addNostrConnect("nostrconnect://$valid?relay=wss%3A%2F%2Fnew.invalid", account))
     }
 
-    // The shared parser: relays, the secret byte for byte, metadata, and only grantable permissions.
     @Test
-    fun aNostrConnectUriIsQueuedAsItsClientAskedFor() = runBlocking {
+    fun `a nostrconnect URI is queued with its relays, metadata, secret byte for byte and only grantable permissions`() = runBlocking {
         val account = AccountManager.addAccount(KeyPair(), name = "nc-parse", signPolicy = 1)
         val clientHex = KeyPair().pubKey.toHexKey()
         val metadata = java.net.URLEncoder.encode("""{"url":"https://example.org"}""", "utf-8")
@@ -112,7 +109,7 @@ class NostrConnectReplaceTest {
         assertEquals("My App", card.appName)
         assertEquals("https://example.org", card.appUrl)
         assertEquals(listOf("wss://a.invalid/", "wss://b.invalid/"), card.relays.map { it.url })
-        assertEquals("XQUdha4rjh_gjAgHN8X5yg==", card.nostrConnectSecret)
-        assertEquals(listOf("sign_event" to 1, "nip" to 44), card.requestedPermissions.map { it.type to it.kind })
+        assertEquals("the secret is kept byte for byte", "XQUdha4rjh_gjAgHN8X5yg==", card.nostrConnectSecret)
+        assertEquals("only grantable permissions are requested", listOf("sign_event" to 1, "nip" to 44), card.requestedPermissions.map { it.type to it.kind })
     }
 }

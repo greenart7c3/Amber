@@ -10,7 +10,7 @@ class UrisTest {
     private val pubKey = "0123456789abcdef".repeat(4)
     private val clientPubKey = "fedcba9876543210".repeat(4)
 
-    private fun params(uri: String): Map<String, String> = uri.substringAfter('?').split('&').associate {
+    private fun paramsDecodedWithUrlDecoderLikeAmber(uri: String): Map<String, String> = uri.substringAfter('?').split('&').associate {
         it.substringBefore('=') to URLDecoder.decode(it.substringAfter('='), "utf-8")
     }
 
@@ -23,8 +23,6 @@ class UrisTest {
             name = "Amber CLI + scripts",
             perms = "sign_event:1,nip44_encrypt",
         )
-        // Quartz parses what it builds, so the CLI and an Amber reading the URI
-        // agree on every value.
         val parsed = NostrConnectURI.parseNostrConnect(uri)!!
         assertEquals(clientPubKey, parsed.clientPubKey)
         assertEquals(setOf("wss://relay.nip46.com/", "ws://127.0.0.1:7777/"), parsed.relays.map { it.url }.toSet())
@@ -39,15 +37,14 @@ class UrisTest {
         val parsed = NostrConnectURI.parseNostrConnect(uri)!!
         assertEquals(null, parsed.name)
         assertEquals(null, parsed.perms)
-        assertEquals(params(uri)["relay"], "wss://relay.example/")
+        assertEquals(paramsDecodedWithUrlDecoderLikeAmber(uri)["relay"], "wss://relay.example/")
     }
 
     @Test
     fun namesWithReservedCharactersSurvive() {
         val name = "My App & tools + more"
         val uri = buildNostrConnectUri(clientPubKey, listOf("wss://relay.example/"), "s", name, perms = "")
-        // Amber decodes each query value with URLDecoder ('+' is a space).
-        assertEquals(name, params(uri)["name"])
+        assertEquals(name, paramsDecodedWithUrlDecoderLikeAmber(uri)["name"])
         assertEquals(name, NostrConnectURI.parseNostrConnect(uri)!!.name)
     }
 

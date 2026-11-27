@@ -36,6 +36,15 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
 
+/**
+ * A signed-in Nostr account and the operations its private key performs.
+ *
+ * @param scope watches name/picture to mark the account saveable, and runs the clipboard copy.
+ * @param appContext the application context: key storage, the keyguard and toasts. Previews pass
+ * none, so anything that needs it fails there instead of guessing.
+ * @param keyAccessCheck reads the policy synchronously: the DataStore-backed settings may not be
+ * loaded yet, and this gate must see the user's actual decision, not a default.
+ */
 @Stable
 class Account(
     val signer: NostrSignerInternal,
@@ -43,13 +52,8 @@ class Account(
     val picture: MutableStateFlow<String>,
     signPolicy: Int,
     didBackup: Boolean,
-    // Watches name/picture to mark the account saveable, and runs the clipboard copy.
     private val scope: CoroutineScope,
-    // The application context: key storage, the keyguard and toasts. Previews pass
-    // none, so anything that needs it fails there instead of guessing.
     appContext: Context? = null,
-    // Reads the policy synchronously: the DataStore-backed settings may not be loaded
-    // yet, and this gate must see the user's actual decision, not a default.
     private val keyAccessCheck: () -> Unit = {
         KeystorePolicy.requireAccess(checkNotNull(appContext) { "No context to check the device lock with" })
     },
@@ -154,6 +158,7 @@ class AccountKeyExport internal constructor(
         return Nip49().encrypt(account.signer.keyPair.privKey!!.toHexKey(), password)
     }
 
+    @Suppress("NoComments")
     suspend fun seedWords(): String {
         // Gate before reading: the repair below swallows decrypt failures and
         // would otherwise turn a lock refusal into an erased recovery phrase.
@@ -189,7 +194,6 @@ class AccountKeyExport internal constructor(
                 getNsec()
             } catch (e: Exception) {
                 if (e is CancellationException) throw e
-                // Never mark the account backed up when the export was refused.
                 AmberLog.e(Amber.TAG, "Failed to export secret key for clipboard", e)
                 return@launch
             }

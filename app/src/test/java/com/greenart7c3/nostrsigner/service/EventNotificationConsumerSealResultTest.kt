@@ -1,6 +1,5 @@
 package com.greenart7c3.nostrsigner.service
 
-import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.EncryptedDataKind
 import com.vitorpamplona.quartz.nip01Core.core.toHexKey
@@ -8,11 +7,6 @@ import com.vitorpamplona.quartz.nip01Core.crypto.KeyPair
 import com.vitorpamplona.quartz.nip01Core.jackson.JacksonMapper
 import com.vitorpamplona.quartz.nip01Core.signers.NostrSignerInternal
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequest
-import io.mockk.every
-import io.mockk.mockk
-import io.mockk.spyk
-import kotlin.coroutines.Continuation
-import kotlin.coroutines.intrinsics.suspendCoroutineUninterceptedOrReturn
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -21,7 +15,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
-import org.junit.Before
 import org.junit.Test
 
 /**
@@ -30,23 +23,6 @@ import org.junit.Test
  * into a disclosure of that self-encrypted plaintext.
  */
 class EventNotificationConsumerSealResultTest {
-    private val bunkerResponder by lazy {
-        spyk(
-            BunkerResponder(
-                amber,
-                amber,
-                amber.accountDatabases,
-                amber.relayClient,
-                object : CoroutineScope {
-                    override val coroutineContext get() = amber.applicationIOScope.coroutineContext
-                },
-                mockk(relaxed = true),
-            ) { null },
-        )
-    }
-
-    private val amber = mockk<Amber>(relaxed = true)
-
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private val signer = NostrSignerInternal(KeyPair())
     private val account = Account(
@@ -62,11 +38,6 @@ class EventNotificationConsumerSealResultTest {
     private val peerHex = peer.keyPair.pubKey.toHexKey()
     private val privateTags = """[["word","private-bookmark"]]"""
 
-    @Before
-    fun setUp() {
-        every { amber.applicationIOScope } returns scope
-    }
-
     @After
     fun tearDown() {
         scope.cancel()
@@ -75,22 +46,7 @@ class EventNotificationConsumerSealResultTest {
     private suspend fun encryptedDataKind(method: String, params: List<String>): EncryptedDataKind {
         val wire = JacksonMapper.mapper.writeValueAsString(mapOf("id" to "req", "method" to method, "params" to params))
         val request = JacksonMapper.mapper.readValue(wire, BunkerRequest::class.java)
-        val fn = EventNotificationConsumer::class.java.getDeclaredMethod(
-            "getEncryptedDataKind",
-            BunkerRequest::class.java,
-            Account::class.java,
-            String::class.java,
-            Continuation::class.java,
-        ).apply { isAccessible = true }
-        val consumer = EventNotificationConsumer(
-            mockk(relaxed = true),
-            settingsStore = amber,
-            accountRepository = amber.accountDatabases,
-            scope = amber.applicationIOScope,
-            notificationCache = amber.notificationCache,
-            bunkerResponder = bunkerResponder,
-        ) { amber.notificationSubscription.updateFilter() }
-        return suspendCoroutineUninterceptedOrReturn<Any?> { c -> fn.invoke(consumer, request, account, "wss://relay.invalid", c) } as EncryptedDataKind
+        return bunkerEncryptedDataKind(request, account) { }!!
     }
 
     private suspend fun sealOfPrivateTags(): String = """{"kind":13,"content":"${account.crypto.nip44Encrypt(privateTags, account.hexKey)}","tags":[],"created_at":1,"pubkey":"${account.hexKey}"}"""

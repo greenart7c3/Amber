@@ -5,7 +5,6 @@ import androidx.core.content.edit
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.RelayUrlNormalizer
 
-// Keys in each account's preference file (`prefs_<npub>`); renaming one loses the stored value.
 internal enum class AccountPrefKeys(val key: String) {
     NOSTR_PUBKEY("nostr_pubkey"),
     ACCOUNT_NAME("account_name"),
@@ -20,7 +19,11 @@ internal enum class AccountPrefKeys(val key: String) {
     BACKUP_APPLICATIONS("backup_applications"),
 }
 
-/** What Amber remembers per account besides its key: backup consent, relay list and fetch times. */
+/**
+ * What Amber remembers per account besides its key: backup consent, relay list and fetch
+ * times, in the account's preference file (`prefs_<npub>`). Renaming one of its keys
+ * (`AccountPrefKeys`) loses the stored value.
+ */
 object AccountPreferences {
     fun getBackupApplications(context: Context, npub: String): Boolean = accountPreferences(context, npub).getBoolean(AccountPrefKeys.BACKUP_APPLICATIONS.key, false)
 

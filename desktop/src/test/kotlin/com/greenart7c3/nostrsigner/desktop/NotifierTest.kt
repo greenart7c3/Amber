@@ -15,8 +15,7 @@ class NotifierTest {
 
     @Test
     fun successfulCommandReportsDelivered() {
-        // `true` exits 0 on any POSIX system; skip elsewhere (e.g. bare Windows).
-        assumeTrue(!System.getProperty("os.name").lowercase().contains("win"))
+        assumeTrue("needs the POSIX true command, which exits 0", !System.getProperty("os.name").lowercase().contains("win"))
         assertTrue(Notifier.tryCommand(listOf("true")))
     }
 

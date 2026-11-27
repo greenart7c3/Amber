@@ -45,7 +45,6 @@ class StringsTest {
         Locale.setDefault(original)
     }
 
-    /** Reads [block] with [tag] as the UI language, as Strings.setLanguage applies it. */
     private fun <T> inLanguage(tag: String, block: () -> T): T {
         Locale.setDefault(Locale.forLanguageTag(tag))
         return block()
@@ -53,18 +52,18 @@ class StringsTest {
 
     private fun string(tag: String, resource: StringResource, vararg args: Any) = inLanguage(tag) { getStringBlocking(resource, *args) }
 
-    /** en-GB only overrides spellings, so most of its strings legitimately match English. */
-    private fun isEnglish(tag: String) = tag == "en" || tag.startsWith("en-")
+    private fun mayOnlyOverrideEnglishSpellings(tag: String) = tag == "en" || tag.startsWith("en-")
 
     private fun assertTranslatedEverywhere(resource: StringResource) {
         val english = string("en", resource)
         Strings.supportedLanguages.forEach { (tag, _) ->
             val value = string(tag, resource)
             assertTrue("$resource missing for $tag", value.isNotBlank())
-            if (!isEnglish(tag)) assertNotEquals("$resource not translated for $tag", english, value)
+            if (!mayOnlyOverrideEnglishSpellings(tag)) assertNotEquals("$resource not translated for $tag", english, value)
         }
     }
 
+    @Suppress("NoComments")
     @Test
     fun everyShippedLanguageHasItsTranslation() {
         // Includes the languages selected without their region (it, ko, vi)
@@ -80,11 +79,9 @@ class StringsTest {
     }
 
     @Test
-    fun britishEnglishOverridesSpellingAndFallsBackToEnglish() {
+    fun britishEnglishOverridesSpelling() {
         assertEquals("Favourite relays list", string("en-GB", Res.string.event_kind_10012))
         assertEquals("Favorite relays list", string("en", Res.string.event_kind_10012))
-        // Strings the en-GB file doesn't override come from values/strings.xml.
-        assertEquals("Short text note", string("en-GB", Res.string.event_kind_1))
         assertEquals(
             "Closing the window minimises Amber to the system tray so it keeps answering requests.",
             string("en-GB", Res.string.d_keep_in_tray_sub),
@@ -92,11 +89,18 @@ class StringsTest {
     }
 
     @Test
-    fun androidEscapesAreDecoded() {
-        // The XML holds "Starting Tor…"; it must render as an ellipsis.
+    fun `british English falls back to the English file for strings it does not override`() {
+        assertEquals("Short text note", string("en-GB", Res.string.event_kind_1))
+    }
+
+    @Test
+    fun `an ellipsis in the XML renders as an ellipsis`() {
         assertEquals("Starting Tor…", string("en", Res.string.tor_starting))
         assertEquals("Tor wird gestartet…", string("de", Res.string.tor_starting))
-        // \' is an apostrophe.
+    }
+
+    @Test
+    fun `an apostrophe in the XML renders as an apostrophe`() {
         assertTrue(string("en", Res.string.d_socket_name_unverified).contains("Amber can't verify it"))
         assertTrue(string("fr", Res.string.d_socket_name_unverified).contains("N'approuvez"))
     }
@@ -106,13 +110,11 @@ class StringsTest {
         assertTrue(string("en", Res.string.event_kind, "12345").contains("12345"))
         assertTrue(string("de", Res.string.d_public_key, "npub1abc").contains("npub1abc"))
         assertTrue(string("ja", Res.string.d_public_key, "npub1abc").contains("npub1abc"))
-        // Single-argument strings use positional %1$s, which Compose resources substitute.
-        assertEquals("Export failed: boom", string("en", Res.string.export_failed, "boom"))
+        assertEquals("positional %1\$s is substituted", "Export failed: boom", string("en", Res.string.export_failed, "boom"))
     }
 
     @Test
-    fun theXmlTextIsShownAsIs() {
-        // Plain text (Compose resources): line breaks and apostrophes as written.
+    fun `line breaks and apostrophes in the XML text are shown as written`() {
         assertTrue(string("en", Res.string.account_backup_tips_md).contains("\n\nYour account is secured"))
         assertTrue(string("en", Res.string.d_socket_name_unverified).contains("Amber can't verify it"))
     }
@@ -127,9 +129,15 @@ class StringsTest {
         assertEquals("Metadata", Permission("sign_event", 0).localizedBlocking())
         assertEquals("Zap", Permission("sign_event", 9735).localizedBlocking())
         assertEquals("Gift wrap", Permission("sign_event", 1059).localizedBlocking())
-        // Range mapping (5000..5999).
+    }
+
+    @Test
+    fun `a kind between 5000 and 5999 gets the range description`() = inLanguage("en") {
         assertEquals(getStringBlocking(Res.string.event_kind_5000_5999), Permission("sign_event", 5123).localizedBlocking())
-        // Kinds the old desktop copy of the table lacked resolve like on Android.
+    }
+
+    @Test
+    fun `kinds 30443 and 10008 resolve like on Android`() = inLanguage("en") {
         assertEquals(getStringBlocking(Res.string.event_kind_30443), Permission("sign_event", 30443).localizedBlocking())
         assertEquals(getStringBlocking(Res.string.event_kind_10008), Permission("sign_event", 10008).localizedBlocking())
     }

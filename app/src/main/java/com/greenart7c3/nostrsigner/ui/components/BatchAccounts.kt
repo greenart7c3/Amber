@@ -10,10 +10,8 @@ import com.greenart7c3.nostrsigner.models.Account
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-/** The account a batched request is signed and recorded under. */
 internal fun batchAccountNpub(currentAccount: String, activeNpub: String): String = currentAccount.ifBlank { activeNpub }
 
-/** Every account a batch confirm acts as, in the order first seen. */
 internal fun batchAccountNpubs(currentAccounts: List<String>, activeNpub: String): List<String> = currentAccounts.map { batchAccountNpub(it, activeNpub) }.distinct()
 
 /**

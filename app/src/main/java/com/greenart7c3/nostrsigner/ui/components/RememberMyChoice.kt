@@ -89,7 +89,6 @@ fun RememberMyChoice(
     alwaysShow: Boolean = false,
 ) {
     var selected by remember { mutableStateOf(RememberType.NEVER) }
-    // The effect below runs once; it must call the latest callbacks, not the first ones.
     val currentOnAccept by rememberUpdatedState(onAccept)
     val currentOnReject by rememberUpdatedState(onReject)
     if (shouldRunAcceptOrReject != null) {

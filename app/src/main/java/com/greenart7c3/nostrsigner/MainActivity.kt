@@ -42,8 +42,6 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         amber.setMainActivity(this)
         mainViewModel = MainViewModel(applicationContext)
-        // Read once here: getReferrer() crashes on OEM builds (Samsung/Android 12) when
-        // the activity has no intent (mIntent == null).
         val launchReferrer = safeReferrer()
         intent?.let { mainViewModel.onNewIntent(it, callingPackage, launchReferrer) }
         setContent {

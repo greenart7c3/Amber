@@ -107,7 +107,6 @@ fun CrashReportScreen(
             }
         }
 
-        // Offline the report goes through the clipboard to another client, which signs it.
         if (!BuildFlavorChecker.isOfflineFlavor()) {
             OutlinedButton(
                 modifier = Modifier

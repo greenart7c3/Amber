@@ -59,6 +59,7 @@ private val DarkColorPalette =
         onSecondaryContainer = Color.Black,
     )
 
+@Suppress("NoComments")
 // Pure black at every elevation for AMOLED screens. Surface tint is transparent so
 // tonal elevation can't lift cards and sheets to gray; they are told apart by an
 // [amoledOutline] border instead (see [amoledBorder]).

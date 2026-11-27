@@ -28,8 +28,7 @@ class NetworkConnectivityProbeTest {
         NetworkConnectivity.newProbeSocket = defaultFactory
     }
 
-    /** Records the connect targets; never touches the network. */
-    private class FakeSocket(
+    private class OfflineTargetRecordingSocket(
         private val succeed: Boolean,
     ) : Socket() {
         val targets = mutableListOf<SocketAddress?>()
@@ -57,11 +56,10 @@ class NetworkConnectivityProbeTest {
     }
 
     @Test
-    fun probeIsFailClosedWhileBuiltinTorIsDown() {
-        // Port 0 is the placeholder that refuses everything; the probe fails
-        // with the relays instead of leaking a direct dial.
+    fun `probe is fail closed while builtin Tor is down, failing with the relays instead of dialing directly`() {
         val proxy = NetworkConnectivity.probeProxy(InetSocketAddress("1.1.1.1", 53), TorMode.BUILTIN, 9050, 0)
-        assertEquals(InetSocketAddress("127.0.0.1", 0), proxy?.address())
+        val refusesEverything = InetSocketAddress("127.0.0.1", 0)
+        assertEquals(refusesEverything, proxy?.address())
     }
 
     @Test
@@ -74,12 +72,11 @@ class NetworkConnectivityProbeTest {
         val dialled = mutableListOf<SocketAddress?>()
         NetworkConnectivity.newProbeSocket = { target ->
             dialled += target
-            FakeSocket(succeed = true)
+            OfflineTargetRecordingSocket(succeed = true)
         }
 
         assertTrue(NetworkConnectivity.isOnline())
-        // `any` stops at the first success: exactly one probe target dialed.
-        assertEquals(listOf<SocketAddress?>(InetSocketAddress("1.1.1.1", 53)), dialled)
+        assertEquals("the first success stops the probe after one target", listOf<SocketAddress?>(InetSocketAddress("1.1.1.1", 53)), dialled)
     }
 
     @Test
@@ -87,7 +84,7 @@ class NetworkConnectivityProbeTest {
         var created = 0
         NetworkConnectivity.newProbeSocket = {
             created++
-            FakeSocket(succeed = false)
+            OfflineTargetRecordingSocket(succeed = false)
         }
 
         assertFalse(NetworkConnectivity.isOnline())

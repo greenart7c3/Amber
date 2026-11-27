@@ -33,8 +33,8 @@ class PermissionTypesTest {
     fun `the type does not depend on the device language`() {
         val default = Locale.getDefault()
         try {
-            // Turkish upper-cases "i" to a dotted "İ".
-            Locale.setDefault(Locale.forLanguageTag("tr"))
+            val turkishUpperCasesIToADottedI = Locale.forLanguageTag("tr")
+            Locale.setDefault(turkishUpperCasesIToADottedI)
             assertEquals(listOf("SIGN_EVENT"), expandPermissionTypes("sign_event"))
             assertEquals(listOf("DECRYPT_ZAP_EVENT"), expandPermissionTypes("decrypt_zap_event"))
             assertEquals(listOf("ENCRYPT_CLEAR_TEXT"), expandPermissionTypes("encrypt_clear_text"))

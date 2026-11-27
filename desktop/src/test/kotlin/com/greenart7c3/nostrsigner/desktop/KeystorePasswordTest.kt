@@ -78,14 +78,12 @@ class KeystorePasswordTest {
     }
 
     @Test
-    fun wrongOsValueFallsBackToWorkingFileValue() {
-        // e.g. a stale credential-store entry from a wiped install.
+    fun `a wrong OS value, such as a stale entry from a wiped install, falls back to the working file value`() {
         val os = FakeStore(value = "stale-secret")
         val file = FakeStore(value = "real-secret")
         val resolved = KeystorePassword.resolve(os, file, keystoreExists = true) { it == "real-secret" }
         assertEquals("real-secret", resolved.password)
-        // The working password replaces the stale credential-store entry.
-        assertEquals("real-secret", os.value)
+        assertEquals("the working password replaces the stale credential-store entry", "real-secret", os.value)
         assertNull(file.value)
     }
 

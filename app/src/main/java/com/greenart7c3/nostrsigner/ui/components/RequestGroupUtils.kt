@@ -148,14 +148,14 @@ fun RequestGroupKey.scopeKind(): RequestGroupScopeKind = when (type) {
     else -> RequestGroupScopeKind.NONE
 }
 
-// Mirrors the single-event defaults: EncryptDecryptData defaults to ALL, Nip44v3ApprovalData to SPECIFIC
+/** Mirrors the single-event defaults: EncryptDecryptData defaults to ALL, Nip44v3ApprovalData to SPECIFIC. */
 fun defaultDecryptTypeScope(type: SignerType): DecryptTypeScope = if (type == SignerType.NIP44_V3_ENCRYPT || type == SignerType.NIP44_V3_DECRYPT) {
     DecryptTypeScope.SPECIFIC
 } else {
     DecryptTypeScope.ALL
 }
 
-// CONNECT / GET_PUBLIC_KEY approvals never persist a permission from the grouped flow
+/** CONNECT / GET_PUBLIC_KEY approvals never persist a permission from the grouped flow. */
 fun RequestGroupKey.hasGroupOptions(): Boolean = type != SignerType.CONNECT && type != SignerType.GET_PUBLIC_KEY
 
 @Composable
@@ -312,7 +312,6 @@ fun RequestApproval(
     }
 }
 
-/** Approve or deny, for a request or a whole group of them. */
 @Composable
 private fun ApproveDenyToggle(
     approved: Boolean,

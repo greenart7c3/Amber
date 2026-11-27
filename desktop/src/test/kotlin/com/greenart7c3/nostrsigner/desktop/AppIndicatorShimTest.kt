@@ -19,7 +19,8 @@ class AppIndicatorShimTest {
         val lib = tmp("libdir")
         val ayatana = File(lib, "libayatana-appindicator3.so.1")
         ayatana.writeText("fake so")
-        val shimDir = tmp("shim").also { it.delete() } // let the code mkdirs
+        val shimDirTheCodeMustCreate = tmp("shim").also { it.delete() }
+        val shimDir = shimDirTheCodeMustCreate
 
         val result = NativeTray.buildAppIndicatorShim(listOf(lib.absolutePath), shimDir)
 

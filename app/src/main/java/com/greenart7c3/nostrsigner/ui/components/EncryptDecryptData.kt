@@ -215,7 +215,6 @@ fun BunkerEncryptDecryptData(
     }
 }
 
-/** The app's icon, then its name in bold followed by what it asks. */
 @Composable
 private fun BunkerRequestTitle(
     iconUrl: String,
@@ -231,7 +230,6 @@ private fun BunkerRequestTitle(
                 withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
                     append(appName)
                 }
-                // Like the intent screen; this string has no leading space.
                 if (!type.isEncrypt() && encryptedData is PrivateZapEncryptedDataKind) append(" ")
                 append(prompt)
             },
@@ -242,19 +240,13 @@ private fun BunkerRequestTitle(
 
 private fun SignerType.isEncrypt(): Boolean = name.contains("ENCRYPT")
 
-/** The method's NIP as the prompts name it: NIP04 or NIP44. */
 private fun SignerType.nipName(): String = name.split("_").first()
 
-/**
- * The event the request is about: the sealed event when [encryptedData] wraps a seal
- * (null when the seal holds no event), else the event itself.
- */
 private fun requestEvent(encryptedData: EventEncryptedDataKind): AmberEvent? {
     val seal = encryptedData.sealEncryptedDataKind ?: return encryptedData.event
     return (seal as? EventEncryptedDataKind)?.event
 }
 
-/** What [event]'s kind is called, or its `alt` tag when Amber has no name for the kind. */
 @Composable
 private fun eventKindLabel(event: AmberEvent): String {
     val kindTranslation = Permission("sign_event", event.kind).localizedBlocking()
@@ -263,7 +255,6 @@ private fun eventKindLabel(event: AmberEvent): String {
     return if (kindTranslation == unknownKindString && altTag != null) altTag else kindTranslation
 }
 
-/** What the app asks, after its name: "wants to encrypt this text with NIP44", … */
 @Composable
 private fun encryptDecryptPrompt(
     type: SignerType,
@@ -283,7 +274,6 @@ private fun encryptDecryptPrompt(
     }
 }
 
-/** A button opening [event]'s details. */
 @Composable
 private fun EventDetailsButton(event: AmberEvent) {
     var showDetails by remember { mutableStateOf(false) }
@@ -296,10 +286,6 @@ private fun EventDetailsButton(event: AmberEvent) {
     }
 }
 
-/**
- * The bunker card for an event: the follow count of a contact list ([outer] is the
- * event as requested), else [shown]'s content (the relay of a relay auth event).
- */
 @Composable
 private fun BunkerEventContent(
     shown: AmberEvent,
@@ -320,7 +306,6 @@ private fun BunkerEventContent(
     }
 }
 
-/** A tag array, under the account signing it, or else the request's text (see [plainCardText]). */
 @Composable
 private fun ColumnScope.TagArrayOrText(
     type: SignerType,
@@ -347,7 +332,6 @@ private fun ColumnScope.TagArrayOrText(
     }
 }
 
-/** Whether the grant covers this method only or every method of the NIP. */
 @Composable
 private fun EncryptionScopeToggle(
     scope: DecryptTypeScope,
@@ -375,10 +359,6 @@ private fun EncryptionScopeToggle(
     }
 }
 
-/**
- * The text an approval card shows for a request that is neither an event nor a tag
- * array: the plaintext of an encrypt, a private zap's message, else the decrypted result.
- */
 internal fun plainCardText(type: SignerType, encryptedData: EncryptedDataKind?): String = when {
     type.name.contains("ENCRYPT") && encryptedData is ClearTextEncryptedDataKind -> encryptedData.text
     encryptedData is PrivateZapEncryptedDataKind -> encryptedData.message

@@ -29,9 +29,10 @@ import kotlinx.coroutines.launch
 class MainViewModel(val context: Context) : ViewModel() {
     var navController: NavHostController? = null
 
-    // Intent IDs added by this ViewModel instance — used by onDestroy to remove only
-    // the intents owned by this activity, avoiding races with a new SignerActivity
-    // instance that may have already added its own intents.
+    /**
+     * Intent IDs added by this ViewModel instance, so onDestroy removes only the intents
+     * this activity owns and never those a newer SignerActivity instance already added.
+     */
     val addedIntentIds = mutableSetOf<String>()
 
     /** Tags the requests this screen queues; see [IntentData.owner]. */
@@ -56,16 +57,13 @@ class MainViewModel(val context: Context) : ViewModel() {
         return account
     }
 
-    /** [key] (an npub or a hex public key) as an npub. */
-    private fun npubOf(key: String): String = if (key.startsWith("npub")) key else Hex.decode(key).toNpub()
+    private fun npubOf(npubOrHexKey: String): String = if (npubOrHexKey.startsWith("npub")) npubOrHexKey else Hex.decode(npubOrHexKey).toNpub()
 
-    /** The npub [userFromIntent] names, when it is a saved account. */
     private fun savedAccount(userFromIntent: String?): String? {
         if (userFromIntent.isNullOrBlank()) return null
         return npubOf(userFromIntent).takeIf { SavedAccounts.contains(context, it) }
     }
 
-    /** The account the first queued request signs as: an intent's event author, else a bunker request's account. */
     private fun requestedAccount(): String? {
         val intentKeys = ownIntents().mapNotNull { it.event?.pubKey }.filter { it.isNotBlank() }
         val bunkerKeys = BunkerRequestUtils.getBunkerRequests().mapNotNull {
@@ -74,7 +72,6 @@ class MainViewModel(val context: Context) : ViewModel() {
         return (intentKeys + bunkerKeys).firstOrNull()?.let { Hex.decode(it).toNpub() }
     }
 
-    /** The current account when it is still saved, else the first saved one. */
     private fun fallbackAccount(): String? {
         val current = SavedAccounts.current(context)
         if (current != null && SavedAccounts.contains(context, current)) return current
@@ -122,7 +119,6 @@ class MainViewModel(val context: Context) : ViewModel() {
                 if (intentData != null) {
                     IntentUtils.addAll(listOf(intentData.copy(owner = ownerId)))
                     addedIntentIds.add(intentData.id)
-                    // The calling app is visible to us now; capture its icon/name.
                     IntentUtils.persistNativeAppMetadata(context, acc, callingPackage)
                 }
 

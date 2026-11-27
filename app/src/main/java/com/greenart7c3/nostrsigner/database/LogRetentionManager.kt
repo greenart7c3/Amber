@@ -70,6 +70,7 @@ object LogRetentionManager {
 
     private fun historyKey(npub: String) = "history_$npub"
 
+    @Suppress("NoComments")
     internal fun launchThrottled(scope: CoroutineScope, key: String, block: suspend () -> Unit): Job? {
         val now = System.currentTimeMillis()
         var claimed = false
@@ -115,8 +116,8 @@ object LogRetentionManager {
         lock(key).withLock {
             lastPruneTimes[key] = System.currentTimeMillis()
             val dao = db.dao()
-            // History times are in seconds.
-            val expired = dao.deleteOldHistory(TimeUtils.now() - DataRetentionSettings.getHistoryRetention(context).millis / 1000)
+            val cutoffSeconds = TimeUtils.now() - DataRetentionSettings.getHistoryRetention(context).millis / 1000
+            val expired = dao.deleteOldHistory(cutoffSeconds)
             val trimmed = trimToBudget(HISTORY_DB_MAX_BYTES, { liveBytes(db) }) { dao.deleteOldestHistory(PRUNE_BATCH) }
             if (expired > 0 || trimmed > 0) {
                 AmberLog.d(Amber.TAG, "Pruned history: $expired expired, $trimmed over the size budget")
@@ -125,10 +126,6 @@ object LogRetentionManager {
         }
     }
 
-    /**
-     * Deletes the oldest rows in batches until the database's live size is at most [maxBytes].
-     * Returns the number of rows deleted.
-     */
     internal suspend fun trimToBudget(
         maxBytes: Long,
         liveBytes: suspend () -> Long,
@@ -144,6 +141,7 @@ object LogRetentionManager {
     }
 
     // Pages in use; freed pages sit on the freelist until they are vacuumed.
+    @Suppress("NoComments")
     private suspend fun liveBytes(db: RoomDatabase): Long = withContext(Dispatchers.IO) {
         val sqlite = db.openHelper.writableDatabase
         (sqlite.longPragma("page_count") - sqlite.longPragma("freelist_count")) * sqlite.longPragma("page_size")
@@ -156,6 +154,7 @@ object LogRetentionManager {
      * auto-vacuum once (a full VACUUM, which can't run inside a Room migration's transaction)
      * and its freed pages are released on every prune after that.
      */
+    @Suppress("NoComments")
     private suspend fun reclaimSpace(db: RoomDatabase) = withContext(Dispatchers.IO) {
         val sqlite = db.openHelper.writableDatabase
         when (sqlite.longPragma("auto_vacuum")) {

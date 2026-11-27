@@ -28,7 +28,6 @@ import kotlinx.collections.immutable.ImmutableList
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
-/** The label of the installed app [packageName], or null when there is none or it cannot be read. */
 internal fun Context.callerAppName(packageName: String?): String? = packageName?.let {
     try {
         val info = packageManager.getApplicationInfo(it, 0)
@@ -38,15 +37,9 @@ internal fun Context.callerAppName(packageName: String?): String? = packageName?
     }
 }
 
-/**
- * The app's screens behind the biometric/PIN lock (UI only, see AGENTS.md): a spinner
- * until [BiometricAuthScreen] lets the user in, then [content].
- */
 @Composable
 internal fun AuthGate(content: @Composable () -> Unit) {
     var isAuthenticated by remember { mutableStateOf(false) }
-    // Like the Surface the activities used to put these in directly: the children
-    // get its minimum size.
     Box(propagateMinConstraints = true) {
         BiometricAuthScreen(onAuth = { isAuthenticated = it })
         if (isAuthenticated) {
@@ -59,14 +52,8 @@ internal fun AuthGate(content: @Composable () -> Unit) {
     }
 }
 
-/** The account the activity's intent names in `current_user`, else the first queued request's (see [MainViewModel.getAccount]). */
 internal fun MainViewModel.requestedAccount(intent: Intent?): String? = getAccount(intent?.getStringExtra("current_user"))
 
-/**
- * Whenever the queued bunker requests change, switches [accountStateViewModel] to the
- * account the current intent (read through [currentIntent], since onNewIntent replaces
- * it) or the first queued request names.
- */
 @Composable
 internal fun SwitchToRequestedAccountEffect(
     mainViewModel: MainViewModel,
@@ -82,7 +69,6 @@ internal fun SwitchToRequestedAccountEffect(
     }
 }
 
-/** The account state for the activities' screens; [npub] is only read when it is first created. */
 @Composable
 internal fun accountStateViewModel(npub: () -> String?): AccountStateViewModel = viewModel(
     factory = AccountStateViewModel.factory(

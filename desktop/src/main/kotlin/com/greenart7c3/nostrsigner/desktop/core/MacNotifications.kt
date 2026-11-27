@@ -36,8 +36,8 @@ import java.util.concurrent.TimeUnit
  * macOS calls the delegate on a thread of its own and the click is handed to
  * [callbacks] so the delegate returns at once.
  */
+@Suppress("NoComments")
 internal object MacNotifications {
-    /** A click on the notification itself, like the freedesktop "default" action. */
     const val DEFAULT_ACTION = "default"
 
     private const val APPLE_DEFAULT_ACTION = "com.apple.UNNotificationDefaultActionIdentifier"
@@ -87,7 +87,6 @@ internal object MacNotifications {
         Thread(r, "amber-mac-notify-action").apply { isDaemon = true }
     }
 
-    /** What to run for a click, per notification identifier. */
     private val handlers = ConcurrentHashMap<String, (String) -> Unit>()
 
     /** Registered categories: identifier → its (action, label) buttons. Only touched on [worker]. */
@@ -212,7 +211,6 @@ internal object MacNotifications {
         return shared
     }
 
-    /** Whether this process can use the notification center at all (the packaged app). */
     fun usable(): Boolean = try {
         onWorker { center() != null }
     } catch (e: Throwable) {
@@ -302,10 +300,8 @@ internal object MacNotifications {
         return id
     }
 
-    /** Stable per set of buttons and their labels, so a language change gets its own category. */
     internal fun categoryId(actions: List<Pair<String, String>>): String = "amber.request." + actions.joinToString("|") { "${it.first}=${it.second}" }.hashCode().toUInt().toString(16)
 
-    /** `UNNotificationResponse` → the handler of the notification it answers. */
     private fun clicked(response: Pointer) {
         val action = string(send(response, "actionIdentifier"))
         val id = string(send(send(send(response, "notification"), "request"), "identifier"))

@@ -65,7 +65,6 @@ fun EventDetailModal(
     }
 }
 
-/** A full-width sheet that only Go back closes, with [content] in a scrolling column. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun DetailSheet(
@@ -115,7 +114,6 @@ internal fun DetailSheet(
     }
 }
 
-/** An event's kind (as [kindLabel] names it), author, date, content and tags, each one copyable. */
 @Composable
 internal fun EventSections(
     event: Event,
@@ -154,7 +152,6 @@ internal fun EventSections(
     }
 }
 
-/** Tags as they are copied: `["p", "…"], ["t", "…"]`. */
 internal fun tagsCopyText(tags: Array<Array<String>>): String = tags.joinToString(separator = ", ") { tag ->
     "[${tag.joinToString(separator = ", ") { value -> "\"$value\"" }}]"
 }

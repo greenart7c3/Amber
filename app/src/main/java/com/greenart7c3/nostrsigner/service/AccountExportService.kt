@@ -71,16 +71,7 @@ object AccountExportService {
                                     scope = scope,
                                     appContext = context,
                                 )
-                                // The NIP-49 key is authoritative: it decrypted with
-                                // the password and account.npub is derived from it.
-                                // A stale or hand-edited npub in the metadata must
-                                // not throw away a valid key.
-                                if (accountData.npub != account.npub) {
-                                    AmberLog.e(
-                                        "Amber",
-                                        "Backup metadata npub ${accountData.npub} does not match the restored key ${account.npub}; trusting the key",
-                                    )
-                                }
+                                logStaleBackupNpubButTrustTheDecryptedKey(accountData, account)
                                 val seedWords = decryptExportedSeedWords(account, accountData.seedWords, privKey)
                                 SavedAccounts.switchTo(context, account.npub)
                                 AccountStorage.login(context, account, hexKey.toHexKey(), privKey, seedWords)
@@ -102,6 +93,15 @@ object AccountExportService {
         }
     }
 
+    private fun logStaleBackupNpubButTrustTheDecryptedKey(accountData: AccountExportData, account: Account) {
+        if (accountData.npub != account.npub) {
+            AmberLog.e(
+                "Amber",
+                "Backup metadata npub ${accountData.npub} does not match the restored key ${account.npub}; trusting the key",
+            )
+        }
+    }
+
     internal suspend fun decryptExportedSeedWords(
         account: Account,
         encryptedSeedWords: String?,
@@ -109,10 +109,6 @@ object AccountExportService {
     ): String? {
         if (encryptedSeedWords.isNullOrBlank()) return null
 
-        // The seed is best-effort: the NIP-49 private key is what was actually
-        // recovered, and a bad seed must never fail the import of a valid key.
-        // Pre-fix builds could store NIP-44 ciphertext in SEED_WORDS, so a
-        // backup exported from such an account decrypts to ciphertext here.
         val seedWords = try {
             account.crypto.nip44Decrypt(encryptedSeedWords, account.hexKey)
         } catch (e: Exception) {
@@ -120,22 +116,20 @@ object AccountExportService {
             AmberLog.e("Amber", "Backup seed words could not be decrypted; importing the account without them", e)
             return null
         }
-        if (!Nip06().isValidMnemonic(seedWords)) {
+        if (!isRecoveryPhraseNotLegacyCiphertext(seedWords)) {
             AmberLog.e("Amber", "Backup seed words are not a valid mnemonic; importing the account without them")
             return null
         }
-        if (expectedPrivKeyHex != null) {
-            // A valid mnemonic that derives a different identity is not this
-            // account's recovery phrase — storing it would let a later
-            // "recovery" produce someone else's key.
-            val derivedHex = Nip06().privateKeyFromMnemonic(seedWords).toHexKey()
-            if (!derivedHex.equals(expectedPrivKeyHex, ignoreCase = true)) {
-                AmberLog.e("Amber", "Backup seed words derive a different key; importing the account without them")
-                return null
-            }
+        if (expectedPrivKeyHex != null && !recoversThisAccountsKey(seedWords, expectedPrivKeyHex)) {
+            AmberLog.e("Amber", "Backup seed words derive a different key; importing the account without them")
+            return null
         }
         return seedWords
     }
+
+    private fun isRecoveryPhraseNotLegacyCiphertext(seedWords: String): Boolean = Nip06().isValidMnemonic(seedWords)
+
+    private fun recoversThisAccountsKey(seedWords: String, expectedPrivKeyHex: String): Boolean = Nip06().privateKeyFromMnemonic(seedWords).toHexKey().equals(expectedPrivKeyHex, ignoreCase = true)
 
     /**
      * Export each account as a separate (npub, ncryptsec) pair.
@@ -237,21 +231,15 @@ object AccountExportService {
                 }
             }
 
-            // Each private key is already encrypted with NIP-49 inside the JSON
             Result.success(data)
         } catch (e: Exception) {
             Result.failure(e)
         }
     }
 
-    /**
-     * Convert an Account to exportable data with encrypted private key
-     */
     private suspend fun accountToExportData(account: Account, password: String): AccountExportData {
         val storedSeedWords = account.keyExport.seedWords()
-        // Pre-fix builds could store NIP-44 ciphertext in SEED_WORDS; never
-        // re-export a non-mnemonic as if it were the recovery phrase.
-        val seedWords = if (storedSeedWords.isNotBlank() && Nip06().isValidMnemonic(storedSeedWords)) storedSeedWords else ""
+        val seedWords = if (storedSeedWords.isNotBlank() && isRecoveryPhraseNotLegacyCiphertext(storedSeedWords)) storedSeedWords else ""
         val encrypedSeedWords = if (seedWords.isNotBlank()) account.crypto.nip44Encrypt(seedWords, account.hexKey) else ""
         val encryptedNsec = account.keyExport.nip49Encrypt(password)
 

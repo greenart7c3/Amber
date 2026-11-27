@@ -53,7 +53,8 @@ object AppIconStore {
     fun isStoredIcon(context: Context, path: String): Boolean = isStoredIcon(File(context.filesDir, DIR), path)
 
     internal fun isStoredIcon(dir: File, path: String): Boolean = runCatching {
-        // Canonical paths resolve `..` and symlinks before the comparison.
-        File(path).isAbsolute && File(path).canonicalFile.parentFile == dir.canonicalFile
+        File(path).isAbsolute && parentAfterResolvingDotDotAndSymlinks(File(path)) == dir.canonicalFile
     }.getOrDefault(false)
+
+    private fun parentAfterResolvingDotDotAndSymlinks(file: File): File? = file.canonicalFile.parentFile
 }

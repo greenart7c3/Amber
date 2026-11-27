@@ -61,14 +61,11 @@ object TorManager {
 
     @Volatile private var appContext: Context? = null
 
-    /** The start → bootstrap job; non-null and active while Tor is up or coming up. */
-    @Volatile private var job: Job? = null
+    @Volatile private var startAndBootstrapJob: Job? = null
 
-    /** Serializes binding and releasing the SOCKS listener against [stop]. */
-    private val proxyLock = Any()
+    private val socksListenerLock = Any()
 
-    /** True once the native library loaded; native calls are skipped until then. */
-    @Volatile private var nativeReady = false
+    @Volatile private var nativeLibraryLoaded = false
 
     @Volatile
     private var portCollectorStarted = false
@@ -196,17 +193,18 @@ object TorManager {
             }
         }
         synchronized(this) {
-            if (job?.isActive == true) return
+            if (startAndBootstrapJob?.isActive == true) return
             updateStatus(TorStatus.Connecting(0))
             val ctx = context.applicationContext
-            job = scope.launch(Dispatchers.IO) { run(ctx) }
+            startAndBootstrapJob = scope.launch(Dispatchers.IO) { run(ctx) }
         }
     }
 
+    @Suppress("NoComments")
     private suspend fun run(context: Context) {
         try {
             ArtiNative.setLogCallback { line -> AmberLog.d(TAG, line) }
-            nativeReady = true
+            nativeLibraryLoaded = true
             AmberLog.i(TAG, "Starting built-in Tor: ${ArtiNative.getVersion()}")
             deleteLegacyKmpTorData(context)
 
@@ -221,20 +219,7 @@ object TorManager {
             AmberLog.i(TAG, "Built-in Tor SOCKS proxy on port $port")
             _socksPort.value = port
 
-            // The proxy accepts connections right away (each one waits for its
-            // circuit), but report Connected only once Arti can carry traffic,
-            // like the C tor daemon's bootstrap did.
-            while (currentCoroutineContext().isActive) {
-                if (ArtiNative.isBootstrapped() == 1) {
-                    AmberLog.i(TAG, "Built-in Tor bootstrapped")
-                    _isRunning.value = true
-                    updateStatus(TorStatus.Connected)
-                    return
-                }
-                val permille = ArtiNative.bootstrapProgressPermille()
-                updateStatus(TorStatus.Connecting((permille / 10).coerceIn(0, 99)))
-                delay(BOOTSTRAP_POLL_MS.milliseconds)
-            }
+            reportConnectedOnceBootstrapped()
         } catch (e: CancellationException) {
             throw e
         } catch (e: Throwable) {
@@ -245,19 +230,34 @@ object TorManager {
         }
     }
 
-    /** Binds the SOCKS listener on a free loopback port; null (and Failed) when none could be bound. */
+    @Suppress("NoComments")
+    private suspend fun reportConnectedOnceBootstrapped() {
+        // The proxy accepts connections right away (each one waits for its
+        // circuit), but report Connected only once Arti can carry traffic,
+        // like the C tor daemon's bootstrap did.
+        while (currentCoroutineContext().isActive) {
+            if (ArtiNative.isBootstrapped() == 1) {
+                AmberLog.i(TAG, "Built-in Tor bootstrapped")
+                _isRunning.value = true
+                updateStatus(TorStatus.Connected)
+                return
+            }
+            val permille = ArtiNative.bootstrapProgressPermille()
+            updateStatus(TorStatus.Connecting((permille / 10).coerceIn(0, 99)))
+            delay(BOOTSTRAP_POLL_MS.milliseconds)
+        }
+    }
+
+    @Suppress("NoComments")
     private suspend fun bindSocksProxy(): Int? {
         val context = currentCoroutineContext()
-        // Tag the probe socket like Amber's other sockets (StrictMode untagged-socket check).
-        if (TrafficStats.getThreadStatsTag() == -1) {
-            TrafficStats.setThreadStatsTag(0x0001)
-        }
+        tagProbeSocketForStrictMode()
         repeat(SOCKS_BIND_ATTEMPTS) {
             val port = ServerSocket(0, 1, InetAddress.getLoopbackAddress()).use { it.localPort }
             val (username, password) = TorSocksAuthenticator.newCredentials()
-            val result = synchronized(proxyLock) {
-                // stop() may have run while initialize() was blocking.
-                if (!context.isActive) return null
+            val result = synchronized(socksListenerLock) {
+                val stopRanWhileInitializeBlocked = !context.isActive
+                if (stopRanWhileInitializeBlocked) return null
                 ArtiNative.startSocksProxy(port, username, password)
             }
             if (result == 0) {
@@ -271,12 +271,19 @@ object TorManager {
         return null
     }
 
+    private fun tagProbeSocketForStrictMode() {
+        if (TrafficStats.getThreadStatsTag() == -1) {
+            TrafficStats.setThreadStatsTag(0x0001)
+        }
+    }
+
     /**
      * Drops the SOCKS port and, while OkHttp still dials through it, replaces
      * the proxy with a fail-closed placeholder. Without this, the released
      * loopback port stays configured until Tor rebinds, and a co-installed app
      * that binds it first receives Amber's proxied dials.
      */
+    @Suppress("NoComments")
     private fun releaseSocksPort() {
         val released = _socksPort.value
         _socksPort.value = 0
@@ -292,7 +299,6 @@ object TorManager {
         updateStatus(TorStatus.Failed(message))
     }
 
-    /** kmp-tor's working directories from before the switch to Arti. */
     private fun deleteLegacyKmpTorData(context: Context) {
         listOf(File(context.filesDir, "kmptor"), File(context.cacheDir, "kmptor")).forEach { dir ->
             if (dir.exists()) {
@@ -311,10 +317,10 @@ object TorManager {
         scope.launch(Dispatchers.IO) {
             try {
                 AmberLog.i(TAG, "Restarting built-in Tor")
-                val previous = job
+                val previous = startAndBootstrapJob
                 stop()
                 previous?.join()
-                if (nativeReady) {
+                if (nativeLibraryLoaded) {
                     ArtiNative.destroy()
                 }
                 start(context, scope)
@@ -330,16 +336,16 @@ object TorManager {
      */
     fun stop() {
         synchronized(this) {
-            job?.cancel()
-            job = null
+            startAndBootstrapJob?.cancel()
+            startAndBootstrapJob = null
         }
         _isRunning.value = false
         releaseSocksPort()
         updateStatus(TorStatus.Stopped)
         cancelNotification()
-        if (!nativeReady) return
+        if (!nativeLibraryLoaded) return
         try {
-            synchronized(proxyLock) { ArtiNative.stopSocksProxy() }
+            synchronized(socksListenerLock) { ArtiNative.stopSocksProxy() }
             AmberLog.i(TAG, "Built-in Tor stopped")
         } catch (e: Throwable) {
             AmberLog.e(TAG, "Error stopping built-in Tor", e)

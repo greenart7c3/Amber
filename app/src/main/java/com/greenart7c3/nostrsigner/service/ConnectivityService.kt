@@ -34,6 +34,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class ConnectivityService : Service() {
+    @Suppress("NoComments")
     // The system constructs the service, so it reads the container from its own context once attached.
     private val amber: Amber get() = applicationContext.amber
 
@@ -43,6 +44,7 @@ class ConnectivityService : Service() {
     private val networkChangeDetector = NetworkChangeDetector()
     private var pendingRelayReset: Job? = null
 
+    @Suppress("NoComments")
     // With requireUnlockedDevice on, a start while the device is locked (an app
     // update, or the system restarting the process) can't decrypt the stored
     // accounts and connections, so the NIP-46 filter comes up empty and stays
@@ -62,6 +64,7 @@ class ConnectivityService : Service() {
 
     private val networkCallback =
         object : ConnectivityManager.NetworkCallback() {
+            @Suppress("NoComments")
             override fun onAvailable(network: Network) {
                 super.onAvailable(network)
                 if (BuildFlavorChecker.isOfflineFlavor()) return
@@ -102,10 +105,7 @@ class ConnectivityService : Service() {
         }
 
     private fun onNetworkState(network: Network, capabilities: NetworkCapabilities) {
-        // Always tracked (also under the kill switch) so the detector's baseline is
-        // current when relays come back.
-        amber.networkState.update(capabilities)
-        val reason = networkChangeDetector.onNetwork(capabilities.toSnapshot(network))
+        val reason = trackNetworkChangeEvenUnderKillSwitch(network, capabilities)
 
         if (amber.settings.killSwitch.value) return
 
@@ -115,12 +115,7 @@ class ConnectivityService : Service() {
         )
 
         if (reason != null) {
-            if (amber.settings.torMode == TorMode.BUILTIN && !TorManager.isRunning.value) {
-                // Built-in Tor gave up earlier (bounded startup retries
-                // in runMigrations). The network is back, so retry now
-                // instead of waiting for a manual restart.
-                TorManager.restart(this, amber.applicationIOScope)
-            }
+            restartBuiltInTorThatGaveUpStarting()
             scheduleRelayReset(reason)
         } else if (!amber.relayClient.client.isActive()) {
             scope.launch {
@@ -129,11 +124,23 @@ class ConnectivityService : Service() {
         }
     }
 
+    private fun trackNetworkChangeEvenUnderKillSwitch(network: Network, capabilities: NetworkCapabilities): String? {
+        amber.networkState.update(capabilities)
+        return networkChangeDetector.onNetwork(capabilities.toSnapshot(network))
+    }
+
+    private fun restartBuiltInTorThatGaveUpStarting() {
+        if (amber.settings.torMode == TorMode.BUILTIN && !TorManager.isRunning.value) {
+            TorManager.restart(this, amber.applicationIOScope)
+        }
+    }
+
     /**
      * Network changes arrive as a burst of callbacks (the new network, then its
      * capabilities as validation completes); wait for it to settle so the relays are
      * rebuilt once, on the final network.
      */
+    @Suppress("NoComments")
     @Synchronized
     private fun scheduleRelayReset(reason: String) {
         pendingRelayReset?.cancel()
@@ -167,13 +174,11 @@ class ConnectivityService : Service() {
         SavedAccounts.all(this).forEach {
             amber.accountDatabases.getDatabase(it.npub)
             amber.applicationIOScope.launch {
-                // Cached dao so the write invalidates CachingApplicationDao's getAll
-                // entry for this account (the service can restart in a live process).
-                val daos = amber.accountDatabases.daos(it.npub)
-                daos.applicationListDao.getAllNotConnected().forEach { app ->
+                val cacheInvalidatingDaos = amber.accountDatabases.daos(it.npub)
+                cacheInvalidatingDaos.applicationListDao.getAllNotConnected().forEach { app ->
                     if (app.application.secret.isNotEmpty() && app.application.secret != app.application.key) {
                         app.application.isConnected = true
-                        daos.permissionWriteDao.insertApplicationWithPermissions(app)
+                        cacheInvalidatingDaos.permissionWriteDao.insertApplicationWithPermissions(app)
                     }
                 }
             }
@@ -190,7 +195,6 @@ class ConnectivityService : Service() {
 
     fun startFunctions() {
         amber.applicationIOScope.launch {
-            // Wait for Tor to be ready before connecting (if using built-in Tor)
             amber.torStartup.waitIfNeeded()
             if (!BuildFlavorChecker.isOfflineFlavor() && !amber.settings.killSwitch.value) {
                 amber.relayClient.client.connect()
@@ -207,16 +211,7 @@ class ConnectivityService : Service() {
                     amber.networkState.update(it)
                 }
 
-                // USER_PRESENT comes from SystemUI, not the system process, so a
-                // non-exported receiver never gets it. It is a protected
-                // broadcast: no other app can send it.
-                ContextCompat.registerReceiver(
-                    this@ConnectivityService,
-                    unlockReceiver,
-                    IntentFilter(Intent.ACTION_USER_PRESENT),
-                    ContextCompat.RECEIVER_EXPORTED,
-                )
-                unlockReceiverRegistered = true
+                registerUnlockReceiver()
             }
 
             timer.schedule(
@@ -236,6 +231,20 @@ class ConnectivityService : Service() {
                 UPDATE_FILTER_PERIOD_MS,
             )
         }
+    }
+
+    @Suppress("NoComments")
+    private fun registerUnlockReceiver() {
+        // USER_PRESENT comes from SystemUI, not the system process, so a
+        // non-exported receiver never gets it. It is a protected
+        // broadcast: no other app can send it.
+        ContextCompat.registerReceiver(
+            this,
+            unlockReceiver,
+            IntentFilter(Intent.ACTION_USER_PRESENT),
+            ContextCompat.RECEIVER_EXPORTED,
+        )
+        unlockReceiverRegistered = true
     }
 
     override fun onDestroy() {
@@ -258,6 +267,7 @@ class ConnectivityService : Service() {
         super.onDestroy()
     }
 
+    @Suppress("NoComments")
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         AmberLog.d(Amber.TAG, "onStartCommand")
         val foregroundServiceType =

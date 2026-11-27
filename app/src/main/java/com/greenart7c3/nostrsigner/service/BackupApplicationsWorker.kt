@@ -32,11 +32,8 @@ class BackupApplicationsWorker(appContext: Context, workerParams: WorkerParamete
                 ApplicationBackup.publishBackup(info.npub, account, amber.accountDatabases, amber.relayClient, amber)
             } catch (e: Exception) {
                 if (e is CancellationException) throw e
-                // With requireUnlockedDevice enabled the gate refuses signing
-                // while the device is locked — usually the case for a daily
-                // background worker. Retry later instead of silently skipping
-                // the day's backup.
-                if (e is SecurityException) {
+                val requireUnlockedDeviceRefusedWhileLocked = e is SecurityException
+                if (requireUnlockedDeviceRefusedWhileLocked) {
                     AmberLog.d(Amber.TAG, "BackupApplicationsWorker: device locked, retrying ${info.npub} later")
                     return Result.retry()
                 }

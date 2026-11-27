@@ -10,8 +10,6 @@ class ReconnectReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         val amber = context.amber
         amber.applicationIOScope.launch {
-            // Manual reconnect: redial every relay now, ignoring dead-relay state and
-            // reconnect backoff, and re-add any relay previously dropped from the pool.
             amber.relayClient.resetRelayConnections("manual reconnect")
         }
     }

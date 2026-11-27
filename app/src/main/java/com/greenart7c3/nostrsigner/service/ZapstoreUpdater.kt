@@ -87,42 +87,40 @@ class ZapstoreUpdater(
         UPDATE_RELAY_URLS.mapNotNull { RelayUrlNormalizer.normalizeOrNull(it) }
     private var timeoutJob: Job? = null
 
-    // Messages are processed sequentially in arrival order through this channel.
-    // Launching a coroutine per message let the release EOSE run before the release
-    // EVENT had populated pendingFileEventIds, so the file subscription never opened.
-    // The timeout goes through it too, so it never races the EOSE handling.
-    private val messages = Channel<Pair<NormalizedRelayUrl?, Message?>>(Channel.UNLIMITED)
+    private val messagesInArrivalOrder = Channel<Pair<NormalizedRelayUrl?, Message?>>(Channel.UNLIMITED)
 
     init {
         client.addConnectionListener(this)
-        scope.launch {
-            for ((relay, msg) in messages) {
-                when (msg) {
-                    is EventMessage if msg.subId == releaseSubId -> processReleaseEvent(msg.event)
-                    is EventMessage if msg.subId == fileSubId -> processFileEvent(msg.event)
-                    // Each relay is asked separately and answers on its own schedule, so a
-                    // phase only ends once every relay has sent EOSE (or on the timeout):
-                    // pre-releases are never on the zapstore relay, and its early empty
-                    // EOSE must not end the check before the other relays answer.
-                    is EoseMessage if msg.subId == releaseSubId -> {
-                        pendingReleaseEose.remove(relay)
-                        if (pendingReleaseEose.isEmpty()) onReleaseEose()
-                    }
-                    is EoseMessage if msg.subId == fileSubId -> {
-                        pendingFileEose.remove(relay)
-                        if (pendingFileEose.isEmpty()) finishCheck()
-                    }
-                    null -> onTimeout()
-                    else -> {}
+        scope.launch { processMessagesInArrivalOrder() }
+    }
+
+    @Suppress("NoComments")
+    private suspend fun processMessagesInArrivalOrder() {
+        for ((relay, msg) in messagesInArrivalOrder) {
+            when (msg) {
+                is EventMessage if msg.subId == releaseSubId -> processReleaseEvent(msg.event)
+                is EventMessage if msg.subId == fileSubId -> processFileEvent(msg.event)
+                // Each relay answers on its own schedule, so a phase only ends once every relay
+                // has sent EOSE (or on the timeout): pre-releases are never on the zapstore relay,
+                // and its early empty EOSE must not end the check before the other relays answer.
+                is EoseMessage if msg.subId == releaseSubId -> {
+                    pendingReleaseEose.remove(relay)
+                    if (pendingReleaseEose.isEmpty()) onReleaseEose()
                 }
+                is EoseMessage if msg.subId == fileSubId -> {
+                    pendingFileEose.remove(relay)
+                    if (pendingFileEose.isEmpty()) finishCheck()
+                }
+                null -> onTimeout()
+                else -> {}
             }
         }
     }
 
     override suspend fun onIncomingMessage(relay: IRelayClient, msgStr: String, msg: Message) {
         when (msg) {
-            is EventMessage if (msg.subId == releaseSubId || msg.subId == fileSubId) -> messages.trySend(relay.url to msg)
-            is EoseMessage if (msg.subId == releaseSubId || msg.subId == fileSubId) -> messages.trySend(relay.url to msg)
+            is EventMessage if (msg.subId == releaseSubId || msg.subId == fileSubId) -> messagesInArrivalOrder.trySend(relay.url to msg)
+            is EoseMessage if (msg.subId == releaseSubId || msg.subId == fileSubId) -> messagesInArrivalOrder.trySend(relay.url to msg)
             else -> {}
         }
         super.onIncomingMessage(relay, msgStr, msg)
@@ -142,21 +140,7 @@ class ZapstoreUpdater(
             LocalPreferences.loadSettingsFromEncryptedStorage(appContext)
         }
 
-        // Subscribe to release events (kind 30063) from the developer. Stable releases
-        // are on every relay, pre-releases (channel "beta") on every relay except the
-        // zapstore one. Stable asks for the main channel only: with limit 1, the others
-        // would otherwise return a newer pre-release that processReleaseEvent then drops.
-        val tags = if (settings.updateChannel == UpdateChannel.STABLE) {
-            mapOf("i" to listOf(APP_IDENTIFIER), "c" to listOf(STABLE_CHANNEL))
-        } else {
-            mapOf("i" to listOf(APP_IDENTIFIER))
-        }
-        val releaseFilter = Filter(
-            kinds = listOf(RELEASE_KIND),
-            authors = listOf(Amber.DEVELOPER_HEX_KEY),
-            tags = tags,
-            limit = 1,
-        )
+        val releaseFilter = latestReleaseFilter(settings.updateChannel)
 
         phase = CheckPhase.RELEASES
         pendingReleaseEose.clear()
@@ -165,11 +149,29 @@ class ZapstoreUpdater(
         startTimeout()
     }
 
+    @Suppress("NoComments")
+    private fun latestReleaseFilter(updateChannel: UpdateChannel): Filter {
+        // Stable releases are on every relay, pre-releases (channel "beta") on every relay
+        // except the zapstore one. Stable asks for the main channel only: with limit 1, the
+        // others would otherwise return a newer pre-release that processReleaseEvent then drops.
+        val tags = if (updateChannel == UpdateChannel.STABLE) {
+            mapOf("i" to listOf(APP_IDENTIFIER), "c" to listOf(STABLE_CHANNEL))
+        } else {
+            mapOf("i" to listOf(APP_IDENTIFIER))
+        }
+        return Filter(
+            kinds = listOf(RELEASE_KIND),
+            authors = listOf(Amber.DEVELOPER_HEX_KEY),
+            tags = tags,
+            limit = 1,
+        )
+    }
+
     private fun startTimeout() {
         timeoutJob?.cancel()
         timeoutJob = scope.launch {
             delay(EOSE_TIMEOUT)
-            messages.trySend(null to null)
+            messagesInArrivalOrder.trySend(null to null)
         }
     }
 
@@ -197,14 +199,12 @@ class ZapstoreUpdater(
 
         AmberLog.d(Amber.TAG, "ZapstoreUpdater: found release $version (current: ${BuildConfig.VERSION_NAME})")
 
-        // Try direct URL first (some release events include it)
         val directUrl = tags.tagValue("url")
         if (directUrl != null) {
             updateLatestRelease(version, directUrl, tags.tagValue("x", "hash"), event.createdAt)
             return
         }
 
-        // Collect file event IDs from e-tags for second subscription
         tags.filter { it.size > 1 && it[0] == "e" }.forEach { tag ->
             val eventId = tag[1]
             pendingFileEventIds.add(eventId)
@@ -217,6 +217,7 @@ class ZapstoreUpdater(
      * The release is the trust root for the URL, hash and file event ids, so it
      * must be signed by the developer key, not just validly signed by anyone.
      */
+    @Suppress("NoComments")
     private fun isTrustedRelease(event: Event): Boolean {
         if (event.pubKey != Amber.DEVELOPER_HEX_KEY) {
             AmberLog.w(Amber.TAG, "ZapstoreUpdater: ignoring release event ${event.id} from ${event.pubKey}")
@@ -231,11 +232,8 @@ class ZapstoreUpdater(
 
     private fun isForThisApp(tags: Array<Array<String>>): Boolean = tags.tagValue("d").orEmpty().startsWith(APP_IDENTIFIER) || tags.tagValue("i").orEmpty() == APP_IDENTIFIER
 
-    /**
-     * Channel filter: stable users skip events tagged c=beta (the relay may ignore
-     * the `c` tag in the filter). Events with no `c` tag (legacy releases) are
-     * treated as stable and shown on both channels.
-     */
+    /** The relay may ignore the `c` tag in the filter, so a beta release is dropped here for stable users. */
+    @Suppress("NoComments")
     private suspend fun isOnUpdateChannel(tags: Array<Array<String>>): Boolean {
         val isBeta = tags.tagValue("c").equals("beta", ignoreCase = true)
         val settings = withContext(Dispatchers.IO) {
@@ -285,10 +283,6 @@ class ZapstoreUpdater(
         updateLatestRelease(version, url, hash, createdAt)
     }
 
-    /**
-     * Only Android APK files, and no ABI-specific build that doesn't match the running
-     * device ABI (prefer universal).
-     */
     private fun isForThisDevice(
         tags: Array<Array<String>>,
         url: String,
@@ -356,6 +350,7 @@ class ZapstoreUpdater(
         }
     }
 
+    @Suppress("NoComments")
     private suspend fun downloadApk(context: Context, release: ZapstoreRelease): File? {
         // The hash from the developer-signed release is the only integrity check on
         // the download; without it, fail closed rather than install unverified bytes.
@@ -436,17 +431,9 @@ class ZapstoreUpdater(
 
         private val PRE_RELEASE = Regex("""pre(\d{1,9})(-.*)?""", RegexOption.IGNORE_CASE)
 
-        /**
-         * Whether release [version] is newer than [current], comparing numeric
-         * dot-separated parts, then a `-preN` suffix: `7.0.0-pre1` < `7.0.0-pre2`
-         * < `7.0.0`. Any other suffix (`-DEBUG`, `-rc1`, …) is ignored, so the
-         * version counts as a final release. A version that does not parse is
-         * never newer: the old fallback compared strings, so a value like "x" or
-         * "v1.0" sorted above any real release and was offered.
-         */
         internal fun isNewerVersion(version: String, current: String): Boolean {
-            val (newParts, newPre) = parse(version) ?: return false
-            val (curParts, curPre) = parse(current) ?: return false
+            val (newParts, newPre) = numericPartsAndPreReleaseNumber(version) ?: return false
+            val (curParts, curPre) = numericPartsAndPreReleaseNumber(current) ?: return false
             for (i in 0 until maxOf(newParts.size, curParts.size)) {
                 val n = newParts.getOrElse(i) { 0 }
                 val c = curParts.getOrElse(i) { 0 }
@@ -460,8 +447,7 @@ class ZapstoreUpdater(
             }
         }
 
-        /** The numeric parts and the `-preN` number, null for a final release. */
-        private fun parse(version: String): Pair<List<Int>, Int?>? {
+        private fun numericPartsAndPreReleaseNumber(version: String): Pair<List<Int>, Int?>? {
             val parts = version.substringBefore("-").takeIf { VERSION.matches(it) }?.split(".")?.map { it.toInt() } ?: return null
             val pre = if (version.contains("-")) PRE_RELEASE.matchEntire(version.substringAfter("-"))?.groupValues?.get(1)?.toInt() else null
             return parts to pre
@@ -469,5 +455,4 @@ class ZapstoreUpdater(
     }
 }
 
-/** The value of the first tag named one of [names], or null when there is none. */
 private fun Array<Array<String>>.tagValue(vararg names: String): String? = firstOrNull { it.size > 1 && it[0] in names }?.getOrNull(1)

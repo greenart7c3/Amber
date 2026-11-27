@@ -90,7 +90,6 @@ object NotificationUtils {
                     group = bunkerGroup.id
                 }
 
-        // Register the channel with the system
         val notificationManager: NotificationManager =
             applicationContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
@@ -116,7 +115,6 @@ object NotificationUtils {
                     group = errorsGroup?.id
                 }
 
-        // Register the channel with the system
         val notificationManager: NotificationManager =
             applicationContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
@@ -126,6 +124,9 @@ object NotificationUtils {
         return errorsChannel!!
     }
 
+    private fun notificationIdKeyedLikeTheQueueNotByClientChosenId(bunkerRequest: AmberBunkerRequest): Int = bunkerRequest.queueKey.hashCode()
+
+    @Suppress("NoComments")
     fun NotificationManager.sendNotification(
         messageBody: String,
         messageTitle: String,
@@ -133,10 +134,7 @@ object NotificationUtils {
         applicationContext: Context,
         bunkerRequest: AmberBunkerRequest,
     ) {
-        // One notification per queued request: keyed like the queue, not by the
-        // client-chosen id, or a second client reusing an id would be dropped here
-        // before it is ever queued.
-        val notId = bunkerRequest.queueKey.hashCode()
+        val notId = notificationIdKeyedLikeTheQueueNotByClientChosenId(bunkerRequest)
         val notifications: Array<StatusBarNotification> = activeNotifications
         for (notification in notifications) {
             if (notification.id == notId) {
@@ -157,7 +155,6 @@ object NotificationUtils {
 
         BunkerRequestUtils.addRequest(bunkerRequest)
 
-        // Build the notification
         val builderPublic =
             NotificationCompat.Builder(
                 applicationContext,
@@ -169,8 +166,6 @@ object NotificationUtils {
                 // carries the same request description as the full notification.
                 .setContentText(messageBody)
                 .setGroup(bunkerGroup?.id)
-                // .setGroup(notificationGroupKey) //-> Might need a Group summary as well before we
-                // activate this
                 .setContentIntent(contentPendingIntent)
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setAutoCancel(true)
@@ -180,7 +175,6 @@ object NotificationUtils {
                     },
                 )
 
-        // Build the notification
         val builder =
             NotificationCompat.Builder(
                 applicationContext,
@@ -190,8 +184,6 @@ object NotificationUtils {
                 .setContentTitle(messageTitle)
                 .setContentText(messageBody)
                 .setGroup(bunkerGroup?.id)
-                // .setGroup(notificationGroupKey)  //-> Might need a Group summary as well before we
-                // activate this
                 .setContentIntent(contentPendingIntent)
                 .setPublicVersion(builderPublic.build())
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
@@ -281,7 +273,6 @@ object NotificationUtils {
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
             )
 
-        // Build the notification
         val builderPublic =
             NotificationCompat.Builder(
                 applicationContext,
@@ -292,8 +283,6 @@ object NotificationUtils {
                 .setContentText(getStringBlocking(Res.string.new_event_to_sign))
                 .setLargeIcon(picture?.bitmap)
                 .setGroup(errorsGroup?.id)
-                // .setGroup(notificationGroupKey) //-> Might need a Group summary as well before we
-                // activate this
                 .setContentIntent(contentPendingIntent)
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setAutoCancel(true)
@@ -303,7 +292,6 @@ object NotificationUtils {
                     },
                 )
 
-        // Build the notification
         val builder =
             NotificationCompat.Builder(
                 applicationContext,
@@ -314,8 +302,6 @@ object NotificationUtils {
                 .setContentText(messageBody)
                 .setLargeIcon(picture?.bitmap)
                 .setGroup(errorsGroup?.id)
-                // .setGroup(notificationGroupKey)  //-> Might need a Group summary as well before we
-                // activate this
                 .setContentIntent(contentPendingIntent)
                 .setPublicVersion(builderPublic.build())
                 .setPriority(NotificationCompat.PRIORITY_HIGH)

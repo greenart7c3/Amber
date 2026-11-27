@@ -46,7 +46,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class ReportSender(
-    // The Application context: it opens the nostr: link outside any activity.
     private val appContext: Context,
     private val relayClient: RelayClient,
     private val scope: CoroutineScope,
@@ -54,12 +53,14 @@ class ReportSender(
     /**
      * Sends [report] to the developer. With [anonymous] it is signed with a
      * throwaway key instead of [account], so the developer does not see the
-     * user's public key (and cannot reply).
+     * user's public key (and cannot reply), and only the developer's copy is
+     * published: the sender's own would be wrapped to the throwaway key, which
+     * nobody keeps. [copyToClipboard] puts the report on the clipboard, for the
+     * offline flavor (and no account) to paste it into a DM.
      */
     fun send(
         account: Account?,
         report: String,
-        // Puts the report on the clipboard, for the offline flavor (and no account) to paste it into a DM.
         copyToClipboard: suspend (String) -> Unit,
         anonymous: Boolean = false,
         onDone: () -> Unit,
@@ -70,7 +71,6 @@ class ReportSender(
         }
         when {
             BuildFlavorChecker.isOfflineFlavor() -> sendOffline(report, copyToClipboard, onDone)
-            // The sender's own copy would be wrapped to the throwaway key, which nobody keeps.
             anonymous -> sendOnline(report, onlyToDeveloper = true, onDone) {
                 NIP17Factory().createMessageNIP17(it, NostrSignerInternal(KeyPair()))
             }

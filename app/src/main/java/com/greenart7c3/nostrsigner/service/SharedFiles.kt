@@ -31,7 +31,10 @@ object SharedFiles {
 
     internal fun cleanUp(cacheDir: File) {
         File(cacheDir, SHARE_DIR).deleteRecursively()
-        // Earlier versions wrote these to the cache root, which the provider served whole.
+        deleteSharesEarlierVersionsWroteToTheServedCacheRoot(cacheDir)
+    }
+
+    private fun deleteSharesEarlierVersionsWroteToTheServedCacheRoot(cacheDir: File) {
         cacheDir.listFiles()?.filter { file ->
             file.isFile && (file.name.endsWith(".ncryptsec") || file.name == "amber-logs.txt" || (file.name.startsWith("amber-update-") && file.name.endsWith(".apk")))
         }?.forEach { it.delete() }

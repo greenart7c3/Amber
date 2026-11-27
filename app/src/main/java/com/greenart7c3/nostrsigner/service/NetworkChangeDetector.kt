@@ -32,7 +32,9 @@ class NetworkChangeDetector {
 
     /**
      * Records the current default network. Returns why the relays should be reset,
-     * or null when nothing that matters changed.
+     * or null when nothing that matters changed. The first report after registering the
+     * callback is the network the relays are already connecting on, so it is a change only
+     * when it follows a loss.
      */
     @Synchronized
     fun onNetwork(current: NetworkSnapshot): String? {
@@ -40,11 +42,9 @@ class NetworkChangeDetector {
         last = current
 
         if (previous == null) {
-            // The first report after registering the callback is the network the
-            // relays are already connecting on; only a return after a loss is a change.
-            val wasLost = lost
+            val returnedAfterLoss = lost
             lost = false
-            return if (wasLost) "network available again" else null
+            return if (returnedAfterLoss) "network available again" else null
         }
 
         return when {

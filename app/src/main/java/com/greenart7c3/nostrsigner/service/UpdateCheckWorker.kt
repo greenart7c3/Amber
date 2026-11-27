@@ -32,20 +32,21 @@ class UpdateCheckWorker(appContext: Context, workerParams: WorkerParameters) : C
 
         try {
             amber.maybeCheckForUpdates()
-
-            // If a check was actually started, wait for it to finish so the notification fires
-            // before WorkManager considers the job done.
-            if (updater.isChecking.value) {
-                withTimeoutOrNull(CHECK_TIMEOUT) {
-                    updater.isChecking.first { !it }
-                }
-            }
+            awaitStartedCheckSoItsNotificationFiresBeforeTheJobEnds(updater)
         } catch (e: Exception) {
             if (e is CancellationException) throw e
             AmberLog.e(Amber.TAG, "UpdateCheckWorker: error checking for updates", e)
         }
 
         return Result.success()
+    }
+
+    private suspend fun awaitStartedCheckSoItsNotificationFiresBeforeTheJobEnds(updater: ZapstoreUpdater) {
+        if (updater.isChecking.value) {
+            withTimeoutOrNull(CHECK_TIMEOUT) {
+                updater.isChecking.first { !it }
+            }
+        }
     }
 
     companion object {

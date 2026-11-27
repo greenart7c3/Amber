@@ -57,6 +57,7 @@ object ExitReasons {
     private val detectionLock = Any()
     private val timestampFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US)
 
+    @Suppress("NoComments")
     // Exit reasons worth showing to a user: all of them mean the process was killed without
     // reaching the uncaught-exception handler. The constants are compile-time ints copied into
     // this class, so building the set is safe below API 30; it is only consulted after [detect]'s
@@ -122,16 +123,14 @@ object ExitReasons {
             prefs.edit {
                 putLong(KEY_LAST_SEEN, records.maxOf { it.timestamp })
                 if (fresh.isNotEmpty()) {
-                    // Keep earlier unread records: a crash on startup must not erase the ANR
-                    // that happened before it.
-                    val previous = prefs.getString(KEY_PENDING, null)
-                    val combined = listOfNotNull(previous?.takeIf { it.isNotBlank() }, fresh.joinToString("\n\n"))
-                    putString(KEY_PENDING, combined.joinToString("\n\n"))
+                    putString(KEY_PENDING, earlierUnreadRecordsThen(prefs.getString(KEY_PENDING, null), fresh))
                 }
             }
             fresh
         }
     }
+
+    private fun earlierUnreadRecordsThen(earlierUnread: String?, fresh: List<String>): String = listOfNotNull(earlierUnread?.takeIf { it.isNotBlank() }, fresh.joinToString("\n\n")).joinToString("\n\n")
 
     /** Abnormal exit records waiting to be shown to the user, oldest first. */
     fun pending(context: Context): String? = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString(KEY_PENDING, null)
@@ -162,16 +161,15 @@ object ExitReasons {
         }
 
         if (info.reason == ApplicationExitInfo.REASON_ANR) {
-            anrTrace(info)?.let {
+            anrTraceFirstLines(info)?.let {
                 append("\n  ANR trace (first lines):\n")
                 append(CrashReports.redactKeys(it))
             }
         }
     }
 
-    // ANRs ship the full traces file; only its first lines are useful in a chat message.
     @RequiresApi(Build.VERSION_CODES.R)
-    private fun anrTrace(info: ApplicationExitInfo): String? = try {
+    private fun anrTraceFirstLines(info: ApplicationExitInfo): String? = try {
         info.traceInputStream?.use { stream ->
             InputStreamReader(stream).use { reader ->
                 val buffer = CharArray(MAX_TRACE_CHARS)

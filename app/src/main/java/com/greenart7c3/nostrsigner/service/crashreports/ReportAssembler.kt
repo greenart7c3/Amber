@@ -27,25 +27,23 @@ import com.greenart7c3.nostrsigner.common.CrashReports
 
 class ReportAssembler {
     fun buildReport(e: Throwable): String = buildString {
-        appendHeader(e.javaClass.simpleName)
+        appendVersionTitleAndDeviceTable(e.javaClass.simpleName)
         appendTrace(e)
         appendMemory()
     }
 
     /** Report for exit records (ANR, low-memory kill, native crash), which carry no exception. */
     fun buildExitReport(exits: String): String = buildString {
-        appendHeader("Abnormal exit")
+        appendVersionTitleAndDeviceTable("Abnormal exit")
         appendLine(exits)
     }
 
-    /** Title with the app version and flavor, then the device table. */
-    private fun StringBuilder.appendHeader(title: String) {
+    private fun StringBuilder.appendVersionTitleAndDeviceTable(title: String) {
         append(title)
         append(": ")
         appendLine(BuildConfig.VERSION_NAME + "-" + BuildConfig.FLAVOR.uppercase())
         appendLine()
 
-        // Device and Product Information
         appendLine("| Prop | Value |")
         appendLine("|------|-------|")
         append("| Manuf |")
@@ -58,7 +56,6 @@ class ReportAssembler {
         append(Build.PRODUCT)
         appendLine(" |")
 
-        // OS Information
         append("| Android |")
         append(Build.VERSION.RELEASE)
         appendLine(" |")
@@ -66,7 +63,6 @@ class ReportAssembler {
         append(Build.VERSION.SDK_INT.toString())
         appendLine(" |")
 
-        // Hardware Information
         append("| Brand |")
         append(Build.BRAND)
         appendLine(" |")
@@ -74,7 +70,6 @@ class ReportAssembler {
         append(Build.HARDWARE)
         appendLine(" |")
 
-        // Other Useful Information
         append("| Device | ")
         append(Build.DEVICE)
         appendLine(" |")
@@ -87,6 +82,7 @@ class ReportAssembler {
         appendLine()
     }
 
+    @Suppress("NoComments")
     private fun StringBuilder.appendTrace(e: Throwable) {
         // Defense-in-depth (GHSA-8844-q5vh-9j8f, L3): exception messages and
         // stack traces can embed attacker-controlled request data (parser/
@@ -116,6 +112,7 @@ class ReportAssembler {
      * Thread and heap snapshot: for an `OutOfMemoryError` these say which kind
      * of memory ran out. Numbers only — this runs while memory may be exhausted.
      */
+    @Suppress("NoComments")
     private fun StringBuilder.appendMemory() {
         appendLine()
         appendLine("| Memory | Value |")

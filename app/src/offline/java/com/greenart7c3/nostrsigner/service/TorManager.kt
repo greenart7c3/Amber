@@ -17,33 +17,19 @@ object TorManager {
     val status: StateFlow<TorStatus> = _status.asStateFlow()
 
     @Suppress("UNUSED_PARAMETER")
-    fun init(context: Context) {
-        // No-op in offline flavor
-    }
+    fun init(context: Context) = Unit
 
     @Suppress("UNUSED_PARAMETER")
-    fun start(context: Context, scope: CoroutineScope) {
-        // No-op in offline flavor
-    }
+    fun start(context: Context, scope: CoroutineScope) = Unit
 
     @Suppress("UNUSED_PARAMETER")
-    fun restart(context: Context, scope: CoroutineScope) {
-        // No-op in offline flavor
-    }
+    fun restart(context: Context, scope: CoroutineScope) = Unit
 
-    fun stop() {
-        // No-op in offline flavor
-    }
+    fun stop() = Unit
 
-    fun showRetrying() {
-        // No-op in offline flavor
-    }
+    fun showRetrying() = Unit
 
-    fun showFailed() {
-        // No-op in offline flavor
-    }
+    fun showFailed() = Unit
 
-    fun cancelNotification() {
-        // No-op in offline flavor
-    }
+    fun cancelNotification() = Unit
 }

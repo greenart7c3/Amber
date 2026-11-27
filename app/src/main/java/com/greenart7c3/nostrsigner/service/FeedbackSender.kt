@@ -27,6 +27,11 @@ class FeedbackSender(
     private val client get() = relayClient.client
     private val settings get() = settingsStore.settings
 
+    /**
+     * Signs the issue with [account] and publishes it to the repository's relays, which the
+     * relay client connects to for this publish even when they are not among its own relays,
+     * and disconnects from afterwards unless another filter uses them.
+     */
     suspend fun send(
         subject: String,
         body: String,
@@ -34,12 +39,10 @@ class FeedbackSender(
         account: Account,
     ): Boolean {
         val usingTor = settings.torMode != TorMode.DISABLED
-        // Tor round trips are slow; give the relays time to answer OK before
-        // declaring the publish failed.
         val publishTimeoutSeconds =
             if (usingTor) FEEDBACK_TOR_PUBLISH_TIMEOUT_SECONDS else FEEDBACK_PUBLISH_TIMEOUT_SECONDS
 
-        val repositoryEvent = fetchAmberRepositoryEvent(usingTor) ?: fallbackRepositoryEvent()
+        val repositoryEvent = fetchAmberRepositoryEvent(usingTor) ?: standInRepositoryEventForTheIssueATag()
         val relays = repositoryEvent.relays()
             .mapNotNull { RelayUrlNormalizer.normalizeOrNull(it) }
             .toSet()
@@ -58,9 +61,6 @@ class FeedbackSender(
             template,
         )
 
-        // This will automatically connect to these relays even if they are not in the list
-        // once the events have been saved, it will disconnect from them unless there are other
-        // filters with them
         return client.publishAndConfirm(event, relays, publishTimeoutSeconds, untilFirstAccept = true)
     }
 
@@ -70,6 +70,7 @@ class FeedbackSender(
      * relays, so resolve those from their NIP-65 relay list first, then ask
      * for the announcement. Returns null when either step finds nothing.
      */
+    @Suppress("NoComments")
     private suspend fun fetchAmberRepositoryEvent(usingTor: Boolean): GitRepositoryEvent? {
         val fetchTimeoutMs = if (usingTor) FEEDBACK_TOR_FETCH_TIMEOUT_MS else FEEDBACK_FETCH_TIMEOUT_MS
 
@@ -133,8 +134,7 @@ class FeedbackSender(
         ).relaysNorm().toSet()
     }
 
-    /** Stand-in used for the issue's `a` tag hint when no announcement was found. */
-    private fun fallbackRepositoryEvent(): GitRepositoryEvent = GitRepositoryEvent(
+    private fun standInRepositoryEventForTheIssueATag(): GitRepositoryEvent = GitRepositoryEvent(
         "",
         DEVELOPER_HEX_KEY,
         TimeUtils.now(),

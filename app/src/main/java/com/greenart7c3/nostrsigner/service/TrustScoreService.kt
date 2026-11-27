@@ -11,12 +11,13 @@ import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.Request
+import okhttp3.Response
 
 object TrustScoreService {
     private const val TAG = "TrustScoreService"
     private const val API_BASE_URL = "https://trustedrelays.xyz/api/score?url="
-    private const val CACHE_DURATION_MS = 60 * 60 * 1000L // 1 hour
-    private const val FAILED_CACHE_DURATION_MS = 5 * 60 * 1000L // 5 minutes for failed requests
+    private const val CACHE_DURATION_MS = 60 * 60 * 1000L
+    private const val FAILED_CACHE_DURATION_MS = 5 * 60 * 1000L
 
     private data class CachedScore(val score: Int?, val timestamp: Long, val isFailed: Boolean = false)
 
@@ -41,15 +42,14 @@ object TrustScoreService {
     /**
      * Gets the trust score for a relay URL.
      * Returns cached value if available and not expired, otherwise fetches from API.
+     * A URL [TrustScoreUrlPolicy] excludes returns null without a cache probe or a request,
+     * and the policy's canonical URL is both the cache key and the API query.
      */
     suspend fun getScore(relayUrl: String, settings: AmberSettings): Int? {
         if (!isEnabled(settings)) {
             return null
         }
 
-        // One key function for cache lookups and the API query alike — a lookup
-        // normalized differently from the fetch never hits. Excluded URLs are
-        // resolved up front: no cache probe, no network, no failed-entry churn.
         val normalizedUrl = TrustScoreUrlPolicy.publicRelayUrl(relayUrl) ?: return null
         val cached = cache[normalizedUrl]
 
@@ -63,10 +63,6 @@ object TrustScoreService {
         return fetchScore(relayUrl, normalizedUrl, settings.torMode)
     }
 
-    /**
-     * Fetches the trust score from the API. The caller resolves the policy
-     * normalization once so the URL is computed exactly once per request.
-     */
     private suspend fun fetchScore(relayUrl: String, normalizedUrl: String, torMode: TorMode): Int? {
         return withContext(Dispatchers.IO) {
             try {
@@ -87,9 +83,7 @@ object TrustScoreService {
                         return@withContext null
                     }
 
-                    // Safe call needed: the offline flavor compiles against OkHttp 4, where body is nullable
-                    @Suppress("UNNECESSARY_SAFE_CALL")
-                    val body = response.body?.string()
+                    val body = response.bodyStringOrNull()
                     if (body == null) {
                         cacheResult(normalizedUrl, null, isFailed = true)
                         return@withContext null
@@ -105,6 +99,12 @@ object TrustScoreService {
                 null
             }
         }
+    }
+
+    @Suppress("UNNECESSARY_SAFE_CALL", "NoComments")
+    private fun Response.bodyStringOrNull(): String? {
+        // Safe call needed: the offline flavor compiles against OkHttp 4, where body is nullable
+        return body?.string()
     }
 
     private fun parseResponse(body: String): Int? {

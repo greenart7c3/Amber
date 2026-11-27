@@ -29,6 +29,7 @@ object IntentResponse {
         else -> intentData.data
     }
 
+    /** The history row of a request; the peer key is kept only when there is ciphertext it decrypts on demand. */
     fun historyEntry(
         intentData: IntentData,
         key: String,
@@ -46,7 +47,6 @@ object IntentResponse {
             TimeUtils.now(),
             accepted,
             content = content,
-            // The peer key is only needed to decrypt the stored ciphertext on demand.
             encryptionPubKey = if (hasPeer && content.isNotEmpty()) intentData.pubKey else "",
             encryptionScope = if (isV3) intentData.nip44v3Scope else "",
         )

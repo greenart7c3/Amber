@@ -56,7 +56,6 @@ import com.vitorpamplona.quartz.utils.TimeUtils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
-// Constructor injection: one parameter per dependency.
 @Suppress("LongParameterList")
 class EventNotificationConsumer(
     private val applicationContext: Context,
@@ -65,7 +64,6 @@ class EventNotificationConsumer(
     private val scope: CoroutineScope,
     private val notificationCache: LruCache<String, Long>,
     private val bunkerResponder: BunkerResponder,
-    // Refreshes the NIP-46 subscription after a connection is added or removed.
     private val onConnectionsChanged: suspend () -> Unit,
 ) {
     internal fun saveLog(
@@ -106,6 +104,7 @@ class EventNotificationConsumer(
         }
     }
 
+    @Suppress("NoComments")
     suspend fun consume(
         event: Event,
         relay: NormalizedRelayUrl,
@@ -135,11 +134,6 @@ class EventNotificationConsumer(
 
     private fun requestServices() = Nip46RequestServices(settingsStore, accountRepository, scope, bunkerResponder, ::saveLog)
 
-    /**
-     * The account a verified kind-24133 [event] is for, with the private key of the
-     * connection it came through ("" when tagged to the account key), or null when
-     * it is not a bunker request for a logged-in account.
-     */
     private suspend fun recipient(event: Event, relay: NormalizedRelayUrl): Pair<Account, String>? {
         if (!notificationManager().areNotificationsEnabled()) {
             saveLog("notifications disabled", relay.url)
@@ -162,7 +156,7 @@ class EventNotificationConsumer(
             ?: null.also { saveLog("Tagged account ${taggedKey.toNPub()} not logged in", relay.url) }
     }
 
-    /** Whether [event] is within the sender's rate limit, fresh and not seen before. */
+    @Suppress("NoComments")
     private suspend fun isNewRequest(event: Event, acc: Account, relay: NormalizedRelayUrl): Boolean {
         // Senders that are not a stored connection are rate-limited before any
         // per-event write, decrypt or signed reply, so a flood costs them
@@ -191,19 +185,11 @@ class EventNotificationConsumer(
         return !seen
     }
 
-    /**
-     * The account a request tagged to [taggedHex] is for, with the private key of the
-     * connection it came through ("" when tagged to the account key itself), or null.
-     */
     private suspend fun addressee(taggedNpub: String, taggedHex: String, relay: NormalizedRelayUrl): Pair<Account, String>? {
-        // First try to match the tagged key to a logged-in account (real pubkey)
         AccountStorage.load(applicationContext, taggedNpub)?.let {
             saveLog("Direct account match for ${it.npub}", relay.url)
             return it to ""
         }
-        // Connection-based match via the in-memory index populated by
-        // NotificationSubscription.updateFilter. This replaces an O(accounts × connections)
-        // synchronous scan that previously ran inside runBlocking on the relay event thread.
         val match = LocalKeyAccountIndex.lookup(taggedHex)
         val acc = match?.let { AccountStorage.load(applicationContext, it.npub) }
         return acc?.let {
@@ -254,6 +240,7 @@ class EventNotificationConsumer(
         }
     }
 
+    @Suppress("NoComments")
     private suspend fun notify(
         event: Event,
         acc: Account,
@@ -309,7 +296,6 @@ class EventNotificationConsumer(
     fun notificationManager(): NotificationManager = ContextCompat.getSystemService(applicationContext, NotificationManager::class.java) as NotificationManager
 
     companion object {
-        // One budget per process: several call sites construct their own consumer.
         internal val senderRateLimiter = SenderRateLimiter()
     }
 }

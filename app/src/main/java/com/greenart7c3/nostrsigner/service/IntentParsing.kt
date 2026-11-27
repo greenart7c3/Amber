@@ -10,14 +10,11 @@ import com.vitorpamplona.quartz.nip19Bech32.toNpub
 import com.vitorpamplona.quartz.utils.Hex
 import java.net.URLDecoder
 
-// How a nostrsigner: request is read: its data, the keys in it, and whether it came from the web.
-
-// Compiled once at class load time; avoids recompiling the pattern on every isUrlEncoded() call.
 private val URL_ENCODED_REGEX = Regex("%[0-9a-fA-F]{2}")
 
+/** [data] without its `nostrsigner:` prefix, URL-decoded when [decodeData]; [replace] keeps a literal '+' instead of letting URLDecoder turn it into a space. */
 fun decodeData(data: String, replace: Boolean = true, decodeData: Boolean = true): String {
     val stripped = data.replace("nostrsigner:", "")
-    // replace keeps a literal '+' instead of letting URLDecoder turn it into a space.
     val raw = if (replace) stripped.replace("+", "%2b") else stripped
     return if (decodeData) URLDecoder.decode(raw, "utf-8") else raw
 }
@@ -66,6 +63,7 @@ private fun isBrowserPackage(context: Context, packageName: String?): Boolean {
  * extra means the caller used the native extras API, so only then do we ignore the
  * weaker signals (BROWSABLE category, browser referrer, `type=` query parameter).
  */
+@Suppress("NoComments")
 internal fun isWebRequest(
     hasApplicationIdExtra: Boolean,
     hasBrowsableCategory: Boolean,

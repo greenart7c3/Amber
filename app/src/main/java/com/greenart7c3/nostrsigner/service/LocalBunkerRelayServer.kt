@@ -30,8 +30,9 @@ import com.vitorpamplona.quartz.nip19Bech32.bech32.bechToBytes
  * path; new bunker connections list it beside the default relays
  * ([newBunkerRelays]). It lives in the app process, so it serves while that
  * process runs (the foreground `ConnectivityService` keeps it alive).
+ *
+ * One per process: Amber owns the instance (`Amber.localBunkerRelay`).
  */
-// One per process: Amber owns the instance (Amber.localBunkerRelay).
 class LocalBunkerRelayServer(
     private val appContext: Context,
     private val settingsStore: SettingsStore,
@@ -46,9 +47,7 @@ class LocalBunkerRelayServer(
         override fun e(message: String, throwable: Throwable?) = AmberLog.e(LocalRelayServer.TAG, message, throwable)
     },
     approvedSenders = { approvedRelaySenders(appContext, accountRepository) },
-    // Same tag as the app's other sockets (TaggedSocketFactory).
-    tagThread = { if (TrafficStats.getThreadStatsTag() == -1) TrafficStats.setThreadStatsTag(0x0001) },
-    // The offline flavor has no network permission and must never open a port.
+    tagThread = { if (TrafficStats.getThreadStatsTag() == -1) TrafficStats.setThreadStatsTag(APP_SOCKET_STATS_TAG) },
     isAllowed = { !BuildFlavorChecker.isOfflineFlavor() },
 ) {
     private val isAvailable: Boolean get() = !BuildFlavorChecker.isOfflineFlavor()
@@ -100,14 +99,18 @@ class LocalBunkerRelayServer(
         if (inUse) return false
         settingsStore.settings = settingsStore.settings.copy(localBunkerPort = newPort)
         LocalPreferences.saveSettingsToEncryptedStorage(appContext, settingsStore.settings)
-        // A running relay must come down first: start() never rebinds a live one.
+        restartOnNewPort()
+        return true
+    }
+
+    private suspend fun restartOnNewPort() {
         stop()
         applySetting()
-        return true
     }
 
     companion object {
         private const val BENCHMARK_PORT = 7779
+        private const val APP_SOCKET_STATS_TAG = 0x0001
 
         /** The automatic port for this build. */
         val defaultPort: Int
@@ -121,11 +124,6 @@ class LocalBunkerRelayServer(
     }
 }
 
-/**
- * Pubkeys the relay treats as approved senders (never rate limited): the
- * client key of every saved connection (request senders), every connection
- * key and the account keys (what the signer answers with).
- */
 private fun approvedRelaySenders(context: Context, accountRepository: AccountRepository): Set<String> = buildSet {
     SavedAccounts.all(context).forEach { account ->
         runCatching { add(account.npub.bechToBytes().toHexKey()) }

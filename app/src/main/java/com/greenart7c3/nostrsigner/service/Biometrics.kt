@@ -26,10 +26,7 @@ object Biometrics {
         onApproved: () -> Unit,
         onError: (String, String) -> Unit,
     ) {
-        // The prompt attaches to the activity showing it; [context] is its (maybe wrapped) context.
-        val fragmentContext = generateSequence(context) { (it as? ContextWrapper)?.baseContext }
-            .filterIsInstance<FragmentActivity>()
-            .firstOrNull() ?: error("Biometrics.authenticate needs an activity context")
+        val fragmentContext = context.showingActivity()
         val keyguardManager =
             fragmentContext.getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager
 
@@ -109,4 +106,8 @@ object Biometrics {
             else -> keyguardPrompt()
         }
     }
+
+    private fun Context.showingActivity(): FragmentActivity = generateSequence(this) { (it as? ContextWrapper)?.baseContext }
+        .filterIsInstance<FragmentActivity>()
+        .firstOrNull() ?: error("Biometrics.authenticate needs an activity context")
 }

@@ -35,12 +35,6 @@
     <ID>NoComments:AccountStateViewModelRestoreTest.kt:publish-consent flag reads false on relogin.</ID>
     <ID>NoComments:AccountStorageTest.kt:The policy refusing while locked is the setting working: reporting it would tell the user to log out</ID>
     <ID>NoComments:AmberEvent.kt:The seven fields are the NIP-01 event, in its order; grouping them would hide the wire format.</ID>
-    <ID>NoComments:AmberUtils.kt:A shared Grant as the app stores it, under the connection [key].</ID>
-    <ID>NoComments:AmberUtils.kt:A stored permission as a shared Grant, without its row id, so two reads compare equal.</ID>
-    <ID>NoComments:AmberUtils.kt:The common rememberedGrant, as on the desktop: for NIP-04/NIP-44 ALL stores the</ID>
-    <ID>NoComments:AmberUtils.kt:The common signPolicyGrants, as on the desktop; an unknown policy changes nothing.</ID>
-    <ID>NoComments:AmberUtils.kt:replacing the other.</ID>
-    <ID>NoComments:AmberUtils.kt:whole NIP (NIP44_DECRYPT), SPECIFIC the content type (DECRYPT_CLEAR_TEXT), each</ID>
     <ID>NoComments:AppIconStore.kt:Canonical paths resolve `..` and symlinks before the comparison.</ID>
     <ID>NoComments:AppNameSanitizerTest.kt:Bidi overrides and zero-width characters are dropped.</ID>
     <ID>NoComments:AppNameSanitizerTest.kt:Cutting never splits a surrogate pair.</ID>
@@ -87,77 +81,11 @@
     <ID>NoComments:BackupApplicationsWorker.kt:background worker. Retry later instead of silently skipping</ID>
     <ID>NoComments:BackupApplicationsWorker.kt:the day's backup.</ID>
     <ID>NoComments:BackupApplicationsWorker.kt:while the device is locked — usually the case for a daily</ID>
-    <ID>NoComments:Biometrics.kt:The prompt attaches to the activity showing it; [context] is its (maybe wrapped) context.</ID>
     <ID>NoComments:BunkerMultiEventViewModelTest.kt:A blank relay-auth relay reads as the all-relays wildcard in the DAO:</ID>
     <ID>NoComments:BunkerMultiEventViewModelTest.kt:Capture after the wait: a timeout verify re-captures on every poll.</ID>
     <ID>NoComments:BunkerMultiEventViewModelTest.kt:Each remembered request saves twice: the app row, then its grant.</ID>
     <ID>NoComments:BunkerMultiEventViewModelTest.kt:Remember my choice defaults to NEVER: only the app row is saved, once.</ID>
     <ID>NoComments:BunkerMultiEventViewModelTest.kt:remembering it would silently grant every relay.</ID>
-    <ID>NoComments:BunkerPermissionLookup.kt:Ping, zap decryption and PSBT signing: only a grant of the request type (unlike</ID>
-    <ID>NoComments:BunkerPermissionLookup.kt:an intent's zap decryption, a bunker one never matches an encryption-type grant).</ID>
-    <ID>NoComments:BunkerRequestUtils.kt:</ID>
-    <ID>NoComments:BunkerRequestUtils.kt:(e.g. a malformed request) used to skip the error reply below.</ID>
-    <ID>NoComments:BunkerRequestUtils.kt:A bunker:// connection is saved under its secret until a client connects with</ID>
-    <ID>NoComments:BunkerRequestUtils.kt:A connection may always ask for the public key and ping.</ID>
-    <ID>NoComments:BunkerRequestUtils.kt:A new `nostrconnect://` approval always mints a fresh `localKey`</ID>
-    <ID>NoComments:BunkerRequestUtils.kt:A queued request whose app row is gone was revoked while it</ID>
-    <ID>NoComments:BunkerRequestUtils.kt:A rejected encrypt request was never performed, so no ciphertext</ID>
-    <ID>NoComments:BunkerRequestUtils.kt:Approving changes the grants in place; kept to take the approval back.</ID>
-    <ID>NoComments:BunkerRequestUtils.kt:Bookkeeping must not cost the client its answer: a failure here</ID>
-    <ID>NoComments:BunkerRequestUtils.kt:Client-supplied: a missing or unparsable param yields "" rather than throwing.</ID>
-    <ID>NoComments:BunkerRequestUtils.kt:Constructor injection: one parameter per dependency.</ID>
-    <ID>NoComments:BunkerRequestUtils.kt:Decrypt requests carry their ciphertext in the request, so it is</ID>
-    <ID>NoComments:BunkerRequestUtils.kt:Ensure each connection has its own unique signing key</ID>
-    <ID>NoComments:BunkerRequestUtils.kt:NIP-44 v3 NIP-46 layout: [pubkey, kind, scope, payload]. For</ID>
-    <ID>NoComments:BunkerRequestUtils.kt:Never the result: for a decrypt request it is the plaintext.</ID>
-    <ID>NoComments:BunkerRequestUtils.kt:Persist the encrypted form (ciphertext), never the plaintext: encrypt</ID>
-    <ID>NoComments:BunkerRequestUtils.kt:Previously this only ran when `didChangeRelays`, so CONNECTs</ID>
-    <ID>NoComments:BunkerRequestUtils.kt:Queued requests are identified by [AmberBunkerRequest.queueKey], never by</ID>
-    <ID>NoComments:BunkerRequestUtils.kt:Returns whether the connection brings relays Amber does not listen on yet.</ID>
-    <ID>NoComments:BunkerRequestUtils.kt:The Application context: notifications and the error notification.</ID>
-    <ID>NoComments:BunkerRequestUtils.kt:The account key, for a connection from before per-connection keys; it checks key access first.</ID>
-    <ID>NoComments:BunkerRequestUtils.kt:The activity showing the requests, if any; finished once the queue empties.</ID>
-    <ID>NoComments:BunkerRequestUtils.kt:The approved reply and where it goes, passed through from sendResult.</ID>
-    <ID>NoComments:BunkerRequestUtils.kt:The client only listens on the relays in its URI; an app saved</ID>
-    <ID>NoComments:BunkerRequestUtils.kt:The connection's own key when the request has one, else the account key.</ID>
-    <ID>NoComments:BunkerRequestUtils.kt:The rejection's whole context, passed through from sendRejection.</ID>
-    <ID>NoComments:BunkerRequestUtils.kt:The reply did not reach the client: take back what approving it remembered (the</ID>
-    <ID>NoComments:BunkerRequestUtils.kt:The row of a connection seen for the first time.</ID>
-    <ID>NoComments:BunkerRequestUtils.kt:The saved connection an approval of [bunkerRequest] updates, after dropping the one it</ID>
-    <ID>NoComments:BunkerRequestUtils.kt:Use connection-specific key if available; fall back to what's in the request</ID>
-    <ID>NoComments:BunkerRequestUtils.kt:What a `connect` sets on [application]: its own signing key when it is [isNew],</ID>
-    <ID>NoComments:BunkerRequestUtils.kt:What approving a connect sets: the default grants, connected, and the close-app choice.</ID>
-    <ID>NoComments:BunkerRequestUtils.kt:Where the reply goes. A brand-new connection that names no relays of its own also</ID>
-    <ID>NoComments:BunkerRequestUtils.kt:`nip44v3_decrypt` it is the v3 ciphertext.</ID>
-    <ID>NoComments:BunkerRequestUtils.kt:`nip44v3_encrypt` the payload is base64-encoded plaintext; for</ID>
-    <ID>NoComments:BunkerRequestUtils.kt:against an already-configured relay left the listening sub to</ID>
-    <ID>NoComments:BunkerRequestUtils.kt:arrive at the relay while we have no subscriber for it (the</ID>
-    <ID>NoComments:BunkerRequestUtils.kt:assume that everything worked and try to revert it if it fails</ID>
-    <ID>NoComments:BunkerRequestUtils.kt:be picked up by the 30-second `ConnectivityService` timer — a</ID>
-    <ID>NoComments:BunkerRequestUtils.kt:check if application has any relay not in saved relays</ID>
-    <ID>NoComments:BunkerRequestUtils.kt:corresponding listening REQ (kind 24133, #p=localPubKey) must be</ID>
-    <ID>NoComments:BunkerRequestUtils.kt:earlier with empty or stale relays must not send the reply elsewhere.</ID>
-    <ID>NoComments:BunkerRequestUtils.kt:event is ephemeral, so the relay drops it), and the client</ID>
-    <ID>NoComments:BunkerRequestUtils.kt:exists — store nothing rather than leaking the plaintext input.</ID>
-    <ID>NoComments:BunkerRequestUtils.kt:for the connection (see `generateBunkerPrivKey()` above). The</ID>
-    <ID>NoComments:BunkerRequestUtils.kt:gets the local relay beside the default relays (desktop BunkerEngine does the</ID>
-    <ID>NoComments:BunkerRequestUtils.kt:is recovered on demand in the activity/history UI.</ID>
-    <ID>NoComments:BunkerRequestUtils.kt:it: move that row (and its grants) to the client's key.</ID>
-    <ID>NoComments:BunkerRequestUtils.kt:lose any RPC published by the client in the meantime.</ID>
-    <ID>NoComments:BunkerRequestUtils.kt:registered on the relay *before* we publish the connect response</ID>
-    <ID>NoComments:BunkerRequestUtils.kt:replaces ([oldKey]) and attaching a bunker:// connection to the client's key.</ID>
-    <ID>NoComments:BunkerRequestUtils.kt:requests store their ciphertext output (`response`), decrypt requests</ID>
-    <ID>NoComments:BunkerRequestUtils.kt:revoked connection with fresh grants.</ID>
-    <ID>NoComments:BunkerRequestUtils.kt:safe to persist and decrypt on demand.</ID>
-    <ID>NoComments:BunkerRequestUtils.kt:same), so clients on this device need no public relay.</ID>
-    <ID>NoComments:BunkerRequestUtils.kt:sequential) ids must not drop or replace each other's requests.</ID>
-    <ID>NoComments:BunkerRequestUtils.kt:store the ciphertext input that arrived in the request. The plaintext</ID>
-    <ID>NoComments:BunkerRequestUtils.kt:the client-chosen JSON-RPC id alone: clients using the same (e.g.</ID>
-    <ID>NoComments:BunkerRequestUtils.kt:times out waiting for a response.</ID>
-    <ID>NoComments:BunkerRequestUtils.kt:waited: answer with an error instead of recreating the</ID>
-    <ID>NoComments:BunkerRequestUtils.kt:waited: reject it without recreating the connection.</ID>
-    <ID>NoComments:BunkerRequestUtils.kt:window in which the pool could idle-disconnect the relay and</ID>
-    <ID>NoComments:BunkerRequestUtils.kt:— otherwise the client's follow-up `get_public_key` RPC can</ID>
     <ID>NoComments:BunkerRequestUtilsTest.kt:===== State management =====</ID>
     <ID>NoComments:BunkerRequestUtilsTest.kt:===== finishRequest =====</ID>
     <ID>NoComments:BunkerRequestUtilsTest.kt:===== getDataFromBunker =====</ID>
@@ -211,53 +139,13 @@
     <ID>NoComments:CrossAccountSignEventTest.kt:pubkey is neither account; what matters is that B's key is unused.</ID>
     <ID>NoComments:CrossAccountSignEventTest.kt:switched the signing key to it.</ID>
     <ID>NoComments:DecryptSignerTypesTest.kt:Ciphertext, signatures and public keys stay ordinary clips.</ID>
-    <ID>NoComments:DeviceUnlockPolicy.kt:isDeviceLocked is a supplier so callers only pay for the KeyguardManager</ID>
-    <ID>NoComments:DeviceUnlockPolicy.kt:lookup when the opt-in flag is actually set.</ID>
     <ID>NoComments:DisplayCrashMessages.kt:ANRs, low-memory kills and native crashes only appear in the exit records.</ID>
     <ID>NoComments:DisplayCrashMessages.kt:The Application context: the crash report file and the exit records live under it.</ID>
     <ID>NoComments:DisplayCrashMessages.kt:The exception report already starts with the version and device table.</ID>
     <ID>NoComments:DisplayCrashMessages.kt:The startup detection may still be running: finish it first, or a dismiss</ID>
     <ID>NoComments:DisplayCrashMessages.kt:would clear records written after this read, unseen.</ID>
     <ID>NoComments:EncryptIntentAccountTest.kt:A context whose Application is a relaxed mock: parsing logs failures through it.</ID>
-    <ID>NoComments:EncryptedDataPreview.kt:The decrypted content of [seal]; the caller still gets the seal itself.</ID>
-    <ID>NoComments:EncryptedDataPreview.kt:The preview of a `decrypt_zap_event`: the decrypted [zapRequest], whose result the</ID>
-    <ID>NoComments:EncryptedDataPreview.kt:What an encrypt/decrypt approval shows, the same for intents and bunker requests:</ID>
     <ID>NoComments:EncryptedDataPreviewTest.kt:A bunker decrypt_zap_event approved on screen used to answer "": it had no preview.</ID>
-    <ID>NoComments:EventNotificationConsumer.kt:(e.g. the message to encrypt, or the event to sign). The encrypted event</ID>
-    <ID>NoComments:EventNotificationConsumer.kt:Connection-based match via the in-memory index populated by</ID>
-    <ID>NoComments:EventNotificationConsumer.kt:Constructor injection: one parameter per dependency.</ID>
-    <ID>NoComments:EventNotificationConsumer.kt:First try to match the tagged key to a logged-in account (real pubkey)</ID>
-    <ID>NoComments:EventNotificationConsumer.kt:Freshness is checked after the limiter: these rejections log the</ID>
-    <ID>NoComments:EventNotificationConsumer.kt:JSON: Quartz's BunkerRequestConnect only keeps params[0..2] and drops the</ID>
-    <ID>NoComments:EventNotificationConsumer.kt:Legacy client: the request and any reply are encrypted with the</ID>
-    <ID>NoComments:EventNotificationConsumer.kt:NIP-46 connect requests may carry optional client metadata as the 4th</ID>
-    <ID>NoComments:EventNotificationConsumer.kt:Never persist the decrypted request body — it can contain plaintext</ID>
-    <ID>NoComments:EventNotificationConsumer.kt:NotificationSubscription.updateFilter. This replaces an O(accounts × connections)</ID>
-    <ID>NoComments:EventNotificationConsumer.kt:One budget per process: several call sites construct their own consumer.</ID>
-    <ID>NoComments:EventNotificationConsumer.kt:Only addresses the replies sent before authorization, so it carries no</ID>
-    <ID>NoComments:EventNotificationConsumer.kt:Refreshes the NIP-46 subscription after a connection is added or removed.</ID>
-    <ID>NoComments:EventNotificationConsumer.kt:Senders that are not a stored connection are rate-limited before any</ID>
-    <ID>NoComments:EventNotificationConsumer.kt:The account a request tagged to [taggedHex] is for, with the private key of the</ID>
-    <ID>NoComments:EventNotificationConsumer.kt:The account a verified kind-24133 [event] is for, with the private key of the</ID>
-    <ID>NoComments:EventNotificationConsumer.kt:Whether [event] is within the sender's rate limit, fresh and not seen before.</ID>
-    <ID>NoComments:EventNotificationConsumer.kt:With requireUnlockedDevice on, nothing may use the account key while</ID>
-    <ID>NoComments:EventNotificationConsumer.kt:account key, so it can't even be answered. Leave the event</ID>
-    <ID>NoComments:EventNotificationConsumer.kt:connecting over the bunker:// flow. It must be read from the raw request</ID>
-    <ID>NoComments:EventNotificationConsumer.kt:event id, so a flood of signed stale events must be budgeted too.</ID>
-    <ID>NoComments:EventNotificationConsumer.kt:is already logged above; here we record only non-sensitive metadata.</ID>
-    <ID>NoComments:EventNotificationConsumer.kt:legitimate sender's budget.</ID>
-    <ID>NoComments:EventNotificationConsumer.kt:limiter: an approved app legitimately bursts (bulk decrypts, rapid</ID>
-    <ID>NoComments:EventNotificationConsumer.kt:metadata element when it rebuilds its params array.</ID>
-    <ID>NoComments:EventNotificationConsumer.kt:on the proven signer pubkey, so forged events cannot drain a</ID>
-    <ID>NoComments:EventNotificationConsumer.kt:param (nostr-protocol/nips#2381) so the signer can show who is</ID>
-    <ID>NoComments:EventNotificationConsumer.kt:per-event write, decrypt or signed reply, so a flood costs them</ID>
-    <ID>NoComments:EventNotificationConsumer.kt:sender until it is known to have a connection.</ID>
-    <ID>NoComments:EventNotificationConsumer.kt:signed event or decrypted data: the account key is not used for a</ID>
-    <ID>NoComments:EventNotificationConsumer.kt:signing) and must never be dropped. Checked after verify() and keyed</ID>
-    <ID>NoComments:EventNotificationConsumer.kt:silence instead of the user's battery. Stored connections bypass the</ID>
-    <ID>NoComments:EventNotificationConsumer.kt:synchronous scan that previously ran inside runBlocking on the relay event thread.</ID>
-    <ID>NoComments:EventNotificationConsumer.kt:the device is locked, and that includes opening the request.</ID>
-    <ID>NoComments:EventNotificationConsumer.kt:unrecorded so a re-delivery after unlock is processed.</ID>
     <ID>NoComments:EventNotificationConsumerRateLimitTest.kt:A real responder over the mocked Application, spied so tests can stub its replies.</ID>
     <ID>NoComments:EventNotificationConsumerRateLimitTest.kt:Empty content: the event is fully admitted (recorded in the persistent</ID>
     <ID>NoComments:EventNotificationConsumerRateLimitTest.kt:Feeds pre-signed [events] and checks that exactly the [capacity] budget</ID>
@@ -317,23 +205,11 @@
     <ID>NoComments:ImageLoaderFactory.kt:this long-lived signer process even while its UI is not visible.</ID>
     <ID>NoComments:IntentMultiEventViewModelTest.kt:Confirming runs on Dispatchers.IO; closing the activity is its last step.</ID>
     <ID>NoComments:IntentMultiEventViewModelTest.kt:The result list goes back in an Intent; the JVM test stubs do not implement putExtra.</ID>
-    <ID>NoComments:IntentParsing.kt:Compiled once at class load time; avoids recompiling the pattern on every isUrlEncoded() call.</ID>
-    <ID>NoComments:IntentParsing.kt:Decides whether a `nostrsigner:` request carries its parameters in the URI query</ID>
-    <ID>NoComments:IntentParsing.kt:How a nostrsigner: request is read: its data, the keys in it, and whether it came from the web.</ID>
-    <ID>NoComments:IntentParsing.kt:replace keeps a literal '+' instead of letting URLDecoder turn it into a space.</ID>
-    <ID>NoComments:IntentPermissionLookup.kt:Per relay host first, then an all-relays grant ("*" or blank).</ID>
-    <ID>NoComments:IntentPermissionLookup.kt:The encryption-specific type first, then the request type, then a whole-NIP grant.</ID>
-    <ID>NoComments:IntentPermissionLookup.kt:They never satisfy v2/v4 requests.</ID>
-    <ID>NoComments:IntentPermissionLookup.kt:V3 grants are scoped by (app, type, kind), with a kind-less "all kinds" fallback.</ID>
     <ID>NoComments:IntentPermissionLookupTest.kt:Kind 1 belongs to NIP-01.</ID>
-    <ID>NoComments:IntentRateLimiter.kt:Cleanup runs at every checkAndRecord; tighter bounds make it harder for a</ID>
-    <ID>NoComments:IntentRateLimiter.kt:The parser IntentUtils uses, so every type it accepts is rate limited.</ID>
-    <ID>NoComments:IntentRateLimiter.kt:misbehaving caller to balloon the bucket map before reclamation kicks in.</ID>
     <ID>NoComments:IntentRejectionTest.kt:A web request (no calling package) could not be rejected: Reject left the sheet open.</ID>
     <ID>NoComments:IntentRejectionTest.kt:Filled on the rejection's coroutine, read by the test thread.</ID>
     <ID>NoComments:IntentRejectionTest.kt:The rejection result is an Intent; the JVM test stubs do not implement putExtra.</ID>
     <ID>NoComments:IntentRejectionTest.kt:onRemoveIntentData runs after finishAndRemoveTask, so waiting for the finish is not enough.</ID>
-    <ID>NoComments:IntentResponse.kt:The peer key is only needed to decrypt the stored ciphertext on demand.</ID>
     <ID>NoComments:IntentResponseTest.kt:--- callbackPayload ---</ID>
     <ID>NoComments:IntentResponseTest.kt:--- historyContent: never the plaintext ---</ID>
     <ID>NoComments:IntentResponseTest.kt:--- historyEntry ---</ID>
@@ -341,40 +217,6 @@
     <ID>NoComments:IntentSingleEventViewModelTest.kt:The calling app picks the request id: a later request reusing it gets this ViewModel</ID>
     <ID>NoComments:IntentSingleEventViewModelTest.kt:The load runs on Dispatchers.IO.</ID>
     <ID>NoComments:IntentSingleEventViewModelTest.kt:back, and must be judged on the grants saved now, not on the first request's load.</ID>
-    <ID>NoComments:IntentUtils.kt:A NIP-44 v3 failure (missing/invalid kind, context mismatch, bad</ID>
-    <ID>NoComments:IntentUtils.kt:A connected app may always read the public key; answering get_public_key also sets whether Amber clo</ID>
-    <ID>NoComments:IntentUtils.kt:A decrypt result is the plaintext itself: hide it from</ID>
-    <ID>NoComments:IntentUtils.kt:A native app is named after its callback host when it has one; a web app by its appName.</ID>
-    <ID>NoComments:IntentUtils.kt:A native app's grants and history are kept under its package name.</ID>
-    <ID>NoComments:IntentUtils.kt:A web request (no calling package) shares the "null" key with every website:</ID>
-    <ID>NoComments:IntentUtils.kt:Hands the result back: as the activity result to a native app, to a web app's callback URL, or else </ID>
-    <ID>NoComments:IntentUtils.kt:MAC, corrupt payload) means the request can never succeed: reject</ID>
-    <ID>NoComments:IntentUtils.kt:Never switch to the pubkey named inside the event: an app holding a</ID>
-    <ID>NoComments:IntentUtils.kt:Records a failed intent parse in every account's log.</ID>
-    <ID>NoComments:IntentUtils.kt:Runs the key operation [request] asks for with [account] and wraps the result for the approval scree</ID>
-    <ID>NoComments:IntentUtils.kt:The `result` extra: a signature, a public key, a ciphertext or plaintext.</ID>
-    <ID>NoComments:IntentUtils.kt:The calling app is visible to us now (mid-request); capture its</ID>
-    <ID>NoComments:IntentUtils.kt:The encrypted or decrypted text, or null when the request was rejected as invalid.</ID>
-    <ID>NoComments:IntentUtils.kt:The event kind a remembered sign grant covers.</ID>
-    <ID>NoComments:IntentUtils.kt:The peer (pubKey) is not a local account; the request runs with `account`.</ID>
-    <ID>NoComments:IntentUtils.kt:The per-account databases, the background scope and the activity a result is handed</ID>
-    <ID>NoComments:IntentUtils.kt:The plaintext side is what the user reads: the data for an encrypt, the result for a decrypt.</ID>
-    <ID>NoComments:IntentUtils.kt:The signed event (or result) for the history and the `event` extra.</ID>
-    <ID>NoComments:IntentUtils.kt:The signing key follows the account that authorizes this request.</ID>
-    <ID>NoComments:IntentUtils.kt:The stored account the `current_user` extra names, if any.</ID>
-    <ID>NoComments:IntentUtils.kt:True when [intent] carries nothing to queue: no data, the empty request a</ID>
-    <ID>NoComments:IntentUtils.kt:another stored account stays a mismatch for the approval guard.</ID>
-    <ID>NoComments:IntentUtils.kt:answered and its sheet closed.</ID>
-    <ID>NoComments:IntentUtils.kt:as on approval, nothing is remembered or saved for it, but it is still</ID>
-    <ID>NoComments:IntentUtils.kt:clipboard previews and clear it, like the nsec.</ID>
-    <ID>NoComments:IntentUtils.kt:grant on one local account could otherwise silently obtain a</ID>
-    <ID>NoComments:IntentUtils.kt:immediately, not only on a later request.</ID>
-    <ID>NoComments:IntentUtils.kt:it without showing the user an approval screen.</ID>
-    <ID>NoComments:IntentUtils.kt:launcher icon + label so a first-ever connection populates them</ID>
-    <ID>NoComments:IntentUtils.kt:plaintext from `text`, while `result` keeps the wire value.</ID>
-    <ID>NoComments:IntentUtils.kt:signature from another stored account. A current_user naming</ID>
-    <ID>NoComments:IntentUtils.kt:to; Amber's constructor installs them before an intent can arrive.</ID>
-    <ID>NoComments:IntentUtils.kt:v3 wire values are Base64; decode once so display/history can read the</ID>
     <ID>NoComments:IntentUtilsBeforeAfterTest.kt:(Measures the when-dispatch itself; the function call overhead is</ID>
     <ID>NoComments:IntentUtilsBeforeAfterTest.kt:1. isUrlEncoded — per-call Regex compilation vs. cached Regex</ID>
     <ID>NoComments:IntentUtilsBeforeAfterTest.kt:2. parseSignerType — duplicated when vs. single shared function</ID>
@@ -420,50 +262,16 @@
     <ID>NoComments:KeyRotationTest.kt:Rotate back: exercises the other direction and restores the policy.</ID>
     <ID>NoComments:KeystorePolicyTest.kt:The gate fails closed; a key failure without a keyguard is still reported as broken.</ID>
     <ID>NoComments:LegacyStorageMigrationDeviceTest.kt:The second account file exists but holds no key, so it cannot be restored.</ID>
-    <ID>NoComments:LocalBunkerRelayServer.kt:A running relay must come down first: start() never rebinds a live one.</ID>
-    <ID>NoComments:LocalBunkerRelayServer.kt:One per process: Amber owns the instance (Amber.localBunkerRelay).</ID>
-    <ID>NoComments:LocalBunkerRelayServer.kt:Pubkeys the relay treats as approved senders (never rate limited): the</ID>
-    <ID>NoComments:LocalBunkerRelayServer.kt:Same tag as the app's other sockets (TaggedSocketFactory).</ID>
-    <ID>NoComments:LocalBunkerRelayServer.kt:The offline flavor has no network permission and must never open a port.</ID>
     <ID>NoComments:LogRetentionManagerTest.kt:350 -&gt; 250 -&gt; 150 -&gt; 50</ID>
     <ID>NoComments:LoginViewModelsTest.kt:Nothing restored: stay on the first page so the user can retry.</ID>
     <ID>NoComments:LogoutDeletesDatabasesTest.kt:File and DataStore cleanup is out of scope here.</ID>
     <ID>NoComments:NetworkChangeDetector.kt:The first report after registering the callback is the network the</ID>
     <ID>NoComments:NetworkChangeDetector.kt:relays are already connecting on; only a return after a loss is a change.</ID>
     <ID>NoComments:NetworkStateTest.kt:No network at all: offline, so a change.</ID>
-    <ID>NoComments:NostrSignerRequest.kt:NIP-04 ciphertexts carry their own "?iv=", which is part of the data.</ID>
-    <ID>NoComments:NostrSignerRequest.kt:Split the RAW query and decode each value once (see</ID>
-    <ID>NoComments:NostrSignerRequest.kt:decodeQueryParamValue): a form-encoded appName "My+App" shows its</ID>
-    <ID>NoComments:NostrSignerRequest.kt:pubkey is matched in any case; the other names are case-sensitive.</ID>
-    <ID>NoComments:NostrSignerRequest.kt:space, and an encoded '&amp;' (%26) inside a value no longer ends up</ID>
-    <ID>NoComments:NostrSignerRequest.kt:splitting the param in two.</ID>
     <ID>NoComments:NostrSignerRequestTest.kt:--- fromExtras (native apps) ---</ID>
     <ID>NoComments:NostrSignerRequestTest.kt:--- fromUri (web apps) ---</ID>
     <ID>NoComments:NostrSignerRequestTest.kt:--- rejection ---</ID>
     <ID>NoComments:NotificationSinceClampTest.kt:The offline flavor never subscribes to relays.</ID>
-    <ID>NoComments:NotificationSubscription.kt:(a keystore2 binder round-trip per encrypted field) each cycle —</ID>
-    <ID>NoComments:NotificationSubscription.kt:Cached dao: getAll() is served from CachingApplicationDao's per-account</ID>
-    <ID>NoComments:NotificationSubscription.kt:Calls queued before a close belong to the old lifecycle too.</ID>
-    <ID>NoComments:NotificationSubscription.kt:Concurrent: mutated in updateFilter/closeAllSubs (coroutines) while relay I/O</ID>
-    <ID>NoComments:NotificationSubscription.kt:Constructor injection: one parameter per dependency.</ID>
-    <ID>NoComments:NotificationSubscription.kt:Each connection listens on its own relays</ID>
-    <ID>NoComments:NotificationSubscription.kt:Exclude relays that have been declared dead so Quartz stops opening</ID>
-    <ID>NoComments:NotificationSubscription.kt:LRU. updateFilter re-runs on every relay refresh (explicit refreshes</ID>
-    <ID>NoComments:NotificationSubscription.kt:Make every endpoint routable before any subscription can deliver a request.</ID>
-    <ID>NoComments:NotificationSubscription.kt:RelayHealthTracker is reset (network change / manual reconnect) or</ID>
-    <ID>NoComments:NotificationSubscription.kt:The account key itself only listens for legacy connections (no localKey)</ID>
-    <ID>NoComments:NotificationSubscription.kt:The cache holds sender-chosen created_at values recorded before any</ID>
-    <ID>NoComments:NotificationSubscription.kt:The one subscription every bunker endpoint shares, keyed in subIds.</ID>
-    <ID>NoComments:NotificationSubscription.kt:Unsubscribe once no application listens any more.</ID>
-    <ID>NoComments:NotificationSubscription.kt:a socket to them on every refresh. They are re-added once</ID>
-    <ID>NoComments:NotificationSubscription.kt:authorization; never let one push `since` past the real clock, or</ID>
-    <ID>NoComments:NotificationSubscription.kt:getAll re-decrypts every application row through AndroidKeyStore</ID>
-    <ID>NoComments:NotificationSubscription.kt:listens until the app crashes.</ID>
-    <ID>NoComments:NotificationSubscription.kt:plus the periodic ConnectivityService safety net), and an uncached</ID>
-    <ID>NoComments:NotificationSubscription.kt:previously the app's dominant native allocator.</ID>
-    <ID>NoComments:NotificationSubscription.kt:relays would drop every legitimate request until then.</ID>
-    <ID>NoComments:NotificationSubscription.kt:they connect successfully again.</ID>
-    <ID>NoComments:NotificationSubscription.kt:threads iterate it in onIncomingMessage (containsValue).</ID>
     <ID>NoComments:NotificationSubscriptionTest.kt:A deliberate fresh refresh after close still restores the connection.</ID>
     <ID>NoComments:NotificationSubscriptionTest.kt:mirrors per-test dao state without cross-test cache leakage.</ID>
     <ID>NoComments:NotificationSubscriptionTest.kt:updateFilter is a no-op on the offline flavor by design</ID>

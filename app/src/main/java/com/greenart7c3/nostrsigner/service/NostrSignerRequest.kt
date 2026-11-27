@@ -61,17 +61,17 @@ object NostrSignerRequestParser {
      * Parses a web app's request, whose parameters are in the URI query
      * (`nostrsigner:<data>?type=…&pubkey=…`). Returns null when the URI carries
      * no parameters, in which case the caller reads the intent extras instead.
+     *
+     * The raw query is split first and each value decoded once (see
+     * decodeQueryParamValue): a form-encoded appName "My+App" shows its space,
+     * and an encoded '&' (%26) inside a value no longer splits the param in two.
+     * The `pubkey` name is matched in any case; the other names are case-sensitive.
      */
     fun fromUri(uri: String): NostrSignerRequest? {
         val stripped = uri.replace("nostrsigner:", "")
-        // NIP-04 ciphertexts carry their own "?iv=", which is part of the data.
-        val content = if (uri.contains("?iv")) stripped.split("?").let { it[0] + "?" + it[1] } else ""
+        val content = nip04CiphertextWithIv(uri, stripped)
         val data = content.ifEmpty { decodeData(uri).split("?").first() }
         val parameters = if (content.isEmpty()) {
-            // Split the RAW query and decode each value once (see
-            // decodeQueryParamValue): a form-encoded appName "My+App" shows its
-            // space, and an encoded '&' (%26) inside a value no longer ends up
-            // splitting the param in two.
             stripped.split("?").drop(1)
         } else {
             decodeData(content, false).split("?").drop(1)
@@ -81,7 +81,6 @@ object NostrSignerRequestParser {
         val values = mutableMapOf<String, String>()
         parameters.flatMap { it.split("&") }.forEach {
             val name = it.substringBefore("=")
-            // pubkey is matched in any case; the other names are case-sensitive.
             val key = if (name.lowercase() == "pubkey") "pubkey" else name
             values[key] = decodeQueryParamValue(it.substringAfter("=", ""))
         }
@@ -101,6 +100,8 @@ object NostrSignerRequestParser {
             fromUri = true,
         )
     }
+
+    private fun nip04CiphertextWithIv(uri: String, stripped: String): String = if (uri.contains("?iv")) stripped.split("?").let { it[0] + "?" + it[1] } else ""
 
     /**
      * Parses a native NIP-55 app's request: the data is the intent URI and the

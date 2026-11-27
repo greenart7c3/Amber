@@ -64,12 +64,6 @@ private fun nip44v3EncryptedDataKind(
     }
 }
 
-/**
- * The preview of a `decrypt_zap_event`: the decrypted [zapRequest], whose result the
- * approval answers with, as the intent path builds it. Null when the zap request is
- * missing or does not open; a device-lock refusal is rethrown so the client sees the
- * real condition.
- */
 internal fun privateZapPreview(zapRequest: String?, account: Account): EncryptedDataKind? {
     if (zapRequest == null) return null
     val decrypted = try {
@@ -82,38 +76,30 @@ internal fun privateZapPreview(zapRequest: String?, account: Account): Encrypted
     return decrypted?.let(::PrivateZapEncryptedDataKind)
 }
 
-/**
- * What an encrypt/decrypt approval shows, the same for intents and bunker requests:
- * [text] (the plaintext side: the data of an encrypt, the result of a decrypt) as an
- * event (a seal is opened for the preview only), a tag array or plain text. [data] is
- * the request's input and [result] the operation's output; [onParseError] gets the
- * message when [text] looks like JSON but does not parse.
- */
 internal suspend fun previewOf(
-    text: String,
-    data: String,
-    result: String,
+    plaintext: String,
+    requestInput: String,
+    operationOutput: String,
     account: Account,
     onParseError: (String) -> Unit,
 ): EncryptedDataKind = try {
     when {
-        text.startsWith("{") -> {
-            val event = AmberEvent.fromJson(text)
+        plaintext.startsWith("{") -> {
+            val event = AmberEvent.fromJson(plaintext)
             if (event.kind == SealEvent.KIND) {
-                EventEncryptedDataKind(event, sealPreview(event, account, onParseError), result)
+                EventEncryptedDataKind(event, sealPreview(event, account, onParseError), operationOutput)
             } else {
-                EventEncryptedDataKind(event, null, result)
+                EventEncryptedDataKind(event, null, operationOutput)
             }
         }
-        text.startsWith("[") -> TagArrayEncryptedDataKind(JacksonMapper.fromJsonToTagArray(text), result)
-        else -> ClearTextEncryptedDataKind(data, result)
+        plaintext.startsWith("[") -> TagArrayEncryptedDataKind(JacksonMapper.fromJsonToTagArray(plaintext), operationOutput)
+        else -> ClearTextEncryptedDataKind(requestInput, operationOutput)
     }
 } catch (e: Exception) {
-    onParseError("Error parsing ${if (text.startsWith("{")) "JSON" else "TagArray"}: ${e.message}")
-    ClearTextEncryptedDataKind(data, result)
+    onParseError("Error parsing ${if (plaintext.startsWith("{")) "JSON" else "TagArray"}: ${e.message}")
+    ClearTextEncryptedDataKind(requestInput, operationOutput)
 }
 
-/** The decrypted content of [seal]; the caller still gets the seal itself. */
 private suspend fun sealPreview(seal: AmberEvent, account: Account, onParseError: (String) -> Unit): EncryptedDataKind {
     val decrypted = try {
         account.crypto.decrypt(seal.content, account.hexKey)

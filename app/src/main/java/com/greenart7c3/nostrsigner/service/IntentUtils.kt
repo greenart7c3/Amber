@@ -61,12 +61,14 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 object IntentUtils {
-    // The per-account databases, the background scope and the activity a result is handed
-    // to; Amber's constructor installs them before an intent can arrive.
     private lateinit var accountRepository: AccountRepository
     private lateinit var appScope: CoroutineScope
     private lateinit var mainActivity: () -> Activity?
 
+    /**
+     * Installs the per-account databases, the background scope and the activity a result
+     * is handed to; Amber's constructor calls it before an intent can arrive.
+     */
     fun install(accounts: AccountRepository, scope: CoroutineScope, mainActivity: () -> Activity?) {
         accountRepository = accounts
         appScope = scope
@@ -189,7 +191,6 @@ object IntentUtils {
         return buildIntentData(request, intent, packageName, route, account)
     }
 
-    /** Runs the key operation [request] asks for with [account] and wraps the result for the approval screen. */
     private suspend fun buildIntentData(
         request: NostrSignerRequest,
         intent: Intent,
@@ -220,7 +221,6 @@ object IntentUtils {
             SignerType.SIGN_EVENT -> signedIntentData(base, request, intent, packageName, account)
             in encryptDecryptSignerTypes -> encryptOrDecrypt(request, intent, packageName, account)?.let { result ->
                 base.copy(
-                    // The peer (pubKey) is not a local account; the request runs with `account`.
                     currentAccount = request.currentUser ?: account.npub,
                     encryptedData = getEncryptedDataKind(request.type, result, request.data, account),
                     nip44v3Kind = request.nip44v3Kind,
@@ -237,12 +237,12 @@ object IntentUtils {
         }
     }
 
-    /** A native app is named after its callback host when it has one; a web app by its appName. */
     private fun displayName(request: NostrSignerRequest): String {
         val callbackHost = request.callbackUrl?.takeIf { !request.fromUri && it.isNotBlank() }?.toUri()?.host
         return callbackHost?.ifBlank { null } ?: request.appName
     }
 
+    @Suppress("NoComments")
     private fun signedIntentData(
         base: IntentData,
         request: NostrSignerRequest,
@@ -273,7 +273,7 @@ object IntentUtils {
         )
     }
 
-    /** The encrypted or decrypted text, or null when the request was rejected as invalid. */
+    @Suppress("NoComments")
     private suspend fun encryptOrDecrypt(
         request: NostrSignerRequest,
         intent: Intent,
@@ -322,27 +322,19 @@ object IntentUtils {
             PrivateZapEncryptedDataKind(result)
         }
 
-        // v3 wire values are Base64; decode once so display/history can read the
-        // plaintext from `text`, while `result` keeps the wire value.
-        SignerType.NIP44_V3_ENCRYPT -> {
-            val plaintext = try {
-                Base64.decode(data).toString(Charsets.UTF_8)
-            } catch (_: Exception) {
-                data
-            }
-            ClearTextEncryptedDataKind(plaintext, result)
-        }
-        SignerType.NIP44_V3_DECRYPT -> {
-            val plaintext = try {
-                Base64.decode(result).toString(Charsets.UTF_8)
-            } catch (_: Exception) {
-                result
-            }
-            ClearTextEncryptedDataKind(plaintext, result)
-        }
+        SignerType.NIP44_V3_ENCRYPT -> ClearTextEncryptedDataKind(nip44v3WireToPlaintext(data), result)
+        SignerType.NIP44_V3_DECRYPT -> ClearTextEncryptedDataKind(nip44v3WireToPlaintext(result), result)
 
-        // The plaintext side is what the user reads: the data for an encrypt, the result for a decrypt.
-        else -> previewOf(if (type.name.contains("ENCRYPT")) data else result, data, result, account) { AmberLog.e("IntentUtils", it) }
+        else -> {
+            val plaintextSide = if (type.name.contains("ENCRYPT")) data else result
+            previewOf(plaintextSide, data, result, account) { AmberLog.e("IntentUtils", it) }
+        }
+    }
+
+    private fun nip44v3WireToPlaintext(base64Wire: String): String = try {
+        Base64.decode(base64Wire).toString(Charsets.UTF_8)
+    } catch (_: Exception) {
+        base64Wire
     }
 
     suspend fun getIntentData(
@@ -356,7 +348,7 @@ object IntentUtils {
         if (isNotNewRequest(intent)) {
             null
         } else {
-            val account = requestAccount(context, intent) ?: currentLoggedInAccount
+            val account = currentUserAccount(context, intent) ?: currentLoggedInAccount
             when {
                 intent.dataString?.startsWith("nostrconnect:") == true -> {
                     NostrConnectUtils.getIntentFromNostrConnect(intent, account, accountRepository, appScope)
@@ -377,23 +369,23 @@ object IntentUtils {
         null
     }
 
-    /**
-     * True when [intent] carries nothing to queue: no data, the empty request a
-     * client sends just to bring Amber up while a bunker request waits, or a
-     * request already queued. Gives the request an id first if it has none.
-     */
     private fun isNotNewRequest(intent: Intent): Boolean {
         if (intent.data == null) return true
-        if (intent.dataString == "nostrsigner:" && BunkerRequestUtils.getBunkerRequests().isNotEmpty()) return true
-        if (intent.extras?.getString("id").isNullOrEmpty()) {
-            intent.putExtra("id", UUID.randomUUID().toString())
-        }
-        val id = intent.extras?.getString("id") ?: ""
+        if (isWakeUpWhileBunkerRequestWaits(intent)) return true
+        val id = requestIdAssigningOne(intent)
         return intents.value.any { it.id == id }
     }
 
-    /** The stored account the `current_user` extra names, if any. */
-    private suspend fun requestAccount(context: Context, intent: Intent): Account? {
+    private fun isWakeUpWhileBunkerRequestWaits(intent: Intent): Boolean = intent.dataString == "nostrsigner:" && BunkerRequestUtils.getBunkerRequests().isNotEmpty()
+
+    private fun requestIdAssigningOne(intent: Intent): String {
+        if (intent.extras?.getString("id").isNullOrEmpty()) {
+            intent.putExtra("id", UUID.randomUUID().toString())
+        }
+        return intent.extras?.getString("id") ?: ""
+    }
+
+    private suspend fun currentUserAccount(context: Context, intent: Intent): Account? {
         val currentUser = intent.getStringExtra("current_user") ?: return null
         return AccountStorage.load(context, parsePubKey(currentUser))
     }
@@ -401,7 +393,7 @@ object IntentUtils {
     private fun reportParseError(context: Context, intent: Intent, packageName: String?, e: Exception) {
         AmberLog.e(Amber.TAG, "Error parsing intent: ${e.message}", e)
         emitInvalid(intent, packageName, "Error parsing intent: ${e.message}", e)
-        logParseError(context, e)
+        logParseErrorInEveryAccount(context, e)
     }
 
     fun getUnsignedEvent(
@@ -437,7 +429,6 @@ object IntentUtils {
     ) {
         val (intentData, packageName, event, value) = reply
         val (rememberType, kind, signPolicy, permissions, appName, shouldCloseApplication, deleteAfter, relay, decryptTypeScope) = approval
-        // A native app's grants and history are kept under its package name.
         val key = "$packageName"
         onLoading(true)
         appScope.launch {
@@ -477,9 +468,6 @@ object IntentUtils {
 
                 if (packageName != null) {
                     daos.permissionWriteDao.insertApplicationWithPermissions(application)
-                    // The calling app is visible to us now (mid-request); capture its
-                    // launcher icon + label so a first-ever connection populates them
-                    // immediately, not only on a later request.
                     persistNativeAppMetadata(context, account, packageName)
                     val content = IntentResponse.historyContent(intentData, accepted = true, event = event, value = value)
                     val entry = IntentResponse.historyEntry(intentData, key, kind, accepted = true, content = content)
@@ -506,7 +494,6 @@ object IntentUtils {
         null
     }
 
-    /** A connected app may always read the public key; answering get_public_key also sets whether Amber closes after its requests. */
     private fun rememberPublicKeyGrant(application: ApplicationWithPermissions, key: String, shouldCloseApplication: Boolean?) {
         shouldCloseApplication?.let { application.application.closeApplication = it }
         if (application.permissions.none { it.type == SignerType.GET_PUBLIC_KEY.toString() }) {
@@ -525,7 +512,6 @@ object IntentUtils {
         }
     }
 
-    /** Hands the result back: as the activity result to a native app, to a web app's callback URL, or else to the clipboard. */
     private suspend fun deliverResult(
         context: Context,
         packageName: String?,
@@ -552,15 +538,19 @@ object IntentUtils {
             val isSignature = intentData.returnType == ReturnType.SIGNATURE
             val result = if (isSignature) value else event
             val message = getStringBlocking(if (isSignature) Res.string.signature_copied_to_the_clipboard else Res.string.event_copied_to_the_clipboard)
+            val resultIsPlaintext = intentData.type in decryptSignerTypes
             withContext(Dispatchers.Main) {
-                // A decrypt result is the plaintext itself: hide it from
-                // clipboard previews and clear it, like the nsec.
-                copyToClipboard(result, intentData.type in decryptSignerTypes)
+                copyToClipboard(result, resultIsPlaintext)
                 Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
             }
         }
     }
 
+    /**
+     * Answers a rejected request. A web request (no calling package) shares the "null"
+     * key with every website: as on approval, nothing is remembered or saved for it, but
+     * it is still answered and its sheet closed.
+     */
     fun sendRejection(
         key: String,
         account: Account,
@@ -574,9 +564,6 @@ object IntentUtils {
         decryptTypeScope: DecryptTypeScope = DecryptTypeScope.ALL,
     ) {
         appScope.launch(Dispatchers.IO) {
-            // A web request (no calling package) shares the "null" key with every website:
-            // as on approval, nothing is remembered or saved for it, but it is still
-            // answered and its sheet closed.
             val closeApplication = if (key == "null") {
                 true
             } else {
@@ -622,8 +609,7 @@ object IntentUtils {
         }
     }
 
-    // Records a failed intent parse in every account's log.
-    private fun logParseError(context: Context, e: Exception) {
+    private fun logParseErrorInEveryAccount(context: Context, e: Exception) {
         appScope.launch {
             SavedAccounts.all(context).forEach {
                 accountRepository.getLogDatabase(it.npub).dao().insertLogIfEnabled(
@@ -644,9 +630,9 @@ object IntentUtils {
 data class IntentReply(
     val intentData: IntentData,
     val packageName: String?,
-    // The signed event (or result) for the history and the `event` extra.
+    /** The signed event (or result) for the history and the `event` extra. */
     val event: String,
-    // The `result` extra: a signature, a public key, a ciphertext or plaintext.
+    /** The `result` extra: a signature, a public key, a ciphertext or plaintext. */
     val value: String,
 )
 
@@ -656,7 +642,7 @@ data class IntentReply(
  */
 data class IntentApproval(
     val rememberType: RememberType,
-    // The event kind a remembered sign grant covers.
+    /** The event kind a remembered sign grant covers. */
     val kind: Int? = null,
     val signPolicy: Int? = null,
     val permissions: List<Permission>? = null,

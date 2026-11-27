@@ -55,11 +55,8 @@ import com.vitorpamplona.quartz.nip46RemoteSigner.NostrConnectEvent
 import com.vitorpamplona.quartz.utils.TimeUtils
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
-import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -188,9 +185,6 @@ data class PendingBunkerRequest(
 
 private const val BUNKER_SUB_KEY = "bunker"
 private const val MAX_REMEMBERED_EVENT_IDS = 512
-private const val BACKOFF_RESET_AFTER_QUIET_MS = 60_000L
-private val INITIAL_RECONNECT_DELAY = 5.seconds
-private val MAX_RECONNECT_DELAY = 60.seconds
 
 /**
  * Desktop port of `NotificationSubscription` + `EventNotificationConsumer` +
@@ -211,10 +205,6 @@ class BunkerEngine(
 
     private val subIds = ConcurrentHashMap<String, String>()
     private val filterMutex = Mutex()
-
-    private var reconnectJob: Job? = null
-    private var reconnectDelay = INITIAL_RECONNECT_DELAY
-    private var lastDisconnectTime = 0L
 
     @Volatile
     private var connectionByPubKey: Map<String, Pair<String, String>> = emptyMap()
@@ -248,19 +238,13 @@ class BunkerEngine(
             return super.onCannotConnect(relay, errorMessage)
         }
 
-        scheduleReconnect(relay.url)
+        recordFailureAndDropDeadRelay(relay.url)
         return super.onCannotConnect(relay, errorMessage)
     }
 
     override fun onDisconnected(relay: IRelayClient) {
         AmberLogger.d("BunkerEngine", "onDisconnected: ${relay.url.url}")
         logAll(relay, "onDisconnected", "Disconnected")
-
-        if (System.currentTimeMillis() - RelayConnections.intentionalDisconnectTime < 2_000) {
-            return super.onDisconnected(relay)
-        }
-
-        scheduleReconnect(relay.url)
         return super.onDisconnected(relay)
     }
 
@@ -271,27 +255,10 @@ class BunkerEngine(
         return super.onConnected(relay, pingMillis, compressed)
     }
 
-    private fun scheduleReconnect(relay: NormalizedRelayUrl) {
+    private fun recordFailureAndDropDeadRelay(relay: NormalizedRelayUrl) {
         if (!RelayHealthTracker.recordFailure(relay)) {
-            AmberLogger.d("BunkerEngine", "Relay ${relay.url} marked dead; skipping reconnect")
-            return
-        }
-        reconnectWithBackoff()
-    }
-
-    private fun reconnectWithBackoff() {
-        val now = System.currentTimeMillis()
-        if (now - lastDisconnectTime > BACKOFF_RESET_AFTER_QUIET_MS) {
-            reconnectDelay = INITIAL_RECONNECT_DELAY
-        }
-        lastDisconnectTime = now
-
-        reconnectJob?.cancel()
-        reconnectJob = scope.launch {
-            AmberLogger.d("BunkerEngine", "Reconnecting in ${reconnectDelay.inWholeSeconds}s...")
-            delay(reconnectDelay)
-            reconnectDelay = (reconnectDelay * 2).coerceAtMost(MAX_RECONNECT_DELAY)
-            RelayConnections.reconnect()
+            AmberLogger.d("BunkerEngine", "Relay ${relay.url} marked dead; dropping from subscriptions")
+            scope.launch { updateFilter() }
         }
     }
 

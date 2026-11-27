@@ -20,6 +20,9 @@
  */
 package com.greenart7c3.nostrsigner.okhttp
 
+import com.vitorpamplona.quartz.nip01Core.relay.client.listeners.RelayConnectionListener
+import com.vitorpamplona.quartz.nip01Core.relay.client.single.IRelayClient
+import com.vitorpamplona.quartz.nip01Core.relay.client.single.basic.BasicRelayClient
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
 import com.vitorpamplona.quartz.nip01Core.relay.sockets.WebSocketListener
 import java.io.InputStream
@@ -33,6 +36,8 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.concurrent.thread
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.isActive
 import okhttp3.OkHttpClient
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -321,6 +326,60 @@ class OkHttpWebSocketCloseHandshakeTest {
             assertTrue(socket.needsReconnect())
             assertEquals("nothing was open, so nothing to report", 0, recorder.closedCount.get())
             assertTrue("an ended session must not dial", recorder.opened.count == 1L && !relay.awaitClientBriefly())
+
+            client.dispatcher.executorService.shutdown()
+        }
+    }
+
+    @OptIn(DelicateCoroutinesApi::class)
+    @Test
+    fun `disconnect closes incomingMessages and cancels the listener scope`() {
+        TinyRelay().use { relay ->
+            val recorder = Recorder()
+            val client = OkHttpClient()
+            val socket = OkHttpWebSocket(relay.url, { client }, recorder)
+
+            socket.connect()
+            assertTrue("relay never saw the client", relay.awaitClient())
+            assertTrue("no onOpen", recorder.opened.await(5, TimeUnit.SECONDS))
+
+            val listenerField = OkHttpWebSocket::class.java.getDeclaredField("activeListener").apply { isAccessible = true }
+            val listener = listenerField.get(socket) as OkHttpWebSocket.OkHttpWebsocketListener
+
+            socket.disconnect()
+
+            assertTrue(listener.incomingMessages.isClosedForSend)
+            assertTrue(!listener.job.isActive)
+            assertTrue(!listener.scope.isActive)
+
+            client.dispatcher.executorService.shutdown()
+        }
+    }
+
+    @Test
+    fun `canConnectRelay false causes BasicRelayClient to skip dialing`() {
+        TinyRelay().use { relay ->
+            val client = OkHttpClient()
+            val connectingCalls = AtomicInteger(0)
+            val failureCalls = AtomicInteger(0)
+            val relayListener = object : RelayConnectionListener {
+                override fun onConnecting(relay: IRelayClient) {
+                    connectingCalls.incrementAndGet()
+                }
+
+                override fun onCannotConnect(relay: IRelayClient, errorMessage: String) {
+                    failureCalls.incrementAndGet()
+                }
+            }
+            val builder = OkHttpWebSocket.Builder({ client }, canConnectRelay = { false })
+            val basicClient = BasicRelayClient(relay.url, builder, relayListener)
+
+            basicClient.connect()
+
+            assertTrue(!relay.awaitClientBriefly())
+            assertTrue(!basicClient.isConnectionStarted())
+            assertEquals(0, connectingCalls.get())
+            assertEquals(0, failureCalls.get())
 
             client.dispatcher.executorService.shutdown()
         }

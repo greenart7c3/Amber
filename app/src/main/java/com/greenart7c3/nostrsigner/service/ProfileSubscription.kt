@@ -188,6 +188,7 @@ class ProfileSubscription(
         val relayListFilter = createRelayListFilter(account)
         timeoutJobs.remove(subId)?.cancel()
         relaysPerSubId[subId] = ConcurrentHashMap.newKeySet<NormalizedRelayUrl>().apply { addAll(relayListFilter.keys) }
+        relayClient.ensureConnected()
         client.subscribe(subId, relayListFilter)
         timeoutJobs[subId] = scope.launch {
             delay(EOSE_TIMEOUT)
@@ -203,6 +204,7 @@ class ProfileSubscription(
         val profileFilter = createProfileFilter(account)
         timeoutJobs.remove(subId)?.cancel()
         relaysPerSubId[subId] = ConcurrentHashMap.newKeySet<NormalizedRelayUrl>().apply { addAll(profileFilter.keys) }
+        relayClient.ensureConnected()
         client.subscribe(subId, profileFilter)
         timeoutJobs[subId] = scope.launch {
             delay(EOSE_TIMEOUT)

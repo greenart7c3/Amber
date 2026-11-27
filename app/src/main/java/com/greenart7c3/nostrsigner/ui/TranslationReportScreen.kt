@@ -230,27 +230,30 @@ private suspend fun sendReportAsDm(
     onFinish: () -> Unit,
 ) {
     val client = NostrClient(relayClient.factory, appScope)
-    client.connect()
+    try {
+        client.connect()
 
-    val template = ChatMessageEvent.build(
-        msg = report,
-        to = listOf(PTag(Amber.DEVELOPER_HEX_KEY)),
-        createdAt = System.currentTimeMillis() / 1000,
-    ) {
-        val tenDaysInSeconds = 10L * 86_400
-        expiration(TimeUtils.now() + tenDaysInSeconds)
+        val template = ChatMessageEvent.build(
+            msg = report,
+            to = listOf(PTag(Amber.DEVELOPER_HEX_KEY)),
+            createdAt = System.currentTimeMillis() / 1000,
+        ) {
+            val tenDaysInSeconds = 10L * 86_400
+            expiration(TimeUtils.now() + tenDaysInSeconds)
+        }
+        val signedEvents = account.createMessageNIP17(template)
+        signedEvents.wraps.forEach { wrap ->
+            client.publish(
+                event = wrap,
+                relayList = setOf(
+                    NormalizedRelayUrl(url = "wss://inbox.nostr.wine"),
+                    NormalizedRelayUrl(url = "wss://nostr.land"),
+                ),
+            )
+        }
+        onFinish()
+        delay(10.seconds)
+    } finally {
+        client.close()
     }
-    val signedEvents = account.createMessageNIP17(template)
-    signedEvents.wraps.forEach { wrap ->
-        client.publish(
-            event = wrap,
-            relayList = setOf(
-                NormalizedRelayUrl(url = "wss://inbox.nostr.wine"),
-                NormalizedRelayUrl(url = "wss://nostr.land"),
-            ),
-        )
-    }
-    onFinish()
-    delay(10.seconds)
-    client.disconnect()
 }

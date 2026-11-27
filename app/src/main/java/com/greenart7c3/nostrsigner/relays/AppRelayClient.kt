@@ -20,11 +20,13 @@ import com.greenart7c3.nostrsigner.service.TorManager
 import com.greenart7c3.nostrsigner.ui.ToastManager
 import com.vitorpamplona.quartz.nip01Core.relay.client.NostrClient
 import com.vitorpamplona.quartz.nip01Core.relay.client.stats.RelayStats
+import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
 import java.net.InetSocketAddress
 import java.net.Socket
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 /**
  * The app's relay connections: the Quartz client, how it dials (Tor or not), its status, and
@@ -38,25 +40,28 @@ import kotlinx.coroutines.delay
 class AppRelayClient(
     appContext: Context,
     private val settingsStore: SettingsStore,
-    isSettingsLoaded: () -> Boolean,
-    scope: CoroutineScope,
+    private val isSettingsLoaded: () -> Boolean,
+    private val scope: CoroutineScope,
     private val updateSubscriptions: suspend () -> Unit,
     private val closeSubscriptions: () -> Unit,
 ) : RelayClient {
     @Suppress("NoComments")
-    override val factory = OkHttpWebSocket.Builder { url ->
-        if (PrivateAddress.isPrivate(url.url)) return@Builder HttpClientManager.getLocalHttpClient()
-        val useProxy = when {
-            // Settings load asynchronously; until they land, torMode's default (DISABLED)
-            // is a guess, not a decision. Route through the proxy client — preset from
-            // plain prefs in onCreate — so a BUILTIN/ORBOT user's pre-Tor dials (network
-            // callbacks, profile fetches) hit the fail-closed placeholder instead of the
-            // clearnet.
-            !isSettingsLoaded() -> true
-            else -> settingsStore.settings.torMode != TorMode.DISABLED
-        }
-        HttpClientManager.getHttpClient(useProxy)
-    }
+    override val factory = OkHttpWebSocket.Builder(
+        httpClient = { url ->
+            if (PrivateAddress.isPrivate(url.url)) return@Builder HttpClientManager.getLocalHttpClient()
+            val useProxy = when {
+                // Settings load asynchronously; until they land, torMode's default (DISABLED)
+                // is a guess, not a decision. Route through the proxy client — preset from
+                // plain prefs in onCreate — so a BUILTIN/ORBOT user's pre-Tor dials (network
+                // callbacks, profile fetches) hit the fail-closed placeholder instead of the
+                // clearnet.
+                !isSettingsLoaded() -> true
+                else -> settingsStore.settings.torMode != TorMode.DISABLED
+            }
+            HttpClientManager.getHttpClient(useProxy)
+        },
+        canConnectRelay = ::canDialRelay,
+    )
 
     override val client: NostrClient = NostrClient(factory, scope)
 
@@ -65,6 +70,40 @@ class AppRelayClient(
     override val stats = AmberRelayStats(client, appContext, settingsStore = settingsStore, relayStats = relayStats, scope = scope)
 
     @Volatile override var intentionalDisconnectTime = 0L
+
+    init {
+        disconnectWhenIdleOnEmptyRelays()
+    }
+
+    private fun canDialRelay(url: NormalizedRelayUrl): Boolean = when {
+        PrivateAddress.isPrivate(url.url) -> true
+        !isSettingsLoaded() -> false
+        settingsStore.settings.torMode == TorMode.BUILTIN -> TorManager.isRunning.value && TorManager.socksPort.value > 0
+        else -> true
+    }
+
+    private fun hasActiveSubscriptions(): Boolean = client.registrySizes().let { it.liveRequests > 0 || it.liveCounts > 0 }
+
+    private fun disconnectWhenIdleOnEmptyRelays() {
+        scope.launch {
+            var hadRelays = false
+            client.availableRelaysFlow().collect { relays ->
+                if (relays.isNotEmpty()) {
+                    hadRelays = true
+                } else if (hadRelays) {
+                    hadRelays = false
+                    if (client.isActive() && !hasActiveSubscriptions()) {
+                        disconnectIntentionally()
+                    }
+                }
+            }
+        }
+    }
+
+    override fun ensureConnected() {
+        if (BuildFlavorChecker.isOfflineFlavor() || settingsStore.settings.killSwitch.value) return
+        if (!client.isActive()) client.connect()
+    }
 
     override fun isSocksProxyAlive(proxyHost: String, proxyPort: Int): Boolean {
         if (settingsStore.settings.torMode == TorMode.BUILTIN) {
@@ -120,6 +159,8 @@ class AppRelayClient(
             return
         }
         AmberLog.d(Amber.TAG, "reconnecting relays")
+        RelayHealthTracker.reset()
+        client.resetBackoff()
         val wasActive = client.isActive()
         // Always call connect() so that failed relays (socket == null) are retried
         // directly, bypassing BasicRelayClient's internal backoff delay. For relays
@@ -170,6 +211,12 @@ class AppRelayClient(
         val wasActive = client.isActive()
         if (!BuildFlavorChecker.isOfflineFlavor()) {
             updateSubscriptions()
+        }
+        if (!hasActiveSubscriptions()) {
+            if (wasActive) {
+                disconnectIntentionally()
+            }
+            return
         }
         AmberLog.d(Amber.TAG, "checkForNewRelaysAndUpdateAllFilters wasActive: $wasActive")
         if (!wasActive) {

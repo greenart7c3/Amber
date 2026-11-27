@@ -46,6 +46,12 @@ object AmberDesktop {
     @Suppress("NoComments")
     private val socketBuilder = object : WebsocketBuilder {
         override fun build(url: NormalizedRelayUrl, out: WebSocketListener) = OkHttpWebSocket(url, RelayHttpClients::clientFor, out)
+
+        override fun canConnect(url: NormalizedRelayUrl): Boolean = when {
+            LocalRelays.isLocal(url) -> true
+            settings.torMode == TorMode.BUILTIN -> TorManager.isRunning.value && TorManager.socksPort.value > 0
+            else -> true
+        }
     }
 
     val client: NostrClient by lazy { NostrClient(socketBuilder, applicationIOScope) }
@@ -320,6 +326,7 @@ object RelayConnections {
      */
     fun reconnect() {
         if (PassphraseLock.isLocked()) return
+        client.resetBackoff()
         val wasActive = client.isActive()
         client.connect()
         client.reconnect(wasActive)

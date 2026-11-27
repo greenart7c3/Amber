@@ -34,8 +34,10 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.concurrent.thread
+import kotlinx.coroutines.isActive
 import okhttp3.OkHttpClient
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -335,6 +337,31 @@ class OkHttpWebSocketTest {
             assertTrue(socket.needsReconnect())
             assertEquals("nothing was open, so nothing to report", 0, recorder.closedCount.get())
             assertTrue("an ended session must not dial", recorder.opened.count == 1L && !relay.awaitClientBriefly())
+
+            client.dispatcher.executorService.shutdown()
+        }
+    }
+
+    @Test
+    fun `disconnect closes the message buffer and cancels the listener scope`() {
+        TinyRelay().use { relay ->
+            val recorder = Recorder()
+            val client = OkHttpClient()
+            val socket = OkHttpWebSocket(relay.url, { client }, recorder)
+
+            socket.connect()
+            assertTrue("relay never saw the client", relay.awaitClient())
+            assertTrue("no onOpen", recorder.opened.await(5, TimeUnit.SECONDS))
+
+            val listenerScope = checkNotNull(socket.activeListenerScope)
+            val messageBuffer = checkNotNull(socket.activeMessageBuffer)
+            assertTrue(listenerScope.isActive)
+            assertFalse(messageBuffer.isClosed())
+
+            socket.disconnect()
+
+            assertFalse(listenerScope.isActive)
+            assertTrue(messageBuffer.isClosed())
 
             client.dispatcher.executorService.shutdown()
         }

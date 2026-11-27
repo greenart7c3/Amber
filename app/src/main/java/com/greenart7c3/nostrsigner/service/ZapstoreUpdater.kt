@@ -145,6 +145,7 @@ class ZapstoreUpdater(
         phase = CheckPhase.RELEASES
         pendingReleaseEose.clear()
         pendingReleaseEose.addAll(updateRelays)
+        relayClient.ensureConnected()
         client.subscribe(releaseSubId, updateRelays.associateWith { listOf(releaseFilter) })
         startTimeout()
     }
@@ -262,6 +263,7 @@ class ZapstoreUpdater(
         phase = CheckPhase.FILES
         pendingFileEose.clear()
         pendingFileEose.addAll(updateRelays)
+        relayClient.ensureConnected()
         client.subscribe(fileSubId, updateRelays.associateWith { listOf(fileFilter) })
         startTimeout()
     }

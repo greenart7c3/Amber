@@ -272,6 +272,7 @@ object ApplicationBackup {
                 authors = listOf(account.hexKey),
                 limit = 1,
             )
+            if (!client.isActive()) client.connect()
             client.subscribe(subId, discoveryRelays.associateWith { listOf(filter) })
             delay(INBOX_FETCH_TIMEOUT)
         } catch (e: Exception) {
@@ -332,6 +333,7 @@ object ApplicationBackup {
             AmberLog.w(Amber.TAG, "ApplicationBackup: no relays resolved for backup")
             return false
         }
+        relayClient.ensureConnected()
         val ok = relayClient.client.publishAndConfirm(event, relays, untilFirstAccept = true)
         AmberLog.d(Amber.TAG, "ApplicationBackup: publish for $npub result=$ok relays=${relays.size}")
         return ok
@@ -364,6 +366,7 @@ object ApplicationBackup {
                 tags = mapOf("d" to listOf(BACKUP_D_TAG)),
                 limit = 1,
             )
+            if (!client.isActive()) client.connect()
             client.subscribe(subId, relays.associateWith { listOf(filter) })
             delay(BACKUP_FETCH_TIMEOUT)
         } catch (e: Exception) {

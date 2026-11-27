@@ -12,8 +12,10 @@ import com.greenart7c3.nostrsigner.commonsui.Permission
 import com.greenart7c3.nostrsigner.commonsui.localizedBlocking
 import com.greenart7c3.nostrsigner.models.encryptDecryptHistoryTypeNames
 import com.vitorpamplona.quartz.utils.TimeUtils
+import java.util.concurrent.ConcurrentHashMap
 
 private const val MAX_CONTENT_LENGTH = 500
+private const val LAST_USED_THROTTLE_SECONDS = 60L
 
 @Dao
 abstract class HistoryDao(private val database: HistoryDatabase) {
@@ -55,7 +57,7 @@ abstract class HistoryDao(private val database: HistoryDatabase) {
             npub?.let {
                 val lastUsed = entities.maxByOrNull { it.time }?.time ?: TimeUtils.now()
                 val pkKey = entities.firstOrNull()?.pkKey
-                if (pkKey != null) {
+                if (pkKey != null && shouldWriteLastUsed("$npub|$pkKey", lastUsed)) {
                     database.accountRepository.daos(npub).applicationWriteDao.updateLastUsed(pkKey, lastUsed)
                 }
             }
@@ -67,5 +69,22 @@ abstract class HistoryDao(private val database: HistoryDatabase) {
     private fun contentToStore(entity: HistoryEntity): String {
         val isCiphertextKeptWholeForOnDemandDecryption = entity.type in encryptDecryptHistoryTypeNames
         return if (!isCiphertextKeptWholeForOnDemandDecryption && entity.content.length > MAX_CONTENT_LENGTH) entity.content.take(MAX_CONTENT_LENGTH) else entity.content
+    }
+
+    companion object {
+        private val lastUsedWrittenAt = ConcurrentHashMap<String, Long>()
+
+        internal fun shouldWriteLastUsed(cacheKey: String, nowSeconds: Long): Boolean {
+            var shouldWrite = false
+            lastUsedWrittenAt.compute(cacheKey) { _, previous ->
+                if (previous == null || nowSeconds - previous >= LAST_USED_THROTTLE_SECONDS) {
+                    shouldWrite = true
+                    nowSeconds
+                } else {
+                    previous
+                }
+            }
+            return shouldWrite
+        }
     }
 }

@@ -70,6 +70,9 @@ class OkHttpWebSocket(
     @Volatile
     private var dialing = false
 
+    @Volatile
+    private var activeListener: OkHttpWebsocketListener? = null
+
     fun buildRequest() = Request.Builder().url(url.url).build()
 
     override fun needsReconnect(): Boolean {
@@ -102,12 +105,16 @@ class OkHttpWebSocket(
         try {
             val client = httpClient(url)
             usingOkHttp = client
-            val dialed = client.newWebSocket(buildRequest(), OkHttpWebsocketListener(out))
+            val listener = OkHttpWebsocketListener(out)
+            activeListener = listener
+            val dialed = client.newWebSocket(buildRequest(), listener)
             socket = dialed
             // A disconnect() that landed while dialing ended the session but had no socket to
             // cancel yet: cancel it now, or it opens and lives on beside the relay client's next one.
             if (ended.get()) {
                 socket = null
+                activeListener = null
+                listener.closeResources()
                 dialed.cancel()
             }
         } finally {
@@ -135,12 +142,17 @@ class OkHttpWebSocket(
                 }
             }
 
+        fun closeResources() {
+            job.cancel()
+            scope.cancel()
+            incomingMessages.close()
+        }
+
         private fun claimSessionEnd(): Boolean {
             if (!ended.compareAndSet(false, true)) return false
             socket = null
-            incomingMessages.close()
-            job.cancel()
-            scope.cancel()
+            activeListener = null
+            closeResources()
             return true
         }
 
@@ -213,11 +225,14 @@ class OkHttpWebSocket(
 
     class Builder(
         val httpClient: (NormalizedRelayUrl) -> OkHttpClient,
+        val canConnectRelay: (NormalizedRelayUrl) -> Boolean = { true },
     ) : WebsocketBuilder {
         override fun build(
             url: NormalizedRelayUrl,
             out: WebSocketListener,
         ) = OkHttpWebSocket(url, httpClient, out)
+
+        override fun canConnect(url: NormalizedRelayUrl): Boolean = canConnectRelay(url)
     }
 
     @Suppress("NoComments")
@@ -230,6 +245,9 @@ class OkHttpWebSocket(
         // (connect() cancels it once OkHttp returns it), and its callbacks must find the session
         // ended. Nothing was open, so there is nothing to report.
         if (!ended.compareAndSet(false, true)) return
+        val closingListener = activeListener
+        activeListener = null
+        closingListener?.closeResources()
         val closing = socket ?: return
         socket = null
         closing.cancel()

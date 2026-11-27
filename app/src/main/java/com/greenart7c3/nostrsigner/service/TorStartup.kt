@@ -10,6 +10,7 @@ import com.greenart7c3.nostrsigner.models.TorMode
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
@@ -32,10 +33,9 @@ class TorStartup(
     /** Starts the built-in Tor when the user chose it; false when it could not start, so the relays must not dial yet. */
     @Suppress("NoComments")
     suspend fun start(): Boolean {
+        reconnectRelaysWheneverTorComesBack()
         if (!usesBuiltInTor) return true
         TorManager.start(appContext, scope)
-
-        reconnectRelaysWheneverTorComesBack()
 
         // Bounded: when Tor cannot bootstrap (airplane mode, censored
         // network) an unbounded stop/start cycle restarts the whole
@@ -75,7 +75,9 @@ class TorStartup(
             }
             attempt++
             withTimeoutOrNull(BOOTSTRAP_TIMEOUT_PER_ATTEMPT) {
-                TorManager.isRunning.first { it }
+                combine(TorManager.isRunning, TorManager.status) { running, status ->
+                    running || status is TorStatus.Failed
+                }.first { it }
             }
         }
         return true
@@ -89,8 +91,9 @@ class TorStartup(
         scope.launch {
             var wasRunning = TorManager.isRunning.value
             TorManager.isRunning.collect { running ->
-                if (running && !wasRunning) {
+                if (running && !wasRunning && usesBuiltInTor) {
                     AmberLog.d(Amber.TAG, "Built-in Tor is up; refreshing relay connections")
+                    relayClient.client.resetBackoff()
                     relayClient.checkForNewRelaysAndUpdateAllFilters(true)
                 }
                 wasRunning = running

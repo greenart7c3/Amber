@@ -61,6 +61,7 @@ class FeedbackSender(
             template,
         )
 
+        relayClient.ensureConnected()
         return client.publishAndConfirm(event, relays, publishTimeoutSeconds, untilFirstAccept = true)
     }
 
@@ -79,6 +80,7 @@ class FeedbackSender(
             .takeIf { it.isNotEmpty() }
             ?: setOfNotNull(RelayUrlNormalizer.normalizeOrNull(FEEDBACK_FALLBACK_RELAY))
 
+        relayClient.ensureConnected()
         val event = client.fetchFirst(
             filters = discoveryRelays.associateWith {
                 listOf(
@@ -110,6 +112,7 @@ class FeedbackSender(
             .takeIf { it.isNotEmpty() }
             ?: setOfNotNull(RelayUrlNormalizer.normalizeOrNull(FEEDBACK_FALLBACK_RELAY))
 
+        relayClient.ensureConnected()
         val event = client.fetchFirst(
             filters = discoveryRelays.associateWith {
                 listOf(

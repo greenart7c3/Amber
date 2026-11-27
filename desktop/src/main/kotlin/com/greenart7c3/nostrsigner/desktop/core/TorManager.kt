@@ -19,6 +19,7 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withTimeoutOrNull
 
 sealed class TorStatus {
     data object Stopped : TorStatus()
@@ -38,6 +39,7 @@ sealed class TorStatus {
 object TorManager {
     private const val TAG = "TorManager"
     private const val BOOTSTRAP_POLL_MS = 500L
+    private const val BOOTSTRAP_TIMEOUT_MS = 120_000L
     private const val SOCKS_BIND_ATTEMPTS = 5
     private const val FAIL_CLOSED_SOCKS_PORT = 0
 
@@ -77,7 +79,6 @@ object TorManager {
             startStopLock.withLock {
                 AmberLogger.i(TAG, "Restarting built-in Tor")
                 stopLocked()
-                if (nativeLibraryLoaded) ArtiNative.destroy()
                 startLocked(scope)
             }
         }
@@ -130,22 +131,40 @@ object TorManager {
     @Suppress("NoComments")
     private suspend fun awaitBootstrap() {
         try {
-            while (currentCoroutineContext().isActive) {
-                if (ArtiNative.isBootstrapped() == 1) {
-                    AmberLogger.i(TAG, "Built-in Tor bootstrapped")
-                    _isRunning.value = true
-                    updateStatus(TorStatus.Connected)
-                    return
+            val bootstrapped = withTimeoutOrNull(BOOTSTRAP_TIMEOUT_MS.milliseconds) {
+                while (currentCoroutineContext().isActive) {
+                    if (ArtiNative.isBootstrapped() == 1) {
+                        return@withTimeoutOrNull true
+                    }
+                    val permille = ArtiNative.bootstrapProgressPermille()
+                    updateStatus(TorStatus.Connecting((permille / 10).coerceIn(0, 99)))
+                    delay(BOOTSTRAP_POLL_MS.milliseconds)
                 }
-                val permille = ArtiNative.bootstrapProgressPermille()
-                updateStatus(TorStatus.Connecting((permille / 10).coerceIn(0, 99)))
-                delay(BOOTSTRAP_POLL_MS.milliseconds)
+                false
+            } ?: false
+            if (bootstrapped) {
+                AmberLogger.i(TAG, "Built-in Tor bootstrapped")
+                _isRunning.value = true
+                updateStatus(TorStatus.Connected)
+            } else if (currentCoroutineContext().isActive) {
+                AmberLogger.e(TAG, "Built-in Tor bootstrap timed out")
+                failCurrentBootstrap("Tor bootstrap timed out")
             }
         } catch (e: CancellationException) {
             throw e
         } catch (e: Throwable) {
             AmberLogger.e(TAG, "Built-in Tor bootstrap check failed", e)
-            fail(e.message)
+            failCurrentBootstrap(e.message)
+        }
+    }
+
+    private suspend fun failCurrentBootstrap(message: String?) {
+        val currentJob = currentCoroutineContext()[Job]
+        startStopLock.withLock {
+            if (bootstrapWatcher == currentJob) {
+                bootstrapWatcher = null
+                fail(message)
+            }
         }
     }
 
@@ -170,6 +189,7 @@ object TorManager {
         _isRunning.value = false
         _socksPort.value = FAIL_CLOSED_SOCKS_PORT
         TorSocksAuthenticator.clear()
+        destroyNativeClient()
         updateStatus(TorStatus.Failed(message))
     }
 
@@ -180,12 +200,16 @@ object TorManager {
         _socksPort.value = FAIL_CLOSED_SOCKS_PORT
         TorSocksAuthenticator.clear()
         updateStatus(TorStatus.Stopped)
+        destroyNativeClient()
+        AmberLogger.i(TAG, "Built-in Tor stopped")
+    }
+
+    private fun destroyNativeClient() {
         if (!nativeLibraryLoaded) return
         try {
-            ArtiNative.stopSocksProxy()
-            AmberLogger.i(TAG, "Built-in Tor stopped")
+            ArtiNative.destroy()
         } catch (e: Throwable) {
-            AmberLogger.e(TAG, "Error stopping built-in Tor", e)
+            AmberLogger.e(TAG, "Error destroying built-in Tor", e)
         }
     }
 }

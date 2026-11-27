@@ -7,6 +7,7 @@ import android.content.Intent
 import android.net.Uri
 import android.provider.Browser
 import android.widget.Toast
+import androidx.collection.LruCache
 import androidx.core.net.toUri
 import com.greenart7c3.nostrsigner.AccountStorage
 import com.greenart7c3.nostrsigner.Amber
@@ -78,6 +79,12 @@ object IntentUtils {
     private val _intents = MutableStateFlow<ImmutableList<IntentData>>(persistentListOf())
     val intents = _intents.asStateFlow()
 
+    private val capturedNativeAppMetadata = LruCache<String, Boolean>(256)
+
+    internal fun clearNativeAppMetadataCache() {
+        capturedNativeAppMetadata.evictAll()
+    }
+
     /**
      * Captures a native (intent/ContentProvider) app's launcher icon and label
      * onto its saved [com.greenart7c3.nostrsigner.database.ApplicationEntity]
@@ -95,9 +102,14 @@ object IntentUtils {
         packageName: String?,
     ) {
         if (packageName.isNullOrBlank()) return
+        val cacheKey = "${account.npub}|$packageName"
+        if (capturedNativeAppMetadata[cacheKey] == true) return
         val daos = accountRepository.daos(account.npub)
         val saved = daos.applicationDao.getByKey(packageName)?.application ?: return
-        if (saved.name.isNotBlank() && saved.icon.isNotBlank()) return
+        if (saved.name.isNotBlank() && saved.icon.isNotBlank()) {
+            capturedNativeAppMetadata.put(cacheKey, true)
+            return
+        }
 
         val newIcon = saved.icon.ifBlank {
             AppIconStore.resolveIconPath(context, packageName) ?: ""
@@ -109,8 +121,12 @@ object IntentUtils {
             }.getOrNull().orEmpty()
         }
 
+        val finalName = newName.ifBlank { saved.name }
+        if (finalName.isNotBlank() && newIcon.isNotBlank()) {
+            capturedNativeAppMetadata.put(cacheKey, true)
+        }
         if (newName == saved.name && newIcon == saved.icon) return
-        daos.applicationWriteDao.updateNameAndIcon(packageName, newName.ifBlank { saved.name }, newIcon)
+        daos.applicationWriteDao.updateNameAndIcon(packageName, finalName, newIcon)
     }
 
     data class InvalidIntentInfo(

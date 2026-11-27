@@ -4,12 +4,10 @@ import android.app.NotificationManager
 import android.content.Context
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.AmberLog
-import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.SavedAccounts
 import com.greenart7c3.nostrsigner.common.relays.RelayHealthTracker
 import com.greenart7c3.nostrsigner.data.AccountRepository
 import com.greenart7c3.nostrsigner.data.RelayClient
-import com.greenart7c3.nostrsigner.data.SettingsStore
 import com.greenart7c3.nostrsigner.database.LogEntity
 import com.greenart7c3.nostrsigner.service.NotificationUtils.sendErrorNotification
 import com.greenart7c3.nostrsigner.ui.ToastManager
@@ -21,10 +19,7 @@ import com.vitorpamplona.quartz.nip01Core.relay.commands.toRelay.Command
 import com.vitorpamplona.quartz.nip01Core.relay.commands.toRelay.EventCmd
 import com.vitorpamplona.quartz.nip01Core.relay.commands.toRelay.ReqCmd
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
-import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 object AmberListenerSingleton {
@@ -55,55 +50,15 @@ class NostrClientLoggerListener(
     val context: Context,
     val stats: AmberRelayStats,
     val scope: CoroutineScope,
-    private val settingsStore: SettingsStore,
     private val relayClient: RelayClient,
     private val accountRepository: AccountRepository,
+    private val onRelayMarkedDead: suspend () -> Unit = {},
 ) : RelayConnectionListener {
-    private var reconnectJob: Job? = null
-    private var reconnectDelay = 5.seconds
-    private var lastDisconnectTime = 0L
-
-    // Counts the failure against the relay and only schedules a reconnect while it
-    // is still worth retrying. Once a relay is dead, RelayHealthTracker also makes
-    // NotificationSubscription.updateFilter drop it from the subscription relay
-    // set, so Quartz stops opening sockets to it on every refresh. The streak resets on a
-    // successful connection (onConnected), a network change / manual reconnect, or
-    // after RelayHealthTracker's cooldown.
-    //
-    // Only failed dials count (onCannotConnect). Quartz reports every failed dial as
-    // onCannotConnect followed by onDisconnected, so counting both halved the real
-    // threshold, and a plain server-side close is not a connection failure.
-    @Suppress("NoComments")
-    private fun recordFailureAndScheduleReconnect(relay: NormalizedRelayUrl) {
+    private fun recordFailureAndDropDeadRelay(relay: NormalizedRelayUrl) {
         if (!RelayHealthTracker.recordFailure(relay)) {
-            AmberLog.d(Amber.TAG, "Relay ${relay.url} marked dead; skipping reconnect")
-            return
-        }
-        reconnectWithBackoff()
-    }
-
-    private fun scheduleReconnect(relay: NormalizedRelayUrl) {
-        if (RelayHealthTracker.isDead(relay)) {
-            AmberLog.d(Amber.TAG, "Relay ${relay.url} is dead; skipping reconnect")
-            return
-        }
-        reconnectWithBackoff()
-    }
-
-    private fun reconnectWithBackoff() {
-        val now = System.currentTimeMillis()
-        if (now - lastDisconnectTime > 60_000) {
-            reconnectDelay = 5.seconds
-        }
-        lastDisconnectTime = now
-
-        reconnectJob?.cancel()
-        reconnectJob = scope.launch {
-            AmberLog.d(Amber.TAG, "Reconnecting in ${reconnectDelay.inWholeSeconds}s...")
-            delay(reconnectDelay)
-            reconnectDelay = (reconnectDelay * 2).coerceAtMost(60.seconds)
-            if (!BuildFlavorChecker.isOfflineFlavor() && !settingsStore.settings.killSwitch.value) {
-                relayClient.reconnect()
+            AmberLog.d(Amber.TAG, "Relay ${relay.url} marked dead; dropping from subscriptions")
+            scope.launch {
+                onRelayMarkedDead()
             }
         }
     }
@@ -150,7 +105,7 @@ class NostrClientLoggerListener(
             return
         }
 
-        recordFailureAndScheduleReconnect(relay.url)
+        recordFailureAndDropDeadRelay(relay.url)
         super.onCannotConnect(relay, errorMessage)
     }
 
@@ -201,14 +156,6 @@ class NostrClientLoggerListener(
     override fun onDisconnected(relay: IRelayClient) {
         AmberLog.d(Amber.TAG, "onDisconnected: ${relay.url.url}")
         saveLog(relay.url.url, "onDisconnected", "Disconnected")
-
-        if (System.currentTimeMillis() - relayClient.intentionalDisconnectTime < 2_000) {
-            AmberLog.d(Amber.TAG, "onDisconnected: ${relay.url.url} intentional, skipping reconnect")
-            super.onDisconnected(relay)
-            return
-        }
-
-        scheduleReconnect(relay.url)
         super.onDisconnected(relay)
     }
 

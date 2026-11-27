@@ -27,6 +27,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.Channel
@@ -86,6 +87,15 @@ class OkHttpWebSocket(
     @Volatile
     private var dialing = false
 
+    @Volatile
+    private var closeActiveListener: (() -> Unit)? = null
+
+    @Volatile
+    internal var activeListenerScope: CoroutineScope? = null
+
+    @Volatile
+    internal var activeMessageBuffer: RelayMessageBuffer? = null
+
     override fun needsReconnect() = ended.get() || (socket == null && !dialing)
 
     @Suppress("NoComments")
@@ -108,12 +118,19 @@ class OkHttpWebSocket(
                         }
                     }
 
+                fun closeResources() {
+                    job.cancel()
+                    scope.cancel()
+                    incomingMessages.close()
+                }
+
                 private fun claimSessionEnd(): Boolean {
                     if (!ended.compareAndSet(false, true)) return false
                     socket = null
-                    incomingMessages.close()
-                    job.cancel()
-                    scope.cancel()
+                    closeActiveListener = null
+                    activeListenerScope = null
+                    activeMessageBuffer = null
+                    closeResources()
                     return true
                 }
 
@@ -182,6 +199,9 @@ class OkHttpWebSocket(
                 }
             }
 
+        closeActiveListener = { listener.closeResources() }
+        activeListenerScope = listener.scope
+        activeMessageBuffer = listener.incomingMessages
         try {
             val dialed = httpClient(url).newWebSocket(request, listener)
             socket = dialed
@@ -189,8 +209,18 @@ class OkHttpWebSocket(
             // cancel yet: cancel it now, or it opens and lives on beside the relay client's next one.
             if (ended.get()) {
                 socket = null
+                closeActiveListener = null
+                activeListenerScope = null
+                activeMessageBuffer = null
+                listener.closeResources()
                 dialed.cancel()
             }
+        } catch (t: Throwable) {
+            closeActiveListener = null
+            activeListenerScope = null
+            activeMessageBuffer = null
+            listener.closeResources()
+            throw t
         } finally {
             dialing = false
         }
@@ -206,6 +236,11 @@ class OkHttpWebSocket(
         // (connect() cancels it once OkHttp returns it), and its callbacks must find the session
         // ended. Nothing was open, so there is nothing to report.
         if (!ended.compareAndSet(false, true)) return
+        val closeListener = closeActiveListener
+        closeActiveListener = null
+        activeListenerScope = null
+        activeMessageBuffer = null
+        closeListener?.invoke()
         val closing = socket ?: return
         socket = null
         closing.cancel()
@@ -248,6 +283,9 @@ internal class RelayMessageBuffer(capacity: Int) {
     fun close() {
         channel.close()
     }
+
+    @OptIn(DelicateCoroutinesApi::class)
+    internal fun isClosed(): Boolean = channel.isClosedForSend
 
     val dropped: Long get() = droppedCount.get()
 

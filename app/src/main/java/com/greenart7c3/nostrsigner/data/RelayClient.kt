@@ -37,4 +37,7 @@ interface RelayClient {
 
     /** Drops every socket and dials again; for a change of network. */
     suspend fun resetRelayConnections(reason: String)
+
+    /** Activates the relay client when a subscription or publish needs it, unless offline or under the kill switch. */
+    fun ensureConnected()
 }

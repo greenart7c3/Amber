@@ -1,7 +1,21 @@
 package com.greenart7c3.nostrsigner.service
 
+import android.content.Context
+import com.greenart7c3.nostrsigner.data.AccountRepository
+import com.greenart7c3.nostrsigner.database.ApplicationEntity
 import com.greenart7c3.nostrsigner.database.ApplicationPermissionsEntity
+import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
+import com.greenart7c3.nostrsigner.database.relaxedApplicationDaos
 import com.vitorpamplona.quartz.utils.TimeUtils
+import io.mockk.coEvery
+import io.mockk.coVerify
+import io.mockk.every
+import io.mockk.mockk
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -231,6 +245,37 @@ class IntentUtilsTest {
         assertFalse(isWebRequest())
         assertFalse(isWebRequest(dataString = null))
         assertFalse(isWebRequest(dataString = "nostrsigner:?pubkey=123"))
+    }
+
+    @Test
+    fun `persistNativeAppMetadata skips repeated lookups once name and icon are populated`() = runBlocking {
+        IntentUtils.clearNativeAppMetadataCache()
+        val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
+        try {
+            val daos = relaxedApplicationDaos()
+            val repo = mockk<AccountRepository>(relaxed = true)
+            every { repo.daos(any()) } returns daos
+            val account = newTestAccount(scope)
+            val saved = ApplicationWithPermissions(
+                application = ApplicationEntity.empty().copy(
+                    key = "com.example.app",
+                    name = "Example",
+                    icon = "/tmp/icon.png",
+                ),
+                permissions = mutableListOf(),
+            )
+            coEvery { daos.applicationDao.getByKey("com.example.app") } returns saved
+            IntentUtils.install(repo, scope) { null }
+            val context = mockk<Context>(relaxed = true)
+
+            IntentUtils.persistNativeAppMetadata(context, account, "com.example.app")
+            IntentUtils.persistNativeAppMetadata(context, account, "com.example.app")
+
+            coVerify(exactly = 1) { daos.applicationDao.getByKey("com.example.app") }
+        } finally {
+            IntentUtils.clearNativeAppMetadataCache()
+            scope.cancel()
+        }
     }
 
     private fun permissionWith(

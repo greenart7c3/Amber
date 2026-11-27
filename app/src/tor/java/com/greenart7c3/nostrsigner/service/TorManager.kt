@@ -44,6 +44,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 
 /**
  * Built-in Tor, backed by Arti (Tor in Rust) running in-process through
@@ -57,6 +58,7 @@ object TorManager {
     private const val TOR_RESTART_REQUEST_CODE = 15
     private const val TOR_CONTENT_REQUEST_CODE = 16
     private const val BOOTSTRAP_POLL_MS = 500L
+    private const val BOOTSTRAP_TIMEOUT_MS = 120_000L
     private const val SOCKS_BIND_ATTEMPTS = 5
 
     @Volatile private var appContext: Context? = null
@@ -72,6 +74,12 @@ object TorManager {
 
     @Volatile
     private var restarting = false
+
+    internal var destroyArtiClient: () -> Unit = ::destroyNativeClient
+    internal var checkBootstrapped: () -> Int = { ArtiNative.isBootstrapped() }
+    internal var readBootstrapProgressPermille: () -> Int = { ArtiNative.bootstrapProgressPermille() }
+    internal var bootstrapTimeoutMs: Long = BOOTSTRAP_TIMEOUT_MS
+    internal var bootstrapPollMs: Long = BOOTSTRAP_POLL_MS
 
     private val _isRunning = MutableStateFlow(false)
     val isRunning: StateFlow<Boolean> = _isRunning.asStateFlow()
@@ -174,7 +182,7 @@ object TorManager {
      * away; the Restart action is the way back to a connection attempt.
      */
     fun showFailed() {
-        appContext?.let { showNotification(getStringBlocking(Res.string.tor_connection_failed), ongoing = false) }
+        updateStatus(TorStatus.Failed(null))
     }
 
     fun start(context: Context, scope: CoroutineScope) {
@@ -214,6 +222,10 @@ object TorManager {
                 fail("Arti failed to initialize ($result)")
                 return
             }
+            if (!currentCoroutineContext().isActive) {
+                destroyArtiClient()
+                return
+            }
 
             val port = bindSocksProxy() ?: return
             AmberLog.i(TAG, "Built-in Tor SOCKS proxy on port $port")
@@ -231,20 +243,28 @@ object TorManager {
     }
 
     @Suppress("NoComments")
-    private suspend fun reportConnectedOnceBootstrapped() {
+    internal suspend fun reportConnectedOnceBootstrapped() {
         // The proxy accepts connections right away (each one waits for its
         // circuit), but report Connected only once Arti can carry traffic,
         // like the C tor daemon's bootstrap did.
-        while (currentCoroutineContext().isActive) {
-            if (ArtiNative.isBootstrapped() == 1) {
-                AmberLog.i(TAG, "Built-in Tor bootstrapped")
-                _isRunning.value = true
-                updateStatus(TorStatus.Connected)
-                return
+        val bootstrapped = withTimeoutOrNull(bootstrapTimeoutMs.milliseconds) {
+            while (currentCoroutineContext().isActive) {
+                if (checkBootstrapped() == 1) {
+                    return@withTimeoutOrNull true
+                }
+                val permille = readBootstrapProgressPermille()
+                updateStatus(TorStatus.Connecting((permille / 10).coerceIn(0, 99)))
+                delay(bootstrapPollMs.milliseconds)
             }
-            val permille = ArtiNative.bootstrapProgressPermille()
-            updateStatus(TorStatus.Connecting((permille / 10).coerceIn(0, 99)))
-            delay(BOOTSTRAP_POLL_MS.milliseconds)
+            false
+        } ?: false
+        if (bootstrapped) {
+            AmberLog.i(TAG, "Built-in Tor bootstrapped")
+            _isRunning.value = true
+            updateStatus(TorStatus.Connected)
+        } else if (currentCoroutineContext().isActive) {
+            AmberLog.e(TAG, "Built-in Tor bootstrap timed out")
+            fail(null)
         }
     }
 
@@ -296,6 +316,7 @@ object TorManager {
     private fun fail(message: String?) {
         _isRunning.value = false
         releaseSocksPort()
+        destroyArtiClient()
         updateStatus(TorStatus.Failed(message))
     }
 
@@ -318,11 +339,9 @@ object TorManager {
             try {
                 AmberLog.i(TAG, "Restarting built-in Tor")
                 val previous = startAndBootstrapJob
-                stop()
+                cancelJobAndResetState()
                 previous?.join()
-                if (nativeLibraryLoaded) {
-                    ArtiNative.destroy()
-                }
+                destroyArtiClient()
                 start(context, scope)
             } finally {
                 restarting = false
@@ -331,10 +350,16 @@ object TorManager {
     }
 
     /**
-     * Stops the SOCKS listener. The Tor client stays alive, so a later [start]
-     * reuses its directory and circuits instead of bootstrapping again.
+     * Stops the SOCKS listener and destroys the Tor client so background guard
+     * and directory tasks stop running.
      */
     fun stop() {
+        cancelJobAndResetState()
+        destroyArtiClient()
+        AmberLog.i(TAG, "Built-in Tor stopped")
+    }
+
+    private fun cancelJobAndResetState() {
         synchronized(this) {
             startAndBootstrapJob?.cancel()
             startAndBootstrapJob = null
@@ -343,12 +368,14 @@ object TorManager {
         releaseSocksPort()
         updateStatus(TorStatus.Stopped)
         cancelNotification()
+    }
+
+    private fun destroyNativeClient() {
         if (!nativeLibraryLoaded) return
         try {
-            synchronized(socksListenerLock) { ArtiNative.stopSocksProxy() }
-            AmberLog.i(TAG, "Built-in Tor stopped")
+            synchronized(socksListenerLock) { ArtiNative.destroy() }
         } catch (e: Throwable) {
-            AmberLog.e(TAG, "Error stopping built-in Tor", e)
+            AmberLog.e(TAG, "Error destroying built-in Tor", e)
         }
     }
 }

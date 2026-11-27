@@ -107,29 +107,32 @@ class ReportSender(
     ) {
         scope.launch {
             val client = NostrClient(relayClient.factory, scope)
-            client.connect()
+            try {
+                client.connect()
 
-            val template = ChatMessageEvent.build(
-                msg = report,
-                to = listOf(PTag(Amber.DEVELOPER_HEX_KEY)),
-                createdAt = System.currentTimeMillis() / 1000,
-            ) {
-                val thirtyDaysInSeconds = 30L * 86_400
-                expiration(TimeUtils.now() + thirtyDaysInSeconds)
+                val template = ChatMessageEvent.build(
+                    msg = report,
+                    to = listOf(PTag(Amber.DEVELOPER_HEX_KEY)),
+                    createdAt = System.currentTimeMillis() / 1000,
+                ) {
+                    val thirtyDaysInSeconds = 30L * 86_400
+                    expiration(TimeUtils.now() + thirtyDaysInSeconds)
+                }
+                val signedEvents = createMessage(template)
+                signedEvents.wraps.filter { !onlyToDeveloper || it.recipientPubKey() == Amber.DEVELOPER_HEX_KEY }.forEach { wrap ->
+                    client.publish(
+                        event = wrap,
+                        relayList = setOf(
+                            NormalizedRelayUrl(url = "wss://inbox.nostr.wine"),
+                            NormalizedRelayUrl(url = "wss://nostr.land"),
+                        ),
+                    )
+                }
+                onDone()
+                delay(10.seconds)
+            } finally {
+                client.close()
             }
-            val signedEvents = createMessage(template)
-            signedEvents.wraps.filter { !onlyToDeveloper || it.recipientPubKey() == Amber.DEVELOPER_HEX_KEY }.forEach { wrap ->
-                client.publish(
-                    event = wrap,
-                    relayList = setOf(
-                        NormalizedRelayUrl(url = "wss://inbox.nostr.wine"),
-                        NormalizedRelayUrl(url = "wss://nostr.land"),
-                    ),
-                )
-            }
-            onDone()
-            delay(10.seconds)
-            client.disconnect()
         }
     }
 }

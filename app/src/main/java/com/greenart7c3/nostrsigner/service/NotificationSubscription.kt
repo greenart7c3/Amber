@@ -57,6 +57,7 @@ class NotificationSubscription(
     private val scope: CoroutineScope,
     private val notificationCache: LruCache<String, Long>,
     bunkerResponder: BunkerResponder,
+    private val ensureConnected: () -> Unit = {},
 ) : RelayConnectionListener {
     private val eventNotificationConsumer =
         EventNotificationConsumer(appContext, settingsStore, accountRepository, scope, notificationCache, bunkerResponder) { updateFilter() }
@@ -147,6 +148,7 @@ class NotificationSubscription(
         if (keysByRelay.isNotEmpty()) {
             val subId = subIds.getOrPut(BUNKER_SUB_KEY) { UUID.randomUUID().toString() }
             client.subscribe(subId, bunkerFilters(keysByRelay, since))
+            ensureConnected()
         }
     }
 

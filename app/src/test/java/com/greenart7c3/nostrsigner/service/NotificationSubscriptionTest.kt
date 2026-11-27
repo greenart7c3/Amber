@@ -288,4 +288,38 @@ class NotificationSubscriptionTest {
         subscription.updateFilter()
         verify(exactly = 1) { client.subscribe(any(), any()) }
     }
+
+    @Test
+    fun `updateFilter invokes ensureConnected only when subscribing to relays`() = runBlocking {
+        assumeFalse(BuildFlavorChecker.isOfflineFlavor())
+        val amber = mockk<Amber>(relaxed = true)
+        val database = mockk<AppDatabase>()
+        every { database.dao() } returns dao
+        every { database.applicationListDao() } returns listDao
+        every { amber.accountDatabases.getDatabase(any()) } returns database
+        every { amber.accountDatabases.daos(any()) } answers {
+            ApplicationDaos.cached(ApplicationDaos(dao, listDao, mockk(), mockk(), mockk(), mockk()))
+        }
+        every { amber.notificationCache } returns LruCache(512)
+        var wakeCalls = 0
+        val wakeTracked = NotificationSubscription(
+            client = client,
+            appContext = mockk(relaxed = true),
+            settingsStore = amber,
+            accountRepository = amber.accountDatabases,
+            scope = scope,
+            notificationCache = amber.notificationCache,
+            bunkerResponder = mockk(relaxed = true),
+            ensureConnected = { wakeCalls++ },
+        )
+
+        coEvery { dao.getAll(account.hexKey) } returns emptyList()
+        every { listDao.getAllRelayLists() } returns emptyList()
+        wakeTracked.updateFilter()
+        assertEquals(0, wakeCalls)
+
+        coEvery { dao.getAll(account.hexKey) } returns listOf(connection())
+        wakeTracked.updateFilter()
+        assertEquals(1, wakeCalls)
+    }
 }

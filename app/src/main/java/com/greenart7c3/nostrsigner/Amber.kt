@@ -144,10 +144,6 @@ class Amber :
     val notificationCache = LruCache<String, Long>(512)
 
     init {
-        relayClient.client.addConnectionListener(NostrClientLoggerListener(this, relayClient.stats, applicationIOScope, settingsStore = this, relayClient = relayClient, accountRepository = accountDatabases))
-    }
-
-    init {
         RelayAuthenticator(relayClient.client, applicationIOScope) { _, event, _ -> signedByEveryAccountThatCan(event) }
     }
 
@@ -167,7 +163,29 @@ class Amber :
     /** Answers bunker requests; stateless, shared by the NIP-46 consumer and the approval screens. */
     val bunkerResponder by lazy { BunkerResponder(this, this, accountDatabases, relayClient, applicationIOScope, localBunkerRelay) { getMainActivity() } }
 
-    val notificationSubscription: NotificationSubscription = NotificationSubscription(relayClient.client, this, settingsStore = this, accountRepository = accountDatabases, bunkerResponder = bunkerResponder, scope = applicationIOScope, notificationCache = notificationCache)
+    val notificationSubscription: NotificationSubscription = NotificationSubscription(
+        relayClient.client,
+        this,
+        settingsStore = this,
+        accountRepository = accountDatabases,
+        bunkerResponder = bunkerResponder,
+        scope = applicationIOScope,
+        notificationCache = notificationCache,
+        ensureConnected = relayClient::ensureConnected,
+    )
+
+    init {
+        relayClient.client.addConnectionListener(
+            NostrClientLoggerListener(
+                this,
+                relayClient.stats,
+                applicationIOScope,
+                relayClient = relayClient,
+                accountRepository = accountDatabases,
+                onRelayMarkedDead = { notificationSubscription.updateFilter() },
+            ),
+        )
+    }
 
     /**
      * Per-account profile metadata fetch, started and stopped by the composables that
@@ -318,6 +336,7 @@ class Amber :
 
     fun startService() {
         if (BuildFlavorChecker.isOfflineFlavor()) return
+        if (ConnectivityService.isRunning) return
         try {
             AmberLog.d(TAG, "Starting ConnectivityService")
             val operation = PendingIntent.getForegroundService(

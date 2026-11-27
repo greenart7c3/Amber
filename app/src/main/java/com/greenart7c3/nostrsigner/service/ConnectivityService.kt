@@ -116,13 +116,23 @@ class ConnectivityService : Service() {
 
         if (reason != null) {
             restartBuiltInTorThatGaveUpStarting()
-            scheduleRelayReset(reason)
-        } else if (!amber.relayClient.client.isActive()) {
+            if (!isWaitingForBuiltInTor()) {
+                scheduleRelayReset(reason)
+            }
+        } else if (shouldReconnectOnUnchangedNetwork()) {
             scope.launch {
                 amber.relayClient.client.connect()
             }
         }
     }
+
+    private fun isWaitingForBuiltInTor(): Boolean = amber.settings.torMode == TorMode.BUILTIN && !TorManager.isRunning.value
+
+    private fun hasActiveSubscriptions(): Boolean = amber.relayClient.client.registrySizes().let { it.liveRequests > 0 || it.liveCounts > 0 }
+
+    private fun shouldReconnectOnUnchangedNetwork(): Boolean = !isWaitingForBuiltInTor() &&
+        !amber.relayClient.client.isActive() &&
+        hasActiveSubscriptions()
 
     private fun trackNetworkChangeEvenUnderKillSwitch(network: Network, capabilities: NetworkCapabilities): String? {
         amber.networkState.update(capabilities)
@@ -130,7 +140,9 @@ class ConnectivityService : Service() {
     }
 
     private fun restartBuiltInTorThatGaveUpStarting() {
-        if (amber.settings.torMode == TorMode.BUILTIN && !TorManager.isRunning.value) {
+        if (amber.settings.torMode != TorMode.BUILTIN) return
+        val status = TorManager.status.value
+        if (status is TorStatus.Failed || status is TorStatus.Stopped) {
             TorManager.restart(this, amber.applicationIOScope)
         }
     }
@@ -195,14 +207,6 @@ class ConnectivityService : Service() {
 
     fun startFunctions() {
         amber.applicationIOScope.launch {
-            amber.torStartup.waitIfNeeded()
-            if (!BuildFlavorChecker.isOfflineFlavor() && !amber.settings.killSwitch.value) {
-                amber.relayClient.client.connect()
-                amber.applicationIOScope.launch {
-                    amber.relayClient.checkForNewRelaysAndUpdateAllFilters()
-                }
-            }
-
             if (!BuildFlavorChecker.isOfflineFlavor()) {
                 val connectivityManager =
                     (getSystemService(ConnectivityManager::class.java) as ConnectivityManager)
@@ -221,6 +225,7 @@ class ConnectivityService : Service() {
                             return
                         }
                         if (amber.settings.killSwitch.value) return
+                        if (isWaitingForBuiltInTor()) return
 
                         scope.launch {
                             amber.notificationSubscription.updateFilter()
@@ -230,6 +235,11 @@ class ConnectivityService : Service() {
                 5000,
                 UPDATE_FILTER_PERIOD_MS,
             )
+
+            amber.torStartup.waitIfNeeded()
+            if (!BuildFlavorChecker.isOfflineFlavor() && !amber.settings.killSwitch.value) {
+                amber.relayClient.checkForNewRelaysAndUpdateAllFilters()
+            }
         }
     }
 
@@ -248,6 +258,7 @@ class ConnectivityService : Service() {
     }
 
     override fun onDestroy() {
+        isRunning = false
         timer.cancel()
         cancelPendingRelayReset()
         if (unlockReceiverRegistered) {
@@ -283,6 +294,7 @@ class ConnectivityService : Service() {
                 amber.relayClient.stats.createForegroundNotification(),
                 foregroundServiceType,
             )
+            isRunning = true
         } catch (e: Exception) {
             // Android 12+ can refuse a background FGS start with ForegroundServiceStartNotAllowedException;
             // swallow it and let the next foreground start (startService) retry.
@@ -294,6 +306,10 @@ class ConnectivityService : Service() {
     }
 
     companion object {
+        @Volatile
+        var isRunning = false
+            private set
+
         /**
          * How often the safety-net subscription refresh runs. Every real state
          * change (login/logout, relay edits, app connect/disconnect, NIP-46

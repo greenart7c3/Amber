@@ -237,6 +237,7 @@ class BunkerResponder(
 
         AmberLog.d(Amber.TAG, "Sending response to relays ${relays.map { relay -> relay.url }} type ${bunkerRequest.request.method}")
         val key = connectionKeyOrAccountKey(bunkerRequest, account)
+        relayClient.ensureConnected()
         val success = publishNip46Reply(bunkerResponse, bunkerRequest.localKey, bunkerRequest.encryptionType, key, attempts) { event ->
             relayClient.client.publishAndConfirm(event = event, relayList = relays.toSet(), timeoutInSeconds = 5, untilFirstAccept = true)
         }

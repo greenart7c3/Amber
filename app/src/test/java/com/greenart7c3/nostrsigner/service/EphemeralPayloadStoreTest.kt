@@ -120,6 +120,48 @@ class EphemeralPayloadStoreTest {
     }
 
     @Test
+    fun `a retained payload is a fresh single-use upload bound to its owner`() {
+        runBlocking {
+            val s = store()
+            val staged = s.allocateUpload(1001, "com.example.client")
+            s.completeUpload(staged, 1001, "com.example.client", "payload".toByteArray())
+            val consumed = s.consumeUpload(staged, 1001, "com.example.client")
+
+            val retained = s.retainUpload(1001, "com.example.client", consumed)
+            assertNotEquals(staged, retained)
+
+            assertThrows(SecurityException::class.java) {
+                runBlocking { s.consumeUpload(retained, 1002, "com.example.client") }
+            }
+            assertArrayEquals("payload".toByteArray(), s.consumeUpload(retained, 1001, "com.example.client"))
+            assertThrows(FileNotFoundException::class.java) {
+                runBlocking { s.consumeUpload(retained, 1001, "com.example.client") }
+            }
+        }
+    }
+
+    @Test
+    fun `retaining a payload respects quotas and leaves nothing behind when it fails`() {
+        val s = store(maxPerCaller = 10L)
+        assertThrows(IOException::class.java) {
+            s.retainUpload(1001, "com.a", ByteArray(11))
+        }
+        assertNotNull(s.retainUpload(1001, "com.a", ByteArray(10)))
+    }
+
+    @Test
+    fun `retained payloads expire like any upload`() {
+        runBlocking {
+            val s = store(ttlMs = 1_000L)
+            val retained = s.retainUpload(1001, "com.a", "x".toByteArray())
+            nowMs += 1_001L
+            assertThrows(FileNotFoundException::class.java) {
+                runBlocking { s.consumeUpload(retained, 1001, "com.a") }
+            }
+        }
+    }
+
+    @Test
     fun `wrong uid or wrong package is rejected with SecurityException`() {
         runBlocking {
             val s = store()

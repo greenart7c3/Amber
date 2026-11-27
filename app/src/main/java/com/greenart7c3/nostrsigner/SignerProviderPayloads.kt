@@ -8,6 +8,7 @@ internal data class SignerQueryOptions(
     val payloadInUri: Boolean,
     val acceptResultUri: Boolean,
     val returnType: String?,
+    val retainPayload: Boolean = false,
 )
 
 internal class SignerCursorPayload(
@@ -34,6 +35,7 @@ internal fun parseSignerQueryOptions(uriString: String): SignerQueryOptions {
         payloadInUri = params[EphemeralPayloadStore.QUERY_PARAM_PAYLOAD_IN_URI].isTruthyParam(),
         acceptResultUri = params[EphemeralPayloadStore.QUERY_PARAM_ACCEPT_RESULT_URI].isTruthyParam(),
         returnType = params[EphemeralPayloadStore.QUERY_PARAM_RETURN_TYPE],
+        retainPayload = params[EphemeralPayloadStore.QUERY_PARAM_RETAIN_PAYLOAD].isTruthyParam(),
     )
 }
 

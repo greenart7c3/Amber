@@ -3,6 +3,7 @@ package com.greenart7c3.nostrsigner
 import android.content.ContentProvider
 import android.content.ContentValues
 import android.database.Cursor
+import android.database.MatrixCursor
 import android.net.Uri
 import android.os.Binder
 import android.os.ParcelFileDescriptor
@@ -87,7 +88,7 @@ class SignerProvider : ContentProvider() {
         } else {
             projection
         }
-        return SignerProviderQuery(amber, amber.accountDatabases, amber.applicationIOScope).query(
+        val cursor = SignerProviderQuery(amber, amber.accountDatabases, amber.applicationIOScope).query(
             context = ctx,
             requesterId = binderCallingPackage,
             callerPackageName = binderCallingPackage,
@@ -103,6 +104,24 @@ class SignerProvider : ContentProvider() {
                 )
             },
         )
+        if (cursor != null || !options.payloadInUri || !options.retainPayload) return cursor
+        val payload = resolvedArguments?.firstOrNull() ?: return null
+        return retainForIntent(amber.payloadStore, callingUid, binderCallingPackage, payload)
+    }
+
+    private fun retainForIntent(
+        payloadStore: EphemeralPayloadStore,
+        callingUid: Int,
+        callingPackage: String,
+        payload: String,
+    ): Cursor? = try {
+        val token = payloadStore.retainUpload(callingUid, callingPackage, payload.toByteArray(Charsets.UTF_8))
+        MatrixCursor(arrayOf(EphemeralPayloadStore.COLUMN_RETAINED_PAYLOAD_URI)).apply {
+            addRow(arrayOf<Any>(EphemeralPayloadStore.buildPayloadUri(BuildConfig.APPLICATION_ID, token)))
+        }
+    } catch (e: IOException) {
+        AmberLog.d(Amber.TAG, "Could not retain the staged payload for $callingPackage", e)
+        null
     }
 
     override fun update(

@@ -82,6 +82,16 @@ class SignerProviderLargePayloadTest {
         assertFalse(plain.payloadInUri)
         assertFalse(plain.acceptResultUri)
         assertNull(plain.returnType)
+        assertFalse(plain.retainPayload)
+    }
+
+    @Test
+    fun `parseSignerQueryOptions reads retain_payload`() {
+        val opts = parseSignerQueryOptions(
+            "content://com.greenart7c3.nostrsigner.SIGN_EVENT?payload_in_uri=1&accept_result_uri=1&retain_payload=1",
+        )
+        assertTrue(opts.retainPayload)
+        assertFalse(parseSignerQueryOptions("content://com.greenart7c3.nostrsigner.SIGN_EVENT?payload_in_uri=1").retainPayload)
     }
 
     @Test

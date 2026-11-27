@@ -51,7 +51,7 @@ Clients usually try `query()` first and fall back to an Intent when the request 
 
 1. The client appends `retain_payload=1` to a `query()` that already carries `payload_in_uri=1` (`content://<package-name>.SIGN_EVENT?payload_in_uri=1&accept_result_uri=1&retain_payload=1`).
 
-2. If the signer would answer with no row because the request needs user approval, a signer that supports the hand-off keeps the staged payload instead of wiping it, and returns a one-row cursor with a single column, `retained_payload_uri`, holding a handle to it. This MAY be the same URI the client staged, or a new one.
+2. If the signer would answer with no row (usually because the request needs user approval), a signer that supports the hand-off keeps the staged payload instead of wiping it, and returns a one-row cursor with a single column, `retained_payload_uri`, holding a handle to it. This MAY be the same URI the client staged, or a new one. A signer that can't keep it (for example, its quotas are full) answers with no row, as without this section.
 
 3. The client passes that value as the Intent's `payload_uri`, exactly like a freshly staged handle. The Intent consumes it.
 

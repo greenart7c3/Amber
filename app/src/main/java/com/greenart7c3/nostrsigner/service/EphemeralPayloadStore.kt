@@ -158,6 +158,26 @@ class EphemeralPayloadStore(
         }
     }
 
+    /**
+     * Stores [bytes], a payload a `query()` consumed but couldn't answer, as a completed upload
+     * under a fresh token, so the client's Intent can consume it instead of staging a second copy
+     * (`retain_payload`). Same owner binding, single use, quotas and TTL as any upload.
+     */
+    fun retainUpload(
+        ownerUid: Int,
+        ownerPackage: String,
+        bytes: ByteArray,
+    ): String {
+        val token = allocateUpload(ownerUid, ownerPackage)
+        try {
+            completeUpload(token, ownerUid, ownerPackage, bytes)
+        } catch (t: Throwable) {
+            synchronized(lock) { removeEntryLocked(token, wipeBytes = true) }
+            throw t
+        }
+        return token
+    }
+
     @Suppress("RunBlocking")
     fun consumeUploadBlocking(
         token: String,
@@ -445,6 +465,8 @@ class EphemeralPayloadStore(
         const val QUERY_PARAM_PAYLOAD_IN_URI = "payload_in_uri"
         const val QUERY_PARAM_ACCEPT_RESULT_URI = "accept_result_uri"
         const val QUERY_PARAM_RETURN_TYPE = "return_type"
+        const val QUERY_PARAM_RETAIN_PAYLOAD = "retain_payload"
+        const val COLUMN_RETAINED_PAYLOAD_URI = "retained_payload_uri"
 
         fun buildPayloadUri(appId: String, token: String): String = "content://$appId.$PAYLOADS_AUTHORITY_SUFFIX/$token"
 

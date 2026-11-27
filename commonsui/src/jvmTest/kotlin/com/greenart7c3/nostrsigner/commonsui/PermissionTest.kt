@@ -90,9 +90,10 @@ class PermissionTest {
 
     @Test
     fun `describes an unlisted kind by its NIP, then by number`() {
-        // 30443 has its own string; a kind no table lists falls back to "Event kind N".
-        assertEquals(PermissionText.Resource(Res.string.event_kind_30443), Permission("sign_event", 30443).description())
-        assertEquals(PermissionText.Resource(Res.string.event_kind, "987654"), Permission("sign_event", 987654).description())
+        val kindWithItsOwnString = 30443
+        val kindNoTableLists = 987654
+        assertEquals(PermissionText.Resource(Res.string.event_kind_30443), Permission("sign_event", kindWithItsOwnString).description())
+        assertEquals(PermissionText.Resource(Res.string.event_kind, "$kindNoTableLists"), Permission("sign_event", kindNoTableLists).description())
         assertEquals(PermissionText.Resource(Res.string.nip_44), Permission("nip", 44).description())
         assertEquals(PermissionText.Resource(Res.string.nip_kind, "12"), Permission("nip", 12).description())
     }

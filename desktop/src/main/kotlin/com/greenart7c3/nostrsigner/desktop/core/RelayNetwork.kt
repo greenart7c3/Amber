@@ -41,33 +41,38 @@ object LocalRelays {
             trimmed.startsWith("wss://", ignoreCase = true) -> "https://" + trimmed.substring(6)
             trimmed.startsWith("ws://", ignoreCase = true) -> "http://" + trimmed.substring(5)
             trimmed.contains("://") -> trimmed
-            // Bare IPv6 without brackets (no port possible to tell apart).
-            trimmed.count { it == ':' } > 1 && !trimmed.startsWith("[") -> "http://[$trimmed]"
+            isUnbracketedIpv6(trimmed) -> "http://[$trimmed]"
             else -> "http://$trimmed"
         }
         return httpForm.toHttpUrlOrNull()?.host?.lowercase()?.trimEnd('.')?.ifBlank { null }
     }
 
+    private fun isUnbracketedIpv6(text: String): Boolean = text.count { it == ':' } > 1 && !text.startsWith("[")
+
     fun isLocal(url: NormalizedRelayUrl): Boolean = isLocal(url.url)
 
+    @Suppress("NoComments")
     fun isLocal(url: String): Boolean {
         val host = hostOf(url) ?: return false
         if (host == "localhost" || localSuffixes.any { host.endsWith(it) }) return true
-        if (!ipv4Literal.matches(host) && !host.contains(':')) return false
-        // An IP literal: getByName parses it without a DNS lookup.
+        if (!isIpLiteral(host)) return false
+        // getByName parses an IP literal without a DNS lookup.
         val address = runCatching { InetAddress.getByName(host) }.getOrNull() ?: return false
         if (address.isLocalAddress()) return true
         val bytes = address.address
         return when (bytes.size) {
-            // 100.64.0.0/10 — carrier-grade NAT range used by Tailscale and similar overlays.
-            4 -> (bytes[0].toInt() and 0xFF) == 100 && (bytes[1].toInt() and 0xC0) == 64
-            // fc00::/7 — IPv6 unique local addresses.
-            16 -> (bytes[0].toInt() and 0xFE) == 0xFC
+            4 -> isCarrierGradeNatIpv4(bytes)
+            16 -> isUniqueLocalIpv6(bytes)
             else -> false
         }
     }
 
-    // Loopback, private (RFC 1918), link-local or the wildcard address.
+    private fun isIpLiteral(host: String): Boolean = ipv4Literal.matches(host) || host.contains(':')
+
+    private fun isCarrierGradeNatIpv4(bytes: ByteArray): Boolean = (bytes[0].toInt() and 0xFF) == 100 && (bytes[1].toInt() and 0xC0) == 64
+
+    private fun isUniqueLocalIpv6(bytes: ByteArray): Boolean = (bytes[0].toInt() and 0xFE) == 0xFC
+
     private fun InetAddress.isLocalAddress(): Boolean = isLoopbackAddress || isSiteLocalAddress || isLinkLocalAddress || isAnyLocalAddress
 
     fun isOnion(url: String): Boolean = hostOf(url)?.endsWith(".onion") == true
@@ -88,6 +93,10 @@ object LocalRelays {
 object RelayHttpClients {
     const val LOCALHOST = "127.0.0.1"
 
+    private const val DIRECT_TIMEOUT_SECONDS = 30L
+    private const val TOR_TIMEOUT_SECONDS = DIRECT_TIMEOUT_SECONDS * 3
+
+    @Suppress("NoComments")
     private val direct: OkHttpClient by lazy {
         OkHttpClient.Builder()
             // `.localhost` and `.local` never reach the system resolver (see
@@ -97,8 +106,8 @@ object RelayHttpClients {
                 chain.proceed(chain.request().newBuilder().header("User-Agent", "Amber/${BuildVariant.version}").build())
             }
             .pingInterval(30, TimeUnit.SECONDS)
-            .readTimeout(30, TimeUnit.SECONDS)
-            .connectTimeout(30, TimeUnit.SECONDS)
+            .readTimeout(DIRECT_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+            .connectTimeout(DIRECT_TIMEOUT_SECONDS, TimeUnit.SECONDS)
             .build()
     }
 
@@ -108,6 +117,7 @@ object RelayHttpClients {
      * host redirecting to a public one would send that request around Tor and
      * reveal the user's IP.
      */
+    @Suppress("NoComments")
     private val local: OkHttpClient by lazy {
         direct.newBuilder()
             .followRedirects(false)
@@ -136,18 +146,18 @@ object RelayHttpClients {
      * Client for any URL (relays and plain HTTP fetches such as profile
      * pictures), so everything follows the same Tor routing rule.
      */
+    @Suppress("NoComments")
     fun clientFor(url: String): OkHttpClient {
         if (LocalRelays.isLocal(url)) return local
         val settings = SettingsStore.settings.value
         val port = socksPortFor(url, settings.torMode, settings.proxyPort, TorManager.socksPort.value) ?: return direct
         return proxied.computeIfAbsent(port) {
-            // Tor circuits are slower to establish; triple the timeouts like Android.
-            // An explicit proxy also means OkHttp never falls back to a direct
+            // An explicit proxy means OkHttp never falls back to a direct
             // route, and SOCKS hosts are passed unresolved so DNS goes through Tor.
             direct.newBuilder()
                 .proxy(Proxy(Proxy.Type.SOCKS, InetSocketAddress(LOCALHOST, port)))
-                .readTimeout(90, TimeUnit.SECONDS)
-                .connectTimeout(90, TimeUnit.SECONDS)
+                .readTimeout(TOR_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+                .connectTimeout(TOR_TIMEOUT_SECONDS, TimeUnit.SECONDS)
                 .build()
         }
     }

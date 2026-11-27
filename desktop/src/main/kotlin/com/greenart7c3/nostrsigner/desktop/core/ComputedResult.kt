@@ -20,13 +20,8 @@ import com.vitorpamplona.quartz.nip57Zaps.PrivateZapRequestBuilder
 import com.vitorpamplona.quartz.nip57Zaps.ZapRequestEvent
 import kotlin.io.encoding.Base64
 
-// [sealPreview]: a seal in an encrypt/decrypt payload, opened for the preview (openSealForPreview).
 internal data class ComputedResult(val result: String, val preview: String, val sealPreview: String = "")
 
-/**
- * The answer to [request] for [acc] (the NIP-46 and local socket paths share it) and
- * what the approval card shows. Throws when the request cannot be fulfilled.
- */
 internal suspend fun computeResult(
     request: BunkerRequest,
     type: SignerType,
@@ -60,7 +55,6 @@ private suspend fun signEventResult(request: BunkerRequestSign, acc: DesktopAcco
 
 private fun BunkerRequest.requirePeerPubKey(): String = requireNotNull(peerPubKeyParam()) { "missing pubkey" }
 
-// params: [pubkey, plaintext]
 private suspend fun encryptResult(request: BunkerRequest, type: SignerType, acc: DesktopAccount): ComputedResult {
     val pubKey = request.requirePeerPubKey()
     val message = request.encryptionTextParam()
@@ -68,7 +62,6 @@ private suspend fun encryptResult(request: BunkerRequest, type: SignerType, acc:
     return ComputedResult(cipher, message, openSealForPreview(message, acc))
 }
 
-// params: [pubkey, ciphertext]
 private suspend fun decryptResult(request: BunkerRequest, type: SignerType, acc: DesktopAccount): ComputedResult {
     val pubKey = request.requirePeerPubKey()
     val ciphertext = request.encryptionTextParam()
@@ -76,7 +69,6 @@ private suspend fun decryptResult(request: BunkerRequest, type: SignerType, acc:
     return ComputedResult(plain, plain, openSealForPreview(plain, acc))
 }
 
-// NIP-46 layout: [pubkey, kind, scope, base64 plaintext or the v3 payload]
 private fun nip44v3Result(request: BunkerRequest, type: SignerType, acc: DesktopAccount): ComputedResult {
     val pubKey = request.requirePeerPubKey().hexToByteArray()
     val kind = request.nip44v3Kind() ?: throw IllegalArgumentException(NIP44V3_KIND_REQUIRED)

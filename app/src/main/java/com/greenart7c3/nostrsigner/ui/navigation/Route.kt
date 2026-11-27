@@ -310,6 +310,7 @@ val routes = listOf(
  * let any app jump straight to an internal screen, with arguments of its
  * choosing (e.g. QrCode/{content}, NewNsecBunkerCreated/{key}).
  */
+@Suppress("NoComments")
 private val EXTERNAL_ROUTES = setOf(Route.IncomingRequest.route, Route.UpdateSettings.route)
 
 fun externalRoute(route: String?): String? = route?.takeIf { it in EXTERNAL_ROUTES }

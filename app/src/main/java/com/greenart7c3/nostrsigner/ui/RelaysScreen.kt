@@ -121,7 +121,6 @@ fun RelaysScreen(
     }
 }
 
-/** The local bunker relay switch and its port (mirrors desktop Settings -> Desktop). */
 @Composable
 private fun ColumnScope.LocalBunkerServerSettings() {
     val localBunkerRelay = LocalBunkerRelay.current
@@ -221,8 +220,6 @@ private fun LocalBunkerPortField(
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done),
             modifier = Modifier.weight(2f),
         )
-        // AmberButton fills the width it gets, so without a weight it would
-        // take the whole row and squeeze the port field to nothing.
         AmberButton(
             modifier = Modifier.weight(1f),
             text = stringResource(Res.string.save),

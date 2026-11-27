@@ -32,6 +32,7 @@ import org.jetbrains.compose.resources.stringResource
  * user once whether to disable the kill switch (reusing [KillSwitchReceiver],
  * the same path as the Applications screen banner and the notification action).
  */
+@Suppress("NoComments")
 @Composable
 fun KillSwitchConnectPrompt(hasConnectRequest: Boolean) {
     // The preview renderer provides no settings.

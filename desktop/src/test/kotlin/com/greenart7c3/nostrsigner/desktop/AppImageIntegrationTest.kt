@@ -14,8 +14,7 @@ class AppImageIntegrationTest {
         assertTrue(entry.contains("Exec=/home/u/Apps/Amber.AppImage %u"))
         assertTrue(entry.contains("Icon=/home/u/.local/share/amber/amber.png"))
         assertTrue(entry.contains("StartupWMClass=${AppImageIntegration.WINDOW_CLASS}"))
-        // Shown in the app launcher, unlike the nostrconnect:// handler entry.
-        assertTrue(!entry.contains("NoDisplay"))
+        assertTrue("shown in the app launcher, unlike the nostrconnect handler entry", !entry.contains("NoDisplay"))
     }
 
     @Test

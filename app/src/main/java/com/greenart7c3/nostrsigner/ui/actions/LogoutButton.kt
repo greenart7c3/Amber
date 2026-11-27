@@ -29,7 +29,6 @@ fun LogoutButton(
                 logoutDialog = false
             },
             onConfirm = {
-                // The logout deletes the account's databases, its saved apps included.
                 logoutDialog = false
                 onLogOff(acc.npub)
             },

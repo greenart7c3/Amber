@@ -121,7 +121,6 @@ fun AddPermissionsSheet(
     val selectedPermissions = remember { mutableStateMapOf<String, Boolean>() }
     var search by remember { mutableStateOf("") }
 
-    // Custom sign_event kinds typed by the user, added on top of the catalog list.
     val customPermissions = remember { mutableStateListOf<Permission>() }
     var customKindText by remember { mutableStateOf("") }
     val customKind = customKindInput(customKindText, existingPermissions, customPermissions)

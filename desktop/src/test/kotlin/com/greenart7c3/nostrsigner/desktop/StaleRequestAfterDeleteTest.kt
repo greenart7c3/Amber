@@ -43,8 +43,7 @@ class StaleRequestAfterDeleteTest {
         return client.signerSync.sign(TimeUtils.now(), 24133, arrayOf(arrayOf("p", connectionHex)), content)
     }
 
-    /** Queues a sign_event card for a connected app, deletes the app, and returns the stale card. */
-    private suspend fun CoroutineScope.staleCard(accountPolicy: Int, name: String): Triple<PendingBunkerRequest, String, String> {
+    private suspend fun CoroutineScope.queueSignEventCardThenDeleteItsApp(accountPolicy: Int, name: String): Triple<PendingBunkerRequest, String, String> {
         val account = AccountManager.addAccount(KeyPair(), name = name, signPolicy = accountPolicy)
         val store = AmberDesktop.store(account.npub)
         val clientKp = KeyPair()
@@ -65,8 +64,8 @@ class StaleRequestAfterDeleteTest {
 
     @Test
     fun rejectingAStaleCardDoesNotRecreateTheApp() = runBlocking {
-        // Account default "fully trust" is the worst case: a recreated app would auto-sign.
-        val (card, npub, clientHex) = staleCard(accountPolicy = 2, name = "stale-reject")
+        val fullyTrustSoARecreatedAppWouldAutoSign = 2
+        val (card, npub, clientHex) = queueSignEventCardThenDeleteItsApp(accountPolicy = fullyTrustSoARecreatedAppWouldAutoSign, name = "stale-reject")
 
         withTimeoutOrNull(20.seconds) { AmberDesktop.engine.reject(card, RememberType.NEVER).join() }
 
@@ -75,7 +74,7 @@ class StaleRequestAfterDeleteTest {
 
     @Test
     fun approvingAStaleCardDoesNotRecreateTheApp() = runBlocking {
-        val (card, npub, clientHex) = staleCard(accountPolicy = 1, name = "stale-approve")
+        val (card, npub, clientHex) = queueSignEventCardThenDeleteItsApp(accountPolicy = 1, name = "stale-approve")
 
         withTimeoutOrNull(20.seconds) { AmberDesktop.engine.approve(card, RememberType.ALWAYS).join() }
 

@@ -45,7 +45,6 @@ sealed interface RestorePromptState {
 @Stable
 class AccountStateViewModel(
     npub: String?,
-    // The Application context: the view model outlives the activity.
     private val appContext: Context,
     private val settingsStore: SettingsStore,
     private val accountRepository: AccountRepository,
@@ -62,6 +61,7 @@ class AccountStateViewModel(
         tryLoginExistingAccount(null, npub)
     }
 
+    @Suppress("NoComments")
     private fun tryLoginExistingAccount(
         route: String?,
         npub: String?,
@@ -78,14 +78,7 @@ class AccountStateViewModel(
             if (forceLogout) {
                 currentUser = null
             }
-            // Warm the full account cache BEFORE any UI state is emitted: the
-            // account switcher in approval screens reads AccountStorage.cached()
-            // synchronously in remember {}, and it used to be populated by the
-            // eager load in AccountStorage.loadSync. ConnectivityService's
-            // reloadApp() cannot be relied on — it starts via an AlarmManager
-            // PendingIntent (a race with composition) and doesn't exist in the
-            // offline flavor — so warm here, at the deterministic app start.
-            AccountStorage.all(appContext)
+            warmAccountCacheBeforeAnyUiState()
             AccountStorage.load(appContext, currentUser)?.let {
                 startUI(it, route)
             }
@@ -95,21 +88,35 @@ class AccountStateViewModel(
         }
     }
 
+    @Suppress("NoComments")
+    private suspend fun warmAccountCacheBeforeAnyUiState() {
+        // The account switcher in approval screens reads AccountStorage.cached()
+        // synchronously in remember {}, and it used to be populated by the
+        // eager load in AccountStorage.loadSync. ConnectivityService's
+        // reloadApp() cannot be relied on — it starts via an AlarmManager
+        // PendingIntent (a race with composition) and doesn't exist in the
+        // offline flavor — so warm here, at the deterministic app start.
+        AccountStorage.all(appContext)
+    }
+
     private fun prepareLogoutOrSwitch() {
         observerJob?.cancel()
-        // Show the loading state while the next account decrypts off the main thread,
-        // so the login page does not flash during an account switch.
+        showLoadingSoTheLoginPageDoesNotFlash()
+    }
+
+    private fun showLoadingSoTheLoginPageDoesNotFlash() {
         _accountContent.update { AccountState.Loading }
+    }
+
+    private suspend fun stopListeningForLoggedOutKey() {
+        relayClient.checkForNewRelaysAndUpdateAllFilters()
     }
 
     fun logOff(npub: String) {
         prepareLogoutOrSwitch()
         appScope.launch {
             val shouldLogout = AccountStorage.logout(npub, appContext)
-            // The logged-out account's NIP-46 subscriptions, connection keys and
-            // relay sockets must go with it: rebuild the filters from the
-            // remaining accounts, or Amber keeps listening for a deleted key.
-            relayClient.checkForNewRelaysAndUpdateAllFilters()
+            stopListeningForLoggedOutKey()
             tryLoginExistingAccount(null, null, forceLogout = shouldLogout)
         }
     }
@@ -221,6 +228,7 @@ class AccountStateViewModel(
         }
     }
 
+    @Suppress("NoComments")
     fun maybeOfferRestore(account: Account) {
         if (BuildFlavorChecker.isOfflineFlavor()) return
 
@@ -229,7 +237,6 @@ class AccountStateViewModel(
         // true on a logout→login round trip — the main case restore exists for.
         // Fetching is a read of a public, self-authored event; the dao check
         // below skips accounts whose local apps are still present.
-
         appScope.launch {
             try {
                 val dao = accountRepository.daos(account.npub).applicationDao

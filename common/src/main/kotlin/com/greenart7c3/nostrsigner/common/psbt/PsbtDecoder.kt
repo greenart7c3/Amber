@@ -26,6 +26,7 @@ data class DecodedPsbt(
 /** What a sign_psbt approval shows instead of the raw PSBT (outputs, change, fee). */
 object PsbtDecoder {
     /** [xOnlyPubKey] is the signing account's x-only public key. */
+    @Suppress("NoComments")
     fun decode(psbtHex: String, xOnlyPubKey: ByteArray): DecodedPsbt = try {
         val psbt = Psbt.parse(psbtHex)
         val tx = psbt.unsignedTx
@@ -76,30 +77,42 @@ object PsbtDecoder {
         )
     }
 
-    // Recognises segwit witness program script shapes and encodes them as bech32/bech32m mainnet addresses.
-    // - P2WPKH (BIP-141): OP_0 <20>  -> bech32 with witver=0
-    // - P2WSH  (BIP-141): OP_0 <32>  -> bech32 with witver=0
-    // - P2TR   (BIP-341): OP_1 <32>  -> bech32m with witver=1
-    // Returns null for everything else (legacy P2PKH/P2SH and non-standard scripts).
+    /**
+     * The bech32/bech32m address (mainnet unless [hrp] says otherwise) of a segwit
+     * witness program script:
+     * - P2WPKH (BIP-141): OP_0 <20>  -> bech32 with witver=0
+     * - P2WSH  (BIP-141): OP_0 <32>  -> bech32 with witver=0
+     * - P2TR   (BIP-341): OP_1 <32>  -> bech32m with witver=1
+     *
+     * Returns null for everything else (legacy P2PKH/P2SH and non-standard scripts).
+     */
     fun scriptPubKeyToAddress(script: ByteArray, hrp: String = "bc"): String? {
-        if (script.size == 22 && script[0] == 0x00.toByte() && script[1] == 0x14.toByte()) {
-            return encodeSegwit(hrp, 0, script.copyOfRange(2, 22))
+        val witnessVersion = when {
+            isWitnessProgram(script, OP_0, P2WPKH_PROGRAM_SIZE) -> 0
+            isWitnessProgram(script, OP_0, P2WSH_PROGRAM_SIZE) -> 0
+            isWitnessProgram(script, OP_1, P2TR_PROGRAM_SIZE) -> 1
+            else -> return null
         }
-        if (script.size == 34 && script[0] == 0x00.toByte() && script[1] == 0x20.toByte()) {
-            return encodeSegwit(hrp, 0, script.copyOfRange(2, 34))
-        }
-        if (script.size == 34 && script[0] == 0x51.toByte() && script[1] == 0x20.toByte()) {
-            return encodeSegwit(hrp, 1, script.copyOfRange(2, 34))
-        }
-        return null
+        return encodeSegwit(hrp, witnessVersion, script.copyOfRange(WITNESS_PROGRAM_OFFSET, script.size))
     }
+
+    private fun isWitnessProgram(script: ByteArray, versionOpcode: Byte, programSize: Int): Boolean = script.size == WITNESS_PROGRAM_OFFSET + programSize &&
+        script[0] == versionOpcode &&
+        script[1] == programSize.toByte()
+
+    private const val OP_0: Byte = 0x00
+    private const val OP_1: Byte = 0x51
+    private const val WITNESS_PROGRAM_OFFSET = 2
+    private const val P2WPKH_PROGRAM_SIZE = 20
+    private const val P2WSH_PROGRAM_SIZE = 32
+    private const val P2TR_PROGRAM_SIZE = 32
 
     private const val BECH32_CHARSET = "qpzry9x8gf2tvdw0s3jn54khce6mua7l"
     private const val BECH32_CONST = 1L
     private const val BECH32M_CONST = 0x2bc830a3L
 
     private fun encodeSegwit(hrp: String, witver: Int, program: ByteArray): String? {
-        val program5 = toFiveBitGroups(program)
+        val program5 = toZeroPaddedFiveBitGroups(program)
         val data = IntArray(program5.size + 1)
         data[0] = witver
         for (i in program5.indices) data[i + 1] = program5[i]
@@ -112,8 +125,7 @@ object PsbtDecoder {
         return sb.toString()
     }
 
-    /** Regroups [data] from 8-bit bytes into 5-bit values, zero-padding the last one (BIP-173). */
-    private fun toFiveBitGroups(data: ByteArray): IntArray {
+    private fun toZeroPaddedFiveBitGroups(data: ByteArray): IntArray {
         var acc = 0
         var bits = 0
         val result = mutableListOf<Int>()

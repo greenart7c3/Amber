@@ -71,7 +71,6 @@ class BunkerOverLocalRelayTest {
         }
     }
 
-    /** The client app: same production wiring as `BunkerE2eTest`, pointed at the local relay only. */
     private class Client(
         relay: NormalizedRelayUrl,
         val keyPair: KeyPair,
@@ -151,21 +150,24 @@ class BunkerOverLocalRelayTest {
         LocalBunkerRelay.stop()
         assertEquals(Status.RUNNING, LocalBunkerRelay.start(0))
         val relay = LocalBunkerRelay.relayUrl() ?: error("relay did not start")
-        // Local-only defaults: the new bunker's URI then references the local relay alone.
         SettingsStore.update { it.copy(defaultRelays = listOf(relay.url), localBunkerServer = true) }
 
         val account = AccountManager.addAccount(KeyPair(), name = "local-relay-e2e")
         val engine = AmberDesktop.engine
         engine.start()
         val bunkerUri = engine.createBunkerConnection(account, "local-relay-e2e-app", AmberDesktop.newBunkerRelays())
-        assertEquals(listOf("relay=${relay.url}"), bunkerUri.substringAfter("?").substringBefore("&secret=").split("&"))
+        assertEquals(
+            "with local-only defaults the bunker URI references the local relay alone",
+            listOf("relay=${relay.url}"),
+            bunkerUri.substringAfter("?").substringBefore("&secret=").split("&"),
+        )
         val signerPubKey = bunkerUri.removePrefix("bunker://").substringBefore("?")
         val secret = bunkerUri.substringAfter("secret=")
 
         val client = Client(relay, KeyPair())
 
-        // 1. connect — arrives at the engine through its subscription on the local relay.
         assertTrue(
+            "connect is published to the local relay the engine subscribes on",
             client.send(signerPubKey, relay, """{"id":"c1","method":"connect","params":["$signerPubKey","$secret"]}"""),
         )
         withTimeout(30.seconds) { engine.pending.first { it.isNotEmpty() } }
@@ -175,12 +177,11 @@ class BunkerOverLocalRelayTest {
         }.first { it.id == "c1" }
         assertEquals("ack", ack.result)
 
-        // 2. get_public_key — granted automatically by the connect approval.
         assertTrue(client.send(signerPubKey, relay, """{"id":"g1","method":"get_public_key","params":[]}"""))
         val gpk = withTimeout(30.seconds) {
             client.responses.first { list -> list.any { it.id == "g1" } }
         }.first { it.id == "g1" }
-        assertEquals(account.hexKey, gpk.result)
+        assertEquals("get_public_key is granted by the connect approval", account.hexKey, gpk.result)
 
         client.stop()
         engine.updateFilter()
@@ -190,15 +191,11 @@ class BunkerOverLocalRelayTest {
 
     @Test
     fun portChangeIsRefusedWhileAnAppUsesTheRelay() = runBlocking {
-        // Configure the port first, exactly as the settings UI does: the guard
-        // compares saved connections against the configured relay URL.
         val probe = ServerSocket(0)
         val port1 = probe.localPort
         probe.close()
         LocalBunkerRelay.stop()
-        SettingsStore.update { it.copy(defaultRelays = emptyList(), localBunkerServer = true, localBunkerPort = port1) }
-        assertEquals(Status.RUNNING, LocalBunkerRelay.start(BunkerRelays.localBunkerPort()))
-        val relay = LocalBunkerRelay.relayUrl() ?: error("relay did not start")
+        val relay = startOnThePortConfiguredLikeTheSettingsUi(port1)
 
         val account = AccountManager.addAccount(KeyPair(), name = "port-guard")
         val engine = AmberDesktop.engine
@@ -209,21 +206,25 @@ class BunkerOverLocalRelayTest {
         val port2 = probe2.localPort
         probe2.close()
 
-        // A saved connection still lists the relay: the port must not move.
-        assertEquals(Res.string.d_local_bunker_port_in_use, BunkerRelays.changeLocalBunkerPort(port2))
-        assertEquals(port1, LocalBunkerRelay.boundPort)
+        assertEquals("a saved connection still lists the relay", Res.string.d_local_bunker_port_in_use, BunkerRelays.changeLocalBunkerPort(port2))
+        assertEquals("the port does not move while a connection uses it", port1, LocalBunkerRelay.boundPort)
         assertEquals(relay.url, LocalBunkerRelay.relayUrl()?.url)
 
         val app = AmberDesktop.store(account.npub).apps.value.first()
         AmberDesktop.store(account.npub).delete(app.app.key)
-        // Freed, the port change restarts the relay on the new port.
-        assertNull(BunkerRelays.changeLocalBunkerPort(port2))
-        assertEquals(port2, LocalBunkerRelay.boundPort)
+        assertNull("a freed port can change", BunkerRelays.changeLocalBunkerPort(port2))
+        assertEquals("the port change restarts the relay on the new port", port2, LocalBunkerRelay.boundPort)
         assertEquals("ws://127.0.0.1:$port2/", LocalBunkerRelay.relayUrl()?.url)
 
         engine.updateFilter()
         AmberDesktop.client.disconnect()
         LocalBunkerRelay.stop()
+    }
+
+    private fun startOnThePortConfiguredLikeTheSettingsUi(port: Int): NormalizedRelayUrl {
+        SettingsStore.update { it.copy(defaultRelays = emptyList(), localBunkerServer = true, localBunkerPort = port) }
+        assertEquals(Status.RUNNING, LocalBunkerRelay.start(BunkerRelays.localBunkerPort()))
+        return LocalBunkerRelay.relayUrl() ?: error("relay did not start")
     }
 
     @Test
@@ -237,8 +238,8 @@ class BunkerOverLocalRelayTest {
                 localBunkerServer = true,
             )
         }
-        // The user removed the local relay and one default from the dialog.
-        val selected = AmberDesktop.newBunkerRelays().filter { it != local && it.url != "wss://relay.one.example/" }
+        fun removedInTheDialog(relay: NormalizedRelayUrl) = relay == local || relay.url == "wss://relay.one.example/"
+        val selected = AmberDesktop.newBunkerRelays().filterNot { removedInTheDialog(it) }
         assertEquals(listOf("wss://relay.two.example/"), selected.map { it.url })
 
         val account = AccountManager.addAccount(KeyPair(), name = "selected-relays")

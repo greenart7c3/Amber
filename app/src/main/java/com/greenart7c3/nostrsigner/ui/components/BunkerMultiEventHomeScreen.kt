@@ -80,7 +80,6 @@ private fun AmberBunkerRequest.defaultAppInfo() = RequestAppInfo(
     icon = clientMetadata?.image ?: "",
 )
 
-/** The requests a batch may show: everything but connects. */
 internal fun batchableBunkerRequests(requests: List<AmberBunkerRequest>): List<AmberBunkerRequest> = requests.filterNot { it.request is BunkerRequestConnect }
 
 @Composable
@@ -127,7 +126,6 @@ private fun BunkerMultiEventContent(
     loadSavedApp: suspend (RequestAppKey) -> SavedAppInfo?,
     modifier: Modifier = Modifier,
 ) {
-    // Requests are grouped by the app that sent them (in arrival order), then by request type.
     val apps = remember(batchRequests) {
         batchRequests.groupBy { it.appKey }.map { (appKey, requests) ->
             appKey to groupRequests(requests) { it.requestGroupKey() }
@@ -157,7 +155,6 @@ private fun BunkerMultiEventContent(
             )
         }
 
-        // Confirm signs each request under its own account (see below).
         val batchAccounts = rememberBatchAccounts(batchRequests.map { it.currentAccount }, accountParam)
         batchAccounts.SigningAsHeader()
 
@@ -181,7 +178,7 @@ private fun BunkerMultiEventContent(
     }
 }
 
-/** Resolves each requesting app's name and icon: the saved app row, or the client metadata the request carried. */
+@Suppress("NoComments")
 @Composable
 private fun rememberAppInfos(
     batchRequests: List<AmberBunkerRequest>,

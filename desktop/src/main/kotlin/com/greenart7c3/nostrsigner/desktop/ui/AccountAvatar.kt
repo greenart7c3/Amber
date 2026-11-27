@@ -119,15 +119,14 @@ object ProfileImages {
 
     private fun download(url: String): ByteArray? = try {
         RelayHttpClients.clientFor(url).newCall(Request.Builder().url(url).build()).execute().use { response ->
-            if (response.isSuccessful) readCapped(response.body) else null
+            if (response.isSuccessful) readUnlessLargerThanMaxBytes(response.body) else null
         }
     } catch (e: Exception) {
         AmberLogger.d("ProfileImages", "Could not download profile picture: ${e.message}")
         null
     }
 
-    /** The body, or null when it is (or says it is) larger than [MAX_BYTES]. */
-    private fun readCapped(body: ResponseBody): ByteArray? {
+    private fun readUnlessLargerThanMaxBytes(body: ResponseBody): ByteArray? {
         if (body.contentLength() > MAX_BYTES) return null
         val bytes = body.byteStream().use { it.readNBytes((MAX_BYTES + 1).toInt()) }
         return bytes.takeIf { it.size <= MAX_BYTES }

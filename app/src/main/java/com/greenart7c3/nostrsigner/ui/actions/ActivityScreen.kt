@@ -97,6 +97,7 @@ fun ActivityScreen(
     }
 }
 
+@Suppress("NoComments")
 @Composable
 private fun ActivityList(
     activities: LazyPagingItems<ActivityEntry>,

@@ -58,6 +58,7 @@ suspend fun Clipboard.setSensitiveClip(
     scheduleSensitiveClear(context.applicationContext, text, clearAfter)
 }
 
+@Suppress("NoComments")
 private fun scheduleSensitiveClear(
     context: Context,
     copiedValue: CharSequence,
@@ -98,6 +99,7 @@ internal fun sensitiveClipHash(salt: ByteArray, text: String): ByteArray = Messa
  * is therefore cleared, at the cost of also wiping anything copied since. A
  * readable clipboard is only cleared while it still holds the copied secret.
  */
+@Suppress("NoComments")
 internal fun shouldClearSensitiveClip(
     clipReadable: Boolean,
     currentText: String?,

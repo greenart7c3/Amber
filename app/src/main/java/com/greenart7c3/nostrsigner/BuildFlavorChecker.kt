@@ -1,9 +1,9 @@
 package com.greenart7c3.nostrsigner
 
 object BuildFlavorChecker {
-    /** The flavor behind the separate "Amber Offline" Zapstore listing. */
     private const val OFFLINE_ZAPSTORE_FLAVOR = "offlinezapstore"
 
+    /** Both offline flavors: `offline` and `offlinezapstore`, the build behind the separate "Amber Offline" Zapstore listing. */
     @Suppress("SimplifyBooleanWithConstants")
     fun isOfflineFlavor(): Boolean {
         @Suppress("KotlinConstantConditions")

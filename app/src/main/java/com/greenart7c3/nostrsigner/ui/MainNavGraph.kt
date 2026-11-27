@@ -44,7 +44,6 @@ import kotlinx.collections.immutable.ImmutableList
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
-/** What the main destinations are laid out with: the scaffold's [padding] and the side [margin]. */
 @Immutable
 internal class MainLayout(val padding: PaddingValues, val margin: Dp) {
     val topPadding: Dp get() = padding.calculateTopPadding() + margin * 1.5f

@@ -55,16 +55,13 @@ class InvalidParamsTest {
             AmberDesktop.engine.consume(client.signerSync.sign(TimeUtils.now(), 24133, arrayOf(arrayOf("p", connectionHex)), content), relay)
         }
 
-        // Missing params are refused before admission (hasRequiredParams); a v3 request
-        // with its pubkey but no kind passes that check and is refused after it, before
-        // anything is computed (nip46Step).
-        fun refusedBeforeAdmission() = store.logs.value.count { it.message.endsWith(": $NIP46_INVALID_PARAMS") }
-        fun refusedUpFront() = store.logs.value.count { it.message == "Rejecting invalid NIP-44 v3 request: $NIP44V3_KIND_REQUIRED" }
+        fun missingParamsRefusedBeforeAdmission() = store.logs.value.count { it.message.endsWith(": $NIP46_INVALID_PARAMS") }
+        fun v3WithoutKindRefusedAfterAdmissionBeforeAnyStep() = store.logs.value.count { it.message == "Rejecting invalid NIP-44 v3 request: $NIP44V3_KIND_REQUIRED" }
         withTimeout(20.seconds) {
-            while (refusedBeforeAdmission() < 3 || refusedUpFront() < 1) delay(50.milliseconds)
+            while (missingParamsRefusedBeforeAdmission() < 3 || v3WithoutKindRefusedAfterAdmissionBeforeAnyStep() < 1) delay(50.milliseconds)
         }
-        assertEquals(3, refusedBeforeAdmission())
-        assertEquals(1, refusedUpFront())
+        assertEquals(3, missingParamsRefusedBeforeAdmission())
+        assertEquals(1, v3WithoutKindRefusedAfterAdmissionBeforeAnyStep())
         assertEquals(0, store.logs.value.count { it.message.startsWith("Rejecting request that cannot be fulfilled") })
         assertFalse(store.history.value.any { it.appKey == clientHex && it.accepted })
         assertFalse(AmberDesktop.engine.pending.value.any { it.account.npub == account.npub })

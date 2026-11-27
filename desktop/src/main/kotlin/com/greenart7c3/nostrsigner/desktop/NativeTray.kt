@@ -52,6 +52,16 @@ class NativeTray private constructor(
         private fun isWayland(): Boolean = !System.getenv("WAYLAND_DISPLAY").isNullOrBlank() ||
             System.getenv("XDG_SESSION_TYPE").equals("wayland", ignoreCase = true)
 
+        private val SYSTEM_LIB_DIRS = listOf(
+            "/usr/lib",
+            "/usr/lib64",
+            "/usr/local/lib",
+            "/usr/lib/x86_64-linux-gnu",
+            "/lib/x86_64-linux-gnu",
+            "/usr/lib/aarch64-linux-gnu",
+            "/lib/aarch64-linux-gnu",
+        )
+
         /**
          * dorkbox 4.4 only looks for the legacy `libappindicator3.so` family of
          * names, never the Ayatana fork. Modern distros (Arch/Omarchy, recent
@@ -63,16 +73,7 @@ class NativeTray private constructor(
          * `jna.library.path` (which JNA re-reads per load). No root needed.
          * Skipped when a real `libappindicator3.so.1` is already present.
          */
-        private val SYSTEM_LIB_DIRS = listOf(
-            "/usr/lib",
-            "/usr/lib64",
-            "/usr/local/lib",
-            "/usr/lib/x86_64-linux-gnu",
-            "/lib/x86_64-linux-gnu",
-            "/usr/lib/aarch64-linux-gnu",
-            "/lib/aarch64-linux-gnu",
-        )
-
+        @Suppress("NoComments")
         private fun ensureAppIndicatorLibrary() {
             runCatching {
                 val shim = buildAppIndicatorShim(SYSTEM_LIB_DIRS, newShimDir()) ?: return
@@ -92,6 +93,7 @@ class NativeTray private constructor(
          * dlopens from `jna.library.path` is what this process put there.
          * Best-effort recursive cleanup at JVM shutdown.
          */
+        @Suppress("NoComments")
         internal fun newShimDir(): File {
             val dir = Files.createTempDirectory("amber-appindicator-shim").toFile()
             AppDirs.restrictToOwner(dir)
@@ -104,13 +106,13 @@ class NativeTray private constructor(
         /**
          * If only the Ayatana appindicator library is present, symlink it under
          * the GTK3 names dorkbox probes into [shimDir] and return that dir; else
-         * null (legacy lib already there, or no Ayatana lib at all). Package-
-         * visible for testing. [shimDir] must be a fresh directory only this
-         * user can write to — see [newShimDir]; never a fixed, world-writable
-         * path, or a local attacker decides what gets dlopened.
+         * null (legacy lib already there, or no Ayatana lib at all). [shimDir]
+         * must be a fresh directory only this user can write to — see
+         * [newShimDir]; never a fixed, world-writable path, or a local attacker
+         * decides what gets dlopened.
          */
+        @Suppress("NoComments")
         internal fun buildAppIndicatorShim(libDirs: List<String>, shimDir: File): String? {
-            // Nothing to do if the legacy library dorkbox wants already exists.
             if (libDirs.any { File(it, "libappindicator3.so.1").exists() || File(it, "libappindicator3.so").exists() }) return null
 
             val ayatana = libDirs.asSequence()
@@ -145,6 +147,7 @@ class NativeTray private constructor(
          * visible to the shell), then restore it; nothing else sees the
          * change — the main thread is blocked on tray init meanwhile.
          */
+        @Suppress("NoComments")
         private fun loadDorkboxWithSessionTempDir() {
             val runtimeDir = System.getenv("XDG_RUNTIME_DIR")?.let(::File)?.takeIf { it.isDirectory && it.canWrite() } ?: return
             val original = System.getProperty("java.io.tmpdir")
@@ -158,6 +161,7 @@ class NativeTray private constructor(
             }
         }
 
+        @Suppress("NoComments")
         private fun chosenTrayType(): SystemTray.TrayType {
             System.getenv("AMBER_TRAY_TYPE")?.let { name ->
                 runCatching { return SystemTray.TrayType.valueOf(name) }
@@ -175,6 +179,7 @@ class NativeTray private constructor(
          * gdbus) means no host: AppIndicator init would just hang waiting for
          * one, so callers skip the tray instead.
          */
+        @Suppress("NoComments")
         internal fun sniHostRegistered(): Boolean {
             val output = runCatching {
                 val process = ProcessBuilder(
@@ -191,10 +196,8 @@ class NativeTray private constructor(
             return parseSniHostReply(output)
         }
 
-        /** Package-visible for testing: a host is registered only on a `true` reply. */
         internal fun parseSniHostReply(output: String): Boolean = output.contains("true", ignoreCase = true)
 
-        /** Probes up to [attempts] times, [intervalMs] apart; true as soon as a host is registered. */
         internal fun awaitSniHost(attempts: Int, intervalMs: Long, probe: () -> Boolean = ::sniHostRegistered): Boolean {
             repeat(attempts) { attempt ->
                 if (probe()) return true
@@ -229,8 +232,8 @@ class NativeTray private constructor(
             onLateTray: ((NativeTray) -> Unit)? = null,
         ): NativeTray? {
             val build = { create(iconStream, tooltip, openLabel, lockLabel, quitLabel, onToggle, onLock, onQuit) }
-            // An explicit AMBER_TRAY_TYPE overrides the host probe (debugging).
-            if (System.getenv("AMBER_TRAY_TYPE") != null || sniHostRegistered()) return runBounded(timeoutMs, build)
+            val trayTypeForcedForDebugging = System.getenv("AMBER_TRAY_TYPE") != null
+            if (trayTypeForcedForDebugging || sniHostRegistered()) return runBounded(timeoutMs, build)
             if (onLateTray == null) {
                 logNoHost()
                 return null

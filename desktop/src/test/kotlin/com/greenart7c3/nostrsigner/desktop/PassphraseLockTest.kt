@@ -32,27 +32,24 @@ import org.junit.Assert.assertTrue
 import org.junit.BeforeClass
 import org.junit.Test
 
-/** In-memory stand-in for the OS credential store holding the second unlock factor. */
 private class MemorySecretStore(var value: String? = null) : PasswordStore {
     var available = true
 
-    /** When set, only this many more reads succeed; later ones fail like a stumbling keyring. */
-    var failLoadsAfter: Int? = null
+    var successfulLoadsBeforeFailing: Int? = null
 
-    /** When set, the next read counts down the first latch and waits for the second: holds an unlock mid-way. */
-    var pause: Pair<java.util.concurrent.CountDownLatch, java.util.concurrent.CountDownLatch>? = null
+    var pauseNextLoadUntilReleased: Pair<java.util.concurrent.CountDownLatch, java.util.concurrent.CountDownLatch>? = null
     override val description: String = "test keyring"
 
     override fun load(): String? {
-        pause?.let { (loading, release) ->
-            pause = null
+        pauseNextLoadUntilReleased?.let { (loading, release) ->
+            pauseNextLoadUntilReleased = null
             loading.countDown()
             release.await(10, java.util.concurrent.TimeUnit.SECONDS)
         }
         if (!available) return null
-        failLoadsAfter?.let { remaining ->
+        successfulLoadsBeforeFailing?.let { remaining ->
             if (remaining <= 0) return null
-            failLoadsAfter = remaining - 1
+            successfulLoadsBeforeFailing = remaining - 1
         }
         return value
     }
@@ -82,10 +79,9 @@ class PassphraseLockTest {
         private const val SECRET = "super-secret-private-key"
         private const val MARKER = "SECRET_APP_NAME_9f3a"
         private const val PASS = "new passphrase 42"
+        private const val FLAKY_KEYRING_PASS = "flaky keyring 77"
         private val fastKdf = PassphraseLock.KdfParams(memoryKb = 1024, iterations = 1, parallelism = 1)
         private val keyring = MemorySecretStore()
-
-        // The per-file generations, kept off the real keyring.
         private val generations = HashMap<String, MemorySecretStore>()
 
         @JvmStatic
@@ -102,8 +98,7 @@ class PassphraseLockTest {
             PassphraseLock.targetKdfParams = fastKdf
         }
 
-        /** The pre-v2 ciphertext format (no context binding), to fabricate old installs. */
-        private fun encryptUnbound(key: SecretKey, plainText: String): String {
+        private fun encryptInPreV2FormatWithoutContextBinding(key: SecretKey, plainText: String): String {
             val cipher = Cipher.getInstance("AES/GCM/NoPadding")
             cipher.init(Cipher.ENCRYPT_MODE, key)
             val cipherText = cipher.doFinal(plainText.toByteArray(Charsets.UTF_8))
@@ -121,21 +116,27 @@ class PassphraseLockTest {
         val cipher1 = DesktopKeyStore.encrypt(SECRET, "test/secret")
         val account = plainModeKeepsDataReadable(cipher1)
         val appsFile = File(AppDirs.accountDir(account.npub), "applications.json")
-        setupEncryptsAtRest(cipher1, account.npub, appsFile)
-        lockWipesKeysAndUnlockRestoresThem(cipher1, account.npub, appsFile)
-        changingThePassphraseKeepsTheData(cipher1)
-        unlockNeedsTheKeyringSecret()
-        val other = storesRefuseSwappedData(appsFile)
+        setupWrapsTheSameMasterKeySoOldCiphertextsStillDecrypt(cipher1)
+        setupRemovesTheUnprotectedMasterKeyCopies()
+        setupEncryptsTheAccountDatabaseAtRest(account.npub, appsFile)
+        lockEvictsAndWipesTheKeys(cipher1, account.npub)
+        verifyChecksThePassphraseWithoutUnlocking(cipher1)
+        unlockRejectsAWrongPassphraseAndTheRightOneRestoresAccess(cipher1, account.npub, appsFile)
+        changingThePassphraseNeedsTheOldOneAndKeepsTheData(cipher1)
+        unlockWithoutTheKeyringSecretReportsItMissingNotAWrongPassphrase()
+        droppingTheSecondFactorFlagFromTheAuthenticatedHeaderBreaksTheBlob()
+        val other = addSecondAccountToSwapDataWith()
+        storesRefuseADatabaseSwappedInFromAnotherAccountAndQuarantineIt(appsFile, other)
+        storesRefuseAPlantedPlaintextDatabase(other)
         storesRefuseRolledBackData(other)
         accountKeysAreBoundToTheirRecords(account, other, appsFile)
         weakKdfIsRehashedAtUnlock(cipher1)
         flakyKeyringKeepsTheSecondFactor(cipher1)
-        lockWaitsForAnUnlockMidWay()
+        aLockArrivingMidUnlockWaitsForItInsteadOfInterleaving()
         crashReportsStayUnreadableOnDisk()
     }
 
     private suspend fun plainModeKeepsDataReadable(cipher1: String): DesktopAccount {
-        // Plain mode (pre-setup): keys and the account database are plaintext.
         assertEquals(SECRET, DesktopKeyStore.decrypt(cipher1, "test/secret"))
         assertEquals(PassphraseLock.Status.DISABLED, PassphraseLock.state.value)
         assertFalse(PassphraseLock.isEnabled())
@@ -149,35 +150,32 @@ class PassphraseLockTest {
         return account
     }
 
-    private suspend fun setupEncryptsAtRest(cipher1: String, npub: String, appsFile: File) {
-        // Setup wraps the same master key under the passphrase: old
-        // ciphertexts still decrypt, and the account database is re-encrypted
-        // at rest.
+    private suspend fun setupWrapsTheSameMasterKeySoOldCiphertextsStillDecrypt(cipher1: String) {
         PassphraseLock.enable("correct horse battery staple".toCharArray(), fastKdf)
         assertTrue(PassphraseLock.isEnabled())
         assertEquals(PassphraseLock.Status.UNLOCKED, PassphraseLock.state.value)
-        assertEquals(SECRET, DesktopKeyStore.decrypt(cipher1, "test/secret"))
+        assertEquals("a ciphertext from before setup still decrypts", SECRET, DesktopKeyStore.decrypt(cipher1, "test/secret"))
+    }
 
-        // The unprotected copies are gone.
+    private fun setupRemovesTheUnprotectedMasterKeyCopies() {
         val dataDir = AppDirs.dataDir
         assertFalse(File(dataDir, "amber.keystore").exists())
         assertFalse(File(dataDir, "keystore.pass").exists())
         assertTrue(File(dataDir, "master.key.enc").exists())
         assertTrue("the keyring secret is a second factor", blobJson().contains("\"osSecret\":true"))
         assertTrue("the keyring holds the secret", keyring.value != null)
+    }
 
+    private fun setupEncryptsTheAccountDatabaseAtRest(npub: String, appsFile: File) {
         val encrypted = appsFile.readText()
         assertTrue("encrypted file should carry the marker header", encrypted.startsWith("AMBERENC3:"))
         assertFalse("plaintext app name must not survive in the encrypted file", encrypted.contains(MARKER))
 
-        // A fresh reader (simulating a restart) decrypts it back.
-        val reloaded = AccountStore(npub)
-        assertEquals(MARKER, reloaded.apps.value.first().app.name)
+        val readerAfterRestart = AccountStore(npub)
+        assertEquals(MARKER, readerAfterRestart.apps.value.first().app.name)
     }
 
-    private suspend fun lockWipesKeysAndUnlockRestoresThem(cipher1: String, npub: String, appsFile: File) {
-        // Locking evicts the key: crypto operations fail, and the key bytes
-        // themselves are wiped, not just dereferenced.
+    private suspend fun lockEvictsAndWipesTheKeys(cipher1: String, npub: String) {
         val loaded = AmberDesktop.account(npub)!!
         val liveMasterKey = DesktopMasterKey.masterKeyForWrapping()
         PassphraseLock.lock()
@@ -188,16 +186,18 @@ class PassphraseLockTest {
         assertThrows(DesktopKeyStore.LockedException::class.java) {
             runBlocking { DesktopKeyStore.decrypt(cipher1, "test/secret") }
         }
+    }
 
-        // verify() checks the passphrase without unlocking anything.
+    private suspend fun verifyChecksThePassphraseWithoutUnlocking(cipher1: String) {
         assertTrue(PassphraseLock.verify("correct horse battery staple".toCharArray()))
         assertFalse(PassphraseLock.verify("wrong passphrase".toCharArray()))
         assertEquals(PassphraseLock.Status.LOCKED, PassphraseLock.state.value)
         assertThrows(DesktopKeyStore.LockedException::class.java) {
             runBlocking { DesktopKeyStore.decrypt(cipher1, "test/secret") }
         }
+    }
 
-        // Wrong passphrase is rejected, right one restores access.
+    private suspend fun unlockRejectsAWrongPassphraseAndTheRightOneRestoresAccess(cipher1: String, npub: String, appsFile: File) {
         assertFalse(PassphraseLock.unlock("wrong passphrase".toCharArray()))
         assertEquals(PassphraseLock.Status.LOCKED, PassphraseLock.state.value)
         assertTrue(PassphraseLock.unlock("correct horse battery staple".toCharArray()))
@@ -206,8 +206,7 @@ class PassphraseLockTest {
         assertTrue("db must stay encrypted while a passphrase is set", appsFile.readText().startsWith("AMBERENC3:"))
     }
 
-    private suspend fun changingThePassphraseKeepsTheData(cipher1: String) {
-        // Changing the passphrase requires the old one and keeps the data.
+    private suspend fun changingThePassphraseNeedsTheOldOneAndKeepsTheData(cipher1: String) {
         assertFalse(PassphraseLock.changePassphrase("nope".toCharArray(), PASS.toCharArray(), fastKdf))
         assertTrue(PassphraseLock.changePassphrase("correct horse battery staple".toCharArray(), PASS.toCharArray(), fastKdf))
         PassphraseLock.lock()
@@ -216,18 +215,17 @@ class PassphraseLockTest {
         assertEquals(SECRET, DesktopKeyStore.decrypt(cipher1, "test/secret"))
     }
 
-    private suspend fun unlockNeedsTheKeyringSecret() {
-        // Without the keyring secret the data dir and passphrase are not
-        // enough, and the failure is reported as such (not "wrong passphrase").
+    private fun unlockWithoutTheKeyringSecretReportsItMissingNotAWrongPassphrase() {
         PassphraseLock.lock()
         keyring.available = false
         assertThrows(PassphraseLock.OsSecretUnavailableException::class.java) {
             runBlocking { PassphraseLock.unlock(PASS.toCharArray()) }
         }
-        assertEquals(PassphraseLock.Status.LOCKED, PassphraseLock.state.value)
+        assertEquals("the data dir and passphrase alone do not unlock", PassphraseLock.Status.LOCKED, PassphraseLock.state.value)
         keyring.available = true
+    }
 
-        // The header is authenticated: dropping the second-factor flag breaks the blob.
+    private suspend fun droppingTheSecondFactorFlagFromTheAuthenticatedHeaderBreaksTheBlob() {
         val blobFile = File(AppDirs.dataDir, "master.key.enc")
         val goodBlob = blobFile.readText()
         blobFile.writeText(goodBlob.replace("\"osSecret\":true", "\"osSecret\":false"))
@@ -236,75 +234,97 @@ class PassphraseLockTest {
         assertTrue(PassphraseLock.unlock(PASS.toCharArray()))
     }
 
-    private suspend fun storesRefuseSwappedData(appsFile: File): DesktopAccount {
-        // A second account to swap data with.
+    private suspend fun addSecondAccountToSwapDataWith(): DesktopAccount {
         val other = AccountManager.addAccount(KeyPair(), name = "other")
-        val otherAppsFile = File(AppDirs.accountDir(other.npub), "applications.json")
         AmberDesktop.store(other.npub).upsert(AppWithPermissions(app = AppRecord(key = "app-key-2", name = "other-app", pubKey = other.hexKey)))
-
-        // Swapping one account's encrypted database into another is rejected,
-        // and the rejected file is kept aside rather than overwritten.
-        otherAppsFile.writeText(appsFile.readText())
-        assertTrue(AccountStore(other.npub).apps.value.isEmpty())
-        assertFalse(otherAppsFile.exists())
-        assertEquals(1, quarantined(otherAppsFile).size)
-
-        // A planted plaintext database is rejected too.
-        otherAppsFile.writeText("""[{"app":{"key":"evil","name":"planted","pubKey":"${other.hexKey}"},"permissions":[]}]""")
-        assertTrue(AccountStore(other.npub).apps.value.isEmpty())
         return other
     }
 
-    private suspend fun storesRefuseRolledBackData(other: DesktopAccount) {
+    private fun storesRefuseADatabaseSwappedInFromAnotherAccountAndQuarantineIt(appsFile: File, other: DesktopAccount) {
         val otherAppsFile = File(AppDirs.accountDir(other.npub), "applications.json")
-        // Rollback: an older, validly encrypted copy put back after a grant was
-        // removed is refused, so the removed connection does not come back.
+        otherAppsFile.writeText(appsFile.readText())
+        assertTrue(AccountStore(other.npub).apps.value.isEmpty())
+        assertFalse(otherAppsFile.exists())
+        assertEquals("the rejected file is kept aside, not overwritten", 1, quarantined(otherAppsFile).size)
+    }
+
+    private fun storesRefuseAPlantedPlaintextDatabase(other: DesktopAccount) {
+        val otherAppsFile = File(AppDirs.accountDir(other.npub), "applications.json")
+        otherAppsFile.writeText("""[{"app":{"key":"evil","name":"planted","pubKey":"${other.hexKey}"},"permissions":[]}]""")
+        assertTrue(AccountStore(other.npub).apps.value.isEmpty())
+    }
+
+    private fun storesRefuseRolledBackData(other: DesktopAccount) {
+        val otherAppsFile = File(AppDirs.accountDir(other.npub), "applications.json")
+        val appsContext = "${other.npub}/applications.json"
+        val (olderCopy, current) = copiesBeforeAndAfterRemovingAGrant(other, otherAppsFile)
+        anOlderValidCopyIsRefusedSoARemovedConnectionDoesNotComeBack(other, otherAppsFile, olderCopy)
+        raisingTheGenerationInTheHeaderBreaksTheBoundCiphertext(other, otherAppsFile, olderCopy)
+        aCopyWithoutAGenerationHeaderIsRefused(other, otherAppsFile, appsContext)
+        aFileOneGenerationAheadOfItsRecordIsAcceptedAndTheRecordCatchesUp(other, otherAppsFile, appsContext, current)
+        withNoGenerationRecordedACopyWithoutAGenerationHeaderIsStillRefused(other, otherAppsFile, appsContext, current)
+    }
+
+    private fun copiesBeforeAndAfterRemovingAGrant(other: DesktopAccount, otherAppsFile: File): Pair<String, String> {
         val otherStore = AmberDesktop.store(other.npub)
         otherStore.upsert(AppWithPermissions(app = AppRecord(key = "revoked-later", name = "granted", pubKey = other.hexKey)))
         val olderCopy = otherAppsFile.readText()
         otherStore.delete("revoked-later")
-        val current = otherAppsFile.readText()
+        return olderCopy to otherAppsFile.readText()
+    }
+
+    private fun anOlderValidCopyIsRefusedSoARemovedConnectionDoesNotComeBack(other: DesktopAccount, otherAppsFile: File, olderCopy: String) {
         val rolledBackBefore = quarantined(otherAppsFile).size
         otherAppsFile.writeText(olderCopy)
         assertTrue("a rolled-back copy must not restore a removed connection", AccountStore(other.npub).apps.value.none { it.app.key == "revoked-later" })
         assertFalse(otherAppsFile.exists())
         assertEquals(rolledBackBefore + 1, quarantined(otherAppsFile).size)
+    }
 
-        // The generation is bound into the ciphertext: raising it in the header breaks the file.
+    private fun raisingTheGenerationInTheHeaderBreaksTheBoundCiphertext(other: DesktopAccount, otherAppsFile: File, olderCopy: String) {
         val olderGeneration = olderCopy.removePrefix("AMBERENC3:").substringBefore(':').toLong()
         otherAppsFile.writeText(olderCopy.replaceFirst("AMBERENC3:$olderGeneration:", "AMBERENC3:${olderGeneration + 100}:"))
         assertTrue(AccountStore(other.npub).apps.value.none { it.app.key == "revoked-later" })
         assertFalse(otherAppsFile.exists())
+    }
 
-        // A copy without a generation header is refused too.
-        val appsContext = "${other.npub}/applications.json"
+    private fun aCopyWithoutAGenerationHeaderIsRefused(other: DesktopAccount, otherAppsFile: File, appsContext: String) {
         otherAppsFile.writeText(
             "AMBERENC2:" + DesktopKeyStore.encryptString("""[{"app":{"key":"revoked-later","name":"granted","pubKey":"${other.hexKey}"},"permissions":[]}]""", appsContext),
         )
         assertTrue(AccountStore(other.npub).apps.value.isEmpty())
         assertFalse(otherAppsFile.exists())
+    }
 
-        // A crash between writing the file and recording its generation leaves
-        // the file one ahead of the record: it is accepted and the record catches up.
+    private fun aFileOneGenerationAheadOfItsRecordIsAcceptedAndTheRecordCatchesUp(other: DesktopAccount, otherAppsFile: File, appsContext: String, current: String) {
         otherAppsFile.writeText(current)
         val currentGeneration = current.removePrefix("AMBERENC3:").substringBefore(':').toLong()
-        generations.getValue(appsContext).value = (currentGeneration - 1).toString()
+        val recordLeftBehindByACrashBeforeItWasWritten = (currentGeneration - 1).toString()
+        generations.getValue(appsContext).value = recordLeftBehindByACrashBeforeItWasWritten
         assertEquals(listOf("app-key-2"), AccountStore(other.npub).apps.value.map { it.app.key })
         assertEquals(currentGeneration.toString(), generations.getValue(appsContext).value)
+    }
 
-        // ...even with no generation recorded yet: there is no older format to accept.
+    private fun withNoGenerationRecordedACopyWithoutAGenerationHeaderIsStillRefused(other: DesktopAccount, otherAppsFile: File, appsContext: String, current: String) {
+        val currentGeneration = current.removePrefix("AMBERENC3:").substringBefore(':').toLong()
         generations.getValue(appsContext).value = null
         otherAppsFile.writeText(
             "AMBERENC2:" + DesktopKeyStore.encryptString("""[{"app":{"key":"app-key-2","name":"other-app","pubKey":"${other.hexKey}"},"permissions":[]}]""", appsContext),
         )
-        assertTrue(AccountStore(other.npub).apps.value.isEmpty())
+        assertTrue("there is no older format to accept", AccountStore(other.npub).apps.value.isEmpty())
         assertFalse(otherAppsFile.exists())
         otherAppsFile.writeText(current)
         generations.getValue(appsContext).value = currentGeneration.toString()
     }
 
     private suspend fun accountKeysAreBoundToTheirRecords(account: DesktopAccount, other: DesktopAccount, appsFile: File) {
-        // Swapping account keys between records is rejected.
+        swappingAccountKeysBetweenRecordsIsRejected(account, other)
+        val masterKey: SecretKey = SecretKeySpec(DesktopMasterKey.masterKeyForWrapping().encoded, "AES")
+        aKeyCopyWithoutContextBindingIsRefused(account, masterKey)
+        aLegacyAmberenc1DatabaseIsRefusedAndQuarantined(account, masterKey, appsFile)
+    }
+
+    private suspend fun swappingAccountKeysBetweenRecordsIsRejected(account: DesktopAccount, other: DesktopAccount) {
         val records = AccountsStore.accounts.value
         val mine = records.first { it.npub == account.npub }
         val theirs = records.first { it.npub == other.npub }
@@ -312,18 +332,19 @@ class PassphraseLockTest {
         assertNull(AccountManager.loadAccount(other.npub))
         AccountsStore.upsert(theirs)
         assertEquals(other.npub, AccountManager.loadAccount(other.npub)?.npub)
+    }
 
-        // An old-format (unbound) key copy is refused outright.
-        val masterKey: SecretKey = SecretKeySpec(DesktopMasterKey.masterKeyForWrapping().encoded, "AES")
+    private suspend fun aKeyCopyWithoutContextBindingIsRefused(account: DesktopAccount, masterKey: SecretKey) {
         val privHex = AccountManager.loadAccount(account.npub)!!.signer.keyPair.privKey!!.toHexKey()
-        AccountsStore.upsert(AccountsStore.get(account.npub)!!.copy(encryptedPrivKey = encryptUnbound(masterKey, privHex)))
+        AccountsStore.upsert(AccountsStore.get(account.npub)!!.copy(encryptedPrivKey = encryptInPreV2FormatWithoutContextBinding(masterKey, privHex)))
         assertNull(AccountManager.loadAccount(account.npub))
         AccountsStore.upsert(AccountsStore.get(account.npub)!!.copy(encryptedPrivKey = DesktopKeyStore.encrypt(privHex, "${account.npub}/privkey")))
         assertEquals(account.npub, AccountManager.loadAccount(account.npub)?.npub)
+    }
 
-        // A legacy AMBERENC1 database is refused and quarantined.
+    private fun aLegacyAmberenc1DatabaseIsRefusedAndQuarantined(account: DesktopAccount, masterKey: SecretKey, appsFile: File) {
         appsFile.writeText(
-            "AMBERENC1:" + encryptUnbound(
+            "AMBERENC1:" + encryptInPreV2FormatWithoutContextBinding(
                 masterKey,
                 """[{"app":{"key":"app-key-1","name":"$MARKER","pubKey":"${account.hexKey}"},"permissions":[]}]""",
             ),
@@ -334,7 +355,6 @@ class PassphraseLockTest {
     }
 
     private suspend fun weakKdfIsRehashedAtUnlock(cipher1: String) {
-        // A blob cheaper than the current Argon2id target is rehashed at unlock.
         try {
             PassphraseLock.targetKdfParams = PassphraseLock.KdfParams(memoryKb = 2048, iterations = 2, parallelism = 1)
             PassphraseLock.lock()
@@ -349,50 +369,48 @@ class PassphraseLockTest {
     }
 
     private suspend fun flakyKeyringKeepsTheSecondFactor(cipher1: String) {
-        // The keyring stumbling right after it unwrapped the blob (one good
-        // read, then failures) must neither drop the second factor nor replace
-        // the secret the current blob depends on: a rewrap reuses that secret.
         val keyringSecret = keyring.value
-        keyring.failLoadsAfter = 1
+        aKeyringFailingAfterOneGoodReadDuringAPassphraseChangeKeepsTheSecondFactor(keyringSecret)
+        aKeyringFailingAfterOneGoodReadDuringTheUnlockRehashKeepsTheSecondFactor(keyringSecret)
+        assertTrue(PassphraseLock.changePassphrase(FLAKY_KEYRING_PASS.toCharArray(), PASS.toCharArray(), fastKdf))
+        assertEquals(SECRET, DesktopKeyStore.decrypt(cipher1, "test/secret"))
+    }
+
+    private suspend fun aKeyringFailingAfterOneGoodReadDuringAPassphraseChangeKeepsTheSecondFactor(keyringSecret: String?) {
+        keyring.successfulLoadsBeforeFailing = 1
         try {
-            assertTrue(PassphraseLock.changePassphrase(PASS.toCharArray(), "flaky keyring 77".toCharArray(), fastKdf))
+            assertTrue(PassphraseLock.changePassphrase(PASS.toCharArray(), FLAKY_KEYRING_PASS.toCharArray(), fastKdf))
         } finally {
-            keyring.failLoadsAfter = null
+            keyring.successfulLoadsBeforeFailing = null
         }
         assertTrue("the second factor is kept", blobJson().contains("\"osSecret\":true"))
-        assertEquals("the stored secret is not replaced", keyringSecret, keyring.value)
+        assertEquals("the stored secret is not replaced: a rewrap reuses it", keyringSecret, keyring.value)
         PassphraseLock.lock()
-        assertTrue(PassphraseLock.unlock("flaky keyring 77".toCharArray()))
+        assertTrue(PassphraseLock.unlock(FLAKY_KEYRING_PASS.toCharArray()))
+    }
 
-        // Same for the Argon2id rehash that runs during unlock.
+    private suspend fun aKeyringFailingAfterOneGoodReadDuringTheUnlockRehashKeepsTheSecondFactor(keyringSecret: String?) {
         try {
             PassphraseLock.targetKdfParams = PassphraseLock.KdfParams(memoryKb = 4096, iterations = 2, parallelism = 1)
             PassphraseLock.lock()
-            keyring.failLoadsAfter = 1
-            assertTrue(PassphraseLock.unlock("flaky keyring 77".toCharArray()))
+            keyring.successfulLoadsBeforeFailing = 1
+            assertTrue(PassphraseLock.unlock(FLAKY_KEYRING_PASS.toCharArray()))
         } finally {
-            keyring.failLoadsAfter = null
+            keyring.successfulLoadsBeforeFailing = null
             PassphraseLock.targetKdfParams = fastKdf
         }
         assertTrue("rehashed to the target cost", blobJson().contains("\"memoryKb\":4096"))
         assertTrue("the second factor is kept", blobJson().contains("\"osSecret\":true"))
-        assertEquals("the stored secret is not replaced", keyringSecret, keyring.value)
+        assertEquals("the stored secret is not replaced: a rewrap reuses it", keyringSecret, keyring.value)
         PassphraseLock.lock()
-        assertTrue(PassphraseLock.unlock("flaky keyring 77".toCharArray()))
-
-        // Back to the passphrase the other tests in this class use.
-        assertTrue(PassphraseLock.changePassphrase("flaky keyring 77".toCharArray(), PASS.toCharArray(), fastKdf))
-        assertEquals(SECRET, DesktopKeyStore.decrypt(cipher1, "test/secret"))
+        assertTrue(PassphraseLock.unlock(FLAKY_KEYRING_PASS.toCharArray()))
     }
 
-    private suspend fun lockWaitsForAnUnlockMidWay() {
-        // A lock (e.g. the auto-lock timer) arriving while an unlock is mid-way
-        // waits for it instead of interleaving: it used to run straight through,
-        // and the paused unlock then reinstalled the key and set UNLOCKED.
+    private suspend fun aLockArrivingMidUnlockWaitsForItInsteadOfInterleaving() {
         PassphraseLock.lock()
         val loading = java.util.concurrent.CountDownLatch(1)
         val release = java.util.concurrent.CountDownLatch(1)
-        keyring.pause = loading to release
+        keyring.pauseNextLoadUntilReleased = loading to release
         val unlocking = kotlin.concurrent.thread { runBlocking { PassphraseLock.unlock(PASS.toCharArray()) } }
         assertTrue(loading.await(10, java.util.concurrent.TimeUnit.SECONDS))
         val locking = kotlin.concurrent.thread { PassphraseLock.lock() }
@@ -400,78 +418,79 @@ class PassphraseLockTest {
         release.countDown()
         unlocking.join(10_000)
         locking.join(10_000)
-        assertEquals(PassphraseLock.Status.LOCKED, PassphraseLock.state.value)
+        assertEquals("a lock arriving mid-unlock must not be undone by that unlock", PassphraseLock.Status.LOCKED, PassphraseLock.state.value)
         assertFalse("the lock that came last wins: no key left behind", DesktopMasterKey.isMasterKeyAvailable())
         assertTrue(PassphraseLock.unlock(PASS.toCharArray()))
     }
 
     private suspend fun crashReportsStayUnreadableOnDisk() {
-        // Crash reports: exception messages can quote request data, so with a
-        // passphrase set nothing readable reaches the disk.
         val crashFile = File(AppDirs.dataDir, "crash.trace")
         try {
-            // Unlocked: the full report is stored encrypted with the master key.
-            CrashReporter.save(IllegalStateException("crash-secret-1"))
-            assertTrue(crashFile.readText().startsWith(CrashReporter.ENCRYPTED_HEADER))
-            assertFalse(crashFile.readText().contains("crash-secret-1"))
-            // After a restart it is only readable once unlocked.
-            CrashReporter.pending.value = null
-            PassphraseLock.lock()
-            CrashReporter.loadAfterUnlock()
-            assertNull(CrashReporter.pending.value)
-            assertTrue("kept for the next unlock", crashFile.exists())
-            assertTrue(PassphraseLock.unlock(PASS.toCharArray()))
-            CrashReporter.loadAfterUnlock()
-            assertTrue(CrashReporter.pending.value!!.contains("crash-secret-1"))
-            CrashReporter.dismiss()
-
-            // Locked (no key): only exception types and frames are stored.
-            PassphraseLock.lock()
-            CrashReporter.save(IllegalStateException("crash-secret-2"))
-            assertFalse(crashFile.readText().contains("crash-secret-2"))
-            assertTrue(crashFile.readText().contains("java.lang.IllegalStateException"))
+            anUnlockedCrashReportIsEncryptedAndReadableOnlyAfterUnlock(crashFile)
+            aLockedCrashReportKeepsOnlyExceptionTypesAndFrames(crashFile)
         } finally {
             CrashReporter.dismiss()
             if (PassphraseLock.isLocked()) assertTrue(PassphraseLock.unlock(PASS.toCharArray()))
         }
     }
 
+    private suspend fun anUnlockedCrashReportIsEncryptedAndReadableOnlyAfterUnlock(crashFile: File) {
+        CrashReporter.save(IllegalStateException("crash-secret-1"))
+        assertTrue(crashFile.readText().startsWith(CrashReporter.ENCRYPTED_HEADER))
+        assertFalse("an exception message can quote request data", crashFile.readText().contains("crash-secret-1"))
+        CrashReporter.pending.value = null
+        PassphraseLock.lock()
+        CrashReporter.loadAfterUnlock()
+        assertNull(CrashReporter.pending.value)
+        assertTrue("kept for the next unlock", crashFile.exists())
+        assertTrue(PassphraseLock.unlock(PASS.toCharArray()))
+        CrashReporter.loadAfterUnlock()
+        assertTrue(CrashReporter.pending.value!!.contains("crash-secret-1"))
+        CrashReporter.dismiss()
+    }
+
+    private fun aLockedCrashReportKeepsOnlyExceptionTypesAndFrames(crashFile: File) {
+        PassphraseLock.lock()
+        CrashReporter.save(IllegalStateException("crash-secret-2"))
+        assertFalse("an exception message can quote request data", crashFile.readText().contains("crash-secret-2"))
+        assertTrue(crashFile.readText().contains("java.lang.IllegalStateException"))
+    }
+
     @Test
     fun `a rolled back v1 blob is refused instead of blessing planted data`() = runBlocking {
-        // Continues the state from fullLifecycle: v2 blob, bound stores,
-        // passphrase "new passphrase 42".
         val record = AccountsStore.accounts.value.first()
-        assertTrue(blobJson().contains("\"version\":2"))
+        assertTrue("expects the v2 blob and passphrase fullLifecycle leaves behind", blobJson().contains("\"version\":2"))
 
         PassphraseLock.lock()
-        // Roll the blob back to the pre-release v1 format and plant a
-        // plaintext application database next to it.
-        val goodBlob = File(AppDirs.dataDir, "master.key.enc").readText()
+        val supportedBlob = File(AppDirs.dataDir, "master.key.enc").readText()
         AmberDesktop.evictAccount(record.npub)
-        File(AppDirs.dataDir, "master.key.enc").writeText(
-            """{"version":1,"salt":"AAAA","memoryKb":1024,"iterations":1,"parallelism":1,"iv":"AAAA","cipherText":"AAAA","osSecret":false}""",
-        )
-        val appsFile = File(AppDirs.accountDir(record.npub), "applications.json")
-        appsFile.writeText(
-            """[{"app":{"key":"evil","name":"planted-f17","pubKey":"${record.npub}"},"permissions":[]}]""",
-        )
+        val appsFile = rollBackToAPreReleaseV1BlobWithAPlantedPlaintextDatabase(record.npub)
 
-        // The unsupported blob is refused before anything is decrypted, so
-        // the planted file is never read, let alone blessed. The only way
-        // back is restoring a supported blob.
-        assertFalse(PassphraseLock.unlock("new passphrase 42".toCharArray()))
+        assertFalse("the unsupported blob is refused before anything is decrypted", PassphraseLock.unlock(PASS.toCharArray()))
         assertEquals(PassphraseLock.Status.LOCKED, PassphraseLock.state.value)
 
-        // A store read under the rolled-back blob refuses and quarantines the
-        // planted file too.
-        val reloaded = AccountStore(record.npub)
-        assertTrue(reloaded.apps.value.isEmpty())
+        val storeUnderTheRolledBackBlob = AccountStore(record.npub)
+        assertTrue("the planted file is never blessed", storeUnderTheRolledBackBlob.apps.value.isEmpty())
         assertFalse(appsFile.exists())
         assertTrue(quarantined(appsFile).isNotEmpty())
 
-        // Restore the supported blob: later test classes share this data dir.
-        File(AppDirs.dataDir, "master.key.enc").writeText(goodBlob)
-        assertTrue(PassphraseLock.unlock("new passphrase 42".toCharArray()))
+        restoreTheSupportedBlobForTheOtherTestsSharingThisDataDir(supportedBlob)
+    }
+
+    private fun rollBackToAPreReleaseV1BlobWithAPlantedPlaintextDatabase(npub: String): File {
+        File(AppDirs.dataDir, "master.key.enc").writeText(
+            """{"version":1,"salt":"AAAA","memoryKb":1024,"iterations":1,"parallelism":1,"iv":"AAAA","cipherText":"AAAA","osSecret":false}""",
+        )
+        val appsFile = File(AppDirs.accountDir(npub), "applications.json")
+        appsFile.writeText(
+            """[{"app":{"key":"evil","name":"planted-f17","pubKey":"$npub"},"permissions":[]}]""",
+        )
+        return appsFile
+    }
+
+    private suspend fun restoreTheSupportedBlobForTheOtherTestsSharingThisDataDir(supportedBlob: String) {
+        File(AppDirs.dataDir, "master.key.enc").writeText(supportedBlob)
+        assertTrue(PassphraseLock.unlock(PASS.toCharArray()))
     }
 
     @Test
@@ -495,10 +514,9 @@ class PassphraseLockTest {
         assertTrue(backup.exists())
         try {
             file.writeText("{ torn write")
-            // A restart re-reads the file; the corrupt one is kept, the backup restored.
             AccountsStore.reload()
-            assertTrue(AccountsStore.get("npub1backuptest") != null)
-            assertEquals(1, quarantined(file).size)
+            assertTrue("the backup is restored on restart", AccountsStore.get("npub1backuptest") != null)
+            assertEquals("the corrupt file is kept", 1, quarantined(file).size)
             assertTrue(file.readText().contains("npub1backuptest"))
         } finally {
             AccountsStore.delete("npub1backuptest")
@@ -507,12 +525,7 @@ class PassphraseLockTest {
     }
 
     @Test
-    fun interruptedEnableCleanupRemovesLeftoverUnprotectedCopies() {
-        // Simulate a crash between writeBlob() and removeUnprotectedCopies():
-        // the wrapped blob exists AND an unprotected master-key copy is still
-        // on disk. The startup cleanup must delete the unprotected copies and
-        // keep the blob. Safe in any method order: it only fabricates state
-        // that was not there and restores it afterward.
+    fun `startup cleanup after an enable interrupted between writing the blob and removing the unprotected copies deletes the copies and keeps the blob`() {
         val dataDir = AppDirs.dataDir
         val blob = File(dataDir, "master.key.enc")
         val blobExisted = blob.exists()
@@ -529,10 +542,12 @@ class PassphraseLockTest {
         } finally {
             if (!blobExisted) {
                 blob.delete()
-                // The singleton may have initialized as LOCKED while the
-                // fabricated blob existed; restore the fresh-install state.
-                PassphraseLock.state.compareAndSet(PassphraseLock.Status.LOCKED, PassphraseLock.Status.DISABLED)
+                undoTheLockedStateTheFabricatedBlobMayHaveInitialized()
             }
         }
+    }
+
+    private fun undoTheLockedStateTheFabricatedBlobMayHaveInitialized() {
+        PassphraseLock.state.compareAndSet(PassphraseLock.Status.LOCKED, PassphraseLock.Status.DISABLED)
     }
 }

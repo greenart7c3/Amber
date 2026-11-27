@@ -70,7 +70,6 @@ fun AccountScreen(
     modifier: Modifier = Modifier,
     isExternalRequest: Boolean = false,
     referrer: Uri? = null,
-    // The owner tag of this activity's MainViewModel: only its requests show.
 ) {
     val accountState by accountStateViewModel.accountContent.collectAsState()
     val actions = remember(accountStateViewModel) { accountActions(accountStateViewModel) }
@@ -151,8 +150,6 @@ private fun LoggedInScreen(
     val packageName = requests.packageName
     val bunkerRequests = requests.bunkerRequests
     val intents = rememberOwnIntents(intent, requests, state.account)
-    // Remembered, so a consumed route (set to null) is not brought back by the
-    // next recomposition; recomputed when the requests or the route change.
     val localRoute = remember(intents, bunkerRequests, state.route) {
         mutableStateOf(
             intents.firstNotNullOfOrNull { it.route } ?: if (bunkerRequests.isNotEmpty()) {

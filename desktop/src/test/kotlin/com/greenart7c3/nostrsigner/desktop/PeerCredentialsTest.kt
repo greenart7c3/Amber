@@ -36,9 +36,8 @@ class PeerCredentialsTest {
     }
 
     @Test
-    fun aCheckThatCannotCompleteRefusesThePeer() = withConnectedPair { accepted, path ->
+    fun `a check that cannot complete, as the socket owner can no longer be read, refuses the peer`() = withConnectedPair { accepted, path ->
         assumeTrue(ExtendedSocketOptions.SO_PEERCRED in accepted.supportedOptions())
-        // The socket's owner can no longer be read: this used to let the peer in.
         Files.delete(path)
         assertFalse(isSameUserPeer(accepted, path))
     }

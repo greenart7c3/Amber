@@ -57,9 +57,8 @@ fun rememberAccountNames(accounts: List<Account>): State<Map<String, String>> {
             combine(accounts.map { acc -> acc.name.map { acc.npub to it } }) { it.toMap() }
         }
     }
-    // Seeds the first frame with the names already loaded, so the list doesn't filter on blanks.
-    val initial = remember(accounts) { accounts.associate { it.npub to it.name.value } }
-    return flow.collectAsStateWithLifecycle(initial)
+    val namesAlreadyLoaded = remember(accounts) { accounts.associate { it.npub to it.name.value } }
+    return flow.collectAsStateWithLifecycle(namesAlreadyLoaded)
 }
 
 @Composable
@@ -89,7 +88,6 @@ fun AccountSearchField(
             autoCorrectEnabled = false,
             imeAction = ImeAction.Search,
         ),
-        // The list filters as you type, so Search only needs to get the keyboard out of the way.
         keyboardActions = KeyboardActions(onSearch = { keyboard?.hide() }),
         singleLine = true,
     )

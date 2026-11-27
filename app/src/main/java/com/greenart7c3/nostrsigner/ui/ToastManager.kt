@@ -27,8 +27,10 @@ class ResourceToastMsg(
 ) : ToastMsg()
 
 object ToastManager {
-    // DROP_OLDEST means tryEmit always succeeds, so callers no longer need to
-    // spawn a coroutine on the application scope just to push a message.
+    /**
+     * DROP_OLDEST means tryEmit always succeeds, so callers need not spawn a
+     * coroutine on the application scope just to push a message.
+     */
     val toasts = MutableSharedFlow<ToastMsg?>(0, 3, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
     fun clearToasts() {

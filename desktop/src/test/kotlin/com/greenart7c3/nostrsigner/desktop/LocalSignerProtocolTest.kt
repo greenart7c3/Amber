@@ -38,8 +38,7 @@ class LocalSignerProtocolTest {
             "nip44v3_decrypt",
             "decrypt_zap_event",
         ).forEach { assertTrue("missing $it", it in methods) }
-        // NIP-55 style: approval only through get_public_key.
-        assertTrue("connect" !in methods && "list_public_keys" !in methods)
+        assertTrue("approval is NIP-55 style, only through get_public_key", "connect" !in methods && "list_public_keys" !in methods)
         assertTrue(node.get("name").asText().startsWith("Amber"))
     }
 
@@ -47,8 +46,8 @@ class LocalSignerProtocolTest {
     fun helloCarriesNameAndOptionalToken() {
         assertEquals(LocalSignerProtocol.ClientHello("nak", null), LocalSignerProtocol.parseHello("""{"client":"nak"}"""))
         assertEquals(LocalSignerProtocol.ClientHello("nak", "abc"), LocalSignerProtocol.parseHello("""{"client":"nak","secret":"abc"}"""))
-        // A client that skips the handshake reply and sends a request straight away.
-        assertNull(LocalSignerProtocol.parseHello("""{"id":"1","method":"get_public_key","params":[]}"""))
+        val requestSentWithoutHello = """{"id":"1","method":"get_public_key","params":[]}"""
+        assertNull(LocalSignerProtocol.parseHello(requestSentWithoutHello))
     }
 
     @Test
@@ -60,8 +59,7 @@ class LocalSignerProtocolTest {
         assertEquals(LocalSignerProtocol.METHOD_NOT_SUPPORTED, codeOf { LocalSignerProtocol.toCall(unknown) })
         val missing = LocalSignerProtocol.parseRequest("""{"id":"1","method":"nip44_encrypt","params":["abc"]}""")
         assertEquals(LocalSignerProtocol.INVALID_PARAMS, codeOf { LocalSignerProtocol.toCall(missing) })
-        // Numeric ids are accepted and echoed as text.
-        assertEquals("7", LocalSignerProtocol.parseRequest("""{"id":7,"method":"ping"}""").id)
+        assertEquals("a numeric id is accepted and echoed as text", "7", LocalSignerProtocol.parseRequest("""{"id":7,"method":"ping"}""").id)
     }
 
     @Test
@@ -73,8 +71,7 @@ class LocalSignerProtocolTest {
         assertEquals(SignerType.NIP44_ENCRYPT, call.type)
         assertEquals(listOf(pub, "hello"), call.params)
         assertEquals(pub, call.account)
-        // Hex and npub name the same account.
-        assertEquals(LocalSignerProtocol.npubOf(pub), LocalSignerProtocol.npubOf(pub.hexToByteArray().toNpub()))
+        assertEquals("hex and npub name the same account", LocalSignerProtocol.npubOf(pub), LocalSignerProtocol.npubOf(pub.hexToByteArray().toNpub()))
         assertNull(LocalSignerProtocol.npubOf("not-a-key"))
     }
 
@@ -91,10 +88,8 @@ class LocalSignerProtocolTest {
         assertEquals("internal-1", request.id)
     }
 
-    // The socket takes just the zap request; the NIP-46 request it becomes carries it
-    // second, as the Android app reads it.
     @Test
-    fun decryptZapEventMovesTheZapRequestToTheNip46Slot() {
+    fun `decrypt_zap_event takes just the zap request and carries it second in the NIP-46 request, as Android reads it`() {
         val call = LocalSignerProtocol.toCall(
             LocalSignerProtocol.parseRequest(
                 """{"id":"1","method":"decrypt_zap_event","params":[{"kind":9734,"content":"","tags":[],"created_at":1700000000}]}""",

@@ -5,6 +5,7 @@ import com.greenart7c3.nostrsigner.desktop.core.AmberDesktop
 import com.greenart7c3.nostrsigner.desktop.core.EncryptedContentType
 import com.greenart7c3.nostrsigner.desktop.core.EncryptionScope
 import com.greenart7c3.nostrsigner.desktop.core.OkHttpWebSocket
+import com.greenart7c3.nostrsigner.desktop.core.PendingBunkerRequest
 import com.greenart7c3.nostrsigner.desktop.core.RememberType
 import com.greenart7c3.nostrsigner.desktop.core.SettingsStore
 import com.greenart7c3.nostrsigner.desktop.core.addNostrConnect
@@ -61,6 +62,9 @@ import org.junit.Test
  */
 class BunkerE2eTest {
     companion object {
+        private val SUBSCRIPTIONS_SETTLE = 3.seconds
+        private const val MANUAL_SIGN_POLICY = 1
+
         @JvmStatic
         @BeforeClass
         fun isolateDataDir() {
@@ -77,9 +81,7 @@ class BunkerE2eTest {
         val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
         val signer = NostrSignerInternal(keyPair)
         val responses = MutableStateFlow<List<BunkerResponse>>(emptyList())
-
-        /** pubkey of the sender of the last connect response (the signer's per-connection key). */
-        val signerPubKey = MutableStateFlow<String?>(null)
+        val lastResponderConnectionKey = MutableStateFlow<String?>(null)
 
         private val httpClient = OkHttpClient.Builder().pingInterval(10, TimeUnit.SECONDS).build()
         val client = NostrClient(
@@ -98,7 +100,7 @@ class BunkerE2eTest {
                                 runCatching {
                                     val decrypted = signer.decrypt(msg.event.content, msg.event.pubKey)
                                     val response = JacksonMapper.mapper.readValue(decrypted, BunkerResponse::class.java)
-                                    signerPubKey.value = msg.event.pubKey
+                                    lastResponderConnectionKey.value = msg.event.pubKey
                                     responses.value += response
                                 }
                             }
@@ -145,7 +147,6 @@ class BunkerE2eTest {
         val relay = RelayUrlNormalizer.normalize("wss://nos.lol/")
         SettingsStore.update { it.copy(defaultRelays = listOf(relay.url)) }
 
-        // Signer side.
         val account = AccountManager.addAccount(KeyPair(), name = "e2e")
         val engine = AmberDesktop.engine
         engine.start()
@@ -153,17 +154,15 @@ class BunkerE2eTest {
         val signerPubKey = bunkerUri.removePrefix("bunker://").substringBefore("?")
         val secret = bunkerUri.substringAfter("secret=")
 
-        // Client side.
         val client = Client(relay, KeyPair())
-        delay(3.seconds) // let both subscriptions settle
+        delay(SUBSCRIPTIONS_SETTLE)
 
-        // 1. connect — requires the user's approval in the UI.
         val connectJson = """{"id":"e2e-connect","method":"connect","params":["$signerPubKey","$secret"]}"""
         assertEquals(true, client.send(signerPubKey, relay, connectJson))
 
         withTimeout(30.seconds) { engine.pending.first { it.isNotEmpty() } }
         val pendingRequest = engine.pending.value.first()
-        assertEquals("e2e-connect", pendingRequest.request.id)
+        assertEquals("connect waits for the user's approval", "e2e-connect", pendingRequest.request.id)
         engine.approve(pendingRequest, RememberType.ALWAYS).join()
 
         val ack = withTimeout(30.seconds) {
@@ -171,14 +170,13 @@ class BunkerE2eTest {
         }.first { it.id == "e2e-connect" }
         assertEquals("ack", ack.result)
 
-        // 2. get_public_key — granted automatically on connect, no UI involved.
         val gpkJson = """{"id":"e2e-gpk","method":"get_public_key","params":[]}"""
         assertEquals(true, client.send(signerPubKey, relay, gpkJson))
 
         val gpk = withTimeout(30.seconds) {
             client.responses.first { list -> list.any { it.id == "e2e-gpk" } }
         }.first { it.id == "e2e-gpk" }
-        assertEquals(account.hexKey, gpk.result)
+        assertEquals("get_public_key is granted on connect, without a prompt", account.hexKey, gpk.result)
 
         client.stop()
     }
@@ -211,20 +209,21 @@ class BunkerE2eTest {
         withTimeout(30.seconds) { engine.pending.first { it.isNotEmpty() } }
         val req = engine.pending.value.first()
 
-        // Simulate the UI: fire approve from a scope, then cancel that scope
-        // right away (as the removed card's composition scope would be).
-        val callerScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
-        callerScope.launch { engine.approve(req, RememberType.ALWAYS) }
-        delay(50.milliseconds)
-        callerScope.cancel()
+        approveFromAScopeTornDownRightAway(req)
 
-        // Despite the canceled caller, the ack must still arrive.
         val ack = withTimeout(30.seconds) {
             client.responses.first { l -> l.any { it.id == "cc" } }
         }.first { it.id == "cc" }
-        assertEquals("ack", ack.result)
+        assertEquals("the ack arrives although the approving caller was canceled", "ack", ack.result)
 
         client.stop()
+    }
+
+    private suspend fun approveFromAScopeTornDownRightAway(request: PendingBunkerRequest) {
+        val removedCardScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
+        removedCardScope.launch { AmberDesktop.engine.approve(request, RememberType.ALWAYS) }
+        delay(50.milliseconds)
+        removedCardScope.cancel()
     }
 
     /**
@@ -258,7 +257,6 @@ class BunkerE2eTest {
         val clientB = Client(relay, KeyPair())
         delay(4.seconds)
 
-        // Connect + approve both.
         clientB.send(signerB, relay, """{"id":"cB","method":"connect","params":["$signerB","$secretB"]}""")
         clientA.send(signerA, relay, """{"id":"cA","method":"connect","params":["$signerA","$secretA"]}""")
 
@@ -268,15 +266,14 @@ class BunkerE2eTest {
         withTimeout(30.seconds) { clientA.responses.first { l -> l.any { it.id == "cA" } } }
         withTimeout(30.seconds) { clientB.responses.first { l -> l.any { it.id == "cB" } } }
 
-        // get_public_key on each connection returns that connection's account key.
         clientA.send(signerA, relay, """{"id":"gA","method":"get_public_key","params":[]}""")
         clientB.send(signerB, relay, """{"id":"gB","method":"get_public_key","params":[]}""")
 
         val gA = withTimeout(30.seconds) { clientA.responses.first { l -> l.any { it.id == "gA" } } }.first { it.id == "gA" }
         val gB = withTimeout(30.seconds) { clientB.responses.first { l -> l.any { it.id == "gB" } } }.first { it.id == "gB" }
 
-        assertEquals(accountA.hexKey, gA.result)
-        assertEquals(accountB.hexKey, gB.result)
+        assertEquals("connection A answers with account A's key", accountA.hexKey, gA.result)
+        assertEquals("connection B answers with account B's key", accountB.hexKey, gB.result)
 
         clientA.stop()
         clientB.stop()
@@ -356,34 +353,29 @@ class BunkerE2eTest {
             client.responses.first { l -> l.any { it.id == id } }
         }.first { it.id == id }
 
-        // Connect with the manual policy and no requested perms.
         request("""{"id":"sc-connect","method":"connect","params":["$signerPubKey","$secret"]}""")
-        engine.approve(pendingFor("sc-connect"), RememberType.ALWAYS, signPolicy = 1).join()
+        engine.approve(pendingFor("sc-connect"), RememberType.ALWAYS, signPolicy = MANUAL_SIGN_POLICY).join()
         responseFor("sc-connect")
 
-        // Text: approve and remember for this content type only.
         request("""{"id":"sc-t1","method":"nip44_encrypt","params":["$peer","hello"]}""")
         val t1 = pendingFor("sc-t1")
         assertEquals(EncryptedContentType.CLEAR_TEXT, t1.encryptedContent?.type)
         engine.approve(t1, RememberType.ALWAYS, encryptionScope = EncryptionScope.SPECIFIC).join()
         responseFor("sc-t1")
         val stored = AmberDesktop.store(account.npub).apps.value.first { it.app.name == "scope-app" }.permissions.map { it.type }
-        assertTrue(stored.toString(), "ENCRYPT_CLEAR_TEXT" in stored && "NIP44_ENCRYPT" !in stored)
+        assertTrue("remembered for clear text only: $stored", "ENCRYPT_CLEAR_TEXT" in stored && "NIP44_ENCRYPT" !in stored)
 
-        // Another text is answered without prompting.
         request("""{"id":"sc-t2","method":"nip44_encrypt","params":["$peer","again"]}""")
-        assertTrue(responseFor("sc-t2").result!!.isNotEmpty())
+        assertTrue("another text is answered without prompting", responseFor("sc-t2").result!!.isNotEmpty())
 
-        // A tag array is a different content type: it prompts. Approve for all methods.
         request("""{"id":"sc-tags","method":"nip44_encrypt","params":["$peer","[[\"p\",\"$peer\"]]"]}""")
         val tags = pendingFor("sc-tags")
-        assertEquals(EncryptedContentType.TAG_ARRAY, tags.encryptedContent?.type)
+        assertEquals("a tag array is another content type, so it prompts", EncryptedContentType.TAG_ARRAY, tags.encryptedContent?.type)
         engine.approve(tags, RememberType.ALWAYS, encryptionScope = EncryptionScope.ALL).join()
         responseFor("sc-tags")
 
-        // The whole-NIP grant now covers an event too.
         request("""{"id":"sc-ev","method":"nip44_encrypt","params":["$peer","{\"kind\":1,\"content\":\"x\",\"tags\":[]}"]}""")
-        assertTrue(responseFor("sc-ev").result!!.isNotEmpty())
+        assertTrue("the whole-NIP grant covers an event too", responseFor("sc-ev").result!!.isNotEmpty())
 
         client.stop()
     }
@@ -425,35 +417,31 @@ class BunkerE2eTest {
             .permissions.filter { it.type == "NIP44_V3_ENCRYPT" }.map { it.kind }
 
         request("""{"id":"v3-connect","method":"connect","params":["$signerPubKey","$secret"]}""")
-        engine.approve(pendingFor("v3-connect"), RememberType.ALWAYS, signPolicy = 1).join()
+        engine.approve(pendingFor("v3-connect"), RememberType.ALWAYS, signPolicy = MANUAL_SIGN_POLICY).join()
         responseFor("v3-connect")
 
-        // Kind 1, this kind only.
         request("""{"id":"v3-a","method":"nip44v3_encrypt","params":["$peer","1","chat","$plain"]}""")
         val a = pendingFor("v3-a")
         assertEquals(1, a.kind)
         assertEquals("chat", a.nip44v3Scope)
         engine.approve(a, RememberType.ALWAYS, encryptionScope = EncryptionScope.SPECIFIC).join()
         responseFor("v3-a")
-        assertEquals(listOf<Int?>(1), v3Perms())
+        assertEquals("this kind only remembers kind 1", listOf<Int?>(1), v3Perms())
 
-        // Same kind: answered without prompting.
         request("""{"id":"v3-b","method":"nip44v3_encrypt","params":["$peer","1","chat","$plain"]}""")
-        assertTrue(responseFor("v3-b").result!!.isNotEmpty())
+        assertTrue("the same kind is answered without prompting", responseFor("v3-b").result!!.isNotEmpty())
 
-        // Another kind prompts; grant all kinds.
         request("""{"id":"v3-c","method":"nip44v3_encrypt","params":["$peer","7","","$plain"]}""")
-        engine.approve(pendingFor("v3-c"), RememberType.ALWAYS, encryptionScope = EncryptionScope.ALL).join()
+        val anotherKindPrompt = pendingFor("v3-c")
+        engine.approve(anotherKindPrompt, RememberType.ALWAYS, encryptionScope = EncryptionScope.ALL).join()
         responseFor("v3-c")
-        assertEquals(listOf<Int?>(null), v3Perms())
+        assertEquals("all kinds replaces the per-kind grant with a kind-less one", listOf<Int?>(null), v3Perms())
 
-        // Any kind is now covered.
         request("""{"id":"v3-d","method":"nip44v3_encrypt","params":["$peer","30023","","$plain"]}""")
-        assertTrue(responseFor("v3-d").result!!.isNotEmpty())
+        assertTrue("any kind is covered by the kind-less grant", responseFor("v3-d").result!!.isNotEmpty())
 
-        // No kind: rejected up front.
         request("""{"id":"v3-e","method":"nip44v3_encrypt","params":["$peer","","","$plain"]}""")
-        assertEquals("kind is required for nip44v3", responseFor("v3-e").error)
+        assertEquals("a request without a kind is rejected up front", "kind is required for nip44v3", responseFor("v3-e").error)
 
         client.stop()
     }
@@ -482,39 +470,33 @@ class BunkerE2eTest {
         val secret = "nc-secret-123"
         val uri = "nostrconnect://$clientPubKey?relay=${relay.url}&secret=$secret&perms=sign_event:1,get_public_key&name=WebApp"
 
-        // Amber imports the URI -> a pending CONNECT request appears.
         val error = engine.addNostrConnect(uri, account)
-        assertEquals(null, error)
+        assertEquals("importing the URI queues a connect request", null, error)
         withTimeout(10.seconds) { engine.pending.first { it.isNotEmpty() } }
-        // Simulate the approval UI, which passes the requested permissions so
-        // the granted perms (sign_event:1, get_public_key) are remembered.
         val connectReq = engine.pending.value.first()
-        engine.approve(connectReq, RememberType.ALWAYS, connectReq.requestedPermissions).join()
+        val requestedSignEventAndGetPublicKey = connectReq.requestedPermissions
+        engine.approve(connectReq, RememberType.ALWAYS, requestedSignEventAndGetPublicKey).join()
 
-        // The client receives the connect ack (result == secret) from the signer key.
         val ack = withTimeout(30.seconds) {
             client.responses.first { l -> l.any { it.result == secret } }
         }.first { it.result == secret }
-        assertEquals(secret, ack.result)
+        assertEquals("the connect ack carries the secret", secret, ack.result)
 
-        val signerKey = withTimeout(5.seconds) { client.signerPubKey.first { it != null } }!!
+        val connectionKey = withTimeout(5.seconds) { client.lastResponderConnectionKey.first { it != null } }!!
 
-        // Follow-up request goes to the signer's per-connection key.
-        client.send(signerKey, relay, """{"id":"nc-gpk","method":"get_public_key","params":[]}""")
+        client.send(connectionKey, relay, """{"id":"nc-gpk","method":"get_public_key","params":[]}""")
         val gpk = withTimeout(30.seconds) {
             client.responses.first { l -> l.any { it.id == "nc-gpk" } }
         }.first { it.id == "nc-gpk" }
-        assertEquals(account.hexKey, gpk.result)
+        assertEquals("the per-connection key answers for the account", account.hexKey, gpk.result)
 
-        // sign_event kind 1 was granted in the connect perms, so it must be
-        // signed automatically without landing in the approval queue.
         val eventJson = """{"kind":1,"content":"hello from a bunker","tags":[],"created_at":${TimeUtils.now()},"pubkey":"${account.hexKey}"}"""
         val escaped = eventJson.replace("\\", "\\\\").replace("\"", "\\\"")
-        client.send(signerKey, relay, """{"id":"nc-sign","method":"sign_event","params":["$escaped"]}""")
+        client.send(connectionKey, relay, """{"id":"nc-sign","method":"sign_event","params":["$escaped"]}""")
         val signResp = withTimeout(30.seconds) {
             client.responses.first { l -> l.any { it.id == "nc-sign" } }
         }.first { it.id == "nc-sign" }
-        assertTrue("sign_event should not have been rejected: ${signResp.error}", signResp.error.isNullOrEmpty())
+        assertTrue("sign_event kind 1, granted in the connect perms, is signed without a prompt: ${signResp.error}", signResp.error.isNullOrEmpty())
         val signed = Event.fromJson(signResp.result!!)
         assertEquals(account.hexKey, signed.pubKey)
         assertEquals(1, signed.kind)

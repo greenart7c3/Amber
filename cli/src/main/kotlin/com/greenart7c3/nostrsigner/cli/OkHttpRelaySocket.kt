@@ -36,16 +36,15 @@ class OkHttpRelaySocket(
     private val out: WebSocketListener,
     scope: CoroutineScope,
 ) : WebSocket {
-    /** Set once by whichever of onClosed, onFailure or [disconnect] ends the session first. */
     private val ended = AtomicBoolean(false)
 
     @Volatile
     private var socket: OkHttpWebSocket? = null
 
-    /** A dial in flight is not a dead session. */
     @Volatile
     private var dialing = false
 
+    @Suppress("NoComments")
     // Incoming messages are handed to Quartz one at a time, in order, and off
     // OkHttp's reader thread: a slow consumer must not stall the socket.
     private val incoming = Channel<String>(capacity = 1024)
@@ -68,13 +67,16 @@ class OkHttpRelaySocket(
                 .build()
             val dialed = http.newWebSocket(request, listener)
             socket = dialed
-            // A disconnect() that landed while dialing has no socket to cancel yet.
-            if (ended.get()) {
-                socket = null
-                dialed.cancel()
-            }
+            cancelIfDisconnectedWhileDialing(dialed)
         } finally {
             dialing = false
+        }
+    }
+
+    private fun cancelIfDisconnectedWhileDialing(dialed: OkHttpWebSocket) {
+        if (ended.get()) {
+            socket = null
+            dialed.cancel()
         }
     }
 
@@ -113,6 +115,7 @@ class OkHttpRelaySocket(
             incoming.trySend(text)
         }
 
+        @Suppress("NoComments")
         override fun onClosing(
             webSocket: OkHttpWebSocket,
             code: Int,

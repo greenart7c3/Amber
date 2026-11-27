@@ -22,9 +22,9 @@ class NostrConnectUriTest {
         assertThrows(IllegalArgumentException::class.java) { NostrConnectUri.parse("nostrconnect://abc?relay=x") { true } }
     }
 
-    // The client compares the secret it gets back with the one it sent (issue #526).
+    // https://github.com/greenart7c3/Amber/issues/526
     @Test
-    fun `the secret comes back byte for byte`() {
+    fun `the secret comes back byte for byte for the client to compare with the one it sent`() {
         assertEquals("XQUdha4rjh_gjAgHN8X5yg==", parse("secret=XQUdha4rjh_gjAgHN8X5yg==").secret)
         assertEquals("YQ==Zm9v", parse("secret=YQ==Zm9v").secret)
         assertEquals("a+b", parse("secret=a%2Bb").secret)
@@ -81,7 +81,6 @@ class NostrConnectUriTest {
         )
     }
 
-    // The bunker connect's third parameter is read the same way (it used to differ per app).
     @Test
     fun `a requested-permissions list drops what grants nothing, and a malformed kind drops its entry`() {
         assertEquals(
@@ -94,7 +93,10 @@ class NostrConnectUriTest {
             parseRequestedPermissions(" sign_event : 1 ,sign_event, ,nip44_encrypt,nip:4,nip:99999,nip44v3_encrypt:abc,nip44v3_encrypt:7,sign_event:,") { it in knownNips },
         )
         assertEquals(emptyList<RequestedPermission>(), parseRequestedPermissions("") { true })
-        // In a URI too: "abc" is not "every kind".
+    }
+
+    @Test
+    fun `a malformed kind in a URI drops its entry rather than asking for every kind`() {
         assertEquals(emptyList<RequestedPermission>(), parse("perms=${enc("nip44v3_decrypt:abc")}").permissions)
     }
 

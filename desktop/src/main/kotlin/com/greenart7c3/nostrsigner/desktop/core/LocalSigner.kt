@@ -67,6 +67,8 @@ object LocalSigner {
     enum class Status { STOPPED, RUNNING, IN_USE, FAILED }
 
     private const val CLOSED_BEFORE_APPROVAL = "connection closed before approval"
+    private const val NIP44V3_CONTEXT_KIND_PARAM = 1
+    private const val NIP44V3_SCOPE_PARAM = 2
 
     val status = MutableStateFlow(Status.STOPPED)
 
@@ -84,7 +86,6 @@ object LocalSigner {
         status.value = try {
             val dir = path.parent.toFile()
             dir.mkdirs()
-            // Checked (and set to 0700) without following links, before anything touches it.
             privateDirProblem(path.parent)?.let { problem ->
                 AmberLogger.e("LocalSigner", "Not starting: ${path.parent} $problem")
                 return Status.FAILED.also { status.value = it }
@@ -99,16 +100,7 @@ object LocalSigner {
             }
             val channel = ServerSocketChannel.open(StandardProtocolFamily.UNIX)
             channel.bind(UnixDomainSocketAddress.of(path))
-            if (isPosix(path)) {
-                // The documented 0600 socket: if it can't be set, don't serve.
-                try {
-                    Files.setPosixFilePermissions(path, PosixFilePermissions.fromString("rw-------"))
-                } catch (e: Exception) {
-                    runCatching { channel.close() }
-                    runCatching { Files.deleteIfExists(path) }
-                    throw e
-                }
-            }
+            if (isPosix(path)) restrictSocketToOwnerOrClose(channel, path)
             server = channel
             Thread({ acceptLoop(channel) }, "amber-local-signer").apply { isDaemon = true }.start()
             if (shutdownHook == null) {
@@ -123,6 +115,17 @@ object LocalSigner {
         return status.value
     }
 
+    private fun restrictSocketToOwnerOrClose(channel: ServerSocketChannel, path: Path) {
+        try {
+            Files.setPosixFilePermissions(path, PosixFilePermissions.fromString("rw-------"))
+        } catch (e: Exception) {
+            runCatching { channel.close() }
+            runCatching { Files.deleteIfExists(path) }
+            throw e
+        }
+    }
+
+    @Suppress("NoComments")
     @Synchronized
     fun stop() {
         val channel = server ?: run {
@@ -147,6 +150,7 @@ object LocalSigner {
      * guarantee is enforced rather than best-effort. Windows has no POSIX
      * permissions; the user-profile ACLs scope access there.
      */
+    @Suppress("NoComments")
     internal fun privateDirProblem(dir: Path): String? {
         if (!isPosix(dir)) return null
         return try {
@@ -187,25 +191,20 @@ object LocalSigner {
         }
     }
 
-    /** See [isSameUserPeer]: fails closed wherever peer credentials exist. */
     private fun isSameUser(client: SocketChannel): Boolean = isSameUserPeer(client, socketPath())
 
     private class ClientSession(val id: String, val channel: SocketChannel) {
         @Volatile var name: String = ""
 
-        /** Set at EOF: from then on nothing of this client may wait for a decision. */
         @Volatile var inputClosed = false
 
-        /** The secret this connection presented in its hello or was given on approval. */
         @Volatile var secret: String? = null
 
         val secretHash: String? get() = secret?.let(::hashSecret)
 
-        /** Apps approved on this very connection: known even if the tool ignores the secret. */
-        val approvedApps: MutableSet<String> = ConcurrentHashMap.newKeySet()
+        val appsApprovedOnThisConnection: MutableSet<String> = ConcurrentHashMap.newKeySet()
 
-        /** Serializes app resolution so overlapping requests ask for one connect, not several. */
-        val connectMutex = Mutex()
+        val appResolutionMutex = Mutex()
 
         private val writeLock = Any()
 
@@ -228,15 +227,12 @@ object LocalSigner {
 
         private val sequence = AtomicLong()
 
-        /**
-         * Queue id for a request: scoped to this connection, and unique even
-         * when a client reuses an id (the queue drops duplicate ids).
-         */
-        fun internalId(clientId: String) = "socket-$id-${sequence.incrementAndGet()}-$clientId"
+        fun uniqueQueueId(clientId: String) = "socket-$id-${sequence.incrementAndGet()}-$clientId"
 
         fun owns(req: PendingBunkerRequest) = req.request.id.startsWith("socket-$id-")
     }
 
+    @Suppress("NoComments")
     private fun serve(session: ClientSession) {
         try {
             session.send(LocalSignerProtocol.handshake())
@@ -250,12 +246,10 @@ object LocalSigner {
                     first = false
                     val hello = runCatching { LocalSignerProtocol.parseHello(line) }.getOrNull()
                     if (hello != null) {
-                        // The tool picks its own label; keep it to one plain line.
                         session.name = sanitizeAppName(hello.name)
                         session.secret = hello.secret
                         continue
                     }
-                    // No handshake reply: an unnamed client sending requests right away.
                 }
                 inFlight += AmberDesktop.applicationIOScope.launch { process(session, line) }
                 inFlight.removeAll { it.isCompleted }
@@ -312,9 +306,7 @@ object LocalSigner {
         session.trySend(reply)
     }
 
-    /** The result, plus the secret when this request got the tool approved. */
     private suspend fun execute(session: ClientSession, rpc: LocalSignerProtocol.Rpc): Pair<com.fasterxml.jackson.databind.JsonNode, String?> {
-        // Malformed calls are reported as such before anything else.
         val call = LocalSignerProtocol.toCall(rpc)
 
         if (PassphraseLock.isLocked()) throw RpcException(LocalSignerProtocol.INTERNAL_ERROR, "signer locked")
@@ -325,7 +317,7 @@ object LocalSigner {
             accounts.firstOrNull { it.npub == npub } ?: throw RpcException(LocalSignerProtocol.KEY_NOT_FOUND, "unknown account")
         }
 
-        val (acc, app, newSecret) = session.connectMutex.withLock {
+        val (acc, app, newSecret) = session.appResolutionMutex.withLock {
             resolveOrConnect(session, accounts, target, canConnect = call.type == SignerType.GET_PUBLIC_KEY)
         }
         val store = AmberDesktop.store(acc.npub)
@@ -335,10 +327,9 @@ object LocalSigner {
     }
 
     private fun findApp(store: AccountStore, session: ClientSession): AppWithPermissions? {
-        // An expired connection no longer authenticates the client.
-        val socketApps = store.apps.value.filter { it.app.isLocalSocket && !it.app.isExpired() }
+        val unexpiredSocketApps = store.apps.value.filter { it.app.isLocalSocket && !it.app.isExpired() }
         val hash = session.secretHash
-        return socketApps.firstOrNull { it.app.key in session.approvedApps || (hash != null && constantTimeEquals(it.app.socketSecretHash, hash)) }
+        return unexpiredSocketApps.firstOrNull { it.app.key in session.appsApprovedOnThisConnection || (hash != null && constantTimeEquals(it.app.socketSecretHash, hash)) }
     }
 
     private suspend fun resolveOrConnect(
@@ -356,25 +347,19 @@ object LocalSigner {
         return connect(session, target ?: candidates.first(), allowAccountSwitch = target == null)
     }
 
-    /**
-     * Asks the user to approve the tool behind [session] on [acc] (or, with
-     * [allowAccountSwitch], an account they pick), and returns where the new
-     * connection was saved, with the secret when this approval issued one.
-     */
     private suspend fun connect(
         session: ClientSession,
         acc: DesktopAccount,
         allowAccountSwitch: Boolean,
     ): Triple<DesktopAccount, AppWithPermissions, String?> {
         val appKey = "socket:${UUID.randomUUID()}"
-        // One secret per tool: a tool already holding one keeps it for further accounts.
-        val issued = if (session.secret == null) newSecret() else null
-        val secret = session.secret ?: issued!!
+        val issuedNow = if (session.secret == null) newSecret() else null
+        val secret = session.secret ?: issuedNow!!
         val decided = CompletableDeferred<BunkerResponse>()
         queuePrompt(
             session,
             PendingBunkerRequest(
-                request = BunkerRequest(session.internalId("connect-${UUID.randomUUID().toString().take(8)}"), "connect", emptyArray()),
+                request = BunkerRequest(session.uniqueQueueId("connect-${UUID.randomUUID().toString().take(8)}"), "connect", emptyArray()),
                 type = SignerType.CONNECT,
                 account = acc,
                 localKey = appKey,
@@ -389,16 +374,14 @@ object LocalSigner {
         )
         decided.await().error?.let { throw RpcException(LocalSignerProtocol.codeFor(it), it) }
         session.secret = secret
-        session.approvedApps += appKey
+        session.appsApprovedOnThisConnection += appKey
 
-        // The approval may have picked another account: find where the app landed.
         for (candidate in AmberDesktop.accounts()) {
-            AmberDesktop.store(candidate.npub).lookup.getByKey(appKey)?.let { return Triple(candidate, it, issued) }
+            AmberDesktop.store(candidate.npub).lookup.getByKey(appKey)?.let { return Triple(candidate, it, issuedNow) }
         }
         throw RpcException(LocalSignerProtocol.INTERNAL_ERROR, "connection was not saved")
     }
 
-    /** Mirrors BunkerEngine.handleRequest from the permission check on. */
     private suspend fun evaluate(
         session: ClientSession,
         clientId: String,
@@ -408,11 +391,9 @@ object LocalSigner {
     ): com.fasterxml.jackson.databind.JsonNode {
         val store = AmberDesktop.store(acc.npub)
         val type = call.type
-        val request = LocalSignerProtocol.bunkerRequest(session.internalId(clientId), call)
+        val request = LocalSignerProtocol.bunkerRequest(session.uniqueQueueId(clientId), call)
         val kind = permissionKind(request, call)
 
-        // Relay auth is granted per relay; a relay outside a non-empty auth
-        // whitelist is rejected without asking (see BunkerEngine.handleRequest).
         val relayHost = if (request is BunkerRequestSign && kind == RELAY_AUTH_KIND) relayAuthHost(request.event.tags) else ""
         if (isBlockedByAuthWhitelist(kind, relayHost, AmberDesktop.settings.authWhitelist)) {
             store.addLog("socket", "local-signer", "Relay auth for $relayHost is not in the auth whitelist")
@@ -439,7 +420,7 @@ object LocalSigner {
                     sealPreview = computed.sealPreview,
                     result = computed.result,
                     encryptedContent = encryptedContent,
-                    nip44v3Scope = if (type in nip44v3SignerTypes) call.params.getOrElse(2) { "" } else "",
+                    nip44v3Scope = if (type in nip44v3SignerTypes) call.params.getOrElse(NIP44V3_SCOPE_PARAM) { "" } else "",
                     relayHost = relayHost,
                     expiresAt = TimeUtils.now() + BunkerEngine.PENDING_TTL_SECONDS,
                 ),
@@ -450,11 +431,9 @@ object LocalSigner {
         return LocalSignerProtocol.resultNode(type, computed.result)
     }
 
-    // The kind a grant is keyed by: the event's for sign_event; NIP-44 v3 grants
-    // are per context kind, carried at params[1].
     private fun permissionKind(request: BunkerRequest, call: LocalSignerProtocol.Call): Int? = when {
         request is BunkerRequestSign -> request.event.kind
-        call.type in nip44v3SignerTypes -> call.params.getOrNull(1)?.toIntOrNull()
+        call.type in nip44v3SignerTypes -> call.params.getOrNull(NIP44V3_CONTEXT_KIND_PARAM)?.toIntOrNull()
             ?: throw RpcException(LocalSignerProtocol.INVALID_PARAMS, NIP44V3_KIND_REQUIRED)
         else -> null
     }
@@ -468,7 +447,6 @@ object LocalSigner {
         throw RpcException(LocalSignerProtocol.INVALID_PARAMS, "could not process the request")
     }
 
-    /** Queues [req] for the user and answers with their decision. */
     private suspend fun ask(session: ClientSession, req: PendingBunkerRequest): com.fasterxml.jackson.databind.JsonNode {
         val answer = CompletableDeferred<BunkerResponse>()
         queuePrompt(session, req.copy(responder = { response -> answer.complete(response) }))
@@ -477,7 +455,7 @@ object LocalSigner {
         return LocalSignerProtocol.resultNode(req.type, response.result ?: "")
     }
 
-    /** Queues an approval; a client whose input already closed gets the error at once. */
+    @Suppress("NoComments")
     private fun queuePrompt(session: ClientSession, req: PendingBunkerRequest) {
         val engine = AmberDesktop.engine
         engine.addPending(req)

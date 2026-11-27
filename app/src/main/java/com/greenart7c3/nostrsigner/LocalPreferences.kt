@@ -54,7 +54,6 @@ internal enum class SettingsKeys(val key: String) {
     LOCAL_BUNKER_PORT("local_bunker_port"),
 }
 
-// A stored enum by name; a missing or unknown name (an older or newer build) reads as [default].
 internal inline fun <reified T : Enum<T>> SharedPreferences.enumOr(key: SettingsKeys, default: T): T = try {
     enumValueOf<T>(getString(key.key, default.name)!!)
 } catch (_: IllegalArgumentException) {
@@ -66,21 +65,18 @@ internal inline fun <reified T : Enum<T>> SharedPreferences.enumOr(key: Settings
  * change, the Tor/proxy settings a load applies, and the profile fetch interval.
  */
 object LocalPreferences {
-    // The settings in effect (updated after every write) and the per-account databases;
-    // Amber's constructor installs them before anything reads the settings.
     internal lateinit var settingsStore: SettingsStore
         private set
     internal lateinit var accountRepository: AccountRepository
         private set
 
+    /** Called from Amber's constructor, before anything reads the settings. */
     fun install(settings: SettingsStore, accounts: AccountRepository) {
         settingsStore = settings
         accountRepository = accounts
     }
 
-    // Pre-rename consent key, kept only so loadSettingsFromEncryptedStorage can
-    // scrub it. Never read.
-    private const val LEGACY_TRUST_SCORE_ENABLED_KEY = "trust_score_enabled"
+    private const val PRE_RENAME_TRUST_SCORE_CONSENT_KEY = "trust_score_enabled"
 
     fun saveSettingsToEncryptedStorage(context: Context, settings: AmberSettings) {
         sharedPrefs(context).edit {
@@ -146,11 +142,7 @@ object LocalPreferences {
 
     private fun readSettings(context: Context): AmberSettings {
         sharedPrefs(context).apply {
-            // One-time cleanup: the pre-rename legacy key is never read again, so
-            // remove it instead of leaving a stale opt-in bit in every prefs file.
-            if (contains(LEGACY_TRUST_SCORE_ENABLED_KEY)) {
-                edit { remove(LEGACY_TRUST_SCORE_ENABLED_KEY) }
-            }
+            removeStalePreRenameTrustScoreConsent()
 
             val torMode = torMode()
             val proxyPort = getInt(SettingsKeys.PROXY_PORT.key, 9050)
@@ -187,7 +179,12 @@ object LocalPreferences {
         }
     }
 
-    // The old use_proxy boolean predates TorMode: true meant Orbot.
+    private fun SharedPreferences.removeStalePreRenameTrustScoreConsent() {
+        if (contains(PRE_RENAME_TRUST_SCORE_CONSENT_KEY)) {
+            edit { remove(PRE_RENAME_TRUST_SCORE_CONSENT_KEY) }
+        }
+    }
+
     private fun SharedPreferences.torMode(): TorMode = when {
         contains(SettingsKeys.TOR_MODE.key) -> enumOr(SettingsKeys.TOR_MODE, TorMode.DISABLED)
         getBoolean(SettingsKeys.USE_PROXY.key, false) -> TorMode.ORBOT
@@ -196,15 +193,15 @@ object LocalPreferences {
 
     private fun SharedPreferences.relays(key: SettingsKeys, default: List<NormalizedRelayUrl>): List<NormalizedRelayUrl> = getStringSet(key.key, null)?.mapNotNull { RelayUrlNormalizer.normalizeOrNull(it) } ?: default
 
-    // Points OkHttp at the proxy before any dial: Orbot's port, or for built-in Tor a
-    // fail-closed placeholder so no clearnet traffic leaks before TorManager sets the real port.
     private fun applyProxy(torMode: TorMode, proxyPort: Int) {
         when (torMode) {
             TorMode.ORBOT -> HttpClientManager.setDefaultProxyOnPort(proxyPort)
-            TorMode.BUILTIN -> HttpClientManager.setDefaultProxyOnPort(TorManager.socksPort.value)
+            TorMode.BUILTIN -> HttpClientManager.setDefaultProxyOnPort(builtInTorPortOrFailClosedPlaceholder())
             TorMode.DISABLED -> {}
         }
     }
+
+    private fun builtInTorPortOrFailClosedPlaceholder(): Int = TorManager.socksPort.value
 
     private fun sharedPrefs(
         context: Context,
@@ -235,8 +232,7 @@ object LocalPreferences {
         when (torMode) {
             TorMode.ORBOT -> HttpClientManager.setDefaultProxyOnPort(port)
             TorMode.DISABLED -> HttpClientManager.clearProxy()
-            // Fail-closed placeholder; TorManager will update to the real port once running.
-            TorMode.BUILTIN -> HttpClientManager.setDefaultProxyOnPort(TorManager.socksPort.value)
+            TorMode.BUILTIN -> HttpClientManager.setDefaultProxyOnPort(builtInTorPortOrFailClosedPlaceholder())
         }
     }
 

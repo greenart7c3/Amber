@@ -382,6 +382,7 @@ object PassphraseLock {
     @Suppress("NoComments")
     private fun deriveKek(passphrase: CharArray, salt: ByteArray, params: KdfParams, osSecret: ByteArray?): ByteArray {
         val stretched = deriveKey(passphrase, salt, params)
+        returnArgon2MemoryToOs()
         if (osSecret == null) return stretched
         return try {
             val hkdf = HKDFBytesGenerator(SHA256Digest())
@@ -391,6 +392,15 @@ object PassphraseLock {
             stretched.fill(0)
         }
     }
+
+    /**
+     * Argon2id fills [KdfParams.memoryKb] of heap (256 MB by default). G1 grows
+     * the heap for it and, in an app that then sits idle, never collects
+     * again, so the process would keep that memory until it quits. A full GC
+     * right after the derivation shrinks the heap back.
+     */
+    @Suppress("NoComments")
+    private fun returnArgon2MemoryToOs() = System.gc()
 
     private fun writeBlob(key: SecretKey, passphrase: CharArray, params: KdfParams, osSecret: ByteArray?) {
         val salt = ByteArray(16).also { SecureRandom().nextBytes(it) }

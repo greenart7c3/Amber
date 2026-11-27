@@ -443,21 +443,28 @@ private suspend fun probeBunkerRelay(
     add: () -> Unit,
 ) {
     val probe = BunkerRelayProbe(NostrClient(factory), relay, onCannotConnect = { offerToAdd(Res.string.could_not_connect_to_relay, add) })
-    if (!probe.awaitConnection()) {
-        offerToAdd(Res.string.could_not_connect_to_relay, add)
+    val connected: Boolean
+    val published: Boolean
+    val noFilterProblem: Boolean
+    try {
+        connected = probe.awaitConnection()
+        published = connected && probe.publish()
+        noFilterProblem = when {
+            !connected -> true
+            published -> {
+                AmberListenerSingleton.latestErrorMessages.clear()
+                probe.awaitEcho()
+            }
+            else -> {
+                AmberListenerSingleton.showErrorMessage(context)
+                true
+            }
+        }
+    } finally {
         probe.close()
-        return
     }
-    val published = probe.publish()
-    val noFilterProblem = if (published) {
-        AmberListenerSingleton.latestErrorMessages.clear()
-        probe.awaitEcho()
-    } else {
-        AmberListenerSingleton.showErrorMessage(context)
-        true
-    }
-    probe.close()
     when {
+        !connected -> offerToAdd(Res.string.could_not_connect_to_relay, add)
         published && noFilterProblem -> add()
         !noFilterProblem -> offerToAdd(Res.string.relay_filter_failed, add)
     }
@@ -557,8 +564,8 @@ private class BunkerRelayProbe(
 
     fun close() {
         client.unsubscribe(subId)
-        client.disconnect()
         client.removeConnectionListener(listener)
+        client.close()
     }
 }
 

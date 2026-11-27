@@ -142,8 +142,8 @@ object RelayChecker {
             return if (filterResult) Outcome.OK else Outcome.FILTER_FAILED
         } finally {
             runCatching { client.unsubscribe(subId) }
-            runCatching { client.disconnect() }
             client.removeConnectionListener(listener)
+            runCatching { client.close() }
         }
     }
 }

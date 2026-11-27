@@ -84,7 +84,7 @@ object ProfileFetcher {
         } catch (e: Exception) {
             AmberLogger.e("ProfileFetcher", "Profile fetch failed for $npub", e)
         } finally {
-            runCatching { client.disconnect() }
+            runCatching { client.close() }
         }
     }
 

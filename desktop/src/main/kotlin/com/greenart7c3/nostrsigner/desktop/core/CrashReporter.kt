@@ -132,7 +132,7 @@ object CrashReporter {
             AmberLogger.e("CrashReporter", "Failed to send the crash report", e)
             false
         } finally {
-            client.disconnect()
+            client.close()
         }
     }
 }

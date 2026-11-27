@@ -35,6 +35,8 @@ data class IntentData(
     val nip44v3Kind: Int? = null,
     val nip44v3Scope: String = "",
     val owner: String = "",
+    val acceptResultUri: Boolean = false,
+    val explicitSignatureOnly: Boolean = false,
 ) {
     /** Unique across screens: two apps may both use the same request id. */
     val queueKey: String get() = "$owner:$id"

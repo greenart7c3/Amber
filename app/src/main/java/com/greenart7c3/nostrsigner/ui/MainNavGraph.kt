@@ -83,7 +83,8 @@ internal fun Modifier.scrollingScreenAboveKeyboard(layout: MainLayout, scrollSta
 /**
  * The requests the main screen shows: the queued NIP-55 intents and NIP-46 bunker requests,
  * the app that sent them ([packageName], [appName]; null for bunker requests) and whether
- * another app opened Amber for them.
+ * another app opened Amber for them, and whether an intent is still being read
+ * ([isReadingRequest]) so the screen waits instead of saying there is nothing to approve.
  */
 @Immutable
 class IncomingRequests(
@@ -92,6 +93,7 @@ class IncomingRequests(
     val packageName: String?,
     val appName: String?,
     val isExternalRequest: Boolean,
+    val isReadingRequest: Boolean = false,
 )
 
 internal fun NavGraphBuilder.loginDestinations(

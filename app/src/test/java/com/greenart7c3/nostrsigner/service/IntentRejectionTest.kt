@@ -59,7 +59,8 @@ class IntentRejectionTest {
     @Suppress("NoComments")
     @Before
     fun setUp() {
-        IntentUtils.install(accounts, CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)) { activity }
+        val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
+        IntentUtils.install(accounts, scope, EphemeralPayloadStore(scope)) { activity }
         // The rejection result is an Intent; the JVM test stubs do not implement putExtra.
         mockkConstructor(Intent::class)
         every { anyConstructed<Intent>().putExtra(any<String>(), any<Boolean>()) } answers { self as Intent }

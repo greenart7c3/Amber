@@ -243,7 +243,7 @@ private fun RawPsbtCard(psbtHex: String) {
             }
             if (expanded) {
                 Text(
-                    psbtHex,
+                    truncateForPreview(psbtHex),
                     modifier = Modifier.fillMaxWidth(),
                     fontSize = 12.sp,
                 )

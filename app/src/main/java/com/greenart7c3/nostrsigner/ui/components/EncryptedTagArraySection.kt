@@ -26,7 +26,7 @@ fun EncryptedTagArraySection(
                 stringResource(Res.string.tags),
                 tags,
                 {
-                    copyToClipboard(tags.joinToString(separator = ", ") { "[${it.joinToString(separator = ", ") { tag -> "\"${tag}\"" }}]" })
+                    copyToClipboard(truncateForPreview(tagsCopyText(tags), MAX_CLIPBOARD_CHARS))
                 },
             )
 

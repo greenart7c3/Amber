@@ -53,7 +53,8 @@ fun IncomingRequestScreen(
     var loading by remember { mutableStateOf(false) }
     val connectRequest = bunkerRequests.firstOrNull { it.request is BunkerRequestConnect }
 
-    if (loading) {
+    val waitingForRequest = intents.isEmpty() && bunkerRequests.isEmpty() && requests.isReadingRequest
+    if (loading || waitingForRequest) {
         CenterCircularProgressIndicator(modifier)
     } else {
         if (intents.isEmpty() && bunkerRequests.isEmpty()) {

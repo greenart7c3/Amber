@@ -139,15 +139,15 @@ internal fun EventSections(
     if (event.content.isNotEmpty()) {
         EventSection(
             stringResource(Res.string.content),
-            event.content,
-            { copyToClipboard(event.content) },
+            truncateForPreview(event.content),
+            { copyToClipboard(truncateForPreview(event.content, MAX_CLIPBOARD_CHARS)) },
         )
     }
     if (event.tags.isNotEmpty()) {
         TagsSection(
             label = stringResource(Res.string.tags),
             tags = event.tags,
-            onCopy = { copyToClipboard(tagsCopyText(event.tags)) },
+            onCopy = { copyToClipboard(truncateForPreview(tagsCopyText(event.tags), MAX_CLIPBOARD_CHARS)) },
         )
     }
 }

@@ -265,7 +265,7 @@ class IntentUtilsTest {
                 permissions = mutableListOf(),
             )
             coEvery { daos.applicationDao.getByKey("com.example.app") } returns saved
-            IntentUtils.install(repo, scope) { null }
+            IntentUtils.install(repo, scope, EphemeralPayloadStore(scope)) { null }
             val context = mockk<Context>(relaxed = true)
 
             IntentUtils.persistNativeAppMetadata(context, account, "com.example.app")

@@ -8,6 +8,7 @@ import com.greenart7c3.nostrsigner.data.PendingReports
 import com.greenart7c3.nostrsigner.data.RelayClient
 import com.greenart7c3.nostrsigner.data.SettingsStore
 import com.greenart7c3.nostrsigner.service.BunkerResponder
+import com.greenart7c3.nostrsigner.service.EphemeralPayloadStore
 import com.greenart7c3.nostrsigner.service.LocalBunkerRelayServer
 import com.greenart7c3.nostrsigner.service.NotificationSubscription
 import com.greenart7c3.nostrsigner.service.ProfileSubscription
@@ -39,11 +40,15 @@ val LocalZapstoreUpdater = staticCompositionLocalOf<ZapstoreUpdater?> { null }
 /** For work that must outlive the screen that starts it (saving settings, relay updates). */
 val LocalAppScope = staticCompositionLocalOf<CoroutineScope> { error("No app scope provided") }
 
+/** In-memory NIP-55 payload staging store for oversized intent/provider transfers. */
+val LocalPayloadStore = staticCompositionLocalOf<EphemeralPayloadStore> { error("No PayloadStore provided") }
+
 fun appDependencies(amber: Amber): Array<ProvidedValue<*>> = arrayOf(
     LocalSettingsStore provides amber,
     LocalAccountRepository provides amber.accountDatabases,
     LocalRelayClient provides amber.relayClient,
     LocalAppScope provides amber.applicationIOScope,
+    LocalPayloadStore provides amber.payloadStore,
     LocalBunkerResponder provides amber.bunkerResponder,
     LocalBunkerRelay provides amber.localBunkerRelay,
     LocalNotificationSubscription provides amber.notificationSubscription,

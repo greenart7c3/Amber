@@ -105,3 +105,8 @@ perf-traces
 
 # Editor backups (e.g. nano writes <file>.save)
 *.save
+
+# Standalone NIP-55 test client
+/tools/nip55-test-client/build/
+/tools/nip55-test-client/local.properties
+/tools/nip55-test-client/.gradle/

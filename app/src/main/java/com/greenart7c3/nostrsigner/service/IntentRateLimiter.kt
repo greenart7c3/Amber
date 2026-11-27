@@ -103,7 +103,8 @@ object IntentRateLimitInspector {
         val typeStr = intent.extras?.getString("type") ?: extractTypeFromUrl(intent)
         val type = NostrSignerRequestParser.parseSignerType(typeStr).takeIf { it != SignerType.INVALID } ?: return null
 
-        val kind = if (type == SignerType.SIGN_EVENT) extractEventKind(intent) else null
+        val hasStagedPayload = !intent.extras?.getString(EphemeralPayloadStore.EXTRA_PAYLOAD_URI).isNullOrBlank()
+        val kind = if (type == SignerType.SIGN_EVENT && !hasStagedPayload) extractEventKind(intent) else null
         return IntentRateLimiter.BucketKey(pkg, type.name, kind)
     }
 

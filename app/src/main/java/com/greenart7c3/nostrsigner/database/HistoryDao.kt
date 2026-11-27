@@ -66,13 +66,20 @@ abstract class HistoryDao(private val database: HistoryDatabase) {
         }
     }
 
-    private fun contentToStore(entity: HistoryEntity): String {
-        val isCiphertextKeptWholeForOnDemandDecryption = entity.type in encryptDecryptHistoryTypeNames
-        return if (!isCiphertextKeptWholeForOnDemandDecryption && entity.content.length > MAX_CONTENT_LENGTH) entity.content.take(MAX_CONTENT_LENGTH) else entity.content
-    }
-
     companion object {
+        internal const val MAX_STORED_CIPHERTEXT_LENGTH = 256 * 1024
         private val lastUsedWrittenAt = ConcurrentHashMap<String, Long>()
+
+        internal fun contentToStore(entity: HistoryEntity): String {
+            val isCiphertextKeptWholeForOnDemandDecryption = entity.type in encryptDecryptHistoryTypeNames
+            return when {
+                isCiphertextKeptWholeForOnDemandDecryption -> {
+                    if (entity.content.length > MAX_STORED_CIPHERTEXT_LENGTH) "" else entity.content
+                }
+                entity.content.length > MAX_CONTENT_LENGTH -> entity.content.take(MAX_CONTENT_LENGTH)
+                else -> entity.content
+            }
+        }
 
         internal fun shouldWriteLastUsed(cacheKey: String, nowSeconds: Long): Boolean {
             var shouldWrite = false

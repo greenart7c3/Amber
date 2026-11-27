@@ -41,8 +41,8 @@ fun TagsSection(
     showFullContent: Boolean = false,
 ) {
     var expanded by remember { mutableStateOf(showFullContent) }
-    val tagsToShow = if (expanded) tags.toList() else tags.take(10)
-    val moreCount = if (expanded) 0 else tags.size - 10
+    val tagsToShow = if (expanded) tags.take(MAX_EXPANDED_TAGS) else tags.take(10)
+    val moreCount = (tags.size - tagsToShow.size).coerceAtLeast(0)
 
     Row(
         modifier = modifier
@@ -70,7 +70,7 @@ fun TagsSection(
                             "\"${it}\""
                         }
                         Text(
-                            text = formattedTag,
+                            text = truncateForPreview(formattedTag, MAX_TAG_PREVIEW_CHARS),
                             style = MaterialTheme.typography.bodyMedium.copy(
                                 lineHeight = 24.sp,
                             ),

@@ -33,6 +33,8 @@ data class NostrSignerRequest(
     val nip44v3Scope: String,
     /** True when the parameters came in the URI query (web apps), false for intent extras. */
     val fromUri: Boolean,
+    val acceptResultUri: Boolean = false,
+    val explicitSignatureOnly: Boolean = false,
 ) {
     /** Why this request can never be served, or null when it can. */
     fun rejection(): String? = when {
@@ -108,13 +110,20 @@ object NostrSignerRequestParser {
      * parameters are the intent extras, read through [extra]. [packageName] is
      * the calling app, null for an unknown caller.
      */
-    fun fromExtras(uri: String, packageName: String?, extra: (String) -> String?): NostrSignerRequest {
-        val data = try {
+    fun fromExtras(
+        uri: String,
+        packageName: String?,
+        payloadOverride: String? = null,
+        acceptResultUri: Boolean = false,
+        extra: (String) -> String?,
+    ): NostrSignerRequest {
+        val data = payloadOverride ?: try {
             decodeData(uri, packageName == null, isUrlEncoded(uri))
         } catch (_: Exception) {
             uri.replace("nostrsigner:", "")
         }
         val type = extra("type")
+        val rawReturnType = extra("returnType")
         return NostrSignerRequest(
             type = parseSignerType(type),
             rawType = type,
@@ -123,12 +132,14 @@ object NostrSignerRequestParser {
             callbackUrl = extra("callbackUrl"),
             appName = sanitizeAppName(extra("appName") ?: ""),
             compression = if (extra("compression") == "gzip") CompressionType.GZIP else CompressionType.NONE,
-            returnType = if (extra("returnType") == "event") ReturnType.EVENT else ReturnType.SIGNATURE,
+            returnType = if (rawReturnType == "event") ReturnType.EVENT else ReturnType.SIGNATURE,
             permissions = extra("permissions")?.let(::parsePermissions),
             currentUser = extra("current_user")?.let(::parsePubKey),
             nip44v3Kind = extra("kind")?.toIntOrNull(),
             nip44v3Scope = extra("scope") ?: "",
             fromUri = false,
+            acceptResultUri = acceptResultUri,
+            explicitSignatureOnly = rawReturnType?.equals("signature", ignoreCase = true) == true,
         )
     }
 

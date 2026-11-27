@@ -12,7 +12,6 @@ import androidx.core.net.toUri
 import com.greenart7c3.nostrsigner.AccountStorage
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.AmberLog
-import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.FailedMigrationException
 import com.greenart7c3.nostrsigner.SavedAccounts
 import com.greenart7c3.nostrsigner.common.SignerType
@@ -45,13 +44,16 @@ import com.vitorpamplona.quartz.nip01Core.crypto.EventHasher
 import com.vitorpamplona.quartz.nip19Bech32.toNpub
 import com.vitorpamplona.quartz.utils.Hex
 import java.util.UUID
+import java.util.WeakHashMap
 import kotlin.io.encoding.Base64
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toPersistentList
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -64,20 +66,35 @@ import kotlinx.coroutines.withContext
 object IntentUtils {
     private lateinit var accountRepository: AccountRepository
     private lateinit var appScope: CoroutineScope
+    private lateinit var payloadStore: EphemeralPayloadStore
     private lateinit var mainActivity: () -> Activity?
 
     /**
-     * Installs the per-account databases, the background scope and the activity a result
-     * is handed to; Amber's constructor calls it before an intent can arrive.
+     * Installs the per-account databases, the background scope, the store staged payloads
+     * are read from and the activity a result is handed to; Amber's constructor calls it
+     * before an intent can arrive.
      */
-    fun install(accounts: AccountRepository, scope: CoroutineScope, mainActivity: () -> Activity?) {
+    fun install(
+        accounts: AccountRepository,
+        scope: CoroutineScope,
+        payloadStore: EphemeralPayloadStore,
+        mainActivity: () -> Activity?,
+    ) {
         accountRepository = accounts
         appScope = scope
+        this.payloadStore = payloadStore
         this.mainActivity = mainActivity
     }
 
     private val _intents = MutableStateFlow<ImmutableList<IntentData>>(persistentListOf())
     val intents = _intents.asStateFlow()
+
+    private val parsesByIntent = WeakHashMap<Intent, Deferred<IntentData?>>()
+
+    private val _requestsBeingParsed = MutableStateFlow(0)
+
+    /** How many incoming intents are still being read (a large staged payload takes seconds) before they reach [intents]. */
+    val requestsBeingParsed = _requestsBeingParsed.asStateFlow()
 
     private val capturedNativeAppMetadata = LruCache<String, Boolean>(256)
 
@@ -157,6 +174,7 @@ object IntentUtils {
         message: String,
         t: Throwable? = null,
     ) {
+        AmberLog.e(Amber.TAG, "Invalid intent from $packageName: $message", t)
         _invalidIntents.tryEmit(
             InvalidIntentInfo(
                 id = UUID.randomUUID().toString(),
@@ -193,17 +211,36 @@ object IntentUtils {
         account: Account,
     ): IntentData? {
         val request = NostrSignerRequestParser.fromUri(data)
-            ?: return getIntentDataFromIntent(intent, packageName, route, account)
+            ?: return parseNativeIntent(null, intent, packageName, route, account)
         return buildIntentData(request, intent, packageName, route, account)
     }
 
-    private suspend fun getIntentDataFromIntent(
+    private suspend fun parseNativeIntent(
+        context: Context?,
         intent: Intent,
         packageName: String?,
         route: String?,
         account: Account,
     ): IntentData? {
-        val request = NostrSignerRequestParser.fromExtras(intent.data?.toString() ?: "", packageName) { intent.extras?.getString(it) }
+        val payloadUri = intent.extras?.getString(EphemeralPayloadStore.EXTRA_PAYLOAD_URI)
+        val payloadOverride = if (!payloadUri.isNullOrBlank()) {
+            when (val staged = consumeStagedIntentPayload(context, packageName, payloadUri, payloadStore)) {
+                is StagedPayloadResult.Ready -> staged.payload
+                is StagedPayloadResult.Invalid -> {
+                    emitInvalid(intent, packageName, staged.message, staged.cause)
+                    return null
+                }
+            }
+        } else {
+            null
+        }
+        val acceptResultUri = intent.getBooleanExtra(EphemeralPayloadStore.EXTRA_ACCEPT_RESULT_URI, false)
+        val request = NostrSignerRequestParser.fromExtras(
+            uri = intent.data?.toString() ?: "",
+            packageName = packageName,
+            payloadOverride = payloadOverride,
+            acceptResultUri = acceptResultUri,
+        ) { intent.extras?.getString(it) }
         return buildIntentData(request, intent, packageName, route, account)
     }
 
@@ -232,6 +269,8 @@ object IntentUtils {
             route = route,
             event = null,
             encryptedData = null,
+            acceptResultUri = request.acceptResultUri,
+            explicitSignatureOnly = request.explicitSignatureOnly,
         )
         return when (request.type) {
             SignerType.SIGN_EVENT -> signedIntentData(base, request, intent, packageName, account)
@@ -360,25 +399,49 @@ object IntentUtils {
         route: String?,
         currentLoggedInAccount: Account,
         referrer: Uri? = null,
-    ): IntentData? = try {
+    ): IntentData? = parseOncePerIntent(intent) {
         if (isNotNewRequest(intent)) {
             null
         } else {
-            val account = currentUserAccount(context, intent) ?: currentLoggedInAccount
-            when {
-                intent.dataString?.startsWith("nostrconnect:") == true -> {
-                    NostrConnectUtils.getIntentFromNostrConnect(intent, account, accountRepository, appScope)
-                    null
+            parseNewRequest(context, intent, packageName, route, currentLoggedInAccount, referrer)
+        }
+    }.await()
+
+    private fun parseOncePerIntent(intent: Intent, parse: suspend () -> IntentData?): Deferred<IntentData?> = synchronized(parsesByIntent) {
+        parsesByIntent.getOrPut(intent) {
+            appScope.async {
+                _requestsBeingParsed.update { it + 1 }
+                try {
+                    parse()
+                } finally {
+                    _requestsBeingParsed.update { it - 1 }
                 }
-                isWebRequest(
-                    hasApplicationIdExtra = intent.extras?.getString(Browser.EXTRA_APPLICATION_ID) != null,
-                    hasBrowsableCategory = intent.hasCategory(Intent.CATEGORY_BROWSABLE),
-                    referrerIsBrowser = isBrowserReferrer(context, referrer),
-                    typeExtra = intent.extras?.getString("type"),
-                    dataString = intent.dataString,
-                ) -> getIntentDataWithoutExtras(intent.data?.toString() ?: "", intent, packageName, route, account)
-                else -> getIntentDataFromIntent(intent, packageName, route, account)
             }
+        }
+    }
+
+    private suspend fun parseNewRequest(
+        context: Context,
+        intent: Intent,
+        packageName: String?,
+        route: String?,
+        currentLoggedInAccount: Account,
+        referrer: Uri?,
+    ): IntentData? = try {
+        val account = currentUserAccount(context, intent) ?: currentLoggedInAccount
+        when {
+            intent.dataString?.startsWith("nostrconnect:") == true -> {
+                NostrConnectUtils.getIntentFromNostrConnect(intent, account, accountRepository, appScope)
+                null
+            }
+            isWebRequest(
+                hasApplicationIdExtra = intent.extras?.getString(Browser.EXTRA_APPLICATION_ID) != null,
+                hasBrowsableCategory = intent.hasCategory(Intent.CATEGORY_BROWSABLE),
+                referrerIsBrowser = isBrowserReferrer(context, referrer),
+                typeExtra = intent.extras?.getString("type"),
+                dataString = intent.dataString,
+            ) -> getIntentDataWithoutExtras(intent.data?.toString() ?: "", intent, packageName, route, account)
+            else -> parseNativeIntent(context, intent, packageName, route, account)
         }
     } catch (e: Exception) {
         reportParseError(context, intent, packageName, e)
@@ -392,7 +455,12 @@ object IntentUtils {
         return intents.value.any { it.id == id }
     }
 
-    private fun isWakeUpWhileBunkerRequestWaits(intent: Intent): Boolean = intent.dataString == "nostrsigner:" && BunkerRequestUtils.getBunkerRequests().isNotEmpty()
+    private fun isWakeUpWhileBunkerRequestWaits(intent: Intent): Boolean {
+        if (intent.dataString != "nostrsigner:") return false
+        val hasTypeOrPayload = !intent.extras?.getString("type").isNullOrBlank() ||
+            !intent.extras?.getString(EphemeralPayloadStore.EXTRA_PAYLOAD_URI).isNullOrBlank()
+        return !hasTypeOrPayload && BunkerRequestUtils.getBunkerRequests().isNotEmpty()
+    }
 
     private fun requestIdAssigningOne(intent: Intent): String {
         if (intent.extras?.getString("id").isNullOrEmpty()) {
@@ -538,13 +606,7 @@ object IntentUtils {
     ) {
         if (packageName != null) {
             val intent = Intent()
-            intent.putExtra("signature", value)
-            intent.putExtra("result", value)
-            intent.putExtra("id", intentData.id)
-            intent.putExtra("event", event)
-            if (intentData.type == SignerType.GET_PUBLIC_KEY) {
-                intent.putExtra("package", BuildConfig.APPLICATION_ID)
-            }
+            applyNativeResultExtras(intent, context, packageName, intentData, event, value, payloadStore)
             mainActivity()?.setResult(RESULT_OK, intent)
         } else if (!intentData.callBackUrl.isNullOrBlank()) {
             val intent = Intent(Intent.ACTION_VIEW)
@@ -579,50 +641,64 @@ object IntentUtils {
         relay: String = "",
         decryptTypeScope: DecryptTypeScope = DecryptTypeScope.ALL,
     ) {
+        onLoading(true)
         appScope.launch(Dispatchers.IO) {
-            val closeApplication = if (key == "null") {
-                true
-            } else {
-                val application = accountRepository.getDatabase(account.npub).dao().getByKey(key)
-                    ?: IntentResponse.newApplication(key, appName, account, closeApplication = true, deleteAfter = 0L)
-                if (rememberType != RememberType.NEVER) {
-                    AmberUtils.acceptOrRejectPermission(
-                        application,
-                        key,
-                        intentData.type,
-                        kind,
-                        false,
-                        rememberType,
-                        relay,
-                        intentData.encryptedData,
-                        decryptTypeScope,
-                        dao = accountRepository.daos(account.npub).permissionWriteDao,
-                    )
-                }
-
-                accountRepository.daos(account.npub).permissionWriteDao.insertApplicationWithPermissions(application)
-                val content = IntentResponse.historyContent(intentData, accepted = false, event = "", value = "")
-                accountRepository.getHistoryDatabase(account.npub).dao().addHistory(
-                    listOf(IntentResponse.historyEntry(intentData, key, kind, accepted = false, content = content)),
-                    account.npub,
+            try {
+                val closeApplication = storeRejection(key, account, intentData, appName, rememberType, kind, relay, decryptTypeScope)
+                val activity = mainActivity()
+                activity?.intent = null
+                activity?.setResult(
+                    RESULT_OK,
+                    Intent()
+                        .also { it.putExtra("rejected", true) }
+                        .also { it.putExtra("id", intentData.id) },
                 )
-                application.application.closeApplication
+                if (closeApplication) {
+                    activity?.finishAndRemoveTask()
+                }
+                onRemoveIntentData(listOf(intentData), IntentResultType.REMOVE)
+            } finally {
+                onLoading(false)
             }
-
-            val activity = mainActivity()
-            activity?.intent = null
-            activity?.setResult(
-                RESULT_OK,
-                Intent()
-                    .also { it.putExtra("rejected", true) }
-                    .also { it.putExtra("id", intentData.id) },
-            )
-            if (closeApplication) {
-                activity?.finishAndRemoveTask()
-            }
-            onRemoveIntentData(listOf(intentData), IntentResultType.REMOVE)
-            onLoading(false)
         }
+    }
+
+    private suspend fun storeRejection(
+        key: String,
+        account: Account,
+        intentData: IntentData,
+        appName: String,
+        rememberType: RememberType,
+        kind: Int?,
+        relay: String,
+        decryptTypeScope: DecryptTypeScope,
+    ): Boolean = if (key == "null") {
+        true
+    } else {
+        val application = accountRepository.getDatabase(account.npub).dao().getByKey(key)
+            ?: IntentResponse.newApplication(key, appName, account, closeApplication = true, deleteAfter = 0L)
+        if (rememberType != RememberType.NEVER) {
+            AmberUtils.acceptOrRejectPermission(
+                application,
+                key,
+                intentData.type,
+                kind,
+                false,
+                rememberType,
+                relay,
+                intentData.encryptedData,
+                decryptTypeScope,
+                dao = accountRepository.daos(account.npub).permissionWriteDao,
+            )
+        }
+
+        accountRepository.daos(account.npub).permissionWriteDao.insertApplicationWithPermissions(application)
+        val content = IntentResponse.historyContent(intentData, accepted = false, event = "", value = "")
+        accountRepository.getHistoryDatabase(account.npub).dao().addHistory(
+            listOf(IntentResponse.historyEntry(intentData, key, kind, accepted = false, content = content)),
+            account.npub,
+        )
+        application.application.closeApplication
     }
 
     private fun logParseErrorInEveryAccount(context: Context, e: Exception) {

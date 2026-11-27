@@ -92,7 +92,7 @@ fun Nip44v3ApprovalData(
 
     val isEncrypt = type == SignerType.NIP44_V3_ENCRYPT
     val messageRes = if (isEncrypt) Res.string.nip44_v3_wants_to_encrypt else Res.string.nip44_v3_wants_to_decrypt
-    val displayContent = encryptedData.nip44v3Plaintext()
+    val displayContent = truncateForPreview(encryptedData.nip44v3Plaintext())
 
     Column(modifier) {
         Nip44v3RequestHeader(

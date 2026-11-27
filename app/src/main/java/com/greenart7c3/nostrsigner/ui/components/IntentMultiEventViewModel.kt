@@ -22,8 +22,11 @@ import com.greenart7c3.nostrsigner.models.IntentData
 import com.greenart7c3.nostrsigner.models.IntentResultType
 import com.greenart7c3.nostrsigner.models.Result
 import com.greenart7c3.nostrsigner.service.AmberUtils
+import com.greenart7c3.nostrsigner.service.EphemeralPayloadStore
 import com.greenart7c3.nostrsigner.service.MultiEventScreenIntents
 import com.greenart7c3.nostrsigner.service.RelayUrlUtils
+import com.greenart7c3.nostrsigner.service.buildBatchResultExtras
+import com.greenart7c3.nostrsigner.service.createResponseSpiller
 import com.greenart7c3.nostrsigner.service.isBlockedByAuthWhitelist
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
 import com.greenart7c3.nostrsigner.service.signRememberType
@@ -47,6 +50,7 @@ class IntentMultiEventViewModel(
     private val appScope: CoroutineScope,
     private val packageName: String?,
     private val account: Account,
+    private val payloadStore: EphemeralPayloadStore = EphemeralPayloadStore(appScope),
 ) : ViewModel() {
     val choices = RequestGroupChoices()
 
@@ -83,7 +87,16 @@ class IntentMultiEventViewModel(
                         closeApp = false
                     }
                 }
-                if (results.isNotEmpty()) sendResultIntent(activity, results)
+                if (results.isNotEmpty()) {
+                    sendResultIntent(
+                        appContext = appContext,
+                        packageName = localKey,
+                        activity = activity,
+                        results = results,
+                        acceptResultUri = intents.any { it.acceptResultUri },
+                        payloadStore = payloadStore,
+                    )
+                }
                 finishActivity(activity, closeApp)
             } finally {
                 onLoading(false)
@@ -168,8 +181,9 @@ class IntentMultiEventViewModel(
             appScope: CoroutineScope,
             packageName: String?,
             account: Account,
+            payloadStore: EphemeralPayloadStore,
         ): ViewModelProvider.Factory = viewModelFactory {
-            initializer { IntentMultiEventViewModel(appContext, settingsStore, accountRepository, appScope, packageName, account) }
+            initializer { IntentMultiEventViewModel(appContext, settingsStore, accountRepository, appScope, packageName, account, payloadStore) }
         }
     }
 }
@@ -251,9 +265,28 @@ private fun finishActivity(activity: Activity?, closeApp: Boolean) {
     }
 }
 
-private fun sendResultIntent(activity: Activity?, results: List<Result>) {
+private fun sendResultIntent(
+    appContext: Context,
+    packageName: String,
+    activity: Activity?,
+    results: List<Result>,
+    acceptResultUri: Boolean,
+    payloadStore: EphemeralPayloadStore,
+) {
     val json = Permission.mapper.writeValueAsString(results)
+    val spillResponse = if (acceptResultUri) {
+        createResponseSpiller(appContext, packageName, payloadStore)
+    } else {
+        null
+    }
     val intent = Intent()
-    intent.putExtra("results", json)
+    buildBatchResultExtras(
+        resultsJson = json,
+        acceptResultUri = acceptResultUri,
+        inlineThresholdBytes = payloadStore.inlineThresholdBytes,
+        spillResponse = spillResponse,
+    ).forEach { (key, value) ->
+        intent.putExtra(key, value)
+    }
     activity?.setResult(Activity.RESULT_OK, intent)
 }

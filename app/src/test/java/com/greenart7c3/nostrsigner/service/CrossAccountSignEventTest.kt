@@ -108,10 +108,11 @@ class CrossAccountSignEventTest {
 
     private suspend fun getIntentData(intent: Intent): IntentData? {
         val method = IntentUtils::class.declaredMemberFunctions
-            .first { it.name == "getIntentDataFromIntent" }
+            .first { it.name == "parseNativeIntent" }
         method.isAccessible = true
         return method.callSuspend(
             IntentUtils,
+            null,
             intent,
             "com.attacker.app",
             null,

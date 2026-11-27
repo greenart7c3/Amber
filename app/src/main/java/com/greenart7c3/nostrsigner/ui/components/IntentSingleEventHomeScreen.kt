@@ -404,6 +404,7 @@ private fun EventRequest(
 ) {
     val context = LocalContext.current
     val copyToClipboard = rememberResultCopier()
+    val appScope = LocalAppScope.current
     val intentData = request.intentData
     val event = intentData.event!!
     EventData(
@@ -412,19 +413,22 @@ private fun EventRequest(
         packageName = request.packageName,
         event = event,
         account = request.account,
-        onAccept = {
+        onAccept = { rememberType ->
             if (refuseCrossAccount(context, request)) return@EventData
-
-            val isAnonZap = event is ZapRequestEvent && event.tags.any { tag -> tag.any { t -> t == "anon" } }
-            IntentUtils.sendResult(
-                context,
-                request.account,
-                request.reply(event.toJson(), if (isAnonZap) event.toJson() else event.sig),
-                IntentApproval(it, kind = event.kind, appName = request.approvalAppName),
-                copyToClipboard,
-                onLoading,
-                onRemoveIntentData,
-            )
+            onLoading(true)
+            appScope.launch(Dispatchers.Default) {
+                val eventJson = event.toJson()
+                val isAnonZap = event is ZapRequestEvent && event.tags.any { tag -> tag.any { t -> t == "anon" } }
+                IntentUtils.sendResult(
+                    context,
+                    request.account,
+                    request.reply(eventJson, if (isAnonZap) eventJson else event.sig),
+                    IntentApproval(rememberType, kind = event.kind, appName = request.approvalAppName),
+                    copyToClipboard,
+                    onLoading,
+                    onRemoveIntentData,
+                )
+            }
         },
         onReject = {
             IntentUtils.sendRejection(

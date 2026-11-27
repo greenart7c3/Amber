@@ -72,9 +72,9 @@ class EncryptIntentAccountTest {
     }
 
     private suspend fun parse(intent: Intent): IntentData? {
-        val method = IntentUtils::class.declaredMemberFunctions.first { it.name == "getIntentDataFromIntent" }
+        val method = IntentUtils::class.declaredMemberFunctions.first { it.name == "parseNativeIntent" }
         method.isAccessible = true
-        return method.callSuspend(IntentUtils, intent, "com.example.app", null, account) as IntentData?
+        return method.callSuspend(IntentUtils, null, intent, "com.example.app", null, account) as IntentData?
     }
 
     @Test

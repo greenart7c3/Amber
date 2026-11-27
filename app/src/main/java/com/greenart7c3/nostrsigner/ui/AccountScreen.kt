@@ -150,6 +150,7 @@ private fun LoggedInScreen(
     val packageName = requests.packageName
     val bunkerRequests = requests.bunkerRequests
     val intents = rememberOwnIntents(intent, requests, state.account)
+    val requestsBeingParsed by IntentUtils.requestsBeingParsed.collectAsState()
     val localRoute = remember(intents, bunkerRequests, state.route) {
         mutableStateOf(
             intents.firstNotNullOfOrNull { it.route } ?: if (bunkerRequests.isNotEmpty()) {
@@ -169,6 +170,7 @@ private fun LoggedInScreen(
             packageName = packageName,
             appName = requests.appName,
             isExternalRequest = requests.isExternalRequest || (intents.isEmpty() && bunkerRequests.isNotEmpty() && (packageName != null || intent.intent?.getStringExtra("route") == Route.IncomingRequest.route)),
+            isReadingRequest = requestsBeingParsed > 0,
         ),
         route = { localRoute.value },
         onConsumeRoute = { localRoute.value = null },

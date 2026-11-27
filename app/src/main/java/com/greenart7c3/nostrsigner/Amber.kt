@@ -23,6 +23,7 @@ import com.greenart7c3.nostrsigner.relays.AppRelayClient
 import com.greenart7c3.nostrsigner.relays.NostrClientLoggerListener
 import com.greenart7c3.nostrsigner.service.BunkerResponder
 import com.greenart7c3.nostrsigner.service.ConnectivityService
+import com.greenart7c3.nostrsigner.service.EphemeralPayloadStore
 import com.greenart7c3.nostrsigner.service.ImageLoaderFactory
 import com.greenart7c3.nostrsigner.service.IntentRateLimiter
 import com.greenart7c3.nostrsigner.service.IntentUtils
@@ -83,6 +84,8 @@ class Amber :
     /** Declared above the init block that hands it on as the AccountRepository: properties initialize in order. */
     val accountDatabases = AccountDatabases(this, this, applicationIOScope)
 
+    val payloadStore = EphemeralPayloadStore(applicationIOScope)
+
     init {
         installBeforeContentProvidersAreCreated()
     }
@@ -91,7 +94,7 @@ class Amber :
         AccountStorage.install(accountRepository = accountDatabases, appScope = applicationIOScope)
         SecureCryptoHelper.install(this, accountDatabases)
         LocalPreferences.install(this, accountDatabases)
-        IntentUtils.install(accountDatabases, applicationIOScope) { getMainActivity() }
+        IntentUtils.install(accountDatabases, applicationIOScope, payloadStore) { getMainActivity() }
     }
 
     override var settings: AmberSettings = AmberSettings()

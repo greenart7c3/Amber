@@ -20,6 +20,7 @@ import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.encryptDecryptSignerTypes
 import com.greenart7c3.nostrsigner.models.permissionTypeFromContent
 import com.greenart7c3.nostrsigner.service.AmberUtils
+import com.greenart7c3.nostrsigner.service.EphemeralPayloadStore
 import com.greenart7c3.nostrsigner.service.IntentUtils
 import com.greenart7c3.nostrsigner.service.RelayUrlUtils
 import com.greenart7c3.nostrsigner.service.isBlockedByAuthWhitelist
@@ -53,10 +54,19 @@ class SignerProviderQuery(
 
     private fun rejectedCursor(): Cursor = MatrixCursor(arrayOf("rejected")).also { it.addRow(arrayOf("true")) }
 
-    private fun resultCursor(
+    private fun cursorFor(payload: SignerCursorPayload): Cursor = MatrixCursor(payload.columns).also { it.addRow(payload.values) }
+
+    private fun singleValueCursor(
+        caller: Caller,
         result: String,
-        event: String = result,
-    ): Cursor = MatrixCursor(arrayOf("signature", "event", "result")).also { it.addRow(arrayOf<Any>(result, event, result)) }
+    ): Cursor = cursorFor(
+        buildSingleValueCursorPayload(
+            result = result,
+            acceptResultUri = caller.response.acceptResultUri,
+            inlineThresholdBytes = caller.response.inlineThresholdBytes,
+            spillResponse = caller.response.spillResponse,
+        ),
+    )
 
     private fun captureCallerMetadataOffBinderThread(
         context: Context,
@@ -96,15 +106,32 @@ class SignerProviderQuery(
         callerPackageName: String?,
         operationUri: Uri,
         arguments: Array<String>?,
+        acceptResultUri: Boolean = false,
+        returnType: String? = null,
+        inlineThresholdBytes: Int = EphemeralPayloadStore.INLINE_THRESHOLD_BYTES,
+        spillResponse: ((ByteArray) -> String)? = null,
     ): Cursor? {
         AmberLog.d(Amber.TAG, "Querying $operationUri")
 
         val appId = BuildConfig.APPLICATION_ID
         val uriString = operationUri.toString()
-        val operation = uriString.replace("content://$appId.", "")
-        val caller = Caller(context, requesterId, callerPackageName, operation)
+        val options = parseSignerQueryOptions(uriString)
+        val baseUri = options.baseUri
+        val operation = baseUri.replace("content://$appId.", "")
+        val caller = Caller(
+            context = context,
+            requesterId = requesterId,
+            packageName = callerPackageName,
+            operation = operation,
+            response = ResponsePolicy(
+                acceptResultUri = acceptResultUri || options.acceptResultUri,
+                returnType = returnType ?: options.returnType,
+                inlineThresholdBytes = inlineThresholdBytes,
+                spillResponse = spillResponse,
+            ),
+        )
         return try {
-            when (uriString) {
+            when (baseUri) {
                 "content://$appId.SIGN_EVENT" -> signEvent(caller, arguments)
 
                 "content://$appId.NIP04_DECRYPT",
@@ -141,11 +168,19 @@ class SignerProviderQuery(
         }
     }
 
+    private class ResponsePolicy(
+        val acceptResultUri: Boolean,
+        val returnType: String?,
+        val inlineThresholdBytes: Int,
+        val spillResponse: ((ByteArray) -> String)?,
+    )
+
     private class Caller(
         val context: Context,
         val requesterId: String,
         val packageName: String?,
         val operation: String,
+        val response: ResponsePolicy,
     )
 
     private fun requestAccount(
@@ -231,10 +266,21 @@ class SignerProviderQuery(
         if (!allowed) return rejected(account, history(caller, event.kind, accepted = false, content = event.toJson()))
 
         val signedEvent = account.signSync<Event>(event.createdAt, event.kind, event.tags, event.content)
-        recordHistory(account, history(caller, event.kind, accepted = true, content = signedEvent.toJson()))
-        val clientCanRebuildFromSignature = !event.isAnonymousZapRequest()
-        val signature = if (clientCanRebuildFromSignature) signedEvent.sig else signedEvent.toJson()
-        return resultCursor(signature, event = signedEvent.toJson())
+        val signedEventJson = signedEvent.toJson()
+        recordHistory(account, history(caller, event.kind, accepted = true, content = signedEventJson))
+        val isAnonZap = event.isAnonymousZapRequest()
+        val resultValue = if (!isAnonZap) signedEvent.sig else signedEventJson
+        return cursorFor(
+            buildSignEventCursorPayload(
+                result = resultValue,
+                signedEventJson = signedEventJson,
+                isAnonymousZap = isAnonZap,
+                acceptResultUri = caller.response.acceptResultUri,
+                returnType = caller.response.returnType,
+                inlineThresholdBytes = caller.response.inlineThresholdBytes,
+                spillResponse = caller.response.spillResponse,
+            ),
+        )
     }
 
     private fun Event.isAnonymousZapRequest(): Boolean = kind == ZapRequestEvent.KIND && tags.any { tag -> tag.any { it == "anon" } }
@@ -312,7 +358,7 @@ class SignerProviderQuery(
         if (!allowed) return rejected(account, cryptoHistory(caller, request, accepted = false, ciphertext = NO_CIPHERTEXT_WAS_MADE))
         val ciphertext = runCrypto(caller, account, request) ?: COULD_NOT_DECRYPT
         recordHistory(account, cryptoHistory(caller, request, accepted = true, ciphertext = ciphertext))
-        return resultCursor(ciphertext)
+        return singleValueCursor(caller, ciphertext)
     }
 
     private fun decrypt(
@@ -326,7 +372,7 @@ class SignerProviderQuery(
         val entry = cryptoHistory(caller, request, accepted = allowed, ciphertext = request.content)
         return if (allowed) {
             recordHistory(account, entry)
-            resultCursor(plaintext)
+            singleValueCursor(caller, plaintext)
         } else {
             rejected(account, entry)
         }
@@ -447,7 +493,7 @@ class SignerProviderQuery(
             return null
         }
         recordHistory(account, history(caller, null, accepted = true, content = psbtHex))
-        return resultCursor(result)
+        return singleValueCursor(caller, result)
     }
 
     private fun ping(

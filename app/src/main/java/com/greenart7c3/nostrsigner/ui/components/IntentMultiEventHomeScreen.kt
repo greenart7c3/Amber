@@ -49,6 +49,7 @@ import com.greenart7c3.nostrsigner.service.MultiEventScreenIntents
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
 import com.greenart7c3.nostrsigner.ui.LocalAccountRepository
 import com.greenart7c3.nostrsigner.ui.LocalAppScope
+import com.greenart7c3.nostrsigner.ui.LocalPayloadStore
 import com.greenart7c3.nostrsigner.ui.LocalSettingsStore
 import com.greenart7c3.nostrsigner.ui.theme.AmberPreview
 import com.greenart7c3.nostrsigner.ui.theme.PreviewsLightDark
@@ -75,6 +76,7 @@ fun IntentMultiEventHomeScreen(
             appScope = LocalAppScope.current,
             packageName = packageName,
             account = accountParam,
+            payloadStore = LocalPayloadStore.current,
         ),
     ),
 ) {
@@ -230,10 +232,10 @@ private fun decryptLabel(
 private fun intentRequestPreview(intent: IntentData): String {
     if (intent.type == SignerType.SIGN_EVENT) {
         val event = intent.event!!
-        return if (event.kind == 22242) AmberEvent.relay(event) ?: event.content else event.content
+        return truncateForPreview(if (event.kind == 22242) AmberEvent.relay(event) ?: event.content else event.content)
     }
     val encryptedData = intent.encryptedData
-    return if (intent.type.name.contains("ENCRYPT") && encryptedData is ClearTextEncryptedDataKind) {
+    val raw = if (intent.type.name.contains("ENCRYPT") && encryptedData is ClearTextEncryptedDataKind) {
         encryptedData.text
     } else if (encryptedData is EventEncryptedDataKind) {
         if (encryptedData.sealEncryptedDataKind != null) {
@@ -246,12 +248,11 @@ private fun intentRequestPreview(intent: IntentData): String {
             encryptedData.event.content
         }
     } else if (encryptedData is TagArrayEncryptedDataKind) {
-        encryptedData.tagArray.joinToString(separator = ", ") {
-            "[${it.joinToString(separator = ", ") { tag -> "\"$tag\"" }}]"
-        }
+        tagsCopyText(encryptedData.tagArray)
     } else {
         encryptedData?.result ?: ""
     }
+    return truncateForPreview(raw)
 }
 
 private const val PREVIEW_PUBKEY = "460c25e682fda7832b52d1f22d3d22b3176d972f60dcdc3212ed8c92ef85065c"

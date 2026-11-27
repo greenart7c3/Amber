@@ -43,7 +43,7 @@ fun EncryptDecryptDetailModal(
                 TagsSection(
                     label = stringResource(Res.string.tags),
                     tags = encryptedData.tagArray,
-                    onCopy = { copyToClipboard(tagsCopyText(encryptedData.tagArray)) },
+                    onCopy = { copyToClipboard(truncateForPreview(tagsCopyText(encryptedData.tagArray), MAX_CLIPBOARD_CHARS)) },
                 )
             }
             else -> {
@@ -53,7 +53,7 @@ fun EncryptDecryptDetailModal(
                     encryptedData?.result ?: ""
                 }
                 Text(
-                    content,
+                    truncateForPreview(content),
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(16.dp),

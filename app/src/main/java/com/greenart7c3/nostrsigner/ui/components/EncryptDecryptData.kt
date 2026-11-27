@@ -298,7 +298,7 @@ private fun BunkerEventContent(
         )
     } else {
         Text(
-            if (shown.kind == 22242) shown.relay() else shown.content,
+            truncateForPreview(if (shown.kind == 22242) shown.relay() else shown.content),
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(top = 8.dp),
@@ -324,7 +324,7 @@ private fun ColumnScope.TagArrayOrText(
         )
     } else {
         Text(
-            plainCardText(type, encryptedData),
+            truncateForPreview(plainCardText(type, encryptedData)),
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(top = 8.dp),

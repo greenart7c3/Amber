@@ -23,13 +23,17 @@ import io.mockk.mockkObject
 import io.mockk.mockkStatic
 import io.mockk.unmockkAll
 import java.io.File
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
+import kotlinx.coroutines.withTimeout
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -126,9 +130,14 @@ class SettingsViewModelTest {
         settingsStore.settings = AmberSettings(torMode = TorMode.BUILTIN, killSwitch = MutableStateFlow(true))
         viewModel.refresh()
 
-        assertEquals(TorMode.BUILTIN, viewModel.state.value.torMode)
-        assertTrue(viewModel.state.value.killSwitch)
+        val refreshed = viewModel.awaitState { it.torMode == TorMode.BUILTIN && it.killSwitch }
+        assertEquals(TorMode.BUILTIN, refreshed.torMode)
+        assertTrue(refreshed.killSwitch)
         settingsStore.settings.killSwitch.value = false
-        assertFalse(viewModel.state.value.killSwitch)
+        assertFalse(viewModel.awaitState { !it.killSwitch }.killSwitch)
+    }
+
+    private fun SettingsViewModel.awaitState(predicate: (SettingsUiState) -> Boolean): SettingsUiState = runBlocking {
+        withTimeout(5.seconds) { state.first(predicate) }
     }
 }

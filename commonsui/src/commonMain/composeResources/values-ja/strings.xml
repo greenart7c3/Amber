@@ -320,6 +320,8 @@
     <string name="event_kind_23195">ウォレットレスポンス</string>
     <string name="event_kind_24133">Nostr Connect</string>
     <string name="event_kind_27235">HTTP 認証</string>
+    <string name="event_kind_27240">P2P ノードの ID</string>
+    <string name="event_kind_27241">P2P ノードの所有権</string>
     <string name="event_kind_30000">フォローセット</string>
     <string name="event_kind_30001">汎用リスト</string>
     <string name="event_kind_30002">Relay セット</string>

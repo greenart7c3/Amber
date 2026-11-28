@@ -296,6 +296,8 @@ Si vous perdez votre mot de passe, vous ne pourrez pas récupérer votre clé.</
     <string name="event_kind_23195">Réponse du portefeuille</string>
     <string name="event_kind_24133">Connexion Nostr</string>
     <string name="event_kind_27235">Authentification HTTP</string>
+    <string name="event_kind_27240">Identité de nœud P2P</string>
+    <string name="event_kind_27241">Propriété de nœud P2P</string>
     <string name="event_kind_30000">Ensemble de suivis</string>
     <string name="event_kind_30001">Listes génériques</string>
     <string name="event_kind_30002">Ensemble de relais</string>

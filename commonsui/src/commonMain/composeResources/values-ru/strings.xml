@@ -296,6 +296,8 @@
     <string name="event_kind_23195">Ответ кошелька</string>
     <string name="event_kind_24133">Nostr connect</string>
     <string name="event_kind_27235">HTTP-аутентификация</string>
+    <string name="event_kind_27240">Идентификация P2P-узла</string>
+    <string name="event_kind_27241">Владение P2P-узлом</string>
     <string name="event_kind_30000">Наборы подписок</string>
     <string name="event_kind_30001">Общие списки</string>
     <string name="event_kind_30002">Наборы relay-серверов</string>

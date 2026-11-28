@@ -296,6 +296,8 @@ Wenn du dein Passwort verlierst, wirst du deinen Schlüssel nicht wiederherstell
     <string name="event_kind_23195">Wallet-Antwort</string>
     <string name="event_kind_24133">Nostr-Connect</string>
     <string name="event_kind_27235">HTTP-Auth</string>
+    <string name="event_kind_27240">P2P-Knotenidentität</string>
+    <string name="event_kind_27241">P2P-Knoteneigentümerschaft</string>
     <string name="event_kind_30000">Follow Sets</string>
     <string name="event_kind_30001">Generische Listen</string>
     <string name="event_kind_30002">Relais Sets</string>

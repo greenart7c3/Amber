@@ -296,6 +296,8 @@ Si pierdes tu contraseña, no podrás recuperar tu clave.</string>
     <string name="event_kind_23195">Respuesta de billetera</string>
     <string name="event_kind_24133">Nostr connect</string>
     <string name="event_kind_27235">Autenticación HTTP</string>
+    <string name="event_kind_27240">Identidad de nodo P2P</string>
+    <string name="event_kind_27241">Propiedad de nodo P2P</string>
     <string name="event_kind_30000">Conjuntos de seguidos</string>
     <string name="event_kind_30001">Listas genéricas</string>
     <string name="event_kind_30002">Conjuntos de relays</string>

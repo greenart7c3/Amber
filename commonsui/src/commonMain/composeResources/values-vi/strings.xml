@@ -320,6 +320,8 @@ Nếu bạn quên mật khẩu, bạn sẽ không thể khôi phục khóa của
     <string name="event_kind_23195">Phản hồi ví</string>
     <string name="event_kind_24133">Nostr connect</string>
     <string name="event_kind_27235">Xác thực HTTP</string>
+    <string name="event_kind_27240">Danh tính nút P2P</string>
+    <string name="event_kind_27241">Quyền sở hữu nút P2P</string>
     <string name="event_kind_30000">Bộ theo dõi</string>
     <string name="event_kind_30001">Danh sách chung</string>
     <string name="event_kind_30002">Bộ relay</string>

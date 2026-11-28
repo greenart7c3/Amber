@@ -314,6 +314,8 @@
     <string name="event_kind_23195">钱包响应</string>
     <string name="event_kind_24133">远程签名请求</string>
     <string name="event_kind_27235">HTTP 认证</string>
+    <string name="event_kind_27240">P2P 节点身份</string>
+    <string name="event_kind_27241">P2P 节点所有权</string>
     <string name="event_kind_30000">关注合集</string>
     <string name="event_kind_30001">通用列表</string>
     <string name="event_kind_30002">中继合集</string>

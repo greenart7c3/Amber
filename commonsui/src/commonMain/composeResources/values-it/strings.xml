@@ -296,6 +296,8 @@ Se perdi la password, non potrai recuperare la chiave.</string>
     <string name="event_kind_23195">Risposta portafoglio</string>
     <string name="event_kind_24133">Nostr connect</string>
     <string name="event_kind_27235">Autenticazione HTTP</string>
+    <string name="event_kind_27240">Identità del nodo P2P</string>
+    <string name="event_kind_27241">Proprietà del nodo P2P</string>
     <string name="event_kind_30000">Set di seguiti</string>
     <string name="event_kind_30001">Liste generiche</string>
     <string name="event_kind_30002">Set di relay</string>

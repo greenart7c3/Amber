@@ -296,6 +296,8 @@ Jika Anda lupa kata sandi, Anda tidak akan dapat memulihkan kunci Anda.</string>
     <string name="event_kind_23195">Respons dompet</string>
     <string name="event_kind_24133">Nostr connect</string>
     <string name="event_kind_27235">Auth HTTP</string>
+    <string name="event_kind_27240">Identitas node P2P</string>
+    <string name="event_kind_27241">Kepemilikan node P2P</string>
     <string name="event_kind_30000">Set mengikuti</string>
     <string name="event_kind_30001">Daftar umum</string>
     <string name="event_kind_30002">Set relay</string>

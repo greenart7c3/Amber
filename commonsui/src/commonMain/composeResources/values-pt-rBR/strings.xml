@@ -296,6 +296,8 @@ Se você perder sua senha, não será possível recuperar sua chave.</string>
     <string name="event_kind_23195">Resposta da carteira</string>
     <string name="event_kind_24133">Nostr connect</string>
     <string name="event_kind_27235">Autenticação HTTP</string>
+    <string name="event_kind_27240">Identidade de nó P2P</string>
+    <string name="event_kind_27241">Propriedade de nó P2P</string>
     <string name="event_kind_30000">Conjuntos de seguidos</string>
     <string name="event_kind_30001">Listas genéricas</string>
     <string name="event_kind_30002">Conjuntos de relays</string>

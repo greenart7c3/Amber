@@ -296,6 +296,8 @@
     <string name="event_kind_23195">지갑 응답</string>
     <string name="event_kind_24133">Nostr connect</string>
     <string name="event_kind_27235">HTTP 인증</string>
+    <string name="event_kind_27240">P2P 노드 신원</string>
+    <string name="event_kind_27241">P2P 노드 소유권</string>
     <string name="event_kind_30000">팔로우 세트</string>
     <string name="event_kind_30001">일반 목록</string>
     <string name="event_kind_30002">Relay 세트</string>

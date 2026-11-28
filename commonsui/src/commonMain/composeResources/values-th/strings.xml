@@ -320,6 +320,8 @@
     <string name="event_kind_23195">การตอบสนองกระเป๋าเงิน</string>
     <string name="event_kind_24133">Nostr connect</string>
     <string name="event_kind_27235">การยืนยันตัวตน HTTP</string>
+    <string name="event_kind_27240">ตัวตนของโหนด P2P</string>
+    <string name="event_kind_27241">ความเป็นเจ้าของโหนด P2P</string>
     <string name="event_kind_30000">ชุดการติดตาม</string>
     <string name="event_kind_30001">รายการทั่วไป</string>
     <string name="event_kind_30002">ชุด relay</string>

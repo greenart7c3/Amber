@@ -296,6 +296,8 @@ Hesabınız gizli bir anahtarla güvence altına alınmıştır. Bu anahtar **ns
     <string name="event_kind_23195">Cüzdan yanıtı</string>
     <string name="event_kind_24133">Nostr Connect</string>
     <string name="event_kind_27235">HTTP kimlik doğrulaması</string>
+    <string name="event_kind_27240">P2P düğüm kimliği</string>
+    <string name="event_kind_27241">P2P düğüm sahipliği</string>
     <string name="event_kind_30000">Takip setleri</string>
     <string name="event_kind_30001">Genel listeler</string>
     <string name="event_kind_30002">Relay setleri</string>

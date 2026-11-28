@@ -316,6 +316,8 @@ If you lose your password, you will not be able to recover your key.</string>
     <string name="event_kind_23195">Wallet response</string>
     <string name="event_kind_24133">Nostr connect</string>
     <string name="event_kind_27235">HTTP auth</string>
+    <string name="event_kind_27240">P2P node identity</string>
+    <string name="event_kind_27241">P2P node ownership</string>
     <string name="event_kind_30000">Follow sets</string>
     <string name="event_kind_30001">Generic lists</string>
     <string name="event_kind_30002">Relay sets</string>

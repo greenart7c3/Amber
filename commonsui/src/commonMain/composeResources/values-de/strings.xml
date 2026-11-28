@@ -520,6 +520,7 @@ Wenn du dein Passwort verlierst, wirst du deinen Schlüssel nicht wiederherstell
 
 aber sie haben noch andere Optionen um Amber zu verwenden:</string>
     <string name="add_a_new_application">Eine neue Anwendung hinzufügen</string>
+    <string name="shortcut_add_application">App hinzufügen</string>
     <string name="account_backup">Konto-Sicherung</string>
     <string name="export_all_accounts_title">Alle Konten exportieren</string>
     <string name="export_all_accounts_warning" tools:ignore="Typos">## WICHTIGER SICHERHEITSHINWEIS

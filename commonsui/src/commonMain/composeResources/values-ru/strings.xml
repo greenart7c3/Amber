@@ -520,6 +520,7 @@
 
 Но у вас есть и другие варианты использования Amber:</string>
     <string name="add_a_new_application">Добавить новое приложение</string>
+    <string name="shortcut_add_application">Добавить приложение</string>
     <string name="account_backup">Резервная копия аккаунта</string>
     <string name="export_all_accounts_title">Экспортировать все аккаунты</string>
     <string name="export_all_accounts_warning" tools:ignore="Typos">## ВАЖНОЕ УВЕДОМЛЕНИЕ БЕЗОПАСНОСТИ

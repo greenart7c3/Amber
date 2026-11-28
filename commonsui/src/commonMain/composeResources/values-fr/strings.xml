@@ -520,6 +520,7 @@ Si vous perdez votre mot de passe, vous ne pourrez pas récupérer votre clé.</
 
 Mais vous avez d'autres options pour utiliser Amber :</string>
     <string name="add_a_new_application">Ajouter une nouvelle application</string>
+    <string name="shortcut_add_application">Ajouter app</string>
     <string name="account_backup">Sauvegarde du compte</string>
     <string name="export_all_accounts_title">Exporter tous les comptes</string>
     <string name="export_all_accounts_warning" tools:ignore="Typos">## AVIS DE SÉCURITÉ IMPORTANT

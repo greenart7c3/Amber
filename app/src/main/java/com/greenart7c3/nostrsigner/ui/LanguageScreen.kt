@@ -11,6 +11,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.intl.Locale
 import androidx.core.os.LocaleListCompat
 import com.greenart7c3.nostrsigner.AppLanguage
+import com.greenart7c3.nostrsigner.LauncherShortcuts
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.commonsui.Res
@@ -54,6 +55,7 @@ fun LanguageScreen(
                             settingsStore.settings.language = languageEntries[languageList[it].title]
                             LocalPreferences.saveSettingsToEncryptedStorage(context, settingsStore.settings)
                             AppLanguage.apply(settingsStore.settings.language)
+                            LauncherShortcuts.publish(context)
                         }
                     },
                 )

@@ -520,6 +520,7 @@ Se você perder sua senha, não será possível recuperar sua chave.</string>
 
 Mas você tem outras opções para usar o Amber:</string>
     <string name="add_a_new_application">Adicionar novo aplicativo</string>
+    <string name="shortcut_add_application">Adicionar app</string>
     <string name="account_backup">Backup da conta</string>
     <string name="export_all_accounts_title">Exportar Todas as Contas</string>
     <string name="export_all_accounts_warning" tools:ignore="Typos">## NOTAS DE SEGURANÇA IMPORTANTE

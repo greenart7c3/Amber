@@ -520,6 +520,7 @@ Se perdi la password, non potrai recuperare la chiave.</string>
 
 Ma hai altre opzioni per usare Amber:</string>
     <string name="add_a_new_application">Aggiungi una nuova applicazione</string>
+    <string name="shortcut_add_application">Aggiungi app</string>
     <string name="account_backup">Backup account</string>
     <string name="export_all_accounts_title">Esporta tutti gli account</string>
     <string name="export_all_accounts_warning" tools:ignore="Typos">## AVVISO DI SICUREZZA IMPORTANTE

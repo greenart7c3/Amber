@@ -538,6 +538,7 @@
 
 但还有其他方式来使用 Amber：</string>
     <string name="add_a_new_application">添加新应用</string>
+    <string name="shortcut_add_application">添加应用</string>
     <string name="account_backup">账户备份</string>
     <string name="export_all_accounts_title">导出所有账户</string>
     <string name="export_all_accounts_warning" tools:ignore="Typos">## 重要安全提示

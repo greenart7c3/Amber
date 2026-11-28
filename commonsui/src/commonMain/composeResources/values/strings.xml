@@ -540,6 +540,7 @@ If you lose your password, you will not be able to recover your key.</string>
 
 But you have other options to use Amber:</string>
     <string name="add_a_new_application">Add a new application</string>
+    <string name="shortcut_add_application">Add app</string>
     <string name="account_backup">Account backup</string>
     <string name="export_all_accounts_title">Export All Accounts</string>
     <string name="export_all_accounts_warning" tools:ignore="Typos">## IMPORTANT SECURITY NOTICE

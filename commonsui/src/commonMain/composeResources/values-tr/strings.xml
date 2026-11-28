@@ -520,6 +520,7 @@ Hesabınız gizli bir anahtarla güvence altına alınmıştır. Bu anahtar **ns
 
 Ancak Amber'ı kullanmak için başka seçenekleriniz de var:</string>
     <string name="add_a_new_application">Yeni bir uygulama ekle</string>
+    <string name="shortcut_add_application">Uygulama ekle</string>
     <string name="account_backup">Hesap yedeği</string>
     <string name="export_all_accounts_title">Tüm Hesapları Dışa Aktar</string>
     <string name="export_all_accounts_warning" tools:ignore="Typos">## ÖNEMLİ GÜVENLİK UYARISI

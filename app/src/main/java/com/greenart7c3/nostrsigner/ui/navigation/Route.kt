@@ -306,11 +306,11 @@ val routes = listOf(
 
 /**
  * The only routes another app may open through the exported activities'
- * "route" extra: the ones Amber's own notifications send. Anything else would
+ * "route" extra: the ones Amber's own notifications and launcher shortcut send. Anything else would
  * let any app jump straight to an internal screen, with arguments of its
  * choosing (e.g. QrCode/{content}, NewNsecBunkerCreated/{key}).
  */
 @Suppress("NoComments")
-private val EXTERNAL_ROUTES = setOf(Route.IncomingRequest.route, Route.UpdateSettings.route)
+private val EXTERNAL_ROUTES = setOf(Route.IncomingRequest.route, Route.UpdateSettings.route, Route.NewApplication.route)
 
 fun externalRoute(route: String?): String? = route?.takeIf { it in EXTERNAL_ROUTES }

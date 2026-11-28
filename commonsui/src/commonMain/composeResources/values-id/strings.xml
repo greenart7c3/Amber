@@ -520,6 +520,7 @@ Jika Anda lupa kata sandi, Anda tidak akan dapat memulihkan kunci Anda.</string>
 
 Namun Anda memiliki opsi lain untuk menggunakan Amber:</string>
     <string name="add_a_new_application">Tambahkan aplikasi baru</string>
+    <string name="shortcut_add_application">Tambah aplikasi</string>
     <string name="account_backup">Cadangan akun</string>
     <string name="export_all_accounts_title">Ekspor Semua Akun</string>
     <string name="export_all_accounts_warning" tools:ignore="Typos">## PEMBERITAHUAN KEAMANAN PENTING

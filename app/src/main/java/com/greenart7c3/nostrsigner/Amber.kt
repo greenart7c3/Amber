@@ -237,6 +237,7 @@ class Amber :
         settings = LocalPreferences.loadSettingsAtStartup(this)
         isSettingsLoaded = true
         settings.language?.let { AppLanguage.apply(it) }
+        applicationIOScope.launch { LauncherShortcuts.publish(this@Amber) }
         relayClient.stats.createNotificationChannel()
         UnexpectedCrashSaver.install(this, crashReportCache, applicationIOScope)
 

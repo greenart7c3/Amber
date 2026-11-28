@@ -544,6 +544,7 @@
 
 แต่คุณมีตัวเลือกอื่นในการใช้ Amber:</string>
     <string name="add_a_new_application">เพิ่มแอปพลิเคชันใหม่</string>
+    <string name="shortcut_add_application">เพิ่มแอป</string>
     <string name="account_backup">สำรองข้อมูลบัญชี</string>
     <string name="export_all_accounts_title">ส่งออกบัญชีทั้งหมด</string>
     <string name="export_all_accounts_warning" tools:ignore="Typos">## ประกาศความปลอดภัยสำคัญ

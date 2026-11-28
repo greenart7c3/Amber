@@ -7,7 +7,6 @@ import android.net.Uri
 import androidx.compose.runtime.Stable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.navigation.NavHostController
 import com.greenart7c3.nostrsigner.models.IntentData
 import com.greenart7c3.nostrsigner.service.BunkerRequestUtils
 import com.greenart7c3.nostrsigner.service.IntentUtils
@@ -19,15 +18,15 @@ import com.vitorpamplona.quartz.nip19Bech32.entities.NPub
 import com.vitorpamplona.quartz.nip19Bech32.toNpub
 import com.vitorpamplona.quartz.utils.Hex
 import java.util.UUID
-import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 
 @Stable
 @SuppressLint("StaticFieldLeak")
 class MainViewModel(val context: Context) : ViewModel() {
-    var navController: NavHostController? = null
+    /** The allowed "route" extra of the last intent, until [RouteNavigationEffect] opens it. */
+    val pendingRoute = MutableStateFlow<String?>(null)
 
     /**
      * Intent IDs added by this ViewModel instance, so onDestroy removes only the intents
@@ -106,10 +105,16 @@ class MainViewModel(val context: Context) : ViewModel() {
         }
     }
 
+    /**
+     * Queues [intent]'s request, and its allowed "route" extra in [pendingRoute] when
+     * [handleRoute] is set. An activity recreated from saved state passes false, since its
+     * back stack is restored and the route was already followed.
+     */
     fun onNewIntent(
         intent: Intent,
         callingPackage: String?,
         referrer: Uri? = null,
+        handleRoute: Boolean = true,
     ) {
         viewModelScope.launch(Dispatchers.IO) {
             val account = AccountStorage.load(context)
@@ -121,33 +126,20 @@ class MainViewModel(val context: Context) : ViewModel() {
                     addedIntentIds.add(intentData.id)
                     IntentUtils.persistNativeAppMetadata(context, acc, callingPackage)
                 }
-
-                route?.let { route ->
-                    viewModelScope.launch(Dispatchers.Main) {
-                        var error = true
-                        var count = 0
-                        while (error && count < 10) {
-                            delay(100.milliseconds)
-                            count++
-                            try {
-                                if (route == Route.UpdateSettings.route) {
-                                    navController?.navigate(Route.Settings.route) {
-                                        popUpTo(0)
-                                    }
-                                    navController?.navigate(Route.UpdateSettings.route)
-                                } else {
-                                    navController?.navigate(route) {
-                                        popUpTo(0)
-                                    }
-                                }
-                                error = false
-                            } catch (e: Exception) {
-                                AmberLog.e(Amber.TAG, "Error navigating to $route", e)
-                            }
-                        }
-                    }
+                if (handleRoute && route != null) {
+                    pendingRoute.value = route
                 }
             }
         }
     }
+}
+
+/**
+ * The screens to open, in order, for an allowed external [route]: a screen reached from a
+ * list opens on top of that list, so Back goes there.
+ */
+fun routeBackStack(route: String): List<String> = when (route) {
+    Route.UpdateSettings.route -> listOf(Route.Settings.route, Route.UpdateSettings.route)
+    Route.NewApplication.route -> listOf(Route.Applications.route, Route.NewApplication.route)
+    else -> listOf(route)
 }

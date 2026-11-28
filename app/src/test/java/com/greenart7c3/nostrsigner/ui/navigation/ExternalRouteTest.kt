@@ -16,6 +16,11 @@ class ExternalRouteTest {
     }
 
     @Test
+    fun theLauncherShortcutRouteIsAllowed() {
+        assertEquals(Route.NewApplication.route, externalRoute(Route.NewApplication.route))
+    }
+
+    @Test
     fun anyOtherRouteIsIgnored() {
         listOf(
             "QrCode/nsec1attackerchosencontent",

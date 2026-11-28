@@ -16,6 +16,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavHostController
 import com.greenart7c3.nostrsigner.common.sanitizeAppName
 import com.greenart7c3.nostrsigner.models.AmberBunkerRequest
 import com.greenart7c3.nostrsigner.ui.AccountStateViewModel
@@ -26,6 +27,8 @@ import com.greenart7c3.nostrsigner.ui.LocalSettingsStore
 import com.greenart7c3.nostrsigner.ui.components.BiometricAuthScreen
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 internal fun Context.callerAppName(packageName: String?): String? = packageName?.let {
@@ -48,6 +51,25 @@ internal fun AuthGate(content: @Composable () -> Unit) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator()
             }
+        }
+    }
+}
+
+@Composable
+internal fun RouteNavigationEffect(mainViewModel: MainViewModel, navController: NavHostController) {
+    LaunchedEffect(mainViewModel, navController) {
+        mainViewModel.pendingRoute.filterNotNull().collect { route ->
+            navController.currentBackStackEntryFlow.first()
+            try {
+                routeBackStack(route).forEachIndexed { index, screen ->
+                    navController.navigate(screen) {
+                        if (index == 0) popUpTo(0)
+                    }
+                }
+            } catch (e: Exception) {
+                AmberLog.e(Amber.TAG, "Error navigating to $route", e)
+            }
+            mainViewModel.pendingRoute.compareAndSet(route, null)
         }
     }
 }

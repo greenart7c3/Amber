@@ -43,7 +43,7 @@ class MainActivity : AppCompatActivity() {
         amber.setMainActivity(this)
         mainViewModel = MainViewModel(applicationContext)
         val launchReferrer = safeReferrer()
-        intent?.let { mainViewModel.onNewIntent(it, callingPackage, launchReferrer) }
+        intent?.let { mainViewModel.onNewIntent(it, callingPackage, launchReferrer, handleRoute = savedInstanceState == null) }
         setContent {
             HttpClientManager.setDefaultUserAgent("Amber/${BuildConfig.VERSION_NAME}")
 
@@ -65,7 +65,6 @@ class MainActivity : AppCompatActivity() {
                     *appDependencies(amber),
                 ) {
                     val navController = rememberNavController()
-                    mainViewModel.navController = navController
 
                     Surface(
                         modifier = Modifier.fillMaxSize(),
@@ -86,6 +85,7 @@ class MainActivity : AppCompatActivity() {
                                 navController = NavHostControllerWrapper(navController),
                                 intentOwner = mainViewModel.ownerId,
                             )
+                            RouteNavigationEffect(mainViewModel, navController)
                         }
                     }
                 }

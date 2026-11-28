@@ -544,6 +544,7 @@ Nếu bạn quên mật khẩu, bạn sẽ không thể khôi phục khóa của
 
 Nhưng bạn có các tùy chọn khác để sử dụng Amber:</string>
     <string name="add_a_new_application">Thêm ứng dụng mới</string>
+    <string name="shortcut_add_application">Thêm ứng dụng</string>
     <string name="account_backup">Sao lưu tài khoản</string>
     <string name="export_all_accounts_title">Xuất Tất Cả Tài Khoản</string>
     <string name="export_all_accounts_warning" tools:ignore="Typos">## THÔNG BÁO BẢO MẬT QUAN TRỌNG

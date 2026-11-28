@@ -59,7 +59,7 @@ class SignerActivity : AppCompatActivity() {
         amber.setMainActivity(this)
         mainViewModel = MainViewModel(applicationContext)
         val launchReferrer = safeReferrer()
-        intent?.let { mainViewModel.onNewIntent(it, callingPackage, launchReferrer) }
+        intent?.let { mainViewModel.onNewIntent(it, callingPackage, launchReferrer, handleRoute = savedInstanceState == null) }
         setContent {
             val themeMode by amber.themeMode.collectAsStateWithLifecycle()
             NostrSignerTheme(themeMode = themeMode) {
@@ -81,7 +81,6 @@ class SignerActivity : AppCompatActivity() {
                     *appDependencies(amber),
                 ) {
                     val navController = rememberNavController()
-                    mainViewModel.navController = navController
 
                     RequestSheet(onFinish = ::finishAndRemoveTask) {
                         AuthGate {
@@ -100,6 +99,7 @@ class SignerActivity : AppCompatActivity() {
                                 isExternalRequest = true,
                                 intentOwner = mainViewModel.ownerId,
                             )
+                            RouteNavigationEffect(mainViewModel, navController)
                         }
                     }
                 }
